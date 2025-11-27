@@ -2,7 +2,7 @@
  * Cache configuration for Cart module
  */
 
-import { cacheTag } from "next/cache"
+import { cacheLife, cacheTag } from "next/cache"
 
 // ============================================
 // CACHE TAGS
@@ -24,19 +24,19 @@ export const CART_CACHE_TAGS = {
 
 /**
  * Configure le cache pour le panier d'un utilisateur/visiteur
- * - Durée : 0s (pas de cache, toujours frais pour afficher le panier exact)
+ * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
  */
 export function cacheCart(userId?: string, sessionId?: string) {
-	// Pas de cacheLife car le panier doit toujours être à jour
+	cacheLife({ stale: 300 })
 	cacheTag(CART_CACHE_TAGS.CART(userId, sessionId))
 }
 
 /**
  * Configure le cache pour le compteur de panier
- * - Durée : 0s (pas de cache, toujours frais)
+ * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
  */
 export function cacheCartCount(userId?: string, sessionId?: string) {
-	// Pas de cacheLife car le compteur doit toujours être à jour
+	cacheLife({ stale: 300 })
 	cacheTag(CART_CACHE_TAGS.COUNT(userId, sessionId))
 }
 

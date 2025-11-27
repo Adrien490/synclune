@@ -9,6 +9,7 @@ import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { cacheLife } from "next/cache";
 
 interface ProcessStep {
 	icon: React.ReactNode;
@@ -73,6 +74,7 @@ const processSteps: ProcessStep[] = [
  */
 export async function CreativeProcess() {
 	"use cache";
+	cacheLife("reference"); // 7 jours pour contenu 100% statique
 
 	return (
 		<section

@@ -4,8 +4,9 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/components/cursor-pagination/pagination";
-import { cacheUserAccounts } from "../constants/cache";
+import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
+import { cacheTag } from "next/cache";
 import { z } from "zod";
 
 import {
@@ -85,9 +86,8 @@ export async function fetchAccounts(
 	params: GetAccountsParams
 ): Promise<GetAccountsReturn> {
 	"use cache";
-	// Note: This fetches all accounts (admin view), not user-specific
-	// Using a generic cache approach since userId is not available here
-	// Consider adding userId parameter if per-user caching is needed
+	cacheDashboard();
+	cacheTag("accounts-list");
 
 	const sortOrder = (params.sortOrder ||
 		GET_ACCOUNTS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;
