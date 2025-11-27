@@ -20,6 +20,7 @@ import { DiscountsFilterSheet } from "@/modules/discount/components/admin/discou
 import { CreateDiscountButton } from "@/modules/discount/components/admin/create-discount-button";
 import { DeleteDiscountAlertDialog } from "@/modules/discount/components/admin/delete-discount-alert-dialog";
 import { ToggleDiscountStatusAlertDialog } from "@/modules/discount/components/admin/toggle-discount-status-alert-dialog";
+import { RefreshDiscountsButton } from "@/modules/discount/components/admin/refresh-discounts-button";
 import { parseFilters } from "./_utils/params";
 
 export type DiscountsSearchParams = {
@@ -112,6 +113,7 @@ export default async function DiscountsAdminPage({
 							className="w-full sm:min-w-[180px]"
 						/>
 						<DiscountsFilterSheet />
+						<RefreshDiscountsButton />
 					</div>
 				</DataTableToolbar>
 

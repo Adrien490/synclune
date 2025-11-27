@@ -1,6 +1,7 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { PageHeader } from "@/shared/components/page-header";
 import { fetchStripePayments } from "@/modules/payments/data/get-stripe-payments";
+import { RefreshPaymentsButton } from "@/modules/payments/components/admin/refresh-payments-button";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { StripePaymentsDataTable } from "@/modules/payments/components/admin/stripe-payments-data-table";
@@ -62,6 +63,7 @@ export default async function StripePaymentsPage({
 			<PageHeader variant="compact"
 				title="Paiements"
 				description="Gestion et suivi des paiements"
+				actions={<RefreshPaymentsButton />}
 			/>
 
 			<Suspense fallback={<StripePaymentsDataTableSkeleton />}>

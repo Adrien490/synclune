@@ -11,6 +11,7 @@ import { ApproveRefundAlertDialog } from "@/modules/refund/components/admin/appr
 import { ProcessRefundAlertDialog } from "@/modules/refund/components/admin/process-refund-alert-dialog";
 import { RejectRefundAlertDialog } from "@/modules/refund/components/admin/reject-refund-alert-dialog";
 import { CancelRefundAlertDialog } from "@/modules/refund/components/admin/cancel-refund-alert-dialog";
+import { RefreshRefundsButton } from "@/modules/refund/components/admin/refresh-refunds-button";
 import { parseRefundParams, parseRefundFilters } from "./_utils/params";
 import type { Metadata } from "next";
 
@@ -87,6 +88,7 @@ export default async function RefundsAdminPage({
 							placeholder="Plus récents"
 							className="w-full sm:min-w-[180px]"
 						/>
+						<RefreshRefundsButton />
 					</div>
 				</DataTableToolbar>
 

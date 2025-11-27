@@ -13,6 +13,7 @@ import { UsersDataTable } from "@/modules/users/components/admin/users-data-tabl
 import { UsersDataTableSkeleton } from "@/modules/users/components/admin/users-data-table-skeleton";
 import { UsersFilterBadges } from "@/modules/users/components/admin/users-filter-badges";
 import { UsersFilterSheet } from "@/modules/users/components/admin/users-filter-sheet";
+import { RefreshUsersButton } from "@/modules/users/components/admin/refresh-users-button";
 import { usersMenuItems } from "./_constants/menu-items";
 import {
 	DEFAULT_SORT_BY,
@@ -132,6 +133,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
 							className="w-full sm:min-w-[180px]"
 						/>
 						<UsersFilterSheet />
+						<RefreshUsersButton />
 					</div>
 				</DataTableToolbar>
 

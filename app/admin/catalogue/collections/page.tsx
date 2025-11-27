@@ -24,6 +24,7 @@ import { DeleteCollectionAlertDialog } from "@/modules/collections/components/ad
 import { ArchiveCollectionAlertDialog } from "@/modules/collections/components/admin/archive-collection-alert-dialog";
 import { BulkArchiveCollectionsAlertDialog } from "@/modules/collections/components/admin/bulk-archive-collections-alert-dialog";
 import { ChangeCollectionStatusAlertDialog } from "@/modules/collections/components/admin/change-collection-status-alert-dialog";
+import { RefreshCollectionsButton } from "@/modules/collections/components/admin/refresh-collections-button";
 import { parseFilters, parseStatus } from "./_utils/params";
 
 type CollectionFiltersSearchParams = {
@@ -132,6 +133,7 @@ export default async function CollectionsAdminPage({
 							className="w-full sm:min-w-[180px]"
 						/>
 						<CollectionsFilterSheet />
+						<RefreshCollectionsButton />
 					</div>
 				</DataTableToolbar>
 

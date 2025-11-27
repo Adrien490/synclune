@@ -14,6 +14,7 @@ import { ColorsFilterSheet } from "@/modules/colors/components/admin/colors-filt
 import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
 import { ColorFormDialog } from "@/modules/colors/components/color-form-dialog";
 import { DeleteColorAlertDialog } from "@/modules/colors/components/admin/delete-color-alert-dialog";
+import { RefreshColorsButton } from "@/modules/colors/components/admin/refresh-colors-button";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -86,6 +87,7 @@ export default async function ColorsAdminPage({
 							className="w-full sm:min-w-[180px]"
 						/>
 						<ColorsFilterSheet />
+						<RefreshColorsButton />
 					</div>
 				</DataTableToolbar>
 

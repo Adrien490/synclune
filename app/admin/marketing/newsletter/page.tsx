@@ -9,6 +9,7 @@ import {
 	SORT_LABELS,
 	SORT_OPTIONS,
 } from "@/modules/newsletter/data/get-subscribers";
+import { RefreshNewsletterButton } from "@/modules/newsletter/components/admin/refresh-newsletter-button";
 import { SendNewsletterEmailForm } from "@/modules/newsletter/components/admin/send-newsletter-email-form";
 import { prisma } from "@/shared/lib/prisma";
 import { getFirstParam } from "@/shared/utils/params";
@@ -195,6 +196,7 @@ export default async function NewsletterPage({
 
 							{/* Bouton Export CSV avec menu déroulant */}
 							<ExportSubscribersButton />
+							<RefreshNewsletterButton />
 						</div>
 					</DataTableToolbar>
 

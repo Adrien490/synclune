@@ -4,7 +4,7 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/components/cursor-pagination/pagination";
-import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import { cacheNewsletterSubscribers } from "../constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 
@@ -83,7 +83,7 @@ export async function fetchSubscribers(
 	params: GetSubscribersParams
 ): Promise<GetSubscribersReturn> {
 	"use cache";
-	cacheDashboard();
+	cacheNewsletterSubscribers();
 
 	try {
 		const where = buildSubscriberWhereClause(params);

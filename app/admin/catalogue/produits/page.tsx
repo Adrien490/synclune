@@ -23,6 +23,7 @@ import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/p
 import { ProductsFilterBadges } from "@/modules/products/components/admin/products-filter-badges";
 import { ProductsFilterSheet } from "@/modules/products/components/admin/products-filter-sheet";
 import { ProductsQuickFilters } from "@/modules/products/components/admin/products-quick-filters";
+import { RefreshProductsButton } from "@/modules/products/components/admin/refresh-products-button";
 import { parseFilters } from "./_utils/params";
 
 export type ProductFiltersSearchParams = {
@@ -176,6 +177,7 @@ export default async function ProductsAdminPage({
 							productTypes={productTypes}
 							collections={collections}
 						/>
+						<RefreshProductsButton />
 					</div>
 				</DataTableToolbar>
 
