@@ -36,10 +36,8 @@ const nextConfig: NextConfig = {
    * - "use cache: private" : Pour les données utilisateur (panier, wishlist)
    * - "use cache: remote" : Pour les données du dashboard (après await connection())
    *
-   * Configuration centralisée dans /lib/cache/ :
-   * - tags.ts : Tous les tags d'invalidation
-   * - utils.ts : Helpers de configuration (cacheProducts, cacheColors, etc.)
-   * - invalidations.ts : Helpers pour invalidation cross-domain
+   * Configuration décentralisée par module dans modules/{module}/constants/cache.ts
+   * Chaque module définit ses tags et helpers de cache
    */
   cacheComponents: true,
   images: {

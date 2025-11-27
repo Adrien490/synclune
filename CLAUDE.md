@@ -55,7 +55,7 @@ Each module in `modules/` follows a consistent pattern:
 - `constants/` - Module constants
 - `utils/` - Module utilities
 
-Modules: auth, cart, collections, colors, customization, dashboard, discount, newsletter, orders, payments, product-types, products, refund, users, wishlist
+Modules: auth, cart, collections, colors, customization, dashboard, discount, newsletter, orders, payments, product-types, products, refund, skus, users, wishlist
 
 ### Key Technologies
 
@@ -69,14 +69,23 @@ Modules: auth, cart, collections, colors, customization, dashboard, discount, ne
 
 ### Caching System (Next.js 16)
 
-Three cache directives configured in `next.config.ts`:
+Cache directives:
 - `"use cache"` - Public shared data (products, collections)
 - `"use cache: private"` - Per-user data (cart, wishlist)
-- `"use cache: remote"` - Admin dashboard data
 
-Cache tags defined in `shared/lib/cache/tags.ts` - invalidate with `revalidateTag()`.
+Cache configuration (decentralized by module):
+- `modules/*/constants/cache.ts` - Tags, cache helpers, and invalidation helpers per module
+- `next.config.ts` - Cache life profiles (products, collections, reference, productDetail, dashboard, changelog)
 
-Cache profiles: `products`, `collections`, `reference`, `productDetail`, `dashboard`, `changelog`
+Pattern:
+```typescript
+// In modules/products/constants/cache.ts
+export const PRODUCTS_CACHE_TAGS = { LIST: "products-list", DETAIL: (slug) => `product-${slug}` }
+export function cacheProducts() { cacheLife("products"); cacheTag(PRODUCTS_CACHE_TAGS.LIST) }
+export function getProductInvalidationTags(slug: string): string[] { ... }
+```
+
+Invalidate with `revalidateTag()` using tags from each module's constants.
 
 ### Server Actions Pattern
 
