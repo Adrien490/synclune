@@ -2,7 +2,7 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { getCurrentUserInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -60,7 +60,7 @@ export async function updateProfile(
 		});
 
 		// 5. Revalidation du cache avec tags
-		updateTags(getCurrentUserInvalidationTags(user.id));
+		getCurrentUserInvalidationTags(user.id).forEach(tag => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

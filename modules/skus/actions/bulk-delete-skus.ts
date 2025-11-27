@@ -3,7 +3,7 @@
 import { isAdmin } from "@/shared/lib/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { bulkDeleteSkusSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../constants/cache";
 
@@ -113,7 +113,7 @@ export async function bulkDeleteSkus(
 				skuData.productId,
 				skuData.product.slug
 			);
-			updateTags(tags);
+			tags.forEach(tag => updateTag(tag));
 		}
 
 		return {

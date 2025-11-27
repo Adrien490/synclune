@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
-import { updateTag } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";

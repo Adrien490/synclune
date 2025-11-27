@@ -76,7 +76,7 @@ export const NewsletterEmail = ({
 					{/* CTA */}
 					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
 						<Button
-							href="https://synclune.fr/products"
+							href="https://synclune.fr/produits"
 							style={EMAIL_STYLES.button.primary}
 						>
 							Découvrir les créations

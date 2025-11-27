@@ -1,4 +1,3 @@
-import type { PublicBaseSearchParams } from "@/shared/types/search-params";
 import { PageHeader } from "@/shared/components/page-header";
 
 /**
@@ -17,7 +16,14 @@ export type ProductFiltersSearchParams = {
 /**
  * Complete product search params (base + filters)
  */
-export type ProductSearchParams = PublicBaseSearchParams & ProductFiltersSearchParams;
+export type ProductSearchParams = {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: string;
+	sortBy?: string;
+	search?: string;
+	filter_sortBy?: string;
+} & ProductFiltersSearchParams;
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { TabNavigation } from "@/shared/components/tab-navigation";

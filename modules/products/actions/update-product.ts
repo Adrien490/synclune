@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/constants/cache";
 import { isAdmin } from "@/shared/lib/guards";
 import { detectMediaType } from "@/shared/utils/media-utils";
@@ -293,7 +293,7 @@ export async function updateProduct(
 			updatedProduct.slug,
 			updatedProduct.id
 		);
-		updateTags(productTags);
+		productTags.forEach(tag => updateTag(tag));
 
 		// Si l'ancienne collection etait differente, l'invalider aussi
 		if (
@@ -303,7 +303,7 @@ export async function updateProduct(
 			const oldCollectionTags = getCollectionInvalidationTags(
 				existingProduct.collection.slug
 			);
-			updateTags(oldCollectionTags);
+			oldCollectionTags.forEach(tag => updateTag(tag));
 		}
 
 		// Si le produit appartient a une nouvelle collection, invalider aussi
@@ -314,7 +314,7 @@ export async function updateProduct(
 			});
 			if (collection) {
 				const collectionTags = getCollectionInvalidationTags(collection.slug);
-				updateTags(collectionTags);
+				collectionTags.forEach(tag => updateTag(tag));
 			}
 		}
 

@@ -18,7 +18,6 @@ import { BulkDeleteOrdersAlertDialog } from "@/modules/orders/components/admin/b
 import { MarkAsPaidAlertDialog } from "@/modules/orders/components/admin/mark-as-paid-alert-dialog";
 import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
 import { MarkAsDeliveredAlertDialog } from "@/modules/orders/components/admin/mark-as-delivered-alert-dialog";
-import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 import { parseFilters } from "./_utils/params";
 import { Metadata } from "next";
 
@@ -33,8 +32,13 @@ export type OrderFiltersSearchParams = {
 	filter_sortBy?: string;
 };
 
-export type OrdersSearchParams = DashboardBaseSearchParams &
-	OrderFiltersSearchParams;
+export type OrdersSearchParams = {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: string;
+	sortBy?: string;
+	search?: string;
+} & OrderFiltersSearchParams;
 
 export const metadata: Metadata = {
 	title: "Commandes - Administration",

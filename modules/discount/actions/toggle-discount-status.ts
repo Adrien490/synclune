@@ -2,7 +2,7 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { toggleDiscountStatusSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
@@ -52,7 +52,7 @@ export async function toggleDiscountStatus(
 		});
 
 		revalidatePath("/admin/marketing/codes-promo");
-		updateTags(getDiscountInvalidationTags(discount.code));
+		getDiscountInvalidationTags(discount.code).forEach(tag => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

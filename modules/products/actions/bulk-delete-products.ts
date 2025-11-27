@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/constants/cache";
 import { isAdmin } from "@/shared/lib/guards";
 import { prisma } from "@/shared/lib/prisma";
@@ -163,14 +163,14 @@ export async function bulkDeleteProducts(
 		// 8. Invalidate cache tags pour tous les produits supprimes
 		for (const product of existingProducts) {
 			const productTags = getProductInvalidationTags(product.slug, product.id);
-			updateTags(productTags);
+			productTags.forEach(tag => updateTag(tag));
 
 			// Si le produit appartenait a une collection, invalider aussi la collection
 			if (product.collection) {
 				const collectionTags = getCollectionInvalidationTags(
 					product.collection.slug
 				);
-				updateTags(collectionTags);
+				collectionTags.forEach(tag => updateTag(tag));
 			}
 		}
 

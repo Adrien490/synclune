@@ -1,6 +1,6 @@
 "use server";
 
-import { cacheChangelogs } from "@/shared/lib/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import fs from "fs";
 import path from "path";
 
@@ -59,7 +59,8 @@ export interface ChangelogData {
  */
 export async function getChangelogs(): Promise<ChangelogData[]> {
 	"use cache";
-	cacheChangelogs(); // Cache 1 jour (changelog stable) + tags
+	cacheLife("changelog");
+	cacheTag("changelogs");
 	const contentDirectory = path.join(process.cwd(), CHANGELOG_CONFIG.CONTENT_PATH);
 
 	// Vérifier si le dossier existe

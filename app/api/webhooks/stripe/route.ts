@@ -1,4 +1,4 @@
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import {
@@ -290,7 +290,7 @@ async function handleCheckoutSessionCompleted(
 		// 7. Invalider le cache du panier pour mise à jour immédiate côté client
 		if (order?.userId) {
 			const tags = getCartInvalidationTags(order.userId, undefined);
-			updateTags(tags);
+			tags.forEach(tag => updateTag(tag));
 		}
 
 		// 8. Récupérer l'email du client depuis la session Stripe

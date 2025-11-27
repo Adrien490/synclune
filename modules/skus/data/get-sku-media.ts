@@ -1,5 +1,5 @@
 import { isAdmin } from "@/shared/lib/guards";
-import { cacheReference } from "@/shared/lib/cache";
+import { cacheLife } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_SKU_MEDIA_SELECT } from "../constants/sku-media.constants";
@@ -45,7 +45,7 @@ async function fetchSkuMedia(
 	params: GetSkuMediaParams
 ): Promise<GetSkuMediaReturn | null> {
 	"use cache";
-	cacheReference();
+	cacheLife("reference");
 
 	try {
 		const image = await prisma.skuMedia.findUnique({

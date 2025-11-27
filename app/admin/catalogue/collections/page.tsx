@@ -1,4 +1,3 @@
-import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
@@ -26,7 +25,13 @@ type CollectionFiltersSearchParams = {
 	filter_hasProducts?: string;
 };
 
-export type CollectionsSearchParams = DashboardBaseSearchParams & CollectionFiltersSearchParams;
+export type CollectionsSearchParams = {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: string;
+	sortBy?: string;
+	search?: string;
+} & CollectionFiltersSearchParams;
 
 export type ParsedCollectionFilters = {
 	hasProducts?: boolean;

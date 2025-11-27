@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -218,7 +218,7 @@ export async function mergeCarts(
 		// 6. Invalider les caches
 		const guestTags = getCartInvalidationTags(undefined, sessionId);
 		const userTags = getCartInvalidationTags(userId, undefined);
-		updateTags([...guestTags, ...userTags]);
+		[...guestTags, ...userTags].forEach(tag => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

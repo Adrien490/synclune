@@ -1,7 +1,7 @@
 "use server";
 
 import { getSession } from "@/shared/utils/get-session";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
@@ -135,7 +135,7 @@ export async function updateCartItem(
 
 		// 8. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
-		updateTags(tags);
+		tags.forEach(tag => updateTag(tag));
 
 		// 9. Success - Return ActionState format
 		return {

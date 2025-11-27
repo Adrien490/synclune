@@ -20,7 +20,6 @@ import { ProductTypesDataTableSkeleton } from "@/modules/product-types/component
 import { ProductTypesFilterBadges } from "@/modules/product-types/components/admin/product-types-filter-badges";
 import { ProductTypesFilterSheet } from "@/modules/product-types/components/admin/product-types-filter-sheet";
 import { DeleteProductTypeAlertDialog } from "@/modules/product-types/components/admin/delete-product-type-alert-dialog";
-import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 import { parseFilters } from "./_utils/params";
 
 export type ProductTypeFiltersSearchParams = {
@@ -28,10 +27,14 @@ export type ProductTypeFiltersSearchParams = {
 	filter_hasSize?: string;
 };
 
-export type ProductTypesSearchParams = DashboardBaseSearchParams &
-	ProductTypeFiltersSearchParams & {
-		sortOrder?: string;
-	};
+export type ProductTypesSearchParams = {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: string;
+	sortBy?: string;
+	search?: string;
+	sortOrder?: string;
+} & ProductTypeFiltersSearchParams;
 
 export type ParsedProductTypeFilters = {
 	isActive?: boolean;

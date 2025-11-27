@@ -1,6 +1,5 @@
 import { Stagger } from "@/shared/components/animations";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
-import { Button } from "@/shared/components/ui/button";
 import {
 	Empty,
 	EmptyContent,
@@ -38,17 +37,12 @@ export function OrdersList({ ordersPromise }: OrdersListProps) {
 				</EmptyHeader>
 				<EmptyContent>
 					<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-						<Button
-							asChild
-							variant="primary"
-							size="lg"
-						>
-							<Link href="/produits">✨ Découvrir la boutique</Link>
-						</Button>
-
-						<Button asChild variant="primary" size="lg">
-							<Link href="/collections">💎 Voir les collections</Link>
-						</Button>
+						<Link href="/produits" className="text-foreground hover:underline">
+							✨ Découvrir la boutique
+						</Link>
+						<Link href="/collections" className="text-foreground hover:underline">
+							💎 Voir les collections
+						</Link>
 					</div>
 				</EmptyContent>
 			</Empty>

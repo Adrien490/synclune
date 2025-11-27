@@ -5,8 +5,8 @@ import { isAdmin } from "@/shared/lib/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
-import { updateTag } from "@/shared/lib/cache";
+import { revalidatePath, updateTag } from "next/cache";
+
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";

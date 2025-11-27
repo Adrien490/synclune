@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { isAdmin } from "@/shared/lib/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -115,7 +115,7 @@ export async function updateCollection(
 		// Revalider les pages concernees et invalider le cache
 		revalidatePath("/admin/catalogue/collections");
 		revalidatePath(`/collections/${slug}`);
-		updateTags(getCollectionInvalidationTags(slug));
+		getCollectionInvalidationTags(slug).forEach(tag => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

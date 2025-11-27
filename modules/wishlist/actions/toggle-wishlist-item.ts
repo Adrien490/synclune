@@ -2,7 +2,7 @@
 
 import { getSession } from "@/shared/utils/get-session"
 import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache"
-import { updateTags } from "@/shared/lib/cache"
+import { updateTag } from "next/cache"
 import { prisma } from "@/shared/lib/prisma"
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit"
 import type { ActionState } from "@/shared/types/server-action"
@@ -173,7 +173,7 @@ export async function toggleWishlistItem(
 
 		// 7. Invalidation cache immédiate (read-your-own-writes)
 		const tags = getWishlistInvalidationTags(userId, undefined, transactionResult.wishlist.id)
-		updateTags(tags)
+		tags.forEach(tag => updateTag(tag))
 
 		// 9. Revalidation complète pour mise à jour du header (badge count)
 		revalidatePath('/', 'layout')

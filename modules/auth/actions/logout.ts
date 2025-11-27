@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/shared/lib/auth";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { getSessionInvalidationTags } from "@/modules/users/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
@@ -32,7 +32,7 @@ export async function logout() {
 		// Cela permet de nettoyer le cache pour les sessions orphelines
 		if (session?.user?.id) {
 			try {
-				updateTags(getSessionInvalidationTags(session.user.id));
+				getSessionInvalidationTags(session.user.id).forEach(tag => updateTag(tag));
 			} catch (cacheError) {
 				// Ignorer les erreurs de cache, on continue le logout
 			}

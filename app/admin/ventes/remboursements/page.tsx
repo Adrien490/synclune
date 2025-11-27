@@ -11,7 +11,6 @@ import { ApproveRefundAlertDialog } from "@/modules/refund/components/admin/appr
 import { ProcessRefundAlertDialog } from "@/modules/refund/components/admin/process-refund-alert-dialog";
 import { RejectRefundAlertDialog } from "@/modules/refund/components/admin/reject-refund-alert-dialog";
 import { CancelRefundAlertDialog } from "@/modules/refund/components/admin/cancel-refund-alert-dialog";
-import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 import { parseRefundParams, parseRefundFilters } from "./_utils/params";
 import type { Metadata } from "next";
 
@@ -22,8 +21,13 @@ export type RefundFiltersSearchParams = {
 	filter_createdBefore?: string;
 };
 
-export type RefundsSearchParams = DashboardBaseSearchParams &
-	RefundFiltersSearchParams;
+export type RefundsSearchParams = {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: string;
+	sortBy?: string;
+	search?: string;
+} & RefundFiltersSearchParams;
 
 export const metadata: Metadata = {
 	title: "Remboursements - Administration",

@@ -23,7 +23,6 @@ import {
 import { parseFilters } from "./_utils/params";
 import { Metadata } from "next";
 import type { Role } from "@/app/generated/prisma/client";
-import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 
 export type CustomerFiltersSearchParams = {
 	filter_role?: string;
@@ -36,8 +35,13 @@ export type CustomerFiltersSearchParams = {
 	[key: string]: string | string[] | undefined;
 };
 
-export type CustomersSearchParams = DashboardBaseSearchParams &
-	CustomerFiltersSearchParams;
+export type CustomersSearchParams = {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: string;
+	sortBy?: string;
+	search?: string;
+} & CustomerFiltersSearchParams;
 
 export type ParsedCustomerFilters = {
 	role?: Role;

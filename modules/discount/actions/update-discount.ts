@@ -2,7 +2,7 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { updateDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
@@ -94,9 +94,9 @@ export async function updateDiscount(
 
 		revalidatePath("/admin/marketing/codes-promo");
 		// Invalider le cache pour l'ancien et le nouveau code si different
-		updateTags(getDiscountInvalidationTags(id));
+		getDiscountInvalidationTags(id).forEach(tag => updateTag(tag));
 		if (data.code !== existing.code) {
-			updateTags(getDiscountInvalidationTags(data.code));
+			getDiscountInvalidationTags(data.code).forEach(tag => updateTag(tag));
 		}
 
 		return {

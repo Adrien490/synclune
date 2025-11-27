@@ -2,7 +2,7 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -54,7 +54,7 @@ export async function bulkToggleDiscountStatus(
 
 		revalidatePath("/admin/marketing/codes-promo");
 		// Invalider la liste des discounts
-		updateTags(getDiscountInvalidationTags());
+		getDiscountInvalidationTags().forEach(tag => updateTag(tag));
 
 		const message = isActive
 			? `${ids.length} code(s) promo activé(s)`

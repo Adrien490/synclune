@@ -61,9 +61,9 @@ export async function CustomerOrdersTable({
 					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
-					<Button asChild>
-						<Link href="/produits">Découvrir nos créations</Link>
-					</Button>
+					<Link href="/produits" className="text-foreground hover:underline">
+						Découvrir nos créations
+					</Link>
 				</EmptyContent>
 			</Empty>
 		);

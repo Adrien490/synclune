@@ -1,4 +1,3 @@
-import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
@@ -48,7 +47,13 @@ export type ProductFiltersSearchParams = {
 	filter_createdBefore?: string;
 };
 
-export type ProductsSearchParams = DashboardBaseSearchParams & ProductFiltersSearchParams;
+export type ProductsSearchParams = {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: string;
+	sortBy?: string;
+	search?: string;
+} & ProductFiltersSearchParams;
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

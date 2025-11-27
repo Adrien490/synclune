@@ -6,14 +6,18 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-data-table";
-import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 
 export type ProductVariantFiltersSearchParams = {
 	// Add any variant-specific filters here if needed in the future
 };
 
-export type ProductVariantsSearchParams = DashboardBaseSearchParams &
-	ProductVariantFiltersSearchParams;
+export type ProductVariantsSearchParams = {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: string;
+	sortBy?: string;
+	search?: string;
+} & ProductVariantFiltersSearchParams;
 
 type ProductVariantsPageProps = {
 	params: Promise<{ slug: string }>;

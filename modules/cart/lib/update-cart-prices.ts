@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
@@ -93,7 +93,7 @@ export async function updateCartPrices(
 
 		// 5. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
-		updateTags(tags);
+		tags.forEach(tag => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

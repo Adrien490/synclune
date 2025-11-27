@@ -1,7 +1,7 @@
 "use server";
 
 import { getSession } from "@/shared/utils/get-session";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
@@ -190,7 +190,7 @@ export async function addToCart(
 
 		// 7. Invalider immédiatement le cache du panier (read-your-own-writes)
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
-		updateTags(tags);
+		tags.forEach(tag => updateTag(tag));
 
 		// 8. Revalider le layout pour mettre à jour le CartBadge
 		revalidatePath('/', 'layout');

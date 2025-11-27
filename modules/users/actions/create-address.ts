@@ -2,7 +2,7 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -69,7 +69,7 @@ export async function createAddress(
 		});
 
 		// 6. Revalidation du cache avec tags
-		updateTags(getUserAddressesInvalidationTags(user.id));
+		getUserAddressesInvalidationTags(user.id).forEach(tag => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

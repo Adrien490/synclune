@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { isAdmin } from "@/shared/lib/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -63,7 +63,7 @@ export async function deleteCollection(
 		// Revalider les pages concernees et invalider le cache
 		revalidatePath("/admin/catalogue/collections");
 		revalidatePath("/collections");
-		updateTags(getCollectionInvalidationTags(existingCollection.slug));
+		getCollectionInvalidationTags(existingCollection.slug).forEach(tag => updateTag(tag));
 
 		// Message different selon si la collection avait des produits
 		const message =

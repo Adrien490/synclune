@@ -6,7 +6,7 @@ import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "@/modules/users/constants/cache";
 import {
 	getFinalShippingCost,
@@ -653,7 +653,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 					});
 
 					// Invalider le cache des adresses de l'utilisateur
-					updateTags(getUserAddressesInvalidationTags(userIdForAddress));
+					getUserAddressesInvalidationTags(userIdForAddress).forEach(tag => updateTag(tag));
 				}
 			} catch (addressError) {
 				// Ne pas bloquer le checkout si l'enregistrement de l'adresse échoue

@@ -3,7 +3,7 @@
 import { isAdmin } from "@/shared/lib/guards";
 import { detectMediaType } from "@/shared/utils/media-utils";
 import { prisma } from "@/shared/lib/prisma";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { createProductSkuSchema } from "../schemas/sku.schemas";
@@ -262,7 +262,7 @@ export async function createProductSku(
 				validatedData.productId,
 				product.slug
 			);
-			updateTags(tags);
+			tags.forEach(tag => updateTag(tag));
 		}
 
 		// 10. Success - Return ActionState format

@@ -2,7 +2,7 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { bulkDeleteDiscountsSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
@@ -70,7 +70,7 @@ export async function bulkDeleteDiscounts(
 		revalidatePath("/admin/marketing/codes-promo");
 		// Invalider le cache pour chaque discount supprimé
 		for (const discount of discounts.filter((d) => deletableIds.includes(d.id))) {
-			updateTags(getDiscountInvalidationTags(discount.code));
+			getDiscountInvalidationTags(discount.code).forEach(tag => updateTag(tag));
 		}
 
 		const message =

@@ -1,7 +1,7 @@
 "use server";
 
 import { getSession } from "@/shared/utils/get-session";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
@@ -90,7 +90,7 @@ export async function removeUnavailableItems(
 
 		// 5. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
-		updateTags(tags);
+		tags.forEach(tag => updateTag(tag));
 
 		// 6. Success - Return ActionState format
 		return {

@@ -2,7 +2,7 @@
 
 import { getSession } from "@/shared/utils/get-session";
 import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	checkRateLimit,
@@ -166,7 +166,7 @@ export async function addToWishlist(
 			undefined,
 			transactionResult.wishlist.id
 		);
-		updateTags(tags);
+		tags.forEach(tag => updateTag(tag));
 
 		// 8. Revalidation complète pour mise à jour du header (badge count)
 		revalidatePath("/", "layout");

@@ -1,4 +1,3 @@
-import type { PublicBaseSearchParams } from "@/shared/types/search-params";
 import type { ProductFiltersSearchParams } from "@/app/(boutique)/produits/page";
 import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
@@ -17,8 +16,14 @@ import { parseFilters } from "../_utils/params";
 /**
  * Collection page search params (base + filters, without collection filters)
  */
-export type CollectionSearchParams = PublicBaseSearchParams &
-	Omit<ProductFiltersSearchParams, "collectionId" | "collectionSlug">;
+export type CollectionSearchParams = {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: string;
+	sortBy?: string;
+	search?: string;
+	filter_sortBy?: string;
+} & Omit<ProductFiltersSearchParams, "collectionId" | "collectionSlug">;
 import { generateCollectionMetadata } from "./_utils/generate-metadata";
 import { generateCollectionStructuredData } from "./_utils/generate-structured-data";
 

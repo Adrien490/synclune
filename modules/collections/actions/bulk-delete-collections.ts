@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { isAdmin } from "@/shared/lib/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -78,7 +78,7 @@ export async function bulkDeleteCollections(
 		revalidatePath("/collections");
 		// Invalider le cache pour chaque collection supprimee
 		for (const collection of collectionsWithUsage) {
-			updateTags(getCollectionInvalidationTags(collection.slug));
+			getCollectionInvalidationTags(collection.slug).forEach(tag => updateTag(tag));
 		}
 
 		// Message avec info sur les produits

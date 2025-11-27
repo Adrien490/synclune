@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/constants/cache";
 import { isAdmin } from "@/shared/lib/guards";
 import { prisma } from "@/shared/lib/prisma";
@@ -165,14 +165,14 @@ export async function duplicateProduct(
 			duplicatedProduct.slug,
 			duplicatedProduct.id
 		);
-		updateTags(productTags);
+		productTags.forEach(tag => updateTag(tag));
 
 		// Si le produit appartient a une collection, invalider aussi la collection
 		if (sourceProduct.collection) {
 			const collectionTags = getCollectionInvalidationTags(
 				sourceProduct.collection.slug
 			);
-			updateTags(collectionTags);
+			collectionTags.forEach(tag => updateTag(tag));
 		}
 
 		// 8. Success

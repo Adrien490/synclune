@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTags } from "@/shared/lib/cache";
+import { updateTag } from "next/cache";
 import { isAdmin } from "@/shared/lib/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -95,7 +95,7 @@ export async function updateProductSkuStatus(
 			existingSku.productId,
 			existingSku.product?.slug
 		);
-		updateTags(tags);
+		tags.forEach(tag => updateTag(tag));
 
 		// 8. Success
 		return {

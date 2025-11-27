@@ -1,10 +1,10 @@
 "use server";
 
 import { isAdmin } from "@/shared/lib/guards";
-import { updateTag } from "@/shared/lib/cache";
+
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { deleteProductTypeSchema } from "../schemas/product-type.schemas";
