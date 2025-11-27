@@ -73,7 +73,7 @@ export const navigationData: NavigationData = {
 			label: "Catalogue",
 			items: [
 				{
-					title: "Bijoux",
+					title: "Produits",
 					url: "/admin/catalogue/produits",
 					icon: Package,
 				},
@@ -83,7 +83,7 @@ export const navigationData: NavigationData = {
 					icon: Layers,
 				},
 				{
-					title: "Types de bijoux",
+					title: "Types de produits",
 					url: "/admin/catalogue/types-de-produits",
 					icon: Tag,
 				},

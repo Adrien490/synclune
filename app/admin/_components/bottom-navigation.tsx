@@ -79,7 +79,7 @@ const moreItems: NavItem[] = [
 		icon: Layers,
 	},
 	{
-		label: "Types de bijoux",
+		label: "Types de produits",
 		shortLabel: "Types",
 		href: "/admin/catalogue/types-de-produits",
 		icon: Tag,
