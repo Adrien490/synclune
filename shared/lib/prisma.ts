@@ -3,12 +3,28 @@ import { PrismaNeon } from '@prisma/adapter-neon';
 import { neonConfig } from '@neondatabase/serverless';
 import ws from 'ws';
 
-// Configuration WebSocket pour Node.js (dev server)
+// Configuration WebSocket pour Node.js (Vercel serverless utilise Node.js 18/20)
 neonConfig.webSocketConstructor = ws;
+
+// Type declaration pour le singleton global
+declare global {
+  var prisma: PrismaClient | undefined;
+}
 
 const connectionString = process.env.DATABASE_URL!;
 
-const adapter = new PrismaNeon({ connectionString });
-const prisma = new PrismaClient({ adapter });
+function createPrismaClient(): PrismaClient {
+  const adapter = new PrismaNeon({ connectionString });
+  return new PrismaClient({ adapter });
+}
+
+// Pattern singleton pour environnements serverless
+// Évite l'épuisement du pool de connexions
+const prisma = globalThis.prisma ?? createPrismaClient();
+
+// Préserver l'instance en développement (hot reload)
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.prisma = prisma;
+}
 
 export { prisma };
