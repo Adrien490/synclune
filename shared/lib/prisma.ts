@@ -14,18 +14,7 @@ declare global {
 const connectionString = process.env.DATABASE_URL!;
 
 function createPrismaClient(): PrismaClient {
-  const adapter = new PrismaNeon(
-    { connectionString },
-    {
-      // Gestion des erreurs de connexion pour éviter les crashes
-      onPoolError: (err) => {
-        console.error('[Prisma Pool Error]', err.message);
-      },
-      onConnectionError: (err) => {
-        console.error('[Prisma Connection Error]', err.message);
-      },
-    }
-  );
+  const adapter = new PrismaNeon({ connectionString });
   return new PrismaClient({ adapter });
 }
 
