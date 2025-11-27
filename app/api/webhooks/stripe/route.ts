@@ -11,7 +11,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { PaymentStatus, Prisma, RefundStatus } from "@/app/generated/prisma/client";
 import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
-import { getShippingRateName } from "@/shared/lib/shipping/stripe-shipping-rates";
+import { getShippingRateName } from "@/modules/orders/constants/stripe-shipping-rates";
 
 // Note: With cacheComponents enabled, API routes are dynamic by default
 // No need for export const dynamic = "force-dynamic"

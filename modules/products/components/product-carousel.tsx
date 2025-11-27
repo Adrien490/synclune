@@ -2,7 +2,7 @@ import { getProducts } from "@/modules/products/data/get-products";
 import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
-} from "@/shared/lib/product/product-list-helpers";
+} from "@/modules/products/utils/product-list-helpers";
 import { ProductCarouselUI } from "./product-carousel-ui";
 
 /**

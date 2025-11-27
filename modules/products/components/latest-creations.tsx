@@ -8,7 +8,7 @@ import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
 	getStockInfoForList,
-} from "@/shared/lib/product/product-list-helpers";
+} from "@/modules/products/utils/product-list-helpers";
 import Link from "next/link";
 import { use } from "react";
 

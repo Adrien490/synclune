@@ -13,8 +13,9 @@ import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
 	getStockInfoForList,
-} from "@/shared/lib/product/product-list-helpers";
+} from "@/modules/products/utils/product-list-helpers";
 import { SearchX } from "lucide-react";
+import { use } from "react";
 
 interface ProductListProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -25,7 +26,7 @@ export async function ProductList({
 	productsPromise,
 	perPage,
 }: ProductListProps) {
-	const { products, pagination } = await productsPromise;
+	const { products, pagination } = use(productsPromise);
 
 	// Afficher le composant Empty si aucun produit
 	if (!products || products.length === 0) {

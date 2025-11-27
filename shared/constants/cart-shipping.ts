@@ -11,7 +11,7 @@ import {
 	ALLOWED_SHIPPING_COUNTRIES,
 	type ShippingRate,
 	type AllowedShippingCountry,
-} from "@/shared/lib/shipping/colissimo-rates";
+} from "@/modules/orders/constants/colissimo-rates";
 
 /**
  * @deprecated Utiliser SHIPPING_RATES.FR.amount de colissimo-rates à la place
@@ -248,5 +248,5 @@ export function isCountrySupported(countryCode: string): boolean {
 }
 
 // Ré-exporter les types et constantes de colissimo-rates pour faciliter les imports
-export { SHIPPING_RATES, ALLOWED_SHIPPING_COUNTRIES, type ShippingRate } from "@/shared/lib/shipping/colissimo-rates";
-export type { AllowedShippingCountry } from "@/shared/lib/shipping/colissimo-rates";
+export { SHIPPING_RATES, ALLOWED_SHIPPING_COUNTRIES, type ShippingRate } from "@/modules/orders/constants/colissimo-rates";
+export type { AllowedShippingCountry } from "@/modules/orders/constants/colissimo-rates";

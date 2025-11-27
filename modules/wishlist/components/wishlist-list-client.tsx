@@ -3,7 +3,7 @@
 import { Stagger } from "@/shared/components/animations"
 import { CursorPagination } from "@/shared/components/cursor-pagination"
 import type { GetWishlistReturn } from '@/modules/wishlist/data/get-wishlist'
-import { ClearWishlistButton } from '@/shared/lib/wishlist/components/clear-wishlist-button'
+import { ClearWishlistButton } from '@/modules/wishlist/components/clear-wishlist-button'
 import { WishlistProductCard } from './wishlist-product-card'
 
 interface WishlistListClientProps {

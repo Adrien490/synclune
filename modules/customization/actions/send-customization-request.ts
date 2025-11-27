@@ -1,6 +1,6 @@
 "use server";
 
-import { subscribeToNewsletterInternal } from "@/shared/lib/newsletter/subscribe-to-newsletter-internal";
+import { subscribeToNewsletterInternal } from "@/modules/newsletter/utils/subscribe-to-newsletter-internal";
 import { sendCustomizationRequestEmail } from "@/shared/lib/email";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { COMMUNICATION_LIMITS } from "@/shared/lib/rate-limit-config";

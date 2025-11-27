@@ -20,8 +20,8 @@ import { createCheckoutSessionSchema, type CreateCheckoutSessionData } from "@/m
 import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
 import { randomUUID } from "crypto";
 import { getInvoiceFooter } from "@/shared/lib/stripe";
-import { ALLOWED_SHIPPING_COUNTRIES } from "@/shared/lib/shipping/colissimo-rates";
-import { getStripeShippingOptions } from "@/shared/lib/shipping/stripe-shipping-rates";
+import { ALLOWED_SHIPPING_COUNTRIES } from "@/modules/orders/constants/colissimo-rates";
+import { getStripeShippingOptions } from "@/modules/orders/constants/stripe-shipping-rates";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discount/constants/discount.constants";
 import { checkDiscountEligibility } from "@/modules/discount/utils/check-discount-eligibility";
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discount/utils/calculate-discount-amount";
