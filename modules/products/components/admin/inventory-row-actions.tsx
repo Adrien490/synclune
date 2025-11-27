@@ -7,7 +7,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import type { SkuStock } from "@/modules/products/types/inventory.types";
+import type { SkuStock } from "@/modules/skus/types/inventory.types";
 import { History, MoreVertical, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 

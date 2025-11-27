@@ -8,6 +8,7 @@ export default defineConfig({
 		seed: "tsx prisma/seed.ts",
 	},
 	datasource: {
-		url: env("DATABASE_URL"),
+		// Utiliser connexion directe pour les migrations (PgBouncer incompatible avec certaines opérations)
+		url: env("POSTGRES_URL_NON_POOLING") || env("DATABASE_URL"),
 	},
 });

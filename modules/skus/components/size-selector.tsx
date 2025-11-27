@@ -4,64 +4,67 @@ import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
-import type { Color } from "@/modules/skus/types/sku-selector.types";
+import type { Size } from "@/modules/skus/types/sku-selector.types";
 
-interface ColorSelectorProps {
-	colors: Color[];
+interface SizeSelectorProps {
+	sizes: Size[];
 	product: GetProductReturn;
-	showMaterialLabel?: boolean;
+	productTypeSlug?: string | null;
+	shouldShow: boolean;
 }
 
 /**
- * Composant autonome de sélection de couleur
+ * Composant autonome de sélection de taille
  *
  * Responsabilités :
- * - Afficher les couleurs disponibles avec preview (hex)
+ * - Afficher les tailles disponibles
  * - Gérer sa propre sélection via URL (useSearchParams)
  * - Calculer la disponibilité des options
- * - Afficher les options indisponibles (grayed out)
+ * - Afficher les options indisponibles
+ * - Adapter le label selon le type de produit (bague, bracelet)
  * - Bouton de réinitialisation
+ * - Affichage en grid adaptatif (3-4 colonnes)
  */
-export function ColorSelector({
-	colors,
+export function SizeSelector({
+	sizes,
 	product,
-	showMaterialLabel = false,
-}: ColorSelectorProps) {
+	productTypeSlug,
+	shouldShow,
+}: SizeSelectorProps) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
 	// Lire l'état depuis l'URL (source de vérité)
-	const selectedColor = searchParams.get("color");
+	const selectedSize = searchParams.get("size");
+	const currentColor = searchParams.get("color");
 	const currentMaterial = searchParams.get("material");
-	const currentSize = searchParams.get("size");
 
-	// Calculer la disponibilité d'une couleur
-	const isColorAvailable = useCallback(
-		(colorId: string): boolean => {
+	// Calculer la disponibilité d'une taille
+	const isSizeAvailable = useCallback(
+		(size: string): boolean => {
 			const compatibleSkus = filterCompatibleSkus(product, {
-				colorSlug: colorId,
+				colorSlug: currentColor || undefined,
 				materialSlug: currentMaterial || undefined,
-				size: currentSize || undefined,
+				size: size,
 			});
 			return compatibleSkus.length > 0;
 		},
-		[product, currentMaterial, currentSize]
+		[product, currentColor, currentMaterial]
 	);
 
-	// Mettre à jour la couleur dans l'URL
-	const updateColor = useCallback(
-		(colorId: string | null) => {
+	// Mettre à jour la taille dans l'URL
+	const updateSize = useCallback(
+		(size: string | null) => {
 			startTransition(() => {
 				const params = new URLSearchParams(searchParams.toString());
-				if (colorId) {
-					params.set("color", colorId);
+				if (size) {
+					params.set("size", size);
 				} else {
-					params.delete("color");
+					params.delete("size");
 				}
 				router.replace(`${pathname}?${params.toString()}`, { scroll: false });
 			});
@@ -69,24 +72,31 @@ export function ColorSelector({
 		[searchParams, pathname, router]
 	);
 
-	if (colors.length === 0) return null;
+	if (!shouldShow || sizes.length === 0) return null;
+
+	// Label adapté au type de produit
+	const getSizeLabel = () => {
+		if (productTypeSlug === "RINGS") return "Taille (Diamètre)";
+		if (productTypeSlug === "BRACELETS") return "Taille (Tour de poignet)";
+		return "Taille";
+	};
 
 	return (
 		<fieldset
 			className="space-y-3"
 			role="radiogroup"
-			aria-label="Sélection de couleur"
+			aria-label="Sélection de taille"
 		>
 			<div className="flex items-center justify-between">
 				<legend className="text-sm/6 font-semibold tracking-tight antialiased">
-					{showMaterialLabel ? "Couleur / Matériau" : "Couleur"}
+					{getSizeLabel()}
 				</legend>
-				{selectedColor && (
+				{selectedSize && (
 					<Button
 						variant="ghost"
 						size="sm"
 						className="text-xs/5 tracking-normal antialiased text-muted-foreground"
-						onClick={() => updateColor(null)}
+						onClick={() => updateSize(null)}
 						disabled={isPending}
 						type="button"
 					>
@@ -94,22 +104,22 @@ export function ColorSelector({
 					</Button>
 				)}
 			</div>
-			<div className="flex flex-wrap gap-3">
-				{colors.map((color) => {
-					const isSelected = color.id === selectedColor;
-					const isAvailable = isColorAvailable(color.id);
+			<div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+				{sizes.map((sizeOption) => {
+					const isSelected = sizeOption.size === selectedSize;
+					const isAvailable = isSizeAvailable(sizeOption.size);
 
 					return (
 						<button
-							key={color.id}
+							key={sizeOption.size}
 							type="button"
 							role="radio"
 							aria-checked={isSelected}
-							aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
-							onClick={() => updateColor(color.id)}
+							aria-label={`Taille ${sizeOption.size}${!isAvailable ? " (indisponible)" : ""}`}
+							onClick={() => updateSize(sizeOption.size)}
 							disabled={!isAvailable || isPending}
 							className={cn(
-								"group relative flex items-center gap-2 p-3 rounded-lg border-2 transition-all",
+								"p-2 text-center rounded-lg border transition-all",
 								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
 								isSelected
 									? "border-primary bg-primary/5"
@@ -118,25 +128,9 @@ export function ColorSelector({
 								isPending && "opacity-60"
 							)}
 						>
-							{color.hex && (
-								<div
-									className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
-									style={{ backgroundColor: color.hex }}
-								/>
-							)}
-							<div className="text-left">
-								<span className="text-sm/6 tracking-normal antialiased font-medium">
-									{color.name}
-								</span>
-								{!isAvailable && (
-									<p className="text-xs/5 tracking-normal antialiased text-muted-foreground">
-										Indisponible
-									</p>
-								)}
-							</div>
-							{isSelected && (
-								<Check className="w-4 h-4 text-primary ml-auto" />
-							)}
+							<span className="text-sm/6 tracking-normal antialiased font-medium">
+								{sizeOption.size}
+							</span>
 						</button>
 					);
 				})}

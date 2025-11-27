@@ -1,6 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { z } from "zod";
-import { productSkuFiltersSchema } from "../schemas/product-sku-filters-schema";
+import { productSkuFiltersSchema } from "@/modules/skus/schemas/sku-filters-schema";
 
 /**
  * Construit les conditions de filtrage pour la liste des SKUs de produits

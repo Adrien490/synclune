@@ -1,11 +1,11 @@
 import { Button } from "@/shared/components/ui/button";
-import { getProductSkus } from "@/modules/products/data/get-product-skus";
-import { parseProductSkuParams } from "@/modules/products/utils/parse-product-sku-params";
+import { getProductSkus } from "@/modules/skus/data/get-skus";
+import { parseProductSkuParams } from "@/modules/skus/utils/parse-sku-params";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ProductVariantsDataTable } from "@/modules/products/components/admin/variants/product-variants-data-table";
+import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-data-table";
 import type { ProductVariantsSearchParams } from "./_types/search-params";
 
 type ProductVariantsPageProps = {

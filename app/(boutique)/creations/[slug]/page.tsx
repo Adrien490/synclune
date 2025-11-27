@@ -18,12 +18,10 @@ import { ProductCharacteristics } from "@/modules/products/components/product-ch
 import { ProductGallery } from "@/modules/products/components/product-gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
 import { ProductPrice } from "@/modules/products/components/product-price-card";
-import { VariantSelector } from "@/modules/products/components/variant-selector";
+import { VariantSelector } from "@/modules/skus/components/sku-selector";
 
-import {
-	RelatedProducts,
-	RelatedProductsSkeleton,
-} from "@/modules/products/components/related-products";
+import { RelatedProducts } from "@/modules/products/components/related-products";
+import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
 import { generateProductMetadata } from "@/modules/products/utils/seo/generate-metadata";
 import { generateStructuredData } from "@/modules/products/utils/seo/generate-structured-data";
 

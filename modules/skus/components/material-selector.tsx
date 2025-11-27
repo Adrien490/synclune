@@ -4,64 +4,63 @@ import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import { Check } from "lucide-react";
+import { AlertCircle, Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
-import type { Color } from "@/modules/skus/types/sku-selector.types";
+import type { Material } from "@/modules/skus/types/sku-selector.types";
 
-interface ColorSelectorProps {
-	colors: Color[];
+interface MaterialSelectorProps {
+	materials: Material[];
 	product: GetProductReturn;
-	showMaterialLabel?: boolean;
 }
 
 /**
- * Composant autonome de sélection de couleur
+ * Composant autonome de sélection de matériau
  *
  * Responsabilités :
- * - Afficher les couleurs disponibles avec preview (hex)
+ * - Afficher les matériaux disponibles
  * - Gérer sa propre sélection via URL (useSearchParams)
  * - Calculer la disponibilité des options
- * - Afficher les options indisponibles (grayed out)
+ * - Afficher les options indisponibles
  * - Bouton de réinitialisation
+ * - Affichage en grid 2 colonnes
  */
-export function ColorSelector({
-	colors,
+export function MaterialSelector({
+	materials,
 	product,
-	showMaterialLabel = false,
-}: ColorSelectorProps) {
+}: MaterialSelectorProps) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
 	// Lire l'état depuis l'URL (source de vérité)
-	const selectedColor = searchParams.get("color");
-	const currentMaterial = searchParams.get("material");
+	const selectedMaterial = searchParams.get("material");
+	const currentColor = searchParams.get("color");
 	const currentSize = searchParams.get("size");
 
-	// Calculer la disponibilité d'une couleur
-	const isColorAvailable = useCallback(
-		(colorId: string): boolean => {
+	// Calculer la disponibilité d'un matériau
+	const isMaterialAvailable = useCallback(
+		(materialSlug: string): boolean => {
 			const compatibleSkus = filterCompatibleSkus(product, {
-				colorSlug: colorId,
-				materialSlug: currentMaterial || undefined,
+				colorSlug: currentColor || undefined,
+				materialSlug: materialSlug,
 				size: currentSize || undefined,
 			});
 			return compatibleSkus.length > 0;
 		},
-		[product, currentMaterial, currentSize]
+		[product, currentColor, currentSize]
 	);
 
-	// Mettre à jour la couleur dans l'URL
-	const updateColor = useCallback(
-		(colorId: string | null) => {
+	// Mettre à jour le matériau dans l'URL
+	const updateMaterial = useCallback(
+		(materialSlug: string | null) => {
 			startTransition(() => {
 				const params = new URLSearchParams(searchParams.toString());
-				if (colorId) {
-					params.set("color", colorId);
+				if (materialSlug) {
+					params.set("material", materialSlug);
 				} else {
-					params.delete("color");
+					params.delete("material");
 				}
 				router.replace(`${pathname}?${params.toString()}`, { scroll: false });
 			});
@@ -69,24 +68,25 @@ export function ColorSelector({
 		[searchParams, pathname, router]
 	);
 
-	if (colors.length === 0) return null;
+	// Ne pas afficher si un seul matériau ou aucun
+	if (materials.length <= 1) return null;
 
 	return (
 		<fieldset
 			className="space-y-3"
 			role="radiogroup"
-			aria-label="Sélection de couleur"
+			aria-label="Sélection de matériau"
 		>
 			<div className="flex items-center justify-between">
 				<legend className="text-sm/6 font-semibold tracking-tight antialiased">
-					{showMaterialLabel ? "Couleur / Matériau" : "Couleur"}
+					Matériau
 				</legend>
-				{selectedColor && (
+				{selectedMaterial && (
 					<Button
 						variant="ghost"
 						size="sm"
 						className="text-xs/5 tracking-normal antialiased text-muted-foreground"
-						onClick={() => updateColor(null)}
+						onClick={() => updateMaterial(null)}
 						disabled={isPending}
 						type="button"
 					>
@@ -94,22 +94,22 @@ export function ColorSelector({
 					</Button>
 				)}
 			</div>
-			<div className="flex flex-wrap gap-3">
-				{colors.map((color) => {
-					const isSelected = color.id === selectedColor;
-					const isAvailable = isColorAvailable(color.id);
+			<div className="grid grid-cols-2 gap-2">
+				{materials.map((material) => {
+					const isSelected = material.name === selectedMaterial;
+					const isAvailable = isMaterialAvailable(material.name);
 
 					return (
 						<button
-							key={color.id}
+							key={material.name}
 							type="button"
 							role="radio"
 							aria-checked={isSelected}
-							aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
-							onClick={() => updateColor(color.id)}
+							aria-label={`${material.name}${!isAvailable ? " (indisponible)" : ""}`}
+							onClick={() => updateMaterial(material.name)}
 							disabled={!isAvailable || isPending}
 							className={cn(
-								"group relative flex items-center gap-2 p-3 rounded-lg border-2 transition-all",
+								"flex items-center justify-between p-3 rounded-lg border text-left transition-all",
 								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
 								isSelected
 									? "border-primary bg-primary/5"
@@ -118,24 +118,12 @@ export function ColorSelector({
 								isPending && "opacity-60"
 							)}
 						>
-							{color.hex && (
-								<div
-									className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
-									style={{ backgroundColor: color.hex }}
-								/>
-							)}
-							<div className="text-left">
-								<span className="text-sm/6 tracking-normal antialiased font-medium">
-									{color.name}
-								</span>
-								{!isAvailable && (
-									<p className="text-xs/5 tracking-normal antialiased text-muted-foreground">
-										Indisponible
-									</p>
-								)}
-							</div>
-							{isSelected && (
-								<Check className="w-4 h-4 text-primary ml-auto" />
+							<span className="text-sm/6 tracking-normal antialiased font-medium">
+								{material.name}
+							</span>
+							{isSelected && <Check className="w-4 h-4 text-primary" />}
+							{!isAvailable && (
+								<AlertCircle className="w-4 h-4 text-muted-foreground" />
 							)}
 						</button>
 					);

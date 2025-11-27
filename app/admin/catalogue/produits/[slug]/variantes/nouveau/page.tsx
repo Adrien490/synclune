@@ -1,7 +1,7 @@
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { prisma } from "@/shared/lib/prisma";
 import { notFound } from "next/navigation";
-import { CreateProductVariantForm } from "@/modules/products/components/admin/variants/create-product-variant-form";
+import { CreateProductVariantForm } from "@/modules/skus/components/admin/create-sku-form";
 
 type NewProductVariantPageParams = Promise<{ slug: string }>;
 

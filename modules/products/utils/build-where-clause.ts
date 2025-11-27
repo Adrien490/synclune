@@ -1,6 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { z } from "zod";
-import { getProductSkusSchema } from "../schemas";
+import { getProductSkusSchema } from "@/modules/skus/schemas";
 import { buildFilterConditions } from "./build-filter-conditions";
 
 /**

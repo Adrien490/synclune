@@ -7,7 +7,8 @@ const globalForPrisma = global as unknown as {
 
 if (!globalForPrisma.prisma) {
 	const adapter = new PrismaPg({
-		connectionString: process.env.DATABASE_URL,
+		// Utiliser POSTGRES_PRISMA_URL (poolée) en priorité pour Vercel serverless
+		connectionString: process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL,
 	});
 	globalForPrisma.prisma = new PrismaClient({ adapter });
 }

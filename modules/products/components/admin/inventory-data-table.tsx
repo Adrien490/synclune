@@ -16,7 +16,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
-import type { GetSkuStocksReturn } from "@/modules/products/data/get-sku-stocks";
+import type { GetSkuStocksReturn } from "@/modules/skus/data/get-sku-stocks";
 import { cn } from "@/shared/utils/cn";
 import { Boxes } from "lucide-react";
 import { ViewTransition } from "react";

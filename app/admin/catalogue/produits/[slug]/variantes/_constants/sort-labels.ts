@@ -1,7 +1,7 @@
 import {
 	GET_PRODUCT_SKUS_SORT_FIELDS,
 	SORT_LABELS as DOMAIN_SORT_LABELS,
-} from "@/modules/products/constants/product-skus-constants";
+} from "@/modules/skus/constants/skus-constants";
 
 /**
  * Available sort fields for product variants

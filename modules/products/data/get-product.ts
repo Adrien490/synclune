@@ -18,10 +18,10 @@ export type {
 
 // Utility functions re-exported for convenience
 // WARNING: These cause issues when imported in Client Components due to "use cache" above
-// Client Components should import directly from ./services/extract-variant-info etc.
-export { extractVariantInfo } from "../services/extract-variant-info";
-export { findSkuByVariants } from "../services/find-sku-by-variants";
-export { filterCompatibleSkus } from "../services/filter-compatible-skus";
+// Client Components should import directly from @/modules/skus/services/*
+export { extractVariantInfo } from "@/modules/skus/services/extract-sku-info";
+export { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
+export { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 
 // ============================================================================
 // MAIN FUNCTIONS
