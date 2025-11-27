@@ -1,0 +1,127 @@
+import { Logo } from "@/shared/components/logo";
+import { ParticleSystem } from "@/shared/components/animations/particle-system";
+import { Button } from "@/shared/components/ui/button";
+import { crimsonPro } from "@/shared/styles/fonts";
+import { cn } from "@/shared/utils/cn";
+import { AlertCircle, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Erreur d'authentification",
+	description: "Une erreur est survenue lors de l'authentification",
+};
+
+const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
+	unable_to_create_user: {
+		title: "Impossible de créer ton compte",
+		description:
+			"Une erreur est survenue lors de la création de ton compte. Réessaye ou inscris-toi avec une autre méthode.",
+	},
+	user_already_exists: {
+		title: "Compte existant",
+		description:
+			"Un compte avec cette adresse email existe déjà. Connecte-toi ou utilise une autre adresse email.",
+	},
+	invalid_credentials: {
+		title: "Identifiants invalides",
+		description:
+			"L'adresse email ou le mot de passe est incorrect. Réessaye.",
+	},
+	email_not_verified: {
+		title: "Email non vérifié",
+		description:
+			"Vérifie ton adresse email avant de te connecter. Un email de vérification a été envoyé à ton adresse.",
+	},
+	default: {
+		title: "Erreur d'authentification",
+		description:
+			"Une erreur inattendue est survenue. Réessaye ultérieurement.",
+	},
+};
+
+interface ErrorPageProps {
+	searchParams: Promise<{ error?: string }>;
+}
+
+export default async function ErrorPage({ searchParams }: ErrorPageProps) {
+	const params = await searchParams;
+	const errorType = params.error || "default";
+	const errorInfo =
+		ERROR_MESSAGES[errorType] || ERROR_MESSAGES.default;
+
+	return (
+		<div className="min-h-screen relative overflow-hidden bg-background">
+			{/* Particules en arrière-plan */}
+			<ParticleSystem variant="minimal" className="absolute inset-0 z-0" />
+
+			{/* Lien retour */}
+			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
+				<Link
+					href="/"
+					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group"
+				>
+					<ArrowLeft
+						size={16}
+						className="transition-transform duration-200 group-hover:-translate-x-1"
+						aria-hidden="true"
+					/>
+					<span className="font-medium">Retour au site</span>
+				</Link>
+			</div>
+
+			{/* Logo en haut à droite */}
+			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+				<Logo size={40} priority href="/" />
+			</div>
+
+			{/* Contenu principal */}
+			<div className="relative z-10 min-h-screen flex justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
+				<div className="w-full max-w-md space-y-8 my-auto">
+					{/* Header avec icône d'erreur */}
+					<div className="text-center space-y-7">
+						<div className="flex justify-center">
+							<div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+								<AlertCircle
+									className="w-8 h-8 text-destructive"
+									aria-hidden="true"
+								/>
+							</div>
+						</div>
+						<div className="space-y-3">
+							<h1
+								className={cn(
+									"text-3xl font-semibold text-foreground",
+									crimsonPro.className
+								)}
+							>
+								{errorInfo.title}
+							</h1>
+							<p className="text-muted-foreground text-base">
+								{errorInfo.description}
+							</p>
+						</div>
+					</div>
+
+					{/* Actions */}
+					<div className="space-y-4 pt-4">
+						<Button asChild size="lg" className="w-full">
+							<Link href="/connexion">Retour à la connexion</Link>
+						</Button>
+						<Button asChild variant="outline" size="lg" className="w-full">
+							<Link href="/inscription">Créer un compte</Link>
+						</Button>
+						<div className="text-center pt-2">
+							<Link
+								href="/"
+								className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+							>
+								Ou revenir à l'accueil
+							</Link>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}

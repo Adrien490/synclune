@@ -1,0 +1,295 @@
+"use server";
+
+import { updateTags } from "@/shared/lib/cache";
+import { getCollectionInvalidationTags } from "@/modules/collections/constants/cache";
+import { isAdmin } from "@/shared/lib/guards";
+import { detectMediaType } from "@/shared/utils/media-utils";
+import { prisma } from "@/shared/lib/prisma";
+import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus } from "@/shared/types/server-action";
+import { generateSlug } from "@/shared/utils/generate-slug";
+import { createProductSchema } from "../schemas/product.schemas";
+import { getProductInvalidationTags } from "../constants/cache";
+
+/**
+ * Server Action pour creer un produit
+ * Compatible avec useActionState de React 19
+ */
+export async function createProduct(
+	_: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
+	try {
+		// 1. Verification des droits admin
+		const admin = await isAdmin();
+		if (!admin) {
+			return {
+				status: ActionStatus.UNAUTHORIZED,
+				message: "Acces non autorise. Droits administrateur requis.",
+			};
+		}
+
+		// 2. Extraction des donnees du FormData
+		// Helper pour parser JSON de maniere safe
+		const parseJSON = <T>(value: FormDataEntryValue | null, fallback: T): T => {
+			if (value && typeof value === "string") {
+				try {
+					return JSON.parse(value);
+				} catch {
+					return fallback;
+				}
+			}
+			return fallback;
+		};
+
+		// Extraire les donnees (approche simple comme collection)
+		const rawData = {
+			title: formData.get("title"),
+			description: formData.get("description"),
+			typeId: formData.get("typeId") || "",
+			collectionId: formData.get("collectionId") || "",
+			status: formData.get("status") || "PUBLIC",
+			initialSku: {
+				sku: formData.get("initialSku.sku"),
+				priceInclTaxEuros: formData.get("initialSku.priceInclTaxEuros"),
+				compareAtPriceEuros: formData.get("initialSku.compareAtPriceEuros"),
+				inventory: formData.get("initialSku.inventory"),
+				// Si le champ n'existe pas dans le FormData, utiliser true par defaut
+				// Car z.coerce.boolean(null) = false, ce qui n'est pas le comportement voulu
+				isActive: formData.get("initialSku.isActive") ?? true,
+				isDefault: formData.get("initialSku.isDefault") ?? true,
+				colorId: formData.get("initialSku.colorId"),
+				material: formData.get("initialSku.material"),
+				size: formData.get("initialSku.size"),
+				primaryImage: parseJSON(formData.get("initialSku.primaryImage"), undefined),
+				galleryMedia: parseJSON(formData.get("initialSku.galleryMedia"), []),
+			},
+		};
+
+		// 3. Validation avec Zod
+		const result = createProductSchema.safeParse(rawData);
+		if (!result.success) {
+			const firstError = result.error.issues[0];
+			const errorPath = firstError.path.join(".");
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: `${errorPath}: ${firstError.message}`,
+			};
+		}
+
+		const validatedData = result.data;
+
+		// 3.5. Validation metier : Produit PUBLIC doit avoir un SKU actif
+		if (
+			validatedData.status === "PUBLIC" &&
+			!validatedData.initialSku.isActive
+		) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message:
+					"Impossible de creer un produit PUBLIC avec un SKU inactif. Veuillez activer le SKU ou creer le produit en DRAFT.",
+			};
+		}
+
+		// 4. Normalize empty strings to null for optional foreign keys
+		const normalizedTypeId = validatedData.typeId?.trim() || null;
+		const normalizedCollectionId = validatedData.collectionId?.trim() || null;
+		const normalizedColorId = validatedData.initialSku.colorId?.trim() || null;
+		const normalizedMaterial =
+			validatedData.initialSku.material?.trim() || null;
+		const normalizedSize = validatedData.initialSku.size?.trim() || null;
+		const normalizedDescription = validatedData.description?.trim() || null;
+
+		// 5. Generate unique slug
+		const finalSlug = await generateSlug(
+			prisma,
+			"product",
+			validatedData.title
+		);
+
+		// 6. Convert priceInclTaxEuros to cents for database
+		const priceInclTaxCents = Math.round(
+			validatedData.initialSku.priceInclTaxEuros * 100
+		);
+		const compareAtPriceCents = validatedData.initialSku.compareAtPriceEuros
+			? Math.round(validatedData.initialSku.compareAtPriceEuros * 100)
+			: null;
+
+		// 7. Combine primary image and gallery images
+		const allImages: Array<{
+			url: string;
+			altText?: string;
+			mediaType?: "IMAGE" | "VIDEO";
+			isPrimary: boolean;
+		}> = [];
+		if (validatedData.initialSku.primaryImage) {
+			// VALIDATION: Le media principal DOIT etre une IMAGE (jamais une VIDEO)
+			const primaryMediaType = validatedData.initialSku.primaryImage.mediaType || detectMediaType(validatedData.initialSku.primaryImage.url);
+			if (primaryMediaType === "VIDEO") {
+				return {
+					status: ActionStatus.VALIDATION_ERROR,
+					message: "Le media principal ne peut pas etre une video. Veuillez selectionner une image comme media principal.",
+				};
+			}
+			allImages.push({
+				...validatedData.initialSku.primaryImage,
+				mediaType: "IMAGE", // Force IMAGE type for primary media
+				isPrimary: true,
+			});
+		}
+		if (validatedData.initialSku.galleryMedia) {
+			allImages.push(
+				...validatedData.initialSku.galleryMedia.map((media) => ({
+					...media,
+					isPrimary: false,
+				}))
+			);
+		}
+
+		// 8. Create product in transaction
+		const product = await prisma.$transaction(async (tx) => {
+			// Validate references exist within the transaction
+			if (normalizedTypeId) {
+				const productType = await tx.productType.findUnique({
+					where: { id: normalizedTypeId },
+					select: { id: true, isActive: true },
+				});
+				if (!productType || !productType.isActive) {
+					throw new Error(
+						"Le type de produit specifie n'existe pas ou n'est pas actif."
+					);
+				}
+			}
+
+			if (normalizedCollectionId) {
+				const collection = await tx.collection.findUnique({
+					where: { id: normalizedCollectionId },
+					select: { id: true },
+				});
+				if (!collection) {
+					throw new Error("La collection specifiee n'existe pas.");
+				}
+			}
+
+			if (normalizedColorId) {
+				const color = await tx.color.findUnique({
+					where: { id: normalizedColorId },
+					select: { id: true },
+				});
+				if (!color) {
+					throw new Error("La couleur specifiee n'existe pas.");
+				}
+			}
+
+			// Create product
+			const productData = {
+				title: validatedData.title,
+				slug: finalSlug,
+				description: normalizedDescription,
+				status: validatedData.status,
+				typeId: normalizedTypeId,
+				collectionId: normalizedCollectionId,
+			};
+
+			const createdProduct = await tx.product.create({
+				data: productData,
+				select: {
+					id: true,
+					title: true,
+					slug: true,
+					description: true,
+					status: true,
+					typeId: true,
+					collectionId: true,
+					createdAt: true,
+					updatedAt: true,
+				},
+			});
+
+			// Generate SKU if not provided
+			const skuValue = `SKU-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+
+			const skuData = {
+				productId: createdProduct.id,
+				sku: skuValue,
+				priceInclTax: priceInclTaxCents,
+				inventory: validatedData.initialSku.inventory,
+				isActive: validatedData.initialSku.isActive,
+				isDefault: validatedData.initialSku.isDefault,
+				colorId: normalizedColorId,
+				material: normalizedMaterial,
+				size: normalizedSize,
+			};
+
+			// Create initial SKU
+			const createdSku = await tx.productSku.create({
+				data: {
+					...skuData,
+					compareAtPrice: compareAtPriceCents,
+				},
+			});
+
+			// Create SKU images
+			if (allImages.length > 0) {
+				for (let i = 0; i < allImages.length; i++) {
+					const image = allImages[i];
+					const imageData = {
+						skuId: createdSku.id,
+						url: image.url,
+						altText: image.altText || null,
+						mediaType: image.mediaType || detectMediaType(image.url),
+						isPrimary: image.isPrimary,
+					};
+
+					await tx.skuMedia.create({
+						data: imageData,
+					});
+				}
+			}
+
+			return createdProduct;
+		});
+
+		// 9. Invalidate cache tags
+		// Invalider le cache produit
+		const productTags = getProductInvalidationTags(product.slug, product.id);
+		updateTags(productTags);
+
+		// Si le produit appartient a une collection, invalider aussi la collection
+		if (product.collectionId) {
+			const collection = await prisma.collection.findUnique({
+				where: { id: product.collectionId },
+				select: { slug: true },
+			});
+			if (collection) {
+				const collectionTags = getCollectionInvalidationTags(collection.slug);
+				updateTags(collectionTags);
+			}
+		}
+
+		// 10. Success - Return ActionState format
+		return {
+			status: ActionStatus.SUCCESS,
+			message: `Produit "${product.title}" cree avec succes${
+				product.status === "PUBLIC" ? " et publie" : ""
+			}.`,
+			data: product,
+		};
+	} catch (e) {
+		// Error handling
+		if (e instanceof Error && e.message.includes("Unique constraint")) {
+			return {
+				status: ActionStatus.ERROR,
+				message: "Une erreur technique est survenue (slug duplique). Veuillez reessayer.",
+			};
+		}
+
+		return {
+			status: ActionStatus.ERROR,
+			message:
+				e instanceof Error
+					? e.message
+					: "Une erreur est survenue lors de la creation du produit. Veuillez reessayer.",
+		};
+	}
+}

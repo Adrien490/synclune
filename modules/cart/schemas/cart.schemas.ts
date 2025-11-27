@@ -1,0 +1,33 @@
+import { z } from "zod";
+
+// ============================================================================
+// CART ITEM SCHEMAS
+// ============================================================================
+
+export const addToCartSchema = z.object({
+	skuId: z.string().min(1),
+	quantity: z.number().int().min(1).max(99).default(1),
+});
+
+// ============================================================================
+// CART ACTION SCHEMAS
+// ============================================================================
+
+/**
+ * Schéma de validation pour la mise à jour d'un item
+ */
+export const updateCartItemSchema = z.object({
+	cartItemId: z.string().min(1, "ID de l'article requis"),
+	quantity: z
+		.number()
+		.int()
+		.min(1, "Quantité minimale: 1")
+		.max(99, "Quantité maximale: 99"),
+});
+
+/**
+ * Schéma de validation pour la suppression d'un item
+ */
+export const removeFromCartSchema = z.object({
+	cartItemId: z.string().min(1, "ID de l'article requis"),
+});

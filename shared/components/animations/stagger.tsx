@@ -1,0 +1,109 @@
+"use client";
+
+import { motion, useReducedMotion } from "framer-motion";
+import { Children, type ReactNode } from "react";
+import { MOTION_CONFIG } from "./motion.config";
+
+export interface StaggerProps {
+	children: ReactNode;
+	className?: string;
+	stagger?: number;
+	delay?: number;
+	y?: number;
+	/** Enable scroll-triggered animation with whileInView */
+	inView?: boolean;
+	/** Only animate once when entering viewport (default: true) */
+	once?: boolean;
+	/** Portion of element that must be visible to trigger (default: 0.2) */
+	amount?: number | "some" | "all";
+	role?: string;
+	/** Data attributes (e.g., data-carousel-scroll) */
+	[key: `data-${string}`]: string | undefined;
+}
+
+/**
+ * Animation stagger ultra-simple avec support prefers-reduced-motion
+ * Chaque enfant reçoit un delay croissant
+ * Supporte whileInView pour animations au scroll
+ *
+ * Note: willChange retiré pour meilleure performance GPU.
+ * Framer Motion optimise déjà les animations avec transform et opacity.
+ */
+export function Stagger({
+	children,
+	className,
+	stagger = MOTION_CONFIG.stagger.normal,
+	delay = 0,
+	y = 20,
+	inView = false,
+	once = true,
+	amount = 0.2,
+	role,
+	...rest
+}: StaggerProps) {
+	const shouldReduceMotion = useReducedMotion();
+	const childrenArray = Children.toArray(children);
+
+	// Variants pour gérer les animations avec ou sans inView
+	const containerVariants = {
+		hidden: {},
+		visible: {
+			transition: {
+				staggerChildren: shouldReduceMotion ? 0 : stagger,
+				delayChildren: shouldReduceMotion ? 0 : delay,
+			},
+		},
+	};
+
+	const itemVariants = {
+		hidden: {
+			opacity: shouldReduceMotion ? 1 : 0,
+			y: shouldReduceMotion ? 0 : y,
+		},
+		visible: {
+			opacity: 1,
+			y: 0,
+			transition: {
+				duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.normal,
+				ease: MOTION_CONFIG.easing.easeOut,
+			},
+		},
+	};
+
+	if (inView) {
+		return (
+			<motion.div
+				className={className}
+				role={role}
+				initial="hidden"
+				whileInView="visible"
+				viewport={{ once, amount }}
+				variants={containerVariants}
+				{...rest}
+			>
+				{childrenArray.map((child, index) => (
+					<motion.div key={index} variants={itemVariants}>
+						{child}
+					</motion.div>
+				))}
+			</motion.div>
+		);
+	}
+
+	return (
+		<motion.div
+			className={className}
+			role={role}
+			initial="hidden"
+			animate="visible"
+			variants={containerVariants}
+			{...rest}
+		>
+			{childrenArray.map((child, index) => (
+				<motion.div key={index} variants={itemVariants}>
+					{child}
+				</motion.div>
+			))}
+		</motion.div>
+	);
+}

@@ -1,0 +1,697 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id               String    @id @default(cuid())
+  role             Role      @default(USER)
+  name             String?   @db.VarChar(100)
+  email            String    @unique @db.VarChar(255)
+  emailVerified    Boolean   @default(false)
+  image            String?
+  stripeCustomerId String?   @unique
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+  deletedAt        DateTime?
+
+  sessions       Session[]
+  accounts       Account[]
+  orders         Order[]
+  cart           Cart?
+  addresses      Address[]
+  wishlist       Wishlist?
+  discountUsages DiscountUsage[]
+
+  // Indexes optimisés
+  @@index([deletedAt])
+  @@index([role, id])
+  @@index([emailVerified, id])
+  @@index([createdAt, id])
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@index([userId, expiresAt])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([providerId, accountId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([identifier])
+}
+
+model Address {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName  String
+  lastName   String
+  address1   String
+  address2   String?
+  postalCode String  @db.VarChar(10)
+  city       String
+  country    String  @default("FR") @db.VarChar(2)
+  phone      String
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // Note: Contrainte unique partielle ajoutée via migration SQL brute
+  // pour garantir qu'un seul enregistrement a isDefault: true par userId
+
+  @@index([userId])
+  @@index([userId, isDefault])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model ProductType {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  label       String  @db.VarChar(50)
+  description String? @db.Text
+  isActive    Boolean @default(true)
+  isSystem    Boolean @default(false) // Types système non modifiables/supprimables
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([label, id])
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLIC
+  ARCHIVED
+}
+
+model Color {
+  id        String       @id @default(cuid())
+  slug      String       @unique
+  name      String       @unique @db.VarChar(50)
+  hex       String       @db.VarChar(7)
+  skus      ProductSku[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name, id])
+}
+
+model Collection {
+  id          String    @id @default(cuid())
+  name        String    @db.VarChar(100)
+  slug        String    @unique
+  description String?   @db.Text
+  imageUrl    String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+
+  @@index([name, id])
+  @@index([createdAt, id])
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String        @db.VarChar(200)
+  description String?       @db.Text
+  status      ProductStatus @default(PUBLIC)
+
+  type   ProductType? @relation(fields: [typeId], references: [id], onDelete: SetNull)
+  typeId String?
+
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  collectionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  skus       ProductSku[]
+  orderItems OrderItem[]
+
+  @@index([status])
+  @@index([status, id])
+  @@index([title, id])
+  @@index([typeId])
+  @@index([collectionId])
+  @@index([createdAt, id])
+}
+
+model ProductSku {
+  id        String  @id @default(cuid())
+  sku       String  @unique @db.VarChar(100)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  colorId  String?
+  color    Color?  @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  material String? @db.VarChar(100)
+
+  size String? @db.VarChar(50)
+
+  // ℹ️ Prix en régime micro-entreprise (exonéré de TVA - art. 293 B du CGI)
+  // Le nom "priceInclTax" est conservé pour compatibilité, mais il s'agit du prix FINAL sans TVA
+  // Exemple : 30€ = 3000 centimes (prix que paie le client, sans TVA ajoutée)
+  priceInclTax   Int
+  compareAtPrice Int? // Prix avant réduction (optionnel, pour afficher prix barré)
+  inventory      Int     @default(0)
+  isActive       Boolean @default(true)
+
+  isDefault Boolean @default(false)
+
+  images        SkuMedia[]
+  orderItems    OrderItem[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 🔒 CONTRAINTE : Garantir unicité des combinaisons produit/couleur/taille/matériau
+  // Évite les doublons de variantes (ex: 2 SKUs "Bague Rouge Taille 52 Argent")
+  @@unique([productId, colorId, size, material])
+  // Indexes optimisés pour requêtes fréquentes
+  @@index([productId, isActive])
+  @@index([isActive, inventory, updatedAt(sort: Desc)])
+  @@index([isActive, priceInclTax])
+  @@index([productId, isDefault])
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model SkuMedia {
+  id    String     @id @default(cuid())
+  skuId String
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
+
+  url       String
+  altText   String?
+  mediaType MediaType @default(IMAGE)
+  isPrimary Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([skuId, isPrimary])
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum InvoiceStatus {
+  PENDING // Commande payée, facture en attente de génération Stripe
+  GENERATED // Facture PDF générée automatiquement par Stripe
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  PAYPAL
+  OTHER
+}
+
+enum FulfillmentStatus {
+  UNFULFILLED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  RETURNED
+}
+
+// ============================================================================
+// REMBOURSEMENTS
+// ============================================================================
+
+enum RefundReason {
+  CUSTOMER_REQUEST // Droit de rétractation (14 jours)
+  DEFECTIVE // Bijou cassé / abîmé
+  WRONG_ITEM // Erreur de préparation de commande
+  LOST_IN_TRANSIT // Colis perdu par le transporteur
+  FRAUD // Fraude avérée
+  OTHER // Autre
+}
+
+enum RefundStatus {
+  PENDING // Demande reçue / En attente de validation
+  APPROVED // Validé, en attente de traitement Stripe
+  COMPLETED // Remboursé effectivement (Stripe a confirmé)
+  REJECTED // Refusé (ex: retour hors délai)
+  FAILED // Échec technique Stripe
+}
+
+model Order {
+  id          String  @id @default(cuid())
+  orderNumber String  @unique @db.VarChar(50)
+  userId      String?
+  user        User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // === IDENTIFIANTS STRIPE (CRITIQUES) ===
+  stripeCheckoutSessionId String? @unique // cs_xxx
+  stripePaymentIntentId   String? @unique // pi_xxx
+  stripeChargeId          String? // ch_xxx
+  stripeCustomerId        String? // cus_xxx
+  stripeInvoiceId         String? @unique // in_xxx
+  // ❌ stripeTaxCalculationId retiré - Inutile en micro-entreprise (pas de Stripe Tax)
+
+  // === INFORMATIONS CLIENT ===
+  customerEmail String @db.VarChar(255)
+  customerName  String @db.VarChar(200)
+  customerPhone String?
+
+  // === ADRESSE DE LIVRAISON (DÉNORMALISÉE - SNAPSHOT) ===
+  shippingFirstName  String
+  shippingLastName   String
+  shippingAddress1   String
+  shippingAddress2   String?
+  shippingPostalCode String  @db.VarChar(10)
+  shippingCity       String
+  shippingCountry    String  @default("FR") @db.VarChar(2)
+  shippingPhone      String
+
+  // === ADRESSE DE FACTURATION (DÉNORMALISÉE - SNAPSHOT) ===
+  billingFirstName  String
+  billingLastName   String
+  billingAddress1   String
+  billingAddress2   String?
+  billingPostalCode String  @db.VarChar(10)
+  billingCity       String
+  billingCountry    String  @default("FR") @db.VarChar(2)
+  billingPhone      String?
+
+  // === MONTANTS (EN CENTIMES) ===
+  subtotal       Int
+  discountAmount Int    @default(0) // Montant total des réductions appliquées
+  taxAmount      Int    @default(0) // ❌ Micro-entreprise : Toujours 0 (exonérée de TVA - art. 293 B du CGI)
+  shippingCost   Int    @default(0) // Frais de livraison
+  total          Int // Formule: MAX(0, subtotal - discountAmount + shippingCost + taxAmount)
+  currency       String @default("eur") @db.VarChar(3)
+
+  // === DÉTAILS FISCAUX (INUTILISÉS EN MICRO-ENTREPRISE) ===
+  // ⚠️ Ces champs sont conservés pour compatibilité et future migration en régime réel TVA
+  // En micro-entreprise (CA < 91 900€/an), ces champs restent null ou 0
+  // Si passage en régime réel TVA (> seuil), réactiver Stripe Tax et ces champs seront remplis
+  taxRate         Decimal? @db.Decimal(5, 4) // ❌ Micro-entreprise : null (pas de TVA)
+  taxJurisdiction String? // ❌ Micro-entreprise : null
+  taxType         String? // ❌ Micro-entreprise : null
+  taxDetails      Json? // ❌ Micro-entreprise : null (pas de Stripe Tax)
+
+  // === LIVRAISON ===
+  shippingMethod    String? // "Colissimo France"
+  shippingCarrier   String? @db.VarChar(50)
+  shippingRateId    String? // ID du tarif Stripe utilisé
+  trackingNumber    String? @db.VarChar(50)
+  trackingUrl       String? // URL de suivi
+  estimatedDelivery DateTime? // Date estimée de livraison
+  actualDelivery    DateTime? // Date réelle de livraison
+  shippedAt         DateTime? // Date d'expédition
+
+  // === STATUTS ===
+  status            OrderStatus       @default(PENDING)
+  paymentStatus     PaymentStatus     @default(PENDING)
+  fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
+
+  // === PAIEMENT ===
+  paymentMethod PaymentMethod @default(CARD)
+  paidAt        DateTime?
+
+  // === FACTURATION (STRIPE INVOICING) ===
+  // ✅ Stripe génère automatiquement les factures PDF avec invoice_creation
+  invoiceNumber      String?       @unique // Numéro Stripe (ex: INV-XXXX)
+  invoiceGeneratedAt DateTime? // Date de génération automatique par Stripe
+  invoiceStatus      InvoiceStatus @default(PENDING)
+
+  // === RELATIONS ===
+  items          OrderItem[]
+  discountUsages DiscountUsage[]
+  refunds        Refund[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // === INDEXES OPTIMISÉS ===
+  @@index([userId])
+  // Statuts (index composites uniquement, supprimé les index simples redondants)
+  @@index([status, id])
+  @@index([paymentStatus, id])
+  @@index([fulfillmentStatus, id])
+  // Montants
+  @@index([total, id])
+  // Chronologique
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, paymentStatus, createdAt(sort: Desc)]) // Covering index "Mes commandes"
+  @@index([status, createdAt])
+  @@index([createdAt, id])
+  @@index([paymentStatus, createdAt])
+  @@index([customerEmail]) // Recherche support client
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  skuId String
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
+
+  // Snapshot des données produit au moment de la commande
+  productTitle       String
+  productDescription String? @db.Text
+  productImageUrl    String?
+
+  skuColor    String?
+  skuMaterial String?
+  skuSize     String?
+  skuImageUrl String?
+
+  // Prix et quantité
+  price    Int // ℹ️ Prix unitaire FINAL sans TVA en centimes (micro-entreprise exonérée)
+  quantity Int
+
+  // Détails fiscaux (inutilisés en micro-entreprise)
+  // ⚠️ Conservés pour compatibilité et future migration en régime réel TVA
+  taxAmount Int      @default(0) // ❌ Micro-entreprise : Toujours 0 (pas de TVA)
+  taxRate   Decimal? @db.Decimal(5, 4) // ❌ Micro-entreprise : null (pas de TVA)
+
+  // Relations
+  refundItems RefundItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([skuId])
+  @@index([productId, orderId]) // Analytics top produits
+}
+
+model Cart {
+  id String @id @default(cuid())
+
+  userId    String? @unique
+  user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String? @unique
+
+  expiresAt DateTime?
+
+  items CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
+model CartItem {
+  id     String @id @default(cuid())
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  skuId String
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
+
+  quantity Int @default(1)
+
+  // Prix snapshot au moment de l'ajout au panier (en centimes)
+  // Protège contre les changements de prix entre l'ajout et le paiement
+  // Exemple: 29,99€ = 2999 centimes
+  priceAtAdd Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, skuId])
+  @@index([cartId])
+  @@index([skuId])
+}
+
+model NewsletterSubscriber {
+  id               String  @id @default(cuid())
+  email            String  @unique
+  isActive         Boolean @default(false) // ⚠️ Changement : false par défaut (activation après confirmation email)
+  unsubscribeToken String  @unique @default(cuid())
+
+  // Double opt-in : Confirmation email obligatoire
+  emailVerified      Boolean   @default(false) // true après clic sur lien confirmation
+  confirmationToken  String?   @unique // Token unique pour confirmer l'inscription
+  confirmationSentAt DateTime? // Date d'envoi de l'email de confirmation
+  confirmedAt        DateTime? // Date de confirmation par l'utilisateur
+
+  // Champs de traçabilité RGPD
+  ipAddress        String?
+  userAgent        String?
+  consentSource    String?  @default("newsletter_form")
+  consentTimestamp DateTime @default(now())
+
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, createdAt])
+  @@index([emailVerified, isActive])
+}
+
+model Wishlist {
+  id String @id @default(cuid())
+
+  // Support utilisateur connecté uniquement
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items WishlistItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+
+  skuId String
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
+
+  // Prix snapshot au moment de l'ajout (pour notifier si baisse de prix)
+  priceAtAdd Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Un SKU ne peut être ajouté qu'une seule fois par wishlist
+  @@unique([wishlistId, skuId])
+  @@index([wishlistId])
+  @@index([skuId])
+}
+
+// ============================================
+// CODES PROMO & RÉDUCTIONS
+// ============================================
+
+enum DiscountType {
+  PERCENTAGE    // Ex: -20%
+  FIXED_AMOUNT  // Ex: -10€
+}
+
+model Discount {
+  id   String @id @default(cuid())
+  code String @unique @db.VarChar(30) // Ex: "BIENVENUE10", "ETE2025"
+
+  // Type et valeur de la réduction
+  type  DiscountType
+  value Int // En pourcentage (20 = 20%) ou centimes (1000 = 10€)
+
+  // Conditions d'utilisation
+  minOrderAmount Int? // Montant minimum de commande en centimes (ex: 5000 = 50€)
+  maxUsageCount  Int? // Nombre max d'utilisations total (null = illimité)
+  maxUsagePerUser Int? // Nombre max d'utilisations par utilisateur (null = illimité)
+
+  // Période de validité
+  startsAt DateTime  @default(now())
+  endsAt   DateTime?
+
+  // Statistiques
+  usageCount Int @default(0) // Compteur d'utilisations
+
+  // État
+  isActive  Boolean   @default(true)
+
+  // Restrictions optionnelles (à implémenter si besoin)
+  // appliesToCollectionId String?
+  // appliesToProductId    String?
+  // firstOrderOnly        Boolean @default(false)
+
+  // Relations
+  usages DiscountUsage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive, startsAt, endsAt])
+  @@index([createdAt, id])
+}
+
+model DiscountUsage {
+  id         String   @id @default(cuid())
+  discountId String
+  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+
+  // Utilisateur (optionnel pour guest checkout)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Commande associée (Restrict pour protection comptable)
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  // Montant de la réduction appliquée (snapshot)
+  amountApplied Int // En centimes
+
+  createdAt DateTime @default(now())
+
+  @@index([discountId])
+  @@index([userId])
+  @@index([orderId])
+  @@index([discountId, userId]) // Pour vérifier usage par utilisateur
+}
+
+// ============================================================================
+// REMBOURSEMENTS
+// ============================================================================
+
+model Refund {
+  id String @id @default(cuid())
+
+  // Relation avec la commande (Restrict pour protection comptable)
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  // Identifiant Stripe du remboursement (pour lier la compta)
+  stripeRefundId String? @unique // re_xxxx
+
+  // Montants
+  amount   Int    // Montant TOTAL remboursé en centimes
+  currency String @default("eur") @db.VarChar(3)
+
+  // Raison et Statut
+  reason RefundReason
+  status RefundStatus @default(PENDING)
+
+  // Note interne (ex: "Le fermoir était cassé, photos reçues par mail")
+  note String? @db.Text
+
+  // Détails des articles remboursés
+  items RefundItem[]
+
+  // Audit
+  createdBy   String? // ID de l'admin qui a créé le remboursement
+  processedAt DateTime? // Date de traitement effectif (Stripe)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@index([status, createdAt])
+}
+
+model RefundItem {
+  id String @id @default(cuid())
+
+  refundId String
+  refund   Refund @relation(fields: [refundId], references: [id], onDelete: Cascade)
+
+  // Lien précis vers la ligne de commande d'origine
+  // Cela permet de savoir quel produit exact (et à quel prix d'origine) est remboursé
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+
+  quantity Int // Nombre d'unités remboursées (ex: 1 sur 2 achetées)
+
+  amount Int // Montant remboursé pour CET article (en centimes)
+  // Permet de rembourser moins que le prix d'achat si décote appliquée
+
+  // Gestion de stock
+  restock Boolean @default(true) // Faut-il remettre le produit en stock (inventory +1) ?
+  // false si le produit est abîmé/cassé
+
+  createdAt DateTime @default(now())
+
+  @@index([refundId])
+  @@index([orderItemId])
+}

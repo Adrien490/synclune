@@ -1,0 +1,170 @@
+"use client";
+
+import { Badge } from "@/shared/components/ui/badge";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
+import { formatEuro } from "@/shared/utils/format-euro";
+import { AlertCircle, CheckCircle, AlertTriangle, Sparkles } from "lucide-react";
+import { useMemo } from "react";
+
+interface ProductPriceProps {
+	selectedSku: ProductSku | null;
+	product: GetProductReturn;
+}
+
+/**
+ * ProductPrice - Affiche le prix du SKU sélectionné avec sa disponibilité
+ *
+ * Responsabilités :
+ * - Afficher le prix TTC formaté en euros avec "À partir de" si plusieurs prix
+ * - Afficher le prix barré si promotion (compareAtPrice)
+ * - Afficher le badge de réduction
+ * - Afficher le badge de disponibilité (En stock / Stock limité / Rupture)
+ */
+export function ProductPrice({ selectedSku, product }: ProductPriceProps) {
+	// Calculer le prix minimum et vérifier si plusieurs prix différents
+	const priceInfo = useMemo(() => {
+		if (!product || !product.skus || product.skus.length === 0) {
+			return { minPrice: 0, hasMultiplePrices: false };
+		}
+
+		const activePrices = product.skus
+			.filter(sku => sku.isActive)
+			.map(sku => sku.priceInclTax);
+
+		if (activePrices.length === 0) {
+			return { minPrice: 0, hasMultiplePrices: false };
+		}
+
+		const minPrice = Math.min(...activePrices);
+		const maxPrice = Math.max(...activePrices);
+		const hasMultiplePrices = minPrice !== maxPrice;
+
+		return { minPrice, hasMultiplePrices };
+	}, [product]);
+
+	// Déterminer si on affiche "À partir de"
+	const showFromPrefix = priceInfo.hasMultiplePrices && !selectedSku;
+
+	// Calculer la réduction si promotion
+	const hasDiscount = selectedSku?.compareAtPrice &&
+		selectedSku.compareAtPrice > selectedSku.priceInclTax;
+
+	const discountPercent = hasDiscount
+		? Math.round(((selectedSku.compareAtPrice! - selectedSku.priceInclTax) / selectedSku.compareAtPrice!) * 100)
+		: 0;
+
+	// Calculer le stock status (système simplifié : en stock ou rupture)
+	const inventory = selectedSku?.inventory || 0;
+	const isAvailable = selectedSku ? inventory > 0 && selectedSku.isActive : false;
+	const stockStatus =
+		!selectedSku?.isActive || inventory === 0
+			? "out_of_stock"
+			: "in_stock";
+
+	if (!selectedSku) {
+		return (
+			<Card role="region" aria-labelledby="product-price-title">
+				<CardContent className="pt-6 space-y-4">
+					<div className="flex items-baseline gap-3 flex-wrap">
+						{showFromPrefix && (
+							<span className="text-sm text-muted-foreground" aria-label="Prix minimum">À partir de</span>
+						)}
+						<p
+							id="product-price-title"
+							className="h3 text-muted-foreground"
+							aria-label={priceInfo.minPrice > 0 ? `Prix à partir de ${formatEuro(priceInfo.minPrice)} TTC` : "Prix non disponible"}
+						>
+							{priceInfo.minPrice > 0 ? formatEuro(priceInfo.minPrice) : "—"}
+						</p>
+						<span className="text-sm text-muted-foreground" aria-hidden="true">TTC</span>
+					</div>
+					{priceInfo.hasMultiplePrices && (
+						<p className="text-xs text-muted-foreground" role="status">
+							Sélectionnez vos options pour voir le prix exact
+						</p>
+					)}
+				</CardContent>
+			</Card>
+		);
+	}
+
+	return (
+		<Card role="region" aria-labelledby="product-price-selected">
+			<CardContent className="pt-6 space-y-3">
+				<div className="flex items-baseline gap-3 flex-wrap">
+					{/* Prix principal */}
+					<p
+						id="product-price-selected"
+						className="h3 text-foreground"
+						aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)} TTC${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ''}`}
+					>
+						{formatEuro(selectedSku.priceInclTax)}
+					</p>
+					<span className="text-sm text-muted-foreground" aria-hidden="true">TTC</span>
+
+					{/* Prix barré si promotion */}
+					{hasDiscount && (
+						<span className="text-lg text-muted-foreground line-through" aria-label={`Prix initial ${formatEuro(selectedSku.compareAtPrice!)}`}>
+							{formatEuro(selectedSku.compareAtPrice!)}
+						</span>
+					)}
+
+					{/* Badge de réduction */}
+					{hasDiscount && (
+						<span
+							className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-accent text-accent-foreground border border-accent/30"
+							role="status"
+							aria-label={`Réduction de ${discountPercent} pourcent`}
+						>
+							-{discountPercent}%
+						</span>
+					)}
+				</div>
+
+				{/* Badge de disponibilité (système simplifié) */}
+				<div className="flex items-center gap-2">
+					{isAvailable ? (
+						<Badge
+							variant="secondary"
+							className="text-xs/5 tracking-normal antialiased gap-1.5"
+							role="status"
+							aria-label="Produit en stock"
+						>
+							<CheckCircle className="w-3 h-3" aria-hidden="true" />
+							En stock
+						</Badge>
+					) : (
+						<Badge
+							variant="destructive"
+							className="text-xs/5 tracking-normal antialiased gap-1.5"
+							role="status"
+							aria-label="Produit en rupture de stock"
+						>
+							<AlertCircle className="w-3 h-3" aria-hidden="true" />
+							Rupture de stock
+						</Badge>
+					)}
+				</div>
+
+				{/* Message d'économie */}
+				{hasDiscount && (
+					<p className="text-sm text-accent-foreground font-medium" role="status">
+						Économisez {formatEuro(selectedSku.compareAtPrice! - selectedSku.priceInclTax)}
+					</p>
+				)}
+
+				{/* Message d'information uniquement pour rupture de stock */}
+				{stockStatus === "out_of_stock" && (
+					<div
+						className="text-xs/5 tracking-normal antialiased text-destructive p-2 bg-destructive/10 rounded border border-destructive/20 flex items-start gap-2"
+						role="alert"
+					>
+						<Sparkles className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+						<p>Cette petite merveille sera bientôt disponible ! Contactez-moi pour découvrir les délais de fabrication.</p>
+					</div>
+				)}
+			</CardContent>
+		</Card>
+	);
+}

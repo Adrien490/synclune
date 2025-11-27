@@ -1,0 +1,57 @@
+import { PageHeader } from "@/shared/components/page-header";
+import { prisma } from "@/shared/lib/prisma";
+import { CreateProductForm } from "@/modules/products/components/admin/create-product-form";
+import { headers } from "next/headers";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Nouveau bijou - Administration",
+	description: "Créer un nouveau bijou",
+};
+
+export default async function NewProductPage() {
+	// Access headers to mark this as dynamic (required for Cache Components with Prisma)
+	await headers();
+
+	// Récupérer les types de produits, collections et couleurs
+	const [productTypes, collections, colors] = await Promise.all([
+		prisma.productType.findMany({
+			where: { isActive: true },
+			select: {
+				id: true,
+				label: true,
+				slug: true,
+				isActive: true,
+			},
+			orderBy: { label: "asc" },
+		}),
+		prisma.collection.findMany({
+			select: {
+				id: true,
+				name: true,
+				slug: true,
+			},
+			orderBy: { name: "asc" },
+		}),
+		prisma.color.findMany({
+			select: {
+				id: true,
+				name: true,
+				hex: true,
+			},
+			orderBy: { name: "asc" },
+		}),
+	]);
+
+	return (
+		<>
+			<PageHeader title="Nouveau bijou" variant="compact" />
+
+			<CreateProductForm
+				productTypes={productTypes}
+				collections={collections}
+				colors={colors}
+			/>
+		</>
+	);
+}

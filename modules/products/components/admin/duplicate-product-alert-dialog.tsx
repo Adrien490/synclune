@@ -1,0 +1,98 @@
+"use client";
+
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
+import { useDuplicateProduct } from "@/modules/products/hooks/admin/use-duplicate-product";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+export const DUPLICATE_PRODUCT_DIALOG_ID = "duplicate-product";
+
+interface DuplicateProductData {
+	productId: string;
+	productTitle: string;
+	[key: string]: unknown;
+}
+
+export function DuplicateProductAlertDialog() {
+	const duplicateDialog = useAlertDialog<DuplicateProductData>(
+		DUPLICATE_PRODUCT_DIALOG_ID
+	);
+	const router = useRouter();
+
+	const { action, isPending } = useDuplicateProduct({
+		onSuccess: () => {
+			duplicateDialog.close();
+			// Rediriger vers la page de modification du bijou dupliqué
+			// Le slug est retourné dans le data de la response
+		},
+	});
+
+	const handleOpenChange = (open: boolean) => {
+		if (!open && !isPending) {
+			duplicateDialog.close();
+		}
+	};
+
+	return (
+		<AlertDialog open={duplicateDialog.isOpen} onOpenChange={handleOpenChange}>
+			<AlertDialogContent>
+				<form action={action}>
+					<input
+						type="hidden"
+						name="productId"
+						value={duplicateDialog.data?.productId ?? ""}
+					/>
+
+					<AlertDialogHeader>
+						<AlertDialogTitle>Dupliquer ce bijou</AlertDialogTitle>
+						<AlertDialogDescription asChild>
+							<div>
+								<p>
+									Es-tu sûr de vouloir dupliquer le bijou{" "}
+									<strong>&quot;{duplicateDialog.data?.productTitle}&quot;</strong> ?
+								</p>
+								<p className="mt-4">Une copie sera créée avec :</p>
+								<ul className="list-disc list-inside mt-2 space-y-1">
+									<li>Le titre préfixé par &quot;Copie de&quot;</li>
+									<li>Tous les SKUs et leurs images</li>
+									<li>Le statut mis en &quot;Brouillon&quot;</li>
+								</ul>
+								<p className="text-muted-foreground text-xs mt-4">
+									Tu pourras ensuite modifier le bijou dupliqué selon tes besoins.
+								</p>
+							</div>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel type="button" disabled={isPending}>
+							Annuler
+						</AlertDialogCancel>
+						<AlertDialogAction
+							type="submit"
+							disabled={isPending}
+						>
+							{isPending ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Duplication...
+								</>
+							) : (
+								"Dupliquer"
+							)}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</form>
+			</AlertDialogContent>
+		</AlertDialog>
+	);
+}

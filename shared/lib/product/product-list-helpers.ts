@@ -1,0 +1,285 @@
+import { GetProductsReturn } from "@/modules/products/data/get-products";
+import { FALLBACK_PRODUCT_IMAGE } from "@/shared/constants/product-fallback-image";
+
+/**
+ * Utilitaires pour les listes de produits avec types simplifiés
+ * Ces utilitaires travaillent avec les SKUs minimaux de get-products
+ */
+
+export type ProductFromList = GetProductsReturn["products"][0];
+export type SkuFromList = ProductFromList["skus"][0];
+
+export type StockStatus = "in_stock" | "out_of_stock"; // Système simplifié
+
+export type ProductStockInfo = {
+	status: StockStatus;
+	totalInventory: number;
+	availableSkus: number;
+	message: string;
+};
+
+/**
+ * Récupère le SKU principal pour les listes (logique de sélection intelligente)
+ */
+export function getPrimarySkuForList(
+	product: ProductFromList
+): SkuFromList | null {
+	// Logique de sélection intelligente
+	if (!product.skus || product.skus.length === 0) {
+		return null;
+	}
+
+	// 1. SKU avec isDefault = true
+	const defaultFlagSku = product.skus.find((sku) => sku.isActive && sku.isDefault);
+	if (defaultFlagSku) return defaultFlagSku;
+
+	// 2. SKU en stock, trié par priceInclTax ASC
+	const inStockSkus = product.skus
+		.filter((sku) => sku.isActive && sku.inventory > 0)
+		.sort((a, b) => a.priceInclTax - b.priceInclTax);
+
+	if (inStockSkus.length > 0) return inStockSkus[0];
+
+	// 3. Premier SKU actif
+	const activeSku = product.skus.find((sku) => sku.isActive);
+	return activeSku || product.skus[0];
+}
+
+/**
+ * Récupère le prix principal (priceInclTax pour affichage client)
+ */
+export function getPrimaryPriceForList(product: ProductFromList): {
+	price: number;
+} {
+	// SKU principal depuis la liste
+	const primarySku = getPrimarySkuForList(product);
+	if (primarySku) {
+		return {
+			price: primarySku.priceInclTax,
+		};
+	}
+
+	// Pas de SKU actif, retourner 0
+	return {
+		price: 0,
+	};
+}
+
+/**
+ * Récupère les informations de stock du produit
+ */
+export function getStockInfoForList(
+	product: ProductFromList
+): ProductStockInfo {
+	const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
+	const totalInventory = activeSkus.reduce((sum, sku) => sum + sku.inventory, 0);
+	const availableSkus = activeSkus.filter((sku) => sku.inventory > 0).length;
+
+	let status: StockStatus;
+	let message: string;
+
+	// Système simplifié : en stock ou rupture de stock
+	if (totalInventory === 0) {
+		status = "out_of_stock";
+		message = "Rupture de stock";
+	} else {
+		status = "in_stock";
+		message = "En stock";
+	}
+
+	return {
+		status,
+		totalInventory,
+		availableSkus,
+		message,
+	};
+}
+
+/**
+ * Récupère la couleur principale du SKU principal
+ */
+export function getPrimaryColorForList(product: ProductFromList): {
+	hex?: string;
+	name?: string;
+} {
+	const primarySku = getPrimarySkuForList(product);
+	if (!primarySku) return {};
+
+	const fallbackName = primarySku.material || undefined;
+
+	if (primarySku.color?.hex) {
+		return {
+			hex: primarySku.color.hex,
+			name: primarySku.color.name || fallbackName,
+		};
+	}
+
+	return fallbackName ? { name: fallbackName } : {};
+}
+
+/**
+ * Récupère l'image principale depuis le SKU principal ou SKUs
+ *
+ * IMPORTANT: Cette fonction retourne TOUJOURS une image (jamais null)
+ * - Priorité 1: Image principale du SKU par défaut
+ * - Priorité 2: Première image du SKU par défaut
+ * - Priorité 3: Image de n'importe quel SKU actif
+ * - Fallback final: Image SVG de placeholder élégante
+ *
+ * Les médias principaux sont UNIQUEMENT des images (jamais de vidéos)
+ */
+export function getPrimaryImageForList(product: ProductFromList): {
+	id: string;
+	url: string;
+	alt?: string;
+	mediaType: "IMAGE";
+} {
+	// Priorité 1: Image du SKU principal
+	const primarySku = getPrimarySkuForList(product);
+	if (primarySku?.images && primarySku.images.length > 0) {
+		// Chercher d'abord un média principal de type IMAGE (isPrimary garantit IMAGE grâce à la contrainte DB)
+		const primaryImage = primarySku.images.find((img) => img.isPrimary && img.mediaType === "IMAGE");
+		if (primaryImage) {
+			return {
+				id: primaryImage.id,
+				url: primaryImage.url,
+				mediaType: "IMAGE",
+				alt:
+					primaryImage.altText ||
+					`${product.title} - ${
+						primarySku.material ||
+						primarySku.color?.name ||
+						"Image principale"
+					}`,
+			};
+		}
+
+		// Fallback: première image disponible (pas vidéo)
+		const firstImage = primarySku.images.find((img) => img.mediaType === "IMAGE");
+		if (firstImage) {
+			return {
+				id: firstImage.id,
+				url: firstImage.url,
+				mediaType: "IMAGE",
+				alt:
+					firstImage.altText ||
+					`${product.title} - ${
+						primarySku.material ||
+						primarySku.color?.name ||
+						"Image principale"
+					}`,
+			};
+		}
+	}
+
+	// Priorité 2: Image de n'importe quel SKU actif de la liste (filtrer les vidéos)
+	if (product.skus) {
+		for (const sku of product.skus.filter((s) => s.isActive)) {
+			if (sku.images && sku.images.length > 0) {
+				const skuImage =
+					sku.images.find((img) => img.isPrimary && img.mediaType === "IMAGE") ||
+					sku.images.find((img) => img.mediaType === "IMAGE");
+
+				if (skuImage) {
+					return {
+						id: skuImage.id,
+						url: skuImage.url,
+						mediaType: "IMAGE",
+						alt:
+							skuImage.altText ||
+							`${product.title} - ${
+								sku.material || sku.color?.name || "Variante"
+							}`,
+					};
+				}
+			}
+		}
+	}
+
+	// Fallback final: Image SVG de placeholder
+	// Cette fonction ne retourne JAMAIS null pour éviter les checks null partout
+	return {
+		...FALLBACK_PRODUCT_IMAGE,
+		alt: `${product.title} - ${FALLBACK_PRODUCT_IMAGE.alt}`,
+	};
+}
+
+/**
+ * Vérifie la disponibilité du produit pour les données structurées
+ * Système simplifié : InStock ou OutOfStock uniquement
+ */
+export function getAvailabilityForList(product: ProductFromList): string {
+	const stockInfo = getStockInfoForList(product);
+	return stockInfo.status === "out_of_stock"
+		? "https://schema.org/OutOfStock"
+		: "https://schema.org/InStock";
+}
+
+/**
+ * Récupère les informations de prix min/max pour une plage (inclut defaultSku)
+ */
+export function getPriceRangeForList(product: ProductFromList): {
+	min: number;
+	max: number;
+	hasRange: boolean;
+} {
+	const prices: number[] = [];
+
+	// Ajouter les prix des SKUs actifs en stock
+	const activeSkus =
+		product.skus?.filter((sku) => sku.isActive && sku.inventory > 0) || [];
+
+	for (const sku of activeSkus) {
+		prices.push(sku.priceInclTax);
+	}
+
+	if (prices.length === 0) {
+		return {
+			min: 0,
+			max: 0,
+			hasRange: false,
+		};
+	}
+
+	const min = Math.min(...prices);
+	const max = Math.max(...prices);
+
+	return {
+		min,
+		max,
+		hasRange: min !== max,
+	};
+}
+
+/**
+ * Compte les variantes disponibles (inclut defaultSku)
+ */
+export function getVariantCountForList(product: ProductFromList): {
+	colors: number;
+	materials: number;
+	sizes: number;
+	total: number;
+} {
+	const uniqueColors = new Set<string>();
+	const uniqueMaterials = new Set<string>();
+	const uniqueSizes = new Set<string>();
+	let totalSkus = 0;
+
+	// Ajouter les SKUs actifs en stock
+	const activeSkus =
+		product.skus?.filter((sku) => sku.isActive && sku.inventory > 0) || [];
+
+	for (const sku of activeSkus) {
+		if (sku.color?.hex) uniqueColors.add(sku.color.hex);
+		if (sku.material) uniqueMaterials.add(sku.material);
+		if (sku.size) uniqueSizes.add(sku.size);
+		totalSkus++;
+	}
+
+	return {
+		colors: uniqueColors.size,
+		materials: uniqueMaterials.size,
+		sizes: uniqueSizes.size,
+		total: totalSkus,
+	};
+}

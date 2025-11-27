@@ -1,0 +1,86 @@
+import { Prisma } from "@/app/generated/prisma/client";
+
+// ============================================================================
+// SELECT DEFINITIONS
+// ============================================================================
+
+export const GET_CART_SELECT = {
+	id: true,
+	userId: true,
+	sessionId: true,
+	expiresAt: true,
+	createdAt: true,
+	updatedAt: true,
+	items: {
+		select: {
+			id: true,
+			quantity: true,
+			priceAtAdd: true,
+			createdAt: true,
+			updatedAt: true,
+			sku: {
+				select: {
+					id: true,
+					sku: true,
+					priceInclTax: true,
+					compareAtPrice: true,
+					inventory: true,
+					isActive: true,
+					product: {
+						select: {
+							id: true,
+							title: true,
+							slug: true,
+							status: true,
+						},
+					},
+					images: {
+						where: { isPrimary: true },
+						take: 1,
+						orderBy: { createdAt: "asc" as const },
+						select: {
+							id: true,
+							url: true,
+							altText: true,
+							mediaType: true,
+							isPrimary: true,
+						},
+					},
+					color: {
+						select: {
+							id: true,
+							name: true,
+							hex: true,
+						},
+					},
+					material: true,
+					size: true,
+				},
+			},
+		},
+		orderBy: { createdAt: "desc" as const },
+	},
+} as const satisfies Prisma.CartSelect;
+
+export const GET_CART_SUMMARY_SELECT = {
+	items: {
+		select: {
+			quantity: true,
+			sku: {
+				select: {
+					priceInclTax: true,
+				},
+			},
+		},
+	},
+} as const satisfies Prisma.CartSelect;
+
+// ============================================================================
+// CACHE SETTINGS
+// ============================================================================
+
+export const GET_CART_DEFAULT_CACHE = {
+	revalidate: 0,
+	stale: 0,
+	expire: 0,
+} as const;

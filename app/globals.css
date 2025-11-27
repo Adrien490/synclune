@@ -1,0 +1,396 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+* {
+	scroll-behavior: smooth;
+}
+
+@theme inline {
+	--font-sans: ui-sans-serif, system-ui, sans-serif;
+	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
+	--font-display: "Crimson Pro", serif;
+	--font-mono:
+		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
+		Courier New, monospace;
+
+	--blur-1: 1px;
+	--blur-2: 2px;
+	--blur-3: 3px;
+
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+
+	--radius: 0.5rem;
+	--radius-sm: 0.5rem;
+	--radius-md: 0.625rem;
+	--radius-lg: 1rem;
+	--radius-xl: 1.5rem;
+	--radius-full: 9999px;
+
+	--color-sidebar-ring: var(--sidebar-ring);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar: var(--sidebar);
+	--tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+	--tracking-tight: calc(var(--tracking-normal) - 0.025em);
+	--tracking-wide: calc(var(--tracking-normal) + 0.025em);
+	--tracking-wider: calc(var(--tracking-normal) + 0.05em);
+	--tracking-widest: calc(var(--tracking-normal) + 0.1em);
+	--tracking-normal: var(--tracking-normal);
+	--shadow-2xl: var(--shadow-2xl);
+	--shadow-xl: var(--shadow-xl);
+	--shadow-lg: var(--shadow-lg);
+	--shadow-md: var(--shadow-md);
+	--shadow: var(--shadow);
+	--shadow-sm: var(--shadow-sm);
+	--shadow-xs: var(--shadow-xs);
+	--shadow-2xs: var(--shadow-2xs);
+	--spacing: var(--spacing);
+	--letter-spacing: var(--letter-spacing);
+	--shadow-offset-y: var(--shadow-offset-y);
+	--shadow-offset-x: var(--shadow-offset-x);
+	--shadow-spread: var(--shadow-spread);
+	--shadow-blur: var(--shadow-blur);
+	--shadow-opacity: var(--shadow-opacity);
+	--color-shadow-color: var(--shadow-color);
+	--color-chart-5: var(--chart-5);
+	--color-chart-4: var(--chart-4);
+	--color-chart-3: var(--chart-3);
+	--color-chart-2: var(--chart-2);
+	--color-chart-1: var(--chart-1);
+	--shadow-color: var(--shadow-color);
+	--animate-gradient: gradient 8s linear infinite;
+  @keyframes gradient {
+  to {
+    background-position: var(--bg-size, 300%) 0;
+		}
+	}
+}
+
+:root {
+	/* ==========================================
+	   BASE COLORS (Neutres pour texte)
+	   ========================================== */
+	--background: oklch(0.99 0.005 270);
+	--foreground: oklch(0.13 0.01 270);
+
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.13 0.01 270);
+
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.13 0.01 270);
+
+	/* ==========================================
+	   INTERACTIVE (Rose foncé accessible)
+	   ========================================== */
+	--primary: oklch(0.8593 0.097 340.78); /* Rose foncé - WCAG AA */
+	--primary-foreground: oklch(0.1 0 0);
+
+	--secondary: oklch(0.9221 0.0871 86.29); /* Gris clair */
+	--secondary-foreground: oklch(0.13 0.01 270);
+
+	/* ==========================================
+	   ACCENT (Couleur logo - décoratif)
+	   ========================================== */
+	--accent: oklch(0.94 0.01 270);
+	--accent-foreground: oklch(0.13 0.01 270);
+
+	--muted: oklch(0.94 0.01 270);
+	--muted-foreground: oklch(0.55 0.01 270); /* Augmenté de 0.48 à 0.55 pour WCAG AAA (ratio 4.5:1+) */
+
+	--destructive: oklch(0.59 0.17 25);
+	--destructive-foreground: oklch(1 0 0);
+
+	--border: oklch(0.92 0.01 270);
+	--input: oklch(0.94 0.01 270);
+	--ring: oklch(0.8593 0.097 340.78);
+
+	/* ==========================================
+	   SIDEBAR (Personnalisée pour bijoux colorés)
+	   ========================================== */
+	--sidebar: oklch(0.995 0.005 340); /* Blanc crème avec touche rose */
+	--sidebar-foreground: oklch(0.13 0.01 270);
+	--sidebar-muted-foreground: oklch(0.45 0.01 270); /* Contraste WCAG AA pour labels */
+	--sidebar-primary: oklch(0.8593 0.097 340.78); /* Rose primaire */
+	--sidebar-primary-foreground: oklch(0.1 0 0);
+	--sidebar-accent: oklch(0.8593 0.097 340.78 / 0.08); /* Rose primaire très subtil */
+	--sidebar-accent-foreground: oklch(0.13 0.01 270);
+	--sidebar-border: oklch(0.8593 0.097 340.78 / 0.15); /* Bordure rose subtile */
+	--sidebar-ring: oklch(0.8593 0.097 340.78);
+	--chart-1: oklch(0.8593 0.097 340.78);
+	--chart-2: oklch(0.9221 0.0871 86.29);
+	--chart-3: oklch(0.5 0.1 200);
+	--chart-4: oklch(0.75 0.15 25); /* Corail lumineux - bijoux colorés */
+	--chart-5: oklch(0.7 0.1 300);
+	--radius: 0.5rem;
+	--font-sans: ui-sans-serif, system-ui, sans-serif;
+	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
+	--font-mono:
+		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
+		Courier New, monospace;
+	--shadow-color: 0 0 0;
+	--shadow-opacity: 0.1;
+	--shadow-blur: 0.5rem;
+	--shadow-spread: 0;
+	--shadow-offset-x: 0;
+	--shadow-offset-y: 0.125rem -0.0625rem;
+	--letter-spacing: 0em;
+	--spacing: 0.25rem;
+	--shadow-2xs: 0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.05);
+	--shadow-xs: 0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.05);
+	--shadow-sm:
+		0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.1),
+		0 1px 2px -1px hsl(0 0 0 / 0.1);
+	--shadow:
+		0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.1),
+		0 1px 2px -1px hsl(0 0 0 / 0.1);
+	--shadow-md:
+		0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.1),
+		0 2px 4px -1px hsl(0 0 0 / 0.1);
+	--shadow-lg:
+		0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.1),
+		0 4px 6px -1px hsl(0 0 0 / 0.1);
+	--shadow-xl:
+		0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.1),
+		0 8px 10px -1px hsl(0 0 0 / 0.1);
+	--shadow-2xl: 0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.25);
+	--tracking-normal: 0em;
+}
+
+/* ========================================================================
+   STYLES DE BASE
+   ======================================================================== */
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+
+	html {
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		text-rendering: optimizeLegibility;
+		/* Globally enable CSS hyphens for better text wrapping */
+		hyphens: auto;
+		-webkit-hyphens: auto;
+		-ms-hyphens: auto;
+	}
+
+	body {
+		@apply bg-background text-foreground;
+		min-height: 100vh;
+		letter-spacing: var(--tracking-normal);
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+		border-radius: var(--radius-sm);
+	}
+
+	::selection {
+		background-color: oklch(0.8593 0.097 340.78 / 0.3);
+		color: oklch(0.2 0 0);
+	}
+}
+
+/* ========================================================================
+   UTILITIES - Accents avec couleurs logo
+   ======================================================================== */
+@layer utilities {
+	/* Gradient Hero avec couleurs logo */
+	.bg-gradient-organic {
+		background: linear-gradient(
+			to bottom right,
+			oklch(0.8593 0.097 340.78 / 0.2) 0%,
+			transparent 50%,
+			oklch(0.9221 0.0871 86.29 / 0.3) 100%
+		);
+	}
+
+	/* Animation sparkle */
+	@keyframes sparkle-pulse {
+		0%,
+		100% {
+			opacity: 1;
+			transform: rotate(0deg) scale(1);
+		}
+		50% {
+			opacity: 0.7;
+			transform: rotate(15deg) scale(1.1);
+		}
+	}
+
+	.animate-sparkle-pulse {
+		animation: sparkle-pulse 3s ease-in-out infinite;
+	}
+
+	/* Animation wave pour emoji main */
+	@keyframes wave {
+		0% {
+			transform: rotate(0deg);
+		}
+		10% {
+			transform: rotate(14deg);
+		}
+		20% {
+			transform: rotate(-8deg);
+		}
+		30% {
+			transform: rotate(14deg);
+		}
+		40% {
+			transform: rotate(-4deg);
+		}
+		50% {
+			transform: rotate(10deg);
+		}
+		60% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(0deg);
+		}
+	}
+
+	.animate-wave {
+		animation: wave 2.5s ease-in-out infinite;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.animate-sparkle-pulse,
+		.animate-wave {
+			animation: none;
+		}
+	}
+}
+
+.dark {
+	--background: oklch(0.09 0.015 270);
+	--foreground: oklch(0.92 0.005 270);
+	--card: oklch(0.12 0.015 270);
+	--card-foreground: oklch(0.92 0.005 270);
+	--popover: oklch(0.12 0.015 270);
+	--popover-foreground: oklch(0.92 0.005 270);
+	--primary: oklch(0.8593 0.097 340.78);
+	--primary-foreground: oklch(0.1 0 0);
+	--secondary: oklch(0.9221 0.0871 86.29);
+	--secondary-foreground: oklch(0.1 0 0);
+	--muted: oklch(0.15 0.015 270);
+	--muted-foreground: oklch(0.75 0.005 270); /* Augmenté de 0.68 à 0.75 pour dark mode WCAG AAA */
+	--accent: oklch(0.15 0.015 270);
+	--accent-foreground: oklch(0.92 0.005 270);
+	--destructive: oklch(0.59 0.17 25);
+	--destructive-foreground: oklch(0.95 0.005 270);
+	--border: oklch(0.18 0.015 270);
+	--input: oklch(0.15 0.015 270);
+	--ring: oklch(0.8593 0.097 340.78);
+	--chart-1: oklch(0.8593 0.097 340.78);
+	--chart-2: oklch(0.9221 0.0871 86.29);
+	--chart-3: oklch(0.5 0.1 200);
+	--chart-4: oklch(0.75 0.15 25); /* Corail lumineux - bijoux colorés */
+	--chart-5: oklch(0.7 0.1 300);
+	--radius: 0.5rem;
+	--sidebar: oklch(0.12 0.015 340); /* Dark mode avec touche rose */
+	--sidebar-foreground: oklch(0.92 0.005 270);
+	--sidebar-muted-foreground: oklch(0.65 0.005 270); /* Contraste WCAG AA dark mode */
+	--sidebar-primary: oklch(0.8593 0.097 340.78); /* Rose primaire */
+	--sidebar-primary-foreground: oklch(0.1 0 0);
+	--sidebar-accent: oklch(0.8593 0.097 340.78 / 0.12); /* Rose primaire subtil dark */
+	--sidebar-accent-foreground: oklch(0.92 0.005 270);
+	--sidebar-border: oklch(0.8593 0.097 340.78 / 0.2); /* Bordure rose dark */
+	--sidebar-ring: oklch(0.8593 0.097 340.78);
+	--font-sans: ui-sans-serif, system-ui, sans-serif;
+	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
+	--font-mono:
+		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
+		Courier New, monospace;
+	--shadow-color: 0 0 0;
+	--shadow-opacity: 0.5;
+	--shadow-blur: 0.5rem;
+	--shadow-spread: 0;
+	--shadow-offset-x: 0;
+	--shadow-offset-y: 0.125rem -0.0625rem;
+	--letter-spacing: 0em;
+	--spacing: 0.25rem;
+	--shadow-2xs: 0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.25);
+	--shadow-xs: 0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.25);
+	--shadow-sm:
+		0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.5),
+		0 1px 2px -1px hsl(0 0 0 / 0.5);
+	--shadow:
+		0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.5),
+		0 1px 2px -1px hsl(0 0 0 / 0.5);
+	--shadow-md:
+		0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.5),
+		0 2px 4px -1px hsl(0 0 0 / 0.5);
+	--shadow-lg:
+		0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.5),
+		0 4px 6px -1px hsl(0 0 0 / 0.5);
+	--shadow-xl:
+		0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 0.5),
+		0 8px 10px -1px hsl(0 0 0 / 0.5);
+	--shadow-2xl: 0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 1.25);
+}
+
+/* ========================================================================
+   VIEW TRANSITIONS
+   ======================================================================== */
+
+/* Transitions par défaut pour toutes les view transitions (images, titres) */
+::view-transition-old(*),
+::view-transition-new(*) {
+	animation-duration: 0.3s;
+	animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Breadcrumbs boutique - transition rapide */
+::view-transition-old(page-breadcrumbs),
+::view-transition-new(page-breadcrumbs) {
+	animation-duration: 0.2s;
+	animation-timing-function: ease-out;
+}
+
+/* Breadcrumbs dashboard admin - même timing que boutique */
+::view-transition-old(dashboard-breadcrumbs),
+::view-transition-new(dashboard-breadcrumbs),
+::view-transition-old(dashboard-breadcrumbs-mobile),
+::view-transition-new(dashboard-breadcrumbs-mobile) {
+	animation-duration: 0.2s;
+	animation-timing-function: ease-out;
+}
+
+/* Titres produits admin - utilisent le timing par défaut (0.3s) */
+/* Note: Les noms dynamiques (admin-product-title-{slug}) héritent du sélecteur (*) */
+
+/* Respecter prefers-reduced-motion (WCAG 2.3.3) */
+@media (prefers-reduced-motion: reduce) {
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
+	}
+}

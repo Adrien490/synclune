@@ -1,0 +1,40 @@
+"use client";
+
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
+import { useActionState } from "react";
+import { toggleDiscountStatus } from "@/modules/discount/actions/toggle-discount-status";
+
+interface UseToggleDiscountStatusOptions {
+	onSuccess?: (message: string) => void;
+}
+
+export const useToggleDiscountStatus = (
+	options?: UseToggleDiscountStatusOptions
+) => {
+	const [state, action, isPending] = useActionState(
+		withCallbacks(
+			toggleDiscountStatus,
+			createToastCallbacks({
+				loadingMessage: "Modification du statut...",
+				onSuccess: (result: unknown) => {
+					if (
+						result &&
+						typeof result === "object" &&
+						"message" in result &&
+						typeof result.message === "string"
+					) {
+						options?.onSuccess?.(result.message);
+					}
+				},
+			})
+		),
+		undefined
+	);
+
+	return {
+		state,
+		action,
+		isPending,
+	};
+};

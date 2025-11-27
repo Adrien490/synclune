@@ -1,0 +1,29 @@
+"use server";
+
+import { cookies } from "next/headers";
+
+const COOKIE_NAME = "contact-adrien-hidden";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 an
+
+/**
+ * Server Action pour basculer la visibilité du bouton Contact Adrien
+ * Stocke la préférence dans un cookie côté serveur
+ */
+export async function toggleContactAdrienVisibility(
+	isHidden: boolean
+): Promise<{ success: boolean; isHidden: boolean }> {
+	const cookieStore = await cookies();
+
+	if (isHidden) {
+		cookieStore.set(COOKIE_NAME, "true", {
+			path: "/",
+			maxAge: COOKIE_MAX_AGE,
+			httpOnly: false, // Accessible côté client si besoin
+			sameSite: "lax",
+		});
+	} else {
+		cookieStore.delete(COOKIE_NAME);
+	}
+
+	return { success: true, isHidden };
+}

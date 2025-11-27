@@ -1,0 +1,166 @@
+"use client";
+
+import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
+import { useAppForm } from "@/shared/components/forms";
+import { Label } from "@/shared/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useTransition } from "react";
+
+interface FilterFormData {
+	stockLevel: string;
+	hasActiveReservations: string;
+}
+
+export function InventoryFilterSheet() {
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const [isPending, startTransition] = useTransition();
+
+	const initialValues = useMemo((): FilterFormData => {
+		let stockLevel = "all";
+		let hasActiveReservations = "all";
+
+		searchParams.forEach((value, key) => {
+			if (key === "filter_stockLevel") {
+				stockLevel = value;
+			}
+			if (key === "filter_hasActiveReservations") {
+				hasActiveReservations = value === "true" ? "with" : "without";
+			}
+		});
+
+		return { stockLevel, hasActiveReservations };
+	}, [searchParams]);
+
+	const form = useAppForm({
+		defaultValues: initialValues,
+		onSubmit: async ({ value }: { value: FilterFormData }) => {
+			const params = new URLSearchParams(searchParams.toString());
+			params.delete("filter_stockLevel");
+			params.delete("filter_hasActiveReservations");
+			params.set("page", "1");
+
+			if (value.stockLevel !== "all") {
+				params.set("filter_stockLevel", value.stockLevel);
+			}
+
+			if (value.hasActiveReservations !== "all") {
+				params.set(
+					"filter_hasActiveReservations",
+					value.hasActiveReservations === "with" ? "true" : "false"
+				);
+			}
+
+			startTransition(() => {
+				router.push(`?${params.toString()}`, { scroll: false });
+			});
+		},
+	});
+
+	const clearAllFilters = () => {
+		form.reset({ stockLevel: "all", hasActiveReservations: "all" });
+
+		const params = new URLSearchParams(searchParams.toString());
+		params.delete("filter_stockLevel");
+		params.delete("filter_hasActiveReservations");
+		params.delete("filter_productTypeId");
+		params.delete("filter_colorId");
+		params.delete("filter_material");
+		params.set("page", "1");
+
+		startTransition(() => {
+			router.push(`?${params.toString()}`, { scroll: false });
+		});
+	};
+
+	const { hasActiveFilters, activeFiltersCount } = useMemo(() => {
+		let count = 0;
+		searchParams.forEach((value, key) => {
+			if (["page", "perPage", "sortBy", "search"].includes(key)) return;
+			if (key.startsWith("filter_")) count += 1;
+		});
+		return { hasActiveFilters: count > 0, activeFiltersCount: count };
+	}, [searchParams]);
+
+	return (
+		<FilterSheetWrapper
+			activeFiltersCount={activeFiltersCount}
+			hasActiveFilters={hasActiveFilters}
+			onClearAll={clearAllFilters}
+			onApply={() => form.handleSubmit()}
+			isPending={isPending}
+		>
+			<form
+				onSubmit={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					form.handleSubmit();
+				}}
+				className="space-y-6"
+			>
+				<form.Field name="stockLevel">
+					{(field) => (
+						<div className="space-y-3">
+							<Label className="font-medium text-sm text-foreground">
+								Niveau de stock
+							</Label>
+							<RadioGroup
+								value={field.state.value}
+								onValueChange={field.handleChange}
+							>
+								{[
+									{ value: "all", label: "Tous" },
+									{ value: "critical", label: "Critique (< 5)" },
+									{ value: "low", label: "Bas (< 10)" },
+									{ value: "normal", label: "Normal (10-50)" },
+									{ value: "high", label: "Élevé (> 50)" },
+								].map(({ value, label }) => (
+									<div key={value} className="flex items-center space-x-2">
+										<RadioGroupItem value={value} id={`stock-${value}`} />
+										<Label
+											htmlFor={`stock-${value}`}
+											className="text-sm font-normal cursor-pointer"
+										>
+											{label}
+										</Label>
+									</div>
+								))}
+							</RadioGroup>
+						</div>
+					)}
+				</form.Field>
+
+				<form.Field name="hasActiveReservations">
+					{(field) => (
+						<div className="space-y-3">
+							<Label className="font-medium text-sm text-foreground">
+								Réservations actives
+							</Label>
+							<RadioGroup
+								value={field.state.value}
+								onValueChange={field.handleChange}
+							>
+								{[
+									{ value: "all", label: "Tous" },
+									{ value: "with", label: "Avec réservations" },
+									{ value: "without", label: "Sans réservations" },
+								].map(({ value, label }) => (
+									<div key={value} className="flex items-center space-x-2">
+										<RadioGroupItem value={value} id={`reservation-${value}`} />
+										<Label
+											htmlFor={`reservation-${value}`}
+											className="text-sm font-normal cursor-pointer"
+										>
+											{label}
+										</Label>
+									</div>
+								))}
+							</RadioGroup>
+						</div>
+					)}
+				</form.Field>
+			</form>
+		</FilterSheetWrapper>
+	);
+}

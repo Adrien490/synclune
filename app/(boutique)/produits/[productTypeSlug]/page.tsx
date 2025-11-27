@@ -1,0 +1,246 @@
+import type { ProductSearchParams } from "@/app/(boutique)/produits/_types/search-params";
+import { PageHeader } from "@/shared/components/page-header";
+import { SearchForm } from "@/shared/components/search-form";
+import { SelectFilter } from "@/shared/components/select-filter";
+import { TabNavigation } from "@/shared/components/tab-navigation";
+import { ParticleSystem } from "@/shared/components/animations/particle-system";
+import { getColors } from "@/modules/colors/data/get-colors";
+import { getProductTypes } from "@/modules/product-types/data/get-product-types";
+import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
+import { ProductFilterSheet } from "@/modules/products/components/product-filter-sheet";
+import { ProductList } from "@/modules/products/components/product-list";
+import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
+import { getMaxProductPrice } from "@/modules/products/data/get-max-product-price";
+import { priceInCentsToEuros } from "@/shared/utils/price-utils";
+import {
+	GET_PRODUCTS_DEFAULT_PER_PAGE,
+	SORT_LABELS,
+	SORT_OPTIONS,
+} from "@/modules/products/data/get-products";
+import { getProducts } from "@/modules/products/data/get-products";
+import type { SortField } from "@/modules/products/data/get-products";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { parseFilters } from "../_utils/params";
+import { generateProductTypeMetadata } from "./_utils/generate-metadata";
+
+type BijouxPageProps = {
+	params: Promise<{ productTypeSlug: string }>;
+	searchParams: Promise<ProductSearchParams>;
+};
+
+export default async function BijouxPage({
+	params,
+	searchParams,
+}: BijouxPageProps) {
+	const { productTypeSlug } = await params;
+	const searchParamsData = await searchParams;
+
+	// Récupérer le type de produit
+	const productTypesData = await getProductTypes({
+		perPage: 100,
+		sortBy: "label-ascending",
+		filters: {
+			isActive: true,
+		},
+	});
+
+	const productType = productTypesData.productTypes.find(
+		(t) => t.slug === productTypeSlug
+	);
+
+	// 404 si le type n'existe pas
+	if (!productType) {
+		notFound();
+	}
+
+	// Extraction du terme de recherche
+	const searchTerm =
+		typeof searchParamsData.search === "string"
+			? searchParamsData.search
+			: undefined;
+
+	// Récupérer les couleurs et le prix maximum
+	const [colorsData, maxPriceInCents] = await Promise.all([
+		getColors({
+			perPage: 100,
+			sortBy: "name-ascending",
+		}),
+		getMaxProductPrice(),
+	]);
+
+	// Conversion en euros côté UI (la DAL retourne des centimes)
+	const maxPriceInEuros = priceInCentsToEuros(maxPriceInCents);
+
+	const colors = colorsData.colors;
+
+	// Helper pour extraire les paramètres
+	const getFirstParam = (
+		param: string | string[] | undefined
+	): string | undefined => {
+		if (Array.isArray(param)) return param[0];
+		return param;
+	};
+
+	// Récupérer les produits avec filtres
+	const cursor = getFirstParam(searchParamsData.cursor);
+	const direction = (getFirstParam(searchParamsData.direction) || "forward") as
+		| "forward"
+		| "backward";
+	const perPage =
+		Number(getFirstParam(searchParamsData.perPage)) ||
+		GET_PRODUCTS_DEFAULT_PER_PAGE;
+	const sortByFromFilter = getFirstParam(searchParamsData.filter_sortBy);
+	const sortByFromParam = getFirstParam(searchParamsData.sortBy);
+	const sortBy = sortByFromFilter || sortByFromParam || "created-descending";
+
+	// Parser les filtres et ajouter le filtre de type
+	const filters = {
+		...parseFilters(searchParamsData),
+		type: productTypeSlug,
+	};
+
+	// Récupérer les produits
+	const productsPromise = getProducts({
+		cursor,
+		direction,
+		perPage,
+		sortBy: sortBy as SortField,
+		search: searchTerm,
+		filters,
+	});
+
+	// Vérifier si des filtres sont actifs (hors navigation et type)
+	const hasActiveFilters = Object.keys(searchParamsData).some(
+		(key) =>
+			!["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(
+				key
+			)
+	);
+
+	// JSON-LD structured data pour SEO
+	const jsonLd = {
+		"@context": "https://schema.org",
+		"@type": "CollectionPage",
+		name: productType.label,
+		description:
+			productType.description ||
+			`Découvrez nos ${productType.label.toLowerCase()} artisanaux faits main à Nantes`,
+		url: `https://synclune.fr/produits/${productTypeSlug}`,
+		breadcrumb: {
+			"@type": "BreadcrumbList",
+			itemListElement: [
+				{
+					"@type": "ListItem",
+					position: 1,
+					name: "Accueil",
+					item: "https://synclune.fr",
+				},
+				{
+					"@type": "ListItem",
+					position: 2,
+					name: "Bijoux",
+					item: "https://synclune.fr/produits",
+				},
+				{
+					"@type": "ListItem",
+					position: 3,
+					name: productType.label,
+				},
+			],
+		},
+		publisher: {
+			"@type": "Organization",
+			name: "Synclune",
+			url: "https://synclune.fr",
+		},
+	};
+
+	return (
+		<div className="min-h-screen relative">
+			{/* JSON-LD Structured Data */}
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+			/>
+
+			{/* Background décoratif - Particules pour ambiance bijoux */}
+			<ParticleSystem variant="section" className="absolute inset-0 z-20" />
+
+			<PageHeader
+				title={searchTerm ? `Recherche "${searchTerm}"` : productType.label}
+				description={productType.description || undefined}
+				breadcrumbs={[
+					{ label: "Bijoux", href: "/produits" },
+					{ label: productType.label, href: `/produits/${productTypeSlug}` },
+				]}
+				navigation={
+					<TabNavigation
+						items={[
+							{
+								label: "Tous les bijoux",
+								value: "tous",
+								href: "/produits",
+							},
+							...productTypesData.productTypes.map((type) => ({
+								label: type.label,
+								value: type.slug,
+								href: `/produits/${type.slug}`,
+							})),
+						]}
+						activeValue={productTypeSlug}
+						ariaLabel="Navigation par types de bijoux"
+					/>
+				}
+			/>
+
+			{/* Section principale avec catalogue */}
+			<section className="bg-background py-8 relative z-10">
+				<div className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+					{/* Toolbar élégante avec les styles Synclune */}
+					<div className="bg-card border border-border rounded-lg p-4 shadow-sm transition-all duration-200">
+						<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
+							{/* Section gauche - Search form */}
+							<div className="flex-1 sm:max-w-md">
+								<SearchForm
+									paramName="search"
+									placeholder={`Rechercher des ${productType.label.toLowerCase()}...`}
+									className="w-full focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 border-secondary/40 hover:border-secondary/60 transition-colors duration-200"
+								/>
+							</div>
+
+							{/* Section droite - Tri et Filtres */}
+							<div className="flex flex-row items-center gap-3 sm:gap-3 sm:shrink-0">
+								<SelectFilter
+									filterKey="sortBy"
+									label="Trier par"
+									options={Object.values(SORT_OPTIONS).map((option) => ({
+										value: option,
+										label: SORT_LABELS[option as keyof typeof SORT_LABELS],
+									}))}
+									placeholder="Plus récents"
+									className="min-w-0 flex-1 sm:min-w-[160px] sm:flex-none border-secondary/40 hover:border-secondary/60 focus:border-primary focus:ring-primary/20 transition-all duration-200"
+								/>
+								<ProductFilterSheet
+									className="shrink-0"
+									colors={colors}
+									maxPriceInEuros={maxPriceInEuros}
+								/>
+							</div>
+						</div>
+					</div>
+
+					{/* Badges des filtres actifs */}
+					{hasActiveFilters && <ProductFilterBadges colors={colors} />}
+
+					<Suspense fallback={<ProductListSkeleton />}>
+						<ProductList productsPromise={productsPromise} perPage={perPage} />
+					</Suspense>
+				</div>
+			</section>
+		</div>
+	);
+}
+
+// Export de la fonction generateMetadata depuis le fichier utilitaire
+export { generateProductTypeMetadata as generateMetadata };

@@ -1,0 +1,227 @@
+import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
+import type { GetProductsParams, ProductFilters } from "../types/product.types";
+
+// ============================================================================
+// PRODUCT QUERY BUILDER UTILS
+// ============================================================================
+
+export function buildProductSearchConditions(
+	search: string
+): Prisma.ProductWhereInput[] {
+	const searchTerm = search.trim();
+	if (!searchTerm) return [];
+
+	return [
+		{
+			OR: [
+				{
+					title: {
+						contains: searchTerm,
+						mode: Prisma.QueryMode.insensitive,
+					},
+				},
+				{
+					description: {
+						contains: searchTerm,
+						mode: Prisma.QueryMode.insensitive,
+					},
+				},
+				{
+					skus: {
+						some: {
+							OR: [
+								{
+									sku: {
+										contains: searchTerm,
+										mode: Prisma.QueryMode.insensitive,
+									},
+								},
+								{
+									color: {
+										OR: [
+											{
+												name: {
+													contains: searchTerm,
+													mode: Prisma.QueryMode.insensitive,
+												},
+											},
+											{
+												hex: {
+													contains: searchTerm,
+													mode: Prisma.QueryMode.insensitive,
+												},
+											},
+										],
+									},
+								},
+								{
+									material: {
+										contains: searchTerm,
+										mode: Prisma.QueryMode.insensitive,
+									},
+								},
+							],
+							isActive: true,
+						},
+					},
+				},
+				{
+					collection: {
+						OR: [
+							{
+								name: {
+									contains: searchTerm,
+									mode: Prisma.QueryMode.insensitive,
+								},
+							},
+							{
+								slug: {
+									contains: searchTerm,
+									mode: Prisma.QueryMode.insensitive,
+								},
+							},
+						],
+					},
+				},
+			],
+		},
+	];
+}
+
+export function buildProductFilterConditions(
+	filters: ProductFilters
+): Prisma.ProductWhereInput[] {
+	const conditions: Prisma.ProductWhereInput[] = [];
+	if (!filters) return conditions;
+
+	if (filters.status !== undefined) {
+		const statuses = Array.isArray(filters.status)
+			? filters.status
+			: [filters.status];
+		if (statuses.length === 1) {
+			conditions.push({ status: statuses[0] });
+		} else if (statuses.length > 1) {
+			conditions.push({ status: { in: statuses } });
+		}
+	}
+
+	if (filters.type !== undefined) {
+		const types = Array.isArray(filters.type) ? filters.type : [filters.type];
+		if (types.length === 1) {
+			conditions.push({ type: { slug: types[0] } });
+		} else if (types.length > 1) {
+			conditions.push({ type: { slug: { in: types } } });
+		}
+	}
+
+	if (filters.color !== undefined) {
+		const colors = Array.isArray(filters.color)
+			? filters.color
+			: [filters.color];
+		if (colors.length === 1) {
+			conditions.push({
+				skus: { some: { isActive: true, color: { slug: colors[0] } } },
+			});
+		} else if (colors.length > 1) {
+			conditions.push({
+				skus: { some: { isActive: true, color: { slug: { in: colors } } } },
+			});
+		}
+	}
+
+	if (filters.collectionId !== undefined) {
+		const collectionIds = Array.isArray(filters.collectionId)
+			? filters.collectionId
+			: [filters.collectionId];
+		if (collectionIds.length === 1) {
+			conditions.push({ collectionId: collectionIds[0] });
+		} else if (collectionIds.length > 1) {
+			conditions.push({ collectionId: { in: collectionIds } });
+		}
+	}
+
+	if (filters.collectionSlug !== undefined) {
+		const collectionSlugs = Array.isArray(filters.collectionSlug)
+			? filters.collectionSlug
+			: [filters.collectionSlug];
+		if (collectionSlugs.length === 1) {
+			conditions.push({ collection: { slug: collectionSlugs[0] } });
+		} else if (collectionSlugs.length > 1) {
+			conditions.push({ collection: { slug: { in: collectionSlugs } } });
+		}
+	}
+
+	if (
+		typeof filters.priceMin === "number" &&
+		typeof filters.priceMax === "number"
+	) {
+		conditions.push({
+			skus: {
+				some: {
+					isActive: true,
+					priceInclTax: { gte: filters.priceMin, lte: filters.priceMax },
+				},
+			},
+		});
+	} else {
+		if (typeof filters.priceMin === "number") {
+			conditions.push({
+				skus: {
+					some: { isActive: true, priceInclTax: { gte: filters.priceMin } },
+				},
+			});
+		}
+		if (typeof filters.priceMax === "number") {
+			conditions.push({
+				skus: {
+					some: { isActive: true, priceInclTax: { lte: filters.priceMax } },
+				},
+			});
+		}
+	}
+
+	if (filters.createdAfter instanceof Date) {
+		conditions.push({ createdAt: { gte: filters.createdAfter } });
+	}
+	if (filters.createdBefore instanceof Date) {
+		conditions.push({ createdAt: { lte: filters.createdBefore } });
+	}
+	if (filters.updatedAfter instanceof Date) {
+		conditions.push({ updatedAt: { gte: filters.updatedAfter } });
+	}
+	if (filters.updatedBefore instanceof Date) {
+		conditions.push({ updatedAt: { lte: filters.updatedBefore } });
+	}
+
+	return conditions;
+}
+
+export function buildProductWhereClause(
+	params: GetProductsParams
+): Prisma.ProductWhereInput {
+	const whereClause: Prisma.ProductWhereInput = {};
+	const andConditions: Prisma.ProductWhereInput[] = [];
+	const filters = params.filters ?? {};
+
+	andConditions.push({
+		status: params.status || ProductStatus.PUBLIC,
+	});
+
+	if (params.search) {
+		const searchConditions = buildProductSearchConditions(params.search);
+		if (searchConditions.length > 0) {
+			andConditions.push(...searchConditions);
+		}
+	}
+
+	const filterConditions = buildProductFilterConditions(filters);
+	if (filterConditions.length > 0) {
+		andConditions.push(...filterConditions);
+	}
+
+	if (andConditions.length > 0) {
+		whereClause.AND = andConditions;
+	}
+
+	return whereClause;
+}

@@ -1,0 +1,102 @@
+"use server";
+
+import { PaymentStatus } from "@/app/generated/prisma/client";
+import { isAdmin } from "@/shared/lib/guards";
+import { prisma } from "@/shared/lib/prisma";
+import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus } from "@/shared/types/server-action";
+import { revalidatePath } from "next/cache";
+
+import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
+import { bulkDeleteOrdersSchema } from "../schemas/order.schemas";
+
+/**
+ * Supprime plusieurs commandes en masse
+ * Réservé aux administrateurs
+ *
+ * Règles métier :
+ * - Seules les commandes éligibles seront supprimées
+ * - Une commande est éligible si :
+ *   1. Aucune facture n'a été émise (invoiceNumber === null)
+ *   2. Elle n'a jamais été payée (paymentStatus !== PAID et !== REFUNDED)
+ * - Les commandes non éligibles sont ignorées (avec compteur)
+ */
+export async function bulkDeleteOrders(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
+	try {
+		const admin = await isAdmin();
+		if (!admin) {
+			return {
+				status: ActionStatus.UNAUTHORIZED,
+				message: "Accès non autorisé",
+			};
+		}
+
+		const idsRaw = formData.get("ids") as string;
+		const ids = idsRaw ? JSON.parse(idsRaw) : [];
+
+		const result = bulkDeleteOrdersSchema.safeParse({ ids });
+		if (!result.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: result.error.issues[0]?.message || "Données invalides",
+			};
+		}
+
+		// Récupérer les commandes pour vérifier leur éligibilité
+		const orders = await prisma.order.findMany({
+			where: {
+				id: { in: result.data.ids },
+			},
+			select: {
+				id: true,
+				orderNumber: true,
+				invoiceNumber: true,
+				paymentStatus: true,
+			},
+		});
+
+		// Filtrer les commandes éligibles à la suppression
+		const deletableOrders = orders.filter(
+			(order) =>
+				order.invoiceNumber === null &&
+				order.paymentStatus !== PaymentStatus.PAID &&
+				order.paymentStatus !== PaymentStatus.REFUNDED
+		);
+
+		const deletableIds = deletableOrders.map((order) => order.id);
+		const skippedCount = orders.length - deletableIds.length;
+
+		if (deletableIds.length === 0) {
+			return {
+				status: ActionStatus.ERROR,
+				message: ORDER_ERROR_MESSAGES.BULK_DELETE_NONE_ELIGIBLE,
+			};
+		}
+
+		// Supprimer les commandes éligibles
+		await prisma.order.deleteMany({
+			where: { id: { in: deletableIds } },
+		});
+
+		revalidatePath("/admin/ventes/commandes");
+
+		const message =
+			skippedCount > 0
+				? `${deletableIds.length} commande(s) supprimée(s), ${skippedCount} ignorée(s) (facturées ou payées)`
+				: `${deletableIds.length} commande(s) supprimée(s)`;
+
+		return {
+			status: ActionStatus.SUCCESS,
+			message,
+		};
+	} catch (error) {
+		console.error("[BULK_DELETE_ORDERS]", error);
+		return {
+			status: ActionStatus.ERROR,
+			message: ORDER_ERROR_MESSAGES.DELETE_FAILED,
+		};
+	}
+}
