@@ -10,6 +10,8 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
+import { ChangelogDialog, ChangelogDialogSkeleton } from "@/modules/dashboard/components/changelog-dialog";
 
 interface DashboardHeaderProps {
 	user?: {
@@ -63,6 +65,11 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 						Voir le site
 					</TooltipContent>
 				</Tooltip>
+
+				{/* Changelog */}
+				<Suspense fallback={<ChangelogDialogSkeleton />}>
+					<ChangelogDialog />
+				</Suspense>
 
 				{/* User dropdown */}
 				{user && <UserDropdown user={user} />}

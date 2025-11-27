@@ -66,3 +66,32 @@ export function cacheDashboardInventory() {
 export function getDashboardBadgesInvalidationTags(): string[] {
 	return [DASHBOARD_CACHE_TAGS.BADGES]
 }
+
+// ============================================
+// CHANGELOG CACHE
+// ============================================
+
+/**
+ * Tags de cache pour les changelogs
+ */
+export const CHANGELOG_CACHE_TAGS = {
+	/** Liste de tous les changelogs */
+	LIST: "changelogs",
+} as const
+
+/**
+ * Configure le cache pour les changelogs
+ * - Utilisé pour : liste des versions du changelog
+ * - Durée : 1j fraîche, 1h revalidation, 7j expiration
+ */
+export function cacheChangelogs() {
+	cacheLife("changelog")
+	cacheTag(CHANGELOG_CACHE_TAGS.LIST)
+}
+
+/**
+ * Tags à invalider pour les changelogs
+ */
+export function getChangelogInvalidationTags(): string[] {
+	return [CHANGELOG_CACHE_TAGS.LIST]
+}

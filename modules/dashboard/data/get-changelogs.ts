@@ -1,15 +1,15 @@
 "use server";
 
-import { cacheLife, cacheTag } from "next/cache";
 import fs from "fs";
 import path from "path";
+import { cacheChangelogs } from "@/modules/dashboard/constants/cache";
 
 /**
  * Configuration pour le système de changelog MDX
  */
 const CHANGELOG_CONFIG = {
 	/** Chemin relatif vers le dossier contenant les fichiers MDX */
-	CONTENT_PATH: "app/admin/_components/changelog-dialog/_content",
+	CONTENT_PATH: "modules/dashboard/components/changelog-dialog/_content",
 
 	/** Messages d'erreur */
 	ERRORS: {
@@ -59,8 +59,7 @@ export interface ChangelogData {
  */
 export async function getChangelogs(): Promise<ChangelogData[]> {
 	"use cache";
-	cacheLife("changelog");
-	cacheTag("changelogs");
+	cacheChangelogs();
 	const contentDirectory = path.join(process.cwd(), CHANGELOG_CONFIG.CONTENT_PATH);
 
 	// Vérifier si le dossier existe
@@ -130,7 +129,8 @@ export async function getChangelogs(): Promise<ChangelogData[]> {
 				}
 
 				// Vérifier que la date est valide (pas 2025-13-45)
-				const parsedDate = new Date(metadata.date + "T00:00:00");
+				// UTC explicite pour éviter les problèmes de timezone
+				const parsedDate = new Date(metadata.date + "T00:00:00Z");
 				if (isNaN(parsedDate.getTime())) {
 					throw new Error(
 						`Invalid date value for ${slug}: "${metadata.date}"`
@@ -146,8 +146,6 @@ export async function getChangelogs(): Promise<ChangelogData[]> {
 					slug,
 				};
 			} catch (error) {
-// console.error(`Error loading changelog for ${slug}:`, error);
-
 				// En développement, lever l'erreur pour faciliter le debug
 				if (process.env.NODE_ENV === "development") {
 					throw error;

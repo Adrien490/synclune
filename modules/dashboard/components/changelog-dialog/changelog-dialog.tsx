@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui
 import { formatDate, formatVersionDisplay, isWithinDays } from "@/shared/utils/dates";
 import { SparklesIcon } from "lucide-react";
 import { RECENT_RELEASE_DAYS } from "./_constants";
-import type { MDXModule } from "./_types";
+import type { ChangelogWithContent, MDXModule } from "./_types";
 import { getChangelogs } from "@/modules/dashboard/data/get-changelogs";
 
 interface ChangelogDialogProps {
@@ -38,8 +38,8 @@ export async function ChangelogDialog({
 	// Charge les contenus MDX en parallèle
 	// TODO OPTIMIZATION: Migrer vers Client Component + next/dynamic pour lazy-load
 	// des tabs inactives. Actuellement tous les MDX sont chargés côté serveur.
-	const changelogsWithContent = await Promise.all(
-		changelogs.map(async (changelog) => {
+	const changelogsWithContent: ChangelogWithContent[] = await Promise.all(
+		changelogs.map(async (changelog): Promise<ChangelogWithContent> => {
 			const mdxModule = (await import(
 				`@/modules/dashboard/components/changelog-dialog/_content/${changelog.slug}.mdx`
 			)) as MDXModule;
@@ -76,20 +76,17 @@ export async function ChangelogDialog({
 				<Button
 					variant="outline"
 					size="sm"
-					className="gap-2 cursor-pointer transition-all duration-300 font-light relative focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+					className="h-9 gap-2 relative"
 					aria-label={`Ouvrir le changelog${isRecentRelease ? ". Nouvelle version disponible" : ""}. Version ${latestChangelog.metadata.version}`}
 					aria-describedby={
 						isRecentRelease ? "new-release-indicator" : undefined
 					}
 				>
 					<SparklesIcon
-						className="h-4 w-4 motion-reduce:animate-none"
+						className="h-4 w-4"
 						aria-hidden="true"
 					/>
-					<span className="hidden sm:inline">
-						v{latestChangelog.metadata.version}
-					</span>
-					<span className="sm:hidden">Changelog</span>
+					<span>v{latestChangelog.metadata.version}</span>
 					{/* Indicateur de nouvelle version */}
 					{isRecentRelease && (
 						<>
