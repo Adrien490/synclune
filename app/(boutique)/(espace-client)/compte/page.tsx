@@ -1,11 +1,16 @@
-import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@/shared/components/ui/card";
+import { PageHeader } from "@/shared/components/page-header";
+import { AccountNav } from "@/modules/users/components/account-nav";
 import {
 	AccountStatsCards,
 	AccountStatsCardsSkeleton,
 } from "@/modules/users/components/account-stats-cards";
-import { QuickLinksCard } from "@/modules/users/components/quick-links-card";
 import { AddressInfoCard } from "@/modules/users/components/address/address-info-card";
 import { AddressInfoCardSkeleton } from "@/modules/users/components/address/address-info-card-skeleton";
 import { getUserAddresses } from "@/modules/users/data/get-user-addresses";
@@ -33,7 +38,7 @@ export const metadata: Metadata = {
 export default async function AccountPage() {
 	const userPromise = getCurrentUser();
 	const ordersPromise = getUserOrders({
-		perPage: 5, // Fetch 5 but display only 3
+		perPage: 5,
 		sortBy: "created-descending",
 		direction: "forward",
 	});
@@ -41,73 +46,78 @@ export default async function AccountPage() {
 
 	const user = await userPromise;
 
-	const breadcrumbs = [{ label: "Mon compte", href: "/compte" }];
-
 	return (
-		<>
+		<div className="min-h-screen">
 			<PageHeader
 				title="Mon compte"
-				description="Gérez vos informations et suivez vos commandes"
-				breadcrumbs={breadcrumbs}
+				description={`Bienvenue, ${user?.name?.split(" ")[0] || ""}`}
+				breadcrumbs={[{ label: "Mon compte", href: "/compte" }]}
 			/>
 
-			<section className="bg-background py-8 relative z-10">
+			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					{/* Stats */}
-					<Suspense fallback={<AccountStatsCardsSkeleton />}>
-						<AccountStatsCards userPromise={getCurrentUser()} />
-					</Suspense>
+					<div className="flex gap-8">
+						{/* Sidebar desktop */}
+						<AccountNav variant="desktop-only" />
 
-					{/* Contenu principal */}
-					<div className="grid gap-6 lg:grid-cols-3 mt-6">
-						{/* Commandes récentes - 2/3 */}
-						<div className="lg:col-span-2">
-							<Suspense fallback={<RecentOrdersSkeleton />}>
-								<RecentOrders
-									ordersPromise={ordersPromise}
-									limit={3}
-									showViewAll
-								/>
-							</Suspense>
-						</div>
-
-						{/* Sidebar - 1/3 */}
-						<div className="space-y-6">
-							{/* Profil */}
-							<Card>
-								<CardHeader>
-									<CardTitle className="text-lg">Profil</CardTitle>
-								</CardHeader>
-								<CardContent>
-									<div className="space-y-1">
-										<p className="font-medium truncate">
-											{user?.name || "Non défini"}
-										</p>
-										<p className="text-sm text-muted-foreground truncate">
-											{user?.email || "Non défini"}
-										</p>
-									</div>
-									<Button
-										asChild
-										variant="link"
-										className="px-0 h-auto mt-2"
-									>
-										<Link href="/parametres">Modifier mes informations</Link>
-									</Button>
-								</CardContent>
-							</Card>
-
-							{/* Adresse par défaut */}
-							<Suspense fallback={<AddressInfoCardSkeleton />}>
-								<AddressInfoCard addressesPromise={addressesPromise} />
+						{/* Contenu principal */}
+						<div className="flex-1 min-w-0 space-y-6">
+							{/* Stats */}
+							<Suspense fallback={<AccountStatsCardsSkeleton />}>
+								<AccountStatsCards userPromise={getCurrentUser()} />
 							</Suspense>
 
-							{/* Navigation rapide */}
-							<QuickLinksCard />
+							{/* Grille principale */}
+							<div className="grid gap-6 lg:grid-cols-3">
+								{/* Commandes récentes - 2/3 */}
+								<div className="lg:col-span-2">
+									<Suspense fallback={<RecentOrdersSkeleton />}>
+										<RecentOrders
+											ordersPromise={ordersPromise}
+											limit={3}
+											showViewAll
+										/>
+									</Suspense>
+								</div>
+
+								{/* Sidebar contenu - 1/3 */}
+								<div className="space-y-6">
+									{/* Profil */}
+									<Card>
+										<CardHeader>
+											<CardTitle className="text-lg">Profil</CardTitle>
+										</CardHeader>
+										<CardContent>
+											<div className="space-y-1">
+												<p className="font-medium truncate">
+													{user?.name || "Non défini"}
+												</p>
+												<p className="text-sm text-muted-foreground truncate">
+													{user?.email || "Non défini"}
+												</p>
+											</div>
+											<Button
+												asChild
+												variant="link"
+												className="px-0 h-auto mt-2"
+											>
+												<Link href="/parametres">
+													Modifier mes informations
+												</Link>
+											</Button>
+										</CardContent>
+									</Card>
+
+									{/* Adresse par défaut */}
+									<Suspense fallback={<AddressInfoCardSkeleton />}>
+										<AddressInfoCard addressesPromise={addressesPromise} />
+									</Suspense>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
 			</section>
-		</>
+		</div>
 	);
 }

@@ -31,16 +31,14 @@ const protectedRoutes = [
 	"/commandes",
 	"/adresses",
 	"/parametres",
-	"/liste-de-souhaits",
 	"/favoris",
-	"/paiement",
 ];
 
 // Routes protégées par admin (admin requis)
 const adminRoutes = ["/admin"];
 
 // Préfixes de routes protégées (toutes les routes sous ce préfixe nécessitent authentification)
-const protectedPrefixes = ["/compte", "/commandes", "/adresses", "/parametres", "/liste-de-souhaits", "/paiement"];
+const protectedPrefixes = ["/compte", "/commandes", "/adresses", "/parametres", "/favoris"];
 
 // Routes API publiques (ne nécessitent pas d'authentification)
 const publicApiRoutes = [

@@ -7,23 +7,23 @@
  * - Loading : infini jusqu'à dismiss programmatique
  */
 export const TOAST_DURATIONS = {
-	/** 3s - Confirmation rapide (ajout panier, favoris) */
-	SUCCESS: 3000,
+	/** 2s - Confirmation rapide (ajout panier, favoris) */
+	SUCCESS: 2000,
 
-	/** 5s - Avec bouton d'action */
-	SUCCESS_WITH_ACTION: 5000,
+	/** 3s - Avec bouton d'action */
+	SUCCESS_WITH_ACTION: 3000,
 
-	/** 6s - Erreur standard (temps de lecture) */
-	ERROR: 6000,
+	/** 3s - Erreur standard */
+	ERROR: 3000,
 
-	/** 8s - Erreurs critiques (paiement, stock) */
-	ERROR_CRITICAL: 8000,
+	/** 5s - Erreurs critiques (paiement, stock) */
+	ERROR_CRITICAL: 5000,
 
-	/** 5s - Attention requise */
-	WARNING: 5000,
+	/** 3s - Attention requise */
+	WARNING: 3000,
 
-	/** 4s - Information contextuelle */
-	INFO: 4000,
+	/** 2.5s - Information contextuelle */
+	INFO: 2500,
 
 	/** Infini - Jusqu'à dismiss manuel/programmatique */
 	LOADING: Infinity,

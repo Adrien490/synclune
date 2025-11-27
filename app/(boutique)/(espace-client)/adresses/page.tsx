@@ -1,9 +1,10 @@
+import { PageHeader } from "@/shared/components/page-header";
+import { AccountNav } from "@/modules/users/components/account-nav";
 import { searchAddress } from "@/modules/users/data/autocomplete-address-api";
 import { getUserAddresses } from "@/modules/users/data/get-user-addresses";
 import { AddressFormDialog } from "@/modules/users/components/address/address-form-dialog";
 import { AddressList } from "@/modules/users/components/address/address-list";
 import { AddressListSkeleton } from "@/modules/users/components/address/address-list-skeleton";
-import { PageHeader } from "@/shared/components/page-header";
 import { DeleteAddressAlertDialog } from "@/modules/users/components/addresses/delete-address-alert-dialog";
 import { Metadata } from "next";
 import { Suspense } from "react";
@@ -31,37 +32,40 @@ interface AddressesPageProps {
 export default async function AddressesPage({
 	searchParams,
 }: AddressesPageProps) {
-	// Récupérer les paramètres de recherche
 	const params = await searchParams;
 	const addressQuery = params.q || "";
 
-	// Créer la promise pour les adresses (ne pas await pour Suspense)
 	const addressesPromise = getUserAddresses();
 
-	// Charger les suggestions d'adresses côté serveur
 	const addressSuggestions =
 		addressQuery.length >= 3
 			? await searchAddress({ text: addressQuery, maximumResponses: 5 })
 			: { addresses: [], query: "", limit: 0 };
 
-	const breadcrumbs = [
-		{ label: "Mon compte", href: "/compte" },
-		{ label: "Mes adresses", href: "/adresses" },
-	];
-
 	return (
-		<>
+		<div className="min-h-screen">
 			<PageHeader
 				title="Mes adresses"
 				description="Gérez vos adresses de livraison pour des commandes plus rapides"
-				breadcrumbs={breadcrumbs}
+				breadcrumbs={[
+					{ label: "Mon compte", href: "/compte" },
+					{ label: "Adresses", href: "/adresses" },
+				]}
 			/>
 
-			<section className="bg-background py-8 relative z-10">
+			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					<Suspense fallback={<AddressListSkeleton />}>
-						<AddressList addressesPromise={addressesPromise} />
-					</Suspense>
+					<div className="flex gap-8">
+						{/* Sidebar desktop */}
+						<AccountNav variant="desktop-only" />
+
+						{/* Contenu principal */}
+						<div className="flex-1 min-w-0">
+							<Suspense fallback={<AddressListSkeleton />}>
+								<AddressList addressesPromise={addressesPromise} />
+							</Suspense>
+						</div>
+					</div>
 				</div>
 			</section>
 
@@ -70,6 +74,6 @@ export default async function AddressesPage({
 
 			{/* Alert dialog for deleting addresses */}
 			<DeleteAddressAlertDialog />
-		</>
+		</div>
 	);
 }

@@ -1,4 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { AccountNav } from "@/modules/users/components/account-nav";
 import {
 	WishlistList,
 	WishlistGridSkeleton,
@@ -12,7 +13,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Ma liste de souhaits - Synclune",
+	title: "Mes favoris - Synclune",
 	description: "Retrouvez tous vos coups de cœur Synclune.",
 	robots: {
 		index: false,
@@ -52,38 +53,45 @@ export default async function WishlistPage({
 		perPage,
 	});
 
-	const breadcrumbs = [
-		{ label: "Mon compte", href: "/compte" },
-		{ label: "Ma liste de souhaits", href: "/liste-de-souhaits" },
-	];
-
 	return (
-		<>
+		<div className="min-h-screen">
 			<PageHeader
-				title="Ma liste de souhaits"
+				title="Mes favoris"
 				description="Retrouvez tous vos coups de cœur"
-				breadcrumbs={breadcrumbs}
+				breadcrumbs={[
+					{ label: "Mon compte", href: "/compte" },
+					{ label: "Favoris", href: "/favoris" },
+				]}
+				action={
+					<Suspense fallback={null}>
+						<WishlistToolbarActions wishlistPromise={wishlistPromise} />
+					</Suspense>
+				}
 			/>
 
-			<section className="bg-background py-8 relative z-10">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-					{/* Actions */}
-					<div className="flex justify-end">
-						<Suspense fallback={null}>
-							<WishlistToolbarActions wishlistPromise={wishlistPromise} />
-						</Suspense>
-					</div>
+			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
+				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div className="flex gap-8">
+						{/* Sidebar desktop */}
+						<AccountNav variant="desktop-only" />
 
-					<Suspense fallback={<WishlistGridSkeleton />}>
-						<WishlistList wishlistPromise={wishlistPromise} perPage={perPage} />
-					</Suspense>
+						{/* Contenu principal */}
+						<div className="flex-1 min-w-0">
+							<Suspense fallback={<WishlistGridSkeleton />}>
+								<WishlistList
+									wishlistPromise={wishlistPromise}
+									perPage={perPage}
+								/>
+							</Suspense>
+						</div>
+					</div>
 				</div>
 			</section>
 
 			{/* Alert Dialogs */}
 			<ClearWishlistAlertDialog />
 			<RemoveWishlistItemAlertDialog />
-		</>
+		</div>
 	);
 }
 

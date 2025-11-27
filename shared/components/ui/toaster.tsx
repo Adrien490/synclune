@@ -129,7 +129,7 @@ const icons = {
  * Composant Toaster personnalisé pour Synclune - Bijoux Artisanaux
  *
  * Design minimaliste élégant avec :
- * - Variables CSS shadcn/ui pour la cohérence du thème
+ * - Variables CSS shadcn/ui (--primary, --secondary, --destructive, etc.)
  * - Glassmorphism subtil (backdrop-blur)
  * - Bordure gauche colorée pour distinction rapide
  * - Icônes SVG outline fines (24px)
@@ -151,43 +151,25 @@ export function AppToaster() {
 			mobileOffset={16}
 			swipeDirections={["bottom"]}
 			hotkey={["Alt", "T"]}
-			duration={4000}
+			duration={2500}
 			visibleToasts={3}
-			// Styles inline avec variables CSS shadcn/ui (recommandé par Sonner)
-			style={
-				{
-					"--normal-bg": "hsl(var(--popover))",
-					"--normal-text": "hsl(var(--popover-foreground))",
-					"--normal-border": "hsl(var(--border))",
-					"--success-bg": "hsl(var(--primary) / 0.08)",
-					"--success-text": "hsl(var(--foreground))",
-					"--success-border": "hsl(var(--primary) / 0.2)",
-					"--error-bg": "hsl(var(--destructive) / 0.08)",
-					"--error-text": "hsl(var(--foreground))",
-					"--error-border": "hsl(var(--destructive) / 0.2)",
-					"--warning-bg": "hsl(var(--secondary) / 0.15)",
-					"--warning-text": "hsl(var(--foreground))",
-					"--warning-border": "hsl(var(--secondary) / 0.3)",
-					"--border-radius": "var(--radius-lg)",
-				} as React.CSSProperties
-			}
 			toastOptions={{
 				classNames: {
-					// Base commune - Glassmorphism minimaliste
+					// Base commune - Glassmorphism minimaliste avec variables du thème
 					toast: [
 						"group toast",
 						"!bg-popover/90 !backdrop-blur-md",
 						"!border !border-border/50",
 						"!border-l-[3px]",
 						"!rounded-xl",
-						"!shadow-lg !shadow-black/[0.04] dark:!shadow-black/20",
+						"!shadow-lg",
 						"!p-4",
 						"!min-w-[320px] !max-w-[400px]",
 					].join(" "),
 
 					// Typographie
-					title: "!font-medium !text-[15px] !leading-snug !tracking-tight",
-					description: "!text-sm !leading-relaxed !opacity-75 !mt-1",
+					title: "!font-medium !text-[15px] !leading-snug !tracking-tight !text-foreground",
+					description: "!text-sm !leading-relaxed !text-muted-foreground !mt-1",
 
 					// Boutons d'action
 					actionButton: [
@@ -206,39 +188,39 @@ export function AppToaster() {
 					// Success - Rose primary Synclune
 					success: [
 						"!bg-primary/5 dark:!bg-primary/10",
-						"!border-primary/15 dark:!border-primary/20",
+						"!border-primary/20",
 						"!border-l-primary",
 					].join(" "),
 
-					// Error - Destructive
+					// Error - Destructive (rouge/corail)
 					error: [
 						"!bg-destructive/5 dark:!bg-destructive/10",
-						"!border-destructive/15 dark:!border-destructive/20",
+						"!border-destructive/20",
 						"!border-l-destructive",
 					].join(" "),
 
 					// Warning - Doré secondary Synclune
 					warning: [
-						"!bg-secondary/10 dark:!bg-secondary/15",
-						"!border-secondary/25 dark:!border-secondary/30",
+						"!bg-secondary/15 dark:!bg-secondary/20",
+						"!border-secondary/30",
 						"!border-l-secondary",
 					].join(" "),
 
-					// Info - Gris neutre élégant
+					// Info - Gris neutre élégant (muted)
 					info: [
 						"!bg-muted/50 dark:!bg-muted/60",
 						"!border-border",
-						"!border-l-muted-foreground/40",
+						"!border-l-muted-foreground/50",
 					].join(" "),
 
 					// Loading - Doré subtil
 					loading: [
-						"!bg-secondary/8 dark:!bg-secondary/12",
-						"!border-secondary/20 dark:!border-secondary/25",
-						"!border-l-secondary/60",
+						"!bg-secondary/10 dark:!bg-secondary/15",
+						"!border-secondary/25",
+						"!border-l-secondary/70",
 					].join(" "),
 				},
-				duration: 4000,
+				duration: 2500,
 			}}
 			icons={icons}
 		/>

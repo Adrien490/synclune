@@ -1,5 +1,6 @@
-import { PageHeader } from "@/shared/components/page-header";
 import { SortSelect } from "@/shared/components/sort-select";
+import { PageHeader } from "@/shared/components/page-header";
+import { AccountNav } from "@/modules/users/components/account-nav";
 import {
 	CustomerOrdersTable,
 	CustomerOrdersTableSkeleton,
@@ -57,41 +58,45 @@ export default async function CustomerOrdersPage({
 		sortBy,
 	});
 
-	const breadcrumbs = [
-		{ label: "Mon compte", href: "/compte" },
-		{ label: "Mes commandes", href: "/commandes" },
-	];
-
 	return (
-		<>
+		<div className="min-h-screen">
 			<PageHeader
 				title="Mes commandes"
 				description="Retrouvez l'historique de toutes vos commandes"
-				breadcrumbs={breadcrumbs}
+				breadcrumbs={[
+					{ label: "Mon compte", href: "/compte" },
+					{ label: "Commandes", href: "/commandes" },
+				]}
+				action={
+					<SortSelect
+						label="Trier par"
+						options={Object.entries(USER_ORDERS_SORT_LABELS).map(
+							([value, label]) => ({
+								value,
+								label,
+							})
+						)}
+						placeholder="Plus récentes"
+						className="w-full sm:w-[200px]"
+					/>
+				}
 			/>
 
-			<section className="bg-background py-8 relative z-10">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-					{/* Tri */}
-					<div className="flex justify-end">
-						<SortSelect
-							label="Trier par"
-							options={Object.entries(USER_ORDERS_SORT_LABELS).map(
-								([value, label]) => ({
-									value,
-									label,
-								})
-							)}
-							placeholder="Plus récentes"
-							className="w-full sm:w-[200px]"
-						/>
-					</div>
+			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
+				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div className="flex gap-8">
+						{/* Sidebar desktop */}
+						<AccountNav variant="desktop-only" />
 
-					<Suspense fallback={<CustomerOrdersTableSkeleton />}>
-						<CustomerOrdersTable ordersPromise={ordersPromise} />
-					</Suspense>
+						{/* Contenu principal */}
+						<div className="flex-1 min-w-0">
+							<Suspense fallback={<CustomerOrdersTableSkeleton />}>
+								<CustomerOrdersTable ordersPromise={ordersPromise} />
+							</Suspense>
+						</div>
+					</div>
 				</div>
 			</section>
-		</>
+		</div>
 	);
 }

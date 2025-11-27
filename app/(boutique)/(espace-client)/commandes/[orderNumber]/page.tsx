@@ -1,5 +1,5 @@
-import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
+import { PageHeader } from "@/shared/components/page-header";
 import {
 	OrderStatusTimeline,
 	OrderItemsList,
@@ -33,7 +33,9 @@ export async function generateMetadata({
 	};
 }
 
-export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
+export default async function OrderDetailPage({
+	params,
+}: OrderDetailPageProps) {
 	const { orderNumber } = await params;
 
 	const order = await getOrder({ orderNumber });
@@ -42,28 +44,27 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 		notFound();
 	}
 
-	const breadcrumbs = [
-		{ label: "Mon compte", href: "/compte" },
-		{ label: "Mes commandes", href: "/commandes" },
-		{ label: order.orderNumber, href: `/commandes/${order.orderNumber}` },
-	];
-
 	return (
-		<>
+		<div className="min-h-screen">
 			<PageHeader
 				title={`Commande ${order.orderNumber}`}
-				breadcrumbs={breadcrumbs}
+				description="Détails et suivi de votre commande"
+				breadcrumbs={[
+					{ label: "Mon compte", href: "/compte" },
+					{ label: "Commandes", href: "/commandes" },
+					{ label: order.orderNumber, href: `/commandes/${order.orderNumber}` },
+				]}
 				action={
 					<Button variant="outline" asChild>
 						<Link href="/commandes">
 							<ArrowLeft className="h-4 w-4 mr-2" />
-							Retour aux commandes
+							Retour
 						</Link>
 					</Button>
 				}
 			/>
 
-			<section className="bg-background py-8 relative z-10">
+			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="grid lg:grid-cols-3 gap-6">
 						{/* Main content - 2/3 */}
@@ -140,6 +141,6 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 					</div>
 				</div>
 			</section>
-		</>
+		</div>
 	);
 }

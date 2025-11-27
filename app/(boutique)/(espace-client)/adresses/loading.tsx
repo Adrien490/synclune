@@ -1,25 +1,32 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { AccountNav } from "@/modules/users/components/account-nav";
 import { AddressListSkeleton } from "@/modules/users/components/address/address-list-skeleton";
 
 export default function AddressesPageLoading() {
-	const breadcrumbs = [
-		{ label: "Mon compte", href: "/compte" },
-		{ label: "Mes adresses", href: "/adresses" },
-	];
-
 	return (
-		<>
+		<div className="min-h-screen">
 			<PageHeader
 				title="Mes adresses"
 				description="Gérez vos adresses de livraison pour des commandes plus rapides"
-				breadcrumbs={breadcrumbs}
+				breadcrumbs={[
+					{ label: "Mon compte", href: "/compte" },
+					{ label: "Adresses", href: "/adresses" },
+				]}
 			/>
 
-			<section className="bg-background py-8 relative z-10">
+			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					<AddressListSkeleton />
+					<div className="flex gap-8">
+						{/* Sidebar desktop */}
+						<AccountNav variant="desktop-only" />
+
+						{/* Contenu principal */}
+						<div className="flex-1 min-w-0">
+							<AddressListSkeleton />
+						</div>
+					</div>
 				</div>
 			</section>
-		</>
+		</div>
 	);
 }

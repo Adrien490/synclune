@@ -10,7 +10,7 @@ export function ExportDataButton() {
 		<div className="space-y-2">
 			<p className="text-sm text-muted-foreground">
 				Téléchargez une copie de vos données personnelles au format JSON
-				(profil, adresses, commandes, liste de souhaits).
+				(profil, adresses, commandes, favoris).
 			</p>
 			<Button variant="outline" onClick={exportData} disabled={isPending}>
 				{isPending ? "Export en cours..." : "Exporter mes données"}

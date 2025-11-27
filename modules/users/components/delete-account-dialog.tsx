@@ -56,7 +56,7 @@ export function DeleteAccountDialog() {
 					<ul className="list-disc list-inside space-y-1">
 						<li>Vos informations personnelles</li>
 						<li>Vos adresses</li>
-						<li>Votre liste de souhaits</li>
+						<li>Vos favoris</li>
 						<li>Votre panier</li>
 					</ul>
 					<p>

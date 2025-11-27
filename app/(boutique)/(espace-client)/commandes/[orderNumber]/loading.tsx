@@ -1,19 +1,32 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function OrderDetailLoading() {
-	const breadcrumbs = [
-		{ label: "Mon compte", href: "/compte" },
-		{ label: "Mes commandes", href: "/commandes" },
-		{ label: "...", href: "/commandes" },
-	];
-
 	return (
-		<>
-			<PageHeader title="Chargement..." breadcrumbs={breadcrumbs} />
+		<div className="min-h-screen">
+			<PageHeader
+				title="Chargement..."
+				description="Détails et suivi de votre commande"
+				breadcrumbs={[
+					{ label: "Mon compte", href: "/compte" },
+					{ label: "Commandes", href: "/commandes" },
+					{ label: "...", href: "/commandes" },
+				]}
+				action={
+					<Button variant="outline" asChild>
+						<Link href="/commandes">
+							<ArrowLeft className="h-4 w-4 mr-2" />
+							Retour
+						</Link>
+					</Button>
+				}
+			/>
 
-			<section className="bg-background py-8 relative z-10">
+			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="grid lg:grid-cols-3 gap-6">
 						{/* Main content */}
@@ -98,6 +111,6 @@ export default function OrderDetailLoading() {
 					</div>
 				</div>
 			</section>
-		</>
+		</div>
 	);
 }

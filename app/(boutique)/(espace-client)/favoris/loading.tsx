@@ -1,19 +1,19 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { AccountNav } from "@/modules/users/components/account-nav";
-import { CustomerOrdersTableSkeleton } from "@/modules/orders/components/customer";
+import { WishlistGridSkeleton } from "@/modules/wishlist/components";
 
-export default function CustomerOrdersLoading() {
+export default function WishlistLoading() {
 	return (
 		<div className="min-h-screen">
 			<PageHeader
-				title="Mes commandes"
-				description="Retrouvez l'historique de toutes vos commandes"
+				title="Mes favoris"
+				description="Retrouvez tous vos coups de cœur"
 				breadcrumbs={[
 					{ label: "Mon compte", href: "/compte" },
-					{ label: "Commandes", href: "/commandes" },
+					{ label: "Favoris", href: "/favoris" },
 				]}
-				action={<Skeleton className="h-10 w-[200px]" />}
+				action={<Skeleton className="h-8 w-32" />}
 			/>
 
 			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
@@ -24,7 +24,7 @@ export default function CustomerOrdersLoading() {
 
 						{/* Contenu principal */}
 						<div className="flex-1 min-w-0">
-							<CustomerOrdersTableSkeleton />
+							<WishlistGridSkeleton />
 						</div>
 					</div>
 				</div>
