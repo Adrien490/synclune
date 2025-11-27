@@ -1,10 +1,9 @@
 import { PrismaClient } from '@/app/generated/prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
-import { neonConfig, Pool } from '@neondatabase/serverless';
+import { neonConfig } from '@neondatabase/serverless';
 import ws from 'ws';
 
 // Configuration pour Vercel serverless
-// WebSocket pour Node.js + HTTP fetch pour plus de fiabilité
 neonConfig.webSocketConstructor = ws;
 neonConfig.poolQueryViaFetch = true;
 
@@ -16,9 +15,7 @@ declare global {
 const connectionString = process.env.DATABASE_URL!;
 
 function createPrismaClient(): PrismaClient {
-  // Utiliser Pool pour une meilleure gestion des connexions
-  const pool = new Pool({ connectionString });
-  const adapter = new PrismaNeon(pool);
+  const adapter = new PrismaNeon({ connectionString });
   return new PrismaClient({ adapter });
 }
 
