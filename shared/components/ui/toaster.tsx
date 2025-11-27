@@ -2,106 +2,245 @@
 
 import { Toaster as SonnerToaster } from "sonner";
 import { useTheme } from "next-themes";
-import {
-	CheckCircle2,
-	XCircle,
-	AlertTriangle,
-	Info,
-	Loader2,
-} from "lucide-react";
 
 /**
- * Composant Toaster personnalisé pour l'application de bijouterie Synclune
+ * Icônes SVG outline minimalistes pour les toasts Synclune
+ * Design élégant avec cercles fins et traits délicats (24px)
+ */
+const icons = {
+	success: (
+		<svg
+			className="size-6 shrink-0 text-primary"
+			viewBox="0 0 24 24"
+			fill="none"
+			aria-hidden="true"
+		>
+			<circle
+				cx="12"
+				cy="12"
+				r="10"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				className="opacity-30"
+			/>
+			<path
+				d="M7 12.5L10 15.5L17 8.5"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+		</svg>
+	),
+	error: (
+		<svg
+			className="size-6 shrink-0 text-destructive"
+			viewBox="0 0 24 24"
+			fill="none"
+			aria-hidden="true"
+		>
+			<circle
+				cx="12"
+				cy="12"
+				r="10"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				className="opacity-30"
+			/>
+			<path
+				d="M8 8L16 16M16 8L8 16"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+			/>
+		</svg>
+	),
+	warning: (
+		<svg
+			className="size-6 shrink-0 text-secondary"
+			viewBox="0 0 24 24"
+			fill="none"
+			aria-hidden="true"
+		>
+			<path
+				d="M12 3L21 20H3L12 3Z"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinejoin="round"
+				className="opacity-40"
+			/>
+			<path
+				d="M12 9V13M12 16V16.01"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+			/>
+		</svg>
+	),
+	info: (
+		<svg
+			className="size-6 shrink-0 text-muted-foreground"
+			viewBox="0 0 24 24"
+			fill="none"
+			aria-hidden="true"
+		>
+			<circle
+				cx="12"
+				cy="12"
+				r="10"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				className="opacity-30"
+			/>
+			<path
+				d="M12 11V16M12 8V8.01"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+			/>
+		</svg>
+	),
+	loading: (
+		<svg
+			className="size-6 shrink-0 text-secondary animate-spin"
+			viewBox="0 0 24 24"
+			fill="none"
+			aria-hidden="true"
+		>
+			<circle
+				cx="12"
+				cy="12"
+				r="9"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				className="opacity-20"
+			/>
+			<path
+				d="M12 3A9 9 0 0 1 21 12"
+				stroke="currentColor"
+				strokeWidth="1.5"
+				strokeLinecap="round"
+			/>
+		</svg>
+	),
+};
+
+/**
+ * Composant Toaster personnalisé pour Synclune - Bijoux Artisanaux
  *
- * Optimisé 2025 avec :
- * - Dark mode dynamique (next-themes)
- * - Position top-center (meilleur pour mobile e-commerce)
- * - Swipe tactile pour fermer
- * - Hotkey accessibilité (Alt+T)
- * - Offsets optimisés mobile/desktop
- * - Couleurs cohérentes avec le design system rose/doré
+ * Design minimaliste élégant avec :
+ * - Variables CSS shadcn/ui pour la cohérence du thème
+ * - Glassmorphism subtil (backdrop-blur)
+ * - Bordure gauche colorée pour distinction rapide
+ * - Icônes SVG outline fines (24px)
+ *
+ * @see https://sonner.emilkowal.ski/styling
  */
 export function AppToaster() {
 	const { resolvedTheme } = useTheme();
 
 	return (
 		<SonnerToaster
-			// Dark mode dynamique
 			theme={resolvedTheme as "light" | "dark" | "system"}
-
-			// Position optimale pour e-commerce mobile (ne masque pas le panier sticky)
 			position="top-center"
-
-			// Comportement
 			expand={false}
 			richColors={false}
 			closeButton={false}
-			gap={14}
-
-			// Offsets optimisés mobile/desktop
-			offset={32}
-			mobileOffset={20}
-
-			// Swipe tactile pour fermer (mobile-friendly)
+			gap={12}
+			offset={28}
+			mobileOffset={16}
 			swipeDirections={["bottom"]}
-
-			// Accessibilité clavier
-			hotkey={["⌥", "T"]}
-
-			// Durée et nombre de toasts
+			hotkey={["Alt", "T"]}
 			duration={4000}
 			visibleToasts={3}
-
+			// Styles inline avec variables CSS shadcn/ui (recommandé par Sonner)
+			style={
+				{
+					"--normal-bg": "hsl(var(--popover))",
+					"--normal-text": "hsl(var(--popover-foreground))",
+					"--normal-border": "hsl(var(--border))",
+					"--success-bg": "hsl(var(--primary) / 0.08)",
+					"--success-text": "hsl(var(--foreground))",
+					"--success-border": "hsl(var(--primary) / 0.2)",
+					"--error-bg": "hsl(var(--destructive) / 0.08)",
+					"--error-text": "hsl(var(--foreground))",
+					"--error-border": "hsl(var(--destructive) / 0.2)",
+					"--warning-bg": "hsl(var(--secondary) / 0.15)",
+					"--warning-text": "hsl(var(--foreground))",
+					"--warning-border": "hsl(var(--secondary) / 0.3)",
+					"--border-radius": "var(--radius-lg)",
+				} as React.CSSProperties
+			}
 			toastOptions={{
-				// Classes générales pour tous les toasts
 				classNames: {
-					toast:
-						"group toast group-[.toaster]:bg-card group-[.toaster]:text-card-foreground group-[.toaster]:border group-[.toaster]:shadow-lg group-[.toaster]:rounded-xl group-[.toaster]:p-4 group-[.toaster]:transition-all group-[.toaster]:duration-300 group-[.toaster]:ease-in-out group-[.toaster]:backdrop-blur-sm",
-					title:
-						"group-[.toast]:font-semibold group-[.toast]:text-base group-[.toast]:leading-tight group-[.toast]:mb-1",
-					description:
-						"group-[.toast]:text-sm group-[.toast]:leading-relaxed group-[.toast]:opacity-90 group-[.toast]:mt-1",
-					actionButton:
-						"group-[.toast]:bg-primary group-[.toast]:text-primary-foreground group-[.toast]:hover:bg-primary/90 group-[.toast]:font-medium group-[.toast]:rounded-lg group-[.toast]:px-4 group-[.toast]:py-2 group-[.toast]:text-sm group-[.toast]:transition-colors group-[.toast]:duration-200 group-[.toast]:shadow-sm",
-					cancelButton:
-						"group-[.toast]:bg-muted group-[.toast]:text-muted-foreground group-[.toast]:hover:bg-muted/80 group-[.toast]:font-medium group-[.toast]:rounded-lg group-[.toast]:px-4 group-[.toast]:py-2 group-[.toast]:text-sm group-[.toast]:transition-colors group-[.toast]:duration-200 group-[.toast]:border group-[.toast]:border-border",
+					// Base commune - Glassmorphism minimaliste
+					toast: [
+						"group toast",
+						"!bg-popover/90 !backdrop-blur-md",
+						"!border !border-border/50",
+						"!border-l-[3px]",
+						"!rounded-xl",
+						"!shadow-lg !shadow-black/[0.04] dark:!shadow-black/20",
+						"!p-4",
+						"!min-w-[320px] !max-w-[400px]",
+					].join(" "),
 
-					// Success - Vert doux avec accent rose (pour cohérence avec le thème)
-					success:
-						"group-[.toast]:border-emerald-200 dark:group-[.toast]:border-emerald-800 group-[.toast]:bg-emerald-50/80 dark:group-[.toast]:bg-emerald-950/80 group-[.toast]:text-emerald-900 dark:group-[.toast]:text-emerald-100",
+					// Typographie
+					title: "!font-medium !text-[15px] !leading-snug !tracking-tight",
+					description: "!text-sm !leading-relaxed !opacity-75 !mt-1",
 
-					// Error - Rouge rosé (cohérent avec la palette)
-					error:
-						"group-[.toast]:border-red-200 dark:group-[.toast]:border-red-800 group-[.toast]:bg-red-50/80 dark:group-[.toast]:bg-red-950/80 group-[.toast]:text-red-900 dark:group-[.toast]:text-red-100",
+					// Boutons d'action
+					actionButton: [
+						"!bg-primary !text-primary-foreground",
+						"hover:!bg-primary/90",
+						"!font-medium !rounded-lg !px-4 !py-2 !text-sm",
+						"!transition-colors !duration-200 !shadow-sm",
+					].join(" "),
 
-					// Warning - Orange chaud (lien avec le doré)
-					warning:
-						"group-[.toast]:border-amber-200 dark:group-[.toast]:border-amber-800 group-[.toast]:bg-amber-50/80 dark:group-[.toast]:bg-amber-950/80 group-[.toast]:text-amber-900 dark:group-[.toast]:text-amber-100",
+					cancelButton: [
+						"!text-sm !font-medium",
+						"!text-muted-foreground hover:!text-foreground",
+						"!transition-colors !duration-200",
+					].join(" "),
 
-					// Info - Indigo élégant (bijoux précieux, distinction claire avec primary)
-					info: "group-[.toast]:border-indigo-200 dark:group-[.toast]:border-indigo-800 group-[.toast]:bg-indigo-50/80 dark:group-[.toast]:bg-indigo-950/80 group-[.toast]:text-indigo-900 dark:group-[.toast]:text-indigo-100",
+					// Success - Rose primary Synclune
+					success: [
+						"!bg-primary/5 dark:!bg-primary/10",
+						"!border-primary/15 dark:!border-primary/20",
+						"!border-l-primary",
+					].join(" "),
 
-					// Loading - Doré (accent logo)
-					loading:
-						"group-[.toast]:border-yellow-200 dark:group-[.toast]:border-yellow-800 group-[.toast]:bg-yellow-50/80 dark:group-[.toast]:bg-yellow-950/80 group-[.toast]:text-yellow-900 dark:group-[.toast]:text-yellow-100",
+					// Error - Destructive
+					error: [
+						"!bg-destructive/5 dark:!bg-destructive/10",
+						"!border-destructive/15 dark:!border-destructive/20",
+						"!border-l-destructive",
+					].join(" "),
+
+					// Warning - Doré secondary Synclune
+					warning: [
+						"!bg-secondary/10 dark:!bg-secondary/15",
+						"!border-secondary/25 dark:!border-secondary/30",
+						"!border-l-secondary",
+					].join(" "),
+
+					// Info - Gris neutre élégant
+					info: [
+						"!bg-muted/50 dark:!bg-muted/60",
+						"!border-border",
+						"!border-l-muted-foreground/40",
+					].join(" "),
+
+					// Loading - Doré subtil
+					loading: [
+						"!bg-secondary/8 dark:!bg-secondary/12",
+						"!border-secondary/20 dark:!border-secondary/25",
+						"!border-l-secondary/60",
+					].join(" "),
 				},
-
-				// Durées personnalisées
 				duration: 4000,
 			}}
-
-			// Icônes personnalisées avec couleurs cohérentes
-			icons={{
-				success: (
-					<CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-				),
-				error: <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />,
-				warning: <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />,
-				info: <Info className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />,
-				loading: (
-					<Loader2 className="h-5 w-5 text-yellow-600 dark:text-yellow-400 animate-spin shrink-0" />
-				),
-			}}
+			icons={icons}
 		/>
 	);
 }

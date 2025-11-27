@@ -394,3 +394,53 @@
 		animation: none !important;
 	}
 }
+
+/* ========================================================================
+   TOAST ANIMATIONS - Design minimaliste élégant Synclune
+   ======================================================================== */
+
+/* Animation entrée toast - slide subtil + fade */
+@keyframes toast-slide-in {
+	0% {
+		opacity: 0;
+		transform: translateY(-8px) scale(0.98);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+/* Animation sortie toast - fade + slide léger */
+@keyframes toast-slide-out {
+	0% {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(-4px) scale(0.98);
+	}
+}
+
+/* Application des animations Sonner */
+[data-sonner-toast][data-mounted="true"] {
+	animation: toast-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-sonner-toast][data-removed="true"] {
+	animation: toast-slide-out 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Z-index garanti au-dessus des modals (z-50) */
+[data-sonner-toaster] {
+	z-index: 9999 !important;
+}
+
+/* Respect de prefers-reduced-motion pour les toasts */
+@media (prefers-reduced-motion: reduce) {
+	[data-sonner-toast][data-mounted="true"],
+	[data-sonner-toast][data-removed="true"] {
+		animation: none !important;
+	}
+}
