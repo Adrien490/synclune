@@ -24,10 +24,12 @@ export const parseFilters = (
 		}
 	});
 
-	// Parse status from direct param (not filter_)
+	// Parse status from direct param (not filter_), default to PUBLIC
 	const statusParam = getFirstParam(params.status);
 	if (statusParam && Object.values(CollectionStatus).includes(statusParam as CollectionStatus)) {
 		status = statusParam as CollectionStatus;
+	} else {
+		status = CollectionStatus.PUBLIC;
 	}
 
 	return {
