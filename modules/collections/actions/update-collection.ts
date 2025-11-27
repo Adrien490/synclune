@@ -49,6 +49,7 @@ export async function updateCollection(
 			slug: formData.get("slug"),
 			description: formData.get("description") || null,
 			imageUrl: formData.get("imageUrl") || null,
+			status: formData.get("status"),
 		};
 
 		// Valider les donnees
@@ -109,6 +110,7 @@ export async function updateCollection(
 				slug,
 				description: validatedData.description,
 				imageUrl: validatedData.imageUrl,
+				status: validatedData.status,
 			},
 		});
 

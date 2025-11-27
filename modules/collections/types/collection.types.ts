@@ -13,6 +13,7 @@ import {
 	updateCollectionSchema,
 	deleteCollectionSchema,
 	bulkDeleteCollectionsSchema,
+	updateCollectionStatusSchema,
 } from "../schemas/collection.schemas";
 
 // ============================================================================
@@ -65,3 +66,4 @@ export type CreateCollectionInput = z.infer<typeof createCollectionSchema>;
 export type UpdateCollectionInput = z.infer<typeof updateCollectionSchema>;
 export type DeleteCollectionInput = z.infer<typeof deleteCollectionSchema>;
 export type BulkDeleteCollectionsInput = z.infer<typeof bulkDeleteCollectionsSchema>;
+export type UpdateCollectionStatusInput = z.infer<typeof updateCollectionStatusSchema>;

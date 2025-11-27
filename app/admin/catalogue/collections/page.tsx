@@ -2,11 +2,12 @@ import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/paginati
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
-import { SortSelect } from "@/shared/components/sort-select";
+import { SelectFilter } from "@/shared/components/select-filter";
 import {
 	getCollections,
 	SORT_LABELS,
 } from "@/modules/collections/data/get-collections";
+import { getCollectionCountsByStatus } from "@/modules/collections/data/get-collection-counts-by-status";
 import { getFirstParam } from "@/shared/utils/params";
 import { Metadata } from "next";
 import { connection } from "next/server";
@@ -17,9 +18,13 @@ import { CollectionsDataTable } from "@/modules/collections/components/admin/col
 import { CollectionsDataTableSkeleton } from "@/modules/collections/components/admin/collections-data-table-skeleton";
 import { CollectionsFilterBadges } from "@/modules/collections/components/admin/collections-filter-badges";
 import { CollectionsFilterSheet } from "@/modules/collections/components/admin/collections-filter-sheet";
+import { CollectionStatusNavigation } from "@/modules/collections/components/admin/collection-status-navigation";
 import { CreateCollectionButton } from "@/modules/collections/components/admin/create-collection-button";
 import { DeleteCollectionAlertDialog } from "@/modules/collections/components/admin/delete-collection-alert-dialog";
-import { parseFilters } from "./_utils/params";
+import { ArchiveCollectionAlertDialog } from "@/modules/collections/components/admin/archive-collection-alert-dialog";
+import { BulkArchiveCollectionsAlertDialog } from "@/modules/collections/components/admin/bulk-archive-collections-alert-dialog";
+import { ChangeCollectionStatusAlertDialog } from "@/modules/collections/components/admin/change-collection-status-alert-dialog";
+import { parseFilters, parseStatus } from "./_utils/params";
 
 type CollectionFiltersSearchParams = {
 	filter_hasProducts?: string;
@@ -31,6 +36,7 @@ export type CollectionsSearchParams = {
 	perPage?: string;
 	sortBy?: string;
 	search?: string;
+	status?: string;
 } & CollectionFiltersSearchParams;
 
 export type ParsedCollectionFilters = {
@@ -67,6 +73,9 @@ export default async function CollectionsAdminPage({
 		| "products-ascending"
 		| "products-descending";
 	const search = getFirstParam(params.search);
+	const status = parseStatus(params);
+
+	const collectionCounts = await getCollectionCountsByStatus();
 
 	const collectionsPromise = getCollections({
 		cursor,
@@ -82,6 +91,9 @@ export default async function CollectionsAdminPage({
 			<CollectionFormDialog />
 			<DeleteCollectionAlertDialog />
 			<BulkDeleteCollectionsAlertDialog />
+			<ArchiveCollectionAlertDialog />
+			<BulkArchiveCollectionsAlertDialog />
+			<ChangeCollectionStatusAlertDialog />
 
 			<PageHeader
 				variant="compact"
@@ -91,6 +103,13 @@ export default async function CollectionsAdminPage({
 			/>
 
 			<div className="space-y-6">
+				{/* Onglets de statut */}
+				<CollectionStatusNavigation
+					currentStatus={status}
+					searchParams={params}
+					counts={collectionCounts}
+				/>
+
 				<DataTableToolbar ariaLabel="Barre d'outils de gestion des collections">
 					<div className="flex-1 w-full sm:max-w-md min-w-0">
 						<SearchForm
@@ -102,7 +121,8 @@ export default async function CollectionsAdminPage({
 					</div>
 
 					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-						<SortSelect
+						<SelectFilter
+							filterKey="sortBy"
 							label="Trier par"
 							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
 								value,

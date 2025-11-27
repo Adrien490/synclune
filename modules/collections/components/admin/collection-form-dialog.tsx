@@ -1,6 +1,8 @@
 "use client";
 
+import { CollectionStatus } from "@/app/generated/prisma/enums";
 import { CollectionImageUpload } from "@/modules/collections/components/collection-image-upload";
+import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Dialog,
@@ -10,6 +12,13 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Label } from "@/shared/components/ui/label";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/shared/components/ui/select";
 import { TextShimmer } from "@/shared/components/ui/text-shimmer";
 import { useAppForm } from "@/shared/components/forms";
 import { createCollection } from "@/modules/collections/actions/create-collection";
@@ -18,6 +27,7 @@ import { cn } from "@/shared/utils/cn";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { UploadDropzone, useUploadThing } from "@/shared/utils/uploadthing";
 import { Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useActionState } from "react";
@@ -33,10 +43,12 @@ interface CollectionDialogData extends Record<string, unknown> {
 		slug: string;
 		description: string | null;
 		imageUrl: string | null;
+		status: CollectionStatus;
 	};
 }
 
 export function CollectionFormDialog() {
+	const router = useRouter();
 	const { isOpen, close, data } =
 		useDialog<CollectionDialogData>(COLLECTION_DIALOG_ID);
 	const collection = data?.collection;
@@ -52,6 +64,7 @@ export function CollectionFormDialog() {
 			name: "",
 			description: "",
 			imageUrl: "",
+			status: CollectionStatus.DRAFT as CollectionStatus,
 		},
 	});
 
@@ -61,9 +74,13 @@ export function CollectionFormDialog() {
 			createCollection,
 			createToastCallbacks({
 				loadingMessage: "Création de la collection...",
-				onSuccess: () => {
+				onSuccess: (result) => {
 					close();
 					form.reset();
+					const data = result?.data as { collectionStatus?: CollectionStatus } | undefined;
+					if (data?.collectionStatus) {
+						router.push(`/admin/catalogue/collections?status=${data.collectionStatus}`);
+					}
 				},
 			})
 		),
@@ -94,12 +111,14 @@ export function CollectionFormDialog() {
 				name: collection.name,
 				description: collection.description ?? "",
 				imageUrl: collection.imageUrl ?? "",
+				status: collection.status,
 			});
 		} else {
 			form.reset({
 				name: "",
 				description: "",
 				imageUrl: "",
+				status: CollectionStatus.DRAFT,
 			});
 		}
 	}, [collection, form]);
@@ -189,6 +208,13 @@ export function CollectionFormDialog() {
 								<input type="hidden" name="imageUrl" value={imageUrl} />
 							) : null
 						}
+					</form.Subscribe>
+
+					{/* Champ caché pour sérialiser le status */}
+					<form.Subscribe selector={(state) => [state.values.status]}>
+						{([status]) => (
+							<input type="hidden" name="status" value={status} />
+						)}
 					</form.Subscribe>
 
 					<RequiredFieldsNote />
@@ -398,9 +424,43 @@ export function CollectionFormDialog() {
 										label="Description"
 										placeholder="Décrivez cette collection..."
 										disabled={isPending}
-										rows={8}
+										rows={5}
 									/>
 								)}
+							</form.AppField>
+
+							{/* Status Field - ARCHIVED only in edit mode */}
+							<form.AppField name="status">
+								{(field) => {
+									const availableStatuses = isUpdateMode
+										? Object.values(CollectionStatus)
+										: [CollectionStatus.DRAFT, CollectionStatus.PUBLIC];
+
+									return (
+										<div className="space-y-2">
+											<Label htmlFor="collection-status">Statut</Label>
+											<Select
+												value={field.state.value}
+												onValueChange={(value) => field.handleChange(value as CollectionStatus)}
+												disabled={isPending}
+											>
+												<SelectTrigger id="collection-status" className="w-full">
+													<SelectValue placeholder="Sélectionner un statut" />
+												</SelectTrigger>
+												<SelectContent>
+													{availableStatuses.map((status) => (
+														<SelectItem key={status} value={status}>
+															{COLLECTION_STATUS_LABELS[status]}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+											<p className="text-xs text-muted-foreground">
+												Seules les collections publiées sont visibles sur le site
+											</p>
+										</div>
+									);
+								}}
 							</form.AppField>
 						</div>
 					</div>

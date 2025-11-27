@@ -24,6 +24,8 @@ export {
 	COLLECTIONS_SORT_OPTIONS,
 	GET_COLLECTIONS_DEFAULT_PER_PAGE,
 	GET_COLLECTIONS_SORT_FIELDS,
+	COLLECTION_STATUS_LABELS,
+	COLLECTION_STATUS_COLORS,
 } from "../constants/collection.constants";
 export { collectionFiltersSchema, collectionSortBySchema } from "../schemas/collection.schemas";
 export type {

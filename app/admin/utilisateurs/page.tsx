@@ -1,7 +1,7 @@
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
-import { SortSelect } from "@/shared/components/sort-select";
+import { SelectFilter } from "@/shared/components/select-filter";
 import { TabNavigation } from "@/shared/components/tab-navigation";
 import { Button } from "@/shared/components/ui/button";
 import { getUsers } from "@/modules/users/data/get-users";
@@ -124,7 +124,8 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
 					</div>
 
 					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-						<SortSelect
+						<SelectFilter
+							filterKey="sortBy"
 							label="Trier par"
 							options={sortOptions}
 							placeholder="Plus récents"

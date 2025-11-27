@@ -1,7 +1,7 @@
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
-import { SortSelect } from "@/shared/components/sort-select";
+import { SelectFilter } from "@/shared/components/select-filter";
 import { getRefunds, SORT_LABELS } from "@/modules/refund/data/get-refunds";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -77,7 +77,8 @@ export default async function RefundsAdminPage({
 					</div>
 
 					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-						<SortSelect
+						<SelectFilter
+							filterKey="sortBy"
 							label="Trier par"
 							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
 								value,

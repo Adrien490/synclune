@@ -1,3 +1,4 @@
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import {
 	getLocalBusinessSchema,
 	getWebSiteSchema,
@@ -95,6 +96,7 @@ export default async function Page() {
 						sortBy: "name-ascending",
 						filters: {
 							hasProducts: true,
+							status: CollectionStatus.PUBLIC,
 						},
 					})}
 				/>

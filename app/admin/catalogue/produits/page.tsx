@@ -1,7 +1,7 @@
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
-import { SortSelect } from "@/shared/components/sort-select";
+import { SelectFilter } from "@/shared/components/select-filter";
 import { Button } from "@/shared/components/ui/button";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
@@ -57,8 +57,8 @@ export type ProductsSearchParams = {
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Bijoux - Administration",
-	description: "Gérer les bijoux du catalogue",
+	title: "Produits - Administration",
+	description: "Gérer les produits du catalogue",
 };
 
 type ProductsAdminPageProps = {
@@ -131,12 +131,12 @@ export default async function ProductsAdminPage({
 		<>
 			<PageHeader
 				variant="compact"
-				title="Bijoux"
-				description="Gérez votre catalogue de bijoux"
+				title="Produits"
+				description="Gérez votre catalogue de produits"
 				actions={
 					<Button asChild>
 						<Link href="/admin/catalogue/produits/nouveau">
-							Nouveau bijou
+							Nouveau produit
 						</Link>
 					</Button>
 				}
@@ -162,7 +162,8 @@ export default async function ProductsAdminPage({
 
 					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
 						<ProductsQuickFilters />
-						<SortSelect
+						<SelectFilter
+							filterKey="sortBy"
 							label="Trier par"
 							options={GET_PRODUCTS_SORT_FIELDS.map((field) => ({
 								value: field,

@@ -1,3 +1,4 @@
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import type { Metadata } from "next";
 
@@ -9,7 +10,8 @@ export async function generateCollectionMetadata({
 	const { slug } = await params;
 	const collection = await getCollectionBySlug({ slug });
 
-	if (!collection) {
+	// Vérifier que la collection existe et est publiée
+	if (!collection || collection.status !== CollectionStatus.PUBLIC) {
 		return {
 			title: "Collection non trouvée - Synclune",
 			description: "Cette collection n'existe pas ou n'est plus disponible.",

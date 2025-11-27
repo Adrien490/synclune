@@ -37,6 +37,7 @@ export async function CollectionsDataTable({
 	const collectionsData = collections.map((collection) => ({
 		id: collection.id,
 		name: collection.name,
+		status: collection.status,
 		productsCount: collection._count.products,
 	}));
 
@@ -69,10 +70,7 @@ export async function CollectionsDataTable({
 	return (
 		<Card>
 			<CardContent>
-				<CollectionsSelectionToolbar
-					collectionIds={collectionIds}
-					collections={collectionsData}
-				/>
+				<CollectionsSelectionToolbar collections={collectionsData} />
 				<div className="overflow-x-auto">
 					<Table role="table" aria-label="Liste des collections" className="min-w-full table-fixed">
 						<TableHeader>
@@ -197,6 +195,7 @@ export async function CollectionsDataTable({
 													collectionSlug={collection.slug}
 													collectionDescription={collection.description}
 													collectionImageUrl={collection.imageUrl}
+													collectionStatus={collection.status}
 													productsCount={productsCount}
 												/>
 											</div>

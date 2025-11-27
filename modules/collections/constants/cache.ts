@@ -13,6 +13,9 @@ export const COLLECTIONS_CACHE_TAGS = {
 	/** Liste de toutes les collections */
 	LIST: "collections-list",
 
+	/** Compteurs par statut */
+	COUNTS: "collection-counts",
+
 	/** Détail d'une collection spécifique */
 	DETAIL: (slug: string) => `collection-${slug}`,
 
@@ -60,6 +63,7 @@ export function cacheCollectionDetail(slug: string) {
 export function getCollectionInvalidationTags(collectionSlug: string): string[] {
 	return [
 		COLLECTIONS_CACHE_TAGS.LIST,
+		COLLECTIONS_CACHE_TAGS.COUNTS,
 		COLLECTIONS_CACHE_TAGS.DETAIL(collectionSlug),
 		COLLECTIONS_CACHE_TAGS.PRODUCTS(collectionSlug),
 		PRODUCTS_CACHE_TAGS.LIST, // Les produits affichent leur collection

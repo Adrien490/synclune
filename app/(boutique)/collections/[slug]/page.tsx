@@ -1,3 +1,4 @@
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import type { ProductFiltersSearchParams } from "@/app/(boutique)/produits/page";
 import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
@@ -45,7 +46,8 @@ export default async function CollectionPage({
 	// Récupérer la collection
 	const collection = await getCollectionBySlug({ slug });
 
-	if (!collection) {
+	// Vérifier que la collection existe et est publiée
+	if (!collection || collection.status !== CollectionStatus.PUBLIC) {
 		notFound();
 	}
 

@@ -31,6 +31,7 @@ export async function createCollection(
 			name: formData.get("name"),
 			description: formData.get("description") || null,
 			imageUrl: formData.get("imageUrl") || null,
+			status: formData.get("status") || undefined,
 		};
 
 		// Valider les donnees
@@ -59,6 +60,7 @@ export async function createCollection(
 				slug,
 				description: validatedData.description,
 				imageUrl: validatedData.imageUrl,
+				status: validatedData.status,
 			},
 		});
 
@@ -69,6 +71,9 @@ export async function createCollection(
 		return {
 			status: ActionStatus.SUCCESS,
 			message: "Collection creee avec succes",
+			data: {
+				collectionStatus: validatedData.status,
+			},
 		};
 	} catch (error) {
 // console.error("Erreur lors de la creation de la collection:", error);

@@ -4,6 +4,7 @@ import { fetchStripePayments } from "@/modules/payments/data/get-stripe-payments
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { StripePaymentsDataTable } from "@/modules/payments/components/admin/stripe-payments-data-table";
+import { StripePaymentsDataTableSkeleton } from "@/modules/payments/components/admin/stripe-payments-data-table-skeleton";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -63,7 +64,7 @@ export default async function StripePaymentsPage({
 				description="Gestion et suivi des paiements"
 			/>
 
-			<Suspense fallback={<div>Chargement...</div>}>
+			<Suspense fallback={<StripePaymentsDataTableSkeleton />}>
 				<StripePaymentsDataTable paymentsPromise={paymentsPromise} />
 			</Suspense>
 		</>

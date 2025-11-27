@@ -135,6 +135,12 @@ enum ProductStatus {
   ARCHIVED
 }
 
+enum CollectionStatus {
+  DRAFT
+  PUBLIC
+  ARCHIVED
+}
+
 model Color {
   id        String       @id @default(cuid())
   slug      String       @unique
@@ -149,18 +155,20 @@ model Color {
 }
 
 model Collection {
-  id          String    @id @default(cuid())
-  name        String    @db.VarChar(100)
-  slug        String    @unique
-  description String?   @db.Text
+  id          String           @id @default(cuid())
+  name        String           @db.VarChar(100)
+  slug        String           @unique
+  description String?          @db.Text
   imageUrl    String?
+  status      CollectionStatus @default(DRAFT)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  products    Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
 
   @@index([name, id])
   @@index([createdAt, id])
+  @@index([status, id])
 }
 
 model Product {

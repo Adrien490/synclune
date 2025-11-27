@@ -1,3 +1,4 @@
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
 import {
 	GET_COLLECTIONS_DEFAULT_PER_PAGE,
@@ -5,6 +6,15 @@ import {
 	GET_COLLECTIONS_MAX_RESULTS_PER_PAGE,
 	GET_COLLECTIONS_SORT_FIELDS,
 } from "../constants/collection.constants";
+
+// ============================================================================
+// STATUS SCHEMA
+// ============================================================================
+
+export const collectionStatusSchema = z
+	.enum([CollectionStatus.PUBLIC, CollectionStatus.DRAFT, CollectionStatus.ARCHIVED])
+	.optional()
+	.default(CollectionStatus.DRAFT);
 
 // ============================================================================
 // FILTERS SCHEMA
@@ -20,6 +30,9 @@ export const collectionFiltersSchema = z.object({
 			if (val === "false") return false;
 			return undefined;
 		}),
+	status: z
+		.union([z.nativeEnum(CollectionStatus), z.array(z.nativeEnum(CollectionStatus))])
+		.optional(),
 });
 
 // ============================================================================
@@ -98,6 +111,7 @@ export const createCollectionSchema = z.object({
 	name: collectionNameSchema,
 	description: collectionDescriptionSchema,
 	imageUrl: collectionImageUrlSchema,
+	status: collectionStatusSchema,
 });
 
 export const updateCollectionSchema = z.object({
@@ -106,6 +120,12 @@ export const updateCollectionSchema = z.object({
 	slug: collectionSlugSchema,
 	description: collectionDescriptionSchema,
 	imageUrl: collectionImageUrlSchema,
+	status: z.nativeEnum(CollectionStatus),
+});
+
+export const updateCollectionStatusSchema = z.object({
+	id: z.string().cuid("ID invalide"),
+	status: z.nativeEnum(CollectionStatus),
 });
 
 export const deleteCollectionSchema = z.object({
@@ -116,4 +136,11 @@ export const bulkDeleteCollectionsSchema = z.object({
 	ids: z
 		.array(z.string().cuid2({ message: "ID de collection invalide" }))
 		.min(1, "Au moins une collection doit etre selectionnee"),
+});
+
+export const bulkArchiveCollectionsSchema = z.object({
+	collectionIds: z
+		.array(z.string().cuid2({ message: "ID de collection invalide" }))
+		.min(1, "Au moins une collection doit etre selectionnee"),
+	targetStatus: z.enum([CollectionStatus.ARCHIVED, CollectionStatus.PUBLIC, CollectionStatus.DRAFT]),
 });

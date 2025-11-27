@@ -1,3 +1,4 @@
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { PageHeader } from "@/shared/components/page-header";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { CollectionGrid } from "@/modules/collections/components/collection-grid";
@@ -74,7 +75,7 @@ export default async function CollectionsPage({
 	) as "forward" | "backward";
 	const perPage = Number(params.perPage) || GET_COLLECTIONS_DEFAULT_PER_PAGE;
 
-	// Récupérer les collections (uniquement celles avec des produits)
+	// Récupérer les collections (uniquement celles publiées avec des produits)
 	const collectionsPromise = getCollections({
 		cursor,
 		direction,
@@ -82,6 +83,7 @@ export default async function CollectionsPage({
 		sortBy: "name-ascending",
 		filters: {
 			hasProducts: true,
+			status: CollectionStatus.PUBLIC,
 		},
 	});
 

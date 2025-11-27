@@ -10,6 +10,7 @@ export const GET_COLLECTION_SELECT = {
 	name: true,
 	description: true,
 	imageUrl: true,
+	status: true,
 	createdAt: true,
 	updatedAt: true,
 	products: {
@@ -60,6 +61,7 @@ export const GET_COLLECTIONS_SELECT = {
 	name: true,
 	description: true,
 	imageUrl: true,
+	status: true,
 	createdAt: true,
 	updatedAt: true,
 	_count: {
@@ -111,3 +113,14 @@ export const COLLECTIONS_SORT_LABELS = {
 	[COLLECTIONS_SORT_OPTIONS.PRODUCTS_ASC]: "Moins de produits",
 	[COLLECTIONS_SORT_OPTIONS.PRODUCTS_DESC]: "Plus de produits",
 } as const;
+
+// ============================================================================
+// STATUS LABELS & COLORS
+// Note: Client-safe constants are in collection-status.constants.ts
+// Re-export for backward compatibility with server components
+// ============================================================================
+
+export {
+	COLLECTION_STATUS_LABELS,
+	COLLECTION_STATUS_COLORS,
+} from "./collection-status.constants";
