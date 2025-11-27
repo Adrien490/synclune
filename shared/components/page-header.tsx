@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ReactNode, ViewTransition } from "react";
+import { ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
 
 import { cn } from "@/shared/utils/cn";
@@ -178,13 +178,12 @@ export function PageHeader({
 									</nav>
 
 									{/* Desktop : Breadcrumb complet avec schema.org (≥640px) */}
-									<ViewTransition name="page-breadcrumbs">
-										<nav
-											aria-label="Fil d'Ariane"
-											className="hidden sm:block text-sm leading-normal text-muted-foreground"
-											itemScope
-											itemType="https://schema.org/BreadcrumbList"
-										>
+									<nav
+										aria-label="Fil d'Ariane"
+										className="hidden sm:block text-sm leading-normal text-muted-foreground"
+										itemScope
+										itemType="https://schema.org/BreadcrumbList"
+									>
 										<ol className="flex items-center gap-2 list-none p-0 m-0">
 											{/* Accueil (position 1) */}
 											<li
@@ -246,8 +245,7 @@ export function PageHeader({
 												</li>
 											))}
 										</ol>
-										</nav>
-									</ViewTransition>
+									</nav>
 								</>
 							)}
 

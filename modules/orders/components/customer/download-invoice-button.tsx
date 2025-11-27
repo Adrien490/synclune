@@ -3,10 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Download, FileText, Loader2 } from "lucide-react";
-import { useState } from "react";
-import { downloadInvoice } from "@/modules/orders/actions/download-invoice";
-import { ActionStatus } from "@/shared/types/server-action";
-import { toast } from "sonner";
+import { useDownloadInvoice } from "@/modules/orders/hooks/customer/use-download-invoice";
 
 interface DownloadInvoiceButtonProps {
 	orderId: string;
@@ -17,30 +14,11 @@ export function DownloadInvoiceButton({
 	orderId,
 	invoiceNumber,
 }: DownloadInvoiceButtonProps) {
-	const [isLoading, setIsLoading] = useState(false);
+	const { download, isPending } = useDownloadInvoice();
 
 	if (!invoiceNumber) {
 		return null;
 	}
-
-	const handleDownload = async () => {
-		setIsLoading(true);
-		try {
-			const result = await downloadInvoice(orderId);
-
-			if (result.status === ActionStatus.SUCCESS && result.data) {
-				const data = result.data as { url: string };
-				// Open the PDF in a new tab
-				window.open(data.url, "_blank");
-			} else {
-				toast.error(result.message || "Impossible de télécharger la facture");
-			}
-		} catch (error) {
-			toast.error("Une erreur est survenue");
-		} finally {
-			setIsLoading(false);
-		}
-	};
 
 	return (
 		<Card>
@@ -56,10 +34,10 @@ export function DownloadInvoiceButton({
 					<Button
 						variant="outline"
 						size="sm"
-						onClick={handleDownload}
-						disabled={isLoading}
+						onClick={() => download(orderId)}
+						disabled={isPending}
 					>
-						{isLoading ? (
+						{isPending ? (
 							<Loader2 className="h-4 w-4 animate-spin" />
 						) : (
 							<>

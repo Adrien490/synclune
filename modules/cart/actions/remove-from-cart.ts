@@ -64,7 +64,9 @@ export async function removeFromCart(
 		// 4. Récupérer l'item avec son panier
 		const cartItem = await prisma.cartItem.findUnique({
 			where: { id: validatedData.cartItemId },
-			include: { cart: true },
+			include: {
+				cart: true,
+			},
 		});
 
 		if (!cartItem) {
@@ -81,26 +83,25 @@ export async function removeFromCart(
 			return { status: ActionStatus.ERROR, message: "Accès non autorisé" };
 		}
 
-		// 6. Transaction: Supprimer l'item et mettre à jour le panier
-		await prisma.$transaction([
-			prisma.cartItem.delete({
+		// 6. Supprimer l'item du panier
+		await prisma.$transaction(async (tx) => {
+			await tx.cartItem.delete({
 				where: { id: validatedData.cartItemId },
-			}),
-			prisma.cart.update({
+			});
+
+			await tx.cart.update({
 				where: { id: cartItem.cartId },
 				data: {
 					updatedAt: new Date(),
 				},
-			}),
-		]);
+			});
+		});
 
 		// 7. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
 		updateTags(tags);
 
-		// 8. Revalidate layout to update CartBadge
-
-		// 9. Success - Return ActionState format
+		// 8. Success - Return ActionState format
 		return {
 			status: ActionStatus.SUCCESS,
 			message: "Article supprimé du panier",

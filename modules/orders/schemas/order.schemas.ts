@@ -304,6 +304,30 @@ export const markAsShippedSchema = z.object({
 });
 
 // ============================================================================
+// UPDATE TRACKING SCHEMA
+// ============================================================================
+
+/**
+ * Schema pour mettre à jour les informations de suivi d'une commande déjà expédiée
+ * Permet de modifier le numéro de suivi, l'URL, le transporteur et la date de livraison estimée
+ */
+export const updateTrackingSchema = z.object({
+	id: z.cuid2(),
+	trackingNumber: z.string().min(1, "Le numéro de suivi est requis").max(100),
+	trackingUrl: z.string().url().optional().or(z.literal("")),
+	carrier: z.string().max(100).optional(),
+	estimatedDelivery: z.coerce.date().optional(),
+	sendEmail: z
+		.union([z.boolean(), z.enum(["true", "false"])])
+		.optional()
+		.default(true)
+		.transform((val) => {
+			if (typeof val === "boolean") return val;
+			return val === "true";
+		}),
+});
+
+// ============================================================================
 // MARK AS DELIVERED SCHEMA
 // ============================================================================
 
@@ -313,4 +337,12 @@ export const markAsShippedSchema = z.object({
  */
 export const markAsDeliveredSchema = z.object({
 	id: z.cuid2(),
+	sendEmail: z
+		.union([z.boolean(), z.enum(["true", "false"])])
+		.optional()
+		.default(true)
+		.transform((val) => {
+			if (typeof val === "boolean") return val;
+			return val === "true";
+		}),
 });

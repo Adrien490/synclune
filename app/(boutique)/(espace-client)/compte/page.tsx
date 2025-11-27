@@ -1,11 +1,14 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { getUserAccounts } from "@/modules/users/data/get-user-accounts";
+import {
+	AccountStatsCards,
+	AccountStatsCardsSkeleton,
+} from "@/modules/users/components/account-stats-cards";
+import { QuickLinksCard } from "@/modules/users/components/quick-links-card";
 import { AddressInfoCard } from "@/modules/users/components/address/address-info-card";
 import { AddressInfoCardSkeleton } from "@/modules/users/components/address/address-info-card-skeleton";
 import { getUserAddresses } from "@/modules/users/data/get-user-addresses";
-import { LogoutButton } from "@/modules/auth/components/logout-button";
 import { RecentOrders } from "@/modules/orders/components/recent-orders";
 import { RecentOrdersSkeleton } from "@/modules/orders/components/recent-orders-skeleton";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
@@ -28,19 +31,15 @@ export const metadata: Metadata = {
 };
 
 export default async function AccountPage() {
+	const userPromise = getCurrentUser();
 	const ordersPromise = getUserOrders({
-		perPage: 5,
+		perPage: 5, // Fetch 5 but display only 3
 		sortBy: "created-descending",
 		direction: "forward",
 	});
-	const userPromise = getCurrentUser();
 	const addressesPromise = getUserAddresses();
 
-	const [user, accounts] = await Promise.all([userPromise, getUserAccounts()]);
-
-	const hasPasswordAccount = accounts.some(
-		(account) => account.providerId === "credential"
-	);
+	const user = await userPromise;
 
 	const breadcrumbs = [{ label: "Mon compte", href: "/compte" }];
 
@@ -48,39 +47,27 @@ export default async function AccountPage() {
 		<>
 			<PageHeader
 				title="Mon compte"
-				description="Gérez vos commandes et vos informations personnelles"
+				description="Gérez vos informations et suivez vos commandes"
 				breadcrumbs={breadcrumbs}
 			/>
 
 			<section className="bg-background py-8 relative z-10">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					{/* Navigation rapide */}
-					<div className="flex flex-wrap gap-3 mb-8">
-						<Button variant="outline" size="sm" asChild>
-							<Link href="/commandes">Mes commandes</Link>
-						</Button>
-						<Button variant="outline" size="sm" asChild>
-							<Link href="/liste-de-souhaits">Liste de souhaits</Link>
-						</Button>
-						<Button variant="outline" size="sm" asChild>
-							<Link href="/adresses">Adresses</Link>
-						</Button>
-						<Button variant="outline" size="sm" asChild>
-							<Link href="/parametres">Paramètres</Link>
-						</Button>
-						<LogoutButton>
-							<Button variant="outline" size="sm">
-								Se déconnecter
-							</Button>
-						</LogoutButton>
-					</div>
+					{/* Stats */}
+					<Suspense fallback={<AccountStatsCardsSkeleton />}>
+						<AccountStatsCards userPromise={getCurrentUser()} />
+					</Suspense>
 
 					{/* Contenu principal */}
-					<div className="grid gap-6 lg:grid-cols-3">
+					<div className="grid gap-6 lg:grid-cols-3 mt-6">
 						{/* Commandes récentes - 2/3 */}
 						<div className="lg:col-span-2">
 							<Suspense fallback={<RecentOrdersSkeleton />}>
-								<RecentOrders ordersPromise={ordersPromise} />
+								<RecentOrders
+									ordersPromise={ordersPromise}
+									limit={3}
+									showViewAll
+								/>
 							</Suspense>
 						</div>
 
@@ -100,15 +87,13 @@ export default async function AccountPage() {
 											{user?.email || "Non défini"}
 										</p>
 									</div>
-									{hasPasswordAccount && (
-										<Button
-											asChild
-											variant="link"
-											className="px-0 h-auto mt-2"
-										>
-											<Link href="/parametres">Modifier mes informations</Link>
-										</Button>
-									)}
+									<Button
+										asChild
+										variant="link"
+										className="px-0 h-auto mt-2"
+									>
+										<Link href="/parametres">Modifier mes informations</Link>
+									</Button>
 								</CardContent>
 							</Card>
 
@@ -116,6 +101,9 @@ export default async function AccountPage() {
 							<Suspense fallback={<AddressInfoCardSkeleton />}>
 								<AddressInfoCard addressesPromise={addressesPromise} />
 							</Suspense>
+
+							{/* Navigation rapide */}
+							<QuickLinksCard />
 						</div>
 					</div>
 				</div>

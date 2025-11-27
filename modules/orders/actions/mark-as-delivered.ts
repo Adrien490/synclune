@@ -6,6 +6,7 @@ import {
 } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/shared/lib/guards";
 import { prisma } from "@/shared/lib/prisma";
+import { sendDeliveryConfirmationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
@@ -23,6 +24,7 @@ import { markAsDeliveredSchema } from "../schemas/order.schemas";
  * - Passe OrderStatus à DELIVERED
  * - Passe FulfillmentStatus à DELIVERED
  * - Enregistre la date de livraison effective
+ * - Envoie un email au client si sendEmail = true
  */
 export async function markAsDelivered(
 	_prevState: ActionState | undefined,
@@ -38,8 +40,12 @@ export async function markAsDelivered(
 		}
 
 		const id = formData.get("id") as string;
+		const sendEmail = formData.get("sendEmail") as string | null;
 
-		const result = markAsDeliveredSchema.safeParse({ id });
+		const result = markAsDeliveredSchema.safeParse({
+			id,
+			sendEmail: sendEmail || "true",
+		});
 		if (!result.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
@@ -53,6 +59,9 @@ export async function markAsDelivered(
 				id: true,
 				orderNumber: true,
 				status: true,
+				customerEmail: true,
+				customerName: true,
+				shippingFirstName: true,
 			},
 		});
 
@@ -79,21 +88,55 @@ export async function markAsDelivered(
 			};
 		}
 
+		const deliveryDate = new Date();
+
 		// Mettre à jour la commande
 		await prisma.order.update({
 			where: { id },
 			data: {
 				status: OrderStatus.DELIVERED,
 				fulfillmentStatus: FulfillmentStatus.DELIVERED,
-				actualDelivery: new Date(),
+				actualDelivery: deliveryDate,
 			},
 		});
 
 		revalidatePath("/admin/ventes/commandes");
+		revalidatePath(`/compte/commandes/${order.orderNumber}`);
+
+		// Envoyer l'email de confirmation de livraison au client
+		if (result.data.sendEmail && order.customerEmail) {
+			// Extraire le prénom du customerName ou utiliser shippingFirstName
+			const customerFirstName =
+				order.customerName?.split(" ")[0] ||
+				order.shippingFirstName ||
+				"Client";
+
+			// Formater la date de livraison
+			const deliveryDateStr = deliveryDate.toLocaleDateString("fr-FR", {
+				weekday: "long",
+				year: "numeric",
+				month: "long",
+				day: "numeric",
+			});
+
+			// URL vers la page de détail de la commande
+			const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000";
+			const orderDetailsUrl = `${baseUrl}/compte/commandes/${order.orderNumber}`;
+
+			await sendDeliveryConfirmationEmail({
+				to: order.customerEmail,
+				orderNumber: order.orderNumber,
+				customerName: customerFirstName,
+				deliveryDate: deliveryDateStr,
+				orderDetailsUrl,
+			});
+		}
+
+		const emailSent = result.data.sendEmail ? " Email envoyé au client." : "";
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} marquée comme livrée.`,
+			message: `Commande ${order.orderNumber} marquée comme livrée.${emailSent}`,
 		};
 	} catch (error) {
 		console.error("[MARK_AS_DELIVERED]", error);

@@ -6,6 +6,7 @@ import { CancelOrderAlertDialog } from "@/modules/orders/components/admin/cancel
 import { MarkAsPaidAlertDialog } from "@/modules/orders/components/admin/mark-as-paid-alert-dialog";
 import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
 import { MarkAsDeliveredAlertDialog } from "@/modules/orders/components/admin/mark-as-delivered-alert-dialog";
+import { UpdateTrackingDialog } from "@/modules/orders/components/admin/update-tracking-dialog";
 
 type OrderDetailPageParams = Promise<{ id: string }>;
 
@@ -50,6 +51,7 @@ export default async function OrderDetailPage({
 			<MarkAsPaidAlertDialog />
 			<MarkAsShippedDialog />
 			<MarkAsDeliveredAlertDialog />
+			<UpdateTrackingDialog />
 		</>
 	);
 }

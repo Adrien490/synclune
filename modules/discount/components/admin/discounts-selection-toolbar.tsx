@@ -13,10 +13,8 @@ import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { MoreVertical, Trash2, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
-import { useTransition } from "react";
 import { BULK_DELETE_DISCOUNTS_DIALOG_ID } from "./bulk-delete-discounts-alert-dialog";
-import { bulkToggleDiscountStatus } from "@/modules/discount/actions/bulk-toggle-discount-status";
-import { ActionStatus } from "@/shared/types/server-action";
+import { useBulkToggleDiscountStatus } from "@/modules/discount/hooks/use-bulk-toggle-discount-status";
 
 interface DiscountsSelectionToolbarProps {
 	discountIds: string[];
@@ -32,7 +30,10 @@ export function DiscountsSelectionToolbar({
 }: DiscountsSelectionToolbarProps) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_DISCOUNTS_DIALOG_ID);
-	const [isPending, startTransition] = useTransition();
+
+	const { toggle, isPending } = useBulkToggleDiscountStatus({
+		onSuccess: clearSelection,
+	});
 
 	const handleDelete = () => {
 		if (selectedItems.length === 0) {
@@ -60,23 +61,7 @@ export function DiscountsSelectionToolbar({
 			return;
 		}
 
-		startTransition(async () => {
-			const formData = new FormData();
-			selectedItems.forEach((id) => formData.append("ids", id));
-			formData.append("isActive", activate.toString());
-
-			const result = await bulkToggleDiscountStatus(undefined, formData);
-			if (result.status === ActionStatus.SUCCESS) {
-				toast.success(
-					activate
-						? `${selectedItems.length} code(s) promo activé(s)`
-						: `${selectedItems.length} code(s) promo désactivé(s)`
-				);
-				clearSelection();
-			} else {
-				toast.error(result.message || "Une erreur est survenue");
-			}
-		});
+		toggle(selectedItems, activate);
 	};
 
 	if (selectedItems.length === 0) return null;

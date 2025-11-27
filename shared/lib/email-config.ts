@@ -43,6 +43,8 @@ export const EMAIL_SUBJECTS = {
 	PASSWORD_CHANGED: "Votre mot de passe a été modifié - Synclune",
 	ORDER_CONFIRMATION: "Confirmation de commande - Synclune",
 	ORDER_SHIPPED: "Votre commande a été expédiée - Synclune",
+	ORDER_TRACKING_UPDATE: "Mise à jour du suivi de votre commande - Synclune",
+	ORDER_DELIVERED: "Votre commande a été livrée - Synclune",
 	NEWSLETTER: "Newsletter - Synclune",
 	NEWSLETTER_CONFIRMATION:
 		"Confirmez votre inscription à la newsletter Synclune ✨",

@@ -95,7 +95,7 @@ export async function addToCart(
 			}
 		}
 
-		// 6. Transaction: Trouver ou créer le panier, puis ajouter/mettre à jour l'item
+		// 6. Transaction: Trouver ou créer le panier, ajouter/mettre à jour l'item
 		const transactionResult = await prisma.$transaction(async (tx) => {
 			// 6a. Upsert panier
 			const cart = await tx.cart.upsert({
@@ -128,37 +128,59 @@ export async function addToCart(
 			if (existingItem) {
 				newQuantity = existingItem.quantity + validatedData.quantity;
 
-				// Vérifier le stock pour la nouvelle quantité
-				const stockCheck = await validateSkuAndStock({
-					skuId: validatedData.skuId,
-					quantity: newQuantity,
+				// Vérifier le stock disponible pour la nouvelle quantité totale
+				const sku = await tx.productSku.findUnique({
+					where: { id: validatedData.skuId },
+					select: { inventory: true, isActive: true },
 				});
 
-				if (!stockCheck.success) {
-					// Message personnalisé pour indiquer qu'il y a déjà des articles dans le panier
+				if (!sku || !sku.isActive) {
+					throw new Error("Ce produit n'est plus disponible");
+				}
+
+				if (sku.inventory < newQuantity) {
 					const currentInCart = existingItem.quantity;
-					const available = skuValidation.data?.sku.inventory ?? 0;
 					throw new Error(
 						`Vous avez déjà ${currentInCart} article${currentInCart > 1 ? "s" : ""} dans votre panier. ` +
-						`Stock disponible total : ${available} exemplaire${available > 1 ? "s" : ""}.`
+						`Stock disponible : ${sku.inventory} exemplaire${sku.inventory > 1 ? "s" : ""}.`
 					);
 				}
 
+				// Mettre à jour le CartItem
 				cartItem = await tx.cartItem.update({
 					where: { id: existingItem.id },
 					data: {
 						quantity: newQuantity,
 					},
 				});
+
 				isUpdate = true;
 			} else {
 				newQuantity = validatedData.quantity;
+
+				// Récupérer le SKU pour le prix
+				const sku = await tx.productSku.findUnique({
+					where: { id: validatedData.skuId },
+					select: { inventory: true, isActive: true, priceInclTax: true },
+				});
+
+				if (!sku || !sku.isActive) {
+					throw new Error("Ce produit n'est plus disponible");
+				}
+
+				if (sku.inventory < validatedData.quantity) {
+					throw new Error(
+						`Stock insuffisant. Disponible : ${sku.inventory} exemplaire${sku.inventory > 1 ? "s" : ""}.`
+					);
+				}
+
+				// Créer le CartItem
 				cartItem = await tx.cartItem.create({
 					data: {
 						cartId: cart.id,
 						skuId: validatedData.skuId,
 						quantity: validatedData.quantity,
-						priceAtAdd: skuValidation.data?.sku.priceInclTax ?? 0,
+						priceAtAdd: sku.priceInclTax,
 					},
 				});
 			}

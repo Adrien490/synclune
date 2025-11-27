@@ -1,5 +1,4 @@
 import { PageHeader } from "@/shared/components/page-header";
-import { Button } from "@/shared/components/ui/button";
 import {
 	WishlistList,
 	WishlistGridSkeleton,
@@ -9,7 +8,6 @@ import {
 } from "@/modules/wishlist/components";
 import { getWishlist } from "@/modules/wishlist/data/get-wishlist";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
-import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
@@ -65,11 +63,6 @@ export default async function WishlistPage({
 				title="Ma liste de souhaits"
 				description="Retrouvez tous vos coups de cœur"
 				breadcrumbs={breadcrumbs}
-				action={
-					<Button variant="outline" asChild>
-						<Link href="/compte">Retour</Link>
-					</Button>
-				}
 			/>
 
 			<section className="bg-background py-8 relative z-10">

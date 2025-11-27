@@ -61,3 +61,6 @@ export const FULFILLMENT_STATUS_COLORS: Record<FulfillmentStatus, string> = {
 	DELIVERED: "#10b981", // green-500
 	RETURNED: "#ef4444", // red-500
 };
+
+// Micro-entreprise : exonération de TVA (art. 293 B du CGI)
+export const VAT_EXEMPTION_TEXT = "TVA non applicable, article 293 B du CGI";

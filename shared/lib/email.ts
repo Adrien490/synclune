@@ -8,6 +8,8 @@ import { NewsletterConfirmationEmail } from "@/emails/newsletter-confirmation-em
 import { NewsletterWelcomeEmail } from "@/emails/newsletter-welcome-email";
 import { OrderConfirmationEmail } from "@/emails/order-confirmation-email";
 import { ShippingConfirmationEmail } from "@/emails/shipping-confirmation-email";
+import { TrackingUpdateEmail } from "@/emails/tracking-update-email";
+import { DeliveryConfirmationEmail } from "@/emails/delivery-confirmation-email";
 import { AdminNewOrderEmail } from "@/emails/admin-new-order-email";
 import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email";
 import { CustomizationRequestEmail } from "@/emails/customization-request-email";
@@ -366,6 +368,115 @@ export async function sendShippingConfirmationEmail({
 		return { success: true, data };
 	} catch (error) {
 		console.error("[EMAIL] Exception sending shipping confirmation:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email de mise à jour du suivi de commande au client
+ */
+export async function sendTrackingUpdateEmail({
+	to,
+	orderNumber,
+	customerName,
+	trackingNumber,
+	trackingUrl,
+	carrierLabel,
+	shippingAddress,
+	estimatedDelivery,
+}: {
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	trackingNumber: string;
+	trackingUrl: string | null;
+	carrierLabel: string;
+	shippingAddress: {
+		firstName: string;
+		lastName: string;
+		address1: string;
+		address2?: string | null;
+		postalCode: string;
+		city: string;
+		country: string;
+	};
+	estimatedDelivery?: string;
+}) {
+	try {
+		const emailHtml = await render(
+			TrackingUpdateEmail({
+				orderNumber,
+				customerName,
+				trackingNumber,
+				trackingUrl,
+				carrierLabel,
+				shippingAddress,
+				estimatedDelivery,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_TRACKING_UPDATE,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending tracking update:", error);
+			return { success: false, error };
+		}
+
+		console.log(`✅ [EMAIL] Tracking update sent to ${to} for order ${orderNumber}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending tracking update:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email de confirmation de livraison au client
+ */
+export async function sendDeliveryConfirmationEmail({
+	to,
+	orderNumber,
+	customerName,
+	deliveryDate,
+	orderDetailsUrl,
+}: {
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	deliveryDate: string;
+	orderDetailsUrl: string;
+}) {
+	try {
+		const emailHtml = await render(
+			DeliveryConfirmationEmail({
+				orderNumber,
+				customerName,
+				deliveryDate,
+				orderDetailsUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_DELIVERED,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending delivery confirmation:", error);
+			return { success: false, error };
+		}
+
+		console.log(`✅ [EMAIL] Delivery confirmation sent to ${to} for order ${orderNumber}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending delivery confirmation:", error);
 		return { success: false, error };
 	}
 }

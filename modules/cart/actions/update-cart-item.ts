@@ -9,8 +9,10 @@ import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
-import { getCartExpirationDate, getCartSessionId } from "@/modules/cart/lib/cart-session";
-import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
+import {
+	getCartExpirationDate,
+	getCartSessionId,
+} from "@/modules/cart/lib/cart-session";
 import { updateCartItemSchema } from "../schemas/cart.schemas";
 
 /**
@@ -66,7 +68,10 @@ export async function updateCartItem(
 		// 4. Récupérer l'item avec son panier
 		const cartItem = await prisma.cartItem.findUnique({
 			where: { id: validatedData.cartItemId },
-			include: { cart: true, sku: true },
+			include: {
+				cart: true,
+				sku: true,
+			},
 		});
 
 		if (!cartItem) {
@@ -77,7 +82,6 @@ export async function updateCartItem(
 		}
 
 		// 5. Vérifier l'appartenance du panier
-
 		const isOwner = userId
 			? cartItem.cart.userId === userId
 			: cartItem.cart.sessionId === sessionId;
@@ -86,39 +90,52 @@ export async function updateCartItem(
 			return { status: ActionStatus.ERROR, message: "Accès non autorisé" };
 		}
 
-		// 6. Valider le stock pour la nouvelle quantité
-		const stockValidation = await validateSkuAndStock({
-			skuId: cartItem.skuId,
-			quantity: validatedData.quantity,
-		});
-
-		if (!stockValidation.success) {
+		// 6. Si la quantité n'a pas changé, ne rien faire
+		if (validatedData.quantity === cartItem.quantity) {
 			return {
-				status: ActionStatus.ERROR,
-				message: stockValidation.error || "Stock insuffisant",
+				status: ActionStatus.SUCCESS,
+				message: `Quantité mise à jour (${validatedData.quantity})`,
 			};
 		}
 
 		// 7. Transaction: Mettre à jour l'item et le panier
-		await prisma.$transaction([
-			prisma.cartItem.update({
+		await prisma.$transaction(async (tx) => {
+			// 7a. Vérifier le stock disponible
+			const sku = await tx.productSku.findUnique({
+				where: { id: cartItem.skuId },
+				select: { inventory: true, isActive: true },
+			});
+
+			if (!sku || !sku.isActive) {
+				throw new Error("Ce produit n'est plus disponible");
+			}
+
+			// 7b. Si augmentation de quantité, vérifier le stock disponible
+			if (validatedData.quantity > sku.inventory) {
+				throw new Error(
+					`Stock insuffisant. Disponible : ${sku.inventory} exemplaire${sku.inventory > 1 ? "s" : ""}.`
+				);
+			}
+
+			// 7c. Mettre à jour le CartItem
+			await tx.cartItem.update({
 				where: { id: validatedData.cartItemId },
 				data: { quantity: validatedData.quantity },
-			}),
-			prisma.cart.update({
+			});
+
+			// 7d. Mettre à jour le panier
+			await tx.cart.update({
 				where: { id: cartItem.cartId },
 				data: {
 					expiresAt: userId ? null : getCartExpirationDate(),
 					updatedAt: new Date(),
 				},
-			}),
-		]);
+			});
+		});
 
 		// 8. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
 		updateTags(tags);
-
-		// Revalidate layout to update CartBadge
 
 		// 9. Success - Return ActionState format
 		return {

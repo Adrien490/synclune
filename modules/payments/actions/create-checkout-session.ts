@@ -267,10 +267,10 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			});
 		}
 
-		// 8. 🔴 TRANSACTION ATOMIQUE : Vérifier stock + Réserver + Créer commande
+		// 8. 🔴 TRANSACTION ATOMIQUE : Vérifier stock + Créer commande
 		// Cette transaction élimine la race condition entre vérif stock et création commande
 		const order = await prisma.$transaction(async (tx) => {
-			// 8a. Vérifier et réserver le stock de manière atomique
+			// 8a. Vérifier le stock pour chaque item
 			for (const cartItem of validatedData.cartItems) {
 				const skuResult = skuDetailsResults.find(
 					(r) => r.success && r.data?.sku.id === cartItem.skuId
@@ -282,22 +282,18 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 
 				const sku = skuResult.data.sku;
 
-				// 🔴 CRITIQUE : Vérifier stock, isActive ET status EN TEMPS RÉEL dans la transaction
-			// Protège contre race conditions où un SKU/produit devient inactif entre validation et paiement
-			// ✅ FIX RACE CONDITION: Utilise SELECT FOR UPDATE pour verrouiller la ligne
+				// Vérifier que le SKU et le produit sont toujours actifs avec verrouillage
 				const currentSkuRows = await tx.$queryRaw<
 					Array<{
-						inventory: number;
-						sku: string;
 						isActive: boolean;
+						inventory: number;
 						productTitle: string;
 						productStatus: string;
 					}>
 				>`
 					SELECT
-						ps.inventory,
-						ps.sku,
 						ps."isActive",
+						ps.inventory,
 						p.title as "productTitle",
 						p.status as "productStatus"
 					FROM "ProductSku" ps
@@ -312,44 +308,21 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 
 				const currentSku = currentSkuRows[0];
 
-			if (!currentSku.isActive) {
-				throw new Error(
-					`Le produit ${currentSku.productTitle} n'est plus disponible (SKU inactif)`
-				);
-			}
+				if (!currentSku.isActive) {
+					throw new Error(
+						`Le produit ${currentSku.productTitle} n'est plus disponible (SKU inactif)`
+					);
+				}
 
-			if (currentSku.productStatus !== "PUBLIC") {
-				throw new Error(
-					`Le produit ${currentSku.productTitle} n'est plus disponible (statut: ${currentSku.productStatus})`
-				);
-			}
+				if (currentSku.productStatus !== "PUBLIC") {
+					throw new Error(
+						`Le produit ${currentSku.productTitle} n'est plus disponible (statut: ${currentSku.productStatus})`
+					);
+				}
 
 				if (currentSku.inventory < cartItem.quantity) {
 					throw new Error(
 						`Stock insuffisant pour ${currentSku.productTitle} (${cartItem.quantity} demandé, ${currentSku.inventory} disponible)`
-					);
-				}
-
-				// 🔴 RÉSERVATION STOCK : Décrémenter immédiatement avec vérification atomique
-				// Le stock est maintenant "réservé" pour cette commande
-				// Si paiement échoue, le webhook restaurera le stock
-				// ✅ FIX RACE CONDITION: updateMany avec condition pour éviter inventory négatif
-				const updateResult = await tx.productSku.updateMany({
-					where: {
-						id: cartItem.skuId,
-						inventory: { gte: cartItem.quantity } // Condition atomique
-					},
-					data: {
-						inventory: {
-							decrement: cartItem.quantity,
-						},
-					},
-				});
-
-				// Double vérification au cas où (ne devrait jamais arriver avec FOR UPDATE)
-				if (updateResult.count === 0) {
-					throw new Error(
-						`Stock insuffisant pour ${currentSku.productTitle} (race condition détectée)`
 					);
 				}
 			}

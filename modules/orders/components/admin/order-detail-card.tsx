@@ -48,6 +48,7 @@ import { CANCEL_ORDER_DIALOG_ID } from "./cancel-order-alert-dialog";
 import { MARK_AS_PAID_DIALOG_ID } from "./mark-as-paid-alert-dialog";
 import { MARK_AS_SHIPPED_DIALOG_ID } from "./mark-as-shipped-dialog";
 import { MARK_AS_DELIVERED_DIALOG_ID } from "./mark-as-delivered-alert-dialog";
+import { UPDATE_TRACKING_DIALOG_ID } from "./update-tracking-dialog";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 
 // ============================================================================
@@ -96,6 +97,7 @@ export function OrderDetailCard({ order }: OrderDetailCardProps) {
 	const markAsPaidDialog = useAlertDialog(MARK_AS_PAID_DIALOG_ID);
 	const markAsShippedDialog = useAlertDialog(MARK_AS_SHIPPED_DIALOG_ID);
 	const markAsDeliveredDialog = useAlertDialog(MARK_AS_DELIVERED_DIALOG_ID);
+	const updateTrackingDialog = useAlertDialog(UPDATE_TRACKING_DIALOG_ID);
 
 	// State machine conditions
 	const isPending = order.status === OrderStatus.PENDING;
@@ -112,6 +114,7 @@ export function OrderDetailCard({ order }: OrderDetailCardProps) {
 	const canMarkAsShipped = isProcessing && isPaid;
 	const canMarkAsDelivered = isShipped;
 	const canRefund = (isProcessing || isShipped || isDelivered) && isPaid;
+	const canUpdateTracking = (isShipped || isDelivered) && order.trackingNumber;
 
 	// Handlers
 	const handleMarkAsPaid = () => {
@@ -140,6 +143,17 @@ export function OrderDetailCard({ order }: OrderDetailCardProps) {
 			orderId: order.id,
 			orderNumber: order.orderNumber,
 			isPaid: order.paymentStatus === PaymentStatus.PAID,
+		});
+	};
+
+	const handleUpdateTracking = () => {
+		updateTrackingDialog.open({
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+			trackingNumber: order.trackingNumber || undefined,
+			trackingUrl: order.trackingUrl || undefined,
+			carrier: (order.shippingCarrier as Carrier) || undefined,
+			estimatedDelivery: order.estimatedDelivery || undefined,
 		});
 	};
 
@@ -372,11 +386,20 @@ export function OrderDetailCard({ order }: OrderDetailCardProps) {
 					{/* Shipping / Tracking */}
 					{(order.trackingNumber || order.shippedAt) && (
 						<Card>
-							<CardHeader>
+							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 								<CardTitle className="flex items-center gap-2">
 									<Truck className="h-5 w-5" />
 									Expédition
 								</CardTitle>
+								{canUpdateTracking && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={handleUpdateTracking}
+									>
+										Modifier
+									</Button>
+								)}
 							</CardHeader>
 							<CardContent className="space-y-4">
 								{order.trackingNumber && (

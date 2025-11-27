@@ -319,7 +319,10 @@ model Order {
   stripeChargeId          String? // ch_xxx
   stripeCustomerId        String? // cus_xxx
   stripeInvoiceId         String? @unique // in_xxx
-  // ❌ stripeTaxCalculationId retiré - Inutile en micro-entreprise (pas de Stripe Tax)
+  // ⚠️ PRÉPARATION TVA RÉGIME RÉEL : Champ conservé pour future activation de Stripe Tax
+  // En micro-entreprise (CA < 91 900€/an), ce champ reste null
+  // Si passage en régime réel TVA (> seuil), activer Stripe Tax et ce champ sera rempli
+  stripeTaxCalculationId  String? // txcalc_xxx - ID Stripe Tax pour réconciliation
 
   // === INFORMATIONS CLIENT ===
   customerEmail String @db.VarChar(255)
@@ -388,6 +391,11 @@ model Order {
   invoiceGeneratedAt DateTime? // Date de génération automatique par Stripe
   invoiceStatus      InvoiceStatus @default(PENDING)
 
+  // === CONFORMITÉ LÉGALE FRANÇAISE ===
+  // Obligation de conservation 10 ans (Art. L123-22 Code de commerce)
+  operationCategory String @default("goods") // "goods" | "services" | "mixed" (depuis juillet 2024)
+  fiscalYear        Int? // Année fiscale de la commande
+
   // === RELATIONS ===
   items          OrderItem[]
   discountUsages DiscountUsage[]
@@ -411,6 +419,7 @@ model Order {
   @@index([createdAt, id])
   @@index([paymentStatus, createdAt])
   @@index([customerEmail]) // Recherche support client
+  @@index([fiscalYear]) // Conformité légale
 }
 
 model OrderItem {
@@ -478,7 +487,7 @@ model CartItem {
   cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
   skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
 
   quantity Int @default(1)
 
@@ -543,7 +552,7 @@ model WishlistItem {
   wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
   skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
 
   // Prix snapshot au moment de l'ajout (pour notifier si baisse de prix)
   priceAtAdd Int
@@ -695,3 +704,6 @@ model RefundItem {
   @@index([refundId])
   @@index([orderItemId])
 }
+
+
+

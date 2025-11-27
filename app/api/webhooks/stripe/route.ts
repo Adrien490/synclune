@@ -220,8 +220,17 @@ async function handleCheckoutSessionCompleted(
 
 			console.log(`✅ [WEBHOOK] All items validated successfully for order ${orderId}`);
 
-			// 4. ✅ NOUVEAU : Le stock a déjà été réservé lors de create-checkout-session
-			// On marque simplement la commande comme PAID
+			// 4. Décrémenter le stock pour chaque item
+			for (const item of order.items) {
+				await tx.productSku.update({
+					where: { id: item.skuId },
+					data: {
+						inventory: { decrement: item.quantity },
+					},
+				});
+			}
+
+			console.log(`✅ [WEBHOOK] Stock decremented for order ${orderId}`);
 
 			// 5. Mettre à jour la commande avec infos shipping
 			// ℹ️ Micro-entreprise : Pas de données fiscales (exonérée de TVA)
@@ -430,48 +439,17 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
 	}
 
 	try {
-		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-			// Récupérer la commande pour vérifier son statut actuel
-			const order = await tx.order.findUnique({
-				where: { id: orderId },
-				include: { items: true },
-			});
-
-			if (!order) {
-				throw new Error(`Order not found: ${orderId}`);
-			}
-
-			// ✅ NOUVEAU : Avec la réservation au checkout, le stock est TOUJOURS décrémenté
-			// pour les commandes PENDING ou PAID. On doit donc TOUJOURS le restaurer.
-			const shouldRestoreStock =
-				order.paymentStatus === "PENDING" ||
-				order.paymentStatus === "PAID";
-
-			// Mettre à jour le statut de la commande
-			await tx.order.update({
-				where: { id: orderId },
-				data: {
-					paymentStatus: "FAILED",
-					status: "CANCELLED",
-					stripePaymentIntentId: paymentIntent.id,
-				},
-			});
-
-			// Restaurer le stock (car il avait été réservé au checkout)
-			if (shouldRestoreStock) {
-				for (const item of order.items) {
-					await tx.productSku.update({
-						where: { id: item.skuId },
-						data: {
-							inventory: { increment: item.quantity },
-						},
-					});
-				}
-				console.log(`✅ [WEBHOOK] Stock restored for failed order ${orderId}`);
-			}
+		// Mettre à jour le statut de la commande
+		await prisma.order.update({
+			where: { id: orderId },
+			data: {
+				paymentStatus: "FAILED",
+				status: "CANCELLED",
+				stripePaymentIntentId: paymentIntent.id,
+			},
 		});
 
-		// 🔴 NOUVEAU : Remboursement automatique si paiement capturé
+		// 🔴 Remboursement automatique si paiement capturé
 		if (paymentIntent.status === "requires_payment_method" || paymentIntent.amount_received > 0) {
 			console.log(`💰 [WEBHOOK] Initiating automatic refund for order ${orderId}`);
 
@@ -525,7 +503,7 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
 			}
 		}
 
-		console.log(`❌ [WEBHOOK] Order ${orderId} payment failed and stock restored`);
+		console.log(`❌ [WEBHOOK] Order ${orderId} payment failed`);
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling payment failure for order ${orderId}:`, error);
 		throw error;
@@ -534,7 +512,7 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
 
 /**
  * 🔴 CRITIQUE - Gère l'annulation d'un paiement
- * Annule la commande, restaure le stock et initie un remboursement si nécessaire
+ * Annule la commande et initie un remboursement si nécessaire
  */
 async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent) {
 	const orderId = paymentIntent.metadata.order_id;
@@ -545,48 +523,17 @@ async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent) {
 	}
 
 	try {
-		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-			// Récupérer la commande pour vérifier son statut actuel
-			const order = await tx.order.findUnique({
-				where: { id: orderId },
-				include: { items: true },
-			});
-
-			if (!order) {
-				throw new Error(`Order not found: ${orderId}`);
-			}
-
-			// ✅ NOUVEAU : Avec la réservation au checkout, le stock est TOUJOURS décrémenté
-			// pour les commandes PENDING ou PAID. On doit donc TOUJOURS le restaurer.
-			const shouldRestoreStock =
-				order.paymentStatus === "PENDING" ||
-				order.paymentStatus === "PAID";
-
-			// Mettre à jour le statut de la commande
-			await tx.order.update({
-				where: { id: orderId },
-				data: {
-					status: "CANCELLED",
-					paymentStatus: "FAILED",
-					stripePaymentIntentId: paymentIntent.id,
-				},
-			});
-
-			// Restaurer le stock (car il avait été réservé au checkout)
-			if (shouldRestoreStock) {
-				for (const item of order.items) {
-					await tx.productSku.update({
-						where: { id: item.skuId },
-						data: {
-							inventory: { increment: item.quantity },
-						},
-					});
-				}
-				console.log(`✅ [WEBHOOK] Stock restored for canceled order ${orderId}`);
-			}
+		// Mettre à jour le statut de la commande
+		await prisma.order.update({
+			where: { id: orderId },
+			data: {
+				status: "CANCELLED",
+				paymentStatus: "FAILED",
+				stripePaymentIntentId: paymentIntent.id,
+			},
 		});
 
-		// 🔴 NOUVEAU : Remboursement automatique si paiement a été capturé
+		// 🔴 Remboursement automatique si paiement a été capturé
 		if (paymentIntent.status === "canceled" && paymentIntent.amount_received > 0) {
 			console.log(`💰 [WEBHOOK] Initiating automatic refund for canceled order ${orderId}`);
 
@@ -640,7 +587,7 @@ async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent) {
 			}
 		}
 
-		console.log(`⚠️ [WEBHOOK] Order ${orderId} payment canceled and stock restored`);
+		console.log(`⚠️ [WEBHOOK] Order ${orderId} payment canceled`);
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling payment cancelation for order ${orderId}:`, error);
 		throw error;
@@ -649,21 +596,17 @@ async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent) {
 
 /**
  * 🔴 CRITIQUE - Gère l'expiration d'une session de checkout
- * Restaure le stock réservé après expiration sans paiement
+ * Marque la commande comme annulée après expiration sans paiement
  *
  * Contexte :
  * - Sessions Stripe configurées pour expirer après 30 minutes
- * - Le stock a été réservé (décrémenté) lors du create-checkout-session
- * - Cette fonction libère le stock pour éviter le blocage d'inventaire
+ * - Le stock n'est PAS décrémenté lors du create-checkout-session
+ * - Le stock sera décrémenté seulement lors du paiement réussi (webhook checkout.session.completed)
  *
  * Cas d'usage :
  * - Utilisateur abandonne le paiement après création session
  * - Utilisateur laisse la page Stripe ouverte sans valider
  * - Problème technique empêchant le paiement
- *
- * Race condition safety :
- * - Idempotente : vérifie paymentStatus avant traitement
- * - Transaction atomique : garantit cohérence stock/commande
  */
 async function handleCheckoutSessionExpired(
 	session: Stripe.Checkout.Session
@@ -678,111 +621,35 @@ async function handleCheckoutSessionExpired(
 	console.log(`⏰ [WEBHOOK] Processing expired checkout session: ${session.id}, order: ${orderId}`);
 
 	try {
-		// 🔴 TRANSACTION ATOMIQUE pour garantir cohérence
-		const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-			// 1. Récupérer la commande avec tous ses items et détails SKU
-			const order = await tx.order.findUnique({
-				where: { id: orderId },
-				include: {
-					items: {
-						include: {
-							sku: {
-								select: {
-									id: true,
-									sku: true,
-									inventory: true,
-									product: {
-										select: {
-											id: true,
-											slug: true,
-											title: true,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			});
-
-			if (!order) {
-				console.warn(`⚠️  [WEBHOOK] Order not found for expired session: ${orderId}`);
-				return null;
-			}
-
-			// 2. ✅ IDEMPOTENCE : Ne traiter que si la commande est toujours PENDING
-			if (order.paymentStatus !== "PENDING") {
-				console.log(
-					`ℹ️  [WEBHOOK] Order ${orderId} already processed (status: ${order.paymentStatus}), skipping expiration`
-				);
-				return null;
-			}
-
-			// 3. Marquer la commande comme expirée/annulée
-			await tx.order.update({
-				where: { id: orderId },
-				data: {
-					status: "CANCELLED",
-					paymentStatus: "FAILED",
-				},
-			});
-
-			// 4. Restaurer le stock pour chaque item (logging détaillé)
-			const restoredItems = [];
-			for (const item of order.items) {
-				const beforeInventory = item.sku.inventory;
-				const afterInventory = beforeInventory + item.quantity;
-
-				await tx.productSku.update({
-					where: { id: item.skuId },
-					data: {
-						inventory: { increment: item.quantity },
-					},
-				});
-
-				restoredItems.push({
-					skuId: item.skuId,
-					sku: item.sku.sku,
-					productTitle: item.sku.product.title,
-					quantity: item.quantity,
-					beforeInventory,
-					afterInventory,
-				});
-
-				console.log(
-					`📦 [WEBHOOK] Stock restored: ${item.sku.sku} (${item.sku.product.title}) | ` +
-					`Quantity: ${item.quantity} | Before: ${beforeInventory} → After: ${afterInventory}`
-				);
-			}
-
-			return {
-				orderId,
-				orderNumber: order.orderNumber,
-				itemCount: order.items.length,
-				restoredItems,
-				productSlugs: [...new Set(order.items.map(i => i.sku.product.slug))],
-			};
+		// Récupérer la commande pour vérifier son statut
+		const order = await prisma.order.findUnique({
+			where: { id: orderId },
+			select: { paymentStatus: true, orderNumber: true },
 		});
 
-		// 5. Si transaction réussie, invalider les caches concernés
-		if (result) {
-			// Invalider cache pour chaque produit affecté
-			for (const slug of result.productSlugs) {
-				const tags = [`product-${slug}`, `products-list`];
-				updateTags(tags);
-			}
-
-			console.log(
-				`✅ [WEBHOOK] Stock restored for expired session ${result.orderId} ` +
-				`(Order: ${result.orderNumber}, ${result.itemCount} items)`
-			);
-
-			// Log détaillé du stock restauré pour monitoring/debug
-			console.log(
-				`📊 [WEBHOOK] Stock restoration details:`,
-				JSON.stringify(result.restoredItems, null, 2)
-			);
+		if (!order) {
+			console.warn(`⚠️  [WEBHOOK] Order not found for expired session: ${orderId}`);
+			return;
 		}
+
+		// ✅ IDEMPOTENCE : Ne traiter que si la commande est toujours PENDING
+		if (order.paymentStatus !== "PENDING") {
+			console.log(
+				`ℹ️  [WEBHOOK] Order ${orderId} already processed (status: ${order.paymentStatus}), skipping expiration`
+			);
+			return;
+		}
+
+		// Marquer la commande comme expirée/annulée
+		await prisma.order.update({
+			where: { id: orderId },
+			data: {
+				status: "CANCELLED",
+				paymentStatus: "FAILED",
+			},
+		});
+
+		console.log(`✅ [WEBHOOK] Order ${orderId} (${order.orderNumber}) marked as cancelled due to session expiration`);
 	} catch (error) {
 		console.error(
 			`❌ [WEBHOOK] Error handling expired checkout session for order ${orderId}:`,
