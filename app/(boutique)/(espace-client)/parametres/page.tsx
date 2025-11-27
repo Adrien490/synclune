@@ -1,6 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { LogoutButton } from "@/modules/auth/components/logout-button";
 import { ChangePasswordForm } from "@/modules/users/components/change-password-form";
 import { ProfileForm } from "@/modules/users/components/profile-form";
@@ -30,15 +29,12 @@ export default async function SettingsPage() {
 	);
 
 	const breadcrumbs = [
-		{ label: "Mon compte", href: "/account" },
-		{ label: "Paramètres", href: "/account/settings" },
+		{ label: "Mon compte", href: "/compte" },
+		{ label: "Paramètres", href: "/parametres" },
 	];
 
 	return (
-		<div className="min-h-screen relative">
-			{/* Background minimal - Pages fonctionnelles */}
-			<ParticleSystem variant="minimal" className="fixed inset-0 z-0" />
-
+		<>
 			<PageHeader
 				title="Paramètres du compte"
 				description="Gérez vos informations personnelles et la sécurité de votre compte"
@@ -92,6 +88,6 @@ export default async function SettingsPage() {
 					</Card>
 				</div>
 			</section>
-		</div>
+		</>
 	);
 }

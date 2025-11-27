@@ -63,9 +63,10 @@ export const getStripePaymentsSchema = z.object({
 // CHECKOUT SCHEMA
 // ============================================================================
 
-import {
-	FRENCH_PHONE_REGEX,
-} from "@/shared/schemas/french-address-schema";
+// Regex pour téléphone français
+// Formats acceptés: 06 12 34 56 78, 0612345678, +33 6 12 34 56 78, +33612345678
+const FRENCH_PHONE_REGEX = /^(?:(?:\+|00)33|0)[1-9](?:[0-9]{8})$/;
+
 import {
 	SHIPPING_COUNTRIES,
 	COUNTRY_ERROR_MESSAGE,

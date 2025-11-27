@@ -3,11 +3,10 @@ import { getUserAddresses } from "@/modules/users/data/get-user-addresses";
 import { AddressFormDialog } from "@/modules/users/components/address/address-form-dialog";
 import { AddressList } from "@/modules/users/components/address/address-list";
 import { AddressListSkeleton } from "@/modules/users/components/address/address-list-skeleton";
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { PageHeader } from "@/shared/components/page-header";
+import { DeleteAddressAlertDialog } from "@/modules/users/components/addresses/delete-address-alert-dialog";
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { DeleteAddressAlertDialog } from "@/modules/users/components/addresses/delete-address-alert-dialog";
 
 export const metadata: Metadata = {
 	title: "Mes adresses | Synclune",
@@ -46,15 +45,12 @@ export default async function AddressesPage({
 			: { addresses: [], query: "", limit: 0 };
 
 	const breadcrumbs = [
-		{ label: "Mon compte", href: "/account" },
-		{ label: "Mes adresses", href: "/account/addresses" },
+		{ label: "Mon compte", href: "/compte" },
+		{ label: "Mes adresses", href: "/adresses" },
 	];
 
 	return (
-		<div className="min-h-screen relative">
-			{/* Background minimal - Pages fonctionnelles */}
-			<ParticleSystem variant="minimal" className="fixed inset-0 z-0" />
-
+		<>
 			<PageHeader
 				title="Mes adresses"
 				description="Gérez vos adresses de livraison pour des commandes plus rapides"
@@ -74,6 +70,6 @@ export default async function AddressesPage({
 
 			{/* Alert dialog for deleting addresses */}
 			<DeleteAddressAlertDialog />
-		</div>
+		</>
 	);
 }

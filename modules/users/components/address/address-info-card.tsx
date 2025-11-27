@@ -47,7 +47,7 @@ export function AddressInfoCard({ addressesPromise }: AddressInfoCardProps) {
 					</div>
 				)}
 				<Button asChild variant="outline" size="sm" className="w-full">
-					<Link href="/compte/adresses">
+					<Link href="/adresses">
 						Gérer mes adresses
 						<ArrowRight className="ml-2 h-4 w-4" />
 					</Link>

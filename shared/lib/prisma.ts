@@ -1,9 +1,14 @@
 import { PrismaClient } from '@/app/generated/prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaNeon } from '@prisma/adapter-neon';
+import { neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
 
-const adapter = new PrismaPg({ 
-  connectionString: process.env.DATABASE_URL 
-});
+// Configuration WebSocket pour Node.js (dev server)
+neonConfig.webSocketConstructor = ws;
+
+const connectionString = process.env.DATABASE_URL!;
+
+const adapter = new PrismaNeon({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 export { prisma };

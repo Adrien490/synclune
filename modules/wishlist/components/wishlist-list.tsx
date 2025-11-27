@@ -47,7 +47,7 @@ export async function WishlistList({
 					</p>
 					<div className="flex flex-col sm:flex-row gap-3">
 						<Button asChild variant="primary" size="lg">
-							<Link href="/products">Découvrir nos créations</Link>
+							<Link href="/produits">Découvrir nos créations</Link>
 						</Button>
 						<Button asChild variant="primary" size="lg">
 							<Link href="/collections">Voir les collections</Link>

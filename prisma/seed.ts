@@ -1,5 +1,7 @@
 import { fakerFR } from "@faker-js/faker";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 import {
   OrderStatus,
   PaymentStatus,
@@ -10,8 +12,12 @@ import {
 import { SYNCLUNE_JEWELRY_TYPES } from "../shared/constants/jewelry-types";
 import { seedColorTaxonomy } from "./seeds/color-taxonomy";
 
+// Configuration WebSocket pour Node.js
+neonConfig.webSocketConstructor = ws;
+
 // Utiliser l'URL directe pour le seed (pas Accelerate)
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const connectionString = process.env.DATABASE_URL!;
+const adapter = new PrismaNeon({ connectionString });
 const prisma = new PrismaClient({ adapter });
 const faker = fakerFR;
 faker.seed(42);

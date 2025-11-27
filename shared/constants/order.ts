@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 	PENDING: "En attente",
@@ -44,4 +44,20 @@ export const SHIPPING_ZONE_COLORS: Record<string, string> = {
 	DOM: "#10b981", // green-500
 	TOM: "#a855f7", // purple-500
 	UNKNOWN: "#6b7280", // gray-500
+};
+
+export const FULFILLMENT_STATUS_LABELS: Record<FulfillmentStatus, string> = {
+	UNFULFILLED: "Non traitée",
+	PROCESSING: "En préparation",
+	SHIPPED: "Expédiée",
+	DELIVERED: "Livrée",
+	RETURNED: "Retournée",
+};
+
+export const FULFILLMENT_STATUS_COLORS: Record<FulfillmentStatus, string> = {
+	UNFULFILLED: "#6b7280", // gray-500
+	PROCESSING: "#3b82f6", // blue-500
+	SHIPPED: "#a855f7", // purple-500
+	DELIVERED: "#10b981", // green-500
+	RETURNED: "#ef4444", // red-500
 };
