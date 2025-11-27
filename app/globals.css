@@ -374,14 +374,6 @@
 	animation-timing-function: ease-out;
 }
 
-/* Breadcrumbs dashboard admin - même timing que boutique */
-::view-transition-old(dashboard-breadcrumbs),
-::view-transition-new(dashboard-breadcrumbs),
-::view-transition-old(dashboard-breadcrumbs-mobile),
-::view-transition-new(dashboard-breadcrumbs-mobile) {
-	animation-duration: 0.2s;
-	animation-timing-function: ease-out;
-}
 
 /* Titres produits admin - utilisent le timing par défaut (0.3s) */
 /* Note: Les noms dynamiques (admin-product-title-{slug}) héritent du sélecteur (*) */

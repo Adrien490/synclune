@@ -11,7 +11,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { Fragment, ViewTransition } from "react";
+import { Fragment } from "react";
 import { navigationData } from "./navigation-config";
 
 interface BreadcrumbSegment {
@@ -125,52 +125,48 @@ export function DashboardBreadcrumb() {
 	return (
 		<>
 			{/* Version mobile : Bouton back + page actuelle */}
-			<ViewTransition name="dashboard-breadcrumbs-mobile">
-				<nav className="flex items-center gap-2 md:hidden" aria-label="Fil d'Ariane">
-					{previousPage && (
-						<Button
-							variant="ghost"
-							size="sm"
-							className="h-8 w-8 p-0"
-							onClick={() => router.push(previousPage.href)}
-							aria-label={`Retour à ${previousPage.label}`}
-						>
-							<ChevronLeft className="h-4 w-4" aria-hidden="true" />
-						</Button>
-					)}
-					<span
-						className="text-sm font-medium truncate max-w-[200px]"
-						aria-current="page"
-						title={currentPage.label}
+			<nav className="flex items-center gap-2 md:hidden" aria-label="Fil d'Ariane">
+				{previousPage && (
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-8 w-8 p-0"
+						onClick={() => router.push(previousPage.href)}
+						aria-label={`Retour à ${previousPage.label}`}
 					>
-						{currentPage.label}
-					</span>
-				</nav>
-			</ViewTransition>
+						<ChevronLeft className="h-4 w-4" aria-hidden="true" />
+					</Button>
+				)}
+				<span
+					className="text-sm font-medium truncate max-w-[200px]"
+					aria-current="page"
+					title={currentPage.label}
+				>
+					{currentPage.label}
+				</span>
+			</nav>
 
 			{/* Version desktop : Breadcrumb complet */}
-			<ViewTransition name="dashboard-breadcrumbs">
-				<Breadcrumb className="hidden md:block" aria-label="Fil d'Ariane">
-					<BreadcrumbList>
-						{breadcrumbs.map((segment, index) => (
-							<Fragment key={segment.href}>
-								<BreadcrumbItem>
-									{segment.isCurrentPage ? (
-										<BreadcrumbPage className="max-w-[200px] truncate" title={segment.label}>
-											{segment.label}
-										</BreadcrumbPage>
-									) : (
-										<BreadcrumbLink href={segment.href} className="max-w-[150px] truncate" title={segment.label}>
-											{segment.label}
-										</BreadcrumbLink>
-									)}
-								</BreadcrumbItem>
-								{index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-							</Fragment>
-						))}
-					</BreadcrumbList>
-				</Breadcrumb>
-			</ViewTransition>
+			<Breadcrumb className="hidden md:block" aria-label="Fil d'Ariane">
+				<BreadcrumbList>
+					{breadcrumbs.map((segment, index) => (
+						<Fragment key={segment.href}>
+							<BreadcrumbItem>
+								{segment.isCurrentPage ? (
+									<BreadcrumbPage className="max-w-[200px] truncate" title={segment.label}>
+										{segment.label}
+									</BreadcrumbPage>
+								) : (
+									<BreadcrumbLink href={segment.href} className="max-w-[150px] truncate" title={segment.label}>
+										{segment.label}
+									</BreadcrumbLink>
+								)}
+							</BreadcrumbItem>
+							{index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
+						</Fragment>
+					))}
+				</BreadcrumbList>
+			</Breadcrumb>
 		</>
 	);
 }
