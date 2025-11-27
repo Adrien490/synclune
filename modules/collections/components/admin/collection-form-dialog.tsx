@@ -74,13 +74,27 @@ export function CollectionFormDialog() {
 			createCollection,
 			createToastCallbacks({
 				loadingMessage: "Création de la collection...",
+				showSuccessToast: false,
 				onSuccess: (result) => {
 					close();
 					form.reset();
 					const data = result?.data as { collectionStatus?: CollectionStatus } | undefined;
-					if (data?.collectionStatus) {
-						router.push(`/admin/catalogue/collections?status=${data.collectionStatus}`);
-					}
+					const statusActionLabels: Record<CollectionStatus, string> = {
+						[CollectionStatus.DRAFT]: "Voir les brouillons",
+						[CollectionStatus.PUBLIC]: "Voir les publiées",
+						[CollectionStatus.ARCHIVED]: "Voir les archivées",
+					};
+					toast.success(result?.message || "Collection créée avec succès", {
+						action: data?.collectionStatus
+							? {
+									label: statusActionLabels[data.collectionStatus],
+									onClick: () =>
+										router.push(
+											`/admin/catalogue/collections?status=${data.collectionStatus}`
+										),
+								}
+							: undefined,
+					});
 				},
 			})
 		),
