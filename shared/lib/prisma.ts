@@ -6,6 +6,9 @@ import ws from 'ws';
 // Configuration WebSocket pour Node.js
 neonConfig.webSocketConstructor = ws;
 
+// Utiliser fetch pour les requêtes (plus stable en serverless)
+neonConfig.poolQueryViaFetch = true;
+
 // Type declaration pour le singleton global
 declare global {
   var prisma: PrismaClient | undefined;
