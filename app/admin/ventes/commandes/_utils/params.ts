@@ -1,5 +1,5 @@
 import type { GetOrdersParams } from "@/modules/orders/types/orders.types";
-import type { OrdersSearchParams } from "../_types/search-params";
+import type { OrdersSearchParams } from "../page";
 import { getFirstParam } from "@/shared/utils/params";
 
 type OrderFilters = NonNullable<GetOrdersParams["filters"]>;

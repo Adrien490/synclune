@@ -10,7 +10,15 @@ import { USER_ORDERS_SORT_LABELS } from "@/modules/orders/constants/user-orders.
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import type { CustomerOrdersSearchParams } from "./_types/search-params";
+
+type CustomerOrdersSearchParams = {
+	cursor?: string;
+	direction?: string;
+	perPage?: string;
+	sortBy?: string;
+	filter_status?: string;
+	filter_fulfillmentStatus?: string;
+};
 
 export const metadata: Metadata = {
 	title: "Mes commandes - Synclune",

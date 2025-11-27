@@ -1,7 +1,7 @@
 import { getFirstParam } from "@/shared/utils/params";
 import { DiscountType } from "@/app/generated/prisma/client";
 import type { DiscountFilters } from "@/modules/discount/types/discount.types";
-import type { DiscountsSearchParams } from "../_types/search-params";
+import type { DiscountsSearchParams } from "../page";
 
 export function parseFilters(params: DiscountsSearchParams): DiscountFilters {
 	const filters: DiscountFilters = {};

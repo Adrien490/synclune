@@ -1,4 +1,4 @@
-import type { ProductSearchParams } from "@/app/(boutique)/produits/_types/search-params";
+import type { ProductSearchParams } from "../../page";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import type { Metadata } from "next";
 

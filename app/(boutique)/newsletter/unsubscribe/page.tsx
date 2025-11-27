@@ -62,7 +62,7 @@ export default async function UnsubscribePage({
 								<Link href="/">Retour à l'accueil</Link>
 							</Button>
 							<Button asChild variant="outline">
-								<Link href="/products">Découvrir nos créations</Link>
+								<Link href="/produits">Découvrir nos créations</Link>
 							</Button>
 						</div>
 					</div>

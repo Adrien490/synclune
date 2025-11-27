@@ -102,7 +102,7 @@ export async function RelatedProducts({
 			{relatedProducts.length >= limit && (
 				<div className="flex justify-center pt-4">
 					<a
-						href="/products"
+						href="/produits"
 						className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:underline underline-offset-4 transition-all duration-200 hover:gap-3"
 					>
 						Découvrir toutes les créations

@@ -1,5 +1,5 @@
 import { ProductStatus } from "@/app/generated/prisma/client";
-import type { ProductsSearchParams } from "../_types/search-params";
+import type { ProductsSearchParams } from "../page";
 import { getFirstParam } from "@/shared/utils/params";
 import type { ProductFilters } from "@/modules/products/data/get-products";
 import { productFiltersSchema } from "@/modules/products/data/get-products";

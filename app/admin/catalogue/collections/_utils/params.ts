@@ -1,6 +1,6 @@
 import type { GetCollectionsParams } from "@/modules/collections/data/get-collections";
 import { getFirstParam } from "@/shared/utils/params";
-import type { CollectionsSearchParams } from "../_types/search-params";
+import type { CollectionsSearchParams } from "../page";
 
 export const parseFilters = (
 	params: CollectionsSearchParams

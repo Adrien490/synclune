@@ -1,6 +1,6 @@
 import type { ProductFilters } from "@/modules/products/data/get-products";
 import { productFiltersSchema } from "@/modules/products/data/get-products";
-import type { CollectionSearchParams } from "../_types/search-params";
+import type { CollectionSearchParams } from "../[slug]/page";
 import { getFirstParam } from "@/shared/utils/params";
 
 export const parseFilters = (

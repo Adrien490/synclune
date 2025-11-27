@@ -3,7 +3,7 @@ import { SORT_OPTIONS } from "@/modules/refund/constants/refund.constants";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { getFirstParam } from "@/shared/utils/params";
 
-import type { RefundsSearchParams } from "../_types/search-params";
+import type { RefundsSearchParams } from "../page";
 
 const REFUND_SORT_FIELDS = Object.values(SORT_OPTIONS);
 

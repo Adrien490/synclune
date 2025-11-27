@@ -1,6 +1,6 @@
 import type { GetProductTypesParams } from "@/modules/product-types/data/get-product-types";
 import { getFirstParam } from "@/shared/utils/params";
-import type { ProductTypesSearchParams } from "../_types/search-params";
+import type { ProductTypesSearchParams } from "../page";
 
 export const parseFilters = (
 	params: ProductTypesSearchParams

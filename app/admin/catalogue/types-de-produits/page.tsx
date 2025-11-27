@@ -20,8 +20,23 @@ import { ProductTypesDataTableSkeleton } from "@/modules/product-types/component
 import { ProductTypesFilterBadges } from "@/modules/product-types/components/admin/product-types-filter-badges";
 import { ProductTypesFilterSheet } from "@/modules/product-types/components/admin/product-types-filter-sheet";
 import { DeleteProductTypeAlertDialog } from "@/modules/product-types/components/admin/delete-product-type-alert-dialog";
-import type { ProductTypesSearchParams } from "./_types/search-params";
+import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 import { parseFilters } from "./_utils/params";
+
+export type ProductTypeFiltersSearchParams = {
+	filter_isActive?: string;
+	filter_hasSize?: string;
+};
+
+export type ProductTypesSearchParams = DashboardBaseSearchParams &
+	ProductTypeFiltersSearchParams & {
+		sortOrder?: string;
+	};
+
+export type ParsedProductTypeFilters = {
+	isActive?: boolean;
+	hasSize?: boolean;
+};
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

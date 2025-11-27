@@ -43,7 +43,7 @@ export function OrdersList({ ordersPromise }: OrdersListProps) {
 							variant="primary"
 							size="lg"
 						>
-							<Link href="/products">✨ Découvrir la boutique</Link>
+							<Link href="/produits">✨ Découvrir la boutique</Link>
 						</Button>
 
 						<Button asChild variant="primary" size="lg">

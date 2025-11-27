@@ -1,7 +1,7 @@
 import { Role } from "@/app/generated/prisma/client";
 import type { userFiltersSchema } from "@/modules/users/data/get-users";
 import type { z } from "zod";
-import type { CustomersSearchParams } from "../_types/search-params";
+import type { CustomersSearchParams } from "../page";
 import { getFirstParam } from "@/shared/utils/params";
 
 type UserFilters = z.infer<typeof userFiltersSchema>;

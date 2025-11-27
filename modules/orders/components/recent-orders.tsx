@@ -69,7 +69,7 @@ export function RecentOrders({
 						Vous n&apos;avez pas encore passé de commande
 					</p>
 					<Button asChild>
-						<Link href="/products">Découvrir nos bijoux</Link>
+						<Link href="/produits">Découvrir nos bijoux</Link>
 					</Button>
 				</div>
 			) : (

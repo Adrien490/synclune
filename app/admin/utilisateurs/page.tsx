@@ -22,6 +22,32 @@ import {
 } from "./_constants/sort-options";
 import { parseFilters } from "./_utils/params";
 import { Metadata } from "next";
+import type { Role } from "@/app/generated/prisma/client";
+import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
+
+export type CustomerFiltersSearchParams = {
+	filter_role?: string;
+	filter_emailVerified?: string;
+	filter_hasOrders?: string;
+	filter_includeDeleted?: string;
+	filter_createdAfter?: string;
+	filter_createdBefore?: string;
+	filter_sortBy?: string;
+	[key: string]: string | string[] | undefined;
+};
+
+export type CustomersSearchParams = DashboardBaseSearchParams &
+	CustomerFiltersSearchParams;
+
+export type ParsedCustomerFilters = {
+	role?: Role;
+	emailVerified?: boolean;
+	hasOrders?: boolean;
+	includeDeleted?: boolean;
+	createdAfter?: Date;
+	createdBefore?: Date;
+	[key: string]: unknown;
+};
 
 export const metadata: Metadata = {
 	title: "Utilisateurs | Dashboard",
@@ -29,7 +55,7 @@ export const metadata: Metadata = {
 };
 
 interface UsersPageProps {
-	searchParams: Promise<Record<string, string | string[] | undefined>>;
+	searchParams: Promise<CustomersSearchParams>;
 }
 
 export default async function UsersPage({ searchParams }: UsersPageProps) {

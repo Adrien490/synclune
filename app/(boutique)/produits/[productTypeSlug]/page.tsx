@@ -1,4 +1,4 @@
-import type { ProductSearchParams } from "@/app/(boutique)/produits/_types/search-params";
+import type { ProductSearchParams } from "../page";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";

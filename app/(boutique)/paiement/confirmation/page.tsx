@@ -199,7 +199,7 @@ export default async function CheckoutSuccessPage({
 									</Link>
 								</Button>
 								<Button asChild variant="outline" size="lg" className="flex-1">
-									<Link href="/products">Continuer mes achats</Link>
+									<Link href="/produits">Continuer mes achats</Link>
 								</Button>
 							</div>
 						</CardContent>

@@ -58,7 +58,7 @@ export default async function ConfirmPage({ searchParams }: ConfirmPageProps) {
 								<Link href="/">Retour à l'accueil</Link>
 							</Button>
 							<Button asChild variant="outline">
-								<Link href="/products">Découvrir mes créations</Link>
+								<Link href="/produits">Découvrir mes créations</Link>
 							</Button>
 						</div>
 					</div>

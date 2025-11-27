@@ -99,7 +99,7 @@ export default async function CartPage() {
               </EmptyHeader>
               <EmptyContent>
                 <Button asChild variant="primary" size="lg" className="shadow-sm">
-                  <Link href="/products">Découvrir la collection</Link>
+                  <Link href="/produits">Découvrir la collection</Link>
                 </Button>
               </EmptyContent>
             </Empty>

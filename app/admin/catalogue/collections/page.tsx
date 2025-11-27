@@ -1,3 +1,4 @@
+import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
@@ -19,8 +20,17 @@ import { CollectionsFilterBadges } from "@/modules/collections/components/admin/
 import { CollectionsFilterSheet } from "@/modules/collections/components/admin/collections-filter-sheet";
 import { CreateCollectionButton } from "@/modules/collections/components/admin/create-collection-button";
 import { DeleteCollectionAlertDialog } from "@/modules/collections/components/admin/delete-collection-alert-dialog";
-import type { CollectionsSearchParams } from "./_types/search-params";
 import { parseFilters } from "./_utils/params";
+
+type CollectionFiltersSearchParams = {
+	filter_hasProducts?: string;
+};
+
+export type CollectionsSearchParams = DashboardBaseSearchParams & CollectionFiltersSearchParams;
+
+export type ParsedCollectionFilters = {
+	hasProducts?: boolean;
+};
 
 export const metadata: Metadata = {
 	title: "Collections - Administration",

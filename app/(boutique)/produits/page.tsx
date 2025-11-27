@@ -1,5 +1,23 @@
-import type { ProductSearchParams } from "@/app/(boutique)/produits/_types/search-params";
+import type { PublicBaseSearchParams } from "@/shared/types/search-params";
 import { PageHeader } from "@/shared/components/page-header";
+
+/**
+ * Product filters search params (URL parameters)
+ */
+export type ProductFiltersSearchParams = {
+	priceMin?: string;
+	priceMax?: string;
+	inStock?: string;
+	type?: string | string[];
+	material?: string | string[];
+	collectionId?: string;
+	collectionSlug?: string;
+};
+
+/**
+ * Complete product search params (base + filters)
+ */
+export type ProductSearchParams = PublicBaseSearchParams & ProductFiltersSearchParams;
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { TabNavigation } from "@/shared/components/tab-navigation";

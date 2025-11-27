@@ -20,8 +20,19 @@ import { DiscountsFilterSheet } from "@/modules/discount/components/admin/discou
 import { CreateDiscountButton } from "@/modules/discount/components/admin/create-discount-button";
 import { DeleteDiscountAlertDialog } from "@/modules/discount/components/admin/delete-discount-alert-dialog";
 import { ToggleDiscountStatusAlertDialog } from "@/modules/discount/components/admin/toggle-discount-status-alert-dialog";
-import type { DiscountsSearchParams } from "./_types/search-params";
 import { parseFilters } from "./_utils/params";
+
+export type DiscountsSearchParams = {
+	cursor?: string | string[];
+	direction?: string | string[];
+	perPage?: string | string[];
+	sortBy?: string | string[];
+	search?: string | string[];
+	type?: string | string[];
+	isActive?: string | string[];
+	hasUsages?: string | string[];
+	isExpired?: string | string[];
+};
 
 export const metadata: Metadata = {
 	title: "Codes promo - Administration",

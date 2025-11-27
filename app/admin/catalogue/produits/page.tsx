@@ -1,3 +1,4 @@
+import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
@@ -23,8 +24,31 @@ import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/p
 import { ProductsFilterBadges } from "@/modules/products/components/admin/products-filter-badges";
 import { ProductsFilterSheet } from "@/modules/products/components/admin/products-filter-sheet";
 import { ProductsQuickFilters } from "@/modules/products/components/admin/products-quick-filters";
-import type { ProductsSearchParams } from "./_types/search-params";
 import { parseFilters } from "./_utils/params";
+
+export type ProductFiltersSearchParams = {
+	filter_priceMin?: string;
+	filter_priceMax?: string;
+	filter_isPublished?: string;
+	filter_publishedAfter?: string;
+	filter_publishedBefore?: string;
+	filter_status?: string | string[];
+	filter_labelId?: string | string[];
+	filter_typeId?: string | string[];
+	filter_collectionId?: string | string[];
+	filter_stockStatus?: string | string[];
+	filter_sortBy?: string;
+	filter_updatedAfter?: string;
+	filter_updatedBefore?: string;
+	filter_material?: string | string[];
+	filter_collectionSlug?: string | string[];
+	filter_inStock?: string;
+	filter_withDeleted?: string;
+	filter_createdAfter?: string;
+	filter_createdBefore?: string;
+};
+
+export type ProductsSearchParams = DashboardBaseSearchParams & ProductFiltersSearchParams;
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

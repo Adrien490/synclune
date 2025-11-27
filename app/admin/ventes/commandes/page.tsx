@@ -18,9 +18,23 @@ import { BulkDeleteOrdersAlertDialog } from "@/modules/orders/components/admin/b
 import { MarkAsPaidAlertDialog } from "@/modules/orders/components/admin/mark-as-paid-alert-dialog";
 import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
 import { MarkAsDeliveredAlertDialog } from "@/modules/orders/components/admin/mark-as-delivered-alert-dialog";
-import type { OrdersSearchParams } from "./_types/search-params";
+import type { DashboardBaseSearchParams } from "@/shared/types/search-params";
 import { parseFilters } from "./_utils/params";
 import { Metadata } from "next";
+
+export type OrderFiltersSearchParams = {
+	filter_status?: string;
+	filter_paymentStatus?: string;
+	filter_totalMin?: string;
+	filter_totalMax?: string;
+	filter_createdAfter?: string;
+	filter_createdBefore?: string;
+	filter_showDeleted?: string;
+	filter_sortBy?: string;
+};
+
+export type OrdersSearchParams = DashboardBaseSearchParams &
+	OrderFiltersSearchParams;
 
 export const metadata: Metadata = {
 	title: "Commandes - Administration",
