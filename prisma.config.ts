@@ -9,6 +9,6 @@ export default defineConfig({
 	},
 	datasource: {
 		// Utiliser connexion directe pour les migrations (PgBouncer incompatible avec certaines opérations)
-		url: env("POSTGRES_URL_NON_POOLING") || env("DATABASE_URL"),
+		url: env("DATABASE_URL"),
 	},
 });
