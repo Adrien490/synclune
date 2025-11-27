@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
 import { cacheProductTypes } from "../constants/cache";

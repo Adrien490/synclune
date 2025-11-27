@@ -17,7 +17,7 @@ import {
 } from "@/shared/components/ui/table";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import { Palette } from "lucide-react";
-import { use, ViewTransition } from "react";
+import { use } from "react";
 import { ColorsRowActions } from "@/modules/colors/components/colors-row-actions";
 import { ColorsSelectionToolbar } from "@/modules/colors/components/colors-selection-toolbar";
 import { ColorsTableSelectionCell } from "@/modules/colors/components/colors-table-selection-cell";
@@ -91,8 +91,7 @@ export function ColorsDataTable({ colorsPromise }: ColorsDataTableProps) {
 								</TableHead>
 							</TableRow>
 						</TableHeader>
-						<ViewTransition name="admin-colors-table-content">
-							<TableBody>
+						<TableBody>
 								{colors.map((color) => {
 								const skuCount = color._count?.skus || 0;
 
@@ -134,8 +133,7 @@ export function ColorsDataTable({ colorsPromise }: ColorsDataTableProps) {
 									</TableRow>
 								);
 								})}
-							</TableBody>
-						</ViewTransition>
+						</TableBody>
 					</Table>
 				</div>
 

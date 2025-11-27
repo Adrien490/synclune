@@ -1,5 +1,5 @@
 import { getSession } from "@/shared/utils/get-session";
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { Prisma } from "@/app/generated/prisma/client";
 import { cacheUserAccounts } from "../constants/cache";
 import { prisma } from "@/shared/lib/prisma";

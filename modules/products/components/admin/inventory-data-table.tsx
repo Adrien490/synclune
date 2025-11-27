@@ -19,7 +19,6 @@ import {
 import type { GetSkuStocksReturn } from "@/modules/skus/data/get-sku-stocks";
 import { cn } from "@/shared/utils/cn";
 import { Boxes } from "lucide-react";
-import { ViewTransition } from "react";
 import { InventoryRowActions } from "./inventory-row-actions";
 import { InventorySelectionToolbar } from "./inventory-selection-toolbar";
 import { InventoryTableSelectionCell } from "./inventory-table-selection-cell";
@@ -73,8 +72,7 @@ export async function InventoryDataTable({
 								</TableHead>
 							</TableRow>
 						</TableHeader>
-						<ViewTransition name="admin-inventory-table-content">
-							<TableBody>
+						<TableBody>
 								{items.map((item) => {
 								const stockLevel =
 									item.inventory < 5
@@ -130,8 +128,7 @@ export async function InventoryDataTable({
 									</TableRow>
 								);
 								})}
-							</TableBody>
-						</ViewTransition>
+						</TableBody>
 					</Table>
 				</div>
 

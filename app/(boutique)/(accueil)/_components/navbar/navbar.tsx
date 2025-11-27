@@ -2,7 +2,7 @@ import { Logo } from "@/shared/components/logo";
 import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/navigation";
 import { getSession } from "@/shared/utils/get-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { LayoutDashboard, ShoppingCart, User } from "lucide-react";
 import Link from "next/link";
 import { CartBadge } from "@/modules/cart/components/cart-badge";

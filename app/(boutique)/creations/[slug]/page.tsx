@@ -1,4 +1,4 @@
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 

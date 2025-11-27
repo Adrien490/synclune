@@ -1,4 +1,4 @@
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";

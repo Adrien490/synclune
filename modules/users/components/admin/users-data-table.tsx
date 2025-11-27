@@ -18,7 +18,6 @@ import {
 import type { GetUsersReturn } from "@/modules/users/data/get-users";
 import { CheckCircle, Users } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { UsersRowActions } from "./users-row-actions";
 
 interface UsersDataTableProps {
@@ -86,8 +85,7 @@ export async function UsersDataTable({
 								</TableHead>
 							</TableRow>
 						</TableHeader>
-						<ViewTransition name="admin-users-table-content">
-							<TableBody>
+						<TableBody>
 								{users.map((user) => {
 								const orderCount = user._count?.orders ?? 0;
 								const displayName = user.name || "Utilisateur";
@@ -145,8 +143,7 @@ export async function UsersDataTable({
 									</TableRow>
 								);
 								})}
-							</TableBody>
-						</ViewTransition>
+						</TableBody>
 					</Table>
 				</div>
 

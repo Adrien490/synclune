@@ -1,4 +1,4 @@
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { redirect } from "next/navigation";
 import { Prisma } from "@/app/generated/prisma/client";
 import {

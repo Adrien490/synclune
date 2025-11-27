@@ -1,6 +1,6 @@
 "use server";
 
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { detectMediaType } from "@/shared/utils/media-utils";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";

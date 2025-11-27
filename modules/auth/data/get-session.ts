@@ -1,5 +1,5 @@
 import { getSession as getCurrentSession } from "@/shared/utils/get-session";
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";

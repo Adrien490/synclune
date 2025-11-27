@@ -27,7 +27,6 @@ import { getVideoMimeType } from "@/shared/utils/media-utils";
 import { Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { ProductSkuActiveToggle } from "./sku-active-toggle";
 import { ProductSkuRowActions } from "./sku-row-actions";
 import { ProductVariantsSelectionToolbar } from "./skus-selection-toolbar";
@@ -164,8 +163,7 @@ export async function ProductVariantsDataTable({
 								</TableHead>
 							</TableRow>
 						</TableHeader>
-						<ViewTransition name="admin-variants-table-content">
-							<TableBody>
+						<TableBody>
 								{productSkus.map((sku) => {
 								const primaryImage = getPrimaryImage(sku);
 								const availableStock = getAvailableStock(sku);
@@ -309,8 +307,7 @@ export async function ProductVariantsDataTable({
 									</TableRow>
 								);
 								})}
-							</TableBody>
-						</ViewTransition>
+						</TableBody>
 					</Table>
 				</div>
 

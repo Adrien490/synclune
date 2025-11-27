@@ -1,4 +1,4 @@
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { cacheDashboardOrders } from "@/modules/dashboard/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";

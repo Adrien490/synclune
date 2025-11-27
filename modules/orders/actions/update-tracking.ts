@@ -4,7 +4,7 @@ import {
 	OrderStatus,
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { sendTrackingUpdateEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";

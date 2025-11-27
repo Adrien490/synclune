@@ -1,4 +1,4 @@
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { cacheLife } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";

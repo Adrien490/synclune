@@ -22,7 +22,6 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CreditCard } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { StripePaymentsRowActions } from "./stripe-payments-row-actions";
 
 interface StripePaymentsDataTableProps {
@@ -92,8 +91,7 @@ export async function StripePaymentsDataTable({
 								<TableHead scope="col" className="w-[10%] text-right">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
-						<ViewTransition name="admin-payments-table-content">
-							<TableBody>
+						<TableBody>
 								{payments.map((payment) => {
 								const isPaid = payment.paymentStatus === "PAID";
 
@@ -172,8 +170,7 @@ export async function StripePaymentsDataTable({
 									</TableRow>
 								);
 								})}
-							</TableBody>
-						</ViewTransition>
+						</TableBody>
 						<TableFooter>
 							<TableRow>
 								<TableCell colSpan={8} className="text-center py-4">

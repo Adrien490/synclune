@@ -6,7 +6,7 @@ import { updateTag } from "next/cache";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { z } from "zod";
 
 import { getDiscountInvalidationTags } from "../constants/cache";

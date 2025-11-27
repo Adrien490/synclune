@@ -20,7 +20,6 @@ import type { GetCollectionsReturn } from "@/modules/collections/data/get-collec
 import { FolderOpen, Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { CollectionRowActions } from "./collection-row-actions";
 import { CollectionsSelectionToolbar } from "./collections-selection-toolbar";
 import { CollectionsTableSelectionCell } from "./collections-table-selection-cell";
@@ -126,8 +125,7 @@ export async function CollectionsDataTable({
 								</TableHead>
 							</TableRow>
 						</TableHeader>
-						<ViewTransition name="admin-collections-table-content">
-							<TableBody>
+						<TableBody>
 								{collections.map((collection) => {
 								const productsCount = collection._count?.products || 0;
 								const truncatedDescription = truncateDescription(
@@ -206,8 +204,7 @@ export async function CollectionsDataTable({
 									</TableRow>
 								);
 								})}
-							</TableBody>
-						</ViewTransition>
+						</TableBody>
 					</Table>
 				</div>
 

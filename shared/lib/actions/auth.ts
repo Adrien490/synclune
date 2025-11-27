@@ -6,7 +6,7 @@
  */
 
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 
 /**

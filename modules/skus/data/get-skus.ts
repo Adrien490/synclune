@@ -1,6 +1,6 @@
 "use server";
 
-import { isAdmin } from "@/shared/lib/guards";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { z } from "zod";
 import {
 	GET_PRODUCT_SKUS_ADMIN_FALLBACK_SORT_BY,

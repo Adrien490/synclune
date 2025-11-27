@@ -21,7 +21,6 @@ import type { GetDiscountsReturn } from "@/modules/discount/data/get-discounts";
 import { DISCOUNT_TYPE_LABELS } from "@/modules/discount/constants/discount.constants";
 import { DiscountType } from "@/app/generated/prisma/client";
 import { Ticket } from "lucide-react";
-import { ViewTransition } from "react";
 import { DiscountRowActions } from "./discount-row-actions";
 import { DiscountsSelectionToolbar } from "./discounts-selection-toolbar";
 import { DiscountsTableSelectionCell } from "./discounts-table-selection-cell";
@@ -178,8 +177,7 @@ export async function DiscountsDataTable({
 								</TableHead>
 							</TableRow>
 						</TableHeader>
-						<ViewTransition name="admin-discounts-table-content">
-							<TableBody>
+						<TableBody>
 								{discounts.map((discount) => {
 								const expired = isExpired(discount.endsAt);
 
@@ -241,8 +239,7 @@ export async function DiscountsDataTable({
 									</TableRow>
 								);
 								})}
-							</TableBody>
-						</ViewTransition>
+						</TableBody>
 					</Table>
 				</div>
 

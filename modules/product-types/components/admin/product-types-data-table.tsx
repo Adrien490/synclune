@@ -21,7 +21,6 @@ import {
 import type { GetProductTypesReturn } from "@/modules/product-types/data/get-product-types";
 import { Tags } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { ProductTypeActiveToggle } from "./product-type-active-toggle";
 import { ProductTypeRowActions } from "./product-type-row-actions";
 import { ProductTypesSelectionToolbar } from "./product-types-selection-toolbar";
@@ -116,8 +115,7 @@ export async function ProductTypesDataTable({
 								</TableHead>
 							</TableRow>
 						</TableHeader>
-						<ViewTransition name="admin-product-types-table-content">
-							<TableBody>
+						<TableBody>
 								{productTypes.map((productType) => {
 								const productsCount = productType._count?.products || 0;
 
@@ -179,8 +177,7 @@ export async function ProductTypesDataTable({
 									</TableRow>
 								);
 								})}
-							</TableBody>
-						</ViewTransition>
+						</TableBody>
 						<TableFooter>
 							<TableRow>
 								<TableCell colSpan={6}>

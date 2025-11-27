@@ -27,7 +27,6 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ReceiptText } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { RefundRowActions } from "./refund-row-actions";
 
 export interface RefundsDataTableProps {
@@ -128,8 +127,7 @@ export async function RefundsDataTable({
 								</TableHead>
 							</TableRow>
 						</TableHeader>
-						<ViewTransition name="admin-refunds-table-content">
-							<TableBody>
+						<TableBody>
 								{refunds.map((refund) => (
 								<TableRow key={refund.id}>
 									<TableCell role="gridcell">
@@ -198,8 +196,7 @@ export async function RefundsDataTable({
 									</TableCell>
 								</TableRow>
 								))}
-							</TableBody>
-						</ViewTransition>
+						</TableBody>
 					</Table>
 				</div>
 
