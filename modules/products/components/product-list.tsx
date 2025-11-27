@@ -22,7 +22,7 @@ interface ProductListProps {
 	perPage: number;
 }
 
-export async function ProductList({
+export function ProductList({
 	productsPromise,
 	perPage,
 }: ProductListProps) {
