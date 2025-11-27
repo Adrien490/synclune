@@ -9,7 +9,12 @@ const nextConfig: NextConfig = {
    * Packages to be treated as external (not bundled)
    * Required for Prisma 7 compatibility with Turbopack
    */
-  serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg"],
+  serverExternalPackages: [
+    "@prisma/client",
+    "@prisma/adapter-neon",
+    "@neondatabase/serverless",
+    "ws",
+  ],
 
   /**
    * ====================================================================
