@@ -23,8 +23,8 @@ import {
 	X,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition, useCallback } from "react";
-import { validateDiscountCode } from "@/modules/discount/actions/validate-discount-code";
+import { useState, useCallback } from "react";
+import { useApplyDiscountCode } from "@/modules/discount/hooks/use-apply-discount-code";
 
 interface AppliedDiscount {
 	id: string;
@@ -54,8 +54,18 @@ export function CheckoutSummary({
 	// États pour le code promo
 	const [discountCode, setDiscountCode] = useState("");
 	const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
-	const [discountError, setDiscountError] = useState<string | null>(null);
-	const [isPending, startTransition] = useTransition();
+
+	// Hook pour appliquer le code promo (pattern établi avec toast automatique)
+	const { applyCode, isPending } = useApplyDiscountCode({
+		onSuccess: (discount) => {
+			setAppliedDiscount(discount);
+			onDiscountChange?.(discount);
+		},
+		onError: () => {
+			setAppliedDiscount(null);
+			onDiscountChange?.(null);
+		},
+	});
 
 	// Calculer le nombre total d'articles
 	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -77,41 +87,13 @@ export function CheckoutSummary({
 	// Appliquer un code promo
 	const handleApplyDiscount = useCallback(() => {
 		if (!discountCode.trim()) return;
-
-		setDiscountError(null);
-
-		startTransition(async () => {
-			const result = await validateDiscountCode(
-				discountCode.trim().toUpperCase(),
-				subtotal,
-				userId,
-				customerEmail
-			);
-
-			if (result.valid && result.discount) {
-				const newDiscount: AppliedDiscount = {
-					id: result.discount.id,
-					code: result.discount.code,
-					type: result.discount.type,
-					value: result.discount.value,
-					discountAmount: result.discount.discountAmount,
-				};
-				setAppliedDiscount(newDiscount);
-				setDiscountError(null);
-				onDiscountChange?.(newDiscount);
-			} else {
-				setDiscountError(result.error || "Code invalide");
-				setAppliedDiscount(null);
-				onDiscountChange?.(null);
-			}
-		});
-	}, [discountCode, subtotal, userId, customerEmail, onDiscountChange]);
+		applyCode(discountCode, subtotal, userId, customerEmail);
+	}, [discountCode, subtotal, userId, customerEmail, applyCode]);
 
 	// Retirer le code promo
 	const handleRemoveDiscount = useCallback(() => {
 		setAppliedDiscount(null);
 		setDiscountCode("");
-		setDiscountError(null);
 		onDiscountChange?.(null);
 	}, [onDiscountChange]);
 
@@ -252,7 +234,6 @@ export function CheckoutSummary({
 										value={discountCode}
 										onChange={(e) => {
 											setDiscountCode(e.target.value.toUpperCase());
-											setDiscountError(null);
 										}}
 										onKeyDown={(e) => {
 											if (e.key === "Enter") {
@@ -280,14 +261,6 @@ export function CheckoutSummary({
 									)}
 								</Button>
 							</div>
-
-							{/* Message d'erreur */}
-							{discountError && (
-								<p className="text-xs text-destructive flex items-center gap-1">
-									<X className="w-3 h-3" />
-									{discountError}
-								</p>
-							)}
 						</div>
 					)}
 

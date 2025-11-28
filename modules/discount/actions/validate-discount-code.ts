@@ -29,7 +29,7 @@ export async function validateDiscountCode(
 	customerEmail?: string
 ): Promise<ValidateDiscountCodeReturn> {
 	try {
-		// 1. Valider les paramètres
+		// 1. Valider les paramètres avec messages d'erreur spécifiques
 		const validation = validateDiscountCodeSchema.safeParse({
 			code,
 			subtotal,
@@ -38,6 +38,84 @@ export async function validateDiscountCode(
 		});
 
 		if (!validation.success) {
+			// Identifier quel champ a échoué pour un meilleur diagnostic
+			const firstError = validation.error.issues[0];
+			const path = firstError?.path[0];
+
+			if (path === "code") {
+				return { valid: false, error: "Format de code invalide" };
+			}
+			if (path === "subtotal") {
+				console.error("[VALIDATE_DISCOUNT] subtotal invalide:", subtotal, "type:", typeof subtotal);
+				return { valid: false, error: "Erreur de calcul du panier" };
+			}
+			if (path === "userId") {
+				console.error("[VALIDATE_DISCOUNT] userId invalide:", userId);
+				// On continue sans userId plutôt que bloquer
+			}
+			if (path === "customerEmail") {
+				console.error("[VALIDATE_DISCOUNT] customerEmail invalide:", customerEmail);
+				// On continue sans email plutôt que bloquer
+			}
+
+			// Si c'est userId ou customerEmail qui a échoué, on réessaie sans
+			if (path === "userId" || path === "customerEmail") {
+				const retryValidation = validateDiscountCodeSchema.safeParse({
+					code,
+					subtotal,
+					userId: undefined,
+					customerEmail: undefined,
+				});
+				if (!retryValidation.success) {
+					return { valid: false, error: "Code invalide" };
+				}
+				// Continuer avec les données validées (sans userId/email)
+				const {
+					code: validatedCode,
+					subtotal: validatedSubtotal,
+				} = retryValidation.data;
+
+				// Rechercher le code promo
+				const discount = await prisma.discount.findUnique({
+					where: { code: validatedCode },
+					select: GET_DISCOUNT_VALIDATION_SELECT,
+				});
+
+				if (!discount) {
+					return { valid: false, error: DISCOUNT_ERROR_MESSAGES.NOT_FOUND };
+				}
+
+				// Vérifier l'éligibilité sans userId/email
+				const context: DiscountApplicationContext = {
+					subtotal: validatedSubtotal,
+					userId: undefined,
+					customerEmail: undefined,
+				};
+
+				const eligibility = await checkDiscountEligibility(discount, context);
+
+				if (!eligibility.eligible) {
+					return { valid: false, error: eligibility.error };
+				}
+
+				const discountAmount = calculateDiscountAmount({
+					type: discount.type,
+					value: discount.value,
+					subtotal: validatedSubtotal,
+				});
+
+				return {
+					valid: true,
+					discount: {
+						id: discount.id,
+						code: discount.code,
+						type: discount.type,
+						value: discount.value,
+						discountAmount,
+					},
+				};
+			}
+
 			return { valid: false, error: "Code invalide" };
 		}
 
