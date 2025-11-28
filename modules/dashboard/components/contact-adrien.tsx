@@ -34,8 +34,8 @@ import {
 	MessageSquare,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useOptimistic, useRef, useState, useTransition } from "react";
-import { toggleContactAdrienVisibility } from "../actions/toggle-contact-adrien-visibility";
+import { useRef, useState } from "react";
+import { useToggleContactAdrienVisibility } from "../hooks/use-toggle-contact-adrien-visibility";
 
 interface ContactAdrienProps {
 	/** Etat initial de visibilité (depuis le cookie serveur) */
@@ -68,9 +68,20 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 	const toggleButtonRef = useRef<HTMLButtonElement>(null);
 	const mainButtonRef = useRef<HTMLButtonElement>(null);
 
-	// useOptimistic pour une UX réactive (hide/show FAB)
-	const [optimisticHidden, setOptimisticHidden] = useOptimistic(initialHidden);
-	const [isPending, startTransition] = useTransition();
+	// Hook pour toggle la visibilité (pattern établi avec useOptimistic intégré)
+	const { isHidden, toggle, isPending } = useToggleContactAdrienVisibility({
+		initialHidden,
+		onToggle: (newHiddenState) => {
+			// Gérer le focus après le toggle
+			requestAnimationFrame(() => {
+				if (newHiddenState) {
+					toggleButtonRef.current?.focus();
+				} else {
+					mainButtonRef.current?.focus();
+				}
+			});
+		},
+	});
 
 	// Dialog contrôlé pour auto-fermeture après succès
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -83,31 +94,8 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 		},
 	});
 
-	const handleToggleVisibility = useCallback(() => {
-		const newHiddenState = !optimisticHidden;
-
-		startTransition(async () => {
-			setOptimisticHidden(newHiddenState);
-			try {
-				await toggleContactAdrienVisibility(newHiddenState);
-			} catch {
-				// Rollback en cas d'erreur
-				setOptimisticHidden(!newHiddenState);
-			}
-		});
-
-		// Gérer le focus après le toggle
-		requestAnimationFrame(() => {
-			if (newHiddenState) {
-				toggleButtonRef.current?.focus();
-			} else {
-				mainButtonRef.current?.focus();
-			}
-		});
-	}, [optimisticHidden, setOptimisticHidden]);
-
 	// Mode caché : affiche juste une flèche pour réouvrir
-	if (optimisticHidden) {
+	if (isHidden) {
 		return (
 			<AnimatePresence>
 				<motion.div
@@ -127,7 +115,7 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 					<TooltipTrigger asChild>
 						<Button
 							ref={toggleButtonRef}
-							onClick={handleToggleVisibility}
+							onClick={toggle}
 							variant="outline"
 							size="sm"
 							className={cn(
@@ -179,7 +167,7 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<Button
-						onClick={handleToggleVisibility}
+						onClick={toggle}
 						disabled={isPending}
 						variant="ghost"
 						size="icon"

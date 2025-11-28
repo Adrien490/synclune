@@ -199,14 +199,14 @@ export function CheckoutSummary({
 
 					{appliedDiscount ? (
 						// Code promo appliqué
-						<div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+						<div className="p-3 bg-muted/50 border border-border rounded-lg">
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-2">
-									<CheckCircle2 className="w-4 h-4 text-primary" />
+									<CheckCircle2 className="w-4 h-4 text-foreground" />
 									<span className="font-mono text-sm font-medium">
 										{appliedDiscount.code}
 									</span>
-									<span className="text-xs text-primary font-medium">
+									<span className="text-xs text-muted-foreground font-medium">
 										({formatDiscountLabel(appliedDiscount)})
 									</span>
 								</div>
@@ -289,7 +289,7 @@ export function CheckoutSummary({
 
 					{/* Réduction (si appliquée) */}
 					{discountAmount > 0 && (
-						<div className="flex justify-between items-center text-primary">
+						<div className="flex justify-between items-center text-foreground">
 							<span className="flex items-center gap-1.5">
 								<Tag className="w-4 h-4" />
 								Réduction

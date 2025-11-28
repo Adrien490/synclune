@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
 import { applyDiscountCode } from "@/modules/discount/actions/apply-discount-code";
 import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
@@ -34,7 +34,8 @@ interface UseApplyDiscountCodeOptions {
  * ```
  */
 export function useApplyDiscountCode(options?: UseApplyDiscountCodeOptions) {
-	const [state, formAction, isPending] = useActionState(
+	const [isTransitionPending, startTransition] = useTransition();
+	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(
 			applyDiscountCode,
 			createToastCallbacks({
@@ -68,13 +69,15 @@ export function useApplyDiscountCode(options?: UseApplyDiscountCodeOptions) {
 		formData.append("subtotal", Math.round(subtotal).toString());
 		if (userId) formData.append("userId", userId);
 		if (customerEmail) formData.append("customerEmail", customerEmail);
-		formAction(formData);
+		startTransition(() => {
+			formAction(formData);
+		});
 	};
 
 	return {
 		state,
 		action: formAction,
 		applyCode,
-		isPending,
+		isPending: isTransitionPending || isActionPending,
 	};
 }
