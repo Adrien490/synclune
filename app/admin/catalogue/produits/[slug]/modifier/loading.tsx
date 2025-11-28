@@ -100,7 +100,7 @@ export default function EditProductLoadingPage() {
 					</FormLayout>
 
 					{/* Footer */}
-					<div className="border-t border-border/40 mt-10 pt-6">
+					<div className="mt-6">
 						<div className="flex justify-end gap-3">
 							<Skeleton className="h-10 w-24" />
 							<Skeleton className="h-10 w-48" />

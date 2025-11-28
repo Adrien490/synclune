@@ -6,7 +6,8 @@ import {
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, logOrderStatusChange } from "@/shared/lib/prisma";
+import { getSession } from "@/shared/utils/get-session";
 import { sendShippingConfirmationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -41,6 +42,10 @@ export async function markAsShipped(
 				message: "Accès non autorisé",
 			};
 		}
+
+		// Récupérer l'ID de l'admin pour l'audit trail
+		const session = await getSession();
+		const adminUserId = session?.user?.id;
 
 		const id = formData.get("id") as string;
 		const trackingNumber = formData.get("trackingNumber") as string;
@@ -131,6 +136,24 @@ export async function markAsShipped(
 				shippingCarrier: result.data.carrier,
 				shippedAt: new Date(),
 			},
+		});
+
+		// Enregistrer l'historique des changements de statut (audit trail)
+		await logOrderStatusChange({
+			orderId: id,
+			field: "status",
+			previousStatus: order.status,
+			newStatus: OrderStatus.SHIPPED,
+			changedBy: adminUserId,
+			reason: `Expédié avec suivi ${result.data.trackingNumber}`,
+		});
+
+		await logOrderStatusChange({
+			orderId: id,
+			field: "fulfillmentStatus",
+			previousStatus: FulfillmentStatus.PROCESSING,
+			newStatus: FulfillmentStatus.SHIPPED,
+			changedBy: adminUserId,
 		});
 
 		revalidatePath("/admin/ventes/commandes");

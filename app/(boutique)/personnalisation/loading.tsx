@@ -145,7 +145,7 @@ export default function ContactLoading() {
 						</div>
 
 						{/* Footer avec boutons */}
-						<div className="pt-8 border-t border-border">
+						<div className="mt-6">
 							<div className="flex flex-col sm:flex-row justify-end gap-3">
 								<Skeleton className="h-12 w-full sm:w-40 bg-muted/30" />
 								<Skeleton className="h-12 w-full sm:w-56 bg-primary/20" />

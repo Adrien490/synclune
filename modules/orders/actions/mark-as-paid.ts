@@ -8,6 +8,7 @@ import {
 } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
+import { getSession } from "@/shared/utils/get-session";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
@@ -39,6 +40,10 @@ export async function markAsPaid(
 				message: "Accès non autorisé",
 			};
 		}
+
+		// Récupérer l'ID de l'admin pour l'audit trail
+		const session = await getSession();
+		const adminUserId = session?.user?.id;
 
 		const id = formData.get("id") as string;
 		const note = formData.get("note") as string | null;
@@ -142,6 +147,38 @@ export async function markAsPaid(
 					status: OrderStatus.PROCESSING,
 					fulfillmentStatus: FulfillmentStatus.PROCESSING,
 					paidAt: new Date(),
+				},
+			});
+
+			// Enregistrer l'historique des changements de statut (audit trail)
+			await tx.orderStatusHistory.create({
+				data: {
+					orderId: id,
+					field: "paymentStatus",
+					previousStatus: order.paymentStatus,
+					newStatus: PaymentStatus.PAID,
+					changedBy: adminUserId,
+					reason: note || "Paiement marqué manuellement",
+				},
+			});
+
+			await tx.orderStatusHistory.create({
+				data: {
+					orderId: id,
+					field: "status",
+					previousStatus: order.status,
+					newStatus: OrderStatus.PROCESSING,
+					changedBy: adminUserId,
+				},
+			});
+
+			await tx.orderStatusHistory.create({
+				data: {
+					orderId: id,
+					field: "fulfillmentStatus",
+					previousStatus: FulfillmentStatus.UNFULFILLED,
+					newStatus: FulfillmentStatus.PROCESSING,
+					changedBy: adminUserId,
 				},
 			});
 		});

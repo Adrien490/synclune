@@ -1,6 +1,5 @@
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { Plus } from "lucide-react";
 
 /**
  * Loading skeleton pour la page de liste des variantes
@@ -12,10 +11,7 @@ export default function ProductVariantsLoading() {
 			{/* Custom Header Section */}
 			<div className="flex items-center justify-between">
 				<Skeleton className="h-5 w-96" />
-				<Button disabled>
-					<Plus className="mr-2 h-4 w-4" />
-					Nouvelle variante
-				</Button>
+				<Button disabled>Nouvelle variante</Button>
 			</div>
 
 			{/* Data Table */}

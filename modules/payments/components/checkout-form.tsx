@@ -794,7 +794,7 @@ export function CheckoutForm({
 			</FormSection>
 
 			{/* Footer avec bouton de paiement */}
-			<div className="pt-8 border-t border-border mt-8">
+			<div className="mt-6">
 				<div className="space-y-4">
 					{/* Message sécurité */}
 					<div className="p-4 bg-muted/50 rounded-lg border space-y-3">

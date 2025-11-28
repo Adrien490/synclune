@@ -147,7 +147,7 @@ export default function CreateProductLoading() {
 			</FormLayout>
 
 			{/* Form Footer */}
-			<div className="border-t border-border/40 mt-10 pt-6">
+			<div className="mt-6">
 				<div className="flex justify-end">
 					<Skeleton className="h-10 w-32" />
 				</div>

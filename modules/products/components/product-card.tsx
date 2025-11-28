@@ -101,14 +101,16 @@ export function ProductCard({
 			className={cn(
 				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent",
 				// Transition optimisée avec cubic-bezier pour fluidité
-				"transition-all duration-400 ease-in-out",
-				// Reflet doré subtil au hover uniquement (augmenté à /8 pour meilleure visibilité)
-				"before:absolute before:inset-0 before:bg-gradient-to-r before:from-accent/0 before:via-accent/8 before:to-accent/0",
-				"before:opacity-0 before:transition-opacity before:duration-500 before:pointer-events-none",
+				"transition-all duration-300 ease-out",
+				// Reflet rose/doré au hover - Plus visible
+				"before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/0 before:via-primary/8 before:to-amber-100/15",
+				"before:opacity-0 before:transition-opacity before:duration-400 before:pointer-events-none",
 				"motion-safe:hover:before:opacity-100",
-				// Border et shadow au hover utilisant les couleurs du thème
-				"shadow-sm motion-safe:hover:border-primary/20 motion-safe:hover:shadow-lg motion-safe:hover:shadow-primary/10",
-				"motion-safe:hover:-translate-y-1 will-change-transform",
+				// Border, shadow et scale au hover - Plus impactant
+				"shadow-sm motion-safe:hover:border-primary/30 motion-safe:hover:shadow-xl motion-safe:hover:shadow-primary/15",
+				"motion-safe:hover:-translate-y-1.5 motion-safe:hover:scale-[1.01] will-change-transform",
+				// Active state pour mobile
+				"active:scale-[0.98]",
 				sizeConfig[size].container
 			)}
 			itemScope
@@ -121,10 +123,10 @@ export function ProductCard({
 				aria-labelledby={titleId}
 			>
 				{/* Image principale (jamais de vidéo, jamais null grâce à getPrimaryImage()) */}
-				<div className="product-card-media relative aspect-4/5 overflow-hidden bg-muted transition-all duration-500">
-					{/* Badge rupture de stock */}
+				<div className="product-card-media relative aspect-4/5 overflow-hidden bg-muted transition-all duration-400 rounded-t-lg">
+					{/* Badge rupture de stock - Style plus doux */}
 					{stockStatus === "out_of_stock" && (
-						<div className="absolute top-2 left-2 bg-destructive text-destructive-foreground px-2 py-1 rounded-md text-xs font-medium z-10 shadow-sm">
+						<div className="absolute top-2.5 left-2.5 bg-foreground/80 text-background px-2.5 py-1 rounded-full text-xs font-medium z-10 shadow-md backdrop-blur-sm">
 							{stockMessage}
 						</div>
 					)}
@@ -133,7 +135,7 @@ export function ProductCard({
 							src={primaryImage.url}
 							alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
 							fill
-							className="object-cover rounded-t-lg transition-all duration-500 ease-out motion-safe:group-hover:scale-110"
+							className="object-cover rounded-t-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
 							placeholder="empty"
 							// Preload pour les 4 premières images (above-fold) - Next.js 16
 							preload={index !== undefined && index < 4}

@@ -12,7 +12,10 @@ import { TrackingUpdateEmail } from "@/emails/tracking-update-email";
 import { DeliveryConfirmationEmail } from "@/emails/delivery-confirmation-email";
 import { AdminNewOrderEmail } from "@/emails/admin-new-order-email";
 import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email";
+import { RefundConfirmationEmail } from "@/emails/refund-confirmation-email";
+import { AdminDisputeAlertEmail } from "@/emails/admin-dispute-alert-email";
 import { CustomizationRequestEmail } from "@/emails/customization-request-email";
+import { PaymentFailedEmail } from "@/emails/payment-failed-email";
 import { EMAIL_FROM, EMAIL_SUBJECTS, EMAIL_ADMIN } from "@/shared/lib/email-config";
 
 // Initialiser le client Resend
@@ -750,4 +753,168 @@ export async function sendAdminInvoiceFailedAlert({
 		return { success: false, error };
 	}
 	*/
+}
+
+/**
+ * Envoie un email de confirmation de remboursement au client
+ */
+export async function sendRefundConfirmationEmail({
+	to,
+	orderNumber,
+	customerName,
+	refundAmount,
+	originalOrderTotal,
+	reason,
+	isPartialRefund,
+	orderDetailsUrl,
+}: {
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	refundAmount: number;
+	originalOrderTotal: number;
+	reason: string;
+	isPartialRefund: boolean;
+	orderDetailsUrl: string;
+}) {
+	try {
+		const emailHtml = await render(
+			RefundConfirmationEmail({
+				orderNumber,
+				customerName,
+				refundAmount,
+				originalOrderTotal,
+				reason,
+				isPartialRefund,
+				orderDetailsUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.REFUND_CONFIRMATION,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending refund confirmation:", error);
+			return { success: false, error };
+		}
+
+		console.log(`✅ [EMAIL] Refund confirmation sent to ${to} for order ${orderNumber}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending refund confirmation:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email au client lorsque son paiement asynchrone (SEPA, etc.) échoue
+ */
+export async function sendPaymentFailedEmail({
+	to,
+	customerName,
+	orderNumber,
+	retryUrl,
+}: {
+	to: string;
+	customerName: string;
+	orderNumber: string;
+	retryUrl: string;
+}) {
+	try {
+		const emailHtml = await render(
+			PaymentFailedEmail({
+				orderNumber,
+				customerName,
+				retryUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.PAYMENT_FAILED,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending payment failed email:", error);
+			return { success: false, error };
+		}
+
+		console.log(`⚠️ [EMAIL] Payment failed notification sent to ${to} for order ${orderNumber}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending payment failed email:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie une alerte admin en cas de litige (dispute) Stripe
+ * URGENT : Délai de réponse limité (généralement 7 jours)
+ */
+export async function sendAdminDisputeAlert({
+	orderNumber,
+	orderId,
+	customerEmail,
+	customerName,
+	disputeAmount,
+	disputeReason,
+	evidenceDueDate,
+	stripeDisputeId,
+	stripePaymentIntentId,
+	dashboardUrl,
+}: {
+	orderNumber: string;
+	orderId: string;
+	customerEmail: string;
+	customerName: string;
+	disputeAmount: number;
+	disputeReason: string;
+	evidenceDueDate: string;
+	stripeDisputeId: string;
+	stripePaymentIntentId: string;
+	dashboardUrl: string;
+}) {
+	try {
+		const stripeDashboardUrl = `https://dashboard.stripe.com/disputes/${stripeDisputeId}`;
+
+		const emailHtml = await render(
+			AdminDisputeAlertEmail({
+				orderNumber,
+				orderId,
+				customerEmail,
+				customerName,
+				disputeAmount,
+				disputeReason,
+				evidenceDueDate,
+				stripeDisputeId,
+				stripePaymentIntentId,
+				dashboardUrl,
+				stripeDashboardUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to: EMAIL_ADMIN,
+			subject: `🚨 LITIGE URGENT : ${orderNumber} - Délai : ${evidenceDueDate}`,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending dispute alert:", error);
+			return { success: false, error };
+		}
+
+		console.log(`🚨 [EMAIL] Dispute alert sent for order ${orderNumber}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending dispute alert:", error);
+		return { success: false, error };
+	}
 }

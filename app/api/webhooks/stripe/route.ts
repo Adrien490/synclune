@@ -5,13 +5,29 @@ import {
 	sendOrderConfirmationEmail,
 	sendAdminNewOrderEmail,
 	sendAdminRefundFailedAlert,
+	sendRefundConfirmationEmail,
+	sendAdminDisputeAlert,
+	sendPaymentFailedEmail,
 } from "@/shared/lib/email";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { PaymentStatus, Prisma, RefundStatus } from "@/app/generated/prisma/client";
+import { PaymentStatus, Prisma, RefundStatus, WebhookEventStatus } from "@/app/generated/prisma/client";
 import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
 import { getShippingRateName } from "@/modules/orders/constants/stripe-shipping-rates";
+
+// Événements critiques qui nécessitent une déduplication stricte
+const CRITICAL_EVENTS = [
+	"checkout.session.completed",
+	"checkout.session.async_payment_succeeded",
+	"checkout.session.async_payment_failed",
+	"charge.refunded",
+	"charge.dispute.created",
+	// Webhooks factures pour synchronisation invoiceNumber et statut
+	"invoice.paid",
+	"invoice.payment_failed",
+	"invoice.finalized",
+] as const;
 
 // Note: With cacheComponents enabled, API routes are dynamic by default
 // No need for export const dynamic = "force-dynamic"
@@ -66,7 +82,46 @@ export async function POST(req: Request) {
 
 		// console.log("✅ Stripe webhook event received:", event.type, event.id);
 
-		// 2. Traiter l'événement selon le type (webhook event tracking removed for v1)
+		// 2. 🔴 DÉDUPLICATION - Vérifier si l'événement a déjà été traité
+		// Stripe peut renvoyer le même événement plusieurs fois (timeout, retry)
+		const isCriticalEvent = CRITICAL_EVENTS.includes(event.type as typeof CRITICAL_EVENTS[number]);
+
+		if (isCriticalEvent) {
+			const existingEvent = await prisma.stripeWebhookEvent.findUnique({
+				where: { stripeEventId: event.id },
+			});
+
+			if (existingEvent) {
+				// Événement déjà traité ou en cours
+				if (existingEvent.status === WebhookEventStatus.PROCESSED) {
+					console.log(`⚠️ [WEBHOOK] Event ${event.id} already processed, skipping`);
+					return NextResponse.json({ received: true, status: "already_processed" });
+				}
+				if (existingEvent.status === WebhookEventStatus.PENDING) {
+					console.log(`⚠️ [WEBHOOK] Event ${event.id} already being processed, skipping`);
+					return NextResponse.json({ received: true, status: "processing" });
+				}
+				// Si FAILED, on peut retenter (incrémenter retryCount)
+			}
+
+			// Enregistrer l'événement comme PENDING avant traitement
+			await prisma.stripeWebhookEvent.upsert({
+				where: { stripeEventId: event.id },
+				create: {
+					stripeEventId: event.id,
+					type: event.type,
+					status: WebhookEventStatus.PENDING,
+					// Convertir l'objet Stripe en JSON sérialisable
+					payload: JSON.parse(JSON.stringify(event.data.object)),
+				},
+				update: {
+					status: WebhookEventStatus.PENDING,
+					retryCount: { increment: 1 },
+				},
+			});
+		}
+
+		// 3. Traiter l'événement selon le type
 		try {
 			switch (event.type) {
 				case "checkout.session.completed": {
@@ -105,14 +160,76 @@ export async function POST(req: Request) {
 					break;
 				}
 
+				// === PAIEMENTS ASYNCHRONES (SEPA, Sofort, etc.) ===
+				case "checkout.session.async_payment_succeeded": {
+					const session = event.data.object as Stripe.Checkout.Session;
+					await handleAsyncPaymentSucceeded(session);
+					break;
+				}
+
+				case "checkout.session.async_payment_failed": {
+					const session = event.data.object as Stripe.Checkout.Session;
+					await handleAsyncPaymentFailed(session);
+					break;
+				}
+
+				// === LITIGES / CHARGEBACKS ===
+				case "charge.dispute.created": {
+					const dispute = event.data.object as Stripe.Dispute;
+					await handleDisputeCreated(dispute);
+					break;
+				}
+
+				// === FACTURES STRIPE (synchronisation invoiceNumber + statut) ===
+				case "invoice.finalized": {
+					const invoice = event.data.object as Stripe.Invoice;
+					await handleInvoiceFinalized(invoice);
+					break;
+				}
+
+				case "invoice.paid": {
+					const invoice = event.data.object as Stripe.Invoice;
+					await handleInvoicePaid(invoice);
+					break;
+				}
+
+				case "invoice.payment_failed": {
+					const invoice = event.data.object as Stripe.Invoice;
+					await handleInvoicePaymentFailed(invoice);
+					break;
+				}
 
 				default:
 					// console.log(`⚠️  Unhandled event type: ${event.type}`);
 			}
 
+			// 4. Marquer l'événement comme traité avec succès
+			if (isCriticalEvent) {
+				await prisma.stripeWebhookEvent.update({
+					where: { stripeEventId: event.id },
+					data: {
+						status: WebhookEventStatus.PROCESSED,
+						processedAt: new Date(),
+					},
+				});
+			}
+
 			return NextResponse.json({ received: true, status: "processed" });
 		} catch (error) {
 			// console.error("❌ Error processing webhook event:", error);
+
+			// Marquer l'événement comme échoué
+			if (isCriticalEvent) {
+				await prisma.stripeWebhookEvent.update({
+					where: { stripeEventId: event.id },
+					data: {
+						status: WebhookEventStatus.FAILED,
+						errorMessage: error instanceof Error ? error.message : "Unknown error",
+					},
+				}).catch(() => {
+					// Ignorer les erreurs de mise à jour (l'événement peut ne pas exister)
+				});
+			}
 
 			throw error;
 		}
@@ -129,6 +246,14 @@ async function handleCheckoutSessionCompleted(
 	session: Stripe.Checkout.Session
 ) {
 	// console.log("🎉 Checkout session completed:", session.id);
+
+	// 🔴 CRITIQUE : Validation payment_status AVANT tout traitement
+	// Pour les paiements asynchrones (SEPA, etc.), payment_status peut être 'unpaid'
+	// Dans ce cas, attendre l'événement checkout.session.async_payment_succeeded
+	if (session.payment_status === "unpaid") {
+		console.log(`⏳ [WEBHOOK] Session ${session.id} payment_status is 'unpaid', waiting for async payment confirmation`);
+		return null;
+	}
 
 	try {
 		// Récupérer l'ID de commande depuis les metadata
@@ -686,6 +811,8 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
 				orderNumber: true,
 				total: true,
 				paymentStatus: true,
+				customerEmail: true,
+				customerName: true,
 				refunds: {
 					select: {
 						id: true,
@@ -784,9 +911,453 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
 			`📄 [WEBHOOK] Refund processed for order ${order.orderNumber} ` +
 			`(${isFullyRefunded ? 'total' : 'partial'}: ${totalRefundedOnStripe / 100}€)`
 		);
+
+		// 5. Envoyer email de confirmation au client
+		if (order.customerEmail) {
+			try {
+				const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
+				const orderDetailsUrl = `${baseUrl}/mon-compte/commandes/${order.orderNumber}`;
+
+				// Déterminer la raison du dernier remboursement
+				const latestRefund = stripeRefunds[0];
+				const reason = latestRefund?.reason || "OTHER";
+
+				await sendRefundConfirmationEmail({
+					to: order.customerEmail,
+					orderNumber: order.orderNumber,
+					customerName: order.customerName || "Client",
+					refundAmount: totalRefundedOnStripe,
+					originalOrderTotal: order.total,
+					reason: reason.toUpperCase(),
+					isPartialRefund: !isFullyRefunded,
+					orderDetailsUrl,
+				});
+
+				console.log(`✅ [WEBHOOK] Refund confirmation email sent to ${order.customerEmail}`);
+			} catch (emailError) {
+				console.error("❌ [WEBHOOK] Error sending refund confirmation email:", emailError);
+				// Ne pas bloquer le webhook si l'email échoue
+			}
+		}
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling charge refunded:`, error);
 		// Ne pas throw pour ne pas bloquer le webhook
 	}
 }
 
+/**
+ * 🏦 Gère les paiements asynchrones réussis (SEPA, Sofort, etc.)
+ * Ces paiements sont confirmés après le checkout, parfois plusieurs jours plus tard
+ */
+async function handleAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
+	console.log(`🏦 [WEBHOOK] Async payment succeeded: ${session.id}`);
+
+	try {
+		const orderId = session.metadata?.orderId || session.client_reference_id;
+
+		if (!orderId) {
+			console.error("❌ [WEBHOOK] No order ID found in async payment session");
+			return;
+		}
+
+		// Traiter comme un checkout.session.completed
+		// La logique est identique : mettre à jour le statut, décrémenter le stock, etc.
+		await handleCheckoutSessionCompleted(session);
+
+		console.log(`✅ [WEBHOOK] Async payment processed for order ${orderId}`);
+	} catch (error) {
+		console.error(`❌ [WEBHOOK] Error handling async payment succeeded:`, error);
+		throw error; // Propager pour marquer l'événement comme FAILED
+	}
+}
+
+/**
+ * 🚫 Gère les paiements asynchrones échoués
+ * Annule la commande et notifie le client
+ */
+async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
+	console.log(`🚫 [WEBHOOK] Async payment failed: ${session.id}`);
+
+	try {
+		const orderId = session.metadata?.orderId || session.client_reference_id;
+
+		if (!orderId) {
+			console.error("❌ [WEBHOOK] No order ID found in failed async payment session");
+			return;
+		}
+
+		// Mettre à jour la commande comme échouée
+		const order = await prisma.order.update({
+			where: { id: orderId },
+			data: {
+				paymentStatus: PaymentStatus.FAILED,
+				status: "CANCELLED",
+			},
+			select: {
+				id: true,
+				orderNumber: true,
+				customerEmail: true,
+				customerName: true,
+			},
+		});
+
+		// Enregistrer dans l'historique des statuts
+		await prisma.orderStatusHistory.create({
+			data: {
+				orderId: order.id,
+				field: "paymentStatus",
+				previousStatus: "PENDING",
+				newStatus: "FAILED",
+				changedBy: "webhook:checkout.session.async_payment_failed",
+				reason: "Paiement asynchrone échoué (virement SEPA rejeté ou autre)",
+			},
+		});
+
+		console.log(`⚠️ [WEBHOOK] Order ${order.orderNumber} marked as FAILED due to async payment failure`);
+
+		// Envoyer un email au client pour l'informer de l'échec
+		const retryUrl = `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "https://synclune.fr"}/creations`;
+		await sendPaymentFailedEmail({
+			to: order.customerEmail,
+			customerName: order.customerName,
+			orderNumber: order.orderNumber,
+			retryUrl,
+		});
+
+	} catch (error) {
+		console.error(`❌ [WEBHOOK] Error handling async payment failed:`, error);
+		throw error;
+	}
+}
+
+/**
+ * ⚠️ Gère les litiges/chargebacks
+ * CRITIQUE : Un chargeback peut coûter 15€+ de frais et entraîner des pénalités
+ *
+ * Actions requises :
+ * 1. Alerter immédiatement l'admin
+ * 2. Bloquer les nouvelles commandes du client (optionnel)
+ * 3. Préparer les preuves (facture, tracking, emails)
+ */
+async function handleDisputeCreated(dispute: Stripe.Dispute) {
+	console.log(`⚠️ [WEBHOOK] Dispute created: ${dispute.id}`);
+
+	try {
+		// 1. Trouver la commande associée via le payment intent
+		const paymentIntentId = typeof dispute.payment_intent === "string"
+			? dispute.payment_intent
+			: dispute.payment_intent?.id;
+
+		if (!paymentIntentId) {
+			console.error("❌ [WEBHOOK] No payment intent found for dispute");
+			return;
+		}
+
+		const order = await prisma.order.findUnique({
+			where: { stripePaymentIntentId: paymentIntentId },
+			select: {
+				id: true,
+				orderNumber: true,
+				customerEmail: true,
+				customerName: true,
+				total: true,
+				stripeInvoiceId: true,
+				trackingNumber: true,
+				shippedAt: true,
+				actualDelivery: true,
+				user: {
+					select: { id: true, email: true },
+				},
+			},
+		});
+
+		if (!order) {
+			console.warn(`⚠️ [WEBHOOK] Order not found for disputed payment intent ${paymentIntentId}`);
+			return;
+		}
+
+		// 2. Créer un enregistrement d'audit pour le litige
+		await prisma.auditLog.create({
+			data: {
+				entityType: "Order",
+				entityId: order.id,
+				action: "dispute_created",
+				newData: {
+					disputeId: dispute.id,
+					reason: dispute.reason,
+					amount: dispute.amount,
+					currency: dispute.currency,
+					status: dispute.status,
+					evidenceDueBy: dispute.evidence_details?.due_by
+						? new Date(dispute.evidence_details.due_by * 1000).toISOString()
+						: null,
+				},
+				changedBy: "webhook:charge.dispute.created",
+				source: "webhook",
+			},
+		});
+
+		// 3. Alerter l'admin par email
+		const disputeAmount = dispute.amount / 100;
+		const evidenceDueDate = dispute.evidence_details?.due_by
+			? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
+			: "Non spécifiée";
+
+		console.log(`
+🚨🚨🚨 ALERTE LITIGE / CHARGEBACK 🚨🚨🚨
+
+Commande: ${order.orderNumber}
+Client: ${order.customerName} (${order.customerEmail})
+Montant contesté: ${disputeAmount}€
+Raison: ${dispute.reason || "Non spécifiée"}
+Date limite pour preuves: ${evidenceDueDate}
+
+ACTIONS REQUISES:
+1. Rassembler les preuves de livraison (tracking, signature)
+2. Préparer la facture Stripe
+3. Répondre dans le Dashboard Stripe AVANT la date limite
+
+Lien Dashboard: https://dashboard.stripe.com/disputes/${dispute.id}
+		`);
+
+		// 4. Envoyer un email d'alerte à l'admin
+		try {
+			const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
+			const dashboardUrl = `${baseUrl}/admin/ventes/commandes/${order.id}`;
+
+			await sendAdminDisputeAlert({
+				orderNumber: order.orderNumber,
+				orderId: order.id,
+				customerEmail: order.customerEmail || "Email non disponible",
+				customerName: order.customerName || "Client",
+				disputeAmount: dispute.amount,
+				disputeReason: dispute.reason || "general",
+				evidenceDueDate,
+				stripeDisputeId: dispute.id,
+				stripePaymentIntentId: paymentIntentId,
+				dashboardUrl,
+			});
+
+			console.log(`✅ [WEBHOOK] Admin dispute alert email sent for order ${order.orderNumber}`);
+		} catch (emailError) {
+			console.error("❌ [WEBHOOK] Error sending admin dispute alert email:", emailError);
+			// Ne pas bloquer le webhook si l'email échoue
+		}
+
+	} catch (error) {
+		console.error(`❌ [WEBHOOK] Error handling dispute created:`, error);
+		throw error; // Propager pour marquer l'événement comme FAILED
+	}
+}
+
+// =============================================================================
+// HANDLERS FACTURES STRIPE
+// =============================================================================
+
+/**
+ * 📄 Gère la finalisation d'une facture Stripe
+ * Stocke le invoiceNumber (numéro séquentiel Stripe) dans la commande
+ *
+ * Appelé quand une facture passe de DRAFT à OPEN ou PAID
+ * Le numéro n'est attribué qu'à la finalisation (garantit la séquentialité)
+ */
+async function handleInvoiceFinalized(invoice: Stripe.Invoice) {
+	console.log(`📄 [WEBHOOK] Invoice finalized: ${invoice.id}, number: ${invoice.number}`);
+
+	try {
+		// Récupérer l'orderId depuis les métadonnées de la facture
+		const orderId = invoice.metadata?.orderId;
+
+		if (!orderId) {
+			// Essayer de trouver via stripeInvoiceId (si déjà enregistré)
+			const order = await prisma.order.findFirst({
+				where: { stripeInvoiceId: invoice.id },
+				select: { id: true, orderNumber: true },
+			});
+
+			if (order) {
+				await prisma.order.update({
+					where: { id: order.id },
+					data: {
+						invoiceNumber: invoice.number || undefined,
+						invoiceStatus: "FINALIZED",
+					},
+				});
+				console.log(`✅ [WEBHOOK] Invoice ${invoice.number} linked to order ${order.orderNumber}`);
+				return;
+			}
+
+			// Essayer via le numéro de commande dans les metadata
+			const orderNumber = invoice.metadata?.orderNumber;
+			if (orderNumber) {
+				const orderByNumber = await prisma.order.findUnique({
+					where: { orderNumber },
+					select: { id: true, orderNumber: true },
+				});
+
+				if (orderByNumber) {
+					await prisma.order.update({
+						where: { id: orderByNumber.id },
+						data: {
+							stripeInvoiceId: invoice.id,
+							invoiceNumber: invoice.number || undefined,
+							invoiceStatus: "FINALIZED",
+						},
+					});
+					console.log(`✅ [WEBHOOK] Invoice ${invoice.number} linked to order ${orderByNumber.orderNumber}`);
+					return;
+				}
+			}
+
+			console.warn(`⚠️ [WEBHOOK] Could not link invoice ${invoice.id} to any order`);
+			return;
+		}
+
+		// Mettre à jour la commande avec le numéro de facture
+		await prisma.order.update({
+			where: { id: orderId },
+			data: {
+				stripeInvoiceId: invoice.id,
+				invoiceNumber: invoice.number || undefined,
+				invoiceStatus: "FINALIZED",
+			},
+		});
+
+		console.log(`✅ [WEBHOOK] Invoice ${invoice.number} stored for order ${orderId}`);
+	} catch (error) {
+		console.error(`❌ [WEBHOOK] Error handling invoice finalized:`, error);
+		throw error;
+	}
+}
+
+/**
+ * 💰 Gère le paiement réussi d'une facture
+ * Met à jour invoiceStatus = PAID
+ */
+async function handleInvoicePaid(invoice: Stripe.Invoice) {
+	console.log(`💰 [WEBHOOK] Invoice paid: ${invoice.id}, number: ${invoice.number}`);
+
+	try {
+		// Trouver la commande via stripeInvoiceId ou metadata
+		let order = await prisma.order.findFirst({
+			where: { stripeInvoiceId: invoice.id },
+			select: { id: true, orderNumber: true },
+		});
+
+		if (!order) {
+			// Essayer via orderNumber dans les metadata
+			const orderNumber = invoice.metadata?.orderNumber;
+			if (orderNumber) {
+				order = await prisma.order.findUnique({
+					where: { orderNumber },
+					select: { id: true, orderNumber: true },
+				});
+			}
+		}
+
+		if (!order) {
+			// Essayer via orderId dans les metadata
+			const orderId = invoice.metadata?.orderId;
+			if (orderId) {
+				order = await prisma.order.findUnique({
+					where: { id: orderId },
+					select: { id: true, orderNumber: true },
+				});
+			}
+		}
+
+		if (!order) {
+			console.warn(`⚠️ [WEBHOOK] Order not found for paid invoice ${invoice.id}`);
+			return;
+		}
+
+		await prisma.order.update({
+			where: { id: order.id },
+			data: {
+				invoiceStatus: "PAID",
+				// S'assurer que le invoiceNumber est bien stocké
+				invoiceNumber: invoice.number || undefined,
+			},
+		});
+
+		console.log(`✅ [WEBHOOK] Invoice status updated to PAID for order ${order.orderNumber}`);
+	} catch (error) {
+		console.error(`❌ [WEBHOOK] Error handling invoice paid:`, error);
+		throw error;
+	}
+}
+
+/**
+ * ❌ Gère l'échec de paiement d'une facture
+ * Met à jour invoiceStatus = PAYMENT_FAILED et log dans AuditLog
+ */
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+	console.log(`❌ [WEBHOOK] Invoice payment failed: ${invoice.id}`);
+
+	try {
+		// Trouver la commande via stripeInvoiceId ou metadata
+		let order = await prisma.order.findFirst({
+			where: { stripeInvoiceId: invoice.id },
+			select: { id: true, orderNumber: true },
+		});
+
+		if (!order) {
+			// Essayer via orderNumber dans les metadata
+			const orderNumber = invoice.metadata?.orderNumber;
+			if (orderNumber) {
+				order = await prisma.order.findUnique({
+					where: { orderNumber },
+					select: { id: true, orderNumber: true },
+				});
+			}
+		}
+
+		if (!order) {
+			// Essayer via orderId dans les metadata
+			const orderId = invoice.metadata?.orderId;
+			if (orderId) {
+				order = await prisma.order.findUnique({
+					where: { id: orderId },
+					select: { id: true, orderNumber: true },
+				});
+			}
+		}
+
+		if (!order) {
+			console.warn(`⚠️ [WEBHOOK] Order not found for failed invoice ${invoice.id}`);
+			return;
+		}
+
+		// Mettre à jour le statut
+		await prisma.order.update({
+			where: { id: order.id },
+			data: {
+				invoiceStatus: "PAYMENT_FAILED",
+			},
+		});
+
+		// Logger dans AuditLog pour traçabilité
+		await prisma.auditLog.create({
+			data: {
+				entityType: "Order",
+				entityId: order.id,
+				action: "invoice_payment_failed",
+				newData: {
+					invoiceId: invoice.id,
+					invoiceNumber: invoice.number,
+					attemptCount: invoice.attempt_count,
+					nextPaymentAttempt: invoice.next_payment_attempt
+						? new Date(invoice.next_payment_attempt * 1000).toISOString()
+						: null,
+				},
+				changedBy: "webhook:invoice.payment_failed",
+				source: "webhook",
+			},
+		});
+
+		console.log(`⚠️ [WEBHOOK] Invoice payment failed for order ${order.orderNumber}`);
+	} catch (error) {
+		console.error(`❌ [WEBHOOK] Error handling invoice payment failed:`, error);
+		throw error;
+	}
+}

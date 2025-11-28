@@ -9,6 +9,7 @@ import {
 	getPrimaryPriceForList,
 	getStockInfoForList,
 } from "@/modules/products/utils/product-list-helpers";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 
@@ -110,11 +111,19 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 					<Button
 						asChild
 						size="lg"
-						className="shadow-lg transition-all duration-300 ease-out active:scale-[0.98]"
+						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out group"
 						aria-describedby="latest-creations-cta-description"
 					>
-						<Link href="/produits?filter_sortBy=created-descending">
-							Découvrir toutes mes créations
+						<Link
+							href="/produits?filter_sortBy=created-descending"
+							className="flex items-center gap-2"
+						>
+							Voir toutes mes créations
+							<ArrowRight
+								size={18}
+								className="group-hover:translate-x-1 transition-transform duration-300"
+								aria-hidden="true"
+							/>
 						</Link>
 					</Button>
 					<span id="latest-creations-cta-description" className="sr-only">

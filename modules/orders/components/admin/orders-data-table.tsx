@@ -149,7 +149,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 											<ViewTransition name={`admin-order-${order.id}`}>
 												<Link
 													href={`/admin/ventes/commandes/${order.id}`}
-													className="font-mono text-sm font-medium text-primary hover:underline"
+													className="font-mono text-sm font-medium text-foreground underline"
 												>
 													{order.orderNumber}
 												</Link>

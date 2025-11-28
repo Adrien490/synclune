@@ -5,12 +5,26 @@ import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
 import { useActionState } from "react";
 import { deleteColor } from "@/modules/colors/actions/delete-color";
 
-export function useDeleteColor() {
+interface UseDeleteColorOptions {
+	onSuccess?: (message: string) => void;
+}
+
+export function useDeleteColor(options?: UseDeleteColorOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			deleteColor,
 			createToastCallbacks({
 				loadingMessage: "Suppression en cours...",
+				onSuccess: (result: unknown) => {
+					if (
+						result &&
+						typeof result === "object" &&
+						"message" in result &&
+						typeof result.message === "string"
+					) {
+						options?.onSuccess?.(result.message);
+					}
+				},
 			})
 		),
 		undefined

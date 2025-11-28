@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
 	LayoutDashboard,
 	ShoppingBag,
-	CreditCard,
 	ReceiptText,
 	Package,
 	Layers,
@@ -56,11 +55,6 @@ export const navigationData: NavigationData = {
 					title: "Commandes",
 					url: "/admin/ventes/commandes",
 					icon: ShoppingBag,
-				},
-				{
-					title: "Paiements",
-					url: "/admin/ventes/paiements",
-					icon: CreditCard,
 				},
 				{
 					title: "Remboursements",

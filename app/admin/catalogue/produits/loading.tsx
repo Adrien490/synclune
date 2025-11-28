@@ -2,8 +2,6 @@ import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { Plus } from "lucide-react";
-
 /**
  * Loading skeleton pour la page de liste des produits
  * Structure: Header + Status Navigation + Toolbar + Filters + Data Table
@@ -17,10 +15,7 @@ export default function ProductsListLoading() {
 				description="Gérez votre catalogue de bijoux"
 				variant="compact"
 				action={
-					<Button disabled>
-						<Plus className="mr-2 h-4 w-4" />
-						Nouveau bijou
-					</Button>
+					<Button disabled>Nouveau bijou</Button>
 				}
 			/>
 

@@ -23,14 +23,14 @@ export async function Hero() {
       itemType="https://schema.org/WebPageElement"
       itemProp="mainContentOfPage"
     >
-      {/* Fond avec gradient pastel doux */}
-      <div className="absolute inset-0 bg-linear-to-br from-pink-50/20 via-transparent to-amber-50/20" />
+      {/* Fond avec gradient plus visible et chaleureux */}
+      <div className="absolute inset-0 bg-linear-to-br from-pink-100/50 via-primary/5 to-amber-100/40" />
 
-      {/* Couche 1: Liquid Gradient (base fluide) - Optimisé mobile & desktop */}
-      <LiquidGradient intensity={0.15} speed={1} />
+      {/* Couche 1: Liquid Gradient (base fluide) - Intensité augmentée pour plus de vie */}
+      <LiquidGradient intensity={0.25} speed={1} />
 
-      {/* Couche 2: Glitter Sparkles (overlay scintillant) - Auto-adaptatif: 50 desktop / 20 mobile */}
-      <GlitterSparkles sizeRange={[2, 6]} glowIntensity={0.8} />
+      {/* Couche 2: Glitter Sparkles (overlay scintillant) - Plus visible et festif */}
+      <GlitterSparkles sizeRange={[2, 7]} glowIntensity={1.0} />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
@@ -67,13 +67,13 @@ export async function Hero() {
               </Fade>
             </div>
 
-            {/* CTA optimisés - Boutique en primaire (conversion e-commerce), Personnalisation en secondaire */}
+            {/* CTA optimisés - Plus visibles et engageants */}
             <Slide direction="up" distance={20} delay={0.4} duration={0.5}>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
                 <Button
                   asChild
                   size="lg"
-                  className="shadow-xl hover:shadow-2xl transition-all duration-300 ease-out font-semibold w-full sm:w-auto"
+                  className="shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out font-semibold w-full sm:w-auto"
                 >
                   <Link
                     href="/produits"
@@ -87,7 +87,7 @@ export async function Hero() {
                   asChild
                   size="lg"
                   variant="secondary"
-                  className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-out font-semibold w-full sm:w-auto"
+                  className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out font-semibold w-full sm:w-auto border-2 border-transparent hover:border-primary/20"
                 >
                   <Link
                     href="/personnalisation"
@@ -100,7 +100,7 @@ export async function Hero() {
               </div>
             </Slide>
 
-            {/* Réseaux sociaux */}
+            {/* Réseaux sociaux - Hover plus visible */}
             <Fade y={8} delay={0.6} duration={0.5}>
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 w-full">
                 <p className="text-sm text-muted-foreground">Mes réseaux :</p>
@@ -109,7 +109,7 @@ export async function Hero() {
                     href={BRAND.social.instagram.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card/50 hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border border-transparent hover:border-primary/20"
                     aria-label="Suivre Synclune sur Instagram"
                   >
                     <InstagramIcon
@@ -125,7 +125,7 @@ export async function Hero() {
                     href={BRAND.social.tiktok.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card/50 hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border border-transparent hover:border-primary/20"
                     aria-label="Suivre Synclune sur TikTok"
                   >
                     <TikTokIcon

@@ -18,38 +18,39 @@ interface ValuePillar {
 }
 
 // Données statiques constantes - parfait pour use cache
+// Couleurs variées pour refléter l'identité "bijoux colorés"
 const valuePillars: ValuePillar[] = [
 	{
 		icon: <Sparkles className="w-8 h-8" aria-hidden="true" />,
 		title: "100% fait main",
 		description:
 			"Chaque détail est travaillé à la main dans mon atelier nantais. Résultat ? Un bijou unique qui ne ressemble à aucun autre.",
-		bgColor: "bg-primary/20 border-primary",
-		iconColor: "text-primary-foreground",
+		bgColor: "bg-pink-100/60 border-pink-300/50",
+		iconColor: "text-pink-700",
 	},
 	{
 		icon: <Leaf className="w-8 h-8" aria-hidden="true" />,
 		title: "Des matériaux qui durent",
 		description:
 			"Acier inoxydable, perles de qualité... Des matériaux qui tiennent vraiment dans le temps pour que tes bijoux t'accompagnent longtemps.",
-		bgColor: "bg-secondary/20 border-secondary",
-		iconColor: "text-secondary-foreground",
+		bgColor: "bg-emerald-100/60 border-emerald-300/50",
+		iconColor: "text-emerald-700",
 	},
 	{
 		icon: <Heart className="w-8 h-8" aria-hidden="true" />,
 		title: "Éditions limitées",
 		description:
 			"Chaque modèle existe en 5 à 10 exemplaires maximum. Tu ne croiseras pas dix personnes avec le même bijou !",
-		bgColor: "bg-primary/20 border-primary",
-		iconColor: "text-primary-foreground",
+		bgColor: "bg-amber-100/60 border-amber-300/50",
+		iconColor: "text-amber-700",
 	},
 	{
 		icon: <Palette className="w-8 h-8" aria-hidden="true" />,
 		title: "Créations personnalisées",
 		description:
 			"Une idée de bijou ? Dis-moi tout ! J'adore créer des pièces sur-mesure.",
-		bgColor: "bg-secondary/20 border-secondary",
-		iconColor: "text-secondary-foreground",
+		bgColor: "bg-violet-100/60 border-violet-300/50",
+		iconColor: "text-violet-700",
 		cta: {
 			label: "Créons ton bijou ensemble",
 			href: "/personnalisation",
@@ -84,7 +85,7 @@ export async function WhySynclune() {
 					<p
 						id="why-synclune-description"
 						itemProp="description"
-						className="mt-4 text-lg/7 tracking-normal antialiased text-foreground/70 max-w-2xl mx-auto"
+						className="mt-4 text-lg/7 tracking-normal antialiased text-foreground/70 max-w-2xl mx-auto break-words"
 					>
 						Depuis mon atelier nantais, je crée des bijoux colorés, un par un, à la main
 						<Heart
@@ -125,7 +126,7 @@ export async function WhySynclune() {
 							</div>
 							<h3
 								id={`pillar-title-${index}`}
-								className="text-xl/7 font-semibold text-foreground mb-3 tracking-tight antialiased"
+								className="text-xl/7 font-semibold text-foreground mb-3 tracking-tight antialiased hyphens-none break-words"
 							>
 								{pillar.title}
 								{/* Astérisque doré décoratif pour "Pièces uniques" */}
@@ -138,7 +139,7 @@ export async function WhySynclune() {
 									</span>
 								)}
 							</h3>
-							<p className="text-base/7 tracking-normal antialiased text-foreground/70">
+							<p className="text-base/7 tracking-normal antialiased text-foreground/70 break-words">
 								{pillar.description}
 							</p>
 							{/* CTA optionnel */}

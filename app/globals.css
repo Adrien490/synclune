@@ -40,6 +40,16 @@
 	--color-input: var(--input);
 	--color-ring: var(--ring);
 
+	/* ==========================================
+	   PASTELS DOUX (Bijoux colorés)
+	   ========================================== */
+	--color-pastel-peach: var(--pastel-peach);
+	--color-pastel-lavender: var(--pastel-lavender);
+	--color-pastel-mint: var(--pastel-mint);
+	--color-pastel-blush: var(--pastel-blush);
+	--color-pastel-sky: var(--pastel-sky);
+	--color-pastel-cream: var(--pastel-cream);
+
 	--radius: 0.5rem;
 	--radius-sm: 0.5rem;
 	--radius-md: 0.625rem;

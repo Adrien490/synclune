@@ -78,7 +78,7 @@ export async function CreativeProcess() {
 
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
+			className={`relative overflow-hidden bg-gradient-to-b from-amber-50/25 via-background to-background ${SECTION_SPACING.default}`}
 			aria-labelledby="creative-process-title"
 		>
 			<div className="absolute inset-0" aria-hidden="true">
@@ -201,9 +201,19 @@ export async function CreativeProcess() {
 								asChild
 								variant="default"
 								size="lg"
-								className="w-full sm:w-auto shadow-sm hover:shadow-lg transition-all duration-300"
+								className="w-full sm:w-auto shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group"
 							>
-								<Link href="/personnalisation">Parlons de ton projet</Link>
+								<Link
+									href="/personnalisation"
+									className="flex items-center justify-center gap-2"
+								>
+									<Sparkles
+										size={18}
+										className="group-hover:rotate-12 transition-transform duration-300"
+										aria-hidden="true"
+									/>
+									Discutons de ton idée
+								</Link>
 							</Button>
 						</div>
 					</div>

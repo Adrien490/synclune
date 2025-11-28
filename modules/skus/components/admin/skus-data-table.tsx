@@ -147,14 +147,7 @@ export async function ProductVariantsDataTable({
 								>
 									Stock
 								</TableHead>
-								<TableHead
-									key="active"
-									role="columnheader"
-									className="hidden sm:table-cell text-center"
-								>
-									Actif
-								</TableHead>
-								<TableHead
+									<TableHead
 									key="actions"
 									role="columnheader"
 									className="text-right"
@@ -287,20 +280,11 @@ export async function ProductVariantsDataTable({
 												{availableStock}
 											</span>
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden sm:table-cell text-center"
-										>
-											<ProductSkuActiveToggle
-												skuId={sku.id}
-												isActive={sku.isActive}
-												isDefault={sku.isDefault}
-											/>
-										</TableCell>
 										<TableCell role="gridcell" className="text-right">
 											<ProductSkuRowActions
 												skuId={sku.id}
 												skuName={sku.sku}
+												productSlug={productSlug}
 												isDefault={sku.isDefault}
 											/>
 										</TableCell>

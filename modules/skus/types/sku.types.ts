@@ -4,6 +4,7 @@ import { GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
 import {
 	getProductSkuSchema,
 	createProductSkuSchema,
+	updateProductSkuSchema,
 	deleteProductSkuSchema,
 	updateProductSkuStatusSchema,
 	bulkActivateSkusSchema,
@@ -26,6 +27,7 @@ export type GetProductSkuReturn = Prisma.ProductSkuGetPayload<{
 // ============================================================================
 
 export type CreateProductSkuFormData = z.infer<typeof createProductSkuSchema>;
+export type UpdateProductSkuFormData = z.infer<typeof updateProductSkuSchema>;
 export type DeleteProductSkuInput = z.infer<typeof deleteProductSkuSchema>;
 export type UpdateProductSkuStatusInput = z.infer<typeof updateProductSkuStatusSchema>;
 export type BulkActivateSkusInput = z.infer<typeof bulkActivateSkusSchema>;

@@ -275,8 +275,15 @@ enum PaymentStatus {
 }
 
 enum InvoiceStatus {
-  PENDING // Commande payée, facture en attente de génération Stripe
-  GENERATED // Facture PDF générée automatiquement par Stripe
+  PENDING        // Commande payée, facture en attente de génération Stripe
+  DRAFT          // Facture créée mais pas encore finalisée (brouillon)
+  OPEN           // Facture finalisée, en attente de paiement
+  FINALIZED      // Facture finalisée avec numéro séquentiel attribué
+  PAID           // Facture payée avec succès
+  UNCOLLECTIBLE  // Facture marquée comme irrécupérable
+  VOID           // Facture annulée
+  PAYMENT_FAILED // Échec de paiement de la facture
+  GENERATED      // @deprecated - Utiliser FINALIZED à la place
 }
 
 enum PaymentMethod {
@@ -374,6 +381,12 @@ model Order {
   taxType         String? // ❌ Micro-entreprise : null
   taxDetails      Json? // ❌ Micro-entreprise : null (pas de Stripe Tax)
 
+  // === PRÉPARATION RÉGIME RÉEL TVA ===
+  // Ces champs préparent la migration vers le régime réel TVA (seuil 85 000€)
+  customerTaxId String? // N° TVA client B2B (ex: FR12345678901 pour ventes B2B)
+  taxBehavior   String  @default("inclusive") // Stripe Tax: "inclusive" ou "exclusive"
+  reverseCharge Boolean @default(false) // Autoliquidation TVA pour ventes B2B UE
+
   // === LIVRAISON ===
   shippingMethod    String? // "Colissimo France"
   shippingCarrier   String? @db.VarChar(50)
@@ -408,6 +421,11 @@ model Order {
   items          OrderItem[]
   discountUsages DiscountUsage[]
   refunds        Refund[]
+  statusHistory  OrderStatusHistory[] // Historique des changements de statut
+
+  // === SOFT DELETE (Conformité légale - Conservation 10 ans) ===
+  // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)
+  deletedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -428,6 +446,12 @@ model Order {
   @@index([paymentStatus, createdAt])
   @@index([customerEmail]) // Recherche support client
   @@index([fiscalYear]) // Conformité légale
+  @@index([deletedAt]) // Soft delete filter
+
+  // === INDEXES STRIPE (Réconciliation & Support) ===
+  @@index([stripePaymentIntentId])
+  @@index([stripeCheckoutSessionId])
+  @@index([stripeCustomerId])
 }
 
 model OrderItem {
@@ -681,10 +705,15 @@ model Refund {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // === SOFT DELETE (Conformité légale - Conservation 10 ans) ===
+  // Ne JAMAIS supprimer physiquement un remboursement (Art. L123-22 Code de Commerce)
+  deletedAt DateTime?
+
   @@index([orderId])
   @@index([status])
   @@index([createdAt(sort: Desc)])
   @@index([status, createdAt])
+  @@index([deletedAt])
 }
 
 model RefundItem {
@@ -711,6 +740,149 @@ model RefundItem {
 
   @@index([refundId])
   @@index([orderItemId])
+}
+
+// ============================================================================
+// AUDIT & CONFORMITÉ LÉGALE (Art. L123-22 Code de Commerce - Conservation 10 ans)
+// ============================================================================
+
+/// Journal d'audit pour traçabilité des modifications sur entités critiques
+/// Requis pour conformité comptable française (conservation 10 ans)
+model AuditLog {
+  id String @id @default(cuid())
+
+  // Entité concernée
+  entityType String // "Order", "Refund", "Payment", "Product", etc.
+  entityId   String // ID de l'entité modifiée
+
+  // Action effectuée
+  action String // "created", "updated", "deleted", "status_changed"
+
+  // Données avant/après modification (pour rollback éventuel)
+  previousData Json? // État avant modification
+  newData      Json? // État après modification
+  changedFields String[] // Liste des champs modifiés
+
+  // Contexte de l'action
+  changedBy String? // userId ou "system" ou "webhook"
+  source    String? // "admin", "webhook", "api", "cron"
+  ipAddress String? // IP de l'utilisateur (RGPD : anonymiser après 1 an)
+  userAgent String? // User-Agent pour debug
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([entityType, createdAt])
+  @@index([changedBy])
+  @@index([createdAt])
+}
+
+/// Historique des changements de statut des commandes
+/// Permet de tracer les transitions (ex: PENDING → PAID → SHIPPED → DELIVERED)
+model OrderStatusHistory {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Transition de statut
+  field          String       // "status", "paymentStatus", "fulfillmentStatus"
+  previousStatus String? // Statut avant (null si création)
+  newStatus      String // Nouveau statut
+
+  // Contexte
+  changedBy String? // userId, "system", "webhook:checkout.session.completed"
+  reason    String? // Raison du changement (ex: "Paiement reçu via Stripe")
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([orderId, createdAt])
+  @@index([field, createdAt])
+}
+
+// ============================================================================
+// WEBHOOKS STRIPE - DÉDUPLICATION & AUDIT
+// ============================================================================
+
+enum WebhookEventStatus {
+  PENDING // Reçu, en cours de traitement
+  PROCESSED // Traité avec succès
+  FAILED // Échec de traitement
+  SKIPPED // Ignoré (déjà traité ou non pertinent)
+}
+
+/// Table de déduplication des événements Stripe
+/// Évite le double traitement lors des retries webhook (Stripe renvoie après timeout)
+model StripeWebhookEvent {
+  id String @id @default(cuid())
+
+  // Identifiant unique Stripe de l'événement
+  stripeEventId String @unique // evt_xxx
+
+  // Type d'événement
+  type String // "checkout.session.completed", "charge.refunded", etc.
+
+  // Statut de traitement
+  status WebhookEventStatus @default(PENDING)
+
+  // Entité liée (pour réconciliation)
+  orderId  String? // Si lié à une commande
+  refundId String? // Si lié à un remboursement
+
+  // Données brutes (pour debug/replay)
+  payload Json? // Corps de l'événement Stripe
+
+  // Erreur éventuelle
+  errorMessage String? @db.Text
+  retryCount   Int     @default(0)
+
+  // Timestamps
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([stripeEventId])
+  @@index([type, status])
+  @@index([orderId])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// PRÉPARATION TVA RÉGIME RÉEL (Seuil 85 000€)
+// ============================================================================
+
+/// Enregistrements TVA par pays (pour passage futur au régime réel)
+/// Gère les immatriculations TVA (France, OSS pour UE, IOSS pour imports)
+model TaxRegistration {
+  id String @id @default(cuid())
+
+  // Pays d'immatriculation (ISO alpha-2)
+  country String @db.VarChar(2) // FR, DE, IT, ES, etc.
+
+  // Numéro de TVA intracommunautaire
+  registrationNumber String // FR35839183027
+
+  // Type d'enregistrement
+  // - "standard" : TVA nationale (France)
+  // - "oss" : One-Stop-Shop pour ventes UE B2C
+  // - "ioss" : Import One-Stop-Shop pour imports hors UE
+  registrationType String @default("standard") @db.VarChar(20)
+
+  // Période de validité
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+
+  // Statut
+  active Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([country, registrationType])
+  @@index([active])
+  @@index([country])
 }
 
 

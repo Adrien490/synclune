@@ -1,5 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
+import type { MediaType } from "@/app/generated/prisma/client";
 
 import { GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
 import { getProductSkuSchema } from "../schemas/sku.schemas";
@@ -11,6 +12,18 @@ import { cacheSkuDetail } from "../constants/cache";
 
 // Re-export pour compatibilité
 export type { GetProductSkuParams, GetProductSkuReturn } from "../types/sku.types";
+
+// Type pour SKU avec images (pour édition)
+export type SkuWithImages = GetProductSkuReturn & {
+	images: Array<{
+		id: string;
+		url: string;
+		altText: string | null;
+		mediaType: MediaType;
+		isPrimary: boolean;
+	}>;
+	compareAtPrice: number | null;
+};
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -51,6 +64,55 @@ async function fetchProductSku(
 		const sku = await prisma.productSku.findUnique({
 			where: { sku: params.sku },
 			select: GET_PRODUCT_SKU_SELECT,
+		});
+
+		return sku;
+	} catch {
+		return null;
+	}
+}
+
+// ============================================================================
+// GET SKU BY ID (pour édition)
+// ============================================================================
+
+/**
+ * Récupère un SKU par son ID avec ses images
+ * Protection: Nécessite un compte ADMIN
+ */
+export async function getSkuById(skuId: string): Promise<SkuWithImages | null> {
+	if (!skuId) return null;
+
+	const admin = await isAdmin();
+	if (!admin) return null;
+
+	return fetchSkuById(skuId);
+}
+
+/**
+ * Récupère le SKU avec ses images depuis la DB avec cache
+ */
+async function fetchSkuById(skuId: string): Promise<SkuWithImages | null> {
+	"use cache";
+	cacheSkuDetail(skuId);
+
+	try {
+		const sku = await prisma.productSku.findUnique({
+			where: { id: skuId },
+			select: {
+				...GET_PRODUCT_SKU_SELECT,
+				compareAtPrice: true,
+				images: {
+					select: {
+						id: true,
+						url: true,
+						altText: true,
+						mediaType: true,
+						isPrimary: true,
+					},
+					orderBy: { isPrimary: "desc" },
+				},
+			},
 		});
 
 		return sku;

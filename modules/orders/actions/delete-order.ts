@@ -2,7 +2,7 @@
 
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, softDelete } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
@@ -88,8 +88,9 @@ export async function deleteOrder(
 			};
 		}
 
-		// Suppression autorisée (commande de test, abandonnée, ou échouée)
-		await prisma.order.delete({ where: { id } });
+		// Soft delete autorisé (commande de test, abandonnée, ou échouée)
+		// Conformité Art. L123-22 Code de Commerce : conservation 10 ans
+		await softDelete.order(id);
 
 		revalidatePath("/admin/ventes/commandes");
 

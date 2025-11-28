@@ -18,7 +18,7 @@ import Stripe from "stripe";
 import { createCheckoutSessionSchema, type CreateCheckoutSessionData } from "@/modules/payments/schemas/create-checkout-session-schema";
 import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
 import { randomUUID } from "crypto";
-import { getInvoiceFooter } from "@/shared/lib/stripe";
+import { getInvoiceFooter, getVendorLegalInfo } from "@/shared/lib/stripe";
 import { ALLOWED_SHIPPING_COUNTRIES } from "@/modules/orders/constants/colissimo-rates";
 import { getStripeShippingOptions } from "@/modules/orders/constants/stripe-shipping-rates";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discount/constants/discount.constants";
@@ -732,6 +732,22 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 							orderNumber: order.orderNumber,
 							orderId: order.id,
 						},
+						// Custom fields affichés en en-tête de facture (max 4)
+						// SIRET + Code NAF obligatoires pour conformité française
+						custom_fields: [
+							{
+								name: "SIRET",
+								value: getVendorLegalInfo().company_siret,
+							},
+							{
+								name: "Code NAF",
+								value: getVendorLegalInfo().company_ape,
+							},
+							{
+								name: "N° Commande",
+								value: order.orderNumber,
+							},
+						],
 						// Footer avec mentions légales françaises complètes
 						// Inclut : SIRET, SIREN, adresse, TVA, assurance RC Pro, pénalités, RNE
 						footer: getInvoiceFooter(),

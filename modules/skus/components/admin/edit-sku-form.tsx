@@ -5,19 +5,21 @@ import { ImageCounterBadge } from "@/modules/products/components/image-counter-b
 import { ImageGallery } from "@/modules/products/components/image-gallery";
 import { PrimaryImageUpload } from "@/modules/products/components/primary-image-upload";
 import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
 import { TextShimmer } from "@/shared/components/ui/text-shimmer";
-import { useCreateProductSkuForm } from "@/modules/skus/hooks/admin/use-create-sku-form";
+import { useUpdateProductSkuForm } from "@/modules/skus/hooks/admin/use-update-sku-form";
+import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/shared/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
 import { Euro, ImagePlus, Package, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
-interface CreateProductVariantFormProps {
+interface EditProductVariantFormProps {
 	colors: Array<{
 		id: string;
 		name: string;
@@ -28,13 +30,15 @@ interface CreateProductVariantFormProps {
 		title: string;
 	};
 	productSlug: string;
+	sku: SkuWithImages;
 }
 
-export function CreateProductVariantForm({
+export function EditProductVariantForm({
 	colors,
 	product,
 	productSlug,
-}: CreateProductVariantFormProps) {
+	sku,
+}: EditProductVariantFormProps) {
 	const router = useRouter();
 	const [uploadStatus, setUploadStatus] = useState<string>("");
 
@@ -68,29 +72,21 @@ export function CreateProductVariantForm({
 			},
 		});
 
-	const { form, action } = useCreateProductSkuForm({
+	const { form, action } = useUpdateProductSkuForm({
+		sku,
 		onSuccess: (message) => {
-			toast.success(message || "Variante créée avec succès", {
+			toast.success(message || "Variante mise à jour avec succès", {
 				action: {
 					label: "Voir les variantes",
 					onClick: () =>
-						router.push(
-							`/admin/catalogue/produits/${productSlug}/variantes`
-						),
+						router.push(`/admin/catalogue/produits/${productSlug}/variantes`),
 				},
 			});
 			setTimeout(() => {
-				router.push(
-					`/admin/catalogue/produits/${productSlug}/variantes`
-				);
+				router.push(`/admin/catalogue/produits/${productSlug}/variantes`);
 			}, 2000);
 		},
 	});
-
-	// Pré-remplir le productId au montage du composant
-	useEffect(() => {
-		form.setFieldValue("productId", product.id);
-	}, [product.id, form]);
 
 	return (
 		<>
@@ -117,8 +113,8 @@ export function CreateProductVariantForm({
 						void form.handleSubmit();
 					}}
 				>
-					{/* Champ caché pour le productId */}
-					<input type="hidden" name="productId" value={product.id} />
+					{/* Champ caché pour le skuId */}
+					<input type="hidden" name="skuId" value={sku.id} />
 
 					{/* Champs cachés pour l'image principale */}
 					<form.Subscribe selector={(state) => [state.values.primaryImage]}>
@@ -361,18 +357,18 @@ export function CreateProductVariantForm({
 							title="Informations de base"
 							description="Détails de la variante"
 						>
-							{/* SKU (optionnel) */}
-							<form.AppField name="sku">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel optional>SKU</FieldLabel>
-										<field.InputGroupField placeholder="Laissez vide pour générer automatiquement" />
-										<p className="text-xs text-muted-foreground">
-											Si laissé vide, un SKU sera généré automatiquement
-										</p>
-									</div>
-								)}
-							</form.AppField>
+							{/* SKU (lecture seule) */}
+							<div className="space-y-2">
+								<FieldLabel>SKU</FieldLabel>
+								<Input
+									value={sku.sku}
+									disabled
+									className="bg-muted text-muted-foreground cursor-not-allowed"
+								/>
+								<p className="text-xs text-muted-foreground">
+									Le code SKU ne peut pas être modifié
+								</p>
+							</div>
 
 							{/* Couleur */}
 							<form.AppField name="colorId">
@@ -817,12 +813,12 @@ export function CreateProductVariantForm({
 											className="min-w-[160px]"
 										>
 											{form.state.isSubmitting
-												? "Création..."
+												? "Mise à jour..."
 												: isPrimaryImageUploading
 													? "Upload image..."
 													: isGalleryUploading
 														? "Upload galerie..."
-														: "Créer la variante"}
+														: "Mettre à jour"}
 										</Button>
 									)}
 								</form.Subscribe>

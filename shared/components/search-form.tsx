@@ -105,6 +105,7 @@ export function SearchForm({
 						<Input
 							ref={inputRef}
 							autoComplete="off"
+							autoFocus={false}
 							type="search"
 							value={field.state.value}
 							onChange={(e) => field.handleChange(e.target.value)}

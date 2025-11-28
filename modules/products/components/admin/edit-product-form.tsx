@@ -1194,7 +1194,7 @@ export function EditProductForm({
 
 			{/* Footer avec boutons d'action */}
 			<form.AppForm>
-				<div className="border-t border-border/40 mt-10 pt-6">
+				<div className="mt-6">
 					<div className="flex justify-end">
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (

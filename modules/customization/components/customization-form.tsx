@@ -269,7 +269,7 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 			</FormSection>
 
 			{/* Footer avec bouton d'action */}
-			<div className="pt-8 border-t border-border mt-8">
+			<div className="mt-6">
 				<div className="flex flex-col sm:flex-row justify-end gap-3">
 					<form.Subscribe
 						selector={(state) => [state.canSubmit]}

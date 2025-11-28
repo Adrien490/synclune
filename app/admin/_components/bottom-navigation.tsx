@@ -6,7 +6,6 @@ import {
 	MoreHorizontal,
 	Package,
 	ShoppingBag,
-	CreditCard,
 	ReceiptText,
 	Layers,
 	Tag,
@@ -60,12 +59,6 @@ const navItems: NavItem[] = [
 
 // Items secondaires affichés dans le Sheet "Plus"
 const moreItems: NavItem[] = [
-	{
-		label: "Paiements",
-		shortLabel: "Paiements",
-		href: "/admin/ventes/paiements",
-		icon: CreditCard,
-	},
 	{
 		label: "Remboursements",
 		shortLabel: "Remboursements",
@@ -138,11 +131,12 @@ export function BottomNavigation() {
 									<button
 										type="button"
 										className={cn(
-											"flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[64px] relative",
+											"flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-[64px] relative",
+											"motion-safe:transition-colors motion-safe:transition-transform",
 											isMoreItemActive
 												? "text-primary"
 												: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-											"active:scale-95 transition-transform"
+											"motion-safe:active:scale-95"
 										)}
 										aria-label="Voir plus d'options"
 									>
@@ -176,11 +170,12 @@ export function BottomNavigation() {
 														<Link
 															href={moreItem.href}
 															className={cn(
-																"flex flex-col items-center justify-center gap-2 p-3 rounded-lg transition-all relative",
+																"flex flex-col items-center justify-center gap-2 p-3 rounded-lg relative",
+																"motion-safe:transition-all motion-safe:active:scale-95",
+																"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 																isMoreActive
 																	? "bg-primary/10 text-primary"
-																	: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-																"active:scale-95"
+																	: "text-muted-foreground hover:text-foreground hover:bg-accent/50"
 															)}
 															aria-current={isMoreActive ? "page" : undefined}
 														>
@@ -211,11 +206,11 @@ export function BottomNavigation() {
 							key={item.label}
 							href={item.href}
 							className={cn(
-								"flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] relative",
+								"flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-[64px] relative",
+								"motion-safe:transition-all motion-safe:active:scale-95",
 								isActive
 									? "text-primary"
-									: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-								"active:scale-95"
+									: "text-muted-foreground hover:text-foreground hover:bg-accent/50"
 							)}
 							aria-label={item.label}
 							aria-current={isActive ? "page" : undefined}
