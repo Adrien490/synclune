@@ -44,20 +44,20 @@ export function CollectionCard({
 	const sizeConfig = {
 		sm: {
 			container: "gap-3",
-			title: "text-base/6 sm:text-lg/6 tracking-normal antialiased break-words hyphens-auto",
-			description: "text-xs/5 tracking-normal antialiased line-clamp-2 break-words hyphens-auto overflow-hidden",
+			title: "text-base/6 sm:text-lg/6 tracking-normal antialiased break-words",
+			description: "text-xs/5 tracking-normal antialiased line-clamp-2 break-words overflow-hidden",
 			padding: "p-3",
 		},
 		md: {
 			container: "gap-4",
-			title: "text-lg/7 sm:text-xl/7 tracking-tight antialiased break-words hyphens-auto",
-			description: "text-sm/6 tracking-normal antialiased line-clamp-3 break-words hyphens-auto overflow-hidden",
+			title: "text-lg/7 sm:text-xl/7 tracking-tight antialiased break-words",
+			description: "text-sm/6 tracking-normal antialiased line-clamp-3 break-words overflow-hidden",
 			padding: "p-4",
 		},
 		lg: {
 			container: "gap-5",
-			title: "text-xl/8 sm:text-2xl/8 tracking-tight antialiased break-words hyphens-auto",
-			description: "text-base/7 tracking-normal antialiased line-clamp-4 break-words hyphens-auto overflow-hidden",
+			title: "text-xl/8 sm:text-2xl/8 tracking-tight antialiased break-words",
+			description: "text-base/7 tracking-normal antialiased line-clamp-4 break-words overflow-hidden",
 			padding: "p-5",
 		},
 	};

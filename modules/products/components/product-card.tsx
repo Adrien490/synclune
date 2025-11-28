@@ -81,18 +81,18 @@ export function ProductCard({
 	const sizeConfig = {
 		sm: {
 			container: "gap-2",
-			title: "text-sm break-words hyphens-auto",
-			description: "text-xs line-clamp-2 leading-relaxed break-words hyphens-auto overflow-hidden",
+			title: "text-sm break-words",
+			description: "text-xs line-clamp-2 leading-relaxed break-words overflow-hidden",
 		},
 		md: {
 			container: "gap-4",
-			title: "text-lg break-words hyphens-auto",
-			description: "text-sm line-clamp-3 leading-relaxed break-words hyphens-auto overflow-hidden",
+			title: "text-lg break-words",
+			description: "text-sm line-clamp-3 leading-relaxed break-words overflow-hidden",
 		},
 		lg: {
 			container: "gap-6",
-			title: "text-xl break-words hyphens-auto",
-			description: "text-base line-clamp-4 leading-relaxed break-words hyphens-auto overflow-hidden",
+			title: "text-xl break-words",
+			description: "text-base line-clamp-4 leading-relaxed break-words overflow-hidden",
 		},
 	};
 

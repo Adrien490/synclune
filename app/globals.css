@@ -203,10 +203,6 @@
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 		text-rendering: optimizeLegibility;
-		/* Globally enable CSS hyphens for better text wrapping */
-		hyphens: auto;
-		-webkit-hyphens: auto;
-		-ms-hyphens: auto;
 	}
 
 	body {

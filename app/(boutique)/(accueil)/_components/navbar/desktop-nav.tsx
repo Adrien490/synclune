@@ -102,7 +102,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 																	)}
 																</div>
 																{child.description && (
-																	<p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed overflow-hidden wrap-break-words hyphens-auto">
+																	<p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed overflow-hidden break-words">
 																		{child.description}
 																	</p>
 																)}

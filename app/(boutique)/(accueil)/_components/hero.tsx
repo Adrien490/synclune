@@ -23,9 +23,6 @@ export async function Hero() {
       itemType="https://schema.org/WebPageElement"
       itemProp="mainContentOfPage"
     >
-      {/* Fond avec gradient plus visible et chaleureux */}
-      <div className="absolute inset-0 bg-linear-to-br from-pink-100/50 via-primary/5 to-amber-100/40" />
-
       {/* Couche 1: Liquid Gradient (base fluide) - Intensité augmentée pour plus de vie */}
       <LiquidGradient intensity={0.25} speed={1} />
 
@@ -151,8 +148,6 @@ export async function Hero() {
         </div>
       </div>
 
-      {/* Mask bottom pour transition douce vers About */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 bg-linear-to-t from-background to-transparent pointer-events-none" />
     </section>
   );
 }
