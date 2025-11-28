@@ -286,9 +286,31 @@
 		animation: wave 2.5s ease-in-out infinite;
 	}
 
+	/* Animation shimmer pour skeleton loading */
+	@keyframes shimmer {
+		0% {
+			background-position: -200% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
+	}
+
+	.animate-shimmer {
+		background: linear-gradient(
+			90deg,
+			var(--accent) 0%,
+			oklch(0.96 0.01 270) 50%,
+			var(--accent) 100%
+		);
+		background-size: 200% 100%;
+		animation: shimmer 1.5s ease-in-out infinite;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.animate-sparkle-pulse,
-		.animate-wave {
+		.animate-wave,
+		.animate-shimmer {
 			animation: none;
 		}
 	}

@@ -123,9 +123,15 @@ export function ProductsFilterSheet({
 
 	const { hasActiveFilters, activeFiltersCount } = useMemo(() => {
 		let count = 0;
-		searchParams.forEach((value, key) => {
-			if (["page", "perPage", "sortBy", "search"].includes(key)) return;
-			if (key.startsWith("filter_")) count += 1;
+		// Ne compter que les filtres gérés par ce sheet
+		const sheetFilterKeys = [
+			"filter_priceMin",
+			"filter_priceMax",
+			"filter_typeId",
+			"filter_collectionId",
+		];
+		searchParams.forEach((_, key) => {
+			if (sheetFilterKeys.includes(key)) count += 1;
 		});
 		return { hasActiveFilters: count > 0, activeFiltersCount: count };
 	}, [searchParams]);

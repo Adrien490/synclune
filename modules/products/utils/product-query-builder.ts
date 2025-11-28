@@ -193,6 +193,33 @@ export function buildProductFilterConditions(
 		conditions.push({ updatedAt: { lte: filters.updatedBefore } });
 	}
 
+	// Stock status filter
+	if (filters.stockStatus !== undefined) {
+		if (filters.stockStatus === "out_of_stock") {
+			// Produits en rupture : aucun SKU actif avec inventory > 0
+			conditions.push({
+				NOT: {
+					skus: {
+						some: {
+							isActive: true,
+							inventory: { gt: 0 },
+						},
+					},
+				},
+			});
+		} else if (filters.stockStatus === "in_stock") {
+			// Produits en stock : au moins un SKU actif avec inventory > 0
+			conditions.push({
+				skus: {
+					some: {
+						isActive: true,
+						inventory: { gt: 0 },
+					},
+				},
+			});
+		}
+	}
+
 	return conditions;
 }
 
@@ -203,9 +230,13 @@ export function buildProductWhereClause(
 	const andConditions: Prisma.ProductWhereInput[] = [];
 	const filters = params.filters ?? {};
 
-	andConditions.push({
-		status: params.status || ProductStatus.PUBLIC,
-	});
+	// Si un statut est spécifié, filtrer par ce statut
+	// Si undefined, ne pas filtrer (affiche tous les statuts - utilisé par l'admin)
+	if (params.status) {
+		andConditions.push({
+			status: params.status,
+		});
+	}
 
 	if (params.search) {
 		const searchConditions = buildProductSearchConditions(params.search);

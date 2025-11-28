@@ -38,6 +38,7 @@ export const productFiltersSchema = z
 		status: z
 			.union([z.enum(ProductStatus), z.array(z.enum(ProductStatus))])
 			.optional(),
+		stockStatus: z.enum(["in_stock", "out_of_stock"]).optional(),
 		collectionId: stringOrStringArray,
 		collectionSlug: stringOrStringArray,
 		priceMin: z.number().int().nonnegative().max(1000000).optional(),

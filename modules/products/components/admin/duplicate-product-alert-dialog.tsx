@@ -64,7 +64,7 @@ export function DuplicateProductAlertDialog() {
 								<p className="mt-4">Une copie sera créée avec :</p>
 								<ul className="list-disc list-inside mt-2 space-y-1">
 									<li>Le titre préfixé par &quot;Copie de&quot;</li>
-									<li>Tous les SKUs et leurs images</li>
+									<li>Toutes les variantes et leurs images</li>
 									<li>Le statut mis en &quot;Brouillon&quot;</li>
 								</ul>
 								<p className="text-muted-foreground text-xs mt-4">

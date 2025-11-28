@@ -361,19 +361,6 @@ export function CreateProductVariantForm({
 							title="Informations de base"
 							description="Détails de la variante"
 						>
-							{/* SKU (optionnel) */}
-							<form.AppField name="sku">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel optional>SKU</FieldLabel>
-										<field.InputGroupField placeholder="Laissez vide pour générer automatiquement" />
-										<p className="text-xs text-muted-foreground">
-											Si laissé vide, un SKU sera généré automatiquement
-										</p>
-									</div>
-								)}
-							</form.AppField>
-
 							{/* Couleur */}
 							<form.AppField name="colorId">
 								{(field) => (

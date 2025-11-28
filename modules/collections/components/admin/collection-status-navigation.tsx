@@ -3,7 +3,7 @@ import { TabNavigation } from "@/shared/components/tab-navigation";
 import type { CollectionCountsByStatus } from "@/modules/collections/types/collection-counts.types";
 
 interface CollectionStatusNavigationProps {
-	currentStatus: CollectionStatus;
+	currentStatus: CollectionStatus | undefined;
 	pathname?: string;
 	searchParams?: Record<string, string | string[] | undefined>;
 	counts?: CollectionCountsByStatus;
@@ -26,7 +26,7 @@ export function CollectionStatusNavigation({
 	counts,
 }: CollectionStatusNavigationProps) {
 	// Construire les URLs avec les query params existants
-	const buildHref = (status: CollectionStatus) => {
+	const buildHref = (status: CollectionStatus | "all") => {
 		const params = new URLSearchParams();
 
 		// Copier tous les params existants sauf status, cursor et direction
@@ -40,24 +40,40 @@ export function CollectionStatusNavigation({
 			}
 		});
 
-		// Ajouter le nouveau status
-		params.set("status", status);
+		// Ajouter le nouveau status (sauf pour "all")
+		if (status !== "all") {
+			params.set("status", status);
+		}
 
 		const queryString = params.toString();
 		return queryString ? `${pathname}?${queryString}` : pathname;
 	};
 
-	const items = Object.values(CollectionStatus).map((status) => ({
-		label: STATUS_LABELS[status],
-		value: status,
-		href: buildHref(status),
-		count: counts?.[status],
-	}));
+	// Calculer le total pour l'onglet "Toutes"
+	const totalCount = counts
+		? Object.values(counts).reduce((sum, count) => sum + count, 0)
+		: undefined;
+
+	// Onglet "Toutes" en premier, puis les statuts individuels
+	const items = [
+		{
+			label: "Toutes",
+			value: "all" as const,
+			href: buildHref("all"),
+			count: totalCount,
+		},
+		...Object.values(CollectionStatus).map((status) => ({
+			label: STATUS_LABELS[status],
+			value: status,
+			href: buildHref(status),
+			count: counts?.[status],
+		})),
+	];
 
 	return (
 		<TabNavigation
 			items={items}
-			activeValue={currentStatus}
+			activeValue={currentStatus ?? "all"}
 			ariaLabel="Navigation par statuts de collections"
 		/>
 	);

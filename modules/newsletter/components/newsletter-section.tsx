@@ -1,4 +1,4 @@
-import { Mail, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { NewsletterForm } from "./newsletter-form";
 
 /**
@@ -25,11 +25,6 @@ export function NewsletterSection() {
 			/>
 
 			<div className="relative z-10 max-w-md mx-auto text-center space-y-5">
-				{/* Icône décorative */}
-				<div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 border border-primary/20 mb-2">
-					<Mail className="w-6 h-6 text-primary" aria-hidden="true" />
-				</div>
-
 				<h2 className="text-2xl/8 sm:text-3xl/9 font-serif tracking-normal antialiased text-foreground">
 					Reste au courant des nouveautés{" "}
 					<Sparkles

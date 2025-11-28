@@ -15,10 +15,12 @@ import {
 } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 import {
-	ORDER_STATUS_COLORS,
 	ORDER_STATUS_LABELS,
-	PAYMENT_STATUS_COLORS,
+	ORDER_STATUS_VARIANTS,
 	PAYMENT_STATUS_LABELS,
+	PAYMENT_STATUS_VARIANTS,
+	FULFILLMENT_STATUS_LABELS,
+	FULFILLMENT_STATUS_VARIANTS,
 } from "@/shared/constants/order";
 import { getCarrierLabel, type Carrier } from "@/shared/utils/carrier-detection";
 import { format } from "date-fns";
@@ -62,22 +64,6 @@ interface OrderDetailCardProps {
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-const FULFILLMENT_STATUS_LABELS: Record<FulfillmentStatus, string> = {
-	UNFULFILLED: "Non traitée",
-	PROCESSING: "En préparation",
-	SHIPPED: "Expédiée",
-	DELIVERED: "Livrée",
-	RETURNED: "Retournée",
-};
-
-const FULFILLMENT_STATUS_COLORS: Record<FulfillmentStatus, string> = {
-	UNFULFILLED: "#f59e0b",
-	PROCESSING: "#3b82f6",
-	SHIPPED: "#a855f7",
-	DELIVERED: "#10b981",
-	RETURNED: "#ef4444",
-};
 
 function formatCurrency(amount: number): string {
 	return (amount / 100).toFixed(2) + " €";
@@ -239,41 +225,17 @@ export function OrderDetailCard({ order }: OrderDetailCardProps) {
 			{/* Status badges */}
 			<div className="flex flex-wrap gap-2">
 				<ViewTransition name={`admin-order-${order.id}-status`}>
-					<Badge
-						variant="outline"
-						className="text-sm"
-						style={{
-							backgroundColor: `${ORDER_STATUS_COLORS[order.status]}20`,
-							color: ORDER_STATUS_COLORS[order.status],
-							borderColor: `${ORDER_STATUS_COLORS[order.status]}40`,
-						}}
-					>
+					<Badge variant={ORDER_STATUS_VARIANTS[order.status]} className="text-sm">
 						{ORDER_STATUS_LABELS[order.status]}
 					</Badge>
 				</ViewTransition>
 				<ViewTransition name={`admin-order-${order.id}-payment`}>
-					<Badge
-						variant="outline"
-						className="text-sm"
-						style={{
-							backgroundColor: `${PAYMENT_STATUS_COLORS[order.paymentStatus]}20`,
-							color: PAYMENT_STATUS_COLORS[order.paymentStatus],
-							borderColor: `${PAYMENT_STATUS_COLORS[order.paymentStatus]}40`,
-						}}
-					>
+					<Badge variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]} className="text-sm">
 						{PAYMENT_STATUS_LABELS[order.paymentStatus]}
 					</Badge>
 				</ViewTransition>
 				<ViewTransition name={`admin-order-${order.id}-fulfillment`}>
-					<Badge
-						variant="outline"
-						className="text-sm"
-						style={{
-							backgroundColor: `${FULFILLMENT_STATUS_COLORS[order.fulfillmentStatus]}20`,
-							color: FULFILLMENT_STATUS_COLORS[order.fulfillmentStatus],
-							borderColor: `${FULFILLMENT_STATUS_COLORS[order.fulfillmentStatus]}40`,
-						}}
-					>
+					<Badge variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]} className="text-sm">
 						{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus]}
 					</Badge>
 				</ViewTransition>

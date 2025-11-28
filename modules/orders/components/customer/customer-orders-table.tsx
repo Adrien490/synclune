@@ -20,10 +20,10 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import {
-	ORDER_STATUS_COLORS,
 	ORDER_STATUS_LABELS,
-	FULFILLMENT_STATUS_COLORS,
+	ORDER_STATUS_VARIANTS,
 	FULFILLMENT_STATUS_LABELS,
+	FULFILLMENT_STATUS_VARIANTS,
 } from "@/shared/constants/order";
 import type { GetUserOrdersReturn } from "@/modules/orders/types/user-orders.types";
 import { format } from "date-fns";
@@ -134,35 +134,18 @@ export async function CustomerOrdersTable({
 									</TableCell>
 									<TableCell>
 										<Badge
-											variant="outline"
+											variant={ORDER_STATUS_VARIANTS[order.status as OrderStatus]}
 											className="whitespace-nowrap"
-											style={{
-												backgroundColor: `${ORDER_STATUS_COLORS[order.status as OrderStatus]}20`,
-												color: ORDER_STATUS_COLORS[order.status as OrderStatus],
-												borderColor: `${ORDER_STATUS_COLORS[order.status as OrderStatus]}40`,
-											}}
 										>
 											{ORDER_STATUS_LABELS[order.status as OrderStatus]}
 										</Badge>
 									</TableCell>
 									<TableCell className="hidden lg:table-cell">
 										<Badge
-											variant="outline"
+											variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus as FulfillmentStatus]}
 											className="whitespace-nowrap"
-											style={{
-												backgroundColor: `${FULFILLMENT_STATUS_COLORS[order.fulfillmentStatus as FulfillmentStatus]}20`,
-												color:
-													FULFILLMENT_STATUS_COLORS[
-														order.fulfillmentStatus as FulfillmentStatus
-													],
-												borderColor: `${FULFILLMENT_STATUS_COLORS[order.fulfillmentStatus as FulfillmentStatus]}40`,
-											}}
 										>
-											{
-												FULFILLMENT_STATUS_LABELS[
-													order.fulfillmentStatus as FulfillmentStatus
-												]
-											}
+											{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus as FulfillmentStatus]}
 										</Badge>
 									</TableCell>
 									<TableCell className="hidden sm:table-cell text-center">

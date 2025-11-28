@@ -55,7 +55,7 @@ export async function createProductSku(
 
 		const rawData = {
 			productId: formData.get("productId") as string,
-			sku: formData.get("sku") as string,
+			sku: (formData.get("sku") as string) || "",
 			priceInclTaxEuros: Number(formData.get("priceInclTaxEuros")) || 0,
 			compareAtPriceEuros: formData.get("compareAtPriceEuros") ? Number(formData.get("compareAtPriceEuros")) : undefined,
 			inventory: Number(formData.get("inventory")) || 0,

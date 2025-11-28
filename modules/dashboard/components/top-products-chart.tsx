@@ -24,7 +24,7 @@ interface TopProductsChartProps {
 const chartConfig = {
 	revenue: {
 		label: "Chiffre d'affaires",
-		color: "hsl(var(--chart-1))",
+		color: "var(--chart-1)",
 	},
 } satisfies ChartConfig;
 
@@ -43,7 +43,7 @@ export function TopProductsChart({ chartPromise }: TopProductsChartProps) {
 	}));
 
 	return (
-		<Card className="border-t-4 border-secondary/40 bg-gradient-to-br from-secondary/5 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className="border-l-4 border-secondary/40 bg-gradient-to-br from-secondary/5 to-transparent hover:shadow-lg transition-all duration-300">
 			<CardHeader>
 				<CardTitle className="text-xl font-semibold tracking-wide">Top 5 bijoux vendus</CardTitle>
 				<CardDescription className="text-sm">

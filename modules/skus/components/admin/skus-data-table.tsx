@@ -268,17 +268,9 @@ export async function ProductVariantsDataTable({
 											role="gridcell"
 											className="hidden sm:table-cell text-center"
 										>
-											<span
-												className={`text-sm font-medium ${
-													availableStock === 0
-														? "text-destructive"
-														: availableStock < 10
-															? "text-orange-600 dark:text-orange-400"
-															: "text-green-600 dark:text-green-400"
-												}`}
-											>
+											<Badge variant={availableStock === 0 ? "destructive" : "success"}>
 												{availableStock}
-											</span>
+											</Badge>
 										</TableCell>
 										<TableCell role="gridcell" className="text-right">
 											<ProductSkuRowActions

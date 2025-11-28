@@ -3,17 +3,13 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
 import { fetchDashboardOrdersStatus } from "@/modules/dashboard/data/get-orders-status";
-import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-orders";
 import { fetchDashboardRevenueChart } from "@/modules/dashboard/data/get-revenue-chart";
-import { fetchDashboardStockAlerts } from "@/modules/dashboard/data/get-stock-alerts";
 import { fetchDashboardTopProducts } from "@/modules/dashboard/data/get-top-products";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
 import { OrdersStatusChart } from "@/modules/dashboard/components/orders-status-chart";
-import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
 import { RevenueChart } from "@/modules/dashboard/components/revenue-chart";
-import { StockAlertsList } from "@/modules/dashboard/components/stock-alerts-list";
 import { TopProductsChart } from "@/modules/dashboard/components/top-products-chart";
 import { Metadata } from "next";
 
@@ -25,9 +21,14 @@ export const metadata: Metadata = {
 // Skeleton components
 function KpisSkeleton() {
 	return (
-		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+		<div
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement des indicateurs clés"
+			className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+		>
 			{[...Array(6)].map((_, i) => (
-				<Card key={i}>
+				<Card key={i} className="border-l-4 border-primary/40">
 					<CardContent className="p-6">
 						<Skeleton className="h-4 w-24 mb-2" />
 						<Skeleton className="h-8 w-32 mb-2" />
@@ -41,29 +42,15 @@ function KpisSkeleton() {
 
 function ChartSkeleton() {
 	return (
-		<Card>
-			<CardContent className="p-6">
-				<Skeleton className="h-6 w-48 mb-2" />
-				<Skeleton className="h-4 w-64 mb-4" />
-				<Skeleton className="h-[300px] w-full" />
-			</CardContent>
-		</Card>
-	);
-}
-
-function ListSkeleton() {
-	return (
-		<Card>
-			<CardContent className="p-6">
-				<Skeleton className="h-6 w-48 mb-2" />
-				<Skeleton className="h-4 w-64 mb-4" />
-				<div className="space-y-3">
-					{[...Array(5)].map((_, i) => (
-						<Skeleton key={i} className="h-16 w-full" />
-					))}
-				</div>
-			</CardContent>
-		</Card>
+		<div role="status" aria-busy="true" aria-label="Chargement du graphique">
+			<Card className="border-l-4 border-primary/30">
+				<CardContent className="p-6">
+					<Skeleton className="h-6 w-48 mb-2" />
+					<Skeleton className="h-4 w-64 mb-4" />
+					<Skeleton className="h-[300px] w-full" />
+				</CardContent>
+			</Card>
+		</div>
 	);
 }
 
@@ -76,8 +63,6 @@ export default async function AdminDashboardPage() {
 	const revenueChartPromise = fetchDashboardRevenueChart();
 	const topProductsPromise = fetchDashboardTopProducts();
 	const ordersStatusPromise = fetchDashboardOrdersStatus();
-	const recentOrdersPromise = fetchDashboardRecentOrders();
-	const stockAlertsPromise = fetchDashboardStockAlerts();
 
 	return (
 		<>
@@ -106,17 +91,6 @@ export default async function AdminDashboardPage() {
 
 					<Suspense fallback={<ChartSkeleton />}>
 						<OrdersStatusChart chartPromise={ordersStatusPromise} />
-					</Suspense>
-				</div>
-
-				{/* Listes rapides */}
-				<div className="grid gap-6 lg:grid-cols-2">
-					<Suspense fallback={<ListSkeleton />}>
-						<RecentOrdersList ordersPromise={recentOrdersPromise} />
-					</Suspense>
-
-					<Suspense fallback={<ListSkeleton />}>
-						<StockAlertsList alertsPromise={stockAlertsPromise} />
 					</Suspense>
 				</div>
 			</div>

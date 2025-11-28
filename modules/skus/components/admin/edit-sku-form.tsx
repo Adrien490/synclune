@@ -5,7 +5,6 @@ import { ImageCounterBadge } from "@/modules/products/components/image-counter-b
 import { ImageGallery } from "@/modules/products/components/image-gallery";
 import { PrimaryImageUpload } from "@/modules/products/components/primary-image-upload";
 import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
 import { TextShimmer } from "@/shared/components/ui/text-shimmer";
@@ -357,20 +356,7 @@ export function EditProductVariantForm({
 							title="Informations de base"
 							description="Détails de la variante"
 						>
-							{/* SKU (lecture seule) */}
-							<div className="space-y-2">
-								<FieldLabel>SKU</FieldLabel>
-								<Input
-									value={sku.sku}
-									disabled
-									className="bg-muted text-muted-foreground cursor-not-allowed"
-								/>
-								<p className="text-xs text-muted-foreground">
-									Le code SKU ne peut pas être modifié
-								</p>
-							</div>
-
-							{/* Couleur */}
+								{/* Couleur */}
 							<form.AppField name="colorId">
 								{(field) => (
 									<div className="space-y-2">

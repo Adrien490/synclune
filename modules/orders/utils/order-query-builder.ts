@@ -122,7 +122,9 @@ export function buildOrderWhereClause(
 	const andConditions: Prisma.OrderWhereInput[] = [];
 
 	// Toujours appliquer les filtres (inclut l'exclusion par défaut des PENDING)
-	const filterConditions = buildOrderFilterConditions(params.filters ?? {});
+	const filterConditions = buildOrderFilterConditions(
+		params.filters ?? { showDeleted: undefined }
+	);
 	andConditions.push(filterConditions);
 
 	if (params.search) {

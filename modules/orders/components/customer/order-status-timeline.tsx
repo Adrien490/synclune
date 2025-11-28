@@ -6,12 +6,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
 import {
-	ORDER_STATUS_COLORS,
 	ORDER_STATUS_LABELS,
-	PAYMENT_STATUS_COLORS,
+	ORDER_STATUS_VARIANTS,
 	PAYMENT_STATUS_LABELS,
-	FULFILLMENT_STATUS_COLORS,
+	PAYMENT_STATUS_VARIANTS,
 	FULFILLMENT_STATUS_LABELS,
+	FULFILLMENT_STATUS_VARIANTS,
 } from "@/shared/constants/order";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -85,14 +85,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 				<div className="flex items-center justify-between">
 					<CardTitle className="text-lg">Suivi de commande</CardTitle>
 					<div className="flex gap-2">
-						<Badge
-							variant="outline"
-							style={{
-								backgroundColor: `${ORDER_STATUS_COLORS[order.status]}20`,
-								color: ORDER_STATUS_COLORS[order.status],
-								borderColor: `${ORDER_STATUS_COLORS[order.status]}40`,
-							}}
-						>
+						<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
 							{ORDER_STATUS_LABELS[order.status]}
 						</Badge>
 					</div>

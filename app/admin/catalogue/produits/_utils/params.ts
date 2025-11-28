@@ -51,6 +51,12 @@ export const parseFilters = (
 						filters.status = validStatuses;
 					}
 				}
+				// Stock status field (in_stock / out_of_stock)
+				else if (filterKey === "stockStatus") {
+					if (filterValue === "in_stock" || filterValue === "out_of_stock") {
+						filters.stockStatus = filterValue;
+					}
+				}
 				// Multi-select fields - Sanitized with limits
 				else if (
 					filterKey === "typeId" ||

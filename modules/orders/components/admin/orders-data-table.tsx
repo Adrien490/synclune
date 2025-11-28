@@ -1,4 +1,4 @@
-import { OrderStatus } from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -18,8 +18,8 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import {
-	ORDER_STATUS_COLORS,
 	ORDER_STATUS_LABELS,
+	ORDER_STATUS_VARIANTS,
 } from "@/shared/constants/order";
 import type { GetOrdersReturn } from "@/modules/orders/types/orders.types";
 import { cn } from "@/shared/utils/cn";
@@ -63,10 +63,11 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 	}
 
 	return (
-		<Card>
-			<CardContent>
-				<OrdersSelectionToolbar orderIds={orderIds} />
-				<div className="overflow-x-auto">
+		<>
+			<OrdersSelectionToolbar orderIds={orderIds} />
+			<Card>
+				<CardContent>
+					<div className="overflow-x-auto">
 					<Table role="table" aria-label="Liste des commandes" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -141,19 +142,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 											</span>
 										</TableCell>
 										<TableCell role="gridcell">
-											<Badge
-												variant="outline"
-												style={{
-													backgroundColor: `${
-														ORDER_STATUS_COLORS[order.status as OrderStatus]
-													}20`,
-													color:
-														ORDER_STATUS_COLORS[order.status as OrderStatus],
-													borderColor: `${
-														ORDER_STATUS_COLORS[order.status as OrderStatus]
-													}40`,
-												}}
-											>
+											<Badge variant={ORDER_STATUS_VARIANTS[order.status as OrderStatus]}>
 												{ORDER_STATUS_LABELS[order.status as OrderStatus]}
 											</Badge>
 										</TableCell>
@@ -193,6 +182,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 					/>
 				</div>
 			</CardContent>
-		</Card>
+			</Card>
+		</>
 	);
 }

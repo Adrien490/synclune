@@ -29,27 +29,27 @@ const STATUS_LABELS: Record<string, string> = {
 const chartConfig = {
 	PENDING: {
 		label: "En attente",
-		color: "hsl(var(--chart-1))",
+		color: "var(--chart-1)",
 	},
 	PROCESSING: {
 		label: "En traitement",
-		color: "hsl(var(--chart-2))",
+		color: "var(--chart-2)",
 	},
 	SHIPPED: {
 		label: "Expédiée",
-		color: "hsl(var(--chart-3))",
+		color: "var(--chart-3)",
 	},
 	DELIVERED: {
 		label: "Livrée",
-		color: "hsl(var(--chart-4))",
+		color: "var(--chart-4)",
 	},
 	CANCELED: {
 		label: "Annulée",
-		color: "hsl(var(--chart-5))",
+		color: "var(--chart-5)",
 	},
 	REFUNDED: {
 		label: "Remboursée",
-		color: "hsl(210 40% 96.1%)",
+		color: "oklch(0.9 0.02 250)",
 	},
 } satisfies ChartConfig;
 
@@ -67,7 +67,7 @@ export function OrdersStatusChart({ chartPromise }: OrdersStatusChartProps) {
 	const total = statuses.reduce((sum, item) => sum + item.count, 0);
 
 	return (
-		<Card className="border-t-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className="border-l-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
 			<CardHeader>
 				<CardTitle className="text-xl font-semibold tracking-wide">Statuts des commandes</CardTitle>
 				<CardDescription className="text-sm">

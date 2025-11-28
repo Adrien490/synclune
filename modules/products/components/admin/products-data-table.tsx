@@ -1,3 +1,4 @@
+import { ProductStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
@@ -21,6 +22,16 @@ import {
 } from "@/shared/components/ui/table";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import { Package } from "lucide-react";
+
+// Labels et styles pour les badges de statut
+const STATUS_CONFIG: Record<
+	ProductStatus,
+	{ label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
+	[ProductStatus.PUBLIC]: { label: "Public", variant: "default" },
+	[ProductStatus.DRAFT]: { label: "Brouillon", variant: "secondary" },
+	[ProductStatus.ARCHIVED]: { label: "Archivé", variant: "outline" },
+};
 import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
@@ -105,10 +116,11 @@ export async function ProductsDataTable({
 	}
 
 	return (
-		<Card>
-			<CardContent>
-				<ProductsSelectionToolbar products={products} />
-				<TableScrollContainer>
+		<>
+			<ProductsSelectionToolbar products={products} />
+			<Card>
+				<CardContent>
+					<TableScrollContainer>
 					<Table
 						role="table"
 						aria-label="Liste des bijoux"
@@ -140,15 +152,23 @@ export async function ProductsDataTable({
 									key="title"
 									scope="col"
 									role="columnheader"
-									className="w-[80%] sm:w-[45%] md:w-[35%] lg:w-[25%]"
+									className="w-[70%] sm:w-[40%] md:w-[30%] lg:w-[22%]"
 								>
 									Titre
+								</TableHead>
+								<TableHead
+									key="status"
+									scope="col"
+									role="columnheader"
+									className="hidden sm:table-cell w-[12%] lg:w-[10%]"
+								>
+									Statut
 								</TableHead>
 								<TableHead
 									key="type"
 									scope="col"
 									role="columnheader"
-									className="hidden lg:table-cell w-[12%]"
+									className="hidden lg:table-cell w-[10%]"
 								>
 									Type
 								</TableHead>
@@ -238,6 +258,11 @@ export async function ProductsDataTable({
 												</ViewTransition>
 											</div>
 										</TableCell>
+										<TableCell role="gridcell" className="hidden sm:table-cell">
+											<Badge variant={STATUS_CONFIG[product.status].variant}>
+												{STATUS_CONFIG[product.status].label}
+											</Badge>
+										</TableCell>
 										<TableCell role="gridcell" className="hidden lg:table-cell">
 											<div className="overflow-hidden">
 												{product.type ? (
@@ -279,13 +304,9 @@ export async function ProductsDataTable({
 											role="gridcell"
 											className="hidden lg:table-cell text-center"
 										>
-											{totalStock === 0 ? (
-												<Badge variant="destructive">0</Badge>
-											) : (
-												<span className="text-sm font-medium">
-													{totalStock}
-												</span>
-											)}
+											<Badge variant={totalStock === 0 ? "destructive" : "success"}>
+												{totalStock}
+											</Badge>
 										</TableCell>
 										<TableCell role="gridcell" className="text-right">
 											<ProductRowActions
@@ -313,6 +334,7 @@ export async function ProductsDataTable({
 					/>
 				</div>
 			</CardContent>
-		</Card>
+			</Card>
+		</>
 	);
 }

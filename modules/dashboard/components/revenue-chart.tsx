@@ -30,7 +30,7 @@ interface RevenueChartProps {
 const chartConfig = {
 	revenue: {
 		label: "Chiffre d'affaires",
-		color: "hsl(var(--chart-1))",
+		color: "var(--chart-1)",
 	},
 } satisfies ChartConfig;
 
@@ -47,7 +47,7 @@ export function RevenueChart({ chartPromise }: RevenueChartProps) {
 	}));
 
 	return (
-		<Card className="border-t-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className="border-l-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
 			<CardHeader>
 				<CardTitle className="text-xl font-semibold tracking-wide">Revenus des 30 derniers jours</CardTitle>
 				<CardDescription className="text-sm">

@@ -24,13 +24,12 @@ export const parseFilters = (
 		}
 	});
 
-	// Parse status from direct param (not filter_), default to PUBLIC
+	// Parse status from direct param (not filter_), undefined = tous les statuts
 	const statusParam = getFirstParam(params.status);
 	if (statusParam && Object.values(CollectionStatus).includes(statusParam as CollectionStatus)) {
 		status = statusParam as CollectionStatus;
-	} else {
-		status = CollectionStatus.PUBLIC;
 	}
+	// Pas de défaut - undefined = affiche tous les statuts
 
 	return {
 		hasProducts,
@@ -38,10 +37,10 @@ export const parseFilters = (
 	};
 };
 
-export const parseStatus = (params: CollectionsSearchParams): CollectionStatus => {
+export const parseStatus = (params: CollectionsSearchParams): CollectionStatus | undefined => {
 	const statusParam = getFirstParam(params.status);
 	if (statusParam && Object.values(CollectionStatus).includes(statusParam as CollectionStatus)) {
 		return statusParam as CollectionStatus;
 	}
-	return CollectionStatus.PUBLIC; // Default to PUBLIC
+	return undefined; // Pas de défaut = affiche tous les statuts
 };

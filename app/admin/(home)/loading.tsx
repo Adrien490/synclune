@@ -16,11 +16,15 @@ export default function DashboardHomeLoading() {
 				variant="compact"
 			/>
 
-			{/* KPIs Section - 5 metric cards */}
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-				{/* Card 1-4 visible on all breakpoints */}
-				{Array.from({ length: 4 }).map((_, i) => (
-					<Card key={i}>
+			{/* KPIs Section - 6 metric cards (cohérent avec DashboardKpis) */}
+			<div
+				role="status"
+				aria-busy="true"
+				aria-label="Chargement des indicateurs clés"
+				className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+			>
+				{Array.from({ length: 6 }).map((_, i) => (
+					<Card key={i} className="border-l-4 border-primary/40">
 						<CardContent className="p-6">
 							<div className="flex items-center justify-between space-x-4">
 								<div className="space-y-2 flex-1">
@@ -33,25 +37,17 @@ export default function DashboardHomeLoading() {
 						</CardContent>
 					</Card>
 				))}
-				{/* Card 5 - spans 2 columns on md, full row on lg */}
-				<Card className="md:col-span-2 lg:col-span-4">
-					<CardContent className="p-6">
-						<div className="flex items-center justify-between space-x-4">
-							<div className="space-y-2 flex-1">
-								<Skeleton className="h-4 w-32" />
-								<Skeleton className="h-8 w-24" />
-								<Skeleton className="h-3 w-28" />
-							</div>
-							<Skeleton className="h-10 w-10 rounded-full" />
-						</div>
-					</CardContent>
-				</Card>
 			</div>
 
 			{/* Charts Section - 2 columns grid */}
-			<div className="grid gap-6 lg:grid-cols-2">
+			<div
+				role="status"
+				aria-busy="true"
+				aria-label="Chargement des graphiques"
+				className="grid gap-6 lg:grid-cols-2"
+			>
 				{/* Revenue Chart - Full width on mobile, left column on desktop */}
-				<Card className="lg:col-span-2">
+				<Card className="lg:col-span-2 border-l-4 border-primary/30">
 					<CardContent className="p-6">
 						<div className="space-y-4">
 							<div className="flex items-center justify-between">
@@ -64,7 +60,7 @@ export default function DashboardHomeLoading() {
 				</Card>
 
 				{/* Top Products Chart */}
-				<Card>
+				<Card className="border-l-4 border-secondary/40">
 					<CardContent className="p-6">
 						<div className="space-y-4">
 							<Skeleton className="h-6 w-36" />
@@ -74,7 +70,7 @@ export default function DashboardHomeLoading() {
 				</Card>
 
 				{/* Orders Status Chart */}
-				<Card>
+				<Card className="border-l-4 border-primary/30">
 					<CardContent className="p-6">
 						<div className="space-y-4">
 							<Skeleton className="h-6 w-44" />
@@ -85,9 +81,14 @@ export default function DashboardHomeLoading() {
 			</div>
 
 			{/* Lists Section - 2 columns grid */}
-			<div className="grid gap-6 lg:grid-cols-2">
+			<div
+				role="status"
+				aria-busy="true"
+				aria-label="Chargement des listes"
+				className="grid gap-6 lg:grid-cols-2"
+			>
 				{/* Recent Orders List */}
-				<Card>
+				<Card className="border-l-4 border-primary/40">
 					<CardContent className="p-6">
 						<div className="space-y-4">
 							<div className="flex items-center justify-between">
@@ -111,7 +112,7 @@ export default function DashboardHomeLoading() {
 				</Card>
 
 				{/* Stock Alerts List */}
-				<Card>
+				<Card className="border-l-4 border-primary/40">
 					<CardContent className="p-6">
 						<div className="space-y-4">
 							<div className="flex items-center justify-between">

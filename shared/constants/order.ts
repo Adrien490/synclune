@@ -16,6 +16,16 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
 	CANCELLED: "#ef4444", // red-500
 };
 
+export type BadgeVariant = "default" | "secondary" | "destructive" | "success" | "warning" | "outline";
+
+export const ORDER_STATUS_VARIANTS: Record<OrderStatus, BadgeVariant> = {
+	PENDING: "warning",
+	PROCESSING: "default",
+	SHIPPED: "secondary",
+	DELIVERED: "success",
+	CANCELLED: "destructive",
+};
+
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 	PENDING: "En attente",
 	PAID: "Payée",
@@ -28,6 +38,13 @@ export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
 	PAID: "#10b981", // green-500
 	FAILED: "#ef4444", // red-500
 	REFUNDED: "#6b7280", // gray-500
+};
+
+export const PAYMENT_STATUS_VARIANTS: Record<PaymentStatus, BadgeVariant> = {
+	PENDING: "warning",
+	PAID: "success",
+	FAILED: "destructive",
+	REFUNDED: "secondary",
 };
 
 export const SHIPPING_ZONE_LABELS: Record<string, string> = {
@@ -60,6 +77,14 @@ export const FULFILLMENT_STATUS_COLORS: Record<FulfillmentStatus, string> = {
 	SHIPPED: "#a855f7", // purple-500
 	DELIVERED: "#10b981", // green-500
 	RETURNED: "#ef4444", // red-500
+};
+
+export const FULFILLMENT_STATUS_VARIANTS: Record<FulfillmentStatus, BadgeVariant> = {
+	UNFULFILLED: "outline",
+	PROCESSING: "default",
+	SHIPPED: "secondary",
+	DELIVERED: "success",
+	RETURNED: "destructive",
 };
 
 // Micro-entreprise : exonération de TVA (art. 293 B du CGI)

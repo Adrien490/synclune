@@ -17,7 +17,6 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import type { GetSkuStocksReturn } from "@/modules/skus/data/get-sku-stocks";
-import { cn } from "@/shared/utils/cn";
 import { Boxes } from "lucide-react";
 import { InventoryRowActions } from "./inventory-row-actions";
 import { InventorySelectionToolbar } from "./inventory-selection-toolbar";
@@ -73,17 +72,7 @@ export async function InventoryDataTable({
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{items.map((item) => {
-								const stockLevel =
-									item.inventory < 5
-										? "critical"
-										: item.inventory < 10
-											? "low"
-											: item.inventory > 50
-												? "high"
-												: "normal";
-
-								return (
+								{items.map((item) => (
 									<TableRow key={item.id}>
 										<TableCell>
 											<InventoryTableSelectionCell
@@ -111,23 +100,15 @@ export async function InventoryDataTable({
 											</div>
 										</TableCell>
 										<TableCell className="text-center">
-											<span
-												className={cn(
-													"font-medium",
-													stockLevel === "critical" && "text-red-600",
-													stockLevel === "low" && "text-orange-600",
-													stockLevel === "high" && "text-green-600"
-												)}
-											>
+											<Badge variant={item.inventory === 0 ? "destructive" : "success"}>
 												{item.inventory}
-											</span>
+											</Badge>
 										</TableCell>
 										<TableCell className="text-right">
 											<InventoryRowActions item={item} />
 										</TableCell>
 									</TableRow>
-								);
-								})}
+								))}
 						</TableBody>
 					</Table>
 				</div>

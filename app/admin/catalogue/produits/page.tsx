@@ -146,7 +146,7 @@ export default async function ProductsAdminPage({
 			<div className="space-y-6">
 				{/* Onglets de statut */}
 				<ProductStatusNavigation
-					currentStatus={status!}
+					currentStatus={status}
 					searchParams={params}
 					counts={productCounts}
 				/>

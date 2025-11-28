@@ -1,7 +1,7 @@
 "use client";
 
 import { ActionStatus } from "@/shared/types/server-action";
-import { useActionState } from "react";
+import { useActionState, useTransition, useCallback } from "react";
 import { exportInvoices } from "@/modules/orders/actions/export-invoices";
 
 /**
@@ -10,10 +10,23 @@ import { exportInvoices } from "@/modules/orders/actions/export-invoices";
  * Gère l'état de l'action et le téléchargement automatique du CSV
  */
 export function useExportInvoices() {
-	const [state, action, isPending] = useActionState(exportInvoices, {
+	const [isTransitionPending, startTransition] = useTransition();
+	const [state, formAction, isActionPending] = useActionState(exportInvoices, {
 		status: ActionStatus.INITIAL,
 		message: "",
 	});
+
+	/**
+	 * Fonction wrapper pour appeler l'action dans une transition (React 19)
+	 */
+	const action = useCallback(
+		(formData: FormData) => {
+			startTransition(() => {
+				formAction(formData);
+			});
+		},
+		[formAction]
+	);
 
 	/**
 	 * Fonction helper pour déclencher le téléchargement du CSV
@@ -50,7 +63,7 @@ export function useExportInvoices() {
 
 	return {
 		action,
-		isPending,
+		isPending: isTransitionPending || isActionPending,
 		state,
 		downloadCSV,
 	};
