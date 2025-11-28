@@ -16,6 +16,9 @@ import { RefundConfirmationEmail } from "@/emails/refund-confirmation-email";
 import { AdminDisputeAlertEmail } from "@/emails/admin-dispute-alert-email";
 import { CustomizationRequestEmail } from "@/emails/customization-request-email";
 import { PaymentFailedEmail } from "@/emails/payment-failed-email";
+import { CancelOrderConfirmationEmail } from "@/emails/cancel-order-confirmation-email";
+import { ReturnConfirmationEmail } from "@/emails/return-confirmation-email";
+import { RevertShippingNotificationEmail } from "@/emails/revert-shipping-notification-email";
 import { EMAIL_FROM, EMAIL_SUBJECTS, EMAIL_ADMIN } from "@/shared/lib/email-config";
 
 // Initialiser le client Resend
@@ -915,6 +918,153 @@ export async function sendAdminDisputeAlert({
 		return { success: true, data };
 	} catch (error) {
 		console.error("[EMAIL] Exception sending dispute alert:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email de confirmation d'annulation de commande au client
+ */
+export async function sendCancelOrderConfirmationEmail({
+	to,
+	orderNumber,
+	customerName,
+	orderTotal,
+	reason,
+	wasRefunded,
+	orderDetailsUrl,
+}: {
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	orderTotal: number;
+	reason?: string;
+	wasRefunded: boolean;
+	orderDetailsUrl: string;
+}) {
+	try {
+		const emailHtml = await render(
+			CancelOrderConfirmationEmail({
+				orderNumber,
+				customerName,
+				orderTotal,
+				reason,
+				wasRefunded,
+				orderDetailsUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_CANCELLED,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending cancel order confirmation:", error);
+			return { success: false, error };
+		}
+
+		console.log(`✅ [EMAIL] Cancel order confirmation sent to ${to} for order ${orderNumber}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending cancel order confirmation:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email de confirmation de retour au client
+ */
+export async function sendReturnConfirmationEmail({
+	to,
+	orderNumber,
+	customerName,
+	orderTotal,
+	reason,
+	orderDetailsUrl,
+}: {
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	orderTotal: number;
+	reason?: string;
+	orderDetailsUrl: string;
+}) {
+	try {
+		const emailHtml = await render(
+			ReturnConfirmationEmail({
+				orderNumber,
+				customerName,
+				orderTotal,
+				reason,
+				orderDetailsUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_RETURNED,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending return confirmation:", error);
+			return { success: false, error };
+		}
+
+		console.log(`✅ [EMAIL] Return confirmation sent to ${to} for order ${orderNumber}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending return confirmation:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email de notification d'annulation d'expédition au client
+ */
+export async function sendRevertShippingNotificationEmail({
+	to,
+	orderNumber,
+	customerName,
+	reason,
+	orderDetailsUrl,
+}: {
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	reason: string;
+	orderDetailsUrl: string;
+}) {
+	try {
+		const emailHtml = await render(
+			RevertShippingNotificationEmail({
+				orderNumber,
+				customerName,
+				reason,
+				orderDetailsUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.ORDER_SHIPPING_REVERTED,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending revert shipping notification:", error);
+			return { success: false, error };
+		}
+
+		console.log(`✅ [EMAIL] Revert shipping notification sent to ${to} for order ${orderNumber}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending revert shipping notification:", error);
 		return { success: false, error };
 	}
 }

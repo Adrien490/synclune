@@ -4,6 +4,7 @@ import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { getSession } from "@/shared/utils/get-session";
+import { sendCancelOrderConfirmationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
@@ -58,6 +59,10 @@ export async function cancelOrder(
 				orderNumber: true,
 				status: true,
 				paymentStatus: true,
+				total: true,
+				customerEmail: true,
+				customerName: true,
+				shippingFirstName: true,
 				items: {
 					select: {
 						skuId: true,
@@ -149,6 +154,27 @@ export async function cancelOrder(
 		revalidatePath("/admin/ventes/commandes");
 		revalidatePath("/admin/catalogue/inventaire");
 
+		// Envoyer l'email de confirmation d'annulation au client
+		if (order.customerEmail) {
+			const customerFirstName =
+				order.customerName?.split(" ")[0] ||
+				order.shippingFirstName ||
+				"Client";
+
+			const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000";
+			const orderDetailsUrl = `${baseUrl}/compte/commandes/${order.orderNumber}`;
+
+			await sendCancelOrderConfirmationEmail({
+				to: order.customerEmail,
+				orderNumber: order.orderNumber,
+				customerName: customerFirstName,
+				orderTotal: order.total,
+				reason: reason || undefined,
+				wasRefunded: newPaymentStatus === PaymentStatus.REFUNDED,
+				orderDetailsUrl,
+			});
+		}
+
 		const refundMessage =
 			newPaymentStatus === PaymentStatus.REFUNDED
 				? " Le statut de paiement a été passé à REFUNDED."
@@ -160,9 +186,11 @@ export async function cancelOrder(
 				? " Stock non restauré (commande déjà payée/traitée)."
 				: "";
 
+		const emailMessage = order.customerEmail ? " Email envoyé au client." : "";
+
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} annulée.${refundMessage}${stockMessage}`,
+			message: `Commande ${order.orderNumber} annulée.${refundMessage}${stockMessage}${emailMessage}`,
 		};
 	} catch (error) {
 		console.error("[CANCEL_ORDER]", error);

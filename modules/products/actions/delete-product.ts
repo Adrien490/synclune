@@ -157,7 +157,7 @@ export async function deleteProduct(
 		// 9. Success
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Produit "${existingProduct.title}" supprime avec succes.`,
+			message: `Produit "${existingProduct.title}" supprimé avec succès.`,
 			data: {
 				productId,
 				title: existingProduct.title,

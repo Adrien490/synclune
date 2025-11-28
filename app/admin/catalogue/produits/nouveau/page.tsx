@@ -5,8 +5,8 @@ import { headers } from "next/headers";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Nouveau bijou - Administration",
-	description: "Créer un nouveau bijou",
+	title: "Nouveau produit - Administration",
+	description: "Créer un nouveau produit",
 };
 
 export default async function NewProductPage() {
@@ -45,7 +45,7 @@ export default async function NewProductPage() {
 
 	return (
 		<>
-			<PageHeader title="Nouveau bijou" variant="compact" />
+			<PageHeader title="Nouveau produit" variant="compact" />
 
 			<CreateProductForm
 				productTypes={productTypes}

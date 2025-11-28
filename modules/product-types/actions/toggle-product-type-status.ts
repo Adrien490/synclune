@@ -41,7 +41,7 @@ export async function toggleProductTypeStatus(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Type ${isActive ? "active" : "desactive"} avec succes`,
+			message: `Type ${isActive ? "activé" : "désactivé"} avec succès`,
 		};
 	} catch (error) {
 // console.error("[toggleProductTypeStatus]", error);

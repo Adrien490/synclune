@@ -178,7 +178,7 @@ export async function duplicateProduct(
 		// 8. Success
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Produit "${duplicatedProduct.title}" duplique avec succes.`,
+			message: `Produit "${duplicatedProduct.title}" dupliqué avec succès.`,
 			data: {
 				productId: duplicatedProduct.id,
 				title: duplicatedProduct.title,

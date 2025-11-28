@@ -58,9 +58,9 @@ export async function createProduct(
 				// Car z.coerce.boolean(null) = false, ce qui n'est pas le comportement voulu
 				isActive: formData.get("initialSku.isActive") ?? true,
 				isDefault: formData.get("initialSku.isDefault") ?? true,
-				colorId: formData.get("initialSku.colorId"),
-				material: formData.get("initialSku.material"),
-				size: formData.get("initialSku.size"),
+				colorId: formData.get("initialSku.colorId") || "",
+				material: formData.get("initialSku.material") || "",
+				size: formData.get("initialSku.size") || "",
 				primaryImage: parseJSON(formData.get("initialSku.primaryImage"), undefined),
 				galleryMedia: parseJSON(formData.get("initialSku.galleryMedia"), []),
 			},
@@ -270,8 +270,8 @@ export async function createProduct(
 		// 10. Success - Return ActionState format
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Produit "${product.title}" cree avec succes${
-				product.status === "PUBLIC" ? " et publie" : ""
+			message: `Produit "${product.title}" créé avec succès${
+				product.status === "PUBLIC" ? " et publié" : ""
 			}.`,
 			data: product,
 		};

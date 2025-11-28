@@ -61,9 +61,9 @@ export async function createProductSku(
 			inventory: Number(formData.get("inventory")) || 0,
 			isActive: formData.get("isActive") === "true",
 			isDefault: formData.get("isDefault") === "true",
-			colorId: formData.get("colorId") as string,
-			material: formData.get("material") as string,
-			size: formData.get("size") as string,
+			colorId: (formData.get("colorId") as string) || "",
+			material: (formData.get("material") as string) || "",
+			size: (formData.get("size") as string) || "",
 			primaryImage: primaryImage,
 			galleryMedia: galleryMedia,
 		};
@@ -248,8 +248,8 @@ export async function createProductSku(
 			.join(" - ");
 
 		const successMessage = variantDetails
-			? `Variante "${variantDetails}" creee avec succes pour "${productSku.product.title}".`
-			: `Variante creee avec succes pour "${productSku.product.title}".`;
+			? `Variante "${variantDetails}" créée avec succès pour "${productSku.product.title}".`
+			: `Variante créée avec succès pour "${productSku.product.title}".`;
 
 		// 9. Invalidate cache (immediate visibility for admin)
 		const product = await prisma.product.findUnique({

@@ -10,7 +10,7 @@ export default function CreateProductLoading() {
 	return (
 		<div className="space-y-6">
 			{/* Page Header */}
-			<PageHeader title="Nouveau bijou" variant="compact" />
+			<PageHeader title="Nouveau produit" variant="compact" />
 
 			{/* Form Sections - 2 columns on desktop */}
 			<FormLayout cols={2}>

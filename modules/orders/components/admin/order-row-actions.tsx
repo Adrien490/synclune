@@ -1,6 +1,6 @@
 "use client";
 
-import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/browser";
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
@@ -18,9 +18,11 @@ import {
 	ExternalLink,
 	MoreVertical,
 	Package,
+	PackageX,
 	RotateCcw,
 	Trash2,
 	Truck,
+	Undo2,
 	XCircle,
 } from "lucide-react";
 import Link from "next/link";
@@ -29,6 +31,9 @@ import { DELETE_ORDER_DIALOG_ID } from "./delete-order-alert-dialog";
 import { MARK_AS_PAID_DIALOG_ID } from "./mark-as-paid-alert-dialog";
 import { MARK_AS_SHIPPED_DIALOG_ID } from "./mark-as-shipped-dialog";
 import { MARK_AS_DELIVERED_DIALOG_ID } from "./mark-as-delivered-alert-dialog";
+import { MARK_AS_PROCESSING_DIALOG_ID } from "./mark-as-processing-alert-dialog";
+import { REVERT_TO_PROCESSING_DIALOG_ID } from "./revert-to-processing-dialog";
+import { MARK_AS_RETURNED_DIALOG_ID } from "./mark-as-returned-alert-dialog";
 
 interface OrderRowActionsProps {
 	order: {
@@ -36,6 +41,7 @@ interface OrderRowActionsProps {
 		orderNumber: string;
 		status: OrderStatus;
 		paymentStatus: PaymentStatus;
+		fulfillmentStatus?: FulfillmentStatus | null;
 		invoiceNumber: string | null;
 		trackingNumber?: string | null;
 		trackingUrl?: string | null;
@@ -48,6 +54,9 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	const markAsPaidDialog = useAlertDialog(MARK_AS_PAID_DIALOG_ID);
 	const markAsShippedDialog = useAlertDialog(MARK_AS_SHIPPED_DIALOG_ID);
 	const markAsDeliveredDialog = useAlertDialog(MARK_AS_DELIVERED_DIALOG_ID);
+	const markAsProcessingDialog = useAlertDialog(MARK_AS_PROCESSING_DIALOG_ID);
+	const revertToProcessingDialog = useAlertDialog(REVERT_TO_PROCESSING_DIALOG_ID);
+	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
 
 	// =========================================================================
 	// STATE MACHINE CONDITIONS
@@ -77,6 +86,12 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 		order.invoiceNumber === null &&
 		order.paymentStatus !== PaymentStatus.PAID &&
 		order.paymentStatus !== PaymentStatus.REFUNDED;
+
+	// Nouvelles actions
+	const canMarkAsProcessing = isPending && isPaid;
+	const canRevertToProcessing = isShipped;
+	const canMarkAsReturned =
+		isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
 
 	// =========================================================================
 	// HANDLERS
@@ -118,6 +133,28 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 		});
 	};
 
+	const handleMarkAsProcessing = () => {
+		markAsProcessingDialog.open({
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+		});
+	};
+
+	const handleRevertToProcessing = () => {
+		revertToProcessingDialog.open({
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+			trackingNumber: order.trackingNumber,
+		});
+	};
+
+	const handleMarkAsReturned = () => {
+		markAsReturnedDialog.open({
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+		});
+	};
+
 	// =========================================================================
 	// RENDER
 	// =========================================================================
@@ -151,6 +188,14 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 					</DropdownMenuItem>
 				)}
 
+				{/* PENDING + PAID : Passer en préparation */}
+				{canMarkAsProcessing && (
+					<DropdownMenuItem onClick={handleMarkAsProcessing}>
+						<Package className="h-4 w-4" />
+						Passer en préparation
+					</DropdownMenuItem>
+				)}
+
 				{/* PROCESSING : Marquer comme expédiée */}
 				{canMarkAsShipped && (
 					<DropdownMenuItem onClick={handleMarkAsShipped}>
@@ -178,6 +223,22 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 					<DropdownMenuItem onClick={handleMarkAsDelivered}>
 						<CheckCircle className="h-4 w-4" />
 						Marquer comme livrée
+					</DropdownMenuItem>
+				)}
+
+				{/* SHIPPED : Annuler l'expédition */}
+				{canRevertToProcessing && (
+					<DropdownMenuItem onClick={handleRevertToProcessing}>
+						<Undo2 className="h-4 w-4" />
+						Annuler l'expédition
+					</DropdownMenuItem>
+				)}
+
+				{/* DELIVERED : Marquer comme retourné */}
+				{canMarkAsReturned && (
+					<DropdownMenuItem onClick={handleMarkAsReturned}>
+						<PackageX className="h-4 w-4" />
+						Marquer comme retourné
 					</DropdownMenuItem>
 				)}
 

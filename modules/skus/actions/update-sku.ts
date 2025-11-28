@@ -64,9 +64,9 @@ export async function updateProductSku(
 			inventory: Number(formData.get("inventory")) || 0,
 			isActive: formData.get("isActive") === "true",
 			isDefault: formData.get("isDefault") === "true",
-			colorId: formData.get("colorId") as string,
-			material: formData.get("material") as string,
-			size: formData.get("size") as string,
+			colorId: (formData.get("colorId") as string) || "",
+			material: (formData.get("material") as string) || "",
+			size: (formData.get("size") as string) || "",
 			primaryImage: primaryImage,
 			galleryMedia: galleryMedia,
 		};

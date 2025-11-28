@@ -18,6 +18,9 @@ import { BulkDeleteOrdersAlertDialog } from "@/modules/orders/components/admin/b
 import { MarkAsPaidAlertDialog } from "@/modules/orders/components/admin/mark-as-paid-alert-dialog";
 import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
 import { MarkAsDeliveredAlertDialog } from "@/modules/orders/components/admin/mark-as-delivered-alert-dialog";
+import { MarkAsProcessingAlertDialog } from "@/modules/orders/components/admin/mark-as-processing-alert-dialog";
+import { RevertToProcessingDialog } from "@/modules/orders/components/admin/revert-to-processing-dialog";
+import { MarkAsReturnedAlertDialog } from "@/modules/orders/components/admin/mark-as-returned-alert-dialog";
 import { RefreshOrdersButton } from "@/modules/orders/components/admin/refresh-orders-button";
 import { parseFilters } from "./_utils/params";
 import { Metadata } from "next";
@@ -123,6 +126,9 @@ export default async function OrdersAdminPage({
 			<MarkAsPaidAlertDialog />
 			<MarkAsShippedDialog />
 			<MarkAsDeliveredAlertDialog />
+			<MarkAsProcessingAlertDialog />
+			<RevertToProcessingDialog />
+			<MarkAsReturnedAlertDialog />
 		</>
 	);
 }

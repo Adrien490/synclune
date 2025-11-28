@@ -17,6 +17,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
+import {
+	PAYMENT_STATUS_LABELS,
+	PAYMENT_STATUS_VARIANTS,
+} from "@/shared/constants/order";
 import type { GetStripePaymentsReturn } from "@/modules/payments/data/get-stripe-payments";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -27,20 +31,6 @@ import { StripePaymentsRowActions } from "./stripe-payments-row-actions";
 interface StripePaymentsDataTableProps {
 	paymentsPromise: Promise<GetStripePaymentsReturn>;
 }
-
-const PAYMENT_STATUS_COLORS = {
-	PENDING: "secondary",
-	PAID: "default",
-	FAILED: "destructive",
-	REFUNDED: "outline",
-} as const;
-
-const PAYMENT_STATUS_LABELS = {
-	PENDING: "En attente",
-	PAID: "Payé",
-	FAILED: "Échec",
-	REFUNDED: "Remboursé",
-} as const;
 
 // Helper pour formater les prix en euros (format français)
 const formatPrice = (priceInCents: number) => {
@@ -133,7 +123,7 @@ export async function StripePaymentsDataTable({
 										{/* Statut */}
 										<TableCell className="text-center">
 											<Badge
-												variant={PAYMENT_STATUS_COLORS[payment.paymentStatus]}
+												variant={PAYMENT_STATUS_VARIANTS[payment.paymentStatus]}
 												className={isPaid ? "bg-green-600" : ""}
 											>
 												{PAYMENT_STATUS_LABELS[payment.paymentStatus]}

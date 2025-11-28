@@ -21,6 +21,7 @@ import {
 import type { GetProductTypesReturn } from "@/modules/product-types/data/get-product-types";
 import { Tags } from "lucide-react";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { ProductTypeActiveToggle } from "./product-type-active-toggle";
 import { ProductTypeRowActions } from "./product-type-row-actions";
 import { ProductTypesSelectionToolbar } from "./product-types-selection-toolbar";
@@ -128,15 +129,16 @@ export async function ProductTypesDataTable({
 											/>
 										</TableCell>
 										<TableCell role="gridcell">
-											<div className="overflow-hidden">
-												<Link
-													href={`/dashboard/product-types/${productType.id}`}
-													className="font-semibold text-foreground hover:underline truncate block"
-													title={productType.label}
-												>
-													{productType.label}
-												</Link>
-											</div>
+											<ViewTransition name={`admin-product-type-${productType.id}`}>
+												<div className="overflow-hidden">
+													<span
+														className="font-semibold text-foreground truncate block"
+														title={productType.label}
+													>
+														{productType.label}
+													</span>
+												</div>
+											</ViewTransition>
 										</TableCell>
 										<TableCell
 											role="gridcell"

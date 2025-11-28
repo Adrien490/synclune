@@ -107,7 +107,7 @@ export async function ProductsDataTable({
 				<EmptyContent>
 					<Button asChild variant="primary">
 						<Link href="/admin/catalogue/produits/nouveau">
-							Créer un bijou
+							Créer un produit
 						</Link>
 					</Button>
 				</EmptyContent>
@@ -116,10 +116,9 @@ export async function ProductsDataTable({
 	}
 
 	return (
-		<>
-			<ProductsSelectionToolbar products={products} />
-			<Card>
-				<CardContent>
+		<Card>
+			<CardContent>
+				<ProductsSelectionToolbar products={products} />
 					<TableScrollContainer>
 					<Table
 						role="table"
@@ -334,7 +333,6 @@ export async function ProductsDataTable({
 					/>
 				</div>
 			</CardContent>
-			</Card>
-		</>
+		</Card>
 	);
 }

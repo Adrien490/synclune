@@ -70,7 +70,7 @@ export async function createCollection(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: "Collection creee avec succes",
+			message: "Collection créée avec succès",
 			data: {
 				collectionStatus: validatedData.status,
 			},

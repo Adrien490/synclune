@@ -121,7 +121,7 @@ export async function updateCollection(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: "Collection modifiee avec succes",
+			message: "Collection modifiée avec succès",
 		};
 	} catch (error) {
 // console.error("Erreur lors de la modification de la collection:", error);

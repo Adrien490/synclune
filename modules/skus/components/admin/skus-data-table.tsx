@@ -27,6 +27,7 @@ import { getVideoMimeType } from "@/shared/utils/media-utils";
 import { Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { ProductSkuActiveToggle } from "./sku-active-toggle";
 import { ProductSkuRowActions } from "./sku-row-actions";
 import { ProductVariantsSelectionToolbar } from "./skus-selection-toolbar";
@@ -173,6 +174,7 @@ export async function ProductVariantsDataTable({
 											role="gridcell"
 											className="hidden md:table-cell py-3"
 										>
+											<ViewTransition name={`admin-sku-image-${sku.id}`}>
 											<div className="w-20 h-20 relative shrink-0">
 												{primaryImage ? (
 													primaryImage.mediaType === "VIDEO" ? (
@@ -202,16 +204,19 @@ export async function ProductVariantsDataTable({
 													</div>
 												)}
 											</div>
+										</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell">
-											<div className="flex flex-col gap-1">
-												<span className="font-medium">{sku.sku}</span>
-												{sku.isDefault && (
-													<Badge variant="secondary" className="w-fit text-xs">
-														Par défaut
-													</Badge>
-												)}
-											</div>
+											<ViewTransition name={`admin-sku-name-${sku.id}`}>
+												<div className="flex flex-col gap-1">
+													<span className="font-medium">{sku.sku}</span>
+													{sku.isDefault && (
+														<Badge variant="secondary" className="w-fit text-xs">
+															Par défaut
+														</Badge>
+													)}
+												</div>
+											</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell" className="hidden sm:table-cell">
 											{sku.color ? (

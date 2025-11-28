@@ -564,19 +564,86 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
 	}
 
 	try {
-		// Mettre à jour le statut de la commande
-		await prisma.order.update({
+		// 1. Récupérer la commande avec ses items pour vérifier si le stock doit être restauré
+		const order = await prisma.order.findUnique({
 			where: { id: orderId },
-			data: {
-				paymentStatus: "FAILED",
-				status: "CANCELLED",
-				stripePaymentIntentId: paymentIntent.id,
+			select: {
+				id: true,
+				orderNumber: true,
+				status: true,
+				paymentStatus: true,
+				items: {
+					select: {
+						skuId: true,
+						quantity: true,
+					},
+				},
 			},
 		});
 
-		// 🔴 Remboursement automatique si paiement capturé
-		if (paymentIntent.status === "requires_payment_method" || paymentIntent.amount_received > 0) {
-			console.log(`💰 [WEBHOOK] Initiating automatic refund for order ${orderId}`);
+		if (!order) {
+			console.error(`❌ [WEBHOOK] Order ${orderId} not found for payment failure handling`);
+			return;
+		}
+
+		// 2. Vérifier si le stock a été décrémenté (statut PROCESSING = paiement avait réussi)
+		const shouldRestoreStock = order.status === "PROCESSING" || order.paymentStatus === "PAID";
+
+		// 3. Transaction pour mettre à jour la commande ET restaurer le stock si nécessaire
+		await prisma.$transaction(async (tx) => {
+			// Mettre à jour le statut de la commande
+			await tx.order.update({
+				where: { id: orderId },
+				data: {
+					paymentStatus: "FAILED",
+					status: "CANCELLED",
+					stripePaymentIntentId: paymentIntent.id,
+				},
+			});
+
+			// Restaurer le stock si nécessaire
+			if (shouldRestoreStock && order.items.length > 0) {
+				for (const item of order.items) {
+					await tx.productSku.update({
+						where: { id: item.skuId },
+						data: {
+							inventory: { increment: item.quantity },
+							// Réactiver le SKU si stock restauré
+							isActive: true,
+						},
+					});
+				}
+				console.log(`📦 [WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`);
+			}
+
+			// Audit trail
+			await tx.orderStatusHistory.create({
+				data: {
+					orderId,
+					field: "status",
+					previousStatus: order.status,
+					newStatus: "CANCELLED",
+					changedBy: "webhook:payment_intent.payment_failed",
+					reason: "Échec du paiement",
+				},
+			});
+
+			await tx.orderStatusHistory.create({
+				data: {
+					orderId,
+					field: "paymentStatus",
+					previousStatus: order.paymentStatus,
+					newStatus: "FAILED",
+					changedBy: "webhook:payment_intent.payment_failed",
+					reason: `PaymentIntent: ${paymentIntent.id}`,
+				},
+			});
+		});
+
+		// 4. Remboursement automatique SEULEMENT si de l'argent a été capturé
+		// Note: requires_payment_method = paiement jamais capturé, donc pas de remboursement nécessaire
+		if (paymentIntent.amount_received > 0) {
+			console.log(`💰 [WEBHOOK] Initiating automatic refund for order ${orderId} (${paymentIntent.amount_received} cents captured)`);
 
 			try {
 				const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -898,13 +965,20 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
 		// 4. Calculer le total remboursé et mettre à jour le statut de paiement
 		const totalRefundedOnStripe = charge.amount_refunded || 0;
 		const isFullyRefunded = totalRefundedOnStripe >= order.total;
+		const isPartiallyRefunded = totalRefundedOnStripe > 0 && totalRefundedOnStripe < order.total;
 
 		if (isFullyRefunded && order.paymentStatus !== PaymentStatus.REFUNDED) {
 			await prisma.order.update({
 				where: { id: order.id },
 				data: { paymentStatus: PaymentStatus.REFUNDED },
 			});
-			console.log(`✅ [WEBHOOK] Order ${order.orderNumber} marked as REFUNDED`);
+			console.log(`✅ [WEBHOOK] Order ${order.orderNumber} marked as REFUNDED (total)`);
+		} else if (isPartiallyRefunded && order.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED && order.paymentStatus !== PaymentStatus.REFUNDED) {
+			await prisma.order.update({
+				where: { id: order.id },
+				data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
+			});
+			console.log(`✅ [WEBHOOK] Order ${order.orderNumber} marked as PARTIALLY_REFUNDED (${totalRefundedOnStripe / 100}€ / ${order.total / 100}€)`);
 		}
 
 		console.log(

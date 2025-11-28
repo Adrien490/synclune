@@ -117,6 +117,20 @@ export const GET_ORDER_SELECT = {
 			taxRate: true,
 		},
 	},
+	statusHistory: {
+		select: {
+			id: true,
+			field: true,
+			previousStatus: true,
+			newStatus: true,
+			reason: true,
+			changedBy: true,
+			createdAt: true,
+		},
+		orderBy: {
+			createdAt: "desc" as const,
+		},
+	},
 } as const satisfies Prisma.OrderSelect;
 
 // ============================================================================
@@ -196,4 +210,17 @@ export const ORDER_ERROR_MESSAGES = {
 	MARK_AS_DELIVERED_FAILED: "Erreur lors du marquage de la commande comme livrée.",
 	ALREADY_DELIVERED: "Cette commande est déjà livrée.",
 	CANNOT_DELIVER_NOT_SHIPPED: "Une commande non expédiée ne peut pas être marquée comme livrée.",
+	// Mark as processing
+	MARK_AS_PROCESSING_FAILED: "Erreur lors du passage en préparation.",
+	ALREADY_PROCESSING: "Cette commande est déjà en cours de préparation.",
+	CANNOT_PROCESS_UNPAID: "Une commande non payée ne peut pas être mise en préparation.",
+	CANNOT_PROCESS_CANCELLED: "Une commande annulée ne peut pas être mise en préparation.",
+	CANNOT_PROCESS_NOT_PENDING: "Seule une commande en attente peut être passée en préparation.",
+	// Revert to processing
+	REVERT_TO_PROCESSING_FAILED: "Erreur lors de l'annulation de l'expédition.",
+	CANNOT_REVERT_NOT_SHIPPED: "Seule une commande expédiée peut être remise en préparation.",
+	// Mark as returned
+	MARK_AS_RETURNED_FAILED: "Erreur lors du marquage comme retourné.",
+	ALREADY_RETURNED: "Cette commande est déjà marquée comme retournée.",
+	CANNOT_RETURN_NOT_DELIVERED: "Seule une commande livrée peut être marquée comme retournée.",
 } as const;

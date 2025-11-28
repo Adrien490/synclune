@@ -68,7 +68,7 @@ export async function bulkActivateSkus(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `${ids.length} variante(s) activee(s) avec succes`,
+			message: `${ids.length} variante(s) activée(s) avec succès`,
 		};
 	} catch (error) {
 // console.error("[bulkActivateSkus]", error);

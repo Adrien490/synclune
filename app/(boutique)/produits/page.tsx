@@ -27,7 +27,6 @@ export type ProductSearchParams = {
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { TabNavigation } from "@/shared/components/tab-navigation";
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { getColors } from "@/modules/colors/data/get-colors";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
@@ -199,15 +198,12 @@ export default async function BijouxHubPage({
 	};
 
 	return (
-		<div className="min-h-screen relative">
+		<div className="min-h-screen">
 			{/* JSON-LD Structured Data */}
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
 			/>
-
-			{/* Background décoratif - Particules pour ambiance bijoux */}
-			<ParticleSystem variant="section" className="absolute inset-0 z-20" />
 
 			<PageHeader
 				title={searchTerm ? `Recherche "${searchTerm}"` : "Mes créations"}

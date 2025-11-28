@@ -15,7 +15,7 @@ export default function ProductsListLoading() {
 				description="Gérez votre catalogue de bijoux"
 				variant="compact"
 				action={
-					<Button disabled>Nouveau bijou</Button>
+					<Button disabled>Nouveau produit</Button>
 				}
 			/>
 

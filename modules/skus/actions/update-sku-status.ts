@@ -100,7 +100,7 @@ export async function updateProductSkuStatus(
 		// 8. Success
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Variante ${updatedSku.sku} ${validatedIsActive ? "activee" : "desactivee"} avec succes.`,
+			message: `Variante ${updatedSku.sku} ${validatedIsActive ? "activée" : "désactivée"} avec succès.`,
 			data: updatedSku,
 		};
 	} catch (error) {

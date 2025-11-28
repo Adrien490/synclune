@@ -27,6 +27,7 @@ import type { GetCollectionsReturn } from "@/modules/collections/data/get-collec
 import { AlertTriangle, FolderOpen, Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { CollectionRowActions } from "./collection-row-actions";
 import { CollectionsSelectionToolbar } from "./collections-selection-toolbar";
 import { CollectionsTableSelectionCell } from "./collections-table-selection-cell";
@@ -85,11 +86,10 @@ export async function CollectionsDataTable({
 	}
 
 	return (
-		<>
-			<CollectionsSelectionToolbar collections={collectionsData} />
-			<Card>
-				<CardContent>
-					<div className="overflow-x-auto">
+		<Card>
+			<CardContent>
+				<CollectionsSelectionToolbar collections={collectionsData} />
+				<div className="overflow-x-auto">
 					<Table role="table" aria-label="Liste des collections" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -168,32 +168,35 @@ export async function CollectionsDataTable({
 											role="gridcell"
 											className="hidden md:table-cell py-3"
 										>
-											<div className="w-20 h-20 relative shrink-0">
-												{collection.imageUrl ? (
-													<Image
-														src={collection.imageUrl}
-														alt={collection.name}
-														fill
-														sizes="80px"
-														className="rounded-md object-cover"
-													/>
-												) : (
-													<div className="flex w-full h-full items-center justify-center rounded-md bg-muted">
-														<Package className="h-8 w-8 text-muted-foreground" />
-													</div>
-												)}
-											</div>
+											<ViewTransition name={`admin-collection-image-${collection.id}`}>
+												<div className="w-20 h-20 relative shrink-0">
+													{collection.imageUrl ? (
+														<Image
+															src={collection.imageUrl}
+															alt={collection.name}
+															fill
+															sizes="80px"
+															className="rounded-md object-cover"
+														/>
+													) : (
+														<div className="flex w-full h-full items-center justify-center rounded-md bg-muted">
+															<Package className="h-8 w-8 text-muted-foreground" />
+														</div>
+													)}
+												</div>
+											</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell">
-											<div className="overflow-hidden">
-												<Link
-													href={`/dashboard/collections/${collection.id}`}
-													className="font-semibold text-foreground hover:underline truncate block"
-													title={collection.name}
-												>
-													{collection.name}
-												</Link>
-											</div>
+											<ViewTransition name={`admin-collection-name-${collection.id}`}>
+												<div className="overflow-hidden">
+													<span
+														className="font-semibold text-foreground truncate block"
+														title={collection.name}
+													>
+														{collection.name}
+													</span>
+												</div>
+											</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell" className="hidden sm:table-cell">
 											<div className="flex items-center gap-2">
@@ -265,7 +268,6 @@ export async function CollectionsDataTable({
 					/>
 				</div>
 			</CardContent>
-			</Card>
-		</>
+		</Card>
 	);
 }

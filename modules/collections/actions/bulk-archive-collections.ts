@@ -100,8 +100,8 @@ export async function bulkArchiveCollections(
 		// 7. Message de succes
 		const count = existingCollections.length;
 		const actionLabel =
-			validatedData.targetStatus === "ARCHIVED" ? "archivee" : "restauree";
-		const successMessage = `${count} collection${count > 1 ? "s" : ""} ${actionLabel}${count > 1 ? "s" : ""} avec succes`;
+			validatedData.targetStatus === "ARCHIVED" ? "archivée" : "restaurée";
+		const successMessage = `${count} collection${count > 1 ? "s" : ""} ${actionLabel}${count > 1 ? "s" : ""} avec succès`;
 
 		return {
 			status: ActionStatus.SUCCESS,

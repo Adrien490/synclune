@@ -69,7 +69,7 @@ export async function bulkActivateProductTypes(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `${ids.length} type(s) active(s) avec succes`,
+			message: `${ids.length} type(s) activé(s) avec succès`,
 		};
 	} catch (error) {
 // console.error("[bulkActivateProductTypes]", error);

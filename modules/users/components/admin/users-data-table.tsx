@@ -17,6 +17,7 @@ import {
 } from "@/shared/components/ui/table";
 import type { GetUsersReturn } from "@/modules/users/data/get-users";
 import { CheckCircle, Users } from "lucide-react";
+import { ViewTransition } from "react";
 import Link from "next/link";
 import { UsersRowActions } from "./users-row-actions";
 
@@ -96,27 +97,31 @@ export async function UsersDataTable({
 										className={user.deletedAt ? "opacity-50" : undefined}
 									>
 										<TableCell role="gridcell">
-											<div className="overflow-hidden">
-												<span
-													className="font-bold truncate block"
-													title={displayName}
-												>
-													{displayName}
-												</span>
-											</div>
+											<ViewTransition name={`admin-user-name-${user.id}`}>
+												<div className="overflow-hidden">
+													<span
+														className="font-bold truncate block"
+														title={displayName}
+													>
+														{displayName}
+													</span>
+												</div>
+											</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell">
-											<div className="flex items-center gap-2">
-												<span className="text-sm truncate">{user.email}</span>
-												{user.emailVerified && (
-													<CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
-												)}
-											</div>
+											<ViewTransition name={`admin-user-email-${user.id}`}>
+												<div className="flex items-center gap-2">
+													<span className="text-sm truncate">{user.email}</span>
+													{user.emailVerified && (
+														<CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+													)}
+												</div>
+											</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell" className="hidden xl:table-cell">
 											{orderCount > 0 ? (
 												<Link
-													href={`/dashboard/orders?filter_userId=${user.id}`}
+													href={`/admin/ventes/commandes?userId=${user.id}`}
 													className="text-foreground hover:underline font-medium"
 												>
 													{orderCount}

@@ -75,7 +75,7 @@ export async function createColor(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: "Couleur creee avec succes",
+			message: "Couleur créée avec succès",
 		};
 	} catch (error) {
 // console.error("Erreur lors de la creation de la couleur:", error);

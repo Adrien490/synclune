@@ -82,7 +82,7 @@ export async function deleteColor(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: "Couleur supprimee avec succes",
+			message: "Couleur supprimée avec succès",
 		};
 	} catch (error) {
 // console.error("Erreur lors de la suppression de la couleur:", error);

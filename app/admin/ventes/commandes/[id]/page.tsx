@@ -7,6 +7,9 @@ import { MarkAsPaidAlertDialog } from "@/modules/orders/components/admin/mark-as
 import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
 import { MarkAsDeliveredAlertDialog } from "@/modules/orders/components/admin/mark-as-delivered-alert-dialog";
 import { UpdateTrackingDialog } from "@/modules/orders/components/admin/update-tracking-dialog";
+import { MarkAsProcessingAlertDialog } from "@/modules/orders/components/admin/mark-as-processing-alert-dialog";
+import { RevertToProcessingDialog } from "@/modules/orders/components/admin/revert-to-processing-dialog";
+import { MarkAsReturnedAlertDialog } from "@/modules/orders/components/admin/mark-as-returned-alert-dialog";
 
 type OrderDetailPageParams = Promise<{ id: string }>;
 
@@ -52,6 +55,9 @@ export default async function OrderDetailPage({
 			<MarkAsShippedDialog />
 			<MarkAsDeliveredAlertDialog />
 			<UpdateTrackingDialog />
+			<MarkAsProcessingAlertDialog />
+			<RevertToProcessingDialog />
+			<MarkAsReturnedAlertDialog />
 		</>
 	);
 }

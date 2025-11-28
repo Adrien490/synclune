@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -63,11 +63,10 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 	}
 
 	return (
-		<>
-			<OrdersSelectionToolbar orderIds={orderIds} />
-			<Card>
-				<CardContent>
-					<div className="overflow-x-auto">
+		<Card>
+			<CardContent>
+				<OrdersSelectionToolbar orderIds={orderIds} />
+				<div className="overflow-x-auto">
 					<Table role="table" aria-label="Liste des commandes" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -158,6 +157,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 													orderNumber: order.orderNumber,
 													status: order.status as OrderStatus,
 													paymentStatus: order.paymentStatus as PaymentStatus,
+													fulfillmentStatus: order.fulfillmentStatus as FulfillmentStatus,
 													invoiceNumber: order.invoiceNumber,
 													trackingNumber: order.trackingNumber,
 													trackingUrl: order.trackingUrl,
@@ -182,7 +182,6 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 					/>
 				</div>
 			</CardContent>
-			</Card>
-		</>
+		</Card>
 	);
 }

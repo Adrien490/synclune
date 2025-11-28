@@ -79,13 +79,13 @@ export async function bulkDeactivateSkus(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `${ids.length} variante(s) desactivee(s) avec succes`,
+			message: `${ids.length} variante(s) désactivée(s) avec succès`,
 		};
 	} catch (error) {
 // console.error("[bulkDeactivateSkus]", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Impossible de desactiver les variantes",
+			message: "Impossible de désactiver les variantes",
 		};
 	}
 }

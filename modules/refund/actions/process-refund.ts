@@ -169,19 +169,28 @@ export async function processRefund(
 				}
 			}
 
-			// 3. Calculer si la commande est totalement remboursée
+			// 3. Calculer si la commande est totalement ou partiellement remboursée
 			const totalRefundedBefore = refund.order.refunds.reduce(
 				(sum, r) => sum + r.amount,
 				0
 			);
 			const totalRefundedAfter = totalRefundedBefore + refund.amount;
 
-			// Si le montant total remboursé >= total de la commande, passer en REFUNDED
+			// Mettre à jour le paymentStatus selon le montant remboursé
 			if (totalRefundedAfter >= refund.order.total) {
+				// Remboursement total
 				await tx.order.update({
 					where: { id: refund.order.id },
 					data: {
 						paymentStatus: PaymentStatus.REFUNDED,
+					},
+				});
+			} else if (totalRefundedAfter > 0) {
+				// Remboursement partiel
+				await tx.order.update({
+					where: { id: refund.order.id },
+					data: {
+						paymentStatus: PaymentStatus.PARTIALLY_REFUNDED,
 					},
 				});
 			}

@@ -109,7 +109,7 @@ export async function updateProductType(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: "Type de produit modifie avec succes",
+			message: "Type de produit modifié avec succès",
 		};
 	} catch (error) {
 // console.error("Erreur lors de la modification du type de produit:", error);

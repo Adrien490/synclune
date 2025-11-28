@@ -81,7 +81,7 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 									className={cn(
 										"flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
 										active
-											? "bg-primary/10 text-primary"
+											? "bg-muted text-foreground"
 											: "text-muted-foreground hover:bg-muted hover:text-foreground"
 									)}
 								>
@@ -108,7 +108,7 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 									href={item.href}
 									className={cn(
 										"flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-colors min-w-[60px]",
-										active ? "text-primary" : "text-muted-foreground"
+										active ? "text-foreground" : "text-muted-foreground"
 									)}
 								>
 									<Icon className="size-5" />

@@ -133,8 +133,8 @@ export async function bulkArchiveProducts(
 		// 8. Message de succes
 		const count = existingProducts.length;
 		const actionLabel =
-			validatedData.targetStatus === "ARCHIVED" ? "archive" : "desarchive";
-		const successMessage = `${count} produit${count > 1 ? "s" : ""} ${actionLabel}${count > 1 ? "s" : ""} avec succes`;
+			validatedData.targetStatus === "ARCHIVED" ? "archivé" : "désarchivé";
+		const successMessage = `${count} produit${count > 1 ? "s" : ""} ${actionLabel}${count > 1 ? "s" : ""} avec succès`;
 
 		// 9. Success (avec warning si applicable)
 		const finalMessage = warningMessage

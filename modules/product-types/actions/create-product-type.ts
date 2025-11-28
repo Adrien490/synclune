@@ -83,7 +83,7 @@ export async function createProductType(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: "Type de produit cree avec succes",
+			message: "Type de produit créé avec succès",
 		};
 	} catch (error) {
 // console.error("Erreur lors de la creation du type de produit:", error);

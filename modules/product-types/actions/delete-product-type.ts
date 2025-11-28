@@ -123,7 +123,7 @@ export async function deleteProductType(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: "Type de produit supprime avec succes",
+			message: "Type de produit supprimé avec succès",
 		};
 	} catch (error) {
 // console.error("[DELETE_PRODUCT_TYPE]", error);

@@ -69,13 +69,13 @@ export async function bulkDeactivateProductTypes(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `${ids.length} type(s) desactive(s) avec succes`,
+			message: `${ids.length} type(s) désactivé(s) avec succès`,
 		};
 	} catch (error) {
 // console.error("[bulkDeactivateProductTypes]", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Impossible de desactiver les types",
+			message: "Impossible de désactiver les types",
 		};
 	}
 }

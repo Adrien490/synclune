@@ -112,8 +112,8 @@ export async function bulkChangeProductStatus(
 		// 8. Message de succes
 		const count = existingProducts.length;
 		const actionLabel =
-			validatedData.targetStatus === "PUBLIC" ? "publie" : "mis en brouillon";
-		const successMessage = `${count} produit${count > 1 ? "s" : ""} ${actionLabel}${count > 1 ? "s" : ""} avec succes`;
+			validatedData.targetStatus === "PUBLIC" ? "publié" : "mis en brouillon";
+		const successMessage = `${count} produit${count > 1 ? "s" : ""} ${actionLabel}${count > 1 ? "s" : ""} avec succès`;
 
 		return {
 			status: ActionStatus.SUCCESS,

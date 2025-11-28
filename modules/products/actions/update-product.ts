@@ -58,9 +58,9 @@ export async function updateProduct(
 				compareAtPriceEuros: formData.get("defaultSku.compareAtPriceEuros"),
 				inventory: formData.get("defaultSku.inventory"),
 				isActive: formData.get("defaultSku.isActive"), // Zod fera la coercion
-				colorId: formData.get("defaultSku.colorId"),
-				material: formData.get("defaultSku.material"),
-				size: formData.get("defaultSku.size"),
+				colorId: formData.get("defaultSku.colorId") || "",
+				material: formData.get("defaultSku.material") || "",
+				size: formData.get("defaultSku.size") || "",
 				primaryImage: parseJSON(formData.get("defaultSku.primaryImage"), undefined),
 				galleryMedia: parseJSON(formData.get("defaultSku.galleryMedia"), []),
 			},
@@ -332,7 +332,7 @@ export async function updateProduct(
 		// 12. Success
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Produit "${updatedProduct.title}" modifie avec succes.`,
+			message: `Produit "${updatedProduct.title}" modifié avec succès.`,
 			data: updatedProduct,
 		};
 	} catch (e) {

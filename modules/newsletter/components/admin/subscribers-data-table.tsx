@@ -19,6 +19,7 @@ import { GetSubscribersReturn } from "@/modules/newsletter/data/get-subscribers"
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CheckCircle2, Mail, XCircle } from "lucide-react";
+import { ViewTransition } from "react";
 
 export interface SubscribersDataTableProps {
 	subscribersPromise: Promise<GetSubscribersReturn>;
@@ -62,7 +63,9 @@ export async function SubscribersDataTable({
 								{subscribers.map((subscriber) => (
 								<TableRow key={subscriber.id}>
 									<TableCell className="font-medium">
-										{subscriber.email}
+										<ViewTransition name={`admin-subscriber-${subscriber.id}`}>
+											<span>{subscriber.email}</span>
+										</ViewTransition>
 									</TableCell>
 									<TableCell>
 										{subscriber.isActive ? (

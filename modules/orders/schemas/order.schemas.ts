@@ -346,3 +346,54 @@ export const markAsDeliveredSchema = z.object({
 			return val === "true";
 		}),
 });
+
+// ============================================================================
+// MARK AS PROCESSING SCHEMA
+// ============================================================================
+
+/**
+ * Schema pour passer une commande payée en préparation
+ * Transition : PENDING (PAID) → PROCESSING
+ */
+export const markAsProcessingSchema = z.object({
+	id: z.cuid2(),
+	sendEmail: z
+		.union([z.boolean(), z.enum(["true", "false"])])
+		.optional()
+		.default(false)
+		.transform((val) => {
+			if (typeof val === "boolean") return val;
+			return val === "true";
+		}),
+});
+
+// ============================================================================
+// REVERT TO PROCESSING SCHEMA
+// ============================================================================
+
+/**
+ * Schema pour annuler une expédition et revenir en préparation
+ * Transition : SHIPPED → PROCESSING
+ * Requiert une raison obligatoire pour l'audit trail
+ */
+export const revertToProcessingSchema = z.object({
+	id: z.cuid2(),
+	reason: z
+		.string()
+		.min(1, "La raison est obligatoire")
+		.max(500, "La raison ne peut pas dépasser 500 caractères"),
+});
+
+// ============================================================================
+// MARK AS RETURNED SCHEMA
+// ============================================================================
+
+/**
+ * Schema pour marquer une commande comme retournée
+ * Transition FulfillmentStatus : DELIVERED → RETURNED
+ * Le OrderStatus reste DELIVERED
+ */
+export const markAsReturnedSchema = z.object({
+	id: z.cuid2(),
+	reason: z.string().max(500).optional(),
+});

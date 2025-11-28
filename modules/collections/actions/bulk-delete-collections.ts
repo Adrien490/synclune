@@ -84,8 +84,8 @@ export async function bulkDeleteCollections(
 		// Message avec info sur les produits
 		const message =
 			totalProducts > 0
-				? `${result.count} collection${result.count > 1 ? "s" : ""} supprimee${result.count > 1 ? "s" : ""} avec succes. ${totalProducts} produit${totalProducts > 1 ? "s ont" : " a"} ete preserve${totalProducts > 1 ? "s" : ""}.`
-				: `${result.count} collection${result.count > 1 ? "s" : ""} supprimee${result.count > 1 ? "s" : ""} avec succes`;
+				? `${result.count} collection${result.count > 1 ? "s" : ""} supprimée${result.count > 1 ? "s" : ""} avec succès. ${totalProducts} produit${totalProducts > 1 ? "s ont" : " a"} été préservé${totalProducts > 1 ? "s" : ""}.`
+				: `${result.count} collection${result.count > 1 ? "s" : ""} supprimée${result.count > 1 ? "s" : ""} avec succès`;
 
 		return {
 			status: ActionStatus.SUCCESS,

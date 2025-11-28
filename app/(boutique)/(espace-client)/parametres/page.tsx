@@ -7,12 +7,13 @@ import {
 } from "@/shared/components/ui/card";
 import { PageHeader } from "@/shared/components/page-header";
 import { AccountNav } from "@/modules/users/components/account-nav";
-import { LogoutButton } from "@/modules/auth/components/logout-button";
+import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import { ChangePasswordForm } from "@/modules/users/components/change-password-form";
 import { ProfileForm } from "@/modules/users/components/profile-form";
 import { GdprSection } from "@/modules/users/components/gdpr-section";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { getUserAccounts } from "@/modules/users/data/get-user-accounts";
+import { Button } from "@/shared/components/ui/button";
 import { KeyRound, LogOut, User } from "lucide-react";
 import { Metadata } from "next";
 
@@ -107,7 +108,12 @@ export default async function SettingsPage() {
 											<p className="text-sm text-muted-foreground mb-4">
 												Déconnectez-vous de votre compte sur cet appareil
 											</p>
-											<LogoutButton />
+											<LogoutAlertDialog>
+												<Button variant="outline" className="w-full">
+													<LogOut className="w-4 h-4 mr-2" />
+													Se déconnecter
+												</Button>
+											</LogoutAlertDialog>
 										</CardContent>
 									</Card>
 

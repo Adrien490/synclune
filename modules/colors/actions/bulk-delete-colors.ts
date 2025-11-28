@@ -83,7 +83,7 @@ export async function bulkDeleteColors(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `${result.count} couleur${result.count > 1 ? "s" : ""} supprimee${result.count > 1 ? "s" : ""} avec succes`,
+			message: `${result.count} couleur${result.count > 1 ? "s" : ""} supprimée${result.count > 1 ? "s" : ""} avec succès`,
 		};
 	} catch (error) {
 // console.error("Erreur lors de la suppression groupee des couleurs:", error);

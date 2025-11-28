@@ -125,8 +125,8 @@ export async function deleteProductSku(
 			return {
 				status: ActionStatus.ERROR,
 				message:
-					`Cette variante ne peut pas etre supprimee car elle est associee a ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
-					"Pour conserver l'historique des commandes, veuillez desactiver cette variante a la place.",
+					`Cette variante ne peut pas être supprimée car elle est associée à ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
+					"Pour conserver l'historique des commandes, veuillez désactiver cette variante à la place.",
 			};
 		}
 
@@ -140,8 +140,8 @@ export async function deleteProductSku(
 			return {
 				status: ActionStatus.ERROR,
 				message:
-					`Cette variante ne peut pas etre supprimee car elle est presente dans ${wishlistItemsCount} wishlist${wishlistItemsCount > 1 ? "s" : ""}. ` +
-					"Pour eviter de frustrer vos clients, veuillez desactiver cette variante a la place.",
+					`Cette variante ne peut pas être supprimée car elle est présente dans ${wishlistItemsCount} wishlist${wishlistItemsCount > 1 ? "s" : ""}. ` +
+					"Pour éviter de frustrer vos clients, veuillez désactiver cette variante à la place.",
 			};
 		}
 
@@ -155,8 +155,8 @@ export async function deleteProductSku(
 			return {
 				status: ActionStatus.ERROR,
 				message:
-					`Cette variante ne peut pas etre supprimee car elle est presente dans ${cartItemsCount} panier${cartItemsCount > 1 ? "s" : ""}. ` +
-					"Veuillez desactiver cette variante a la place.",
+					`Cette variante ne peut pas être supprimée car elle est présente dans ${cartItemsCount} panier${cartItemsCount > 1 ? "s" : ""}. ` +
+					"Veuillez désactiver cette variante à la place.",
 			};
 		}
 
@@ -248,8 +248,8 @@ export async function deleteProductSku(
 
 		// 13. Success
 		const successMessage = promotedSkuSku
-			? `Variante ${existingSku.sku} supprimee avec succes. La variante ${promotedSkuSku} est maintenant la variante principale.`
-			: `Variante ${existingSku.sku} supprimee avec succes.`;
+			? `Variante ${existingSku.sku} supprimée avec succès. La variante ${promotedSkuSku} est maintenant la variante principale.`
+			: `Variante ${existingSku.sku} supprimée avec succès.`;
 
 		return {
 			status: ActionStatus.SUCCESS,

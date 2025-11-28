@@ -1,4 +1,3 @@
-import { Button } from "@/shared/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -96,15 +95,12 @@ export default async function AccountPage() {
 													{user?.email || "Non défini"}
 												</p>
 											</div>
-											<Button
-												asChild
-												variant="link"
-												className="px-0 h-auto mt-2"
+											<Link
+												href="/parametres"
+												className="text-sm text-foreground underline hover:text-foreground/80 mt-2 inline-block"
 											>
-												<Link href="/parametres">
-													Modifier mes informations
-												</Link>
-											</Button>
+												Modifier mes informations
+											</Link>
 										</CardContent>
 									</Card>
 

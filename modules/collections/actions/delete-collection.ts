@@ -68,8 +68,8 @@ export async function deleteCollection(
 		// Message different selon si la collection avait des produits
 		const message =
 			productCount > 0
-				? `Collection supprimee avec succes. ${productCount} produit${productCount > 1 ? "s ont" : " a"} ete preserve${productCount > 1 ? "s" : ""}.`
-				: "Collection supprimee avec succes";
+				? `Collection supprimée avec succès. ${productCount} produit${productCount > 1 ? "s ont" : " a"} été préservé${productCount > 1 ? "s" : ""}.`
+				: "Collection supprimée avec succès";
 
 		return {
 			status: ActionStatus.SUCCESS,

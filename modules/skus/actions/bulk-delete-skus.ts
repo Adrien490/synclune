@@ -118,7 +118,7 @@ export async function bulkDeleteSkus(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `${ids.length} variante(s) supprimee(s) avec succes`,
+			message: `${ids.length} variante(s) supprimée(s) avec succès`,
 		};
 	} catch (error) {
 // console.error("[bulkDeleteSkus]", error);

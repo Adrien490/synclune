@@ -96,7 +96,7 @@ export async function updateColor(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: "Couleur modifiee avec succes",
+			message: "Couleur modifiée avec succès",
 		};
 	} catch (error) {
 // console.error("Erreur lors de la modification de la couleur:", error);

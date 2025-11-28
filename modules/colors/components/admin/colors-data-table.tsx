@@ -17,7 +17,7 @@ import {
 } from "@/shared/components/ui/table";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import { Palette } from "lucide-react";
-import { use } from "react";
+import { use, ViewTransition } from "react";
 import { ColorsRowActions } from "@/modules/colors/components/colors-row-actions";
 import { ColorsSelectionToolbar } from "@/modules/colors/components/colors-selection-toolbar";
 import { ColorsTableSelectionCell } from "@/modules/colors/components/colors-table-selection-cell";
@@ -101,20 +101,24 @@ export function ColorsDataTable({ colorsPromise }: ColorsDataTableProps) {
 											<ColorsTableSelectionCell type="row" colorId={color.id} />
 										</TableCell>
 										<TableCell role="gridcell" className="hidden md:table-cell">
-											<div
-												className="w-[30px] h-[30px] rounded-full inline-flex border border-border"
-												style={{ backgroundColor: color.hex }}
-											/>
+											<ViewTransition name={`admin-color-preview-${color.id}`}>
+												<div
+													className="w-[30px] h-[30px] rounded-full inline-flex border border-border"
+													style={{ backgroundColor: color.hex }}
+												/>
+											</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell">
-											<div className="overflow-hidden">
-												<span
-													className="font-semibold text-foreground truncate block"
-													title={color.name}
-												>
-													{color.name}
-												</span>
-											</div>
+											<ViewTransition name={`admin-color-name-${color.id}`}>
+												<div className="overflow-hidden">
+													<span
+														className="font-semibold text-foreground truncate block"
+														title={color.name}
+													>
+														{color.name}
+													</span>
+												</div>
+											</ViewTransition>
 										</TableCell>
 										<TableCell
 											role="gridcell"

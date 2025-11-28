@@ -177,7 +177,7 @@ export async function bulkDeleteProducts(
 		// 9. Success
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `${existingProducts.length} produit${existingProducts.length > 1 ? "s" : ""} supprime${existingProducts.length > 1 ? "s" : ""} avec succes.`,
+			message: `${existingProducts.length} produit${existingProducts.length > 1 ? "s" : ""} supprimé${existingProducts.length > 1 ? "s" : ""} avec succès.`,
 			data: {
 				deletedCount: existingProducts.length,
 				productIds: validatedProductIds,

@@ -27,6 +27,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ReceiptText } from "lucide-react";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { RefundRowActions } from "./refund-row-actions";
 
 export interface RefundsDataTableProps {
@@ -131,12 +132,14 @@ export async function RefundsDataTable({
 								{refunds.map((refund) => (
 								<TableRow key={refund.id}>
 									<TableCell role="gridcell">
-										<Link
-											href={`/dashboard/orders/${refund.order.id}`}
-											className="font-mono text-sm font-medium text-blue-600 hover:underline"
-										>
-											{refund.order.orderNumber}
-										</Link>
+										<ViewTransition name={`admin-order-${refund.order.id}`}>
+											<Link
+												href={`/admin/ventes/commandes/${refund.order.id}`}
+												className="font-mono text-sm font-medium text-foreground underline"
+											>
+												{refund.order.orderNumber}
+											</Link>
+										</ViewTransition>
 									</TableCell>
 									<TableCell role="gridcell" className="hidden sm:table-cell">
 										<span className="text-sm whitespace-nowrap">
