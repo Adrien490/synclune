@@ -236,6 +236,7 @@ model ProductSku {
   @@index([isActive, inventory, updatedAt(sort: Desc)])
   @@index([isActive, priceInclTax])
   @@index([productId, isDefault])
+  @@index([colorId, isActive]) // Filtrage catalogue par couleur
 }
 
 enum MediaType {
@@ -452,6 +453,7 @@ model Order {
   @@index([stripePaymentIntentId])
   @@index([stripeCheckoutSessionId])
   @@index([stripeCustomerId])
+  @@index([createdAt(sort: Desc)]) // Listing commandes récentes
 }
 
 model OrderItem {
@@ -596,6 +598,7 @@ model WishlistItem {
   @@unique([wishlistId, skuId])
   @@index([wishlistId])
   @@index([skuId])
+  @@index([skuId, createdAt]) // Notifications baisse de prix
 }
 
 // ============================================

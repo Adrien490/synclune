@@ -9,13 +9,7 @@ import { NewsletterForm } from "./newsletter-form";
  */
 export function NewsletterSection() {
 	return (
-		<section className="relative overflow-hidden bg-gradient-to-br from-pink-50/60 via-primary/5 to-amber-50/50 py-16 sm:py-20 px-4">
-			{/* Mask top pour transition douce depuis la section précédente */}
-			<div
-				className="absolute top-0 left-0 right-0 h-16 bg-linear-to-b from-background to-transparent pointer-events-none"
-				aria-hidden="true"
-			/>
-
+		<section className="relative overflow-hidden py-16 sm:py-20 px-4">
 			{/* Formes décoratives floues */}
 			<div
 				className="absolute top-8 left-10 w-24 h-24 rounded-full bg-primary/20 blur-3xl"
