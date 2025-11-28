@@ -338,7 +338,6 @@ export function AddressFormDialog({
 									<field.InputField
 										label="Code postal"
 										type="text"
-										placeholder="75001"
 										disabled={isPending}
 										maxLength={5}
 										required
@@ -378,7 +377,6 @@ export function AddressFormDialog({
 									<field.InputField
 										label="Pays"
 										type="text"
-										placeholder="FR"
 										disabled={true}
 										required
 									/>

@@ -27,7 +27,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
 					id="name"
 					name="name"
 					type="text"
-					placeholder="Votre prénom"
 					defaultValue={user?.name || ""}
 					disabled={isPending}
 					required

@@ -9,7 +9,8 @@ import type { Session } from "@/shared/lib/auth";
 import { getFinalShippingCost } from "@/shared/constants/cart-shipping";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { CreditCard, Info, Mail, Shield, User } from "lucide-react";
+import { CreditCard, Info, Mail, Shield } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
 	SORTED_SHIPPING_COUNTRIES,
 	COUNTRY_NAMES,
@@ -21,7 +22,6 @@ const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
 	label: COUNTRY_NAMES[code],
 }));
 import Link from "next/link";
-import { SignOutButton } from "./sign-out-button";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
 
 interface CheckoutFormProps {
@@ -180,28 +180,7 @@ export function CheckoutForm({
 
 			<RequiredFieldsNote />
 
-			{/* Message de bienvenue si connecté */}
-			{!isGuest && (
-				<Alert>
-					<div className="flex items-center justify-between gap-3">
-						<div className="flex items-center gap-3">
-							
-								
-								<User className="h-4 w-4" />
-							
-							<AlertDescription>
-								Bonjour{" "}
-								<strong>
-									{session?.user?.name}
-								</strong>{" "}
-								! Tes informations sont pré-remplies.
-							</AlertDescription>
-						</div>
-						<SignOutButton />
-					</div>
-				</Alert>
-			)}
-
+			
 			{/* SECTION 1 : Email (guests uniquement) */}
 			{isGuest && (
 				<FormSection
@@ -237,7 +216,7 @@ export function CheckoutForm({
 											Tu as déjà un compte ?{" "}
 											<Link
 												href="/connexion?callbackURL=/paiement"
-												className="text-primary underline hover:no-underline font-medium"
+												className="text-foreground underline hover:no-underline font-medium"
 												onClick={() => {
 													// Sauvegarder les données du formulaire avant la redirection
 													if (typeof window !== "undefined") {
@@ -308,9 +287,7 @@ export function CheckoutForm({
 							<field.InputField
 								label="Prénom"
 								required
-								placeholder="Sophie"
 								autoComplete="given-name"
-								disabled={!isGuest}
 							/>
 						)}
 					</form.AppField>
@@ -330,9 +307,7 @@ export function CheckoutForm({
 							<field.InputField
 								label="Nom"
 								required
-								placeholder="Martin"
 								autoComplete="family-name"
-								disabled={!isGuest}
 							/>
 						)}
 					</form.AppField>
@@ -353,7 +328,6 @@ export function CheckoutForm({
 						<field.InputField
 							label="Adresse"
 							required
-							placeholder="123 rue de la République"
 							autoComplete="address-line1"
 						/>
 					)}
@@ -390,7 +364,6 @@ export function CheckoutForm({
 							<field.InputField
 								label="Code postal"
 								required
-								placeholder="44000"
 								autoComplete="postal-code"
 							/>
 						)}
@@ -411,7 +384,6 @@ export function CheckoutForm({
 							<field.InputField
 								label="Ville"
 								required
-								placeholder="Nantes"
 								autoComplete="address-level2"
 							/>
 						)}
@@ -447,9 +419,9 @@ export function CheckoutForm({
 							if (!value) {
 								return "Le numéro de téléphone est requis";
 							}
-							// Regex simple pour téléphone français
+							// Regex pour numéros européens (livraison UE)
 							const cleaned = value.replace(/[\s.\-()]/g, "");
-							if (!/^(?:(?:\+|00)33|0)[1-9](?:[0-9]{8})$/.test(cleaned)) {
+							if (!/^(?:\+|00)?[1-9]\d{8,14}$/.test(cleaned)) {
 								return "Numéro de téléphone invalide";
 							}
 						},
@@ -508,9 +480,16 @@ export function CheckoutForm({
 							<form.Subscribe
 								selector={(state) => [(state.values as any)?.billingDifferent]}
 							>
-								{([billingDifferent]) =>
-									billingDifferent && (
-										<div className="space-y-6 p-4 border rounded-lg bg-muted/30">
+								{([billingDifferent]) => (
+									<AnimatePresence>
+										{billingDifferent && (
+											<motion.div
+												initial={{ opacity: 0, height: 0 }}
+												animate={{ opacity: 1, height: "auto" }}
+												exit={{ opacity: 0, height: 0 }}
+												transition={{ duration: 0.2 }}
+												className="space-y-6 p-4 border rounded-lg bg-muted/30 overflow-hidden"
+											>
 											<Alert>
 												<Info className="h-4 w-4" />
 												<AlertDescription>
@@ -540,7 +519,6 @@ export function CheckoutForm({
 														<billingField.InputField
 															label="Prénom"
 															required
-															placeholder="Sophie"
 															autoComplete="billing given-name"
 														/>
 													)}
@@ -566,7 +544,6 @@ export function CheckoutForm({
 														<billingField.InputField
 															label="Nom"
 															required
-															placeholder="Martin"
 															autoComplete="billing family-name"
 														/>
 													)}
@@ -593,7 +570,6 @@ export function CheckoutForm({
 													<billingField.InputField
 														label="Adresse"
 														required
-														placeholder="123 rue de la République"
 														autoComplete="billing address-line1"
 													/>
 												)}
@@ -630,7 +606,6 @@ export function CheckoutForm({
 														<billingField.InputField
 															label="Code postal"
 															required
-															placeholder="44000"
 															autoComplete="billing postal-code"
 														/>
 													)}
@@ -656,7 +631,6 @@ export function CheckoutForm({
 														<billingField.InputField
 															label="Ville"
 															required
-															placeholder="Nantes"
 															autoComplete="billing address-level2"
 														/>
 													)}
@@ -696,9 +670,7 @@ export function CheckoutForm({
 														if (billingDiff && value) {
 															const cleaned = value.replace(/[\s.\-()]/g, "");
 															if (
-																!/^(?:(?:\+|00)33|0)[1-9](?:[0-9]{8})$/.test(
-																	cleaned
-																)
+																!/^(?:\+|00)?[1-9]\d{8,14}$/.test(cleaned)
 															) {
 																return "Numéro de téléphone invalide";
 															}
@@ -715,9 +687,10 @@ export function CheckoutForm({
 													/>
 												)}
 											</form.AppField>
-										</div>
-									)
-								}
+											</motion.div>
+										)}
+									</AnimatePresence>
+								)}
 							</form.Subscribe>
 						</div>
 					)}
@@ -726,7 +699,7 @@ export function CheckoutForm({
 
 			{/* SECTION 2ter : Information légale droit de rétractation */}
 			<Alert>
-				<Info />
+				<Info className="h-4 w-4" />
 				<AlertTitle>
 					Droit de rétractation
 				</AlertTitle>
@@ -740,6 +713,7 @@ export function CheckoutForm({
 						className="underline hover:no-underline font-medium"
 						target="_blank"
 						rel="noopener noreferrer"
+						aria-label="En savoir plus sur les conditions de retour (ouvre dans un nouvel onglet)"
 					>
 						En savoir plus sur les conditions de retour
 					</Link>
@@ -772,9 +746,10 @@ export function CheckoutForm({
 								Consultez nos{" "}
 								<Link
 									href="/legal/terms"
-									className="text-primary underline hover:no-underline"
+									className="text-foreground underline hover:no-underline"
 									target="_blank"
 									rel="noopener noreferrer"
+									aria-label="Conditions générales de vente (ouvre dans un nouvel onglet)"
 								>
 									conditions générales de vente
 								</Link>
@@ -810,31 +785,15 @@ export function CheckoutForm({
 					</div>
 
 					{/* Bouton de paiement */}
-					<form.Subscribe
-						selector={(state) => [state.canSubmit, state.isSubmitting]}
+					<Button
+						type="submit"
+						size="lg"
+						className="w-full text-base h-14 relative overflow-hidden group"
 					>
-						{([canSubmit, isSubmitting]) => (
-							<Button
-								type="submit"
-								disabled={!canSubmit || isSubmitting}
-								size="lg"
-								className="w-full text-base h-14 relative overflow-hidden group"
-							>
-								{isSubmitting ? (
-									<>
-										<CreditCard className="h-5 w-5 mr-2" />
-										Préparation du paiement...
-									</>
-								) : (
-									<>
-										<CreditCard className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
-										Commander avec obligation de paiement · {formatEuro(total)}
-										<span className="absolute inset-0 bg-linear-to-r from-accent/0 via-accent/20 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-									</>
-								)}
-							</Button>
-						)}
-					</form.Subscribe>
+						<CreditCard className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
+						Commander avec obligation de paiement · {formatEuro(total)}
+						<span className="absolute inset-0 bg-linear-to-r from-accent/0 via-accent/20 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+					</Button>
 
 					{/* Message de réassurance */}
 					<p className="text-xs text-center text-muted-foreground">

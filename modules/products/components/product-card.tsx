@@ -102,11 +102,7 @@ export function ProductCard({
 				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent",
 				// Transition optimisée avec cubic-bezier pour fluidité
 				"transition-all duration-300 ease-out",
-				// Reflet rose/doré au hover - Plus visible
-				"before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/0 before:via-primary/8 before:to-amber-100/15",
-				"before:opacity-0 before:transition-opacity before:duration-400 before:pointer-events-none",
-				"motion-safe:hover:before:opacity-100",
-				// Border, shadow et scale au hover - Plus impactant
+				// Border, shadow et scale au hover
 				"shadow-sm motion-safe:hover:border-primary/30 motion-safe:hover:shadow-xl motion-safe:hover:shadow-primary/15",
 				"motion-safe:hover:-translate-y-1.5 motion-safe:hover:scale-[1.01] will-change-transform",
 				// Active state pour mobile

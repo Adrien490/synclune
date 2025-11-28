@@ -199,7 +199,7 @@ export function CheckoutSummary({
 				<div className="text-center">
 					<Link
 						href="/panier"
-						className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+						className="text-xs text-foreground underline hover:no-underline inline-flex items-center gap-1"
 					>
 						<Pencil className="w-3 h-3" />
 						Modifier mon panier
