@@ -1,4 +1,4 @@
-import { Mail, Sparkles } from "lucide-react";
+import { Mail } from "lucide-react";
 import { NewsletterForm } from "./newsletter-form";
 
 /**
@@ -31,11 +31,7 @@ export function NewsletterSection() {
 				</div>
 
 				<h2 className="text-2xl/8 sm:text-3xl/9 font-serif tracking-normal antialiased text-foreground">
-					Reste au courant des nouveautés{" "}
-					<Sparkles
-						className="inline w-5 h-5 text-primary align-middle"
-						aria-hidden="true"
-					/>
+					Reste au courant des nouveautés
 				</h2>
 
 				<p className="text-base/7 tracking-normal antialiased text-muted-foreground max-w-sm mx-auto">
