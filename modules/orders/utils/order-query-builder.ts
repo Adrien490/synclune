@@ -58,6 +58,10 @@ export function buildOrderFilterConditions(
 			? filters.status
 			: [filters.status];
 		conditions.status = statuses.length === 1 ? statuses[0] : { in: statuses };
+	} else {
+		// Par défaut, exclure les commandes PENDING (abandons de panier)
+		// Ces commandes sont créées au clic "Procéder au paiement" mais jamais payées
+		conditions.status = { not: "PENDING" };
 	}
 
 	if (filters.paymentStatus !== undefined) {
@@ -117,10 +121,9 @@ export function buildOrderWhereClause(
 	const whereClause: Prisma.OrderWhereInput = {};
 	const andConditions: Prisma.OrderWhereInput[] = [];
 
-	if (params.filters) {
-		const filterConditions = buildOrderFilterConditions(params.filters);
-		andConditions.push(filterConditions);
-	}
+	// Toujours appliquer les filtres (inclut l'exclusion par défaut des PENDING)
+	const filterConditions = buildOrderFilterConditions(params.filters ?? {});
+	andConditions.push(filterConditions);
 
 	if (params.search) {
 		const searchConditions = buildOrderSearchConditions(params.search);

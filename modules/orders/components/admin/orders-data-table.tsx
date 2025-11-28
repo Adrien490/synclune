@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -20,13 +20,9 @@ import {
 import {
 	ORDER_STATUS_COLORS,
 	ORDER_STATUS_LABELS,
-	PAYMENT_STATUS_COLORS,
-	PAYMENT_STATUS_LABELS,
 } from "@/shared/constants/order";
 import type { GetOrdersReturn } from "@/modules/orders/types/orders.types";
 import { cn } from "@/shared/utils/cn";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { ViewTransition } from "react";
@@ -81,23 +77,15 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 									key="orderNumber"
 									scope="col"
 									role="columnheader"
-									className="w-[20%] sm:w-[10%]"
+									className="w-[25%] sm:w-[20%]"
 								>
-									Numéro
-								</TableHead>
-								<TableHead
-									key="date"
-									scope="col"
-									role="columnheader"
-									className="hidden sm:table-cell w-[10%]"
-								>
-									Date
+									Commande
 								</TableHead>
 								<TableHead
 									key="client"
 									scope="col"
 									role="columnheader"
-									className="w-[25%] sm:w-[15%]"
+									className="w-[25%] sm:w-[20%]"
 								>
 									Client
 								</TableHead>
@@ -105,23 +93,15 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 									key="status"
 									scope="col"
 									role="columnheader"
-									className="hidden sm:table-cell w-[10%]"
+									className="w-[20%] sm:w-[15%]"
 								>
 									Status
-								</TableHead>
-								<TableHead
-									key="paymentStatus"
-									scope="col"
-									role="columnheader"
-									className="hidden lg:table-cell w-[10%]"
-								>
-									Paiement
 								</TableHead>
 								<TableHead
 									key="total"
 									scope="col"
 									role="columnheader"
-									className="w-[15%] sm:w-[8%] text-right"
+									className="w-[15%] sm:w-[10%] text-right"
 								>
 									Montant
 								</TableHead>
@@ -155,19 +135,12 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 												</Link>
 											</ViewTransition>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden sm:table-cell">
-											<span className="text-sm whitespace-nowrap">
-												{format(order.createdAt, "d MMM yyyy", {
-													locale: fr,
-												})}
-											</span>
-										</TableCell>
 										<TableCell role="gridcell">
 											<span className="text-sm font-medium truncate block">
 												{userName}
 											</span>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden sm:table-cell">
+										<TableCell role="gridcell">
 											<Badge
 												variant="outline"
 												style={{
@@ -182,33 +155,6 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 												}}
 											>
 												{ORDER_STATUS_LABELS[order.status as OrderStatus]}
-											</Badge>
-										</TableCell>
-										<TableCell role="gridcell" className="hidden lg:table-cell">
-											<Badge
-												variant="outline"
-												style={{
-													backgroundColor: `${
-														PAYMENT_STATUS_COLORS[
-															order.paymentStatus as PaymentStatus
-														]
-													}20`,
-													color:
-														PAYMENT_STATUS_COLORS[
-															order.paymentStatus as PaymentStatus
-														],
-													borderColor: `${
-														PAYMENT_STATUS_COLORS[
-															order.paymentStatus as PaymentStatus
-														]
-													}40`,
-												}}
-											>
-												{
-													PAYMENT_STATUS_LABELS[
-														order.paymentStatus as PaymentStatus
-													]
-												}
 											</Badge>
 										</TableCell>
 										<TableCell role="gridcell" className="text-right">

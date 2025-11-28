@@ -1,5 +1,5 @@
 import { fakerFR } from "@faker-js/faker";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
 import {
   OrderStatus,
   PaymentStatus,
@@ -10,9 +10,7 @@ import {
 import { SYNCLUNE_JEWELRY_TYPES } from "../shared/constants/jewelry-types";
 import { seedColorTaxonomy } from "./seeds/color-taxonomy";
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-});
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 const faker = fakerFR;
 faker.seed(42);
