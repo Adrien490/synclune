@@ -1,5 +1,5 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { Hash, Image, Layers, Package, Tag } from "lucide-react";
+import { Layers, Package, Palette, Tag } from "lucide-react";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -36,16 +36,10 @@ export default function CatalogPage() {
 						icon: Layers,
 					},
 					{
-						title: "Tags",
-						description: "Gérer les tags pour les bijoux",
-						href: "/admin/catalogue/tags",
-						icon: Hash,
-					},
-					{
-						title: "Galerie Photos",
-						description: "Gérer les images des variantes",
-						href: "/admin/catalogue/images",
-						icon: Image,
+						title: "Couleurs",
+						description: "Gérer les couleurs disponibles",
+						href: "/admin/catalogue/couleurs",
+						icon: Palette,
 					},
 				]}
 			/>

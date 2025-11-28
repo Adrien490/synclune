@@ -1,4 +1,5 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -107,7 +108,7 @@ export async function ProductsDataTable({
 		<Card>
 			<CardContent>
 				<ProductsSelectionToolbar products={products} />
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table
 						role="table"
 						aria-label="Liste des bijoux"
@@ -299,7 +300,7 @@ export async function ProductsDataTable({
 							})}
 						</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination
