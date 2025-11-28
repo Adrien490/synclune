@@ -76,7 +76,7 @@ export async function ChangelogDialog({
 				<Button
 					variant="outline"
 					size="sm"
-					className="h-9 gap-2 relative"
+					className="h-9 gap-2 relative cursor-pointer"
 					aria-label={`Ouvrir le changelog${isRecentRelease ? ". Nouvelle version disponible" : ""}. Version ${latestChangelog.metadata.version}`}
 					aria-describedby={
 						isRecentRelease ? "new-release-indicator" : undefined
