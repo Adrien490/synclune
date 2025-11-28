@@ -1,6 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
-import { cacheLife } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 
@@ -17,9 +16,6 @@ export type GetDashboardKpisReturn = GetKpisReturn;
 // ============================================================================
 
 async function fetchTodayRevenue() {
-	"use cache";
-	cacheDashboard();
-
 	const now = new Date();
 	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 	const yesterdayStart = new Date(todayStart);
@@ -53,9 +49,6 @@ async function fetchTodayRevenue() {
 }
 
 async function fetchMonthlyRevenue() {
-	"use cache";
-	cacheLife({ stale: 120, revalidate: 60, expire: 300 });
-
 	const now = new Date();
 	const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 	const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -87,9 +80,6 @@ async function fetchMonthlyRevenue() {
 }
 
 async function fetchMonthlyOrders() {
-	"use cache";
-	cacheLife({ stale: 120, revalidate: 60, expire: 300 });
-
 	const now = new Date();
 	const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 	const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -119,9 +109,6 @@ async function fetchMonthlyOrders() {
 }
 
 async function fetchAverageOrderValue() {
-	"use cache";
-	cacheLife({ stale: 120, revalidate: 60, expire: 300 });
-
 	const now = new Date();
 	const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 	const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -159,9 +146,6 @@ async function fetchAverageOrderValue() {
 }
 
 async function fetchPendingOrders() {
-	"use cache";
-	cacheLife({ stale: 120, revalidate: 60, expire: 300 });
-
 	const now = new Date();
 	const twoDaysAgo = new Date(now);
 	twoDaysAgo.setHours(now.getHours() - 48);
@@ -184,9 +168,6 @@ async function fetchPendingOrders() {
 }
 
 async function fetchOutOfStockProducts() {
-	"use cache";
-	cacheLife({ stale: 120, revalidate: 60, expire: 300 });
-
 	const outOfStockProducts = await prisma.productSku.count({
 		where: {
 			isActive: true,

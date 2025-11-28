@@ -4,6 +4,7 @@ import {
 	getWebSiteSchema,
 } from "@/shared/constants/seo-config";
 import { Collections } from "@/modules/collections/components/collections";
+import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
 import { Suspense } from "react";
@@ -89,7 +90,7 @@ export default async function Page() {
 			</Suspense>
 
 			{/* 3. Collections - Exploration thématique + Navigation visuelle (remplace ProductTypes) */}
-			<Suspense>
+			<Suspense fallback={<CollectionsSectionSkeleton />}>
 				<Collections
 					collectionsPromise={getCollections({
 						perPage: 20,
