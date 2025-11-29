@@ -521,3 +521,61 @@
 		animation: none !important;
 	}
 }
+
+/* ============================================
+   Lightbox Premium Styles (yet-another-react-lightbox)
+   ============================================ */
+
+.synclune-lightbox {
+	/* Boutons de fermeture et navigation */
+	& .yarl__button {
+		transition: all 0.2s ease;
+	}
+
+	& .yarl__button:hover {
+		background: rgba(255, 255, 255, 0.2) !important;
+		transform: scale(1.05);
+	}
+
+	& .yarl__button:active {
+		transform: scale(0.95);
+	}
+
+	/* Bouton de fermeture */
+	& .yarl__button--close {
+		background: rgba(255, 255, 255, 0.1);
+		border-radius: 50%;
+		backdrop-filter: blur(8px);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		margin: 16px;
+	}
+
+	/* Compteur d'images stylisé */
+	& .yarl__counter {
+		font-family: var(--font-geist-sans), system-ui, sans-serif;
+		font-size: 14px;
+		font-weight: 500;
+		color: rgba(255, 255, 255, 0.9);
+		background: rgba(0, 0, 0, 0.6);
+		backdrop-filter: blur(8px);
+		padding: 8px 16px;
+		border-radius: 9999px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	/* Animation d'ouverture */
+	& .yarl__slide {
+		animation: lightbox-slide-in 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+}
+
+@keyframes lightbox-slide-in {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}

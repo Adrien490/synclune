@@ -2,7 +2,9 @@
 
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import Counter from "yet-another-react-lightbox/plugins/counter";
 import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/counter.css";
 
 import type { Slide } from "yet-another-react-lightbox";
 
@@ -14,14 +16,11 @@ interface ProductLightboxProps {
 }
 
 /**
- * Lightbox optimized for product images
- * - Zoom plugin enabled
- * - Next.js Image optimization via URL generation (not custom render)
- * - Keyboard navigation (arrows, Esc)
- *
- * Note: According to Yet Another React Lightbox docs,
- * the Zoom plugin doesn't work well with Next.js Image component.
- * Instead, we generate optimized Next.js URLs in the slides array.
+ * Lightbox premium pour images produits
+ * - Zoom plugin (pinch, double-tap, scroll)
+ * - Counter plugin pour afficher la position
+ * - Style premium personnalisé
+ * - Navigation clavier (flèches, Esc)
  */
 export default function ProductLightbox({
 	open,
@@ -35,7 +34,7 @@ export default function ProductLightbox({
 			close={close}
 			slides={slides}
 			index={index}
-			plugins={[Zoom]}
+			plugins={[Zoom, Counter]}
 			zoom={{
 				maxZoomPixelRatio: 3,
 				zoomInMultiplier: 2,
@@ -47,9 +46,43 @@ export default function ProductLightbox({
 				pinchZoomDistanceFactor: 100,
 				scrollToZoom: true,
 			}}
-			animation={{ fade: 300 }}
-			carousel={{ finite: false }}
+			counter={{ container: { style: { top: "unset", bottom: 16 } } }}
+			animation={{ fade: 350, swipe: 300 }}
+			carousel={{ finite: false, preload: 2 }}
 			controller={{ closeOnBackdropClick: true }}
+			styles={{
+				container: {
+					backgroundColor: "rgba(0, 0, 0, 0.95)",
+					backdropFilter: "blur(20px)",
+				},
+				button: {
+					filter: "none",
+					color: "white",
+				},
+				navigationPrev: {
+					color: "white",
+					background: "rgba(255, 255, 255, 0.1)",
+					borderRadius: "50%",
+					width: 48,
+					height: 48,
+					margin: 16,
+					backdropFilter: "blur(8px)",
+					border: "1px solid rgba(255, 255, 255, 0.2)",
+					transition: "all 0.2s ease",
+				},
+				navigationNext: {
+					color: "white",
+					background: "rgba(255, 255, 255, 0.1)",
+					borderRadius: "50%",
+					width: 48,
+					height: 48,
+					margin: 16,
+					backdropFilter: "blur(8px)",
+					border: "1px solid rgba(255, 255, 255, 0.2)",
+					transition: "all 0.2s ease",
+				},
+			}}
+			className="synclune-lightbox"
 		/>
 	);
 }

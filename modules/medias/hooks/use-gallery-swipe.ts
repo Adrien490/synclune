@@ -1,46 +1,80 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 
 interface UseGallerySwipeOptions {
 	onSwipeLeft: () => void;
 	onSwipeRight: () => void;
 	minSwipeDistance?: number;
+	/** Nombre total d'images pour la résistance aux bords */
+	totalImages?: number;
+	/** Index actuel pour la résistance aux bords */
+	currentIndex?: number;
 }
 
 export interface UseGallerySwipeReturn {
 	onTouchStart: (e: React.TouchEvent) => void;
 	onTouchMove: (e: React.TouchEvent) => void;
 	onTouchEnd: () => void;
+	/** Décalage visuel en pixels pendant le swipe */
+	swipeOffset: number;
+	/** Indique si un swipe est en cours */
+	isSwiping: boolean;
 }
 
 /**
  * Hook pour gérer la navigation par swipe sur mobile
  * - Détection du swipe gauche/droite
  * - Distance minimale configurable
- * - Utilise des refs pour éviter les re-renders
+ * - Feedback visuel pendant le drag (swipeOffset)
+ * - Résistance élastique aux bords
  */
 export function useGallerySwipe({
 	onSwipeLeft,
 	onSwipeRight,
 	minSwipeDistance = 50,
+	totalImages = 1,
+	currentIndex = 0,
 }: UseGallerySwipeOptions): UseGallerySwipeReturn {
 	const touchStartRef = useRef<number | null>(null);
-	const touchEndRef = useRef<number | null>(null);
+	const [swipeOffset, setSwipeOffset] = useState(0);
+	const [isSwiping, setIsSwiping] = useState(false);
 
 	const onTouchStart = useCallback((e: React.TouchEvent) => {
-		touchEndRef.current = null;
 		touchStartRef.current = e.targetTouches[0].clientX;
+		setIsSwiping(true);
 	}, []);
 
-	const onTouchMove = useCallback((e: React.TouchEvent) => {
-		touchEndRef.current = e.targetTouches[0].clientX;
-	}, []);
+	const onTouchMove = useCallback(
+		(e: React.TouchEvent) => {
+			if (touchStartRef.current === null) return;
+
+			const currentX = e.targetTouches[0].clientX;
+			let offset = currentX - touchStartRef.current;
+
+			// Résistance élastique aux bords (premier/dernier)
+			const isAtStart = currentIndex === 0;
+			const isAtEnd = currentIndex === totalImages - 1;
+
+			// Si on est au début et on swipe vers la droite, ou à la fin et vers la gauche
+			// Appliquer une résistance (diviser le mouvement par 3)
+			if ((isAtStart && offset > 0) || (isAtEnd && offset < 0)) {
+				offset = offset / 3;
+			}
+
+			setSwipeOffset(offset);
+		},
+		[currentIndex, totalImages]
+	);
 
 	const onTouchEnd = useCallback(() => {
-		if (!touchStartRef.current || !touchEndRef.current) return;
+		if (touchStartRef.current === null) {
+			setIsSwiping(false);
+			setSwipeOffset(0);
+			return;
+		}
 
-		const distance = touchStartRef.current - touchEndRef.current;
+		const distance = -swipeOffset; // Inverser pour la direction
 		const isLeftSwipe = distance > minSwipeDistance;
 		const isRightSwipe = distance < -minSwipeDistance;
 
@@ -50,13 +84,17 @@ export function useGallerySwipe({
 			onSwipeRight();
 		}
 
+		// Reset
 		touchStartRef.current = null;
-		touchEndRef.current = null;
-	}, [minSwipeDistance, onSwipeLeft, onSwipeRight]);
+		setSwipeOffset(0);
+		setIsSwiping(false);
+	}, [minSwipeDistance, onSwipeLeft, onSwipeRight, swipeOffset]);
 
 	return {
 		onTouchStart,
 		onTouchMove,
 		onTouchEnd,
+		swipeOffset,
+		isSwiping,
 	};
 }
