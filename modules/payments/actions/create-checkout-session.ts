@@ -377,7 +377,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 
 				const discount = discountRows[0];
 
-				// Vérifier l'éligibilité (dates, montant min, limites usage)
+				// Vérifier l'éligibilité (montant min, limites usage)
 				const eligibility = await checkDiscountEligibility(
 					{
 						id: discount.id,
@@ -388,8 +388,6 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 						maxUsageCount: discount.maxUsageCount,
 						maxUsagePerUser: discount.maxUsagePerUser,
 						usageCount: discount.usageCount,
-						startsAt: discount.startsAt,
-						endsAt: discount.endsAt,
 						isActive: discount.isActive,
 					},
 					{

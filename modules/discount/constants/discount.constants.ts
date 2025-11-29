@@ -13,8 +13,6 @@ export const GET_DISCOUNT_SELECT = {
 	minOrderAmount: true,
 	maxUsageCount: true,
 	maxUsagePerUser: true,
-	startsAt: true,
-	endsAt: true,
 	usageCount: true,
 	isActive: true,
 	createdAt: true,
@@ -35,8 +33,6 @@ export const GET_DISCOUNTS_SELECT = {
 	maxUsageCount: true,
 	maxUsagePerUser: true,
 	usageCount: true,
-	startsAt: true,
-	endsAt: true,
 	isActive: true,
 	createdAt: true,
 	_count: { select: { usages: true } },
@@ -54,8 +50,6 @@ export const GET_DISCOUNT_VALIDATION_SELECT = {
 	minOrderAmount: true,
 	maxUsageCount: true,
 	maxUsagePerUser: true,
-	startsAt: true,
-	endsAt: true,
 	usageCount: true,
 	isActive: true,
 } as const satisfies Prisma.DiscountSelect;
@@ -74,8 +68,6 @@ export const DISCOUNTS_SORT_OPTIONS = {
 	CODE_DESC: "code-descending",
 	USAGE_DESC: "usage-descending",
 	USAGE_ASC: "usage-ascending",
-	ENDS_ASC: "ends-ascending",
-	ENDS_DESC: "ends-descending",
 } as const;
 
 export const GET_DISCOUNTS_SORT_FIELDS = Object.values(
@@ -91,8 +83,6 @@ export const DISCOUNTS_SORT_LABELS = {
 	[DISCOUNTS_SORT_OPTIONS.CODE_DESC]: "Code (Z-A)",
 	[DISCOUNTS_SORT_OPTIONS.USAGE_DESC]: "Plus utilisés",
 	[DISCOUNTS_SORT_OPTIONS.USAGE_ASC]: "Moins utilisés",
-	[DISCOUNTS_SORT_OPTIONS.ENDS_ASC]: "Expire bientôt",
-	[DISCOUNTS_SORT_OPTIONS.ENDS_DESC]: "Expire plus tard",
 } as const;
 
 // ============================================================================
@@ -116,8 +106,6 @@ export const DISCOUNT_TYPE_ICONS = {
 export const DISCOUNT_ERROR_MESSAGES = {
 	NOT_FOUND: "Code promo introuvable",
 	NOT_ACTIVE: "Ce code promo n'est plus actif",
-	NOT_YET_VALID: "Ce code promo n'est pas encore valide",
-	EXPIRED: "Ce code promo a expiré",
 	MAX_USAGE_REACHED: "Ce code promo a atteint sa limite d'utilisation",
 	USER_MAX_USAGE_REACHED: "Vous avez déjà utilisé ce code promo",
 	MIN_ORDER_NOT_MET: "Commande minimum de {amount}€ requise",

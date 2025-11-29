@@ -30,16 +30,9 @@ interface DiscountDialogData extends Record<string, unknown> {
 		minOrderAmount: number | null;
 		maxUsageCount: number | null;
 		maxUsagePerUser: number | null;
-		startsAt: Date;
-		endsAt: Date | null;
 		isActive: boolean;
 	};
 }
-
-const formatDateForInput = (date: Date | null): string => {
-	if (!date) return "";
-	return new Date(date).toISOString().slice(0, 16);
-};
 
 export function DiscountFormDialog() {
 	const { isOpen, close, data } =
@@ -56,8 +49,6 @@ export function DiscountFormDialog() {
 			minOrderAmount: null as number | null,
 			maxUsageCount: null as number | null,
 			maxUsagePerUser: null as number | null,
-			startsAt: new Date().toISOString().slice(0, 16),
-			endsAt: null as string | null,
 		},
 	});
 
@@ -103,8 +94,6 @@ export function DiscountFormDialog() {
 				minOrderAmount: discount.minOrderAmount,
 				maxUsageCount: discount.maxUsageCount,
 				maxUsagePerUser: discount.maxUsagePerUser,
-				startsAt: formatDateForInput(discount.startsAt),
-				endsAt: discount.endsAt ? formatDateForInput(discount.endsAt) : null,
 			});
 		} else {
 			form.reset({
@@ -114,8 +103,6 @@ export function DiscountFormDialog() {
 				minOrderAmount: null,
 				maxUsageCount: null,
 				maxUsagePerUser: null,
-				startsAt: new Date().toISOString().slice(0, 16),
-				endsAt: null,
 			});
 		}
 	}, [discount, form]);
@@ -286,40 +273,6 @@ export function DiscountFormDialog() {
 											disabled={isPending}
 											min={1}
 										/>
-									</div>
-								)}
-							</form.AppField>
-						</FormLayout>
-
-						{/* Date Fields in 2 columns */}
-						<FormLayout cols={2}>
-							{/* Starts At Field */}
-							<form.AppField name="startsAt">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel required>Date de début</FieldLabel>
-										<field.InputField
-											label=""
-											type="datetime-local"
-											disabled={isPending}
-										/>
-									</div>
-								)}
-							</form.AppField>
-
-							{/* Ends At Field */}
-							<form.AppField name="endsAt">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel optional>Date de fin</FieldLabel>
-										<field.InputField
-											label=""
-											type="datetime-local"
-											disabled={isPending}
-										/>
-										<p className="text-xs text-muted-foreground">
-											Laisser vide pour aucune expiration
-										</p>
 									</div>
 								)}
 							</form.AppField>

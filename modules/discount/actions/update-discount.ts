@@ -39,12 +39,6 @@ export async function updateDiscount(
 			maxUsagePerUser: formData.get("maxUsagePerUser")
 				? Number(formData.get("maxUsagePerUser"))
 				: null,
-			startsAt: formData.get("startsAt")
-				? new Date(formData.get("startsAt") as string)
-				: undefined,
-			endsAt: formData.get("endsAt")
-				? new Date(formData.get("endsAt") as string)
-				: null,
 		};
 
 		const result = updateDiscountSchema.safeParse(rawData);
@@ -87,8 +81,6 @@ export async function updateDiscount(
 				minOrderAmount: data.minOrderAmount,
 				maxUsageCount: data.maxUsageCount,
 				maxUsagePerUser: data.maxUsagePerUser,
-				startsAt: data.startsAt,
-				endsAt: data.endsAt,
 			},
 		});
 

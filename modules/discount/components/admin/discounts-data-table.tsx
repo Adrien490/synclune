@@ -64,26 +64,6 @@ export async function DiscountsDataTable({
 		return `${usageCount} / ${maxUsageCount}`;
 	};
 
-	const formatDateRange = (startsAt: Date, endsAt: Date | null) => {
-		const start = new Date(startsAt).toLocaleDateString("fr-FR", {
-			day: "2-digit",
-			month: "short",
-		});
-		if (!endsAt) {
-			return `Depuis ${start}`;
-		}
-		const end = new Date(endsAt).toLocaleDateString("fr-FR", {
-			day: "2-digit",
-			month: "short",
-		});
-		return `${start} → ${end}`;
-	};
-
-	const isExpired = (endsAt: Date | null) => {
-		if (!endsAt) return false;
-		return new Date(endsAt) < new Date();
-	};
-
 	if (discounts.length === 0) {
 		return (
 			<Empty className="py-12">
@@ -153,14 +133,6 @@ export async function DiscountsDataTable({
 									Utilisations
 								</TableHead>
 								<TableHead
-									key="validity"
-									scope="col"
-									role="columnheader"
-									className="hidden lg:table-cell w-[18%]"
-								>
-									Validité
-								</TableHead>
-								<TableHead
 									key="status"
 									scope="col"
 									role="columnheader"
@@ -179,10 +151,7 @@ export async function DiscountsDataTable({
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{discounts.map((discount) => {
-								const expired = isExpired(discount.endsAt);
-
-								return (
+								{discounts.map((discount) => (
 									<TableRow key={discount.id}>
 										<TableCell role="gridcell">
 											<DiscountsTableSelectionCell
@@ -212,17 +181,8 @@ export async function DiscountsDataTable({
 												{formatUsage(discount.usageCount, discount.maxUsageCount)}
 											</span>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden lg:table-cell">
-											<span className="text-sm text-muted-foreground">
-												{formatDateRange(discount.startsAt, discount.endsAt)}
-											</span>
-										</TableCell>
 										<TableCell role="gridcell" className="text-center">
-											{expired ? (
-												<Badge variant="outline" className="text-muted-foreground">
-													Expiré
-												</Badge>
-											) : discount.isActive ? (
+											{discount.isActive ? (
 												<Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
 													Actif
 												</Badge>
@@ -240,8 +200,7 @@ export async function DiscountsDataTable({
 											</div>
 										</TableCell>
 									</TableRow>
-								);
-								})}
+								))}
 						</TableBody>
 					</Table>
 				</div>

@@ -71,18 +71,6 @@ function buildDiscountWhereClause(
 		});
 	}
 
-	// Filtre par expiration
-	if (params.filters?.isExpired !== undefined) {
-		const now = new Date();
-		if (params.filters.isExpired) {
-			AND.push({ endsAt: { lt: now } });
-		} else {
-			AND.push({
-				OR: [{ endsAt: null }, { endsAt: { gte: now } }],
-			});
-		}
-	}
-
 	if (AND.length > 0) {
 		where.AND = AND;
 	}
@@ -136,9 +124,7 @@ async function fetchDiscounts(
 					? [{ createdAt: direction }, { id: "asc" }]
 					: params.sortBy.startsWith("usage-")
 						? [{ usageCount: direction }, { id: "asc" }]
-						: params.sortBy.startsWith("ends-")
-							? [{ endsAt: direction }, { id: "asc" }]
-							: [{ createdAt: "desc" }, { id: "asc" }];
+						: [{ createdAt: "desc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_DISCOUNTS_DEFAULT_PER_PAGE),

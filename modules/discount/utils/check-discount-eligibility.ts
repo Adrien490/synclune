@@ -12,11 +12,10 @@ export type EligibilityCheckResult = {
  *
  * Conditions vérifiées :
  * 1. Code actif
- * 2. Période de validité (startsAt / endsAt)
- * 3. Montant minimum de commande (appliqué sur subtotal hors frais de port)
- * 4. Limite d'utilisation globale (maxUsageCount)
- * 5. Limite d'utilisation par utilisateur (maxUsagePerUser)
- * 6. Pour guest checkout : vérification par email
+ * 2. Montant minimum de commande (appliqué sur subtotal hors frais de port)
+ * 3. Limite d'utilisation globale (maxUsageCount)
+ * 4. Limite d'utilisation par utilisateur (maxUsagePerUser)
+ * 5. Pour guest checkout : vérification par email
  */
 export async function checkDiscountEligibility(
 	discount: DiscountValidation,
@@ -29,18 +28,7 @@ export async function checkDiscountEligibility(
 		return { eligible: false, error: DISCOUNT_ERROR_MESSAGES.NOT_ACTIVE };
 	}
 
-	// 2. Vérifier la période de validité
-	const now = new Date();
-
-	if (discount.startsAt && now < discount.startsAt) {
-		return { eligible: false, error: DISCOUNT_ERROR_MESSAGES.NOT_YET_VALID };
-	}
-
-	if (discount.endsAt && now > discount.endsAt) {
-		return { eligible: false, error: DISCOUNT_ERROR_MESSAGES.EXPIRED };
-	}
-
-	// 3. Vérifier le montant minimum (sur subtotal, hors frais de port)
+	// 2. Vérifier le montant minimum (sur subtotal, hors frais de port)
 	if (discount.minOrderAmount && subtotal < discount.minOrderAmount) {
 		const minAmount = (discount.minOrderAmount / 100).toFixed(2);
 		return {
@@ -107,10 +95,6 @@ export async function checkDiscountEligibility(
 export function isDiscountCurrentlyValid(discount: DiscountValidation): boolean {
 	if (!discount.isActive) return false;
 
-	const now = new Date();
-
-	if (discount.startsAt && now < discount.startsAt) return false;
-	if (discount.endsAt && now > discount.endsAt) return false;
 	if (
 		discount.maxUsageCount &&
 		discount.usageCount >= discount.maxUsageCount
@@ -126,13 +110,9 @@ export function isDiscountCurrentlyValid(discount: DiscountValidation): boolean 
  */
 export function getDiscountStatus(
 	discount: DiscountValidation
-): "active" | "inactive" | "expired" | "scheduled" | "exhausted" {
+): "active" | "inactive" | "exhausted" {
 	if (!discount.isActive) return "inactive";
 
-	const now = new Date();
-
-	if (discount.startsAt && now < discount.startsAt) return "scheduled";
-	if (discount.endsAt && now > discount.endsAt) return "expired";
 	if (
 		discount.maxUsageCount &&
 		discount.usageCount >= discount.maxUsageCount

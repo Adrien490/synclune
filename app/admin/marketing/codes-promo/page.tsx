@@ -32,7 +32,6 @@ export type DiscountsSearchParams = {
 	type?: string | string[];
 	isActive?: string | string[];
 	hasUsages?: string | string[];
-	isExpired?: string | string[];
 };
 
 export const metadata: Metadata = {
@@ -62,9 +61,7 @@ export default async function DiscountsAdminPage({
 		| "code-ascending"
 		| "code-descending"
 		| "usage-descending"
-		| "usage-ascending"
-		| "ends-ascending"
-		| "ends-descending";
+		| "usage-ascending";
 	const search = getFirstParam(params.search);
 
 	const discountsPromise = getDiscounts({

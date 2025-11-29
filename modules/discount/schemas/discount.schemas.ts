@@ -29,7 +29,6 @@ export const discountFiltersSchema = z.object({
 	type: z.enum(DiscountType).optional(),
 	isActive: z.boolean().optional(),
 	hasUsages: z.boolean().optional(),
-	isExpired: z.boolean().optional(),
 });
 
 // ============================================================================
@@ -44,8 +43,6 @@ export const discountSortBySchema = z
 		DISCOUNTS_SORT_OPTIONS.CODE_DESC,
 		DISCOUNTS_SORT_OPTIONS.USAGE_DESC,
 		DISCOUNTS_SORT_OPTIONS.USAGE_ASC,
-		DISCOUNTS_SORT_OPTIONS.ENDS_ASC,
-		DISCOUNTS_SORT_OPTIONS.ENDS_DESC,
 	])
 	.default(DISCOUNTS_SORT_OPTIONS.CREATED_DESC);
 
@@ -101,34 +98,19 @@ const baseDiscountSchema = z.object({
 	minOrderAmount: z.number().int().nonnegative().optional().nullable(),
 	maxUsageCount: z.number().int().positive().optional().nullable(),
 	maxUsagePerUser: z.number().int().positive().optional().nullable(),
-	startsAt: z.coerce.date().optional(),
-	endsAt: z.coerce.date().optional().nullable(),
 });
 
 // Refinements communs
 const discountRefinements = <T extends typeof baseDiscountSchema>(schema: T) =>
-	schema
-		.refine(
-			(data) => {
-				if (data.type === DiscountType.PERCENTAGE && data.value > 100) {
-					return false;
-				}
-				return true;
-			},
-			{ message: "Un pourcentage ne peut pas dépasser 100%", path: ["value"] }
-		)
-		.refine(
-			(data) => {
-				if (data.startsAt && data.endsAt && data.startsAt > data.endsAt) {
-					return false;
-				}
-				return true;
-			},
-			{
-				message: "La date de fin doit être après la date de début",
-				path: ["endsAt"],
+	schema.refine(
+		(data) => {
+			if (data.type === DiscountType.PERCENTAGE && data.value > 100) {
+				return false;
 			}
-		);
+			return true;
+		},
+		{ message: "Un pourcentage ne peut pas dépasser 100%", path: ["value"] }
+	);
 
 // ============================================================================
 // CREATE SCHEMA

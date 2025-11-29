@@ -46,8 +46,6 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 								minOrderAmount: discount.minOrderAmount,
 								maxUsageCount: discount.maxUsageCount,
 								maxUsagePerUser: discount.maxUsagePerUser,
-								startsAt: discount.startsAt,
-								endsAt: discount.endsAt,
 								isActive: discount.isActive,
 							},
 						});

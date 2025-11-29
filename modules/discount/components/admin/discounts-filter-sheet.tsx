@@ -17,7 +17,6 @@ interface FilterFormData {
 	type: string;
 	isActive: string;
 	hasUsages: string;
-	isExpired: string;
 }
 
 export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
@@ -30,7 +29,6 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 			type: "all",
 			isActive: "all",
 			hasUsages: "all",
-			isExpired: "all",
 		};
 
 		searchParams.forEach((value, key) => {
@@ -42,9 +40,6 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 			}
 			if (key === "filter_hasUsages") {
 				values.hasUsages = value === "true" ? "with" : "without";
-			}
-			if (key === "filter_isExpired") {
-				values.isExpired = value === "true" ? "expired" : "valid";
 			}
 		});
 
@@ -65,7 +60,6 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 			"filter_type",
 			"filter_isActive",
 			"filter_hasUsages",
-			"filter_isExpired",
 		];
 		filterKeys.forEach((key) => params.delete(key));
 		params.delete("cursor");
@@ -80,9 +74,6 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 		if (formData.hasUsages !== "all") {
 			params.set("filter_hasUsages", formData.hasUsages === "with" ? "true" : "false");
 		}
-		if (formData.isExpired !== "all") {
-			params.set("filter_isExpired", formData.isExpired === "expired" ? "true" : "false");
-		}
 
 		startTransition(() => {
 			router.push(`?${params.toString()}`, { scroll: false });
@@ -94,7 +85,6 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 			type: "all",
 			isActive: "all",
 			hasUsages: "all",
-			isExpired: "all",
 		});
 
 		const params = new URLSearchParams(searchParams.toString());
@@ -102,7 +92,6 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 			"filter_type",
 			"filter_isActive",
 			"filter_hasUsages",
-			"filter_isExpired",
 		];
 		filterKeys.forEach((key) => params.delete(key));
 		params.delete("cursor");
@@ -240,44 +229,6 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 											/>
 											<Label
 												htmlFor={`usage-${value}`}
-												className="text-sm font-normal cursor-pointer flex-1"
-											>
-												{label}
-											</Label>
-										</div>
-									);
-								})}
-							</div>
-						</div>
-					)}
-				</form.Field>
-
-				{/* Expiration Filter */}
-				<form.Field name="isExpired">
-					{(field) => (
-						<div className="space-y-3">
-							<h4 className="font-medium text-sm text-foreground">Validité</h4>
-							<div className="space-y-2">
-								{[
-									{ value: "all", label: "Tous" },
-									{ value: "valid", label: "Valides" },
-									{ value: "expired", label: "Expirés" },
-								].map(({ value, label }) => {
-									const isSelected = field.state.value === value;
-									return (
-										<div key={value} className="flex items-center space-x-2">
-											<Checkbox
-												id={`expiry-${value}`}
-												checked={isSelected}
-												onCheckedChange={(checked) => {
-													if (checked) {
-														field.handleChange(value);
-													}
-												}}
-												className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-											/>
-											<Label
-												htmlFor={`expiry-${value}`}
 												className="text-sm font-normal cursor-pointer flex-1"
 											>
 												{label}

@@ -30,13 +30,6 @@ function formatDiscountFilter(filter: FilterDefinition) {
 		};
 	}
 
-	if (filterKey === "isExpired") {
-		return {
-			label: "Validité",
-			displayValue: value === "true" ? "Expirés" : "Valides",
-		};
-	}
-
 	return {
 		label: filterKey,
 		displayValue: value,

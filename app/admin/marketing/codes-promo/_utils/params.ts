@@ -25,12 +25,5 @@ export function parseFilters(params: DiscountsSearchParams): DiscountFilters {
 		filters.hasUsages = false;
 	}
 
-	const isExpired = getFirstParam(params.isExpired);
-	if (isExpired === "true") {
-		filters.isExpired = true;
-	} else if (isExpired === "false") {
-		filters.isExpired = false;
-	}
-
 	return filters;
 }
