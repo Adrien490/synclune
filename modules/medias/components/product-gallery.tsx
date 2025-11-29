@@ -1,7 +1,7 @@
 "use client";
 
-import type { Slide } from "@/modules/medias/components/lightbox";
-import { OpenLightboxButton } from "@/modules/medias/components/lightbox/open-lightbox-button";
+import type { Slide } from "yet-another-react-lightbox";
+import { OpenLightboxButton } from "@/modules/medias/components/open-lightbox-button";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Carousel,
@@ -79,6 +79,10 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 						},
 					],
 					poster: media.thumbnailUrl || undefined,
+					autoPlay: true,
+					muted: true,
+					loop: true,
+					playsInline: true,
 				};
 			}
 
@@ -317,23 +321,18 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 											) : (
 												<>
 													<video
+														key={current.id}
 														className="w-full h-full object-cover"
-														controls
-														loop
+														autoPlay
 														muted
+														loop
 														playsInline
-														preload="metadata"
-														aria-label={
-															current.alt ||
-															`${title} - Vidéo ${optimisticIndex + 1}`
-														}
+														controls
+														poster={current.thumbnailUrl || undefined}
+														aria-label={current.alt || `${title} - Vidéo ${optimisticIndex + 1}`}
 														onError={() => handleMediaError(current.id)}
 													>
-														<source
-															src={current.url}
-															type={getVideoMimeType(current.url)}
-														/>
-														Votre navigateur ne supporte pas la lecture de vidéos.
+														<source src={current.url} type={getVideoMimeType(current.url)} />
 													</video>
 													<div className="absolute top-4 right-4 pointer-events-none z-10">
 														<MediaTypeBadge type="VIDEO" size="lg" />

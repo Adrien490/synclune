@@ -15,7 +15,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { AddToCartButton } from "@/modules/cart/components/add-to-cart-button";
 import { ProductCareInfo } from "@/modules/products/components/product-care-info";
 import { ProductCharacteristics } from "@/modules/products/components/product-characteristics";
-import { ProductGallery } from "@/modules/medias/components/gallery/product-gallery";
+import { ProductGallery } from "@/modules/medias/components/product-gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
 import { ProductPrice } from "@/modules/products/components/product-price-card";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";

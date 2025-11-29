@@ -48,6 +48,13 @@ export default function ProductLightbox({
 				scrollToZoom: true,
 			}}
 			counter={{ container: { style: { top: "unset", bottom: 16 } } }}
+			video={{
+				autoPlay: true,
+				controls: true,
+				playsInline: true,
+				loop: true,
+				muted: true,
+			}}
 			animation={{ fade: 350, swipe: 300 }}
 			carousel={{ finite: false, preload: 2 }}
 			controller={{ closeOnBackdropClick: true }}
