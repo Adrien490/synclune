@@ -299,6 +299,7 @@ export function Autocomplete<T>({
 															width={imageSize}
 															height={imageSize}
 															sizes={`${imageSize}px`}
+															quality={80}
 															className="object-cover rounded-sm"
 														/>
 													</div>

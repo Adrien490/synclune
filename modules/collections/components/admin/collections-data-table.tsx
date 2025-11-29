@@ -176,6 +176,7 @@ export async function CollectionsDataTable({
 															alt={collection.products[0].product.skus[0].images[0].altText || collection.name}
 															fill
 															sizes="80px"
+															quality={80}
 															className="rounded-md object-cover"
 														/>
 													) : (

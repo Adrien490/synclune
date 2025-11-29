@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductLightbox, type Slide } from "@/shared/components/lightbox";
+import { ProductLightbox, type Slide } from "@/modules/medias/components/lightbox";
 import { useState, type ReactNode } from "react";
 
 interface OpenLightboxButtonProps {

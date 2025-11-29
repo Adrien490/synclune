@@ -1,5 +1,6 @@
 import { Button } from "@/shared/components/ui/button";
 import {
+	Command,
 	CommandEmpty,
 	CommandGroup,
 	CommandInput,
@@ -14,17 +15,10 @@ import {
 } from "@/shared/components/ui/popover";
 import { Separator } from "@/shared/components/ui/separator";
 import { cva, type VariantProps } from "class-variance-authority";
-import {
-	Badge,
-	CheckIcon,
-	ChevronDown,
-	Command,
-	WandSparkles,
-	XCircle,
-	XIcon,
-} from "lucide-react";
+import { CheckIcon, ChevronDown, XCircle, XIcon } from "lucide-react";
 import * as React from "react";
-import { cn } from "../utils/cn";
+import { Badge } from "@/shared/components/ui/badge";
+import { cn } from "@/shared/utils/cn";
 
 /**
  * Animation types and configurations
@@ -67,7 +61,7 @@ const multiSelectVariants = cva("m-1 transition-all duration-300 ease-in-out", {
 	},
 	defaultVariants: {
 		variant: "default",
-		badgeAnimation: "bounce",
+		badgeAnimation: "none",
 	},
 });
 
@@ -128,7 +122,7 @@ interface MultiSelectProps
 
 	/**
 	 * Placeholder text to be displayed when no values are selected.
-	 * Optional, defaults to "Select options".
+	 * Optional, defaults to "Sélectionner".
 	 */
 	placeholder?: string;
 
@@ -184,7 +178,7 @@ interface MultiSelectProps
 
 	/**
 	 * Custom empty state message when no options match search.
-	 * Optional, defaults to "No results found."
+	 * Optional, defaults to "Aucun résultat."
 	 */
 	emptyIndicator?: React.ReactNode;
 
@@ -310,7 +304,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			onValueChange,
 			variant,
 			defaultValue = [],
-			placeholder = "Select options",
+			placeholder = "Sélectionner",
 			animation = 0,
 			animationConfig,
 			maxCount = 3,
@@ -336,7 +330,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 		const [selectedValues, setSelectedValues] =
 			React.useState<string[]>(defaultValue);
 		const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
-		const [isAnimating, setIsAnimating] = React.useState(false);
 		const [searchValue, setSearchValue] = React.useState("");
 
 		const [politeMessage, setPoliteMessage] = React.useState("");
@@ -450,7 +443,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			};
 		}, []);
 
-		const getResponsiveSettings = () => {
+		const responsiveSettings = React.useMemo(() => {
 			if (!responsive) {
 				return {
 					maxCount: maxCount,
@@ -477,17 +470,13 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 				hideIcons: currentSettings?.hideIcons ?? false,
 				compactMode: currentSettings?.compactMode ?? false,
 			};
-		};
+		}, [responsive, screenSize, maxCount]);
 
-		const responsiveSettings = getResponsiveSettings();
-
-		const getBadgeAnimationClass = () => {
+		const badgeAnimationClass = React.useMemo(() => {
 			if (animationConfig?.badgeAnimation) {
 				switch (animationConfig.badgeAnimation) {
 					case "bounce":
-						return isAnimating
-							? "animate-bounce"
-							: "hover:-translate-y-1 hover:scale-110";
+						return "hover:-translate-y-1 hover:scale-110";
 					case "pulse":
 						return "hover:animate-pulse";
 					case "wiggle":
@@ -502,10 +491,10 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						return "";
 				}
 			}
-			return isAnimating ? "animate-bounce" : "";
-		};
+			return "";
+		}, [animationConfig?.badgeAnimation]);
 
-		const getPopoverAnimationClass = () => {
+		const popoverAnimationClass = React.useMemo(() => {
 			if (animationConfig?.popoverAnimation) {
 				switch (animationConfig.popoverAnimation) {
 					case "scale":
@@ -523,7 +512,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 				}
 			}
 			return "";
-		};
+		}, [animationConfig?.popoverAnimation]);
 
 		const getAllOptions = React.useCallback((): MultiSelectOption[] => {
 			if (options.length === 0) return [];
@@ -662,7 +651,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			}
 		}, [defaultValue, selectedValues, arraysEqual, resetOnDefaultValueChange]);
 
-		const getWidthConstraints = () => {
+		const widthConstraints = React.useMemo(() => {
 			const defaultMinWidth = screenSize === "mobile" ? "0px" : "200px";
 			const effectiveMinWidth = minWidth || defaultMinWidth;
 			const effectiveMaxWidth = maxWidth || "100%";
@@ -671,9 +660,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 				maxWidth: effectiveMaxWidth,
 				width: autoSize ? "auto" : "100%",
 			};
-		};
-
-		const widthConstraints = getWidthConstraints();
+		}, [screenSize, minWidth, maxWidth, autoSize]);
 
 		React.useEffect(() => {
 			if (!isPopoverOpen) {
@@ -756,6 +743,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 				</div>
 
 				<Popover
+					data-slot="multi-select"
 					open={isPopoverOpen}
 					onOpenChange={setIsPopoverOpen}
 					modal={modalPopover}
@@ -790,10 +778,10 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 								getAllOptions().length
 							} options selected. ${placeholder}`}
 							className={cn(
-								"flex p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
+								"flex p-1 rounded-md border min-h-9 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
 								autoSize ? "w-auto" : "w-full",
 								responsiveSettings.compactMode && "min-h-8 text-sm",
-								screenSize === "mobile" && "min-h-12 text-base",
+								screenSize === "mobile" && "min-h-10 text-base",
 								disabled && "opacity-50 cursor-not-allowed",
 								className
 							)}
@@ -843,7 +831,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 													<Badge
 														key={value}
 														className={cn(
-															getBadgeAnimationClass(),
+															badgeAnimationClass,
 															multiSelectVariants({ variant }),
 															customStyle?.gradient &&
 																"text-white border-transparent",
@@ -900,7 +888,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																}
 															}}
 															aria-label={`Remove ${option.label} from selection`}
-															className="ml-2 h-4 w-4 cursor-pointer hover:bg-white/20 rounded-sm p-0.5 -m-0.5 focus:outline-none focus:ring-1 focus:ring-white/50"
+															className="ml-2 h-4 w-4 cursor-pointer hover:bg-white/20 rounded-sm p-0.5 -m-0.5 focus:outline-none focus:ring-1 focus:ring-white/50 flex items-center justify-center"
 														>
 															<XCircle
 																className={cn(
@@ -918,7 +906,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											<Badge
 												className={cn(
 													"bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
-													getBadgeAnimationClass(),
+													badgeAnimationClass,
 													multiSelectVariants({ variant }),
 													responsiveSettings.compactMode &&
 														"text-xs px-1.5 py-0.5",
@@ -934,7 +922,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											>
 												{`+ ${
 													selectedValues.length - responsiveSettings.maxCount
-												} more`}
+												} de plus`}
 												<XCircle
 													className={cn(
 														"ml-2 h-4 w-4 cursor-pointer",
@@ -995,7 +983,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						aria-label="Available options"
 						className={cn(
 							"w-auto p-0",
-							getPopoverAnimationClass(),
+							popoverAnimationClass,
 							screenSize === "mobile" && "w-[85vw] max-w-[280px]",
 							screenSize === "tablet" && "w-[70vw] max-w-md",
 							screenSize === "desktop" && "min-w-[300px]",
@@ -1014,7 +1002,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						<Command>
 							{searchable && (
 								<CommandInput
-									placeholder="Search options..."
+									placeholder="Rechercher..."
 									onKeyDown={handleInputKeyDown}
 									value={searchValue}
 									onValueChange={setSearchValue}
@@ -1035,7 +1023,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 								)}
 							>
 								<CommandEmpty>
-									{emptyIndicator || "No results found."}
+									{emptyIndicator || "Aucun résultat."}
 								</CommandEmpty>{" "}
 								{!hideSelectAll && !searchValue && (
 									<CommandGroup>
@@ -1066,9 +1054,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 												<CheckIcon className="h-4 w-4" />
 											</div>
 											<span>
-												(Select All
+												(Tout sélectionner
 												{getAllOptions().length > 20
-													? ` - ${getAllOptions().length} options`
+													? ` - ${getAllOptions().length} éléments`
 													: ""}
 												)
 											</span>
@@ -1173,7 +1161,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 													onSelect={handleClear}
 													className="flex-1 justify-center cursor-pointer"
 												>
-													Clear
+													Effacer
 												</CommandItem>
 												<Separator
 													orientation="vertical"
@@ -1185,22 +1173,13 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											onSelect={() => setIsPopoverOpen(false)}
 											className="flex-1 justify-center cursor-pointer max-w-full"
 										>
-											Close
+											Fermer
 										</CommandItem>
 									</div>
 								</CommandGroup>
 							</CommandList>
 						</Command>
 					</PopoverContent>
-					{animation > 0 && selectedValues.length > 0 && (
-						<WandSparkles
-							className={cn(
-								"cursor-pointer my-2 text-foreground bg-background w-3 h-3",
-								isAnimating ? "" : "text-muted-foreground"
-							)}
-							onClick={() => setIsAnimating(!isAnimating)}
-						/>
-					)}
 				</Popover>
 			</>
 		);

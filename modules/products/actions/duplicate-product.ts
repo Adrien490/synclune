@@ -78,6 +78,7 @@ export async function duplicateProduct(
 						images: {
 							select: {
 								url: true,
+								thumbnailUrl: true,
 								altText: true,
 								mediaType: true,
 								isPrimary: true,
@@ -159,6 +160,7 @@ export async function duplicateProduct(
 						data: {
 							skuId: createdSku.id,
 							url: sourceImage.url,
+							thumbnailUrl: sourceImage.thumbnailUrl,
 							altText: sourceImage.altText,
 							mediaType: sourceImage.mediaType,
 							isPrimary: sourceImage.isPrimary,

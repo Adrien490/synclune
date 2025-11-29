@@ -1,24 +1,25 @@
 "use client";
 
-import type { Slide } from "@/shared/components/lightbox";
-import { OpenLightboxButton } from "@/shared/components/lightbox/open-lightbox-button";
+import type { Slide } from "@/modules/medias/components/lightbox";
+import { OpenLightboxButton } from "@/modules/medias/components/lightbox/open-lightbox-button";
 import { Button } from "@/shared/components/ui/button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { cn } from "@/shared/utils/cn";
-import { getVideoMimeType } from "@/shared/utils/media-utils";
+import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useRef } from "react";
 import { ViewTransition } from "react";
-import { buildGallery } from "@/modules/products/utils/build-gallery";
-import { MediaErrorFallback } from "./media-error-fallback";
-import { useGalleryKeyboard } from "@/modules/products/hooks/use-gallery-keyboard";
-import { useGalleryNavigation } from "@/modules/products/hooks/use-gallery-navigation";
-import { useGallerySwipe } from "@/modules/products/hooks/use-gallery-swipe";
-import { useMediaErrors } from "@/modules/products/hooks/use-media-errors";
+import { buildGallery } from "@/modules/medias/utils/build-gallery";
+import { MediaErrorFallback } from "@/modules/medias/components/media-error-fallback";
+import { MediaTypeBadge } from "@/modules/medias/components/media-type-badge";
+import { useGalleryKeyboard } from "@/modules/medias/hooks/use-gallery-keyboard";
+import { useGalleryNavigation } from "@/modules/medias/hooks/use-gallery-navigation";
+import { useGallerySwipe } from "@/modules/medias/hooks/use-gallery-swipe";
+import { useMediaErrors } from "@/modules/medias/hooks/use-media-errors";
 
-import type { ProductMedia } from "@/shared/types/product";
+import type { ProductMedia } from "@/modules/medias/types/product-media.types";
 import { PRODUCT_TEXTS } from "@/shared/constants/product";
 
 // Constantes pour l'optimisation des images
@@ -221,16 +222,7 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 												Votre navigateur ne supporte pas la lecture de vidéos.
 											</video>
 											<div className="absolute top-4 right-4 pointer-events-none z-10">
-												<div className="bg-blue-600 text-white text-sm font-bold px-3 py-1.5 rounded-md shadow-lg flex items-center gap-2">
-													<svg
-														className="w-4 h-4"
-														fill="currentColor"
-														viewBox="0 0 16 16"
-													>
-														<path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z" />
-													</svg>
-													<span>VIDEO</span>
-												</div>
+												<MediaTypeBadge type="VIDEO" size="lg" />
 											</div>
 										</>
 									)}
@@ -340,24 +332,42 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 														<MediaErrorFallback type="image" size="small" />
 													) : image.mediaType === "VIDEO" ? (
 														<div className="relative w-full h-full bg-linear-organic">
-															<video
-																className="w-full h-full object-cover"
-																muted
-																playsInline
-																preload="none"
-																aria-label={
-																	image.alt ||
-																	`${title} - Miniature vidéo ${index + 1}`
-																}
-																onError={() => handleMediaError(image.id)}
-															>
-																<source
-																	src={image.url}
-																	type={getVideoMimeType(image.url)}
+															{/* Afficher la miniature si disponible, sinon la vidéo */}
+															{image.thumbnailUrl ? (
+																<Image
+																	src={image.thumbnailUrl}
+																	alt={
+																		image.alt ||
+																		`${title} - Miniature vidéo ${index + 1}`
+																	}
+																	fill
+																	className="object-cover"
+																	sizes="(max-width: 480px) 33vw, (max-width: 640px) 25vw, (max-width: 768px) 20vw, 16vw"
+																	quality={THUMBNAIL_IMAGE_QUALITY}
+																	loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
+																	onError={() => handleMediaError(image.id)}
 																/>
-																Votre navigateur ne supporte pas la lecture de
-																vidéos.
-															</video>
+															) : (
+																<video
+																	className="w-full h-full object-cover"
+																	muted
+																	playsInline
+																	preload="none"
+																	aria-label={
+																		image.alt ||
+																		`${title} - Miniature vidéo ${index + 1}`
+																	}
+																	onError={() => handleMediaError(image.id)}
+																>
+																	<source
+																		src={image.url}
+																		type={getVideoMimeType(image.url)}
+																	/>
+																	Votre navigateur ne supporte pas la lecture de
+																	vidéos.
+																</video>
+															)}
+															{/* Overlay play icon */}
 															<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 																<div className="bg-blue-600 rounded-full p-1.5 sm:p-2 shadow-lg">
 																	<svg

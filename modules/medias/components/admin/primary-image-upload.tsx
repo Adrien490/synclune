@@ -10,12 +10,12 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/shared/components/ui/dialog";
-import { useDeleteUploadThingFiles } from "@/shared/lib/uploadthing";
+import { useDeleteUploadThingFiles } from "@/modules/medias/lib/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, X } from "lucide-react";
 import Image from "next/image";
 import { startTransition, useState } from "react";
-import { MediaTypeBadge } from "./media-type-badge";
+import { MediaTypeBadge } from "@/modules/medias/components/media-type-badge";
 
 interface PrimaryImageUploadProps {
 	imageUrl?: string;
@@ -119,6 +119,7 @@ export function PrimaryImageUpload({
 									fill
 									className="object-cover"
 									sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 448px"
+									quality={80}
 								/>
 							)}
 

@@ -10,18 +10,19 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/shared/components/ui/dialog";
-import { useDeleteUploadThingFile } from "@/shared/lib/uploadthing";
+import { useDeleteUploadThingFile } from "@/modules/medias/lib/uploadthing";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, X } from "lucide-react";
 import Image from "next/image";
 import { startTransition, useState } from "react";
-import { MediaTypeBadge } from "./media-type-badge";
+import { MediaTypeBadge } from "@/modules/medias/components/media-type-badge";
 
 interface GalleryImage {
 	url: string;
 	altText?: string;
 	mediaType: "IMAGE" | "VIDEO";
+	thumbnailUrl?: string | null;
 }
 
 interface ImageGalleryProps {
@@ -94,31 +95,40 @@ function ImageItem({ image, index, onRemove, skipUtapiDelete }: ImageItemProps) 
 			<div className="relative w-full h-full bg-muted">
 				{isVideo ? (
 					<div className="relative w-full h-full">
-						<video
-							src={image.url}
-							className="w-full h-full object-cover"
-							loop
-							muted
-							playsInline
-							preload="none"
-							onMouseEnter={(e) => {
-								// Throttle: charger et jouer seulement si pas déjà en cours
-								if (e.currentTarget.readyState === 0) {
-									e.currentTarget.load();
-								}
-								void e.currentTarget.play();
-							}}
-							onMouseLeave={(e) => {
-								e.currentTarget.pause();
-								e.currentTarget.currentTime = 0;
-							}}
-							aria-label={
-								image.altText ||
-								`Aperçu vidéo de l'article, image ${index + 1} de la galerie`
-							}
-						>
-							Votre navigateur ne supporte pas la lecture de vidéos.
-						</video>
+						{/* Thumbnail si disponible, sinon vidéo avec lecture au hover */}
+						{image.thumbnailUrl ? (
+							<Image
+								src={image.thumbnailUrl}
+								alt={image.altText || `Miniature vidéo ${index + 1}`}
+								fill
+								className="object-cover"
+								sizes="(max-width: 640px) 128px, (max-width: 768px) 144px, 160px"
+								quality={80}
+								loading="lazy"
+							/>
+						) : (
+							<video
+								src={image.url}
+								className="w-full h-full object-cover"
+								loop
+								muted
+								playsInline
+								preload="none"
+								onMouseEnter={(e) => {
+									if (e.currentTarget.readyState === 0) {
+										e.currentTarget.load();
+									}
+									void e.currentTarget.play();
+								}}
+								onMouseLeave={(e) => {
+									e.currentTarget.pause();
+									e.currentTarget.currentTime = 0;
+								}}
+								aria-label={image.altText || `Aperçu vidéo ${index + 1}`}
+							>
+								Votre navigateur ne supporte pas la lecture de vidéos.
+							</video>
+						)}
 						{/* Badge VIDEO visible en permanence */}
 						<div className="absolute top-2 right-2 z-10">
 							<MediaTypeBadge type="VIDEO" size="sm" />
@@ -139,6 +149,7 @@ function ImageItem({ image, index, onRemove, skipUtapiDelete }: ImageItemProps) 
 						fill
 						className="object-cover"
 						sizes="(max-width: 640px) 128px, (max-width: 768px) 144px, 160px"
+						quality={80}
 						preload={index === 0}
 						loading={index > 0 ? "lazy" : undefined}
 					/>
@@ -146,7 +157,7 @@ function ImageItem({ image, index, onRemove, skipUtapiDelete }: ImageItemProps) 
 			</div>
 
 			{/* Overlay avec contrôles */}
-			<div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center gap-1">
+			<div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center gap-2">
 				{/* Bouton de suppression - taille tactile optimale */}
 				<Button
 					type="button"

@@ -9,7 +9,7 @@ export function FormErrorDisplay() {
 				errorMap.onSubmit ? (
 					<div
 						role="alert"
-						className="p-3 bg-destructive/10 border border-destructive/20 rounded-md"
+						className="p-3 bg-destructive/10 border border-destructive/20 rounded-md animate-in fade-in-0 slide-in-from-top-1 duration-200"
 					>
 						<p className="text-sm text-destructive">{errorMap.onSubmit}</p>
 					</div>

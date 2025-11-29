@@ -3,7 +3,7 @@ import type { GetWishlistReturn } from '@/modules/wishlist/data/get-wishlist'
 import { formatEuro } from "@/shared/utils/format-euro"
 import { TrendingDown, TrendingUp } from 'lucide-react'
 import { WishlistRemoveButton } from '@/modules/wishlist/components/wishlist-remove-button'
-import { FALLBACK_IMAGE_URL } from '@/shared/constants/product-fallback-image'
+import { FALLBACK_IMAGE_URL } from '@/modules/medias/constants/product-fallback-image'
 
 interface WishlistProductCardProps {
 	item: NonNullable<GetWishlistReturn>['items'][number]

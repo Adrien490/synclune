@@ -6,12 +6,14 @@ import { useFieldContext } from "@/shared/lib/form-context";
 
 interface TextareaGroupFieldProps extends React.ComponentProps<"textarea"> {
 	children?: React.ReactNode; // Pour InputGroupAddon
+	required?: boolean;
 }
 
 export const TextareaGroupField = ({
 	disabled,
 	rows,
 	placeholder,
+	required,
 	children,
 	...props
 }: TextareaGroupFieldProps) => {
@@ -35,6 +37,7 @@ export const TextareaGroupField = ({
 							? `${field.name}-error`
 							: undefined
 					}
+					aria-required={required}
 					{...props}
 				/>
 				{children}

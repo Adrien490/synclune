@@ -1,9 +1,10 @@
 "use client";
 
 import { FieldLabel, FormLayout, FormSection } from "@/shared/components/forms";
-import { ImageCounterBadge } from "@/modules/products/components/image-counter-badge";
-import { ImageGallery } from "@/modules/products/components/image-gallery";
-import { PrimaryImageUpload } from "@/modules/products/components/primary-image-upload";
+import { ImageCounterBadge } from "@/modules/medias/components/image-counter-badge";
+import { ImageGallery } from "@/modules/medias/components/admin/image-gallery";
+import { PrimaryImageUpload } from "@/modules/medias/components/admin/primary-image-upload";
+import { useAutoVideoThumbnail } from "@/modules/medias/hooks/use-auto-video-thumbnail";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
@@ -11,9 +12,9 @@ import { TextShimmer } from "@/shared/components/ui/text-shimmer";
 import { MultiSelect } from "@/shared/components/multi-select";
 import { useCreateProductForm } from "@/modules/products/hooks/admin/use-create-product-form";
 import { cn } from "@/shared/utils/cn";
-import { UploadDropzone, useUploadThing } from "@/shared/utils/uploadthing";
+import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
-import { Euro, ImagePlus, Info, Package, Upload, X } from "lucide-react";
+import { Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -42,6 +43,9 @@ export function CreateProductForm({
 	colors,
 }: CreateProductFormProps) {
 	const router = useRouter();
+
+	// Hook pour génération automatique de thumbnail vidéo
+	const { generateThumbnail } = useAutoVideoThumbnail();
 
 	const {
 		startUpload: startPrimaryImageUpload,
@@ -187,30 +191,15 @@ export function CreateProductForm({
 							{(field) => (
 								<div className="space-y-2">
 									<FieldLabel optional>Type de bijou</FieldLabel>
-									<div className="flex gap-2">
-										<div className="flex-1">
-											<field.SelectField
-												label=""
-												options={productTypes.map((type) => ({
-													value: type.id,
-													label: type.label,
-												}))}
-												placeholder="Sélectionner un type"
-											/>
-										</div>
-										{field.state.value && (
-											<Button
-												type="button"
-												variant="outline"
-												size="icon"
-												onClick={() => field.handleChange(undefined)}
-												aria-label="Effacer le type de bijou"
-												className="h-9 w-9 shrink-0 cursor-pointer"
-											>
-												<X className="h-4 w-4" />
-											</Button>
-										)}
-									</div>
+									<field.SelectField
+										label=""
+										options={productTypes.map((type) => ({
+											value: type.id,
+											label: type.label,
+										}))}
+										placeholder="Sélectionner un type"
+										clearable
+									/>
 								</div>
 							)}
 						</form.AppField>
@@ -243,62 +232,47 @@ export function CreateProductForm({
 						{(field) => (
 							<div className="space-y-2">
 								<FieldLabel optional>Couleur</FieldLabel>
-								<div className="flex gap-2">
-									<div className="flex-1">
-										<field.SelectField
-											label=""
-											options={colors.map((color) => ({
-												value: color.id,
-												label: color.name,
-											}))}
-											renderOption={(option) => {
-												const color = colors.find(
-													(c) => c.id === option.value
-												);
-												return (
-													<div className="flex items-center gap-2">
-														{color && (
-															<div
-																className="w-4 h-4 rounded-full border border-border"
-																style={{ backgroundColor: color.hex }}
-															/>
-														)}
-														<span>{option.label}</span>
-													</div>
-												);
-											}}
-											renderValue={(value) => {
-												const color = colors.find((c) => c.id === value);
-												return color ? (
-													<div className="flex items-center gap-2">
-														<div
-															className="w-4 h-4 rounded-full border border-border"
-															style={{ backgroundColor: color.hex }}
-														/>
-														<span>{color.name}</span>
-													</div>
-												) : (
-													<span className="text-muted-foreground">
-														Sélectionner une couleur
-													</span>
-												);
-											}}
-											placeholder="Sélectionner une couleur"
-										/>
-									</div>
-									{field.state.value && (
-										<Button
-											type="button"
-											variant="outline"
-											size="icon"
-											onClick={() => field.handleChange("")}
-											aria-label="Effacer la couleur"
-											className="h-9 w-9 shrink-0 cursor-pointer"
-										>
-											<X className="h-4 w-4" />
-										</Button>
-									)}
-								</div>
+								<field.SelectField
+									label=""
+									options={colors.map((color) => ({
+										value: color.id,
+										label: color.name,
+									}))}
+									renderOption={(option) => {
+										const color = colors.find(
+											(c) => c.id === option.value
+										);
+										return (
+											<div className="flex items-center gap-2">
+												{color && (
+													<div
+														className="w-4 h-4 rounded-full border border-border"
+														style={{ backgroundColor: color.hex }}
+													/>
+												)}
+												<span>{option.label}</span>
+											</div>
+										);
+									}}
+									renderValue={(value) => {
+										const color = colors.find((c) => c.id === value);
+										return color ? (
+											<div className="flex items-center gap-2">
+												<div
+													className="w-4 h-4 rounded-full border border-border"
+													style={{ backgroundColor: color.hex }}
+												/>
+												<span>{color.name}</span>
+											</div>
+										) : (
+											<span className="text-muted-foreground">
+												Sélectionner une couleur
+											</span>
+										);
+									}}
+									placeholder="Sélectionner une couleur"
+									clearable
+								/>
 							</div>
 						)}
 					</form.AppField>
@@ -830,15 +804,32 @@ export function CreateProductForm({
 														const imageUrl = uploadResult?.serverData?.url;
 														if (imageUrl) {
 															const originalFile = filesToUpload[index];
-															field.pushValue({
+															const mediaType =
+																(fileTypeMap.get(originalFile.name) as
+																	| "IMAGE"
+																	| "VIDEO"
+																	| undefined) || "IMAGE";
+
+															const newMediaIndex = field.state.value.length;
+															const newMedia = {
 																url: imageUrl,
 																altText: form.state.values.title || undefined,
-																mediaType:
-																	(fileTypeMap.get(originalFile.name) as
-																		| "IMAGE"
-																		| "VIDEO"
-																		| undefined) || "IMAGE",
-															});
+																mediaType,
+															};
+															field.pushValue(newMedia);
+
+															// Si c'est une vidéo, générer thumbnail automatiquement en arrière-plan
+															if (mediaType === "VIDEO") {
+																generateThumbnail(imageUrl).then((thumbnailUrl) => {
+																	if (thumbnailUrl) {
+																		field.replaceValue(newMediaIndex, {
+																			...newMedia,
+																			thumbnailUrl,
+																		});
+																		toast.success("Miniature générée");
+																	}
+																});
+															}
 														}
 													});
 												} catch {
@@ -854,16 +845,33 @@ export function CreateProductForm({
 																			uploadResult?.serverData?.url;
 																		if (imageUrl) {
 																			const originalFile = filesToUpload[index];
-																			field.pushValue({
+																			const mediaType =
+																				(fileTypeMap.get(
+																					originalFile.name
+																				) as "IMAGE" | "VIDEO" | undefined) ||
+																				"IMAGE";
+
+																			const newMediaIndex = field.state.value.length;
+																			const newMedia = {
 																				url: imageUrl,
 																				altText:
 																					form.state.values.title || undefined,
-																				mediaType:
-																					(fileTypeMap.get(
-																						originalFile.name
-																					) as "IMAGE" | "VIDEO" | undefined) ||
-																					"IMAGE",
-																			});
+																				mediaType,
+																			};
+																			field.pushValue(newMedia);
+
+																			// Si c'est une vidéo, générer thumbnail automatiquement
+																			if (mediaType === "VIDEO") {
+																				generateThumbnail(imageUrl).then((thumbnailUrl) => {
+																					if (thumbnailUrl) {
+																						field.replaceValue(newMediaIndex, {
+																							...newMedia,
+																							thumbnailUrl,
+																						});
+																						toast.success("Miniature générée");
+																					}
+																				});
+																			}
 																		}
 																	});
 																	toast.success("Médias ajoutés avec succès");
@@ -1049,6 +1057,7 @@ export function CreateProductForm({
 					</div>
 				</div>
 			</form.AppForm>
+
 		</form>
 	);
 }

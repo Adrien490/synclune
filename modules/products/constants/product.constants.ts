@@ -46,6 +46,7 @@ export const GET_PRODUCT_SELECT = {
 				select: {
 					id: true,
 					url: true,
+					thumbnailUrl: true,
 					altText: true,
 					mediaType: true,
 					isPrimary: true,
@@ -112,6 +113,7 @@ export const GET_PRODUCTS_SELECT = {
 				select: {
 					id: true,
 					url: true,
+					thumbnailUrl: true,
 					altText: true,
 					mediaType: true,
 					isPrimary: true,

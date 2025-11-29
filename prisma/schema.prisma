@@ -274,10 +274,11 @@ model SkuMedia {
   skuId String
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
 
-  url       String
-  altText   String?
-  mediaType MediaType @default(IMAGE)
-  isPrimary Boolean   @default(false)
+  url          String
+  thumbnailUrl String? // URL de la miniature pour les vidéos (générée côté client via Canvas)
+  altText      String?
+  mediaType    MediaType @default(IMAGE)
+  isPrimary    Boolean   @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -768,88 +769,6 @@ model RefundItem {
 
   @@index([refundId])
   @@index([orderItemId])
-}
-
-// ============================================================================
-// AUDIT & CONFORMITÉ LÉGALE (Art. L123-22 Code de Commerce - Conservation 10 ans)
-// ============================================================================
-
-/// Journal d'audit pour traçabilité des modifications sur entités critiques
-/// Requis pour conformité comptable française (conservation 10 ans)
-model AuditLog {
-  id String @id @default(cuid())
-
-  // Entité concernée
-  entityType String // "Order", "Refund", "Payment", "Product", etc.
-  entityId   String // ID de l'entité modifiée
-
-  // Action effectuée
-  action String // "created", "updated", "deleted", "status_changed"
-
-  // Données avant/après modification (pour rollback éventuel)
-  previousData Json? // État avant modification
-  newData      Json? // État après modification
-  changedFields String[] // Liste des champs modifiés
-
-  // Contexte de l'action
-  changedBy String? // userId ou "system" ou "webhook"
-  source    String? // "admin", "webhook", "api", "cron"
-  ipAddress String? // IP de l'utilisateur (RGPD : anonymiser après 1 an)
-  userAgent String? // User-Agent pour debug
-
-  createdAt DateTime @default(now())
-
-  @@index([entityType, entityId])
-  @@index([entityType, createdAt])
-  @@index([changedBy])
-  @@index([createdAt])
-}
-
-// ============================================================================
-// WEBHOOKS STRIPE - DÉDUPLICATION & AUDIT
-// ============================================================================
-
-enum WebhookEventStatus {
-  PENDING // Reçu, en cours de traitement
-  PROCESSED // Traité avec succès
-  FAILED // Échec de traitement
-  SKIPPED // Ignoré (déjà traité ou non pertinent)
-}
-
-/// Table de déduplication des événements Stripe
-/// Évite le double traitement lors des retries webhook (Stripe renvoie après timeout)
-model StripeWebhookEvent {
-  id String @id @default(cuid())
-
-  // Identifiant unique Stripe de l'événement
-  stripeEventId String @unique // evt_xxx
-
-  // Type d'événement
-  type String // "checkout.session.completed", "charge.refunded", etc.
-
-  // Statut de traitement
-  status WebhookEventStatus @default(PENDING)
-
-  // Entité liée (pour réconciliation)
-  orderId  String? // Si lié à une commande
-  refundId String? // Si lié à un remboursement
-
-  // Données brutes (pour debug/replay)
-  payload Json? // Corps de l'événement Stripe
-
-  // Erreur éventuelle
-  errorMessage String? @db.Text
-  retryCount   Int     @default(0)
-
-  // Timestamps
-  processedAt DateTime?
-  createdAt   DateTime  @default(now())
-
-  @@index([stripeEventId])
-  @@index([type, status])
-  @@index([orderId])
-  @@index([status, createdAt])
-  @@index([createdAt])
 }
 
 // ============================================================================

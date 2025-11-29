@@ -9,6 +9,8 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { cn } from "@/shared/utils/cn";
+import { X } from "lucide-react";
 
 interface SelectFieldProps<T extends string> {
 	disabled?: boolean;
@@ -18,6 +20,8 @@ interface SelectFieldProps<T extends string> {
 	options: { value: T; label: string }[];
 	renderOption?: (option: { value: T; label: string }) => React.ReactNode;
 	renderValue?: (value: T) => React.ReactNode;
+	/** Affiche un bouton pour effacer la sélection */
+	clearable?: boolean;
 }
 
 export const SelectField = <T extends string>({
@@ -28,6 +32,7 @@ export const SelectField = <T extends string>({
 	options,
 	renderOption,
 	renderValue,
+	clearable,
 }: SelectFieldProps<T>) => {
 	const field = useFieldContext<string | undefined>();
 
@@ -62,11 +67,46 @@ export const SelectField = <T extends string>({
 					}
 					aria-required={required}
 				>
-					{renderValue && field.state.value ? (
-						renderValue(field.state.value as T)
-					) : (
-						<SelectValue placeholder={placeholder} />
-					)}
+					<div className="flex items-center w-full min-w-0">
+						<span className="flex-1 truncate text-left">
+							{renderValue && field.state.value ? (
+								renderValue(field.state.value as T)
+							) : (
+								<SelectValue placeholder={placeholder} />
+							)}
+						</span>
+						{clearable && field.state.value && (
+							<span
+								role="button"
+								tabIndex={0}
+								className={cn(
+									"inline-flex items-center justify-center h-6 w-6 ml-1 mr-0.5 shrink-0 rounded-sm",
+									"hover:bg-accent hover:text-accent-foreground",
+									"focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+									"cursor-pointer"
+								)}
+								onPointerDown={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+								}}
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									field.handleChange(undefined);
+								}}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										e.stopPropagation();
+										field.handleChange(undefined);
+									}
+								}}
+								aria-label="Effacer la sélection"
+							>
+								<X className="h-3.5 w-3.5" />
+							</span>
+						)}
+					</div>
 				</SelectTrigger>
 				<SelectContent className="max-h-[300px] overflow-y-auto">
 					{options.map((option) => (

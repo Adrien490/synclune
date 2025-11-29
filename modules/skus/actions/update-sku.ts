@@ -1,7 +1,7 @@
 "use server";
 
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { detectMediaType } from "@/shared/utils/media-utils";
+import { detectMediaType } from "@/modules/medias/utils/media-utils";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
@@ -99,6 +99,7 @@ export async function updateProductSku(
 		// 6. Combine primary media and gallery media
 		const allMedia: Array<{
 			url: string;
+			thumbnailUrl?: string | null;
 			altText?: string;
 			mediaType?: "IMAGE" | "VIDEO";
 			isPrimary: boolean;
@@ -251,6 +252,7 @@ export async function updateProductSku(
 						data: {
 							skuId: updatedSku.id,
 							url: media.url,
+							thumbnailUrl: media.thumbnailUrl || null,
 							altText: media.altText || null,
 							mediaType: media.mediaType || detectMediaType(media.url),
 							isPrimary: media.isPrimary,

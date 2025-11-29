@@ -408,6 +408,8 @@ function RefundItemRow({
 							src={orderItem.skuImageUrl || orderItem.productImageUrl || ""}
 							alt={orderItem.productTitle}
 							fill
+							sizes="48px"
+							quality={80}
 							className="object-cover"
 						/>
 					) : (
@@ -443,6 +445,8 @@ function RefundItemRow({
 						src={orderItem.skuImageUrl || orderItem.productImageUrl || ""}
 						alt={orderItem.productTitle}
 						fill
+						sizes="48px"
+						quality={80}
 						className="object-cover"
 					/>
 				) : (

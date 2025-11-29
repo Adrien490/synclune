@@ -272,6 +272,8 @@ export function OrderDetailCard({ order }: OrderDetailCardProps) {
 														src={item.skuImageUrl || item.productImageUrl || ""}
 														alt={item.productTitle}
 														fill
+														sizes="64px"
+														quality={80}
 														className="object-cover"
 													/>
 												) : (

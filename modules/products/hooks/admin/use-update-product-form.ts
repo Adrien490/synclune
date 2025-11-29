@@ -71,12 +71,14 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 				primaryImage: primaryImage
 					? {
 							url: primaryImage.url,
+							thumbnailUrl: primaryImage.thumbnailUrl || undefined,
 							altText: primaryImage.altText || undefined,
 							mediaType: primaryImage.mediaType,
 					  }
 					: undefined,
 				galleryMedia: galleryImages.map((img) => ({
 					url: img.url,
+					thumbnailUrl: img.thumbnailUrl || undefined,
 					altText: img.altText || undefined,
 					mediaType: img.mediaType,
 				})),

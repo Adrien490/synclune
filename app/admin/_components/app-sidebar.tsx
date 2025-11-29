@@ -29,6 +29,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 										fill
 										className="object-cover"
 										sizes="32px"
+										quality={80}
 									/>
 								</div>
 								<div className="flex flex-col gap-0.5 leading-none">

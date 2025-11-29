@@ -1,6 +1,7 @@
 export type ProductMedia = {
 	id: string;
 	url: string;
+	thumbnailUrl?: string | null; // URL de la miniature pour les vidéos
 	alt: string;
 	blurDataURL?: string;
 	source?: "default" | "selected" | "sku";

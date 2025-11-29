@@ -23,7 +23,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
-import { getVideoMimeType } from "@/shared/utils/media-utils";
+import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
 import { Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -195,6 +195,7 @@ export async function ProductVariantsDataTable({
 															alt={primaryImage.altText || sku.sku}
 															fill
 															sizes="80px"
+															quality={80}
 															className="rounded-md object-cover"
 														/>
 													)

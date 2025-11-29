@@ -234,6 +234,7 @@ export async function ProductsDataTable({
 															alt={defaultImage.altText || product.title}
 															fill
 															sizes="80px"
+															quality={80}
 															className="rounded-md object-cover"
 														/>
 													) : (

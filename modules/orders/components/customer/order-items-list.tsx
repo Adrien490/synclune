@@ -57,6 +57,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 											fill
 											className="object-cover"
 											sizes="80px"
+											quality={80}
 										/>
 									) : (
 										<div className="flex h-full items-center justify-center text-muted-foreground">

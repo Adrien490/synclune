@@ -31,7 +31,11 @@ export const RadioGroupField = ({
 			{label && (
 				<FieldLabel>
 					{label}
-					{required && <span className="text-destructive ml-1">*</span>}
+					{required && (
+						<span className="text-destructive ml-1" aria-label="requis">
+							*
+						</span>
+					)}
 				</FieldLabel>
 			)}
 			<RadioGroup

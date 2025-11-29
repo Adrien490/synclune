@@ -12,35 +12,20 @@ import {
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { PaymentStatus, Prisma, RefundStatus, WebhookEventStatus } from "@/app/generated/prisma/client";
+import { PaymentStatus, Prisma, RefundStatus } from "@/app/generated/prisma/client";
 import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
 import { getShippingRateName } from "@/modules/orders/constants/stripe-shipping-rates";
-
-// Événements critiques qui nécessitent une déduplication stricte
-const CRITICAL_EVENTS = [
-	"checkout.session.completed",
-	"checkout.session.async_payment_succeeded",
-	"checkout.session.async_payment_failed",
-	"charge.refunded",
-	"charge.dispute.created",
-	// Webhooks factures pour synchronisation invoiceNumber et statut
-	"invoice.paid",
-	"invoice.payment_failed",
-	"invoice.finalized",
-] as const;
 
 // Note: With cacheComponents enabled, API routes are dynamic by default
 // No need for export const dynamic = "force-dynamic"
 
 /**
- * 🔴 CRITIQUE - Webhook Stripe avec Idempotence
+ * Webhook Stripe
  *
- * Gère les événements Stripe de manière idempotente pour éviter le traitement double.
- * Conforme aux meilleures pratiques 2025 :
- * - Vérification de signature
- * - Déduplication via stripeEventId
- * - Réponse immédiate (< 5s)
- * - Traitement transactionnel
+ * Gère les événements Stripe de manière idempotente.
+ * L'idempotence est assurée par :
+ * - Order.paymentStatus === "PAID" (évite double décrémentation stock)
+ * - Refund.stripeRefundId @unique (évite double remboursement)
  */
 export async function POST(req: Request) {
 	try {
@@ -82,46 +67,7 @@ export async function POST(req: Request) {
 
 		// console.log("✅ Stripe webhook event received:", event.type, event.id);
 
-		// 2. 🔴 DÉDUPLICATION - Vérifier si l'événement a déjà été traité
-		// Stripe peut renvoyer le même événement plusieurs fois (timeout, retry)
-		const isCriticalEvent = CRITICAL_EVENTS.includes(event.type as typeof CRITICAL_EVENTS[number]);
-
-		if (isCriticalEvent) {
-			const existingEvent = await prisma.stripeWebhookEvent.findUnique({
-				where: { stripeEventId: event.id },
-			});
-
-			if (existingEvent) {
-				// Événement déjà traité ou en cours
-				if (existingEvent.status === WebhookEventStatus.PROCESSED) {
-					console.log(`⚠️ [WEBHOOK] Event ${event.id} already processed, skipping`);
-					return NextResponse.json({ received: true, status: "already_processed" });
-				}
-				if (existingEvent.status === WebhookEventStatus.PENDING) {
-					console.log(`⚠️ [WEBHOOK] Event ${event.id} already being processed, skipping`);
-					return NextResponse.json({ received: true, status: "processing" });
-				}
-				// Si FAILED, on peut retenter (incrémenter retryCount)
-			}
-
-			// Enregistrer l'événement comme PENDING avant traitement
-			await prisma.stripeWebhookEvent.upsert({
-				where: { stripeEventId: event.id },
-				create: {
-					stripeEventId: event.id,
-					type: event.type,
-					status: WebhookEventStatus.PENDING,
-					// Convertir l'objet Stripe en JSON sérialisable
-					payload: JSON.parse(JSON.stringify(event.data.object)),
-				},
-				update: {
-					status: WebhookEventStatus.PENDING,
-					retryCount: { increment: 1 },
-				},
-			});
-		}
-
-		// 3. Traiter l'événement selon le type
+		// Traiter l'événement selon le type
 		try {
 			switch (event.type) {
 				case "checkout.session.completed": {
@@ -203,34 +149,9 @@ export async function POST(req: Request) {
 					// console.log(`⚠️  Unhandled event type: ${event.type}`);
 			}
 
-			// 4. Marquer l'événement comme traité avec succès
-			if (isCriticalEvent) {
-				await prisma.stripeWebhookEvent.update({
-					where: { stripeEventId: event.id },
-					data: {
-						status: WebhookEventStatus.PROCESSED,
-						processedAt: new Date(),
-					},
-				});
-			}
-
 			return NextResponse.json({ received: true, status: "processed" });
 		} catch (error) {
-			// console.error("❌ Error processing webhook event:", error);
-
-			// Marquer l'événement comme échoué
-			if (isCriticalEvent) {
-				await prisma.stripeWebhookEvent.update({
-					where: { stripeEventId: event.id },
-					data: {
-						status: WebhookEventStatus.FAILED,
-						errorMessage: error instanceof Error ? error.message : "Unknown error",
-					},
-				}).catch(() => {
-					// Ignorer les erreurs de mise à jour (l'événement peut ne pas exister)
-				});
-			}
-
+			console.error("❌ Error processing webhook event:", error);
 			throw error;
 		}
 	} catch {
@@ -1115,25 +1036,18 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
 			return;
 		}
 
-		// 2. Créer un enregistrement d'audit pour le litige
-		await prisma.auditLog.create({
-			data: {
-				entityType: "Order",
-				entityId: order.id,
-				action: "dispute_created",
-				newData: {
-					disputeId: dispute.id,
-					reason: dispute.reason,
-					amount: dispute.amount,
-					currency: dispute.currency,
-					status: dispute.status,
-					evidenceDueBy: dispute.evidence_details?.due_by
-						? new Date(dispute.evidence_details.due_by * 1000).toISOString()
-						: null,
-				},
-				changedBy: "webhook:charge.dispute.created",
-				source: "webhook",
-			},
+		// 2. Log pour traçabilité (Dashboard Stripe = source de vérité)
+		console.log(`[AUDIT] Dispute created`, {
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+			disputeId: dispute.id,
+			reason: dispute.reason,
+			amount: dispute.amount,
+			currency: dispute.currency,
+			status: dispute.status,
+			evidenceDueBy: dispute.evidence_details?.due_by
+				? new Date(dispute.evidence_details.due_by * 1000).toISOString()
+				: null,
 		});
 
 		// 3. Alerter l'admin par email
@@ -1375,26 +1289,17 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 			},
 		});
 
-		// Logger dans AuditLog pour traçabilité
-		await prisma.auditLog.create({
-			data: {
-				entityType: "Order",
-				entityId: order.id,
-				action: "invoice_payment_failed",
-				newData: {
-					invoiceId: invoice.id,
-					invoiceNumber: invoice.number,
-					attemptCount: invoice.attempt_count,
-					nextPaymentAttempt: invoice.next_payment_attempt
-						? new Date(invoice.next_payment_attempt * 1000).toISOString()
-						: null,
-				},
-				changedBy: "webhook:invoice.payment_failed",
-				source: "webhook",
-			},
+		// Log pour traçabilité (Dashboard Stripe = source de vérité)
+		console.log(`[AUDIT] Invoice payment failed`, {
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+			invoiceId: invoice.id,
+			invoiceNumber: invoice.number,
+			attemptCount: invoice.attempt_count,
+			nextPaymentAttempt: invoice.next_payment_attempt
+				? new Date(invoice.next_payment_attempt * 1000).toISOString()
+				: null,
 		});
-
-		console.log(`⚠️ [WEBHOOK] Invoice payment failed for order ${order.orderNumber}`);
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling invoice payment failed:`, error);
 		throw error;

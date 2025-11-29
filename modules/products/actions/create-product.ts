@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/constants/cache";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { detectMediaType } from "@/shared/utils/media-utils";
+import { detectMediaType } from "@/modules/medias/utils/media-utils";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -118,6 +118,7 @@ export async function createProduct(
 		// 7. Combine primary image and gallery images
 		const allImages: Array<{
 			url: string;
+			thumbnailUrl?: string | null;
 			altText?: string;
 			mediaType?: "IMAGE" | "VIDEO";
 			isPrimary: boolean;
@@ -245,6 +246,7 @@ export async function createProduct(
 					const imageData = {
 						skuId: createdSku.id,
 						url: image.url,
+						thumbnailUrl: image.thumbnailUrl || null,
 						altText: image.altText || null,
 						mediaType: image.mediaType || detectMediaType(image.url),
 						isPrimary: image.isPrimary,

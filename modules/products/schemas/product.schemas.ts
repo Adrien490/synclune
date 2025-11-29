@@ -117,6 +117,7 @@ export const getProductsSchema = z.object({
  */
 const imageSchema = z.object({
 	url: z.url({ message: "L'URL du media doit etre valide" }),
+	thumbnailUrl: z.url().optional().nullable(), // URL de la miniature pour les videos
 	altText: z.string().max(200).optional(),
 	mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
 });

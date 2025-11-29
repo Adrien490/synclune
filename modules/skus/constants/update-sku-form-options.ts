@@ -3,6 +3,7 @@ import type { SkuWithImages } from "../data/get-sku";
 // Type pour les options du formulaire d'édition
 type MediaData = {
 	url: string;
+	thumbnailUrl?: string | null;
 	altText?: string;
 	mediaType: "IMAGE" | "VIDEO";
 };
@@ -33,6 +34,7 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 		.filter((img) => !img.isPrimary)
 		.map((img) => ({
 			url: img.url,
+			thumbnailUrl: img.thumbnailUrl || undefined,
 			altText: img.altText || undefined,
 			mediaType: img.mediaType,
 		}));
@@ -53,6 +55,7 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 			primaryImage: primaryImage
 				? {
 						url: primaryImage.url,
+						thumbnailUrl: primaryImage.thumbnailUrl || undefined,
 						altText: primaryImage.altText || undefined,
 						mediaType: primaryImage.mediaType,
 					}

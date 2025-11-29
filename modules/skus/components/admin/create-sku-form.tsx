@@ -1,20 +1,21 @@
 "use client";
 
 import { FieldLabel, FormSection } from "@/shared/components/forms";
-import { ImageCounterBadge } from "@/modules/products/components/image-counter-badge";
-import { ImageGallery } from "@/modules/products/components/image-gallery";
-import { PrimaryImageUpload } from "@/modules/products/components/primary-image-upload";
+import { ImageCounterBadge } from "@/modules/medias/components/image-counter-badge";
+import { ImageGallery } from "@/modules/medias/components/admin/image-gallery";
+import { PrimaryImageUpload } from "@/modules/medias/components/admin/primary-image-upload";
+import { useAutoVideoThumbnail } from "@/modules/medias/hooks/use-auto-video-thumbnail";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
 import { TextShimmer } from "@/shared/components/ui/text-shimmer";
 import { useCreateProductSkuForm } from "@/modules/skus/hooks/admin/use-create-sku-form";
 import { cn } from "@/shared/utils/cn";
-import { UploadDropzone, useUploadThing } from "@/shared/utils/uploadthing";
+import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
 import { Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 interface CreateProductVariantFormProps {
@@ -36,37 +37,17 @@ export function CreateProductVariantForm({
 	productSlug,
 }: CreateProductVariantFormProps) {
 	const router = useRouter();
-	const [uploadStatus, setUploadStatus] = useState<string>("");
+
+	// Hook pour génération automatique de thumbnail vidéo
+	const { generateThumbnail } = useAutoVideoThumbnail();
 
 	const {
 		startUpload: startPrimaryImageUpload,
 		isUploading: isPrimaryImageUploading,
-	} = useUploadThing("catalogMedia", {
-		onUploadBegin: () => {
-			setUploadStatus("Upload du média principal en cours...");
-		},
-		onUploadProgress: (progress) => {
-			setUploadStatus(`Upload du média principal : ${progress}%`);
-		},
-		onClientUploadComplete: () => {
-			setUploadStatus("Upload du média principal terminé avec succès");
-			setTimeout(() => setUploadStatus(""), 2000);
-		},
-	});
+	} = useUploadThing("catalogMedia");
 
 	const { startUpload: startGalleryUpload, isUploading: isGalleryUploading } =
-		useUploadThing("catalogMedia", {
-			onUploadBegin: () => {
-				setUploadStatus("Upload des médias de galerie en cours...");
-			},
-			onUploadProgress: (progress) => {
-				setUploadStatus(`Upload de la galerie : ${progress}%`);
-			},
-			onClientUploadComplete: () => {
-				setUploadStatus("Upload de la galerie terminé avec succès");
-				setTimeout(() => setUploadStatus(""), 2000);
-			},
-		});
+		useUploadThing("catalogMedia");
 
 	const { form, action } = useCreateProductSkuForm({
 		onSuccess: (message) => {
@@ -93,15 +74,6 @@ export function CreateProductVariantForm({
 
 	return (
 		<>
-			<div
-				role="status"
-				aria-live="polite"
-				aria-atomic="true"
-				className="sr-only"
-			>
-				{uploadStatus}
-			</div>
-
 			<fieldset
 				disabled={
 					isPrimaryImageUploading || isGalleryUploading || form.state.isSubmitting
@@ -197,6 +169,7 @@ export function CreateProductVariantForm({
 													);
 												}}
 												placeholder="Sélectionner une couleur"
+											clearable
 											/>
 										</div>
 									)}
@@ -628,15 +601,32 @@ export function CreateProductVariantForm({
 																const imageUrl = uploadResult?.serverData?.url;
 																if (imageUrl) {
 																	const originalFile = filesToUpload[index];
-																	field.pushValue({
+																	const mediaType =
+																		(fileTypeMap.get(originalFile.name) as
+																			| "IMAGE"
+																			| "VIDEO"
+																			| undefined) || "IMAGE";
+
+																	const newMediaIndex = field.state.value.length;
+																	const newMedia = {
 																		url: imageUrl,
 																		altText: product.title,
-																		mediaType:
-																			(fileTypeMap.get(originalFile.name) as
-																				| "IMAGE"
-																				| "VIDEO"
-																				| undefined) || "IMAGE",
-																	});
+																		mediaType,
+																	};
+																	field.pushValue(newMedia);
+
+																	// Si c'est une vidéo, générer thumbnail automatiquement
+																	if (mediaType === "VIDEO") {
+																		generateThumbnail(imageUrl).then((thumbnailUrl) => {
+																			if (thumbnailUrl) {
+																				field.replaceValue(newMediaIndex, {
+																					...newMedia,
+																					thumbnailUrl,
+																				});
+																				toast.success("Miniature générée");
+																			}
+																		});
+																	}
 																}
 															});
 														} catch {

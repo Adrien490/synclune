@@ -35,7 +35,11 @@ export function FormErrors({ errors, className }: FormErrorsProps) {
 	return (
 		<div
 			role="alert"
-			className={cn("bg-destructive/15 p-3 rounded-md space-y-1", className)}
+			className={cn(
+				"bg-destructive/15 p-3 rounded-md space-y-1",
+				"animate-in fade-in-0 slide-in-from-top-1 duration-200",
+				className
+			)}
 		>
 			{errors.map((error, index) => (
 				<p key={`form-error-${index}`} className="text-destructive text-sm">

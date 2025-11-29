@@ -15,12 +15,14 @@ export const createProductSkuFormOpts = {
 		primaryImage: undefined as
 			| {
 					url: string;
+					thumbnailUrl?: string | null;
 					altText?: string;
 					mediaType: "IMAGE" | "VIDEO";
 			  }
 			| undefined,
 		galleryMedia: [] as Array<{
 			url: string;
+			thumbnailUrl?: string | null;
 			altText?: string;
 			mediaType: "IMAGE" | "VIDEO";
 		}>,

@@ -1,5 +1,5 @@
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import { FALLBACK_PRODUCT_IMAGE } from "@/shared/constants/product-fallback-image";
+import { FALLBACK_PRODUCT_IMAGE } from "@/modules/medias/constants/product-fallback-image";
 
 /**
  * Utilitaires pour les listes de produits avec types simplifiés

@@ -18,6 +18,7 @@ export type SkuWithImages = GetProductSkuReturn & {
 	images: Array<{
 		id: string;
 		url: string;
+		thumbnailUrl: string | null;
 		altText: string | null;
 		mediaType: MediaType;
 		isPrimary: boolean;
@@ -106,6 +107,7 @@ async function fetchSkuById(skuId: string): Promise<SkuWithImages | null> {
 					select: {
 						id: true,
 						url: true,
+						thumbnailUrl: true,
 						altText: true,
 						mediaType: true,
 						isPrimary: true,

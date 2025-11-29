@@ -7,11 +7,13 @@ import { useFieldContext } from "@/shared/lib/form-context";
 interface InputGroupFieldProps
 	extends React.InputHTMLAttributes<HTMLInputElement> {
 	children?: React.ReactNode; // Pour InputGroupAddon
+	required?: boolean;
 }
 
 export const InputGroupField = ({
 	disabled,
 	placeholder,
+	required,
 	type,
 	min,
 	max,
@@ -96,6 +98,7 @@ export const InputGroupField = ({
 							? `${field.name}-error`
 							: undefined
 					}
+					aria-required={required}
 					{...props}
 				/>
 				{children}

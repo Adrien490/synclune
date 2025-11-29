@@ -123,6 +123,8 @@ function StockNotificationRow({
 							alt={sku.product.title}
 							width={40}
 							height={40}
+							sizes="40px"
+							quality={80}
 							className="rounded-md object-cover"
 						/>
 					) : (

@@ -1,7 +1,7 @@
-import { FALLBACK_PRODUCT_IMAGE } from "@/shared/constants/product-fallback-image";
+import { FALLBACK_PRODUCT_IMAGE } from "@/modules/medias/constants/product-fallback-image";
 import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductMedia } from "@/shared/types/product";
+import type { ProductMedia } from "@/modules/medias/types/product-media.types";
 
 interface BuildGalleryOptions {
 	product: GetProductReturn;
@@ -47,6 +47,7 @@ export function buildGallery({
 	const gallery: Array<{
 		id: string;
 		url: string;
+		thumbnailUrl?: string | null;
 		alt: string;
 		mediaType: "IMAGE" | "VIDEO";
 		source: "default" | "selected" | "sku";
@@ -59,6 +60,7 @@ export function buildGallery({
 			gallery.push({
 				id: skuImage.id,
 				url: skuImage.url,
+				thumbnailUrl: skuImage.thumbnailUrl,
 				alt:
 					skuImage.altText ||
 					`${product.title} - ${
@@ -81,6 +83,7 @@ export function buildGallery({
 				gallery.push({
 					id: skuImage.id,
 					url: skuImage.url,
+					thumbnailUrl: skuImage.thumbnailUrl,
 					alt:
 						skuImage.altText ||
 						`${product.title} - ${
@@ -110,6 +113,7 @@ export function buildGallery({
 						gallery.push({
 							id: skuImage.id,
 							url: skuImage.url,
+							thumbnailUrl: skuImage.thumbnailUrl,
 							alt:
 								skuImage.altText ||
 								`${product.title} - ${
@@ -140,6 +144,7 @@ export function buildGallery({
 		return {
 			id: img.id,
 			url: img.url,
+			thumbnailUrl: img.thumbnailUrl,
 			alt: img.alt,
 			mediaType: img.mediaType,
 			source: img.source,

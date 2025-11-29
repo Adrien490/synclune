@@ -5,7 +5,7 @@ import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import { BUSINESS_INFO, SEO_DEFAULTS, SITE_URL } from "@/shared/constants/seo-config";
 import { crimsonPro, inter, jetBrainsMono } from "@/shared/styles/fonts";
-import { UploadThingSSR } from "@/shared/lib/uploadthing/uploadthing-ssr";
+import { UploadThingSSR } from "@/modules/medias/lib/uploadthing/uploadthing-ssr";
 import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
