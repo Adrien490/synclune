@@ -59,28 +59,6 @@ export default function ProductLightbox({
 					filter: "none",
 					color: "white",
 				},
-				navigationPrev: {
-					color: "white",
-					background: "rgba(255, 255, 255, 0.1)",
-					borderRadius: "50%",
-					width: 48,
-					height: 48,
-					margin: 16,
-					backdropFilter: "blur(8px)",
-					border: "1px solid rgba(255, 255, 255, 0.2)",
-					transition: "all 0.2s ease",
-				},
-				navigationNext: {
-					color: "white",
-					background: "rgba(255, 255, 255, 0.1)",
-					borderRadius: "50%",
-					width: 48,
-					height: 48,
-					margin: 16,
-					backdropFilter: "blur(8px)",
-					border: "1px solid rgba(255, 255, 255, 0.2)",
-					transition: "all 0.2s ease",
-				},
 			}}
 			className="synclune-lightbox"
 		/>

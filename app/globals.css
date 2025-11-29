@@ -527,29 +527,6 @@
    ============================================ */
 
 .synclune-lightbox {
-	/* Boutons de fermeture et navigation */
-	& .yarl__button {
-		transition: all 0.2s ease;
-	}
-
-	& .yarl__button:hover {
-		background: rgba(255, 255, 255, 0.2) !important;
-		transform: scale(1.05);
-	}
-
-	& .yarl__button:active {
-		transform: scale(0.95);
-	}
-
-	/* Bouton de fermeture */
-	& .yarl__button--close {
-		background: rgba(255, 255, 255, 0.1);
-		border-radius: 50%;
-		backdrop-filter: blur(8px);
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		margin: 16px;
-	}
-
 	/* Compteur d'images stylisé */
 	& .yarl__counter {
 		font-family: var(--font-geist-sans), system-ui, sans-serif;
