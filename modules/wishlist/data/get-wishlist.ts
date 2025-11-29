@@ -94,12 +94,31 @@ export async function fetchWishlist(
 			take,
 		});
 
-		const wishlist = await prisma.wishlist.findUnique({
-			where: { userId },
-			select: { id: true },
-		});
+		// Filtres communs pour les requêtes wishlistItem
+		const itemWhereClause = {
+			wishlist: { userId },
+			sku: {
+				isActive: true,
+				product: {
+					status: "PUBLIC" as const,
+				},
+			},
+		};
 
-		if (!wishlist) {
+		// Exécuter count et findMany en parallèle (2 requêtes au lieu de 3)
+		const [totalCount, items] = await Promise.all([
+			prisma.wishlistItem.count({
+				where: itemWhereClause,
+			}),
+			prisma.wishlistItem.findMany({
+				where: itemWhereClause,
+				select: GET_WISHLIST_ITEM_SELECT,
+				orderBy: GET_WISHLIST_SELECT.items.orderBy,
+				...cursorConfig,
+			}),
+		]);
+
+		if (totalCount === 0) {
 			return {
 				items: [],
 				pagination: {
@@ -111,33 +130,6 @@ export async function fetchWishlist(
 				totalCount: 0,
 			};
 		}
-
-		const totalCount = await prisma.wishlistItem.count({
-			where: {
-				wishlistId: wishlist.id,
-				sku: {
-					isActive: true,
-					product: {
-						status: "PUBLIC",
-					},
-				},
-			},
-		});
-
-		const items = await prisma.wishlistItem.findMany({
-			where: {
-				wishlistId: wishlist.id,
-				sku: {
-					isActive: true,
-					product: {
-						status: "PUBLIC",
-					},
-				},
-			},
-			select: GET_WISHLIST_ITEM_SELECT,
-			orderBy: GET_WISHLIST_SELECT.items.orderBy,
-			...cursorConfig,
-		});
 
 		const { items: paginatedItems, pagination } = processCursorResults(
 			items,

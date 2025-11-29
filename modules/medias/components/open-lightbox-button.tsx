@@ -7,16 +7,20 @@ import ProductLightbox from "./product-lightbox";
 interface OpenLightboxButtonProps {
 	slides: Slide[];
 	index: number;
+	/** Callback pour synchroniser l'index de la galerie avec la lightbox */
+	onIndexChange?: (index: number) => void;
 	children: (props: { openLightbox: () => void }) => ReactNode;
 }
 
 /**
  * Composant qui gère l'état d'ouverture de la lightbox
  * Utilise un render prop pattern pour permettre au parent de déclencher l'ouverture
+ * Synchronise la navigation lightbox avec le parent via onIndexChange
  */
 export function OpenLightboxButton({
 	slides,
 	index,
+	onIndexChange,
 	children,
 }: OpenLightboxButtonProps) {
 	const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -39,6 +43,7 @@ export function OpenLightboxButton({
 					close={closeLightbox}
 					slides={slides}
 					index={index}
+					onIndexChange={onIndexChange}
 				/>
 			)}
 		</>

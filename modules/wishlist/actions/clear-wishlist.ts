@@ -123,10 +123,10 @@ export async function clearWishlist(
 			},
 		}
 	} catch (e) {
-		// console.error('[CLEAR_WISHLIST] Error:', e)
+		console.error('[CLEAR_WISHLIST] Error:', e);
 		return {
 			status: ActionStatus.ERROR,
-			message: e instanceof Error ? e.message : 'Une erreur est survenue',
+			message: "Une erreur est survenue. Veuillez réessayer.",
 		}
 	}
 }

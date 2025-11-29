@@ -1,6 +1,20 @@
 import { Prisma } from "@/app/generated/prisma/client";
 
 // ============================================================================
+// STOCK THRESHOLD CONSTANTS
+// ============================================================================
+
+/**
+ * Seuil de stock bas - un SKU est considéré en "low stock"
+ * quand son inventaire est strictement inférieur à ce seuil.
+ *
+ * Utilisé pour :
+ * - Affichage d'alertes sur la boutique
+ * - Alertes stock dans le dashboard admin
+ */
+export const LOW_STOCK_THRESHOLD = 3;
+
+// ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
 

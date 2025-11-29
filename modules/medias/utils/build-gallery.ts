@@ -54,24 +54,39 @@ export function buildGallery({
 		skuId?: string;
 	}> = [];
 
+	// Set pour déduplication O(1) au lieu de O(n) avec array.find
+	const seenUrls = new Set<string>();
+
+	// Helper pour ajouter une image unique
+	const addUniqueImage = (
+		skuImage: { id: string; url: string; thumbnailUrl?: string | null; altText?: string | null; mediaType: "IMAGE" | "VIDEO" },
+		alt: string,
+		source: "default" | "selected" | "sku",
+		skuId: string
+	): boolean => {
+		if (seenUrls.has(skuImage.url)) return false;
+		seenUrls.add(skuImage.url);
+		gallery.push({
+			id: skuImage.id,
+			url: skuImage.url,
+			thumbnailUrl: skuImage.thumbnailUrl,
+			alt: skuImage.altText || alt,
+			mediaType: skuImage.mediaType,
+			source,
+			skuId,
+		});
+		return true;
+	};
+
 	// Priorité 1: Images du SKU sélectionné
 	if (selectedSku?.images) {
 		for (const skuImage of selectedSku.images) {
-			gallery.push({
-				id: skuImage.id,
-				url: skuImage.url,
-				thumbnailUrl: skuImage.thumbnailUrl,
-				alt:
-					skuImage.altText ||
-					`${product.title} - ${
-						selectedSku.material ||
-						selectedSku.color?.name ||
-						"Variante sélectionnée"
-					}`,
-				mediaType: skuImage.mediaType,
-				source: "selected",
-				skuId: selectedSku.id,
-			});
+			addUniqueImage(
+				skuImage,
+				`${product.title} - ${selectedSku.material || selectedSku.color?.name || "Variante sélectionnée"}`,
+				"selected",
+				selectedSku.id
+			);
 		}
 	}
 
@@ -79,23 +94,12 @@ export function buildGallery({
 	const defaultSku = product.skus[0];
 	if (defaultSku && defaultSku.id !== selectedSku?.id && defaultSku.images) {
 		for (const skuImage of defaultSku.images) {
-			if (!gallery.find((img) => img.url === skuImage.url)) {
-				gallery.push({
-					id: skuImage.id,
-					url: skuImage.url,
-					thumbnailUrl: skuImage.thumbnailUrl,
-					alt:
-						skuImage.altText ||
-						`${product.title} - ${
-							defaultSku.material ||
-							defaultSku.color?.name ||
-							"Image principale"
-						}`,
-					mediaType: skuImage.mediaType,
-					source: "default",
-					skuId: defaultSku.id,
-				});
-			}
+			addUniqueImage(
+				skuImage,
+				`${product.title} - ${defaultSku.material || defaultSku.color?.name || "Image principale"}`,
+				"default",
+				defaultSku.id
+			);
 		}
 	}
 
@@ -103,27 +107,17 @@ export function buildGallery({
 	if (gallery.length < 5 && product.skus) {
 		for (const sku of product.skus.filter((s) => s.isActive)) {
 			if (sku.id === selectedSku?.id || sku.id === defaultSku?.id) continue;
+			if (gallery.length >= 10) break;
 
 			if (sku.images) {
 				for (const skuImage of sku.images) {
-					if (
-						!gallery.find((img) => img.url === skuImage.url) &&
-						gallery.length < 10
-					) {
-						gallery.push({
-							id: skuImage.id,
-							url: skuImage.url,
-							thumbnailUrl: skuImage.thumbnailUrl,
-							alt:
-								skuImage.altText ||
-								`${product.title} - ${
-									sku.material || sku.color?.name || "Variante"
-								}`,
-							mediaType: skuImage.mediaType,
-							source: "sku",
-							skuId: sku.id,
-						});
-					}
+					if (gallery.length >= 10) break;
+					addUniqueImage(
+						skuImage,
+						`${product.title} - ${sku.material || sku.color?.name || "Variante"}`,
+						"sku",
+						sku.id
+					);
 				}
 			}
 		}

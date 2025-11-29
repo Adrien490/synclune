@@ -13,13 +13,11 @@ import { cn } from "@/shared/utils/cn";
 import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useRef } from "react";
-import { ViewTransition } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { buildGallery } from "@/modules/medias/utils/build-gallery";
-import { MediaErrorFallback } from "@/modules/medias/components/media-error-fallback";
-import { MediaTypeBadge } from "@/modules/medias/components/media-type-badge";
+import { GalleryErrorBoundary } from "@/modules/medias/components/gallery-error-boundary";
+import { MediaRenderer } from "@/modules/medias/components/media-renderer";
 import { useGalleryKeyboard } from "@/modules/medias/hooks/use-gallery-keyboard";
 import { useGalleryNavigation } from "@/modules/medias/hooks/use-gallery-navigation";
 import { useGallerySwipe } from "@/modules/medias/hooks/use-gallery-swipe";
@@ -27,20 +25,42 @@ import { useMediaErrors } from "@/modules/medias/hooks/use-media-errors";
 
 import type { ProductMedia } from "@/modules/medias/types/product-media.types";
 import { GalleryThumbnail } from "@/modules/medias/components/gallery-thumbnail";
-import { PRODUCT_TEXTS } from "@/shared/constants/product";
 
 // Constantes pour l'optimisation des images
 const IMAGE_SIZES = [16, 32, 48, 64, 96, 128, 256, 384] as const;
 const DEVICE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048, 3840] as const;
 const MAX_IMAGE_SIZE = 3840;
-const MAIN_IMAGE_QUALITY = 95;
+const LIGHTBOX_QUALITY = 95;
+
+// Fonction stable pour générer les URLs Next.js optimisées (extraite pour éviter recréation)
+function nextImageUrl(src: string, size: number) {
+	return `/_next/image?url=${encodeURIComponent(src)}&w=${size}&q=${LIGHTBOX_QUALITY}`;
+}
 
 interface ProductGalleryProps {
 	product: GetProductReturn;
 	title: string;
 }
 
-export function ProductGallery({ product, title }: ProductGalleryProps) {
+/**
+ * Galerie produit avec Error Boundary
+ * Wrapper qui capture les erreurs et affiche un fallback gracieux
+ */
+export function ProductGallery(props: ProductGalleryProps) {
+	return (
+		<GalleryErrorBoundary>
+			<ProductGalleryContent {...props} />
+		</GalleryErrorBoundary>
+	);
+}
+
+/**
+ * Contenu interne de la galerie produit
+ * - Support images et vidéos
+ * - Navigation clavier, swipe mobile, lightbox
+ * - Synchronisation URL
+ */
+function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 	const galleryRef = useRef<HTMLDivElement>(null);
 	const searchParams = useSearchParams();
 
@@ -63,10 +83,6 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 	// Génère les URLs Next.js optimisées pour les images
 	// Utilise le format vidéo natif pour les vidéos
 	const lightboxSlides: Slide[] = useMemo(() => {
-		function nextImageUrl(src: string, size: number) {
-			return `/_next/image?url=${encodeURIComponent(src)}&w=${size}&q=75`;
-		}
-
 		return safeImages.map((media) => {
 			if (media.mediaType === "VIDEO") {
 				return {
@@ -125,8 +141,33 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 		onNavigate: navigateToIndex,
 	});
 
-	// Hook: Gestion erreurs média
-	const { handleMediaError, hasError } = useMediaErrors();
+	// Hook: Gestion erreurs média avec retry
+	const { handleMediaError, hasError, retryMedia } = useMediaErrors();
+
+	// Handlers mémorisés pour les boutons navigation (évite re-renders)
+	const handlePrev = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+			navigatePrev();
+		},
+		[navigatePrev]
+	);
+
+	const handleNext = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+			navigateNext();
+		},
+		[navigateNext]
+	);
+
+	// Sync lightbox navigation avec URL galerie
+	const handleLightboxIndexChange = useCallback(
+		(index: number) => {
+			navigateToIndex(index);
+		},
+		[navigateToIndex]
+	);
 
 	// Cas limite : aucune image (ne devrait pas arriver grâce à buildGallery())
 	if (!safeImages.length) {
@@ -149,9 +190,15 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 	}
 
 	const current = safeImages[optimisticIndex];
+	// Type guard: current devrait toujours exister grâce aux guards précédentes
+	if (!current) return null;
 
 	return (
-		<OpenLightboxButton slides={lightboxSlides} index={optimisticIndex}>
+		<OpenLightboxButton
+			slides={lightboxSlides}
+			index={optimisticIndex}
+			onIndexChange={handleLightboxIndexChange}
+		>
 			{({ openLightbox }) => (
 				<div
 					className="product-gallery w-full"
@@ -255,61 +302,18 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 										x: { duration: isSwiping ? 0 : 0.3, ease: "easeOut" }
 									}}
 									className="absolute inset-0"
+									style={{ willChange: isSwiping ? "transform" : "auto" }}
 								>
-									{current.mediaType === "VIDEO" ? (
-										<div className="relative w-full h-full">
-											{hasError(current.id) ? (
-												<MediaErrorFallback type="video" />
-											) : (
-												<>
-													<video
-														key={current.id}
-														className="w-full h-full object-cover"
-														autoPlay
-														muted
-														loop
-														playsInline
-														controls
-														preload="auto"
-														poster={current.thumbnailUrl || undefined}
-														aria-label={current.alt || `${title} - Vidéo ${optimisticIndex + 1}`}
-														onError={() => handleMediaError(current.id)}
-													>
-														<source src={current.url} type={getVideoMimeType(current.url)} />
-													</video>
-													<div className="absolute top-4 right-4 pointer-events-none z-10">
-														<MediaTypeBadge type="VIDEO" size="lg" />
-													</div>
-												</>
-											)}
-										</div>
-									) : hasError(current.id) ? (
-										<MediaErrorFallback type="image" />
-									) : optimisticIndex === 0 ? (
-										<ViewTransition name={`product-image-${product.slug}`}>
-											<Image
-												src={current.url}
-												alt={current.alt || PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, optimisticIndex + 1)}
-												fill
-												className="object-cover"
-												priority={optimisticIndex <= 1}
-												quality={MAIN_IMAGE_QUALITY}
-												sizes="(max-width: 768px) 100vw, 60vw"
-												onError={() => handleMediaError(current.id)}
-											/>
-										</ViewTransition>
-									) : (
-										<Image
-											src={current.url}
-											alt={current.alt || PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, optimisticIndex + 1)}
-											fill
-											className="object-cover"
-											priority={optimisticIndex <= 1}
-											quality={MAIN_IMAGE_QUALITY}
-											sizes="(max-width: 768px) 100vw, 60vw"
-											onError={() => handleMediaError(current.id)}
-										/>
-									)}
+									<MediaRenderer
+										media={current}
+										productSlug={product.slug}
+										title={title}
+										index={optimisticIndex}
+										isFirst={optimisticIndex === 0}
+										hasError={hasError(current.id)}
+										onError={() => handleMediaError(current.id)}
+										onRetry={() => retryMedia(current.id)}
+									/>
 								</motion.div>
 							</AnimatePresence>
 
@@ -326,10 +330,7 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 											"w-11 h-11 sm:w-10 sm:h-10 p-0",
 											"hover:scale-105 active:scale-95"
 										)}
-										onClick={(e) => {
-											e.stopPropagation();
-											navigatePrev();
-										}}
+										onClick={handlePrev}
 										aria-label="Image précédente"
 									>
 										<ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -345,10 +346,7 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 											"w-11 h-11 sm:w-10 sm:h-10 p-0",
 											"hover:scale-105 active:scale-95"
 										)}
-										onClick={(e) => {
-											e.stopPropagation();
-											navigateNext();
-										}}
+										onClick={handleNext}
 										aria-label="Image suivante"
 									>
 										<ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />

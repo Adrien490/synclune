@@ -1,4 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 
@@ -27,7 +28,7 @@ export type GetDashboardStockAlertsReturn = GetStockAlertsReturn;
 
 /**
  * Action serveur pour récupérer les 10 alertes stock
- * Ruptures (inventory = 0) + faible stock (inventory <= 5)
+ * Ruptures (inventory = 0) + faible stock (inventory < LOW_STOCK_THRESHOLD)
  */
 export async function getStockAlerts(): Promise<GetStockAlertsReturn> {
 	const admin = await isAdmin();
@@ -47,13 +48,11 @@ export async function fetchDashboardStockAlerts(): Promise<GetStockAlertsReturn>
 
 	cacheDashboard();
 
-	const LOW_STOCK_THRESHOLD = 5;
-
 	const skus = await prisma.productSku.findMany({
 		where: {
 			isActive: true,
 			inventory: {
-				lte: LOW_STOCK_THRESHOLD,
+				lt: LOW_STOCK_THRESHOLD,
 			},
 		},
 		take: 10,

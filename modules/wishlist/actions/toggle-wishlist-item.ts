@@ -191,10 +191,10 @@ export async function toggleWishlistItem(
 			},
 		}
 	} catch (e) {
-		// console.error('[TOGGLE_WISHLIST_ITEM] Error:', e)
+		console.error('[TOGGLE_WISHLIST_ITEM] Error:', e);
 		return {
 			status: ActionStatus.ERROR,
-			message: e instanceof Error ? e.message : 'Une erreur est survenue',
+			message: "Une erreur est survenue. Veuillez réessayer.",
 		}
 	}
 }

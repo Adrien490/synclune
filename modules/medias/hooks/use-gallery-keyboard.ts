@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 
 interface UseGalleryKeyboardOptions {
 	galleryRef: RefObject<HTMLElement | null>;
@@ -24,26 +24,48 @@ export function useGalleryKeyboard({
 	onNavigate,
 	enabled = true,
 }: UseGalleryKeyboardOptions): void {
+	// Refs pour éviter re-registration du listener à chaque navigation
+	const currentIndexRef = useRef(currentIndex);
+	const totalImagesRef = useRef(totalImages);
+	const onNavigateRef = useRef(onNavigate);
+
+	// Synchroniser les refs avec les props
+	useEffect(() => {
+		currentIndexRef.current = currentIndex;
+	}, [currentIndex]);
+
+	useEffect(() => {
+		totalImagesRef.current = totalImages;
+	}, [totalImages]);
+
+	useEffect(() => {
+		onNavigateRef.current = onNavigate;
+	}, [onNavigate]);
+
 	useEffect(() => {
 		if (!enabled || totalImages === 0) return;
 
 		const handleKeyDown = (event: KeyboardEvent) => {
+			const idx = currentIndexRef.current;
+			const total = totalImagesRef.current;
+			const navigate = onNavigateRef.current;
+
 			switch (event.key) {
 				case "ArrowLeft":
 					event.preventDefault();
-					onNavigate(currentIndex === 0 ? totalImages - 1 : currentIndex - 1);
+					navigate(idx === 0 ? total - 1 : idx - 1);
 					break;
 				case "ArrowRight":
 					event.preventDefault();
-					onNavigate(currentIndex === totalImages - 1 ? 0 : currentIndex + 1);
+					navigate(idx === total - 1 ? 0 : idx + 1);
 					break;
 				case "Home":
 					event.preventDefault();
-					onNavigate(0);
+					navigate(0);
 					break;
 				case "End":
 					event.preventDefault();
-					onNavigate(totalImages - 1);
+					navigate(total - 1);
 					break;
 			}
 		};
@@ -55,5 +77,5 @@ export function useGalleryKeyboard({
 				galleryElement.removeEventListener("keydown", handleKeyDown);
 			};
 		}
-	}, [enabled, currentIndex, totalImages, onNavigate, galleryRef]);
+	}, [enabled, galleryRef, totalImages]);
 }

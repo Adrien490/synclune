@@ -1,6 +1,6 @@
 import { Badge } from "@/shared/components/ui/badge";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-// import { WishlistButtonCompact } from "@/domains/wishlist-item/features/add-to-wishlist/components/wishlist-button-compact";
+import { WishlistButtonCompact } from "@/modules/wishlist/components";
 import { Crown, Heart } from "lucide-react";
 import Link from "next/link";
 import { ViewTransition } from "react";
@@ -28,8 +28,8 @@ export function ProductInfo({
 }: ProductInfoProps) {
 	return (
 		<div className="space-y-4">
-			{/* Titre (wishlist button désactivé temporairement) */}
-			{/* {selectedSkuId && (
+			{/* Titre avec bouton wishlist */}
+			{selectedSkuId ? (
 				<div className="flex items-start justify-between gap-3">
 					<h1
 						className="text-3xl/10 sm:text-4xl/10 font-bold tracking-tight text-foreground flex-1"
@@ -42,9 +42,7 @@ export function ProductInfo({
 						isInWishlist={isInWishlist ?? false}
 					/>
 				</div>
-			)} */}
-
-			{/* {!selectedSkuId && ( */}
+			) : (
 				<ViewTransition name={`product-title-${product.slug}`}>
 					<h1
 						className="text-3xl/10 sm:text-4xl/10 font-bold tracking-tight text-foreground"
@@ -53,7 +51,7 @@ export function ProductInfo({
 						{product.title}
 					</h1>
 				</ViewTransition>
-			{/* )} */}
+			)}
 
 			{/* Labels et badges */}
 			<div className="flex flex-wrap items-center gap-2">

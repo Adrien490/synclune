@@ -13,11 +13,11 @@ export const getWishlistSchema = z.object({
 	direction: z.enum(["forward", "backward"]).optional().default("forward"),
 	perPage: z.coerce
 		.number()
-		.int({ message: "PerPage must be an integer" })
-		.min(1, { message: "PerPage must be at least 1" })
+		.int({ message: "Le nombre par page doit être un entier" })
+		.min(1, { message: "Le nombre par page doit être au minimum 1" })
 		.max(
 			GET_WISHLIST_MAX_RESULTS_PER_PAGE,
-			`PerPage cannot exceed ${GET_WISHLIST_MAX_RESULTS_PER_PAGE}`
+			{ message: `Le nombre par page ne peut pas dépasser ${GET_WISHLIST_MAX_RESULTS_PER_PAGE}` }
 		)
 		.default(GET_WISHLIST_DEFAULT_PER_PAGE),
 });

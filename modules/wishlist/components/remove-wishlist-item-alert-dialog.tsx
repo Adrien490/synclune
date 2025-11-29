@@ -21,7 +21,6 @@ interface RemoveWishlistItemData {
 	skuId: string;
 	itemId: string;
 	itemName: string;
-	[key: string]: unknown;
 }
 
 /**

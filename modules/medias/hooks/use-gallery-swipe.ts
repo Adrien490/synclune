@@ -37,11 +37,17 @@ export function useGallerySwipe({
 	currentIndex = 0,
 }: UseGallerySwipeOptions): UseGallerySwipeReturn {
 	const touchStartRef = useRef<number | null>(null);
+	// Ref pour éviter stale closure dans onTouchEnd
+	const swipeOffsetRef = useRef(0);
 	const [swipeOffset, setSwipeOffset] = useState(0);
 	const [isSwiping, setIsSwiping] = useState(false);
 
 	const onTouchStart = useCallback((e: React.TouchEvent) => {
-		touchStartRef.current = e.targetTouches[0].clientX;
+		// Guard: vérifier que le touch existe (multi-touch protection)
+		const touch = e.targetTouches[0];
+		if (!touch) return;
+
+		touchStartRef.current = touch.clientX;
 		setIsSwiping(true);
 	}, []);
 
@@ -49,7 +55,11 @@ export function useGallerySwipe({
 		(e: React.TouchEvent) => {
 			if (touchStartRef.current === null) return;
 
-			const currentX = e.targetTouches[0].clientX;
+			// Guard: vérifier que le touch existe
+			const touch = e.targetTouches[0];
+			if (!touch) return;
+
+			const currentX = touch.clientX;
 			let offset = currentX - touchStartRef.current;
 
 			// Résistance élastique aux bords (premier/dernier)
@@ -62,6 +72,8 @@ export function useGallerySwipe({
 				offset = offset / 3;
 			}
 
+			// Mettre à jour ref ET state
+			swipeOffsetRef.current = offset;
 			setSwipeOffset(offset);
 		},
 		[currentIndex, totalImages]
@@ -71,10 +83,12 @@ export function useGallerySwipe({
 		if (touchStartRef.current === null) {
 			setIsSwiping(false);
 			setSwipeOffset(0);
+			swipeOffsetRef.current = 0;
 			return;
 		}
 
-		const distance = -swipeOffset; // Inverser pour la direction
+		// Utiliser ref pour éviter stale closure
+		const distance = -swipeOffsetRef.current;
 		const isLeftSwipe = distance > minSwipeDistance;
 		const isRightSwipe = distance < -minSwipeDistance;
 
@@ -86,9 +100,10 @@ export function useGallerySwipe({
 
 		// Reset
 		touchStartRef.current = null;
+		swipeOffsetRef.current = 0;
 		setSwipeOffset(0);
 		setIsSwiping(false);
-	}, [minSwipeDistance, onSwipeLeft, onSwipeRight, swipeOffset]);
+	}, [minSwipeDistance, onSwipeLeft, onSwipeRight]);
 
 	return {
 		onTouchStart,

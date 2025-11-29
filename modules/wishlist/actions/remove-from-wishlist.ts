@@ -79,7 +79,20 @@ export async function removeFromWishlist(
 			}
 		}
 
-		// 5. Récupérer la wishlist de l'utilisateur
+		// 5. Valider le SKU (existence)
+		const sku = await prisma.productSku.findUnique({
+			where: { id: validatedData.skuId },
+			select: { id: true },
+		})
+
+		if (!sku) {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: 'Produit introuvable',
+			}
+		}
+
+		// 6. Récupérer la wishlist de l'utilisateur
 		const wishlist = await prisma.wishlist.findUnique({
 			where: { userId },
 			select: { id: true },
@@ -92,7 +105,7 @@ export async function removeFromWishlist(
 			}
 		}
 
-		// 7. Supprimer l'item de la wishlist et mettre à jour le timestamp
+		// 8. Supprimer l'item de la wishlist et mettre à jour le timestamp
 		const deleteResult = await prisma.$transaction(async (tx) => {
 			const result = await tx.wishlistItem.deleteMany({
 				where: {
@@ -112,11 +125,11 @@ export async function removeFromWishlist(
 			return result
 		})
 
-		// 8. Invalidation cache immédiate (read-your-own-writes)
+		// 9. Invalidation cache immédiate (read-your-own-writes)
 		const tags = getWishlistInvalidationTags(userId, undefined, wishlist.id)
 		tags.forEach(tag => updateTag(tag))
 
-		// 9. Revalidation complète pour mise à jour du header (badge count)
+		// 10. Revalidation complète pour mise à jour du header (badge count)
 		revalidatePath('/', 'layout')
 
 		return {
@@ -128,10 +141,10 @@ export async function removeFromWishlist(
 			},
 		}
 	} catch (e) {
-		// console.error('[REMOVE_FROM_WISHLIST] Error:', e)
+		console.error('[REMOVE_FROM_WISHLIST] Error:', e);
 		return {
 			status: ActionStatus.ERROR,
-			message: e instanceof Error ? e.message : 'Une erreur est survenue',
+			message: "Une erreur est survenue. Veuillez réessayer.",
 		}
 	}
 }

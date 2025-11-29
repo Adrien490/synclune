@@ -7,6 +7,7 @@ import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
 import { PRODUCT_TEXTS } from "@/shared/constants/product";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
+import { memo } from "react";
 
 // Constantes pour l'optimisation
 const THUMBNAIL_IMAGE_QUALITY = 85;
@@ -26,8 +27,9 @@ interface GalleryThumbnailProps {
 /**
  * Composant thumbnail réutilisable pour la galerie produit
  * Gère les images et vidéos avec fallback d'erreur
+ * Mémorisé pour éviter les re-renders inutiles
  */
-export function GalleryThumbnail({
+function GalleryThumbnailComponent({
 	media,
 	index,
 	isActive,
@@ -119,3 +121,6 @@ function ThumbnailVideoContent({
 		</div>
 	);
 }
+
+// Export mémorisé pour éviter re-renders inutiles lors de la navigation
+export const GalleryThumbnail = memo(GalleryThumbnailComponent);

@@ -26,7 +26,7 @@ export function VideoPlayBadge({ size = "sm", className }: VideoPlayBadgeProps) 
 				className
 			)}
 		>
-			<div className={cn("bg-blue-600 rounded-full shadow-lg", sizeClasses[size])}>
+			<div className={cn("bg-primary rounded-full shadow-lg", sizeClasses[size])}>
 				<svg
 					className={cn("text-white", iconSizes[size])}
 					fill="currentColor"

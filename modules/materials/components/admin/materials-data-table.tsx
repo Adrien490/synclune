@@ -15,8 +15,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
-import { Badge } from "@/shared/components/ui/badge";
 import type { GetMaterialsReturn } from "@/modules/materials/data/get-materials";
+import { MaterialActiveToggle } from "@/modules/materials/components/admin/material-active-toggle";
 import { Gem } from "lucide-react";
 import { use, ViewTransition } from "react";
 import { MaterialsRowActions } from "@/modules/materials/components/materials-row-actions";
@@ -130,9 +130,10 @@ export function MaterialsDataTable({ materialsPromise }: MaterialsDataTableProps
 											role="gridcell"
 											className="hidden sm:table-cell text-center"
 										>
-											<Badge variant={material.isActive ? "default" : "secondary"}>
-												{material.isActive ? "Actif" : "Inactif"}
-											</Badge>
+											<MaterialActiveToggle
+												materialId={material.id}
+												isActive={material.isActive}
+											/>
 										</TableCell>
 										<TableCell
 											role="gridcell"

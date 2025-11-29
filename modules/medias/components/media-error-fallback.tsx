@@ -1,15 +1,22 @@
+import { Button } from "@/shared/components/ui/button";
+import { RotateCcw } from "lucide-react";
+
 interface MediaErrorFallbackProps {
 	type: "image" | "video";
 	size?: "default" | "small";
+	/** Callback pour réessayer le chargement du média */
+	onRetry?: () => void;
 }
 
 /**
  * Composant d'affichage d'erreur pour les médias (images/vidéos)
  * Utilisé quand un média échoue au chargement
+ * Supporte un bouton de retry optionnel
  */
 export function MediaErrorFallback({
 	type,
 	size = "default",
+	onRetry,
 }: MediaErrorFallbackProps) {
 	const isSmall = size === "small";
 
@@ -26,9 +33,23 @@ export function MediaErrorFallback({
 						: `Impossible de charger ${type === "video" ? "la vidéo" : "l'image"}`}
 				</p>
 				{!isSmall && (
-					<p className="text-xs text-muted-foreground">
-						Veuillez réessayer plus tard
-					</p>
+					<>
+						{onRetry ? (
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={onRetry}
+								className="text-xs gap-1.5"
+							>
+								<RotateCcw className="w-3 h-3" />
+								Réessayer
+							</Button>
+						) : (
+							<p className="text-xs text-muted-foreground">
+								Veuillez réessayer plus tard
+							</p>
+						)}
+					</>
 				)}
 			</div>
 		</div>

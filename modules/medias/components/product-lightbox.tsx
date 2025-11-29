@@ -14,6 +14,8 @@ interface ProductLightboxProps {
 	close: () => void;
 	slides: Slide[];
 	index: number;
+	/** Callback appelé quand l'utilisateur navigue dans la lightbox */
+	onIndexChange?: (index: number) => void;
 }
 
 /**
@@ -22,12 +24,14 @@ interface ProductLightboxProps {
  * - Counter plugin pour afficher la position
  * - Style premium personnalisé
  * - Navigation clavier (flèches, Esc)
+ * - Synchronisation d'index avec le parent via onIndexChange
  */
 export default function ProductLightbox({
 	open,
 	close,
 	slides,
 	index,
+	onIndexChange,
 }: ProductLightboxProps) {
 	return (
 		<Lightbox
@@ -35,6 +39,11 @@ export default function ProductLightbox({
 			close={close}
 			slides={slides}
 			index={index}
+			on={{
+				view: ({ index: newIndex }) => {
+					onIndexChange?.(newIndex);
+				},
+			}}
 			plugins={[Zoom, Counter, Video]}
 			zoom={{
 				maxZoomPixelRatio: 3,
