@@ -3,7 +3,6 @@
 import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
-import { getSession } from "@/shared/utils/get-session";
 import { sendCancelOrderConfirmationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -35,10 +34,6 @@ export async function cancelOrder(
 				message: "Accès non autorisé",
 			};
 		}
-
-		// Récupérer l'ID de l'admin pour l'audit trail
-		const session = await getSession();
-		const adminUserId = session?.user?.id;
 
 		const id = formData.get("id") as string;
 		const reason = formData.get("reason") as string | null;
@@ -111,32 +106,7 @@ export async function cancelOrder(
 				},
 			});
 
-			// 2. Enregistrer l'historique des changements de statut (audit trail)
-			await tx.orderStatusHistory.create({
-				data: {
-					orderId: id,
-					field: "status",
-					previousStatus: order.status,
-					newStatus: OrderStatus.CANCELLED,
-					changedBy: adminUserId,
-					reason: reason || "Annulation manuelle",
-				},
-			});
-
-			if (newPaymentStatus !== order.paymentStatus) {
-				await tx.orderStatusHistory.create({
-					data: {
-						orderId: id,
-						field: "paymentStatus",
-						previousStatus: order.paymentStatus,
-						newStatus: newPaymentStatus,
-						changedBy: adminUserId,
-						reason: "Changement suite à annulation",
-					},
-				});
-			}
-
-			// 3. Restaurer le stock uniquement si la commande était PENDING
+			// 2. Restaurer le stock uniquement si la commande était PENDING
 			if (shouldRestoreStock) {
 				for (const item of order.items) {
 					await tx.productSku.update({

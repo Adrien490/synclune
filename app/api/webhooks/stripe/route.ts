@@ -615,29 +615,6 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
 				}
 				console.log(`📦 [WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`);
 			}
-
-			// Audit trail
-			await tx.orderStatusHistory.create({
-				data: {
-					orderId,
-					field: "status",
-					previousStatus: order.status,
-					newStatus: "CANCELLED",
-					changedBy: "webhook:payment_intent.payment_failed",
-					reason: "Échec du paiement",
-				},
-			});
-
-			await tx.orderStatusHistory.create({
-				data: {
-					orderId,
-					field: "paymentStatus",
-					previousStatus: order.paymentStatus,
-					newStatus: "FAILED",
-					changedBy: "webhook:payment_intent.payment_failed",
-					reason: `PaymentIntent: ${paymentIntent.id}`,
-				},
-			});
 		});
 
 		// 4. Remboursement automatique SEULEMENT si de l'argent a été capturé
@@ -1072,18 +1049,6 @@ async function handleAsyncPaymentFailed(session: Stripe.Checkout.Session) {
 				orderNumber: true,
 				customerEmail: true,
 				customerName: true,
-			},
-		});
-
-		// Enregistrer dans l'historique des statuts
-		await prisma.orderStatusHistory.create({
-			data: {
-				orderId: order.id,
-				field: "paymentStatus",
-				previousStatus: "PENDING",
-				newStatus: "FAILED",
-				changedBy: "webhook:checkout.session.async_payment_failed",
-				reason: "Paiement asynchrone échoué (virement SEPA rejeté ou autre)",
 			},
 		});
 

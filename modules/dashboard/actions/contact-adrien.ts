@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import nodemailer from "nodemailer";

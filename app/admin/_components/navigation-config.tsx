@@ -11,6 +11,7 @@ import {
 	Mail,
 	Users,
 	Ticket,
+	Bell,
 } from "lucide-react";
 
 interface NavSubItem {
@@ -106,6 +107,11 @@ export const navigationData: NavigationData = {
 					title: "Codes promo",
 					url: "/admin/marketing/codes-promo",
 					icon: Ticket,
+				},
+				{
+					title: "Alertes stock",
+					url: "/admin/marketing/notifications-stock",
+					icon: Bell,
 				},
 			],
 		},

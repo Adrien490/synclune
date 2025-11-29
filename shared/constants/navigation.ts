@@ -1,4 +1,4 @@
-import type { Session } from "@/shared/lib/auth";
+import type { Session } from "@/modules/auth/lib/auth";
 
 /**
  * Constantes pour limiter les items affichés dans les menus

@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { prisma } from "@/shared/lib/prisma";
 import { sendPasswordChangedEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";

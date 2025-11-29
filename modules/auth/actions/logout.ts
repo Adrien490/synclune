@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { updateTag } from "next/cache";
 import { getSessionInvalidationTags } from "@/modules/users/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";

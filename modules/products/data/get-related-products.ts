@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 

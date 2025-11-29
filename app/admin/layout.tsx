@@ -3,7 +3,7 @@ import { BottomNavigation } from "@/app/admin/_components/bottom-navigation";
 import { DashboardHeader } from "@/app/admin/_components/dashboard-header";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { SelectionProvider } from "@/shared/contexts";
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { ContactAdrien } from "@/modules/dashboard/components/contact-adrien";
 import { getContactAdrienVisibility } from "@/modules/dashboard/data/get-contact-adrien-visibility";
 import type { Metadata } from "next";

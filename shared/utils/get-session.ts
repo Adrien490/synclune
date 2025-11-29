@@ -1,4 +1,4 @@
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { headers } from "next/headers";
 import { cacheLife, cacheTag } from "next/cache";
 import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";

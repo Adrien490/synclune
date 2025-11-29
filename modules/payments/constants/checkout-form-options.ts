@@ -1,5 +1,5 @@
 import type { GetUserAddressesReturn } from "@/modules/users/data/get-user-addresses";
-import type { Session } from "@/shared/lib/auth";
+import type { Session } from "@/modules/auth/lib/auth";
 
 /**
  * Génère les options du formulaire de checkout avec pré-remplissage dynamique

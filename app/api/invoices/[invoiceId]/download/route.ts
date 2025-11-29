@@ -1,4 +1,4 @@
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { prisma } from "@/shared/lib/prisma";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";

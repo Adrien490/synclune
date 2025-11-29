@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/aler
 import { Button } from "@/shared/components/ui/button";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import type { GetUserAddressesReturn } from "@/modules/users/data/get-user-addresses";
-import type { Session } from "@/shared/lib/auth";
+import type { Session } from "@/modules/auth/lib/auth";
 import { getFinalShippingCost } from "@/shared/constants/cart-shipping";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";

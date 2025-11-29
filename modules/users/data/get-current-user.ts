@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { cacheLife, cacheTag } from "next/cache";
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_CURRENT_USER_DEFAULT_SELECT } from "../constants/current-user.constants";

@@ -5,8 +5,7 @@ import {
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { prisma, logOrderStatusChange } from "@/shared/lib/prisma";
-import { getSession } from "@/shared/utils/get-session";
+import { prisma } from "@/shared/lib/prisma";
 import { sendDeliveryConfirmationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -39,10 +38,6 @@ export async function markAsDelivered(
 				message: "Accès non autorisé",
 			};
 		}
-
-		// Récupérer l'ID de l'admin pour l'audit trail
-		const session = await getSession();
-		const adminUserId = session?.user?.id;
 
 		const id = formData.get("id") as string;
 		const sendEmail = formData.get("sendEmail") as string | null;
@@ -104,23 +99,6 @@ export async function markAsDelivered(
 				fulfillmentStatus: FulfillmentStatus.DELIVERED,
 				actualDelivery: deliveryDate,
 			},
-		});
-
-		// Enregistrer l'historique des changements de statut (audit trail)
-		await logOrderStatusChange({
-			orderId: id,
-			field: "status",
-			previousStatus: order.status,
-			newStatus: OrderStatus.DELIVERED,
-			changedBy: adminUserId,
-		});
-
-		await logOrderStatusChange({
-			orderId: id,
-			field: "fulfillmentStatus",
-			previousStatus: order.fulfillmentStatus,
-			newStatus: FulfillmentStatus.DELIVERED,
-			changedBy: adminUserId,
 		});
 
 		revalidatePath("/admin/ventes/commandes");

@@ -1,6 +1,6 @@
 "use client";
 
-import { FieldLabel, FormLayout, FormSection } from "@/shared/components/forms";
+import { FieldLabel, FormSection } from "@/shared/components/forms";
 import { ImageCounterBadge } from "@/modules/products/components/image-counter-badge";
 import { ImageGallery } from "@/modules/products/components/image-gallery";
 import { PrimaryImageUpload } from "@/modules/products/components/primary-image-upload";
@@ -13,7 +13,7 @@ import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/shared/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
-import { Euro, ImagePlus, Package, Upload } from "lucide-react";
+import { Euro, ImagePlus, Info, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -89,7 +89,6 @@ export function EditProductVariantForm({
 
 	return (
 		<>
-			{/* Zone d'annonce pour les lecteurs d'écran */}
 			<div
 				role="status"
 				aria-live="polite"
@@ -112,10 +111,8 @@ export function EditProductVariantForm({
 						void form.handleSubmit();
 					}}
 				>
-					{/* Champ caché pour le skuId */}
 					<input type="hidden" name="skuId" value={sku.id} />
 
-					{/* Champs cachés pour l'image principale */}
 					<form.Subscribe selector={(state) => [state.values.primaryImage]}>
 						{([primaryImage]) =>
 							primaryImage ? (
@@ -128,7 +125,6 @@ export function EditProductVariantForm({
 						}
 					</form.Subscribe>
 
-					{/* Champs cachés pour la galerie */}
 					<form.Subscribe selector={(state) => [state.values.galleryMedia]}>
 						{([galleryMedia]) =>
 							galleryMedia && galleryMedia.length > 0 ? (
@@ -141,18 +137,197 @@ export function EditProductVariantForm({
 						}
 					</form.Subscribe>
 
-					{/* Erreurs globales */}
 					<form.AppForm>
 						<form.FormErrorDisplay />
 					</form.AppForm>
 
-					{/* SECTIONS */}
-					<FormLayout cols={2}>
-						{/* Image principale */}
-						<FormSection
-							title="Média principal"
-							description="Image principale de cette variante"
-						>
+					{/* ═══════════════════════════════════════════════════════════════════════
+					    SECTION 1 : La variante (infos + prix + stock)
+					    ═══════════════════════════════════════════════════════════════════════ */}
+					<FormSection
+						title="La variante"
+						description="Caractéristiques, prix et disponibilité"
+					>
+						<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+							{/* Colonne gauche : Caractéristiques */}
+							<div className="space-y-4">
+								{/* Couleur */}
+								<form.AppField name="colorId">
+									{(field) => (
+										<div className="space-y-2">
+											<FieldLabel optional>Couleur</FieldLabel>
+											<field.SelectField
+												label=""
+												options={colors.map((color) => ({
+													value: color.id,
+													label: color.name,
+												}))}
+												renderOption={(option) => {
+													const color = colors.find((c) => c.id === option.value);
+													return (
+														<div className="flex items-center gap-2">
+															{color && (
+																<div
+																	className="w-4 h-4 rounded-full border border-border"
+																	style={{ backgroundColor: color.hex }}
+																/>
+															)}
+															<span>{option.label}</span>
+														</div>
+													);
+												}}
+												renderValue={(value) => {
+													const color = colors.find((c) => c.id === value);
+													return color ? (
+														<div className="flex items-center gap-2">
+															<div
+																className="w-4 h-4 rounded-full border border-border"
+																style={{ backgroundColor: color.hex }}
+															/>
+															<span>{color.name}</span>
+														</div>
+													) : (
+														<span className="text-muted-foreground">
+															Sélectionner une couleur
+														</span>
+													);
+												}}
+												placeholder="Sélectionner une couleur"
+											/>
+										</div>
+									)}
+								</form.AppField>
+
+								{/* Matériau + Taille */}
+								<div className="grid grid-cols-2 gap-4">
+									<form.AppField name="material">
+										{(field) => (
+											<div className="space-y-2">
+												<FieldLabel optional>Matériau</FieldLabel>
+												<field.InputGroupField placeholder="Ex: Or 18 carats..." />
+											</div>
+										)}
+									</form.AppField>
+
+									<form.AppField name="size">
+										{(field) => (
+											<div className="space-y-2">
+												<FieldLabel optional>Taille</FieldLabel>
+												<field.InputGroupField placeholder="Ex: 52, Ajustable..." />
+											</div>
+										)}
+									</form.AppField>
+								</div>
+
+								{/* Statut + Par défaut */}
+								<div className="grid grid-cols-2 gap-4">
+									<form.AppField name="isActive">
+										{(field) => (
+											<div className="space-y-2">
+												<FieldLabel required>Statut</FieldLabel>
+												<field.RadioGroupField
+													label=""
+													options={[
+														{ value: "true", label: "Actif" },
+														{ value: "false", label: "Inactif" },
+													]}
+												/>
+											</div>
+										)}
+									</form.AppField>
+
+									<form.AppField name="isDefault">
+										{(field) => (
+											<div className="space-y-2">
+												<FieldLabel optional>Par défaut</FieldLabel>
+												<field.CheckboxField label="Variante par défaut" />
+												<p className="text-xs text-muted-foreground">
+													Affichée en premier
+												</p>
+											</div>
+										)}
+									</form.AppField>
+								</div>
+							</div>
+
+							{/* Colonne droite : Prix et stock */}
+							<div className="space-y-4">
+								{/* Prix TTC */}
+								<form.AppField
+									name="priceInclTaxEuros"
+									validators={{
+										onChange: ({ value }: { value: number }) => {
+											if (!value || value <= 0) {
+												return "Le prix doit être supérieur à 0";
+											}
+										},
+									}}
+								>
+									{(field) => (
+										<div className="space-y-2">
+											<FieldLabel required>Prix TTC</FieldLabel>
+											<field.InputGroupField
+												type="number"
+												step="0.01"
+												required
+												placeholder="0.00"
+											>
+												<InputGroupAddon>
+													<Euro className="h-4 w-4" />
+												</InputGroupAddon>
+												<InputGroupAddon align="inline-end">
+													<InputGroupText className="text-xs text-muted-foreground">
+														TTC
+													</InputGroupText>
+												</InputGroupAddon>
+											</field.InputGroupField>
+										</div>
+									)}
+								</form.AppField>
+
+								{/* Prix comparé */}
+								<form.AppField
+									name="compareAtPriceEuros"
+									validators={{
+										onChangeListenTo: ["priceInclTaxEuros"],
+										onBlur: ({ value, fieldApi }) => {
+											if (!value) return undefined;
+											const price = fieldApi.form.getFieldValue("priceInclTaxEuros");
+											if (price && value < price) {
+												return "Le prix comparé doit être supérieur au prix de vente";
+											}
+										},
+									}}
+								>
+									{(field) => (
+										<div className="space-y-2">
+											<FieldLabel optional>Prix avant réduction</FieldLabel>
+											<field.InputGroupField
+												type="number"
+												step="0.01"
+												placeholder="0.00"
+											>
+												<InputGroupAddon>
+													<Euro className="h-4 w-4" />
+												</InputGroupAddon>
+											</field.InputGroupField>
+										</div>
+									)}
+								</form.AppField>
+
+							</div>
+						</div>
+					</FormSection>
+
+					{/* ═══════════════════════════════════════════════════════════════════════
+					    SECTION 2 : Visuels (pleine largeur)
+					    ═══════════════════════════════════════════════════════════════════════ */}
+					<FormSection
+						title="Visuels"
+						description="Image principale et galerie de médias"
+					>
+						<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+							{/* Image principale */}
 							<form.Field name="primaryImage">
 								{(field) => (
 									<div className="space-y-2">
@@ -349,196 +524,8 @@ export function EditProductVariantForm({
 									</div>
 								)}
 							</form.Field>
-						</FormSection>
 
-						{/* Informations de base */}
-						<FormSection
-							title="Informations de base"
-							description="Détails de la variante"
-						>
-								{/* Couleur */}
-							<form.AppField name="colorId">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel optional>Couleur</FieldLabel>
-										<field.SelectField
-											label=""
-											options={colors.map((color) => ({
-												value: color.id,
-												label: color.name,
-											}))}
-											renderOption={(option) => {
-												const color = colors.find((c) => c.id === option.value);
-												return (
-													<div className="flex items-center gap-2">
-														{color && (
-															<div
-																className="w-4 h-4 rounded-full border border-border"
-																style={{ backgroundColor: color.hex }}
-															/>
-														)}
-														<span>{option.label}</span>
-													</div>
-												);
-											}}
-											renderValue={(value) => {
-												const color = colors.find((c) => c.id === value);
-												return color ? (
-													<div className="flex items-center gap-2">
-														<div
-															className="w-4 h-4 rounded-full border border-border"
-															style={{ backgroundColor: color.hex }}
-														/>
-														<span>{color.name}</span>
-													</div>
-												) : (
-													<span className="text-muted-foreground">
-														Sélectionner une couleur
-													</span>
-												);
-											}}
-											placeholder="Sélectionner une couleur"
-										/>
-									</div>
-								)}
-							</form.AppField>
-
-							{/* Matériau + Taille */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-								<form.AppField name="material">
-									{(field) => (
-										<div className="space-y-2">
-											<FieldLabel optional>Matériau</FieldLabel>
-											<field.InputGroupField />
-										</div>
-									)}
-								</form.AppField>
-
-								<form.AppField name="size">
-									{(field) => (
-										<div className="space-y-2">
-											<FieldLabel optional>Taille</FieldLabel>
-											<field.InputGroupField />
-										</div>
-									)}
-								</form.AppField>
-							</div>
-						</FormSection>
-					</FormLayout>
-
-					{/* Prix et stock */}
-					<FormLayout cols={2}>
-						<FormSection title="Prix" description="Configuration des prix">
-							{/* Prix TTC */}
-							<form.AppField
-								name="priceInclTaxEuros"
-								validators={{
-									onChange: ({ value }: { value: number }) => {
-										if (!value || value <= 0) {
-											return "Le prix doit être supérieur à 0";
-										}
-									},
-								}}
-							>
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel required>Prix TTC</FieldLabel>
-										<field.InputGroupField
-											type="number"
-											step="0.01"
-											required
-											placeholder="0.00"
-										>
-											<InputGroupAddon>
-												<Euro className="h-4 w-4" />
-											</InputGroupAddon>
-											<InputGroupAddon align="inline-end">
-												<InputGroupText className="text-xs text-muted-foreground">
-													TTC
-												</InputGroupText>
-											</InputGroupAddon>
-										</field.InputGroupField>
-									</div>
-								)}
-							</form.AppField>
-
-							{/* Prix comparé */}
-							<form.AppField name="compareAtPriceEuros">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel optional>Prix avant réduction</FieldLabel>
-										<field.InputGroupField
-											type="number"
-											step="0.01"
-											placeholder="0.00"
-										>
-											<InputGroupAddon>
-												<Euro className="h-4 w-4" />
-											</InputGroupAddon>
-										</field.InputGroupField>
-									</div>
-								)}
-							</form.AppField>
-						</FormSection>
-
-						<FormSection
-							title="Disponibilité"
-							description="Stock et statut"
-						>
-							{/* Stock */}
-							<form.AppField name="inventory">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel optional>Quantité en stock</FieldLabel>
-										<field.InputGroupField type="number" min={0} placeholder="0">
-											<InputGroupAddon align="inline-end">
-												<Package className="h-4 w-4 text-muted-foreground" />
-												<InputGroupText className="text-xs text-muted-foreground">
-													unités
-												</InputGroupText>
-											</InputGroupAddon>
-										</field.InputGroupField>
-									</div>
-								)}
-							</form.AppField>
-
-							{/* Actif */}
-							<form.AppField name="isActive">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel required>Statut</FieldLabel>
-										<field.RadioGroupField
-											label=""
-											options={[
-												{ value: "true", label: "Actif" },
-												{ value: "false", label: "Inactif" },
-											]}
-										/>
-									</div>
-								)}
-							</form.AppField>
-
-							{/* Par défaut */}
-							<form.AppField name="isDefault">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel optional>Variante par défaut</FieldLabel>
-										<field.CheckboxField label="Définir comme variante par défaut" />
-										<p className="text-xs text-muted-foreground">
-											La variante par défaut sera affichée en premier
-										</p>
-									</div>
-								)}
-							</form.AppField>
-						</FormSection>
-					</FormLayout>
-
-					{/* Galerie */}
-					<FormLayout cols={1}>
-						<FormSection
-							title="Galerie d'images"
-							description="Images supplémentaires (max 10)"
-						>
+							{/* Galerie */}
 							<form.Field name="galleryMedia" mode="array">
 								{(field) => {
 									const currentCount = field.state.value.length;
@@ -546,22 +533,21 @@ export function EditProductVariantForm({
 									const isAtLimit = currentCount >= maxCount;
 
 									return (
-										<div className="space-y-4">
+										<div className="space-y-3">
 											<div className="flex items-center justify-between">
-												<div className="flex items-center gap-2 text-sm text-muted-foreground">
-													<ImagePlus className="h-4 w-4" />
-													<span className="font-medium">
-														{currentCount} / {maxCount} médias
-													</span>
-												</div>
+												<Label>Galerie (optionnel)</Label>
 												<ImageCounterBadge count={currentCount} max={maxCount} />
 											</div>
 
 											{isAtLimit && (
-												<div className="bg-secondary/10 border border-secondary rounded-lg p-3">
-													<p className="text-sm text-secondary-foreground">
-														Limite de {maxCount} médias atteinte
-													</p>
+												<div className="bg-secondary/10 border border-secondary rounded-lg p-3 flex items-start gap-2">
+													<Info className="h-4 w-4 text-secondary-foreground mt-0.5 shrink-0" />
+													<div className="text-sm text-secondary-foreground">
+														<p className="font-medium">Limite atteinte</p>
+														<p className="text-xs mt-0.5">
+															Supprimez un média pour en ajouter un nouveau.
+														</p>
+													</div>
 												</div>
 											)}
 
@@ -580,6 +566,20 @@ export function EditProductVariantForm({
 													</motion.div>
 												)}
 											</AnimatePresence>
+
+											{field.state.value.length === 0 && (
+												<div className="flex items-center gap-3 py-3 px-3 text-left bg-muted/20 rounded-lg border border-dashed border-border">
+													<ImagePlus className="h-6 w-6 text-muted-foreground/50 shrink-0" />
+													<div>
+														<p className="text-sm font-medium text-foreground">
+															Aucun média
+														</p>
+														<p className="text-xs text-muted-foreground">
+															Jusqu'à {maxCount} images et vidéos
+														</p>
+													</div>
+												</div>
+											)}
 
 											{!isAtLimit && (
 												<UploadDropzone
@@ -637,10 +637,10 @@ export function EditProductVariantForm({
 															backgroundColor: isDragActive
 																? "hsl(var(--primary) / 0.05)"
 																: "hsl(var(--muted) / 0.3)",
-															padding: "1.5rem",
+															padding: "1rem",
 															transition: "all 0.2s ease-in-out",
-															height: "min(180px, 30vh)",
-															minHeight: "150px",
+															height: "min(140px, 20vh)",
+															minHeight: "120px",
 															display: "flex",
 															flexDirection: "column",
 															alignItems: "center",
@@ -657,8 +657,8 @@ export function EditProductVariantForm({
 															color: isDragActive
 																? "hsl(var(--primary))"
 																: "hsl(var(--primary) / 0.7)",
-															width: "2.5rem",
-															height: "2.5rem",
+															width: "2rem",
+															height: "2rem",
 															transition: "all 0.2s ease-in-out",
 															transform: isDragActive ? "scale(1.1)" : "scale(1)",
 															opacity: isUploading ? 0.5 : 1,
@@ -713,7 +713,7 @@ export function EditProductVariantForm({
 															return (
 																<Upload
 																	className={cn(
-																		"h-12 w-12 transition-all duration-200",
+																		"h-10 w-10 transition-all duration-200",
 																		isDragActive
 																			? "text-primary scale-110"
 																			: "text-primary/70"
@@ -738,16 +738,12 @@ export function EditProductVariantForm({
 
 															const remaining = maxCount - field.state.value.length;
 															return (
-																<div className="text-center space-y-1.5">
+																<div className="text-center space-y-1">
 																	<p className="text-sm font-medium">
 																		Ajouter à la galerie
 																	</p>
 																	<p className="text-xs text-muted-foreground">
-																		{remaining} {remaining > 1 ? "médias" : "média"}{" "}
-																		{remaining > 1 ? "restants" : "restant"}
-																	</p>
-																	<p className="text-xs text-muted-foreground">
-																		Max 4MB (image) / 512MB (vidéo)
+																		{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 4MB (image) / 512MB (vidéo)
 																	</p>
 																</div>
 															);
@@ -768,8 +764,8 @@ export function EditProductVariantForm({
 									);
 								}}
 							</form.Field>
-						</FormSection>
-					</FormLayout>
+						</div>
+					</FormSection>
 
 					{/* Footer */}
 					<form.AppForm>

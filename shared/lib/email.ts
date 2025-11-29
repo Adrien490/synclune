@@ -19,6 +19,7 @@ import { PaymentFailedEmail } from "@/emails/payment-failed-email";
 import { CancelOrderConfirmationEmail } from "@/emails/cancel-order-confirmation-email";
 import { ReturnConfirmationEmail } from "@/emails/return-confirmation-email";
 import { RevertShippingNotificationEmail } from "@/emails/revert-shipping-notification-email";
+import { BackInStockEmail } from "@/emails/back-in-stock-email";
 import { EMAIL_FROM, EMAIL_SUBJECTS, EMAIL_ADMIN } from "@/shared/lib/email-config";
 
 // Initialiser le client Resend
@@ -1065,6 +1066,67 @@ export async function sendRevertShippingNotificationEmail({
 		return { success: true, data };
 	} catch (error) {
 		console.error("[EMAIL] Exception sending revert shipping notification:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email de notification de retour en stock
+ */
+export async function sendBackInStockEmail({
+	to,
+	productTitle,
+	productUrl,
+	skuColor,
+	skuMaterial,
+	skuSize,
+	skuImageUrl,
+	price,
+	availableQuantity,
+	unsubscribeUrl,
+}: {
+	to: string;
+	productTitle: string;
+	productUrl: string;
+	skuColor: string | null;
+	skuMaterial: string | null;
+	skuSize: string | null;
+	skuImageUrl: string | null;
+	price: number;
+	availableQuantity: number;
+	unsubscribeUrl: string;
+}) {
+	try {
+		const emailHtml = await render(
+			BackInStockEmail({
+				productTitle,
+				productUrl,
+				skuColor,
+				skuMaterial,
+				skuSize,
+				skuImageUrl,
+				price,
+				availableQuantity,
+				unsubscribeUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.BACK_IN_STOCK,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending back in stock notification:", error);
+			return { success: false, error };
+		}
+
+		console.log(`✅ [EMAIL] Back in stock notification sent to ${to} for ${productTitle}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending back in stock notification:", error);
 		return { success: false, error };
 	}
 }

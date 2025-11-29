@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheUserSessions } from "@/modules/users/constants/cache";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";

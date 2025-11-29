@@ -5,7 +5,7 @@ import { stripe } from "@/shared/lib/stripe";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { headers } from "next/headers";
 
 /**

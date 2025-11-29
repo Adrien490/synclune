@@ -24,13 +24,14 @@ model User {
   updatedAt        DateTime  @default(now()) @updatedAt
   deletedAt        DateTime?
 
-  sessions       Session[]
-  accounts       Account[]
-  orders         Order[]
-  cart           Cart?
-  addresses      Address[]
-  wishlist       Wishlist?
-  discountUsages DiscountUsage[]
+  sessions                  Session[]
+  accounts                  Account[]
+  orders                    Order[]
+  cart                      Cart?
+  addresses                 Address[]
+  wishlist                  Wishlist?
+  discountUsages            DiscountUsage[]
+  stockNotificationRequests StockNotificationRequest[]
 
   // Indexes optimisés
   @@index([deletedAt])
@@ -220,10 +221,11 @@ model ProductSku {
 
   isDefault Boolean @default(false)
 
-  images        SkuMedia[]
-  orderItems    OrderItem[]
-  cartItems     CartItem[]
-  wishlistItems WishlistItem[]
+  images                    SkuMedia[]
+  orderItems                OrderItem[]
+  cartItems                 CartItem[]
+  wishlistItems             WishlistItem[]
+  stockNotificationRequests StockNotificationRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -423,7 +425,6 @@ model Order {
   items          OrderItem[]
   discountUsages DiscountUsage[]
   refunds        Refund[]
-  statusHistory  OrderStatusHistory[] // Historique des changements de statut
 
   // === SOFT DELETE (Conformité légale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)
@@ -781,30 +782,6 @@ model AuditLog {
   @@index([createdAt])
 }
 
-/// Historique des changements de statut des commandes
-/// Permet de tracer les transitions (ex: PENDING → PAID → SHIPPED → DELIVERED)
-model OrderStatusHistory {
-  id String @id @default(cuid())
-
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  // Transition de statut
-  field          String       // "status", "paymentStatus", "fulfillmentStatus"
-  previousStatus String? // Statut avant (null si création)
-  newStatus      String // Nouveau statut
-
-  // Contexte
-  changedBy String? // userId, "system", "webhook:checkout.session.completed"
-  reason    String? // Raison du changement (ex: "Paiement reçu via Stripe")
-
-  createdAt DateTime @default(now())
-
-  @@index([orderId])
-  @@index([orderId, createdAt])
-  @@index([field, createdAt])
-}
-
 // ============================================================================
 // WEBHOOKS STRIPE - DÉDUPLICATION & AUDIT
 // ============================================================================
@@ -853,40 +830,56 @@ model StripeWebhookEvent {
 }
 
 // ============================================================================
-// PRÉPARATION TVA RÉGIME RÉEL (Seuil 85 000€)
+// NOTIFICATIONS RETOUR EN STOCK
 // ============================================================================
 
-/// Enregistrements TVA par pays (pour passage futur au régime réel)
-/// Gère les immatriculations TVA (France, OSS pour UE, IOSS pour imports)
-model TaxRegistration {
+enum StockNotificationStatus {
+  PENDING    // En attente du retour en stock
+  NOTIFIED   // Email envoyé au client
+  EXPIRED    // Demande expirée (après X jours sans retour)
+  CANCELLED  // Annulée par l'utilisateur
+}
+
+/// Demande de notification quand un produit revient en stock
+/// Permet aux clients de s'inscrire pour être notifiés du retour d'un SKU
+model StockNotificationRequest {
   id String @id @default(cuid())
 
-  // Pays d'immatriculation (ISO alpha-2)
-  country String @db.VarChar(2) // FR, DE, IT, ES, etc.
+  // SKU concerné (Restrict pour ne pas perdre les demandes si SKU désactivé)
+  skuId String
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
 
-  // Numéro de TVA intracommunautaire
-  registrationNumber String // FR35839183027
+  // Utilisateur (optionnel : peut être un visiteur non connecté)
+  userId String?
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  // Type d'enregistrement
-  // - "standard" : TVA nationale (France)
-  // - "oss" : One-Stop-Shop pour ventes UE B2C
-  // - "ioss" : Import One-Stop-Shop pour imports hors UE
-  registrationType String @default("standard") @db.VarChar(20)
+  // Email du demandeur (obligatoire pour envoi notification)
+  email String @db.VarChar(255)
 
-  // Période de validité
-  effectiveFrom DateTime
-  effectiveTo   DateTime?
+  // Statut de la demande
+  status StockNotificationStatus @default(PENDING)
 
-  // Statut
-  active Boolean @default(true)
+  // Token unique pour désinscription sans connexion
+  unsubscribeToken String @unique @default(cuid())
+
+  // Tracking envoi notification
+  notifiedAt DateTime? // Date d'envoi de l'email de notification
+  notifiedInventory Int? // Stock disponible au moment de l'envoi
+
+  // Métadonnées RGPD
+  ipAddress String?
+  userAgent String?
 
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([country, registrationType])
-  @@index([active])
-  @@index([country])
+  // Indexes pour performances (la contrainte unicité est gérée côté applicatif)
+  @@index([email, skuId])
+  @@index([skuId, status])
+  @@index([email])
+  @@index([userId])
+  @@index([status, createdAt])
 }
 
 

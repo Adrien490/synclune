@@ -1,7 +1,7 @@
 import { Logo } from "@/shared/components/logo";
 import { Button } from "@/shared/components/ui/button";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
-import { auth } from "@/shared/lib/auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";

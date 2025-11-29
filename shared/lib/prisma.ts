@@ -49,37 +49,3 @@ export const softDelete = {
   user: (id: string) => prisma.user.update({ where: { id }, data: { deletedAt: new Date() } }),
   refund: (id: string) => prisma.refund.update({ where: { id }, data: { deletedAt: new Date() } }),
 };
-
-/**
- * Enregistre un changement de statut de commande dans l'historique
- * Requis pour traçabilité et conformité légale (Art. L123-22 Code de Commerce)
- *
- * @example
- * await logOrderStatusChange({
- *   orderId: "xxx",
- *   field: "status",
- *   previousStatus: "PENDING",
- *   newStatus: "SHIPPED",
- *   changedBy: adminUserId,
- *   reason: "Expédié via Colissimo",
- * });
- */
-export async function logOrderStatusChange(params: {
-  orderId: string;
-  field: "status" | "paymentStatus" | "fulfillmentStatus";
-  previousStatus: string | null;
-  newStatus: string;
-  changedBy?: string;
-  reason?: string;
-}) {
-  return prisma.orderStatusHistory.create({
-    data: {
-      orderId: params.orderId,
-      field: params.field,
-      previousStatus: params.previousStatus,
-      newStatus: params.newStatus,
-      changedBy: params.changedBy,
-      reason: params.reason,
-    },
-  });
-}

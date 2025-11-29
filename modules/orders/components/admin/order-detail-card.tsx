@@ -51,7 +51,6 @@ import { MARK_AS_PAID_DIALOG_ID } from "./mark-as-paid-alert-dialog";
 import { MARK_AS_SHIPPED_DIALOG_ID } from "./mark-as-shipped-dialog";
 import { MARK_AS_DELIVERED_DIALOG_ID } from "./mark-as-delivered-alert-dialog";
 import { UPDATE_TRACKING_DIALOG_ID } from "./update-tracking-dialog";
-import { OrderStatusHistory } from "./order-status-history";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 
 // ============================================================================
@@ -433,8 +432,6 @@ export function OrderDetailCard({ order }: OrderDetailCardProps) {
 						</Card>
 					)}
 
-					{/* Status History */}
-					<OrderStatusHistory statusHistory={order.statusHistory} />
 				</div>
 
 				{/* Right column - 1/3 */}
