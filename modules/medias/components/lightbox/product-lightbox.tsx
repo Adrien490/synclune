@@ -3,6 +3,7 @@
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Counter from "yet-another-react-lightbox/plugins/counter";
+import Video from "yet-another-react-lightbox/plugins/video";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/counter.css";
 
@@ -34,7 +35,7 @@ export default function ProductLightbox({
 			close={close}
 			slides={slides}
 			index={index}
-			plugins={[Zoom, Counter]}
+			plugins={[Zoom, Counter, Video]}
 			zoom={{
 				maxZoomPixelRatio: 3,
 				zoomInMultiplier: 2,

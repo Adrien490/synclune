@@ -60,31 +60,42 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 	// Sécurité additionnelle: garantir que images n'est jamais undefined
 	const safeImages = images || [];
 
-	// Conversion des images en slides pour la lightbox
-	// Filtrer uniquement les images (exclure les vidéos)
-	// Génère les URLs Next.js optimisées pour le plugin Zoom
+	// Conversion des médias en slides pour la lightbox (images + vidéos)
+	// Génère les URLs Next.js optimisées pour les images
+	// Utilise le format vidéo natif pour les vidéos
 	const lightboxSlides: Slide[] = useMemo(() => {
 		function nextImageUrl(src: string, size: number) {
 			return `/_next/image?url=${encodeURIComponent(src)}&w=${size}&q=75`;
 		}
 
-		return safeImages
-			.filter((img) => img.mediaType === "IMAGE")
-			.map((img) => {
+		return safeImages.map((media) => {
+			if (media.mediaType === "VIDEO") {
 				return {
-					src: nextImageUrl(img.url, MAX_IMAGE_SIZE),
-					alt: img.alt,
-					width: MAX_IMAGE_SIZE,
-					height: MAX_IMAGE_SIZE,
-					srcSet: [...IMAGE_SIZES, ...DEVICE_SIZES]
-						.filter((size) => size <= MAX_IMAGE_SIZE)
-						.map((size) => ({
-							src: nextImageUrl(img.url, size),
-							width: size,
-							height: size,
-						})),
+					type: "video" as const,
+					sources: [
+						{
+							src: media.url,
+							type: getVideoMimeType(media.url),
+						},
+					],
+					poster: media.thumbnailUrl || undefined,
 				};
-			});
+			}
+
+			return {
+				src: nextImageUrl(media.url, MAX_IMAGE_SIZE),
+				alt: media.alt,
+				width: MAX_IMAGE_SIZE,
+				height: MAX_IMAGE_SIZE,
+				srcSet: [...IMAGE_SIZES, ...DEVICE_SIZES]
+					.filter((size) => size <= MAX_IMAGE_SIZE)
+					.map((size) => ({
+						src: nextImageUrl(media.url, size),
+						width: size,
+						height: size,
+					})),
+			};
+		});
 	}, [safeImages]);
 
 	// Hook: Navigation avec URL sync (optimiste = instantané, pas de loading)
