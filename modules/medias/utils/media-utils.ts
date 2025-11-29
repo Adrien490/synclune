@@ -23,51 +23,6 @@ export function isImage(mediaType: MediaType): boolean {
 	return mediaType === "IMAGE";
 }
 
-
-/**
- * Détermine si une URL pointe vers un fichier image
- * @param url - L'URL du fichier à vérifier
- * @returns true si l'URL est une image, false sinon
- */
-export function isImageUrl(url: string): boolean {
-	const imageExtensions = [
-		".jpg",
-		".jpeg",
-		".png",
-		".gif",
-		".webp",
-		".avif",
-		".svg",
-	];
-	return imageExtensions.some((ext) => url.toLowerCase().includes(ext));
-}
-
-/**
- * Obtient le type de média d'une URL (en se basant sur l'extension)
- * ⚠️ ATTENTION: Méthode legacy, peut échouer avec URLs sans extension
- * @param url - L'URL du fichier à vérifier
- * @returns "video", "image" ou "unknown"
- */
-export function getMediaType(url: string): "video" | "image" | "unknown" {
-	const videoExtensions = [".mp4", ".webm", ".ogg", ".mov", ".avi", ".mkv"];
-	const isVideo = videoExtensions.some((ext) => url.toLowerCase().includes(ext));
-	if (isVideo) return "video";
-	if (isImageUrl(url)) return "image";
-	return "unknown";
-}
-
-/**
- * Détecte le MediaType Prisma depuis une URL (en se basant sur l'extension)
- * Utilisé lors de l'upload pour définir le champ mediaType en base de données
- * @param url - L'URL du fichier uploadé
- * @returns "VIDEO" si vidéo, "IMAGE" par défaut
- */
-export function detectMediaType(url: string): "IMAGE" | "VIDEO" {
-	const videoExtensions = [".mp4", ".webm", ".ogg", ".mov", ".avi", ".mkv"];
-	const isVideo = videoExtensions.some((ext) => url.toLowerCase().includes(ext));
-	return isVideo ? "VIDEO" : "IMAGE";
-}
-
 /**
  * Obtient le type MIME d'une vidéo à partir de son URL
  * @param url - L'URL de la vidéo

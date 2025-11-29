@@ -98,8 +98,8 @@ export const SORT_LABELS: Record<string, string> = {
 	"price-descending": "Prix (décroissant)",
 	"stock-ascending": "Stock (croissant)",
 	"stock-descending": "Stock (décroissant)",
-	"sku-ascending": "SKU (A-Z)",
-	"sku-descending": "SKU (Z-A)",
+	"sku-ascending": "Référence (A-Z)",
+	"sku-descending": "Référence (Z-A)",
 	"priority-descending": "Priorité (haute)",
 	"priority-ascending": "Priorité (basse)",
 };

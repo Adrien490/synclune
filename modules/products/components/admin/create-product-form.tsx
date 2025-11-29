@@ -45,7 +45,7 @@ export function CreateProductForm({
 	const router = useRouter();
 
 	// Hook pour génération automatique de thumbnail vidéo
-	const { generateThumbnail } = useAutoVideoThumbnail();
+	const { generateThumbnail, generatingUrls } = useAutoVideoThumbnail();
 
 	const {
 		startUpload: startPrimaryImageUpload,
@@ -729,6 +729,7 @@ export function CreateProductForm({
 												<ImageGallery
 													images={field.state.value}
 													onRemove={(index) => field.removeValue(index)}
+													generatingThumbnails={generatingUrls}
 												/>
 											</motion.div>
 										)}
@@ -826,7 +827,6 @@ export function CreateProductForm({
 																			...newMedia,
 																			thumbnailUrl,
 																		});
-																		toast.success("Miniature générée");
 																	}
 																});
 															}
@@ -868,7 +868,6 @@ export function CreateProductForm({
 																							...newMedia,
 																							thumbnailUrl,
 																						});
-																						toast.success("Miniature générée");
 																					}
 																				});
 																			}

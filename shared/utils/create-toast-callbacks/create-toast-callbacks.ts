@@ -1,17 +1,22 @@
 import { ActionState } from "@/shared/types/server-action";
 import { toast } from "sonner";
 
-type CreateToastCallbacksOptions<T = ActionState> = {
+/**
+ * Options de configuration pour createToastCallbacks
+ * @template T - Type du résultat de l'action (défaut: ActionState)
+ */
+export type CreateToastCallbacksOptions<T = ActionState> = {
+	/** Message affiché pendant le chargement (toast.loading) */
 	loadingMessage?: string;
+	/** Afficher un toast de succès (défaut: true) */
 	showSuccessToast?: boolean;
+	/** Afficher un toast d'erreur (défaut: true) */
 	showErrorToast?: boolean;
+	/** Callback personnalisé appelé en cas de succès */
 	onSuccess?: (result: T) => void;
+	/** Callback personnalisé appelé en cas d'erreur */
 	onError?: (result: T) => void;
-	/**
-	 * Action button configuration for success toasts
-	 * Uses Sonner's recommended object format
-	 * Example: { label: 'Voir le panier', onClick: () => router.push('/cart') }
-	 */
+	/** Bouton d'action dans le toast de succès */
 	successAction?: {
 		label: string;
 		onClick: () => void;
@@ -19,9 +24,11 @@ type CreateToastCallbacksOptions<T = ActionState> = {
 };
 
 /**
- * Type guard to check if a value is an ActionState with a message
+ * Type guard pour vérifier si une valeur contient un message
+ * @param value - La valeur à vérifier
+ * @returns true si la valeur contient une propriété message de type string non vide
  */
-const hasMessage = (
+export const hasMessage = (
 	value: unknown
 ): value is { message: string; [key: string]: unknown } => {
 	return (
@@ -34,9 +41,22 @@ const hasMessage = (
 };
 
 /**
- * Creates callbacks for handling toast notifications in server actions
- * @param options Configuration options for the toast callbacks
- * @returns An object with onStart, onEnd, onSuccess, and onError callbacks
+ * Crée les callbacks pour gérer les notifications toast avec les server actions
+ *
+ * @template T - Type du résultat de l'action (défaut: ActionState)
+ * @param options - Options de configuration
+ * @returns Un objet avec les callbacks onStart, onEnd, onSuccess et onError
+ *
+ * @example
+ * ```typescript
+ * const callbacks = createToastCallbacks({
+ *   loadingMessage: "Ajout en cours...",
+ *   successAction: {
+ *     label: "Voir le panier",
+ *     onClick: () => router.push("/panier")
+ *   }
+ * });
+ * ```
  */
 export const createToastCallbacks = <
 	T extends ActionState | unknown = ActionState,

@@ -2,12 +2,26 @@ import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { Callbacks } from "./types";
 
 /**
- * Fonction d'ordre supérieur qui enveloppe une action serveur et ajoute des callbacks
- * pour la gestion d'état (démarrage, fin, succès, erreur)
+ * Fonction d'ordre supérieur qui enveloppe une server action avec des callbacks lifecycle
  *
- * @param fn La fonction d'action serveur à envelopper
- * @param callbacks Les callbacks à exécuter aux différentes étapes
- * @returns Une nouvelle fonction qui exécute l'action serveur avec les callbacks
+ * Permet d'ajouter des callbacks (onStart, onEnd, onSuccess, onError) autour d'une
+ * server action pour gérer les états de chargement, succès et erreur.
+ *
+ * @template T - Type du résultat de l'action (défaut: ActionState)
+ * @template R - Type de la référence retournée par onStart (ex: ID du toast)
+ * @param fn - La server action à envelopper
+ * @param callbacks - Les callbacks à exécuter aux différentes étapes du lifecycle
+ * @returns Une nouvelle fonction compatible avec useActionState
+ *
+ * @example
+ * ```typescript
+ * const [state, action, isPending] = useActionState(
+ *   withCallbacks(myServerAction, createToastCallbacks({
+ *     loadingMessage: "Chargement..."
+ *   })),
+ *   undefined
+ * );
+ * ```
  */
 export const withCallbacks = <
 	T extends ActionState | unknown = ActionState,

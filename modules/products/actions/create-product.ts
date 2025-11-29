@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/constants/cache";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { detectMediaType } from "@/modules/medias/utils/media-utils";
+import { detectMediaType } from "@/modules/medias/constants/media.constants";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";

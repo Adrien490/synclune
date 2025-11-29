@@ -46,7 +46,7 @@ export async function generateMetadata({
 
 	return {
 		title: `Variantes de ${product.title} - Administration`,
-		description: `Gérer les variantes (SKUs) du produit ${product.title}`,
+		description: `Gérer les variantes du produit ${product.title}`,
 	};
 }
 

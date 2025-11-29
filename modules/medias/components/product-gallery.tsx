@@ -26,6 +26,7 @@ import { useGallerySwipe } from "@/modules/medias/hooks/use-gallery-swipe";
 import { useMediaErrors } from "@/modules/medias/hooks/use-media-errors";
 
 import type { ProductMedia } from "@/modules/medias/types/product-media.types";
+import { GalleryThumbnail } from "@/modules/medias/components/gallery-thumbnail";
 import { PRODUCT_TEXTS } from "@/shared/constants/product";
 
 // Constantes pour l'optimisation des images
@@ -33,8 +34,6 @@ const IMAGE_SIZES = [16, 32, 48, 64, 96, 128, 256, 384] as const;
 const DEVICE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048, 3840] as const;
 const MAX_IMAGE_SIZE = 3840;
 const MAIN_IMAGE_QUALITY = 95;
-const THUMBNAIL_IMAGE_QUALITY = 85;
-const EAGER_LOAD_THUMBNAILS = 6;
 
 interface ProductGalleryProps {
 	product: GetProductReturn;
@@ -173,76 +172,19 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 						{/* Thumbnails verticales - Desktop uniquement */}
 						{safeImages.length > 1 && (
 							<div className="hidden lg:flex flex-col gap-2 order-1 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent pr-1">
-								{safeImages.map((image, index) => {
-									const isActive = index === optimisticIndex;
-									const imageHasError = hasError(image.id);
-
-									return (
-										<button
-											key={image.id}
-											onClick={() => navigateToIndex(index)}
-											className={cn(
-												"group/thumb relative aspect-square overflow-hidden rounded-xl flex-shrink-0",
-												"w-full h-auto",
-												"border-2 transition-all duration-200",
-												isActive
-													? "border-primary shadow-md ring-2 ring-primary/20"
-													: "border-border hover:border-primary/50 hover:shadow-sm"
-											)}
-											aria-label={`Voir photo ${index + 1}${isActive ? " (sélectionnée)" : ""}`}
-											aria-current={isActive}
-										>
-											{imageHasError ? (
-												<MediaErrorFallback type="image" size="small" />
-											) : image.mediaType === "VIDEO" ? (
-												<div className="relative w-full h-full bg-linear-organic">
-													{image.thumbnailUrl ? (
-														<Image
-															src={image.thumbnailUrl}
-															alt={image.alt || `${title} - Miniature vidéo ${index + 1}`}
-															fill
-															className="object-cover"
-															sizes="80px"
-															quality={THUMBNAIL_IMAGE_QUALITY}
-															loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
-															onError={() => handleMediaError(image.id)}
-														/>
-													) : (
-														<video
-															className="w-full h-full object-cover"
-															muted
-															playsInline
-															preload="none"
-															aria-label={image.alt || `${title} - Miniature vidéo ${index + 1}`}
-															onError={() => handleMediaError(image.id)}
-														>
-															<source src={image.url} type={getVideoMimeType(image.url)} />
-														</video>
-													)}
-													{/* Overlay play icon */}
-													<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-														<div className="bg-blue-600 rounded-full p-1.5 shadow-lg">
-															<svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 16 16">
-																<path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z" />
-															</svg>
-														</div>
-													</div>
-												</div>
-											) : (
-												<Image
-													src={image.url}
-													alt={image.alt || PRODUCT_TEXTS.IMAGES.GALLERY_THUMBNAIL_ALT(title, index + 1)}
-													fill
-													className="object-cover"
-													sizes="80px"
-													quality={THUMBNAIL_IMAGE_QUALITY}
-													loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
-													onError={() => handleMediaError(image.id)}
-												/>
-											)}
-										</button>
-									);
-								})}
+								{safeImages.map((media, index) => (
+									<GalleryThumbnail
+										key={media.id}
+										media={media}
+										index={index}
+										isActive={index === optimisticIndex}
+										hasError={hasError(media.id)}
+										title={title}
+										onClick={() => navigateToIndex(index)}
+										onError={() => handleMediaError(media.id)}
+										className="flex-shrink-0 h-auto hover:shadow-sm"
+									/>
+								))}
 							</div>
 						)}
 
@@ -328,6 +270,7 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 														loop
 														playsInline
 														controls
+														preload="auto"
 														poster={current.thumbnailUrl || undefined}
 														aria-label={current.alt || `${title} - Vidéo ${optimisticIndex + 1}`}
 														onError={() => handleMediaError(current.id)}
@@ -429,147 +372,37 @@ export function ProductGallery({ product, title }: ProductGalleryProps) {
 									className="w-full"
 								>
 									<CarouselContent className="-ml-2">
-										{safeImages.map((image, index) => {
-											const isActive = index === optimisticIndex;
-											const imageHasError = hasError(image.id);
-
-											return (
-												<CarouselItem key={image.id} className="pl-2 basis-1/4 xs:basis-1/5 sm:basis-1/6">
-													<button
-														onClick={() => navigateToIndex(index)}
-														className={cn(
-															"group relative aspect-square overflow-hidden rounded-xl w-full",
-															"border-2 transition-all duration-200",
-															isActive
-																? "border-primary shadow-md ring-2 ring-primary/20"
-																: "border-border hover:border-primary/50"
-														)}
-														aria-label={`Voir photo ${index + 1}${isActive ? " (sélectionnée)" : ""}`}
-														aria-current={isActive}
-													>
-														{imageHasError ? (
-															<MediaErrorFallback type="image" size="small" />
-														) : image.mediaType === "VIDEO" ? (
-															<div className="relative w-full h-full bg-linear-organic">
-																{image.thumbnailUrl ? (
-																	<Image
-																		src={image.thumbnailUrl}
-																		alt={image.alt || `${title} - Miniature vidéo ${index + 1}`}
-																		fill
-																		className="object-cover"
-																		sizes="80px"
-																		quality={THUMBNAIL_IMAGE_QUALITY}
-																		loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
-																		onError={() => handleMediaError(image.id)}
-																	/>
-																) : (
-																	<video
-																		className="w-full h-full object-cover"
-																		muted
-																		playsInline
-																		preload="none"
-																		onError={() => handleMediaError(image.id)}
-																	>
-																		<source src={image.url} type={getVideoMimeType(image.url)} />
-																	</video>
-																)}
-																<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-																	<div className="bg-blue-600 rounded-full p-1.5 shadow-lg">
-																		<svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 16 16">
-																			<path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z" />
-																		</svg>
-																	</div>
-																</div>
-															</div>
-														) : (
-															<Image
-																src={image.url}
-																alt={image.alt || PRODUCT_TEXTS.IMAGES.GALLERY_THUMBNAIL_ALT(title, index + 1)}
-																fill
-																className="object-cover"
-																sizes="80px"
-																quality={THUMBNAIL_IMAGE_QUALITY}
-																loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
-																onError={() => handleMediaError(image.id)}
-															/>
-														)}
-													</button>
-												</CarouselItem>
-											);
-										})}
+										{safeImages.map((media, index) => (
+											<CarouselItem key={media.id} className="pl-2 basis-1/4 xs:basis-1/5 sm:basis-1/6">
+												<GalleryThumbnail
+													media={media}
+													index={index}
+													isActive={index === optimisticIndex}
+													hasError={hasError(media.id)}
+													title={title}
+													onClick={() => navigateToIndex(index)}
+													onError={() => handleMediaError(media.id)}
+												/>
+											</CarouselItem>
+										))}
 									</CarouselContent>
 								</Carousel>
 							) : (
 								/* Grille standard si 6 images ou moins */
 								<div className="gallery-thumbnails w-full">
 									<div className="grid grid-cols-4 xs:grid-cols-5 sm:grid-cols-6 gap-2 sm:gap-3">
-										{safeImages.map((image, index) => {
-											const isActive = index === optimisticIndex;
-											const imageHasError = hasError(image.id);
-
-											return (
-												<button
-													key={image.id}
-													onClick={() => navigateToIndex(index)}
-													className={cn(
-														"group relative aspect-square overflow-hidden rounded-xl w-full",
-														"border-2 transition-all duration-200",
-														isActive
-															? "border-primary shadow-md ring-2 ring-primary/20"
-															: "border-border hover:border-primary/50"
-													)}
-													aria-label={`Voir photo ${index + 1}${isActive ? " (sélectionnée)" : ""}`}
-													aria-current={isActive}
-												>
-													{imageHasError ? (
-														<MediaErrorFallback type="image" size="small" />
-													) : image.mediaType === "VIDEO" ? (
-														<div className="relative w-full h-full bg-linear-organic">
-															{image.thumbnailUrl ? (
-																<Image
-																	src={image.thumbnailUrl}
-																	alt={image.alt || `${title} - Miniature vidéo ${index + 1}`}
-																	fill
-																	className="object-cover"
-																	sizes="80px"
-																	quality={THUMBNAIL_IMAGE_QUALITY}
-																	loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
-																	onError={() => handleMediaError(image.id)}
-																/>
-															) : (
-																<video
-																	className="w-full h-full object-cover"
-																	muted
-																	playsInline
-																	preload="none"
-																	onError={() => handleMediaError(image.id)}
-																>
-																	<source src={image.url} type={getVideoMimeType(image.url)} />
-																</video>
-															)}
-															<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-																<div className="bg-blue-600 rounded-full p-1.5 shadow-lg">
-																	<svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 16 16">
-																		<path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z" />
-																	</svg>
-																</div>
-															</div>
-														</div>
-													) : (
-														<Image
-															src={image.url}
-															alt={image.alt || PRODUCT_TEXTS.IMAGES.GALLERY_THUMBNAIL_ALT(title, index + 1)}
-															fill
-															className="object-cover"
-															sizes="80px"
-															quality={THUMBNAIL_IMAGE_QUALITY}
-															loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
-															onError={() => handleMediaError(image.id)}
-														/>
-													)}
-												</button>
-											);
-										})}
+										{safeImages.map((media, index) => (
+											<GalleryThumbnail
+												key={media.id}
+												media={media}
+												index={index}
+												isActive={index === optimisticIndex}
+												hasError={hasError(media.id)}
+												title={title}
+												onClick={() => navigateToIndex(index)}
+												onError={() => handleMediaError(media.id)}
+											/>
+										))}
 									</div>
 								</div>
 							)}

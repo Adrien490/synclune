@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 import { requestPasswordResetSchema } from "../schemas/auth.schemas";
 
 export const requestPasswordReset = async (
-	_: ActionState | null,
+	_: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> => {
 	try {

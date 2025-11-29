@@ -1,7 +1,7 @@
 "use server";
 
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { detectMediaType } from "@/modules/medias/utils/media-utils";
+import { detectMediaType } from "@/modules/medias/constants/media.constants";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
@@ -171,7 +171,7 @@ export async function createProductSku(
 					.join(", ");
 
 				throw new Error(
-					`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe deja pour ce produit (SKU: ${existingCombination.sku}). Veuillez modifier au moins une variante.`
+					`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe deja pour ce produit (Réf: ${existingCombination.sku}). Veuillez modifier au moins une variante.`
 				);
 			}
 

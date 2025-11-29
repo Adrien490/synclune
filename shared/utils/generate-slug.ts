@@ -21,7 +21,7 @@ import { PrismaClient } from "@/app/generated/prisma/client";
  */
 export async function generateSlug(
 	prisma: PrismaClient,
-	model: "product" | "collection" | "productType" | "color",
+	model: "product" | "collection" | "productType" | "color" | "material",
 	value: string
 ): Promise<string> {
 	if (!value || typeof value !== "string" || value.trim().length === 0) {
@@ -67,6 +67,12 @@ export async function generateSlug(
 				break;
 			case "color":
 				existing = await prisma.color.findUnique({
+					where: { slug: finalSlug },
+					select: { id: true },
+				});
+				break;
+			case "material":
+				existing = await prisma.material.findUnique({
 					where: { slug: finalSlug },
 					select: { id: true },
 				});

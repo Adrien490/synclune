@@ -1,3 +1,7 @@
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
 generator client {
   provider = "prisma-client"
   output   = "../app/generated/prisma"
@@ -6,6 +10,10 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// ============================================================================
+// AUTH & USERS
+// ============================================================================
 
 enum Role {
   USER
@@ -33,7 +41,6 @@ model User {
   discountUsages            DiscountUsage[]
   stockNotificationRequests StockNotificationRequest[]
 
-  // Indexes optimisés
   @@index([deletedAt])
   @@index([role, id])
   @@index([emailVerified, id])
@@ -113,6 +120,31 @@ model Address {
   @@index([userId, createdAt(sort: Desc)])
 }
 
+// ============================================================================
+// CATALOGUE - ENUMS
+// ============================================================================
+
+enum ProductStatus {
+  DRAFT
+  PUBLIC
+  ARCHIVED
+}
+
+enum CollectionStatus {
+  DRAFT
+  PUBLIC
+  ARCHIVED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+// ============================================================================
+// CATALOGUE - RÉFÉRENTIELS
+// ============================================================================
+
 model ProductType {
   id          String  @id @default(cuid())
   slug        String  @unique
@@ -130,18 +162,6 @@ model ProductType {
   @@index([label, id])
 }
 
-enum ProductStatus {
-  DRAFT
-  PUBLIC
-  ARCHIVED
-}
-
-enum CollectionStatus {
-  DRAFT
-  PUBLIC
-  ARCHIVED
-}
-
 model Color {
   id        String       @id @default(cuid())
   slug      String       @unique
@@ -154,6 +174,25 @@ model Color {
 
   @@index([name, id])
 }
+
+model Material {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String       @unique @db.VarChar(100)
+  description String?      @db.Text
+  isActive    Boolean      @default(true)
+  skus        ProductSku[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name, id])
+  @@index([isActive])
+}
+
+// ============================================================================
+// CATALOGUE - COLLECTIONS
+// ============================================================================
 
 model Collection {
   id          String           @id @default(cuid())
@@ -197,6 +236,10 @@ model ProductCollection {
   @@index([collectionId, isFeatured])
 }
 
+// ============================================================================
+// CATALOGUE - PRODUITS & SKUs
+// ============================================================================
+
 model Product {
   id          String        @id @default(cuid())
   slug        String        @unique
@@ -230,7 +273,10 @@ model ProductSku {
 
   colorId  String?
   color    Color?  @relation(fields: [colorId], references: [id], onDelete: SetNull)
-  material String? @db.VarChar(100)
+  material String? @db.VarChar(100) // @deprecated - Utiliser materialId à la place
+
+  materialId  String?
+  materialRef Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
 
   size String? @db.VarChar(50)
 
@@ -262,11 +308,7 @@ model ProductSku {
   @@index([isActive, priceInclTax])
   @@index([productId, isDefault])
   @@index([colorId, isActive]) // Filtrage catalogue par couleur
-}
-
-enum MediaType {
-  IMAGE
-  VIDEO
+  @@index([materialId, isActive]) // Filtrage catalogue par matériau
 }
 
 model SkuMedia {
@@ -285,6 +327,92 @@ model SkuMedia {
 
   @@index([skuId, isPrimary])
 }
+
+// ============================================================================
+// PANIER
+// ============================================================================
+
+model Cart {
+  id String @id @default(cuid())
+
+  userId    String? @unique
+  user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String? @unique
+
+  expiresAt DateTime?
+
+  items CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
+model CartItem {
+  id     String @id @default(cuid())
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  skuId String
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
+
+  quantity Int @default(1)
+
+  // Prix snapshot au moment de l'ajout au panier (en centimes)
+  // Protège contre les changements de prix entre l'ajout et le paiement
+  // Exemple: 29,99€ = 2999 centimes
+  priceAtAdd Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, skuId])
+  @@index([cartId])
+  @@index([skuId])
+}
+
+// ============================================================================
+// WISHLIST (FAVORIS)
+// ============================================================================
+
+model Wishlist {
+  id String @id @default(cuid())
+
+  // Support utilisateur connecté uniquement
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items WishlistItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+
+  skuId String
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
+
+  // Prix snapshot au moment de l'ajout (pour notifier si baisse de prix)
+  priceAtAdd Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Un SKU ne peut être ajouté qu'une seule fois par wishlist
+  @@unique([wishlistId, skuId])
+  @@index([wishlistId])
+  @@index([skuId])
+  @@index([skuId, createdAt]) // Notifications baisse de prix
+}
+
+// ============================================================================
+// COMMANDES - ENUMS
+// ============================================================================
 
 enum OrderStatus {
   PENDING
@@ -330,25 +458,8 @@ enum FulfillmentStatus {
 }
 
 // ============================================================================
-// REMBOURSEMENTS
+// COMMANDES - MODELS
 // ============================================================================
-
-enum RefundReason {
-  CUSTOMER_REQUEST // Droit de rétractation (14 jours)
-  DEFECTIVE // Bijou cassé / abîmé
-  WRONG_ITEM // Erreur de préparation de commande
-  LOST_IN_TRANSIT // Colis perdu par le transporteur
-  FRAUD // Fraude avérée
-  OTHER // Autre
-}
-
-enum RefundStatus {
-  PENDING // Demande reçue / En attente de validation
-  APPROVED // Validé, en attente de traitement Stripe
-  COMPLETED // Remboursé effectivement (Stripe a confirmé)
-  REJECTED // Refusé (ex: retour hors délai)
-  FAILED // Échec technique Stripe
-}
 
 model Order {
   id          String  @id @default(cuid())
@@ -524,184 +635,26 @@ model OrderItem {
   @@index([productId, orderId]) // Analytics top produits
 }
 
-model Cart {
-  id String @id @default(cuid())
-
-  userId    String? @unique
-  user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId String? @unique
-
-  expiresAt DateTime?
-
-  items CartItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([expiresAt])
-}
-
-model CartItem {
-  id     String @id @default(cuid())
-  cartId String
-  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
-
-  skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
-
-  quantity Int @default(1)
-
-  // Prix snapshot au moment de l'ajout au panier (en centimes)
-  // Protège contre les changements de prix entre l'ajout et le paiement
-  // Exemple: 29,99€ = 2999 centimes
-  priceAtAdd Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([cartId, skuId])
-  @@index([cartId])
-  @@index([skuId])
-}
-
-model NewsletterSubscriber {
-  id               String  @id @default(cuid())
-  email            String  @unique
-  isActive         Boolean @default(false) // ⚠️ Changement : false par défaut (activation après confirmation email)
-  unsubscribeToken String  @unique @default(cuid())
-
-  // Double opt-in : Confirmation email obligatoire
-  emailVerified      Boolean   @default(false) // true après clic sur lien confirmation
-  confirmationToken  String?   @unique // Token unique pour confirmer l'inscription
-  confirmationSentAt DateTime? // Date d'envoi de l'email de confirmation
-  confirmedAt        DateTime? // Date de confirmation par l'utilisateur
-
-  // Champs de traçabilité RGPD
-  ipAddress        String?
-  userAgent        String?
-  consentSource    String?  @default("newsletter_form")
-  consentTimestamp DateTime @default(now())
-
-  subscribedAt   DateTime  @default(now())
-  unsubscribedAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([isActive, createdAt])
-  @@index([emailVerified, isActive])
-}
-
-model Wishlist {
-  id String @id @default(cuid())
-
-  // Support utilisateur connecté uniquement
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  items WishlistItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-}
-
-model WishlistItem {
-  id         String   @id @default(cuid())
-  wishlistId String
-  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
-
-  skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
-
-  // Prix snapshot au moment de l'ajout (pour notifier si baisse de prix)
-  priceAtAdd Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Un SKU ne peut être ajouté qu'une seule fois par wishlist
-  @@unique([wishlistId, skuId])
-  @@index([wishlistId])
-  @@index([skuId])
-  @@index([skuId, createdAt]) // Notifications baisse de prix
-}
-
-// ============================================
-// CODES PROMO & RÉDUCTIONS
-// ============================================
-
-enum DiscountType {
-  PERCENTAGE    // Ex: -20%
-  FIXED_AMOUNT  // Ex: -10€
-}
-
-model Discount {
-  id   String @id @default(cuid())
-  code String @unique @db.VarChar(30) // Ex: "BIENVENUE10", "ETE2025"
-
-  // Type et valeur de la réduction
-  type  DiscountType
-  value Int // En pourcentage (20 = 20%) ou centimes (1000 = 10€)
-
-  // Conditions d'utilisation
-  minOrderAmount Int? // Montant minimum de commande en centimes (ex: 5000 = 50€)
-  maxUsageCount  Int? // Nombre max d'utilisations total (null = illimité)
-  maxUsagePerUser Int? // Nombre max d'utilisations par utilisateur (null = illimité)
-
-  // Période de validité
-  startsAt DateTime  @default(now())
-  endsAt   DateTime?
-
-  // Statistiques
-  usageCount Int @default(0) // Compteur d'utilisations
-
-  // État
-  isActive  Boolean   @default(true)
-
-  // Restrictions optionnelles (à implémenter si besoin)
-  // appliesToCollectionId String?
-  // appliesToProductId    String?
-  // firstOrderOnly        Boolean @default(false)
-
-  // Relations
-  usages DiscountUsage[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([code])
-  @@index([isActive, startsAt, endsAt])
-  @@index([createdAt, id])
-}
-
-model DiscountUsage {
-  id         String   @id @default(cuid())
-  discountId String
-  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
-
-  // Utilisateur (optionnel pour guest checkout)
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  // Commande associée (Restrict pour protection comptable)
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
-
-  // Montant de la réduction appliquée (snapshot)
-  amountApplied Int // En centimes
-
-  createdAt DateTime @default(now())
-
-  @@index([discountId])
-  @@index([userId])
-  @@index([orderId])
-  @@index([discountId, userId]) // Pour vérifier usage par utilisateur
-}
-
 // ============================================================================
 // REMBOURSEMENTS
 // ============================================================================
+
+enum RefundReason {
+  CUSTOMER_REQUEST // Droit de rétractation (14 jours)
+  DEFECTIVE // Bijou cassé / abîmé
+  WRONG_ITEM // Erreur de préparation de commande
+  LOST_IN_TRANSIT // Colis perdu par le transporteur
+  FRAUD // Fraude avérée
+  OTHER // Autre
+}
+
+enum RefundStatus {
+  PENDING // Demande reçue / En attente de validation
+  APPROVED // Validé, en attente de traitement Stripe
+  COMPLETED // Remboursé effectivement (Stripe a confirmé)
+  REJECTED // Refusé (ex: retour hors délai)
+  FAILED // Échec technique Stripe
+}
 
 model Refund {
   id String @id @default(cuid())
@@ -772,14 +725,118 @@ model RefundItem {
 }
 
 // ============================================================================
+// CODES PROMO & RÉDUCTIONS
+// ============================================================================
+
+enum DiscountType {
+  PERCENTAGE   // Ex: -20%
+  FIXED_AMOUNT // Ex: -10€
+}
+
+model Discount {
+  id   String @id @default(cuid())
+  code String @unique @db.VarChar(30) // Ex: "BIENVENUE10", "ETE2025"
+
+  // Type et valeur de la réduction
+  type  DiscountType
+  value Int // En pourcentage (20 = 20%) ou centimes (1000 = 10€)
+
+  // Conditions d'utilisation
+  minOrderAmount  Int? // Montant minimum de commande en centimes (ex: 5000 = 50€)
+  maxUsageCount   Int? // Nombre max d'utilisations total (null = illimité)
+  maxUsagePerUser Int? // Nombre max d'utilisations par utilisateur (null = illimité)
+
+  // Période de validité
+  startsAt DateTime  @default(now())
+  endsAt   DateTime?
+
+  // Statistiques
+  usageCount Int @default(0) // Compteur d'utilisations
+
+  // État
+  isActive Boolean @default(true)
+
+  // Restrictions optionnelles (à implémenter si besoin)
+  // appliesToCollectionId String?
+  // appliesToProductId    String?
+  // firstOrderOnly        Boolean @default(false)
+
+  // Relations
+  usages DiscountUsage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive, startsAt, endsAt])
+  @@index([createdAt, id])
+}
+
+model DiscountUsage {
+  id         String   @id @default(cuid())
+  discountId String
+  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+
+  // Utilisateur (optionnel pour guest checkout)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Commande associée (Restrict pour protection comptable)
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  // Montant de la réduction appliquée (snapshot)
+  amountApplied Int // En centimes
+
+  createdAt DateTime @default(now())
+
+  @@index([discountId])
+  @@index([userId])
+  @@index([orderId])
+  @@index([discountId, userId]) // Pour vérifier usage par utilisateur
+}
+
+// ============================================================================
+// NEWSLETTER
+// ============================================================================
+
+model NewsletterSubscriber {
+  id               String  @id @default(cuid())
+  email            String  @unique
+  isActive         Boolean @default(false) // ⚠️ Changement : false par défaut (activation après confirmation email)
+  unsubscribeToken String  @unique @default(cuid())
+
+  // Double opt-in : Confirmation email obligatoire
+  emailVerified      Boolean   @default(false) // true après clic sur lien confirmation
+  confirmationToken  String?   @unique // Token unique pour confirmer l'inscription
+  confirmationSentAt DateTime? // Date d'envoi de l'email de confirmation
+  confirmedAt        DateTime? // Date de confirmation par l'utilisateur
+
+  // Champs de traçabilité RGPD
+  ipAddress        String?
+  userAgent        String?
+  consentSource    String?  @default("newsletter_form")
+  consentTimestamp DateTime @default(now())
+
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, createdAt])
+  @@index([emailVerified, isActive])
+}
+
+// ============================================================================
 // NOTIFICATIONS RETOUR EN STOCK
 // ============================================================================
 
 enum StockNotificationStatus {
-  PENDING    // En attente du retour en stock
-  NOTIFIED   // Email envoyé au client
-  EXPIRED    // Demande expirée (après X jours sans retour)
-  CANCELLED  // Annulée par l'utilisateur
+  PENDING   // En attente du retour en stock
+  NOTIFIED  // Email envoyé au client
+  EXPIRED   // Demande expirée (après X jours sans retour)
+  CANCELLED // Annulée par l'utilisateur
 }
 
 /// Demande de notification quand un produit revient en stock
@@ -805,7 +862,7 @@ model StockNotificationRequest {
   unsubscribeToken String @unique @default(cuid())
 
   // Tracking envoi notification
-  notifiedAt DateTime? // Date d'envoi de l'email de notification
+  notifiedAt        DateTime? // Date d'envoi de l'email de notification
   notifiedInventory Int? // Stock disponible au moment de l'envoi
 
   // Métadonnées RGPD
@@ -823,6 +880,3 @@ model StockNotificationRequest {
   @@index([userId])
   @@index([status, createdAt])
 }
-
-
-

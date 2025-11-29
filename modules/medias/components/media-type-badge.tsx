@@ -43,7 +43,7 @@ export function MediaTypeBadge({
 			aria-label="Type de média : vidéo"
 		>
 			<Video className={iconSizes[size]} aria-hidden="true" />
-			<span>VIDEO</span>
+			<span>VIDÉO</span>
 		</div>
 	);
 }

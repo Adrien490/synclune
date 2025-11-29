@@ -33,6 +33,8 @@ interface ImageGalleryProps {
 	 * Utilisé pour le mode édition où la suppression est différée.
 	 */
 	skipUtapiDelete?: boolean;
+	/** URLs des vidéos dont la miniature est en cours de génération */
+	generatingThumbnails?: Set<string>;
 }
 
 interface ImageItemProps {
@@ -40,9 +42,10 @@ interface ImageItemProps {
 	index: number;
 	onRemove: () => void;
 	skipUtapiDelete?: boolean;
+	isGeneratingThumbnail?: boolean;
 }
 
-function ImageItem({ image, index, onRemove, skipUtapiDelete }: ImageItemProps) {
+function ImageItem({ image, index, onRemove, skipUtapiDelete, isGeneratingThumbnail }: ImageItemProps) {
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
 	const { isPending, action } = useDeleteUploadThingFile({
@@ -141,6 +144,12 @@ function ImageItem({ image, index, onRemove, skipUtapiDelete }: ImageItemProps) 
 								</svg>
 							</div>
 						</div>
+						{/* Loader pendant génération de miniature */}
+						{isGeneratingThumbnail && (
+							<div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+								<Loader2 className="h-8 w-8 text-white animate-spin" />
+							</div>
+						)}
 					</div>
 				) : (
 					<Image
@@ -229,7 +238,7 @@ function ImageItem({ image, index, onRemove, skipUtapiDelete }: ImageItemProps) 
 	);
 }
 
-export function ImageGallery({ images, onRemove, skipUtapiDelete }: ImageGalleryProps) {
+export function ImageGallery({ images, onRemove, skipUtapiDelete, generatingThumbnails }: ImageGalleryProps) {
 	return (
 		<div
 			className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full"
@@ -244,6 +253,7 @@ export function ImageGallery({ images, onRemove, skipUtapiDelete }: ImageGallery
 						index={index}
 						onRemove={() => onRemove(index)}
 						skipUtapiDelete={skipUtapiDelete}
+						isGeneratingThumbnail={image.mediaType === "VIDEO" && generatingThumbnails?.has(image.url)}
 					/>
 				))}
 			</AnimatePresence>

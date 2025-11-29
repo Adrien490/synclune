@@ -49,7 +49,7 @@ export function EditProductForm({
 	const router = useRouter();
 
 	// Hook pour génération automatique de thumbnail vidéo
-	const { generateThumbnail } = useAutoVideoThumbnail();
+	const { generateThumbnail, generatingUrls } = useAutoVideoThumbnail();
 
 	const {
 		startUpload: startPrimaryImageUpload,
@@ -384,7 +384,7 @@ export function EditProductForm({
 										]}
 									/>
 									<p className="text-xs text-muted-foreground">
-										⚠️ Archiver désactive automatiquement tous les SKUs
+										⚠️ Archiver désactive automatiquement toutes les variantes
 									</p>
 								</div>
 							)}
@@ -775,6 +775,7 @@ export function EditProductForm({
 														images={field.state.value}
 														onRemove={(index) => field.removeValue(index)}
 														skipUtapiDelete={true}
+														generatingThumbnails={generatingUrls}
 													/>
 												</motion.div>
 											)}
@@ -865,7 +866,6 @@ export function EditProductForm({
 																				...newMedia,
 																				thumbnailUrl,
 																			});
-																			toast.success("Miniature générée");
 																		}
 																	});
 																}

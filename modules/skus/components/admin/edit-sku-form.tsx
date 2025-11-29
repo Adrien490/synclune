@@ -41,7 +41,7 @@ export function EditProductVariantForm({
 	const router = useRouter();
 
 	// Hook pour génération automatique de thumbnail vidéo
-	const { generateThumbnail } = useAutoVideoThumbnail();
+	const { generateThumbnail, generatingUrls } = useAutoVideoThumbnail();
 
 	const {
 		startUpload: startPrimaryImageUpload,
@@ -535,6 +535,7 @@ export function EditProductVariantForm({
 															images={field.state.value}
 															onRemove={(index) => field.removeValue(index)}
 															skipUtapiDelete={true}
+															generatingThumbnails={generatingUrls}
 														/>
 													</motion.div>
 												)}
@@ -604,7 +605,6 @@ export function EditProductVariantForm({
 																					...newMedia,
 																					thumbnailUrl,
 																				});
-																				toast.success("Miniature générée");
 																			}
 																		});
 																	}

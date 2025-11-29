@@ -108,7 +108,7 @@ export async function ProductVariantsDataTable({
 									Image
 								</TableHead>
 								<TableHead key="sku" role="columnheader">
-									SKU
+									Référence
 								</TableHead>
 								<TableHead
 									key="color"
@@ -184,7 +184,7 @@ export async function ProductVariantsDataTable({
 															loop
 															playsInline
 															preload="none"
-															aria-label={primaryImage.altText || `Vidéo SKU ${sku.sku}`}
+															aria-label={primaryImage.altText || `Vidéo variante ${sku.sku}`}
 														>
 															<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
 															Votre navigateur ne supporte pas la lecture de vidéos.

@@ -220,6 +220,12 @@ export function useVideoThumbnail(
 				canvasRef.current.height = 0;
 				canvasRef.current = null;
 			}
+			// Cleanup video element (memory leak fix)
+			if (videoRef.current) {
+				videoRef.current.pause();
+				videoRef.current.src = "";
+				videoRef.current.load();
+			}
 			// Abort pending loads
 			abortControllerRef.current?.abort();
 			// Clear timeout

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useUploadThing } from "@/modules/medias/utils/uploadthing";
 
 // ============================================================================
@@ -31,12 +31,16 @@ export function useAutoVideoThumbnail(
 	options: UseAutoVideoThumbnailOptions = {}
 ) {
 	const { startUpload } = useUploadThing("catalogMedia");
+	const [generatingUrls, setGeneratingUrls] = useState<Set<string>>(new Set());
 
-	const generateThumbnail = useCallback(
+	const generateThumbnailCore = useCallback(
 		async (videoUrl: string): Promise<string | null> => {
+			// Créer élément vidéo caché (déclaré en dehors du try pour cleanup)
+			const video = document.createElement("video");
+			let canvas: HTMLCanvasElement | null = null;
+
 			try {
-				// 1. Créer élément vidéo caché
-				const video = document.createElement("video");
+				// 1. Configurer élément vidéo
 				video.crossOrigin = "anonymous";
 				video.muted = true;
 				video.preload = "metadata";
@@ -74,8 +78,9 @@ export function useAutoVideoThumbnail(
 				}
 
 				// 5. Capturer via Canvas
-				const canvas = document.createElement("canvas");
-				const ctx = canvas.getContext("2d");
+				const createdCanvas = document.createElement("canvas");
+				canvas = createdCanvas;
+				const ctx = createdCanvas.getContext("2d");
 
 				if (!ctx) {
 					throw new Error("Canvas 2D non disponible");
@@ -87,20 +92,20 @@ export function useAutoVideoThumbnail(
 					MAX_SIZE / video.videoHeight,
 					1
 				);
-				canvas.width = Math.round(video.videoWidth * ratio);
-				canvas.height = Math.round(video.videoHeight * ratio);
+				createdCanvas.width = Math.round(video.videoWidth * ratio);
+				createdCanvas.height = Math.round(video.videoHeight * ratio);
 
-				ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+				ctx.drawImage(video, 0, 0, createdCanvas.width, createdCanvas.height);
 
 				// 6. Convertir en Blob WebP
 				const blob = await new Promise<Blob | null>((resolve) => {
-					canvas.toBlob((b) => resolve(b), "image/webp", QUALITY);
+					createdCanvas.toBlob((b) => resolve(b), "image/webp", QUALITY);
 				});
 
 				if (!blob) {
 					// Fallback JPEG si WebP non supporté
 					const jpegBlob = await new Promise<Blob | null>((resolve) => {
-						canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9);
+						createdCanvas.toBlob((b) => resolve(b), "image/jpeg", 0.9);
 					});
 					if (!jpegBlob) {
 						throw new Error("Échec conversion image");
@@ -118,10 +123,6 @@ export function useAutoVideoThumbnail(
 				});
 				const result = await startUpload([file]);
 
-				// Cleanup
-				canvas.width = 0;
-				canvas.height = 0;
-
 				return result?.[0]?.ufsUrl || null;
 			} catch (error) {
 				const msg =
@@ -130,10 +131,41 @@ export function useAutoVideoThumbnail(
 						: "Erreur génération miniature";
 				options.onError?.(msg);
 				return null;
+			} finally {
+				// Cleanup vidéo pour éviter memory leak
+				video.pause();
+				video.src = "";
+				video.load();
+				video.onloadedmetadata = null;
+				video.onerror = null;
+				video.onseeked = null;
+				video.oncanplay = null;
+
+				// Cleanup canvas
+				if (canvas) {
+					canvas.width = 0;
+					canvas.height = 0;
+				}
 			}
 		},
 		[startUpload, options]
 	);
 
-	return { generateThumbnail };
+	const generateThumbnail = useCallback(
+		async (videoUrl: string): Promise<string | null> => {
+			setGeneratingUrls((prev) => new Set(prev).add(videoUrl));
+			try {
+				return await generateThumbnailCore(videoUrl);
+			} finally {
+				setGeneratingUrls((prev) => {
+					const next = new Set(prev);
+					next.delete(videoUrl);
+					return next;
+				});
+			}
+		},
+		[generateThumbnailCore]
+	);
+
+	return { generateThumbnail, generatingUrls };
 }

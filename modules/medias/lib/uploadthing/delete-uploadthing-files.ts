@@ -1,5 +1,6 @@
 "use server";
 
+import { isAdmin } from "@/modules/auth/utils/guards";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
@@ -36,12 +37,21 @@ export async function deleteUploadThingFiles(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Extraction des données du FormData
+		// 1. Vérification des droits admin
+		const admin = await isAdmin();
+		if (!admin) {
+			return {
+				status: ActionStatus.UNAUTHORIZED,
+				message: "Accès non autorisé. Droits administrateur requis.",
+			};
+		}
+
+		// 2. Extraction des données du FormData
 		const rawData = {
 			fileUrls: JSON.parse(formData.get("fileUrls") as string) as string[],
 		};
 
-		// 2. Validation avec Zod
+		// 3. Validation avec Zod
 		const result = deleteUploadThingFilesSchema.safeParse(rawData);
 
 		if (!result.success) {
