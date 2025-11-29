@@ -27,6 +27,7 @@ export const GET_USERS_SELECT = {
 	createdAt: true,
 	updatedAt: true,
 	deletedAt: true,
+	suspendedAt: true,
 	_count: {
 		select: {
 			orders: true,

@@ -17,9 +17,11 @@ import {
 } from "@/shared/components/ui/table";
 import type { GetUsersReturn } from "@/modules/users/data/get-users";
 import { CheckCircle, Users } from "lucide-react";
-import { ViewTransition } from "react";
+import { use, ViewTransition } from "react";
 import Link from "next/link";
 import { UsersRowActions } from "./users-row-actions";
+import { UsersSelectionToolbar } from "./users-selection-toolbar";
+import { UsersTableSelectionCell } from "./users-table-selection-cell";
 
 interface UsersDataTableProps {
 	usersPromise: Promise<GetUsersReturn>;
@@ -33,10 +35,9 @@ function formatDate(date: Date | string): string {
 	}).format(new Date(date));
 }
 
-export async function UsersDataTable({
-	usersPromise,
-}: UsersDataTableProps) {
-	const { users, pagination } = await usersPromise;
+export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
+	const { users, pagination } = use(usersPromise);
+	const userIds = users.map((user) => user.id);
 
 	if (users.length === 0) {
 		return (
@@ -45,9 +46,9 @@ export async function UsersDataTable({
 					<EmptyMedia variant="icon">
 						<Users />
 					</EmptyMedia>
-					<EmptyTitle>Aucun client trouvé</EmptyTitle>
+					<EmptyTitle>Aucun client trouve</EmptyTitle>
 					<EmptyDescription>
-						Aucun client ne correspond aux critères de recherche.
+						Aucun client ne correspond aux criteres de recherche.
 					</EmptyDescription>
 				</EmptyHeader>
 			</Empty>
@@ -57,10 +58,14 @@ export async function UsersDataTable({
 	return (
 		<Card>
 			<CardContent>
+				<UsersSelectionToolbar userIds={userIds} />
 				<div className="overflow-x-auto">
 					<Table role="table" aria-label="Liste des clients" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
+								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
+									<UsersTableSelectionCell type="header" userIds={userIds} />
+								</TableHead>
 								<TableHead scope="col" role="columnheader" className="w-[25%]">
 									Nom
 								</TableHead>
@@ -70,7 +75,7 @@ export async function UsersDataTable({
 								<TableHead
 									scope="col"
 									role="columnheader"
-									className="hidden xl:table-cell w-[15%]"
+									className="hidden xl:table-cell w-[10%]"
 								>
 									Commandes
 								</TableHead>
@@ -87,7 +92,7 @@ export async function UsersDataTable({
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{users.map((user) => {
+							{users.map((user) => {
 								const orderCount = user._count?.orders ?? 0;
 								const displayName = user.name || "Utilisateur";
 
@@ -96,6 +101,9 @@ export async function UsersDataTable({
 										key={user.id}
 										className={user.deletedAt ? "opacity-50" : undefined}
 									>
+										<TableCell role="gridcell">
+											<UsersTableSelectionCell type="row" userId={user.id} />
+										</TableCell>
 										<TableCell role="gridcell">
 											<ViewTransition name={`admin-user-name-${user.id}`}>
 												<div className="overflow-hidden">
@@ -141,13 +149,15 @@ export async function UsersDataTable({
 													id: user.id,
 													name: displayName,
 													email: user.email,
+													role: user.role,
 													deletedAt: user.deletedAt,
+													suspendedAt: user.suspendedAt,
 												}}
 											/>
 										</TableCell>
 									</TableRow>
 								);
-								})}
+							})}
 						</TableBody>
 					</Table>
 				</div>

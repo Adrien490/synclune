@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
@@ -21,167 +22,138 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { useSelectionContext } from "@/shared/contexts/selection-context";
+import { useBulkDeleteUsers } from "@/modules/users/hooks/admin/use-bulk-delete-users";
+import { useBulkSuspendUsers } from "@/modules/users/hooks/admin/use-bulk-suspend-users";
+import { useBulkRestoreUsers } from "@/modules/users/hooks/admin/use-bulk-restore-users";
+import { useBulkChangeUserRole } from "@/modules/users/hooks/admin/use-bulk-change-user-role";
 import {
 	Ban,
-	Eye,
 	Loader2,
 	MoreVertical,
-	Pencil,
 	RotateCcw,
 	Shield,
 	ShieldOff,
 	Trash2,
 	UserCog,
 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
-import { useDeleteUser } from "@/modules/users/hooks/admin/use-delete-user";
-import { useSuspendUser } from "@/modules/users/hooks/admin/use-suspend-user";
-import { useRestoreUser } from "@/modules/users/hooks/admin/use-restore-user";
-import { useChangeUserRole } from "@/modules/users/hooks/admin/use-change-user-role";
 import { Role } from "@/app/generated/prisma/client";
 
-interface UsersRowActionsProps {
-	user: {
-		id: string;
-		name: string;
-		email: string;
-		role?: Role;
-		deletedAt: Date | null;
-		suspendedAt?: Date | null;
-	};
+interface UsersSelectionToolbarProps {
+	userIds: string[];
 }
 
-export function UsersRowActions({ user }: UsersRowActionsProps) {
+export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
+	const { selectedItems, clearSelection } = useSelectionContext();
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
 	const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
 	const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
 	const [demoteDialogOpen, setDemoteDialogOpen] = useState(false);
 
-	const { action: deleteAction, isPending: isDeletePending } = useDeleteUser({
-		onSuccess: () => setDeleteDialogOpen(false),
+	const { action: deleteAction, isPending: isDeletePending } = useBulkDeleteUsers({
+		onSuccess: () => {
+			setDeleteDialogOpen(false);
+			clearSelection();
+		},
 	});
 
-	const { action: suspendAction, isPending: isSuspendPending } = useSuspendUser({
-		onSuccess: () => setSuspendDialogOpen(false),
+	const { action: suspendAction, isPending: isSuspendPending } = useBulkSuspendUsers({
+		onSuccess: () => {
+			setSuspendDialogOpen(false);
+			clearSelection();
+		},
 	});
 
-	const { action: restoreAction, isPending: isRestorePending } = useRestoreUser({
-		onSuccess: () => setRestoreDialogOpen(false),
+	const { action: restoreAction, isPending: isRestorePending } = useBulkRestoreUsers({
+		onSuccess: () => {
+			setRestoreDialogOpen(false);
+			clearSelection();
+		},
 	});
 
-	const { action: changeRoleAction, isPending: isChangeRolePending } = useChangeUserRole({
+	const { action: changeRoleAction, isPending: isChangeRolePending } = useBulkChangeUserRole({
 		onSuccess: () => {
 			setPromoteDialogOpen(false);
 			setDemoteDialogOpen(false);
+			clearSelection();
 		},
 	});
 
 	const isPending = isDeletePending || isSuspendPending || isRestorePending || isChangeRolePending;
-	const isDeleted = !!user.deletedAt;
-	const isSuspended = !!user.suspendedAt;
-	const isAdmin = user.role === Role.ADMIN;
-	const displayName = user.name || user.email;
+
+	if (selectedItems.length === 0) return null;
 
 	return (
 		<>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="h-8 w-8 p-0" aria-label="Actions">
-						<MoreVertical className="h-4 w-4" />
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end">
-					<DropdownMenuItem asChild>
-						<Link
-							href={`/admin/ventes/commandes?userId=${user.id}`}
-							className="flex items-center cursor-pointer"
+			<SelectionToolbar>
+				<span className="text-sm text-muted-foreground">
+					{selectedItems.length} utilisateur{selectedItems.length > 1 ? "s" : ""}{" "}
+					selectionne{selectedItems.length > 1 ? "s" : ""}
+				</span>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+							<span className="sr-only">Ouvrir le menu</span>
+							<MoreVertical className="h-4 w-4" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="w-[200px]">
+						<DropdownMenuSub>
+							<DropdownMenuSubTrigger>
+								<UserCog className="h-4 w-4" />
+								Changer le role
+							</DropdownMenuSubTrigger>
+							<DropdownMenuSubContent>
+								<DropdownMenuItem onClick={() => setPromoteDialogOpen(true)}>
+									<Shield className="h-4 w-4" />
+									Promouvoir admin
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setDemoteDialogOpen(true)}>
+									<ShieldOff className="h-4 w-4" />
+									Retrograder utilisateur
+								</DropdownMenuItem>
+							</DropdownMenuSubContent>
+						</DropdownMenuSub>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem onClick={() => setSuspendDialogOpen(true)}>
+							<Ban className="h-4 w-4" />
+							Suspendre
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={() => setRestoreDialogOpen(true)}>
+							<RotateCcw className="h-4 w-4" />
+							Restaurer
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							onClick={() => setDeleteDialogOpen(true)}
+							variant="destructive"
 						>
-							<Eye className="mr-2 h-4 w-4" />
-							Voir commandes
-						</Link>
-					</DropdownMenuItem>
-					{!isDeleted && (
-						<>
-							<DropdownMenuSeparator />
-							<DropdownMenuSub>
-								<DropdownMenuSubTrigger>
-									<UserCog className="mr-2 h-4 w-4" />
-									Changer le role
-								</DropdownMenuSubTrigger>
-								<DropdownMenuSubContent>
-									<DropdownMenuItem
-										onClick={() => setPromoteDialogOpen(true)}
-										disabled={isAdmin}
-									>
-										<Shield className="mr-2 h-4 w-4" />
-										Promouvoir admin
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={() => setDemoteDialogOpen(true)}
-										disabled={!isAdmin}
-									>
-										<ShieldOff className="mr-2 h-4 w-4" />
-										Retrograder utilisateur
-									</DropdownMenuItem>
-								</DropdownMenuSubContent>
-							</DropdownMenuSub>
-							<DropdownMenuSeparator />
-							{!isSuspended ? (
-								<DropdownMenuItem
-									className="flex items-center cursor-pointer"
-									onClick={() => setSuspendDialogOpen(true)}
-								>
-									<Ban className="mr-2 h-4 w-4" />
-									Suspendre
-								</DropdownMenuItem>
-							) : (
-								<DropdownMenuItem
-									className="flex items-center cursor-pointer"
-									onClick={() => setRestoreDialogOpen(true)}
-								>
-									<RotateCcw className="mr-2 h-4 w-4" />
-									Lever la suspension
-								</DropdownMenuItem>
-							)}
-							<DropdownMenuItem
-								className="flex items-center cursor-pointer text-destructive focus:text-destructive"
-								onClick={() => setDeleteDialogOpen(true)}
-							>
-								<Trash2 className="mr-2 h-4 w-4" />
-								Supprimer
-							</DropdownMenuItem>
-						</>
-					)}
-					{isDeleted && (
-						<>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem
-								className="flex items-center cursor-pointer"
-								onClick={() => setRestoreDialogOpen(true)}
-							>
-								<RotateCcw className="mr-2 h-4 w-4" />
-								Restaurer
-							</DropdownMenuItem>
-						</>
-					)}
-				</DropdownMenuContent>
-			</DropdownMenu>
+							<Trash2 className="h-4 w-4" />
+							Supprimer
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</SelectionToolbar>
 
 			{/* Delete Dialog */}
 			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>
 					<form action={deleteAction}>
-						<input type="hidden" name="id" value={user.id} />
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
 						<AlertDialogHeader>
-							<AlertDialogTitle>Supprimer l&apos;utilisateur</AlertDialogTitle>
+							<AlertDialogTitle>Supprimer les utilisateurs</AlertDialogTitle>
 							<AlertDialogDescription>
 								Etes-vous sur de vouloir supprimer{" "}
-								<span className="font-semibold">{displayName}</span> ?
+								<span className="font-semibold">
+									{selectedItems.length} utilisateur
+									{selectedItems.length > 1 ? "s" : ""}
+								</span>{" "}
+								?
 								<br />
 								<br />
-								Le compte sera desactive mais les donnees seront conservees.
+								Les comptes seront desactives mais les donnees seront conservees.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
@@ -214,15 +186,19 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			<AlertDialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
 				<AlertDialogContent>
 					<form action={suspendAction}>
-						<input type="hidden" name="id" value={user.id} />
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
 						<AlertDialogHeader>
-							<AlertDialogTitle>Suspendre l&apos;utilisateur</AlertDialogTitle>
+							<AlertDialogTitle>Suspendre les utilisateurs</AlertDialogTitle>
 							<AlertDialogDescription>
 								Etes-vous sur de vouloir suspendre{" "}
-								<span className="font-semibold">{displayName}</span> ?
+								<span className="font-semibold">
+									{selectedItems.length} utilisateur
+									{selectedItems.length > 1 ? "s" : ""}
+								</span>{" "}
+								?
 								<br />
 								<br />
-								L&apos;utilisateur ne pourra plus se connecter.
+								Les utilisateurs suspendus ne pourront plus se connecter.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
@@ -251,15 +227,19 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			<AlertDialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
 				<AlertDialogContent>
 					<form action={restoreAction}>
-						<input type="hidden" name="id" value={user.id} />
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
 						<AlertDialogHeader>
-							<AlertDialogTitle>Restaurer l&apos;utilisateur</AlertDialogTitle>
+							<AlertDialogTitle>Restaurer les utilisateurs</AlertDialogTitle>
 							<AlertDialogDescription>
 								Etes-vous sur de vouloir restaurer{" "}
-								<span className="font-semibold">{displayName}</span> ?
+								<span className="font-semibold">
+									{selectedItems.length} utilisateur
+									{selectedItems.length > 1 ? "s" : ""}
+								</span>{" "}
+								?
 								<br />
 								<br />
-								Le compte sera reactive.
+								Les comptes supprimes ou suspendus seront reactives.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
@@ -288,14 +268,17 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			<AlertDialog open={promoteDialogOpen} onOpenChange={setPromoteDialogOpen}>
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
-						<input type="hidden" name="id" value={user.id} />
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
 						<input type="hidden" name="role" value={Role.ADMIN} />
 						<AlertDialogHeader>
 							<AlertDialogTitle>Promouvoir en administrateur</AlertDialogTitle>
 							<AlertDialogDescription>
 								Etes-vous sur de vouloir promouvoir{" "}
-								<span className="font-semibold">{displayName}</span> au role
-								d&apos;administrateur ?
+								<span className="font-semibold">
+									{selectedItems.length} utilisateur
+									{selectedItems.length > 1 ? "s" : ""}
+								</span>{" "}
+								au role d&apos;administrateur ?
 								<br />
 								<br />
 								<span className="text-amber-600 font-medium">
@@ -330,17 +313,20 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			<AlertDialog open={demoteDialogOpen} onOpenChange={setDemoteDialogOpen}>
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
-						<input type="hidden" name="id" value={user.id} />
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
 						<input type="hidden" name="role" value={Role.USER} />
 						<AlertDialogHeader>
 							<AlertDialogTitle>Retrograder en utilisateur</AlertDialogTitle>
 							<AlertDialogDescription>
 								Etes-vous sur de vouloir retrograder{" "}
-								<span className="font-semibold">{displayName}</span> au role
-								d&apos;utilisateur standard ?
+								<span className="font-semibold">
+									{selectedItems.length} utilisateur
+									{selectedItems.length > 1 ? "s" : ""}
+								</span>{" "}
+								au role d&apos;utilisateur standard ?
 								<br />
 								<br />
-								Il perdra l&apos;acces au dashboard administrateur.
+								Ils perdront l&apos;acces au dashboard administrateur.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
