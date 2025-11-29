@@ -8,7 +8,7 @@ export const editProductFormOpts = {
 		title: "",
 		description: "",
 		typeId: "",
-		collectionId: "",
+		collectionIds: [] as string[],
 		status: "PUBLIC" as ProductStatus,
 		defaultSku: {
 			skuId: "",

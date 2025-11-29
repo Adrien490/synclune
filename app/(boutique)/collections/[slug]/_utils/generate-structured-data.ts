@@ -4,7 +4,7 @@ type Collection = {
 	slug: string;
 	name: string;
 	description: string | null;
-	imageUrl: string | null;
+	featuredImageUrl?: string | null;
 };
 
 /**
@@ -57,10 +57,10 @@ export function generateCollectionStructuredData(collection: Collection) {
 			name: collection.name,
 			description: collection.description || undefined,
 		},
-		...(collection.imageUrl && {
+		...(collection.featuredImageUrl && {
 			image: {
 				"@type": "ImageObject",
-				url: collection.imageUrl,
+				url: collection.featuredImageUrl,
 				caption: `Collection ${collection.name}`,
 			},
 		}),

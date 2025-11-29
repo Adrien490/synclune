@@ -12,7 +12,6 @@ interface Collection {
 	name: string;
 	slug: string;
 	description: string | null;
-	imageUrl: string | null;
 }
 
 interface UseUpdateCollectionFormOptions {
@@ -56,7 +55,6 @@ export const useUpdateCollectionForm = (
 			id: collection.id,
 			name: collection.name,
 			description: collection.description || "",
-			imageUrl: collection.imageUrl || "",
 		},
 		// Merge server state with form state for validation errors
 		transform: useTransform(

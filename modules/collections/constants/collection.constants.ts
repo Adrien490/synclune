@@ -9,49 +9,56 @@ export const GET_COLLECTION_SELECT = {
 	slug: true,
 	name: true,
 	description: true,
-	imageUrl: true,
 	status: true,
 	createdAt: true,
 	updatedAt: true,
 	products: {
 		select: {
 			id: true,
-			slug: true,
-			title: true,
-			description: true,
-			status: true,
-			createdAt: true,
-			updatedAt: true,
-			type: {
+			addedAt: true,
+			isFeatured: true,
+			product: {
 				select: {
 					id: true,
 					slug: true,
-					label: true,
-					isActive: true,
-				},
-			},
-			skus: {
-				where: {
-					isActive: true,
-				},
-				select: {
-					id: true,
-					isDefault: true,
-					priceInclTax: true,
-					images: {
+					title: true,
+					description: true,
+					status: true,
+					createdAt: true,
+					updatedAt: true,
+					type: {
 						select: {
 							id: true,
-							url: true,
-							altText: true,
-							mediaType: true,
-							isPrimary: true,
+							slug: true,
+							label: true,
+							isActive: true,
 						},
-						orderBy: { createdAt: "asc" },
+					},
+					skus: {
+						where: {
+							isActive: true,
+						},
+						select: {
+							id: true,
+							isDefault: true,
+							priceInclTax: true,
+							images: {
+								select: {
+									id: true,
+									url: true,
+									altText: true,
+									mediaType: true,
+									isPrimary: true,
+								},
+								orderBy: { createdAt: "asc" },
+							},
+						},
+						orderBy: [{ isDefault: "desc" }, { priceInclTax: "asc" }],
 					},
 				},
-				orderBy: [{ isDefault: "desc" }, { priceInclTax: "asc" }],
 			},
 		},
+		orderBy: { addedAt: "desc" },
 	},
 } as const satisfies Prisma.CollectionSelect;
 
@@ -60,15 +67,40 @@ export const GET_COLLECTIONS_SELECT = {
 	slug: true,
 	name: true,
 	description: true,
-	imageUrl: true,
 	status: true,
 	createdAt: true,
 	updatedAt: true,
+	// Produit vedette pour l'image de la collection
+	products: {
+		where: { isFeatured: true },
+		select: {
+			product: {
+				select: {
+					id: true,
+					title: true,
+					skus: {
+						where: { isActive: true, isDefault: true },
+						select: {
+							images: {
+								where: { isPrimary: true },
+								select: { url: true, altText: true },
+								take: 1,
+							},
+						},
+						take: 1,
+					},
+				},
+			},
+		},
+		take: 1,
+	},
 	_count: {
 		select: {
 			products: {
 				where: {
-					status: "PUBLIC",
+					product: {
+						status: "PUBLIC",
+					},
 				},
 			},
 		},

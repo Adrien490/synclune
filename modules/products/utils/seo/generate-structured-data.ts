@@ -128,11 +128,11 @@ export function generateStructuredData(
 		...(selectedSku?.color && {
 			color: selectedSku.color.name,
 		}),
-		...(product.collection && {
-			isRelatedTo: {
+		...(product.collections && product.collections.length > 0 && {
+			isRelatedTo: product.collections.map((pc) => ({
 				"@type": "Collection",
-				name: product.collection.name,
-			},
+				name: pc.collection.name,
+			})),
 		}),
 		additionalProperty: [
 			{

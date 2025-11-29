@@ -43,7 +43,6 @@ export const useCreateCollectionForm = (
 		defaultValues: {
 			name: "",
 			description: "",
-			imageUrl: "",
 		},
 		// Merge server state with form state for validation errors
 		transform: useTransform(

@@ -89,14 +89,6 @@ export const collectionDescriptionSchema = z
 	.optional()
 	.nullable();
 
-export const collectionImageUrlSchema = z
-	.string()
-	.trim()
-	.url({ message: "L'URL de l'image doit etre valide" })
-	.optional()
-	.nullable()
-	.or(z.literal(""));
-
 export const collectionSlugSchema = z
 	.string()
 	.trim()
@@ -110,7 +102,6 @@ export const collectionSlugSchema = z
 export const createCollectionSchema = z.object({
 	name: collectionNameSchema,
 	description: collectionDescriptionSchema,
-	imageUrl: collectionImageUrlSchema,
 	status: collectionStatusSchema,
 });
 
@@ -119,7 +110,6 @@ export const updateCollectionSchema = z.object({
 	name: collectionNameSchema,
 	slug: collectionSlugSchema,
 	description: collectionDescriptionSchema,
-	imageUrl: collectionImageUrlSchema,
 	status: z.nativeEnum(CollectionStatus),
 });
 

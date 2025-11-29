@@ -30,7 +30,6 @@ export async function createCollection(
 		const rawData = {
 			name: formData.get("name"),
 			description: formData.get("description") || null,
-			imageUrl: formData.get("imageUrl") || null,
 			status: formData.get("status") || undefined,
 		};
 
@@ -59,7 +58,6 @@ export async function createCollection(
 				name: validatedData.name,
 				slug,
 				description: validatedData.description,
-				imageUrl: validatedData.imageUrl,
 				status: validatedData.status,
 			},
 		});

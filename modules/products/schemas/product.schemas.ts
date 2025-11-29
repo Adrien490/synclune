@@ -248,15 +248,17 @@ export const createProductSchema = z
 
 		// Relations (IDs vides seront traites comme null)
 		typeId: z
-		.string()
-		.optional()
-		.or(z.literal(""))
-		.transform((val) => (val === "" ? undefined : val)),
-		collectionId: z
-		.string()
-		.optional()
-		.or(z.literal(""))
-		.transform((val) => (val === "" ? undefined : val)),
+			.string()
+			.optional()
+			.or(z.literal(""))
+			.transform((val) => (val === "" ? undefined : val)),
+
+		// Collections (many-to-many)
+		collectionIds: z
+			.array(z.string().cuid())
+			.max(10, { error: "Un produit ne peut appartenir qu'a 10 collections maximum" })
+			.optional()
+			.default([]),
 
 		// Status enum
 		status: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]).default("PUBLIC"),
@@ -314,15 +316,17 @@ export const updateProductSchema = z
 
 		// Relations (IDs vides seront traites comme null)
 		typeId: z
-		.string()
-		.optional()
-		.or(z.literal(""))
-		.transform((val) => (val === "" ? undefined : val)),
-		collectionId: z
-		.string()
-		.optional()
-		.or(z.literal(""))
-		.transform((val) => (val === "" ? undefined : val)),
+			.string()
+			.optional()
+			.or(z.literal(""))
+			.transform((val) => (val === "" ? undefined : val)),
+
+		// Collections (many-to-many)
+		collectionIds: z
+			.array(z.string().cuid())
+			.max(10, { error: "Un produit ne peut appartenir qu'a 10 collections maximum" })
+			.optional()
+			.default([]),
 
 		// Status enum
 		status: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]),

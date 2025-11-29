@@ -170,10 +170,10 @@ export async function CollectionsDataTable({
 										>
 											<ViewTransition name={`admin-collection-image-${collection.id}`}>
 												<div className="w-20 h-20 relative shrink-0">
-													{collection.imageUrl ? (
+													{collection.products[0]?.product?.skus[0]?.images[0]?.url ? (
 														<Image
-															src={collection.imageUrl}
-															alt={collection.name}
+															src={collection.products[0].product.skus[0].images[0].url}
+															alt={collection.products[0].product.skus[0].images[0].altText || collection.name}
 															fill
 															sizes="80px"
 															className="rounded-md object-cover"
@@ -244,7 +244,6 @@ export async function CollectionsDataTable({
 													collectionName={collection.name}
 													collectionSlug={collection.slug}
 													collectionDescription={collection.description}
-													collectionImageUrl={collection.imageUrl}
 													collectionStatus={collection.status}
 													productsCount={productsCount}
 												/>

@@ -67,17 +67,17 @@ export function ProductInfo({
 					</Badge>
 				)}
 
-				{product.collection && (
-					<Link href={`/collections/${product.collection.slug}`}>
+				{product.collections?.map((pc) => (
+					<Link key={pc.collection.id} href={`/collections/${pc.collection.slug}`}>
 						<Badge
 							variant="outline"
 							className="text-xs/5 tracking-normal antialiased font-medium px-3 py-1 gap-1.5 cursor-pointer hover:bg-primary/10 transition-colors"
 						>
 							<Heart className="w-3 h-3" aria-hidden="true" />
-							{product.collection.name}
+							{pc.collection.name}
 						</Badge>
 					</Link>
-				)}
+				))}
 			</div>
 
 			{/* Description */}

@@ -92,12 +92,16 @@ export default async function CollectionPage({
 		{ label: collection.name, href: `/collections/${slug}` },
 	];
 
+	// Récupérer l'image du produit vedette pour le SEO
+	const featuredProduct = collection.products.find((pc) => pc.isFeatured);
+	const featuredImageUrl = featuredProduct?.product?.skus?.[0]?.images?.[0]?.url || null;
+
 	// Générer les données structurées pour le SEO
 	const structuredData = generateCollectionStructuredData({
 		slug: collection.slug,
 		name: collection.name,
 		description: collection.description,
-		imageUrl: collection.imageUrl,
+		featuredImageUrl,
 	});
 
 	return (

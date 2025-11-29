@@ -66,21 +66,25 @@ export function buildProductSearchConditions(
 					},
 				},
 				{
-					collection: {
-						OR: [
-							{
-								name: {
-									contains: searchTerm,
-									mode: Prisma.QueryMode.insensitive,
-								},
+					collections: {
+						some: {
+							collection: {
+								OR: [
+									{
+										name: {
+											contains: searchTerm,
+											mode: Prisma.QueryMode.insensitive,
+										},
+									},
+									{
+										slug: {
+											contains: searchTerm,
+											mode: Prisma.QueryMode.insensitive,
+										},
+									},
+								],
 							},
-							{
-								slug: {
-									contains: searchTerm,
-									mode: Prisma.QueryMode.insensitive,
-								},
-							},
-						],
+						},
 					},
 				},
 			],
@@ -134,9 +138,13 @@ export function buildProductFilterConditions(
 			? filters.collectionId
 			: [filters.collectionId];
 		if (collectionIds.length === 1) {
-			conditions.push({ collectionId: collectionIds[0] });
+			conditions.push({
+				collections: { some: { collectionId: collectionIds[0] } },
+			});
 		} else if (collectionIds.length > 1) {
-			conditions.push({ collectionId: { in: collectionIds } });
+			conditions.push({
+				collections: { some: { collectionId: { in: collectionIds } } },
+			});
 		}
 	}
 
@@ -145,9 +153,13 @@ export function buildProductFilterConditions(
 			? filters.collectionSlug
 			: [filters.collectionSlug];
 		if (collectionSlugs.length === 1) {
-			conditions.push({ collection: { slug: collectionSlugs[0] } });
+			conditions.push({
+				collections: { some: { collection: { slug: collectionSlugs[0] } } },
+			});
 		} else if (collectionSlugs.length > 1) {
-			conditions.push({ collection: { slug: { in: collectionSlugs } } });
+			conditions.push({
+				collections: { some: { collection: { slug: { in: collectionSlugs } } } },
+			});
 		}
 	}
 

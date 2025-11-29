@@ -50,7 +50,7 @@ export async function updateProduct(
 			title: formData.get("title"),
 			description: formData.get("description"),
 			typeId: formData.get("typeId") || "",
-			collectionId: formData.get("collectionId") || "",
+			collectionIds: parseJSON<string[]>(formData.get("collectionIds"), []),
 			status: formData.get("status"),
 			defaultSku: {
 				skuId: formData.get("defaultSku.skuId"),
@@ -92,9 +92,13 @@ export async function updateProduct(
 				id: true,
 				slug: true,
 				status: true,
-				collectionId: true,
-				collection: {
-					select: { slug: true },
+				collections: {
+					select: {
+						collectionId: true,
+						collection: {
+							select: { slug: true },
+						},
+					},
 				},
 				_count: {
 					select: {
@@ -144,7 +148,7 @@ export async function updateProduct(
 
 		// 6. Normalize empty strings to null for optional foreign keys
 		const normalizedTypeId = validatedData.typeId?.trim() || null;
-		const normalizedCollectionId = validatedData.collectionId?.trim() || null;
+		const normalizedCollectionIds = validatedData.collectionIds?.filter((id) => id.trim()) || [];
 		const normalizedColorId = validatedData.defaultSku.colorId?.trim() || null;
 		const normalizedMaterial =
 			validatedData.defaultSku.material?.trim() || null;
@@ -208,13 +212,14 @@ export async function updateProduct(
 				}
 			}
 
-			if (normalizedCollectionId) {
-				const collection = await tx.collection.findUnique({
-					where: { id: normalizedCollectionId },
+			// Validate all collections exist
+			if (normalizedCollectionIds.length > 0) {
+				const collections = await tx.collection.findMany({
+					where: { id: { in: normalizedCollectionIds } },
 					select: { id: true },
 				});
-				if (!collection) {
-					throw new Error("La collection specifiee n'existe pas.");
+				if (collections.length !== normalizedCollectionIds.length) {
+					throw new Error("Une ou plusieurs collections specifiees n'existent pas.");
 				}
 			}
 
@@ -236,7 +241,6 @@ export async function updateProduct(
 					description: normalizedDescription,
 					status: validatedData.status,
 					typeId: normalizedTypeId,
-					collectionId: normalizedCollectionId,
 				},
 				select: {
 					id: true,
@@ -245,10 +249,25 @@ export async function updateProduct(
 					description: true,
 					status: true,
 					typeId: true,
-					collectionId: true,
 					updatedAt: true,
 				},
 			});
+
+			// Update ProductCollection associations (many-to-many)
+			// Delete existing associations
+			await tx.productCollection.deleteMany({
+				where: { productId: validatedData.productId },
+			});
+
+			// Create new associations
+			if (normalizedCollectionIds.length > 0) {
+				await tx.productCollection.createMany({
+					data: normalizedCollectionIds.map((collectionId) => ({
+						productId: validatedData.productId,
+						collectionId,
+					})),
+				});
+			}
 
 			// Update SKU
 			await tx.productSku.update({
@@ -295,24 +314,19 @@ export async function updateProduct(
 		);
 		productTags.forEach(tag => updateTag(tag));
 
-		// Si l'ancienne collection etait differente, l'invalider aussi
-		if (
-			existingProduct.collection &&
-			existingProduct.collectionId !== updatedProduct.collectionId
-		) {
-			const oldCollectionTags = getCollectionInvalidationTags(
-				existingProduct.collection.slug
-			);
-			oldCollectionTags.forEach(tag => updateTag(tag));
+		// Invalider les anciennes collections
+		for (const pc of existingProduct.collections) {
+			const collectionTags = getCollectionInvalidationTags(pc.collection.slug);
+			collectionTags.forEach(tag => updateTag(tag));
 		}
 
-		// Si le produit appartient a une nouvelle collection, invalider aussi
-		if (updatedProduct.collectionId) {
-			const collection = await prisma.collection.findUnique({
-				where: { id: updatedProduct.collectionId },
+		// Invalider les nouvelles collections
+		if (normalizedCollectionIds.length > 0) {
+			const newCollections = await prisma.collection.findMany({
+				where: { id: { in: normalizedCollectionIds } },
 				select: { slug: true },
 			});
-			if (collection) {
+			for (const collection of newCollections) {
 				const collectionTags = getCollectionInvalidationTags(collection.slug);
 				collectionTags.forEach(tag => updateTag(tag));
 			}

@@ -7,26 +7,10 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { revalidatePath } from "next/cache";
-import { UTApi } from "uploadthing/server";
 import { ZodError } from "zod";
 
 import { getCollectionInvalidationTags } from "../constants/cache";
 import { updateCollectionSchema } from "../schemas/collection.schemas";
-
-const utapi = new UTApi();
-
-/**
- * Extrait la cle du fichier depuis une URL UploadThing
- */
-function extractFileKeyFromUrl(url: string): string {
-	try {
-		const urlObj = new URL(url);
-		const parts = urlObj.pathname.split("/");
-		return parts[parts.length - 1];
-	} catch {
-		return url;
-	}
-}
 
 export async function updateCollection(
 	_prevState: unknown,
@@ -48,7 +32,6 @@ export async function updateCollection(
 			name: formData.get("name"),
 			slug: formData.get("slug"),
 			description: formData.get("description") || null,
-			imageUrl: formData.get("imageUrl") || null,
 			status: formData.get("status"),
 		};
 
@@ -88,20 +71,6 @@ export async function updateCollection(
 				? await generateSlug(prisma, "collection", validatedData.name)
 				: existingCollection.slug;
 
-		// Supprimer l'ancienne image si elle a change
-		// Note: on ne supprime que si l'URL a change ET que l'ancienne URL existe
-		const oldImageUrl = existingCollection.imageUrl;
-		const newImageUrl = validatedData.imageUrl;
-
-		if (oldImageUrl && oldImageUrl !== newImageUrl) {
-			try {
-				const fileKey = extractFileKeyFromUrl(oldImageUrl);
-				await utapi.deleteFiles(fileKey);
-			} catch (error) {
-				// Ignore - on continue meme si la suppression echoue
-			}
-		}
-
 		// Mettre a jour la collection
 		await prisma.collection.update({
 			where: { id: validatedData.id },
@@ -109,7 +78,6 @@ export async function updateCollection(
 				name: validatedData.name,
 				slug,
 				description: validatedData.description,
-				imageUrl: validatedData.imageUrl,
 				status: validatedData.status,
 			},
 		});

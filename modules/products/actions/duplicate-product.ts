@@ -56,10 +56,12 @@ export async function duplicateProduct(
 				slug: true,
 				description: true,
 				typeId: true,
-				collectionId: true,
-				collection: {
+				collections: {
 					select: {
-						slug: true,
+						collectionId: true,
+						collection: {
+							select: { slug: true },
+						},
 					},
 				},
 				skus: {
@@ -107,7 +109,6 @@ export async function duplicateProduct(
 					description: sourceProduct.description,
 					status: "DRAFT", // Toujours en brouillon pour eviter publication accidentelle
 					typeId: sourceProduct.typeId,
-					collectionId: sourceProduct.collectionId,
 				},
 				select: {
 					id: true,
@@ -116,11 +117,20 @@ export async function duplicateProduct(
 					description: true,
 					status: true,
 					typeId: true,
-					collectionId: true,
 					createdAt: true,
 					updatedAt: true,
 				},
 			});
+
+			// Dupliquer les associations ProductCollection (many-to-many)
+			if (sourceProduct.collections.length > 0) {
+				await tx.productCollection.createMany({
+					data: sourceProduct.collections.map((pc) => ({
+						productId: createdProduct.id,
+						collectionId: pc.collectionId,
+					})),
+				});
+			}
 
 			// Dupliquer tous les SKUs
 			for (const sourceSku of sourceProduct.skus) {
@@ -167,11 +177,9 @@ export async function duplicateProduct(
 		);
 		productTags.forEach(tag => updateTag(tag));
 
-		// Si le produit appartient a une collection, invalider aussi la collection
-		if (sourceProduct.collection) {
-			const collectionTags = getCollectionInvalidationTags(
-				sourceProduct.collection.slug
-			);
+		// Si le produit appartient a des collections, invalider aussi les collections
+		for (const pc of sourceProduct.collections) {
+			const collectionTags = getCollectionInvalidationTags(pc.collection.slug);
 			collectionTags.forEach(tag => updateTag(tag));
 		}
 

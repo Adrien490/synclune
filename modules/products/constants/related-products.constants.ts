@@ -19,15 +19,21 @@ export const RELATED_PRODUCTS_SELECT = {
 			isActive: true,
 		},
 	},
-	collectionId: true,
-	collection: {
+	collections: {
 		select: {
 			id: true,
-			name: true,
-			slug: true,
-			description: true,
-			imageUrl: true,
+			addedAt: true,
+			isFeatured: true,
+			collection: {
+				select: {
+					id: true,
+					name: true,
+					slug: true,
+					description: true,
+				},
+			},
 		},
+		orderBy: { addedAt: "desc" as const },
 	},
 	skus: {
 		where: { isActive: true },

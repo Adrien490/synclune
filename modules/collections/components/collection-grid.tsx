@@ -66,7 +66,7 @@ export function CollectionGrid({
 							slug={collection.slug}
 							name={collection.name}
 							description={collection.description}
-							imageUrl={collection.imageUrl}
+							imageUrl={collection.products[0]?.product?.skus[0]?.images[0]?.url || null}
 							showDescription={true}
 						/>
 					</div>

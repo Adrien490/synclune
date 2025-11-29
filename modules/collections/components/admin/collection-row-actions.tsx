@@ -35,7 +35,6 @@ interface CollectionRowActionsProps {
 	collectionName: string;
 	collectionSlug: string;
 	collectionDescription: string | null;
-	collectionImageUrl: string | null;
 	collectionStatus: CollectionStatus;
 	productsCount: number;
 }
@@ -45,7 +44,6 @@ export function CollectionRowActions({
 	collectionName,
 	collectionSlug,
 	collectionDescription,
-	collectionImageUrl,
 	collectionStatus,
 	productsCount,
 }: CollectionRowActionsProps) {
@@ -112,7 +110,6 @@ export function CollectionRowActions({
 								name: collectionName,
 								slug: collectionSlug,
 								description: collectionDescription,
-								imageUrl: collectionImageUrl,
 								status: collectionStatus,
 							},
 						});

@@ -36,7 +36,9 @@ export type GetProductReturn = Prisma.ProductGetPayload<{
 
 export type ProductSku = GetProductReturn["skus"][0];
 export type ProductType = GetProductReturn["type"];
-export type ProductCollection = NonNullable<GetProductReturn["collection"]>;
+export type ProductCollections = GetProductReturn["collections"];
+export type ProductCollectionItem = ProductCollections[number];
+export type ProductCollection = ProductCollectionItem["collection"];
 
 export type ProductVariantInfo = {
 	availableColors: Array<{

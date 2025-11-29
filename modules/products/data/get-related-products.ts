@@ -106,7 +106,9 @@ async function fetchPersonalizedRelatedProducts(
 				product: {
 					select: {
 						typeId: true,
-						collectionId: true,
+						collections: {
+							select: { collectionId: true },
+						},
 					},
 				},
 			},
@@ -118,7 +120,7 @@ async function fetchPersonalizedRelatedProducts(
 			.map((item) => item.product?.typeId)
 			.filter((id): id is string => id !== null);
 		const collectionIds = orderHistory
-			.map((item) => item.product?.collectionId)
+			.flatMap((item) => item.product?.collections?.map((c) => c.collectionId) || [])
 			.filter((id): id is string => id !== null);
 
 		if (typeIds.length > 0 || collectionIds.length > 0) {
@@ -134,7 +136,7 @@ async function fetchPersonalizedRelatedProducts(
 					OR: [
 						...(typeIds.length > 0 ? [{ typeId: { in: typeIds } }] : []),
 						...(collectionIds.length > 0
-							? [{ collectionId: { in: collectionIds } }]
+							? [{ collections: { some: { collectionId: { in: collectionIds } } } }]
 							: []),
 					],
 				},
@@ -189,7 +191,9 @@ async function fetchContextualRelatedProducts(
 			select: {
 				id: true,
 				typeId: true,
-				collectionId: true,
+				collections: {
+					select: { collectionId: true },
+				},
 				skus: {
 					where: { isActive: true },
 					select: {
@@ -235,12 +239,15 @@ async function fetchContextualRelatedProducts(
 			},
 		};
 
-		// STRATÉGIE 1 : Même collection
-		if (currentProduct.collectionId) {
+		// STRATÉGIE 1 : Même collection(s)
+		const currentCollectionIds = currentProduct.collections.map((c) => c.collectionId);
+		if (currentCollectionIds.length > 0) {
 			const sameCollectionProducts = await prisma.product.findMany({
 				where: {
 					...baseWhere,
-					collectionId: currentProduct.collectionId,
+					collections: {
+						some: { collectionId: { in: currentCollectionIds } },
+					},
 				},
 				select: RELATED_PRODUCTS_SELECT,
 				orderBy: { createdAt: "desc" },
@@ -255,9 +262,9 @@ async function fetchContextualRelatedProducts(
 				where: {
 					...baseWhere,
 					typeId: currentProduct.typeId,
-					collectionId: currentProduct.collectionId
-						? { not: currentProduct.collectionId }
-						: undefined,
+					...(currentCollectionIds.length > 0
+						? { NOT: { collections: { some: { collectionId: { in: currentCollectionIds } } } } }
+						: {}),
 				},
 				select: RELATED_PRODUCTS_SELECT,
 				orderBy: { createdAt: "desc" },

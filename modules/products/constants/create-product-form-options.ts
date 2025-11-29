@@ -7,7 +7,7 @@ export const createProductFormOpts = {
 		title: "",
 		description: "",
 		typeId: undefined as string | undefined,
-		collectionId: undefined as string | undefined,
+		collectionIds: [] as string[],
 		status: "DRAFT" as ProductStatus,
 		initialSku: {
 			sku: "",

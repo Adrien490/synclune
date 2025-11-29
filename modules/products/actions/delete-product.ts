@@ -71,10 +71,11 @@ export async function deleteProduct(
 				id: true,
 				title: true,
 				slug: true,
-				collectionId: true,
-				collection: {
+				collections: {
 					select: {
-						slug: true,
+						collection: {
+							select: { slug: true },
+						},
 					},
 				},
 				skus: {
@@ -146,10 +147,10 @@ export async function deleteProduct(
 		);
 		productTags.forEach(tag => updateTag(tag));
 
-		// Si le produit appartenait a une collection, invalider aussi la collection
-		if (existingProduct.collection) {
+		// Si le produit appartenait a des collections, invalider aussi leurs caches
+		for (const pc of existingProduct.collections) {
 			const collectionTags = getCollectionInvalidationTags(
-				existingProduct.collection.slug
+				pc.collection.slug
 			);
 			collectionTags.forEach(tag => updateTag(tag));
 		}

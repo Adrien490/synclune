@@ -35,7 +35,9 @@ export function buildCollectionFilterConditions(
 			// Filtrer pour ne compter que les produits PUBLIC
 			conditions.products = {
 				some: {
-					status: "PUBLIC",
+					product: {
+						status: "PUBLIC",
+					},
 				},
 			};
 		} else {

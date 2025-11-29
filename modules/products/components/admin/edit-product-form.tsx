@@ -8,6 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
 import { TextShimmer } from "@/shared/components/ui/text-shimmer";
+import { MultiSelect } from "@/shared/components/multi-select";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { useUpdateProductForm } from "@/modules/products/hooks/admin/use-update-product-form";
 import { cn } from "@/shared/utils/cn";
@@ -134,6 +135,16 @@ export function EditProductForm({
 
 				<form.Subscribe selector={(state) => [state.values.status]}>
 					{([status]) => <input type="hidden" name="status" value={status} />}
+				</form.Subscribe>
+
+				<form.Subscribe selector={(state) => [state.values.collectionIds]}>
+					{([collectionIds]) => (
+						<input
+							type="hidden"
+							name="collectionIds"
+							value={JSON.stringify(collectionIds || [])}
+						/>
+					)}
 				</form.Subscribe>
 
 				<form.Subscribe
@@ -276,34 +287,24 @@ export function EditProductForm({
 								)}
 							</form.AppField>
 
-							<form.AppField name="collectionId">
+							<form.AppField name="collectionIds">
 								{(field) => (
 									<div className="space-y-2">
-										<FieldLabel optional>Collection</FieldLabel>
-										<div className="flex gap-2">
-											<div className="flex-1">
-												<field.SelectField
-													label=""
-													options={collections.map((col) => ({
-														value: col.id,
-														label: col.name,
-													}))}
-													placeholder="Sélectionner une collection"
-												/>
-											</div>
-											{field.state.value && (
-												<Button
-													type="button"
-													variant="outline"
-													size="icon"
-													onClick={() => field.handleChange("")}
-													aria-label="Effacer la collection"
-													className="h-9 w-9 shrink-0 cursor-pointer"
-												>
-													<X className="h-4 w-4" />
-												</Button>
-											)}
-										</div>
+										<FieldLabel optional>Collections</FieldLabel>
+										<MultiSelect
+											options={collections.map((col) => ({
+												value: col.id,
+												label: col.name,
+											}))}
+											defaultValue={field.state.value || []}
+											onValueChange={(values) => field.handleChange(values)}
+											placeholder="Sélectionner des collections"
+											maxCount={2}
+											hideSelectAll
+										/>
+										<p className="text-xs text-muted-foreground">
+											Un produit peut appartenir à plusieurs collections
+										</p>
 									</div>
 								)}
 							</form.AppField>

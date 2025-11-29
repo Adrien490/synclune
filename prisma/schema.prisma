@@ -160,16 +160,41 @@ model Collection {
   name        String           @db.VarChar(100)
   slug        String           @unique
   description String?          @db.Text
-  imageUrl    String?
   status      CollectionStatus @default(DRAFT)
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  products  Product[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  products  ProductCollection[]
 
   @@index([name, id])
   @@index([createdAt, id])
   @@index([status, id])
+}
+
+/// Table de jointure explicite Product <-> Collection (many-to-many)
+/// Permet à un produit d'appartenir à plusieurs collections
+model ProductCollection {
+  id           String     @id @default(cuid())
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  /// Date d'ajout à la collection (pour tri automatique par nouveautés)
+  addedAt DateTime @default(now())
+
+  /// Produit mis en avant dans la collection (pour hero/banner)
+  /// Un seul produit peut être featured par collection (géré côté applicatif)
+  isFeatured Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Un produit ne peut appartenir qu'une seule fois à une collection
+  @@unique([productId, collectionId])
+  @@index([collectionId, addedAt(sort: Desc)])
+  @@index([productId])
+  @@index([collectionId, isFeatured])
 }
 
 model Product {
@@ -182,8 +207,7 @@ model Product {
   type   ProductType? @relation(fields: [typeId], references: [id], onDelete: SetNull)
   typeId String?
 
-  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
-  collectionId String?
+  collections ProductCollection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -195,7 +219,6 @@ model Product {
   @@index([status, id])
   @@index([title, id])
   @@index([typeId])
-  @@index([collectionId])
   @@index([createdAt, id])
 }
 

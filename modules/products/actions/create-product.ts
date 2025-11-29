@@ -47,7 +47,7 @@ export async function createProduct(
 			title: formData.get("title"),
 			description: formData.get("description"),
 			typeId: formData.get("typeId") || "",
-			collectionId: formData.get("collectionId") || "",
+			collectionIds: parseJSON<string[]>(formData.get("collectionIds"), []),
 			status: formData.get("status") || "PUBLIC",
 			initialSku: {
 				sku: formData.get("initialSku.sku"),
@@ -93,7 +93,7 @@ export async function createProduct(
 
 		// 4. Normalize empty strings to null for optional foreign keys
 		const normalizedTypeId = validatedData.typeId?.trim() || null;
-		const normalizedCollectionId = validatedData.collectionId?.trim() || null;
+		const normalizedCollectionIds = validatedData.collectionIds?.filter((id) => id.trim()) || [];
 		const normalizedColorId = validatedData.initialSku.colorId?.trim() || null;
 		const normalizedMaterial =
 			validatedData.initialSku.material?.trim() || null;
@@ -161,13 +161,14 @@ export async function createProduct(
 				}
 			}
 
-			if (normalizedCollectionId) {
-				const collection = await tx.collection.findUnique({
-					where: { id: normalizedCollectionId },
+			// Validate all collections exist
+			if (normalizedCollectionIds.length > 0) {
+				const collections = await tx.collection.findMany({
+					where: { id: { in: normalizedCollectionIds } },
 					select: { id: true },
 				});
-				if (!collection) {
-					throw new Error("La collection specifiee n'existe pas.");
+				if (collections.length !== normalizedCollectionIds.length) {
+					throw new Error("Une ou plusieurs collections specifiees n'existent pas.");
 				}
 			}
 
@@ -188,7 +189,6 @@ export async function createProduct(
 				description: normalizedDescription,
 				status: validatedData.status,
 				typeId: normalizedTypeId,
-				collectionId: normalizedCollectionId,
 			};
 
 			const createdProduct = await tx.product.create({
@@ -200,11 +200,20 @@ export async function createProduct(
 					description: true,
 					status: true,
 					typeId: true,
-					collectionId: true,
 					createdAt: true,
 					updatedAt: true,
 				},
 			});
+
+			// Create ProductCollection associations (many-to-many)
+			if (normalizedCollectionIds.length > 0) {
+				await tx.productCollection.createMany({
+					data: normalizedCollectionIds.map((collectionId) => ({
+						productId: createdProduct.id,
+						collectionId,
+					})),
+				});
+			}
 
 			// Generate SKU if not provided
 			const skuValue = `SKU-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
@@ -255,13 +264,13 @@ export async function createProduct(
 		const productTags = getProductInvalidationTags(product.slug, product.id);
 		productTags.forEach(tag => updateTag(tag));
 
-		// Si le produit appartient a une collection, invalider aussi la collection
-		if (product.collectionId) {
-			const collection = await prisma.collection.findUnique({
-				where: { id: product.collectionId },
+		// Si le produit appartient a des collections, invalider aussi les collections
+		if (normalizedCollectionIds.length > 0) {
+			const collections = await prisma.collection.findMany({
+				where: { id: { in: normalizedCollectionIds } },
 				select: { slug: true },
 			});
-			if (collection) {
+			for (const collection of collections) {
 				const collectionTags = getCollectionInvalidationTags(collection.slug);
 				collectionTags.forEach(tag => updateTag(tag));
 			}

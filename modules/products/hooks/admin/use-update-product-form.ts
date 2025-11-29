@@ -57,7 +57,7 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 			title: product.title,
 			description: product.description || "",
 			typeId: product.type?.id || "",
-			collectionId: product.collection?.id || "",
+			collectionIds: product.collections?.map((pc) => pc.collection.id) || [],
 			status: product.status,
 			defaultSku: {
 				skuId: defaultSku?.id || "",

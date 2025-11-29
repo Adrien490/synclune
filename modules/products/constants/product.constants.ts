@@ -60,13 +60,23 @@ export const GET_PRODUCT_SELECT = {
 			{ priceInclTax: "asc" as const },
 		],
 	},
-	collection: {
+	collections: {
 		select: {
 			id: true,
-			name: true,
-			slug: true,
-			description: true,
-			imageUrl: true,
+			addedAt: true,
+			isFeatured: true,
+			collection: {
+				select: {
+					id: true,
+					name: true,
+					slug: true,
+					description: true,
+					status: true,
+				},
+			},
+		},
+		orderBy: {
+			addedAt: "desc" as const,
 		},
 	},
 } as const satisfies Prisma.ProductSelect;
@@ -131,13 +141,23 @@ export const GET_PRODUCTS_SELECT = {
 			},
 		},
 	},
-	collection: {
+	collections: {
 		select: {
 			id: true,
-			name: true,
-			slug: true,
-			description: true,
-			imageUrl: true,
+			addedAt: true,
+			isFeatured: true,
+			collection: {
+				select: {
+					id: true,
+					name: true,
+					slug: true,
+					description: true,
+					status: true,
+				},
+			},
+		},
+		orderBy: {
+			addedAt: "desc" as const,
 		},
 	},
 } as const satisfies Prisma.ProductSelect;
