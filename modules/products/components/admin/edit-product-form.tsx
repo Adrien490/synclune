@@ -141,6 +141,16 @@ export function EditProductForm({
 					{([status]) => <input type="hidden" name="status" value={status} />}
 				</form.Subscribe>
 
+				<form.Subscribe selector={(state) => [state.values.defaultSku.isActive]}>
+					{([isActive]) => (
+						<input
+							type="hidden"
+							name="defaultSku.isActive"
+							value={String(isActive)}
+						/>
+					)}
+				</form.Subscribe>
+
 				<form.Subscribe selector={(state) => [state.values.collectionIds]}>
 					{([collectionIds]) => (
 						<input

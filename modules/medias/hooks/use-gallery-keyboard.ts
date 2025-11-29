@@ -25,22 +25,13 @@ export function useGalleryKeyboard({
 	enabled = true,
 }: UseGalleryKeyboardOptions): void {
 	// Refs pour éviter re-registration du listener à chaque navigation
+	// Assignation directe dans le render (pas besoin de useEffect)
 	const currentIndexRef = useRef(currentIndex);
 	const totalImagesRef = useRef(totalImages);
 	const onNavigateRef = useRef(onNavigate);
-
-	// Synchroniser les refs avec les props
-	useEffect(() => {
-		currentIndexRef.current = currentIndex;
-	}, [currentIndex]);
-
-	useEffect(() => {
-		totalImagesRef.current = totalImages;
-	}, [totalImages]);
-
-	useEffect(() => {
-		onNavigateRef.current = onNavigate;
-	}, [onNavigate]);
+	currentIndexRef.current = currentIndex;
+	totalImagesRef.current = totalImages;
+	onNavigateRef.current = onNavigate;
 
 	useEffect(() => {
 		if (!enabled || totalImages === 0) return;

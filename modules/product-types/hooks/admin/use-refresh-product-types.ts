@@ -16,7 +16,7 @@ export function useRefreshProductTypes(options?: UseRefreshProductTypesOptions) 
 		withCallbacks(
 			refreshProductTypes,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement types de produits...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

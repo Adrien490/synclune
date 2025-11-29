@@ -16,7 +16,7 @@ export function useRefreshOrders(options?: UseRefreshOrdersOptions) {
 		withCallbacks(
 			refreshOrders,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement commandes...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

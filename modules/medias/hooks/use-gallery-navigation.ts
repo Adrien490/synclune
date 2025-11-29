@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useOptimistic, useTransition } from "react";
+import { useCallback, useOptimistic, useRef, useTransition } from "react";
 
 interface UseGalleryNavigationOptions {
 	totalImages: number;
@@ -31,6 +31,11 @@ export function useGalleryNavigation({
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
+	// Ref pour stabiliser searchParams et éviter recréation des callbacks
+	// Assignation directe dans le render (pas besoin de useEffect)
+	const searchParamsRef = useRef(searchParams);
+	searchParamsRef.current = searchParams;
+
 	// Source de vérité : l'URL
 	const selectedIndex = totalImages > 0 ? Math.max(
 		0,
@@ -43,10 +48,10 @@ export function useGalleryNavigation({
 		(_, newIndex: number) => newIndex
 	);
 
-	// Mise à jour de l'URL
+	// Mise à jour de l'URL (dépendances stabilisées via ref)
 	const updateUrl = useCallback(
 		(newIndex: number) => {
-			const newSearchParams = new URLSearchParams(searchParams);
+			const newSearchParams = new URLSearchParams(searchParamsRef.current);
 
 			if (newIndex === 0) {
 				newSearchParams.delete("gallery");
@@ -59,7 +64,7 @@ export function useGalleryNavigation({
 			}`;
 			router.replace(newUrl, { scroll: false });
 		},
-		[searchParams, pathname, router]
+		[pathname, router]
 	);
 
 	// Navigation optimiste vers un index spécifique
@@ -77,12 +82,14 @@ export function useGalleryNavigation({
 
 	// Navigation suivante (circulaire)
 	const navigateNext = useCallback(() => {
+		if (totalImages === 0) return;
 		const nextIndex = (optimisticIndex + 1) % totalImages;
 		navigateToIndex(nextIndex);
 	}, [optimisticIndex, totalImages, navigateToIndex]);
 
 	// Navigation précédente (circulaire)
 	const navigatePrev = useCallback(() => {
+		if (totalImages === 0) return;
 		const prevIndex =
 			optimisticIndex === 0 ? totalImages - 1 : optimisticIndex - 1;
 		navigateToIndex(prevIndex);

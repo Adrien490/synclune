@@ -31,6 +31,7 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @default(now()) @updatedAt
   deletedAt        DateTime?
+  suspendedAt      DateTime? // Date de suspension du compte
 
   sessions                  Session[]
   accounts                  Account[]
@@ -42,6 +43,7 @@ model User {
   stockNotificationRequests StockNotificationRequest[]
 
   @@index([deletedAt])
+  @@index([suspendedAt])
   @@index([role, id])
   @@index([emailVerified, id])
   @@index([createdAt, id])

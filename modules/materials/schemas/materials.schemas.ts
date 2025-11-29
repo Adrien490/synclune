@@ -100,3 +100,8 @@ export const toggleMaterialStatusSchema = z.object({
 	id: z.string().cuid("ID invalide"),
 	isActive: z.boolean(),
 });
+
+export const bulkToggleMaterialStatusSchema = z.object({
+	ids: z.array(z.string().cuid("ID invalide")).min(1, "Aucun materiau selectionne"),
+	isActive: z.boolean(),
+});

@@ -31,6 +31,12 @@ export class GalleryErrorBoundary extends Component<
 		return { hasError: true };
 	}
 
+	componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+		// Log pour debugging (console en dev, service de monitoring en prod)
+		console.error("[GalleryErrorBoundary] Erreur capturée:", error);
+		console.error("[GalleryErrorBoundary] ComponentStack:", errorInfo.componentStack);
+	}
+
 	handleRetry = () => {
 		this.setState({ hasError: false });
 	};

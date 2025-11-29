@@ -6,6 +6,7 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import {
@@ -20,7 +21,8 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkDeleteMaterials } from "@/modules/materials/hooks/admin/use-bulk-delete-materials";
-import { Loader2, MoreVertical, Trash2 } from "lucide-react";
+import { useBulkToggleMaterialStatus } from "@/modules/materials/hooks/admin/use-bulk-toggle-material-status";
+import { CheckCircle2, Loader2, MoreVertical, Trash2, XCircle } from "lucide-react";
 import { useState } from "react";
 
 interface MaterialsSelectionToolbarProps {
@@ -30,20 +32,40 @@ interface MaterialsSelectionToolbarProps {
 export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [activateDialogOpen, setActivateDialogOpen] = useState(false);
+	const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
 
-	const { action, isPending } = useBulkDeleteMaterials({
+	const { action: deleteAction, isPending: isDeletePending } = useBulkDeleteMaterials({
 		onSuccess: () => {
 			setDeleteDialogOpen(false);
 			clearSelection();
 		},
 	});
 
+	const { action: toggleAction, isPending: isTogglePending } = useBulkToggleMaterialStatus({
+		onSuccess: () => {
+			setActivateDialogOpen(false);
+			setDeactivateDialogOpen(false);
+			clearSelection();
+		},
+	});
+
 	const handleDeleteClick = () => {
-		if (selectedItems.length === 0) {
-			return;
-		}
+		if (selectedItems.length === 0) return;
 		setDeleteDialogOpen(true);
 	};
+
+	const handleActivateClick = () => {
+		if (selectedItems.length === 0) return;
+		setActivateDialogOpen(true);
+	};
+
+	const handleDeactivateClick = () => {
+		if (selectedItems.length === 0) return;
+		setDeactivateDialogOpen(true);
+	};
+
+	const isPending = isDeletePending || isTogglePending;
 
 	if (selectedItems.length === 0) return null;
 
@@ -63,6 +85,15 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-[200px]">
+						<DropdownMenuItem onClick={handleActivateClick}>
+							<CheckCircle2 className="h-4 w-4" />
+							Activer
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={handleDeactivateClick}>
+							<XCircle className="h-4 w-4" />
+							Desactiver
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={handleDeleteClick} variant="destructive">
 							<Trash2 className="h-4 w-4" />
 							Supprimer
@@ -73,25 +104,25 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 
 			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>
-					<form action={action}>
+					<form action={deleteAction}>
 						<input
 							type="hidden"
 							name="ids"
 							value={JSON.stringify(selectedItems)}
 						/>
 						<AlertDialogHeader>
-							<AlertDialogTitle>Supprimer les matériaux</AlertDialogTitle>
+							<AlertDialogTitle>Supprimer les materiaux</AlertDialogTitle>
 							<AlertDialogDescription>
-								Êtes-vous sûr de vouloir supprimer{" "}
+								Etes-vous sur de vouloir supprimer{" "}
 								<span className="font-semibold">
-									{selectedItems.length} matériau
+									{selectedItems.length} materiau
 									{selectedItems.length > 1 ? "x" : ""}
 								</span>{" "}
 								?
 								<br />
 								<br />
 								<span className="text-destructive font-medium">
-									Cette action est irréversible.
+									Cette action est irreversible.
 								</span>
 							</AlertDialogDescription>
 						</AlertDialogHeader>
@@ -104,7 +135,7 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 								disabled={isPending}
 								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
-								{isPending ? (
+								{isDeletePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 										Suppression...
@@ -113,6 +144,96 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 									<>
 										<Trash2 className="mr-2 h-4 w-4" />
 										Supprimer
+									</>
+								)}
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</form>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			<AlertDialog open={activateDialogOpen} onOpenChange={setActivateDialogOpen}>
+				<AlertDialogContent>
+					<form action={toggleAction}>
+						<input
+							type="hidden"
+							name="ids"
+							value={JSON.stringify(selectedItems)}
+						/>
+						<input type="hidden" name="isActive" value="true" />
+						<AlertDialogHeader>
+							<AlertDialogTitle>Activer les materiaux</AlertDialogTitle>
+							<AlertDialogDescription>
+								Etes-vous sur de vouloir activer{" "}
+								<span className="font-semibold">
+									{selectedItems.length} materiau
+									{selectedItems.length > 1 ? "x" : ""}
+								</span>{" "}
+								?
+								<br />
+								<br />
+								Les materiaux actives seront disponibles pour les variantes de produits.
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel type="button" disabled={isPending}>
+								Annuler
+							</AlertDialogCancel>
+							<AlertDialogAction type="submit" disabled={isPending}>
+								{isTogglePending ? (
+									<>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										Activation...
+									</>
+								) : (
+									<>
+										<CheckCircle2 className="mr-2 h-4 w-4" />
+										Activer
+									</>
+								)}
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</form>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			<AlertDialog open={deactivateDialogOpen} onOpenChange={setDeactivateDialogOpen}>
+				<AlertDialogContent>
+					<form action={toggleAction}>
+						<input
+							type="hidden"
+							name="ids"
+							value={JSON.stringify(selectedItems)}
+						/>
+						<input type="hidden" name="isActive" value="false" />
+						<AlertDialogHeader>
+							<AlertDialogTitle>Desactiver les materiaux</AlertDialogTitle>
+							<AlertDialogDescription>
+								Etes-vous sur de vouloir desactiver{" "}
+								<span className="font-semibold">
+									{selectedItems.length} materiau
+									{selectedItems.length > 1 ? "x" : ""}
+								</span>{" "}
+								?
+								<br />
+								<br />
+								Les materiaux desactives ne seront plus disponibles pour les nouvelles variantes.
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel type="button" disabled={isPending}>
+								Annuler
+							</AlertDialogCancel>
+							<AlertDialogAction type="submit" disabled={isPending}>
+								{isTogglePending ? (
+									<>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										Desactivation...
+									</>
+								) : (
+									<>
+										<XCircle className="mr-2 h-4 w-4" />
+										Desactiver
 									</>
 								)}
 							</AlertDialogAction>

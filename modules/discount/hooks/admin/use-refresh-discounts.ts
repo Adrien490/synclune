@@ -16,7 +16,7 @@ export function useRefreshDiscounts(options?: UseRefreshDiscountsOptions) {
 		withCallbacks(
 			refreshDiscounts,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement codes promo...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

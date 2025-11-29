@@ -16,7 +16,7 @@ export function useRefreshPayments(options?: UseRefreshPaymentsOptions) {
 		withCallbacks(
 			refreshPayments,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement paiements...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

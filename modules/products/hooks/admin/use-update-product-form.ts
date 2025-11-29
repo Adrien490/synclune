@@ -64,7 +64,7 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 				priceInclTaxEuros: defaultSku ? defaultSku.priceInclTax / 100 : 0,
 				compareAtPriceEuros: defaultSku?.compareAtPrice ? defaultSku.compareAtPrice / 100 : undefined,
 				inventory: defaultSku?.inventory || 0,
-				isActive: defaultSku?.isActive ?? true,
+				isActive: String(defaultSku?.isActive ?? true),
 				colorId: defaultSku?.color?.id || "",
 				material: defaultSku?.material || "",
 				size: defaultSku?.size || "",

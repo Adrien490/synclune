@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseGallerySwipeOptions {
 	onSwipeLeft: () => void;
@@ -42,6 +42,18 @@ export function useGallerySwipe({
 	const [swipeOffset, setSwipeOffset] = useState(0);
 	const [isSwiping, setIsSwiping] = useState(false);
 
+	// Ref pour throttle avec requestAnimationFrame
+	const rafIdRef = useRef<number | null>(null);
+
+	// Cleanup RAF au démontage
+	useEffect(() => {
+		return () => {
+			if (rafIdRef.current) {
+				cancelAnimationFrame(rafIdRef.current);
+			}
+		};
+	}, []);
+
 	const onTouchStart = useCallback((e: React.TouchEvent) => {
 		// Guard: vérifier que le touch existe (multi-touch protection)
 		const touch = e.targetTouches[0];
@@ -72,9 +84,17 @@ export function useGallerySwipe({
 				offset = offset / 3;
 			}
 
-			// Mettre à jour ref ET state
+			// Mettre à jour la ref immédiatement (pour onTouchEnd)
 			swipeOffsetRef.current = offset;
-			setSwipeOffset(offset);
+
+			// Throttle le re-render avec requestAnimationFrame
+			if (rafIdRef.current) {
+				cancelAnimationFrame(rafIdRef.current);
+			}
+			rafIdRef.current = requestAnimationFrame(() => {
+				setSwipeOffset(offset);
+				rafIdRef.current = null;
+			});
 		},
 		[currentIndex, totalImages]
 	);

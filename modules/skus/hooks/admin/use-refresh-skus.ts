@@ -17,7 +17,7 @@ export function useRefreshSkus(options?: UseRefreshSkusOptions) {
 		withCallbacks(
 			refreshSkus,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement variantes...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

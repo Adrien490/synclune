@@ -3,6 +3,9 @@ import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants"
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/medias/types/product-media.types";
 
+/** Nombre maximum d'images dans la galerie */
+const MAX_GALLERY_IMAGES = 20;
+
 interface BuildGalleryOptions {
 	product: GetProductReturn;
 	selectedVariants: {
@@ -16,7 +19,7 @@ interface BuildGalleryOptions {
  * Construit la galerie d'images/vidéos d'un produit selon la priorité:
  * 1. Images du SKU sélectionné (variants)
  * 2. Images du SKU par défaut (product.skus[0])
- * 3. Images des autres SKUs actifs (max 10 total)
+ * 3. Images des autres SKUs actifs (max MAX_GALLERY_IMAGES total)
  * 4. Fallback image si aucune image disponible
  *
  * @param options - Options de construction de la galerie
@@ -107,11 +110,11 @@ export function buildGallery({
 	if (gallery.length < 5 && product.skus) {
 		for (const sku of product.skus.filter((s) => s.isActive)) {
 			if (sku.id === selectedSku?.id || sku.id === defaultSku?.id) continue;
-			if (gallery.length >= 10) break;
+			if (gallery.length >= MAX_GALLERY_IMAGES) break;
 
 			if (sku.images) {
 				for (const skuImage of sku.images) {
-					if (gallery.length >= 10) break;
+					if (gallery.length >= MAX_GALLERY_IMAGES) break;
 					addUniqueImage(
 						skuImage,
 						`${product.title} - ${sku.material || sku.color?.name || "Variante"}`,

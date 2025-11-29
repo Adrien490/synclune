@@ -16,7 +16,7 @@ export function useRefreshColors(options?: UseRefreshColorsOptions) {
 		withCallbacks(
 			refreshColors,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement couleurs...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

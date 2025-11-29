@@ -16,7 +16,7 @@ export function useRefreshRefunds(options?: UseRefreshRefundsOptions) {
 		withCallbacks(
 			refreshRefunds,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement remboursements...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

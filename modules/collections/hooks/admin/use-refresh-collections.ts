@@ -19,7 +19,7 @@ export function useRefreshCollections(options?: UseRefreshCollectionsOptions) {
 		withCallbacks(
 			refreshCollections,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement collections...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

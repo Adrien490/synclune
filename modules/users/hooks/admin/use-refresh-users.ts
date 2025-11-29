@@ -16,7 +16,7 @@ export function useRefreshUsers(options?: UseRefreshUsersOptions) {
 		withCallbacks(
 			refreshUsers,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement utilisateurs...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

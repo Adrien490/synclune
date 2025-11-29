@@ -16,7 +16,7 @@ export function useRefreshMaterials(options?: UseRefreshMaterialsOptions) {
 		withCallbacks(
 			refreshMaterials,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement matériaux...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

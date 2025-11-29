@@ -16,7 +16,7 @@ export function useRefreshNewsletter(options?: UseRefreshNewsletterOptions) {
 		withCallbacks(
 			refreshNewsletter,
 			createToastCallbacks({
-				loadingMessage: "Rafraîchissement newsletter...",
+				showSuccessToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

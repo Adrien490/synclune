@@ -12,16 +12,17 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useRemoveFromWishlist } from "@/modules/wishlist/hooks/use-remove-from-wishlist";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { AlertDialogData } from "@/shared/stores/alert-dialog-store";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const REMOVE_WISHLIST_ITEM_DIALOG_ID = "remove-wishlist-item";
 
-interface RemoveWishlistItemData {
+type RemoveWishlistItemData = AlertDialogData & {
 	skuId: string;
 	itemId: string;
 	itemName: string;
-}
+};
 
 /**
  * Dialog de confirmation pour supprimer un article de la wishlist

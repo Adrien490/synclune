@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 /** Limite pour éviter les memory leaks avec beaucoup d'erreurs */
-const MAX_ERRORS = 100;
+const MAX_ERRORS = 500;
 
 export interface UseMediaErrorsReturn {
 	mediaErrors: Set<string>;
@@ -24,20 +24,26 @@ export interface UseMediaErrorsReturn {
 export function useMediaErrors(): UseMediaErrorsReturn {
 	const [mediaErrors, setMediaErrors] = useState<Set<string>>(new Set());
 
+	// Ref pour stabiliser hasError et éviter re-renders en cascade
+	// Assignation directe dans le render (pas besoin de useEffect)
+	const mediaErrorsRef = useRef(mediaErrors);
+	mediaErrorsRef.current = mediaErrors;
+
 	const handleMediaError = useCallback((mediaId: string) => {
 		setMediaErrors((prev) => {
 			// Prévention memory leak : ne pas dépasser MAX_ERRORS
-			if (prev.size >= MAX_ERRORS) return prev;
+			if (prev.size >= MAX_ERRORS) {
+				console.warn(`[MediaErrors] Limite de ${MAX_ERRORS} erreurs atteinte`);
+				return prev;
+			}
 			return new Set(prev).add(mediaId);
 		});
 	}, []);
 
-	const hasError = useCallback(
-		(mediaId: string) => {
-			return mediaErrors.has(mediaId);
-		},
-		[mediaErrors]
-	);
+	// Fonction stable qui lit la ref courante (évite re-renders des composants utilisant hasError)
+	const hasError = useCallback((mediaId: string) => {
+		return mediaErrorsRef.current.has(mediaId);
+	}, []);
 
 	const clearErrors = useCallback(() => {
 		setMediaErrors(new Set());
