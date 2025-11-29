@@ -28,7 +28,6 @@ import {
 } from "@/shared/utils/carrier-detection";
 import { useStore } from "@tanstack/react-form";
 import { Mail, Truck } from "lucide-react";
-import { useEffect, useCallback } from "react";
 import { useMarkAsShippedForm } from "@/modules/orders/hooks/admin/use-mark-as-shipped-form";
 
 export const MARK_AS_SHIPPED_DIALOG_ID = "mark-as-shipped";
@@ -55,33 +54,26 @@ function MarkAsShippedFormContent({
 		},
 	});
 
-	// Auto-détection du transporteur quand le numéro de suivi change
-	const handleTrackingNumberChange = useCallback(
-		(value: string) => {
-			if (value.length >= 8) {
-				const detection = detectCarrierAndUrl(value);
-				// Mettre à jour le transporteur détecté
-				form.setFieldValue("carrier", detection.carrier);
-				// Mettre à jour l'URL si détectée
-				if (detection.url) {
-					form.setFieldValue("trackingUrl", detection.url);
-				}
-			}
-		},
-		[form]
-	);
-
-	// Watch trackingNumber changes
+	// Watch form values
 	const trackingNumber = useStore(form.store, (state) => state.values.trackingNumber);
 	const carrier = useStore(form.store, (state) => state.values.carrier);
 	const trackingUrl = useStore(form.store, (state) => state.values.trackingUrl);
 	const sendEmail = useStore(form.store, (state) => state.values.sendEmail);
 
-	useEffect(() => {
-		if (trackingNumber.length >= 8) {
-			handleTrackingNumberChange(trackingNumber);
+	// Auto-détection du transporteur directement dans onChange (pas de useEffect)
+	const handleTrackingNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		form.setFieldValue("trackingNumber", value);
+
+		// Auto-détecter si numéro >= 8 caractères
+		if (value.length >= 8) {
+			const detection = detectCarrierAndUrl(value);
+			form.setFieldValue("carrier", detection.carrier);
+			if (detection.url) {
+				form.setFieldValue("trackingUrl", detection.url);
+			}
 		}
-	}, [trackingNumber, handleTrackingNumberChange]);
+	};
 
 	return (
 		<>
@@ -117,7 +109,7 @@ function MarkAsShippedFormContent({
 							id="trackingNumber"
 							name="trackingNumber"
 							value={trackingNumber}
-							onChange={(e) => form.setFieldValue("trackingNumber", e.target.value)}
+							onChange={handleTrackingNumberChange}
 							placeholder="Ex: 8N00234567890"
 							disabled={isPending}
 							required

@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, ReactElement, useEffect, useState } from "react";
+import { CSSProperties, ReactElement, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 
@@ -12,6 +12,18 @@ interface Sparkle {
 	delay: number;
 	scale: number;
 	lifespan: number;
+}
+
+// Pure function pour générer une sparkle (évite de recréer dans le composant)
+function createSparkle(firstColor: string, secondColor: string): Sparkle {
+	const starX = `${Math.random() * 100}%`;
+	const starY = `${Math.random() * 100}%`;
+	const color = Math.random() > 0.5 ? firstColor : secondColor;
+	const delay = Math.random() * 2;
+	const scale = Math.random() * 1 + 0.3;
+	const lifespan = Math.random() * 10 + 5;
+	const id = `${starX}-${starY}-${Date.now()}`;
+	return { id, x: starX, y: starY, color, delay, scale, lifespan };
 }
 
 const Sparkle: React.FC<Sparkle> = ({ id, x, y, color, delay, scale }) => {
@@ -90,30 +102,32 @@ export const SparklesText: React.FC<SparklesTextProps> = ({
 	sparklesCount = 10,
 	...props
 }) => {
-	const [sparkles, setSparkles] = useState<Sparkle[]>([]);
+	const isFirstMount = useRef(true);
 
+	// Lazy initializer: génère les sparkles au premier rendu (évite le flash d'état vide)
+	const [sparkles, setSparkles] = useState<Sparkle[]>(() =>
+		Array.from({ length: sparklesCount }, () =>
+			createSparkle(colors.first, colors.second)
+		)
+	);
+
+	// useEffect nécessaire pour l'animation (interval) et la réinitialisation si props changent
 	useEffect(() => {
-		const generateStar = (): Sparkle => {
-			const starX = `${Math.random() * 100}%`;
-			const starY = `${Math.random() * 100}%`;
-			const color = Math.random() > 0.5 ? colors.first : colors.second;
-			const delay = Math.random() * 2;
-			const scale = Math.random() * 1 + 0.3;
-			const lifespan = Math.random() * 10 + 5;
-			const id = `${starX}-${starY}-${Date.now()}`;
-			return { id, x: starX, y: starY, color, delay, scale, lifespan };
-		};
-
-		const initializeStars = () => {
-			const newSparkles = Array.from({ length: sparklesCount }, generateStar);
-			setSparkles(newSparkles);
-		};
+		// Skip reinitialization on first mount (already done by lazy initializer)
+		if (!isFirstMount.current) {
+			setSparkles(
+				Array.from({ length: sparklesCount }, () =>
+					createSparkle(colors.first, colors.second)
+				)
+			);
+		}
+		isFirstMount.current = false;
 
 		const updateStars = () => {
 			setSparkles((currentSparkles) =>
 				currentSparkles.map((star) => {
 					if (star.lifespan <= 0) {
-						return generateStar();
+						return createSparkle(colors.first, colors.second);
 					} else {
 						return { ...star, lifespan: star.lifespan - 0.1 };
 					}
@@ -121,7 +135,6 @@ export const SparklesText: React.FC<SparklesTextProps> = ({
 			);
 		};
 
-		initializeStars();
 		const interval = setInterval(updateStars, 100);
 
 		return () => clearInterval(interval);

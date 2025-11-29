@@ -35,13 +35,14 @@ export const CookieConsentStoreProvider = ({
 		storeRef.current = createCookieConsentStore();
 	}
 
-	// Ensure hydration is marked complete after mount (fallback for first visit)
+	// NÉCESSAIRE: useEffect pour marquer l'hydratation comme terminée
+	// Zustand persist middleware appelle onRehydrateStorage uniquement s'il y a des données persistées.
+	// Pour les premiers visiteurs (pas de localStorage), onRehydrateStorage ne se déclenche jamais.
+	// Ce useEffect sert de fallback pour garantir que _hasHydrated passe à true après le mount client.
+	// Cela évite un flash où le banner de cookies s'affiche puis disparaît.
 	useEffect(() => {
 		if (storeRef.current) {
 			const currentState = storeRef.current.getState();
-
-			// If not hydrated yet, mark as hydrated now
-			// This handles the case where there's no persisted state (first visit)
 			if (!currentState._hasHydrated) {
 				storeRef.current.setState({ _hasHydrated: true });
 			}

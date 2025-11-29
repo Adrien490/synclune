@@ -13,10 +13,12 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import {
 	Check,
 	CreditCard,
+	Eye,
 	MoreVertical,
 	XCircle,
 	Trash2,
 } from "lucide-react";
+import Link from "next/link";
 import { APPROVE_REFUND_DIALOG_ID } from "./approve-refund-alert-dialog";
 import { PROCESS_REFUND_DIALOG_ID } from "./process-refund-alert-dialog";
 import { REJECT_REFUND_DIALOG_ID } from "./reject-refund-alert-dialog";
@@ -27,6 +29,7 @@ interface RefundRowActionsProps {
 		id: string;
 		status: RefundStatus;
 		amount: number;
+		orderId: string;
 		orderNumber: string;
 	};
 }
@@ -84,6 +87,16 @@ export function RefundRowActions({ refund }: RefundRowActionsProps) {
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
+				{/* Voir la commande associée */}
+				<DropdownMenuItem asChild>
+					<Link href={`/admin/ventes/commandes/${refund.orderId}`}>
+						<Eye className="h-4 w-4" />
+						Voir la commande
+					</Link>
+				</DropdownMenuItem>
+
+				<DropdownMenuSeparator />
+
 				{canApprove && (
 					<DropdownMenuItem onClick={handleApprove}>
 						<Check className="h-4 w-4" />

@@ -155,3 +155,16 @@ export const checkoutSchema = z
 	});
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;
+
+// ============================================================================
+// BULK ADMIN SCHEMAS
+// ============================================================================
+
+/**
+ * Schema pour exporter plusieurs paiements en CSV
+ */
+export const bulkExportPaymentsSchema = z.object({
+	ids: z.array(z.string().cuid()).min(1, "Au moins un paiement doit être sélectionné"),
+});
+
+export type BulkExportPaymentsInput = z.infer<typeof bulkExportPaymentsSchema>;

@@ -92,7 +92,11 @@ export async function updateMaterial(
 
 		// Revalider les pages concernees et invalider le cache
 		revalidatePath("/admin/catalogue/materiaux");
-		const tags = getMaterialInvalidationTags();
+		// Invalider l'ancien et le nouveau slug si différents
+		const tags = getMaterialInvalidationTags(existingMaterial.slug);
+		if (slug !== existingMaterial.slug) {
+			tags.push(...getMaterialInvalidationTags(slug));
+		}
 		tags.forEach((tag) => updateTag(tag));
 
 		return {

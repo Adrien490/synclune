@@ -14,6 +14,8 @@ import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-d
 import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
 import { RefreshSkusButton } from "@/modules/skus/components/admin/refresh-skus-button";
 import { DeleteProductSkuAlertDialog } from "@/modules/skus/components/admin/delete-sku-alert-dialog";
+import { AdjustStockDialog } from "@/modules/skus/components/admin/adjust-stock-dialog";
+import { UpdatePriceDialog } from "@/modules/skus/components/admin/update-price-dialog";
 
 export type ProductVariantFiltersSearchParams = {
 	// Add any variant-specific filters here if needed in the future
@@ -85,6 +87,8 @@ export default async function ProductVariantsPage({
 	return (
 		<>
 			<DeleteProductSkuAlertDialog />
+			<AdjustStockDialog />
+			<UpdatePriceDialog />
 
 			<PageHeader
 				variant="compact"

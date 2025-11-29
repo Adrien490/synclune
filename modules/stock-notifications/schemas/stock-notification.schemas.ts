@@ -82,3 +82,29 @@ export const getPendingNotificationsSchema = z.object({
 export type GetPendingNotificationsInput = z.infer<
 	typeof getPendingNotificationsSchema
 >;
+
+// ============================================================================
+// BULK ADMIN SCHEMAS
+// ============================================================================
+
+/**
+ * Schema pour annuler plusieurs notifications en masse (admin)
+ */
+export const bulkCancelStockNotificationsSchema = z.object({
+	ids: z.array(z.string().cuid()).min(1, "Au moins une notification doit être sélectionnée"),
+});
+
+export type BulkCancelStockNotificationsInput = z.infer<
+	typeof bulkCancelStockNotificationsSchema
+>;
+
+/**
+ * Schema pour supprimer définitivement plusieurs notifications (RGPD)
+ */
+export const bulkDeleteStockNotificationsSchema = z.object({
+	ids: z.array(z.string().cuid()).min(1, "Au moins une notification doit être sélectionnée"),
+});
+
+export type BulkDeleteStockNotificationsInput = z.infer<
+	typeof bulkDeleteStockNotificationsSchema
+>;

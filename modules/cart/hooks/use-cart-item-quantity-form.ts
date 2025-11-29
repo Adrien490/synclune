@@ -57,20 +57,17 @@ export const useCartItemQuantityForm = ({
 		),
 	});
 
-	// Sync form quantity with currentQuantity when it changes (after server success)
+	// Single useEffect: sync server state OR rollback on error
 	useEffect(() => {
-		form.setFieldValue("quantity", currentQuantity);
-		// Mettre à jour la ref pour la prochaine tentative
-		previousQuantityRef.current = currentQuantity;
-	}, [currentQuantity, form]);
-
-	// 🔴 ROLLBACK : Restaurer la valeur précédente en cas d'erreur serveur
-	useEffect(() => {
-		if (state && state.status === ActionStatus.ERROR) {
-			// Rollback vers la valeur serveur (currentQuantity)
+		if (state?.status === ActionStatus.ERROR) {
+			// 🔴 ROLLBACK : Restaurer la valeur précédente en cas d'erreur serveur
 			form.setFieldValue("quantity", previousQuantityRef.current);
+		} else {
+			// Sync form quantity with currentQuantity (initial mount or after server success)
+			form.setFieldValue("quantity", currentQuantity);
+			previousQuantityRef.current = currentQuantity;
 		}
-	}, [state, form]);
+	}, [currentQuantity, state, form]);
 
 	// Debounced submit to prevent spam (300ms delay)
 	// Submit the HTML form directly using requestSubmit()

@@ -12,12 +12,14 @@ import {
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import {
 	Archive,
 	ArchiveRestore,
 	Copy,
 	Eye,
 	FileEdit,
+	FolderPlus,
 	LayoutList,
 	MoreVertical,
 	Pencil,
@@ -28,6 +30,7 @@ import { ARCHIVE_PRODUCT_DIALOG_ID } from "./archive-product-alert-dialog";
 import { CHANGE_PRODUCT_STATUS_DIALOG_ID } from "./change-product-status-alert-dialog";
 import { DELETE_PRODUCT_DIALOG_ID } from "./delete-product-alert-dialog";
 import { DUPLICATE_PRODUCT_DIALOG_ID } from "./duplicate-product-alert-dialog";
+import { MANAGE_COLLECTIONS_DIALOG_ID } from "./manage-collections-dialog";
 
 interface ProductRowActionsProps {
 	productId: string;
@@ -46,6 +49,14 @@ export function ProductRowActions({
 	const changeStatusDialog = useAlertDialog(CHANGE_PRODUCT_STATUS_DIALOG_ID);
 	const archiveDialog = useAlertDialog(ARCHIVE_PRODUCT_DIALOG_ID);
 	const duplicateDialog = useAlertDialog(DUPLICATE_PRODUCT_DIALOG_ID);
+	const collectionsDialog = useDialog(MANAGE_COLLECTIONS_DIALOG_ID);
+
+	const handleManageCollections = () => {
+		collectionsDialog.open({
+			productId,
+			productTitle,
+		});
+	};
 
 	const handleChangeStatus = (
 		targetStatus: "DRAFT" | "PUBLIC" | "ARCHIVED"
@@ -130,6 +141,12 @@ export function ProductRowActions({
 						<LayoutList className="h-4 w-4" />
 						Gérer variantes
 					</Link>
+				</DropdownMenuItem>
+
+				{/* Gérer collections */}
+				<DropdownMenuItem onClick={handleManageCollections}>
+					<FolderPlus className="h-4 w-4" />
+					Gérer collections
 				</DropdownMenuItem>
 
 				<DropdownMenuSeparator />

@@ -22,16 +22,19 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import {
-	Ban,
+	CheckCircle2,
+	Download,
 	Eye,
+	Heart,
+	KeyRound,
 	Loader2,
+	LogOut,
 	MoreVertical,
 	Pencil,
 	RotateCcw,
-	Shield,
-	ShieldOff,
+	ShoppingCart,
 	Trash2,
-	UserCog,
+	XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -39,14 +42,16 @@ import { useDeleteUser } from "@/modules/users/hooks/admin/use-delete-user";
 import { useSuspendUser } from "@/modules/users/hooks/admin/use-suspend-user";
 import { useRestoreUser } from "@/modules/users/hooks/admin/use-restore-user";
 import { useChangeUserRole } from "@/modules/users/hooks/admin/use-change-user-role";
-import { Role } from "@/app/generated/prisma/client";
+import { useExportUserDataAdmin } from "@/modules/users/hooks/admin/use-export-user-data-admin";
+import { useInvalidateUserSessions } from "@/modules/users/hooks/admin/use-invalidate-user-sessions";
+import { useSendPasswordResetAdmin } from "@/modules/users/hooks/admin/use-send-password-reset-admin";
 
 interface UsersRowActionsProps {
 	user: {
 		id: string;
 		name: string;
 		email: string;
-		role?: Role;
+		role?: string;
 		deletedAt: Date | null;
 		suspendedAt?: Date | null;
 	};
@@ -78,10 +83,14 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 		},
 	});
 
-	const isPending = isDeletePending || isSuspendPending || isRestorePending || isChangeRolePending;
+	const { exportData, isPending: isExportPending } = useExportUserDataAdmin();
+	const { invalidate: invalidateSessions, isPending: isInvalidatePending } = useInvalidateUserSessions();
+	const { sendReset, isPending: isResetPending } = useSendPasswordResetAdmin();
+
+	const isPending = isDeletePending || isSuspendPending || isRestorePending || isChangeRolePending || isExportPending || isInvalidatePending || isResetPending;
 	const isDeleted = !!user.deletedAt;
 	const isSuspended = !!user.suspendedAt;
-	const isAdmin = user.role === Role.ADMIN;
+	const isAdmin = user.role === "ADMIN";
 	const displayName = user.name || user.email;
 
 	return (
@@ -93,6 +102,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
+					{/* Navigation vers les données utilisateur */}
 					<DropdownMenuItem asChild>
 						<Link
 							href={`/admin/ventes/commandes?userId=${user.id}`}
@@ -102,12 +112,62 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							Voir commandes
 						</Link>
 					</DropdownMenuItem>
+					<DropdownMenuItem asChild>
+						<Link
+							href={`/admin/utilisateurs/${user.id}/panier`}
+							className="flex items-center cursor-pointer"
+						>
+							<ShoppingCart className="mr-2 h-4 w-4" />
+							Voir le panier
+						</Link>
+					</DropdownMenuItem>
+					<DropdownMenuItem asChild>
+						<Link
+							href={`/admin/utilisateurs/${user.id}/wishlist`}
+							className="flex items-center cursor-pointer"
+						>
+							<Heart className="mr-2 h-4 w-4" />
+							Voir la wishlist
+						</Link>
+					</DropdownMenuItem>
+
+					<DropdownMenuSeparator />
+
+					{/* Export RGPD */}
+					<DropdownMenuItem
+						onClick={() => exportData(user.id, displayName)}
+						disabled={isExportPending}
+						className="flex items-center cursor-pointer"
+					>
+						<Download className="mr-2 h-4 w-4" />
+						Exporter données (RGPD)
+					</DropdownMenuItem>
+
+					{/* Forcer déconnexion */}
+					<DropdownMenuItem
+						onClick={() => invalidateSessions(user.id, displayName)}
+						disabled={isInvalidatePending}
+						className="flex items-center cursor-pointer"
+					>
+						<LogOut className="mr-2 h-4 w-4" />
+						Forcer la déconnexion
+					</DropdownMenuItem>
+
+					{/* Reset mot de passe */}
+					<DropdownMenuItem
+						onClick={() => sendReset(user.id, displayName)}
+						disabled={isResetPending}
+						className="flex items-center cursor-pointer"
+					>
+						<KeyRound className="mr-2 h-4 w-4" />
+						Envoyer reset mot de passe
+					</DropdownMenuItem>
+
 					{!isDeleted && (
 						<>
 							<DropdownMenuSeparator />
 							<DropdownMenuSub>
 								<DropdownMenuSubTrigger>
-									<UserCog className="mr-2 h-4 w-4" />
 									Changer le role
 								</DropdownMenuSubTrigger>
 								<DropdownMenuSubContent>
@@ -115,14 +175,14 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 										onClick={() => setPromoteDialogOpen(true)}
 										disabled={isAdmin}
 									>
-										<Shield className="mr-2 h-4 w-4" />
+										<CheckCircle2 className="mr-2 h-4 w-4" />
 										Promouvoir admin
 									</DropdownMenuItem>
 									<DropdownMenuItem
 										onClick={() => setDemoteDialogOpen(true)}
 										disabled={!isAdmin}
 									>
-										<ShieldOff className="mr-2 h-4 w-4" />
+										<XCircle className="mr-2 h-4 w-4" />
 										Retrograder utilisateur
 									</DropdownMenuItem>
 								</DropdownMenuSubContent>
@@ -133,7 +193,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 									className="flex items-center cursor-pointer"
 									onClick={() => setSuspendDialogOpen(true)}
 								>
-									<Ban className="mr-2 h-4 w-4" />
+									<XCircle className="mr-2 h-4 w-4" />
 									Suspendre
 								</DropdownMenuItem>
 							) : (
@@ -237,7 +297,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 									</>
 								) : (
 									<>
-										<Ban className="mr-2 h-4 w-4" />
+										<XCircle className="mr-2 h-4 w-4" />
 										Suspendre
 									</>
 								)}
@@ -289,7 +349,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
-						<input type="hidden" name="role" value={Role.ADMIN} />
+						<input type="hidden" name="role" value="ADMIN" />
 						<AlertDialogHeader>
 							<AlertDialogTitle>Promouvoir en administrateur</AlertDialogTitle>
 							<AlertDialogDescription>
@@ -316,7 +376,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 									</>
 								) : (
 									<>
-										<Shield className="mr-2 h-4 w-4" />
+										<CheckCircle2 className="mr-2 h-4 w-4" />
 										Promouvoir
 									</>
 								)}
@@ -331,7 +391,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
-						<input type="hidden" name="role" value={Role.USER} />
+						<input type="hidden" name="role" value="USER" />
 						<AlertDialogHeader>
 							<AlertDialogTitle>Retrograder en utilisateur</AlertDialogTitle>
 							<AlertDialogDescription>
@@ -355,7 +415,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 									</>
 								) : (
 									<>
-										<ShieldOff className="mr-2 h-4 w-4" />
+										<XCircle className="mr-2 h-4 w-4" />
 										Retrograder
 									</>
 								)}

@@ -562,6 +562,7 @@ model Order {
   items          OrderItem[]
   discountUsages DiscountUsage[]
   refunds        Refund[]
+  notes          OrderNote[]
 
   // === SOFT DELETE (Conformité légale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)
@@ -635,6 +636,27 @@ model OrderItem {
   @@index([productId])
   @@index([skuId])
   @@index([productId, orderId]) // Analytics top produits
+}
+
+/// Notes internes sur les commandes (visibles uniquement par les admins)
+/// Permet de documenter les échanges clients, incidents, ou actions spéciales
+model OrderNote {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Contenu de la note
+  content String @db.Text
+
+  // Admin qui a créé la note
+  authorId   String
+  authorName String @db.VarChar(100) // Dénormalisé pour historique si admin supprimé
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId, createdAt(sort: Desc)])
 }
 
 // ============================================================================

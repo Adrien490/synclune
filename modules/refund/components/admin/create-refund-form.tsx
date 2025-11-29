@@ -27,7 +27,7 @@ import { ArrowLeft, Package, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import {
 	useCreateRefundForm,
 	getDefaultRestock,
@@ -92,18 +92,23 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 	// Watch note from store
 	const note = useStore(form.store, (s) => s.values.note);
 
-	// Mettre à jour le restock par défaut quand le motif change
-	useEffect(() => {
-		const defaultRestock = getDefaultRestock(reason);
-		const currentItems = form.getFieldValue("items");
-		form.setFieldValue(
-			"items",
-			currentItems.map((item) => ({
-				...item,
-				restock: defaultRestock,
-			}))
-		);
-	}, [reason, form]);
+	// Handler pour changer le motif (met à jour le restock par défaut, pas de useEffect)
+	const handleReasonChange = useCallback(
+		(value: RefundReason) => {
+			form.setFieldValue("reason", value);
+			// Mettre à jour le restock par défaut pour tous les items
+			const defaultRestock = getDefaultRestock(value);
+			const currentItems = form.getFieldValue("items");
+			form.setFieldValue(
+				"items",
+				currentItems.map((item) => ({
+					...item,
+					restock: defaultRestock,
+				}))
+			);
+		},
+		[form]
+	);
 
 	// Handlers
 	const handleItemToggle = useCallback(
@@ -256,9 +261,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 							<CardContent className="space-y-4">
 								<Select
 									value={reason}
-									onValueChange={(value) =>
-										form.setFieldValue("reason", value as RefundReason)
-									}
+									onValueChange={(value) => handleReasonChange(value as RefundReason)}
 									disabled={isPending}
 								>
 									<SelectTrigger>

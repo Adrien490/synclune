@@ -1,3 +1,5 @@
+"use server";
+
 import { getSession } from "@/shared/utils/get-session";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe } from "@/shared/lib/stripe";

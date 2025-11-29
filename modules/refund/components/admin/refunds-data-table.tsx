@@ -29,6 +29,8 @@ import { ReceiptText } from "lucide-react";
 import Link from "next/link";
 import { ViewTransition } from "react";
 import { RefundRowActions } from "./refund-row-actions";
+import { RefundsSelectionToolbar } from "./refunds-selection-toolbar";
+import { RefundsTableSelectionCell } from "./refunds-table-selection-cell";
 
 export interface RefundsDataTableProps {
 	refundsPromise: Promise<GetRefundsReturn>;
@@ -46,6 +48,7 @@ export async function RefundsDataTable({
 	refundsPromise,
 }: RefundsDataTableProps) {
 	const { refunds, pagination } = await refundsPromise;
+	const refundIds = refunds.map((refund) => refund.id);
 
 	if (refunds.length === 0) {
 		return (
@@ -66,10 +69,14 @@ export async function RefundsDataTable({
 	return (
 		<Card>
 			<CardContent>
+				<RefundsSelectionToolbar refundIds={refundIds} />
 				<div className="overflow-x-auto">
 					<Table role="table" aria-label="Liste des remboursements" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
+								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
+									<RefundsTableSelectionCell type="header" refundIds={refundIds} />
+								</TableHead>
 								<TableHead
 									key="orderNumber"
 									scope="col"
@@ -132,6 +139,9 @@ export async function RefundsDataTable({
 								{refunds.map((refund) => (
 								<TableRow key={refund.id}>
 									<TableCell role="gridcell">
+										<RefundsTableSelectionCell type="row" refundId={refund.id} />
+									</TableCell>
+									<TableCell role="gridcell">
 										<ViewTransition name={`admin-order-${refund.order.id}`}>
 											<Link
 												href={`/admin/ventes/commandes/${refund.order.id}`}
@@ -193,6 +203,7 @@ export async function RefundsDataTable({
 												id: refund.id,
 												status: refund.status as RefundStatus,
 												amount: refund.amount,
+												orderId: refund.order.id,
 												orderNumber: refund.order.orderNumber,
 											}}
 										/>

@@ -10,7 +10,7 @@ import {
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
-import { useEffect, useId, useRef } from "react";
+import { useId, useRef } from "react";
 import { useSortSelect } from "@/shared/hooks/use-sort-select";
 
 export type SortOption = {
@@ -39,15 +39,7 @@ export function SortSelect({
 }: SortSelectProps) {
 	const { value, setSort, clearSort, isPending } = useSortSelect();
 	const triggerRef = useRef<HTMLButtonElement>(null);
-	const clearButtonRef = useRef<HTMLButtonElement>(null);
 	const generatedId = useId();
-
-	// Focus management: return focus to trigger after clearing
-	useEffect(() => {
-		if (!value && clearButtonRef.current === document.activeElement) {
-			triggerRef.current?.focus();
-		}
-	}, [value]);
 
 	const handleSelect = (newValue: string) => {
 		setSort(newValue);
@@ -57,6 +49,8 @@ export function SortSelect({
 		e.preventDefault();
 		e.stopPropagation();
 		clearSort();
+		// Focus management: return focus to trigger after clearing (direct, no useEffect)
+		triggerRef.current?.focus();
 	};
 
 	const handleClearKeyDown = (e: React.KeyboardEvent) => {
@@ -124,7 +118,6 @@ export function SortSelect({
 					{/* Clear button - positioned outside to avoid conflicts with Radix icon */}
 					{value && (
 						<button
-							ref={clearButtonRef}
 							type="button"
 							onClick={handleClear}
 							onKeyDown={handleClearKeyDown}

@@ -148,3 +148,20 @@ export const rejectRefundSchema = z.object({
 export const cancelRefundSchema = z.object({
 	id: z.cuid2(),
 });
+
+// ============================================================================
+// BULK APPROVE REFUNDS SCHEMA
+// ============================================================================
+
+export const bulkApproveRefundsSchema = z.object({
+	ids: z.array(z.cuid2()).min(1, "Au moins un remboursement doit être sélectionné"),
+});
+
+// ============================================================================
+// BULK REJECT REFUNDS SCHEMA
+// ============================================================================
+
+export const bulkRejectRefundsSchema = z.object({
+	ids: z.array(z.cuid2()).min(1, "Au moins un remboursement doit être sélectionné"),
+	reason: z.string().max(500).optional(),
+});

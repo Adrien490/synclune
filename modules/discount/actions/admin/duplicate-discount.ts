@@ -1,0 +1,90 @@
+"use server";
+
+import { prisma } from "@/shared/lib/prisma";
+import { requireAdmin } from "@/shared/lib/actions";
+import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus } from "@/shared/types/server-action";
+import { revalidatePath } from "next/cache";
+
+/**
+ * Server Action ADMIN pour dupliquer un code promo
+ *
+ * Crée une copie du code promo avec:
+ * - Un nouveau code (original + -COPY ou -COPY-N)
+ * - usageCount remis à 0
+ * - isActive à false (pour éviter activation accidentelle)
+ */
+export async function duplicateDiscount(discountId: string): Promise<ActionState> {
+	try {
+		// 1. Vérification admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2. Récupérer le code promo original
+		const original = await prisma.discount.findUnique({
+			where: { id: discountId },
+		});
+
+		if (!original) {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: "Code promo non trouvé",
+			};
+		}
+
+		// 3. Générer un nouveau code unique
+		let newCode = `${original.code}-COPY`;
+		let suffix = 1;
+
+		// Vérifier si le code existe déjà et incrémenter le suffixe si nécessaire
+		while (true) {
+			const existing = await prisma.discount.findUnique({
+				where: { code: newCode },
+			});
+
+			if (!existing) break;
+
+			suffix++;
+			newCode = `${original.code}-COPY-${suffix}`;
+
+			// Sécurité: éviter boucle infinie
+			if (suffix > 100) {
+				return {
+					status: ActionStatus.ERROR,
+					message: "Impossible de générer un code unique. Supprimez certaines copies.",
+				};
+			}
+		}
+
+		// 4. Créer la copie
+		const duplicate = await prisma.discount.create({
+			data: {
+				code: newCode,
+				type: original.type,
+				value: original.value,
+				minOrderAmount: original.minOrderAmount,
+				maxUsageCount: original.maxUsageCount,
+				maxUsagePerUser: original.maxUsagePerUser,
+				startsAt: original.startsAt,
+				endsAt: original.endsAt,
+				usageCount: 0,
+				isActive: false, // Désactivé par défaut
+			},
+		});
+
+		// 5. Revalider
+		revalidatePath("/admin/marketing/promotions");
+
+		return {
+			status: ActionStatus.SUCCESS,
+			message: `Code promo dupliqué: ${duplicate.code}`,
+			data: { id: duplicate.id, code: duplicate.code },
+		};
+	} catch (error) {
+		console.error("[DUPLICATE_DISCOUNT] Erreur:", error);
+		return {
+			status: ActionStatus.ERROR,
+			message: error instanceof Error ? error.message : "Une erreur est survenue",
+		};
+	}
+}

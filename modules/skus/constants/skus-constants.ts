@@ -6,6 +6,7 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 	sku: true,
 	productId: true,
 	priceInclTax: true,
+	compareAtPrice: true,
 	inventory: true,
 	isActive: true,
 	isDefault: true,

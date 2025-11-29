@@ -14,7 +14,9 @@ export const GET_MATERIALS_SELECT = {
 	updatedAt: true,
 	_count: {
 		select: {
-			skus: true,
+			skus: {
+				where: { isActive: true },
+			},
 		},
 	},
 } as const satisfies Prisma.MaterialSelect;
@@ -33,7 +35,7 @@ export const GET_MATERIAL_SELECT = {
 // PAGINATION CONSTANTS
 // ============================================================================
 
-export const GET_MATERIALS_DEFAULT_PER_PAGE = 50;
+export const GET_MATERIALS_DEFAULT_PER_PAGE = 20;
 export const GET_MATERIALS_MAX_RESULTS_PER_PAGE = 200;
 
 // ============================================================================

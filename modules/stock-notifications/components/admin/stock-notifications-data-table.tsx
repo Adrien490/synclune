@@ -16,6 +16,8 @@ import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/shared/components/ui/empty";
 import { Bell } from "lucide-react";
 import { StockNotificationsRowActions } from "./stock-notifications-row-actions";
+import { StockNotificationsSelectionToolbar } from "./stock-notifications-selection-toolbar";
+import { StockNotificationsTableSelectionCell } from "./stock-notifications-table-selection-cell";
 import type {
 	GetStockNotificationsAdminReturn,
 	StockNotificationAdmin,
@@ -38,6 +40,7 @@ export async function StockNotificationsDataTable({
 	notificationsPromise,
 }: StockNotificationsDataTableProps) {
 	const { notifications, pagination } = await notificationsPromise;
+	const notificationIds = notifications.map((n) => n.id);
 
 	if (notifications.length === 0) {
 		return (
@@ -59,19 +62,24 @@ export async function StockNotificationsDataTable({
 
 	return (
 		<Card>
-			<CardContent className="p-0">
-				<Table role="table" aria-label="Liste des demandes de notification">
-					<TableHeader>
-						<TableRow>
-							<TableHead className="w-[25%]">Produit</TableHead>
-							<TableHead className="w-[15%]">Variante</TableHead>
-							<TableHead className="w-[20%]">Email</TableHead>
-							<TableHead className="w-[12%]">Statut</TableHead>
-							<TableHead className="w-[10%] text-center">Stock</TableHead>
-							<TableHead className="hidden sm:table-cell w-[12%]">Date</TableHead>
-							<TableHead className="w-[6%] text-right">Actions</TableHead>
-						</TableRow>
-					</TableHeader>
+			<CardContent>
+				<StockNotificationsSelectionToolbar notificationIds={notificationIds} />
+				<div className="overflow-x-auto">
+					<Table role="table" aria-label="Liste des demandes de notification">
+						<TableHeader>
+							<TableRow>
+								<TableHead className="w-[5%]">
+									<StockNotificationsTableSelectionCell type="header" notificationIds={notificationIds} />
+								</TableHead>
+								<TableHead className="w-[22%]">Produit</TableHead>
+								<TableHead className="w-[13%]">Variante</TableHead>
+								<TableHead className="w-[18%]">Email</TableHead>
+								<TableHead className="w-[10%]">Statut</TableHead>
+								<TableHead className="w-[8%] text-center">Stock</TableHead>
+								<TableHead className="hidden sm:table-cell w-[12%]">Date</TableHead>
+								<TableHead className="w-[6%] text-right">Actions</TableHead>
+							</TableRow>
+						</TableHeader>
 					<TableBody>
 						{notifications.map((notification) => (
 							<StockNotificationRow
@@ -80,9 +88,10 @@ export async function StockNotificationsDataTable({
 							/>
 						))}
 					</TableBody>
-				</Table>
+					</Table>
+				</div>
 
-				<div className="p-4 border-t">
+				<div className="mt-4">
 					<CursorPagination
 						perPage={50}
 						currentPageSize={notifications.length}
@@ -114,6 +123,10 @@ function StockNotificationRow({
 
 	return (
 		<TableRow>
+			{/* Sélection */}
+			<TableCell>
+				<StockNotificationsTableSelectionCell type="row" notificationId={notification.id} />
+			</TableCell>
 			{/* Produit */}
 			<TableCell>
 				<div className="flex items-center gap-3">

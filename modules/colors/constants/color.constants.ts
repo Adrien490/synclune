@@ -31,7 +31,7 @@ export const GET_COLOR_SELECT = {
 // PAGINATION CONSTANTS
 // ============================================================================
 
-export const GET_COLORS_DEFAULT_PER_PAGE = 50;
+export const GET_COLORS_DEFAULT_PER_PAGE = 20;
 export const GET_COLORS_MAX_RESULTS_PER_PAGE = 200;
 
 // ============================================================================

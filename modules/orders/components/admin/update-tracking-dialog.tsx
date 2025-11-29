@@ -28,7 +28,6 @@ import {
 } from "@/shared/utils/carrier-detection";
 import { useStore } from "@tanstack/react-form";
 import { Calendar, Mail, Truck } from "lucide-react";
-import { useEffect, useCallback } from "react";
 import { useUpdateTrackingForm } from "@/modules/orders/hooks/admin/use-update-tracking-form";
 
 export const UPDATE_TRACKING_DIALOG_ID = "update-tracking";
@@ -71,22 +70,6 @@ function UpdateTrackingFormContent({
 		},
 	});
 
-	// Auto-détection du transporteur quand le numéro de suivi change
-	const handleTrackingNumberChange = useCallback(
-		(value: string) => {
-			if (value.length >= 8) {
-				const detection = detectCarrierAndUrl(value);
-				// Mettre à jour le transporteur détecté
-				form.setFieldValue("carrier", detection.carrier);
-				// Mettre à jour l'URL si détectée
-				if (detection.url) {
-					form.setFieldValue("trackingUrl", detection.url);
-				}
-			}
-		},
-		[form]
-	);
-
 	// Watch form values
 	const trackingNumber = useStore(form.store, (state) => state.values.trackingNumber);
 	const carrier = useStore(form.store, (state) => state.values.carrier);
@@ -94,11 +77,20 @@ function UpdateTrackingFormContent({
 	const estimatedDelivery = useStore(form.store, (state) => state.values.estimatedDelivery);
 	const sendEmail = useStore(form.store, (state) => state.values.sendEmail);
 
-	useEffect(() => {
-		if (trackingNumber.length >= 8 && trackingNumber !== initialTrackingNumber) {
-			handleTrackingNumberChange(trackingNumber);
+	// Auto-détection du transporteur directement dans onChange (pas de useEffect)
+	const handleTrackingNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		form.setFieldValue("trackingNumber", value);
+
+		// Auto-détecter si nouveau numéro >= 8 caractères et différent de l'initial
+		if (value.length >= 8 && value !== initialTrackingNumber) {
+			const detection = detectCarrierAndUrl(value);
+			form.setFieldValue("carrier", detection.carrier);
+			if (detection.url) {
+				form.setFieldValue("trackingUrl", detection.url);
+			}
 		}
-	}, [trackingNumber, handleTrackingNumberChange, initialTrackingNumber]);
+	};
 
 	return (
 		<>
@@ -134,7 +126,7 @@ function UpdateTrackingFormContent({
 							id="trackingNumber"
 							name="trackingNumber"
 							value={trackingNumber}
-							onChange={(e) => form.setFieldValue("trackingNumber", e.target.value)}
+							onChange={handleTrackingNumberChange}
 							placeholder="Ex: 8N00234567890"
 							disabled={isPending}
 							required

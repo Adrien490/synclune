@@ -6,12 +6,15 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkActivateProductTypes } from "@/modules/product-types/hooks/admin/use-bulk-activate-product-types";
 import { useBulkDeactivateProductTypes } from "@/modules/product-types/hooks/admin/use-bulk-deactivate-product-types";
-import { CheckCircle, MoreVertical, XCircle } from "lucide-react";
+import { BULK_DELETE_PRODUCT_TYPES_DIALOG_ID } from "./bulk-delete-product-types-alert-dialog";
+import { CheckCircle2, MoreVertical, Trash2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProductTypesSelectionToolbarProps {
@@ -20,6 +23,7 @@ interface ProductTypesSelectionToolbarProps {
 
 export function ProductTypesSelectionToolbar({}: ProductTypesSelectionToolbarProps) {
 	const { selectedItems, clearSelection } = useSelectionContext();
+	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_PRODUCT_TYPES_DIALOG_ID);
 
 	const { activateProductTypes, isPending: isActivating } = useBulkActivateProductTypes({
 		onSuccess: () => {
@@ -51,6 +55,17 @@ export function ProductTypesSelectionToolbar({}: ProductTypesSelectionToolbarPro
 		deactivateProductTypes(selectedItems);
 	};
 
+	const handleBulkDelete = () => {
+		if (selectedItems.length === 0) {
+			toast.error("Veuillez sélectionner au moins un type de bijou.");
+			return;
+		}
+
+		bulkDeleteDialog.open({
+			productTypeIds: selectedItems,
+		});
+	};
+
 	if (selectedItems.length === 0) return null;
 
 	return (
@@ -69,12 +84,17 @@ export function ProductTypesSelectionToolbar({}: ProductTypesSelectionToolbarPro
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-[200px]">
 					<DropdownMenuItem onClick={handleActivate} disabled={isActivating}>
-						<CheckCircle className="h-4 w-4" />
+						<CheckCircle2 className="h-4 w-4" />
 						Activer
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={handleDeactivate} disabled={isDeactivating}>
 						<XCircle className="h-4 w-4" />
 						Désactiver
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem onClick={handleBulkDelete} variant="destructive">
+						<Trash2 className="h-4 w-4" />
+						Supprimer
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

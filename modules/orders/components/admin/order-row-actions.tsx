@@ -7,25 +7,37 @@ import {
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuLabel,
+	DropdownMenuPortal,
 	DropdownMenuSeparator,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import {
 	CheckCircle,
 	CreditCard,
+	Download,
 	Eye,
 	ExternalLink,
+	Mail,
 	MoreVertical,
 	Package,
+	PackageCheck,
 	PackageX,
 	RotateCcw,
+	ShoppingBag,
+	StickyNote,
 	Trash2,
 	Truck,
 	Undo2,
 	XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useDownloadInvoiceAdmin } from "@/modules/orders/hooks/admin/use-download-invoice-admin";
+import { useResendOrderEmail } from "@/modules/orders/hooks/use-resend-order-email";
 import { CANCEL_ORDER_DIALOG_ID } from "./cancel-order-alert-dialog";
 import { DELETE_ORDER_DIALOG_ID } from "./delete-order-alert-dialog";
 import { MARK_AS_PAID_DIALOG_ID } from "./mark-as-paid-alert-dialog";
@@ -34,6 +46,7 @@ import { MARK_AS_DELIVERED_DIALOG_ID } from "./mark-as-delivered-alert-dialog";
 import { MARK_AS_PROCESSING_DIALOG_ID } from "./mark-as-processing-alert-dialog";
 import { REVERT_TO_PROCESSING_DIALOG_ID } from "./revert-to-processing-dialog";
 import { MARK_AS_RETURNED_DIALOG_ID } from "./mark-as-returned-alert-dialog";
+import { ORDER_NOTES_DIALOG_ID } from "./order-notes-dialog";
 
 interface OrderRowActionsProps {
 	order: {
@@ -57,6 +70,12 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	const markAsProcessingDialog = useAlertDialog(MARK_AS_PROCESSING_DIALOG_ID);
 	const revertToProcessingDialog = useAlertDialog(REVERT_TO_PROCESSING_DIALOG_ID);
 	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
+	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
+
+	// Hook pour télécharger la facture
+	const { download: downloadInvoice, isPending: isDownloadingInvoice } = useDownloadInvoiceAdmin();
+	// Hook pour renvoyer les emails
+	const { resend: resendEmail, isPending: isResendingEmail } = useResendOrderEmail();
 
 	// =========================================================================
 	// STATE MACHINE CONDITIONS
@@ -92,6 +111,9 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	const canRevertToProcessing = isShipped;
 	const canMarkAsReturned =
 		isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
+
+	// Facture disponible si invoiceNumber existe
+	const hasInvoice = !!order.invoiceNumber;
 
 	// =========================================================================
 	// HANDLERS
@@ -155,6 +177,13 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 		});
 	};
 
+	const handleOpenNotes = () => {
+		notesDialog.open({
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+		});
+	};
+
 	// =========================================================================
 	// RENDER
 	// =========================================================================
@@ -179,6 +208,60 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 						Voir les détails
 					</Link>
 				</DropdownMenuItem>
+
+				{/* Notes internes */}
+				<DropdownMenuItem onClick={handleOpenNotes}>
+					<StickyNote className="h-4 w-4" />
+					Notes internes
+				</DropdownMenuItem>
+
+				{/* Renvoyer un email */}
+				<DropdownMenuSub>
+					<DropdownMenuSubTrigger disabled={isResendingEmail}>
+						<Mail className="h-4 w-4" />
+						Renvoyer un email
+					</DropdownMenuSubTrigger>
+					<DropdownMenuPortal>
+						<DropdownMenuSubContent>
+							<DropdownMenuItem
+								onClick={() => resendEmail(order.id, "confirmation")}
+								disabled={isResendingEmail}
+							>
+								<ShoppingBag className="h-4 w-4" />
+								Confirmation de commande
+							</DropdownMenuItem>
+							{(isShipped || isDelivered) && order.trackingNumber && (
+								<DropdownMenuItem
+									onClick={() => resendEmail(order.id, "shipping")}
+									disabled={isResendingEmail}
+								>
+									<Truck className="h-4 w-4" />
+									Expédition
+								</DropdownMenuItem>
+							)}
+							{isDelivered && (
+								<DropdownMenuItem
+									onClick={() => resendEmail(order.id, "delivery")}
+									disabled={isResendingEmail}
+								>
+									<PackageCheck className="h-4 w-4" />
+									Livraison
+								</DropdownMenuItem>
+							)}
+						</DropdownMenuSubContent>
+					</DropdownMenuPortal>
+				</DropdownMenuSub>
+
+				{/* Télécharger la facture (si disponible) */}
+				{hasInvoice && (
+					<DropdownMenuItem
+						onClick={() => downloadInvoice(order.id)}
+						disabled={isDownloadingInvoice}
+					>
+						<Download className="h-4 w-4" />
+						Télécharger la facture
+					</DropdownMenuItem>
+				)}
 
 				{/* PENDING : Marquer comme payée */}
 				{canMarkAsPaid && (

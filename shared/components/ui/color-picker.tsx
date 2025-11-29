@@ -85,17 +85,15 @@ export const ColorPicker = ({
 	});
 	const [mode, setMode] = useState("hex");
 
-	// Use ref to store onChange to avoid infinite loops
-	const onChangeRef = useRef(onChange);
-	useEffect(() => {
-		onChangeRef.current = onChange;
-	}, [onChange]);
+	// Ref pour éviter la notification initiale et pendant la sync depuis value
+	const isUpdatingFromValue = useRef(false);
 
-	// Update color when controlled value changes
+	// Sync controlled value → internal state (nécessaire pour composant contrôlé)
 	const prevValueRef = useRef(value);
 	useEffect(() => {
 		if (value && value !== prevValueRef.current) {
 			prevValueRef.current = value;
+			isUpdatingFromValue.current = true;
 			const color = Color(value);
 			const hslValues = color.hsl().array();
 
@@ -106,15 +104,18 @@ export const ColorPicker = ({
 		}
 	}, [value]);
 
-	// Notify parent of changes
+	// Notify parent of changes (skip if updating from controlled value to avoid loop)
 	useEffect(() => {
-		if (onChangeRef.current) {
+		if (isUpdatingFromValue.current) {
+			isUpdatingFromValue.current = false;
+			return;
+		}
+		if (onChange) {
 			const color = Color.hsl(hue, saturation, lightness).alpha(alpha / 100);
 			const rgba = color.rgb().array();
-
-			onChangeRef.current([rgba[0], rgba[1], rgba[2], alpha / 100]);
+			onChange([rgba[0], rgba[1], rgba[2], alpha / 100]);
 		}
-	}, [hue, saturation, lightness, alpha]);
+	}, [hue, saturation, lightness, alpha, onChange]);
 
 	return (
 		<ColorPickerContext.Provider

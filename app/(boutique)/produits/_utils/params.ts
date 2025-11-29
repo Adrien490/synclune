@@ -65,6 +65,18 @@ export const parseFilters = (params: ProductSearchParams): ProductFilters => {
 					.map((c) => String(c).trim())
 					.filter((c) => c.length > 0)
 					.slice(0, 20);
+			} else if (key === "material") {
+				const materials = Array.isArray(value)
+					? value
+					: filterValue.includes(",")
+						? filterValue.split(",")
+						: [filterValue];
+
+				// Clean, filter empty, and limit to 20 items
+				filters.material = materials
+					.map((m) => String(m).trim())
+					.filter((m) => m.length > 0)
+					.slice(0, 20);
 			}
 			// String fields
 			else if (key === "collectionId") {

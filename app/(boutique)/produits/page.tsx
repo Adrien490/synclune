@@ -28,6 +28,7 @@ import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { TabNavigation } from "@/shared/components/tab-navigation";
 import { getColors } from "@/modules/colors/data/get-colors";
+import { getMaterialOptions } from "@/modules/materials/data/get-materials";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
 import { ProductFilterSheet } from "@/modules/products/components/product-filter-sheet";
@@ -119,12 +120,13 @@ export default async function BijouxHubPage({
 			? searchParamsData.search
 			: undefined;
 
-	// Récupérer les couleurs et le prix maximum
-	const [colorsData, maxPriceInCents] = await Promise.all([
+	// Récupérer les couleurs, matériaux et le prix maximum
+	const [colorsData, materials, maxPriceInCents] = await Promise.all([
 		getColors({
 			perPage: 100,
 			sortBy: "name-ascending",
 		}),
+		getMaterialOptions(),
 		getMaxProductPrice(),
 	]);
 
@@ -263,13 +265,14 @@ export default async function BijouxHubPage({
 								<ProductFilterSheet
 									className="shrink-0"
 									colors={colors}
+									materials={materials}
 									maxPriceInEuros={maxPriceInEuros}
 								/>
 							</div>
 						</div>
 					</div>
 
-					{hasActiveFilters && <ProductFilterBadges colors={colors} />}
+					{hasActiveFilters && <ProductFilterBadges colors={colors} materials={materials} />}
 
 					<Suspense fallback={<ProductListSkeleton />}>
 						<ProductList productsPromise={productsPromise} perPage={perPage} />

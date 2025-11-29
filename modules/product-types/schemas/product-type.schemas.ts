@@ -120,3 +120,14 @@ export const bulkDeactivateProductTypesSchema = z.object({
 		}
 	}),
 });
+
+export const bulkDeleteProductTypesSchema = z.object({
+	ids: z.string().transform((str) => {
+		try {
+			const parsed = JSON.parse(str);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	}),
+});

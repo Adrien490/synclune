@@ -25,9 +25,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useTransition } from "react";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
+import type { MaterialOption } from "@/modules/materials/data/get-materials";
 
 interface FilterSheetProps {
 	colors: GetColorsReturn["colors"];
+	materials: MaterialOption[];
 	maxPriceInEuros: number;
 	className?: string;
 }
@@ -35,11 +37,13 @@ interface FilterSheetProps {
 // Types pour TanStack Form
 interface FilterFormData {
 	colors: string[];
+	materials: string[];
 	priceRange: [number, number];
 }
 
 export function ProductFilterSheet({
 	colors = [],
+	materials = [],
 	maxPriceInEuros,
 	className,
 }: FilterSheetProps) {
@@ -56,6 +60,7 @@ export function ProductFilterSheet({
 	// Initialisation des valeurs depuis les paramètres URL
 	const initialValues = useMemo((): FilterFormData => {
 		const colors: string[] = [];
+		const materials: string[] = [];
 		let priceMin = DEFAULT_PRICE_RANGE[0];
 		let priceMax = DEFAULT_PRICE_RANGE[1];
 
@@ -63,6 +68,8 @@ export function ProductFilterSheet({
 		searchParams.forEach((value, key) => {
 			if (key === "color") {
 				colors.push(value);
+			} else if (key === "material") {
+				materials.push(value);
 			} else if (key === "priceMin") {
 				priceMin = Number(value) || DEFAULT_PRICE_RANGE[0];
 			} else if (key === "priceMax") {
@@ -72,6 +79,7 @@ export function ProductFilterSheet({
 
 		return {
 			colors: [...new Set(colors)], // Dédoublonner
+			materials: [...new Set(materials)], // Dédoublonner
 			priceRange: [priceMin, priceMax],
 		};
 	}, [searchParams, DEFAULT_PRICE_RANGE]);
@@ -89,7 +97,7 @@ export function ProductFilterSheet({
 		const params = new URLSearchParams(searchParams.toString());
 
 		// Nettoyer tous les anciens filtres (directement par nom)
-		const filterKeys = ["color", "priceMin", "priceMax"];
+		const filterKeys = ["color", "material", "priceMin", "priceMax"];
 		filterKeys.forEach((key) => {
 			params.delete(key);
 		});
@@ -103,6 +111,15 @@ export function ProductFilterSheet({
 				params.set("color", formData.colors[0]);
 			} else {
 				formData.colors.forEach((color) => params.append("color", color));
+			}
+		}
+
+		// Matériaux (schéma: material - peut être string ou array)
+		if (formData.materials.length > 0) {
+			if (formData.materials.length === 1) {
+				params.set("material", formData.materials[0]);
+			} else {
+				formData.materials.forEach((material) => params.append("material", material));
 			}
 		}
 
@@ -124,6 +141,7 @@ export function ProductFilterSheet({
 	const clearAllFilters = () => {
 		const defaultValues: FilterFormData = {
 			colors: [],
+			materials: [],
 			priceRange: [DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]],
 		};
 
@@ -131,7 +149,7 @@ export function ProductFilterSheet({
 
 		const params = new URLSearchParams(searchParams.toString());
 		// Supprimer tous les paramètres de filtres
-		const filterKeys = ["color", "priceMin", "priceMax"];
+		const filterKeys = ["color", "material", "priceMin", "priceMax"];
 		filterKeys.forEach((key) => {
 			params.delete(key);
 		});
@@ -156,6 +174,8 @@ export function ProductFilterSheet({
 			// Compter les filtres actifs
 			if (key === "color") {
 				count += 1; // Chaque couleur compte pour 1
+			} else if (key === "material") {
+				count += 1; // Chaque matériau compte pour 1
 			} else if (key === "priceMin" || key === "priceMax") {
 				// Éviter de compter deux fois pour le prix
 				if (key === "priceMin") count += 1;
@@ -283,6 +303,57 @@ export function ProductFilterSheet({
 									</div>
 								)}
 							</form.Field>
+
+							{/* Matériaux - dynamiques depuis la base */}
+							{materials.length > 0 && (
+								<>
+									<Separator />
+									<form.Field name="materials" mode="array">
+										{(field) => (
+											<div className="space-y-3">
+												<h4 className="font-medium text-sm text-foreground">
+													Matériaux
+												</h4>
+												<div className="space-y-2">
+													{materials.map((material) => {
+														const isSelected = field.state.value.includes(
+															material.slug
+														);
+														return (
+															<div
+																key={material.slug}
+																className="flex items-center space-x-2"
+															>
+																<Checkbox
+																	id={`material-${material.slug}`}
+																	checked={isSelected}
+																	onCheckedChange={(checked) => {
+																		if (checked && !isSelected) {
+																			field.pushValue(material.slug);
+																		} else if (!checked && isSelected) {
+																			const index = field.state.value.indexOf(
+																				material.slug
+																			);
+																			field.removeValue(index);
+																		}
+																	}}
+																	className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+																/>
+																<Label
+																	htmlFor={`material-${material.slug}`}
+																	className="text-sm font-normal cursor-pointer flex-1"
+																>
+																	{material.name}
+																</Label>
+															</div>
+														);
+													})}
+												</div>
+											</div>
+										)}
+									</form.Field>
+								</>
+							)}
 
 							<Separator />
 

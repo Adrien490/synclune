@@ -1,20 +1,11 @@
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
+import type { MaterialOption } from "@/modules/materials/data/get-materials";
 import type { FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ReadonlyURLSearchParams } from "next/navigation";
 
-// Filtres autres que les couleurs
-const OTHER_FILTERS = {
-	material: {
-		name: "Matériau",
-		values: {
-			argent: "Argent",
-			or: "Or",
-			acier: "Acier inoxydable",
-			cuivre: "Cuivre",
-			laiton: "Laiton",
-		},
-	},
+// Filtres statiques
+const STATIC_FILTERS = {
 	inStock: {
 		name: "En stock",
 	},
@@ -26,16 +17,24 @@ const OTHER_FILTERS = {
 /**
  * Crée une fonction de formatage pour les filtres de produits
  * @param colors - Liste des couleurs depuis la base
+ * @param materials - Liste des matériaux depuis la base
  * @param searchParams - Paramètres de recherche URL (pour gérer le prix)
  */
 export function createProductFilterFormatter(
 	colors: GetColorsReturn["colors"],
+	materials: MaterialOption[],
 	searchParams: ReadonlyURLSearchParams
 ) {
 	// Créer le mapping dynamique des couleurs
 	const colorMapping: Record<string, string> = {};
 	colors.forEach((color) => {
 		colorMapping[color.slug] = color.name;
+	});
+
+	// Créer le mapping dynamique des matériaux
+	const materialMapping: Record<string, string> = {};
+	materials.forEach((material) => {
+		materialMapping[material.slug] = material.name;
 	});
 
 	// Configuration des filtres avec mapping dynamique
@@ -45,7 +44,12 @@ export function createProductFilterFormatter(
 			name: "Couleur",
 			values: colorMapping,
 		},
-		...OTHER_FILTERS,
+		// Matériaux (dynamique depuis la base)
+		material: {
+			name: "Matériau",
+			values: materialMapping,
+		},
+		...STATIC_FILTERS,
 	};
 
 	// Fonction de formatage pour les filtres de produits

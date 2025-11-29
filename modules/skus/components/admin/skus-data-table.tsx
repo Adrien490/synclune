@@ -284,6 +284,10 @@ export async function ProductVariantsDataTable({
 												skuName={sku.sku}
 												productSlug={productSlug}
 												isDefault={sku.isDefault}
+												isActive={sku.isActive}
+												inventory={sku.inventory}
+												priceInclTax={sku.priceInclTax}
+												compareAtPrice={sku.compareAtPrice}
 											/>
 										</TableCell>
 									</TableRow>

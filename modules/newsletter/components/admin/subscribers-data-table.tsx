@@ -20,6 +20,9 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CheckCircle2, Mail, XCircle } from "lucide-react";
 import { ViewTransition } from "react";
+import { SubscriberRowActions } from "./subscriber-row-actions";
+import { SubscribersSelectionToolbar } from "./subscribers-selection-toolbar";
+import { SubscribersTableSelectionCell } from "./subscribers-table-selection-cell";
 
 export interface SubscribersDataTableProps {
 	subscribersPromise: Promise<GetSubscribersReturn>;
@@ -29,6 +32,7 @@ export async function SubscribersDataTable({
 	subscribersPromise,
 }: SubscribersDataTableProps) {
 	const { subscribers, pagination } = await subscribersPromise;
+	const subscriberIds = subscribers.map((s) => s.id);
 
 	if (subscribers.length === 0) {
 		return (
@@ -48,20 +52,28 @@ export async function SubscribersDataTable({
 
 	return (
 		<Card>
-			<CardContent className="p-0">
+			<CardContent>
+				<SubscribersSelectionToolbar subscriberIds={subscriberIds} />
 				<div className="overflow-x-auto">
 					<Table role="table" aria-label="Liste des abonnés newsletter">
 						<TableHeader>
 							<TableRow>
-								<TableHead scope="col" className="w-[50%] sm:w-[40%]">Email</TableHead>
-								<TableHead scope="col" className="w-[25%] sm:w-[15%]">Statut</TableHead>
-								<TableHead scope="col" className="hidden sm:table-cell w-[22.5%]">Date d'inscription</TableHead>
-								<TableHead scope="col" className="hidden md:table-cell w-[22.5%]">Dernière mise à jour</TableHead>
+								<TableHead scope="col" className="w-[5%]">
+									<SubscribersTableSelectionCell type="header" subscriberIds={subscriberIds} />
+								</TableHead>
+								<TableHead scope="col" className="w-[35%] sm:w-[30%]">Email</TableHead>
+								<TableHead scope="col" className="w-[15%] sm:w-[15%]">Statut</TableHead>
+								<TableHead scope="col" className="hidden sm:table-cell w-[20%]">Date d'inscription</TableHead>
+								<TableHead scope="col" className="hidden md:table-cell w-[15%]">Dernière mise à jour</TableHead>
+								<TableHead scope="col" className="w-[10%] text-right">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
 								{subscribers.map((subscriber) => (
 								<TableRow key={subscriber.id}>
+									<TableCell>
+										<SubscribersTableSelectionCell type="row" subscriberId={subscriber.id} />
+									</TableCell>
 									<TableCell className="font-medium">
 										<ViewTransition name={`admin-subscriber-${subscriber.id}`}>
 											<span>{subscriber.email}</span>
@@ -94,13 +106,23 @@ export async function SubscribersDataTable({
 											{ locale: fr }
 										)}
 									</TableCell>
+									<TableCell className="text-right">
+										<SubscriberRowActions
+											subscriber={{
+												id: subscriber.id,
+												email: subscriber.email,
+												isActive: subscriber.isActive,
+												emailVerified: subscriber.emailVerified,
+											}}
+										/>
+									</TableCell>
 								</TableRow>
 								))}
 						</TableBody>
 					</Table>
 				</div>
 
-				<div className="p-4 border-t">
+				<div className="mt-4">
 					<CursorPagination
 						perPage={subscribers.length}
 						hasNextPage={pagination.hasNextPage}

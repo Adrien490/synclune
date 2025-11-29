@@ -8,6 +8,7 @@ export const GET_SUBSCRIBER_SELECT = {
 	id: true,
 	email: true,
 	isActive: true,
+	emailVerified: true,
 	subscribedAt: true,
 	unsubscribedAt: true,
 	createdAt: true,

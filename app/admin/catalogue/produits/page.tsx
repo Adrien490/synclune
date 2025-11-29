@@ -17,6 +17,7 @@ import { BulkDeleteProductsAlertDialog } from "@/modules/products/components/adm
 import { ChangeProductStatusAlertDialog } from "@/modules/products/components/admin/change-product-status-alert-dialog";
 import { DeleteProductAlertDialog } from "@/modules/products/components/admin/delete-product-alert-dialog";
 import { DuplicateProductAlertDialog } from "@/modules/products/components/admin/duplicate-product-alert-dialog";
+import { ManageCollectionsDialog } from "@/modules/products/components/admin/manage-collections-dialog";
 import { ProductStatusNavigation } from "@/modules/products/components/admin/product-status-navigation";
 import { ProductsDataTable } from "@/modules/products/components/admin/products-data-table";
 import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/products-data-table-skeleton";
@@ -199,6 +200,7 @@ export default async function ProductsAdminPage({
 			<ChangeProductStatusAlertDialog />
 			<DeleteProductAlertDialog />
 			<DuplicateProductAlertDialog />
+			<ManageCollectionsDialog />
 		</>
 	);
 }

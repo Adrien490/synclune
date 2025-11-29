@@ -42,6 +42,7 @@ export const getMaterialsSchema = z.object({
 
 export const getMaterialSchema = z.object({
 	slug: z.string().trim().min(1),
+	includeInactive: z.boolean().optional(),
 });
 
 // ============================================================================

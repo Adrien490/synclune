@@ -1,7 +1,7 @@
 "use server";
 
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { getCurrentUser } from "@/modules/auth/utils/session";
+import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";

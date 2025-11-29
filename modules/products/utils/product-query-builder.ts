@@ -133,6 +133,21 @@ export function buildProductFilterConditions(
 		}
 	}
 
+	if (filters.material !== undefined) {
+		const materials = Array.isArray(filters.material)
+			? filters.material
+			: [filters.material];
+		if (materials.length === 1) {
+			conditions.push({
+				skus: { some: { isActive: true, materialRef: { slug: materials[0] } } },
+			});
+		} else if (materials.length > 1) {
+			conditions.push({
+				skus: { some: { isActive: true, materialRef: { slug: { in: materials } } } },
+			});
+		}
+	}
+
 	if (filters.collectionId !== undefined) {
 		const collectionIds = Array.isArray(filters.collectionId)
 			? filters.collectionId

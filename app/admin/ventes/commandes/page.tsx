@@ -21,6 +21,7 @@ import { MarkAsDeliveredAlertDialog } from "@/modules/orders/components/admin/ma
 import { MarkAsProcessingAlertDialog } from "@/modules/orders/components/admin/mark-as-processing-alert-dialog";
 import { RevertToProcessingDialog } from "@/modules/orders/components/admin/revert-to-processing-dialog";
 import { MarkAsReturnedAlertDialog } from "@/modules/orders/components/admin/mark-as-returned-alert-dialog";
+import { OrderNotesDialog } from "@/modules/orders/components/admin/order-notes-dialog";
 import { RefreshOrdersButton } from "@/modules/orders/components/admin/refresh-orders-button";
 import { parseFilters } from "./_utils/params";
 import { Metadata } from "next";
@@ -129,6 +130,7 @@ export default async function OrdersAdminPage({
 			<MarkAsProcessingAlertDialog />
 			<RevertToProcessingDialog />
 			<MarkAsReturnedAlertDialog />
+			<OrderNotesDialog />
 		</>
 	);
 }

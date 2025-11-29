@@ -35,6 +35,7 @@ export const productFiltersSchema = z
 	.object({
 		type: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
 		color: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
+		material: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
 		status: z
 			.union([z.enum(ProductStatus), z.array(z.enum(ProductStatus))])
 			.optional(),

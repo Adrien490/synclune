@@ -20,6 +20,7 @@ import { ProductTypesDataTableSkeleton } from "@/modules/product-types/component
 import { ProductTypesFilterBadges } from "@/modules/product-types/components/admin/product-types-filter-badges";
 import { ProductTypesFilterSheet } from "@/modules/product-types/components/admin/product-types-filter-sheet";
 import { DeleteProductTypeAlertDialog } from "@/modules/product-types/components/admin/delete-product-type-alert-dialog";
+import { BulkDeleteProductTypesAlertDialog } from "@/modules/product-types/components/admin/bulk-delete-product-types-alert-dialog";
 import { RefreshProductTypesButton } from "@/modules/product-types/components/admin/refresh-product-types-button";
 import { parseFilters } from "./_utils/params";
 
@@ -91,6 +92,7 @@ export default async function ProductTypesAdminPage({
 		<>
 			<ProductTypeFormDialog />
 			<DeleteProductTypeAlertDialog />
+			<BulkDeleteProductTypesAlertDialog />
 			<PageHeader
 				variant="compact"
 				title="Types de bijoux"

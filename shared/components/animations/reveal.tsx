@@ -1,8 +1,13 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useSyncExternalStore } from "react";
 import { MOTION_CONFIG } from "./motion.config";
+
+// useSyncExternalStore pour détecter le montage client sans useEffect
+const subscribeNoop = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export interface RevealProps {
 	children: ReactNode;
@@ -36,15 +41,12 @@ export function Reveal({
 	...rest
 }: RevealProps) {
 	const prefersReducedMotion = useReducedMotion();
-	const [isMounted, setIsMounted] = useState(false);
-
-	useEffect(() => {
-		setIsMounted(true);
-	}, []);
+	// useSyncExternalStore: false côté serveur, true côté client (pas d'hydration mismatch)
+	const isClient = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
 
 	// Côté serveur et première hydratation: toujours avec animation
 	// Côté client après mount: respecte les préférences utilisateur
-	const shouldReduceMotion = isMounted && prefersReducedMotion;
+	const shouldReduceMotion = isClient && prefersReducedMotion;
 
 	return (
 		<motion.div

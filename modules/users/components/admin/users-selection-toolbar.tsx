@@ -28,17 +28,14 @@ import { useBulkSuspendUsers } from "@/modules/users/hooks/admin/use-bulk-suspen
 import { useBulkRestoreUsers } from "@/modules/users/hooks/admin/use-bulk-restore-users";
 import { useBulkChangeUserRole } from "@/modules/users/hooks/admin/use-bulk-change-user-role";
 import {
-	Ban,
+	CheckCircle2,
 	Loader2,
 	MoreVertical,
 	RotateCcw,
-	Shield,
-	ShieldOff,
 	Trash2,
-	UserCog,
+	XCircle,
 } from "lucide-react";
 import { useState } from "react";
-import { Role } from "@/app/generated/prisma/client";
 
 interface UsersSelectionToolbarProps {
 	userIds: string[];
@@ -102,23 +99,22 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 					<DropdownMenuContent align="end" className="w-[200px]">
 						<DropdownMenuSub>
 							<DropdownMenuSubTrigger>
-								<UserCog className="h-4 w-4" />
 								Changer le role
 							</DropdownMenuSubTrigger>
 							<DropdownMenuSubContent>
 								<DropdownMenuItem onClick={() => setPromoteDialogOpen(true)}>
-									<Shield className="h-4 w-4" />
+									<CheckCircle2 className="h-4 w-4" />
 									Promouvoir admin
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => setDemoteDialogOpen(true)}>
-									<ShieldOff className="h-4 w-4" />
+									<XCircle className="h-4 w-4" />
 									Retrograder utilisateur
 								</DropdownMenuItem>
 							</DropdownMenuSubContent>
 						</DropdownMenuSub>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={() => setSuspendDialogOpen(true)}>
-							<Ban className="h-4 w-4" />
+							<XCircle className="h-4 w-4" />
 							Suspendre
 						</DropdownMenuItem>
 						<DropdownMenuItem onClick={() => setRestoreDialogOpen(true)}>
@@ -213,7 +209,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 									</>
 								) : (
 									<>
-										<Ban className="mr-2 h-4 w-4" />
+										<XCircle className="mr-2 h-4 w-4" />
 										Suspendre
 									</>
 								)}
@@ -269,7 +265,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
-						<input type="hidden" name="role" value={Role.ADMIN} />
+						<input type="hidden" name="role" value="ADMIN" />
 						<AlertDialogHeader>
 							<AlertDialogTitle>Promouvoir en administrateur</AlertDialogTitle>
 							<AlertDialogDescription>
@@ -299,7 +295,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 									</>
 								) : (
 									<>
-										<Shield className="mr-2 h-4 w-4" />
+										<CheckCircle2 className="mr-2 h-4 w-4" />
 										Promouvoir
 									</>
 								)}
@@ -314,7 +310,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
-						<input type="hidden" name="role" value={Role.USER} />
+						<input type="hidden" name="role" value="USER" />
 						<AlertDialogHeader>
 							<AlertDialogTitle>Retrograder en utilisateur</AlertDialogTitle>
 							<AlertDialogDescription>
@@ -341,7 +337,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 									</>
 								) : (
 									<>
-										<ShieldOff className="mr-2 h-4 w-4" />
+										<XCircle className="mr-2 h-4 w-4" />
 										Retrograder
 									</>
 								)}

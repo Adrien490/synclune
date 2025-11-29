@@ -88,3 +88,19 @@ export const subscribeToNewsletterSchema = z.object({
 export const unsubscribeFromNewsletterSchema = z.object({
 	email: z.string().email("Email invalide").max(255),
 });
+
+// ============================================================================
+// BULK ADMIN SCHEMAS
+// ============================================================================
+
+export const bulkUnsubscribeSubscribersSchema = z.object({
+	ids: z.array(z.cuid2()).min(1, "Au moins un abonné doit être sélectionné"),
+});
+
+export const bulkResubscribeSubscribersSchema = z.object({
+	ids: z.array(z.cuid2()).min(1, "Au moins un abonné doit être sélectionné"),
+});
+
+export const bulkDeleteSubscribersSchema = z.object({
+	ids: z.array(z.cuid2()).min(1, "Au moins un abonné doit être sélectionné"),
+});

@@ -76,7 +76,7 @@ export async function deleteMaterial(
 
 		// Revalider les pages concernees et invalider le cache
 		revalidatePath("/admin/catalogue/materiaux");
-		const tags = getMaterialInvalidationTags();
+		const tags = getMaterialInvalidationTags(existingMaterial.slug);
 		tags.forEach((tag) => updateTag(tag));
 
 		return {
