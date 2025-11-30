@@ -11,7 +11,8 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { ApproveRefundWrapper } from "./approve-refund-wrapper";
+import { useApproveRefund } from "@/modules/refunds/hooks/use-approve-refund";
+import { Loader2 } from "lucide-react";
 
 export const APPROVE_REFUND_DIALOG_ID = "approve-refund";
 
@@ -25,8 +26,14 @@ interface ApproveRefundData {
 export function ApproveRefundAlertDialog() {
 	const dialog = useAlertDialog<ApproveRefundData>(APPROVE_REFUND_DIALOG_ID);
 
+	const { action, isPending } = useApproveRefund({
+		onSuccess: () => {
+			dialog.close();
+		},
+	});
+
 	const handleOpenChange = (open: boolean) => {
-		if (!open) {
+		if (!open && !isPending) {
 			dialog.close();
 		}
 	};
@@ -38,27 +45,40 @@ export function ApproveRefundAlertDialog() {
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>Approuver le remboursement</AlertDialogTitle>
-					<AlertDialogDescription asChild>
-						<div>
-							<p>
-								Approuver le remboursement de <strong>{formattedAmount} €</strong>{" "}
-								pour la commande <strong>{dialog.data?.orderNumber}</strong> ?
-							</p>
-							<p className="text-muted-foreground mt-4 text-sm">
-								Après approbation, vous pourrez procéder au remboursement effectif
-								via Stripe.
-							</p>
-						</div>
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel type="button">Annuler</AlertDialogCancel>
-					<ApproveRefundWrapper refundId={dialog.data?.refundId ?? ""}>
-						<Button>Approuver</Button>
-					</ApproveRefundWrapper>
-				</AlertDialogFooter>
+				<form action={action}>
+					<input type="hidden" name="id" value={dialog.data?.refundId ?? ""} />
+
+					<AlertDialogHeader>
+						<AlertDialogTitle>Approuver le remboursement</AlertDialogTitle>
+						<AlertDialogDescription asChild>
+							<div>
+								<p>
+									Approuver le remboursement de <strong>{formattedAmount} €</strong>{" "}
+									pour la commande <strong>{dialog.data?.orderNumber}</strong> ?
+								</p>
+								<p className="text-muted-foreground mt-4 text-sm">
+									Après approbation, vous pourrez procéder au remboursement effectif
+									via Stripe.
+								</p>
+							</div>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel type="button" disabled={isPending}>
+							Annuler
+						</AlertDialogCancel>
+						<Button type="submit" disabled={isPending}>
+							{isPending ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Approbation...
+								</>
+							) : (
+								"Approuver"
+							)}
+						</Button>
+					</AlertDialogFooter>
+				</form>
 			</AlertDialogContent>
 		</AlertDialog>
 	);

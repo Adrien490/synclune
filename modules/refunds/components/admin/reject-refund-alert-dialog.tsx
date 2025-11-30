@@ -11,7 +11,8 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { RejectRefundWrapper } from "./reject-refund-wrapper";
+import { useRejectRefund } from "@/modules/refunds/hooks/use-reject-refund";
+import { Loader2 } from "lucide-react";
 
 export const REJECT_REFUND_DIALOG_ID = "reject-refund";
 
@@ -25,8 +26,14 @@ interface RejectRefundData {
 export function RejectRefundAlertDialog() {
 	const dialog = useAlertDialog<RejectRefundData>(REJECT_REFUND_DIALOG_ID);
 
+	const { action, isPending } = useRejectRefund({
+		onSuccess: () => {
+			dialog.close();
+		},
+	});
+
 	const handleOpenChange = (open: boolean) => {
-		if (!open) {
+		if (!open && !isPending) {
 			dialog.close();
 		}
 	};
@@ -38,28 +45,41 @@ export function RejectRefundAlertDialog() {
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>Refuser le remboursement</AlertDialogTitle>
-					<AlertDialogDescription asChild>
-						<div>
-							<p>
-								Refuser la demande de remboursement de{" "}
-								<strong>{formattedAmount} €</strong> pour la commande{" "}
-								<strong>{dialog.data?.orderNumber}</strong> ?
-							</p>
-							<p className="text-muted-foreground mt-4 text-sm">
-								Cette action est définitive. La demande sera marquée comme
-								refusée.
-							</p>
-						</div>
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel type="button">Annuler</AlertDialogCancel>
-					<RejectRefundWrapper refundId={dialog.data?.refundId ?? ""}>
-						<Button variant="destructive">Refuser</Button>
-					</RejectRefundWrapper>
-				</AlertDialogFooter>
+				<form action={action}>
+					<input type="hidden" name="id" value={dialog.data?.refundId ?? ""} />
+
+					<AlertDialogHeader>
+						<AlertDialogTitle>Refuser le remboursement</AlertDialogTitle>
+						<AlertDialogDescription asChild>
+							<div>
+								<p>
+									Refuser la demande de remboursement de{" "}
+									<strong>{formattedAmount} €</strong> pour la commande{" "}
+									<strong>{dialog.data?.orderNumber}</strong> ?
+								</p>
+								<p className="text-muted-foreground mt-4 text-sm">
+									Cette action est définitive. La demande sera marquée comme
+									refusée.
+								</p>
+							</div>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel type="button" disabled={isPending}>
+							Annuler
+						</AlertDialogCancel>
+						<Button type="submit" variant="destructive" disabled={isPending}>
+							{isPending ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Refus...
+								</>
+							) : (
+								"Refuser"
+							)}
+						</Button>
+					</AlertDialogFooter>
+				</form>
 			</AlertDialogContent>
 		</AlertDialog>
 	);

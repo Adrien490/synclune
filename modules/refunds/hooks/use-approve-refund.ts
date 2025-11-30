@@ -5,12 +5,16 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 
-export function useApproveRefund() {
+interface UseApproveRefundOptions {
+	onSuccess?: () => void;
+}
+
+export function useApproveRefund(options?: UseApproveRefundOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			approveRefund,
 			createToastCallbacks({
-				loadingMessage: "Approbation en cours...",
+				onSuccess: () => options?.onSuccess?.(),
 			})
 		),
 		undefined

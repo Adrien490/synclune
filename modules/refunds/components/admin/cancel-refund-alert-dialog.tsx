@@ -11,7 +11,8 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { CancelRefundWrapper } from "./cancel-refund-wrapper";
+import { useCancelRefund } from "@/modules/refunds/hooks/use-cancel-refund";
+import { Loader2 } from "lucide-react";
 
 export const CANCEL_REFUND_DIALOG_ID = "cancel-refund";
 
@@ -25,8 +26,14 @@ interface CancelRefundData {
 export function CancelRefundAlertDialog() {
 	const dialog = useAlertDialog<CancelRefundData>(CANCEL_REFUND_DIALOG_ID);
 
+	const { action, isPending } = useCancelRefund({
+		onSuccess: () => {
+			dialog.close();
+		},
+	});
+
 	const handleOpenChange = (open: boolean) => {
-		if (!open) {
+		if (!open && !isPending) {
 			dialog.close();
 		}
 	};
@@ -38,28 +45,41 @@ export function CancelRefundAlertDialog() {
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>Annuler la demande de remboursement</AlertDialogTitle>
-					<AlertDialogDescription asChild>
-						<div>
-							<p>
-								Annuler la demande de remboursement de{" "}
-								<strong>{formattedAmount} €</strong> pour la commande{" "}
-								<strong>{dialog.data?.orderNumber}</strong> ?
-							</p>
-							<p className="text-muted-foreground mt-4 text-sm">
-								La demande sera supprimée. Vous pourrez en créer une nouvelle si
-								nécessaire.
-							</p>
-						</div>
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel type="button">Fermer</AlertDialogCancel>
-					<CancelRefundWrapper refundId={dialog.data?.refundId ?? ""}>
-						<Button variant="destructive">Annuler la demande</Button>
-					</CancelRefundWrapper>
-				</AlertDialogFooter>
+				<form action={action}>
+					<input type="hidden" name="id" value={dialog.data?.refundId ?? ""} />
+
+					<AlertDialogHeader>
+						<AlertDialogTitle>Annuler la demande de remboursement</AlertDialogTitle>
+						<AlertDialogDescription asChild>
+							<div>
+								<p>
+									Annuler la demande de remboursement de{" "}
+									<strong>{formattedAmount} €</strong> pour la commande{" "}
+									<strong>{dialog.data?.orderNumber}</strong> ?
+								</p>
+								<p className="text-muted-foreground mt-4 text-sm">
+									La demande sera supprimée. Vous pourrez en créer une nouvelle si
+									nécessaire.
+								</p>
+							</div>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel type="button" disabled={isPending}>
+							Fermer
+						</AlertDialogCancel>
+						<Button type="submit" variant="destructive" disabled={isPending}>
+							{isPending ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Annulation...
+								</>
+							) : (
+								"Annuler la demande"
+							)}
+						</Button>
+					</AlertDialogFooter>
+				</form>
 			</AlertDialogContent>
 		</AlertDialog>
 	);

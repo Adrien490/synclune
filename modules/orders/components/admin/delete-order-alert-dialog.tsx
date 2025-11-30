@@ -11,7 +11,8 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { DeleteOrderWrapper } from "./delete-order-wrapper";
+import { useDeleteOrder } from "@/modules/orders/hooks/use-delete-order";
+import { Loader2 } from "lucide-react";
 
 export const DELETE_ORDER_DIALOG_ID = "delete-order";
 
@@ -24,8 +25,14 @@ interface DeleteOrderData {
 export function DeleteOrderAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteOrderData>(DELETE_ORDER_DIALOG_ID);
 
+	const { action, isPending } = useDeleteOrder({
+		onSuccess: () => {
+			deleteDialog.close();
+		},
+	});
+
 	const handleOpenChange = (open: boolean) => {
-		if (!open) {
+		if (!open && !isPending) {
 			deleteDialog.close();
 		}
 	};
@@ -33,30 +40,43 @@ export function DeleteOrderAlertDialog() {
 	return (
 		<AlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-					<AlertDialogDescription asChild>
-						<div>
-							<p>
-								Es-tu sûr de vouloir supprimer la commande{" "}
-								<strong>{deleteDialog.data?.orderNumber}</strong> ?
-							</p>
-							<p className="text-destructive mt-2 font-medium">
-								Cette action est irréversible.
-							</p>
-							<p className="text-muted-foreground mt-4 text-sm">
-								Note: Seules les commandes sans facture et non payées peuvent
-								être supprimées (commandes de test, abandonnées ou échouées).
-							</p>
-						</div>
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel type="button">Annuler</AlertDialogCancel>
-					<DeleteOrderWrapper orderId={deleteDialog.data?.orderId ?? ""}>
-						<Button variant="destructive">Supprimer</Button>
-					</DeleteOrderWrapper>
-				</AlertDialogFooter>
+				<form action={action}>
+					<input type="hidden" name="id" value={deleteDialog.data?.orderId ?? ""} />
+
+					<AlertDialogHeader>
+						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+						<AlertDialogDescription asChild>
+							<div>
+								<p>
+									Es-tu sûr de vouloir supprimer la commande{" "}
+									<strong>{deleteDialog.data?.orderNumber}</strong> ?
+								</p>
+								<p className="text-destructive mt-2 font-medium">
+									Cette action est irréversible.
+								</p>
+								<p className="text-muted-foreground mt-4 text-sm">
+									Note: Seules les commandes sans facture et non payées peuvent
+									être supprimées (commandes de test, abandonnées ou échouées).
+								</p>
+							</div>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel type="button" disabled={isPending}>
+							Annuler
+						</AlertDialogCancel>
+						<Button type="submit" variant="destructive" disabled={isPending}>
+							{isPending ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Suppression...
+								</>
+							) : (
+								"Supprimer"
+							)}
+						</Button>
+					</AlertDialogFooter>
+				</form>
 			</AlertDialogContent>
 		</AlertDialog>
 	);

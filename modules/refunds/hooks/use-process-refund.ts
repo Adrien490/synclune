@@ -5,12 +5,16 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 
-export function useProcessRefund() {
+interface UseProcessRefundOptions {
+	onSuccess?: () => void;
+}
+
+export function useProcessRefund(options?: UseProcessRefundOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			processRefund,
 			createToastCallbacks({
-				loadingMessage: "Traitement du remboursement...",
+				onSuccess: () => options?.onSuccess?.(),
 			})
 		),
 		undefined

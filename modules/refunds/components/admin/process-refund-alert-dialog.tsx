@@ -11,7 +11,8 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { ProcessRefundWrapper } from "./process-refund-wrapper";
+import { useProcessRefund } from "@/modules/refunds/hooks/use-process-refund";
+import { Loader2 } from "lucide-react";
 
 export const PROCESS_REFUND_DIALOG_ID = "process-refund";
 
@@ -25,8 +26,14 @@ interface ProcessRefundData {
 export function ProcessRefundAlertDialog() {
 	const dialog = useAlertDialog<ProcessRefundData>(PROCESS_REFUND_DIALOG_ID);
 
+	const { action, isPending } = useProcessRefund({
+		onSuccess: () => {
+			dialog.close();
+		},
+	});
+
 	const handleOpenChange = (open: boolean) => {
-		if (!open) {
+		if (!open && !isPending) {
 			dialog.close();
 		}
 	};
@@ -38,32 +45,45 @@ export function ProcessRefundAlertDialog() {
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>Traiter le remboursement</AlertDialogTitle>
-					<AlertDialogDescription asChild>
-						<div>
-							<p>
-								Procéder au remboursement de <strong>{formattedAmount} €</strong>{" "}
-								pour la commande <strong>{dialog.data?.orderNumber}</strong> ?
-							</p>
-							<p className="text-amber-600 mt-4 text-sm">
-								Cette action va effectuer le remboursement via Stripe. Le montant
-								sera crédité sur le moyen de paiement du client sous 5-10 jours
-								ouvrés.
-							</p>
-							<p className="text-muted-foreground mt-2 text-sm">
-								Le stock sera automatiquement restauré pour les articles marqués
-								"à restocker".
-							</p>
-						</div>
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel type="button">Annuler</AlertDialogCancel>
-					<ProcessRefundWrapper refundId={dialog.data?.refundId ?? ""}>
-						<Button variant="default">Traiter le remboursement</Button>
-					</ProcessRefundWrapper>
-				</AlertDialogFooter>
+				<form action={action}>
+					<input type="hidden" name="id" value={dialog.data?.refundId ?? ""} />
+
+					<AlertDialogHeader>
+						<AlertDialogTitle>Traiter le remboursement</AlertDialogTitle>
+						<AlertDialogDescription asChild>
+							<div>
+								<p>
+									Procéder au remboursement de <strong>{formattedAmount} €</strong>{" "}
+									pour la commande <strong>{dialog.data?.orderNumber}</strong> ?
+								</p>
+								<p className="text-amber-600 mt-4 text-sm">
+									Cette action va effectuer le remboursement via Stripe. Le montant
+									sera crédité sur le moyen de paiement du client sous 5-10 jours
+									ouvrés.
+								</p>
+								<p className="text-muted-foreground mt-2 text-sm">
+									Le stock sera automatiquement restauré pour les articles marqués
+									"à restocker".
+								</p>
+							</div>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel type="button" disabled={isPending}>
+							Annuler
+						</AlertDialogCancel>
+						<Button type="submit" disabled={isPending}>
+							{isPending ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									Traitement...
+								</>
+							) : (
+								"Traiter le remboursement"
+							)}
+						</Button>
+					</AlertDialogFooter>
+				</form>
 			</AlertDialogContent>
 		</AlertDialog>
 	);

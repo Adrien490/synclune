@@ -5,12 +5,16 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 
-export function useMarkAsPaid() {
+interface UseMarkAsPaidOptions {
+	onSuccess?: () => void;
+}
+
+export function useMarkAsPaid(options?: UseMarkAsPaidOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			markAsPaid,
 			createToastCallbacks({
-				loadingMessage: "Marquage en cours...",
+				onSuccess: () => options?.onSuccess?.(),
 			})
 		),
 		undefined

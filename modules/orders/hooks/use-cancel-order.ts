@@ -5,12 +5,16 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 
-export function useCancelOrder() {
+interface UseCancelOrderOptions {
+	onSuccess?: () => void;
+}
+
+export function useCancelOrder(options?: UseCancelOrderOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			cancelOrder,
 			createToastCallbacks({
-				loadingMessage: "Annulation en cours...",
+				onSuccess: () => options?.onSuccess?.(),
 			})
 		),
 		undefined

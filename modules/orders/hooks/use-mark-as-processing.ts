@@ -5,12 +5,16 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 
-export function useMarkAsProcessing() {
+interface UseMarkAsProcessingOptions {
+	onSuccess?: () => void;
+}
+
+export function useMarkAsProcessing(options?: UseMarkAsProcessingOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			markAsProcessing,
 			createToastCallbacks({
-				loadingMessage: "Passage en préparation...",
+				onSuccess: () => options?.onSuccess?.(),
 			})
 		),
 		undefined

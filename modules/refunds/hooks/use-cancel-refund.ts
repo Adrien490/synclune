@@ -5,12 +5,16 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 
-export function useCancelRefund() {
+interface UseCancelRefundOptions {
+	onSuccess?: () => void;
+}
+
+export function useCancelRefund(options?: UseCancelRefundOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			cancelRefund,
 			createToastCallbacks({
-				loadingMessage: "Annulation en cours...",
+				onSuccess: () => options?.onSuccess?.(),
 			})
 		),
 		undefined

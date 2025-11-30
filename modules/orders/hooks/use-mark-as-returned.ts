@@ -5,12 +5,16 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 
-export function useMarkAsReturned() {
+interface UseMarkAsReturnedOptions {
+	onSuccess?: () => void;
+}
+
+export function useMarkAsReturned(options?: UseMarkAsReturnedOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			markAsReturned,
 			createToastCallbacks({
-				loadingMessage: "Marquage comme retourné...",
+				onSuccess: () => options?.onSuccess?.(),
 			})
 		),
 		undefined

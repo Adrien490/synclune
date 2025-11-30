@@ -5,12 +5,16 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 
-export function useMarkAsDelivered() {
+interface UseMarkAsDeliveredOptions {
+	onSuccess?: () => void;
+}
+
+export function useMarkAsDelivered(options?: UseMarkAsDeliveredOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			markAsDelivered,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour en cours...",
+				onSuccess: () => options?.onSuccess?.(),
 			})
 		),
 		undefined
