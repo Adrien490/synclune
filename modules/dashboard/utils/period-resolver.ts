@@ -15,19 +15,19 @@ export type DashboardPeriod = z.infer<typeof dashboardPeriodSchema>;
 export interface DateRange {
 	startDate: Date;
 	endDate: Date;
-	/** Date de debut de la periode precedente (pour calcul evolution) */
+	/** Date de début de la période précédente (pour calcul évolution) */
 	previousStartDate: Date;
-	/** Date de fin de la periode precedente */
+	/** Date de fin de la période précédente */
 	previousEndDate: Date;
 }
 
 /**
- * Convertit une periode predeterminee en dates concretes
+ * Convertit une période prédéterminée en dates concrètes
  *
- * @param period - La periode selectionnee (today, last7days, etc.)
- * @param customStartDate - Date de debut pour le mode custom
+ * @param period - La période sélectionnée (today, last7days, etc.)
+ * @param customStartDate - Date de début pour le mode custom
  * @param customEndDate - Date de fin pour le mode custom
- * @returns DateRange avec les dates de la periode et de la periode precedente
+ * @returns DateRange avec les dates de la période et de la période précédente
  */
 export function resolvePeriodToDates(
 	period: DashboardPeriod,
@@ -145,10 +145,10 @@ export function resolvePeriodToDates(
 			const startDate = getStartOfDay(customStartDate);
 			const endDate = getEndOfDay(customEndDate);
 
-			// Calculer la duree de la periode
+			// Calculer la durée de la période
 			const duration = endDate.getTime() - startDate.getTime();
 
-			// Periode precedente de meme duree
+			// Période précédente de même durée
 			const previousEndDate = new Date(startDate.getTime() - 1);
 			const previousStartDate = new Date(
 				previousEndDate.getTime() - duration + 1
@@ -178,11 +178,11 @@ export function resolvePeriodToDates(
 }
 
 /**
- * Calcule le pourcentage d'evolution entre deux valeurs
+ * Calcule le pourcentage d'évolution entre deux valeurs
  *
  * @param current - Valeur actuelle
- * @param previous - Valeur precedente
- * @returns Pourcentage d'evolution (positif = hausse, negatif = baisse)
+ * @param previous - Valeur précédente
+ * @returns Pourcentage d'évolution (positif = hausse, négatif = baisse)
  */
 export function calculateEvolution(current: number, previous: number): number {
 	if (previous === 0) {
@@ -192,10 +192,10 @@ export function calculateEvolution(current: number, previous: number): number {
 }
 
 /**
- * Formate une periode pour l'affichage
+ * Formate une période pour l'affichage
  *
- * @param period - La periode a formater
- * @returns Label lisible en francais
+ * @param period - La période à formater
+ * @returns Label lisible en français
  */
 export function formatPeriodLabel(period: DashboardPeriod): string {
 	const labels: Record<DashboardPeriod, string> = {
@@ -205,9 +205,9 @@ export function formatPeriodLabel(period: DashboardPeriod): string {
 		last30days: "30 derniers jours",
 		thisMonth: "Ce mois-ci",
 		lastMonth: "Mois dernier",
-		thisYear: "Cette annee",
-		lastYear: "Annee derniere",
-		custom: "Personnalise",
+		thisYear: "Cette année",
+		lastYear: "Année dernière",
+		custom: "Personnalisé",
 	};
 	return labels[period];
 }
