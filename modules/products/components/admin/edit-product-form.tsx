@@ -11,7 +11,7 @@ import { Label } from "@/shared/components/ui/label";
 import { TextShimmer } from "@/shared/components/ui/text-shimmer";
 import { MultiSelect } from "@/shared/components/multi-select";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import { useUpdateProductForm } from "@/modules/products/hooks/admin/use-update-product-form";
+import { useUpdateProductForm } from "@/modules/products/hooks/use-update-product-form";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";

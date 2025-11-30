@@ -28,7 +28,7 @@ import {
 } from "@/shared/utils/carrier-detection";
 import { useStore } from "@tanstack/react-form";
 import { Calendar, Mail, Truck } from "lucide-react";
-import { useUpdateTrackingForm } from "@/modules/orders/hooks/admin/use-update-tracking-form";
+import { useUpdateTrackingForm } from "@/modules/orders/hooks/use-update-tracking-form";
 
 export const UPDATE_TRACKING_DIALOG_ID = "update-tracking";
 

@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { useRefreshMaterials } from "@/modules/materials/hooks/admin/use-refresh-materials";
+import { useRefreshMaterials } from "@/modules/materials/hooks/use-refresh-materials";
 
 export function RefreshMaterialsButton() {
 	const { refresh, isPending } = useRefreshMaterials();

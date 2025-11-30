@@ -20,8 +20,8 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { useBulkDeleteMaterials } from "@/modules/materials/hooks/admin/use-bulk-delete-materials";
-import { useBulkToggleMaterialStatus } from "@/modules/materials/hooks/admin/use-bulk-toggle-material-status";
+import { useBulkDeleteMaterials } from "@/modules/materials/hooks/use-bulk-delete-materials";
+import { useBulkToggleMaterialStatus } from "@/modules/materials/hooks/use-bulk-toggle-material-status";
 import { CheckCircle2, Loader2, MoreVertical, Trash2, XCircle } from "lucide-react";
 import { useState } from "react";
 

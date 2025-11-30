@@ -1,7 +1,7 @@
 "use client";
 
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { addToCart } from "@/modules/cart/actions/add-to-cart";

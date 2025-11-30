@@ -16,8 +16,8 @@ import { useEffect } from "react";
 import { DiscountType } from "@/app/generated/prisma/browser";
 import { DISCOUNT_TYPE_LABELS } from "@/modules/discount/constants/discount.constants";
 import { useActionState } from "react";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
 export const DISCOUNT_DIALOG_ID = "discount-form";
 

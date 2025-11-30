@@ -13,7 +13,7 @@ import {
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useAdjustSkuStock } from "@/modules/skus/hooks/admin/use-adjust-sku-stock";
+import { useAdjustSkuStock } from "@/modules/skus/hooks/use-adjust-sku-stock";
 import { Loader2, Minus, Plus } from "lucide-react";
 
 export const ADJUST_STOCK_DIALOG_ID = "adjust-sku-stock";

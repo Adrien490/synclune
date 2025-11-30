@@ -26,8 +26,8 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useActionState } from "react";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
 export const COLLECTION_DIALOG_ID = "collection-form";
 

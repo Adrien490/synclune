@@ -12,7 +12,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { useBulkDeleteOrders } from "@/modules/orders/hooks/admin/use-bulk-delete-orders";
+import { useBulkDeleteOrders } from "@/modules/orders/hooks/use-bulk-delete-orders";
 
 export const BULK_DELETE_ORDERS_DIALOG_ID = "bulk-delete-orders";
 

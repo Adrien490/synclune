@@ -13,7 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useRevertToProcessing } from "@/modules/orders/hooks/admin/use-revert-to-processing";
+import { useRevertToProcessing } from "@/modules/orders/hooks/use-revert-to-processing";
 import { useTransition } from "react";
 
 export const REVERT_TO_PROCESSING_DIALOG_ID = "revert-to-processing";

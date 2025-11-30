@@ -1,7 +1,7 @@
 "use client";
 
 import { Switch } from "@/shared/components/ui/switch";
-import { useUpdateProductSkuStatus } from "@/modules/skus/hooks/admin/use-update-sku-status";
+import { useUpdateProductSkuStatus } from "@/modules/skus/hooks/use-update-sku-status";
 import { useRouter } from "next/navigation";
 
 interface ProductSkuActiveToggleProps {

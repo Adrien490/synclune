@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useTransition } from "react";
-import { useProcessRefund } from "@/modules/refund/hooks/admin/use-process-refund";
+import { useProcessRefund } from "@/modules/refund/hooks/use-process-refund";
 
 interface ProcessRefundWrapperProps {
 	className?: string;

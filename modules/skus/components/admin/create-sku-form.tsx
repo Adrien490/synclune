@@ -9,7 +9,7 @@ import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
 import { TextShimmer } from "@/shared/components/ui/text-shimmer";
-import { useCreateProductSkuForm } from "@/modules/skus/hooks/admin/use-create-sku-form";
+import { useCreateProductSkuForm } from "@/modules/skus/hooks/use-create-sku-form";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";

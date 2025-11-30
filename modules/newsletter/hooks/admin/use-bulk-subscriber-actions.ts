@@ -3,8 +3,8 @@
 import { bulkUnsubscribeSubscribers } from "@/modules/newsletter/actions/admin/bulk-unsubscribe-subscribers";
 import { bulkResubscribeSubscribers } from "@/modules/newsletter/actions/admin/bulk-resubscribe-subscribers";
 import { bulkDeleteSubscribers } from "@/modules/newsletter/actions/admin/bulk-delete-subscribers";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useTransition } from "react";
 
 interface UseBulkSubscriberActionsOptions {

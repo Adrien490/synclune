@@ -11,7 +11,7 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { useBulkDeleteProducts } from "@/modules/products/hooks/admin/use-bulk-delete-products";
+import { useBulkDeleteProducts } from "@/modules/products/hooks/use-bulk-delete-products";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
 

@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
-import { useToggleDiscountStatus } from "@/modules/discount/hooks/admin/use-toggle-discount-status";
+import { useToggleDiscountStatus } from "@/modules/discount/hooks/use-toggle-discount-status";
 import { cn } from "@/shared/utils/cn";
 
 export const TOGGLE_DISCOUNT_STATUS_DIALOG_ID = "toggle-discount-status";

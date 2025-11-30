@@ -6,7 +6,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
-import { useRefreshPayments } from "@/modules/payments/hooks/admin/use-refresh-payments";
+import { useRefreshPayments } from "@/modules/payments/hooks/use-refresh-payments";
 import { cn } from "@/shared/utils/cn";
 import { RefreshCw } from "lucide-react";
 

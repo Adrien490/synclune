@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useTransition } from "react";
-import { useMarkAsDelivered } from "@/modules/orders/hooks/admin/use-mark-as-delivered";
+import { useMarkAsDelivered } from "@/modules/orders/hooks/use-mark-as-delivered";
 
 interface MarkAsDeliveredWrapperProps {
 	className?: string;

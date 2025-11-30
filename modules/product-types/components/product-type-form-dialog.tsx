@@ -9,8 +9,8 @@ import {
 	DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
-import { useCreateProductTypeForm } from "@/modules/product-types/hooks/admin/use-create-product-type-form";
-import { useUpdateProductTypeForm } from "@/modules/product-types/hooks/admin/use-update-product-type-form";
+import { useCreateProductTypeForm } from "@/modules/product-types/hooks/use-create-product-type-form";
+import { useUpdateProductTypeForm } from "@/modules/product-types/hooks/use-update-product-type-form";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 export const PRODUCT_TYPE_DIALOG_ID = "product-type-form";

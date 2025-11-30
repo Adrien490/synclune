@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useTransition } from "react";
-import { useDeleteProduct } from "@/modules/products/hooks/admin/use-delete-product";
+import { useDeleteProduct } from "@/modules/products/hooks/use-delete-product";
 
 interface DeleteProductWrapperProps {
 	className?: string;

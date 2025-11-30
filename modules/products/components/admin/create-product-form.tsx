@@ -10,7 +10,7 @@ import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-gr
 import { Label } from "@/shared/components/ui/label";
 import { TextShimmer } from "@/shared/components/ui/text-shimmer";
 import { MultiSelect } from "@/shared/components/multi-select";
-import { useCreateProductForm } from "@/modules/products/hooks/admin/use-create-product-form";
+import { useCreateProductForm } from "@/modules/products/hooks/use-create-product-form";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";

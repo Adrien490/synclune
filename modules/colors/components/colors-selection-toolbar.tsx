@@ -19,7 +19,7 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { useBulkDeleteColors } from "@/modules/colors/hooks/admin/use-bulk-delete-colors";
+import { useBulkDeleteColors } from "@/modules/colors/hooks/use-bulk-delete-colors";
 import { Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 

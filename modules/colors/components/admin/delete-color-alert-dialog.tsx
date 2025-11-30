@@ -10,7 +10,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { useDeleteColor } from "@/modules/colors/hooks/admin/use-delete-color";
+import { useDeleteColor } from "@/modules/colors/hooks/use-delete-color";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { ActionStatus } from "@/shared/types/server-action";
 import { Loader2 } from "lucide-react";

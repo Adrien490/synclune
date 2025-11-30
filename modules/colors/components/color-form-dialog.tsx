@@ -22,8 +22,8 @@ import { createColor } from "@/modules/colors/actions/create-color";
 import { updateColor } from "@/modules/colors/actions/update-color";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useEffect, useActionState } from "react";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import Color from "color";
 
 export const COLOR_DIALOG_ID = "color-form";

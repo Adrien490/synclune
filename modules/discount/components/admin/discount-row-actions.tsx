@@ -14,7 +14,7 @@ import { Copy, Eye, MoreVertical, Pencil, Trash2, Power, PowerOff } from "lucide
 import { DISCOUNT_DIALOG_ID } from "./discount-form-dialog";
 import { DELETE_DISCOUNT_DIALOG_ID } from "./delete-discount-alert-dialog";
 import { TOGGLE_DISCOUNT_STATUS_DIALOG_ID } from "./toggle-discount-status-alert-dialog";
-import { useDuplicateDiscount } from "@/modules/discount/hooks/admin/use-duplicate-discount";
+import { useDuplicateDiscount } from "@/modules/discount/hooks/use-duplicate-discount";
 import { DISCOUNT_USAGES_DIALOG_ID } from "./discount-usages-dialog";
 import type { Discount } from "@/modules/discount/types/discount.types";
 

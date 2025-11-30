@@ -13,7 +13,7 @@ import {
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useUpdateSkuPrice } from "@/modules/skus/hooks/admin/use-update-sku-price";
+import { useUpdateSkuPrice } from "@/modules/skus/hooks/use-update-sku-price";
 import { Loader2 } from "lucide-react";
 
 export const UPDATE_PRICE_DIALOG_ID = "update-sku-price";

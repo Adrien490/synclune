@@ -6,7 +6,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
-import { useRefreshRefunds } from "@/modules/refund/hooks/admin/use-refresh-refunds";
+import { useRefreshRefunds } from "@/modules/refund/hooks/use-refresh-refunds";
 import { cn } from "@/shared/utils/cn";
 import { RefreshCw } from "lucide-react";
 

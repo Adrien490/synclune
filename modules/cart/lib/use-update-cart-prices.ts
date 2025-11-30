@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 import { updateCartPrices } from "./update-cart-prices";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
 
 /**
  * Hook pour utiliser l'action de mise à jour des prix du panier

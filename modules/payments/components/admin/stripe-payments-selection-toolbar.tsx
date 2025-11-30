@@ -3,7 +3,7 @@
 import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import { Button } from "@/shared/components/ui/button";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { useBulkExportPayments } from "@/modules/payments/hooks/admin/use-bulk-export-payments";
+import { useBulkExportPayments } from "@/modules/payments/hooks/use-bulk-export-payments";
 import { Download, Loader2 } from "lucide-react";
 
 interface StripePaymentsSelectionToolbarProps {

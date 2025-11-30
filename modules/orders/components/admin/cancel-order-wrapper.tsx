@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useTransition } from "react";
-import { useCancelOrder } from "@/modules/orders/hooks/admin/use-cancel-order";
+import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
 
 interface CancelOrderWrapperProps {
 	className?: string;

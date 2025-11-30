@@ -19,9 +19,9 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { useBulkActivateSkus } from "@/modules/skus/hooks/admin/use-bulk-activate-skus";
-import { useBulkDeactivateSkus } from "@/modules/skus/hooks/admin/use-bulk-deactivate-skus";
-import { useBulkDeleteSkus } from "@/modules/skus/hooks/admin/use-bulk-delete-skus";
+import { useBulkActivateSkus } from "@/modules/skus/hooks/use-bulk-activate-skus";
+import { useBulkDeactivateSkus } from "@/modules/skus/hooks/use-bulk-deactivate-skus";
+import { useBulkDeleteSkus } from "@/modules/skus/hooks/use-bulk-delete-skus";
 import {
 	CheckCircle,
 	FileDown,

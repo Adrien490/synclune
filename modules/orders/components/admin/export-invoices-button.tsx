@@ -28,7 +28,7 @@ import {
 import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, Download, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useExportInvoices } from "@/modules/orders/hooks/admin/use-export-invoices";
+import { useExportInvoices } from "@/modules/orders/hooks/use-export-invoices";
 
 /**
  * 📊 Bouton d'export du livre de recettes (factures)

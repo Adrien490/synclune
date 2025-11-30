@@ -3,7 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Download, FileText, Loader2 } from "lucide-react";
-import { useDownloadInvoice } from "@/modules/orders/hooks/customer/use-download-invoice";
+import { useDownloadInvoice } from "@/modules/orders/hooks/use-download-invoice";
 
 interface DownloadInvoiceButtonProps {
 	orderId: string;

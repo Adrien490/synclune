@@ -11,7 +11,7 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useBulkDeleteProductTypes } from "@/modules/product-types/hooks/admin/use-bulk-delete-product-types";
+import { useBulkDeleteProductTypes } from "@/modules/product-types/hooks/use-bulk-delete-product-types";
 import { Loader2, Trash2 } from "lucide-react";
 
 export const BULK_DELETE_PRODUCT_TYPES_DIALOG_ID = "bulk-delete-product-types";

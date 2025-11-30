@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useTransition } from "react";
-import { useMarkAsReturned } from "@/modules/orders/hooks/admin/use-mark-as-returned";
+import { useMarkAsReturned } from "@/modules/orders/hooks/use-mark-as-returned";
 
 interface MarkAsReturnedWrapperProps {
 	className?: string;

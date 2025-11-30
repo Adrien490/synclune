@@ -8,9 +8,9 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { useSetDefaultSku } from "@/modules/skus/hooks/admin/use-set-default-sku";
-import { useUpdateProductSkuStatus } from "@/modules/skus/hooks/admin/use-update-sku-status";
-import { useDuplicateSku } from "@/modules/skus/hooks/admin/use-duplicate-sku";
+import { useSetDefaultSku } from "@/modules/skus/hooks/use-set-default-sku";
+import { useUpdateProductSkuStatus } from "@/modules/skus/hooks/use-update-sku-status";
+import { useDuplicateSku } from "@/modules/skus/hooks/use-duplicate-sku";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { Check, Copy, DollarSign, MoreVertical, Package, Pencil, Power, PowerOff, Trash2 } from "lucide-react";

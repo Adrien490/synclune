@@ -2,8 +2,8 @@
 
 import { useActionState, useTransition } from "react";
 import { applyDiscountCode } from "@/modules/discount/actions/apply-discount-code";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import type { AppliedDiscount } from "@/modules/discount/types/discount.types";
 
 interface UseApplyDiscountCodeOptions {

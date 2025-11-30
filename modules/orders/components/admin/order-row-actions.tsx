@@ -36,7 +36,7 @@ import {
 	XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useDownloadInvoiceAdmin } from "@/modules/orders/hooks/admin/use-download-invoice-admin";
+import { useDownloadInvoiceAdmin } from "@/modules/orders/hooks/use-download-invoice-admin";
 import { useResendOrderEmail } from "@/modules/orders/hooks/use-resend-order-email";
 import { CANCEL_ORDER_DIALOG_ID } from "./cancel-order-alert-dialog";
 import { DELETE_ORDER_DIALOG_ID } from "./delete-order-alert-dialog";

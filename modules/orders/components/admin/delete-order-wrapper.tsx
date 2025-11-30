@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useTransition } from "react";
-import { useDeleteOrder } from "@/modules/orders/hooks/admin/use-delete-order";
+import { useDeleteOrder } from "@/modules/orders/hooks/use-delete-order";
 
 interface DeleteOrderWrapperProps {
 	className?: string;

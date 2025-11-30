@@ -9,7 +9,7 @@ import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
 import { TextShimmer } from "@/shared/components/ui/text-shimmer";
-import { useUpdateProductSkuForm } from "@/modules/skus/hooks/admin/use-update-sku-form";
+import { useUpdateProductSkuForm } from "@/modules/skus/hooks/use-update-sku-form";
 import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";

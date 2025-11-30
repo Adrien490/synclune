@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 import { updateCartItem } from "@/modules/cart/actions/update-cart-item";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
 /**
  * Hook pour mettre à jour la quantité d'un article du panier

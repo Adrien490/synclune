@@ -1,7 +1,7 @@
 "use client";
 
 import { Switch } from "@/shared/components/ui/switch";
-import { useToggleMaterialStatus } from "@/modules/materials/hooks/admin/use-toggle-material-status";
+import { useToggleMaterialStatus } from "@/modules/materials/hooks/use-toggle-material-status";
 
 interface MaterialActiveToggleProps {
 	materialId: string;

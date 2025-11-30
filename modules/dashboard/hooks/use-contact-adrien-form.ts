@@ -1,8 +1,8 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { contactAdrien } from "@/modules/dashboard/actions/contact-adrien";

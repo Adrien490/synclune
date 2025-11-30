@@ -2,7 +2,7 @@
 
 import { useActionState, useOptimistic, useCallback, useTransition } from "react";
 import { setContactAdrienVisibility } from "@/modules/dashboard/actions/set-contact-adrien-visibility";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { ActionStatus } from "@/shared/types/server-action";
 
 interface UseToggleContactAdrienVisibilityOptions {

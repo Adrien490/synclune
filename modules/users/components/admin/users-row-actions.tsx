@@ -38,13 +38,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useDeleteUser } from "@/modules/users/hooks/admin/use-delete-user";
-import { useSuspendUser } from "@/modules/users/hooks/admin/use-suspend-user";
-import { useRestoreUser } from "@/modules/users/hooks/admin/use-restore-user";
-import { useChangeUserRole } from "@/modules/users/hooks/admin/use-change-user-role";
-import { useExportUserDataAdmin } from "@/modules/users/hooks/admin/use-export-user-data-admin";
-import { useInvalidateUserSessions } from "@/modules/users/hooks/admin/use-invalidate-user-sessions";
-import { useSendPasswordResetAdmin } from "@/modules/users/hooks/admin/use-send-password-reset-admin";
+import { useDeleteUser } from "@/modules/users/hooks/use-delete-user";
+import { useSuspendUser } from "@/modules/users/hooks/use-suspend-user";
+import { useRestoreUser } from "@/modules/users/hooks/use-restore-user";
+import { useChangeUserRole } from "@/modules/users/hooks/use-change-user-role";
+import { useExportUserDataAdmin } from "@/modules/users/hooks/use-export-user-data-admin";
+import { useInvalidateUserSessions } from "@/modules/users/hooks/use-invalidate-user-sessions";
+import { useSendPasswordResetAdmin } from "@/modules/users/hooks/use-send-password-reset-admin";
 
 interface UsersRowActionsProps {
 	user: {

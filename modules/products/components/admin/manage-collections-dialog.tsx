@@ -13,11 +13,11 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useUpdateProductCollections } from "@/modules/products/hooks/admin/use-update-product-collections";
+import { useUpdateProductCollections } from "@/modules/products/hooks/use-update-product-collections";
 import {
 	getAllCollections,
 	getProductCollections,
-} from "@/modules/products/actions/admin/update-product-collections";
+} from "@/modules/products/actions/update-product-collections";
 import { Loader2, FolderOpen } from "lucide-react";
 
 export const MANAGE_COLLECTIONS_DIALOG_ID = "manage-product-collections";

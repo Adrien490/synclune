@@ -10,7 +10,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { useDeleteProductType } from "@/modules/product-types/hooks/admin/use-delete-product-type";
+import { useDeleteProductType } from "@/modules/product-types/hooks/use-delete-product-type";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
 

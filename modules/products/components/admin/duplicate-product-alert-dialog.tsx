@@ -10,7 +10,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { useDuplicateProduct } from "@/modules/products/hooks/admin/use-duplicate-product";
+import { useDuplicateProduct } from "@/modules/products/hooks/use-duplicate-product";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";

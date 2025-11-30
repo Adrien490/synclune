@@ -19,8 +19,8 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { useBulkApproveRefunds } from "@/modules/refund/hooks/admin/use-bulk-approve-refunds";
-import { useBulkRejectRefunds } from "@/modules/refund/hooks/admin/use-bulk-reject-refunds";
+import { useBulkApproveRefunds } from "@/modules/refund/hooks/use-bulk-approve-refunds";
+import { useBulkRejectRefunds } from "@/modules/refund/hooks/use-bulk-reject-refunds";
 import {
 	CheckCircle2,
 	Loader2,

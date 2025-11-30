@@ -13,7 +13,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
-import { useBulkArchiveCollections } from "@/modules/collections/hooks/admin/use-bulk-archive-collections";
+import { useBulkArchiveCollections } from "@/modules/collections/hooks/use-bulk-archive-collections";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 
 export const BULK_ARCHIVE_COLLECTIONS_DIALOG_ID = "bulk-archive-collections";

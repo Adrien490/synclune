@@ -20,8 +20,8 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useBulkMarkAsDelivered } from "@/modules/orders/hooks/admin/use-bulk-mark-as-delivered";
-import { useBulkCancelOrders } from "@/modules/orders/hooks/admin/use-bulk-cancel-orders";
+import { useBulkMarkAsDelivered } from "@/modules/orders/hooks/use-bulk-mark-as-delivered";
+import { useBulkCancelOrders } from "@/modules/orders/hooks/use-bulk-cancel-orders";
 import {
 	CheckCircle2,
 	Loader2,

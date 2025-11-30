@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
-import { useToggleProductStatus } from "@/modules/products/hooks/admin/use-toggle-product-status";
+import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
 import { cn } from "@/shared/utils/cn";
 
 export const CHANGE_PRODUCT_STATUS_DIALOG_ID = "change-product-status";

@@ -6,7 +6,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
-import { useRefreshColors } from "@/modules/colors/hooks/admin/use-refresh-colors";
+import { useRefreshColors } from "@/modules/colors/hooks/use-refresh-colors";
 import { cn } from "@/shared/utils/cn";
 import { RefreshCw } from "lucide-react";
 

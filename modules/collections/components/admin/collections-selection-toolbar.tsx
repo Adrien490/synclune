@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
-import { useBulkArchiveCollections } from "@/modules/collections/hooks/admin/use-bulk-archive-collections";
+import { useBulkArchiveCollections } from "@/modules/collections/hooks/use-bulk-archive-collections";
 import { BULK_DELETE_COLLECTIONS_DIALOG_ID } from "./bulk-delete-collections-alert-dialog";
 import { BULK_ARCHIVE_COLLECTIONS_DIALOG_ID } from "./bulk-archive-collections-alert-dialog";
 

@@ -32,7 +32,7 @@ import {
 	useCreateRefundForm,
 	getDefaultRestock,
 	getAvailableQuantity,
-} from "@/modules/refund/hooks/admin/use-create-refund-form";
+} from "@/modules/refund/hooks/use-create-refund-form";
 
 // ============================================================================
 // TYPES

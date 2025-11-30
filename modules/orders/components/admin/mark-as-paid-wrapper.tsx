@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useTransition } from "react";
-import { useMarkAsPaid } from "@/modules/orders/hooks/admin/use-mark-as-paid";
+import { useMarkAsPaid } from "@/modules/orders/hooks/use-mark-as-paid";
 
 interface MarkAsPaidWrapperProps {
 	className?: string;

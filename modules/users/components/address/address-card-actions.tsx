@@ -8,7 +8,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { Star, Pencil, Trash2, Loader2, MoreVertical } from "lucide-react";
-import { useSetDefaultAddress } from "@/modules/users/hooks/addresses/use-set-default-address";
+import { useSetDefaultAddress } from "@/modules/users/hooks/use-set-default-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { DELETE_ADDRESS_DIALOG_ID } from "@/modules/users/components/addresses/delete-address-alert-dialog";

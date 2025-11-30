@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useTransition } from "react";
-import { useMarkAsProcessing } from "@/modules/orders/hooks/admin/use-mark-as-processing";
+import { useMarkAsProcessing } from "@/modules/orders/hooks/use-mark-as-processing";
 
 interface MarkAsProcessingWrapperProps {
 	className?: string;

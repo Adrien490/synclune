@@ -1,7 +1,7 @@
 "use client";
 
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useTransition } from "react";
 import { refreshNewsletter } from "@/modules/newsletter/actions/refresh-newsletter";
 

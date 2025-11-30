@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 import { bulkToggleDiscountStatus } from "@/modules/discount/actions/bulk-toggle-discount-status";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
 interface UseBulkToggleDiscountStatusOptions {
 	onSuccess?: () => void;

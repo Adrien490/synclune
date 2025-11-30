@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
-import { useBulkChangeProductStatus } from "@/modules/products/hooks/admin/use-bulk-change-product-status";
+import { useBulkChangeProductStatus } from "@/modules/products/hooks/use-bulk-change-product-status";
 import { BULK_ARCHIVE_PRODUCTS_DIALOG_ID } from "./bulk-archive-products-alert-dialog";
 import { BULK_DELETE_PRODUCTS_DIALOG_ID } from "./bulk-delete-products-alert-dialog";
 

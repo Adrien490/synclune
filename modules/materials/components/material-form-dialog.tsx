@@ -13,8 +13,8 @@ import { createMaterial } from "@/modules/materials/actions/create-material";
 import { updateMaterial } from "@/modules/materials/actions/update-material";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useEffect, useActionState } from "react";
-import { withCallbacks } from "@/shared/utils/with-callbacks/with-callbacks";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
 export const MATERIAL_DIALOG_ID = "material-form";
 

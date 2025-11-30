@@ -1,7 +1,7 @@
 "use client";
 
 import { Switch } from "@/shared/components/ui/switch";
-import { useToggleProductTypeStatus } from "@/modules/product-types/hooks/admin/use-toggle-product-type-status";
+import { useToggleProductTypeStatus } from "@/modules/product-types/hooks/use-toggle-product-type-status";
 
 interface ProductTypeActiveToggleProps {
 	productTypeId: string;

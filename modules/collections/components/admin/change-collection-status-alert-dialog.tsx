@@ -13,7 +13,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
-import { useUpdateCollectionStatus } from "@/modules/collections/hooks/admin/use-update-collection-status";
+import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
 import { cn } from "@/shared/utils/cn";
 
 export const CHANGE_COLLECTION_STATUS_DIALOG_ID = "change-collection-status";

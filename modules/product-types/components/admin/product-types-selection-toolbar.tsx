@@ -11,8 +11,8 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useBulkActivateProductTypes } from "@/modules/product-types/hooks/admin/use-bulk-activate-product-types";
-import { useBulkDeactivateProductTypes } from "@/modules/product-types/hooks/admin/use-bulk-deactivate-product-types";
+import { useBulkActivateProductTypes } from "@/modules/product-types/hooks/use-bulk-activate-product-types";
+import { useBulkDeactivateProductTypes } from "@/modules/product-types/hooks/use-bulk-deactivate-product-types";
 import { BULK_DELETE_PRODUCT_TYPES_DIALOG_ID } from "./bulk-delete-product-types-alert-dialog";
 import { CheckCircle2, MoreVertical, Trash2, XCircle } from "lucide-react";
 import { toast } from "sonner";

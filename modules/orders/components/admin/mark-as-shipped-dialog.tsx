@@ -28,7 +28,7 @@ import {
 } from "@/shared/utils/carrier-detection";
 import { useStore } from "@tanstack/react-form";
 import { Mail, Truck } from "lucide-react";
-import { useMarkAsShippedForm } from "@/modules/orders/hooks/admin/use-mark-as-shipped-form";
+import { useMarkAsShippedForm } from "@/modules/orders/hooks/use-mark-as-shipped-form";
 
 export const MARK_AS_SHIPPED_DIALOG_ID = "mark-as-shipped";
 

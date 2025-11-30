@@ -23,10 +23,10 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { useBulkDeleteUsers } from "@/modules/users/hooks/admin/use-bulk-delete-users";
-import { useBulkSuspendUsers } from "@/modules/users/hooks/admin/use-bulk-suspend-users";
-import { useBulkRestoreUsers } from "@/modules/users/hooks/admin/use-bulk-restore-users";
-import { useBulkChangeUserRole } from "@/modules/users/hooks/admin/use-bulk-change-user-role";
+import { useBulkDeleteUsers } from "@/modules/users/hooks/use-bulk-delete-users";
+import { useBulkSuspendUsers } from "@/modules/users/hooks/use-bulk-suspend-users";
+import { useBulkRestoreUsers } from "@/modules/users/hooks/use-bulk-restore-users";
+import { useBulkChangeUserRole } from "@/modules/users/hooks/use-bulk-change-user-role";
 import {
 	CheckCircle2,
 	Loader2,

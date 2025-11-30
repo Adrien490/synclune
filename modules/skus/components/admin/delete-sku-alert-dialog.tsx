@@ -10,7 +10,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { useDeleteProductSku } from "@/modules/skus/hooks/admin/use-delete-sku";
+import { useDeleteProductSku } from "@/modules/skus/hooks/use-delete-sku";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
 

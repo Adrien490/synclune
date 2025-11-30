@@ -22,8 +22,8 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { StockNotificationStatus } from "@/app/generated/prisma/browser";
-import { useCancelStockNotification } from "../../hooks/admin/use-cancel-stock-notification";
-import { useNotifyStockAvailable } from "../../hooks/admin/use-notify-stock-available";
+import { useCancelStockNotification } from "../../hooks/use-cancel-stock-notification";
+import { useNotifyStockAvailable } from "../../hooks/use-notify-stock-available";
 import type { StockNotificationAdmin } from "../../data/get-stock-notifications-admin";
 
 interface StockNotificationsRowActionsProps {

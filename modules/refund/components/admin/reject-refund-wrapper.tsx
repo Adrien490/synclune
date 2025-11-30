@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useTransition } from "react";
-import { useRejectRefund } from "@/modules/refund/hooks/admin/use-reject-refund";
+import { useRejectRefund } from "@/modules/refund/hooks/use-reject-refund";
 
 interface RejectRefundWrapperProps {
 	className?: string;

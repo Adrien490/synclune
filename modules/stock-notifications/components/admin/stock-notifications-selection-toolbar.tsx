@@ -23,7 +23,7 @@ import { useSelectionContext } from "@/shared/contexts/selection-context";
 import {
 	useBulkCancelStockNotifications,
 	useBulkDeleteStockNotifications,
-} from "@/modules/stock-notifications/hooks/admin/use-bulk-stock-notification-actions";
+} from "@/modules/stock-notifications/hooks/use-bulk-stock-notification-actions";
 import {
 	Loader2,
 	MoreVertical,

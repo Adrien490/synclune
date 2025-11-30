@@ -32,8 +32,8 @@ export {
 // ============================================================================
 // HOOKS (Admin)
 // ============================================================================
-export { useCancelStockNotification } from "./hooks/admin/use-cancel-stock-notification";
-export { useNotifyStockAvailable } from "./hooks/admin/use-notify-stock-available";
+export { useCancelStockNotification } from "./hooks/use-cancel-stock-notification";
+export { useNotifyStockAvailable } from "./hooks/use-notify-stock-available";
 
 // ============================================================================
 // DATA
