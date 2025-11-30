@@ -103,8 +103,9 @@ export const SelectField = <T extends string>({
 							)}
 						</span>
 						{clearable && field.state.value && (
-							<button
-								type="button"
+							<span
+								role="button"
+								tabIndex={0}
 								className={cn(
 									"inline-flex items-center justify-center h-6 w-6 ml-1 mr-0.5 shrink-0 rounded-sm",
 									"hover:bg-accent hover:text-accent-foreground",
@@ -120,10 +121,17 @@ export const SelectField = <T extends string>({
 									e.stopPropagation();
 									field.handleChange(undefined);
 								}}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										e.stopPropagation();
+										field.handleChange(undefined);
+									}
+								}}
 								aria-label="Effacer la sélection"
 							>
 								<X className="h-3.5 w-3.5" />
-							</button>
+							</span>
 						)}
 					</div>
 				</SelectTrigger>
