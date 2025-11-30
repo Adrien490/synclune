@@ -7,7 +7,9 @@ import { getClientIp } from "@/shared/lib/rate-limit";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { randomUUID } from "crypto";
 import { headers } from "next/headers";
+import { revalidateTag } from "next/cache";
 import { subscribeToNewsletterSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
+import { getNewsletterInvalidationTags } from "../constants/cache";
 
 export async function subscribeToNewsletter(
 	_previousState: ActionState | undefined,
@@ -100,6 +102,9 @@ export async function subscribeToNewsletter(
 					},
 				});
 
+				// Invalider le cache
+				getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
+
 				// Envoyer l'email de confirmation
 				const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
 				const confirmationUrl = `${baseUrl}/newsletter/confirm?token=${confirmationToken}`;
@@ -128,6 +133,9 @@ export async function subscribeToNewsletter(
 					emailVerified: false, // Demander une nouvelle vérification
 				},
 			});
+
+			// Invalider le cache
+			getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
 
 			// Envoyer l'email de confirmation
 			const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
@@ -160,6 +168,9 @@ export async function subscribeToNewsletter(
 				emailVerified: false,
 			},
 		});
+
+		// Invalider le cache
+		getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
 
 		// Envoyer l'email de confirmation
 		const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";

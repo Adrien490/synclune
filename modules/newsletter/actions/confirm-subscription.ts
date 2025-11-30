@@ -5,6 +5,8 @@ import { sendNewsletterWelcomeEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
+import { revalidateTag } from "next/cache";
+import { getNewsletterInvalidationTags } from "../constants/cache";
 
 export async function confirmSubscription(
 	_previousState: ActionState | undefined,
@@ -33,7 +35,7 @@ export async function confirmSubscription(
 			}
 
 			if (decision.reason.isShield()) {
-// console.warn("🚨 Shield blocked suspicious confirmation request");
+				console.warn("[CONFIRM_SUBSCRIPTION] Shield blocked suspicious request");
 				return {
 					status: ActionStatus.ERROR,
 					message:
@@ -103,6 +105,9 @@ export async function confirmSubscription(
 			},
 		});
 
+		// Invalider le cache
+		getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
+
 		// 📧 Envoyer l'email de bienvenue après confirmation
 		// Note : Envoi en arrière-plan, ne bloque pas la réponse si échec
 		try {
@@ -110,7 +115,7 @@ export async function confirmSubscription(
 		} catch (error) {
 			// Log l'erreur mais ne pas bloquer la confirmation
 			// L'utilisateur est bien inscrit même si l'email de bienvenue échoue
-			// console.error("Erreur envoi email bienvenue:", error);
+			console.error("[CONFIRM_SUBSCRIPTION] Erreur envoi email bienvenue:", error);
 		}
 
 		return {
@@ -119,7 +124,7 @@ export async function confirmSubscription(
 				"Merci ! Votre inscription est confirmée 🎉 Vous recevrez bientôt notre prochaine newsletter.",
 		};
 	} catch (error) {
-// console.error("Erreur lors de la confirmation de l'inscription:", error);
+		console.error("[CONFIRM_SUBSCRIPTION] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
 			message: "Une erreur est survenue. Veuillez réessayer plus tard.",

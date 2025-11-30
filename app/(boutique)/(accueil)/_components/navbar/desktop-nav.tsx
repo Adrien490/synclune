@@ -62,7 +62,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 									{item.label}
 								</NavigationMenuTrigger>
 								<NavigationMenuContent>
-									<ul className="grid w-full max-w-md sm:w-[420px] gap-2 p-3 bg-background/95 backdrop-blur-sm border border-border/50 shadow-lg rounded-lg">
+									<ul className="grid w-full max-w-[calc(100vw-2rem)] sm:w-[420px] sm:max-w-md gap-2 p-3 bg-background/95 backdrop-blur-sm border border-border/50 shadow-lg rounded-lg">
 										{item.children?.map((child) => {
 											const isChildActive = isMenuItemActive(child.href);
 

@@ -128,11 +128,32 @@ export function AddToCartButton({
 								</div>
 							)}
 						</form.Field>
-						{selectedSku.inventory <= 10 && (
-							<p className="text-xs/5 tracking-normal antialiased text-muted-foreground mt-2" role="status">
-								Maximum disponible : {selectedSku.inventory}
-							</p>
-						)}
+						{/* Message explicatif sur la limite de quantité */}
+						<form.Subscribe selector={(state) => [state.values.quantity]}>
+							{([quantity]) => {
+								const MAX_QUANTITY_PER_ORDER = 10;
+								const maxAvailable = Math.min(selectedSku.inventory, MAX_QUANTITY_PER_ORDER);
+
+								// Afficher quand on atteint la limite ou quand le stock est limité
+								if (selectedSku.inventory <= MAX_QUANTITY_PER_ORDER) {
+									return (
+										<p className="text-xs/5 tracking-normal antialiased text-muted-foreground mt-2" role="status">
+											Maximum disponible : {selectedSku.inventory}
+										</p>
+									);
+								}
+
+								if (quantity >= MAX_QUANTITY_PER_ORDER) {
+									return (
+										<p className="text-xs/5 tracking-normal antialiased text-muted-foreground mt-2" role="status">
+											Limite de {MAX_QUANTITY_PER_ORDER} par commande
+										</p>
+									);
+								}
+
+								return null;
+							}}
+						</form.Subscribe>
 					</CardContent>
 				</Card>
 			)}

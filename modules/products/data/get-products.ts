@@ -15,7 +15,7 @@ import {
 	GET_PRODUCTS_SELECT,
 } from "../constants/product.constants";
 import type { GetProductsParams, GetProductsReturn } from "../types/product.types";
-import { buildProductWhereClause } from "../utils/product-query-builder";
+import { buildProductWhereClause } from "../services/product-query-builder";
 import { cacheProducts } from "../constants/cache";
 
 // Re-export pour compatibilité
@@ -99,12 +99,25 @@ async function fetchProducts(
 		});
 
 		// Special handling for price sorting
+		// Note: Le tri par prix nécessite de charger tous les produits en mémoire
+		// car le prix minimum est calculé à partir des SKUs.
+		// Quick fix: Limite à 500 produits pour éviter les problèmes de mémoire.
+		// TODO: Implémenter une colonne dénormalisée minPriceInclTax pour un tri SQL natif.
 		if (params.sortBy.startsWith("price-")) {
+			const MAX_PRODUCTS_FOR_PRICE_SORT = 500;
+
 			const allProducts = await prisma.product.findMany({
 				where,
 				select: GET_PRODUCTS_SELECT,
 				orderBy: [{ id: "asc" }],
+				take: MAX_PRODUCTS_FOR_PRICE_SORT,
 			});
+
+			if (allProducts.length >= MAX_PRODUCTS_FOR_PRICE_SORT) {
+				console.warn(
+					`[getProducts] Price sort: ${allProducts.length} products loaded (limit reached). Consider implementing denormalized minPrice column.`
+				);
+			}
 
 			const sortedProducts = allProducts.sort((a, b) => {
 				const getPriceMin = (product: typeof a) => {

@@ -6,7 +6,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
-import { WishlistListClient } from "./wishlist-list-client";
+import { WishlistListContent } from "./wishlist-list-content";
 import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";
 import { Heart } from "lucide-react";
 import Link from "next/link";
@@ -60,7 +60,7 @@ export async function WishlistList({
 
 	// Déléguer au Client Component pour les optimistic updates
 	return (
-		<WishlistListClient
+		<WishlistListContent
 			items={items}
 			pagination={pagination}
 			totalCount={totalCount}

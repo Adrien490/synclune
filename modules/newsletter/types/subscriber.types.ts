@@ -42,11 +42,6 @@ export type GetSubscribersReturn = {
 // TYPES - NEWSLETTER STATUS
 // ============================================================================
 
-export type NewsletterStatus = {
-	isSubscribed: boolean;
-	subscribedAt: Date | null;
-};
-
 /**
  * Return type for getSubscriptionStatus - user-facing status check
  */

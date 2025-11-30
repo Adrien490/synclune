@@ -39,8 +39,9 @@ export async function toggleWishlistItem(
 
 		if (!userId) {
 			return {
-				status: ActionStatus.ERROR,
-				message: 'Vous devez être connecté pour gérer votre wishlist',
+				status: ActionStatus.UNAUTHORIZED,
+				message: 'Connectez-vous pour ajouter ce bijou à votre wishlist',
+				data: { requiresAuth: true },
 			}
 		}
 

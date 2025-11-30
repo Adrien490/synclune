@@ -54,13 +54,3 @@ export const GET_NEWSLETTER_STATUS_DEFAULT_SELECT = {
 	isActive: true,
 	emailVerified: true,
 } as const satisfies Prisma.NewsletterSubscriberSelect;
-
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const GET_SUBSCRIBERS_DEFAULT_CACHE = {
-	revalidate: 60,
-	stale: 60 * 2,
-	expire: 60 * 5,
-} as const;

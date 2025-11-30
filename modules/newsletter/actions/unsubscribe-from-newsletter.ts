@@ -4,7 +4,9 @@ import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
+import { revalidateTag } from "next/cache";
 import { unsubscribeFromNewsletterSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
+import { getNewsletterInvalidationTags } from "../constants/cache";
 
 export async function unsubscribeFromNewsletter(
 	_previousState: ActionState | undefined,
@@ -126,13 +128,16 @@ export async function unsubscribeFromNewsletter(
 			},
 		});
 
+		// Invalider le cache
+		getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
+
 		return {
 			status: ActionStatus.SUCCESS,
 			message:
 				"Vous avez été désinscrit(e) de la newsletter. Nous sommes désolés de vous voir partir 💔",
 		};
 	} catch (error) {
-// console.error("Erreur lors de la désinscription de la newsletter:", error);
+		console.error("[UNSUBSCRIBE_NEWSLETTER] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
 			message: "Une erreur est survenue. Veuillez réessayer plus tard.",

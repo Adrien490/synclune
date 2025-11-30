@@ -8,7 +8,7 @@ import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
 	getStockInfoForList,
-} from "@/modules/products/utils/product-list-helpers";
+} from "@/modules/products/services/product-list-helpers";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";

@@ -5,17 +5,27 @@ import { requireAdmin } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
+import { subscriberIdSchema } from "../../schemas/subscriber.schemas";
 
 /**
  * Server Action ADMIN pour désabonner un abonné newsletter
  */
 export async function unsubscribeSubscriberAdmin(subscriberId: string): Promise<ActionState> {
 	try {
-		// 1. Vérification admin
+		// 1. Validation de l'entrée
+		const validation = subscriberIdSchema.safeParse({ subscriberId });
+		if (!validation.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: validation.error.issues[0]?.message || "ID d'abonné invalide",
+			};
+		}
+
+		// 2. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Vérifier que l'abonné existe
+		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
 			where: { id: subscriberId },
 			select: { id: true, email: true, isActive: true },
@@ -35,7 +45,7 @@ export async function unsubscribeSubscriberAdmin(subscriberId: string): Promise<
 			};
 		}
 
-		// 3. Désabonner
+		// 4. Désabonner
 		await prisma.newsletterSubscriber.update({
 			where: { id: subscriberId },
 			data: {
@@ -44,7 +54,7 @@ export async function unsubscribeSubscriberAdmin(subscriberId: string): Promise<
 			},
 		});
 
-		// 4. Revalider
+		// 5. Revalider
 		revalidatePath("/admin/marketing/newsletter");
 
 		return {

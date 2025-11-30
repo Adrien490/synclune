@@ -54,13 +54,16 @@ export function ProductPrice({ selectedSku, product }: ProductPriceProps) {
 		? Math.round(((selectedSku.compareAtPrice! - selectedSku.priceInclTax) / selectedSku.compareAtPrice!) * 100)
 		: 0;
 
-	// Calculer le stock status (système simplifié : en stock ou rupture)
+	// Calculer le stock status (en stock, stock limité, ou rupture)
+	const LOW_STOCK_THRESHOLD = 5;
 	const inventory = selectedSku?.inventory || 0;
 	const isAvailable = selectedSku ? inventory > 0 && selectedSku.isActive : false;
 	const stockStatus =
 		!selectedSku?.isActive || inventory === 0
 			? "out_of_stock"
-			: "in_stock";
+			: inventory <= LOW_STOCK_THRESHOLD
+				? "low_stock"
+				: "in_stock";
 
 	if (!selectedSku) {
 		return (
@@ -122,9 +125,9 @@ export function ProductPrice({ selectedSku, product }: ProductPriceProps) {
 					)}
 				</div>
 
-				{/* Badge de disponibilité (système simplifié) */}
+				{/* Badge de disponibilité (en stock, stock limité, rupture) */}
 				<div className="flex items-center gap-2">
-					{isAvailable ? (
+					{stockStatus === "in_stock" && (
 						<Badge
 							variant="secondary"
 							className="text-xs/5 tracking-normal antialiased gap-1.5"
@@ -134,7 +137,19 @@ export function ProductPrice({ selectedSku, product }: ProductPriceProps) {
 							<CheckCircle className="w-3 h-3" aria-hidden="true" />
 							En stock
 						</Badge>
-					) : (
+					)}
+					{stockStatus === "low_stock" && (
+						<Badge
+							variant="outline"
+							className="text-xs/5 tracking-normal antialiased gap-1.5 border-amber-500 text-amber-600 bg-amber-50"
+							role="status"
+							aria-label={`Plus que ${inventory} en stock`}
+						>
+							<AlertTriangle className="w-3 h-3" aria-hidden="true" />
+							Plus que {inventory} en stock
+						</Badge>
+					)}
+					{stockStatus === "out_of_stock" && (
 						<Badge
 							variant="destructive"
 							className="text-xs/5 tracking-normal antialiased gap-1.5"

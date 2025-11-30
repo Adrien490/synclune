@@ -6,17 +6,27 @@ import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { randomUUID } from "crypto";
+import { subscriberIdSchema } from "../../schemas/subscriber.schemas";
 
 /**
  * Server Action ADMIN pour renvoyer l'email de confirmation newsletter
  */
 export async function resendConfirmationAdmin(subscriberId: string): Promise<ActionState> {
 	try {
-		// 1. Vérification admin
+		// 1. Validation de l'entrée
+		const validation = subscriberIdSchema.safeParse({ subscriberId });
+		if (!validation.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: validation.error.issues[0]?.message || "ID d'abonné invalide",
+			};
+		}
+
+		// 2. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Vérifier que l'abonné existe
+		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
 			where: { id: subscriberId },
 			select: { id: true, email: true, emailVerified: true, isActive: true },
@@ -36,7 +46,7 @@ export async function resendConfirmationAdmin(subscriberId: string): Promise<Act
 			};
 		}
 
-		// 3. Régénérer un token de confirmation
+		// 4. Régénérer un token de confirmation
 		const confirmationToken = randomUUID();
 
 		await prisma.newsletterSubscriber.update({
@@ -47,7 +57,7 @@ export async function resendConfirmationAdmin(subscriberId: string): Promise<Act
 			},
 		});
 
-		// 4. Envoyer l'email de confirmation
+		// 5. Envoyer l'email de confirmation
 		const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
 		const confirmationUrl = `${baseUrl}/newsletter/confirm?token=${confirmationToken}`;
 

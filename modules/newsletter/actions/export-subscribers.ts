@@ -136,7 +136,7 @@ export async function exportSubscribers(
 			},
 		};
 	} catch (error) {
-// console.error("❌ Erreur export CSV newsletter:", error);
+		console.error("[EXPORT_SUBSCRIBERS] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
 			message: "Une erreur est survenue lors de l'export",

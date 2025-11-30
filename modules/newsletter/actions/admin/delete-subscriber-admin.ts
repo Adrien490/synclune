@@ -5,6 +5,7 @@ import { requireAdmin } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
+import { subscriberIdSchema } from "../../schemas/subscriber.schemas";
 
 /**
  * Server Action ADMIN pour supprimer définitivement un abonné newsletter
@@ -12,11 +13,20 @@ import { revalidatePath } from "next/cache";
  */
 export async function deleteSubscriberAdmin(subscriberId: string): Promise<ActionState> {
 	try {
-		// 1. Vérification admin
+		// 1. Validation de l'entrée
+		const validation = subscriberIdSchema.safeParse({ subscriberId });
+		if (!validation.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: validation.error.issues[0]?.message || "ID d'abonné invalide",
+			};
+		}
+
+		// 2. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Vérifier que l'abonné existe
+		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
 			where: { id: subscriberId },
 			select: { id: true, email: true },
@@ -31,12 +41,12 @@ export async function deleteSubscriberAdmin(subscriberId: string): Promise<Actio
 
 		const email = subscriber.email;
 
-		// 3. Supprimer définitivement
+		// 4. Supprimer définitivement
 		await prisma.newsletterSubscriber.delete({
 			where: { id: subscriberId },
 		});
 
-		// 4. Revalider
+		// 5. Revalider
 		revalidatePath("/admin/marketing/newsletter");
 
 		return {

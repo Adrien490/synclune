@@ -78,15 +78,11 @@ export const getSubscribersSchema = z.object({
 });
 
 // ============================================================================
-// SUBSCRIBE SCHEMA
+// SINGLE ADMIN ACTION SCHEMA
 // ============================================================================
 
-export const subscribeToNewsletterSchema = z.object({
-	email: z.string().email("Email invalide").max(255),
-});
-
-export const unsubscribeFromNewsletterSchema = z.object({
-	email: z.string().email("Email invalide").max(255),
+export const subscriberIdSchema = z.object({
+	subscriberId: z.string().cuid2("ID d'abonné invalide"),
 });
 
 // ============================================================================

@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { Stagger } from "@/shared/components/animations"
 import { CursorPagination } from "@/shared/components/cursor-pagination"
@@ -6,7 +6,7 @@ import type { GetWishlistReturn } from '@/modules/wishlist/data/get-wishlist'
 import { ClearWishlistButton } from '@/modules/wishlist/components/clear-wishlist-button'
 import { WishlistProductCard } from './wishlist-product-card'
 
-interface WishlistListClientProps {
+interface WishlistListContentProps {
 	items: GetWishlistReturn['items']
 	pagination: GetWishlistReturn['pagination']
 	totalCount: number
@@ -14,25 +14,20 @@ interface WishlistListClientProps {
 }
 
 /**
- * Client Component pour la liste de wishlist
+ * Contenu de la liste wishlist - Client Component
  *
  * Pattern :
  * - Source de vérité unique (DB) pour éviter désynchronisations
  * - Affiche le count total et bouton "Vider"
- * - Affiche la grid des items
+ * - Affiche la grid des items avec animations
  * - Affiche la pagination cursor-based
- *
- * UX :
- * - Revalidation automatique après mutations
- * - Animation smooth de disparition
- * - Feedback via isPending dans les composants enfants
  */
-export function WishlistListClient({
+export function WishlistListContent({
 	items,
 	pagination,
 	totalCount,
 	perPage,
-}: WishlistListClientProps) {
+}: WishlistListContentProps) {
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination
 
 	return (

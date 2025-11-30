@@ -1,5 +1,6 @@
-'use client'
+"use client";
 
+import { useOptimistic } from 'react'
 import { HeartIcon } from "@/shared/components/icons/heart-icon"
 import { Button } from "@/shared/components/ui/button"
 import {
@@ -27,7 +28,9 @@ interface WishlistButtonCompactProps {
  * - Tooltip pour clarté
  * - Position: top-right du titre
  * - Animation subtile au hover
- * - Source de vérité unique (DB) pour éviter désynchronisations
+ * - Optimistic UI pour feedback instantané
+ *
+ * Note: La redirection auth et les toasts sont gérés dans useToggleWishlistItem
  */
 export function WishlistButtonCompact({
 	skuId,
@@ -36,14 +39,23 @@ export function WishlistButtonCompact({
 }: WishlistButtonCompactProps) {
 	const { action, isPending } = useToggleWishlistItem()
 
-	// Utilise directement isInWishlist (source de vérité: DB)
-	// Pas d'optimistic update pour éviter les désynchronisations
+	// Optimistic UI : affichage immédiat du changement avant confirmation serveur
+	const [optimisticIsInWishlist, setOptimisticIsInWishlist] = useOptimistic(
+		isInWishlist,
+		(_, newValue: boolean) => newValue
+	)
+
+	// Action wrapper avec optimistic update
+	const handleAction = async (formData: FormData) => {
+		setOptimisticIsInWishlist(!optimisticIsInWishlist)
+		await action(formData)
+	}
 
 	return (
 		<TooltipProvider>
 			<Tooltip delayDuration={300}>
 				<TooltipTrigger asChild>
-					<form action={action} className={className}>
+					<form action={handleAction} className={className}>
 						<input type="hidden" name="skuId" value={skuId} />
 						<Button
 							type="submit"
@@ -52,18 +64,18 @@ export function WishlistButtonCompact({
 							disabled={isPending}
 							className="relative group h-10 w-10 rounded-full hover:bg-accent hover:scale-110 transition-all duration-300"
 							aria-label={
-								isInWishlist
+								optimisticIsInWishlist
 									? 'Retirer de la wishlist'
 									: 'Ajouter à la wishlist'
 							}
-							aria-pressed={isInWishlist}
+							aria-pressed={optimisticIsInWishlist}
 						>
 							<HeartIcon
-								variant={isInWishlist ? 'filled' : 'outline'}
+								variant={optimisticIsInWishlist ? 'filled' : 'outline'}
 								size={22}
 								decorative
 								className={`transition-all duration-300 ${
-									isInWishlist
+									optimisticIsInWishlist
 										? 'text-primary scale-110'
 										: 'text-muted-foreground group-hover:text-primary'
 								}`}
@@ -73,7 +85,7 @@ export function WishlistButtonCompact({
 				</TooltipTrigger>
 				<TooltipContent side="bottom" sideOffset={5}>
 					<p className="text-xs">
-						{isInWishlist
+						{optimisticIsInWishlist
 							? 'Retirer de la wishlist'
 							: 'Ajouter à la wishlist'}
 					</p>

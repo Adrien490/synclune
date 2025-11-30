@@ -1,10 +1,9 @@
 "use server";
 
-import { auth } from "@/modules/auth/lib/auth";
 import { sendNewsletterEmail as sendEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
+import { requireAdmin } from "@/shared/lib/actions";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
-import { headers } from "next/headers";
 import { sendNewsletterEmailSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 
 export async function sendNewsletterEmail(
@@ -12,26 +11,11 @@ export async function sendNewsletterEmail(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// Vérifier l'authentification et le rôle admin
-		const session = await auth.api.getSession({
-			headers: await headers(),
-		});
+		// 1. Vérification admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
-		if (!session?.user) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Vous devez être connecté pour effectuer cette action",
-			};
-		}
-
-		if (session.user.role !== "ADMIN") {
-			return {
-				status: ActionStatus.FORBIDDEN,
-				message: "Vous n'avez pas les permissions pour effectuer cette action",
-			};
-		}
-
-		// Validation avec Zod
+		// 2. Validation avec Zod
 		const subject = formData.get("subject");
 		const content = formData.get("content");
 		const result = sendNewsletterEmailSchema.safeParse({ subject, content });
@@ -89,7 +73,7 @@ export async function sendNewsletterEmail(
 		const errorCount = results.length - successCount;
 
 		if (errorCount > 0) {
-// console.error(`❌ ${errorCount} emails n'ont pas pu être envoyés`);
+			console.error(`[SEND_NEWSLETTER] ${errorCount} emails n'ont pas pu être envoyés`);
 		}
 
 		return {
@@ -102,7 +86,7 @@ export async function sendNewsletterEmail(
 			},
 		};
 	} catch (error) {
-// console.error("Erreur lors de l'envoi de la newsletter:", error);
+		console.error("[SEND_NEWSLETTER] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
 			message: "Une erreur est survenue lors de l'envoi de la newsletter",

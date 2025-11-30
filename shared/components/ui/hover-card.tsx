@@ -5,10 +5,15 @@ import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
 
+/**
+ * HoverCard - Affiche du contenu au survol
+ * Note: Sur écrans tactiles, utiliser open/onOpenChange pour contrôler manuellement,
+ * ou préférer Popover qui fonctionne nativement avec le touch.
+ */
 function HoverCard({
 	...props
 }: React.ComponentProps<typeof HoverCardPrimitive.Root>) {
-	return <HoverCardPrimitive.Root data-slot="hover-card" {...props} />;
+	return <HoverCardPrimitive.Root data-slot="hover-card" openDelay={100} closeDelay={200} {...props} />;
 }
 
 function HoverCardTrigger({
@@ -32,7 +37,7 @@ function HoverCardContent({
 				align={align}
 				sideOffset={sideOffset}
 				className={cn(
-					"bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-64 origin-(--radix-hover-card-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
+					"bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-64 max-w-[calc(100vw-2rem)] origin-(--radix-hover-card-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
 					className
 				)}
 				{...props}

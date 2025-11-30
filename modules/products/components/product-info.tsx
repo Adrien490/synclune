@@ -1,14 +1,15 @@
 import { Badge } from "@/shared/components/ui/badge";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import { WishlistButtonCompact } from "@/modules/wishlist/components";
+import type { ProductSku } from "@/modules/products/types/product-services.types";
+import { WishlistButtonDynamic } from "@/modules/wishlist/components/wishlist-button-dynamic";
 import { Crown, Heart } from "lucide-react";
 import Link from "next/link";
 import { ViewTransition } from "react";
 
 interface ProductInfoProps {
 	product: GetProductReturn;
+	defaultSku: ProductSku;
 	isInWishlist?: boolean;
-	selectedSkuId?: string;
 }
 
 /**
@@ -23,35 +24,27 @@ interface ProductInfoProps {
  */
 export function ProductInfo({
 	product,
+	defaultSku,
 	isInWishlist,
-	selectedSkuId,
 }: ProductInfoProps) {
 	return (
 		<div className="space-y-4">
 			{/* Titre avec bouton wishlist */}
-			{selectedSkuId ? (
-				<div className="flex items-start justify-between gap-3">
+			<div className="flex items-start justify-between gap-3">
+				<ViewTransition name={`product-title-${product.slug}`}>
 					<h1
 						className="text-3xl/10 sm:text-4xl/10 font-bold tracking-tight text-foreground flex-1"
 						itemProp="name"
 					>
 						{product.title}
 					</h1>
-					<WishlistButtonCompact
-						skuId={selectedSkuId}
-						isInWishlist={isInWishlist ?? false}
-					/>
-				</div>
-			) : (
-				<ViewTransition name={`product-title-${product.slug}`}>
-					<h1
-						className="text-3xl/10 sm:text-4xl/10 font-bold tracking-tight text-foreground"
-						itemProp="name"
-					>
-						{product.title}
-					</h1>
 				</ViewTransition>
-			)}
+				<WishlistButtonDynamic
+					product={product}
+					defaultSku={defaultSku}
+					initialIsInWishlist={isInWishlist ?? false}
+				/>
+			</div>
 
 			{/* Labels et badges */}
 			<div className="flex flex-wrap items-center gap-2">

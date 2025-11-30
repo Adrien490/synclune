@@ -3,6 +3,8 @@
 import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
 import { randomUUID } from "crypto";
+import { revalidateTag } from "next/cache";
+import { getNewsletterInvalidationTags } from "../constants/cache";
 
 interface SubscribeToNewsletterInternalParams {
 	email: string;
@@ -57,6 +59,9 @@ export async function subscribeToNewsletterInternal({
 					},
 				});
 
+				// Invalider le cache
+				getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
+
 				// Envoyer l'email de confirmation
 				const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
 				const confirmationUrl = `${baseUrl}/newsletter/confirm?token=${confirmationToken}`;
@@ -85,6 +90,9 @@ export async function subscribeToNewsletterInternal({
 					emailVerified: false, // Demander une nouvelle vérification
 				},
 			});
+
+			// Invalider le cache
+			getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
 
 			// Envoyer l'email de confirmation
 			const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
@@ -117,6 +125,9 @@ export async function subscribeToNewsletterInternal({
 				emailVerified: false,
 			},
 		});
+
+		// Invalider le cache
+		getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
 
 		// Envoyer l'email de confirmation
 		const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";

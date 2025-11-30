@@ -3,7 +3,7 @@ export { WishlistButtonCompact } from "./wishlist-button-compact";
 export { WishlistGrid } from "./wishlist-grid";
 export { WishlistGridSkeleton } from "./wishlist-grid-skeleton";
 export { WishlistList } from "./wishlist-list";
-export { WishlistListClient } from "./wishlist-list-client";
+export { WishlistListContent } from "./wishlist-list-content";
 export { WishlistProductCard } from "./wishlist-product-card";
 export { WishlistRemoveButton } from "./wishlist-remove-button";
 export { ClearWishlistButton, CLEAR_WISHLIST_DIALOG_ID } from "./clear-wishlist-button";

@@ -95,7 +95,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 			</SheetTrigger>
 			<SheetContent
 				side="left"
-				className="w-72 sm:w-80 sm:max-w-md border-r bg-background/95 p-6 flex flex-col"
+				className="w-[85vw] max-w-72 sm:w-80 sm:max-w-md border-r bg-background/95 p-6 flex flex-col"
 				id="mobile-menu-synclune"
 				aria-describedby="mobile-menu-synclune-description"
 			>

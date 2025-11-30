@@ -9,16 +9,12 @@ import {
 	filterCompatibleSkus,
 	getProductBySlug,
 } from "@/modules/products/data/get-product";
-// import { checkIsInWishlist } from "@/domains/wishlist-item/features/check-is-in-wishlist";
+import { checkIsInWishlist } from "@/modules/wishlist/data/check-is-in-wishlist";
 
 import { PageHeader } from "@/shared/components/page-header";
-import { AddToCartButton } from "@/modules/cart/components/add-to-cart-button";
-import { ProductCareInfo } from "@/modules/products/components/product-care-info";
-import { ProductCharacteristics } from "@/modules/products/components/product-characteristics";
+import { ProductDetails } from "@/modules/products/components/product-details";
 import { ProductGallery } from "@/modules/medias/components/product-gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
-import { ProductPrice } from "@/modules/products/components/product-price-card";
-import { VariantSelector } from "@/modules/skus/components/sku-selector";
 
 import { RelatedProducts } from "@/modules/products/components/related-products";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
@@ -109,8 +105,8 @@ export default async function ProductPage({
 	// Génération du structured data JSON-LD
 	const structuredData = generateStructuredData(product, selectedSku);
 
-	// Vérifier si le SKU sélectionné est dans la wishlist (optimisé sans récupérer tous les items) - Désactivé temporairement
-	// const isInWishlist = await checkIsInWishlist(selectedSku.id);
+	// Vérifier si le SKU sélectionné est dans la wishlist de l'utilisateur
+	const isInWishlist = await checkIsInWishlist(selectedSku.id);
 
 	return (
 		<div className="min-h-screen relative">
@@ -143,36 +139,18 @@ export default async function ProductPage({
 
 								{/* Informations et configurateur scrollables */}
 								<section className="space-y-6 lg:min-h-screen">
-									{/* 1. ProductInfo - Infos de base (wishlist button désactivé temporairement) */}
+									{/* 1. ProductInfo - Infos de base avec bouton wishlist dynamique */}
 									<ProductInfo
 										product={product}
-										// isInWishlist={isInWishlist}
-										selectedSkuId={selectedSku.id}
+										defaultSku={selectedSku}
+										isInWishlist={isInWishlist}
 									/>
 
 									<Separator className="bg-border" />
 
-									{/* 2. ProductPrice - Prix du SKU sélectionné */}
-									<ProductPrice selectedSku={selectedSku} product={product} />
-
-									{/* 3. ProductCharacteristics - Caractéristiques principales */}
-									<ProductCharacteristics product={product} selectedSku={selectedSku} />
-
-									<Separator className="bg-border" />
-
-									{/* 4. ProductVariantSelector - Sélection des variantes */}
-									<VariantSelector product={product} />
-
-									{/* 5. AddToCartButton - CTA principal */}
-									<AddToCartButton
-										product={product}
-										selectedSku={selectedSku}
-									/>
-
-									<Separator className="bg-border" />
-
-									{/* 6. ProductCareInfo - Entretien et livraison */}
-									<ProductCareInfo primaryMaterial={selectedSku?.material} />
+									{/* 2-6. ProductDetails - Prix, Caractéristiques, Variantes, Panier, Entretien */}
+									{/* Composant client qui synchronise le SKU avec les paramètres URL */}
+									<ProductDetails product={product} defaultSku={selectedSku} />
 								</section>
 							</div>
 

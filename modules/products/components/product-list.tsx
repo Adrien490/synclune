@@ -13,7 +13,7 @@ import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
 	getStockInfoForList,
-} from "@/modules/products/utils/product-list-helpers";
+} from "@/modules/products/services/product-list-helpers";
 import { SearchX } from "lucide-react";
 import { use } from "react";
 
