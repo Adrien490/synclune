@@ -1,5 +1,5 @@
-import type { RefundFilters } from "@/modules/refund/types/refund.types";
-import { SORT_OPTIONS } from "@/modules/refund/constants/refund.constants";
+import type { RefundFilters } from "@/modules/refunds/types/refund.types";
+import { SORT_OPTIONS } from "@/modules/refunds/constants/refund.constants";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { getFirstParam } from "@/shared/utils/params";
 

@@ -6,22 +6,22 @@ import { SelectFilter } from "@/shared/components/select-filter";
 import {
 	getDiscounts,
 	DISCOUNTS_SORT_LABELS,
-} from "@/modules/discount/data/get-discounts";
+} from "@/modules/discounts/data/get-discounts";
 import { getFirstParam } from "@/shared/utils/params";
 import { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { BulkDeleteDiscountsAlertDialog } from "@/modules/discount/components/admin/bulk-delete-discounts-alert-dialog";
-import { DiscountFormDialog } from "@/modules/discount/components/admin/discount-form-dialog";
-import { DiscountsDataTable } from "@/modules/discount/components/admin/discounts-data-table";
-import { DiscountsDataTableSkeleton } from "@/modules/discount/components/admin/discounts-data-table-skeleton";
-import { DiscountsFilterBadges } from "@/modules/discount/components/admin/discounts-filter-badges";
-import { DiscountsFilterSheet } from "@/modules/discount/components/admin/discounts-filter-sheet";
-import { CreateDiscountButton } from "@/modules/discount/components/admin/create-discount-button";
-import { DeleteDiscountAlertDialog } from "@/modules/discount/components/admin/delete-discount-alert-dialog";
-import { ToggleDiscountStatusAlertDialog } from "@/modules/discount/components/admin/toggle-discount-status-alert-dialog";
-import { DiscountUsagesDialog } from "@/modules/discount/components/admin/discount-usages-dialog";
-import { RefreshDiscountsButton } from "@/modules/discount/components/admin/refresh-discounts-button";
+import { BulkDeleteDiscountsAlertDialog } from "@/modules/discounts/components/admin/bulk-delete-discounts-alert-dialog";
+import { DiscountFormDialog } from "@/modules/discounts/components/admin/discount-form-dialog";
+import { DiscountsDataTable } from "@/modules/discounts/components/admin/discounts-data-table";
+import { DiscountsDataTableSkeleton } from "@/modules/discounts/components/admin/discounts-data-table-skeleton";
+import { DiscountsFilterBadges } from "@/modules/discounts/components/admin/discounts-filter-badges";
+import { DiscountsFilterSheet } from "@/modules/discounts/components/admin/discounts-filter-sheet";
+import { CreateDiscountButton } from "@/modules/discounts/components/admin/create-discount-button";
+import { DeleteDiscountAlertDialog } from "@/modules/discounts/components/admin/delete-discount-alert-dialog";
+import { ToggleDiscountStatusAlertDialog } from "@/modules/discounts/components/admin/toggle-discount-status-alert-dialog";
+import { DiscountUsagesDialog } from "@/modules/discounts/components/admin/discount-usages-dialog";
+import { RefreshDiscountsButton } from "@/modules/discounts/components/admin/refresh-discounts-button";
 import { parseFilters } from "./_utils/params";
 
 export type DiscountsSearchParams = {

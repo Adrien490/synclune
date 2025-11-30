@@ -3,7 +3,7 @@ import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { cacheLife, cacheTag } from "next/cache";
-import { CustomizationForm } from "@/modules/customization/components/customization-form";
+import { CustomizationForm } from "@/modules/customizations/components/customization-form";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

@@ -1,7 +1,7 @@
-import { getOrderForRefund } from "@/modules/refund/data/get-order-for-refund";
+import { getOrderForRefund } from "@/modules/refunds/data/get-order-for-refund";
 import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
-import { CreateRefundForm } from "@/modules/refund/components/admin/create-refund-form";
+import { CreateRefundForm } from "@/modules/refunds/components/admin/create-refund-form";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 
 export const metadata: Metadata = {

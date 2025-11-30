@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useCallback } from "react";
-import { useApplyDiscountCode } from "@/modules/discount/hooks/use-apply-discount-code";
+import { useApplyDiscountCode } from "@/modules/discounts/hooks/use-apply-discount-code";
 
 interface AppliedDiscount {
 	id: string;

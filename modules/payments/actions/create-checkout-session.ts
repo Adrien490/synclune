@@ -21,9 +21,9 @@ import { randomUUID } from "crypto";
 import { getInvoiceFooter, getVendorLegalInfo } from "@/shared/lib/stripe";
 import { ALLOWED_SHIPPING_COUNTRIES } from "@/modules/orders/constants/colissimo-rates";
 import { getStripeShippingOptions } from "@/modules/orders/constants/stripe-shipping-rates";
-import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discount/constants/discount.constants";
-import { checkDiscountEligibility } from "@/modules/discount/utils/check-discount-eligibility";
-import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discount/utils/calculate-discount-amount";
+import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
+import { checkDiscountEligibility } from "@/modules/discounts/utils/check-discount-eligibility";
+import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/utils/calculate-discount-amount";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
