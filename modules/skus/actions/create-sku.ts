@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { requireAdmin } from "@/shared/lib/actions/auth";
 import { detectMediaType } from "@/modules/medias/constants/media.constants";
 import { prisma } from "@/shared/lib/prisma";
@@ -178,10 +179,10 @@ export async function createProductSku(
 				});
 			}
 
-			// Generate SKU if not provided
+			// Generate SKU with cryptographically secure random ID
 			const skuValue =
 				validatedData.sku?.trim() ||
-				`SKU-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+				`SKU-${randomUUID().split("-")[0].toUpperCase()}`;
 
 			// Create SKU
 			const createdSku = await tx.productSku.create({

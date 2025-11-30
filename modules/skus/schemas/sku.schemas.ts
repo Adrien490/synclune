@@ -9,6 +9,34 @@ export const getProductSkuSchema = z.object({
 });
 
 // ============================================================================
+// SECURITY: ALLOWED MEDIA DOMAINS
+// ============================================================================
+
+/**
+ * Whitelist des domaines autorisés pour les URLs de médias
+ * Seuls les fichiers hébergés sur UploadThing sont acceptés
+ */
+const ALLOWED_MEDIA_DOMAINS = [
+	"utfs.io",
+	"uploadthing.com",
+	"uploadthing-prod.s3.us-west-2.amazonaws.com",
+];
+
+/**
+ * Vérifie si une URL provient d'un domaine autorisé
+ */
+function isAllowedMediaDomain(url: string): boolean {
+	try {
+		const hostname = new URL(url).hostname;
+		return ALLOWED_MEDIA_DOMAINS.some(
+			(domain) => hostname === domain || hostname.endsWith(`.${domain}`)
+		);
+	} catch {
+		return false;
+	}
+}
+
+// ============================================================================
 // SHARED SCHEMAS
 // ============================================================================
 
@@ -18,8 +46,20 @@ export const getProductSkuSchema = z.object({
  */
 const imageSchema = z
 	.object({
-		url: z.url({ message: "L'URL du media doit être valide" }),
-		thumbnailUrl: z.url().optional().nullable(), // URL de la miniature pour les videos
+		url: z
+			.string()
+			.url({ message: "L'URL du media doit être valide" })
+			.refine(isAllowedMediaDomain, {
+				message: "L'URL du média doit provenir d'un domaine autorisé (UploadThing)",
+			}),
+		thumbnailUrl: z
+			.string()
+			.url()
+			.refine((url) => !url || isAllowedMediaDomain(url), {
+				message: "L'URL de la miniature doit provenir d'un domaine autorisé",
+			})
+			.optional()
+			.nullable(),
 		blurDataUrl: z.string().optional().nullable(), // Base64 blur placeholder pour les images
 		altText: z.string().max(200).optional().nullable(),
 		mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
@@ -81,7 +121,7 @@ const baseSkuFieldsSchema = z.object({
 	primaryImage: imageSchema.optional(),
 	galleryMedia: z
 		.array(imageSchema)
-		.max(9, { error: "Maximum 9 medias dans la galerie" })
+		.max(10, { error: "Maximum 10 medias dans la galerie" })
 		.default([])
 		.transform((arr) => arr.filter((item): item is NonNullable<typeof item> => item !== null)),
 });

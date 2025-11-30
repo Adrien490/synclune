@@ -12,6 +12,22 @@ import { updateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
 
 /**
+ * Sanitise une chaîne en supprimant les balises HTML potentiellement dangereuses
+ * Protection contre XSS pour les champs texte utilisateur
+ */
+function sanitizeText(text: string): string {
+	return text
+		.replace(/<[^>]*>/g, "") // Supprime toutes les balises HTML
+		.replace(/&lt;/g, "<")   // Decode les entités échappées
+		.replace(/&gt;/g, ">")
+		.replace(/&amp;/g, "&")
+		.replace(/&quot;/g, '"')
+		.replace(/&#x27;/g, "'")
+		.replace(/&#x2F;/g, "/")
+		.trim();
+}
+
+/**
  * Server Action pour modifier un produit existant
  * Le slug n'est PAS modifiable (evite les liens casses et problemes SEO)
  * Permet de modifier le SKU par defaut
@@ -153,7 +169,10 @@ export async function updateProduct(
 		const normalizedMaterialId =
 			validatedData.defaultSku.materialId?.trim() || null;
 		const normalizedSize = validatedData.defaultSku.size?.trim() || null;
-		const normalizedDescription = validatedData.description?.trim() || null;
+		// Sanitisation XSS de la description
+		const normalizedDescription = validatedData.description?.trim()
+			? sanitizeText(validatedData.description)
+			: null;
 
 		// 7. Convert priceInclTaxEuros to cents for database
 		const priceInclTaxCents = Math.round(

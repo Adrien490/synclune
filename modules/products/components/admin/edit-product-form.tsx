@@ -447,6 +447,15 @@ export function EditProductForm({
 							name="defaultSku.compareAtPriceEuros"
 							validators={{
 								onChangeListenTo: ["defaultSku.priceInclTaxEuros"],
+								onChange: ({ value, fieldApi }) => {
+									if (!value) return undefined;
+									const price = fieldApi.form.getFieldValue(
+										"defaultSku.priceInclTaxEuros"
+									);
+									if (price && value < price) {
+										return "Le prix comparé doit être supérieur ou égal au prix de vente";
+									}
+								},
 								onBlur: ({ value, fieldApi }) => {
 									if (!value) return undefined;
 									const price = fieldApi.form.getFieldValue(
@@ -667,11 +676,15 @@ export function EditProductForm({
 																				className="text-base font-semibold"
 																				duration={1.5}
 																			>
-																				Upload en cours...
+																				{`Upload en cours... ${uploadProgress}%`}
 																			</TextShimmer>
-																			<p className="text-2xl font-bold text-primary mt-2">
-																				{uploadProgress}%
-																			</p>
+																		</div>
+																		{/* Barre de progression */}
+																		<div className="w-3/4 h-2 bg-muted rounded-full overflow-hidden">
+																			<div
+																				className="h-full bg-primary transition-all duration-300 ease-out"
+																				style={{ width: `${uploadProgress}%` }}
+																			/>
 																		</div>
 																	</div>
 																);
@@ -728,13 +741,15 @@ export function EditProductForm({
 													}}
 												/>
 												{field.state.meta.errors.length > 0 && (
-													<p
+													<ul
 														id="primary-image-error"
-														className="text-sm text-destructive mt-2 text-center"
+														className="text-sm text-destructive mt-2 text-center list-none space-y-1"
 														role="alert"
 													>
-														{field.state.meta.errors.join(", ")}
-													</p>
+														{field.state.meta.errors.map((error, i) => (
+															<li key={i}>{error}</li>
+														))}
+													</ul>
 												)}
 											</div>
 										)}
@@ -967,11 +982,15 @@ export function EditProductForm({
 																			className="text-sm font-medium"
 																			duration={1.5}
 																		>
-																			Ajout en cours...
+																			{`Ajout en cours... ${uploadProgress}%`}
 																		</TextShimmer>
-																		<p className="text-lg font-semibold text-primary mt-1">
-																			{uploadProgress}%
-																		</p>
+																	</div>
+																	{/* Barre de progression */}
+																	<div className="w-3/4 h-1.5 bg-muted rounded-full overflow-hidden">
+																		<div
+																			className="h-full bg-primary transition-all duration-300 ease-out"
+																			style={{ width: `${uploadProgress}%` }}
+																		/>
 																	</div>
 																</div>
 															);
@@ -1045,7 +1064,8 @@ export function EditProductForm({
 											!canSubmit ||
 											isPending ||
 											isPrimaryImageUploading ||
-											isGalleryUploading
+											isGalleryUploading ||
+											generatingUrls.size > 0
 										}
 										className="min-w-[160px]"
 									>
@@ -1055,7 +1075,9 @@ export function EditProductForm({
 												? "Upload image principale..."
 												: isGalleryUploading
 													? "Upload galerie..."
-													: "Enregistrer les modifications"}
+													: generatingUrls.size > 0
+														? "Génération miniatures..."
+														: "Enregistrer les modifications"}
 									</Button>
 								)}
 							</form.Subscribe>

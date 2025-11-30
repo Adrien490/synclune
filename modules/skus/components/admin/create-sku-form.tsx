@@ -280,6 +280,13 @@ export function CreateProductVariantForm({
 									name="compareAtPriceEuros"
 									validators={{
 										onChangeListenTo: ["priceInclTaxEuros"],
+										onChange: ({ value, fieldApi }) => {
+											if (!value) return undefined;
+											const price = fieldApi.form.getFieldValue("priceInclTaxEuros");
+											if (price && value < price) {
+												return "Le prix comparé doit être supérieur au prix de vente";
+											}
+										},
 										onBlur: ({ value, fieldApi }) => {
 											if (!value) return undefined;
 											const price = fieldApi.form.getFieldValue("priceInclTaxEuros");
@@ -465,11 +472,15 @@ export function CreateProductVariantForm({
 																					className="text-base font-semibold"
 																					duration={1.5}
 																				>
-																					Upload en cours...
+																					{`Upload en cours... ${uploadProgress}%`}
 																				</TextShimmer>
-																				<p className="text-2xl font-bold text-primary mt-2">
-																					{uploadProgress}%
-																				</p>
+																			</div>
+																			{/* Barre de progression */}
+																			<div className="w-3/4 h-2 bg-muted rounded-full overflow-hidden">
+																				<div
+																					className="h-full bg-primary transition-all duration-300 ease-out"
+																					style={{ width: `${uploadProgress}%` }}
+																				/>
 																			</div>
 																		</div>
 																	);
@@ -727,11 +738,15 @@ export function CreateProductVariantForm({
 																				className="text-sm font-medium"
 																				duration={1.5}
 																			>
-																				Ajout en cours...
+																				{`Ajout en cours... ${uploadProgress}%`}
 																			</TextShimmer>
-																			<p className="text-lg font-semibold text-primary mt-1">
-																				{uploadProgress}%
-																			</p>
+																		</div>
+																		{/* Barre de progression */}
+																		<div className="w-3/4 h-1.5 bg-muted rounded-full overflow-hidden">
+																			<div
+																				className="h-full bg-primary transition-all duration-300 ease-out"
+																				style={{ width: `${uploadProgress}%` }}
+																			/>
 																		</div>
 																	</div>
 																);
@@ -816,7 +831,8 @@ export function CreateProductVariantForm({
 												!canSubmit ||
 												form.state.isSubmitting ||
 												isPrimaryImageUploading ||
-												isGalleryUploading
+												isGalleryUploading ||
+												generatingUrls.size > 0
 											}
 											className="min-w-[160px]"
 										>
@@ -826,7 +842,9 @@ export function CreateProductVariantForm({
 													? "Upload image..."
 													: isGalleryUploading
 														? "Upload galerie..."
-														: "Créer la variante"}
+														: generatingUrls.size > 0
+															? "Génération miniatures..."
+															: "Créer la variante"}
 										</Button>
 									)}
 								</form.Subscribe>
