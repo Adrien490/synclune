@@ -29,7 +29,7 @@ export async function createProductSku(
 
 		// 2. Extraction des donnees du FormData
 		// Parse images from JSON strings (sent as hidden inputs)
-		let primaryImage: { url: string; altText?: string; mediaType?: "IMAGE" | "VIDEO" } | undefined;
+		let primaryImage: { url: string; blurDataUrl?: string; altText?: string; mediaType?: "IMAGE" | "VIDEO" } | undefined;
 		const primaryImageRaw = formData.get("primaryImage");
 		if (primaryImageRaw && typeof primaryImageRaw === "string") {
 			try {
@@ -41,6 +41,7 @@ export async function createProductSku(
 
 		let galleryMedia: Array<{
 			url: string;
+			blurDataUrl?: string;
 			altText?: string;
 			mediaType?: "IMAGE" | "VIDEO";
 		}> = [];
@@ -96,6 +97,7 @@ export async function createProductSku(
 		const allMedia: Array<{
 			url: string;
 			thumbnailUrl?: string | null;
+			blurDataUrl?: string;
 			altText?: string;
 			mediaType?: "IMAGE" | "VIDEO";
 			isPrimary: boolean;
@@ -229,6 +231,7 @@ export async function createProductSku(
 							skuId: createdSku.id,
 							url: media.url,
 							thumbnailUrl: media.thumbnailUrl || null,
+							blurDataUrl: media.blurDataUrl || null,
 							altText: media.altText || null,
 							mediaType: media.mediaType || detectMediaType(media.url),
 							isPrimary: media.isPrimary,

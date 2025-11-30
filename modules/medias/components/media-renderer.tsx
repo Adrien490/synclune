@@ -57,7 +57,7 @@ function MediaRendererComponent({
 					playsInline
 					controls
 					preload="metadata"
-					poster={media.thumbnailUrl || undefined}
+					poster={media.thumbnailUrl || media.thumbnailSmallUrl || undefined}
 					aria-label={media.alt || `${title} - Vidéo ${index + 1}`}
 					onError={onError}
 					tabIndex={-1}
@@ -86,8 +86,8 @@ function MediaRendererComponent({
 			preload={isFirst}
 			quality={MAIN_IMAGE_QUALITY}
 			sizes="(max-width: 768px) 100vw, 60vw"
-			placeholder={media.blurDataURL ? "blur" : "empty"}
-			blurDataURL={media.blurDataURL}
+			placeholder={media.blurDataUrl ? "blur" : "empty"}
+			blurDataURL={media.blurDataUrl}
 			onError={onError}
 			draggable={false}
 		/>

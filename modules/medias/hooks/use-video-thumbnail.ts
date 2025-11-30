@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useUploadThing } from "@/modules/medias/utils/uploadthing";
+import { THUMBNAIL_CONFIG } from "../constants/media.constants";
 
 // ============================================================================
 // TYPES
@@ -43,15 +44,13 @@ export interface UseVideoThumbnailReturn {
 // ============================================================================
 
 const DEFAULT_OPTIONS: Required<UseVideoThumbnailOptions> = {
-	quality: 0.85,
-	maxWidth: 640,
-	maxHeight: 640,
-	format: "webp",
+	quality: THUMBNAIL_CONFIG.MEDIUM.quality,
+	maxWidth: THUMBNAIL_CONFIG.MEDIUM.width,
+	maxHeight: THUMBNAIL_CONFIG.MEDIUM.height,
+	format: THUMBNAIL_CONFIG.MEDIUM.format,
 	onThumbnailGenerated: () => {},
 	onError: () => {},
 };
-
-const VIDEO_LOAD_TIMEOUT = 30000; // 30 secondes
 
 // Extensions vidéo supportées pour validation
 const SUPPORTED_VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".avi"] as const;
@@ -286,14 +285,18 @@ export function useVideoThumbnail(
 					loadTimeoutRef.current = null;
 				}
 
+				const initialTime = Math.min(
+					THUMBNAIL_CONFIG.maxCaptureTime,
+					video.duration * THUMBNAIL_CONFIG.capturePosition
+				);
 				setState((s) => ({
 					...s,
 					isLoading: false,
 					duration: video.duration,
-					currentTime: Math.min(1, video.duration * 0.1), // Défaut à 10% ou 1s
+					currentTime: initialTime,
 				}));
 				// Seek to initial position
-				video.currentTime = Math.min(1, video.duration * 0.1);
+				video.currentTime = initialTime;
 				cleanup();
 				resolve();
 			};
@@ -316,7 +319,8 @@ export function useVideoThumbnail(
 			const handleTimeout = () => {
 				if (isAborted) return;
 				isAborted = true;
-				const errorMsg = "Délai d'attente dépassé pour le chargement de la vidéo (30s)";
+				const timeoutSec = Math.round(THUMBNAIL_CONFIG.loadTimeout / 1000);
+				const errorMsg = `Délai d'attente dépassé pour le chargement de la vidéo (${timeoutSec}s)`;
 				setState((s) => ({ ...s, isLoading: false, error: errorMsg }));
 				cleanup();
 				reject(new Error(errorMsg));
@@ -334,7 +338,7 @@ export function useVideoThumbnail(
 			abortSignal.addEventListener("abort", handleAbort);
 
 			// Setup timeout
-			loadTimeoutRef.current = setTimeout(handleTimeout, VIDEO_LOAD_TIMEOUT);
+			loadTimeoutRef.current = setTimeout(handleTimeout, THUMBNAIL_CONFIG.loadTimeout);
 
 			// Configurer la vidéo
 			video.crossOrigin = "anonymous";

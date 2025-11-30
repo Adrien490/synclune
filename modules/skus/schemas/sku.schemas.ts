@@ -18,6 +18,7 @@ export const getProductSkuSchema = z.object({
 const imageSchema = z.object({
 	url: z.url({ message: "L'URL du media doit etre valide" }),
 	thumbnailUrl: z.url().optional().nullable(), // URL de la miniature pour les videos
+	blurDataUrl: z.string().optional(), // Base64 blur placeholder pour les images
 	altText: z.string().max(200).optional(),
 	mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
 });

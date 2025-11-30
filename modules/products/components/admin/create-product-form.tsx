@@ -821,11 +821,12 @@ export function CreateProductForm({
 
 															// Si c'est une vidéo, générer thumbnail automatiquement en arrière-plan
 															if (mediaType === "VIDEO") {
-																generateThumbnail(imageUrl).then((thumbnailUrl) => {
-																	if (thumbnailUrl) {
+																generateThumbnail(imageUrl).then((result) => {
+																	if (result.mediumUrl) {
 																		field.replaceValue(newMediaIndex, {
 																			...newMedia,
-																			thumbnailUrl,
+																			thumbnailUrl: result.mediumUrl,
+																			thumbnailSmallUrl: result.smallUrl,
 																		});
 																	}
 																});
@@ -862,11 +863,12 @@ export function CreateProductForm({
 
 																			// Si c'est une vidéo, générer thumbnail automatiquement
 																			if (mediaType === "VIDEO") {
-																				generateThumbnail(imageUrl).then((thumbnailUrl) => {
-																					if (thumbnailUrl) {
+																				generateThumbnail(imageUrl).then((result) => {
+																					if (result.mediumUrl) {
 																						field.replaceValue(newMediaIndex, {
 																							...newMedia,
-																							thumbnailUrl,
+																							thumbnailUrl: result.mediumUrl,
+																							thumbnailSmallUrl: result.smallUrl,
 																						});
 																					}
 																				});

@@ -23,6 +23,7 @@ export const createProductFormOpts = {
 				| {
 						url: string;
 						thumbnailUrl?: string | null;
+						thumbnailSmallUrl?: string | null;
 						altText?: string;
 						mediaType: "IMAGE" | "VIDEO";
 				  }
@@ -30,6 +31,7 @@ export const createProductFormOpts = {
 			galleryMedia: [] as Array<{
 				url: string;
 				thumbnailUrl?: string | null;
+				thumbnailSmallUrl?: string | null;
 				altText?: string;
 				mediaType: "IMAGE" | "VIDEO";
 			}>,

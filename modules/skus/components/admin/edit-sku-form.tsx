@@ -341,11 +341,13 @@ export function EditProductVariantForm({
 
 															try {
 																const res = await startPrimaryImageUpload(files);
-																const imageUrl = res?.[0]?.serverData?.url;
-																if (imageUrl) {
+																const serverData = res?.[0]?.serverData;
+																if (serverData?.url) {
 																	field.handleChange({
-																		url: imageUrl,
+																		url: serverData.url,
+																		blurDataUrl: serverData.blurDataUrl,
 																		thumbnailUrl: undefined,
+																		thumbnailSmallUrl: undefined,
 																		altText: product.title,
 																		mediaType: "IMAGE",
 																	});
@@ -579,8 +581,8 @@ export function EditProductVariantForm({
 															const res = await startGalleryUpload(filesToUpload);
 
 															res?.forEach((uploadResult, index) => {
-																const imageUrl = uploadResult?.serverData?.url;
-																if (imageUrl) {
+																const serverData = uploadResult?.serverData;
+																if (serverData?.url) {
 																	const originalFile = filesToUpload[index];
 																	const mediaType =
 																		(fileTypeMap.get(originalFile.name) as
@@ -590,8 +592,10 @@ export function EditProductVariantForm({
 
 																	const newMediaIndex = field.state.value.length;
 																	const newMedia = {
-																		url: imageUrl,
-																		thumbnailUrl: undefined,
+																		url: serverData.url,
+																		blurDataUrl: serverData.blurDataUrl,
+																		thumbnailUrl: undefined as string | undefined,
+																		thumbnailSmallUrl: undefined as string | undefined,
 																		altText: product.title,
 																		mediaType,
 																	};
@@ -599,11 +603,12 @@ export function EditProductVariantForm({
 
 																	// Si c'est une vidéo, générer thumbnail automatiquement
 																	if (mediaType === "VIDEO") {
-																		generateThumbnail(imageUrl).then((thumbnailUrl) => {
-																			if (thumbnailUrl) {
+																		generateThumbnail(serverData.url).then((result) => {
+																			if (result.mediumUrl) {
 																				field.replaceValue(newMediaIndex, {
 																					...newMedia,
-																					thumbnailUrl,
+																					thumbnailUrl: result.mediumUrl ?? undefined,
+																					thumbnailSmallUrl: result.smallUrl ?? undefined,
 																				});
 																			}
 																		});

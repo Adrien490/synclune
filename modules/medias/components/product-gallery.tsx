@@ -104,7 +104,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 							type: getVideoMimeType(media.url),
 						},
 					],
-					poster: media.thumbnailUrl || undefined,
+					poster: media.thumbnailUrl || media.thumbnailSmallUrl || undefined,
 					autoPlay: true,
 					muted: true,
 					loop: true,

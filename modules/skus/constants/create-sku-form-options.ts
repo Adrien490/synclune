@@ -16,6 +16,8 @@ export const createProductSkuFormOpts = {
 			| {
 					url: string;
 					thumbnailUrl?: string | null;
+					thumbnailSmallUrl?: string | null;
+					blurDataUrl?: string;
 					altText?: string;
 					mediaType: "IMAGE" | "VIDEO";
 			  }
@@ -23,6 +25,8 @@ export const createProductSkuFormOpts = {
 		galleryMedia: [] as Array<{
 			url: string;
 			thumbnailUrl?: string | null;
+			thumbnailSmallUrl?: string | null;
+			blurDataUrl?: string;
 			altText?: string;
 			mediaType: "IMAGE" | "VIDEO";
 		}>,

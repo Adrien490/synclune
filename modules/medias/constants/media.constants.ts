@@ -72,11 +72,33 @@ export function getFileExtension(url: string): string | null {
 // CONFIGURATION THUMBNAILS
 // ============================================================================
 
-/** Configuration par défaut pour la génération de miniatures */
+/** Configuration pour la génération de miniatures vidéo */
 export const THUMBNAIL_CONFIG = {
-	quality: 0.85,
-	maxWidth: 640,
-	maxHeight: 640,
-	format: "webp" as const,
-	loadTimeout: 30000, // 30 secondes
+	/** Petite taille pour miniatures galerie (80px * 2 pour Retina) */
+	SMALL: {
+		width: 160,
+		height: 160,
+		quality: 0.8,
+		format: "webp" as const,
+	},
+	/** Taille moyenne pour poster vidéo (~500px affichage) */
+	MEDIUM: {
+		width: 480,
+		height: 480,
+		quality: 0.85,
+		format: "webp" as const,
+	},
+	/** Position de capture: 10% de la durée vidéo */
+	capturePosition: 0.1,
+	/** Position max en secondes (évite frames noires de fin) */
+	maxCaptureTime: 1,
+	/** Timeout pour le chargement vidéo (ms) */
+	loadTimeout: 30000,
+	/** Nombre de tentatives avant échec */
+	maxRetries: 3,
+	/** Délai de base pour backoff exponentiel (ms) */
+	retryBaseDelay: 1000,
 } as const;
+
+/** Type pour les tailles de thumbnails */
+export type ThumbnailSize = "SMALL" | "MEDIUM";

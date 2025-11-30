@@ -54,7 +54,8 @@ export function buildGallery({
 		id: string;
 		url: string;
 		thumbnailUrl?: string | null;
-		blurDataURL?: string | null;
+		thumbnailSmallUrl?: string | null;
+		blurDataUrl?: string | null;
 		alt: string;
 		mediaType: "IMAGE" | "VIDEO";
 		source: "default" | "selected" | "sku";
@@ -66,7 +67,15 @@ export function buildGallery({
 
 	// Helper pour ajouter une image unique
 	const addUniqueImage = (
-		skuImage: { id: string; url: string; thumbnailUrl?: string | null; blurDataUrl?: string | null; altText?: string | null; mediaType: "IMAGE" | "VIDEO" },
+		skuImage: {
+			id: string;
+			url: string;
+			thumbnailUrl?: string | null;
+			thumbnailSmallUrl?: string | null;
+			blurDataUrl?: string | null;
+			altText?: string | null;
+			mediaType: "IMAGE" | "VIDEO";
+		},
 		alt: string,
 		source: "default" | "selected" | "sku",
 		skuId: string
@@ -77,7 +86,8 @@ export function buildGallery({
 			id: skuImage.id,
 			url: skuImage.url,
 			thumbnailUrl: skuImage.thumbnailUrl,
-			blurDataURL: skuImage.blurDataUrl,
+			thumbnailSmallUrl: skuImage.thumbnailSmallUrl,
+			blurDataUrl: skuImage.blurDataUrl,
 			alt: skuImage.altText || alt,
 			mediaType: skuImage.mediaType,
 			source,
@@ -147,7 +157,8 @@ export function buildGallery({
 			id: img.id,
 			url: img.url,
 			thumbnailUrl: img.thumbnailUrl,
-			blurDataURL: img.blurDataURL || undefined,
+			thumbnailSmallUrl: img.thumbnailSmallUrl,
+			blurDataUrl: img.blurDataUrl || undefined,
 			alt: img.alt,
 			mediaType: img.mediaType,
 			source: img.source,

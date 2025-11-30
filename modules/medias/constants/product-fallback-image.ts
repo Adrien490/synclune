@@ -117,5 +117,5 @@ export const FALLBACK_PRODUCT_IMAGE = {
 	url: FALLBACK_IMAGE_URL,
 	alt: FALLBACK_IMAGE_ALT,
 	mediaType: "IMAGE" as const,
-	blurDataURL: undefined,
+	blurDataUrl: undefined,
 } as const;

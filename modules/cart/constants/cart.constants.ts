@@ -41,6 +41,8 @@ export const GET_CART_SELECT = {
 						select: {
 							id: true,
 							url: true,
+							thumbnailUrl: true,
+							thumbnailSmallUrl: true,
 							altText: true,
 							mediaType: true,
 							isPrimary: true,

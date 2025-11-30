@@ -3,6 +3,7 @@ import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
 } from "@/modules/products/utils/product-list-helpers";
+import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
 import { ProductCarouselUI } from "./product-carousel-ui";
 
 /**
@@ -14,7 +15,7 @@ import { ProductCarouselUI } from "./product-carousel-ui";
 export async function ProductCarousel() {
 	// Récupération des produits côté serveur
 	const { products } = await getProducts({
-		perPage: 5,
+		perPage: PRODUCT_CAROUSEL_CONFIG.PRODUCTS_COUNT,
 		sortBy: "created-descending",
 		filters: {
 			status: "PUBLIC",

@@ -72,6 +72,7 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 					? {
 							url: primaryImage.url,
 							thumbnailUrl: primaryImage.thumbnailUrl || undefined,
+							thumbnailSmallUrl: primaryImage.thumbnailSmallUrl || undefined,
 							altText: primaryImage.altText || undefined,
 							mediaType: primaryImage.mediaType,
 					  }
@@ -79,6 +80,7 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 				galleryMedia: galleryImages.map((img) => ({
 					url: img.url,
 					thumbnailUrl: img.thumbnailUrl || undefined,
+					thumbnailSmallUrl: img.thumbnailSmallUrl || undefined,
 					altText: img.altText || undefined,
 					mediaType: img.mediaType,
 				})),

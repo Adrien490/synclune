@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from "react";
 import { useUploadThing } from "@/modules/medias/utils/uploadthing";
+import { THUMBNAIL_CONFIG } from "../constants/media.constants";
+import { withRetry, CORSError } from "../utils/retry";
 
 // ============================================================================
 // TYPES
@@ -11,33 +13,88 @@ export interface UseAutoVideoThumbnailOptions {
 	onError?: (error: string) => void;
 }
 
+export interface ThumbnailResult {
+	smallUrl: string | null;
+	mediumUrl: string | null;
+}
+
 // ============================================================================
-// CONSTANTS
+// HELPERS
 // ============================================================================
 
-const MAX_SIZE = 640;
-const QUALITY = 0.85;
-const THUMBNAIL_POSITION = 0.1; // 10% de la durée
+/**
+ * Capture une frame vidéo à une taille spécifique
+ */
+async function captureFrame(
+	video: HTMLVideoElement,
+	width: number,
+	height: number,
+	quality: number
+): Promise<Blob> {
+	const canvas = document.createElement("canvas");
+
+	try {
+		const ctx = canvas.getContext("2d");
+		if (!ctx) {
+			throw new Error("Canvas 2D non disponible");
+		}
+
+		// Calcul dimensions (ratio préservé)
+		const ratio = Math.min(width / video.videoWidth, height / video.videoHeight, 1);
+		canvas.width = Math.round(video.videoWidth * ratio);
+		canvas.height = Math.round(video.videoHeight * ratio);
+
+		// Dessiner la frame (peut échouer sur CORS)
+		try {
+			ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+		} catch (error) {
+			if (error instanceof Error && error.name === "SecurityError") {
+				throw new CORSError("Impossible d'accéder au contenu vidéo (CORS)");
+			}
+			throw error;
+		}
+
+		// Convertir en WebP
+		const blob = await new Promise<Blob | null>((resolve) => {
+			canvas.toBlob((b) => resolve(b), "image/webp", quality);
+		});
+
+		if (blob) return blob;
+
+		// Fallback JPEG si WebP non supporté
+		const jpegBlob = await new Promise<Blob | null>((resolve) => {
+			canvas.toBlob((b) => resolve(b), "image/jpeg", quality);
+		});
+
+		if (!jpegBlob) {
+			throw new Error("Échec conversion image");
+		}
+
+		return jpegBlob;
+	} finally {
+		// Cleanup canvas pour libérer mémoire
+		canvas.width = 0;
+		canvas.height = 0;
+	}
+}
 
 // ============================================================================
 // HOOK
 // ============================================================================
 
 /**
- * Hook pour générer automatiquement une thumbnail de vidéo
+ * Hook pour générer automatiquement des thumbnails de vidéo (deux tailles)
  * Sans interaction utilisateur - capture à 10% de la durée
+ *
+ * @returns smallUrl (160px) pour miniatures galerie, mediumUrl (480px) pour poster
  */
-export function useAutoVideoThumbnail(
-	options: UseAutoVideoThumbnailOptions = {}
-) {
+export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}) {
 	const { startUpload } = useUploadThing("catalogMedia");
 	const [generatingUrls, setGeneratingUrls] = useState<Set<string>>(new Set());
 
 	const generateThumbnailCore = useCallback(
-		async (videoUrl: string): Promise<string | null> => {
-			// Créer élément vidéo caché (déclaré en dehors du try pour cleanup)
+		async (videoUrl: string): Promise<ThumbnailResult> => {
 			const video = document.createElement("video");
-			let canvas: HTMLCanvasElement | null = null;
 
 			try {
 				// 1. Configurer élément vidéo
@@ -49,7 +106,7 @@ export function useAutoVideoThumbnail(
 				await new Promise<void>((resolve, reject) => {
 					const timeout = setTimeout(() => {
 						reject(new Error("Timeout chargement vidéo"));
-					}, 15000);
+					}, THUMBNAIL_CONFIG.loadTimeout);
 
 					video.onloadedmetadata = () => {
 						clearTimeout(timeout);
@@ -62,8 +119,11 @@ export function useAutoVideoThumbnail(
 					video.src = videoUrl;
 				});
 
-				// 3. Seek à 10% de la durée (évite frames noires du début)
-				const seekTime = Math.min(1, video.duration * THUMBNAIL_POSITION);
+				// 3. Seek à la position calculée (10% de la durée, max 1s)
+				const seekTime = Math.min(
+					THUMBNAIL_CONFIG.maxCaptureTime,
+					video.duration * THUMBNAIL_CONFIG.capturePosition
+				);
 				video.currentTime = seekTime;
 
 				await new Promise<void>((resolve) => {
@@ -77,60 +137,34 @@ export function useAutoVideoThumbnail(
 					});
 				}
 
-				// 5. Capturer via Canvas
-				const createdCanvas = document.createElement("canvas");
-				canvas = createdCanvas;
-				const ctx = createdCanvas.getContext("2d");
+				// 5. Capturer les deux tailles
+				const smallConfig = THUMBNAIL_CONFIG.SMALL;
+				const mediumConfig = THUMBNAIL_CONFIG.MEDIUM;
 
-				if (!ctx) {
-					throw new Error("Canvas 2D non disponible");
-				}
+				const [smallBlob, mediumBlob] = await Promise.all([
+					captureFrame(video, smallConfig.width, smallConfig.height, smallConfig.quality),
+					captureFrame(video, mediumConfig.width, mediumConfig.height, mediumConfig.quality),
+				]);
 
-				// Calcul dimensions (ratio préservé)
-				const ratio = Math.min(
-					MAX_SIZE / video.videoWidth,
-					MAX_SIZE / video.videoHeight,
-					1
+				// 6. Upload les deux fichiers
+				const timestamp = Date.now();
+				const smallFile = new File(
+					[smallBlob],
+					`thumb-small-${timestamp}.webp`,
+					{ type: smallBlob.type }
 				);
-				createdCanvas.width = Math.round(video.videoWidth * ratio);
-				createdCanvas.height = Math.round(video.videoHeight * ratio);
+				const mediumFile = new File(
+					[mediumBlob],
+					`thumb-medium-${timestamp}.webp`,
+					{ type: mediumBlob.type }
+				);
 
-				ctx.drawImage(video, 0, 0, createdCanvas.width, createdCanvas.height);
+				const results = await startUpload([smallFile, mediumFile]);
 
-				// 6. Convertir en Blob WebP
-				const blob = await new Promise<Blob | null>((resolve) => {
-					createdCanvas.toBlob((b) => resolve(b), "image/webp", QUALITY);
-				});
-
-				if (!blob) {
-					// Fallback JPEG si WebP non supporté
-					const jpegBlob = await new Promise<Blob | null>((resolve) => {
-						createdCanvas.toBlob((b) => resolve(b), "image/jpeg", 0.9);
-					});
-					if (!jpegBlob) {
-						throw new Error("Échec conversion image");
-					}
-					const file = new File([jpegBlob], `thumb-${Date.now()}.jpg`, {
-						type: "image/jpeg",
-					});
-					const result = await startUpload([file]);
-					return result?.[0]?.ufsUrl || null;
-				}
-
-				// 7. Upload sur UploadThing
-				const file = new File([blob], `thumb-${Date.now()}.webp`, {
-					type: "image/webp",
-				});
-				const result = await startUpload([file]);
-
-				return result?.[0]?.ufsUrl || null;
-			} catch (error) {
-				const msg =
-					error instanceof Error
-						? error.message
-						: "Erreur génération miniature";
-				options.onError?.(msg);
-				return null;
+				return {
+					smallUrl: results?.[0]?.ufsUrl || null,
+					mediumUrl: results?.[1]?.ufsUrl || null,
+				};
 			} finally {
 				// Cleanup vidéo pour éviter memory leak
 				video.pause();
@@ -140,22 +174,31 @@ export function useAutoVideoThumbnail(
 				video.onerror = null;
 				video.onseeked = null;
 				video.oncanplay = null;
-
-				// Cleanup canvas
-				if (canvas) {
-					canvas.width = 0;
-					canvas.height = 0;
-				}
 			}
 		},
-		[startUpload, options]
+		[startUpload]
 	);
 
 	const generateThumbnail = useCallback(
-		async (videoUrl: string): Promise<string | null> => {
+		async (videoUrl: string): Promise<ThumbnailResult> => {
 			setGeneratingUrls((prev) => new Set(prev).add(videoUrl));
+
 			try {
-				return await generateThumbnailCore(videoUrl);
+				// Utiliser withRetry pour la robustesse (sauf CORS qui échouera toujours)
+				return await withRetry(() => generateThumbnailCore(videoUrl), {
+					onRetry: (attempt, error) => {
+						// console.log(`Tentative ${attempt} échouée: ${error.message}`);
+					},
+				});
+			} catch (error) {
+				const msg =
+					error instanceof CORSError
+						? error.message
+						: error instanceof Error
+							? error.message
+							: "Erreur génération miniature";
+				options.onError?.(msg);
+				return { smallUrl: null, mediumUrl: null };
 			} finally {
 				setGeneratingUrls((prev) => {
 					const next = new Set(prev);
@@ -164,7 +207,7 @@ export function useAutoVideoThumbnail(
 				});
 			}
 		},
-		[generateThumbnailCore]
+		[generateThumbnailCore, options]
 	);
 
 	return { generateThumbnail, generatingUrls };

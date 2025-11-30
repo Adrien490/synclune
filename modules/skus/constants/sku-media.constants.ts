@@ -9,6 +9,8 @@ export const GET_SKU_MEDIA_SELECT = {
 	skuId: true,
 	url: true,
 	thumbnailUrl: true,
+	thumbnailSmallUrl: true,
+	blurDataUrl: true,
 	altText: true,
 	mediaType: true,
 	isPrimary: true,

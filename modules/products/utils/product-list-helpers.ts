@@ -1,5 +1,6 @@
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import { FALLBACK_PRODUCT_IMAGE } from "@/modules/medias/constants/product-fallback-image";
+import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
 
 /**
  * Utilitaires pour les listes de produits avec types simplifiés
@@ -17,6 +18,17 @@ export type ProductStockInfo = {
 	availableSkus: number;
 	message: string;
 };
+
+/**
+ * Tronque le texte alternatif pour SEO (max 120 caractères par défaut)
+ */
+function truncateAltText(
+	text: string,
+	maxLength = PRODUCT_CAROUSEL_CONFIG.MAX_ALT_TEXT_LENGTH
+): string {
+	if (text.length <= maxLength) return text;
+	return text.slice(0, maxLength - 3) + "...";
+}
 
 /**
  * Récupère le SKU principal pour les listes (logique de sélection intelligente)
@@ -144,13 +156,14 @@ export function getPrimaryImageForList(product: ProductFromList): {
 				id: primaryImage.id,
 				url: primaryImage.url,
 				mediaType: "IMAGE",
-				alt:
+				alt: truncateAltText(
 					primaryImage.altText ||
-					`${product.title} - ${
-						primarySku.material ||
-						primarySku.color?.name ||
-						"Image principale"
-					}`,
+						`${product.title} - ${
+							primarySku.material ||
+							primarySku.color?.name ||
+							"Image principale"
+						}`
+				),
 			};
 		}
 
@@ -161,13 +174,14 @@ export function getPrimaryImageForList(product: ProductFromList): {
 				id: firstImage.id,
 				url: firstImage.url,
 				mediaType: "IMAGE",
-				alt:
+				alt: truncateAltText(
 					firstImage.altText ||
-					`${product.title} - ${
-						primarySku.material ||
-						primarySku.color?.name ||
-						"Image principale"
-					}`,
+						`${product.title} - ${
+							primarySku.material ||
+							primarySku.color?.name ||
+							"Image principale"
+						}`
+				),
 			};
 		}
 	}
@@ -185,11 +199,12 @@ export function getPrimaryImageForList(product: ProductFromList): {
 						id: skuImage.id,
 						url: skuImage.url,
 						mediaType: "IMAGE",
-						alt:
+						alt: truncateAltText(
 							skuImage.altText ||
-							`${product.title} - ${
-								sku.material || sku.color?.name || "Variante"
-							}`,
+								`${product.title} - ${
+									sku.material || sku.color?.name || "Variante"
+								}`
+						),
 					};
 				}
 			}
@@ -200,7 +215,7 @@ export function getPrimaryImageForList(product: ProductFromList): {
 	// Cette fonction ne retourne JAMAIS null pour éviter les checks null partout
 	return {
 		...FALLBACK_PRODUCT_IMAGE,
-		alt: `${product.title} - ${FALLBACK_PRODUCT_IMAGE.alt}`,
+		alt: truncateAltText(`${product.title} - ${FALLBACK_PRODUCT_IMAGE.alt}`),
 	};
 }
 

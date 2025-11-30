@@ -14,6 +14,7 @@ import Autoplay from "embla-carousel-autoplay";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
 
 interface ProductCarouselItem {
 	id: string;
@@ -38,7 +39,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 	// Plugin Autoplay (pattern officiel shadcn/ui)
 	const plugin = useRef(
 		Autoplay({
-			delay: 7000, // 7s pour permettre d'apprécier les bijoux
+			delay: PRODUCT_CAROUSEL_CONFIG.AUTOPLAY_DELAY,
 			stopOnInteraction: false, // Continue après interaction
 			stopOnMouseEnter: true, // Pause au survol
 			stopOnFocusIn: true, // Pause au focus (a11y)

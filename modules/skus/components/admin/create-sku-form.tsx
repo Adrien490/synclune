@@ -362,10 +362,11 @@ export function CreateProductVariantForm({
 
 															try {
 																const res = await startPrimaryImageUpload(files);
-																const imageUrl = res?.[0]?.serverData?.url;
-																if (imageUrl) {
+																const serverData = res?.[0]?.serverData;
+																if (serverData?.url) {
 																	field.handleChange({
-																		url: imageUrl,
+																		url: serverData.url,
+																		blurDataUrl: serverData.blurDataUrl,
 																		altText: product.title,
 																		mediaType: "IMAGE",
 																	});
@@ -599,8 +600,8 @@ export function CreateProductVariantForm({
 															const res = await startGalleryUpload(filesToUpload);
 
 															res?.forEach((uploadResult, index) => {
-																const imageUrl = uploadResult?.serverData?.url;
-																if (imageUrl) {
+																const serverData = uploadResult?.serverData;
+																if (serverData?.url) {
 																	const originalFile = filesToUpload[index];
 																	const mediaType =
 																		(fileTypeMap.get(originalFile.name) as
@@ -610,7 +611,8 @@ export function CreateProductVariantForm({
 
 																	const newMediaIndex = field.state.value.length;
 																	const newMedia = {
-																		url: imageUrl,
+																		url: serverData.url,
+																		blurDataUrl: serverData.blurDataUrl,
 																		altText: product.title,
 																		mediaType,
 																	};
@@ -618,11 +620,12 @@ export function CreateProductVariantForm({
 
 																	// Si c'est une vidéo, générer thumbnail automatiquement
 																	if (mediaType === "VIDEO") {
-																		generateThumbnail(imageUrl).then((thumbnailUrl) => {
-																			if (thumbnailUrl) {
+																		generateThumbnail(serverData.url).then((result) => {
+																			if (result.mediumUrl) {
 																				field.replaceValue(newMediaIndex, {
 																					...newMedia,
-																					thumbnailUrl,
+																					thumbnailUrl: result.mediumUrl,
+																					thumbnailSmallUrl: result.smallUrl,
 																				});
 																			}
 																		});

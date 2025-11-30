@@ -576,6 +576,7 @@ export function EditProductForm({
 																field.handleChange({
 																	url: imageUrl,
 																	thumbnailUrl: undefined,
+																	thumbnailSmallUrl: undefined,
 																	altText: form.state.values.title || undefined,
 																	mediaType: "IMAGE",
 																});
@@ -862,7 +863,8 @@ export function EditProductForm({
 																const newMediaIndex = field.state.value.length;
 																const newMedia = {
 																	url: imageUrl,
-																	thumbnailUrl: undefined,
+																	thumbnailUrl: undefined as string | undefined,
+																	thumbnailSmallUrl: undefined as string | undefined,
 																	altText: form.state.values.title || undefined,
 																	mediaType,
 																};
@@ -870,11 +872,12 @@ export function EditProductForm({
 
 																// Si c'est une vidéo, générer thumbnail automatiquement
 																if (mediaType === "VIDEO") {
-																	generateThumbnail(imageUrl).then((thumbnailUrl) => {
-																		if (thumbnailUrl) {
+																	generateThumbnail(imageUrl).then((result) => {
+																		if (result.mediumUrl) {
 																			field.replaceValue(newMediaIndex, {
 																				...newMedia,
-																				thumbnailUrl,
+																				thumbnailUrl: result.mediumUrl ?? undefined,
+																				thumbnailSmallUrl: result.smallUrl ?? undefined,
 																			});
 																		}
 																	});

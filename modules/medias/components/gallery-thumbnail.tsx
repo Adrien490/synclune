@@ -71,8 +71,8 @@ function GalleryThumbnailComponent({
 					sizes="80px"
 					quality={THUMBNAIL_IMAGE_QUALITY}
 					loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
-					placeholder={media.blurDataURL ? "blur" : "empty"}
-					blurDataURL={media.blurDataURL}
+					placeholder={media.blurDataUrl ? "blur" : "empty"}
+					blurDataURL={media.blurDataUrl}
 					onError={onError}
 				/>
 			)}
@@ -94,19 +94,22 @@ function ThumbnailVideoContent({
 	title: string;
 	onError: () => void;
 }) {
+	// Priorité: thumbnailSmallUrl (160px optimisé) > thumbnailUrl (480px) > fallback vidéo
+	const thumbnailSrc = media.thumbnailSmallUrl || media.thumbnailUrl;
+
 	return (
 		<div className="relative w-full h-full bg-linear-organic">
-			{media.thumbnailUrl ? (
+			{thumbnailSrc ? (
 				<Image
-					src={media.thumbnailUrl}
+					src={thumbnailSrc}
 					alt={media.alt || `${title} - Miniature vidéo ${index + 1}`}
 					fill
 					className="object-cover"
 					sizes="80px"
 					quality={THUMBNAIL_IMAGE_QUALITY}
 					loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
-					placeholder={media.blurDataURL ? "blur" : "empty"}
-					blurDataURL={media.blurDataURL}
+					placeholder={media.blurDataUrl ? "blur" : "empty"}
+					blurDataURL={media.blurDataUrl}
 					onError={onError}
 				/>
 			) : (

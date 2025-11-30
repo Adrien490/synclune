@@ -25,6 +25,7 @@ import { promisify } from "util";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../app/generated/prisma/client";
 import { UTApi } from "uploadthing/server";
+import { THUMBNAIL_CONFIG } from "../modules/medias/constants/media.constants";
 
 const execAsync = promisify(exec);
 
@@ -32,8 +33,16 @@ const execAsync = promisify(exec);
 // CONFIGURATION
 // ============================================================================
 
-const FRAME_TIME = 1; // Extraire la frame à 1 seconde
-const THUMBNAIL_WIDTH = 640; // Largeur max de la miniature
+// Tailles des thumbnails (centralisées depuis THUMBNAIL_CONFIG)
+const THUMBNAIL_SIZES = {
+	small: THUMBNAIL_CONFIG.SMALL.width,
+	medium: THUMBNAIL_CONFIG.MEDIUM.width,
+} as const;
+
+// Position de capture (centralisée depuis THUMBNAIL_CONFIG)
+const CAPTURE_POSITION = THUMBNAIL_CONFIG.capturePosition;
+const MAX_CAPTURE_TIME = THUMBNAIL_CONFIG.maxCaptureTime;
+
 const TEMP_DIR = join(process.cwd(), ".tmp-thumbnails");
 
 // Timeouts et limites
@@ -197,12 +206,34 @@ async function downloadVideo(url: string, outputPath: string): Promise<void> {
 }
 
 /**
- * Extrait une frame d'une vidéo avec FFmpeg et timeout
+ * Obtient la durée d'une vidéo avec FFprobe
  */
-async function extractFrame(
+async function getVideoDuration(videoPath: string): Promise<number> {
+	const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${videoPath}"`;
+
+	try {
+		const { stdout } = await execWithTimeout(command, 10000);
+		const duration = parseFloat(stdout.trim());
+		if (isNaN(duration) || duration <= 0) {
+			console.log("    Durée non détectée, utilisation de 1s par défaut");
+			return 10; // Fallback pour calculer 10% = 1s
+		}
+		return duration;
+	} catch {
+		console.log("    FFprobe échoué, utilisation de 1s par défaut");
+		return 10; // Fallback
+	}
+}
+
+/**
+ * Extrait une frame d'une vidéo avec FFmpeg à une taille spécifique
+ */
+async function extractFrameAtSize(
 	videoPath: string,
 	outputPath: string,
-	timeInSeconds: number
+	timeInSeconds: number,
+	width: number,
+	quality: number
 ): Promise<void> {
 	// Commande FFmpeg pour extraire une frame au format WebP
 	const command = [
@@ -211,16 +242,16 @@ async function extractFrame(
 		"-ss", timeInSeconds.toString(), // Position temporelle
 		"-i", `"${videoPath}"`, // Fichier d'entrée
 		"-vframes", "1", // Une seule frame
-		"-vf", `scale=${THUMBNAIL_WIDTH}:-1`, // Redimensionner en gardant le ratio
+		"-vf", `scale=${width}:-1`, // Redimensionner en gardant le ratio
 		"-c:v", "libwebp", // Codec WebP
-		"-quality", "85", // Qualité
+		"-quality", quality.toString(), // Qualité
 		`"${outputPath}"`,
 	].join(" ");
 
 	try {
 		await execWithTimeout(command, FFMPEG_TIMEOUT);
 	} catch {
-		console.log("    WebP échoué, fallback vers JPEG...");
+		console.log(`    WebP échoué pour ${width}px, fallback vers JPEG...`);
 		// Si WebP échoue, essayer avec JPEG
 		const jpegOutputPath = outputPath.replace(".webp", ".jpg");
 		const jpegCommand = [
@@ -229,7 +260,7 @@ async function extractFrame(
 			"-ss", timeInSeconds.toString(),
 			"-i", `"${videoPath}"`,
 			"-vframes", "1",
-			"-vf", `scale=${THUMBNAIL_WIDTH}:-1`,
+			"-vf", `scale=${width}:-1`,
 			"-q:v", "2",
 			`"${jpegOutputPath}"`,
 		].join(" ");
@@ -243,13 +274,29 @@ async function extractFrame(
 
 	// Valider que le fichier a été créé et n'est pas vide
 	if (!existsSync(outputPath)) {
-		throw new Error("La miniature n'a pas été créée");
+		throw new Error(`La miniature ${width}px n'a pas été créée`);
 	}
 
 	const stats = statSync(outputPath);
 	if (stats.size === 0) {
-		throw new Error("La miniature est vide (0 octets)");
+		throw new Error(`La miniature ${width}px est vide (0 octets)`);
 	}
+}
+
+/**
+ * Extrait les deux tailles de thumbnails (small et medium)
+ */
+async function extractFrames(
+	videoPath: string,
+	smallOutputPath: string,
+	mediumOutputPath: string,
+	timeInSeconds: number
+): Promise<void> {
+	// Générer les deux tailles en parallèle
+	await Promise.all([
+		extractFrameAtSize(videoPath, smallOutputPath, timeInSeconds, THUMBNAIL_SIZES.small, 80),
+		extractFrameAtSize(videoPath, mediumOutputPath, timeInSeconds, THUMBNAIL_SIZES.medium, 85),
+	]);
 }
 
 /**
@@ -270,11 +317,12 @@ async function uploadThumbnail(filePath: string, mediaId: string): Promise<strin
 }
 
 /**
- * Traite une vidéo : télécharge, extrait frame, upload, met à jour DB
+ * Traite une vidéo : télécharge, extrait frames, upload, met à jour DB
  */
 async function processVideo(media: VideoMedia, index: number, total: number): Promise<ProcessResult> {
 	const videoPath = join(TEMP_DIR, `video-${media.id}.mp4`);
-	const thumbnailPath = join(TEMP_DIR, `thumbnail-${media.id}.webp`);
+	const smallThumbnailPath = join(TEMP_DIR, `thumbnail-small-${media.id}.webp`);
+	const mediumThumbnailPath = join(TEMP_DIR, `thumbnail-medium-${media.id}.webp`);
 
 	console.log(`\n[${index + 1}/${total}] Traitement de ${media.id}...`);
 	console.log(`  URL: ${media.url.substring(0, 80)}...`);
@@ -289,20 +337,32 @@ async function processVideo(media: VideoMedia, index: number, total: number): Pr
 		console.log("  Téléchargement de la vidéo...");
 		await withRetry(() => downloadVideo(media.url, videoPath));
 
-		// 2. Extraire la frame
-		console.log("  Extraction de la miniature...");
-		await extractFrame(videoPath, thumbnailPath, FRAME_TIME);
+		// 2. Obtenir la durée et calculer la position de capture
+		const duration = await getVideoDuration(videoPath);
+		const captureTime = Math.min(MAX_CAPTURE_TIME, duration * CAPTURE_POSITION);
+		console.log(`  Durée: ${duration.toFixed(1)}s, capture à ${captureTime.toFixed(2)}s`);
 
-		// 3. Upload sur UploadThing avec retry
-		console.log("  Upload de la miniature...");
-		const thumbnailUrl = await withRetry(() => uploadThumbnail(thumbnailPath, media.id));
-		console.log(`  Miniature uploadée: ${thumbnailUrl.substring(0, 60)}...`);
+		// 3. Extraire les deux tailles de miniatures
+		console.log("  Extraction des miniatures (small + medium)...");
+		await extractFrames(videoPath, smallThumbnailPath, mediumThumbnailPath, captureTime);
 
-		// 4. Mettre à jour la base de données
+		// 4. Upload les deux miniatures sur UploadThing
+		console.log("  Upload des miniatures...");
+		const [thumbnailSmallUrl, thumbnailUrl] = await Promise.all([
+			withRetry(() => uploadThumbnail(smallThumbnailPath, `${media.id}-small`)),
+			withRetry(() => uploadThumbnail(mediumThumbnailPath, `${media.id}-medium`)),
+		]);
+		console.log(`  Small: ${thumbnailSmallUrl.substring(0, 50)}...`);
+		console.log(`  Medium: ${thumbnailUrl.substring(0, 50)}...`);
+
+		// 5. Mettre à jour la base de données avec les deux URLs
 		console.log("  Mise à jour de la base de données...");
 		await prisma.skuMedia.update({
 			where: { id: media.id },
-			data: { thumbnailUrl },
+			data: {
+				thumbnailUrl,
+				thumbnailSmallUrl,
+			},
 		});
 
 		console.log("  ✅ Traitement terminé");
@@ -315,7 +375,8 @@ async function processVideo(media: VideoMedia, index: number, total: number): Pr
 		// Nettoyer les fichiers temporaires
 		try {
 			if (existsSync(videoPath)) unlinkSync(videoPath);
-			if (existsSync(thumbnailPath)) unlinkSync(thumbnailPath);
+			if (existsSync(smallThumbnailPath)) unlinkSync(smallThumbnailPath);
+			if (existsSync(mediumThumbnailPath)) unlinkSync(mediumThumbnailPath);
 		} catch {
 			// Ignorer les erreurs de nettoyage
 		}
@@ -386,12 +447,14 @@ async function main(): Promise<void> {
 	}
 
 	try {
-		// Récupérer les vidéos sans miniature
-		console.log("\nRecherche des vidéos sans miniature...");
+		// Récupérer les vidéos sans miniature small (nouveau système à 2 tailles)
+		console.log("\nRecherche des vidéos sans miniature small...");
 		const videosWithoutThumbnail = await prisma.skuMedia.findMany({
 			where: {
 				mediaType: "VIDEO",
-				thumbnailUrl: null,
+				// Chercher les vidéos sans thumbnailSmallUrl (nouveau champ)
+				// Cela inclut les vidéos qui ont un ancien thumbnailUrl mais pas le nouveau format
+				thumbnailSmallUrl: null,
 			},
 			select: {
 				id: true,
