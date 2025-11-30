@@ -21,24 +21,24 @@ export function CollectionsDataTableSkeleton() {
 								<TableHead className="w-[5%]">
 									<Skeleton className="h-4 w-4" />
 								</TableHead>
-								{/* Image */}
-								<TableHead className="hidden md:table-cell w-[12%]">
-									<Skeleton className="h-4 w-12" />
-								</TableHead>
 								{/* Nom */}
-								<TableHead className="w-[50%] sm:w-[30%]">
+								<TableHead className="w-[40%] sm:w-[30%]">
 									<Skeleton className="h-4 w-10" />
 								</TableHead>
+								{/* Statut */}
+								<TableHead className="hidden sm:table-cell w-[15%]">
+									<Skeleton className="h-4 w-12" />
+								</TableHead>
 								{/* Description */}
-								<TableHead className="hidden xl:table-cell w-[30%]">
+								<TableHead className="hidden xl:table-cell w-[25%]">
 									<Skeleton className="h-4 w-20" />
 								</TableHead>
 								{/* Produits */}
-								<TableHead className="hidden sm:table-cell text-center w-[15%]">
+								<TableHead className="hidden sm:table-cell text-center w-[12%]">
 									<Skeleton className="h-4 w-16 mx-auto" />
 								</TableHead>
 								{/* Actions */}
-								<TableHead className="w-[20%] sm:w-[10%] text-right">
+								<TableHead className="w-[15%] sm:w-[10%] text-right">
 									<Skeleton className="h-4 w-16 ml-auto" />
 								</TableHead>
 							</TableRow>
@@ -50,13 +50,13 @@ export function CollectionsDataTableSkeleton() {
 									<TableCell>
 										<Skeleton className="h-4 w-4" />
 									</TableCell>
-									{/* Image */}
-									<TableCell className="hidden md:table-cell py-3">
-										<Skeleton className="h-20 w-20 rounded-md" />
-									</TableCell>
 									{/* Name */}
 									<TableCell>
 										<Skeleton className="h-4 w-32" />
+									</TableCell>
+									{/* Statut */}
+									<TableCell className="hidden sm:table-cell">
+										<Skeleton className="h-5 w-16 rounded-full" />
 									</TableCell>
 									{/* Description */}
 									<TableCell className="hidden xl:table-cell">

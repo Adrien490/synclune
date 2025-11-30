@@ -207,7 +207,7 @@ export async function ChangelogDialog({
 				{/* Footer */}
 				<div className="border-t pt-4 pb-6 px-6 bg-background">
 					<p className="text-sm text-center text-muted-foreground flex items-center justify-center gap-1">
-						Développé avec soin pour Synclune Bijoux
+						Développé avec soin pour Synclune
 						<SparklesIcon
 							className="size-4 text-primary"
 							aria-label="Étincelles"

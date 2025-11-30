@@ -24,8 +24,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import { AlertTriangle, FolderOpen, Package } from "lucide-react";
-import Image from "next/image";
+import { AlertTriangle, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { ViewTransition } from "react";
 import { CollectionRowActions } from "./collection-row-actions";
@@ -100,18 +99,10 @@ export async function CollectionsDataTable({
 									/>
 								</TableHead>
 								<TableHead
-									key="image"
-									scope="col"
-									role="columnheader"
-									className="hidden md:table-cell w-[12%]"
-								>
-									Image
-								</TableHead>
-								<TableHead
 									key="name"
 									scope="col"
 									role="columnheader"
-									className="w-[40%] sm:w-[25%]"
+									className="w-[40%] sm:w-[30%]"
 								>
 									Nom
 								</TableHead>
@@ -163,29 +154,6 @@ export async function CollectionsDataTable({
 												type="row"
 												collectionId={collection.id}
 											/>
-										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden md:table-cell py-3"
-										>
-											<ViewTransition name={`admin-collection-image-${collection.id}`}>
-												<div className="w-20 h-20 relative shrink-0">
-													{collection.products[0]?.product?.skus[0]?.images[0]?.url ? (
-														<Image
-															src={collection.products[0].product.skus[0].images[0].url}
-															alt={collection.products[0].product.skus[0].images[0].altText || collection.name}
-															fill
-															sizes="80px"
-															quality={80}
-															className="rounded-md object-cover"
-														/>
-													) : (
-														<div className="flex w-full h-full items-center justify-center rounded-md bg-muted">
-															<Package className="h-8 w-8 text-muted-foreground" />
-														</div>
-													)}
-												</div>
-											</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell">
 											<ViewTransition name={`admin-collection-name-${collection.id}`}>

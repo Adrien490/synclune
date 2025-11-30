@@ -52,15 +52,15 @@ export const InputField = ({
 		}
 	};
 
-	// Pour les inputs number, on affiche une chaîne vide uniquement si null ou NaN
-	// Le 0 doit pouvoir être affiché et saisi
+	// Pour les inputs number, on affiche une chaîne vide si null, NaN ou 0
 	const fieldValue = field.state.value;
-	const displayValue =
-		type === "number"
-			? fieldValue === null || (typeof fieldValue === "number" && isNaN(fieldValue))
-				? ""
-				: fieldValue
-			: fieldValue ?? "";
+	const isEmpty =
+		fieldValue === null ||
+		fieldValue === 0 ||
+		fieldValue === "0" ||
+		fieldValue === "" ||
+		(typeof fieldValue === "number" && isNaN(fieldValue));
+	const displayValue = type === "number" ? (isEmpty ? "" : fieldValue) : fieldValue ?? "";
 
 	return (
 		<Field data-invalid={field.state.meta.errors.length > 0}>
