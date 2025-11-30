@@ -6,7 +6,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
-import { useRefreshNewsletter } from "@/modules/newsletter/hooks/admin/use-refresh-newsletter";
+import { useRefreshNewsletter } from "@/modules/newsletter/hooks/use-refresh-newsletter";
 import { cn } from "@/shared/utils/cn";
 import { RefreshCw } from "lucide-react";
 

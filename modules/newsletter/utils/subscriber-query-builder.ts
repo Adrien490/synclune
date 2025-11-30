@@ -50,7 +50,10 @@ export function buildSubscriberFilterConditions(
 export function buildSubscriberWhereClause(
 	params: GetSubscribersParams
 ): Prisma.NewsletterSubscriberWhereInput {
-	const whereClause: Prisma.NewsletterSubscriberWhereInput = {};
+	const whereClause: Prisma.NewsletterSubscriberWhereInput = {
+		// Soft delete: exclure les abonnés supprimés par défaut
+		deletedAt: null,
+	};
 	const andConditions: Prisma.NewsletterSubscriberWhereInput[] = [];
 
 	if (params.filters) {

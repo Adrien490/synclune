@@ -32,9 +32,15 @@ export class GalleryErrorBoundary extends Component<
 	}
 
 	componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-		// Log pour debugging (console en dev, service de monitoring en prod)
+		// Log pour debugging
 		console.error("[GalleryErrorBoundary] Erreur capturée:", error);
 		console.error("[GalleryErrorBoundary] ComponentStack:", errorInfo.componentStack);
+
+		// TODO: Intégrer un service de monitoring en production (Sentry, etc.)
+		// Exemple avec Sentry:
+		// if (process.env.NODE_ENV === "production") {
+		//   Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
+		// }
 	}
 
 	handleRetry = () => {

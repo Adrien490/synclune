@@ -4,6 +4,50 @@ import { Prisma } from "@/app/generated/prisma/client";
 // SELECT DEFINITIONS
 // ============================================================================
 
+/**
+ * Select minimal pour les listings produits (grids, carousels)
+ * Optimisé pour réduire la taille des payloads
+ * - 1 SKU par défaut uniquement
+ * - 1 image primaire uniquement
+ * - Pas de collections
+ */
+export const PRODUCT_LIST_SELECT = {
+	id: true,
+	slug: true,
+	title: true,
+	status: true,
+	type: {
+		select: {
+			id: true,
+			slug: true,
+			label: true,
+		},
+	},
+	skus: {
+		where: { isActive: true, isDefault: true },
+		take: 1,
+		select: {
+			id: true,
+			priceInclTax: true,
+			compareAtPrice: true,
+			inventory: true,
+			images: {
+				where: { isPrimary: true },
+				take: 1,
+				select: {
+					url: true,
+					blurDataUrl: true,
+					altText: true,
+					mediaType: true,
+				},
+			},
+		},
+	},
+} as const satisfies Prisma.ProductSelect;
+
+/**
+ * Select complet pour la page détail d'un produit
+ */
 export const GET_PRODUCT_SELECT = {
 	id: true,
 	slug: true,
@@ -47,6 +91,7 @@ export const GET_PRODUCT_SELECT = {
 					id: true,
 					url: true,
 					thumbnailUrl: true,
+					blurDataUrl: true,
 					altText: true,
 					mediaType: true,
 					isPrimary: true,
@@ -114,6 +159,7 @@ export const GET_PRODUCTS_SELECT = {
 					id: true,
 					url: true,
 					thumbnailUrl: true,
+					blurDataUrl: true,
 					altText: true,
 					mediaType: true,
 					isPrimary: true,

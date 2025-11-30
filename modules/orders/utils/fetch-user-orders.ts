@@ -49,6 +49,7 @@ export async function fetchUserOrders(
 		const where: Prisma.OrderWhereInput = {
 			userId,
 			paymentStatus: PaymentStatus.PAID, // Seulement les commandes confirmées et payées
+			deletedAt: null, // Soft delete: exclure les commandes supprimées
 		};
 
 		// Construire l'orderBy

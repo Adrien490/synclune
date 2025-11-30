@@ -51,7 +51,7 @@ function GalleryThumbnailComponent({
 				className
 			)}
 			aria-label={`Voir photo ${index + 1}${isActive ? " (sélectionnée)" : ""}`}
-			aria-current={isActive}
+			aria-current={isActive ? "true" : undefined}
 		>
 			{hasError ? (
 				<MediaErrorFallback type="image" size="small" />
@@ -71,6 +71,8 @@ function GalleryThumbnailComponent({
 					sizes="80px"
 					quality={THUMBNAIL_IMAGE_QUALITY}
 					loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
+					placeholder={media.blurDataURL ? "blur" : "empty"}
+					blurDataURL={media.blurDataURL}
 					onError={onError}
 				/>
 			)}
@@ -103,6 +105,8 @@ function ThumbnailVideoContent({
 					sizes="80px"
 					quality={THUMBNAIL_IMAGE_QUALITY}
 					loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
+					placeholder={media.blurDataURL ? "blur" : "empty"}
+					blurDataURL={media.blurDataURL}
 					onError={onError}
 				/>
 			) : (

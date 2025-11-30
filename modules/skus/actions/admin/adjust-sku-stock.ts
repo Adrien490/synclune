@@ -50,10 +50,8 @@ export async function adjustSkuStock(
 			};
 		}
 
-		// 4. Calculer le nouveau stock
+		// 4. Vérifier que le stock ne devient pas négatif
 		const newInventory = sku.inventory + adjustment;
-
-		// 5. Vérifier que le stock ne devient pas négatif
 		if (newInventory < 0) {
 			return {
 				status: ActionStatus.ERROR,
@@ -61,10 +59,15 @@ export async function adjustSkuStock(
 			};
 		}
 
-		// 6. Mettre à jour le stock
+		// 5. Mettre à jour le stock avec opération atomique (évite les race conditions)
 		await prisma.productSku.update({
 			where: { id: skuId },
-			data: { inventory: newInventory },
+			data: {
+				inventory:
+					adjustment > 0
+						? { increment: adjustment }
+						: { decrement: Math.abs(adjustment) },
+			},
 		});
 
 		// 7. Revalider les pages concernées

@@ -36,6 +36,18 @@ if (process.env.NODE_ENV !== "production") {
 export { prisma };
 
 /**
+ * Helper pour filtrer les enregistrements soft-deleted
+ * À utiliser dans les clauses `where` des requêtes Prisma
+ *
+ * @example
+ * import { notDeleted } from "@/shared/lib/prisma";
+ * const users = await prisma.user.findMany({
+ *   where: { ...notDeleted, role: "USER" }
+ * });
+ */
+export const notDeleted = { deletedAt: null } as const;
+
+/**
  * Helper pour soft delete - Usage recommandé
  *
  * @example
@@ -48,4 +60,7 @@ export const softDelete = {
   order: (id: string) => prisma.order.update({ where: { id }, data: { deletedAt: new Date() } }),
   user: (id: string) => prisma.user.update({ where: { id }, data: { deletedAt: new Date() } }),
   refund: (id: string) => prisma.refund.update({ where: { id }, data: { deletedAt: new Date() } }),
+  orderNote: (id: string) => prisma.orderNote.update({ where: { id }, data: { deletedAt: new Date() } }),
+  discountUsage: (id: string) => prisma.discountUsage.update({ where: { id }, data: { deletedAt: new Date() } }),
+  newsletterSubscriber: (id: string) => prisma.newsletterSubscriber.update({ where: { id }, data: { deletedAt: new Date() } }),
 };

@@ -109,12 +109,11 @@ export async function exportInvoices(
 		}
 
 		// Filtre de statut
-		// Note : Avec la simplification, on n'a plus que PENDING et GENERATED
-		// On exporte uniquement les factures GENERATED (finalisees)
+		// On exporte uniquement les factures finalisées (FINALIZED ou PAID)
 		if (params.invoiceStatus === "sent" || params.invoiceStatus === "archived" || params.invoiceStatus === "all") {
-			whereClause.invoiceStatus = "GENERATED";
+			whereClause.invoiceStatus = { in: ["FINALIZED", "PAID"] };
 		} else {
-			whereClause.invoiceStatus = "GENERATED";
+			whereClause.invoiceStatus = { in: ["FINALIZED", "PAID"] };
 		}
 
 		// Recuperer les commandes avec leurs factures
@@ -179,7 +178,9 @@ export async function exportInvoices(
 
 				// Statut
 				const statusLabel =
-					order.invoiceStatus === "GENERATED" ? "Générée" : "En attente";
+					order.invoiceStatus === "FINALIZED" || order.invoiceStatus === "PAID"
+						? "Finalisée"
+						: "En attente";
 
 				// Echapper les champs avec virgules
 				const invoiceNumber = order.invoiceNumber || "N/A";

@@ -77,7 +77,10 @@ export async function fetchUser(userId: string): Promise<GetUserReturn> {
 
 	try {
 		const user = await prisma.user.findUnique({
-			where: { id: userId },
+			where: {
+				id: userId,
+				deletedAt: null, // Soft delete: exclure les utilisateurs supprimés
+			},
 			select: GET_USER_SELECT,
 		});
 

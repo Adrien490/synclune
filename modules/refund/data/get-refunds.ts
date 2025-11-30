@@ -37,7 +37,10 @@ export type {
 function buildRefundWhereClause(
 	params: GetRefundsParams
 ): Prisma.RefundWhereInput {
-	const where: Prisma.RefundWhereInput = {};
+	const where: Prisma.RefundWhereInput = {
+		// Soft delete: exclure les remboursements supprimés par défaut
+		deletedAt: null,
+	};
 	const AND: Prisma.RefundWhereInput[] = [];
 
 	// Recherche textuelle (orderNumber, customerEmail, customerName)

@@ -239,74 +239,82 @@ async function fetchContextualRelatedProducts(
 			},
 		};
 
-		// STRATÉGIE 1 : Même collection(s)
 		const currentCollectionIds = currentProduct.collections.map((c) => c.collectionId);
-		if (currentCollectionIds.length > 0) {
-			const sameCollectionProducts = await prisma.product.findMany({
-				where: {
-					...baseWhere,
-					collections: {
-						some: { collectionId: { in: currentCollectionIds } },
-					},
-				},
-				select: RELATED_PRODUCTS_SELECT,
-				orderBy: { createdAt: "desc" },
-				take: RELATED_PRODUCTS_STRATEGY.SAME_COLLECTION,
-			});
-			addProducts(sameCollectionProducts, RELATED_PRODUCTS_STRATEGY.SAME_COLLECTION);
-		}
 
-		// STRATÉGIE 2 : Même type
-		if (currentProduct.typeId && relatedProducts.length < limit) {
-			const sameTypeProducts = await prisma.product.findMany({
-				where: {
-					...baseWhere,
-					typeId: currentProduct.typeId,
-					...(currentCollectionIds.length > 0
-						? { NOT: { collections: { some: { collectionId: { in: currentCollectionIds } } } } }
-						: {}),
-				},
-				select: RELATED_PRODUCTS_SELECT,
-				orderBy: { createdAt: "desc" },
-				take: RELATED_PRODUCTS_STRATEGY.SAME_TYPE,
-			});
-			addProducts(sameTypeProducts, RELATED_PRODUCTS_STRATEGY.SAME_TYPE);
-		}
-
-		// STRATÉGIE 3 : Couleurs similaires
-		if (currentColorIds.length > 0 && relatedProducts.length < limit) {
-			const similarColorProducts = await prisma.product.findMany({
-				where: {
-					...baseWhere,
-					skus: {
-						some: {
-							isActive: true,
-							inventory: { gt: 0 },
-							colorId: { in: currentColorIds },
+		// Lancer toutes les requêtes en parallèle pour optimiser les performances
+		const [
+			sameCollectionProducts,
+			sameTypeProducts,
+			similarColorProducts,
+			bestSellers,
+		] = await Promise.all([
+			// STRATÉGIE 1 : Même collection(s)
+			currentCollectionIds.length > 0
+				? prisma.product.findMany({
+						where: {
+							...baseWhere,
+							collections: {
+								some: { collectionId: { in: currentCollectionIds } },
+							},
 						},
-					},
-					typeId: currentProduct.typeId
-						? { not: currentProduct.typeId }
-						: undefined,
-				},
-				select: RELATED_PRODUCTS_SELECT,
-				orderBy: { createdAt: "desc" },
-				take: RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS,
-			});
-			addProducts(similarColorProducts, RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS);
-		}
+						select: RELATED_PRODUCTS_SELECT,
+						orderBy: { createdAt: "desc" },
+						take: RELATED_PRODUCTS_STRATEGY.SAME_COLLECTION,
+					})
+				: Promise.resolve([]),
 
-		// STRATÉGIE 4 : Best-sellers pour compléter
-		if (relatedProducts.length < limit) {
-			const remainingCount = limit - relatedProducts.length;
-			const bestSellers = await prisma.product.findMany({
+			// STRATÉGIE 2 : Même type
+			currentProduct.typeId
+				? prisma.product.findMany({
+						where: {
+							...baseWhere,
+							typeId: currentProduct.typeId,
+							...(currentCollectionIds.length > 0
+								? { NOT: { collections: { some: { collectionId: { in: currentCollectionIds } } } } }
+								: {}),
+						},
+						select: RELATED_PRODUCTS_SELECT,
+						orderBy: { createdAt: "desc" },
+						take: RELATED_PRODUCTS_STRATEGY.SAME_TYPE,
+					})
+				: Promise.resolve([]),
+
+			// STRATÉGIE 3 : Couleurs similaires
+			currentColorIds.length > 0
+				? prisma.product.findMany({
+						where: {
+							...baseWhere,
+							skus: {
+								some: {
+									isActive: true,
+									inventory: { gt: 0 },
+									colorId: { in: currentColorIds },
+								},
+							},
+							typeId: currentProduct.typeId
+								? { not: currentProduct.typeId }
+								: undefined,
+						},
+						select: RELATED_PRODUCTS_SELECT,
+						orderBy: { createdAt: "desc" },
+						take: RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS,
+					})
+				: Promise.resolve([]),
+
+			// STRATÉGIE 4 : Best-sellers pour compléter
+			prisma.product.findMany({
 				where: baseWhere,
 				select: RELATED_PRODUCTS_SELECT,
 				orderBy: { createdAt: "desc" },
-				take: remainingCount + 5,
-			});
-			addProducts(bestSellers, remainingCount);
-		}
+				take: limit + 5,
+			}),
+		]);
+
+		// Combiner les résultats par priorité
+		addProducts(sameCollectionProducts, RELATED_PRODUCTS_STRATEGY.SAME_COLLECTION);
+		addProducts(sameTypeProducts, RELATED_PRODUCTS_STRATEGY.SAME_TYPE);
+		addProducts(similarColorProducts, RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS);
+		addProducts(bestSellers, limit - relatedProducts.length);
 
 		return relatedProducts;
 	} catch {

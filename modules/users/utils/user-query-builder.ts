@@ -105,7 +105,10 @@ export function buildUserFilterConditions(
 export function buildUserWhereClause(
 	params: GetUsersParams
 ): Prisma.UserWhereInput {
-	const whereClause: Prisma.UserWhereInput = {};
+	const whereClause: Prisma.UserWhereInput = {
+		// Soft delete: exclure les utilisateurs supprimés par défaut
+		deletedAt: null,
+	};
 	const andConditions: Prisma.UserWhereInput[] = [];
 	const filters = params.filters ?? {};
 

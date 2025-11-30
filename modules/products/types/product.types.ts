@@ -5,6 +5,7 @@ import {
 	GET_PRODUCT_SELECT,
 	GET_PRODUCTS_SELECT,
 	GET_PRODUCTS_SORT_FIELDS,
+	PRODUCT_LIST_SELECT,
 } from "../constants/product.constants";
 import {
 	getProductSchema,
@@ -88,6 +89,14 @@ export type GetProductsReturn = {
 
 export type Product = Prisma.ProductGetPayload<{
 	select: typeof GET_PRODUCTS_SELECT;
+}>;
+
+/**
+ * Type minimal pour les listings produits (grids, carousels)
+ * Utiliser avec PRODUCT_LIST_SELECT
+ */
+export type ProductListItem = Prisma.ProductGetPayload<{
+	select: typeof PRODUCT_LIST_SELECT;
 }>;
 
 // ============================================================================

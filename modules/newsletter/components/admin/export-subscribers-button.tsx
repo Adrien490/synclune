@@ -12,7 +12,7 @@ import {
 import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, Download, Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { useExportSubscribers } from "@/modules/newsletter/hooks/admin/use-export-subscribers";
+import { useExportSubscribers } from "@/modules/newsletter/hooks/use-export-subscribers";
 
 /**
  * Bouton d'export des abonnés newsletter avec menu déroulant

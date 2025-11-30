@@ -28,7 +28,7 @@ import {
 	UserCheck,
 } from "lucide-react";
 import { useState } from "react";
-import { useSubscriberActions } from "@/modules/newsletter/hooks/admin/use-subscriber-actions";
+import { useSubscriberActions } from "@/modules/newsletter/hooks/use-subscriber-actions";
 
 interface SubscriberRowActionsProps {
 	subscriber: {

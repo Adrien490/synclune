@@ -7,7 +7,7 @@ import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { AlertCircle, CheckCircle2, Send } from "lucide-react";
-import { useSendNewsletterEmail } from "@/modules/newsletter/hooks/admin/use-send-newsletter-email";
+import { useSendNewsletterEmail } from "@/modules/newsletter/hooks/use-send-newsletter-email";
 
 export function SendNewsletterEmailForm() {
 	const { action, isPending, state } = useSendNewsletterEmail();

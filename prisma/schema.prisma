@@ -26,12 +26,17 @@ model User {
   name             String?   @db.VarChar(100)
   email            String    @unique @db.VarChar(255)
   emailVerified    Boolean   @default(false)
-  image            String?
+  image            String?   @db.VarChar(2048)
   stripeCustomerId String?   @unique
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @default(now()) @updatedAt
   deletedAt        DateTime?
   suspendedAt      DateTime? // Date de suspension du compte
+
+  // Consentement RGPD
+  termsAcceptedAt         DateTime? // Date d'acceptation des CGV
+  privacyPolicyAcceptedAt DateTime? // Date d'acceptation de la politique de confidentialité
+  signupIpAddress         String?   @db.VarChar(45) // IP lors de l'inscription (IPv6 max 45 chars)
 
   sessions                  Session[]
   accounts                  Account[]
@@ -41,12 +46,14 @@ model User {
   wishlist                  Wishlist?
   discountUsages            DiscountUsage[]
   stockNotificationRequests StockNotificationRequest[]
+  newsletterSubscription    NewsletterSubscriber?
 
   @@index([deletedAt])
   @@index([suspendedAt])
   @@index([role, id])
   @@index([emailVerified, id])
   @@index([createdAt, id])
+  @@index([deletedAt, role]) // Index composite pour queries admin filtrant utilisateurs actifs par rôle
 }
 
 model Session {
@@ -303,7 +310,8 @@ model ProductSku {
 
   // 🔒 CONTRAINTE : Garantir unicité des combinaisons produit/couleur/taille/matériau
   // Évite les doublons de variantes (ex: 2 SKUs "Bague Rouge Taille 52 Argent")
-  @@unique([productId, colorId, size, material])
+  // Note: Le champ `material` (String) est déprécié, utiliser `materialId` (FK)
+  @@unique([productId, colorId, size, materialId])
   // Indexes optimisés pour requêtes fréquentes
   @@index([productId, isActive])
   @@index([isActive, inventory, updatedAt(sort: Desc)])
@@ -318,8 +326,9 @@ model SkuMedia {
   skuId String
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
 
-  url          String
-  thumbnailUrl String? // URL de la miniature pour les vidéos (générée côté client via Canvas)
+  url          String  @db.VarChar(2048)
+  thumbnailUrl String? @db.VarChar(2048) // URL de la miniature pour les vidéos (générée côté client via Canvas)
+  blurDataUrl  String? @db.Text          // Base64 blur placeholder pour chargement progressif (~200 bytes)
   altText      String?
   mediaType    MediaType @default(IMAGE)
   isPrimary    Boolean   @default(false)
@@ -441,7 +450,6 @@ enum InvoiceStatus {
   UNCOLLECTIBLE  // Facture marquée comme irrécupérable
   VOID           // Facture annulée
   PAYMENT_FAILED // Échec de paiement de la facture
-  GENERATED      // @deprecated - Utiliser FINALIZED à la place
 }
 
 enum PaymentMethod {
@@ -588,12 +596,14 @@ model Order {
   @@index([customerEmail]) // Recherche support client
   @@index([fiscalYear]) // Conformité légale
   @@index([deletedAt]) // Soft delete filter
+  @@index([deletedAt, status, createdAt]) // Index composite pour listings admin (soft-delete + status)
 
   // === INDEXES STRIPE (Réconciliation & Support) ===
   @@index([stripePaymentIntentId])
   @@index([stripeCheckoutSessionId])
   @@index([stripeCustomerId])
   @@index([createdAt(sort: Desc)]) // Listing commandes récentes
+  @@index([shippingPostalCode]) // Analyse régionale livraison
 }
 
 model OrderItem {
@@ -655,8 +665,11 @@ model OrderNote {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete pour audit trail
 
   @@index([orderId, createdAt(sort: Desc)])
+  @@index([authorId, createdAt(sort: Desc)]) // Historique activité admin
+  @@index([deletedAt])
 }
 
 // ============================================================================
@@ -813,11 +826,13 @@ model DiscountUsage {
   amountApplied Int // En centimes
 
   createdAt DateTime @default(now())
+  deletedAt DateTime? // Soft delete pour audit trail comptable
 
   @@index([discountId])
   @@index([userId])
   @@index([orderId])
   @@index([discountId, userId]) // Pour vérifier usage par utilisateur
+  @@index([deletedAt])
 }
 
 // ============================================================================
@@ -829,6 +844,10 @@ model NewsletterSubscriber {
   email            String  @unique
   isActive         Boolean @default(false) // ⚠️ Changement : false par défaut (activation après confirmation email)
   unsubscribeToken String  @unique @default(cuid())
+
+  // Lien optionnel avec un compte utilisateur
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Double opt-in : Confirmation email obligatoire
   emailVerified      Boolean   @default(false) // true après clic sur lien confirmation
@@ -847,9 +866,12 @@ model NewsletterSubscriber {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete pour RGPD
 
   @@index([isActive, createdAt])
   @@index([emailVerified, isActive])
+  @@index([userId])
+  @@index([deletedAt])
 }
 
 // ============================================================================
@@ -903,4 +925,5 @@ model StockNotificationRequest {
   @@index([email])
   @@index([userId])
   @@index([status, createdAt])
+  @@index([email, createdAt(sort: Desc)]) // Historique demandes par email
 }

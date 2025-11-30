@@ -76,9 +76,10 @@ export async function bulkDeleteOrders(
 			};
 		}
 
-		// Supprimer les commandes éligibles
-		await prisma.order.deleteMany({
+		// Soft delete des commandes éligibles (Art. L123-22 Code de Commerce - conservation 10 ans)
+		await prisma.order.updateMany({
 			where: { id: { in: deletableIds } },
+			data: { deletedAt: new Date() },
 		});
 
 		revalidatePath("/admin/ventes/commandes");

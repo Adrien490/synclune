@@ -24,9 +24,12 @@ export async function getOrderNotes(
 			return { error: adminCheck.error.message };
 		}
 
-		// 2. Récupérer les notes
+		// 2. Récupérer les notes (exclure les notes soft-deleted)
 		const notes = await prisma.orderNote.findMany({
-			where: { orderId },
+			where: {
+				orderId,
+				deletedAt: null,
+			},
 			orderBy: { createdAt: "desc" },
 			select: {
 				id: true,

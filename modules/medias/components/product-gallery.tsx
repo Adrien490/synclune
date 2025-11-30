@@ -11,10 +11,10 @@ import {
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { cn } from "@/shared/utils/cn";
 import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useRef } from "react";
+import { Suspense, useCallback, useMemo, useRef } from "react";
 import { buildGallery } from "@/modules/medias/utils/build-gallery";
 import { GalleryErrorBoundary } from "@/modules/medias/components/gallery-error-boundary";
 import { MediaRenderer } from "@/modules/medias/components/media-renderer";
@@ -43,13 +43,26 @@ interface ProductGalleryProps {
 }
 
 /**
- * Galerie produit avec Error Boundary
+ * Skeleton de chargement pour la galerie
+ */
+function GalleryLoadingSkeleton() {
+	return (
+		<div className="w-full">
+			<div className="aspect-square rounded-3xl bg-muted animate-pulse" />
+		</div>
+	);
+}
+
+/**
+ * Galerie produit avec Error Boundary et Suspense
  * Wrapper qui capture les erreurs et affiche un fallback gracieux
  */
 export function ProductGallery(props: ProductGalleryProps) {
 	return (
 		<GalleryErrorBoundary>
-			<ProductGalleryContent {...props} />
+			<Suspense fallback={<GalleryLoadingSkeleton />}>
+				<ProductGalleryContent {...props} />
+			</Suspense>
 		</GalleryErrorBoundary>
 	);
 }
@@ -63,9 +76,10 @@ export function ProductGallery(props: ProductGalleryProps) {
 function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 	const galleryRef = useRef<HTMLDivElement>(null);
 	const searchParams = useSearchParams();
+	const prefersReducedMotion = useReducedMotion();
 
 	// Calcul dynamique des images selon les variants sélectionnés
-	const images: ProductMedia[] = useMemo(() => {
+	const safeImages: ProductMedia[] = useMemo(() => {
 		return buildGallery({
 			product,
 			selectedVariants: {
@@ -75,9 +89,6 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 			},
 		});
 	}, [product, searchParams]);
-
-	// Sécurité additionnelle: garantir que images n'est jamais undefined
-	const safeImages = images || [];
 
 	// Conversion des médias en slides pour la lightbox (images + vidéos)
 	// Génère les URLs Next.js optimisées pour les images
@@ -206,7 +217,6 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 					role="region"
 					aria-label={`Galerie d'images pour ${title}`}
 					aria-describedby="gallery-instructions"
-					tabIndex={0}
 				>
 					{/* Annonce dynamique pour lecteurs d'écran */}
 					<div className="sr-only" aria-live="polite" aria-atomic="true">
@@ -289,17 +299,17 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 							<AnimatePresence mode="wait">
 								<motion.div
 									key={current.id}
-									initial={{ opacity: 0, scale: 0.98 }}
+									initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.98 }}
 									animate={{
 										opacity: 1,
 										scale: 1,
 										x: swipeOffset,
 									}}
-									exit={{ opacity: 0, scale: 1.02 }}
+									exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 1.02 }}
 									transition={{
-										duration: isSwiping ? 0 : 0.25,
+										duration: prefersReducedMotion ? 0 : (isSwiping ? 0 : 0.25),
 										ease: "easeOut",
-										x: { duration: isSwiping ? 0 : 0.3, ease: "easeOut" }
+										x: { duration: prefersReducedMotion ? 0 : (isSwiping ? 0 : 0.3), ease: "easeOut" }
 									}}
 									className="absolute inset-0"
 									style={{ willChange: isSwiping ? "transform" : "auto" }}

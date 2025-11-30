@@ -36,11 +36,12 @@ export function useGalleryNavigation({
 	const searchParamsRef = useRef(searchParams);
 	searchParamsRef.current = searchParams;
 
-	// Source de vérité : l'URL
-	const selectedIndex = totalImages > 0 ? Math.max(
-		0,
-		Math.min(totalImages - 1, parseInt(searchParams.get("gallery") || "0", 10))
-	) : 0;
+	// Source de vérité : l'URL (avec validation NaN)
+	const rawGalleryParam = searchParams.get("gallery");
+	const parsedIndex = rawGalleryParam ? parseInt(rawGalleryParam, 10) : 0;
+	const selectedIndex = totalImages > 0
+		? Math.max(0, Math.min(totalImages - 1, Number.isNaN(parsedIndex) ? 0 : parsedIndex))
+		: 0;
 
 	// État optimiste pour navigation fluide
 	const [optimisticIndex, setOptimisticIndex] = useOptimistic(

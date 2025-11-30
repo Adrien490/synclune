@@ -3,6 +3,7 @@ import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/shared/utils/get-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
+import { getPlaiceholder } from "plaiceholder";
 
 // Vérifier que le token UploadThing est configuré au démarrage
 if (!process.env.UPLOADTHING_TOKEN) {
@@ -64,6 +65,25 @@ function validateFileSize(
 	}
 }
 
+/**
+ * Génère un blurDataURL (base64) pour une image uploadée
+ * Utilisé pour le placeholder blur lors du chargement progressif
+ * @returns base64 string ou undefined si échec
+ */
+async function generateBlurDataUrl(imageUrl: string): Promise<string | undefined> {
+	try {
+		const response = await fetch(imageUrl);
+		if (!response.ok) return undefined;
+
+		const buffer = Buffer.from(await response.arrayBuffer());
+		const { base64 } = await getPlaiceholder(buffer, { size: 10 });
+		return base64;
+	} catch (error) {
+		console.warn("Failed to generate blur placeholder:", error);
+		return undefined;
+	}
+}
+
 const f = createUploadthing({
 	/**
 	 * Formatter d'erreur personnalisé pour envoyer des messages clairs au client
@@ -116,12 +136,12 @@ export const ourFileRouter = {
 			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
-			// console.log("Collection media upload complete:", {
-			// 	url: file.ufsUrl,
-			// 	uploadedBy: metadata.userId,
-			// });
+			// Générer le blur placeholder pour les images de collection
+			const blurDataUrl = await generateBlurDataUrl(file.ufsUrl);
+
 			return {
 				url: file.ufsUrl,
+				blurDataUrl,
 				uploadedBy: metadata.userId,
 			};
 		}),
@@ -177,14 +197,13 @@ export const ourFileRouter = {
 			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
-			// console.log("Catalog media upload complete:", {
-			// 	url: file.ufsUrl,
-			// 	uploadedBy: metadata.userId,
-			// 	size: file.size,
-			// 	type: file.type,
-			// });
+			// Générer le blur placeholder uniquement pour les images
+			const isImage = file.type.startsWith("image/");
+			const blurDataUrl = isImage ? await generateBlurDataUrl(file.ufsUrl) : undefined;
+
 			return {
 				url: file.ufsUrl,
+				blurDataUrl,
 				uploadedBy: metadata.userId,
 			};
 		}),

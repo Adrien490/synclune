@@ -9,8 +9,8 @@ import Image from "next/image";
 import { ViewTransition } from "react";
 import { memo } from "react";
 
-// Constantes
-const MAIN_IMAGE_QUALITY = 95;
+// Constantes - quality 85 offre un bon compromis taille/qualité (-50% vs 95)
+const MAIN_IMAGE_QUALITY = 85;
 
 interface MediaRendererProps {
 	media: ProductMedia;
@@ -56,7 +56,7 @@ function MediaRendererComponent({
 					loop
 					playsInline
 					controls
-					preload="auto"
+					preload="metadata"
 					poster={media.thumbnailUrl || undefined}
 					aria-label={media.alt || `${title} - Vidéo ${index + 1}`}
 					onError={onError}
@@ -83,9 +83,11 @@ function MediaRendererComponent({
 			alt={media.alt || PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1)}
 			fill
 			className="object-cover"
-			priority={isFirst}
+			preload={isFirst}
 			quality={MAIN_IMAGE_QUALITY}
 			sizes="(max-width: 768px) 100vw, 60vw"
+			placeholder={media.blurDataURL ? "blur" : "empty"}
+			blurDataURL={media.blurDataURL}
 			onError={onError}
 			draggable={false}
 		/>

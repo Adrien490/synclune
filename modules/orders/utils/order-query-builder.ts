@@ -118,7 +118,10 @@ export function buildOrderFilterConditions(
 export function buildOrderWhereClause(
 	params: GetOrdersParams
 ): Prisma.OrderWhereInput {
-	const whereClause: Prisma.OrderWhereInput = {};
+	const whereClause: Prisma.OrderWhereInput = {
+		// Soft delete: exclure les commandes supprimées par défaut
+		deletedAt: null,
+	};
 	const andConditions: Prisma.OrderWhereInput[] = [];
 
 	// Toujours appliquer les filtres (inclut l'exclusion par défaut des PENDING)

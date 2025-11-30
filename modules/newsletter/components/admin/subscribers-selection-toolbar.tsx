@@ -24,7 +24,7 @@ import {
 	useBulkUnsubscribeSubscribers,
 	useBulkResubscribeSubscribers,
 	useBulkDeleteSubscribers,
-} from "@/modules/newsletter/hooks/admin/use-bulk-subscriber-actions";
+} from "@/modules/newsletter/hooks/use-bulk-subscriber-actions";
 import {
 	CheckCircle2,
 	Loader2,

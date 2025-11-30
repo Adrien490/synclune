@@ -34,7 +34,10 @@ async function fetchRefund(
 ): Promise<GetRefundReturn> {
 	try {
 		const refund = await prisma.refund.findUnique({
-			where: { id: params.id },
+			where: {
+				id: params.id,
+				deletedAt: null, // Soft delete: exclure les remboursements supprimés
+			},
 			select: GET_REFUND_SELECT,
 		});
 

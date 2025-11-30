@@ -58,6 +58,7 @@ export async function fetchOrder(
 
 	const where: Prisma.OrderWhereInput = {
 		orderNumber: params.orderNumber,
+		deletedAt: null, // Soft delete: exclure les commandes supprimées
 	};
 
 	if (!context.admin && context.userId) {

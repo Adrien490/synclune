@@ -25,36 +25,39 @@ export function isImage(mediaType: MediaType): boolean {
 
 /**
  * Obtient le type MIME d'une vidéo à partir de son URL
+ * Utilise une regex pour extraire l'extension en fin d'URL (avant query string)
  * @param url - L'URL de la vidéo
  * @returns Le type MIME de la vidéo
  */
 export function getVideoMimeType(url: string): string {
-	const urlLower = url.toLowerCase();
+	// Extraire l'extension de fichier (avant query params)
+	const extensionMatch = url.toLowerCase().match(/\.(\w+)(?:\?|#|$)/);
+	const extension = extensionMatch?.[1];
 
-	if (urlLower.includes(".webm")) return "video/webm";
-	if (urlLower.includes(".ogg")) return "video/ogg";
-	if (urlLower.includes(".mov")) return "video/quicktime";
-	if (urlLower.includes(".avi")) return "video/x-msvideo";
-	if (urlLower.includes(".mkv")) return "video/x-matroska";
-
-	// Default pour .mp4 et autres
-	return "video/mp4";
+	switch (extension) {
+		case "webm":
+			return "video/webm";
+		case "ogg":
+		case "ogv":
+			return "video/ogg";
+		case "mov":
+			return "video/quicktime";
+		case "avi":
+			return "video/x-msvideo";
+		case "mkv":
+			return "video/x-matroska";
+		default:
+			return "video/mp4";
+	}
 }
 
 /**
- * Génère une liste de sources vidéo avec fallback
- * Utile pour compatibilité multi-navigateurs
+ * Génère une liste de sources vidéo
+ * Note: Ne génère pas de fallback WebM car les CDN (UploadThing, etc.)
+ * ne créent pas automatiquement de versions alternatives
  * @param url - L'URL principale de la vidéo
  * @returns Array de sources avec types MIME
  */
 export function getVideoSources(url: string): Array<{ src: string; type: string }> {
-	const sources = [{ src: url, type: getVideoMimeType(url) }];
-
-	// Si c'est un MP4, suggérer WebM en fallback (meilleure compression)
-	if (url.includes(".mp4")) {
-		const webmUrl = url.replace(".mp4", ".webm");
-		sources.unshift({ src: webmUrl, type: "video/webm" });
-	}
-
-	return sources;
+	return [{ src: url, type: getVideoMimeType(url) }];
 }

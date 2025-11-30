@@ -152,21 +152,31 @@ export async function getStockNotificationsAdmin(
 		);
 
 		// Build where clause
-		const where: Prisma.StockNotificationRequestWhereInput = {};
+		// Exclure les notifications d'utilisateurs soft-deleted (mais garder les anonymes)
+		const where: Prisma.StockNotificationRequestWhereInput = {
+			OR: [
+				{ user: null }, // Visiteurs anonymes
+				{ user: { deletedAt: null } }, // Utilisateurs actifs
+			],
+		};
 
 		if (filters?.status) {
 			where.status = filters.status;
 		}
 
 		if (filters?.search) {
-			where.OR = [
-				{ email: { contains: filters.search, mode: "insensitive" } },
+			where.AND = [
 				{
-					sku: {
-						product: {
-							title: { contains: filters.search, mode: "insensitive" },
+					OR: [
+						{ email: { contains: filters.search, mode: "insensitive" } },
+						{
+							sku: {
+								product: {
+									title: { contains: filters.search, mode: "insensitive" },
+								},
+							},
 						},
-					},
+					],
 				},
 			];
 		}
