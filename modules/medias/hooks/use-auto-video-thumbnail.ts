@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useUploadThing } from "@/modules/medias/utils/uploadthing";
 import { THUMBNAIL_CONFIG } from "../constants/media.constants";
 import { withRetry, CORSError } from "../utils/retry";
@@ -91,6 +91,8 @@ async function captureFrame(
 export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}) {
 	const { startUpload } = useUploadThing("catalogMedia");
 	const [generatingUrls, setGeneratingUrls] = useState<Set<string>>(new Set());
+	// Ref pour éviter les race conditions (state peut être stale dans useCallback)
+	const generatingUrlsRef = useRef<Set<string>>(new Set());
 
 	const generateThumbnailCore = useCallback(
 		async (videoUrl: string): Promise<ThumbnailResult> => {
@@ -181,6 +183,13 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 
 	const generateThumbnail = useCallback(
 		async (videoUrl: string): Promise<ThumbnailResult> => {
+			// Protection contre les appels dupliqués (race condition)
+			if (generatingUrlsRef.current.has(videoUrl)) {
+				return { smallUrl: null, mediumUrl: null };
+			}
+
+			// Marquer comme en cours (ref + state)
+			generatingUrlsRef.current.add(videoUrl);
 			setGeneratingUrls((prev) => new Set(prev).add(videoUrl));
 
 			try {
@@ -200,6 +209,8 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 				options.onError?.(msg);
 				return { smallUrl: null, mediumUrl: null };
 			} finally {
+				// Cleanup ref + state
+				generatingUrlsRef.current.delete(videoUrl);
 				setGeneratingUrls((prev) => {
 					const next = new Set(prev);
 					next.delete(videoUrl);

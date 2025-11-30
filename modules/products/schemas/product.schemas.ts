@@ -114,12 +114,56 @@ export const getProductsSchema = z.object({
 // ============================================================================
 
 /**
+ * Domaines autorises pour les URLs de medias (securite)
+ * Seuls les fichiers uploades via UploadThing sont acceptes
+ */
+const ALLOWED_MEDIA_DOMAINS = [
+	"utfs.io",
+	"uploadthing.com",
+	"uploadthing-prod.s3.us-west-2.amazonaws.com",
+];
+
+/**
+ * Verifie si une URL provient d'un domaine autorise
+ */
+const isAllowedMediaDomain = (url: string): boolean => {
+	try {
+		const hostname = new URL(url).hostname;
+		return ALLOWED_MEDIA_DOMAINS.some(
+			(domain) => hostname === domain || hostname.endsWith(`.${domain}`)
+		);
+	} catch {
+		return false;
+	}
+};
+
+/**
  * Schema pour un media (image ou video)
+ * Securise: n'accepte que les URLs provenant d'UploadThing
  */
 const imageSchema = z.object({
-	url: z.url({ message: "L'URL du media doit être valide" }),
-	thumbnailUrl: z.url().optional().nullable(), // URL de la miniature pour les videos (MEDIUM 480px)
-	thumbnailSmallUrl: z.url().optional().nullable(), // URL de la petite miniature (SMALL 160px)
+	url: z
+		.string()
+		.url({ message: "L'URL du media doit être valide" })
+		.refine(isAllowedMediaDomain, {
+			message: "L'URL du média doit provenir d'un domaine autorisé (UploadThing)",
+		}),
+	thumbnailUrl: z
+		.string()
+		.url()
+		.refine(isAllowedMediaDomain, {
+			message: "L'URL de la miniature doit provenir d'un domaine autorisé",
+		})
+		.optional()
+		.nullable(),
+	thumbnailSmallUrl: z
+		.string()
+		.url()
+		.refine(isAllowedMediaDomain, {
+			message: "L'URL de la miniature doit provenir d'un domaine autorisé",
+		})
+		.optional()
+		.nullable(),
 	altText: z.string().max(200).optional(),
 	mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
 });
@@ -161,7 +205,7 @@ const initialSkuSchema = z.object({
 	primaryImage: imageSchema.optional(),
 	galleryMedia: z
 		.array(imageSchema)
-		.max(9, { error: "Maximum 9 medias dans la galerie" })
+		.max(10, { error: "Maximum 10 médias dans la galerie" })
 		.default([]),
 }).refine(
 	(data) => {
@@ -213,7 +257,7 @@ const defaultSkuSchema = z.object({
 	primaryImage: imageSchema.optional(),
 	galleryMedia: z
 		.array(imageSchema)
-		.max(9, { error: "Maximum 9 medias dans la galerie" })
+		.max(10, { error: "Maximum 10 médias dans la galerie" })
 		.default([]),
 }).refine(
 	(data) => {
@@ -264,7 +308,7 @@ export const createProductSchema = z
 			.default([]),
 
 		// Status enum
-		status: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]).default("PUBLIC"),
+		status: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]).default("DRAFT"),
 
 		// Initial SKU (required for product creation)
 		initialSku: initialSkuSchema,

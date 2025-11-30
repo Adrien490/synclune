@@ -372,6 +372,15 @@ export function CreateProductForm({
 						name="initialSku.compareAtPriceEuros"
 						validators={{
 							onChangeListenTo: ["initialSku.priceInclTaxEuros"],
+							onChange: ({ value, fieldApi }) => {
+								if (!value) return undefined;
+								const price = fieldApi.form.getFieldValue(
+									"initialSku.priceInclTaxEuros"
+								);
+								if (price && value < price) {
+									return "Le prix comparé doit être supérieur ou égal au prix de vente";
+								}
+							},
 							onBlur: ({ value, fieldApi }) => {
 								if (!value) return undefined;
 								const price = fieldApi.form.getFieldValue(
@@ -616,16 +625,20 @@ export function CreateProductForm({
 														if (isUploading) {
 															return (
 																<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/90 backdrop-blur-sm rounded-lg z-10">
+																	{/* Barre de progression visuelle */}
+																	<div className="w-3/4 h-2 bg-muted rounded-full overflow-hidden">
+																		<div
+																			className="h-full bg-primary transition-all duration-300 ease-out"
+																			style={{ width: `${uploadProgress}%` }}
+																		/>
+																	</div>
 																	<div className="text-center">
 																		<TextShimmer
 																			className="text-base font-semibold"
 																			duration={1.5}
 																		>
-																			Upload en cours...
+																			{`Upload en cours... ${uploadProgress}%`}
 																		</TextShimmer>
-																		<p className="text-2xl font-bold text-primary mt-2">
-																			{uploadProgress}%
-																		</p>
 																	</div>
 																</div>
 															);
@@ -682,13 +695,15 @@ export function CreateProductForm({
 												}}
 											/>
 											{field.state.meta.errors.length > 0 && (
-												<p
+												<ul
 													id="primary-image-error"
-													className="text-sm text-destructive mt-2 text-center"
+													className="text-sm text-destructive mt-2 text-center list-none space-y-1"
 													role="alert"
 												>
-													{field.state.meta.errors.join(", ")}
-												</p>
+													{field.state.meta.errors.map((error, i) => (
+														<li key={i}>{error}</li>
+													))}
+												</ul>
 											)}
 										</div>
 									)}
@@ -1054,7 +1069,8 @@ export function CreateProductForm({
 										!canSubmit ||
 										isPending ||
 										isPrimaryImageUploading ||
-										isGalleryUploading
+										isGalleryUploading ||
+										generatingUrls.size > 0
 									}
 									className="min-w-[160px]"
 								>
@@ -1064,7 +1080,9 @@ export function CreateProductForm({
 											? "Upload image principale..."
 											: isGalleryUploading
 												? "Upload galerie..."
-												: "Créer le bijou"}
+												: generatingUrls.size > 0
+													? "Génération miniatures..."
+													: "Créer le bijou"}
 								</Button>
 							)}
 						</form.Subscribe>

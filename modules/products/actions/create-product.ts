@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/constants/cache";
 import { isAdmin } from "@/modules/auth/utils/guards";
@@ -10,6 +11,22 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { createProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
+
+/**
+ * Sanitise une chaîne en supprimant les balises HTML potentiellement dangereuses
+ * Protection contre XSS pour les champs texte utilisateur
+ */
+function sanitizeText(text: string): string {
+	return text
+		.replace(/<[^>]*>/g, "") // Supprime toutes les balises HTML
+		.replace(/&lt;/g, "<")   // Decode les entités échappées
+		.replace(/&gt;/g, ">")
+		.replace(/&amp;/g, "&")
+		.replace(/&quot;/g, '"')
+		.replace(/&#x27;/g, "'")
+		.replace(/&#x2F;/g, "/")
+		.trim();
+}
 
 /**
  * Server Action pour creer un produit
@@ -97,7 +114,10 @@ export async function createProduct(
 		const normalizedColorId = validatedData.initialSku.colorId?.trim() || null;
 		const normalizedMaterialId = validatedData.initialSku.materialId?.trim() || null;
 		const normalizedSize = validatedData.initialSku.size?.trim() || null;
-		const normalizedDescription = validatedData.description?.trim() || null;
+		// Sanitisation XSS de la description
+		const normalizedDescription = validatedData.description?.trim()
+			? sanitizeText(validatedData.description)
+			: null;
 
 		// 5. Generate unique slug
 		const finalSlug = await generateSlug(
@@ -226,8 +246,8 @@ export async function createProduct(
 				});
 			}
 
-			// Generate SKU if not provided
-			const skuValue = `SKU-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+			// Generate SKU with cryptographically secure random ID
+			const skuValue = `SKU-${randomUUID().split("-")[0].toUpperCase()}`;
 
 			const skuData = {
 				productId: createdProduct.id,
