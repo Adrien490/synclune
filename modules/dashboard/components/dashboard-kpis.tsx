@@ -20,41 +20,53 @@ export function DashboardKpis({ kpisPromise }: DashboardKpisProps) {
 		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 			<KpiCard
 				title="CA du jour"
-				value={`${(kpis.todayRevenue.amount / 100).toFixed(2)} €`}
+				value=""
+				numericValue={kpis.todayRevenue.amount / 100}
+				suffix=" €"
+				decimalPlaces={2}
 				evolution={kpis.todayRevenue.evolution}
 				subtitle="vs hier"
 				icon={<Euro className="h-4 w-4" />}
 			/>
 			<KpiCard
 				title="CA du mois"
-				value={`${(kpis.monthlyRevenue.amount / 100).toFixed(2)} €`}
+				value=""
+				numericValue={kpis.monthlyRevenue.amount / 100}
+				suffix=" €"
+				decimalPlaces={2}
 				evolution={kpis.monthlyRevenue.evolution}
 				subtitle="vs mois dernier"
 				icon={<TrendingUp className="h-4 w-4" />}
 			/>
 			<KpiCard
 				title="Panier moyen"
-				value={`${(kpis.averageOrderValue.amount / 100).toFixed(2)} €`}
+				value=""
+				numericValue={kpis.averageOrderValue.amount / 100}
+				suffix=" €"
+				decimalPlaces={2}
 				evolution={kpis.averageOrderValue.evolution}
 				subtitle="vs mois dernier"
 				icon={<ShoppingCart className="h-4 w-4" />}
 			/>
 			<KpiCard
 				title="Commandes du mois"
-				value={kpis.monthlyOrders.count}
+				value=""
+				numericValue={kpis.monthlyOrders.count}
 				evolution={kpis.monthlyOrders.evolution}
 				subtitle="vs mois dernier"
 				icon={<ShoppingCart className="h-4 w-4" />}
 			/>
 			<KpiCard
 				title="Commandes en traitement"
-				value={kpis.pendingOrders.count}
+				value=""
+				numericValue={kpis.pendingOrders.count}
 				subtitle={kpis.pendingOrders.urgentCount > 0 ? `dont ${kpis.pendingOrders.urgentCount} urgente(s)` : "Tout à jour"}
 				icon={<Clock className="h-4 w-4" />}
 			/>
 			<KpiCard
 				title="Bijoux en rupture"
-				value={kpis.outOfStock.count}
+				value=""
+				numericValue={kpis.outOfStock.count}
 				icon={<PackageX className="h-4 w-4" />}
 			/>
 		</div>

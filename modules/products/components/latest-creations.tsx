@@ -53,9 +53,13 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 		return null;
 	}
 
+	// Mobile: 6 produits, Desktop: tous (jusqu'à 12)
+	const mobileProducts = products.slice(0, 6);
+	const hasMoreProducts = products.length > 6;
+
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
+			className={`relative overflow-hidden bg-gradient-to-br from-white via-white to-dopamine-lavender/20 ${SECTION_SPACING.default}`}
 			aria-labelledby="latest-creations-title"
 			aria-describedby="latest-creations-subtitle"
 		>
@@ -75,8 +79,42 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 					</p>
 				</header>
 
+				{/* Grille mobile : 6 produits max */}
 				<Stagger
-					className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8 lg:mb-12"
+					className="grid grid-cols-2 gap-4 mb-6 sm:hidden"
+					stagger={0.08}
+					y={30}
+					inView
+					once={true}
+				>
+					{mobileProducts.map((product, index) => {
+						const { price } = getPrimaryPriceForList(product);
+						const stockInfo = getStockInfoForList(product);
+						const primaryImage = getPrimaryImageForList(product);
+
+						return (
+							<ProductCard
+								key={product.id}
+								slug={product.slug}
+								title={product.title}
+								description={product.description}
+								price={price}
+								stockStatus={stockInfo.status}
+								stockMessage={stockInfo.message}
+								primaryImage={{
+									url: primaryImage.url,
+									alt: primaryImage.alt || null,
+									mediaType: primaryImage.mediaType,
+								}}
+								index={index}
+							/>
+						);
+					})}
+				</Stagger>
+
+				{/* Grille desktop : tous les produits */}
+				<Stagger
+					className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8 lg:mb-12"
 					stagger={0.1}
 					y={40}
 					inView

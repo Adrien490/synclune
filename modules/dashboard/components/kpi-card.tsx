@@ -4,6 +4,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
 import { ArrowDown, ArrowUp } from "lucide-react";
+import { NumberTicker } from "@/shared/components/ui/number-ticker";
 
 export interface KpiCardProps {
 	title: string;
@@ -17,6 +18,14 @@ export interface KpiCardProps {
 	icon?: React.ReactNode;
 	/** Variante de couleur pour les alertes */
 	variant?: "default" | "danger" | "warning" | "info";
+	/** Valeur numerique pour l'animation (si fournie, utilise NumberTicker) */
+	numericValue?: number;
+	/** Suffixe a afficher apres la valeur animee (ex: " €", " %") */
+	suffix?: string;
+	/** Nombre de decimales pour l'animation */
+	decimalPlaces?: number;
+	/** Delai avant le debut de l'animation (en secondes) */
+	animationDelay?: number;
 }
 
 const variantStyles = {
@@ -34,6 +43,10 @@ export function KpiCard({
 	subtitle,
 	icon,
 	variant = "default",
+	numericValue,
+	suffix,
+	decimalPlaces = 0,
+	animationDelay = 0,
 }: KpiCardProps) {
 	return (
 		<Card className={cn(
@@ -57,7 +70,20 @@ export function KpiCard({
 				)}
 			</CardHeader>
 			<CardContent>
-				<div className="text-3xl font-semibold tracking-tight text-foreground">{value}</div>
+				<div className="text-3xl font-semibold tracking-tight text-foreground">
+					{numericValue !== undefined ? (
+						<>
+							<NumberTicker
+								value={numericValue}
+								decimalPlaces={decimalPlaces}
+								delay={animationDelay}
+							/>
+							{suffix}
+						</>
+					) : (
+						value
+					)}
+				</div>
 				<div className="flex items-center gap-2 mt-2">
 					{evolution !== undefined && (
 						<div
