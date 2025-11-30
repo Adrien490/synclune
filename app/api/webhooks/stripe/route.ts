@@ -1,4 +1,5 @@
 import { updateTag } from "next/cache";
+import { after } from "next/server";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import {
@@ -12,9 +13,70 @@ import {
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { PaymentStatus, Prisma, RefundStatus } from "@/app/generated/prisma/client";
+import { PaymentStatus, Prisma, RefundStatus, RefundAction } from "@/app/generated/prisma/client";
 import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
 import { getShippingRateName } from "@/modules/orders/constants/stripe-shipping-rates";
+
+// ============================================================================
+// 🔴 TYPES POUR TRAITEMENT ASYNCHRONE (Best Practice Stripe 2025)
+// ============================================================================
+
+/**
+ * Tâches à exécuter après la réponse 200 via after()
+ * Permet de répondre rapidement à Stripe tout en traitant les emails en arrière-plan
+ */
+type PostWebhookTask =
+	| { type: "ORDER_CONFIRMATION_EMAIL"; data: Parameters<typeof sendOrderConfirmationEmail>[0] }
+	| { type: "ADMIN_NEW_ORDER_EMAIL"; data: Parameters<typeof sendAdminNewOrderEmail>[0] }
+	| { type: "REFUND_CONFIRMATION_EMAIL"; data: Parameters<typeof sendRefundConfirmationEmail>[0] }
+	| { type: "PAYMENT_FAILED_EMAIL"; data: Parameters<typeof sendPaymentFailedEmail>[0] }
+	| { type: "ADMIN_DISPUTE_ALERT"; data: Parameters<typeof sendAdminDisputeAlert>[0] }
+	| { type: "ADMIN_REFUND_FAILED_ALERT"; data: Parameters<typeof sendAdminRefundFailedAlert>[0] }
+	| { type: "INVALIDATE_CACHE"; tags: string[] };
+
+/**
+ * Résultat d'un handler de webhook avec tâches post-traitement
+ */
+interface WebhookHandlerResult {
+	success: boolean;
+	tasks: PostWebhookTask[];
+}
+
+/**
+ * Exécute les tâches post-webhook (emails, cache) en arrière-plan
+ */
+async function executePostWebhookTasks(tasks: PostWebhookTask[]): Promise<void> {
+	for (const task of tasks) {
+		try {
+			switch (task.type) {
+				case "ORDER_CONFIRMATION_EMAIL":
+					await sendOrderConfirmationEmail(task.data);
+					break;
+				case "ADMIN_NEW_ORDER_EMAIL":
+					await sendAdminNewOrderEmail(task.data);
+					break;
+				case "REFUND_CONFIRMATION_EMAIL":
+					await sendRefundConfirmationEmail(task.data);
+					break;
+				case "PAYMENT_FAILED_EMAIL":
+					await sendPaymentFailedEmail(task.data);
+					break;
+				case "ADMIN_DISPUTE_ALERT":
+					await sendAdminDisputeAlert(task.data);
+					break;
+				case "ADMIN_REFUND_FAILED_ALERT":
+					await sendAdminRefundFailedAlert(task.data);
+					break;
+				case "INVALIDATE_CACHE":
+					task.tags.forEach(tag => updateTag(tag));
+					break;
+			}
+		} catch (error) {
+			// Log mais ne pas bloquer les autres tâches
+			console.error(`❌ [WEBHOOK-AFTER] Failed to execute task ${task.type}:`, error);
+		}
+	}
+}
 
 // Note: With cacheComponents enabled, API routes are dynamic by default
 // No need for export const dynamic = "force-dynamic"
@@ -65,14 +127,32 @@ export async function POST(req: Request) {
 			);
 		}
 
+		// 2. 🔴 ANTI-REPLAY CHECK (Best Practice Stripe 2025)
+		// Rejeter les événements trop anciens pour éviter les attaques de replay
+		// Stripe recommande une fenêtre de 5 minutes maximum
+		const eventAgeSeconds = Math.floor(Date.now() / 1000) - event.created;
+		if (eventAgeSeconds > 300) {
+			console.warn(`⚠️ [WEBHOOK] Event ${event.id} too old (${eventAgeSeconds}s), rejecting for anti-replay`);
+			return NextResponse.json(
+				{ error: "Event too old (anti-replay protection)" },
+				{ status: 400 }
+			);
+		}
+
 		// console.log("✅ Stripe webhook event received:", event.type, event.id);
 
-		// Traiter l'événement selon le type
+		// 3. Traiter l'événement selon le type
+		// Collecter les tâches post-webhook pour exécution via after()
+		const postWebhookTasks: PostWebhookTask[] = [];
+
 		try {
 			switch (event.type) {
 				case "checkout.session.completed": {
 					const session = event.data.object as Stripe.Checkout.Session;
-					await handleCheckoutSessionCompleted(session);
+					const result = await handleCheckoutSessionCompleted(session);
+					if (result?.tasks) {
+						postWebhookTasks.push(...result.tasks);
+					}
 					break;
 				}
 
@@ -103,6 +183,20 @@ export async function POST(req: Request) {
 				case "charge.refunded": {
 					const charge = event.data.object as Stripe.Charge;
 					await handleChargeRefunded(charge);
+					break;
+				}
+
+				// === ÉVÉNEMENTS REFUND (API 2024-10-28+) ===
+				case "refund.created":
+				case "refund.updated": {
+					const refund = event.data.object as Stripe.Refund;
+					await handleRefundUpdated(refund);
+					break;
+				}
+
+				case "refund.failed": {
+					const refund = event.data.object as Stripe.Refund;
+					await handleRefundFailed(refund);
 					break;
 				}
 
@@ -149,7 +243,21 @@ export async function POST(req: Request) {
 					// console.log(`⚠️  Unhandled event type: ${event.type}`);
 			}
 
-			return NextResponse.json({ received: true, status: "processed" });
+			// 4. 🔴 RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
+			// Retourner 200 immédiatement, puis exécuter les tâches en arrière-plan
+			const response = NextResponse.json({ received: true, status: "processed" });
+
+			// Exécuter les tâches post-webhook (emails, cache) via after()
+			// Ne bloque pas la réponse au webhook
+			if (postWebhookTasks.length > 0) {
+				after(async () => {
+					console.log(`📧 [WEBHOOK-AFTER] Executing ${postWebhookTasks.length} post-webhook tasks...`);
+					await executePostWebhookTasks(postWebhookTasks);
+					console.log(`✅ [WEBHOOK-AFTER] All post-webhook tasks completed`);
+				});
+			}
+
+			return response;
 		} catch (error) {
 			console.error("❌ Error processing webhook event:", error);
 			throw error;
@@ -165,8 +273,11 @@ export async function POST(req: Request) {
 
 async function handleCheckoutSessionCompleted(
 	session: Stripe.Checkout.Session
-) {
+): Promise<WebhookHandlerResult | null> {
 	// console.log("🎉 Checkout session completed:", session.id);
+
+	// Collecter les tâches post-webhook
+	const tasks: PostWebhookTask[] = [];
 
 	// 🔴 CRITIQUE : Validation payment_status AVANT tout traitement
 	// Pour les paiements asynchrones (SEPA, etc.), payment_status peut être 'unpaid'
@@ -182,7 +293,7 @@ async function handleCheckoutSessionCompleted(
 
 		if (!orderId) {
 			console.error("❌ [WEBHOOK] No order ID found in checkout session");
-			return;
+			return null;
 		}
 
 		// ℹ️ Micro-entreprise : Pas de calcul TVA (exonérée - art. 293 B du CGI)
@@ -290,8 +401,10 @@ async function handleCheckoutSessionCompleted(
 					stripeCheckoutSessionId: session.id,
 					stripeCustomerId: (session.customer as string) || null,
 					shippingCost,
-					// ✅ Méthode de livraison (Colissimo France/Europe/DOM-TOM/Gratuit)
-					shippingMethod,
+					// ⚠️ AUDIT FIX: shippingMethod est maintenant un enum (STANDARD, EXPRESS, etc.)
+					// La valeur textuelle "Colissimo France" est stockée dans shippingCarrier via le nom de la rate
+					shippingMethod: "STANDARD", // Par défaut pour Colissimo
+					shippingCarrier: "COLISSIMO", // Transporteur
 					// Micro-entreprise : taxAmount = 0, taxRate/taxJurisdiction/taxType/taxDetails = null
 				},
 			});
@@ -333,10 +446,10 @@ async function handleCheckoutSessionCompleted(
 			return order;
 		});
 
-		// 7. Invalider le cache du panier pour mise à jour immédiate côté client
+		// 7. 🔴 TÂCHE POST-WEBHOOK : Invalider le cache du panier
 		if (order?.userId) {
-			const tags = getCartInvalidationTags(order.userId, undefined);
-			tags.forEach(tag => updateTag(tag));
+			const cacheTags = getCartInvalidationTags(order.userId, undefined);
+			tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 		}
 
 		// 8. Récupérer l'email du client depuis la session Stripe
@@ -348,13 +461,15 @@ async function handleCheckoutSessionCompleted(
 		console.log(`📄 [WEBHOOK] Invoice automatically generated by Stripe for order ${order.orderNumber}`);
 		const invoiceGenerated = true;
 
-		// 9. Envoyer email de confirmation au client
-		if (customerEmail) {
-			try {
-				const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
-				const trackingUrl = `${baseUrl}/orders`;
+		const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
 
-				await sendOrderConfirmationEmail({
+		// 9. 🔴 TÂCHE POST-WEBHOOK : Email de confirmation au client
+		if (customerEmail) {
+			const trackingUrl = `${baseUrl}/orders`;
+
+			tasks.push({
+				type: "ORDER_CONFIRMATION_EMAIL",
+				data: {
 					to: customerEmail,
 					orderNumber: order.orderNumber,
 					customerName: `${order.shippingFirstName} ${order.shippingLastName}`,
@@ -384,19 +499,16 @@ async function handleCheckoutSessionCompleted(
 					// 🔒 SÉCURITÉ : URLs supprimées - utiliser orderId pour récupération sécurisée
 					orderId: order.id,
 					invoiceGenerated,
-				});
-			} catch (emailError) {
-				console.error("❌ [WEBHOOK] Error sending customer confirmation email:", emailError);
-				// Ne pas bloquer le webhook si l'email échoue
-			}
+				},
+			});
 		}
 
-		// 10. Notifier l'admin
-		try {
-			const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
-			const dashboardUrl = `${baseUrl}/dashboard/orders/${order.id}`;
+		// 10. 🔴 TÂCHE POST-WEBHOOK : Notifier l'admin
+		const dashboardUrl = `${baseUrl}/dashboard/orders/${order.id}`;
 
-			await sendAdminNewOrderEmail({
+		tasks.push({
+			type: "ADMIN_NEW_ORDER_EMAIL",
+			data: {
 				orderNumber: order.orderNumber,
 				orderId: order.id,
 				customerName: `${order.shippingFirstName} ${order.shippingLastName}`,
@@ -426,11 +538,11 @@ async function handleCheckoutSessionCompleted(
 				},
 				dashboardUrl,
 				stripePaymentIntentId: session.payment_intent as string,
-			});
-		} catch (emailError) {
-			console.error("❌ [WEBHOOK] Error sending admin notification email:", emailError);
-			// Ne pas bloquer le webhook si l'email échoue
-		}
+			},
+		});
+
+		// Retourner les tâches pour exécution via after()
+		return { success: true, tasks };
 	} catch (error) {
 		console.error("❌ [WEBHOOK] Error handling checkout session completed:", error);
 		throw error;
@@ -553,6 +665,8 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
 						orderId,
 						reason: "Payment failed, automatic refund",
 					},
+				}, {
+					idempotencyKey: `auto-refund-failed-${paymentIntent.id}`,
 				});
 
 				console.log(`✅ [WEBHOOK] Refund created successfully: ${refund.id} for order ${orderId}`);
@@ -637,6 +751,8 @@ async function handlePaymentCanceled(paymentIntent: Stripe.PaymentIntent) {
 						orderId,
 						reason: "Payment canceled, automatic refund",
 					},
+				}, {
+					idempotencyKey: `auto-refund-canceled-${paymentIntent.id}`,
 				});
 
 				console.log(`✅ [WEBHOOK] Refund created successfully: ${refund.id} for order ${orderId}`);
@@ -838,13 +954,15 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
 					console.log(`✅ [WEBHOOK] Linked existing refund ${refundId} to Stripe refund ${stripeRefund.id}`);
 				} else {
 					// Remboursement fait entièrement depuis Stripe Dashboard
-					// Créer un Refund générique pour garder la cohérence comptable
-					await prisma.refund.create({
-						data: {
+					// 🔴 UPSERT pour idempotence (Best Practice Stripe 2025)
+					// Évite les doublons si le webhook est rejoué
+					await prisma.refund.upsert({
+						where: { stripeRefundId: stripeRefund.id },
+						create: {
 							orderId: order.id,
 							stripeRefundId: stripeRefund.id,
 							amount: stripeRefund.amount || 0,
-							currency: stripeRefund.currency || "eur",
+							currency: "EUR", // ⚠️ AUDIT FIX: CurrencyCode enum
 							reason: "OTHER",
 							status: stripeRefund.status === "succeeded"
 								? RefundStatus.COMPLETED
@@ -852,9 +970,16 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
 							note: "Remboursement effectué via Dashboard Stripe",
 							processedAt: new Date(),
 						},
+						update: {
+							// Si existe déjà, mettre à jour le statut
+							status: stripeRefund.status === "succeeded"
+								? RefundStatus.COMPLETED
+								: RefundStatus.PENDING,
+							processedAt: new Date(),
+						},
 					});
 					console.log(
-						`⚠️ [WEBHOOK] Created refund record for Stripe Dashboard refund ${stripeRefund.id}`
+						`⚠️ [WEBHOOK] Upserted refund record for Stripe Dashboard refund ${stripeRefund.id}`
 					);
 				}
 			}
@@ -1303,5 +1428,195 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling invoice payment failed:`, error);
 		throw error;
+	}
+}
+
+// =============================================================================
+// HANDLERS REFUND (API 2024-10-28+)
+// =============================================================================
+
+/**
+ * 💰 Gère les événements refund.created et refund.updated
+ * Synchronise le statut du remboursement avec la base de données
+ */
+async function handleRefundUpdated(stripeRefund: Stripe.Refund) {
+	console.log(`💰 [WEBHOOK] Refund updated: ${stripeRefund.id}, status: ${stripeRefund.status}`);
+
+	try {
+		// 1. Trouver le remboursement local via stripeRefundId
+		let refund = await prisma.refund.findUnique({
+			where: { stripeRefundId: stripeRefund.id },
+			select: {
+				id: true,
+				status: true,
+				orderId: true,
+				order: {
+					select: { orderNumber: true },
+				},
+			},
+		});
+
+		// 2. Si pas trouvé via stripeRefundId, essayer via metadata
+		if (!refund && stripeRefund.metadata?.refund_id) {
+			refund = await prisma.refund.findUnique({
+				where: { id: stripeRefund.metadata.refund_id },
+				select: {
+					id: true,
+					status: true,
+					orderId: true,
+					order: {
+						select: { orderNumber: true },
+					},
+				},
+			});
+
+			// Lier le stripeRefundId si trouvé
+			if (refund) {
+				await prisma.refund.update({
+					where: { id: refund.id },
+					data: { stripeRefundId: stripeRefund.id },
+				});
+			}
+		}
+
+		if (!refund) {
+			console.log(`ℹ️ [WEBHOOK] Refund ${stripeRefund.id} not found in database (may be external)`);
+			return;
+		}
+
+		// 3. Mapper le statut Stripe vers notre statut
+		const statusMap: Record<string, RefundStatus> = {
+			succeeded: RefundStatus.COMPLETED,
+			pending: RefundStatus.APPROVED,
+			failed: RefundStatus.FAILED,
+			canceled: RefundStatus.CANCELLED,
+		};
+
+		const newStatus = statusMap[stripeRefund.status || "pending"];
+
+		// 4. Mettre à jour si le statut a changé
+		if (newStatus && refund.status !== newStatus) {
+			await prisma.$transaction(async (tx) => {
+				// Update refund status
+				await tx.refund.update({
+					where: { id: refund.id },
+					data: {
+						status: newStatus,
+						processedAt: newStatus === RefundStatus.COMPLETED ? new Date() : undefined,
+					},
+				});
+
+				// Ajouter à l'historique
+				await tx.refundHistory.create({
+					data: {
+						refundId: refund.id,
+						action: newStatus === RefundStatus.COMPLETED ? RefundAction.COMPLETED : RefundAction.FAILED,
+						note: `Mis à jour via webhook Stripe (status: ${stripeRefund.status})`,
+					},
+				});
+			});
+
+			console.log(`✅ [WEBHOOK] Refund ${refund.id} status updated to ${newStatus}`);
+		}
+	} catch (error) {
+		console.error(`❌ [WEBHOOK] Error handling refund updated:`, error);
+		// Ne pas throw pour ne pas bloquer le webhook
+	}
+}
+
+/**
+ * ❌ Gère les échecs de remboursement
+ * Marque le remboursement comme FAILED et alerte l'admin
+ */
+async function handleRefundFailed(stripeRefund: Stripe.Refund) {
+	console.log(`❌ [WEBHOOK] Refund failed: ${stripeRefund.id}`);
+
+	try {
+		// 1. Trouver le remboursement local
+		let refund = await prisma.refund.findUnique({
+			where: { stripeRefundId: stripeRefund.id },
+			select: {
+				id: true,
+				status: true,
+				amount: true,
+				orderId: true,
+				order: {
+					select: {
+						id: true,
+						orderNumber: true,
+						customerEmail: true,
+						stripePaymentIntentId: true,
+					},
+				},
+			},
+		});
+
+		// 2. Si pas trouvé via stripeRefundId, essayer via metadata
+		if (!refund && stripeRefund.metadata?.refund_id) {
+			refund = await prisma.refund.findUnique({
+				where: { id: stripeRefund.metadata.refund_id },
+				select: {
+					id: true,
+					status: true,
+					amount: true,
+					orderId: true,
+					order: {
+						select: {
+							id: true,
+							orderNumber: true,
+							customerEmail: true,
+							stripePaymentIntentId: true,
+						},
+					},
+				},
+			});
+		}
+
+		if (!refund) {
+			console.warn(`⚠️ [WEBHOOK] Failed refund ${stripeRefund.id} not found in database`);
+			return;
+		}
+
+		// 3. Marquer comme FAILED avec historique
+		await prisma.$transaction(async (tx) => {
+			await tx.refund.update({
+				where: { id: refund.id },
+				data: { status: RefundStatus.FAILED },
+			});
+
+			await tx.refundHistory.create({
+				data: {
+					refundId: refund.id,
+					action: RefundAction.FAILED,
+					note: `Échec Stripe: ${stripeRefund.failure_reason || "Raison inconnue"}`,
+				},
+			});
+		});
+
+		console.log(`✅ [WEBHOOK] Refund ${refund.id} marked as FAILED`);
+
+		// 4. Alerter l'admin
+		try {
+			const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
+			const dashboardUrl = `${baseUrl}/admin/ventes/remboursements`;
+
+			await sendAdminRefundFailedAlert({
+				orderNumber: refund.order.orderNumber,
+				orderId: refund.order.id,
+				customerEmail: refund.order.customerEmail || "Email non disponible",
+				amount: refund.amount,
+				reason: "other",
+				errorMessage: `Échec remboursement Stripe: ${stripeRefund.failure_reason || "Raison inconnue"}`,
+				stripePaymentIntentId: refund.order.stripePaymentIntentId || "",
+				dashboardUrl,
+			});
+
+			console.log(`🚨 [WEBHOOK] Admin alert sent for failed refund on order ${refund.order.orderNumber}`);
+		} catch (emailError) {
+			console.error("❌ [WEBHOOK] Error sending refund failure alert:", emailError);
+		}
+	} catch (error) {
+		console.error(`❌ [WEBHOOK] Error handling refund failed:`, error);
+		// Ne pas throw pour ne pas bloquer le webhook
 	}
 }

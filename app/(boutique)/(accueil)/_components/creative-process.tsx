@@ -82,7 +82,7 @@ export async function CreativeProcess() {
 			aria-labelledby="creative-process-title"
 		>
 			<div className="absolute inset-0" aria-hidden="true">
-				<ParticleSystem variant="minimal" className="absolute inset-0" />
+				<ParticleSystem count={4} className="absolute inset-0" />
 			</div>
 
 			<div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">

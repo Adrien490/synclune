@@ -28,12 +28,25 @@ export {
 	notifyStockAvailableAction,
 	processAllPendingStockNotifications,
 } from "./actions/notify-stock-available";
+export {
+	cleanupExpiredNotifications,
+	cleanupExpiredNotificationsAction,
+} from "./actions/cleanup-expired-notifications";
+export { bulkCancelStockNotifications } from "./actions/bulk-cancel-stock-notifications";
+export { bulkDeleteStockNotifications } from "./actions/bulk-delete-stock-notifications";
 
 // ============================================================================
-// HOOKS (Admin)
+// HOOKS
 // ============================================================================
 export { useCancelStockNotification } from "./hooks/use-cancel-stock-notification";
 export { useNotifyStockAvailable } from "./hooks/use-notify-stock-available";
+export { useCleanupExpiredNotifications } from "./hooks/use-cleanup-expired-notifications";
+export { useSubscribeToStockNotification } from "./hooks/use-subscribe-to-stock-notification";
+export { useUnsubscribeFromStockNotification } from "./hooks/use-unsubscribe-from-stock-notification";
+export {
+	useBulkCancelStockNotifications,
+	useBulkDeleteStockNotifications,
+} from "./hooks/use-bulk-stock-notification-actions";
 
 // ============================================================================
 // DATA
@@ -98,5 +111,6 @@ export {
 	STOCK_NOTIFICATION_EXPIRY_DAYS,
 	STOCK_NOTIFICATION_BATCH_SIZE,
 	STOCK_NOTIFICATION_COOLDOWN_HOURS,
+	STOCK_NOTIFICATION_EMAIL_CONCURRENCY,
 	STOCK_NOTIFICATION_STATUS_LABELS,
 } from "./constants/stock-notification.constants";

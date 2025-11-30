@@ -40,7 +40,7 @@ export default async function CartPage() {
     return (
       <div className="min-h-screen relative">
         {/* Background minimal - Ne pas distraire de l'action */}
-        <ParticleSystem variant="minimal" className="fixed inset-0 z-0" />
+        <ParticleSystem count={4} className="fixed inset-0 z-0" />
 
         <PageHeader
           title="Mon panier"
@@ -112,7 +112,7 @@ export default async function CartPage() {
   return (
     <div className="min-h-screen relative">
       {/* Background minimal - Focus sur le panier et conversion */}
-      <ParticleSystem variant="minimal" className="fixed inset-0 z-0" />
+      <ParticleSystem count={4} className="fixed inset-0 z-0" />
 
       <PageHeader
         title="Mon panier"

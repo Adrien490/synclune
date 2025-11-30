@@ -43,12 +43,6 @@ export type { PresenceProps } from "./presence";
 // Background Animation Types
 export type { LiquidGradientProps } from "./liquid-gradient";
 export type { GlitterSparklesProps } from "./glitter-sparkles";
-export type {
-	ParticleSystemProps,
-	Particle,
-	AnimationType,
-	ParticleColor,
-	ParticleVariant,
-} from "./particle-system";
+export type { ParticleSystemProps } from "./particle-system";
 export type { BubbleDreamProps } from "./bubble-dream";
 export type { HeroBackgroundGlitterProps } from "./hero-background-glitter";

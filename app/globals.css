@@ -495,23 +495,42 @@
    VIEW TRANSITIONS
    ======================================================================== */
 
-/* Transitions par défaut pour toutes les view transitions (images, titres) */
+/* Animation par défaut pour les transitions partagées (morphing entre pages) */
 ::view-transition-old(*),
 ::view-transition-new(*) {
 	animation-duration: 0.3s;
 	animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Breadcrumbs boutique - transition rapide */
-::view-transition-old(page-breadcrumbs),
-::view-transition-new(page-breadcrumbs) {
-	animation-duration: 0.2s;
-	animation-timing-function: ease-out;
+/* Entrée seule (élément apparaît) : fade-in avec léger scale */
+::view-transition-new(*):only-child {
+	animation: vt-fade-scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Sortie seule (élément disparaît) : fade-out rapide */
+::view-transition-old(*):only-child {
+	animation: vt-fade-out 0.2s ease-out;
+}
 
-/* Titres produits admin - utilisent le timing par défaut (0.3s) */
-/* Note: Les noms dynamiques (admin-product-title-{slug}) héritent du sélecteur (*) */
+@keyframes vt-fade-scale-in {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes vt-fade-out {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
 
 /* Respecter prefers-reduced-motion (WCAG 2.3.3) */
 @media (prefers-reduced-motion: reduce) {

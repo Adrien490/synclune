@@ -5,9 +5,11 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { bulkCancelStockNotificationsSchema } from "../schemas/stock-notification.schemas";
+import { STOCK_NOTIFICATIONS_CACHE_TAGS } from "../constants/cache";
+import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 
 /**
  * Server Action ADMIN pour annuler plusieurs notifications de stock en masse
@@ -68,7 +70,12 @@ export async function bulkCancelStockNotifications(
 			data: { status: StockNotificationStatus.CANCELLED },
 		});
 
-		revalidatePath("/admin/marketing/stock-notifications");
+		// Invalider le cache
+		const tagsToInvalidate = [
+			STOCK_NOTIFICATIONS_CACHE_TAGS.PENDING_LIST,
+			DASHBOARD_CACHE_TAGS.BADGES,
+		];
+		tagsToInvalidate.forEach((tag) => updateTag(tag));
 
 		const skipped = result.data.ids.length - eligibleNotifications.length;
 		let message = `${eligibleNotifications.length} notification${eligibleNotifications.length > 1 ? "s" : ""} annulée${eligibleNotifications.length > 1 ? "s" : ""}`;

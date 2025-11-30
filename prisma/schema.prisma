@@ -48,6 +48,10 @@ model User {
   stockNotificationRequests StockNotificationRequest[]
   newsletterSubscription    NewsletterSubscriber?
 
+  // Relations avec les remboursements (audit)
+  refundsCreated       Refund[]        @relation("RefundCreator")
+  refundHistoryActions RefundHistory[] @relation("RefundHistoryAuthor")
+
   @@index([deletedAt])
   @@index([suspendedAt])
   @@index([role, id])
@@ -151,6 +155,37 @@ enum MediaType {
 }
 
 // ============================================================================
+// CATALOGUE - ENUMS ADDITIONNELS (Audit Fix)
+// ============================================================================
+
+enum CurrencyCode {
+  EUR
+  USD
+  GBP
+  CHF
+}
+
+enum ShippingCarrier {
+  COLISSIMO
+  CHRONOPOST
+  MONDIAL_RELAY
+  DPD
+  OTHER
+}
+
+enum ShippingMethod {
+  STANDARD
+  EXPRESS
+  PICKUP_POINT
+  STORE_PICKUP
+  // Zones de livraison (compatibilité rétroactive)
+  METROPOLITAN
+  CORSE
+  DOM
+  TOM
+}
+
+// ============================================================================
 // CATALOGUE - RÉFÉRENTIELS
 // ============================================================================
 
@@ -176,12 +211,14 @@ model Color {
   slug      String       @unique
   name      String       @unique @db.VarChar(100)
   hex       String       @db.VarChar(7)
+  isActive  Boolean      @default(true) // Cohérence avec Material
   skus      ProductSku[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([name, id])
+  @@index([isActive])
 }
 
 model Material {
@@ -261,8 +298,9 @@ model Product {
 
   collections ProductCollection[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete pour préserver historique commandes
 
   skus       ProductSku[]
   orderItems OrderItem[]
@@ -271,6 +309,10 @@ model Product {
   @@index([title, id])
   @@index([typeId])
   @@index([createdAt, id])
+  @@index([deletedAt])
+  @@index([deletedAt, status])
+  @@index([status, createdAt(sort: Desc)]) // Nouveautés
+  @@index([typeId, status]) // Filtrage par type
 }
 
 model ProductSku {
@@ -283,8 +325,8 @@ model ProductSku {
   color    Color?  @relation(fields: [colorId], references: [id], onDelete: SetNull)
   material String? @db.VarChar(100) // @deprecated - Utiliser materialId à la place
 
-  materialId  String?
-  materialRef Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  materialId       String?
+  materialRelation Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
 
   size String? @db.VarChar(50)
 
@@ -304,8 +346,9 @@ model ProductSku {
   wishlistItems             WishlistItem[]
   stockNotificationRequests StockNotificationRequest[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete pour préserver historique commandes
 
   // 🔒 CONTRAINTE : Garantir unicité des combinaisons produit/couleur/taille/matériau
   // Évite les doublons de variantes (ex: 2 SKUs "Bague Rouge Taille 52 Argent")
@@ -319,6 +362,8 @@ model ProductSku {
   @@index([productId, isDefault])
   @@index([colorId, isActive]) // Filtrage catalogue par couleur
   @@index([materialId, isActive]) // Filtrage catalogue par matériau
+  @@index([deletedAt])
+  @@index([productId, isActive, deletedAt])
 }
 
 model SkuMedia {
@@ -338,6 +383,7 @@ model SkuMedia {
   updatedAt DateTime @updatedAt
 
   @@index([skuId, isPrimary])
+  @@index([skuId, mediaType]) // Filtrage vidéo/image
 }
 
 // ============================================================================
@@ -359,6 +405,8 @@ model Cart {
   updatedAt DateTime @updatedAt
 
   @@index([expiresAt])
+  @@index([userId])
+  @@index([sessionId])
 }
 
 model CartItem {
@@ -468,6 +516,23 @@ enum FulfillmentStatus {
   RETURNED
 }
 
+/// Actions traçables sur les commandes (audit trail)
+/// Requis pour conformité légale (Art. L123-22 Code de Commerce)
+enum OrderAction {
+  CREATED           // Création de la commande
+  PAID              // Paiement reçu
+  PROCESSING        // Mise en préparation
+  SHIPPED           // Expédition
+  DELIVERED         // Livraison confirmée
+  CANCELLED         // Annulation
+  RETURNED          // Retour client
+  STATUS_REVERTED   // Retour à un statut précédent
+  NOTE_ADDED        // Note ajoutée
+  NOTE_DELETED      // Note supprimée
+  TRACKING_UPDATED  // Suivi mis à jour
+  MANUAL_EDIT       // Modification manuelle admin
+}
+
 // ============================================================================
 // COMMANDES - MODELS
 // ============================================================================
@@ -516,11 +581,11 @@ model Order {
 
   // === MONTANTS (EN CENTIMES) ===
   subtotal       Int
-  discountAmount Int    @default(0) // Montant total des réductions appliquées
-  taxAmount      Int    @default(0) // ❌ Micro-entreprise : Toujours 0 (exonérée de TVA - art. 293 B du CGI)
-  shippingCost   Int    @default(0) // Frais de livraison
+  discountAmount Int          @default(0) // Montant total des réductions appliquées
+  taxAmount      Int          @default(0) // ❌ Micro-entreprise : Toujours 0 (exonérée de TVA - art. 293 B du CGI)
+  shippingCost   Int          @default(0) // Frais de livraison
   total          Int // Formule: MAX(0, subtotal - discountAmount + shippingCost + taxAmount)
-  currency       String @default("eur") @db.VarChar(3)
+  currency       CurrencyCode @default(EUR)
 
   // === DÉTAILS FISCAUX (INUTILISÉS EN MICRO-ENTREPRISE) ===
   // ⚠️ Ces champs sont conservés pour compatibilité et future migration en régime réel TVA
@@ -538,8 +603,8 @@ model Order {
   reverseCharge Boolean @default(false) // Autoliquidation TVA pour ventes B2B UE
 
   // === LIVRAISON ===
-  shippingMethod    String? // "Colissimo France"
-  shippingCarrier   String? @db.VarChar(50)
+  shippingMethod    ShippingMethod?  // Type de livraison
+  shippingCarrier   ShippingCarrier? // Transporteur
   shippingRateId    String? // ID du tarif Stripe utilisé
   trackingNumber    String? @db.VarChar(50)
   trackingUrl       String? // URL de suivi
@@ -572,6 +637,7 @@ model Order {
   discountUsages DiscountUsage[]
   refunds        Refund[]
   notes          OrderNote[]
+  history        OrderHistory[] // 🔴 Audit trail (conformité légale)
 
   // === SOFT DELETE (Conformité légale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)
@@ -602,6 +668,50 @@ model Order {
   @@index([stripeCheckoutSessionId])
   @@index([stripeCustomerId])
   @@index([createdAt(sort: Desc)]) // Listing commandes récentes
+}
+
+/// Historique des actions sur les commandes (audit trail)
+/// Obligatoire pour conformité légale française (Art. L123-22 Code de Commerce)
+/// Conservation 10 ans avec la commande
+/// ⚠️ AUDIT FIX: onDelete: SetNull pour préserver l'audit trail même si commande supprimée
+model OrderHistory {
+  id      String  @id @default(cuid())
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  /// Action effectuée sur la commande
+  action OrderAction
+
+  /// Statuts avant/après pour les changements de statut
+  previousStatus            OrderStatus?
+  newStatus                 OrderStatus?
+  previousPaymentStatus     PaymentStatus?
+  newPaymentStatus          PaymentStatus?
+  previousFulfillmentStatus FulfillmentStatus?
+  newFulfillmentStatus      FulfillmentStatus?
+
+  /// Note explicative (ex: raison annulation, commentaire admin)
+  note String? @db.Text
+
+  /// Métadonnées supplémentaires (JSON flexible pour données additionnelles)
+  metadata Json?
+
+  /// Auteur de l'action
+  authorId   String? // ID de l'admin ou null pour actions système
+  authorName String? @db.VarChar(100) // Dénormalisé pour audit (si admin supprimé plus tard)
+
+  /// Source de l'action
+  source String @default("admin") // "admin" | "webhook" | "system" | "customer"
+
+  /// Timestamp de l'action
+  createdAt DateTime @default(now())
+
+  // === INDEXES ===
+  // Note: @@index([orderId]) supprimé (couvert par composite)
+  @@index([orderId, createdAt(sort: Desc)])
+  @@index([action])
+  @@index([authorId])
+  @@index([createdAt(sort: Desc)])
 }
 
 model OrderItem {
@@ -689,6 +799,18 @@ enum RefundStatus {
   COMPLETED // Remboursé effectivement (Stripe a confirmé)
   REJECTED // Refusé (ex: retour hors délai)
   FAILED // Échec technique Stripe
+  CANCELLED // Annulé par l'admin (soft delete)
+}
+
+// === Actions de l'historique des remboursements ===
+enum RefundAction {
+  CREATED // Création de la demande
+  APPROVED // Approbation de la demande
+  REJECTED // Rejet de la demande
+  PROCESSED // Envoi vers Stripe
+  COMPLETED // Remboursement confirmé par Stripe
+  FAILED // Échec du remboursement Stripe
+  CANCELLED // Annulation de la demande
 }
 
 model Refund {
@@ -702,8 +824,8 @@ model Refund {
   stripeRefundId String? @unique // re_xxxx
 
   // Montants
-  amount   Int    // Montant TOTAL remboursé en centimes
-  currency String @default("eur") @db.VarChar(3)
+  amount   Int          // Montant TOTAL remboursé en centimes
+  currency CurrencyCode @default(EUR)
 
   // Raison et Statut
   reason RefundReason
@@ -716,8 +838,12 @@ model Refund {
   items RefundItem[]
 
   // Audit
-  createdBy   String? // ID de l'admin qui a créé le remboursement
-  processedAt DateTime? // Date de traitement effectif (Stripe)
+  createdBy     String? // ID de l'admin qui a créé le remboursement
+  createdByUser User?   @relation("RefundCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  processedAt   DateTime? // Date de traitement effectif (Stripe)
+
+  // Historique des actions
+  history RefundHistory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -757,6 +883,29 @@ model RefundItem {
 
   @@index([refundId])
   @@index([orderItemId])
+}
+
+// === Historique des actions sur les remboursements ===
+/// ⚠️ AUDIT FIX: onDelete: SetNull pour préserver l'audit trail même si remboursement supprimé
+model RefundHistory {
+  id String @id @default(cuid())
+
+  refundId String?
+  refund   Refund? @relation(fields: [refundId], references: [id], onDelete: SetNull)
+
+  action RefundAction
+
+  // Note optionnelle (ex: raison du rejet)
+  note String? @db.Text
+
+  // Auteur de l'action (admin ou système via webhook)
+  authorId String?
+  author   User?   @relation("RefundHistoryAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([refundId])
+  @@index([refundId, createdAt])
 }
 
 // ============================================================================
@@ -920,7 +1069,10 @@ model StockNotificationRequest {
   updatedAt DateTime @updatedAt
   deletedAt DateTime? // Soft delete pour RGPD
 
-  // Indexes pour performances (la contrainte unicité est gérée côté applicatif)
+  // ⚠️ AUDIT FIX: Contrainte unicité au niveau DB (avant: gérée côté applicatif)
+  @@unique([email, skuId])
+
+  // Indexes pour performances
   @@index([email, skuId])
   @@index([skuId, status])
   @@index([email])

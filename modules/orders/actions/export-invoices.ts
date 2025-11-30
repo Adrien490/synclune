@@ -98,7 +98,10 @@ export async function exportInvoices(
 
 		// Construire le filtre Prisma complet
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const whereClause: any = {};
+		const whereClause: any = {
+			// 🔴 FIX: Exclure les commandes soft deleted de l'export comptable
+			deletedAt: null,
+		};
 
 		// Filtre de date
 		if (dateFilter) {

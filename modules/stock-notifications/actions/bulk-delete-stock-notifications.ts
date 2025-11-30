@@ -4,9 +4,11 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { bulkDeleteStockNotificationsSchema } from "../schemas/stock-notification.schemas";
+import { STOCK_NOTIFICATIONS_CACHE_TAGS } from "../constants/cache";
+import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 
 /**
  * Server Action ADMIN pour supprimer définitivement plusieurs notifications (RGPD)
@@ -49,7 +51,12 @@ export async function bulkDeleteStockNotifications(
 			where: { id: { in: result.data.ids } },
 		});
 
-		revalidatePath("/admin/marketing/stock-notifications");
+		// Invalider le cache
+		const tagsToInvalidate = [
+			STOCK_NOTIFICATIONS_CACHE_TAGS.PENDING_LIST,
+			DASHBOARD_CACHE_TAGS.BADGES,
+		];
+		tagsToInvalidate.forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

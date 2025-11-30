@@ -1,6 +1,7 @@
 "use server";
 
-import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
+import { PaymentStatus, RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -114,6 +115,19 @@ export async function processRefund(
 			};
 		}
 
+		// Récupérer la session pour l'historique
+		const session = await getSession();
+
+		// Enregistrer l'action PROCESSED avant l'appel Stripe
+		await prisma.refundHistory.create({
+			data: {
+				refundId: refund.id,
+				action: RefundAction.PROCESSED,
+				authorId: session?.user?.id,
+				note: "Envoi vers Stripe en cours",
+			},
+		});
+
 		// Appeler Stripe pour créer le remboursement
 		// Utiliser l'ID du refund comme base de la clé d'idempotence pour éviter les doublons
 		const stripeResult = await createStripeRefund({
@@ -129,12 +143,23 @@ export async function processRefund(
 		});
 
 		if (!stripeResult.success) {
-			// Marquer le remboursement comme échoué
-			await prisma.refund.update({
-				where: { id },
-				data: {
-					status: RefundStatus.FAILED,
-				},
+			// Marquer le remboursement comme échoué avec historique
+			await prisma.$transaction(async (tx) => {
+				await tx.refund.update({
+					where: { id },
+					data: {
+						status: RefundStatus.FAILED,
+					},
+				});
+
+				await tx.refundHistory.create({
+					data: {
+						refundId: id,
+						action: RefundAction.FAILED,
+						authorId: session?.user?.id,
+						note: `Échec Stripe: ${stripeResult.error || "Erreur inconnue"}`,
+					},
+				});
 			});
 
 			return {
@@ -152,6 +177,16 @@ export async function processRefund(
 					status: RefundStatus.COMPLETED,
 					stripeRefundId: stripeResult.refundId,
 					processedAt: new Date(),
+				},
+			});
+
+			// 1b. Ajouter l'entrée d'historique COMPLETED
+			await tx.refundHistory.create({
+				data: {
+					refundId: id,
+					action: RefundAction.COMPLETED,
+					authorId: session?.user?.id,
+					note: `Remboursement Stripe confirmé: ${stripeResult.refundId}`,
 				},
 			});
 

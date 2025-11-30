@@ -9,6 +9,8 @@ import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { getNotifyStockInvalidationTags } from "../constants/cache";
 import {
 	STOCK_NOTIFICATION_BATCH_SIZE,
+	STOCK_NOTIFICATION_COOLDOWN_HOURS,
+	STOCK_NOTIFICATION_EMAIL_CONCURRENCY,
 	STOCK_NOTIFICATION_WITH_SKU_SELECT,
 } from "../constants/stock-notification.constants";
 import type { NotifyStockAvailableResult } from "../types/stock-notification.types";
@@ -77,12 +79,23 @@ export async function notifyStockAvailable(
 			return result;
 		}
 
+		// Calculer la date limite du cooldown (24h par défaut)
+		const cooldownDate = new Date(
+			Date.now() - STOCK_NOTIFICATION_COOLDOWN_HOURS * 60 * 60 * 1000
+		);
+
 		// Récupérer toutes les demandes en attente pour ce SKU
+		// Exclut les demandes déjà notifiées dans les dernières 24h (cooldown anti-spam)
 		const pendingNotifications = await prisma.stockNotificationRequest.findMany(
 			{
 				where: {
 					skuId,
 					status: StockNotificationStatus.PENDING,
+					// Cooldown: soit jamais notifié, soit notifié il y a plus de 24h
+					OR: [
+						{ notifiedAt: null },
+						{ notifiedAt: { lt: cooldownDate } },
+					],
 				},
 				select: {
 					id: true,
@@ -106,8 +119,11 @@ export async function notifyStockAvailable(
 		const productUrl = `${baseUrl}/creations/${sku.product.slug}`;
 		const skuImageUrl = sku.images[0]?.url || null;
 
-		// Envoyer les notifications en parallèle (par batch)
-		const sendPromises = pendingNotifications.map(async (notification) => {
+		// Collecter les IDs des notifications réussies pour batch update
+		const successfulIds: string[] = [];
+
+		// Fonction pour traiter une notification (envoi email seulement)
+		const processNotification = async (notification: (typeof pendingNotifications)[0]) => {
 			try {
 				const unsubscribeUrl = `${baseUrl}/notifications/stock/unsubscribe?token=${notification.unsubscribeToken}`;
 
@@ -125,16 +141,8 @@ export async function notifyStockAvailable(
 				});
 
 				if (emailResult.success) {
-					// Marquer comme notifié
-					await prisma.stockNotificationRequest.update({
-						where: { id: notification.id },
-						data: {
-							status: StockNotificationStatus.NOTIFIED,
-							notifiedAt: new Date(),
-							notifiedInventory: sku.inventory,
-						},
-					});
-
+					// Collecter l'ID pour batch update ultérieur
+					successfulIds.push(notification.id);
 					result.successfulNotifications++;
 					result.notificationIds.push(notification.id);
 				} else {
@@ -151,9 +159,25 @@ export async function notifyStockAvailable(
 					error
 				);
 			}
-		});
+		};
 
-		await Promise.all(sendPromises);
+		// Envoyer les notifications par batch pour limiter la concurrence
+		for (let i = 0; i < pendingNotifications.length; i += STOCK_NOTIFICATION_EMAIL_CONCURRENCY) {
+			const batch = pendingNotifications.slice(i, i + STOCK_NOTIFICATION_EMAIL_CONCURRENCY);
+			await Promise.all(batch.map(processNotification));
+		}
+
+		// ⚠️ AUDIT FIX: Batch update de toutes les notifications réussies en une seule requête
+		if (successfulIds.length > 0) {
+			await prisma.stockNotificationRequest.updateMany({
+				where: { id: { in: successfulIds } },
+				data: {
+					status: StockNotificationStatus.NOTIFIED,
+					notifiedAt: new Date(),
+					notifiedInventory: sku.inventory,
+				},
+			});
+		}
 
 		// Invalider le cache
 		const tagsToInvalidate = getNotifyStockInvalidationTags(skuId);

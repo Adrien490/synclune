@@ -8,7 +8,7 @@ import type { GetCartReturn, Cart, CartItem } from "../types/cart.types";
 
 // Re-export pour compatibilité
 export { GET_CART_SELECT } from "../constants/cart.constants";
-export type { GetCartReturn, Cart, CartItem, CartWithItems } from "../types/cart.types";
+export type { GetCartReturn, Cart, CartItem } from "../types/cart.types";
 
 // ============================================================================
 // MAIN FUNCTIONS

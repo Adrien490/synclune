@@ -152,8 +152,9 @@ export async function getStockNotificationsAdmin(
 		);
 
 		// Build where clause
-		// Exclure les notifications d'utilisateurs soft-deleted (mais garder les anonymes)
+		// ⚠️ AUDIT FIX: Filtre deletedAt sur la notification elle-même + utilisateurs soft-deleted
 		const where: Prisma.StockNotificationRequestWhereInput = {
+			deletedAt: null, // Exclure les notifications soft-deleted
 			OR: [
 				{ user: null }, // Visiteurs anonymes
 				{ user: { deletedAt: null } }, // Utilisateurs actifs
@@ -260,23 +261,24 @@ export async function getStockNotificationsStats(): Promise<StockNotificationsSt
 
 		const [totalPending, notifiedThisMonth, skusWithPending] =
 			await Promise.all([
-				// Total demandes en attente
+				// Total demandes en attente (excluant soft-deleted)
 				prisma.stockNotificationRequest.count({
-					where: { status: StockNotificationStatus.PENDING },
+					where: { status: StockNotificationStatus.PENDING, deletedAt: null },
 				}),
 
-				// Notifications envoyées ce mois
+				// Notifications envoyées ce mois (excluant soft-deleted)
 				prisma.stockNotificationRequest.count({
 					where: {
 						status: StockNotificationStatus.NOTIFIED,
 						notifiedAt: { gte: startOfMonth },
+						deletedAt: null,
 					},
 				}),
 
-				// Nombre de SKUs distincts avec demandes en attente
+				// Nombre de SKUs distincts avec demandes en attente (excluant soft-deleted)
 				prisma.stockNotificationRequest.groupBy({
 					by: ["skuId"],
-					where: { status: StockNotificationStatus.PENDING },
+					where: { status: StockNotificationStatus.PENDING, deletedAt: null },
 				}),
 			]);
 

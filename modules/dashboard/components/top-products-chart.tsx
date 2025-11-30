@@ -13,7 +13,7 @@ import {
 	ChartTooltipContent,
 	type ChartConfig,
 } from "@/shared/components/ui/chart";
-import { GetDashboardTopProductsReturn, TopProductItem } from "@/modules/dashboard/types";
+import type { GetDashboardTopProductsReturn, TopProductItem } from "@/modules/dashboard/data/get-top-products";
 import { use } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 

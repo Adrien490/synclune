@@ -8,7 +8,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
-import { GetDashboardRecentOrdersReturn, RecentOrderItem } from "@/modules/dashboard/types";
+import type { GetDashboardRecentOrdersReturn, RecentOrderItem } from "@/modules/dashboard/data/get-recent-orders";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";

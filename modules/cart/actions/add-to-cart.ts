@@ -98,6 +98,14 @@ export async function addToCart(
 			}
 		}
 
+		// 5b. Vérifier que sessionId est bien défini pour les visiteurs
+		if (!userId && !sessionId) {
+			return {
+				status: ActionStatus.ERROR,
+				message: "Impossible de créer une session panier. Veuillez réessayer.",
+			};
+		}
+
 		// 6. Transaction: Trouver ou créer le panier, ajouter/mettre à jour l'item
 		const transactionResult = await prisma.$transaction(async (tx) => {
 			// 6a. Upsert panier
@@ -195,8 +203,8 @@ export async function addToCart(
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
 		tags.forEach(tag => updateTag(tag));
 
-		// 8. Revalider le layout pour mettre à jour le CartBadge
-		revalidatePath('/', 'layout');
+		// 8. Revalider le panier pour mettre à jour le CartBadge
+		revalidatePath('/panier');
 
 		// 9. Success - Return ActionState format
 		const successMessage = transactionResult.isUpdate

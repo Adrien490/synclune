@@ -1,0 +1,48 @@
+import { Suspense } from "react";
+import { fetchDashboardKpis } from "../../data/get-kpis";
+import { fetchDashboardRevenueChart } from "../../data/get-revenue-chart";
+import { fetchDashboardTopProducts } from "../../data/get-top-products";
+import { fetchDashboardOrdersStatus } from "../../data/get-orders-status";
+import { DashboardKpis } from "../dashboard-kpis";
+import { RevenueChart } from "../revenue-chart";
+import { TopProductsChart } from "../top-products-chart";
+import { OrdersStatusChart } from "../orders-status-chart";
+import { KpisSkeleton, ChartSkeleton } from "../skeletons";
+
+/**
+ * Section Vue d'ensemble du dashboard
+ * Affiche les KPIs principaux et les graphiques de synthese
+ */
+export async function OverviewSection() {
+	// Creer les promises pour les donnees
+	const kpisPromise = fetchDashboardKpis();
+	const revenueChartPromise = fetchDashboardRevenueChart();
+	const topProductsPromise = fetchDashboardTopProducts();
+	const ordersStatusPromise = fetchDashboardOrdersStatus();
+
+	return (
+		<div className="space-y-6">
+			{/* KPIs */}
+			<Suspense fallback={<KpisSkeleton count={6} ariaLabel="Chargement des indicateurs cles" />}>
+				<DashboardKpis kpisPromise={kpisPromise} />
+			</Suspense>
+
+			{/* Graphiques principaux */}
+			<div className="grid gap-6 lg:grid-cols-2">
+				<div className="lg:col-span-2">
+					<Suspense fallback={<ChartSkeleton />}>
+						<RevenueChart chartPromise={revenueChartPromise} />
+					</Suspense>
+				</div>
+
+				<Suspense fallback={<ChartSkeleton />}>
+					<TopProductsChart chartPromise={topProductsPromise} />
+				</Suspense>
+
+				<Suspense fallback={<ChartSkeleton />}>
+					<OrdersStatusChart chartPromise={ordersStatusPromise} />
+				</Suspense>
+			</div>
+		</div>
+	);
+}

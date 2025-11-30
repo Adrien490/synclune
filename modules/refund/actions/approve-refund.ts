@@ -1,11 +1,14 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
+import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
+
+import { sendRefundApprovedEmail } from "@/shared/lib/email";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { approveRefundSchema } from "../schemas/refund.schemas";
@@ -37,16 +40,25 @@ export async function approveRefund(
 			};
 		}
 
-		// Récupérer le remboursement
+		// Récupérer le remboursement avec les infos pour l'email
 		const refund = await prisma.refund.findUnique({
 			where: { id },
 			select: {
 				id: true,
 				status: true,
 				amount: true,
+				reason: true,
 				order: {
 					select: {
+						id: true,
 						orderNumber: true,
+						total: true,
+						user: {
+							select: {
+								email: true,
+								name: true,
+							},
+						},
 					},
 				},
 			},
@@ -74,15 +86,45 @@ export async function approveRefund(
 			};
 		}
 
-		// Mettre à jour le statut
-		await prisma.refund.update({
-			where: { id },
-			data: {
-				status: RefundStatus.APPROVED,
-			},
+		// Récupérer la session pour l'historique
+		const session = await getSession();
+
+		// Mettre à jour le statut et créer l'entrée d'historique
+		await prisma.$transaction(async (tx) => {
+			await tx.refund.update({
+				where: { id },
+				data: {
+					status: RefundStatus.APPROVED,
+				},
+			});
+
+			await tx.refundHistory.create({
+				data: {
+					refundId: id,
+					action: RefundAction.APPROVED,
+					authorId: session?.user?.id,
+				},
+			});
 		});
 
 		revalidatePath("/admin/ventes/remboursements");
+
+		// Envoyer l'email de notification au client
+		if (refund.order.user?.email) {
+			const isPartialRefund = refund.amount < refund.order.total;
+			const orderDetailsUrl = `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"}/mon-compte/commandes/${refund.order.id}`;
+
+			await sendRefundApprovedEmail({
+				to: refund.order.user.email,
+				orderNumber: refund.order.orderNumber,
+				customerName: refund.order.user.name || "Client",
+				refundAmount: refund.amount,
+				originalOrderTotal: refund.order.total,
+				reason: refund.reason,
+				isPartialRefund,
+				orderDetailsUrl,
+			});
+		}
 
 		return {
 			status: ActionStatus.SUCCESS,

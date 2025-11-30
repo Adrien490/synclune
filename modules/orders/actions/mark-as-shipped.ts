@@ -6,15 +6,17 @@ import {
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier-detection";
+import { getCarrierLabel, getTrackingUrl, toShippingCarrierEnum, type Carrier } from "@/modules/orders/utils/carrier-detection";
 import { revalidatePath } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { markAsShippedSchema } from "../schemas/order.schemas";
+import { createOrderAudit } from "../utils/order-audit";
 
 /**
  * Marque une commande comme expédiée
@@ -41,6 +43,11 @@ export async function markAsShipped(
 				message: "Accès non autorisé",
 			};
 		}
+
+		// Récupérer les infos de l'admin pour l'audit trail
+		const session = await getSession();
+		const adminId = session?.user?.id;
+		const adminName = session?.user?.name || "Admin";
 
 		const id = formData.get("id") as string;
 		const trackingNumber = formData.get("trackingNumber") as string;
@@ -71,6 +78,7 @@ export async function markAsShipped(
 				orderNumber: true,
 				status: true,
 				paymentStatus: true,
+				fulfillmentStatus: true,
 				customerEmail: true,
 				customerName: true,
 				shippingFirstName: true,
@@ -128,8 +136,27 @@ export async function markAsShipped(
 				fulfillmentStatus: FulfillmentStatus.SHIPPED,
 				trackingNumber: result.data.trackingNumber,
 				trackingUrl: finalTrackingUrl,
-				shippingCarrier: result.data.carrier,
+				shippingCarrier: toShippingCarrierEnum(result.data.carrier),
 				shippedAt: new Date(),
+			},
+		});
+
+		// 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
+		await createOrderAudit({
+			orderId: id,
+			action: "SHIPPED",
+			previousStatus: order.status,
+			newStatus: OrderStatus.SHIPPED,
+			previousFulfillmentStatus: order.fulfillmentStatus,
+			newFulfillmentStatus: FulfillmentStatus.SHIPPED,
+			authorId: adminId,
+			authorName: adminName,
+			source: "admin",
+			metadata: {
+				trackingNumber: result.data.trackingNumber,
+				trackingUrl: finalTrackingUrl,
+				shippingCarrier: result.data.carrier,
+				emailSent: result.data.sendEmail,
 			},
 		});
 

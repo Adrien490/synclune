@@ -9,11 +9,6 @@ export type GetCartReturn = Prisma.CartGetPayload<{
 	select: typeof GET_CART_SELECT;
 }> | null;
 
-/**
- * @deprecated Use GetCartReturn instead
- */
-export type CartWithItems = GetCartReturn;
-
 export type Cart = Prisma.CartGetPayload<{
 	select: typeof GET_CART_SELECT;
 }>;

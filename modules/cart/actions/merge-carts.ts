@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";
-import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
+import { batchValidateSkusForMerge } from "@/modules/cart/lib/sku-validation";
 
 export type MergeCartsResult =
 	| {
@@ -143,79 +143,85 @@ export async function mergeCarts(
 			});
 		}
 
-		// 4. Fusionner les items dans une transaction atomique
+		// 4. Préparer et valider tous les SKUs en batch (UNE SEULE requête DB)
+		// Calculer les quantités finales selon la stratégie MAX
+		const itemsToValidate: Array<{ skuId: string; quantity: number }> = [];
+		const userItemsMap = new Map(
+			targetCart.items.map((item) => [item.skuId, item])
+		);
+
+		for (const guestItem of guestCart.items) {
+			// Skip les produits inactifs (déjà chargé dans guestCart.items)
+			if (
+				!guestItem.sku.isActive ||
+				guestItem.sku.product.status !== "PUBLIC"
+			) {
+				continue;
+			}
+
+			const existingItem = userItemsMap.get(guestItem.skuId);
+			const finalQuantity = existingItem
+				? Math.max(existingItem.quantity, guestItem.quantity) // Stratégie MAX
+				: guestItem.quantity;
+
+			itemsToValidate.push({ skuId: guestItem.skuId, quantity: finalQuantity });
+		}
+
+		// Validation batch - UNE SEULE requête pour tous les SKUs
+		const validationResults = await batchValidateSkusForMerge(itemsToValidate);
+
+		// 5. Fusionner les items dans une transaction atomique
 		let mergedCount = 0;
 		let conflictCount = 0;
 
 		await prisma.$transaction(async (tx) => {
 			for (const guestItem of guestCart.items) {
-				// Vérifier que le SKU est toujours actif et disponible
+				// Skip les produits inactifs
 				if (
 					!guestItem.sku.isActive ||
 					guestItem.sku.product.status !== "PUBLIC"
 				) {
-					continue; // Skip les produits inactifs
+					continue;
 				}
 
-				// Chercher si ce SKU existe déjà dans le panier utilisateur
-				const existingItem = targetCart.items.find(
-					(item) => item.skuId === guestItem.skuId
-				);
+				const validation = validationResults.get(guestItem.skuId);
+				if (!validation?.isValid) {
+					continue; // Stock insuffisant ou SKU invalide
+				}
+
+				const existingItem = userItemsMap.get(guestItem.skuId);
 
 				if (existingItem) {
 					// 🔀 STRATÉGIE DE FUSION : MAX (voir documentation ligne 34-71)
-					// Conflit : prendre la quantité maximale
 					const maxQuantity = Math.max(
 						existingItem.quantity,
 						guestItem.quantity
 					);
 
-					// 💡 ALTERNATIVE SUM (décommenter pour activer) :
-					// const sumQuantity = existingItem.quantity + guestItem.quantity;
-
-					// Vérifier le stock
-					const stockValidation = await validateSkuAndStock({
-						skuId: guestItem.skuId,
-						quantity: maxQuantity, // Remplacer par sumQuantity si stratégie SUM
+					await tx.cartItem.update({
+						where: { id: existingItem.id },
+						data: { quantity: maxQuantity },
 					});
-
-					if (stockValidation.success) {
-						await tx.cartItem.update({
-							where: { id: existingItem.id },
-							data: {
-								quantity: maxQuantity, // Remplacer par sumQuantity si stratégie SUM
-							},
-						});
-						conflictCount++;
-					}
-					// Si stock insuffisant, on garde la quantité existante (aucune erreur affichée)
+					conflictCount++;
 				} else {
 					// Pas de conflit : ajouter directement
-					// Vérifier le stock
-					const stockValidation = await validateSkuAndStock({
-						skuId: guestItem.skuId,
-						quantity: guestItem.quantity,
+					await tx.cartItem.create({
+						data: {
+							cartId: targetCart.id,
+							skuId: guestItem.skuId,
+							quantity: guestItem.quantity,
+							priceAtAdd: guestItem.priceAtAdd, // Conserver le prix snapshot lors du merge
+						},
 					});
-
-					if (stockValidation.success) {
-						await tx.cartItem.create({
-							data: {
-								cartId: targetCart.id,
-								skuId: guestItem.skuId,
-								quantity: guestItem.quantity,
-								priceAtAdd: guestItem.priceAtAdd, // 🔴 Conserver le prix snapshot lors du merge
-							},
-						});
-						mergedCount++;
-					}
+					mergedCount++;
 				}
 			}
 
-			// 5. Supprimer le panier visiteur (dans la même transaction)
+			// 6. Supprimer le panier visiteur (dans la même transaction)
 			await tx.cart.delete({ where: { id: guestCart.id } });
 		});
 
-		// 6. Invalider les caches
+		// 7. Invalider les caches
 		const guestTags = getCartInvalidationTags(undefined, sessionId);
 		const userTags = getCartInvalidationTags(userId, undefined);
 		[...guestTags, ...userTags].forEach(tag => updateTag(tag));

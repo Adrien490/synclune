@@ -8,7 +8,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
-import { GetDashboardStockAlertsReturn, StockAlertItem } from "@/modules/dashboard/types";
+import type { GetDashboardStockAlertsReturn, StockAlertItem } from "@/modules/dashboard/data/get-stock-alerts";
 import { AlertTriangle, PackageX } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";

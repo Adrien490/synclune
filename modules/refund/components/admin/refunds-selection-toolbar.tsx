@@ -4,11 +4,7 @@ import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { RefundSelectionActions } from "./refund-selection-actions";
 
-interface RefundsSelectionToolbarProps {
-	refundIds: string[];
-}
-
-export function RefundsSelectionToolbar({}: RefundsSelectionToolbarProps) {
+export function RefundsSelectionToolbar() {
 	const { selectedItems } = useSelectionContext();
 
 	if (selectedItems.length === 0) return null;

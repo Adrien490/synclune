@@ -9,7 +9,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { sendTrackingUpdateEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier-detection";
+import { getCarrierLabel, getTrackingUrl, toShippingCarrierEnum, type Carrier } from "@/modules/orders/utils/carrier-detection";
 import { revalidatePath } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -108,7 +108,7 @@ export async function updateTracking(
 			data: {
 				trackingNumber: result.data.trackingNumber,
 				trackingUrl: finalTrackingUrl,
-				shippingCarrier: result.data.carrier,
+				shippingCarrier: toShippingCarrierEnum(result.data.carrier),
 				estimatedDelivery: result.data.estimatedDelivery,
 			},
 		});

@@ -17,6 +17,12 @@ export const STOCK_NOTIFICATION_EXPIRY_DAYS = 90;
 export const STOCK_NOTIFICATION_BATCH_SIZE = 50;
 
 /**
+ * Nombre maximum d'emails à envoyer en parallèle
+ * (limite la concurrence pour ne pas surcharger Resend)
+ */
+export const STOCK_NOTIFICATION_EMAIL_CONCURRENCY = 10;
+
+/**
  * Délai minimum entre deux notifications pour le même email/SKU (en heures)
  * (évite le spam si le stock fluctue)
  */

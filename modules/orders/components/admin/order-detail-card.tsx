@@ -27,7 +27,6 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
 	ArrowLeft,
-	Calendar,
 	CheckCircle,
 	Copy,
 	CreditCard,
@@ -51,6 +50,7 @@ import { MARK_AS_PAID_DIALOG_ID } from "./mark-as-paid-alert-dialog";
 import { MARK_AS_SHIPPED_DIALOG_ID } from "./mark-as-shipped-dialog";
 import { MARK_AS_DELIVERED_DIALOG_ID } from "./mark-as-delivered-alert-dialog";
 import { UPDATE_TRACKING_DIALOG_ID } from "./update-tracking-dialog";
+import { OrderHistoryTimeline } from "./order-history-timeline";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 
 // ============================================================================
@@ -611,55 +611,8 @@ export function OrderDetailCard({ order }: OrderDetailCardProps) {
 						</Card>
 					)}
 
-					{/* Dates */}
-					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Calendar className="h-5 w-5" />
-								Historique
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-2 text-sm">
-							<div className="flex justify-between">
-								<span className="text-muted-foreground">Créée</span>
-								<span>
-									{format(order.createdAt, "d MMM yyyy, HH:mm", { locale: fr })}
-								</span>
-							</div>
-							<div className="flex justify-between">
-								<span className="text-muted-foreground">Mise à jour</span>
-								<span>
-									{format(order.updatedAt, "d MMM yyyy, HH:mm", { locale: fr })}
-								</span>
-							</div>
-							{order.paidAt && (
-								<div className="flex justify-between">
-									<span className="text-muted-foreground">Payée</span>
-									<span>
-										{format(order.paidAt, "d MMM yyyy, HH:mm", { locale: fr })}
-									</span>
-								</div>
-							)}
-							{order.shippedAt && (
-								<div className="flex justify-between">
-									<span className="text-muted-foreground">Expédiée</span>
-									<span>
-										{format(order.shippedAt, "d MMM yyyy, HH:mm", { locale: fr })}
-									</span>
-								</div>
-							)}
-							{order.actualDelivery && (
-								<div className="flex justify-between">
-									<span className="text-muted-foreground">Livrée</span>
-									<span>
-										{format(order.actualDelivery, "d MMM yyyy, HH:mm", {
-											locale: fr,
-										})}
-									</span>
-								</div>
-							)}
-						</CardContent>
-					</Card>
+					{/* History Timeline */}
+					<OrderHistoryTimeline history={order.history || []} />
 				</div>
 			</div>
 		</div>

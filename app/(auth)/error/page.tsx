@@ -53,7 +53,7 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
 	return (
 		<div className="min-h-screen relative overflow-hidden bg-background">
 			{/* Particules en arrière-plan */}
-			<ParticleSystem variant="minimal" className="absolute inset-0 z-0" />
+			<ParticleSystem count={4} className="absolute inset-0 z-0" />
 
 			{/* Lien retour */}
 			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">

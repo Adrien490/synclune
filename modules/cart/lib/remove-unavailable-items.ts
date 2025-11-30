@@ -33,18 +33,27 @@ export async function removeUnavailableItems(
 		}
 
 		// 2. Récupérer le panier avec tous ses items et relations
+		// ⚠️ AUDIT FIX: Utiliser select explicite au lieu d'include + filtre deletedAt
 		const cart = await prisma.cart.findFirst({
 			where: userId ? { userId } : { sessionId },
-			include: {
+			select: {
+				id: true,
 				items: {
-					include: {
+					select: {
+						id: true,
+						quantity: true,
 						sku: {
-							include: {
+							select: {
+								id: true,
+								inventory: true,
+								isActive: true,
+								deletedAt: true,
 								product: {
 									select: {
 										id: true,
 										title: true,
 										status: true,
+										deletedAt: true,
 									},
 								},
 							},
@@ -63,12 +72,15 @@ export async function removeUnavailableItems(
 		}
 
 		// 3. Identifier les items indisponibles
+		// ⚠️ AUDIT FIX: Inclure les SKU/produits soft-deleted comme indisponibles
 		const unavailableItems = cart.items.filter((item) => {
 			const isOutOfStock = item.sku.inventory < item.quantity;
 			const isInactive = !item.sku.isActive;
 			const isNotPublic = item.sku.product.status !== "PUBLIC";
+			const isSkuDeleted = item.sku.deletedAt !== null;
+			const isProductDeleted = item.sku.product.deletedAt !== null;
 
-			return isOutOfStock || isInactive || isNotPublic;
+			return isOutOfStock || isInactive || isNotPublic || isSkuDeleted || isProductDeleted;
 		});
 
 		if (unavailableItems.length === 0) {

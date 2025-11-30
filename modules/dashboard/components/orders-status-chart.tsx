@@ -9,7 +9,7 @@ import {
     ChartTooltipContent,
     type ChartConfig,
 } from "@/shared/components/ui/chart";
-import { GetDashboardOrdersStatusReturn, OrderStatusItem } from "@/modules/dashboard/types";
+import type { GetDashboardOrdersStatusReturn, OrderStatusItem } from "@/modules/dashboard/data/get-orders-status";
 import { use } from "react";
 import { Cell, Pie, PieChart } from "recharts";
 

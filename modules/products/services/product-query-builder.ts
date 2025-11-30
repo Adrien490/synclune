@@ -139,11 +139,11 @@ export function buildProductFilterConditions(
 			: [filters.material];
 		if (materials.length === 1) {
 			conditions.push({
-				skus: { some: { isActive: true, materialRef: { slug: materials[0] } } },
+				skus: { some: { isActive: true, materialRelation: { slug: materials[0] } } },
 			});
 		} else if (materials.length > 1) {
 			conditions.push({
-				skus: { some: { isActive: true, materialRef: { slug: { in: materials } } } },
+				skus: { some: { isActive: true, materialRelation: { slug: { in: materials } } } },
 			});
 		}
 	}
@@ -256,6 +256,12 @@ export function buildProductWhereClause(
 	const whereClause: Prisma.ProductWhereInput = {};
 	const andConditions: Prisma.ProductWhereInput[] = [];
 	const filters = params.filters ?? {};
+
+	// ⚠️ AUDIT FIX: Exclure les produits soft-deleted par défaut
+	// Pour l'admin, utiliser includeDeleted: true dans les params
+	if (!params.includeDeleted) {
+		andConditions.push({ deletedAt: null });
+	}
 
 	// Si un statut est spécifié, filtrer par ce statut
 	// Si undefined, ne pas filtrer (affiche tous les statuts - utilisé par l'admin)

@@ -208,11 +208,11 @@ async function main(): Promise<void> {
     let trackingData: Partial<Prisma.OrderCreateInput> = {};
     if (status === OrderStatus.SHIPPED || status === OrderStatus.DELIVERED) {
       const shippingMethod = faker.helpers.arrayElement([
-        "Colissimo",
-        "Mondial Relay",
-        "Chronopost",
-        "Lettre suivie",
-      ]);
+        "STANDARD",
+        "EXPRESS",
+        "STANDARD",
+        "STANDARD",
+      ] as const);
 
       // Expédié quelques jours après la commande
       const shippedAt = new Date(orderDate);

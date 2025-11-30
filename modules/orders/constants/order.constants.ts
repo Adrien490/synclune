@@ -117,6 +117,25 @@ export const GET_ORDER_SELECT = {
 			taxRate: true,
 		},
 	},
+	history: {
+		select: {
+			id: true,
+			action: true,
+			previousStatus: true,
+			newStatus: true,
+			previousPaymentStatus: true,
+			newPaymentStatus: true,
+			previousFulfillmentStatus: true,
+			newFulfillmentStatus: true,
+			note: true,
+			metadata: true,
+			authorName: true,
+			source: true,
+			createdAt: true,
+		},
+		orderBy: { createdAt: "desc" as const },
+		take: 50,
+	},
 } as const satisfies Prisma.OrderSelect;
 
 // ============================================================================

@@ -117,7 +117,7 @@ export default async function ProductPage({
 			/>
 
 			{/* Particules précieuses pour pages produits - variant jewelry */}
-			<ParticleSystem variant="jewelry" className="fixed inset-0 z-0" />
+			<ParticleSystem count={8} size={[12, 80]} className="fixed inset-0 z-0" />
 
 			<div className="relative z-10">
 				<PageHeader title={product.title} breadcrumbs={breadcrumbs} />

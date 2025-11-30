@@ -161,22 +161,30 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			try {
 // console.log(`🔨 [CHECKOUT] Creating Stripe customer for ${finalEmail}...`);
 
-				const customer = await stripe.customers.create({
-					email: finalEmail,
-					name: `${validatedData.shippingAddress.firstName} ${validatedData.shippingAddress.lastName}`,
-					address: {
-						line1: validatedData.shippingAddress.addressLine1,
-						line2: validatedData.shippingAddress.addressLine2 || undefined,
-						postal_code: validatedData.shippingAddress.postalCode,
-						city: validatedData.shippingAddress.city,
-						country: validatedData.shippingAddress.country || 'FR',
+				// 🔴 IDEMPOTENCY KEY (Best Practice Stripe 2025)
+				// Protège contre double-clic, timeout réseau, retry automatique
+				// Clé basée sur email = même customer retourné pendant 24h
+				const customerIdempotencyKey = `customer-create-${finalEmail}`;
+
+				const customer = await stripe.customers.create(
+					{
+						email: finalEmail,
+						name: `${validatedData.shippingAddress.firstName} ${validatedData.shippingAddress.lastName}`,
+						address: {
+							line1: validatedData.shippingAddress.addressLine1,
+							line2: validatedData.shippingAddress.addressLine2 || undefined,
+							postal_code: validatedData.shippingAddress.postalCode,
+							city: validatedData.shippingAddress.city,
+							country: validatedData.shippingAddress.country || 'FR',
+						},
+						phone: validatedData.shippingAddress.phoneNumber || undefined,
+						metadata: {
+							source: 'checkout_b2c',
+							createdFrom: 'synclune-bijoux',
+						},
 					},
-					phone: validatedData.shippingAddress.phoneNumber || undefined,
-					metadata: {
-						source: 'checkout_b2c',
-						createdFrom: 'synclune-bijoux',
-					},
-				});
+					{ idempotencyKey: customerIdempotencyKey }
+				);
 
 				stripeCustomerId = customer.id;
 // console.log(`✅ [CHECKOUT] Stripe customer created: ${customer.id}`);
@@ -250,7 +258,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 
 			lineItems.push({
 				price_data: {
-					currency: "eur",
+					currency: "EUR",
 					product_data: {
 						name: productName,
 						images: imageUrl ? [imageUrl] : undefined,
@@ -457,7 +465,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 					shippingCost,
 					taxAmount,
 					total,
-					currency: "eur",
+					currency: "EUR",
 
 					// === INFORMATIONS CLIENT ===
 					customerEmail: finalEmail || "",

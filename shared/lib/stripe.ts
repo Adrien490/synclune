@@ -2,10 +2,12 @@ import Stripe from "stripe";
 
 /**
  * Instance Stripe centralisée pour toute l'application
- * Utilise automatiquement la version API compatible avec le SDK Stripe (v19.2.0)
- * Pas de version explicite = le SDK gère la compatibilité
+ * Utilise automatiquement la version API compatible avec le SDK Stripe (v20.x)
+ * - maxNetworkRetries: 2 pour retry automatique en cas d'erreur réseau
  */
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  maxNetworkRetries: 2,
+});
 
 /**
  * Récupère les informations légales du vendeur depuis les variables d'environnement

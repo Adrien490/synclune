@@ -1,6 +1,7 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
+import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -87,13 +88,27 @@ export async function rejectRefund(
 				: `[REFUSÉ] ${result.data.reason}`
 			: refund.note;
 
-		// Mettre à jour le statut
-		await prisma.refund.update({
-			where: { id },
-			data: {
-				status: RefundStatus.REJECTED,
-				note: updatedNote,
-			},
+		// Récupérer la session pour l'historique
+		const session = await getSession();
+
+		// Mettre à jour le statut et créer l'entrée d'historique
+		await prisma.$transaction(async (tx) => {
+			await tx.refund.update({
+				where: { id },
+				data: {
+					status: RefundStatus.REJECTED,
+					note: updatedNote,
+				},
+			});
+
+			await tx.refundHistory.create({
+				data: {
+					refundId: id,
+					action: RefundAction.REJECTED,
+					authorId: session?.user?.id,
+					note: result.data.reason || undefined,
+				},
+			});
 		});
 
 		revalidatePath("/admin/ventes/remboursements");

@@ -27,8 +27,12 @@ export function ApproveRefundWrapper({
 	};
 
 	return (
-		<span className={cn(className)} onClick={handleClick}>
+		<button
+			type="button"
+			className={cn("appearance-none bg-transparent border-none p-0 m-0 text-inherit font-inherit cursor-pointer", className)}
+			onClick={handleClick}
+		>
 			{children}
-		</span>
+		</button>
 	);
 }

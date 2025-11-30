@@ -13,9 +13,17 @@ import type { StockNotificationRequestWithSku } from "../types/stock-notificatio
 export async function getNotificationByToken(
 	token: string
 ): Promise<StockNotificationRequestWithSku | null> {
+	"use cache";
+	cacheLife("dashboard");
+	cacheTag(STOCK_NOTIFICATIONS_CACHE_TAGS.BY_TOKEN(token));
+
 	try {
-		const notification = await prisma.stockNotificationRequest.findUnique({
-			where: { unsubscribeToken: token },
+		const notification = await prisma.stockNotificationRequest.findFirst({
+			where: {
+				unsubscribeToken: token,
+				// Exclure les notifications d'utilisateurs soft-deleted
+				OR: [{ user: null }, { user: { deletedAt: null } }],
+			},
 			select: STOCK_NOTIFICATION_WITH_SKU_SELECT,
 		});
 

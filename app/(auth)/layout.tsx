@@ -9,7 +9,7 @@ export default function AuthLayout({
 	return (
 		<div className="relative min-h-screen bg-background overflow-hidden">
 			{/* Background décoratif - Option 2 : Minimal + Halos subtils */}
-			<ParticleSystem variant="minimal" className="absolute inset-0 z-0" />
+			<ParticleSystem count={4} className="absolute inset-0 z-0" />
 			<DecorativeHalo
 				size="xl"
 				variant="mixed"

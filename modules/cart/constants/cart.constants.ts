@@ -73,12 +73,3 @@ export const GET_CART_SUMMARY_SELECT = {
 	},
 } as const satisfies Prisma.CartSelect;
 
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const GET_CART_DEFAULT_CACHE = {
-	revalidate: 0,
-	stale: 0,
-	expire: 0,
-} as const;

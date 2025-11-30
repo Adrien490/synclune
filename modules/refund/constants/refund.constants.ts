@@ -96,6 +96,7 @@ export const REFUND_STATUS_LABELS: Record<RefundStatus, string> = {
 	[RefundStatus.COMPLETED]: "Remboursé",
 	[RefundStatus.REJECTED]: "Refusé",
 	[RefundStatus.FAILED]: "Échoué",
+	[RefundStatus.CANCELLED]: "Annulé",
 };
 
 export const REFUND_STATUS_COLORS: Record<RefundStatus, string> = {
@@ -104,6 +105,7 @@ export const REFUND_STATUS_COLORS: Record<RefundStatus, string> = {
 	[RefundStatus.COMPLETED]: "#22c55e", // Green
 	[RefundStatus.REJECTED]: "#ef4444", // Red
 	[RefundStatus.FAILED]: "#dc2626", // Red darker
+	[RefundStatus.CANCELLED]: "#6b7280", // Gray
 };
 
 export const REFUND_REASON_LABELS: Record<RefundReason, string> = {

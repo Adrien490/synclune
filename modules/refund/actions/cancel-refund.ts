@@ -1,6 +1,7 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
+import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -74,9 +75,27 @@ export async function cancelRefund(
 			};
 		}
 
-		// Supprimer le remboursement et ses items (cascade)
-		await prisma.refund.delete({
-			where: { id },
+		// Récupérer la session pour l'historique
+		const session = await getSession();
+
+		// Soft delete : marquer comme CANCELLED au lieu de supprimer
+		// (Conformité comptable Art. L123-22 Code de Commerce - conservation 10 ans)
+		await prisma.$transaction(async (tx) => {
+			await tx.refund.update({
+				where: { id },
+				data: {
+					status: RefundStatus.CANCELLED,
+					deletedAt: new Date(),
+				},
+			});
+
+			await tx.refundHistory.create({
+				data: {
+					refundId: id,
+					action: RefundAction.CANCELLED,
+					authorId: session?.user?.id,
+				},
+			});
 		});
 
 		revalidatePath("/admin/ventes/remboursements");

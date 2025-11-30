@@ -88,51 +88,59 @@ export async function subscribeToStockNotification(
 			};
 		}
 
-		// Vérifier si une demande existe déjà pour cet email/SKU
-		const existingNotification = await prisma.stockNotificationRequest.findFirst(
-			{
+		// Transaction pour éviter les race conditions entre vérification et création
+		const transactionResult = await prisma.$transaction(async (tx) => {
+			// Vérifier si une demande existe déjà pour cet email/SKU
+			const existingNotification = await tx.stockNotificationRequest.findFirst({
 				where: {
 					email: normalizedEmail,
 					skuId: validatedSkuId,
 				},
 				orderBy: { createdAt: "desc" },
-			}
-		);
-
-		if (existingNotification) {
-			// Si déjà en attente, retourner un message
-			if (existingNotification.status === StockNotificationStatus.PENDING) {
-				return {
-					status: ActionStatus.CONFLICT,
-					message:
-						"Vous êtes déjà inscrit(e) pour recevoir une notification pour ce produit",
-				};
-			}
-
-			// Si NOTIFIED/EXPIRED/CANCELLED, réactiver la demande existante
-			await prisma.stockNotificationRequest.update({
-				where: { id: existingNotification.id },
-				data: {
-					status: StockNotificationStatus.PENDING,
-					userId, // Mettre à jour le userId si l'utilisateur s'est connecté entre temps
-					notifiedAt: null,
-					notifiedInventory: null,
-					ipAddress,
-					userAgent,
-				},
 			});
-		} else {
-			// Créer une nouvelle demande de notification
-			await prisma.stockNotificationRequest.create({
-				data: {
-					skuId: validatedSkuId,
-					userId,
-					email: normalizedEmail,
-					status: StockNotificationStatus.PENDING,
-					ipAddress,
-					userAgent,
-				},
-			});
+
+			if (existingNotification) {
+				// Si déjà en attente, retourner un message
+				if (existingNotification.status === StockNotificationStatus.PENDING) {
+					return { alreadyPending: true } as const;
+				}
+
+				// Si NOTIFIED/EXPIRED/CANCELLED, réactiver la demande existante
+				// Note: on conserve notifiedAt pour le cooldown anti-spam (24h)
+				await tx.stockNotificationRequest.update({
+					where: { id: existingNotification.id },
+					data: {
+						status: StockNotificationStatus.PENDING,
+						userId, // Mettre à jour le userId si l'utilisateur s'est connecté entre temps
+						// notifiedAt conservé pour le cooldown
+						notifiedInventory: null,
+						ipAddress,
+						userAgent,
+					},
+				});
+			} else {
+				// Créer une nouvelle demande de notification
+				await tx.stockNotificationRequest.create({
+					data: {
+						skuId: validatedSkuId,
+						userId,
+						email: normalizedEmail,
+						status: StockNotificationStatus.PENDING,
+						ipAddress,
+						userAgent,
+					},
+				});
+			}
+
+			return { alreadyPending: false } as const;
+		});
+
+		if (transactionResult.alreadyPending) {
+			return {
+				status: ActionStatus.CONFLICT,
+				message:
+					"Vous êtes déjà inscrit(e) pour recevoir une notification pour ce produit",
+			};
 		}
 
 		// Invalider le cache

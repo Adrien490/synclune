@@ -28,6 +28,9 @@ export async function getPendingNotificationsBySku(
 	cacheStockNotificationsBySku(skuId);
 
 	try {
+		// Limiter le nombre de résultats pour éviter les surcharges mémoire
+		const take = GET_PENDING_NOTIFICATIONS_MAX_PER_PAGE + 1; // +1 pour détecter s'il y a plus
+
 		const notifications = await prisma.stockNotificationRequest.findMany({
 			where: {
 				skuId,
@@ -35,13 +38,17 @@ export async function getPendingNotificationsBySku(
 			},
 			select: STOCK_NOTIFICATION_WITH_SKU_SELECT,
 			orderBy: { createdAt: "asc" },
+			take,
 		});
 
+		const hasNextPage = notifications.length > GET_PENDING_NOTIFICATIONS_MAX_PER_PAGE;
+		const results = hasNextPage ? notifications.slice(0, -1) : notifications;
+
 		return {
-			notifications,
+			notifications: results,
 			pagination: {
-				nextCursor: null,
-				hasNextPage: false,
+				nextCursor: hasNextPage ? results[results.length - 1]?.id ?? null : null,
+				hasNextPage,
 			},
 		};
 	} catch (error) {

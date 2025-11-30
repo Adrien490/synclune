@@ -78,45 +78,65 @@ export async function bulkCancelOrders(
 		let stockRestored = 0;
 		let refundedCount = 0;
 
+		// ⚠️ AUDIT FIX: Pré-calculer les mises à jour de stock pour éviter N+1 queries
+		// Grouper les quantités par skuId pour batch update
+		const stockUpdates = new Map<string, number>();
+		const orderUpdates: Array<{
+			id: string;
+			newPaymentStatus: PaymentStatus;
+			shouldRestoreStock: boolean;
+		}> = [];
+
+		for (const order of eligibleOrders) {
+			const newPaymentStatus =
+				order.paymentStatus === PaymentStatus.PAID
+					? PaymentStatus.REFUNDED
+					: order.paymentStatus;
+
+			if (newPaymentStatus === PaymentStatus.REFUNDED) {
+				refundedCount++;
+			}
+
+			const shouldRestoreStock = order.paymentStatus === PaymentStatus.PENDING;
+			orderUpdates.push({ id: order.id, newPaymentStatus, shouldRestoreStock });
+
+			// Collecter les quantités à restaurer par SKU
+			if (shouldRestoreStock && order.items.length > 0) {
+				for (const item of order.items) {
+					const current = stockUpdates.get(item.skuId) || 0;
+					stockUpdates.set(item.skuId, current + item.quantity);
+				}
+				stockRestored++;
+			}
+		}
+
 		// Transaction pour annuler toutes les commandes
 		await prisma.$transaction(async (tx) => {
-			for (const order of eligibleOrders) {
-				// Déterminer le nouveau paymentStatus
-				const newPaymentStatus =
-					order.paymentStatus === PaymentStatus.PAID
-						? PaymentStatus.REFUNDED
-						: order.paymentStatus;
+			// Batch update de toutes les commandes en parallèle
+			await Promise.all(
+				orderUpdates.map((order) =>
+					tx.order.update({
+						where: { id: order.id },
+						data: {
+							status: OrderStatus.CANCELLED,
+							paymentStatus: order.newPaymentStatus,
+						},
+					})
+				)
+			);
 
-				if (newPaymentStatus === PaymentStatus.REFUNDED) {
-					refundedCount++;
-				}
-
-				// Restaurer le stock uniquement si PENDING
-				const shouldRestoreStock = order.paymentStatus === PaymentStatus.PENDING;
-
-				// Mettre à jour la commande
-				await tx.order.update({
-					where: { id: order.id },
-					data: {
-						status: OrderStatus.CANCELLED,
-						paymentStatus: newPaymentStatus,
-					},
-				});
-
-				// Restaurer le stock si nécessaire
-				if (shouldRestoreStock && order.items.length > 0) {
-					for (const item of order.items) {
-						await tx.productSku.update({
-							where: { id: item.skuId },
+			// Batch update de tous les stocks en parallèle (1 requête par SKU unique)
+			if (stockUpdates.size > 0) {
+				await Promise.all(
+					Array.from(stockUpdates.entries()).map(([skuId, quantity]) =>
+						tx.productSku.update({
+							where: { id: skuId },
 							data: {
-								inventory: {
-									increment: item.quantity,
-								},
+								inventory: { increment: quantity },
 							},
-						});
-					}
-					stockRestored++;
-				}
+						})
+					)
+				);
 			}
 		});
 

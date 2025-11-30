@@ -13,6 +13,7 @@ import { DeliveryConfirmationEmail } from "@/emails/delivery-confirmation-email"
 import { AdminNewOrderEmail } from "@/emails/admin-new-order-email";
 import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email";
 import { RefundConfirmationEmail } from "@/emails/refund-confirmation-email";
+import { RefundApprovedEmail } from "@/emails/refund-approved-email";
 import { AdminDisputeAlertEmail } from "@/emails/admin-dispute-alert-email";
 import { CustomizationRequestEmail } from "@/emails/customization-request-email";
 import { PaymentFailedEmail } from "@/emails/payment-failed-email";
@@ -810,6 +811,61 @@ export async function sendRefundConfirmationEmail({
 		return { success: true, data };
 	} catch (error) {
 		console.error("[EMAIL] Exception sending refund confirmation:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email au client lorsque sa demande de remboursement est approuvée
+ */
+export async function sendRefundApprovedEmail({
+	to,
+	orderNumber,
+	customerName,
+	refundAmount,
+	originalOrderTotal,
+	reason,
+	isPartialRefund,
+	orderDetailsUrl,
+}: {
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	refundAmount: number;
+	originalOrderTotal: number;
+	reason: string;
+	isPartialRefund: boolean;
+	orderDetailsUrl: string;
+}) {
+	try {
+		const emailHtml = await render(
+			RefundApprovedEmail({
+				orderNumber,
+				customerName,
+				refundAmount,
+				originalOrderTotal,
+				reason,
+				isPartialRefund,
+				orderDetailsUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.REFUND_APPROVED,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending refund approved notification:", error);
+			return { success: false, error };
+		}
+
+		console.log(`✅ [EMAIL] Refund approved notification sent to ${to} for order ${orderNumber}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending refund approved notification:", error);
 		return { success: false, error };
 	}
 }

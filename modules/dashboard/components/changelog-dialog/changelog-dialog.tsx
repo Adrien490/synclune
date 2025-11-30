@@ -11,7 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { formatDate, formatVersionDisplay, isWithinDays } from "@/shared/utils/dates";
 import { HandIcon, SparklesIcon } from "lucide-react";
-import { CHANGELOG_UI_CONFIG, RECENT_RELEASE_DAYS } from "./_constants";
+import { RECENT_RELEASE_DAYS } from "./_constants";
 import type { ChangelogWithContent, MDXModule } from "./_types";
 import { getChangelogs } from "@/modules/dashboard/data/get-changelogs";
 
@@ -100,7 +100,7 @@ export async function ChangelogDialog({
 				</Button>
 			</DialogTrigger>
 
-			<DialogContent className={`max-w-${CHANGELOG_UI_CONFIG.MAX_WIDTH} max-h-[min(${CHANGELOG_UI_CONFIG.MAX_HEIGHT_VH},${CHANGELOG_UI_CONFIG.MAX_HEIGHT_PX})] min-h-[${CHANGELOG_UI_CONFIG.MIN_HEIGHT}] overflow-hidden flex flex-col p-0`}>
+			<DialogContent className="max-w-2xl max-h-[min(80vh,800px)] min-h-[400px] overflow-hidden flex flex-col p-0">
 				{/* Sticky Header */}
 				<div className="sticky top-0 bg-background z-10 pb-4 border-b px-6 pt-6">
 					<DialogHeader>

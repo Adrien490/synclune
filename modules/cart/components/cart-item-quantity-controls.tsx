@@ -3,7 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { ButtonGroup, ButtonGroupText } from "@/shared/components/ui/button-group";
 import { Minus, Plus } from "lucide-react";
-import { useUpdateCartItemQuantity } from "@/modules/cart/hooks/use-update-cart-item-quantity";
+import { useUpdateCartItem } from "@/modules/cart/hooks/use-update-cart-item";
 
 interface CartItemQuantityControlsProps {
 	cartItemId: string;
@@ -18,7 +18,7 @@ export function CartItemQuantityControls({
 	maxQuantity,
 	isInactive,
 }: CartItemQuantityControlsProps) {
-	const { action, isPending } = useUpdateCartItemQuantity();
+	const { action, isPending } = useUpdateCartItem();
 
 	// Utilise directement currentQuantity (source de vérité: DB)
 	// Pas d'optimistic update pour éviter les désynchronisations

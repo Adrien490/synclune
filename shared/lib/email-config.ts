@@ -49,6 +49,7 @@ export const EMAIL_SUBJECTS = {
 	ORDER_RETURNED: "Retour enregistré pour votre commande - Synclune",
 	ORDER_SHIPPING_REVERTED: "Mise à jour de l'expédition de votre commande - Synclune",
 	REFUND_CONFIRMATION: "Votre remboursement a été effectué - Synclune",
+	REFUND_APPROVED: "Votre demande de remboursement a été acceptée - Synclune",
 	PAYMENT_FAILED: "Échec de votre paiement - Synclune",
 	NEWSLETTER: "Newsletter - Synclune",
 	NEWSLETTER_CONFIRMATION:

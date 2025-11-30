@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, softDelete } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
@@ -30,10 +30,9 @@ export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 			};
 		}
 
-		// 3. Supprimer la note
-		await prisma.orderNote.delete({
-			where: { id: noteId },
-		});
+		// 3. 🔴 FIX: Soft delete au lieu de hard delete (conformité légale)
+		// Conservation des notes pour audit trail (Art. L123-22 Code de Commerce)
+		await softDelete.orderNote(noteId);
 
 		// 4. Invalider le cache
 		revalidatePath("/admin/ventes/commandes");

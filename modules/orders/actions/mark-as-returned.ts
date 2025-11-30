@@ -5,6 +5,7 @@ import {
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 import { sendReturnConfirmationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
@@ -13,6 +14,7 @@ import { revalidatePath } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { markAsReturnedSchema } from "../schemas/order.schemas";
+import { createOrderAudit } from "../utils/order-audit";
 
 /**
  * Marque une commande livrée comme retournée
@@ -36,6 +38,11 @@ export async function markAsReturned(
 				message: "Accès non autorisé",
 			};
 		}
+
+		// Récupérer les infos de l'admin pour l'audit trail
+		const session = await getSession();
+		const adminId = session?.user?.id;
+		const adminName = session?.user?.name || "Admin";
 
 		const id = formData.get("id") as string;
 		const reason = formData.get("reason") as string | null;
@@ -96,6 +103,18 @@ export async function markAsReturned(
 			data: {
 				fulfillmentStatus: FulfillmentStatus.RETURNED,
 			},
+		});
+
+		// 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
+		await createOrderAudit({
+			orderId: id,
+			action: "RETURNED",
+			previousFulfillmentStatus: order.fulfillmentStatus,
+			newFulfillmentStatus: FulfillmentStatus.RETURNED,
+			note: result.data.reason,
+			authorId: adminId,
+			authorName: adminName,
+			source: "admin",
 		});
 
 		revalidatePath("/admin/ventes/commandes");

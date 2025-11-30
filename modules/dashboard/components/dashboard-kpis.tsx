@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { GetDashboardKpisReturn } from "@/modules/dashboard/types";
+import type { GetDashboardKpisReturn } from "@/modules/dashboard/data/get-kpis";
 import { KpiCard } from "./kpi-card";
 import { Euro, PackageX, Clock, TrendingUp, ShoppingCart } from "lucide-react";
 

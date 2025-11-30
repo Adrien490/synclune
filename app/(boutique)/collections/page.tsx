@@ -96,7 +96,7 @@ export default async function CollectionsPage({
 			/>
 
 			{/* Background décoratif - Particules pour ambiance bijoux */}
-			<ParticleSystem variant="section" className="fixed inset-0 z-0" />
+			<ParticleSystem className="fixed inset-0 z-0" />
 
 			<PageHeader
 				title="Mes collections"

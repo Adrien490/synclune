@@ -7,7 +7,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
 
-import { RefundReason } from "@/app/generated/prisma/client";
+import { RefundAction, RefundReason } from "@/app/generated/prisma/client";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createRefundSchema } from "../schemas/refund.schemas";
 
@@ -194,7 +194,7 @@ export async function createRefund(
 		// Récupérer l'ID de l'admin
 		const session = await getSession();
 
-		// Créer le remboursement avec ses items
+		// Créer le remboursement avec ses items et l'historique
 		const refund = await prisma.refund.create({
 			data: {
 				orderId,
@@ -209,6 +209,13 @@ export async function createRefund(
 						amount: item.amount,
 						restock: item.restock,
 					})),
+				},
+				history: {
+					create: {
+						action: RefundAction.CREATED,
+						authorId: session?.user?.id,
+						note: `Demande de remboursement créée pour ${(totalAmount / 100).toFixed(2)} €`,
+					},
 				},
 			},
 			select: {

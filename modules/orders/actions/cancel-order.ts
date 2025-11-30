@@ -2,6 +2,7 @@
 
 import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 import { sendCancelOrderConfirmationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
@@ -10,6 +11,7 @@ import { revalidatePath } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { cancelOrderSchema } from "../schemas/order.schemas";
+import { createOrderAuditTx } from "../utils/order-audit";
 
 /**
  * Annule une commande
@@ -34,6 +36,11 @@ export async function cancelOrder(
 				message: "Accès non autorisé",
 			};
 		}
+
+		// Récupérer les infos de l'admin pour l'audit trail
+		const session = await getSession();
+		const adminId = session?.user?.id;
+		const adminName = session?.user?.name || "Admin";
 
 		const id = formData.get("id") as string;
 		const reason = formData.get("reason") as string | null;
@@ -119,6 +126,24 @@ export async function cancelOrder(
 					});
 				}
 			}
+
+			// 3. 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
+			await createOrderAuditTx(tx, {
+				orderId: id,
+				action: "CANCELLED",
+				previousStatus: order.status,
+				newStatus: OrderStatus.CANCELLED,
+				previousPaymentStatus: order.paymentStatus,
+				newPaymentStatus: newPaymentStatus,
+				note: reason || undefined,
+				authorId: adminId,
+				authorName: adminName,
+				source: "admin",
+				metadata: {
+					stockRestored: shouldRestoreStock,
+					itemsCount: order.items.length,
+				},
+			});
 		});
 
 		revalidatePath("/admin/ventes/commandes");

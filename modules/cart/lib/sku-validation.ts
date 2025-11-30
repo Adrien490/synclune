@@ -309,3 +309,58 @@ export async function validateCartItems(input: {
 		};
 	}
 }
+
+// Type pour le résultat de validation batch
+export interface BatchSkuValidationResult {
+	skuId: string;
+	isValid: boolean;
+	inventory: number;
+	isActive: boolean;
+	productStatus: string;
+}
+
+/**
+ * Valide plusieurs SKUs en une seule requête DB (optimisé pour mergeCarts)
+ * Retourne une Map pour un accès O(1) aux résultats
+ */
+export async function batchValidateSkusForMerge(
+	items: Array<{ skuId: string; quantity: number }>
+): Promise<Map<string, BatchSkuValidationResult>> {
+	const skuIds = items.map((item) => item.skuId);
+	const quantityMap = new Map(items.map((item) => [item.skuId, item.quantity]));
+
+	// Une seule requête pour tous les SKUs
+	const skus = await prisma.productSku.findMany({
+		where: { id: { in: skuIds } },
+		select: {
+			id: true,
+			inventory: true,
+			isActive: true,
+			product: {
+				select: {
+					status: true,
+				},
+			},
+		},
+	});
+
+	const results = new Map<string, BatchSkuValidationResult>();
+
+	for (const sku of skus) {
+		const requestedQty = quantityMap.get(sku.id) || 0;
+		const isValid =
+			sku.isActive &&
+			sku.product.status === "PUBLIC" &&
+			sku.inventory >= requestedQty;
+
+		results.set(sku.id, {
+			skuId: sku.id,
+			isValid,
+			inventory: sku.inventory,
+			isActive: sku.isActive,
+			productStatus: sku.product.status,
+		});
+	}
+
+	return results;
+}

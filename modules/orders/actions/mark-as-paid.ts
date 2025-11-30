@@ -7,6 +7,7 @@ import {
 	Prisma,
 } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -14,6 +15,7 @@ import { revalidatePath } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { markAsPaidSchema } from "../schemas/order.schemas";
+import { createOrderAuditTx } from "../utils/order-audit";
 
 /**
  * Marque une commande comme payée manuellement
@@ -40,6 +42,11 @@ export async function markAsPaid(
 			};
 		}
 
+		// Récupérer les infos de l'admin pour l'audit trail
+		const session = await getSession();
+		const adminId = session?.user?.id;
+		const adminName = session?.user?.name || "Admin";
+
 		const id = formData.get("id") as string;
 		const note = formData.get("note") as string | null;
 
@@ -58,6 +65,7 @@ export async function markAsPaid(
 				orderNumber: true,
 				status: true,
 				paymentStatus: true,
+				fulfillmentStatus: true,
 				stripeCheckoutSessionId: true, // Pour savoir si le stock a été réservé via checkout
 				items: {
 					select: {
@@ -142,6 +150,25 @@ export async function markAsPaid(
 					status: OrderStatus.PROCESSING,
 					fulfillmentStatus: FulfillmentStatus.PROCESSING,
 					paidAt: new Date(),
+				},
+			});
+
+			// 🔴 AUDIT TRAIL (Best Practice Stripe 2025)
+			await createOrderAuditTx(tx, {
+				orderId: id,
+				action: "PAID",
+				previousStatus: order.status,
+				newStatus: OrderStatus.PROCESSING,
+				previousPaymentStatus: order.paymentStatus,
+				newPaymentStatus: PaymentStatus.PAID,
+				previousFulfillmentStatus: order.fulfillmentStatus,
+				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
+				authorId: adminId,
+				authorName: adminName,
+				source: "admin",
+				metadata: {
+					stockAdjusted: !stockAlreadyReserved,
+					itemsCount: order.items.length,
 				},
 			});
 		});

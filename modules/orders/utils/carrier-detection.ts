@@ -128,3 +128,28 @@ export function detectCarrierAndUrl(trackingNumber: string): DetectionResult {
 export function getCarrierLabel(carrier: Carrier): string {
 	return CARRIERS.find((c) => c.value === carrier)?.label ?? "Autre transporteur";
 }
+
+/**
+ * Convertit un Carrier (string local) vers l'enum Prisma ShippingCarrier
+ * ⚠️ AUDIT FIX: Nécessaire après migration vers enum
+ */
+export function toShippingCarrierEnum(carrier: Carrier | string | undefined | null): "COLISSIMO" | "CHRONOPOST" | "MONDIAL_RELAY" | "DPD" | "OTHER" | null {
+	if (!carrier) return null;
+
+	const mapping: Record<string, "COLISSIMO" | "CHRONOPOST" | "MONDIAL_RELAY" | "DPD" | "OTHER"> = {
+		colissimo: "COLISSIMO",
+		lettre_suivie: "COLISSIMO", // Lettre suivie est géré par La Poste comme Colissimo
+		chronopost: "CHRONOPOST",
+		mondial_relay: "MONDIAL_RELAY",
+		dpd: "DPD",
+		autre: "OTHER",
+		// Support des valeurs déjà en majuscules
+		COLISSIMO: "COLISSIMO",
+		CHRONOPOST: "CHRONOPOST",
+		MONDIAL_RELAY: "MONDIAL_RELAY",
+		DPD: "DPD",
+		OTHER: "OTHER",
+	};
+
+	return mapping[carrier.toLowerCase()] || mapping[carrier] || "OTHER";
+}

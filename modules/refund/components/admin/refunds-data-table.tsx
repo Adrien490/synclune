@@ -69,7 +69,7 @@ export async function RefundsDataTable({
 	return (
 		<Card>
 			<CardContent>
-				<RefundsSelectionToolbar refundIds={refundIds} />
+				<RefundsSelectionToolbar />
 				<div className="overflow-x-auto">
 					<Table role="table" aria-label="Liste des remboursements" className="min-w-full table-fixed">
 						<TableHeader>

@@ -78,6 +78,7 @@ export type GetProductsParams = Omit<
 > & {
 	direction?: "forward" | "backward";
 	status?: z.infer<typeof getProductsSchema>["status"];
+	includeDeleted?: boolean; // ⚠️ AUDIT FIX: Option pour inclure les produits soft-deleted (admin)
 };
 
 export type GetProductsReturn = {

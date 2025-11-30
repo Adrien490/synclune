@@ -15,7 +15,7 @@ import {
 	ChartTooltipContent,
 	type ChartConfig,
 } from "@/shared/components/ui/chart";
-import { GetDashboardRevenueChartReturn, RevenueDataPoint } from "@/modules/dashboard/types";
+import type { GetDashboardRevenueChartReturn, RevenueDataPoint } from "@/modules/dashboard/data/get-revenue-chart";
 import { use } from "react";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 

@@ -18,6 +18,7 @@ import {
 	StockNotificationsDataTableSkeleton,
 } from "@/modules/stock-notifications/components/admin/stock-notifications-data-table";
 import { StockNotificationsFilterBadges } from "@/modules/stock-notifications/components/admin/stock-notifications-filter-badges";
+import { CleanupExpiredButton } from "@/modules/stock-notifications/components/admin/cleanup-expired-button";
 import { STOCK_NOTIFICATION_STATUS_LABELS } from "@/modules/stock-notifications/constants/stock-notification.constants";
 import { SORT_OPTIONS_FOR_SELECT, DEFAULT_SORT } from "./_constants/sort-options";
 
@@ -86,11 +87,14 @@ export default async function NotificationsStockPage({
 
 	return (
 		<>
-			<PageHeader
-				variant="compact"
-				title="Alertes stock"
-				description="Demandes de notification de retour en stock"
-			/>
+			<div className="flex items-center justify-between">
+				<PageHeader
+					variant="compact"
+					title="Alertes stock"
+					description="Demandes de notification de retour en stock"
+				/>
+				<CleanupExpiredButton />
+			</div>
 
 			{/* Statistiques */}
 			<StockNotificationsStatsCards stats={stats} />

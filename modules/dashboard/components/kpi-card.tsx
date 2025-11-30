@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { cn } from "@/shared/utils/cn";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
-interface KpiCardProps {
+export interface KpiCardProps {
 	title: string;
 	value: string | number;
 	evolution?: number;
@@ -15,7 +15,16 @@ interface KpiCardProps {
 	};
 	subtitle?: string;
 	icon?: React.ReactNode;
+	/** Variante de couleur pour les alertes */
+	variant?: "default" | "danger" | "warning" | "info";
 }
+
+const variantStyles = {
+	default: "border-primary/40 from-primary/5",
+	danger: "border-red-500/50 from-red-500/5",
+	warning: "border-orange-500/50 from-orange-500/5",
+	info: "border-blue-500/50 from-blue-500/5",
+};
 
 export function KpiCard({
 	title,
@@ -24,9 +33,13 @@ export function KpiCard({
 	badge,
 	subtitle,
 	icon,
+	variant = "default",
 }: KpiCardProps) {
 	return (
-		<Card className="relative overflow-hidden border-l-4 border-primary/40 bg-gradient-to-br from-primary/5 via-background to-transparent hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+		<Card className={cn(
+			"relative overflow-hidden border-l-4 bg-gradient-to-br via-background to-transparent hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group",
+			variantStyles[variant]
+		)}>
 			{/* Particule décorative subtile */}
 			<div
 				className="absolute top-2 right-2 w-1 h-1 bg-secondary rounded-full opacity-40 group-hover:opacity-60 transition-opacity"
