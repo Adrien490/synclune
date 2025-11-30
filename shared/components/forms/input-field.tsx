@@ -4,9 +4,31 @@ import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
 
 interface HTMLInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+	/** Label affiché au-dessus du champ */
 	label?: string;
 }
 
+/**
+ * Champ input générique pour formulaires TanStack Form.
+ *
+ * Supporte les types: text, email, password, number, etc.
+ * Pour les champs numériques, les valeurs vides retournent `null`,
+ * permettant de distinguer "pas de valeur" de "zéro".
+ *
+ * @example
+ * ```tsx
+ * <form.AppField name="email">
+ *   {(field) => (
+ *     <field.InputField
+ *       label="Email"
+ *       type="email"
+ *       placeholder="votre@email.com"
+ *       required
+ *     />
+ *   )}
+ * </form.AppField>
+ * ```
+ */
 export const InputField = ({
 	disabled,
 	label,
@@ -30,14 +52,12 @@ export const InputField = ({
 		}
 	};
 
-	// Pour les inputs number, on affiche une chaîne vide si la valeur est null, 0 ou NaN
-	// Pour les autres inputs, on garantit toujours une valeur (string vide minimum)
+	// Pour les inputs number, on affiche une chaîne vide uniquement si null ou NaN
+	// Le 0 doit pouvoir être affiché et saisi
 	const fieldValue = field.state.value;
 	const displayValue =
 		type === "number"
-			? fieldValue === null ||
-				fieldValue === 0 ||
-				(typeof fieldValue === "number" && isNaN(fieldValue))
+			? fieldValue === null || (typeof fieldValue === "number" && isNaN(fieldValue))
 				? ""
 				: fieldValue
 			: fieldValue ?? "";

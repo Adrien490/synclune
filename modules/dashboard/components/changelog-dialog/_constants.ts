@@ -9,11 +9,13 @@
  * Configuration UI du Dialog
  */
 export const CHANGELOG_UI_CONFIG = {
-	/** Hauteur maximale du dialog (responsive viewport) */
-	MAX_HEIGHT: "80vh",
+	/** Hauteur maximale viewport (responsive) */
+	MAX_HEIGHT_VH: "80vh",
+	/** Hauteur maximale absolue en pixels */
+	MAX_HEIGHT_PX: "800px",
 	/** Hauteur minimale du dialog */
 	MIN_HEIGHT: "400px",
-	/** Largeur maximale du dialog */
+	/** Largeur maximale du dialog (Tailwind class) */
 	MAX_WIDTH: "2xl",
 } as const;
 

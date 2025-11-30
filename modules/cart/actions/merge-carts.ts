@@ -229,7 +229,6 @@ export async function mergeCarts(
 			},
 		};
 	} catch (error) {
-// console.error("[MERGE_CARTS] Error during cart merge:", error);
 		return {
 			status: ActionStatus.ERROR,
 			message: "Une erreur est survenue lors de la fusion des paniers",

@@ -1,6 +1,6 @@
 import { Logo } from "@/shared/components/logo";
 import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/navigation";
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { LayoutDashboard, ShoppingCart, User } from "lucide-react";

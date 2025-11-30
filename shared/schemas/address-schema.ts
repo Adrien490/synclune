@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "../constants/address";
+import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "@/modules/users/constants/address";
 import { SHIPPING_COUNTRIES, COUNTRY_ERROR_MESSAGE } from "../constants/countries";
 
 /**

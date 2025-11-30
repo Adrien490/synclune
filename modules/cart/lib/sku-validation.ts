@@ -2,7 +2,7 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
-import { CART_ERROR_MESSAGES } from "@/shared/constants/cart-error-messages";
+import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 
 // Types pour la validation SKU
 export interface SkuData {
@@ -14,6 +14,11 @@ export interface SkuData {
 	isActive: boolean;
 	material?: string;
 	colorId?: string;
+	color?: {
+		id: string;
+		name: string;
+		hex: string;
+	};
 	size?: string;
 	product: {
 		id: string;
@@ -140,6 +145,13 @@ export async function validateSkuAndStock(input: {
 					isActive: sku.isActive,
 					material: sku.material || undefined,
 					colorId: sku.colorId || undefined,
+					color: sku.color
+						? {
+								id: sku.color.id,
+								name: sku.color.name,
+								hex: sku.color.hex,
+							}
+						: undefined,
 					size: sku.size || undefined,
 					product: {
 						id: sku.product.id,
@@ -163,7 +175,6 @@ export async function validateSkuAndStock(input: {
 			};
 		}
 
-// console.error("Erreur validateSkuAndStock:", error);
 		return {
 			success: false,
 			error: CART_ERROR_MESSAGES.GENERAL_ERROR,
@@ -216,6 +227,13 @@ export async function getSkuDetails(input: {
 					isActive: sku.isActive,
 					material: sku.material || undefined,
 					colorId: sku.colorId || undefined,
+					color: sku.color
+						? {
+								id: sku.color.id,
+								name: sku.color.name,
+								hex: sku.color.hex,
+							}
+						: undefined,
 					size: sku.size || undefined,
 					product: {
 						id: sku.product.id,
@@ -239,7 +257,6 @@ export async function getSkuDetails(input: {
 			};
 		}
 
-// console.error("Erreur getSkuDetails:", error);
 		return {
 			success: false,
 			error: CART_ERROR_MESSAGES.GENERAL_ERROR,
@@ -286,7 +303,6 @@ export async function validateCartItems(input: {
 			data: validationResults,
 		};
 	} catch (error) {
-// console.error("Erreur validateCartItems:", error);
 		return {
 			success: false,
 			error: CART_ERROR_MESSAGES.GENERAL_ERROR,

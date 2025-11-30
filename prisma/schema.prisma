@@ -174,7 +174,7 @@ model ProductType {
 model Color {
   id        String       @id @default(cuid())
   slug      String       @unique
-  name      String       @unique @db.VarChar(50)
+  name      String       @unique @db.VarChar(100)
   hex       String       @db.VarChar(7)
   skus      ProductSku[]
 
@@ -267,7 +267,6 @@ model Product {
   skus       ProductSku[]
   orderItems OrderItem[]
 
-  @@index([status])
   @@index([status, id])
   @@index([title, id])
   @@index([typeId])
@@ -314,6 +313,7 @@ model ProductSku {
   @@unique([productId, colorId, size, materialId])
   // Indexes optimisés pour requêtes fréquentes
   @@index([productId, isActive])
+  @@index([productId, isActive, inventory]) // Stock actif par produit
   @@index([isActive, inventory, updatedAt(sort: Desc)])
   @@index([isActive, priceInclTax])
   @@index([productId, isDefault])
@@ -582,29 +582,26 @@ model Order {
 
   // === INDEXES OPTIMISÉS ===
   @@index([userId])
-  // Statuts (index composites uniquement, supprimé les index simples redondants)
+  // Statuts (index composites uniquement)
   @@index([status, id])
   @@index([paymentStatus, id])
   @@index([fulfillmentStatus, id])
-  // Montants
-  @@index([total, id])
   // Chronologique
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, paymentStatus, createdAt(sort: Desc)]) // Covering index "Mes commandes"
   @@index([status, createdAt])
-  @@index([createdAt, id])
-  @@index([paymentStatus, createdAt])
   @@index([customerEmail]) // Recherche support client
-  @@index([fiscalYear]) // Conformité légale
   @@index([deletedAt]) // Soft delete filter
   @@index([deletedAt, status, createdAt]) // Index composite pour listings admin (soft-delete + status)
+  // Timestamps métier
+  @@index([shippedAt, fulfillmentStatus]) // Timeline expéditions
+  @@index([paidAt, paymentStatus]) // Rapports comptables
 
   // === INDEXES STRIPE (Réconciliation & Support) ===
   @@index([stripePaymentIntentId])
   @@index([stripeCheckoutSessionId])
   @@index([stripeCustomerId])
   @@index([createdAt(sort: Desc)]) // Listing commandes récentes
-  @@index([shippingPostalCode]) // Analyse régionale livraison
 }
 
 model OrderItem {
@@ -833,6 +830,7 @@ model DiscountUsage {
   @@index([userId])
   @@index([orderId])
   @@index([discountId, userId]) // Pour vérifier usage par utilisateur
+  @@index([userId, discountId, deletedAt]) // Vérification limite par user avec soft-delete
   @@index([deletedAt])
 }
 
@@ -873,6 +871,7 @@ model NewsletterSubscriber {
   @@index([emailVerified, isActive])
   @@index([userId])
   @@index([deletedAt])
+  @@index([confirmedAt]) // Audit RGPD preuve de consentement
 }
 
 // ============================================================================
@@ -919,6 +918,7 @@ model StockNotificationRequest {
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete pour RGPD
 
   // Indexes pour performances (la contrainte unicité est gérée côté applicatif)
   @@index([email, skuId])
@@ -927,4 +927,6 @@ model StockNotificationRequest {
   @@index([userId])
   @@index([status, createdAt])
   @@index([email, createdAt(sort: Desc)]) // Historique demandes par email
+  @@index([deletedAt]) // Soft delete filter RGPD
+  @@index([notifiedAt(sort: Desc)]) // Analyse historique notifications
 }

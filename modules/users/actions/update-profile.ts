@@ -7,7 +7,7 @@ import { getCurrentUserInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateProfileSchema } from "../schemas/user.schemas";
-import { USER_ERROR_MESSAGES } from "@/shared/constants/user";
+import { USER_ERROR_MESSAGES } from "@/modules/users/constants/profile";
 
 /**
  * Server Action pour mettre à jour le profil utilisateur

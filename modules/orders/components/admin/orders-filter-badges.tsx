@@ -4,7 +4,7 @@ import { FilterBadges } from "@/shared/components/filter-badges";
 import {
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
-} from "@/shared/constants/order";
+} from "@/modules/orders/constants/status-display";
 import { FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSearchParams } from "next/navigation";

@@ -13,8 +13,8 @@ export default async function NewProductPage() {
 	// Access headers to mark this as dynamic (required for Cache Components with Prisma)
 	await headers();
 
-	// Récupérer les types de produits, collections et couleurs
-	const [productTypes, collections, colors] = await Promise.all([
+	// Récupérer les types de produits, collections, couleurs et matériaux
+	const [productTypes, collections, colors, materials] = await Promise.all([
 		prisma.productType.findMany({
 			where: { isActive: true },
 			select: {
@@ -41,6 +41,13 @@ export default async function NewProductPage() {
 			},
 			orderBy: { name: "asc" },
 		}),
+		prisma.material.findMany({
+			select: {
+				id: true,
+				name: true,
+			},
+			orderBy: { name: "asc" },
+		}),
 	]);
 
 	return (
@@ -51,6 +58,7 @@ export default async function NewProductPage() {
 				productTypes={productTypes}
 				collections={collections}
 				colors={colors}
+				materials={materials}
 			/>
 		</>
 	);

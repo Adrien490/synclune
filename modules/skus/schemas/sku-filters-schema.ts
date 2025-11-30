@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+import {
+	SKU_FILTERS_MIN_DATE,
+	SKU_FILTERS_MAX_INVENTORY,
+	SKU_FILTERS_MAX_PRICE_CENTS,
+} from "../constants/skus-constants";
+
 const stringOrStringArray = z
 	.union([
 		z.string().min(1).max(100),
@@ -19,13 +25,13 @@ export const productSkuFiltersSchema = z
 		isActive: z.boolean().optional(),
 		isDefault: z.boolean().optional(),
 
-		// Filtres de prix (en centimes)
-		priceMin: z.number().int().nonnegative().max(10000000).optional(),
-		priceMax: z.number().int().nonnegative().max(10000000).optional(),
+		// Filtres de prix (en centimes) - aligné avec max 999999.99€ = 99999999 centimes
+		priceMin: z.number().int().nonnegative().max(SKU_FILTERS_MAX_PRICE_CENTS).optional(),
+		priceMax: z.number().int().nonnegative().max(SKU_FILTERS_MAX_PRICE_CENTS).optional(),
 
 		// Filtres de stock
-		inventoryMin: z.number().int().nonnegative().max(100000).optional(),
-		inventoryMax: z.number().int().nonnegative().max(100000).optional(),
+		inventoryMin: z.number().int().nonnegative().max(SKU_FILTERS_MAX_INVENTORY).optional(),
+		inventoryMax: z.number().int().nonnegative().max(SKU_FILTERS_MAX_INVENTORY).optional(),
 		inStock: z.boolean().optional(), // inventory > 0
 		outOfStock: z.boolean().optional(), // inventory = 0
 		stockStatus: z.enum(["all", "in_stock", "low_stock", "out_of_stock"]).optional(),
@@ -36,21 +42,21 @@ export const productSkuFiltersSchema = z
 		// Filtres temporels
 		createdAfter: z.coerce
 			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.max(new Date(), "Date cannot be in the future")
+			.min(SKU_FILTERS_MIN_DATE, "Date trop ancienne")
+			.max(new Date(), "La date ne peut pas être dans le futur")
 			.optional(),
 		createdBefore: z.coerce
 			.date()
-			.min(new Date("2020-01-01"), "Date too old")
+			.min(SKU_FILTERS_MIN_DATE, "Date trop ancienne")
 			.optional(),
 		updatedAfter: z.coerce
 			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.max(new Date(), "Date cannot be in the future")
+			.min(SKU_FILTERS_MIN_DATE, "Date trop ancienne")
+			.max(new Date(), "La date ne peut pas être dans le futur")
 			.optional(),
 		updatedBefore: z.coerce
 			.date()
-			.min(new Date("2020-01-01"), "Date too old")
+			.min(SKU_FILTERS_MIN_DATE, "Date trop ancienne")
 			.optional(),
 
 		// Filtres sur les relations

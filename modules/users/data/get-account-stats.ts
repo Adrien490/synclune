@@ -1,5 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 
 import { CART_SELECT_FOR_COUNT } from "../constants/account-stats.constants";

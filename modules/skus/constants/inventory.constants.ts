@@ -5,14 +5,29 @@ import { Prisma } from "@/app/generated/prisma/client";
 // ============================================================================
 
 /**
- * Seuil de stock bas - un SKU est considéré en "low stock"
- * quand son inventaire est strictement inférieur à ce seuil.
- *
- * Utilisé pour :
+ * Seuils de stock centralisés pour tout le module SKUs.
+ * Ces valeurs sont utilisées pour :
+ * - Filtrage dans l'inventaire admin (critical, low, normal, high)
  * - Affichage d'alertes sur la boutique
  * - Alertes stock dans le dashboard admin
  */
-export const LOW_STOCK_THRESHOLD = 3;
+export const STOCK_THRESHOLDS = {
+	/** Stock critique : < CRITICAL (alertes urgentes) */
+	CRITICAL: 5,
+	/** Stock bas : < LOW (alertes préventives) */
+	LOW: 10,
+	/** Stock normal max : <= NORMAL_MAX */
+	NORMAL_MAX: 50,
+} as const;
+
+/**
+ * Seuil de stock bas pour l'affichage boutique.
+ * Un SKU est considéré en "low stock" quand son inventaire
+ * est strictement inférieur à ce seuil.
+ *
+ * @deprecated Utiliser STOCK_THRESHOLDS.LOW à la place
+ */
+export const LOW_STOCK_THRESHOLD = STOCK_THRESHOLDS.LOW;
 
 // ============================================================================
 // SELECT DEFINITIONS

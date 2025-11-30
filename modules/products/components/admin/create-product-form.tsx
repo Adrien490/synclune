@@ -35,12 +35,17 @@ interface CreateProductFormProps {
 		name: string;
 		hex: string;
 	}>;
+	materials: Array<{
+		id: string;
+		name: string;
+	}>;
 }
 
 export function CreateProductForm({
 	productTypes,
 	collections,
 	colors,
+	materials,
 }: CreateProductFormProps) {
 	const router = useRouter();
 
@@ -279,11 +284,19 @@ export function CreateProductForm({
 
 					{/* Matériau + Taille */}
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<form.AppField name="initialSku.material">
+						<form.AppField name="initialSku.materialId">
 							{(field) => (
 								<div className="space-y-2">
 									<FieldLabel optional>Matériau</FieldLabel>
-									<field.InputGroupField placeholder="Ex: Or 18 carats, Argent 925..." />
+									<field.SelectField
+										label=""
+										options={materials.map((material) => ({
+											value: material.id,
+											label: material.name,
+										}))}
+										placeholder="Sélectionner un matériau"
+										clearable
+									/>
 								</div>
 							)}
 						</form.AppField>

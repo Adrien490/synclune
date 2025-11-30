@@ -3,6 +3,7 @@ import type {
 	GetSkuStocksParams,
 	InventoryFilters,
 } from "../types/inventory.types";
+import { STOCK_THRESHOLDS } from "../constants/inventory.constants";
 
 // ============================================================================
 // INVENTORY QUERY BUILDER UTILS
@@ -91,13 +92,15 @@ export function buildInventoryWhereClause(
 		const andConditions: Prisma.ProductSkuWhereInput[] = [];
 
 		if (level === "critical") {
-			andConditions.push({ inventory: { lt: 5 } });
+			andConditions.push({ inventory: { lt: STOCK_THRESHOLDS.CRITICAL } });
 		} else if (level === "low") {
-			andConditions.push({ inventory: { lt: 10 } });
+			andConditions.push({ inventory: { lt: STOCK_THRESHOLDS.LOW } });
 		} else if (level === "normal") {
-			andConditions.push({ inventory: { gte: 10, lte: 50 } });
+			andConditions.push({
+				inventory: { gte: STOCK_THRESHOLDS.LOW, lte: STOCK_THRESHOLDS.NORMAL_MAX },
+			});
 		} else if (level === "high") {
-			andConditions.push({ inventory: { gt: 50 } });
+			andConditions.push({ inventory: { gt: STOCK_THRESHOLDS.NORMAL_MAX } });
 		}
 
 		if (andConditions.length > 0) {

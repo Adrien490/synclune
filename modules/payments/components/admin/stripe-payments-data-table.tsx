@@ -20,7 +20,7 @@ import {
 import {
 	PAYMENT_STATUS_LABELS,
 	PAYMENT_STATUS_VARIANTS,
-} from "@/shared/constants/order";
+} from "@/modules/orders/constants/status-display";
 import type { GetStripePaymentsReturn } from "@/modules/payments/data/get-stripe-payments";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";

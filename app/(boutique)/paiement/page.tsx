@@ -7,7 +7,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { getCart } from "@/modules/cart/data/get-cart";
 import { validateCart } from "@/modules/cart/actions/validate-cart";
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getUserAddresses } from "@/modules/users/data/get-user-addresses";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";

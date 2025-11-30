@@ -40,8 +40,8 @@ export default async function EditSkuPage({
 }) {
 	const { slug, skuId } = await params;
 
-	// Récupérer le produit, le SKU et les couleurs en parallèle
-	const [product, sku, colors] = await Promise.all([
+	// Récupérer le produit, le SKU, les couleurs et matériaux en parallèle
+	const [product, sku, colors, materials] = await Promise.all([
 		getProductBySlug({ slug, includeDraft: true }),
 		getSkuById(skuId),
 		prisma.color.findMany({
@@ -49,6 +49,13 @@ export default async function EditSkuPage({
 				id: true,
 				name: true,
 				hex: true,
+			},
+			orderBy: { name: "asc" },
+		}),
+		prisma.material.findMany({
+			select: {
+				id: true,
+				name: true,
 			},
 			orderBy: { name: "asc" },
 		}),
@@ -73,6 +80,7 @@ export default async function EditSkuPage({
 
 			<EditProductVariantForm
 				colors={colors}
+				materials={materials}
 				product={{
 					id: product.id,
 					title: product.title,

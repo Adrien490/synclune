@@ -22,15 +22,24 @@ export default async function NewProductVariantPage({
 		notFound();
 	}
 
-	// Récupérer les couleurs disponibles
-	const colors = await prisma.color.findMany({
-		select: {
-			id: true,
-			name: true,
-			hex: true,
-		},
-		orderBy: { name: "asc" },
-	});
+	// Récupérer les couleurs et matériaux disponibles en parallèle
+	const [colors, materials] = await Promise.all([
+		prisma.color.findMany({
+			select: {
+				id: true,
+				name: true,
+				hex: true,
+			},
+			orderBy: { name: "asc" },
+		}),
+		prisma.material.findMany({
+			select: {
+				id: true,
+				name: true,
+			},
+			orderBy: { name: "asc" },
+		}),
+	]);
 
 	return (
 		<div className="space-y-6">
@@ -43,6 +52,7 @@ export default async function NewProductVariantPage({
 
 			<CreateProductVariantForm
 				colors={colors}
+				materials={materials}
 				product={{
 					id: product.id,
 					title: product.title,

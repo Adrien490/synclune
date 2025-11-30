@@ -19,7 +19,14 @@ export const GET_PRODUCT_SKU_SELECT = {
 			hex: true,
 		},
 	},
-	material: true,
+	materialId: true,
+	materialRef: {
+		select: {
+			id: true,
+			name: true,
+		},
+	},
+	material: true, // Conservé pour compatibilité avec données historiques
 	size: true,
 	createdAt: true,
 	updatedAt: true,

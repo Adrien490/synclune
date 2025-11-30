@@ -21,8 +21,8 @@ import {
 	PAYMENT_STATUS_VARIANTS,
 	FULFILLMENT_STATUS_LABELS,
 	FULFILLMENT_STATUS_VARIANTS,
-} from "@/shared/constants/order";
-import { getCarrierLabel, type Carrier } from "@/shared/utils/carrier-detection";
+} from "@/modules/orders/constants/status-display";
+import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier-detection";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {

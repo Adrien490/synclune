@@ -1,6 +1,6 @@
 // import "server-only"; // Temporairement commenté pour Better Auth CLI
 import { cookies } from "next/headers";
-import { CART_EXPIRATION_DAYS, CART_EXPIRATION_MS } from "@/shared/constants/cart-expiration";
+import { CART_EXPIRATION_DAYS, CART_EXPIRATION_MS } from "@/modules/cart/constants/expiration";
 
 /**
  * Nom du cookie pour l'identifiant de session du panier

@@ -125,12 +125,12 @@ export const deleteCollectionSchema = z.object({
 export const bulkDeleteCollectionsSchema = z.object({
 	ids: z
 		.array(z.string().cuid2({ message: "ID de collection invalide" }))
-		.min(1, "Au moins une collection doit etre selectionnee"),
+		.min(1, "Au moins une collection doit être sélectionnée"),
 });
 
 export const bulkArchiveCollectionsSchema = z.object({
 	collectionIds: z
 		.array(z.string().cuid2({ message: "ID de collection invalide" }))
-		.min(1, "Au moins une collection doit etre selectionnee"),
+		.min(1, "Au moins une collection doit être sélectionnée"),
 	targetStatus: z.enum([CollectionStatus.ARCHIVED, CollectionStatus.PUBLIC, CollectionStatus.DRAFT]),
 });

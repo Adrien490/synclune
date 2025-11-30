@@ -10,7 +10,7 @@ import {
 } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCarrierLabel, type Carrier } from "@/shared/utils/carrier-detection";
+import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier-detection";
 
 export type ResendEmailType = "confirmation" | "shipping" | "delivery";
 

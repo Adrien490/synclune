@@ -4,7 +4,7 @@ import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { unsubscribeFromNewsletterSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 
@@ -109,11 +109,12 @@ export async function unsubscribeFromNewsletter(
 			};
 		}
 
-		// Si l'abonné est déjà inactif
+		// Si l'abonné est déjà inactif - message générique pour éviter information disclosure
 		if (!existingSubscriber.isActive) {
 			return {
 				status: ActionStatus.SUCCESS,
-				message: "Vous êtes déjà désinscrit(e) de la newsletter.",
+				message:
+					"Si vous étiez inscrit(e), votre désinscription a été prise en compte.",
 			};
 		}
 
@@ -129,7 +130,7 @@ export async function unsubscribeFromNewsletter(
 		});
 
 		// Invalider le cache
-		getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
+		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

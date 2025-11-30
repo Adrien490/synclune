@@ -172,26 +172,3 @@ export async function getChangelogs(): Promise<ChangelogData[]> {
 
 	return validChangelogs.sort(compareVersions);
 }
-
-/**
- * Récupère un changelog spécifique par sa version
- * @param version Version à récupérer (ex: "1.0.0")
- * @returns Changelog correspondant ou undefined
- */
-export async function getChangelogByVersion(
-	version: string
-): Promise<ChangelogData | undefined> {
-	const changelogs = await getChangelogs();
-	return changelogs.find((c) => c.metadata.version === version);
-}
-
-/**
- * Récupère le changelog le plus récent
- * @returns Changelog le plus récent ou undefined si aucun
- */
-export async function getLatestChangelog(): Promise<
-	ChangelogData | undefined
-> {
-	const changelogs = await getChangelogs();
-	return changelogs[0];
-}

@@ -1,9 +1,9 @@
-import { cacheLife, cacheTag } from "next/cache";
-import { getSession } from "@/shared/utils/get-session";
-import { getCartSessionId } from "@/shared/utils/cart-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
+import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_CART_SUMMARY_SELECT } from "../constants/cart.constants";
+import { cacheCartSummary } from "../constants/cache";
 import type { CartSummary, GetCartSummaryReturn } from "../types/cart.types";
 
 // Re-export pour compatibilité
@@ -45,15 +45,7 @@ export async function fetchCartSummary(
 	sessionId: string | null
 ): Promise<GetCartSummaryReturn> {
 	"use cache: private";
-	cacheLife({ stale: 300 });
-
-	cacheTag(
-		userId
-			? `cart-summary-${userId}`
-			: sessionId
-				? `cart-summary-session-${sessionId}`
-				: "cart-summary-anonymous"
-	);
+	cacheCartSummary(userId ?? undefined, sessionId ?? undefined);
 
 	try {
 		const cart = await prisma.cart.findFirst({
@@ -75,7 +67,7 @@ export async function fetchCartSummary(
 
 		const itemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 		const totalAmount = cart.items.reduce(
-			(sum, item) => sum + item.sku.priceInclTax * item.quantity,
+			(sum, item) => sum + item.priceAtAdd * item.quantity,
 			0
 		);
 

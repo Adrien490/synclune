@@ -1,6 +1,6 @@
 "use server";
 
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getUserOrdersSchema } from "../schemas/user-orders.schemas";
 import type { GetUserOrdersParams, GetUserOrdersReturn } from "../types/user-orders.types";
 import { fetchUserOrders } from "../utils/fetch-user-orders";

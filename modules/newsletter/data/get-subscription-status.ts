@@ -50,7 +50,8 @@ export async function fetchSubscriptionStatus(
 	userId: string
 ): Promise<{ isActive: boolean; emailVerified: boolean } | null> {
 	"use cache: private";
-	cacheLife({ stale: 300 });
+	// Cache configuration: 5min stale, revalidate après 1min, expire après 1h
+	cacheLife({ stale: 300, revalidate: 60, expire: 3600 });
 	cacheTag(`newsletter-user-${userId}`);
 
 	try {
@@ -61,6 +62,12 @@ export async function fetchSubscriptionStatus(
 
 		return subscriber;
 	} catch (error) {
+		// Logging structuré pour debug production
+		console.error("[GET_SUBSCRIPTION_STATUS]", {
+			email: email.substring(0, 3) + "***", // Masquer partiellement l'email
+			userId,
+			error: error instanceof Error ? error.message : "Unknown error",
+		});
 		return null;
 	}
 }

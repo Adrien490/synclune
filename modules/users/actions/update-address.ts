@@ -7,7 +7,7 @@ import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { addressSchema } from "@/shared/schemas/address-schema";
-import { ADDRESS_ERROR_MESSAGES } from "@/shared/constants/address";
+import { ADDRESS_ERROR_MESSAGES } from "@/modules/users/constants/address";
 
 export async function updateAddress(
 	addressId: string,

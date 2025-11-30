@@ -29,7 +29,7 @@ export async function generateSlug(
 	}
 
 	// Générer le slug de base
-	const baseSlug = slugifyFR(value);
+	const baseSlug = slugify(value);
 
 	// Tronquer si trop long (garde de la place pour le suffixe)
 	const maxLength = 70;
@@ -94,9 +94,14 @@ export async function generateSlug(
  * @param input - Chaîne à convertir
  * @returns Slug normalisé
  *
- * @internal
+ * @example
+ * ```typescript
+ * slugify("Or rose") // → "or-rose"
+ * slugify("Argent 925") // → "argent-925"
+ * slugify("Été 2024") // → "ete-2024"
+ * ```
  */
-function slugifyFR(input: string): string {
+export function slugify(input: string): string {
 	return (
 		input
 			.trim()

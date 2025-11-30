@@ -1,5 +1,5 @@
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import { slugify } from "@/shared/utils/slugify";
+import { slugify } from "@/shared/utils/generate-slug";
 import type { ProductSku, ProductVariantInfo } from "@/modules/products/types/product-services.types";
 
 /**

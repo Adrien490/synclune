@@ -20,7 +20,7 @@ import {
 import {
 	ORDER_STATUS_LABELS,
 	ORDER_STATUS_VARIANTS,
-} from "@/shared/constants/order";
+} from "@/modules/orders/constants/status-display";
 import type { GetOrdersReturn } from "@/modules/orders/types/orders.types";
 import { cn } from "@/shared/utils/cn";
 import { ShoppingBag } from "lucide-react";

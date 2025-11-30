@@ -16,7 +16,7 @@ import { Slider } from "@/shared/components/ui/slider";
 import {
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
-} from "@/shared/constants/order";
+} from "@/modules/orders/constants/status-display";
 import { cn } from "@/shared/utils/cn";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";

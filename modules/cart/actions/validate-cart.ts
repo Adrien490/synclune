@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { CART_ERROR_MESSAGES } from "@/shared/constants/cart-error-messages";
+import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 
 export interface CartValidationIssue {
 	cartItemId: string;
@@ -137,7 +137,6 @@ export async function validateCart(cartId: string): Promise<ValidateCartResult> 
 			issues,
 		};
 	} catch (error) {
-// console.error("[VALIDATE_CART] Error:", error);
 		throw error;
 	}
 }

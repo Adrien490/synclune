@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/shared/lib/actions/auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
@@ -23,13 +23,8 @@ export async function setDefaultSku(
 ): Promise<ActionState> {
 	try {
 		// 1. Check admin rights
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Unauthorized access",
-			};
-		}
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
 		// 2. Get SKU ID
 		const skuId = formData.get("skuId") as string;

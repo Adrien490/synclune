@@ -39,7 +39,6 @@ export async function generateProductMetadata({
 	return {
 		title,
 		description,
-		keywords: `${product.title.toLowerCase()}, ${product.type?.label.toLowerCase() || "bijou"} artisanal, bijou fait main, création unique, ${product.type?.label.toLowerCase() || "bijou"} coloré, Synclune`,
 		alternates: {
 			canonical: canonicalUrl,
 		},
@@ -47,7 +46,7 @@ export async function generateProductMetadata({
 			title,
 			description,
 			url: fullUrl,
-			type: "website",
+			type: "article", // "article" pour les pages produit (meilleur support que "product")
 			images: [
 				{
 					url: imageUrl,

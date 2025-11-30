@@ -2,7 +2,7 @@
  * Cache configuration for SKUs module
  */
 
-import { cacheLife, cacheTag } from "next/cache"
+import { cacheLife, cacheTag, updateTag } from "next/cache"
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache"
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache"
 
@@ -74,4 +74,46 @@ export function getInventoryInvalidationTags(productSlug: string, productId: str
 		DASHBOARD_CACHE_TAGS.INVENTORY_LIST,
 		DASHBOARD_CACHE_TAGS.BADGES,
 	]
+}
+
+/**
+ * Type pour les données SKU nécessaires à l'invalidation bulk
+ */
+interface SkuDataForInvalidation {
+	sku: string;
+	productId: string;
+	product: { slug: string };
+}
+
+/**
+ * Collecte et déduplique les tags à invalider pour plusieurs SKUs
+ *
+ * Optimise les opérations bulk en évitant les invalidations dupliquées
+ * (ex: plusieurs SKUs du même produit ne génèrent qu'une seule invalidation produit)
+ *
+ * @param skusData - Tableau de SKUs avec leurs données produit
+ * @returns Set de tags uniques à invalider
+ */
+export function collectBulkInvalidationTags(skusData: SkuDataForInvalidation[]): Set<string> {
+	const uniqueTags = new Set<string>();
+
+	for (const skuData of skusData) {
+		const tags = getSkuInvalidationTags(
+			skuData.sku,
+			skuData.productId,
+			skuData.product.slug
+		);
+		tags.forEach((tag) => uniqueTags.add(tag));
+	}
+
+	return uniqueTags;
+}
+
+/**
+ * Invalide tous les tags d'un Set en une seule passe
+ *
+ * @param tags - Set de tags à invalider
+ */
+export function invalidateTags(tags: Set<string>): void {
+	tags.forEach((tag) => updateTag(tag));
 }

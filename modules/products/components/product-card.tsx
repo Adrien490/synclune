@@ -2,7 +2,7 @@ import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
-import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/shared/constants/product";
+import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product";
 import { ProductPriceCompact } from "./product-price";
 
 /**

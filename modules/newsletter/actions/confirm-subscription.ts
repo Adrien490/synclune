@@ -5,7 +5,7 @@ import { sendNewsletterWelcomeEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 
 export async function confirmSubscription(
@@ -49,12 +49,23 @@ export async function confirmSubscription(
 			};
 		}
 
-		const token = formData.get("token") as string;
+		const token = formData.get("token");
 
-		if (!token) {
+		// Validation type du token
+		if (!token || typeof token !== "string") {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
 				message: "Token de confirmation manquant",
+			};
+		}
+
+		// Validation format UUID du token (randomUUID génère des UUIDs v4)
+		const uuidRegex =
+			/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+		if (!uuidRegex.test(token)) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "Token de confirmation invalide",
 			};
 		}
 
@@ -75,12 +86,22 @@ export async function confirmSubscription(
 		if (subscriber.emailVerified && subscriber.isActive) {
 			return {
 				status: ActionStatus.SUCCESS,
-				message: "Votre email est déjà confirmé ! Vous êtes bien inscrit(e) ✨",
+				message: "Votre email est déjà confirmé ! Vous êtes bien inscrit(e).",
 			};
 		}
 
 		// Vérifier si le token n'est pas expiré (7 jours)
-		const tokenAge = Date.now() - new Date(subscriber.confirmationSentAt!).getTime();
+		// Validation robuste de confirmationSentAt
+		if (!subscriber.confirmationSentAt) {
+			return {
+				status: ActionStatus.ERROR,
+				message:
+					"Lien de confirmation invalide. Veuillez vous réinscrire.",
+			};
+		}
+
+		const tokenAge =
+			Date.now() - new Date(subscriber.confirmationSentAt).getTime();
 		const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
 
 		if (tokenAge > sevenDaysInMs) {
@@ -106,9 +127,9 @@ export async function confirmSubscription(
 		});
 
 		// Invalider le cache
-		getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
+		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
-		// 📧 Envoyer l'email de bienvenue après confirmation
+		// Envoyer l'email de bienvenue après confirmation
 		// Note : Envoi en arrière-plan, ne bloque pas la réponse si échec
 		try {
 			await sendNewsletterWelcomeEmail({ to: subscriber.email });

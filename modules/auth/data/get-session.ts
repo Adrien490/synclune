@@ -1,4 +1,4 @@
-import { getSession as getCurrentSession } from "@/shared/utils/get-session";
+import { getSession as getCurrentSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { prisma } from "@/shared/lib/prisma";

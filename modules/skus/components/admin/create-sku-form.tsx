@@ -24,6 +24,10 @@ interface CreateProductVariantFormProps {
 		name: string;
 		hex: string;
 	}>;
+	materials: Array<{
+		id: string;
+		name: string;
+	}>;
 	product: {
 		id: string;
 		title: string;
@@ -33,6 +37,7 @@ interface CreateProductVariantFormProps {
 
 export function CreateProductVariantForm({
 	colors,
+	materials,
 	product,
 	productSlug,
 }: CreateProductVariantFormProps) {
@@ -177,11 +182,19 @@ export function CreateProductVariantForm({
 
 								{/* Matériau + Taille */}
 								<div className="grid grid-cols-2 gap-4">
-									<form.AppField name="material">
+									<form.AppField name="materialId">
 										{(field) => (
 											<div className="space-y-2">
 												<FieldLabel optional>Matériau</FieldLabel>
-												<field.InputGroupField placeholder="Ex: Or 18 carats..." />
+												<field.SelectField
+													label=""
+													options={materials.map((material) => ({
+														value: material.id,
+														label: material.name,
+													}))}
+													placeholder="Sélectionner un matériau"
+													clearable
+												/>
 											</div>
 										)}
 									</form.AppField>

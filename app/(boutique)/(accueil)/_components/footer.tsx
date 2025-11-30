@@ -63,7 +63,7 @@ export async function Footer() {
 				style={{ animationDelay: "2s" }}
 			/>
 
-			<div className="relative z-10 max-w-6xl mx-auto px-4 py-12">
+			<div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 				{/* Navigation principale */}
 				<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
 					{/* Colonne 1: Logo + phrase perso */}
@@ -95,7 +95,7 @@ export async function Footer() {
 								<li key={index} role="listitem">
 									<Link
 										href={item.href}
-										className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm inline-block px-2 py-1"
+										className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm inline-block px-2 py-2.5"
 									>
 										{item.label}
 									</Link>
@@ -208,7 +208,7 @@ export async function Footer() {
 									<li key={index} role="listitem">
 										<Link
 											href={link.href}
-											className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm inline-block px-2 py-1"
+											className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm inline-block px-2 py-2.5"
 										>
 											{link.label}
 										</Link>

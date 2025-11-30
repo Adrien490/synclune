@@ -68,11 +68,7 @@ export const GET_CART_SUMMARY_SELECT = {
 	items: {
 		select: {
 			quantity: true,
-			sku: {
-				select: {
-					priceInclTax: true,
-				},
-			},
+			priceAtAdd: true,
 		},
 	},
 } as const satisfies Prisma.CartSelect;

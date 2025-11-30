@@ -1,6 +1,6 @@
 "use server";
 
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
@@ -67,18 +67,21 @@ export async function addToCart(
 			};
 		}
 
-		// 4. Valider le SKU et le stock
+		// 4. Valider le SKU et le stock (première validation optimiste)
 		const skuValidation = await validateSkuAndStock({
 			skuId: validatedData.skuId,
 			quantity: validatedData.quantity,
 		});
 
-		if (!skuValidation.success) {
+		if (!skuValidation.success || !skuValidation.data) {
 			return {
 				status: ActionStatus.ERROR,
 				message: skuValidation.error || "Produit indisponible",
 			};
 		}
+
+		// Conserver le prix pour réutilisation dans la transaction
+		const skuPriceAtAdd = skuValidation.data.sku.priceInclTax;
 
 		// 5. Vérifier que l'userId existe dans la base de données
 		// Si l'userId n'existe pas, traiter comme un utilisateur non connecté
@@ -158,10 +161,10 @@ export async function addToCart(
 			} else {
 				newQuantity = validatedData.quantity;
 
-				// Récupérer le SKU pour le prix
+				// Vérifier le stock dans la transaction (protection contre race conditions)
 				const sku = await tx.productSku.findUnique({
 					where: { id: validatedData.skuId },
-					select: { inventory: true, isActive: true, priceInclTax: true },
+					select: { inventory: true, isActive: true },
 				});
 
 				if (!sku || !sku.isActive) {
@@ -174,13 +177,13 @@ export async function addToCart(
 					);
 				}
 
-				// Créer le CartItem
+				// Créer le CartItem (prix réutilisé depuis validation initiale)
 				cartItem = await tx.cartItem.create({
 					data: {
 						cartId: cart.id,
 						skuId: validatedData.skuId,
 						quantity: validatedData.quantity,
-						priceAtAdd: sku.priceInclTax,
+						priceAtAdd: skuPriceAtAdd,
 					},
 				});
 			}

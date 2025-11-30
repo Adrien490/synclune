@@ -5,6 +5,11 @@ import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { sendNewsletterEmailSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
+import { NEWSLETTER_BASE_URL } from "@/modules/newsletter/constants/urls";
+
+// Configuration batching pour éviter surcharge mémoire
+const BATCH_SIZE = 100;
+const MAX_CONCURRENT_SENDS = 10;
 
 export async function sendNewsletterEmail(
 	_previousState: ActionState | null,
@@ -30,50 +35,82 @@ export async function sendNewsletterEmail(
 		const { subject: validatedSubject, content: validatedContent } =
 			result.data;
 
-		// Récupérer tous les abonnés actifs ET avec email vérifié (double opt-in)
-		const subscribers = await prisma.newsletterSubscriber.findMany({
+		// Compter d'abord le nombre total d'abonnés
+		const totalCount = await prisma.newsletterSubscriber.count({
 			where: {
 				isActive: true,
-				emailVerified: true, // ✅ Seulement les emails confirmés
-			},
-			select: {
-				email: true,
-				unsubscribeToken: true,
+				emailVerified: true,
 			},
 		});
 
-		if (subscribers.length === 0) {
+		if (totalCount === 0) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Aucun abonné actif trouvé",
 			};
 		}
 
-		// Préparer l'URL de désinscription (sera unique par abonné en production)
-		const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
+		// Traitement par batch avec curseur pour éviter surcharge mémoire
+		let successCount = 0;
+		let errorCount = 0;
+		let lastId: string | undefined;
 
-		// Envoyer l'email à tous les abonnés avec lien de désinscription sécurisé
-		const sendPromises = subscribers.map((subscriber) => {
-			const unsubscribeUrl = `${baseUrl}/newsletter/unsubscribe?token=${subscriber.unsubscribeToken}`;
-
-			return sendEmail({
-				to: subscriber.email,
-				subject: validatedSubject,
-				content: validatedContent,
-				unsubscribeUrl,
+		while (true) {
+			// Récupérer un batch d'abonnés
+			const subscribers = await prisma.newsletterSubscriber.findMany({
+				where: {
+					isActive: true,
+					emailVerified: true,
+					...(lastId ? { id: { gt: lastId } } : {}),
+				},
+				select: {
+					id: true,
+					email: true,
+					unsubscribeToken: true,
+				},
+				take: BATCH_SIZE,
+				orderBy: { id: "asc" },
 			});
-		});
 
-		const results = await Promise.allSettled(sendPromises);
+			if (subscribers.length === 0) break;
 
-		// Compter les succès et les échecs
-		const successCount = results.filter(
-			(r) => r.status === "fulfilled" && r.value.success
-		).length;
-		const errorCount = results.length - successCount;
+			// Traiter le batch en chunks de MAX_CONCURRENT_SENDS
+			for (let i = 0; i < subscribers.length; i += MAX_CONCURRENT_SENDS) {
+				const chunk = subscribers.slice(i, i + MAX_CONCURRENT_SENDS);
+
+				const sendPromises = chunk.map((subscriber) => {
+					const unsubscribeUrl = `${NEWSLETTER_BASE_URL}/newsletter/unsubscribe?token=${subscriber.unsubscribeToken}`;
+
+					return sendEmail({
+						to: subscriber.email,
+						subject: validatedSubject,
+						content: validatedContent,
+						unsubscribeUrl,
+					});
+				});
+
+				const results = await Promise.allSettled(sendPromises);
+
+				successCount += results.filter(
+					(r) => r.status === "fulfilled" && r.value.success
+				).length;
+				errorCount += results.filter(
+					(r) => r.status === "rejected" || (r.status === "fulfilled" && !r.value.success)
+				).length;
+			}
+
+			lastId = subscribers[subscribers.length - 1].id;
+		}
+
+		// Audit log
+		console.log(
+			`[SEND_NEWSLETTER_AUDIT] Newsletter sent: ${successCount} success, ${errorCount} errors, ${totalCount} total`
+		);
 
 		if (errorCount > 0) {
-			console.error(`[SEND_NEWSLETTER] ${errorCount} emails n'ont pas pu être envoyés`);
+			console.error(
+				`[SEND_NEWSLETTER] ${errorCount} emails n'ont pas pu être envoyés`
+			);
 		}
 
 		return {
@@ -82,7 +119,7 @@ export async function sendNewsletterEmail(
 			data: {
 				successCount,
 				errorCount,
-				totalCount: subscribers.length,
+				totalCount,
 			},
 		};
 	} catch (error) {

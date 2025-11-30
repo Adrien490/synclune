@@ -10,8 +10,8 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { formatDate, formatVersionDisplay, isWithinDays } from "@/shared/utils/dates";
-import { SparklesIcon } from "lucide-react";
-import { RECENT_RELEASE_DAYS } from "./_constants";
+import { HandIcon, SparklesIcon } from "lucide-react";
+import { CHANGELOG_UI_CONFIG, RECENT_RELEASE_DAYS } from "./_constants";
 import type { ChangelogWithContent, MDXModule } from "./_types";
 import { getChangelogs } from "@/modules/dashboard/data/get-changelogs";
 
@@ -35,7 +35,7 @@ export async function ChangelogDialog({
 	// Charge les changelogs côté serveur (métadonnées uniquement)
 	const changelogs = await getChangelogs();
 
-	// Charge les contenus MDX en parallèle
+	// Charge les contenus MDX en parallèle et calcule isRecent une seule fois
 	// TODO OPTIMIZATION: Migrer vers Client Component + next/dynamic pour lazy-load
 	// des tabs inactives. Actuellement tous les MDX sont chargés côté serveur.
 	const changelogsWithContent: ChangelogWithContent[] = await Promise.all(
@@ -46,6 +46,7 @@ export async function ChangelogDialog({
 			return {
 				...changelog,
 				Content: mdxModule.default,
+				isRecent: isWithinDays(changelog.metadata.date, RECENT_RELEASE_DAYS),
 			};
 		})
 	);
@@ -63,11 +64,7 @@ export async function ChangelogDialog({
 	}
 
 	const latestChangelog = changelogsWithContent[0];
-	// Calculer une seule fois pour éviter la duplication
-	const isRecentRelease = isWithinDays(
-		latestChangelog.metadata.date,
-		RECENT_RELEASE_DAYS
-	);
+	const isRecentRelease = latestChangelog.isRecent;
 	const formattedDate = formatDate(latestChangelog.metadata.date);
 
 	return (
@@ -103,7 +100,7 @@ export async function ChangelogDialog({
 				</Button>
 			</DialogTrigger>
 
-			<DialogContent className="max-w-2xl max-h-[min(80vh,800px)] min-h-[400px] overflow-hidden flex flex-col p-0">
+			<DialogContent className={`max-w-${CHANGELOG_UI_CONFIG.MAX_WIDTH} max-h-[min(${CHANGELOG_UI_CONFIG.MAX_HEIGHT_VH},${CHANGELOG_UI_CONFIG.MAX_HEIGHT_PX})] min-h-[${CHANGELOG_UI_CONFIG.MIN_HEIGHT}] overflow-hidden flex flex-col p-0`}>
 				{/* Sticky Header */}
 				<div className="sticky top-0 bg-background z-10 pb-4 border-b px-6 pt-6">
 					<DialogHeader>
@@ -130,7 +127,6 @@ export async function ChangelogDialog({
 					className="overflow-y-auto flex-1 px-6 relative"
 					role="region"
 					aria-label="Détails du changelog"
-					tabIndex={0}
 				>
 					<Tabs
 						defaultValue={latestChangelog.metadata.version}
@@ -139,30 +135,24 @@ export async function ChangelogDialog({
 						{/* Tabs pour les différentes versions */}
 						{changelogsWithContent.length > 1 && (
 							<TabsList className="w-full justify-start mb-4 mt-4 overflow-x-auto flex-wrap h-auto">
-								{changelogsWithContent.map((changelog) => {
-									const isRecent = isWithinDays(
-										changelog.metadata.date,
-										RECENT_RELEASE_DAYS
-									);
-									return (
-										<TabsTrigger
-											key={changelog.metadata.version}
-											value={changelog.metadata.version}
-											className="relative"
-										>
-											v{changelog.metadata.version}
-											{isRecent && (
-												<>
-													<span
-														className="ml-1 h-1.5 w-1.5 bg-primary rounded-full inline-block"
-														aria-hidden="true"
-													/>
-													<span className="sr-only">Nouvelle version</span>
-												</>
-											)}
-										</TabsTrigger>
-									);
-								})}
+								{changelogsWithContent.map((changelog) => (
+									<TabsTrigger
+										key={changelog.metadata.version}
+										value={changelog.metadata.version}
+										className="relative"
+									>
+										v{changelog.metadata.version}
+										{changelog.isRecent && (
+											<>
+												<span
+													className="ml-1 h-1.5 w-1.5 bg-primary rounded-full inline-block"
+													aria-hidden="true"
+												/>
+												<span className="sr-only">Nouvelle version</span>
+											</>
+										)}
+									</TabsTrigger>
+								))}
 							</TabsList>
 						)}
 
@@ -187,13 +177,10 @@ export async function ChangelogDialog({
 										<div className="space-y-2 bg-primary/5 p-4 rounded-lg border border-primary/10">
 											<h3 className="font-semibold text-base flex items-center gap-2">
 												<span>{greetingMessage || changelogGreeting}</span>
-												<span
-													className="text-xl inline-block animate-wave origin-[70%_70%] motion-reduce:animate-none"
-													role="img"
+												<HandIcon
+													className="size-5 text-primary animate-wave origin-[70%_70%] motion-reduce:animate-none"
 													aria-label="Main qui salue"
-												>
-													👋
-												</span>
+												/>
 											</h3>
 											<p className="text-foreground/80">
 												{changelog.metadata.description}
@@ -219,15 +206,12 @@ export async function ChangelogDialog({
 
 				{/* Footer */}
 				<div className="border-t pt-4 pb-6 px-6 bg-background">
-					<p className="text-sm text-center text-muted-foreground">
+					<p className="text-sm text-center text-muted-foreground flex items-center justify-center gap-1">
 						Développé avec soin pour Synclune Bijoux
-						<span
-							className="ml-1 text-primary"
-							role="img"
+						<SparklesIcon
+							className="size-4 text-primary"
 							aria-label="Étincelles"
-						>
-							✨
-						</span>
+						/>
 					</p>
 				</div>
 			</DialogContent>

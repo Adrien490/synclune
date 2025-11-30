@@ -4,6 +4,7 @@ import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldLabel, FieldSet } from "@/shared/components/ui/field";
+import { EMAIL_REGEX } from "@/shared/constants/validation";
 import { useSubscribeToNewsletter } from "@/modules/newsletter/hooks/use-subscribe-to-newsletter";
 import { ActionStatus } from "@/shared/types/server-action";
 import { Mail, Sparkles } from "lucide-react";
@@ -60,7 +61,7 @@ export function NewsletterForm() {
 						validators={{
 							onChange: ({ value }: { value: string }) => {
 								if (!value) return "L'email est requis";
-								if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+								if (!EMAIL_REGEX.test(value)) {
 									return "Format d'email invalide";
 								}
 								return undefined;

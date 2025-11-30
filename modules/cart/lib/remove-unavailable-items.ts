@@ -1,6 +1,6 @@
 "use server";
 
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
@@ -99,13 +99,6 @@ export async function removeUnavailableItems(
 			data: { deletedCount: result.count },
 		};
 	} catch (e) {
-		// Error handling
-		// console.error("[REMOVE_UNAVAILABLE_ITEMS] Error:", e);
-		if (e instanceof Error) {
-			// console.error("[REMOVE_UNAVAILABLE_ITEMS] Error message:", e.message);
-			// console.error("[REMOVE_UNAVAILABLE_ITEMS] Error stack:", e.stack);
-		}
-
 		return {
 			status: ActionStatus.ERROR,
 			message:

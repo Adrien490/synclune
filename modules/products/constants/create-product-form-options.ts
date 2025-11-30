@@ -17,7 +17,7 @@ export const createProductFormOpts = {
 			isDefault: true,
 			isActive: true,
 			colorId: "",
-			material: "",
+			materialId: "",
 			size: "",
 			primaryImage: undefined as
 				| {

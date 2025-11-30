@@ -35,7 +35,7 @@ import { ProductFilterSheet } from "@/modules/products/components/product-filter
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
 import { getMaxProductPrice } from "@/modules/products/data/get-max-product-price";
-import { priceInCentsToEuros } from "@/shared/utils/price-utils";
+import { centsToEuros } from "@/shared/utils/format-euro";
 import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
 	SORT_LABELS,
@@ -131,7 +131,7 @@ export default async function BijouxHubPage({
 	]);
 
 	// Conversion en euros côté UI (la DAL retourne des centimes)
-	const maxPriceInEuros = priceInCentsToEuros(maxPriceInCents);
+	const maxPriceInEuros = centsToEuros(maxPriceInCents);
 
 	const colors = colorsData.colors;
 

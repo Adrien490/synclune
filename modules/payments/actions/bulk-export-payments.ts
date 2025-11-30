@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 import { bulkExportPaymentsSchema } from "../schemas/payment.schemas";
-import { PAYMENT_STATUS_LABELS } from "@/shared/constants/order";
+import { PAYMENT_STATUS_LABELS } from "@/modules/orders/constants/status-display";
 
 /**
  * Server Action ADMIN pour exporter plusieurs paiements au format CSV

@@ -107,12 +107,12 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 									key={item.href}
 									href={item.href}
 									className={cn(
-										"flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-colors min-w-[60px]",
+										"flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[60px]",
 										active ? "text-foreground" : "text-muted-foreground"
 									)}
 								>
 									<Icon className="size-5" />
-									<span className="text-[10px] font-medium">{item.label}</span>
+									<span className="text-xs font-medium">{item.label}</span>
 								</Link>
 							);
 						})}

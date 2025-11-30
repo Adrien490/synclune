@@ -1,6 +1,6 @@
 "use server";
 
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";

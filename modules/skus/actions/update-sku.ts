@@ -1,6 +1,6 @@
 "use server";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/shared/lib/actions/auth";
 import { detectMediaType } from "@/modules/medias/constants/media.constants";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
@@ -9,6 +9,10 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { updateProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../constants/cache";
 import { triggerStockNotificationsIfNeeded } from "@/modules/stock-notifications/utils/trigger-stock-notifications";
+import {
+	parsePrimaryImageFromForm,
+	parseGalleryMediaFromForm,
+} from "../utils/parse-media-from-form";
 
 /**
  * Server Action pour mettre à jour une variante de produit (Product SKU)
@@ -20,42 +24,13 @@ export async function updateProductSku(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification des droits admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé. Droits administrateur requis.",
-			};
-		}
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
 		// 2. Extraction des données du FormData
 		// Parse images from JSON strings (sent as hidden inputs)
-		let primaryImage:
-			| { url: string; blurDataUrl?: string; altText?: string; mediaType?: "IMAGE" | "VIDEO" }
-			| undefined;
-		const primaryImageRaw = formData.get("primaryImage");
-		if (primaryImageRaw && typeof primaryImageRaw === "string") {
-			try {
-				primaryImage = JSON.parse(primaryImageRaw);
-			} catch {
-				// Ignore parse error
-			}
-		}
-
-		let galleryMedia: Array<{
-			url: string;
-			blurDataUrl?: string;
-			altText?: string;
-			mediaType?: "IMAGE" | "VIDEO";
-		}> = [];
-		const galleryMediaRaw = formData.get("galleryMedia");
-		if (galleryMediaRaw && typeof galleryMediaRaw === "string") {
-			try {
-				galleryMedia = JSON.parse(galleryMediaRaw);
-			} catch {
-				// Ignore parse error
-			}
-		}
+		const primaryImage = parsePrimaryImageFromForm(formData);
+		const galleryMedia = parseGalleryMediaFromForm(formData);
 
 		const rawData = {
 			skuId: formData.get("skuId") as string,
@@ -67,7 +42,7 @@ export async function updateProductSku(
 			isActive: formData.get("isActive") === "true",
 			isDefault: formData.get("isDefault") === "true",
 			colorId: (formData.get("colorId") as string) || "",
-			material: (formData.get("material") as string) || "",
+			materialId: (formData.get("materialId") as string) || "",
 			size: (formData.get("size") as string) || "",
 			primaryImage: primaryImage,
 			galleryMedia: galleryMedia,
@@ -88,7 +63,7 @@ export async function updateProductSku(
 
 		// 4. Normalize empty strings to null for optional foreign keys
 		const normalizedColorId = validatedData.colorId?.trim() || null;
-		const normalizedMaterial = validatedData.material?.trim() || null;
+		const normalizedMaterialId = validatedData.materialId?.trim() || null;
 		const normalizedSize = validatedData.size?.trim() || null;
 
 		// 5. Convert priceInclTaxEuros to cents for database
@@ -101,8 +76,8 @@ export async function updateProductSku(
 		const allMedia: Array<{
 			url: string;
 			thumbnailUrl?: string | null;
-			blurDataUrl?: string;
-			altText?: string;
+			blurDataUrl?: string | null;
+			altText?: string | null;
 			mediaType?: "IMAGE" | "VIDEO";
 			isPrimary: boolean;
 		}> = [];
@@ -170,14 +145,25 @@ export async function updateProductSku(
 				}
 			}
 
-			// CONTRAINTE MÉTIER : Vérifier l'unicité de la combinaison (productId, colorId, size, material)
+			// Validate material if provided
+			if (normalizedMaterialId) {
+				const material = await tx.material.findUnique({
+					where: { id: normalizedMaterialId },
+					select: { id: true },
+				});
+				if (!material) {
+					throw new Error("Le matériau spécifié n'existe pas.");
+				}
+			}
+
+			// CONTRAINTE MÉTIER : Vérifier l'unicité de la combinaison (productId, colorId, size, materialId)
 			// Exclure le SKU actuel de la vérification
 			const existingCombination = await tx.productSku.findFirst({
 				where: {
 					productId: existingSku.productId,
 					colorId: normalizedColorId,
 					size: normalizedSize,
-					material: normalizedMaterial,
+					materialId: normalizedMaterialId,
 					NOT: { id: validatedData.skuId },
 				},
 				select: {
@@ -190,7 +176,7 @@ export async function updateProductSku(
 				const variantDetails = [
 					normalizedColorId ? `couleur spécifiée` : null,
 					normalizedSize ? `taille "${normalizedSize}"` : null,
-					normalizedMaterial ? `matériau "${normalizedMaterial}"` : null,
+					normalizedMaterialId ? `matériau spécifié` : null,
 				]
 					.filter(Boolean)
 					.join(", ");
@@ -229,7 +215,7 @@ export async function updateProductSku(
 					isActive: validatedData.isActive,
 					isDefault: validatedData.isDefault,
 					colorId: normalizedColorId,
-					material: normalizedMaterial,
+					materialId: normalizedMaterialId,
 					size: normalizedSize,
 				},
 				include: {
@@ -240,6 +226,11 @@ export async function updateProductSku(
 						},
 					},
 					color: {
+						select: {
+							name: true,
+						},
+					},
+					materialRef: {
 						select: {
 							name: true,
 						},
@@ -270,7 +261,7 @@ export async function updateProductSku(
 		// 8. Build success message
 		const variantDetails = [
 			productSku.color?.name,
-			productSku.material,
+			productSku.materialRef?.name,
 			productSku.size,
 		]
 			.filter(Boolean)

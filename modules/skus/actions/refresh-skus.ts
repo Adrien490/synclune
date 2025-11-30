@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/shared/lib/actions/auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
@@ -12,13 +12,8 @@ export async function refreshSkus(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé. Droits administrateur requis.",
-			};
-		}
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
 		const productId = formData.get("productId") as string | null;
 

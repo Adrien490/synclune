@@ -1,11 +1,10 @@
 "use server";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/shared/lib/actions/auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { updateTag } from "next/cache";
 import { bulkDeactivateSkusSchema } from "../schemas/sku.schemas";
-import { getSkuInvalidationTags } from "../constants/cache";
+import { collectBulkInvalidationTags, invalidateTags } from "../constants/cache";
 
 export async function bulkDeactivateSkus(
 	prevState: ActionState | undefined,
@@ -13,13 +12,8 @@ export async function bulkDeactivateSkus(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification des droits admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé. Droits administrateur requis.",
-			};
-		}
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
 		const rawData = {
 			ids: formData.get("ids") as string,
@@ -67,15 +61,9 @@ export async function bulkDeactivateSkus(
 			},
 		});
 
-		// Invalider le cache pour chaque SKU
-		for (const skuData of skusData) {
-			const tags = getSkuInvalidationTags(
-				skuData.sku,
-				skuData.productId,
-				skuData.product.slug
-			);
-			tags.forEach(tag => updateTag(tag));
-		}
+		// Invalider le cache (deduplique automatiquement les tags)
+		const uniqueTags = collectBulkInvalidationTags(skusData);
+		invalidateTags(uniqueTags);
 
 		return {
 			status: ActionStatus.SUCCESS,

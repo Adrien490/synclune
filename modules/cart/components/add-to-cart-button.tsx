@@ -5,12 +5,14 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
+import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
 import type {
 	GetProductReturn,
 	ProductSku,
 } from "@/modules/products/types/product.types";
 import { ShoppingCart, Truck, ShieldCheck, RotateCcw, CreditCard } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 interface AddToCartButtonProps {
 	product: GetProductReturn;
@@ -35,10 +37,21 @@ export function AddToCartButton({
 }: AddToCartButtonProps) {
 	// Hook TanStack Form
 	const { action, isPending } = useAddToCart();
+	const searchParams = useSearchParams();
 
 	const form = useAppForm({
 		defaultValues: {
 			quantity: 1,
+		},
+	});
+
+	// Validation des variantes pour message explicite
+	const { validationErrors } = useVariantValidation({
+		product,
+		selection: {
+			color: searchParams.get("color"),
+			material: searchParams.get("material"),
+			size: searchParams.get("size"),
 		},
 	});
 
@@ -73,12 +86,12 @@ export function AddToCartButton({
 						<form.Field name="quantity">
 							{(field) => (
 								<div className="flex items-center justify-between">
-									<label
-										htmlFor="quantity-value"
+									<span
+										id="quantity-label"
 										className="text-sm/6 font-semibold tracking-tight antialiased"
 									>
 										Quantité
-									</label>
+									</span>
 									<div className="flex items-center gap-2" role="group" aria-labelledby="quantity-label">
 										<Button
 											type="button"
@@ -177,7 +190,7 @@ export function AddToCartButton({
 						<span>
 							{hasOnlyOneSku
 								? "Produit non disponible"
-								: "Sélectionnez vos options"}
+								: validationErrors[0] || "Sélectionnez vos options"}
 						</span>
 					) : (
 						<div className="flex items-center gap-2">
@@ -189,15 +202,15 @@ export function AddToCartButton({
 
 				{/* Trust badges - Réassurance */}
 				<div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground py-2">
-					<div className="flex items-center gap-1.5" role="status" aria-label="Paiement sécurisé">
+					<div className="flex items-center gap-1.5">
 						<ShieldCheck className="w-4 h-4 text-green-600" aria-hidden="true" />
 						<span>Paiement sécurisé</span>
 					</div>
-					<div className="flex items-center gap-1.5" role="status" aria-label="Retours sous 14 jours">
+					<div className="flex items-center gap-1.5">
 						<RotateCcw className="w-4 h-4 text-blue-600" aria-hidden="true" />
 						<span>Retours 14 jours</span>
 					</div>
-					<div className="flex items-center gap-1.5" role="status" aria-label="Plusieurs moyens de paiement acceptés">
+					<div className="flex items-center gap-1.5">
 						<CreditCard className="w-4 h-4 text-primary" aria-hidden="true" />
 						<span>CB, PayPal, Stripe</span>
 					</div>
@@ -218,9 +231,9 @@ export function AddToCartButton({
 						className="inline-flex items-center gap-2 font-medium text-foreground underline-offset-4 hover:underline text-sm/6 tracking-normal antialiased transition-all duration-200 hover:gap-3"
 						href={`/personnalisation?product=${product.slug}`}
 					>
-						<span className="text-base">✨</span>
+						<span className="text-base" aria-hidden="true">✨</span>
 						<span>Parlons-en ensemble</span>
-						<span className="text-xs">→</span>
+						<span className="text-xs" aria-hidden="true">→</span>
 					</Link>
 				</div>
 			</div>

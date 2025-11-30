@@ -9,7 +9,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { sendTrackingUpdateEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/shared/utils/carrier-detection";
+import { getCarrierLabel, getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier-detection";
 import { revalidatePath } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";

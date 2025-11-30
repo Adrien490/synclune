@@ -17,6 +17,7 @@
 		"email:dev": "email dev --dir emails --port 3001",
 		"verify:stripe": "tsx scripts/verify-stripe-config.ts",
 		"validate:production-ready": "tsx scripts/validate-production-ready.ts",
+		"validate:changelogs": "tsx scripts/validate-changelogs.ts",
 		"generate:video-thumbnails": "tsx scripts/generate-video-thumbnails.ts"
 	},
 	"dependencies": {

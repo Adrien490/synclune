@@ -8,6 +8,10 @@ import { revalidatePath } from "next/cache";
 
 import { bulkResubscribeSubscribersSchema } from "../../schemas/subscriber.schemas";
 
+// Limite de sécurité pour éviter DoS
+const MAX_BULK_IDS = 1000;
+const MAX_JSON_LENGTH = 30000; // ~1000 CUID2 IDs
+
 /**
  * Server Action ADMIN pour réabonner plusieurs abonnés en masse
  * Ne réabonne que les abonnés dont l'email est vérifié
@@ -25,15 +29,38 @@ export async function bulkResubscribeSubscribers(
 			};
 		}
 
-		const idsRaw = formData.get("ids") as string;
-		let ids: string[];
+		const idsRaw = formData.get("ids");
 
+		// Validation type et taille avant JSON.parse
+		if (!idsRaw || typeof idsRaw !== "string") {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "Format des IDs invalide",
+			};
+		}
+
+		if (idsRaw.length > MAX_JSON_LENGTH) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: `Trop d'IDs dans la requête (max ${MAX_BULK_IDS})`,
+			};
+		}
+
+		let ids: string[];
 		try {
 			ids = JSON.parse(idsRaw);
 		} catch {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format des IDs invalide",
+				message: "Format JSON invalide",
+			};
+		}
+
+		// Vérification limite
+		if (ids.length > MAX_BULK_IDS) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: `Maximum ${MAX_BULK_IDS} abonnés par opération`,
 			};
 		}
 
@@ -45,33 +72,32 @@ export async function bulkResubscribeSubscribers(
 			};
 		}
 
-		// Trouver les abonnés inactifs avec email vérifié
-		const eligibleSubscribers = await prisma.newsletterSubscriber.findMany({
+		// Réabonner en masse avec une seule query (optimisation)
+		const updateResult = await prisma.newsletterSubscriber.updateMany({
 			where: {
 				id: { in: result.data.ids },
 				isActive: false,
 				emailVerified: true,
 			},
-			select: { id: true },
+			data: { isActive: true },
 		});
 
-		if (eligibleSubscribers.length === 0) {
+		if (updateResult.count === 0) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Aucun abonné éligible (doit être inactif avec email vérifié)",
 			};
 		}
 
-		// Réabonner en masse
-		await prisma.newsletterSubscriber.updateMany({
-			where: { id: { in: eligibleSubscribers.map((s) => s.id) } },
-			data: { isActive: true },
-		});
-
 		revalidatePath("/admin/marketing/newsletter");
 
-		const skipped = result.data.ids.length - eligibleSubscribers.length;
-		let message = `${eligibleSubscribers.length} abonné${eligibleSubscribers.length > 1 ? "s" : ""} réabonné${eligibleSubscribers.length > 1 ? "s" : ""}`;
+		// Audit log
+		console.log(
+			`[BULK_RESUBSCRIBE_AUDIT] Admin resubscribed ${updateResult.count} subscribers`
+		);
+
+		const skipped = result.data.ids.length - updateResult.count;
+		let message = `${updateResult.count} abonné${updateResult.count > 1 ? "s" : ""} réabonné${updateResult.count > 1 ? "s" : ""}`;
 		if (skipped > 0) {
 			message += ` - ${skipped} ignoré${skipped > 1 ? "s" : ""} (déjà actif${skipped > 1 ? "s" : ""} ou non vérifié${skipped > 1 ? "s" : ""})`;
 		}

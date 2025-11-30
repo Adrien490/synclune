@@ -148,7 +148,7 @@ export function BottomNavigation() {
 											/>
 										)}
 										<Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-										<span className="text-[10px] font-medium leading-none">
+										<span className="text-xs font-medium leading-none">
 											{item.shortLabel}
 										</span>
 									</button>
@@ -223,7 +223,7 @@ export function BottomNavigation() {
 								/>
 							)}
 							<Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-							<span className="text-[10px] font-medium leading-none">
+							<span className="text-xs font-medium leading-none">
 								{item.shortLabel}
 							</span>
 						</Link>

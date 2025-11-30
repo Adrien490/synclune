@@ -15,7 +15,7 @@ export const editProductFormOpts = {
 			priceInclTaxEuros: 0,
 			compareAtPriceEuros: undefined as number | undefined,
 			inventory: 0,
-			isActive: "true",
+			isActive: true,
 			colorId: "",
 			material: "",
 			size: "",

@@ -121,7 +121,7 @@ export const getUsersSchema = z.object({
 // UPDATE PROFILE SCHEMA
 // ============================================================================
 
-import { USER_CONSTANTS, USER_ERROR_MESSAGES } from "@/shared/constants/user";
+import { USER_CONSTANTS, USER_ERROR_MESSAGES } from "@/modules/users/constants/profile";
 
 /**
  * Schéma de validation pour la mise à jour du profil utilisateur

@@ -25,7 +25,7 @@ import {
 	CARRIERS,
 	detectCarrierAndUrl,
 	type Carrier,
-} from "@/shared/utils/carrier-detection";
+} from "@/modules/orders/utils/carrier-detection";
 import { useStore } from "@tanstack/react-form";
 import { Calendar, Mail, Truck } from "lucide-react";
 import { useUpdateTrackingForm } from "@/modules/orders/hooks/use-update-tracking-form";

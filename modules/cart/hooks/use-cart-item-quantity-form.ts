@@ -8,7 +8,7 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState, useEffect, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import { cartItemQuantityFormOpts } from "../lib/cart-item-quantity-form-options";
+import { cartItemQuantityFormOpts } from "@/modules/cart/constants/cart-item-quantity-form-options";
 
 interface UseCartItemQuantityFormOptions {
 	cartItemId: string;

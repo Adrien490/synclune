@@ -21,7 +21,7 @@ interface ProductCareInfoProps {
  */
 export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 	return (
-		<Accordion type="multiple" className="w-full">
+		<Accordion type="multiple" defaultValue={["shipping"]} className="w-full">
 			{/* Section Entretien */}
 			<AccordionItem value="care">
 				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold">
@@ -46,7 +46,8 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 						)}
 					</ul>
 					<p className="text-xs italic">
-						Votre bijou a été créé avec passion, prenez-en soin et il vous le rendra ! ✨
+						Votre bijou a été créé avec passion, prenez-en soin et il vous le rendra !{" "}
+						<span aria-hidden="true">✨</span>
 					</p>
 				</AccordionContent>
 			</AccordionItem>

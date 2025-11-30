@@ -6,10 +6,28 @@ import { useFieldContext } from "@/shared/lib/form-context";
 
 interface InputGroupFieldProps
 	extends React.InputHTMLAttributes<HTMLInputElement> {
-	children?: React.ReactNode; // Pour InputGroupAddon
+	/** Addon (InputGroupAddon) à afficher avant ou après le champ */
+	children?: React.ReactNode;
 	required?: boolean;
 }
 
+/**
+ * Champ input avec addon (prefix/suffix) pour formulaires TanStack Form.
+ *
+ * N'inclut pas de label - utilisez FieldLabel séparément si nécessaire.
+ * Pour les champs numériques, les valeurs vides retournent `null`.
+ *
+ * @example
+ * ```tsx
+ * <form.AppField name="price">
+ *   {(field) => (
+ *     <field.InputGroupField type="number" min={0} step={0.01}>
+ *       <InputGroupAddon position="end">€</InputGroupAddon>
+ *     </field.InputGroupField>
+ *   )}
+ * </form.AppField>
+ * ```
+ */
 export const InputGroupField = ({
 	disabled,
 	placeholder,
@@ -21,59 +39,27 @@ export const InputGroupField = ({
 	children,
 	...props
 }: InputGroupFieldProps) => {
-	const field = useFieldContext<string | number>();
+	const field = useFieldContext<string | number | null>();
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (type === "number") {
 			const numValue = e.target.valueAsNumber;
-			// Si la valeur est NaN (champ vide), on met 0 ou undefined selon le contexte
-			field.handleChange(isNaN(numValue) ? 0 : numValue);
+			// Si la valeur est NaN (champ vide), on retourne null pour les champs optionnels
+			field.handleChange(isNaN(numValue) ? null : numValue);
 		} else {
 			field.handleChange(e.target.value);
 		}
 	};
 
-	// Bloque les caractères non-numériques pour type="number"
-	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (type === "number") {
-			// Autoriser: chiffres, point, backspace, delete, tab, escape, enter, flèches
-			const allowedKeys = [
-				"Backspace",
-				"Delete",
-				"Tab",
-				"Escape",
-				"Enter",
-				"ArrowLeft",
-				"ArrowRight",
-				"ArrowUp",
-				"ArrowDown",
-				"Home",
-				"End",
-			];
-			if (allowedKeys.includes(e.key)) return;
-
-			// Autoriser Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-			if (e.ctrlKey || e.metaKey) return;
-
-			// Autoriser chiffres et point décimal
-			if (!/^[0-9.]$/.test(e.key)) {
-				e.preventDefault();
-			}
-
-			// Empêcher plusieurs points
-			if (e.key === "." && e.currentTarget.value.includes(".")) {
-				e.preventDefault();
-			}
-		}
-	};
-
-	// Pour les inputs number, on affiche une chaîne vide si la valeur est 0 ou NaN
-	const displayValue =
+	// Pour les inputs number, on affiche une chaîne vide uniquement si null ou NaN
+	// Le 0 doit pouvoir être affiché et saisi
+	const displayValue: string | number | undefined =
 		type === "number"
-			? field.state.value === 0 || isNaN(field.state.value as number)
+			? field.state.value === null ||
+				(typeof field.state.value === "number" && isNaN(field.state.value))
 				? ""
-				: field.state.value
-			: field.state.value;
+				: (field.state.value as number)
+			: (field.state.value as string) ?? "";
 
 	return (
 		<Field data-invalid={field.state.meta.errors.length > 0}>
@@ -89,7 +75,6 @@ export const InputGroupField = ({
 					placeholder={placeholder}
 					value={displayValue}
 					onChange={handleChange}
-					onKeyDown={handleKeyDown}
 					onBlur={field.handleBlur}
 					inputMode={type === "number" ? "decimal" : undefined}
 					aria-invalid={field.state.meta.errors.length > 0}

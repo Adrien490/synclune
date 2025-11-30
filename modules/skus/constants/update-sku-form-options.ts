@@ -18,7 +18,7 @@ export type UpdateProductSkuFormValues = {
 	isDefault: boolean;
 	isActive: boolean;
 	colorId: string;
-	material: string;
+	materialId: string;
 	size: string;
 	primaryImage: MediaData | undefined;
 	galleryMedia: MediaData[];
@@ -54,7 +54,7 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 			isDefault: sku.isDefault,
 			isActive: sku.isActive,
 			colorId: sku.color?.id || "",
-			material: sku.material || "",
+			materialId: sku.materialId || "",
 			size: sku.size || "",
 			primaryImage: primaryImage
 				? {

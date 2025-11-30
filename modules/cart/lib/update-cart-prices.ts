@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 
 /**
@@ -103,7 +103,6 @@ export async function updateCartPrices(
 			},
 		};
 	} catch (error) {
-// console.error("[UPDATE_CART_PRICES] Error:", error);
 		return {
 			status: ActionStatus.ERROR,
 			message: "Erreur lors de la mise à jour des prix",

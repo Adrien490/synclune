@@ -13,7 +13,10 @@ import { cacheSkuDetail } from "../constants/cache";
 // Re-export pour compatibilité
 export type { GetProductSkuParams, GetProductSkuReturn } from "../types/sku.types";
 
-// Type pour SKU avec images (pour édition)
+/**
+ * Type pour SKU avec images (pour édition)
+ * Inclut toutes les données nécessaires au formulaire de modification
+ */
 export type SkuWithImages = GetProductSkuReturn & {
 	images: Array<{
 		id: string;
@@ -26,6 +29,7 @@ export type SkuWithImages = GetProductSkuReturn & {
 		isPrimary: boolean;
 	}>;
 	compareAtPrice: number | null;
+	materialId: string | null;
 };
 
 // ============================================================================
@@ -70,7 +74,8 @@ async function fetchProductSku(
 		});
 
 		return sku;
-	} catch {
+	} catch (error) {
+		console.error("[get-sku] Erreur fetchProductSku:", error);
 		return null;
 	}
 }
@@ -122,7 +127,8 @@ async function fetchSkuById(skuId: string): Promise<SkuWithImages | null> {
 		});
 
 		return sku;
-	} catch {
+	} catch (error) {
+		console.error("[get-sku] Erreur fetchSkuById:", error);
 		return null;
 	}
 }

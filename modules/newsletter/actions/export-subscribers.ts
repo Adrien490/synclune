@@ -62,7 +62,7 @@ export async function exportSubscribers(
 					? { isActive: false }
 					: {}; // "all" : pas de filtre
 
-		// Récupérer les abonnés selon le filtre
+		// Récupérer les abonnés selon le filtre (sans données GDPR sensibles)
 		const subscribers = await prisma.newsletterSubscriber.findMany({
 			where: whereClause,
 			select: {
@@ -71,8 +71,7 @@ export async function exportSubscribers(
 				subscribedAt: true,
 				unsubscribedAt: true,
 				consentTimestamp: true,
-				consentSource: true,
-				ipAddress: true,
+				// ipAddress et consentSource retirés pour conformité RGPD
 			},
 			orderBy: { subscribedAt: "desc" },
 		});
@@ -84,10 +83,15 @@ export async function exportSubscribers(
 			};
 		}
 
+		// Audit log de l'export
+		console.log(
+			`[EXPORT_AUDIT] Admin ${session.user.id} exported ${subscribers.length} subscribers (status: ${status})`
+		);
+
 		// Générer CSV avec BOM UTF-8 (pour Excel)
 		const BOM = "\uFEFF";
 		const csvHeader =
-			"Email,Statut,Date d'inscription,Date de consentement,Source,IP,Date de désinscription\n";
+			"Email,Statut,Date d'inscription,Date de consentement,Date de désinscription\n";
 
 		const csvRows = subscribers
 			.map((s) => {
@@ -96,8 +100,6 @@ export async function exportSubscribers(
 				const consentTimestamp = s.consentTimestamp
 					.toISOString()
 					.split("T")[0];
-				const source = s.consentSource || "N/A";
-				const ip = s.ipAddress || "N/A";
 				const unsubscribedAt = s.unsubscribedAt
 					? s.unsubscribedAt.toISOString().split("T")[0]
 					: "N/A";
@@ -107,7 +109,7 @@ export async function exportSubscribers(
 					? `"${s.email}"`
 					: s.email;
 
-				return `${emailEscaped},${statusLabel},${subscribedAt},${consentTimestamp},${source},${ip},${unsubscribedAt}`;
+				return `${emailEscaped},${statusLabel},${subscribedAt},${consentTimestamp},${unsubscribedAt}`;
 			})
 			.join("\n");
 

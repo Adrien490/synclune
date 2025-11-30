@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/shared/lib/actions/auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -44,13 +44,8 @@ export async function deleteProductSku(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Acces non autorise. Droits administrateur requis.",
-			};
-		}
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
 		// 2. Extraction des donnees du FormData
 		const rawData = {
@@ -70,7 +65,8 @@ export async function deleteProductSku(
 
 		const { skuId: validatedSkuId } = result.data;
 
-		// 4. Verifier que le SKU existe et recuperer les infos pour invalidation + images
+		// 4. Verifier que le SKU existe et recuperer toutes les infos necessaires en UNE requete
+		// Optimisation: Consolider les counts pour eviter les N+1 queries
 		const existingSku = await prisma.productSku.findUnique({
 			where: { id: validatedSkuId },
 			select: {
@@ -94,6 +90,18 @@ export async function deleteProductSku(
 								skus: true,
 							},
 						},
+						skus: {
+							where: { isActive: true },
+							select: { id: true },
+						},
+					},
+				},
+				// Counts des relations bloquantes
+				_count: {
+					select: {
+						orderItems: true,
+						wishlistItems: true,
+						cartItems: true,
 					},
 				},
 			},
@@ -117,9 +125,7 @@ export async function deleteProductSku(
 
 		// 6. CRITIQUE : Verifier que le SKU n'est pas associe a des commandes
 		// Prisma a onDelete: Restrict sur OrderItem.sku, mais on affiche un message explicite
-		const orderItemsCount = await prisma.orderItem.count({
-			where: { skuId: validatedSkuId },
-		});
+		const orderItemsCount = existingSku._count.orderItems;
 
 		if (orderItemsCount > 0) {
 			return {
@@ -132,9 +138,7 @@ export async function deleteProductSku(
 
 		// 6b. CRITIQUE : Verifier que le SKU n'est pas dans des wishlists
 		// Prisma a onDelete: Restrict sur WishlistItem.sku
-		const wishlistItemsCount = await prisma.wishlistItem.count({
-			where: { skuId: validatedSkuId },
-		});
+		const wishlistItemsCount = existingSku._count.wishlistItems;
 
 		if (wishlistItemsCount > 0) {
 			return {
@@ -147,9 +151,7 @@ export async function deleteProductSku(
 
 		// 6c. CRITIQUE : Verifier que le SKU n'est pas dans des paniers
 		// Prisma a onDelete: Restrict sur CartItem.sku
-		const cartItemsCount = await prisma.cartItem.count({
-			where: { skuId: validatedSkuId },
-		});
+		const cartItemsCount = existingSku._count.cartItems;
 
 		if (cartItemsCount > 0) {
 			return {
@@ -161,13 +163,9 @@ export async function deleteProductSku(
 		}
 
 		// 7. Pour les produits PUBLIC : verifier qu'il reste au moins 1 SKU actif apres suppression
+		// activeSkusCount deja charge dans la requete initiale
 		if (existingSku.product.status === "PUBLIC" && existingSku.isActive) {
-			const activeSkusCount = await prisma.productSku.count({
-				where: {
-					productId: existingSku.productId,
-					isActive: true,
-				},
-			});
+			const activeSkusCount = existingSku.product.skus.length;
 
 			if (activeSkusCount <= 1) {
 				return {

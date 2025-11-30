@@ -1,6 +1,6 @@
 "use server";
 
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getSkuDetails } from "@/modules/cart/lib/sku-validation";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
@@ -11,7 +11,7 @@ import { getUserAddressesInvalidationTags } from "@/modules/users/constants/cach
 import {
 	getFinalShippingCost,
 	calculateTaxAmount,
-} from "@/shared/constants/cart-shipping";
+} from "@/modules/orders/constants/shipping";
 import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import Stripe from "stripe";
@@ -503,18 +503,9 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				const sku = skuResult.data.sku;
 				const product = sku.product;
 
-				// Récupérer les détails supplémentaires du SKU pour les champs dénormalisés
-				const skuWithDetails = await tx.productSku.findUnique({
-					where: { id: sku.id },
-					include: {
-						color: { select: { name: true } },
-						images: {
-							where: { isPrimary: true },
-							select: { url: true },
-							take: 1,
-						},
-					},
-				});
+				// Utiliser les données déjà chargées par getSkuDetails (évite un re-fetch)
+				const primaryImage = sku.images?.find((img) => img.isPrimary);
+				const imageUrl = primaryImage?.url || sku.images?.[0]?.url || null;
 
 				await tx.orderItem.create({
 					data: {
@@ -523,11 +514,11 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 						skuId: sku.id,
 						productTitle: product.title,
 						productDescription: product.description || null,
-						productImageUrl: skuWithDetails?.images?.[0]?.url || null,
-						skuColor: skuWithDetails?.color?.name || null,
-						skuMaterial: skuWithDetails?.material || null,
-						skuSize: skuWithDetails?.size || null,
-						skuImageUrl: skuWithDetails?.images?.[0]?.url || null,
+						productImageUrl: imageUrl,
+						skuColor: sku.color?.name || null,
+						skuMaterial: sku.material || null,
+						skuSize: sku.size || null,
+						skuImageUrl: imageUrl,
 						price: sku.priceInclTax,
 						quantity: cartItem.quantity,
 						// Détails fiscaux temporaires (mis à jour par webhook après calcul Stripe Tax)

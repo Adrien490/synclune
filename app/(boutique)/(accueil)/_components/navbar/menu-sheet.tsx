@@ -127,7 +127,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 						<SheetClose asChild>
 							<Link
 								href="/legal"
-								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-1.5 rounded-none"
+								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-2.5 rounded-none"
 							>
 								Mentions légales
 							</Link>
@@ -135,7 +135,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 						<SheetClose asChild>
 							<Link
 								href="/privacy"
-								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-1.5 rounded-none"
+								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-2.5 rounded-none"
 							>
 								Confidentialité
 							</Link>
@@ -143,7 +143,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 						<SheetClose asChild>
 							<Link
 								href="/accessibility"
-								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-1.5 rounded-none"
+								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-2.5 rounded-none"
 							>
 								Accessibilité
 							</Link>

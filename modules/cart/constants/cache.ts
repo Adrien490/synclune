@@ -16,6 +16,10 @@ export const CART_CACHE_TAGS = {
 	/** Compteur d'items dans le panier */
 	COUNT: (userId?: string, sessionId?: string) =>
 		userId ? `cart-count-user-${userId}` : sessionId ? `cart-count-session-${sessionId}` : "cart-count-anonymous",
+
+	/** Résumé du panier (pour tableau de bord) */
+	SUMMARY: (userId?: string, sessionId?: string) =>
+		userId ? `cart-summary-user-${userId}` : sessionId ? `cart-summary-session-${sessionId}` : "cart-summary-anonymous",
 } as const
 
 // ============================================
@@ -40,6 +44,15 @@ export function cacheCartCount(userId?: string, sessionId?: string) {
 	cacheTag(CART_CACHE_TAGS.COUNT(userId, sessionId))
 }
 
+/**
+ * Configure le cache pour le résumé du panier
+ * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
+ */
+export function cacheCartSummary(userId?: string, sessionId?: string) {
+	cacheLife({ stale: 300 })
+	cacheTag(CART_CACHE_TAGS.SUMMARY(userId, sessionId))
+}
+
 // ============================================
 // INVALIDATION HELPER
 // ============================================
@@ -50,7 +63,12 @@ export function cacheCartCount(userId?: string, sessionId?: string) {
  * Invalide automatiquement :
  * - Le panier de l'utilisateur/visiteur
  * - Le compteur d'items dans le panier
+ * - Le résumé du panier
  */
 export function getCartInvalidationTags(userId?: string, sessionId?: string): string[] {
-	return [CART_CACHE_TAGS.CART(userId, sessionId), CART_CACHE_TAGS.COUNT(userId, sessionId)]
+	return [
+		CART_CACHE_TAGS.CART(userId, sessionId),
+		CART_CACHE_TAGS.COUNT(userId, sessionId),
+		CART_CACHE_TAGS.SUMMARY(userId, sessionId),
+	]
 }

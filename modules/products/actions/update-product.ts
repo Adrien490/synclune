@@ -59,7 +59,7 @@ export async function updateProduct(
 				inventory: formData.get("defaultSku.inventory"),
 				isActive: formData.get("defaultSku.isActive"), // Zod fera la coercion
 				colorId: formData.get("defaultSku.colorId") || "",
-				material: formData.get("defaultSku.material") || "",
+				materialId: formData.get("defaultSku.materialId") || "",
 				size: formData.get("defaultSku.size") || "",
 				primaryImage: parseJSON(formData.get("defaultSku.primaryImage"), undefined),
 				galleryMedia: parseJSON(formData.get("defaultSku.galleryMedia"), []),
@@ -150,8 +150,8 @@ export async function updateProduct(
 		const normalizedTypeId = validatedData.typeId?.trim() || null;
 		const normalizedCollectionIds = validatedData.collectionIds?.filter((id) => id.trim()) || [];
 		const normalizedColorId = validatedData.defaultSku.colorId?.trim() || null;
-		const normalizedMaterial =
-			validatedData.defaultSku.material?.trim() || null;
+		const normalizedMaterialId =
+			validatedData.defaultSku.materialId?.trim() || null;
 		const normalizedSize = validatedData.defaultSku.size?.trim() || null;
 		const normalizedDescription = validatedData.description?.trim() || null;
 
@@ -279,7 +279,7 @@ export async function updateProduct(
 					inventory: validatedData.defaultSku.inventory,
 					isActive: validatedData.defaultSku.isActive,
 					colorId: normalizedColorId,
-					material: normalizedMaterial,
+					materialId: normalizedMaterialId,
 					size: normalizedSize,
 				},
 			});

@@ -130,7 +130,7 @@ export function DashboardBreadcrumb() {
 					<Button
 						variant="ghost"
 						size="sm"
-						className="h-8 w-8 p-0"
+						className="size-9 p-0"
 						onClick={() => router.push(previousPage.href)}
 						aria-label={`Retour à ${previousPage.label}`}
 					>

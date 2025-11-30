@@ -117,7 +117,7 @@ export const getProductsSchema = z.object({
  * Schema pour un media (image ou video)
  */
 const imageSchema = z.object({
-	url: z.url({ message: "L'URL du media doit etre valide" }),
+	url: z.url({ message: "L'URL du media doit être valide" }),
 	thumbnailUrl: z.url().optional().nullable(), // URL de la miniature pour les videos (MEDIUM 480px)
 	thumbnailSmallUrl: z.url().optional().nullable(), // URL de la petite miniature (SMALL 160px)
 	altText: z.string().max(200).optional(),
@@ -129,13 +129,13 @@ const initialSkuSchema = z.object({
 	// Prix en euros (sera converti en centimes cote serveur)
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
-		.positive({ error: "Le prix doit etre positif" })
+		.positive({ error: "Le prix doit être positif" })
 		.max(999999.99, { error: "Le prix ne peut pas depasser 999999.99 eur" }),
 
 	// Prix compare (optionnel, pour afficher prix barre)
 	compareAtPriceEuros: z.coerce
 		.number()
-		.positive({ error: "Le prix compare doit etre positif" })
+		.positive({ error: "Le prix compare doit être positif" })
 		.max(999999.99, { error: "Le prix compare ne peut pas depasser 999999.99 eur" })
 		.optional()
 		.or(z.literal(""))
@@ -144,8 +144,8 @@ const initialSkuSchema = z.object({
 	// Inventory: normalized in server action before validation
 	inventory: z.coerce
 		.number()
-		.int({ error: "L'inventaire doit etre un entier" })
-		.nonnegative({ error: "L'inventaire doit etre positif ou nul" })
+		.int({ error: "L'inventaire doit être un entier" })
+		.nonnegative({ error: "L'inventaire doit être positif ou nul" })
 		.default(0),
 
 	// Boolean fields: normalized in server action before validation
@@ -154,7 +154,7 @@ const initialSkuSchema = z.object({
 
 	// Optional fields
 	colorId: z.string().optional().or(z.literal("")),
-	material: z.string().max(200).optional().or(z.literal("")),
+	materialId: z.string().optional().or(z.literal("")),
 	size: z.string().max(50).optional().or(z.literal("")),
 
 	// Medias (images et videos)
@@ -170,7 +170,7 @@ const initialSkuSchema = z.object({
 		return data.compareAtPriceEuros >= data.priceInclTaxEuros;
 	},
 	{
-		message: "Le prix compare doit etre superieur ou egal au prix de vente",
+		message: "Le prix compare doit être superieur ou egal au prix de vente",
 		path: ["compareAtPriceEuros"],
 	}
 );
@@ -182,13 +182,13 @@ const defaultSkuSchema = z.object({
 	// Prix en euros (sera converti en centimes cote serveur)
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
-		.positive({ error: "Le prix doit etre positif" })
+		.positive({ error: "Le prix doit être positif" })
 		.max(999999.99, { error: "Le prix ne peut pas depasser 999999.99 eur" }),
 
 	// Prix compare (optionnel, pour afficher prix barre)
 	compareAtPriceEuros: z.coerce
 		.number()
-		.positive({ error: "Le prix compare doit etre positif" })
+		.positive({ error: "Le prix compare doit être positif" })
 		.max(999999.99, { error: "Le prix compare ne peut pas depasser 999999.99 eur" })
 		.optional()
 		.or(z.literal(""))
@@ -197,8 +197,8 @@ const defaultSkuSchema = z.object({
 	// Inventory: normalized in server action before validation
 	inventory: z.coerce
 		.number()
-		.int({ error: "L'inventaire doit etre un entier" })
-		.nonnegative({ error: "L'inventaire doit etre positif ou nul" })
+		.int({ error: "L'inventaire doit être un entier" })
+		.nonnegative({ error: "L'inventaire doit être positif ou nul" })
 		.default(0),
 
 	// Boolean fields: normalized in server action before validation
@@ -206,7 +206,7 @@ const defaultSkuSchema = z.object({
 
 	// Optional fields
 	colorId: z.string().optional().or(z.literal("")),
-	material: z.string().max(200).optional().or(z.literal("")),
+	materialId: z.string().optional().or(z.literal("")),
 	size: z.string().max(50).optional().or(z.literal("")),
 
 	// Medias (images et videos)
@@ -222,7 +222,7 @@ const defaultSkuSchema = z.object({
 		return data.compareAtPriceEuros >= data.priceInclTaxEuros;
 	},
 	{
-		message: "Le prix compare doit etre superieur ou egal au prix de vente",
+		message: "Le prix compare doit être superieur ou egal au prix de vente",
 		path: ["compareAtPriceEuros"],
 	}
 );
@@ -291,7 +291,7 @@ export const createProductSchema = z
 		},
 		{
 			message:
-				"Le media principal ne peut pas etre une video. Veuillez selectionner une image.",
+				"Le media principal ne peut pas être une video. Veuillez sélectionner une image.",
 			path: ["initialSku", "primaryImage"],
 		}
 	);
@@ -359,7 +359,7 @@ export const updateProductSchema = z
 		},
 		{
 			message:
-				"Le media principal ne peut pas etre une video. Veuillez selectionner une image.",
+				"Le media principal ne peut pas être une video. Veuillez sélectionner une image.",
 			path: ["defaultSku", "primaryImage"],
 		}
 	);
@@ -390,6 +390,6 @@ export const bulkArchiveProductsSchema = z.object({
 export const bulkChangeProductStatusSchema = z.object({
 	productIds: z
 		.array(z.string().min(1))
-		.min(1, "Au moins un produit doit etre selectionne"),
+		.min(1, "Au moins un produit doit être sélectionné"),
 	targetStatus: z.enum(["DRAFT", "PUBLIC"]),
 });

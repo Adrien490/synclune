@@ -12,7 +12,7 @@ import {
 	PAYMENT_STATUS_VARIANTS,
 	FULFILLMENT_STATUS_LABELS,
 	FULFILLMENT_STATUS_VARIANTS,
-} from "@/shared/constants/order";
+} from "@/modules/orders/constants/status-display";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {

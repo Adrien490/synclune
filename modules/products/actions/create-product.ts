@@ -59,7 +59,7 @@ export async function createProduct(
 				isActive: formData.get("initialSku.isActive") ?? true,
 				isDefault: formData.get("initialSku.isDefault") ?? true,
 				colorId: formData.get("initialSku.colorId") || "",
-				material: formData.get("initialSku.material") || "",
+				materialId: formData.get("initialSku.materialId") || "",
 				size: formData.get("initialSku.size") || "",
 				primaryImage: parseJSON(formData.get("initialSku.primaryImage"), undefined),
 				galleryMedia: parseJSON(formData.get("initialSku.galleryMedia"), []),
@@ -95,8 +95,7 @@ export async function createProduct(
 		const normalizedTypeId = validatedData.typeId?.trim() || null;
 		const normalizedCollectionIds = validatedData.collectionIds?.filter((id) => id.trim()) || [];
 		const normalizedColorId = validatedData.initialSku.colorId?.trim() || null;
-		const normalizedMaterial =
-			validatedData.initialSku.material?.trim() || null;
+		const normalizedMaterialId = validatedData.initialSku.materialId?.trim() || null;
 		const normalizedSize = validatedData.initialSku.size?.trim() || null;
 		const normalizedDescription = validatedData.description?.trim() || null;
 
@@ -183,6 +182,17 @@ export async function createProduct(
 				}
 			}
 
+			// Validate material if provided
+			if (normalizedMaterialId) {
+				const material = await tx.material.findUnique({
+					where: { id: normalizedMaterialId },
+					select: { id: true },
+				});
+				if (!material) {
+					throw new Error("Le materiau specifie n'existe pas.");
+				}
+			}
+
 			// Create product
 			const productData = {
 				title: validatedData.title,
@@ -227,7 +237,7 @@ export async function createProduct(
 				isActive: validatedData.initialSku.isActive,
 				isDefault: validatedData.initialSku.isDefault,
 				colorId: normalizedColorId,
-				material: normalizedMaterial,
+				materialId: normalizedMaterialId,
 				size: normalizedSize,
 			};
 

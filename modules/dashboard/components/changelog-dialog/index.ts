@@ -9,11 +9,7 @@ export { ChangelogDialog } from "./changelog-dialog";
 export { ChangelogDialogSkeleton } from "./changelog-dialog-skeleton";
 
 // Fonctions serveur
-export {
-	getChangelogByVersion,
-	getChangelogs,
-	getLatestChangelog,
-} from "@/modules/dashboard/data/get-changelogs";
+export { getChangelogs } from "@/modules/dashboard/data/get-changelogs";
 
 // Types
 export type { ChangelogData, ChangelogMetadata } from "@/modules/dashboard/data/get-changelogs";

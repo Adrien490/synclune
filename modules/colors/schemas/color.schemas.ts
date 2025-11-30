@@ -93,7 +93,7 @@ export const hexColorSchema = z
 		return normalizeHex(val);
 	})
 	.refine((val) => /^#[0-9A-F]{6}$/.test(val), {
-		message: "Le code couleur doit etre au format #RRGGBB en majuscules",
+		message: "Le code couleur doit être au format #RRGGBB en majuscules",
 	});
 
 export const colorSlugSchema = z
@@ -129,5 +129,5 @@ export const deleteColorSchema = z.object({
 });
 
 export const bulkDeleteColorsSchema = z.object({
-	ids: z.array(z.string().cuid("ID invalide")).min(1, "Aucune couleur selectionnee"),
+	ids: z.array(z.string().cuid("ID invalide")).min(1, "Aucune couleur sélectionnée"),
 });

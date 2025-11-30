@@ -1,4 +1,4 @@
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { cacheWishlistCount } from "@/modules/wishlist/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 

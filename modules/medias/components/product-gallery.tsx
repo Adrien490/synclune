@@ -381,7 +381,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 								>
 									<CarouselContent className="-ml-2">
 										{safeImages.map((media, index) => (
-											<CarouselItem key={media.id} className="pl-2 basis-1/4 xs:basis-1/5 sm:basis-1/6">
+											<CarouselItem key={media.id} className="pl-2 basis-1/4 sm:basis-1/5 md:basis-1/6">
 												<GalleryThumbnail
 													media={media}
 													index={index}
@@ -398,7 +398,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 							) : (
 								/* Grille standard si 6 images ou moins */
 								<div className="gallery-thumbnails w-full">
-									<div className="grid grid-cols-4 xs:grid-cols-5 sm:grid-cols-6 gap-2 sm:gap-3">
+									<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3">
 										{safeImages.map((media, index) => (
 											<GalleryThumbnail
 												key={media.id}

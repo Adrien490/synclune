@@ -1,6 +1,6 @@
 "use server";
 
-import { getSession } from "@/shared/utils/get-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
@@ -107,13 +107,6 @@ export async function removeFromCart(
 			message: "Article supprimé du panier",
 		};
 	} catch (e) {
-		// Error handling
-		// console.error("[REMOVE_FROM_CART] Error:", e);
-		if (e instanceof Error) {
-			// console.error("[REMOVE_FROM_CART] Error message:", e.message);
-			// console.error("[REMOVE_FROM_CART] Error stack:", e.stack);
-		}
-
 		return {
 			status: ActionStatus.ERROR,
 			message: e instanceof Error ? e.message : "Une erreur est survenue lors de la suppression",

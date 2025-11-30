@@ -126,7 +126,11 @@ export const sendNewsletterEmailSchema = z.object({
 	subject: z
 		.string()
 		.min(1, "Le sujet est requis")
-		.max(200, "Le sujet ne doit pas dépasser 200 caractères"),
+		.max(200, "Le sujet ne doit pas dépasser 200 caractères")
+		// Validation CRLF pour éviter injection header email
+		.refine((s) => !s.includes("\n") && !s.includes("\r"), {
+			message: "Le sujet ne peut pas contenir de sauts de ligne",
+		}),
 	content: z
 		.string()
 		.min(10, "Le contenu doit contenir au moins 10 caractères")

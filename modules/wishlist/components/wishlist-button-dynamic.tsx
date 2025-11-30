@@ -19,6 +19,11 @@ interface WishlistButtonDynamicProps {
  *
  * Pattern : Le SKU est calculé côté client depuis les searchParams,
  * permettant une mise à jour instantanée sans attendre le SSR.
+ *
+ * Note : initialIsInWishlist n'est valide que pour le defaultSku.
+ * Quand l'utilisateur change de variante, on réinitialise à false car
+ * on ne connaît pas l'état wishlist du nouveau SKU sans requête serveur.
+ * L'utilisateur peut toujours toggle et l'état se mettra à jour via optimistic UI.
  */
 export function WishlistButtonDynamic({
 	product,
@@ -28,10 +33,16 @@ export function WishlistButtonDynamic({
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 	const currentSku = selectedSku ?? defaultSku;
 
+	// L'état wishlist initial n'est valide que pour le defaultSku
+	// Pour les autres SKUs, on part de false (l'utilisateur peut toggle)
+	const isCurrentSkuDefault = currentSku.id === defaultSku.id;
+	const currentIsInWishlist = isCurrentSkuDefault ? initialIsInWishlist : false;
+
 	return (
 		<WishlistButtonCompact
+			key={currentSku.id}
 			skuId={currentSku.id}
-			isInWishlist={initialIsInWishlist}
+			isInWishlist={currentIsInWishlist}
 		/>
 	);
 }

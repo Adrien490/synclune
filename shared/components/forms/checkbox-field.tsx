@@ -27,11 +27,6 @@ export const CheckboxField = ({
 			data-invalid={field.state.meta.errors.length > 0}
 			className="items-start"
 		>
-			<input
-				type="hidden"
-				name={field.name}
-				value={String(checked ?? field.state.value ?? false)}
-			/>
 			<Checkbox
 				disabled={disabled}
 				name={field.name}

@@ -3,8 +3,9 @@
 import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
 import { randomUUID } from "crypto";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
+import { NEWSLETTER_BASE_URL } from "../constants/urls";
 
 interface SubscribeToNewsletterInternalParams {
 	email: string;
@@ -60,11 +61,10 @@ export async function subscribeToNewsletterInternal({
 				});
 
 				// Invalider le cache
-				getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
+				getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 				// Envoyer l'email de confirmation
-				const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
-				const confirmationUrl = `${baseUrl}/newsletter/confirm?token=${confirmationToken}`;
+				const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
 				await sendNewsletterConfirmationEmail({
 					to: email,
 					confirmationUrl,
@@ -73,7 +73,7 @@ export async function subscribeToNewsletterInternal({
 				return {
 					success: true,
 					message:
-						"Un email de confirmation vous a été renvoyé ! Veuillez vérifier votre boîte de réception 📧",
+						"Un email de confirmation vous a été renvoyé ! Veuillez vérifier votre boîte de réception.",
 				};
 			}
 
@@ -92,11 +92,10 @@ export async function subscribeToNewsletterInternal({
 			});
 
 			// Invalider le cache
-			getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
+			getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 			// Envoyer l'email de confirmation
-			const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
-			const confirmationUrl = `${baseUrl}/newsletter/confirm?token=${confirmationToken}`;
+			const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
 			await sendNewsletterConfirmationEmail({
 				to: email,
 				confirmationUrl,
@@ -105,7 +104,7 @@ export async function subscribeToNewsletterInternal({
 			return {
 				success: true,
 				message:
-					"Bienvenue à nouveau ! Un email de confirmation vous a été envoyé pour réactiver votre inscription 📧",
+					"Bienvenue à nouveau ! Un email de confirmation vous a été envoyé pour réactiver votre inscription.",
 			};
 		}
 
@@ -127,11 +126,10 @@ export async function subscribeToNewsletterInternal({
 		});
 
 		// Invalider le cache
-		getNewsletterInvalidationTags().forEach((tag) => revalidateTag(tag, "dashboard"));
+		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		// Envoyer l'email de confirmation
-		const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
-		const confirmationUrl = `${baseUrl}/newsletter/confirm?token=${confirmationToken}`;
+		const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
 		await sendNewsletterConfirmationEmail({
 			to: email,
 			confirmationUrl,

@@ -6,19 +6,19 @@ Ce dossier contient l'implémentation des formulaires basée sur **TanStack Form
 
 ```
 shared/components/forms/
-├── index.tsx                 # Point d'entrée principal - exporte useAppForm, withForm, withFieldGroup
+├── index.tsx                 # Point d'entrée principal - exporte useAppForm
 ├── checkbox-field.tsx        # Champ de type checkbox
-├── input-field.tsx          # Champ input générique (texte, nombre, email, etc.)
-├── select-field.tsx         # Champ de sélection
-├── radio-group-field.tsx    # Groupe de boutons radio
-├── textarea-field.tsx       # Zone de texte multiligne
-├── submit-button.tsx        # Bouton de soumission réactif
-├── form-error-display.tsx   # Affichage des erreurs de formulaire
-├── field-info.tsx           # Composant d'information de champ
-├── form-errors.tsx          # Liste des erreurs de formulaire
-├── form-footer.tsx          # Footer de formulaire
-├── form-layout.tsx          # Layout responsive pour formulaires
-└── form-section.tsx         # Section de formulaire
+├── input-field.tsx           # Champ input générique (texte, nombre, email, etc.)
+├── input-group-field.tsx     # Champ input avec addon (prefix/suffix)
+├── select-field.tsx          # Champ de sélection
+├── radio-group-field.tsx     # Groupe de boutons radio
+├── textarea-field.tsx        # Zone de texte multiligne
+├── textarea-group-field.tsx  # Zone de texte avec addon
+├── form-error-display.tsx    # Affichage des erreurs globales de formulaire
+├── field-label.tsx           # Label de champ avec support optionnel/requis
+├── form-footer.tsx           # Footer de formulaire avec boutons
+├── form-layout.tsx           # Layout responsive pour formulaires
+└── form-section.tsx          # Section de formulaire avec titre
 ```
 
 ## API principale
@@ -28,7 +28,7 @@ shared/components/forms/
 Hook personnalisé pour créer un formulaire TanStack Form avec pré-configuration des composants.
 
 ```tsx
-import { useAppForm } from "@/components/forms";
+import { useAppForm } from "@/shared/components/forms";
 
 function MyForm() {
 	const form = useAppForm({
@@ -42,7 +42,7 @@ function MyForm() {
 	});
 
 	return (
-		<form.AppForm>
+		<form onSubmit={() => form.handleSubmit()}>
 			<form.AppField name="email">
 				{(field) => (
 					<field.InputField
@@ -60,164 +60,14 @@ function MyForm() {
 				)}
 			</form.AppField>
 
-			<form.SubmitButton label="Se connecter" />
-		</form.AppForm>
-	);
-}
-```
-
-### `withForm`
-
-Higher-order component pour décomposer les grands formulaires en morceaux réutilisables.
-
-```tsx
-import { useAppForm, withForm } from "@/components/forms";
-
-const AddressFields = withForm({
-	defaultValues: {
-		street: "",
-		city: "",
-		zipCode: "",
-	},
-	render: function Render({ form }) {
-		return (
-			<div className="space-y-4">
-				<form.AppField name="street">
-					{(field) => <field.InputField label="Rue" required />}
-				</form.AppField>
-
-				<form.AppField name="city">
-					{(field) => <field.InputField label="Ville" required />}
-				</form.AppField>
-
-				<form.AppField name="zipCode">
-					{(field) => <field.InputField label="Code postal" required />}
-				</form.AppField>
-			</div>
-		);
-	},
-});
-
-function UserForm() {
-	const form = useAppForm({
-		defaultValues: {
-			name: "",
-			street: "",
-			city: "",
-			zipCode: "",
-		},
-	});
-
-	return (
-		<form.AppForm>
-			<form.AppField name="name">
-				{(field) => <field.InputField label="Nom" required />}
-			</form.AppField>
-
-			<AddressFields form={form} />
-
-			<form.SubmitButton label="Enregistrer" />
-		</form.AppForm>
-	);
-}
-```
-
-### `withFieldGroup`
-
-Higher-order component pour réutiliser des groupes de champs liés dans plusieurs formulaires.
-
-```tsx
-import { useAppForm, withFieldGroup } from "@/components/forms";
-import { useStore } from "@tanstack/react-store";
-
-type PasswordFields = {
-	password: string;
-	confirmPassword: string;
-};
-
-const defaultValues: PasswordFields = {
-	password: "",
-	confirmPassword: "",
-};
-
-const PasswordFieldGroup = withFieldGroup({
-	defaultValues,
-	render: function Render({ group }) {
-		const password = useStore(group.store, (state) => state.values.password);
-
-		return (
-			<div className="space-y-4">
-				<group.AppField name="password">
-					{(field) => (
-						<field.InputField label="Mot de passe" type="password" required />
-					)}
-				</group.AppField>
-
-				<group.AppField
-					name="confirmPassword"
-					validators={{
-						onChangeListenTo: ["password"],
-						onChange: ({ value, fieldApi }) => {
-							if (value !== group.getFieldValue("password")) {
-								return "Les mots de passe ne correspondent pas";
-							}
-						},
-					}}
-				>
-					{(field) => (
-						<field.InputField
-							label="Confirmer le mot de passe"
-							type="password"
-							required
-						/>
-					)}
-				</group.AppField>
-			</div>
-		);
-	},
-});
-
-// Utilisation avec champs au niveau racine
-function CreateAccountForm() {
-	const form = useAppForm({
-		defaultValues: {
-			email: "",
-			password: "",
-			confirmPassword: "",
-		},
-	});
-
-	return (
-		<form.AppForm>
-			<PasswordFieldGroup
-				form={form}
-				fields={{
-					password: "password",
-					confirmPassword: "confirmPassword",
-				}}
-			/>
-			<form.SubmitButton label="Créer un compte" />
-		</form.AppForm>
-	);
-}
-
-// Utilisation avec champs imbriqués
-function UserSettingsForm() {
-	const form = useAppForm({
-		defaultValues: {
-			email: "",
-			security: {
-				password: "",
-				confirmPassword: "",
-			},
-		},
-	});
-
-	return (
-		<form.AppForm>
-			<PasswordFieldGroup form={form} fields="security" />
-			<form.SubmitButton label="Mettre à jour" />
-		</form.AppForm>
+			<form.Subscribe selector={(s) => [s.canSubmit, s.isSubmitting]}>
+				{([canSubmit, isSubmitting]) => (
+					<Button type="submit" disabled={!canSubmit || isSubmitting}>
+						{isSubmitting ? "Envoi..." : "Se connecter"}
+					</Button>
+				)}
+			</form.Subscribe>
+		</form>
 	);
 }
 ```
@@ -228,7 +78,7 @@ Tous les composants de champs utilisent `useFieldContext` et sont pré-configur�
 
 ### `InputField`
 
-Champ input générique avec support de plusieurs types.
+Champ input générique avec support de plusieurs types. Inclut automatiquement le label.
 
 ```tsx
 <form.AppField name="email">
@@ -254,9 +104,41 @@ Champ input générique avec support de plusieurs types.
 - `min?: number` - Pour type="number"
 - `step?: number` - Pour type="number"
 
+**Note pour les nombres:** Les champs vides retournent `null`, ce qui permet de distinguer "pas de valeur" de "zéro". La valeur `0` peut être saisie et affichée correctement.
+
+### `InputGroupField`
+
+Champ input avec addon (prefix ou suffix). N'inclut **pas** de label - utilisez `FieldLabel` si nécessaire.
+
+```tsx
+<form.AppField name="price">
+	{(field) => (
+		<field.InputGroupField
+			type="number"
+			placeholder="0.00"
+			min={0}
+			step={0.01}
+		>
+			<InputGroupAddon position="end">€</InputGroupAddon>
+		</field.InputGroupField>
+	)}
+</form.AppField>
+```
+
+**Props:**
+
+- `children?: ReactNode` - Addon (InputGroupAddon) à afficher
+- `type?: string` - Type d'input
+- `placeholder?: string`
+- `required?: boolean`
+- `disabled?: boolean`
+- `min?: number`
+- `max?: number`
+- `step?: number`
+
 ### `SelectField`
 
-Champ de sélection.
+Champ de sélection avec support de typage générique.
 
 ```tsx
 <form.AppField name="country">
@@ -269,14 +151,26 @@ Champ de sélection.
 				{ value: "be", label: "Belgique" },
 			]}
 			required
+			clearable // Permet d'effacer la sélection
 		/>
 	)}
 </form.AppField>
 ```
 
+**Props:**
+
+- `label?: string`
+- `placeholder?: string`
+- `options: { value: T; label: string }[]`
+- `required?: boolean`
+- `disabled?: boolean`
+- `clearable?: boolean` - Affiche un bouton pour effacer la sélection
+- `renderOption?: (option) => ReactNode` - Rendu personnalisé des options
+- `renderValue?: (value) => ReactNode` - Rendu personnalisé de la valeur sélectionnée
+
 ### `CheckboxField`
 
-Case à cocher.
+Case à cocher. Inclut automatiquement le label.
 
 ```tsx
 <form.AppField name="terms">
@@ -304,7 +198,7 @@ Groupe de boutons radio.
 
 ### `TextareaField`
 
-Zone de texte multiligne.
+Zone de texte multiligne. Inclut automatiquement le label.
 
 ```tsx
 <form.AppField name="description">
@@ -318,39 +212,32 @@ Zone de texte multiligne.
 </form.AppField>
 ```
 
-## Composants de formulaire disponibles
+### `TextareaGroupField`
 
-Ces composants utilisent `useFormContext` et sont pré-configurés dans `formComponents`.
-
-### `SubmitButton`
-
-Bouton de soumission réactif qui se désactive automatiquement pendant la soumission.
+Zone de texte avec addon. N'inclut **pas** de label.
 
 ```tsx
-<form.AppForm>
-	<form.SubmitButton
-		label="Enregistrer"
-		loadingLabel="Enregistrement..."
-		variant="default"
-	/>
-</form.AppForm>
+<form.AppField name="notes">
+	{(field) => (
+		<field.TextareaGroupField
+			placeholder="Notes..."
+			rows={3}
+		/>
+	)}
+</form.AppField>
 ```
 
-**Props:**
-
-- `label?: string` - Texte du bouton (défaut: "Envoyer")
-- `loadingLabel?: string` - Texte pendant la soumission (défaut: "Envoi...")
-- `variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"`
+## Composants de formulaire
 
 ### `FormErrorDisplay`
 
 Affiche les erreurs globales du formulaire (erreurs `onSubmit`).
 
 ```tsx
-<form.AppForm>
+<form action={action}>
 	<form.FormErrorDisplay />
 	{/* Champs du formulaire */}
-</form.AppForm>
+</form>
 ```
 
 ## Composants UI helpers
@@ -362,7 +249,7 @@ Ces composants sont disponibles pour la mise en page et l'organisation.
 Layout responsive pour organiser les champs en colonnes.
 
 ```tsx
-import { FormLayout } from "@/components/forms";
+import { FormLayout } from "@/shared/components/forms";
 
 <FormLayout cols={2}>
 	<form.AppField name="firstName">
@@ -385,7 +272,7 @@ import { FormLayout } from "@/components/forms";
 Section de formulaire avec titre et description.
 
 ```tsx
-import { FormSection } from "@/components/forms";
+import { FormSection } from "@/shared/components/forms";
 
 <FormSection
 	title="Informations personnelles"
@@ -395,14 +282,38 @@ import { FormSection } from "@/components/forms";
 </FormSection>;
 ```
 
-### `FieldInfo`
+### `FormFooter`
 
-Texte d'aide pour un champ.
+Footer de formulaire avec indication des champs requis et boutons.
 
 ```tsx
-import { FieldInfo } from "@/components/forms";
+import { FormFooter } from "@/shared/components/forms";
 
-<FieldInfo>Votre email ne sera jamais partagé</FieldInfo>;
+<FormFooter
+	isPending={isPending}
+	cancelHref="/retour"
+	showRequiredHint
+/>;
+```
+
+### `FieldLabel`
+
+Label de champ avec support optionnel/requis et tooltip.
+
+```tsx
+import { FieldLabel } from "@/shared/components/forms";
+
+<FieldLabel htmlFor="email" required>
+	Email
+</FieldLabel>
+
+<FieldLabel htmlFor="phone" optional>
+	Téléphone
+</FieldLabel>
+
+<FieldLabel htmlFor="code" tooltip="Le code à 6 chiffres">
+	Code de vérification
+</FieldLabel>
 ```
 
 ## Validation
@@ -462,16 +373,58 @@ TanStack Form supporte plusieurs stratégies de validation.
 </form.AppField>
 ```
 
+## Intégration avec Server Actions
+
+Pour intégrer avec Next.js Server Actions, utilisez `mergeForm` pour synchroniser les erreurs serveur :
+
+```tsx
+import { useAppForm } from "@/shared/components/forms";
+import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
+
+function MyForm() {
+	const [state, action, isPending] = useActionState(myServerAction, undefined);
+
+	const form = useAppForm({
+		defaultValues: { name: "" },
+		transform: useTransform(
+			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
+			[state]
+		),
+	});
+
+	return (
+		<form action={action} onSubmit={() => form.handleSubmit()}>
+			{/* ... */}
+		</form>
+	);
+}
+```
+
+## Constantes de validation
+
+Utilisez les constantes centralisées pour la validation :
+
+```tsx
+import { EMAIL_REGEX, isValidEmail } from "@/shared/constants/validation";
+
+validators={{
+	onChange: ({ value }) => {
+		if (!EMAIL_REGEX.test(value)) {
+			return "Format d'email invalide";
+		}
+	},
+}}
+```
+
 ## Bonnes pratiques
 
-1. **Utilisez `useAppForm`** au lieu de `useForm` pour bénéficier des composants pré-configurés
-2. **Utilisez `form.AppField`** au lieu de `form.Field` pour accéder aux composants de champs
-3. **Utilisez `form.AppForm`** au lieu de `form.Provider` pour accéder aux composants de formulaire
-4. **Décomposez les grands formulaires** avec `withForm` pour améliorer la lisibilité
-5. **Réutilisez les groupes de champs** avec `withFieldGroup` pour les champs liés
-6. **Validez au bon moment**: `onChange` pour les feedbacks immédiats, `onBlur` pour valider après la saisie, `onSubmit` pour les validations globales
+1. **Utilisez `useAppForm`** pour bénéficier des composants pré-configurés
+2. **Utilisez `form.AppField`** pour accéder aux composants de champs (`field.InputField`, etc.)
+3. **Utilisez `form.Subscribe`** pour écouter l'état du formulaire (canSubmit, isSubmitting)
+4. **Validez au bon moment**: `onChange` pour les feedbacks immédiats, `onBlur` après la saisie, `onSubmit` pour les validations globales
+5. **Utilisez `mergeForm`** pour synchroniser les erreurs serveur avec le formulaire
 
 ## Références
 
-- [TanStack Form - Form Composition](https://tanstack.com/form/latest/docs/framework/react/guides/form-composition)
+- [TanStack Form - Documentation](https://tanstack.com/form/latest/docs/overview)
 - [TanStack Form - Validation](https://tanstack.com/form/latest/docs/framework/react/guides/validation)

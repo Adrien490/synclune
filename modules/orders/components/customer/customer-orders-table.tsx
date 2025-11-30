@@ -24,7 +24,7 @@ import {
 	ORDER_STATUS_VARIANTS,
 	FULFILLMENT_STATUS_LABELS,
 	FULFILLMENT_STATUS_VARIANTS,
-} from "@/shared/constants/order";
+} from "@/modules/orders/constants/status-display";
 import type { GetUserOrdersReturn } from "@/modules/orders/types/user-orders.types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";

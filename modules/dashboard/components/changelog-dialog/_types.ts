@@ -28,4 +28,7 @@ export interface ChangelogWithContent {
 
 	/** Composant React du contenu MDX */
 	Content: ComponentType;
+
+	/** Indique si la release est récente (< RECENT_RELEASE_DAYS jours) */
+	isRecent: boolean;
 }

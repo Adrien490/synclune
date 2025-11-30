@@ -1,5 +1,43 @@
 import { Prisma } from "@/app/generated/prisma/client";
 
+/**
+ * SELECT léger pour les listes - sans images
+ * Utilisé pour les endpoints qui n'ont pas besoin des médias (performance)
+ */
+export const GET_PRODUCT_SKUS_LIGHT_SELECT = {
+	id: true,
+	sku: true,
+	productId: true,
+	priceInclTax: true,
+	compareAtPrice: true,
+	inventory: true,
+	isActive: true,
+	isDefault: true,
+	size: true,
+	createdAt: true,
+	updatedAt: true,
+	product: {
+		select: {
+			id: true,
+			slug: true,
+			title: true,
+			status: true,
+		},
+	},
+	color: {
+		select: {
+			id: true,
+			name: true,
+			hex: true,
+			slug: true,
+		},
+	},
+	material: true,
+} as const satisfies Prisma.ProductSkuSelect;
+
+/**
+ * SELECT complet avec images - pour les détails et édition
+ */
 export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 	// Champs de base
 	id: true,
@@ -72,6 +110,11 @@ export const GET_PRODUCT_SKUS_DEFAULT_SORT_BY = "created-descending";
 export const GET_PRODUCT_SKUS_DEFAULT_SORT_ORDER = "desc";
 export const GET_PRODUCT_SKUS_ADMIN_FALLBACK_SORT_BY = "created-descending";
 
+// Constantes pour les filtres de date et inventaire
+export const SKU_FILTERS_MIN_DATE = new Date("2020-01-01");
+export const SKU_FILTERS_MAX_INVENTORY = 100000;
+export const SKU_FILTERS_MAX_PRICE_CENTS = 99999999; // 999999.99€ en centimes
+
 export const GET_PRODUCT_SKUS_SORT_FIELDS = [
 	"created-descending",
 	"created-ascending",
@@ -81,14 +124,17 @@ export const GET_PRODUCT_SKUS_SORT_FIELDS = [
 	"stock-descending",
 	"sku-ascending",
 	"sku-descending",
-	"priority-descending",
-	"priority-ascending",
 ] as const;
 
+// Cache timings constants
+export const SKU_CACHE_REVALIDATE = 60 * 2; // 2 minutes (données de stock)
+export const SKU_CACHE_STALE = 60 * 5; // 5 minutes
+export const SKU_CACHE_EXPIRE = 60 * 15; // 15 minutes
+
 export const GET_PRODUCT_SKUS_DEFAULT_CACHE = {
-	revalidate: 60 * 2, // 2 minutes (données de stock)
-	stale: 60 * 5, // 5 minutes
-	expire: 60 * 15, // 15 minutes
+	revalidate: SKU_CACHE_REVALIDATE,
+	stale: SKU_CACHE_STALE,
+	expire: SKU_CACHE_EXPIRE,
 } as const;
 
 // Labels pour l'interface utilisateur
@@ -101,6 +147,4 @@ export const SORT_LABELS: Record<string, string> = {
 	"stock-descending": "Stock (décroissant)",
 	"sku-ascending": "Référence (A-Z)",
 	"sku-descending": "Référence (Z-A)",
-	"priority-descending": "Priorité (haute)",
-	"priority-ascending": "Priorité (basse)",
 };

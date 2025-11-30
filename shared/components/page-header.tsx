@@ -107,13 +107,13 @@ export function PageHeader({
 					<div className="min-w-0 flex-1 space-y-3">
 						<h1
 							id="page-title"
-							className="text-3xl lg:text-4xl font-display font-semibold tracking-wide text-foreground break-words"
+							className="text-3xl lg:text-4xl font-display font-semibold tracking-wide text-foreground wrap-break-words"
 							title={title}
 						>
 							{title}
 						</h1>
 						{description && (
-							<p className="text-base lg:text-lg font-sans text-muted-foreground leading-relaxed max-w-prose break-words line-clamp-2 md:line-clamp-none overflow-hidden">
+							<p className="text-base lg:text-lg font-sans text-muted-foreground leading-relaxed max-w-prose wrap-break-words line-clamp-2 md:line-clamp-none overflow-hidden">
 								{description}
 							</p>
 						)}

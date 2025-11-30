@@ -8,7 +8,6 @@ import { InputField } from "./input-field";
 import { InputGroupField } from "./input-group-field";
 import { RadioGroupField } from "./radio-group-field";
 import { SelectField } from "./select-field";
-import { SubmitButton } from "./submit-button";
 import { TextareaField } from "./textarea-field";
 import { TextareaGroupField } from "./textarea-group-field";
 
@@ -16,15 +15,13 @@ import { TextareaGroupField } from "./textarea-group-field";
 export { useFieldContext, useFormContext } from "@/shared/lib/form-context";
 
 // Export UI components (layout and helpers)
-export { FieldInfo } from "./field-info";
 export { FieldLabel } from "./field-label";
-export { FormErrors } from "./form-errors";
 export { FormFooter } from "./form-footer";
 export { FormLayout } from "./form-layout";
 export { FormSection } from "./form-section";
 
 // Create the main form hook with all field and form components
-export const { useAppForm, withForm, withFieldGroup } = createFormHook({
+export const { useAppForm } = createFormHook({
 	fieldContext,
 	formContext,
 	fieldComponents: {
@@ -37,7 +34,6 @@ export const { useAppForm, withForm, withFieldGroup } = createFormHook({
 		RadioGroupField,
 	},
 	formComponents: {
-		SubmitButton,
 		FormErrorDisplay,
 	},
 });

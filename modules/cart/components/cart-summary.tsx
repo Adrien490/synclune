@@ -8,11 +8,11 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
-import { CART_INFO_MESSAGES } from "@/shared/constants/cart-error-messages";
+import { CART_INFO_MESSAGES } from "@/modules/cart/constants/error-messages";
 import {
 	calculateShipping,
 	// ❌ Micro-entreprise : calculateTaxAmount n'est plus utilisé (pas de TVA)
-} from "@/shared/constants/cart-shipping";
+} from "@/modules/orders/constants/shipping";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { RemoveUnavailableItemsButton } from "@/modules/cart/components/remove-unavailable-items-button";
 import { formatEuro } from "@/shared/utils/format-euro";

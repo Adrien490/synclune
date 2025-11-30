@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { getCartSessionId } from "@/shared/utils/cart-session";
-import { getSession } from "@/shared/utils/get-session";
+import { getCartSessionId } from "@/modules/cart/lib/cart-session";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_CART_SELECT } from "../constants/cart.constants";
