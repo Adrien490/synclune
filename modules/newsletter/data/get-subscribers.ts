@@ -95,7 +95,7 @@ export async function fetchSubscribers(
 				: params.sortBy.startsWith("email-")
 					? [{ email: direction }, { id: "asc" }]
 					: params.sortBy.startsWith("status-")
-						? [{ isActive: direction }, { id: "asc" }]
+						? [{ status: direction }, { id: "asc" }]
 						: [{ subscribedAt: "desc" }, { id: "asc" }];
 
 		const take = Math.min(

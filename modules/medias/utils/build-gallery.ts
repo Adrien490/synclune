@@ -101,7 +101,7 @@ export function buildGallery({
 		for (const skuImage of selectedSku.images) {
 			addUniqueImage(
 				skuImage,
-				`${product.title} - ${selectedSku.material || selectedSku.color?.name || "Variante sélectionnée"}`,
+				`${product.title} - ${selectedSku.materialRelation?.name || selectedSku.color?.name || "Variante sélectionnée"}`,
 				"selected",
 				selectedSku.id
 			);
@@ -114,7 +114,7 @@ export function buildGallery({
 		for (const skuImage of defaultSku.images) {
 			addUniqueImage(
 				skuImage,
-				`${product.title} - ${defaultSku.material || defaultSku.color?.name || "Image principale"}`,
+				`${product.title} - ${defaultSku.materialRelation?.name || defaultSku.color?.name || "Image principale"}`,
 				"default",
 				defaultSku.id
 			);
@@ -132,7 +132,7 @@ export function buildGallery({
 					if (gallery.length >= MAX_GALLERY_IMAGES) break;
 					addUniqueImage(
 						skuImage,
-						`${product.title} - ${sku.material || sku.color?.name || "Variante"}`,
+						`${product.title} - ${sku.materialRelation?.name || sku.color?.name || "Variante"}`,
 						"sku",
 						sku.id
 					);

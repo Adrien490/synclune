@@ -1,5 +1,6 @@
 "use server";
 
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -75,9 +76,9 @@ export async function bulkUnsubscribeSubscribers(
 		const updateResult = await prisma.newsletterSubscriber.updateMany({
 			where: {
 				id: { in: result.data.ids },
-				isActive: true,
+				status: { not: NewsletterStatus.UNSUBSCRIBED },
 			},
-			data: { isActive: false },
+			data: { status: NewsletterStatus.UNSUBSCRIBED, unsubscribedAt: new Date() },
 		});
 
 		if (updateResult.count === 0) {

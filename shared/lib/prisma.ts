@@ -64,3 +64,4 @@ export const softDelete = {
   discountUsage: (id: string) => prisma.discountUsage.update({ where: { id }, data: { deletedAt: new Date() } }),
   newsletterSubscriber: (id: string) => prisma.newsletterSubscriber.update({ where: { id }, data: { deletedAt: new Date() } }),
 };
+

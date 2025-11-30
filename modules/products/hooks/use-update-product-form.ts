@@ -66,7 +66,7 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 				inventory: defaultSku?.inventory || 0,
 				isActive: String(defaultSku?.isActive ?? true),
 				colorId: defaultSku?.color?.id || "",
-				material: defaultSku?.material || "",
+				materialId: defaultSku?.materialRelation?.id || "",
 				size: defaultSku?.size || "",
 				primaryImage: primaryImage
 					? {

@@ -1,5 +1,6 @@
 "use server";
 
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
@@ -28,7 +29,7 @@ export async function unsubscribeSubscriberAdmin(subscriberId: string): Promise<
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
 			where: { id: subscriberId },
-			select: { id: true, email: true, isActive: true },
+			select: { id: true, email: true, status: true },
 		});
 
 		if (!subscriber) {
@@ -38,7 +39,7 @@ export async function unsubscribeSubscriberAdmin(subscriberId: string): Promise<
 			};
 		}
 
-		if (!subscriber.isActive) {
+		if (subscriber.status === NewsletterStatus.UNSUBSCRIBED) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Cet abonné est déjà désabonné",
@@ -49,7 +50,7 @@ export async function unsubscribeSubscriberAdmin(subscriberId: string): Promise<
 		await prisma.newsletterSubscriber.update({
 			where: { id: subscriberId },
 			data: {
-				isActive: false,
+				status: NewsletterStatus.UNSUBSCRIBED,
 				unsubscribedAt: new Date(),
 			},
 		});

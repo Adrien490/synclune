@@ -5,6 +5,19 @@ import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import nodemailer from "nodemailer";
 import { contactAdrienSchema } from "../schemas/dashboard.schemas";
+import { CONTACT_TYPES } from "../constants/contact-adrien.constants";
+
+/**
+ * Échappe les caractères HTML pour prévenir les injections XSS
+ */
+function escapeHtml(str: string): string {
+	return str
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
 
 /**
  * Server Action pour envoyer un email à Adrien (créateur du site)
@@ -71,15 +84,10 @@ export async function contactAdrien(
 			},
 		});
 
-		// 5. Labels pour les types de message
-		const typeLabels: Record<string, string> = {
-			bug: "Bug",
-			feature: "Nouvelle fonctionnalité",
-			improvement: "Amélioration",
-			question: "Question",
-			other: "Autre",
-		};
-		const typeLabel = typeLabels[validatedType] || "Message";
+		// 5. Labels pour les types de message (centralisés dans constants)
+		const typeLabel =
+			CONTACT_TYPES[validatedType as keyof typeof CONTACT_TYPES]?.emailLabel ||
+			"Message";
 
 		// 6. Envoyer l'email
 		const info = await transporter.sendMail({
@@ -155,14 +163,14 @@ export async function contactAdrien(
 						<div>
 							<div class="label">De</div>
 							<div class="value">
-								${session.user.name}<br>
-								<a href="mailto:${session.user.email}" style="color: #ec4899;">${session.user.email}</a>
+								${escapeHtml(session.user.name || "")}<br>
+								<a href="mailto:${escapeHtml(session.user.email || "")}" style="color: #ec4899;">${escapeHtml(session.user.email || "")}</a>
 							</div>
 						</div>
 
 						<div>
 							<div class="label">Message</div>
-							<div class="value message">${validatedMessage.replace(/\n/g, "<br>")}</div>
+							<div class="value message">${escapeHtml(validatedMessage).replace(/\n/g, "<br>")}</div>
 						</div>
 
 						<div class="footer">

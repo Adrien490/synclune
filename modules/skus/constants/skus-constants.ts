@@ -32,7 +32,12 @@ export const GET_PRODUCT_SKUS_LIGHT_SELECT = {
 			slug: true,
 		},
 	},
-	material: true,
+	materialRelation: {
+		select: {
+			id: true,
+			name: true,
+		},
+	},
 } as const satisfies Prisma.ProductSkuSelect;
 
 /**
@@ -69,7 +74,12 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 			hex: true,
 		},
 	},
-	material: true,
+	materialRelation: {
+		select: {
+			id: true,
+			name: true,
+		},
+	},
 
 	// Images
 	images: {

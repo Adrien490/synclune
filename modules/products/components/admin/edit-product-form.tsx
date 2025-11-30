@@ -361,11 +361,11 @@ export function EditProductForm({
 
 						{/* Matériau + Taille */}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<form.AppField name="defaultSku.material">
+							<form.AppField name="defaultSku.materialId">
 								{(field) => (
 									<div className="space-y-2">
 										<FieldLabel optional>Matériau</FieldLabel>
-										<field.InputGroupField placeholder="Ex: Or 18 carats..." />
+										<field.InputGroupField placeholder="ID du matériau..." />
 									</div>
 								)}
 							</form.AppField>

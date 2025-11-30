@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { cacheChangelogs } from "@/modules/dashboard/constants/cache";
+import { isPathSafe } from "@/shared/lib/file-utils";
 
 /**
  * Configuration pour le système de changelog MDX
@@ -73,17 +74,9 @@ export async function getChangelogs(): Promise<ChangelogData[]> {
 			// Filtrer uniquement les fichiers .mdx
 			if (!f.endsWith(".mdx")) return false;
 
-			// Validation path traversal : vérifier que le fichier est bien dans le dossier
+			// Validation path traversal : verifier que le fichier est bien dans le dossier
 			const filePath = path.join(contentDirectory, f);
-			const resolvedPath = path.resolve(filePath);
-			const resolvedDirectory = path.resolve(contentDirectory);
-
-			// Le fichier doit être dans le dossier de contenu
-			if (!resolvedPath.startsWith(resolvedDirectory)) {
-				return false;
-			}
-
-			return true;
+			return isPathSafe(filePath, contentDirectory);
 		});
 
 	const changelogs = await Promise.all(

@@ -1,3 +1,4 @@
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
@@ -33,7 +34,7 @@ async function getNewsletterStats() {
 		prisma.newsletterSubscriber.count(),
 		prisma.newsletterSubscriber.count({
 			where: {
-				isActive: true,
+				status: NewsletterStatus.CONFIRMED,
 			},
 		}),
 	]);
@@ -77,7 +78,7 @@ export default async function NewsletterPage({
 		sortBy,
 		search,
 		filters: {
-			isActive: undefined,
+			status: undefined,
 			subscribedAfter: undefined,
 			subscribedBefore: undefined,
 		},

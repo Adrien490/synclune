@@ -9,15 +9,20 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import {
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-	ResponsiveContainer,
-} from "recharts";
+	ChartContainer,
+	ChartTooltip,
+	ChartTooltipContent,
+	type ChartConfig,
+} from "@/shared/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import type { GetRevenueByCollectionReturn } from "../../types/dashboard.types";
+
+const chartConfig = {
+	revenue: {
+		label: "Chiffre d'affaires",
+		color: "var(--chart-1)",
+	},
+} satisfies ChartConfig;
 
 interface RevenueByCollectionChartProps {
 	dataPromise: Promise<GetRevenueByCollectionReturn>;
@@ -62,7 +67,7 @@ export function RevenueByCollectionChart({
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ResponsiveContainer width="100%" height={250}>
+				<ChartContainer config={chartConfig} className="min-h-[250px] w-full">
 					<BarChart
 						data={chartData}
 						layout="vertical"
@@ -76,19 +81,22 @@ export function RevenueByCollectionChart({
 							width={100}
 							tick={{ fontSize: 12 }}
 						/>
-						<Tooltip
-							formatter={(value: number) => [`${value.toFixed(2)} €`, "CA"]}
-							labelFormatter={(label, payload) => {
-								if (payload && payload[0]) {
-									const item = payload[0].payload;
-									return `${item.fullName} (${item.orders} cmd, ${item.units} unites)`;
-								}
-								return label;
-							}}
+						<ChartTooltip
+							content={
+								<ChartTooltipContent
+									formatter={(value, name, item) => {
+										const entry = item.payload;
+										return [
+											`${Number(value).toFixed(2)} € (${entry.orders} cmd, ${entry.units} unites)`,
+											entry.fullName,
+										];
+									}}
+								/>
+							}
 						/>
-						<Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+						<Bar dataKey="revenue" fill="var(--color-revenue)" radius={[0, 4, 4, 0]} />
 					</BarChart>
-				</ResponsiveContainer>
+				</ChartContainer>
 			</CardContent>
 		</Card>
 	);

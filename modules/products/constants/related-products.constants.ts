@@ -53,7 +53,12 @@ export const RELATED_PRODUCTS_SELECT = {
 					hex: true,
 				},
 			},
-			material: true,
+			materialRelation: {
+				select: {
+					id: true,
+					name: true,
+				},
+			},
 			size: true,
 			images: {
 				where: { isPrimary: true },

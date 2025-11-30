@@ -2,7 +2,7 @@
 
 import { useAppForm } from "@/shared/components/forms";
 import type { Session } from "@/modules/auth/lib/auth";
-import type { GetUserAddressesReturn } from "@/modules/users/data/get-user-addresses";
+import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import { createCheckoutSession } from "@/modules/payments/actions/create-checkout-session";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";

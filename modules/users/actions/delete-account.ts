@@ -1,5 +1,6 @@
 "use server";
 
+import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe } from "@/shared/lib/stripe";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
@@ -75,16 +76,27 @@ export async function deleteAccount(): Promise<ActionState> {
 			// Comptes OAuth
 			await tx.account.deleteMany({ where: { userId } });
 
-			// 2.3 Soft delete du compte utilisateur
+			// 2.3 Soft delete du compte utilisateur avec anonymisation RGPD
 			await tx.user.update({
 				where: { id: userId },
 				data: {
 					deletedAt: new Date(),
+					anonymizedAt: new Date(),
+					accountStatus: AccountStatus.ANONYMIZED,
 					email: anonymizedEmail,
 					name: "Compte supprimé",
 					image: null,
 					stripeCustomerId: null,
 					emailVerified: false,
+					// Effacer les données RGPD
+					signupIpAddress: null,
+					signupUserAgent: null,
+					termsAcceptedAt: null,
+					termsVersion: null,
+					privacyPolicyAcceptedAt: null,
+					privacyPolicyVersion: null,
+					marketingEmailConsentedAt: null,
+					marketingConsentSource: null,
 				},
 			});
 		});

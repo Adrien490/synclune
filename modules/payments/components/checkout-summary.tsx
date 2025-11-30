@@ -152,9 +152,9 @@ export function CheckoutSummary({
 										Couleur: {item.sku.color.name}
 									</p>
 								)}
-								{item.sku.material && (
+								{item.sku.materialRelation && (
 									<p className="text-xs text-muted-foreground">
-										Matière: {item.sku.material}
+										Matière: {item.sku.materialRelation.name}
 									</p>
 								)}
 								<p className="text-xs text-muted-foreground mt-1">

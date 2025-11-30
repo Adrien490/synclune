@@ -1,4 +1,4 @@
-import type { GetUserAddressesReturn } from "@/modules/users/data/get-user-addresses";
+import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
 
 /**

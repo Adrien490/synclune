@@ -20,6 +20,14 @@ enum Role {
   ADMIN
 }
 
+// === STATUT DE COMPTE (RGPD) ===
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+  PENDING_DELETION
+  ANONYMIZED
+}
+
 model User {
   id               String    @id @default(cuid())
   role             Role      @default(USER)
@@ -33,10 +41,27 @@ model User {
   deletedAt        DateTime?
   suspendedAt      DateTime? // Date de suspension du compte
 
-  // Consentement RGPD
+  // === STATUT DE COMPTE (RGPD) ===
+  accountStatus AccountStatus @default(ACTIVE)
+
+  // === CONSENTEMENT RGPD (avec versioning) ===
   termsAcceptedAt         DateTime? // Date d'acceptation des CGV
+  termsVersion            String?   @db.VarChar(20) // Version CGV acceptées (ex: "2024-11")
   privacyPolicyAcceptedAt DateTime? // Date d'acceptation de la politique de confidentialité
-  signupIpAddress         String?   @db.VarChar(45) // IP lors de l'inscription (IPv6 max 45 chars)
+  privacyPolicyVersion    String?   @db.VarChar(20) // Version politique confidentialité
+
+  // === MÉTADONNÉES INSCRIPTION ===
+  signupIpAddress String? @db.VarChar(45) // IP lors de l'inscription (IPv6 max 45 chars)
+  signupUserAgent String? @db.Text        // Browser/device info
+  signupSource    String? @db.VarChar(50) // 'website', 'mobile', 'checkout'
+
+  // === CONSENTEMENT MARKETING (séparé de la newsletter) ===
+  marketingEmailConsentedAt DateTime?
+  marketingConsentSource    String?   @db.VarChar(100)
+
+  // === ANONYMISATION RGPD ===
+  anonymizedAt        DateTime? // Date d'anonymisation effective
+  deletionRequestedAt DateTime? // Demande de suppression enregistrée
 
   sessions                  Session[]
   accounts                  Account[]
@@ -58,6 +83,10 @@ model User {
   @@index([emailVerified, id])
   @@index([createdAt, id])
   @@index([deletedAt, role]) // Index composite pour queries admin filtrant utilisateurs actifs par rôle
+  @@index([accountStatus])
+  @@index([deletionRequestedAt])
+  @@index([anonymizedAt])
+  @@index([deletedAt, emailVerified])
 }
 
 model Session {
@@ -323,7 +352,6 @@ model ProductSku {
 
   colorId  String?
   color    Color?  @relation(fields: [colorId], references: [id], onDelete: SetNull)
-  material String? @db.VarChar(100) // @deprecated - Utiliser materialId à la place
 
   materialId       String?
   materialRelation Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
@@ -352,7 +380,6 @@ model ProductSku {
 
   // 🔒 CONTRAINTE : Garantir unicité des combinaisons produit/couleur/taille/matériau
   // Évite les doublons de variantes (ex: 2 SKUs "Bague Rouge Taille 52 Argent")
-  // Note: Le champ `material` (String) est déprécié, utiliser `materialId` (FK)
   @@unique([productId, colorId, size, materialId])
   // Indexes optimisés pour requêtes fréquentes
   @@index([productId, isActive])
@@ -519,18 +546,18 @@ enum FulfillmentStatus {
 /// Actions traçables sur les commandes (audit trail)
 /// Requis pour conformité légale (Art. L123-22 Code de Commerce)
 enum OrderAction {
-  CREATED           // Création de la commande
-  PAID              // Paiement reçu
-  PROCESSING        // Mise en préparation
-  SHIPPED           // Expédition
-  DELIVERED         // Livraison confirmée
-  CANCELLED         // Annulation
-  RETURNED          // Retour client
-  STATUS_REVERTED   // Retour à un statut précédent
-  NOTE_ADDED        // Note ajoutée
-  NOTE_DELETED      // Note supprimée
-  TRACKING_UPDATED  // Suivi mis à jour
-  MANUAL_EDIT       // Modification manuelle admin
+  CREATED          // Création de la commande
+  PAID             // Paiement reçu
+  PROCESSING       // Mise en préparation
+  SHIPPED          // Expédition
+  DELIVERED        // Livraison confirmée
+  CANCELLED        // Annulation
+  RETURNED         // Retour client
+  STATUS_REVERTED  // Retour à un statut précédent
+  NOTE_ADDED       // Note ajoutée
+  NOTE_DELETED     // Note supprimée
+  TRACKING_UPDATED // Suivi mis à jour
+  MANUAL_EDIT      // Modification manuelle admin
 }
 
 // ============================================================================
@@ -662,6 +689,9 @@ model Order {
   // Timestamps métier
   @@index([shippedAt, fulfillmentStatus]) // Timeline expéditions
   @@index([paidAt, paymentStatus]) // Rapports comptables
+  // Facturation
+  @@index([invoiceStatus, createdAt])
+  @@index([fiscalYear, paymentStatus])
 
   // === INDEXES STRIPE (Réconciliation & Support) ===
   @@index([stripePaymentIntentId])
@@ -786,30 +816,30 @@ model OrderNote {
 
 enum RefundReason {
   CUSTOMER_REQUEST // Droit de rétractation (14 jours)
-  DEFECTIVE // Bijou cassé / abîmé
-  WRONG_ITEM // Erreur de préparation de commande
-  LOST_IN_TRANSIT // Colis perdu par le transporteur
-  FRAUD // Fraude avérée
-  OTHER // Autre
+  DEFECTIVE        // Bijou cassé / abîmé
+  WRONG_ITEM       // Erreur de préparation de commande
+  LOST_IN_TRANSIT  // Colis perdu par le transporteur
+  FRAUD            // Fraude avérée
+  OTHER            // Autre
 }
 
 enum RefundStatus {
-  PENDING // Demande reçue / En attente de validation
-  APPROVED // Validé, en attente de traitement Stripe
+  PENDING   // Demande reçue / En attente de validation
+  APPROVED  // Validé, en attente de traitement Stripe
   COMPLETED // Remboursé effectivement (Stripe a confirmé)
-  REJECTED // Refusé (ex: retour hors délai)
-  FAILED // Échec technique Stripe
+  REJECTED  // Refusé (ex: retour hors délai)
+  FAILED    // Échec technique Stripe
   CANCELLED // Annulé par l'admin (soft delete)
 }
 
 // === Actions de l'historique des remboursements ===
 enum RefundAction {
-  CREATED // Création de la demande
-  APPROVED // Approbation de la demande
-  REJECTED // Rejet de la demande
+  CREATED   // Création de la demande
+  APPROVED  // Approbation de la demande
+  REJECTED  // Rejet de la demande
   PROCESSED // Envoi vers Stripe
   COMPLETED // Remboursement confirmé par Stripe
-  FAILED // Échec du remboursement Stripe
+  FAILED    // Échec du remboursement Stripe
   CANCELLED // Annulation de la demande
 }
 
@@ -952,6 +982,7 @@ model Discount {
   updatedAt DateTime @updatedAt
 
   @@index([code])
+  @@index([code, isActive]) // Validation code promo actif
   @@index([isActive, startsAt, endsAt])
   @@index([createdAt, id])
 }
@@ -987,11 +1018,22 @@ model DiscountUsage {
 // NEWSLETTER
 // ============================================================================
 
+enum NewsletterStatus {
+  PENDING      // En attente de confirmation (double opt-in)
+  CONFIRMED    // Email confirmé, abonnement actif
+  UNSUBSCRIBED // Désabonné
+}
+
 model NewsletterSubscriber {
   id               String  @id @default(cuid())
   email            String  @unique
-  isActive         Boolean @default(false) // ⚠️ Changement : false par défaut (activation après confirmation email)
   unsubscribeToken String  @unique @default(cuid())
+
+  // === STATUT NEWSLETTER (remplace isActive) ===
+  status NewsletterStatus @default(PENDING)
+
+  // @deprecated - Sera supprimé après migration des données vers `status`
+  isActive Boolean @default(false)
 
   // Lien optionnel avec un compte utilisateur
   userId String? @unique
@@ -1004,10 +1046,11 @@ model NewsletterSubscriber {
   confirmedAt        DateTime? // Date de confirmation par l'utilisateur
 
   // Champs de traçabilité RGPD
-  ipAddress        String?
-  userAgent        String?
-  consentSource    String?  @default("newsletter_form")
-  consentTimestamp DateTime @default(now())
+  ipAddress             String? // IP inscription
+  confirmationIpAddress String? // IP confirmation (preuve RGPD)
+  userAgent             String?
+  consentSource         String? @default("newsletter_form")
+  consentTimestamp      DateTime @default(now())
 
   subscribedAt   DateTime  @default(now())
   unsubscribedAt DateTime?
@@ -1016,11 +1059,13 @@ model NewsletterSubscriber {
   updatedAt DateTime @updatedAt
   deletedAt DateTime? // Soft delete pour RGPD
 
-  @@index([isActive, createdAt])
-  @@index([emailVerified, isActive])
+  @@index([status, createdAt])
+  @@index([emailVerified, status])
   @@index([userId])
   @@index([deletedAt])
   @@index([confirmedAt]) // Audit RGPD preuve de consentement
+  @@index([confirmationToken])
+  @@index([deletedAt, status, subscribedAt])
 }
 
 // ============================================================================
@@ -1081,4 +1126,39 @@ model StockNotificationRequest {
   @@index([email, createdAt(sort: Desc)]) // Historique demandes par email
   @@index([deletedAt]) // Soft delete filter RGPD
   @@index([notifiedAt(sort: Desc)]) // Analyse historique notifications
+  @@index([status, deletedAt]) // Stats avec soft delete
+  @@index([status, notifiedAt, deletedAt]) // notifiedThisMonth stat query
+}
+
+// ============================================================================
+// WEBHOOKS IDEMPOTENCY (Stripe)
+// ============================================================================
+
+enum WebhookEventStatus {
+  PENDING    // Reçu, en attente de traitement
+  PROCESSING // En cours de traitement
+  COMPLETED  // Traité avec succès
+  FAILED     // Échec du traitement
+  SKIPPED    // Ignoré (type non géré ou doublon)
+}
+
+/// Événements webhook reçus (Stripe, Resend, etc.)
+/// Permet l'idempotence et l'audit trail des webhooks
+model WebhookEvent {
+  id            String             @id @default(cuid())
+  stripeEventId String             @unique // evt_xxx - Clé d'idempotence
+  eventType     String             @db.VarChar(100) // checkout.session.completed, etc.
+  source        String             @db.VarChar(50) @default("stripe")
+  status        WebhookEventStatus @default(PENDING)
+  payload       Json? // Payload complet pour debug/replay
+  errorMessage  String?            @db.Text
+  attempts      Int                @default(0)
+  receivedAt    DateTime           @default(now())
+  processedAt   DateTime?
+
+  @@index([stripeEventId])
+  @@index([eventType, status])
+  @@index([source, receivedAt(sort: Desc)])
+  @@index([status, receivedAt])
+  @@index([processedAt])
 }

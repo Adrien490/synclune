@@ -47,7 +47,7 @@ export async function notifyStockAvailable(
 				priceInclTax: true,
 				isActive: true,
 				color: { select: { name: true } },
-				material: true,
+				materialRelation: { select: { id: true, name: true } },
 				size: true,
 				images: {
 					select: { url: true },
@@ -132,7 +132,7 @@ export async function notifyStockAvailable(
 					productTitle: sku.product.title,
 					productUrl,
 					skuColor: sku.color?.name || null,
-					skuMaterial: sku.material,
+					skuMaterial: sku.materialRelation?.name || null,
 					skuSize: sku.size,
 					skuImageUrl,
 					price: sku.priceInclTax,

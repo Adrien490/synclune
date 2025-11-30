@@ -1,5 +1,6 @@
 "use server";
 
+import { AccountStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { prisma } from "@/shared/lib/prisma";
@@ -77,7 +78,10 @@ export async function suspendUser(
 		// 5. Suspendre l'utilisateur
 		await prisma.user.update({
 			where: { id: userId },
-			data: { suspendedAt: new Date() },
+			data: {
+				suspendedAt: new Date(),
+				accountStatus: AccountStatus.INACTIVE,
+			},
 		});
 
 		// 6. Revalider la page

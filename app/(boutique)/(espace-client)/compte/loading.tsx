@@ -3,7 +3,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { AccountNav } from "@/modules/users/components/account-nav";
 import { AccountStatsCardsSkeleton } from "@/modules/users/components/account-stats-cards";
-import { AddressInfoCardSkeleton } from "@/modules/users/components/address/address-info-card-skeleton";
+import { AddressInfoCardSkeleton } from "@/modules/addresses/components/address/address-info-card-skeleton";
 import { RecentOrdersSkeleton } from "@/modules/orders/components/recent-orders-skeleton";
 
 export default function AccountDashboardLoading() {

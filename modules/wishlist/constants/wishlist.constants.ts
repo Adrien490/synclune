@@ -52,7 +52,12 @@ export const GET_WISHLIST_SELECT = {
 							hex: true,
 						},
 					},
-					material: true,
+					materialRelation: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 					size: true,
 				},
 			},

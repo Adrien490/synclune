@@ -79,7 +79,12 @@ export const GET_PRODUCT_SELECT = {
 					hex: true,
 				},
 			},
-			material: true,
+			materialRelation: {
+				select: {
+					id: true,
+					name: true,
+				},
+			},
 			size: true,
 			priceInclTax: true,
 			compareAtPrice: true,
@@ -170,7 +175,12 @@ export const GET_PRODUCTS_SELECT = {
 					createdAt: "asc",
 				},
 			},
-			material: true,
+			materialRelation: {
+				select: {
+					id: true,
+					name: true,
+				},
+			},
 			color: {
 				select: {
 					id: true,

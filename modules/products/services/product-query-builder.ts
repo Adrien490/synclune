@@ -55,9 +55,11 @@ export function buildProductSearchConditions(
 									},
 								},
 								{
-									material: {
-										contains: searchTerm,
-										mode: Prisma.QueryMode.insensitive,
+									materialRelation: {
+										name: {
+											contains: searchTerm,
+											mode: Prisma.QueryMode.insensitive,
+										},
 									},
 								},
 							],

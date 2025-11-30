@@ -112,6 +112,7 @@ async function main(): Promise<void> {
         where: { isActive: true, inventory: { gt: 0 } },
         include: {
           color: { select: { name: true } },
+          materialRelation: { select: { name: true } },
           images: {
             where: { isPrimary: true },
             select: { url: true },
@@ -160,7 +161,7 @@ async function main(): Promise<void> {
         skuId: sku.id,
         productTitle: product.title,
         skuColor: sku.color?.name || null,
-        skuMaterial: sku.material || null,
+        skuMaterial: sku.materialRelation?.name || null,
         skuSize: sku.size || null,
         skuImageUrl: sku.images?.[0]?.url || null,
         price: sku.priceInclTax,

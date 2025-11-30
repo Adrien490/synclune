@@ -32,9 +32,9 @@ export async function getSubscriptionStatus(): Promise<GetSubscriptionStatusRetu
 	const subscriber = await fetchSubscriptionStatus(user.email, user.id);
 
 	return {
-		isSubscribed: subscriber?.isActive ?? false,
+		isSubscribed: subscriber?.status === "CONFIRMED",
 		email: user.email,
-		emailVerified: subscriber?.emailVerified ?? false,
+		emailVerified: subscriber?.status === "CONFIRMED",
 	};
 }
 
@@ -48,7 +48,7 @@ export async function getSubscriptionStatus(): Promise<GetSubscriptionStatusRetu
 export async function fetchSubscriptionStatus(
 	email: string,
 	userId: string
-): Promise<{ isActive: boolean; emailVerified: boolean } | null> {
+): Promise<{ status: string } | null> {
 	"use cache: private";
 	// Cache configuration: 5min stale, revalidate après 1min, expire après 1h
 	cacheLife({ stale: 300, revalidate: 60, expire: 3600 });

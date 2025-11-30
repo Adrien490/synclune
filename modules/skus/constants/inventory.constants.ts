@@ -57,7 +57,12 @@ export const GET_INVENTORY_SELECT = {
 			name: true,
 		},
 	},
-	material: true,
+	materialRelation: {
+		select: {
+			id: true,
+			name: true,
+		},
+	},
 	size: true,
 } as const satisfies Prisma.ProductSkuSelect;
 

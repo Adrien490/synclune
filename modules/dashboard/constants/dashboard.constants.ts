@@ -62,7 +62,12 @@ export const GET_DASHBOARD_STOCK_ALERTS_SELECT = {
 			name: true,
 		},
 	},
-	material: true,
+	materialRelation: {
+		select: {
+			id: true,
+			name: true,
+		},
+	},
 	size: true,
 } as const satisfies Prisma.ProductSkuSelect;
 

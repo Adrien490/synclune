@@ -9,9 +9,13 @@ import type { GetNeverSoldProductsReturn } from "../types/dashboard.types";
 
 /**
  * Recupere les produits publics qui n'ont jamais ete vendus
+ *
+ * @param skip - Nombre de produits a ignorer (pagination)
+ * @param take - Nombre de produits a retourner (pagination)
  */
 export async function fetchNeverSoldProducts(
-	limit: number = 20
+	skip: number = 0,
+	take: number = 20
 ): Promise<GetNeverSoldProductsReturn> {
 	"use cache: remote";
 
@@ -45,7 +49,8 @@ export async function fetchNeverSoldProducts(
 			},
 		},
 		orderBy: { createdAt: "asc" }, // Plus vieux en premier
-		take: limit,
+		skip,
+		take,
 	});
 
 	// Transformer les donnees

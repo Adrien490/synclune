@@ -1,21 +1,19 @@
 import { z } from "zod";
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { SORT_OPTIONS } from "../constants/subscriber.constants";
 
 // ============================================================================
 // FILTERS SCHEMA
 // ============================================================================
 
+// Valeurs enum Prisma (lowercase via @map)
+const newsletterStatusValues = Object.values(NewsletterStatus) as [string, ...string[]];
+
 export const subscriberFiltersSchema = z
 	.object({
-		isActive: z
-			.union([z.boolean(), z.enum(["true", "false"])])
-			.optional()
-			.transform((val) => {
-				if (typeof val === "boolean") return val;
-				if (val === "true") return true;
-				if (val === "false") return false;
-				return undefined;
-			}),
+		status: z
+			.enum(newsletterStatusValues)
+			.optional(),
 		subscribedAfter: z
 			.union([z.string(), z.date()])
 			.transform((val) => {

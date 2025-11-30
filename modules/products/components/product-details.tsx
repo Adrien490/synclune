@@ -50,7 +50,7 @@ export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 			<Separator className="bg-border" />
 
 			{/* Entretien et livraison */}
-			<ProductCareInfo primaryMaterial={currentSku?.material} />
+			<ProductCareInfo primaryMaterial={currentSku?.materialRelation?.name} />
 		</>
 	);
 }

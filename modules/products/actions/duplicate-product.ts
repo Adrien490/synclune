@@ -73,7 +73,7 @@ export async function duplicateProduct(
 						isActive: true,
 						isDefault: true,
 						colorId: true,
-						material: true,
+						materialId: true,
 						size: true,
 						images: {
 							select: {
@@ -150,7 +150,7 @@ export async function duplicateProduct(
 						isActive: sourceSku.isActive,
 						isDefault: sourceSku.isDefault,
 						colorId: sourceSku.colorId,
-						material: sourceSku.material,
+						materialId: sourceSku.materialId,
 						size: sourceSku.size,
 					},
 				});

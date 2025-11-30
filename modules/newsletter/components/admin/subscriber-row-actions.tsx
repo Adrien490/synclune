@@ -1,5 +1,6 @@
 "use client";
 
+import { NewsletterStatus } from "@/app/generated/prisma/enums";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
@@ -34,8 +35,8 @@ interface SubscriberRowActionsProps {
 	subscriber: {
 		id: string;
 		email: string;
-		isActive: boolean;
-		emailVerified?: boolean;
+		status: NewsletterStatus;
+		confirmedAt?: Date | null;
 	};
 }
 
@@ -60,8 +61,8 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 		},
 	});
 
-	const isVerified = subscriber.emailVerified !== false;
-	const canResendConfirmation = !isVerified || !subscriber.isActive;
+	const isConfirmed = subscriber.status === NewsletterStatus.CONFIRMED;
+	const canResendConfirmation = subscriber.status === NewsletterStatus.PENDING;
 
 	return (
 		<>
@@ -85,7 +86,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					)}
 
 					{/* Activer/Désactiver */}
-					{subscriber.isActive ? (
+					{isConfirmed ? (
 						<DropdownMenuItem
 							onClick={() => setUnsubscribeDialogOpen(true)}
 							className="flex items-center cursor-pointer"
@@ -93,7 +94,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 							<MailX className="mr-2 h-4 w-4" />
 							Désabonner
 						</DropdownMenuItem>
-					) : isVerified ? (
+					) : subscriber.status === NewsletterStatus.UNSUBSCRIBED && subscriber.confirmedAt ? (
 						<DropdownMenuItem
 							onClick={() => setResubscribeDialogOpen(true)}
 							className="flex items-center cursor-pointer"

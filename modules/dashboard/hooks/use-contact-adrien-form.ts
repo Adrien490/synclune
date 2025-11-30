@@ -1,11 +1,13 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
+import { ActionState } from "@/shared/types/server-action";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { contactAdrien } from "@/modules/dashboard/actions/contact-adrien";
+import type { FeedbackType } from "../constants/contact-adrien.constants";
 
 interface UseContactAdrienFormOptions {
 	onSuccess?: (message: string) => void;
@@ -38,11 +40,13 @@ export function useContactAdrienForm(options?: UseContactAdrienFormOptions) {
 
 	const form = useAppForm({
 		defaultValues: {
-			type: "bug" as "bug" | "feature" | "improvement" | "question" | "other",
+			type: "bug" as FeedbackType,
 			message: "",
 		},
 		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
+			// Note: mergeForm attend un FormState partiel, le cast est nécessaire car
+			// useActionState retourne ActionState | undefined
+			(baseForm) => mergeForm(baseForm, (state ?? {}) as never),
 			[state]
 		),
 	});

@@ -1,3 +1,4 @@
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -18,7 +19,8 @@ import {
 import { GetSubscribersReturn } from "@/modules/newsletter/data/get-subscribers";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CheckCircle2, Mail, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Mail, XCircle } from "lucide-react";
+import { NEWSLETTER_STATUS_LABELS } from "@/modules/newsletter/constants/newsletter-status.constants";
 import { ViewTransition } from "react";
 import { SubscriberRowActions } from "./subscriber-row-actions";
 import { SubscribersSelectionToolbar } from "./subscribers-selection-toolbar";
@@ -80,15 +82,20 @@ export async function SubscribersDataTable({
 										</ViewTransition>
 									</TableCell>
 									<TableCell>
-										{subscriber.isActive ? (
-											<span className="inline-flex items-center gap-1.5 text-sm text-secondary-foreground">
+										{subscriber.status === NewsletterStatus.CONFIRMED ? (
+											<span className="inline-flex items-center gap-1.5 text-sm text-green-600">
 												<CheckCircle2 className="h-4 w-4" />
-												Actif
+												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.CONFIRMED]}
+											</span>
+										) : subscriber.status === NewsletterStatus.PENDING ? (
+											<span className="inline-flex items-center gap-1.5 text-sm text-yellow-600">
+												<Clock className="h-4 w-4" />
+												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.PENDING]}
 											</span>
 										) : (
 											<span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
 												<XCircle className="h-4 w-4" />
-												Inactif
+												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.UNSUBSCRIBED]}
 											</span>
 										)}
 									</TableCell>
@@ -111,8 +118,8 @@ export async function SubscribersDataTable({
 											subscriber={{
 												id: subscriber.id,
 												email: subscriber.email,
-												isActive: subscriber.isActive,
-												emailVerified: subscriber.emailVerified,
+												status: subscriber.status,
+												confirmedAt: subscriber.confirmedAt,
 											}}
 										/>
 									</TableCell>

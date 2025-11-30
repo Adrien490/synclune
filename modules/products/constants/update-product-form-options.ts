@@ -17,7 +17,7 @@ export const editProductFormOpts = {
 			inventory: 0,
 			isActive: true,
 			colorId: "",
-			material: "",
+			materialId: "",
 			size: "",
 			primaryImage: undefined as
 				| {

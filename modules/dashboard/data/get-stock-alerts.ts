@@ -17,6 +17,7 @@ export type StockAlertItem = {
 
 export type GetStockAlertsReturn = {
 	alerts: StockAlertItem[];
+	totalCount: number;
 };
 
 // Alias pour compatibilité avec les imports existants
@@ -27,47 +28,65 @@ export type GetDashboardStockAlertsReturn = GetStockAlertsReturn;
 // ============================================================================
 
 /**
- * Action serveur pour récupérer les 10 alertes stock
+ * Action serveur pour recuperer les alertes stock
  * Ruptures (inventory = 0) + faible stock (inventory < LOW_STOCK_THRESHOLD)
+ *
+ * @param skip - Nombre d'alertes a ignorer (pagination)
+ * @param take - Nombre d'alertes a retourner (pagination)
  */
-export async function getStockAlerts(): Promise<GetStockAlertsReturn> {
+export async function getStockAlerts(
+	skip: number = 0,
+	take: number = 10
+): Promise<GetStockAlertsReturn> {
 	const admin = await isAdmin();
 
 	if (!admin) {
 		throw new Error("Admin access required");
 	}
 
-	return fetchDashboardStockAlerts();
+	return fetchDashboardStockAlerts(skip, take);
 }
 
 /**
- * Récupère les 10 alertes stock depuis la DB avec cache
+ * Recupere les alertes stock depuis la DB avec cache
+ *
+ * @param skip - Nombre d'alertes a ignorer (pagination)
+ * @param take - Nombre d'alertes a retourner (pagination)
  */
-export async function fetchDashboardStockAlerts(): Promise<GetStockAlertsReturn> {
+export async function fetchDashboardStockAlerts(
+	skip: number = 0,
+	take: number = 10
+): Promise<GetStockAlertsReturn> {
 	"use cache: remote";
 
 	cacheDashboard();
 
-	const skus = await prisma.productSku.findMany({
-		where: {
-			isActive: true,
-			inventory: {
-				lt: LOW_STOCK_THRESHOLD,
-			},
+	const whereClause = {
+		isActive: true,
+		inventory: {
+			lt: LOW_STOCK_THRESHOLD,
 		},
-		take: 10,
-		orderBy: [{ inventory: "asc" }, { updatedAt: "desc" }],
-		select: {
-			id: true,
-			sku: true,
-			inventory: true,
-			product: {
-				select: {
-					title: true,
+	};
+
+	const [skus, totalCount] = await Promise.all([
+		prisma.productSku.findMany({
+			where: whereClause,
+			skip,
+			take,
+			orderBy: [{ inventory: "asc" }, { updatedAt: "desc" }],
+			select: {
+				id: true,
+				sku: true,
+				inventory: true,
+				product: {
+					select: {
+						title: true,
+					},
 				},
 			},
-		},
-	});
+		}),
+		prisma.productSku.count({ where: whereClause }),
+	]);
 
 	const alerts = skus.map((sku) => ({
 		skuId: sku.id,
@@ -79,5 +98,5 @@ export async function fetchDashboardStockAlerts(): Promise<GetStockAlertsReturn>
 			| "low_stock",
 	}));
 
-	return { alerts };
+	return { alerts, totalCount };
 }

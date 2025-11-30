@@ -1,5 +1,6 @@
 "use server";
 
+import { AccountStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -63,6 +64,7 @@ export async function restoreUser(
 			data: {
 				deletedAt: null,
 				suspendedAt: null,
+				accountStatus: AccountStatus.ACTIVE,
 			},
 		});
 

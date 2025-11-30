@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useMemo } from "react";
 import {
 	Card,
 	CardContent,
@@ -9,15 +9,12 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import {
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-	ResponsiveContainer,
-	Cell,
-} from "recharts";
+	ChartContainer,
+	ChartTooltip,
+	ChartTooltipContent,
+	type ChartConfig,
+} from "@/shared/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts";
 import type { GetStockByColorReturn } from "../../types/dashboard.types";
 
 interface StockByColorChartProps {
@@ -30,27 +27,45 @@ interface StockByColorChartProps {
 export function StockByColorChart({ dataPromise }: StockByColorChartProps) {
 	const data = use(dataPromise);
 
-	// Preparer les donnees pour le graphique (top 8)
-	const chartData = data.colors.slice(0, 8).map((c) => ({
-		name: c.name.length > 12 ? c.name.slice(0, 12) + "..." : c.name,
-		fullName: c.name,
-		units: c.totalUnits,
-		value: c.value / 100,
-		color: c.hex || "hsl(var(--primary))",
-		skus: c.skuCount,
-	}));
+	// Preparer les donnees pour le graphique (top 8) avec une cle unique
+	const chartData = useMemo(() => {
+		const items = data.colors.slice(0, 8).map((c, index) => ({
+			key: `color-${index}`,
+			name: c.name.length > 12 ? c.name.slice(0, 12) + "..." : c.name,
+			fullName: c.name,
+			units: c.totalUnits,
+			value: c.value / 100,
+			color: c.hex || "var(--chart-1)",
+			skus: c.skuCount,
+		}));
 
-	// Ajouter non categorise si significatif
-	if (data.uncategorized.totalUnits > 0) {
-		chartData.push({
-			name: "Sans couleur",
-			fullName: "Sans couleur",
-			units: data.uncategorized.totalUnits,
-			value: data.uncategorized.value / 100,
-			color: "hsl(var(--muted-foreground))",
-			skus: 0,
+		// Ajouter non categorise si significatif
+		if (data.uncategorized.totalUnits > 0) {
+			items.push({
+				key: "uncategorized",
+				name: "Sans couleur",
+				fullName: "Sans couleur",
+				units: data.uncategorized.totalUnits,
+				value: data.uncategorized.value / 100,
+				color: "var(--muted-foreground)",
+				skus: 0,
+			});
+		}
+
+		return items;
+	}, [data]);
+
+	// Generer la config dynamiquement avec les couleurs hex reelles
+	const chartConfig = useMemo(() => {
+		const config: ChartConfig = {};
+		chartData.forEach((item) => {
+			config[item.key] = {
+				label: item.fullName,
+				color: item.color,
+			};
 		});
-	}
+		return config;
+	}, [chartData]);
 
 	if (chartData.length === 0) {
 		return (
@@ -75,7 +90,7 @@ export function StockByColorChart({ dataPromise }: StockByColorChartProps) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ResponsiveContainer width="100%" height={250}>
+				<ChartContainer config={chartConfig} className="min-h-[250px] w-full">
 					<BarChart
 						data={chartData}
 						layout="vertical"
@@ -89,26 +104,26 @@ export function StockByColorChart({ dataPromise }: StockByColorChartProps) {
 							width={80}
 							tick={{ fontSize: 12 }}
 						/>
-						<Tooltip
-							formatter={(value: number, name: string) => {
-								if (name === "units") return [value, "Unites"];
-								return [`${value.toFixed(2)} €`, "Valeur"];
-							}}
-							labelFormatter={(label, payload) => {
-								if (payload && payload[0]) {
-									const item = payload[0].payload;
-									return `${item.fullName}`;
-								}
-								return label;
-							}}
+						<ChartTooltip
+							content={
+								<ChartTooltipContent
+									formatter={(value, name, item) => {
+										const entry = item.payload;
+										return [
+											`${value} unites (${entry.value.toFixed(2)} €)`,
+											entry.fullName,
+										];
+									}}
+								/>
+							}
 						/>
 						<Bar dataKey="units" radius={[0, 4, 4, 0]}>
-							{chartData.map((entry, index) => (
-								<Cell key={`cell-${index}`} fill={entry.color} />
+							{chartData.map((entry) => (
+								<Cell key={entry.key} fill={entry.color} />
 							))}
 						</Bar>
 					</BarChart>
-				</ResponsiveContainer>
+				</ChartContainer>
 			</CardContent>
 		</Card>
 	);

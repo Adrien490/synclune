@@ -1,5 +1,6 @@
 "use server";
 
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
 import { randomUUID } from "crypto";
@@ -38,8 +39,8 @@ export async function subscribeToNewsletterInternal({
 		});
 
 		if (existingSubscriber) {
-			// Si l'abonné existe et est actif ET email vérifié
-			if (existingSubscriber.isActive && existingSubscriber.emailVerified) {
+			// Si l'abonné est confirmé
+			if (existingSubscriber.status === NewsletterStatus.CONFIRMED) {
 				return {
 					success: true,
 					message: "Vous êtes déjà inscrit(e) à la newsletter",
@@ -47,8 +48,8 @@ export async function subscribeToNewsletterInternal({
 				};
 			}
 
-			// Si l'abonné existe mais email non vérifié → Renvoyer email de confirmation
-			if (!existingSubscriber.emailVerified) {
+			// Si l'abonné est en attente de confirmation → Renvoyer email de confirmation
+			if (existingSubscriber.status === NewsletterStatus.PENDING) {
 				// Régénérer un nouveau token de confirmation (sécurisé avec crypto)
 				const confirmationToken = randomUUID();
 
@@ -77,7 +78,7 @@ export async function subscribeToNewsletterInternal({
 				};
 			}
 
-			// Si l'abonné existe mais s'était désabonné → Renvoyer email de confirmation
+			// Si l'abonné s'était désabonné → Renvoyer email de confirmation
 			// (nécessaire pour re-valider le consentement RGPD et confirmer que l'email est toujours valide)
 			const confirmationToken = randomUUID();
 
@@ -86,8 +87,7 @@ export async function subscribeToNewsletterInternal({
 				data: {
 					confirmationToken,
 					confirmationSentAt: new Date(),
-					isActive: false, // Sera réactivé après confirmation
-					emailVerified: false, // Demander une nouvelle vérification
+					status: NewsletterStatus.PENDING, // Repasse en attente de confirmation
 				},
 			});
 
@@ -120,8 +120,7 @@ export async function subscribeToNewsletterInternal({
 				consentTimestamp: new Date(),
 				confirmationToken,
 				confirmationSentAt: new Date(),
-				isActive: false, // Sera activé après confirmation email
-				emailVerified: false,
+				status: NewsletterStatus.PENDING, // Sera confirmé après validation email
 			},
 		});
 

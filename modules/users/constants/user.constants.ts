@@ -9,6 +9,7 @@ export const GET_USER_SELECT = {
 	email: true,
 	name: true,
 	role: true,
+	accountStatus: true,
 	emailVerified: true,
 	createdAt: true,
 	updatedAt: true,
@@ -21,6 +22,7 @@ export const GET_USER_SELECT = {
 export const GET_USERS_SELECT = {
 	id: true,
 	role: true,
+	accountStatus: true,
 	name: true,
 	email: true,
 	emailVerified: true,

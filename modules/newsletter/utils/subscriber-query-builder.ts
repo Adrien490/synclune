@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { NewsletterStatus, Prisma } from "@/app/generated/prisma/client";
 import type {
 	GetSubscribersParams,
 	SubscriberFilters,
@@ -30,8 +30,8 @@ export function buildSubscriberFilterConditions(
 ): Prisma.NewsletterSubscriberWhereInput {
 	const conditions: Prisma.NewsletterSubscriberWhereInput = {};
 
-	if (filters.isActive !== undefined) {
-		conditions.isActive = filters.isActive;
+	if (filters.status !== undefined) {
+		conditions.status = filters.status as NewsletterStatus;
 	}
 
 	if (filters.subscribedAfter || filters.subscribedBefore) {

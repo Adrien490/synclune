@@ -73,13 +73,14 @@ export function matchMaterial(
 	// Aucune sélection = match par défaut
 	if (!material && !materialSlug) return true;
 
-	const targetMaterial = materialSlug || material;
+	// Pas de matériau sur le SKU = pas de match
+	if (!sku.materialRelation) return false;
 
-	// Pas de matériau cible ou SKU sans matériau = pas de match
-	if (!targetMaterial || !sku.material) return false;
+	const targetMaterial = materialSlug || material;
+	if (!targetMaterial) return true;
 
 	// Comparaison normalisée via slugify
-	return slugify(sku.material) === slugify(targetMaterial);
+	return slugify(sku.materialRelation.name) === slugify(targetMaterial);
 }
 
 /**

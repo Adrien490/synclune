@@ -1,5 +1,6 @@
 "use server";
 
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -73,13 +74,14 @@ export async function bulkResubscribeSubscribers(
 		}
 
 		// Réabonner en masse avec une seule query (optimisation)
+		// Ne réabonne que les abonnés déjà confirmés dans le passé (confirmedAt)
 		const updateResult = await prisma.newsletterSubscriber.updateMany({
 			where: {
 				id: { in: result.data.ids },
-				isActive: false,
-				emailVerified: true,
+				status: NewsletterStatus.UNSUBSCRIBED,
+				confirmedAt: { not: null },
 			},
-			data: { isActive: true },
+			data: { status: NewsletterStatus.CONFIRMED, unsubscribedAt: null },
 		});
 
 		if (updateResult.count === 0) {

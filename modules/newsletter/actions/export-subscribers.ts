@@ -1,5 +1,6 @@
 "use server";
 
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { auth } from "@/modules/auth/lib/auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
@@ -54,12 +55,12 @@ export async function exportSubscribers(
 
 		const { status } = result.data;
 
-		// Construire le filtre Prisma
+		// Construire le filtre Prisma basé sur le statut enum
 		const whereClause =
 			status === "active"
-				? { isActive: true }
+				? { status: NewsletterStatus.CONFIRMED }
 				: status === "inactive"
-					? { isActive: false }
+					? { status: { in: [NewsletterStatus.PENDING, NewsletterStatus.UNSUBSCRIBED] } }
 					: {}; // "all" : pas de filtre
 
 		// Récupérer les abonnés selon le filtre (sans données GDPR sensibles)
@@ -67,7 +68,7 @@ export async function exportSubscribers(
 			where: whereClause,
 			select: {
 				email: true,
-				isActive: true,
+				status: true,
 				subscribedAt: true,
 				unsubscribedAt: true,
 				consentTimestamp: true,
@@ -95,7 +96,7 @@ export async function exportSubscribers(
 
 		const csvRows = subscribers
 			.map((s) => {
-				const statusLabel = s.isActive ? "Actif" : "Inactif";
+				const statusLabel = s.status === NewsletterStatus.CONFIRMED ? "Confirmé" : s.status === NewsletterStatus.PENDING ? "En attente" : "Désabonné";
 				const subscribedAt = s.subscribedAt.toISOString().split("T")[0];
 				const consentTimestamp = s.consentTimestamp
 					.toISOString()

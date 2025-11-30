@@ -1,5 +1,6 @@
 "use server";
 
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
@@ -28,7 +29,7 @@ export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
 			where: { id: subscriberId },
-			select: { id: true, email: true, isActive: true, emailVerified: true },
+			select: { id: true, email: true, status: true, confirmedAt: true },
 		});
 
 		if (!subscriber) {
@@ -38,15 +39,15 @@ export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<
 			};
 		}
 
-		if (subscriber.isActive) {
+		if (subscriber.status === NewsletterStatus.CONFIRMED) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Cet abonné est déjà actif",
 			};
 		}
 
-		// 4. Réabonner (uniquement si l'email était vérifié)
-		if (!subscriber.emailVerified) {
+		// 4. Réabonner (uniquement si l'email était vérifié auparavant)
+		if (!subscriber.confirmedAt) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Cet abonné n'a jamais confirmé son email. Renvoyez plutôt l'email de confirmation.",
@@ -56,7 +57,7 @@ export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<
 		await prisma.newsletterSubscriber.update({
 			where: { id: subscriberId },
 			data: {
-				isActive: true,
+				status: NewsletterStatus.CONFIRMED,
 				unsubscribedAt: null,
 			},
 		});

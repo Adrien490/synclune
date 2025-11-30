@@ -27,7 +27,7 @@ export function extractVariantInfo(product: GetProductReturn): ProductVariantInf
 
 	for (const sku of activeSkus) {
 		// Couleurs avec fallback sur le matériau pour différencier les variantes
-		const materialName = sku.material || undefined;
+		const materialName = sku.materialRelation?.name || undefined;
 
 		if (sku.color || materialName) {
 			// Utiliser le slug comme clé principale (URL-friendly)

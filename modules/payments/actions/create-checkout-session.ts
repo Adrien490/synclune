@@ -7,7 +7,7 @@ import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/li
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
-import { getUserAddressesInvalidationTags } from "@/modules/users/constants/cache";
+import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/cache";
 import {
 	getFinalShippingCost,
 	calculateTaxAmount,

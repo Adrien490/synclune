@@ -117,7 +117,7 @@ function StockNotificationRow({
 	// Construire la description de la variante
 	const variantParts: string[] = [];
 	if (sku.color) variantParts.push(sku.color.name);
-	if (sku.material) variantParts.push(sku.material);
+	if (sku.materialRelation) variantParts.push(sku.materialRelation.name);
 	if (sku.size) variantParts.push(`T.${sku.size}`);
 	const variantText = variantParts.join(" / ") || "-";
 

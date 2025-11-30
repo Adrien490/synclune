@@ -1,5 +1,6 @@
 "use server";
 
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
@@ -109,8 +110,8 @@ export async function unsubscribeFromNewsletter(
 			};
 		}
 
-		// Si l'abonné est déjà inactif - message générique pour éviter information disclosure
-		if (!existingSubscriber.isActive) {
+		// Si l'abonné est déjà désabonné - message générique pour éviter information disclosure
+		if (existingSubscriber.status === NewsletterStatus.UNSUBSCRIBED) {
 			return {
 				status: ActionStatus.SUCCESS,
 				message:
@@ -118,13 +119,13 @@ export async function unsubscribeFromNewsletter(
 			};
 		}
 
-		// Désactiver l'abonné (utiliser le token si disponible, sinon l'email)
+		// Désabonner (utiliser le token si disponible, sinon l'email)
 		await prisma.newsletterSubscriber.update({
 			where: validatedToken
 				? { unsubscribeToken: validatedToken }
 				: { email: validatedEmail },
 			data: {
-				isActive: false,
+				status: NewsletterStatus.UNSUBSCRIBED,
 				unsubscribedAt: new Date(),
 			},
 		});

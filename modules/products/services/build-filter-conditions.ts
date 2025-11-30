@@ -39,26 +39,30 @@ export const buildFilterConditions = (
 		}
 	}
 
-	// Material - now a string field
+	// Material - filter by materialRelation.name
 	if (filters.material !== undefined) {
 		const materials = Array.isArray(filters.material)
 			? filters.material
 			: [filters.material];
 		if (materials.length === 1) {
 			conditions.push({
-				material: {
-					contains: materials[0],
-					mode: Prisma.QueryMode.insensitive,
-				}
+				materialRelation: {
+					name: {
+						contains: materials[0],
+						mode: Prisma.QueryMode.insensitive,
+					},
+				},
 			});
 		} else if (materials.length > 1) {
-			// Pour plusieurs matériaux, utiliser OR au niveau ProductSkuWhereInput
+			// Pour plusieurs matériaux, utiliser OR
 			conditions.push({
 				OR: materials.map((mat) => ({
-					material: {
-						contains: mat,
-						mode: Prisma.QueryMode.insensitive,
-					}
+					materialRelation: {
+						name: {
+							contains: mat,
+							mode: Prisma.QueryMode.insensitive,
+						},
+					},
 				})),
 			} as Prisma.ProductSkuWhereInput);
 		}

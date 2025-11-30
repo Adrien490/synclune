@@ -55,7 +55,12 @@ export const GET_CART_SELECT = {
 							hex: true,
 						},
 					},
-					material: true,
+					materialRelation: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 					size: true,
 				},
 			},

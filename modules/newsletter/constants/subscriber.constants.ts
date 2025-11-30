@@ -7,10 +7,10 @@ import { Prisma } from "@/app/generated/prisma/client";
 export const GET_SUBSCRIBER_SELECT = {
 	id: true,
 	email: true,
-	isActive: true,
-	emailVerified: true,
+	status: true,
 	subscribedAt: true,
 	unsubscribedAt: true,
+	confirmedAt: true,
 	createdAt: true,
 	updatedAt: true,
 } as const satisfies Prisma.NewsletterSubscriberSelect;
@@ -51,6 +51,5 @@ export const SORT_LABELS = {
 // ============================================================================
 
 export const GET_NEWSLETTER_STATUS_DEFAULT_SELECT = {
-	isActive: true,
-	emailVerified: true,
+	status: true,
 } as const satisfies Prisma.NewsletterSubscriberSelect;

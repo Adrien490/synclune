@@ -67,7 +67,6 @@ export async function duplicateSku(skuId: string): Promise<ActionState> {
 				sku: newSku,
 				productId: original.productId,
 				colorId: original.colorId,
-				material: original.material,
 				materialId: original.materialId,
 				size: original.size,
 				priceInclTax: original.priceInclTax,

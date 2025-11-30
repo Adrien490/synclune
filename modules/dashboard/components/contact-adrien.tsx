@@ -12,13 +12,6 @@ import {
 } from "@/shared/components/ui/dialog";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/shared/components/ui/select";
-import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
@@ -33,24 +26,24 @@ import {
 	ChevronRight,
 	MessageSquare,
 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import { useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useCallback, useRef, useState } from "react";
 import { useToggleContactAdrienVisibility } from "../hooks/use-toggle-contact-adrien-visibility";
+import {
+	CONTACT_TYPE_OPTIONS,
+	type FeedbackType,
+} from "../constants/contact-adrien.constants";
 
 interface ContactAdrienProps {
 	/** Etat initial de visibilité (depuis le cookie serveur) */
 	initialHidden?: boolean;
 }
 
-type FeedbackType = "bug" | "feature" | "improvement" | "question" | "other";
+/** Transition spring par défaut */
+const SPRING_TRANSITION = { type: "spring" as const, stiffness: 400, damping: 25 };
 
-const typeLabels: Record<FeedbackType, string> = {
-	bug: "🐛 Signaler un bug",
-	feature: "✨ Demander une fonctionnalité",
-	improvement: "🔧 Amélioration de l'existant",
-	question: "❓ Poser une question",
-	other: "💬 Autre",
-};
+/** Transition réduite pour prefers-reduced-motion */
+const REDUCED_TRANSITION = { duration: 0 };
 
 /**
  * Floating Action Button pour contacter Adri
@@ -67,6 +60,10 @@ const typeLabels: Record<FeedbackType, string> = {
 export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 	const toggleButtonRef = useRef<HTMLButtonElement>(null);
 	const mainButtonRef = useRef<HTMLButtonElement>(null);
+
+	// Respecter prefers-reduced-motion
+	const prefersReducedMotion = useReducedMotion();
+	const transition = prefersReducedMotion ? REDUCED_TRANSITION : SPRING_TRANSITION;
 
 	// Hook pour toggle la visibilité (pattern établi avec useOptimistic intégré)
 	const { isHidden, toggle, isPending } = useToggleContactAdrienVisibility({
@@ -94,15 +91,31 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 		},
 	});
 
+	// Gestion du changement d'état du dialog avec reset différé pour éviter les race conditions
+	const handleDialogOpenChange = useCallback(
+		(open: boolean) => {
+			setDialogOpen(open);
+			if (!open) {
+				// Délai pour laisser l'animation de fermeture se terminer
+				setTimeout(() => {
+					if (!isFormPending) {
+						form.reset();
+					}
+				}, 300);
+			}
+		},
+		[form, isFormPending]
+	);
+
 	// Mode caché : affiche juste une flèche pour réouvrir
 	if (isHidden) {
 		return (
 			<AnimatePresence>
 				<motion.div
-					initial={{ opacity: 0, x: 20 }}
+					initial={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
 					animate={{ opacity: 1, x: 0 }}
-					exit={{ opacity: 0, x: 20 }}
-					transition={{ type: "spring", stiffness: 400, damping: 25 }}
+					exit={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
+					transition={transition}
 					className={cn(
 						"fixed z-40",
 						// Mobile: au-dessus de la BottomNavigation
@@ -150,10 +163,10 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 	return (
 		<AnimatePresence>
 			<motion.div
-				initial={{ opacity: 0, scale: 0.8 }}
+				initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
 				animate={{ opacity: 1, scale: 1 }}
-				exit={{ opacity: 0, scale: 0.8 }}
-				transition={{ type: "spring", stiffness: 400, damping: 25 }}
+				exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
+				transition={transition}
 				className={cn(
 					"group",
 					"fixed z-40",
@@ -202,15 +215,7 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 			</Tooltip>
 
 			{/* Dialog avec formulaire de contact */}
-			<Dialog
-				open={dialogOpen}
-				onOpenChange={(open) => {
-					setDialogOpen(open);
-					if (!open && !isFormPending) {
-						form.reset();
-					}
-				}}
-			>
+			<Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<DialogTrigger asChild>
@@ -295,30 +300,14 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 									}}
 								>
 									{(field) => (
-										<div className="space-y-2">
-											<label htmlFor="type" className="text-sm font-medium">
-												Type de message
-											</label>
-											<input type="hidden" name="type" value={field.state.value} />
-											<Select
-												value={field.state.value}
-												onValueChange={(value) =>
-													field.handleChange(value as FeedbackType)
-												}
-												disabled={isFormPending || state?.status === ActionStatus.SUCCESS}
-											>
-												<SelectTrigger id="type" className="w-full">
-													<SelectValue />
-												</SelectTrigger>
-												<SelectContent>
-													{Object.entries(typeLabels).map(([value, label]) => (
-														<SelectItem key={value} value={value}>
-															{label}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-										</div>
+										<field.SelectField
+											label="Type de message"
+											options={CONTACT_TYPE_OPTIONS}
+											disabled={
+												isFormPending || state?.status === ActionStatus.SUCCESS
+											}
+											required
+										/>
 									)}
 								</form.AppField>
 
@@ -355,9 +344,14 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 													"resize-none transition-opacity",
 													isFormPending && "opacity-60"
 												)}
+												aria-describedby="message-counter"
 												required
 											/>
-											<p className="text-xs text-muted-foreground">
+											<p
+												id="message-counter"
+												className="text-xs text-muted-foreground"
+												aria-live="polite"
+											>
 												{field.state.value.length} / 5000 caractères
 											</p>
 										</div>
@@ -383,6 +377,7 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 										disabled={
 											!canSubmit || isFormPending || state?.status === ActionStatus.SUCCESS
 										}
+										aria-busy={isFormPending}
 									>
 										{isFormPending
 											? "Envoi..."

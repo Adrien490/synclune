@@ -1,5 +1,14 @@
 import { z } from "zod";
 import { dashboardPeriodSchema } from "../schemas/dashboard.schemas";
+import {
+	getStartOfDay,
+	getEndOfDay,
+	getStartOfMonth,
+	getEndOfMonth,
+	getStartOfYear,
+	getEndOfYear,
+	subtractDays,
+} from "./date-helpers";
 
 export type DashboardPeriod = z.infer<typeof dashboardPeriodSchema>;
 
@@ -26,60 +35,26 @@ export function resolvePeriodToDates(
 	customEndDate?: Date
 ): DateRange {
 	const now = new Date();
-	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-	const endOfToday = new Date(
-		now.getFullYear(),
-		now.getMonth(),
-		now.getDate(),
-		23,
-		59,
-		59,
-		999
-	);
-
-	const DAY_MS = 24 * 60 * 60 * 1000;
+	const today = getStartOfDay(now);
+	const endOfToday = getEndOfDay(now);
 
 	switch (period) {
 		case "today": {
-			const yesterdayStart = new Date(today.getTime() - DAY_MS);
-			const yesterdayEnd = new Date(
-				yesterdayStart.getFullYear(),
-				yesterdayStart.getMonth(),
-				yesterdayStart.getDate(),
-				23,
-				59,
-				59,
-				999
-			);
+			const yesterdayStart = subtractDays(today, 1);
+			const yesterdayEnd = getEndOfDay(yesterdayStart);
 			return {
 				startDate: today,
 				endDate: now,
-				previousStartDate: yesterdayStart,
+				previousStartDate: getStartOfDay(yesterdayStart),
 				previousEndDate: yesterdayEnd,
 			};
 		}
 
 		case "yesterday": {
-			const yesterdayStart = new Date(today.getTime() - DAY_MS);
-			const yesterdayEnd = new Date(
-				yesterdayStart.getFullYear(),
-				yesterdayStart.getMonth(),
-				yesterdayStart.getDate(),
-				23,
-				59,
-				59,
-				999
-			);
-			const dayBeforeStart = new Date(yesterdayStart.getTime() - DAY_MS);
-			const dayBeforeEnd = new Date(
-				dayBeforeStart.getFullYear(),
-				dayBeforeStart.getMonth(),
-				dayBeforeStart.getDate(),
-				23,
-				59,
-				59,
-				999
-			);
+			const yesterdayStart = getStartOfDay(subtractDays(today, 1));
+			const yesterdayEnd = getEndOfDay(yesterdayStart);
+			const dayBeforeStart = getStartOfDay(subtractDays(yesterdayStart, 1));
+			const dayBeforeEnd = getEndOfDay(dayBeforeStart);
 			return {
 				startDate: yesterdayStart,
 				endDate: yesterdayEnd,
@@ -89,8 +64,8 @@ export function resolvePeriodToDates(
 		}
 
 		case "last7days": {
-			const startDate = new Date(today.getTime() - 7 * DAY_MS);
-			const previousStartDate = new Date(startDate.getTime() - 7 * DAY_MS);
+			const startDate = subtractDays(today, 7);
+			const previousStartDate = subtractDays(startDate, 7);
 			const previousEndDate = new Date(startDate.getTime() - 1);
 			return {
 				startDate,
@@ -101,8 +76,8 @@ export function resolvePeriodToDates(
 		}
 
 		case "last30days": {
-			const startDate = new Date(today.getTime() - 30 * DAY_MS);
-			const previousStartDate = new Date(startDate.getTime() - 30 * DAY_MS);
+			const startDate = subtractDays(today, 30);
+			const previousStartDate = subtractDays(startDate, 30);
 			const previousEndDate = new Date(startDate.getTime() - 1);
 			return {
 				startDate,
@@ -113,12 +88,8 @@ export function resolvePeriodToDates(
 		}
 
 		case "thisMonth": {
-			const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-			const previousStartDate = new Date(
-				now.getFullYear(),
-				now.getMonth() - 1,
-				1
-			);
+			const startDate = getStartOfMonth(now.getFullYear(), now.getMonth());
+			const previousStartDate = getStartOfMonth(now.getFullYear(), now.getMonth() - 1);
 			const previousEndDate = new Date(startDate.getTime() - 1);
 			return {
 				startDate,
@@ -129,13 +100,9 @@ export function resolvePeriodToDates(
 		}
 
 		case "lastMonth": {
-			const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-			const endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-			const previousStartDate = new Date(
-				now.getFullYear(),
-				now.getMonth() - 2,
-				1
-			);
+			const startDate = getStartOfMonth(now.getFullYear(), now.getMonth() - 1);
+			const endDate = getEndOfMonth(now.getFullYear(), now.getMonth() - 1);
+			const previousStartDate = getStartOfMonth(now.getFullYear(), now.getMonth() - 2);
 			const previousEndDate = new Date(startDate.getTime() - 1);
 			return {
 				startDate,
@@ -146,8 +113,8 @@ export function resolvePeriodToDates(
 		}
 
 		case "thisYear": {
-			const startDate = new Date(now.getFullYear(), 0, 1);
-			const previousStartDate = new Date(now.getFullYear() - 1, 0, 1);
+			const startDate = getStartOfYear(now.getFullYear());
+			const previousStartDate = getStartOfYear(now.getFullYear() - 1);
 			const previousEndDate = new Date(startDate.getTime() - 1);
 			return {
 				startDate,
@@ -158,9 +125,9 @@ export function resolvePeriodToDates(
 		}
 
 		case "lastYear": {
-			const startDate = new Date(now.getFullYear() - 1, 0, 1);
-			const endDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
-			const previousStartDate = new Date(now.getFullYear() - 2, 0, 1);
+			const startDate = getStartOfYear(now.getFullYear() - 1);
+			const endDate = getEndOfYear(now.getFullYear() - 1);
+			const previousStartDate = getStartOfYear(now.getFullYear() - 2);
 			const previousEndDate = new Date(startDate.getTime() - 1);
 			return {
 				startDate,
@@ -175,21 +142,8 @@ export function resolvePeriodToDates(
 				throw new Error("Custom period requires startDate and endDate");
 			}
 
-			// Normaliser les dates
-			const startDate = new Date(
-				customStartDate.getFullYear(),
-				customStartDate.getMonth(),
-				customStartDate.getDate()
-			);
-			const endDate = new Date(
-				customEndDate.getFullYear(),
-				customEndDate.getMonth(),
-				customEndDate.getDate(),
-				23,
-				59,
-				59,
-				999
-			);
+			const startDate = getStartOfDay(customStartDate);
+			const endDate = getEndOfDay(customEndDate);
 
 			// Calculer la duree de la periode
 			const duration = endDate.getTime() - startDate.getTime();
@@ -210,8 +164,8 @@ export function resolvePeriodToDates(
 
 		default: {
 			// Fallback sur last30days
-			const startDate = new Date(today.getTime() - 30 * DAY_MS);
-			const previousStartDate = new Date(startDate.getTime() - 30 * DAY_MS);
+			const startDate = subtractDays(today, 30);
+			const previousStartDate = subtractDays(startDate, 30);
 			const previousEndDate = new Date(startDate.getTime() - 1);
 			return {
 				startDate,

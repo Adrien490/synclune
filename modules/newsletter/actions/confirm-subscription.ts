@@ -1,8 +1,10 @@
 "use server";
 
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterConfirm } from "@/shared/lib/arcjet";
 import { sendNewsletterWelcomeEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
+import { getClientIp } from "@/shared/lib/rate-limit";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { updateTag } from "next/cache";
@@ -82,8 +84,8 @@ export async function confirmSubscription(
 			};
 		}
 
-		// Vérifier si l'email est déjà vérifié
-		if (subscriber.emailVerified && subscriber.isActive) {
+		// Vérifier si l'abonnement est déjà confirmé
+		if (subscriber.status === NewsletterStatus.CONFIRMED) {
 			return {
 				status: ActionStatus.SUCCESS,
 				message: "Votre email est déjà confirmé ! Vous êtes bien inscrit(e).",
@@ -112,13 +114,16 @@ export async function confirmSubscription(
 			};
 		}
 
+		// Récupérer l'IP de confirmation pour traçabilité RGPD
+		const confirmationIpAddress = (await getClientIp(headersList)) || "unknown";
+
 		// Activer l'abonné
 		await prisma.newsletterSubscriber.update({
 			where: { id: subscriber.id },
 			data: {
-				emailVerified: true,
-				isActive: true,
+				status: NewsletterStatus.CONFIRMED,
 				confirmedAt: new Date(),
+				confirmationIpAddress,
 				subscribedAt: new Date(), // Mettre à jour la date d'inscription
 				unsubscribedAt: null, // Réinitialiser la date de désabonnement
 				// Nettoyer le token après confirmation

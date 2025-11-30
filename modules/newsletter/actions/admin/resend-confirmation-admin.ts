@@ -1,5 +1,6 @@
 "use server";
 
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
 import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
@@ -29,7 +30,7 @@ export async function resendConfirmationAdmin(subscriberId: string): Promise<Act
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
 			where: { id: subscriberId },
-			select: { id: true, email: true, emailVerified: true, isActive: true },
+			select: { id: true, email: true, status: true },
 		});
 
 		if (!subscriber) {
@@ -39,7 +40,7 @@ export async function resendConfirmationAdmin(subscriberId: string): Promise<Act
 			};
 		}
 
-		if (subscriber.emailVerified && subscriber.isActive) {
+		if (subscriber.status === NewsletterStatus.CONFIRMED) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Cet abonné a déjà confirmé son email et est actif",

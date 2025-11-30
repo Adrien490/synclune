@@ -1,5 +1,6 @@
 "use server";
 
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { sendNewsletterEmail as sendEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
@@ -35,11 +36,10 @@ export async function sendNewsletterEmail(
 		const { subject: validatedSubject, content: validatedContent } =
 			result.data;
 
-		// Compter d'abord le nombre total d'abonnés
+		// Compter d'abord le nombre total d'abonnés confirmés
 		const totalCount = await prisma.newsletterSubscriber.count({
 			where: {
-				isActive: true,
-				emailVerified: true,
+				status: NewsletterStatus.CONFIRMED,
 			},
 		});
 
@@ -56,11 +56,10 @@ export async function sendNewsletterEmail(
 		let lastId: string | undefined;
 
 		while (true) {
-			// Récupérer un batch d'abonnés
+			// Récupérer un batch d'abonnés confirmés
 			const subscribers = await prisma.newsletterSubscriber.findMany({
 				where: {
-					isActive: true,
-					emailVerified: true,
+					status: NewsletterStatus.CONFIRMED,
 					...(lastId ? { id: { gt: lastId } } : {}),
 				},
 				select: {
