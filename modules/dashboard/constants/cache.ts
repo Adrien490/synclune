@@ -1,9 +1,8 @@
 /**
  * Cache configuration for Dashboard module
  *
- * NOTE: Les tags partagés (BADGES, ORDERS_LIST, CUSTOMERS_LIST, INVENTORY_LIST)
- * sont désormais définis dans @/shared/constants/cache-tags.
- * Les exports ici sont conservés pour compatibilité mais marqués @deprecated.
+ * NOTE: Pour les tags partagés (badges, orders list, customers list, inventory list),
+ * utiliser SHARED_CACHE_TAGS depuis @/shared/constants/cache-tags
  */
 
 import { cacheLife, cacheTag } from "next/cache"
@@ -14,23 +13,6 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 // ============================================
 
 export const DASHBOARD_CACHE_TAGS = {
-	/**
-	 * @deprecated Utiliser SHARED_CACHE_TAGS.ADMIN_BADGES depuis @/shared/constants/cache-tags
-	 */
-	BADGES: SHARED_CACHE_TAGS.ADMIN_BADGES,
-	/**
-	 * @deprecated Utiliser SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST depuis @/shared/constants/cache-tags
-	 */
-	ORDERS_LIST: SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-	/**
-	 * @deprecated Utiliser SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST depuis @/shared/constants/cache-tags
-	 */
-	CUSTOMERS_LIST: SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST,
-	/**
-	 * @deprecated Utiliser SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST depuis @/shared/constants/cache-tags
-	 */
-	INVENTORY_LIST: SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
-
 	// ========== STATS VENTES (parametriques par periode) ==========
 	/** Taux de conversion panier -> commande */
 	CONVERSION_RATE: (period: string) => `dashboard-conversion-${period}`,
@@ -110,7 +92,7 @@ export function cacheDashboard() {
  */
 export function cacheDashboardOrders() {
 	cacheDashboard()
-	cacheTag(DASHBOARD_CACHE_TAGS.ORDERS_LIST)
+	cacheTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST)
 }
 
 /**
@@ -118,7 +100,7 @@ export function cacheDashboardOrders() {
  */
 export function cacheDashboardCustomers() {
 	cacheDashboard()
-	cacheTag(DASHBOARD_CACHE_TAGS.CUSTOMERS_LIST)
+	cacheTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST)
 }
 
 /**
@@ -126,7 +108,7 @@ export function cacheDashboardCustomers() {
  */
 export function cacheDashboardInventory() {
 	cacheDashboard()
-	cacheTag(DASHBOARD_CACHE_TAGS.INVENTORY_LIST)
+	cacheTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST)
 }
 
 /**
@@ -291,7 +273,7 @@ export function cacheDashboardRevenueYear() {
  * Tags à invalider pour les badges du dashboard
  */
 export function getDashboardBadgesInvalidationTags(): string[] {
-	return [DASHBOARD_CACHE_TAGS.BADGES]
+	return [SHARED_CACHE_TAGS.ADMIN_BADGES]
 }
 
 /**
@@ -312,7 +294,7 @@ export function getInventoryInvalidationTags(): string[] {
 		DASHBOARD_CACHE_TAGS.NEVER_SOLD,
 		DASHBOARD_CACHE_TAGS.STOCK_BY_COLOR,
 		DASHBOARD_CACHE_TAGS.STOCK_BY_MATERIAL,
-		DASHBOARD_CACHE_TAGS.INVENTORY_LIST,
+		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 	]
 }
 

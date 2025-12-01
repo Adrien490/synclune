@@ -13,39 +13,15 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
 import { use } from "react";
+import {
+	ORDER_STATUS_LABELS,
+	ORDER_STATUS_VARIANTS,
+	PAYMENT_STATUS_LABELS,
+} from "../constants/order-status";
 
 interface RecentOrdersListProps {
 	ordersPromise: Promise<GetDashboardRecentOrdersReturn>;
 }
-
-const ORDER_STATUS_LABELS: Record<string, string> = {
-	PENDING: "En attente",
-	PROCESSING: "En traitement",
-	SHIPPED: "Expédiée",
-	DELIVERED: "Livrée",
-	CANCELED: "Annulée",
-	REFUNDED: "Remboursée",
-};
-
-const ORDER_STATUS_VARIANTS: Record<
-	string,
-	"default" | "secondary" | "destructive" | "outline"
-> = {
-	PENDING: "outline",
-	PROCESSING: "secondary",
-	SHIPPED: "default",
-	DELIVERED: "default",
-	CANCELED: "destructive",
-	REFUNDED: "destructive",
-};
-
-const PAYMENT_STATUS_LABELS: Record<string, string> = {
-	PENDING: "En attente",
-	PAID: "Payée",
-	FAILED: "Échouée",
-	REFUNDED: "Remboursée",
-	PARTIALLY_REFUNDED: "Part. remboursée",
-};
 
 export function RecentOrdersList({ ordersPromise }: RecentOrdersListProps) {
 	const { orders } = use(ordersPromise);

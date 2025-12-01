@@ -83,7 +83,8 @@ function SidebarProvider({
 			}
 
 			// This sets the cookie to keep the sidebar state.
-			document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+			const isSecure = window.location.protocol === "https:";
+			document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; SameSite=Lax${isSecure ? "; Secure" : ""}`;
 		},
 		[setOpenProp, open]
 	);
@@ -146,6 +147,9 @@ function SidebarProvider({
 				>
 					{children}
 				</div>
+				<div aria-live="polite" aria-atomic="true" className="sr-only">
+					{state === "expanded" ? "Menu ouvert" : "Menu réduit"}
+				</div>
 			</TooltipProvider>
 		</SidebarContext.Provider>
 	);
@@ -196,8 +200,10 @@ function Sidebar({
 					side={side}
 				>
 					<SheetHeader className="sr-only">
-						<SheetTitle>Sidebar</SheetTitle>
-						<SheetDescription>Displays the mobile sidebar.</SheetDescription>
+						<SheetTitle>Menu de navigation</SheetTitle>
+						<SheetDescription>
+							Navigation principale du tableau de bord
+						</SheetDescription>
 					</SheetHeader>
 					<div className="flex h-full w-full flex-col">{children}</div>
 				</SheetContent>
@@ -288,6 +294,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
 
 	return (
 		<button
+			type="button"
 			data-sidebar="rail"
 			data-slot="sidebar-rail"
 			aria-label={
@@ -437,6 +444,7 @@ function SidebarGroupAction({
 		<Comp
 			data-slot="sidebar-group-action"
 			data-sidebar="group-action"
+			{...(!asChild && { type: "button" })}
 			className={cn(
 				"text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground absolute top-3.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
 				// Increases the hit area of the button on mobile.
@@ -572,6 +580,7 @@ function SidebarMenuAction({
 		<Comp
 			data-slot="sidebar-menu-action"
 			data-sidebar="menu-action"
+			{...(!asChild && { type: "button" })}
 			className={cn(
 				"text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer-hover/menu-button:text-sidebar-accent-foreground absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
 				// Increases the hit area of the button on mobile.

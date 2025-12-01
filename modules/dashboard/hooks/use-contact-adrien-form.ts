@@ -44,9 +44,8 @@ export function useContactAdrienForm(options?: UseContactAdrienFormOptions) {
 			message: "",
 		},
 		transform: useTransform(
-			// Note: mergeForm attend un FormState partiel, le cast est nécessaire car
-			// useActionState retourne ActionState | undefined
-			(baseForm) => mergeForm(baseForm, (state ?? {}) as never),
+			// Merge server state with form state for validation errors
+			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
 			[state]
 		),
 	});

@@ -1,10 +1,10 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
 import { CreditCard, RefreshCcw, ShoppingCart } from "lucide-react";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Ventes - Administration",
-	description: "Gérer les ventes, commandes et paiements",
+  title: "Ventes - Administration",
+  description: "Gérer les ventes, commandes et paiements",
 };
 
 export default function VentesPage() {

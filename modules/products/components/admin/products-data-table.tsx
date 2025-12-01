@@ -1,4 +1,15 @@
+// React & Next.js
+import { ViewTransition } from "react";
+import Image from "next/image";
+import Link from "next/link";
+
+// External packages
+import { Package } from "lucide-react";
+
+// Generated types
 import { ProductStatus } from "@/app/generated/prisma/client";
+
+// Shared components
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
@@ -20,8 +31,27 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
+
+// Module imports
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import { Package } from "lucide-react";
+
+// Local components
+import { ProductRowActions } from "./product-row-actions";
+import { ProductsSelectionToolbar } from "./products-selection-toolbar";
+import { ProductsTableSelectionCell } from "./products-table-selection-cell";
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+// Singleton pour le formatage des prix (évite de recréer Intl.NumberFormat à chaque appel)
+const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
+	style: "currency",
+	currency: "EUR",
+});
+
+const formatPrice = (priceInCents: number) =>
+	PRICE_FORMATTER.format(priceInCents / 100);
 
 // Labels et styles pour les badges de statut
 const STATUS_CONFIG: Record<
@@ -32,12 +62,6 @@ const STATUS_CONFIG: Record<
 	[ProductStatus.DRAFT]: { label: "Brouillon", variant: "secondary" },
 	[ProductStatus.ARCHIVED]: { label: "Archivé", variant: "outline" },
 };
-import Image from "next/image";
-import Link from "next/link";
-import { ViewTransition } from "react";
-import { ProductRowActions } from "./product-row-actions";
-import { ProductsSelectionToolbar } from "./products-selection-toolbar";
-import { ProductsTableSelectionCell } from "./products-table-selection-cell";
 
 interface ProductsDataTableProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -69,14 +93,6 @@ export async function ProductsDataTable({
 		return (
 			defaultSku.images.find((img) => img.isPrimary) || defaultSku.images[0]
 		);
-	};
-
-	// Helper pour formater les prix en euros (format français)
-	const formatPrice = (priceInCents: number) => {
-		return new Intl.NumberFormat("fr-FR", {
-			style: "currency",
-			currency: "EUR",
-		}).format(priceInCents / 100);
 	};
 
 	// Helper pour obtenir la plage de prix (min-max)
@@ -238,8 +254,11 @@ export async function ProductsDataTable({
 															className="rounded-md object-cover"
 														/>
 													) : (
-														<div className="flex w-full h-full items-center justify-center rounded-md bg-muted">
-															<Package className="h-8 w-8 text-muted-foreground" />
+														<div
+															className="flex w-full h-full items-center justify-center rounded-md bg-muted"
+															aria-label="Aucune image disponible"
+														>
+															<Package className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
 														</div>
 													)}
 												</div>
@@ -252,6 +271,7 @@ export async function ProductsDataTable({
 														href={`/admin/catalogue/produits/${product.slug}/modifier`}
 														className="font-semibold text-foreground hover:underline hover:text-foreground truncate block"
 														title={product.title}
+														aria-label={`Modifier ${product.title}`}
 													>
 														{product.title}
 													</Link>
@@ -274,7 +294,7 @@ export async function ProductsDataTable({
 														{product.type.label}
 													</Badge>
 												) : (
-													<span className="text-sm text-muted-foreground">
+													<span className="text-sm text-muted-foreground" aria-label="Type non défini">
 														—
 													</span>
 												)}
@@ -285,17 +305,23 @@ export async function ProductsDataTable({
 											className="hidden sm:table-cell text-center"
 										>
 											{variantsCount > 0 ? (
-												<span className="text-sm font-medium">
+												<span
+													className="text-sm font-medium"
+													aria-label={`${variantsCount} variante${variantsCount > 1 ? "s" : ""}`}
+												>
 													{variantsCount}
 												</span>
 											) : (
-												<span className="text-sm text-muted-foreground">—</span>
+												<span className="text-sm text-muted-foreground" aria-label="Aucune variante">
+													—
+												</span>
 											)}
 										</TableCell>
 										<TableCell role="gridcell" className="hidden lg:table-cell text-right">
 											<span
 												className="text-sm font-medium"
 												title={priceRange}
+												aria-label={`Prix : ${priceRange}`}
 											>
 												{priceRange}
 											</span>
@@ -304,7 +330,10 @@ export async function ProductsDataTable({
 											role="gridcell"
 											className="hidden lg:table-cell text-center"
 										>
-											<Badge variant={totalStock === 0 ? "destructive" : "success"}>
+											<Badge
+												variant={totalStock === 0 ? "destructive" : "success"}
+												aria-label={totalStock === 0 ? "Stock épuisé" : `${totalStock} en stock`}
+											>
 												{totalStock}
 											</Badge>
 										</TableCell>

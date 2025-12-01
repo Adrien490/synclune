@@ -12,7 +12,7 @@ export const dashboardDateRangeSchema = z.object({
 		return data.startDate <= data.endDate;
 	}
 	return true;
-}, "startDate must be before or equal to endDate");
+}, "La date de début doit être antérieure ou égale à la date de fin");
 
 // ============================================================================
 // DASHBOARD PERIOD SCHEMA
