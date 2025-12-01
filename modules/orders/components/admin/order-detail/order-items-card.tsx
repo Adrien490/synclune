@@ -33,19 +33,23 @@ export function OrderItemsCard({
 							.filter(Boolean)
 							.join(" / ");
 
+						const imageAlt = variant
+							? `${item.productTitle} - ${variant}`
+							: item.productTitle;
+
 						return (
 							<div
 								key={item.id}
 								className="flex items-start gap-4 py-3 border-b last:border-0"
 							>
 								{/* Image */}
-								<div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-muted">
+								<div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border bg-muted">
 									{item.skuImageUrl || item.productImageUrl ? (
 										<Image
 											src={item.skuImageUrl || item.productImageUrl || ""}
-											alt={item.productTitle}
+											alt={imageAlt}
 											fill
-											sizes="64px"
+											sizes="80px"
 											quality={80}
 											className="object-cover"
 										/>

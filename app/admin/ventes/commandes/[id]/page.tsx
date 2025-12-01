@@ -2,7 +2,6 @@ import { getOrderById } from "@/modules/orders/data/get-order-by-id";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { OrderDetailPage as OrderDetail } from "@/modules/orders/components/admin/order-detail";
-import { OrderDetailSkeleton } from "@/modules/orders/components/admin/order-detail/order-detail-skeleton";
 import { CancelOrderAlertDialog } from "@/modules/orders/components/admin/cancel-order-alert-dialog";
 import { MarkAsPaidAlertDialog } from "@/modules/orders/components/admin/mark-as-paid-alert-dialog";
 import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
@@ -12,6 +11,9 @@ import { MarkAsProcessingAlertDialog } from "@/modules/orders/components/admin/m
 import { RevertToProcessingDialog } from "@/modules/orders/components/admin/revert-to-processing-dialog";
 import { MarkAsReturnedAlertDialog } from "@/modules/orders/components/admin/mark-as-returned-alert-dialog";
 import { OrderNotesDialog } from "@/modules/orders/components/admin/order-notes-dialog";
+import { ResendEmailDialog } from "@/modules/orders/components/admin/resend-email-dialog";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -57,8 +59,17 @@ export default async function OrderDetailPage({
 
 	return (
 		<div className="space-y-6">
-			{/* Breadcrumb */}
-			<Breadcrumb>
+			{/* Bouton retour mobile */}
+			<Link
+				href="/admin/ventes/commandes"
+				className="sm:hidden flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+			>
+				<ChevronLeft className="h-4 w-4" aria-hidden="true" />
+				Retour aux commandes
+			</Link>
+
+			{/* Breadcrumb (caché sur mobile) */}
+			<Breadcrumb className="hidden sm:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
@@ -86,6 +97,7 @@ export default async function OrderDetailPage({
 			<RevertToProcessingDialog />
 			<MarkAsReturnedAlertDialog />
 			<OrderNotesDialog />
+			<ResendEmailDialog />
 		</div>
 	);
 }

@@ -1,21 +1,25 @@
 "use client";
 
 import { ViewTransition } from "react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
 import {
 	OrderStatus,
 	PaymentStatus,
+	FulfillmentStatus,
 } from "@/app/generated/prisma/browser";
 import {
 	CheckCircle,
 	CreditCard,
 	Edit,
+	Mail,
 	MoreHorizontal,
+	PackageX,
 	RotateCcw,
 	StickyNote,
 	Truck,
+	Undo2,
 	XCircle,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
@@ -34,6 +38,9 @@ import { MARK_AS_SHIPPED_DIALOG_ID } from "../mark-as-shipped-dialog";
 import { MARK_AS_DELIVERED_DIALOG_ID } from "../mark-as-delivered-alert-dialog";
 import { UPDATE_TRACKING_DIALOG_ID } from "../update-tracking-dialog";
 import { ORDER_NOTES_DIALOG_ID } from "../order-notes-dialog";
+import { RESEND_EMAIL_DIALOG_ID } from "../resend-email-dialog";
+import { MARK_AS_RETURNED_DIALOG_ID } from "../mark-as-returned-alert-dialog";
+import { REVERT_TO_PROCESSING_DIALOG_ID } from "../revert-to-processing-dialog";
 import type { Carrier } from "@/modules/orders/utils/carrier-detection";
 import type { OrderHeaderProps } from "./types";
 
@@ -44,6 +51,9 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 	const markAsDeliveredDialog = useAlertDialog(MARK_AS_DELIVERED_DIALOG_ID);
 	const updateTrackingDialog = useAlertDialog(UPDATE_TRACKING_DIALOG_ID);
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
+	const resendEmailDialog = useDialog(RESEND_EMAIL_DIALOG_ID);
+	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
+	const revertToProcessingDialog = useAlertDialog(REVERT_TO_PROCESSING_DIALOG_ID);
 
 	// State machine conditions
 	const isPending = order.status === OrderStatus.PENDING;
@@ -61,6 +71,8 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 	const canMarkAsDelivered = isShipped;
 	const canRefund = (isProcessing || isShipped || isDelivered) && isPaid;
 	const canUpdateTracking = (isShipped || isDelivered) && order.trackingNumber;
+	const canMarkAsReturned = isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
+	const canRevertToProcessing = isShipped;
 
 	// Handlers
 	const handleMarkAsPaid = () => {
@@ -110,6 +122,30 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 		});
 	};
 
+	const handleResendEmail = () => {
+		resendEmailDialog.open({
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+			orderStatus: order.status,
+			fulfillmentStatus: order.fulfillmentStatus,
+		});
+	};
+
+	const handleMarkAsReturned = () => {
+		markAsReturnedDialog.open({
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+		});
+	};
+
+	const handleRevertToProcessing = () => {
+		revertToProcessingDialog.open({
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+			trackingNumber: order.trackingNumber,
+		});
+	};
+
 	return (
 		<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
 			<div>
@@ -123,6 +159,10 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 					{format(order.createdAt, "d MMMM yyyy 'à' HH'h'mm", {
 						locale: fr,
 					})}
+					<span className="text-muted-foreground/70">
+						{" "}
+						({formatDistanceToNow(order.createdAt, { addSuffix: true, locale: fr })})
+					</span>
 				</p>
 			</div>
 
@@ -156,10 +196,14 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 							<span className="sr-only">Plus d'actions</span>
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-48">
+					<DropdownMenuContent align="end" className="w-52">
 						<DropdownMenuItem onClick={handleOpenNotes}>
 							<StickyNote className="h-4 w-4" aria-hidden="true" />
 							Notes {notesCount > 0 && `(${notesCount})`}
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={handleResendEmail}>
+							<Mail className="h-4 w-4" aria-hidden="true" />
+							Renvoyer un email
 						</DropdownMenuItem>
 						{canUpdateTracking && (
 							<DropdownMenuItem onClick={handleUpdateTracking}>
@@ -175,7 +219,22 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 								</Link>
 							</DropdownMenuItem>
 						)}
+						{canMarkAsReturned && (
+							<DropdownMenuItem onClick={handleMarkAsReturned}>
+								<PackageX className="h-4 w-4" aria-hidden="true" />
+								Marquer retournée
+							</DropdownMenuItem>
+						)}
 						<DropdownMenuSeparator />
+						{canRevertToProcessing && (
+							<DropdownMenuItem
+								onClick={handleRevertToProcessing}
+								className="text-destructive focus:text-destructive"
+							>
+								<Undo2 className="h-4 w-4" aria-hidden="true" />
+								Annuler l'expédition
+							</DropdownMenuItem>
+						)}
 						{canCancel && (
 							<DropdownMenuItem
 								onClick={handleCancel}
