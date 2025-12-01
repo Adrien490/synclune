@@ -1,10 +1,18 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import {
+	requireAdmin,
+	enforceRateLimitForCurrentUser,
+	success,
+	notFound,
+	handleActionError,
+} from "@/shared/lib/actions";
 import type { UserDataExport } from "../export-user-data";
+
+// Rate limit: 10 requêtes par minute
+const EXPORT_ADMIN_RATE_LIMIT = { limit: 10, windowMs: 60 * 1000 };
 
 /**
  * Server Action ADMIN pour exporter les données d'un utilisateur (RGPD)
@@ -14,7 +22,11 @@ import type { UserDataExport } from "../export-user-data";
  */
 export async function exportUserDataAdmin(userId: string): Promise<ActionState> {
 	try {
-		// 1. Vérification admin
+		// 1. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(EXPORT_ADMIN_RATE_LIMIT);
+		if ("error" in rateCheck) return rateCheck.error;
+
+		// 2. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
@@ -64,13 +76,10 @@ export async function exportUserDataAdmin(userId: string): Promise<ActionState> 
 		});
 
 		if (!user) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Utilisateur non trouvé",
-			};
+			return notFound("Utilisateur");
 		}
 
-		// 3. Formater les données pour l'export
+		// 4. Formater les données pour l'export
 		const exportData: UserDataExport = {
 			exportedAt: new Date().toISOString(),
 			profile: {
@@ -127,19 +136,8 @@ export async function exportUserDataAdmin(userId: string): Promise<ActionState> 
 			})),
 		};
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Données exportées avec succès",
-			data: exportData,
-		};
-	} catch (error) {
-		console.error("[EXPORT_USER_DATA_ADMIN] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de l'export des données",
-		};
+		return success("Données exportées avec succès", exportData);
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de l'export des données");
 	}
 }

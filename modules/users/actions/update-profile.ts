@@ -1,13 +1,20 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
-import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { updateTag } from "next/cache";
-import { getCurrentUserInvalidationTags } from "../constants/cache";
+import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import {
+	requireAuth,
+	enforceRateLimitForCurrentUser,
+	validateInput,
+	success,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { updateProfileSchema } from "../schemas/user.schemas";
-import { USER_ERROR_MESSAGES } from "@/modules/users/constants/profile";
+import { getCurrentUserInvalidationTags } from "../constants/cache";
+
+// Rate limit: 10 requêtes par minute
+const UPDATE_PROFILE_RATE_LIMIT = { limit: 10, windowMs: 60 * 1000 };
 
 /**
  * Server Action pour mettre à jour le profil utilisateur
@@ -24,56 +31,38 @@ export async function updateProfile(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Vérification de l'authentification
-		const user = await getCurrentUser();
+		// 1. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(UPDATE_PROFILE_RATE_LIMIT);
+		if ("error" in rateCheck) return rateCheck.error;
 
-		if (!user) {
-			return {
-				status: ActionStatus.ERROR,
-				message: USER_ERROR_MESSAGES.NOT_AUTHENTICATED,
-			};
-		}
+		// 2. Vérification de l'authentification
+		const userAuth = await requireAuth();
+		if ("error" in userAuth) return userAuth.error;
 
-		// 2. Extraction des données du FormData
+		const user = userAuth.user;
+
+		// 3. Extraction et validation des données
 		const rawData = {
 			name: formData.get("name") as string,
 		};
 
-		// 3. Validation avec Zod
-		const result = updateProfileSchema.safeParse(rawData);
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || "Données invalides",
-			};
-		}
-
-		const validatedData = result.data;
+		const validation = validateInput(updateProfileSchema, rawData);
+		if ("error" in validation) return validation.error;
 
 		// 4. Mettre à jour le profil
 		await prisma.user.update({
 			where: { id: user.id },
 			data: {
-				name: validatedData.name,
+				name: validation.data.name,
 			},
 		});
 
 		// 5. Revalidation du cache avec tags
-		getCurrentUserInvalidationTags(user.id).forEach(tag => updateTag(tag));
+		const tags = getCurrentUserInvalidationTags(user.id);
+		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Profil mis à jour avec succès",
-		};
-	} catch (error) {
-// console.error("Error updating profile:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: USER_ERROR_MESSAGES.UPDATE_FAILED,
-		};
+		return success("Profil mis à jour avec succès");
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la mise à jour du profil");
 	}
 }

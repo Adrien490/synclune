@@ -1,64 +1,59 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import { AccountStatus } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import {
+	requireAdmin,
+	enforceRateLimitForCurrentUser,
+	validateInput,
+	success,
+	error,
+	notFound,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { restoreUserSchema } from "../../schemas/user-admin.schemas";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+
+// Rate limit: 20 requêtes par minute
+const RESTORE_USER_RATE_LIMIT = { limit: 20, windowMs: 60 * 1000 };
 
 export async function restoreUser(
 	_prevState: unknown,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Acces non autorise. Droits administrateur requis.",
-			};
-		}
+		// 1. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(RESTORE_USER_RATE_LIMIT);
+		if ("error" in rateCheck) return rateCheck.error;
 
-		// 2. Extraire l'ID du FormData
-		const id = formData.get("id") as string;
+		// 2. Verification des droits admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
-		// Valider les donnees
-		const validation = restoreUserSchema.safeParse({ id });
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
+		// 3. Extraire et valider l'ID
+		const rawData = { id: formData.get("id") as string };
+		const validation = validateInput(restoreUserSchema, rawData);
+		if ("error" in validation) return validation.error;
 
 		const { id: userId } = validation.data;
 
-		// 3. Verifier que l'utilisateur existe
+		// 4. Verifier que l'utilisateur existe
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 			select: { id: true, name: true, email: true, suspendedAt: true, deletedAt: true },
 		});
 
 		if (!user) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Utilisateur introuvable.",
-			};
+			return notFound("Utilisateur");
 		}
 
 		if (!user.deletedAt && !user.suspendedAt) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Cet utilisateur n'est ni supprime ni suspendu.",
-			};
+			return error("Cet utilisateur n'est ni supprime ni suspendu.");
 		}
 
-		// 4. Restaurer l'utilisateur (clear both deletedAt and suspendedAt)
+		// 5. Restaurer l'utilisateur (clear both deletedAt and suspendedAt)
 		await prisma.user.update({
 			where: { id: userId },
 			data: {
@@ -68,24 +63,12 @@ export async function restoreUser(
 			},
 		});
 
-		// 5. Revalider la page
-		revalidatePath("/admin/utilisateurs");
+		// 6. Revalider le cache
+		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `L'utilisateur ${user.name || user.email} a ete restaure.`,
-		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la restauration de l'utilisateur.",
-		};
+		return success(`L'utilisateur ${user.name || user.email} a ete restaure.`);
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la restauration de l'utilisateur");
 	}
 }

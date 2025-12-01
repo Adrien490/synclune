@@ -1,96 +1,78 @@
 "use server";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { getCurrentUser } from "@/modules/users/data/get-current-user";
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import {
+	requireAdmin,
+	requireAuth,
+	enforceRateLimitForCurrentUser,
+	validateInput,
+	success,
+	error,
+	notFound,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { deleteUserSchema } from "../../schemas/user-admin.schemas";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+
+// Rate limit: 10 requêtes par minute
+const DELETE_USER_RATE_LIMIT = { limit: 10, windowMs: 60 * 1000 };
 
 export async function deleteUser(
 	_prevState: unknown,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Acces non autorise. Droits administrateur requis.",
-			};
-		}
+		// 1. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(DELETE_USER_RATE_LIMIT);
+		if ("error" in rateCheck) return rateCheck.error;
 
-		// 2. Extraire l'ID du FormData
-		const id = formData.get("id") as string;
+		// 2. Verification des droits admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
-		// Valider les donnees
-		const validation = deleteUserSchema.safeParse({ id });
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
+		// 3. Extraire et valider l'ID
+		const rawData = { id: formData.get("id") as string };
+		const validation = validateInput(deleteUserSchema, rawData);
+		if ("error" in validation) return validation.error;
 
 		const { id: userId } = validation.data;
 
-		// 3. Verifier qu'on ne supprime pas son propre compte
-		const currentUser = await getCurrentUser();
-		if (currentUser?.id === userId) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Vous ne pouvez pas supprimer votre propre compte.",
-			};
+		// 4. Verifier qu'on ne supprime pas son propre compte
+		const userAuth = await requireAuth();
+		if ("error" in userAuth) return userAuth.error;
+
+		if (userAuth.user.id === userId) {
+			return error("Vous ne pouvez pas supprimer votre propre compte.");
 		}
 
-		// 4. Verifier que l'utilisateur existe
+		// 5. Verifier que l'utilisateur existe
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 			select: { id: true, name: true, email: true, deletedAt: true },
 		});
 
 		if (!user) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Utilisateur introuvable.",
-			};
+			return notFound("Utilisateur");
 		}
 
 		if (user.deletedAt) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Cet utilisateur est deja supprime.",
-			};
+			return error("Cet utilisateur est deja supprime.");
 		}
 
-		// 5. Soft delete
+		// 6. Soft delete
 		await prisma.user.update({
 			where: { id: userId },
 			data: { deletedAt: new Date() },
 		});
 
-		// 6. Revalider la page
-		revalidatePath("/admin/utilisateurs");
+		// 7. Revalider le cache
+		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `L'utilisateur ${user.name || user.email} a ete supprime.`,
-		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la suppression de l'utilisateur.",
-		};
+		return success(`L'utilisateur ${user.name || user.email} a ete supprime.`);
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la suppression de l'utilisateur");
 	}
 }

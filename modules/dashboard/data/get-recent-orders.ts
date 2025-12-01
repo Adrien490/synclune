@@ -1,4 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 
@@ -45,7 +46,11 @@ export async function fetchDashboardRecentOrders(): Promise<GetRecentOrdersRetur
 
 	cacheDashboard();
 
+	// Exclure les commandes non payees (Stripe checkout abandonnes)
 	const orders = await prisma.order.findMany({
+		where: {
+			paymentStatus: PaymentStatus.PAID,
+		},
 		take: DASHBOARD_RECENT_ORDERS_LIMIT,
 		orderBy: {
 			createdAt: "desc",

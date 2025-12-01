@@ -41,10 +41,8 @@ export function ProductStatusNavigation({
             }
         });
 
-        // Ajouter le nouveau status (sauf pour "all")
-        if (status !== "all") {
-            params.set("status", status);
-        }
+        // Ajouter le status (y compris "all" pour afficher tous les produits)
+        params.set("status", status);
 
         const queryString = params.toString();
         return queryString ? `${pathname}?${queryString}` : pathname;

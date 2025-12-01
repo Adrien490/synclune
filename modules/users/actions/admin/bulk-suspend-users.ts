@@ -1,51 +1,53 @@
 "use server";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { getCurrentUser } from "@/modules/users/data/get-current-user";
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import {
+	requireAdmin,
+	requireAuth,
+	enforceRateLimitForCurrentUser,
+	validateInput,
+	success,
+	error,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { bulkSuspendUsersSchema } from "../../schemas/user-admin.schemas";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+
+// Rate limit: 5 requêtes par minute (bulk actions)
+const BULK_SUSPEND_RATE_LIMIT = { limit: 5, windowMs: 60 * 1000 };
 
 export async function bulkSuspendUsers(
 	_prevState: unknown,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Acces non autorise. Droits administrateur requis.",
-			};
-		}
+		// 1. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(BULK_SUSPEND_RATE_LIMIT);
+		if ("error" in rateCheck) return rateCheck.error;
 
-		// 2. Extraire les IDs du FormData
+		// 2. Verification des droits admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
+
+		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
-		const ids = idsString ? JSON.parse(idsString as string) : [];
+		const rawData = {
+			ids: idsString ? JSON.parse(idsString as string) : [],
+		};
 
-		// Valider les donnees
-		const validation = bulkSuspendUsersSchema.safeParse({ ids });
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
+		const validation = validateInput(bulkSuspendUsersSchema, rawData);
+		if ("error" in validation) return validation.error;
 
 		const validatedData = validation.data;
 
-		// 3. Verifier qu'on ne suspend pas son propre compte
-		const currentUser = await getCurrentUser();
-		if (currentUser && validatedData.ids.includes(currentUser.id)) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Vous ne pouvez pas suspendre votre propre compte.",
-			};
+		// 4. Verifier qu'on ne suspend pas son propre compte
+		const userAuth = await requireAuth();
+		if ("error" in userAuth) return userAuth.error;
+
+		if (validatedData.ids.includes(userAuth.user.id)) {
+			return error("Vous ne pouvez pas suspendre votre propre compte.");
 		}
 
 		// 4. Filtrer les utilisateurs eligibles (non supprimes, non deja suspendus)
@@ -59,38 +61,31 @@ export async function bulkSuspendUsers(
 		});
 
 		if (eligibleUsers.length === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun utilisateur eligible pour la suspension.",
-			};
+			return error("Aucun utilisateur eligible pour la suspension.");
 		}
 
 		const eligibleIds = eligibleUsers.map((u) => u.id);
 
-		// 5. Suspendre les utilisateurs
-		const result = await prisma.user.updateMany({
-			where: { id: { in: eligibleIds } },
-			data: { suspendedAt: new Date() },
-		});
+		// 6. Suspendre les utilisateurs ET invalider leurs sessions
+		await prisma.$transaction([
+			prisma.user.updateMany({
+				where: { id: { in: eligibleIds } },
+				data: { suspendedAt: new Date() },
+			}),
+			// Invalider toutes les sessions pour forcer la deconnexion
+			prisma.session.deleteMany({
+				where: { userId: { in: eligibleIds } },
+			}),
+		]);
 
-		// 6. Revalider la page
-		revalidatePath("/admin/utilisateurs");
+		// 7. Revalider le cache
+		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${result.count} utilisateur${result.count > 1 ? "s" : ""} suspendu${result.count > 1 ? "s" : ""} avec succes.`,
-		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la suspension des utilisateurs.",
-		};
+		return success(
+			`${eligibleIds.length} utilisateur${eligibleIds.length > 1 ? "s" : ""} suspendu${eligibleIds.length > 1 ? "s" : ""} avec succes.`
+		);
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la suspension des utilisateurs");
 	}
 }

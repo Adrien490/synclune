@@ -1,10 +1,19 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import {
+	requireAdmin,
+	enforceRateLimitForCurrentUser,
+	success,
+	notFound,
+	handleActionError,
+} from "@/shared/lib/actions";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+
+// Rate limit: 10 requêtes par minute
+const INVALIDATE_SESSIONS_RATE_LIMIT = { limit: 10, windowMs: 60 * 1000 };
 
 /**
  * Server Action ADMIN pour forcer la déconnexion d'un utilisateur
@@ -14,45 +23,38 @@ import { revalidatePath } from "next/cache";
  */
 export async function invalidateUserSessions(userId: string): Promise<ActionState> {
 	try {
-		// 1. Vérification admin
+		// 1. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(INVALIDATE_SESSIONS_RATE_LIMIT);
+		if ("error" in rateCheck) return rateCheck.error;
+
+		// 2. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Vérifier que l'utilisateur existe
+		// 3. Vérifier que l'utilisateur existe
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 			select: { id: true, email: true, name: true },
 		});
 
 		if (!user) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Utilisateur non trouvé",
-			};
+			return notFound("Utilisateur");
 		}
 
-		// 3. Supprimer toutes les sessions de l'utilisateur
+		// 4. Supprimer toutes les sessions de l'utilisateur
 		const result = await prisma.session.deleteMany({
 			where: { userId },
 		});
 
-		// 4. Revalider la page utilisateurs
-		revalidatePath("/admin/utilisateurs");
+		// 5. Revalider le cache
+		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 		const displayName = user.name || user.email;
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${result.count} session(s) de ${displayName} invalidée(s)`,
-			data: { deletedCount: result.count },
-		};
-	} catch (error) {
-		console.error("[INVALIDATE_USER_SESSIONS] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de l'invalidation des sessions",
-		};
+		return success(`${result.count} session(s) de ${displayName} invalidée(s)`, {
+			deletedCount: result.count,
+		});
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de l'invalidation des sessions");
 	}
 }

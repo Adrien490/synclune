@@ -13,16 +13,16 @@ export const CHART_STYLES = {
   /** Combinaison complete pour les cartes de chart */
   card: "border-l-4 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent",
 
-  /** Hauteurs standardisees avec max-height pour eviter CLS */
+  /** Hauteurs standardisees pour les charts */
   height: {
-    /** Hauteur par defaut pour les charts principaux (300-500px) */
-    default: "min-h-[300px] max-h-[500px] overflow-y-auto",
-    /** Hauteur compacte pour les charts secondaires (250-400px) */
-    compact: "min-h-[250px] max-h-[400px] overflow-y-auto",
-    /** Hauteur responsive (200-400px mobile, 300-500px desktop) */
-    responsive: "min-h-[200px] md:min-h-[300px] max-h-[400px] md:max-h-[500px] overflow-y-auto",
-    /** Hauteur compacte responsive (180-350px mobile, 250-400px desktop) */
-    compactResponsive: "min-h-[180px] md:min-h-[250px] max-h-[350px] md:max-h-[400px] overflow-y-auto",
+    /** Hauteur par defaut pour les charts principaux */
+    default: "h-[300px]",
+    /** Hauteur compacte pour les charts secondaires */
+    compact: "h-[250px]",
+    /** Hauteur responsive (250px mobile, 300px desktop) */
+    responsive: "h-[250px] md:h-[300px]",
+    /** Hauteur compacte responsive */
+    compactResponsive: "h-[200px] md:h-[250px]",
   },
 
   /** Padding standardise pour les cards */

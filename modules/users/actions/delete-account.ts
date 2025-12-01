@@ -3,11 +3,19 @@
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe } from "@/shared/lib/stripe";
-import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { auth } from "@/modules/auth/lib/auth";
 import { headers } from "next/headers";
+import {
+	requireAuth,
+	enforceRateLimitForCurrentUser,
+	success,
+	error,
+	handleActionError,
+} from "@/shared/lib/actions";
+
+// Rate limit: 3 requêtes par heure (action sensible RGPD)
+const DELETE_ACCOUNT_RATE_LIMIT = { limit: 3, windowMs: 60 * 60 * 1000 };
 
 /**
  * Server Action pour supprimer le compte utilisateur (droit à l'oubli RGPD)
@@ -22,15 +30,15 @@ import { headers } from "next/headers";
  */
 export async function deleteAccount(): Promise<ActionState> {
 	try {
-		// 1. Vérification de l'authentification
-		const user = await getCurrentUser();
+		// 1. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(DELETE_ACCOUNT_RATE_LIMIT);
+		if ("error" in rateCheck) return rateCheck.error;
 
-		if (!user) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Vous devez être connecté pour supprimer votre compte",
-			};
-		}
+		// 2. Vérification de l'authentification
+		const userAuth = await requireAuth();
+		if ("error" in userAuth) return userAuth.error;
+
+		const user = userAuth.user;
 
 		const userId = user.id;
 		const anonymizedEmail = `deleted_${userId.slice(0, 8)}@synclune.local`;
@@ -121,19 +129,10 @@ export async function deleteAccount(): Promise<ActionState> {
 			headers: headersList,
 		});
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message:
-				"Votre compte a été supprimé. Vos données personnelles ont été effacées conformément au RGPD.",
-		};
-	} catch (error) {
-		console.error("[DELETE_ACCOUNT] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de la suppression du compte",
-		};
+		return success(
+			"Votre compte a été supprimé. Vos données personnelles ont été effacées conformément au RGPD."
+		);
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la suppression du compte");
 	}
 }

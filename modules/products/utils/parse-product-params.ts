@@ -9,7 +9,7 @@ import { GET_PRODUCTS_SORT_FIELDS } from "../constants/product.constants";
 export function parseProductParams(searchParams: {
 	[key: string]: string | string[] | undefined;
 }) {
-	// Parse status separately to allow undefined (= all statuses)
+	// Parse status - default to PUBLIC if not specified
 	const statusParam = Array.isArray(searchParams.status)
 		? searchParams.status[0]
 		: searchParams.status;
@@ -20,10 +20,13 @@ export function parseProductParams(searchParams: {
 		ProductStatus.ARCHIVED,
 	] as const;
 
+	// "all" = undefined (tous les statuts), sinon valider le statut ou défaut PUBLIC
 	const status =
-		statusParam && validStatuses.includes(statusParam as ProductStatus)
-			? (statusParam as ProductStatus)
-			: undefined; // undefined = affiche tous les statuts
+		statusParam === "all"
+			? undefined
+			: statusParam && validStatuses.includes(statusParam as ProductStatus)
+				? (statusParam as ProductStatus)
+				: ProductStatus.PUBLIC; // Par défaut: produits publics
 
 	return {
 		cursor: searchParamParsers.cursor(searchParams.cursor),

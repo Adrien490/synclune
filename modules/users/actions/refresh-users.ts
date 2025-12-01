@@ -1,9 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { isAdmin } from "@/modules/auth/utils/guards";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import { requireAdmin, success, handleActionError } from "@/shared/lib/actions";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export async function refreshUsers(
@@ -11,33 +10,16 @@ export async function refreshUsers(
 	_formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
+		// 1. Vérification des droits admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé. Droits administrateur requis.",
-			};
-		}
-
+		// 2. Revalidation du cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Utilisateurs rafraîchis",
-		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors du rafraîchissement",
-		};
+		return success("Utilisateurs rafraîchis");
+	} catch (e) {
+		return handleActionError(e, "Erreur lors du rafraîchissement");
 	}
 }

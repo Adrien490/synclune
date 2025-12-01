@@ -59,6 +59,14 @@ export async function bulkDeleteProducts(
 			};
 		}
 
+		// Validation defensive : verifier que productIds est bien un tableau
+		if (!Array.isArray(productIds)) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "La liste des produits est invalide.",
+			};
+		}
+
 		const rawData = {
 			productIds,
 		};

@@ -1,9 +1,17 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import {
+	requireAuth,
+	enforceRateLimitForCurrentUser,
+	success,
+	notFound,
+	handleActionError,
+} from "@/shared/lib/actions";
+
+// Rate limit: 5 requêtes par heure (action intensive)
+const EXPORT_DATA_RATE_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
 
 /**
  * Données exportées pour l'utilisateur (droit à la portabilité RGPD - Article 20)
@@ -71,17 +79,17 @@ export interface UserDataExport {
  */
 export async function exportUserData(): Promise<ActionState> {
 	try {
-		// 1. Vérification de l'authentification
-		const currentUser = await getCurrentUser();
+		// 1. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(EXPORT_DATA_RATE_LIMIT);
+		if ("error" in rateCheck) return rateCheck.error;
 
-		if (!currentUser) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Vous devez être connecté pour exporter vos données",
-			};
-		}
+		// 2. Vérification de l'authentification
+		const userAuth = await requireAuth();
+		if ("error" in userAuth) return userAuth.error;
 
-		// 2. Récupérer toutes les données utilisateur
+		const currentUser = userAuth.user;
+
+		// 3. Récupérer toutes les données utilisateur
 		const user = await prisma.user.findUnique({
 			where: { id: currentUser.id },
 			include: {
@@ -127,13 +135,10 @@ export async function exportUserData(): Promise<ActionState> {
 		});
 
 		if (!user) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Utilisateur non trouvé",
-			};
+			return notFound("Utilisateur");
 		}
 
-		// 3. Formater les données pour l'export
+		// 4. Formater les données pour l'export
 		const exportData: UserDataExport = {
 			exportedAt: new Date().toISOString(),
 			profile: {
@@ -190,19 +195,8 @@ export async function exportUserData(): Promise<ActionState> {
 			})),
 		};
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Données exportées avec succès",
-			data: exportData,
-		};
-	} catch (error) {
-		console.error("[EXPORT_USER_DATA] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de l'export des données",
-		};
+		return success("Données exportées avec succès", exportData);
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de l'export des données");
 	}
 }

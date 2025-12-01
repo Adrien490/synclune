@@ -1,40 +1,43 @@
 "use server";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import {
+	requireAdmin,
+	enforceRateLimitForCurrentUser,
+	validateInput,
+	success,
+	error,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { bulkRestoreUsersSchema } from "../../schemas/user-admin.schemas";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+
+// Rate limit: 5 requêtes par minute (bulk actions)
+const BULK_RESTORE_RATE_LIMIT = { limit: 5, windowMs: 60 * 1000 };
 
 export async function bulkRestoreUsers(
 	_prevState: unknown,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Verification des droits admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Acces non autorise. Droits administrateur requis.",
-			};
-		}
+		// 1. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(BULK_RESTORE_RATE_LIMIT);
+		if ("error" in rateCheck) return rateCheck.error;
 
-		// 2. Extraire les IDs du FormData
+		// 2. Verification des droits admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
+
+		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids");
-		const ids = idsString ? JSON.parse(idsString as string) : [];
+		const rawData = {
+			ids: idsString ? JSON.parse(idsString as string) : [],
+		};
 
-		// Valider les donnees
-		const validation = bulkRestoreUsersSchema.safeParse({ ids });
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
+		const validation = validateInput(bulkRestoreUsersSchema, rawData);
+		if ("error" in validation) return validation.error;
 
 		const validatedData = validation.data;
 
@@ -51,10 +54,7 @@ export async function bulkRestoreUsers(
 		});
 
 		if (eligibleUsers.length === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun utilisateur eligible pour la restauration.",
-			};
+			return error("Aucun utilisateur eligible pour la restauration.");
 		}
 
 		const eligibleIds = eligibleUsers.map((u) => u.id);
@@ -68,24 +68,14 @@ export async function bulkRestoreUsers(
 			},
 		});
 
-		// 5. Revalider la page
-		revalidatePath("/admin/utilisateurs");
+		// 5. Revalider le cache
+		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${result.count} utilisateur${result.count > 1 ? "s" : ""} restaure${result.count > 1 ? "s" : ""} avec succes.`,
-		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la restauration des utilisateurs.",
-		};
+		return success(
+			`${result.count} utilisateur${result.count > 1 ? "s" : ""} restaure${result.count > 1 ? "s" : ""} avec succes.`
+		);
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la restauration des utilisateurs");
 	}
 }

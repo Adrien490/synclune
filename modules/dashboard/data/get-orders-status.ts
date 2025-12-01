@@ -1,5 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { OrderStatus } from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import type { OrderStatusCount } from "../types/dashboard.types";
@@ -39,8 +39,12 @@ export async function fetchDashboardOrdersStatus(): Promise<GetOrdersStatusRetur
 
 	cacheDashboard();
 
+	// Exclure les commandes non payees (Stripe checkout abandonnes)
 	const statusCounts = await prisma.order.groupBy({
 		by: ["status"],
+		where: {
+			paymentStatus: PaymentStatus.PAID,
+		},
 		_count: {
 			id: true,
 		},
