@@ -12,7 +12,6 @@ import { CreativeProcess } from "./_components/creative-process";
 import { Hero } from "./_components/hero";
 import { LatestCreations } from "@/modules/products/components/latest-creations";
 import { LatestCreationsSkeleton } from "@/modules/products/components/latest-creations-skeleton";
-import { NewsletterSection } from "@/modules/newsletter/components/newsletter-section";
 import { WhySynclune } from "./_components/why-synclune";
 import type { Metadata } from "next";
 
@@ -108,9 +107,6 @@ export default async function Page() {
 
 			{/* 5. CreativeProcess - Storytelling atelier + Connexion émotionnelle */}
 			<CreativeProcess />
-
-			{/* 6. Newsletter - Inscription pour rester informé(e) des nouveautés */}
-			<NewsletterSection />
 		</>
 	);
 }

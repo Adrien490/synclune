@@ -7,7 +7,7 @@ import { ProductCarouselSkeleton } from "@/modules/products/components/product-c
  * Loading state for home page
  * Reproduit EXACTEMENT la structure de la page réelle pour éviter le CLS
  *
- * Structure : Hero → LatestCreations → Collections → WhySynclune → CreativeProcess → Newsletter
+ * Structure : Hero → LatestCreations → Collections → WhySynclune → CreativeProcess
  */
 export default function HomeLoading() {
 	return (
@@ -206,24 +206,6 @@ export default function HomeLoading() {
 								<Skeleton className="h-12 w-full sm:w-56 bg-muted/40 rounded-lg shadow-sm" />
 							</div>
 						</div>
-					</div>
-				</div>
-			</section>
-
-			{/* 6. Newsletter Section Skeleton */}
-			<section
-				className="relative bg-background py-16 px-4"
-				aria-label="Chargement de la newsletter"
-			>
-				<div className="max-w-md mx-auto text-center space-y-4">
-					{/* Titre */}
-					<Skeleton className="h-7 w-80 mx-auto bg-muted/50" />
-					{/* Description */}
-					<Skeleton className="h-6 w-full max-w-sm mx-auto bg-muted/30" />
-					{/* Formulaire */}
-					<div className="flex flex-col gap-3 mt-4">
-						<Skeleton className="h-12 w-full bg-muted/30 rounded-lg" />
-						<Skeleton className="h-4 w-3/4 mx-auto bg-muted/20" />
 					</div>
 				</div>
 			</section>

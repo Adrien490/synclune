@@ -2,24 +2,37 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/shared/components/ui/breadcrumb";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
+import { SelectFilter } from "@/shared/components/select-filter";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getProductSkus } from "@/modules/skus/data/get-skus";
 import { parseProductSkuParams } from "@/modules/skus/utils/parse-sku-params";
+import { getColorOptions } from "@/modules/colors/data/get-colors";
+import { getMaterialOptions } from "@/modules/materials/data/get-materials";
+import { SORT_LABELS } from "@/modules/skus/constants/skus-constants";
 import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-data-table";
 import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
 import { RefreshSkusButton } from "@/modules/skus/components/admin/refresh-skus-button";
 import { DeleteProductSkuAlertDialog } from "@/modules/skus/components/admin/delete-sku-alert-dialog";
 import { AdjustStockDialog } from "@/modules/skus/components/admin/adjust-stock-dialog";
 import { UpdatePriceDialog } from "@/modules/skus/components/admin/update-price-dialog";
-
-export type ProductVariantFiltersSearchParams = {
-	// Add any variant-specific filters here if needed in the future
-};
+import { BulkAdjustStockDialog } from "@/modules/skus/components/admin/bulk-adjust-stock-dialog";
+import { BulkUpdatePriceDialog } from "@/modules/skus/components/admin/bulk-update-price-dialog";
+import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-sheet";
+import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
 
 export type ProductVariantsSearchParams = {
 	cursor?: string;
@@ -27,12 +40,50 @@ export type ProductVariantsSearchParams = {
 	perPage?: string;
 	sortBy?: string;
 	search?: string;
-} & ProductVariantFiltersSearchParams;
+	filter_stockStatus?: string | string[];
+	filter_colorId?: string | string[];
+	filter_materialId?: string | string[];
+	filter_isActive?: string;
+};
 
 type ProductVariantsPageProps = {
 	params: Promise<{ slug: string }>;
 	searchParams: Promise<ProductVariantsSearchParams>;
 };
+
+// Normalise une valeur string ou string[] en tableau
+function normalizeArray(value: string | string[] | undefined): string[] {
+	if (!value) return [];
+	return Array.isArray(value) ? value : [value];
+}
+
+// Parse les filtres depuis les parametres URL
+function parseVariantFilters(params: ProductVariantsSearchParams) {
+	const stockStatuses = normalizeArray(params.filter_stockStatus).filter(
+		(s) => s !== "all"
+	);
+	const colorIds = normalizeArray(params.filter_colorId);
+	const materialIds = normalizeArray(params.filter_materialId);
+
+	// Parse isActive
+	let isActive: boolean | undefined;
+	if (params.filter_isActive === "true") {
+		isActive = true;
+	} else if (params.filter_isActive === "false") {
+		isActive = false;
+	}
+
+	return {
+		// Si un seul statut, utiliser comme string pour le schema existant
+		stockStatus:
+			stockStatuses.length === 1
+				? (stockStatuses[0] as "in_stock" | "low_stock" | "out_of_stock")
+				: undefined,
+		colorId: colorIds.length > 0 ? colorIds : undefined,
+		materialId: materialIds.length > 0 ? materialIds : undefined,
+		isActive,
+	};
+}
 
 export async function generateMetadata({
 	params,
@@ -48,7 +99,7 @@ export async function generateMetadata({
 
 	return {
 		title: `Variantes de ${product.title} - Administration`,
-		description: `Gérer les variantes du produit ${product.title}`,
+		description: `Gerer les variantes du produit ${product.title}`,
 	};
 }
 
@@ -63,7 +114,10 @@ export default async function ProductVariantsPage({
 	const { cursor, direction, perPage, sortBy, search } =
 		parseProductSkuParams(searchParamsData);
 
-	// Récupérer le produit
+	// Parse les filtres
+	const filters = parseVariantFilters(searchParamsData);
+
+	// Recuperer le produit
 	const product = await getProductBySlug({
 		slug,
 		includeDraft: true,
@@ -73,6 +127,13 @@ export default async function ProductVariantsPage({
 		notFound();
 	}
 
+	// Les options de filtre sont awaited car necessaires immediatement
+	const [colorOptions, materialOptions] = await Promise.all([
+		getColorOptions(),
+		getMaterialOptions(),
+	]);
+
+	// La promise de SKUs n'est PAS awaited pour permettre le streaming
 	const skusPromise = getProductSkus({
 		cursor,
 		direction,
@@ -81,25 +142,59 @@ export default async function ProductVariantsPage({
 		search,
 		filters: {
 			productId: product.id,
+			...filters,
 		},
 	});
 
 	return (
-		<>
+		<div className="space-y-6">
 			<DeleteProductSkuAlertDialog />
 			<AdjustStockDialog />
 			<UpdatePriceDialog />
+			<BulkAdjustStockDialog />
+			<BulkUpdatePriceDialog />
+
+			{/* Breadcrumb personnalise avec titre du produit */}
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin/catalogue/produits">Produits</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href={`/admin/catalogue/produits/${slug}/modifier`}>
+							{product.title}
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbPage>Variantes</BreadcrumbPage>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
 
 			<PageHeader
 				variant="compact"
 				title={`Variantes de ${product.title}`}
-				description="Gérez les différentes variantes de ce produit (couleur, taille, matériau, etc.)"
+				description="Gerez les differentes variantes de ce produit (couleur, taille, materiau, etc.)"
 				actions={
-					<Button asChild>
-						<Link href={`/admin/catalogue/produits/${slug}/variantes/nouveau`}>
-							Nouvelle variante
-						</Link>
-					</Button>
+					<div className="flex items-center gap-2">
+						<Button variant="outline" asChild>
+							<Link href={`/admin/catalogue/produits/${slug}/modifier`}>
+								<ArrowLeft className="h-4 w-4 mr-2" />
+								Modifier le produit
+							</Link>
+						</Button>
+						<Button asChild>
+							<Link href={`/admin/catalogue/produits/${slug}/variantes/nouveau`}>
+								Nouvelle variante
+							</Link>
+						</Button>
+					</div>
 				}
 			/>
 
@@ -111,10 +206,26 @@ export default async function ProductVariantsPage({
 							placeholder="Rechercher une variante..."
 						/>
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2 w-full sm:w-auto">
+						<SkusFilterSheet
+							colorOptions={colorOptions}
+							materialOptions={materialOptions}
+						/>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+								value,
+								label,
+							}))}
+							placeholder="Plus recents"
+							className="w-full sm:min-w-[180px]"
+						/>
 						<RefreshSkusButton productId={product.id} />
 					</div>
 				</DataTableToolbar>
+
+				<SkusFilterBadges colors={colorOptions} materials={materialOptions} />
 
 				<Suspense fallback={<SkusDataTableSkeleton />}>
 					<ProductVariantsDataTable
@@ -123,6 +234,6 @@ export default async function ProductVariantsPage({
 					/>
 				</Suspense>
 			</div>
-		</>
+		</div>
 	);
 }

@@ -8,7 +8,6 @@ import {
 	Layers,
 	Boxes,
 	Bell,
-	Mail,
 	Ticket,
 	Users,
 	Tag,
@@ -115,17 +114,11 @@ export const navigationData: NavigationData = {
 			],
 		},
 		// ─────────────────────────────────────────────────────────────────────────
-		// MARKETING - Newsletter et promotions
+		// MARKETING - Promotions et alertes stock
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Marketing",
 			items: [
-				{
-					id: "newsletter",
-					title: "Newsletter",
-					url: "/admin/marketing/newsletter",
-					icon: Mail,
-				},
 				{
 					id: "promo-codes",
 					title: "Codes promo",

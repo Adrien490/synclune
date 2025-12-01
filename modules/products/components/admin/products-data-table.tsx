@@ -245,7 +245,6 @@ export async function ProductsDataTable({
 								const defaultImage = getDefaultImage(product);
 								const totalStock = getTotalStock(product);
 								const skusCount = product._count?.skus || 0;
-								const variantsCount = skusCount > 1 ? skusCount - 1 : 0;
 								const priceRange = getPriceRange(product);
 
 								return (
@@ -323,13 +322,15 @@ export async function ProductsDataTable({
 											role="gridcell"
 											className="hidden sm:table-cell text-center"
 										>
-											{variantsCount > 0 ? (
-												<span
-													className="text-sm font-medium"
-													aria-label={`${variantsCount} variante${variantsCount > 1 ? "s" : ""}`}
+											{skusCount > 0 ? (
+												<Link
+													href={`/admin/catalogue/produits/${product.slug}/variantes`}
+													className="text-sm font-medium hover:underline"
+													aria-label={`${skusCount} variante${skusCount > 1 ? "s" : ""} - Cliquer pour gerer`}
+													title="Gerer les variantes"
 												>
-													{variantsCount}
-												</span>
+													{skusCount}
+												</Link>
 											) : (
 												<span className="text-sm text-muted-foreground" aria-label="Aucune variante">
 													—

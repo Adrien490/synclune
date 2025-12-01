@@ -217,6 +217,33 @@ export const bulkDeleteSkusSchema = z.object({
 	}),
 });
 
+export const bulkAdjustStockSchema = z.object({
+	ids: z.string().transform((str) => {
+		try {
+			const parsed = JSON.parse(str);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	}),
+	mode: z.enum(["relative", "absolute"]),
+	value: z.coerce.number().int(),
+});
+
+export const bulkUpdatePriceSchema = z.object({
+	ids: z.string().transform((str) => {
+		try {
+			const parsed = JSON.parse(str);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	}),
+	mode: z.enum(["percentage", "absolute"]),
+	value: z.coerce.number(),
+	updateCompareAtPrice: z.coerce.boolean().default(false),
+});
+
 // ============================================================================
 // UPDATE SCHEMA
 // ============================================================================

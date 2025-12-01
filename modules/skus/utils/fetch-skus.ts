@@ -35,7 +35,8 @@ export async function fetchProductSkus(
 		const where = buildWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.ProductSkuOrderByWithRelationInput[] =
+		// Toujours trier le SKU par défaut en premier, puis appliquer le tri sélectionné
+		const userSortConfig: Prisma.ProductSkuOrderByWithRelationInput[] =
 			params.sortBy.startsWith("sku-")
 				? [{ sku: direction }, { id: "asc" }]
 				: params.sortBy.startsWith("price-")
@@ -45,6 +46,11 @@ export async function fetchProductSkus(
 						: params.sortBy.startsWith("created-")
 							? [{ createdAt: direction }, { id: "asc" }]
 							: [{ createdAt: "desc" }, { id: "asc" }];
+
+		const orderBy: Prisma.ProductSkuOrderByWithRelationInput[] = [
+			{ isDefault: "desc" }, // SKU par défaut toujours en premier
+			...userSortConfig,
+		];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_PRODUCT_SKUS_DEFAULT_PER_PAGE),

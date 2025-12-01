@@ -19,14 +19,19 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useBulkActivateSkus } from "@/modules/skus/hooks/use-bulk-activate-skus";
 import { useBulkDeactivateSkus } from "@/modules/skus/hooks/use-bulk-deactivate-skus";
 import { useBulkDeleteSkus } from "@/modules/skus/hooks/use-bulk-delete-skus";
+import { BULK_ADJUST_STOCK_DIALOG_ID } from "./bulk-adjust-stock-dialog";
+import { BULK_UPDATE_PRICE_DIALOG_ID } from "./bulk-update-price-dialog";
 import {
 	CheckCircle,
+	DollarSign,
 	FileDown,
 	Loader2,
 	MoreVertical as MoreVerticalIcon,
+	Package,
 	Trash2,
 	XCircle,
 } from "lucide-react";
@@ -36,6 +41,10 @@ import { toast } from "sonner";
 export function ProductVariantSelectionActions() {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+	// Dialog hooks (Zustand)
+	const bulkAdjustStockDialog = useDialog(BULK_ADJUST_STOCK_DIALOG_ID);
+	const bulkUpdatePriceDialog = useDialog(BULK_UPDATE_PRICE_DIALOG_ID);
 
 	const { activateSkus, isPending: isActivating } = useBulkActivateSkus({
 		onSuccess: () => {
@@ -58,33 +67,47 @@ export function ProductVariantSelectionActions() {
 
 	const handleExportCSV = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une variante.");
+			toast.error("Veuillez selectionner au moins une variante.");
 			return;
 		}
-		toast.info("Export CSV non implémenté");
+		toast.info("Export CSV non implemente");
 	};
 
 	const handleActivate = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une variante.");
+			toast.error("Veuillez selectionner au moins une variante.");
 			return;
 		}
-
 		activateSkus(selectedItems);
 	};
 
 	const handleDeactivate = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une variante.");
+			toast.error("Veuillez selectionner au moins une variante.");
 			return;
 		}
-
 		deactivateSkus(selectedItems);
+	};
+
+	const handleAdjustStock = () => {
+		if (selectedItems.length === 0) {
+			toast.error("Veuillez selectionner au moins une variante.");
+			return;
+		}
+		bulkAdjustStockDialog.open({ skuIds: selectedItems });
+	};
+
+	const handleUpdatePrice = () => {
+		if (selectedItems.length === 0) {
+			toast.error("Veuillez selectionner au moins une variante.");
+			return;
+		}
+		bulkUpdatePriceDialog.open({ skuIds: selectedItems });
 	};
 
 	const handleDeleteClick = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une variante.");
+			toast.error("Veuillez selectionner au moins une variante.");
 			return;
 		}
 		setDeleteDialogOpen(true);
@@ -109,6 +132,18 @@ export function ProductVariantSelectionActions() {
 
 					<DropdownMenuSeparator />
 
+					<DropdownMenuItem onClick={handleAdjustStock}>
+						<Package className="h-4 w-4" />
+						Ajuster le stock
+					</DropdownMenuItem>
+
+					<DropdownMenuItem onClick={handleUpdatePrice}>
+						<DollarSign className="h-4 w-4" />
+						Modifier le prix
+					</DropdownMenuItem>
+
+					<DropdownMenuSeparator />
+
 					<DropdownMenuItem onClick={handleActivate} disabled={isActivating}>
 						<CheckCircle className="h-4 w-4" />
 						Activer
@@ -116,7 +151,7 @@ export function ProductVariantSelectionActions() {
 
 					<DropdownMenuItem onClick={handleDeactivate} disabled={isDeactivating}>
 						<XCircle className="h-4 w-4" />
-						Désactiver
+						Desactiver
 					</DropdownMenuItem>
 
 					<DropdownMenuSeparator />
@@ -133,7 +168,7 @@ export function ProductVariantSelectionActions() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Supprimer les variantes</AlertDialogTitle>
 						<AlertDialogDescription>
-							Êtes-vous sûr de vouloir supprimer{" "}
+							Etes-vous sur de vouloir supprimer{" "}
 							<span className="font-semibold">
 								{selectedItems.length} variante
 								{selectedItems.length > 1 ? "s" : ""}
@@ -142,7 +177,7 @@ export function ProductVariantSelectionActions() {
 							<br />
 							<br />
 							<span className="text-destructive font-medium">
-								Cette action est irréversible. Les variantes par défaut ne peuvent pas être supprimées.
+								Cette action est irreversible. Les variantes par defaut ne peuvent pas etre supprimees.
 							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>

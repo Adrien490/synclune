@@ -4,6 +4,14 @@ import { getProductTypes } from "@/modules/product-types/data/get-product-types"
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { notFound } from "next/navigation";
 import { EditProductForm } from "@/modules/products/components/admin/edit-product-form";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/shared/components/ui/breadcrumb";
 
 type EditProductPageParams = Promise<{ slug: string }>;
 
@@ -43,11 +51,30 @@ export default async function EditProductPage({
 	]);
 
 	return (
-		<EditProductForm
-			product={product}
-			productTypes={productTypesData.productTypes}
-			collections={collectionsData.collections}
-			colors={colorsData.colors}
-		/>
+		<div className="space-y-6">
+			{/* Breadcrumb personnalise avec titre du produit */}
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin/catalogue/produits">Produits</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbPage>{product.title}</BreadcrumbPage>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+
+			<EditProductForm
+				product={product}
+				productTypes={productTypesData.productTypes}
+				collections={collectionsData.collections}
+				colors={colorsData.colors}
+			/>
+		</div>
 	);
 }

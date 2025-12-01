@@ -176,17 +176,21 @@ export async function InventoryDataTable({
 											<div className="overflow-hidden">
 												<ViewTransition name={`admin-sku-${sku.id}`}>
 													<Link
-														href={`/admin/catalogue/produits/${sku.product.slug}/variantes/${sku.id}/modifier`}
+														href={`/admin/catalogue/produits/${sku.product.slug}/variantes`}
 														className="font-semibold text-foreground hover:underline truncate block"
-														title={`Modifier ${sku.product.title}`}
+														title={`Voir toutes les variantes de ${sku.product.title}`}
 													>
 														{sku.product.title}
 													</Link>
 												</ViewTransition>
-												<p className="text-sm text-muted-foreground truncate">
+												<Link
+													href={`/admin/catalogue/produits/${sku.product.slug}/variantes/${sku.id}/modifier`}
+													className="text-sm text-muted-foreground hover:underline truncate block"
+													title={`Modifier ${sku.sku}`}
+												>
 													{sku.sku}
 													{sku.size && ` · ${sku.size}`}
-												</p>
+												</Link>
 												{!sku.isActive && (
 													<Badge variant="secondary" className="mt-1 text-xs">
 														Inactif

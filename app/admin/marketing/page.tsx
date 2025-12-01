@@ -1,5 +1,5 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { Mail, Percent } from "lucide-react";
+import { Percent } from "lucide-react";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,15 +11,9 @@ export default function MarketingPage() {
 	return (
 		<SectionNavigation
 			title="Marketing"
-			description="Gérez vos newsletters et codes promotionnels"
-			columns={2}
+			description="Gérez vos codes promotionnels"
+			columns={1}
 			links={[
-				{
-					title: "Newsletter",
-					description: "Envoyer des emails et gérer les abonnés",
-					href: "/admin/marketing/newsletter",
-					icon: Mail,
-				},
 				{
 					title: "Codes promo",
 					description: "Créer et gérer les codes de réduction",

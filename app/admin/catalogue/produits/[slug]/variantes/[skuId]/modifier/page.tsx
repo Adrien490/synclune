@@ -2,6 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/shared/components/page-header";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/shared/components/ui/breadcrumb";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getSkuById } from "@/modules/skus/data/get-sku";
 import { EditProductVariantForm } from "@/modules/skus/components/admin/edit-sku-form";
@@ -71,7 +79,36 @@ export default async function EditSkuPage({
 	}
 
 	return (
-		<>
+		<div className="space-y-6">
+			{/* Breadcrumb personnalise */}
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin/catalogue/produits">Produits</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href={`/admin/catalogue/produits/${slug}/modifier`}>
+							{product.title}
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href={`/admin/catalogue/produits/${slug}/variantes`}>
+							Variantes
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbPage>{sku.sku}</BreadcrumbPage>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+
 			<PageHeader
 				variant="compact"
 				title={`Modifier ${sku.sku}`}
@@ -88,6 +125,6 @@ export default async function EditSkuPage({
 				productSlug={slug}
 				sku={sku}
 			/>
-		</>
+		</div>
 	);
 }
