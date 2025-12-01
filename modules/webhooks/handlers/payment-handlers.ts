@@ -78,15 +78,32 @@ export async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent):
 		// 2. Vérifier si le stock a été décrémenté (statut PROCESSING = paiement avait réussi)
 		const shouldRestoreStock = order.status === "PROCESSING" || order.paymentStatus === "PAID";
 
-		// 3. Transaction pour mettre à jour la commande ET restaurer le stock si nécessaire
+		// 3. Extraire les codes d'erreur du payment intent
+		const lastError = paymentIntent.last_payment_error;
+		const paymentFailureCode = lastError?.code ?? null;
+		const paymentDeclineCode = lastError?.decline_code ?? null;
+		const paymentFailureMessage = lastError?.message ?? null;
+
+		console.log(`[AUDIT] Payment failure details`, {
+			orderId,
+			orderNumber: order.orderNumber,
+			failureCode: paymentFailureCode,
+			declineCode: paymentDeclineCode,
+			message: paymentFailureMessage,
+		});
+
+		// 4. Transaction pour mettre à jour la commande ET restaurer le stock si nécessaire
 		await prisma.$transaction(async (tx) => {
-			// Mettre à jour le statut de la commande
+			// Mettre à jour le statut de la commande avec les codes d'erreur
 			await tx.order.update({
 				where: { id: orderId },
 				data: {
 					paymentStatus: "FAILED",
 					status: "CANCELLED",
 					stripePaymentIntentId: paymentIntent.id,
+					paymentFailureCode,
+					paymentDeclineCode,
+					paymentFailureMessage,
 				},
 			});
 

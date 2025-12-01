@@ -6,7 +6,13 @@ import { handleCheckoutSessionCompleted, handleCheckoutSessionExpired } from "..
 import { handlePaymentSuccess, handlePaymentFailure, handlePaymentCanceled } from "../handlers/payment-handlers";
 import { handleChargeRefunded, handleRefundUpdated, handleRefundFailed } from "../handlers/refund-handlers";
 import { handleAsyncPaymentSucceeded, handleAsyncPaymentFailed } from "../handlers/async-payment-handlers";
-import { handleDisputeCreated } from "../handlers/dispute-handlers";
+import {
+	handleDisputeCreated,
+	handleDisputeUpdated,
+	handleDisputeClosed,
+	handleDisputeFundsWithdrawn,
+	handleDisputeFundsReinstated,
+} from "../handlers/dispute-handlers";
 import { handleInvoiceFinalized, handleInvoicePaid, handleInvoicePaymentFailed } from "../handlers/invoice-handlers";
 
 type EventHandler = (event: Stripe.Event) => Promise<WebhookHandlerResult | null>;
@@ -67,6 +73,22 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	// === DISPUTE / CHARGEBACK ===
 	"charge.dispute.created": async (e) => {
 		await handleDisputeCreated(e.data.object as Stripe.Dispute);
+		return null;
+	},
+	"charge.dispute.updated": async (e) => {
+		await handleDisputeUpdated(e.data.object as Stripe.Dispute);
+		return null;
+	},
+	"charge.dispute.closed": async (e) => {
+		await handleDisputeClosed(e.data.object as Stripe.Dispute);
+		return null;
+	},
+	"charge.dispute.funds_withdrawn": async (e) => {
+		await handleDisputeFundsWithdrawn(e.data.object as Stripe.Dispute);
+		return null;
+	},
+	"charge.dispute.funds_reinstated": async (e) => {
+		await handleDisputeFundsReinstated(e.data.object as Stripe.Dispute);
 		return null;
 	},
 

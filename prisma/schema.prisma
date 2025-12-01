@@ -81,11 +81,13 @@ model User {
   @@index([role, id])
   @@index([emailVerified, id])
   @@index([createdAt, id])
-  @@index([deletedAt, role]) // Index composite pour queries admin filtrant utilisateurs actifs par rôle (couvre aussi deletedAt seul)
+  // Note: Les 2 index composites commençant par deletedAt couvrent les queries sur deletedAt seul
+  // PostgreSQL utilise le leading column d'un index composite pour les queries mono-colonne
+  @@index([deletedAt, role]) // Admin: filtrer users actifs par rôle
+  @@index([deletedAt, emailVerified]) // Admin: filtrer users actifs par statut email
   @@index([accountStatus])
   @@index([deletionRequestedAt])
   @@index([anonymizedAt])
-  @@index([deletedAt, emailVerified]) // Couvre aussi deletedAt seul
 }
 
 model Session {
@@ -521,14 +523,13 @@ enum PaymentStatus {
 }
 
 enum InvoiceStatus {
-  PENDING        // Commande payée, facture en attente de génération Stripe
-  DRAFT          // Facture créée mais pas encore finalisée (brouillon)
-  OPEN           // Facture finalisée, en attente de paiement
-  FINALIZED      // Facture finalisée avec numéro séquentiel attribué
-  PAID           // Facture payée avec succès
-  UNCOLLECTIBLE  // Facture marquée comme irrécupérable
-  VOID           // Facture annulée
-  PAYMENT_FAILED // Échec de paiement de la facture
+  PENDING        // Interne: commande payée, facture en attente de génération Stripe
+  DRAFT          // Stripe: draft - Facture créée mais pas encore finalisée
+  OPEN           // Stripe: open - Facture finalisée, en attente de paiement
+  PAID           // Stripe: paid - Facture payée avec succès
+  UNCOLLECTIBLE  // Stripe: uncollectible - Facture marquée comme irrécupérable
+  VOID           // Stripe: void - Facture annulée
+  PAYMENT_FAILED // Interne: open + échec de paiement détecté via webhook
 }
 
 enum PaymentMethod {
@@ -544,6 +545,13 @@ enum FulfillmentStatus {
   SHIPPED
   DELIVERED
   RETURNED
+}
+
+/// Catégorie d'opération (conformité fiscale française depuis juillet 2024)
+enum OperationCategory {
+  GOODS    // Vente de biens
+  SERVICES // Prestations de services
+  MIXED    // Mixte (biens + services)
 }
 
 /// Actions traçables sur les commandes (audit trail)
@@ -628,9 +636,18 @@ model Order {
 
   // === PRÉPARATION RÉGIME RÉEL TVA ===
   // Ces champs préparent la migration vers le régime réel TVA (seuil 85 000€)
-  customerTaxId String? // N° TVA client B2B (ex: FR12345678901 pour ventes B2B)
-  taxBehavior   String  @default("inclusive") // Stripe Tax: "inclusive" ou "exclusive"
-  reverseCharge Boolean @default(false) // Autoliquidation TVA pour ventes B2B UE
+  customerTaxId          String?  // N° TVA client B2B (ex: FR12345678901 pour ventes B2B)
+  taxBehavior            String   @default("inclusive") // Stripe Tax: "inclusive" ou "exclusive"
+  reverseCharge          Boolean  @default(false) // Autoliquidation TVA pour ventes B2B UE
+  stripeTaxTransactionId String?  // tax_txn_xxx - ID permanent pour reporting fiscal (txcalc_ expire 90j)
+  customerTaxIdVerified  Boolean  @default(false) // Résultat validation VIES (TVA intracommunautaire)
+  taxExempt              Boolean  @default(false) // Client exonéré de TVA
+
+  // === ÉCHECS DE PAIEMENT ===
+  // Stocke les codes d'erreur du dernier échec (historique complet dans WebhookEvent)
+  paymentFailureCode    String? @db.VarChar(100) // Code Stripe: "card_declined", "expired_card", etc.
+  paymentDeclineCode    String? @db.VarChar(100) // Code réseau détaillé (Visa/MC)
+  paymentFailureMessage String? // Message lisible pour debug
 
   // === LIVRAISON ===
   shippingMethod    ShippingMethod?  // Type de livraison
@@ -659,13 +676,14 @@ model Order {
 
   // === CONFORMITÉ LÉGALE FRANÇAISE ===
   // Obligation de conservation 10 ans (Art. L123-22 Code de commerce)
-  operationCategory String @default("goods") // "goods" | "services" | "mixed" (depuis juillet 2024)
+  operationCategory OperationCategory @default(GOODS) // Conformité fiscale depuis juillet 2024
   fiscalYear        Int? // Année fiscale de la commande
 
   // === RELATIONS ===
   items          OrderItem[]
   discountUsages DiscountUsage[]
   refunds        Refund[]
+  disputes       Dispute[] // Litiges/chargebacks Stripe
   notes          OrderNote[]
   history        OrderHistory[] // 🔴 Audit trail (conformité légale)
 
@@ -756,6 +774,9 @@ model OrderItem {
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
+  // ⚠️ onDelete: Restrict intentionnel - Un SKU avec commandes ne peut pas être supprimé
+  // Garantit l'intégrité comptable (Art. L123-22 Code de commerce - conservation 10 ans)
+  // Pour "supprimer" un SKU : utiliser le soft-delete sur Product ou archiver le SKU
   skuId String
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
 
@@ -862,8 +883,9 @@ model Refund {
   currency CurrencyCode @default(EUR)
 
   // Raison et Statut
-  reason RefundReason
-  status RefundStatus @default(PENDING)
+  reason        RefundReason
+  status        RefundStatus @default(PENDING)
+  failureReason String?      // Détail si FAILED (ex: "insufficient_funds", "charge_already_refunded")
 
   // Note interne (ex: "Le fermoir était cassé, photos reçues par mail")
   note String? @db.Text
@@ -1158,4 +1180,50 @@ model WebhookEvent {
   @@index([source, receivedAt(sort: Desc)])
   @@index([status, receivedAt])
   @@index([processedAt])
+}
+
+// ============================================================================
+// LITIGES STRIPE (Disputes/Chargebacks)
+// ============================================================================
+
+enum DisputeStatus {
+  NEEDS_RESPONSE  // needs_response - Preuves requises sous 7-21 jours
+  UNDER_REVIEW    // under_review - En cours d'examen par Stripe/banque
+  WON             // won - Litige gagné, fonds restitués
+  LOST            // lost - Litige perdu, fonds retirés définitivement
+  CHARGE_REFUNDED // charge_refunded - Remboursé avant résolution du litige
+  ACCEPTED        // warning_closed - Accepté sans contestation
+}
+
+/// Litiges/Chargebacks Stripe
+/// Un dispute est initié par le client via sa banque (différent d'un refund)
+/// Frais: 15€ par dispute (non tracké ici, visible dans Stripe Dashboard)
+model Dispute {
+  id              String        @id @default(cuid())
+  stripeDisputeId String        @unique // dp_xxx
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  // Montant contesté
+  amount   Int          // Montant en centimes
+  currency CurrencyCode @default(EUR)
+
+  // Raison du litige
+  reason            String  @db.VarChar(100) // fraudulent, duplicate, product_not_received, etc.
+  networkReasonCode String? @db.VarChar(20) // Code réseau carte (Visa/MC)
+
+  status DisputeStatus
+
+  // Date limite pour soumettre des preuves (critique !)
+  evidenceDueBy DateTime
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+  resolvedAt DateTime? // Date de résolution (WON/LOST/CHARGE_REFUNDED/ACCEPTED)
+
+  @@index([orderId])
+  @@index([status])
+  @@index([evidenceDueBy])
+  @@index([createdAt(sort: Desc)])
 }

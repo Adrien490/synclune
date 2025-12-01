@@ -322,23 +322,28 @@ export async function handleRefundFailed(stripeRefund: Stripe.Refund): Promise<v
 			return;
 		}
 
-		// 3. Marquer comme FAILED avec historique
+		// 3. Marquer comme FAILED avec historique et stocker la raison d'échec
+		const failureReason = stripeRefund.failure_reason || "unknown";
+
 		await prisma.$transaction(async (tx) => {
 			await tx.refund.update({
 				where: { id: refund.id },
-				data: { status: RefundStatus.FAILED },
+				data: {
+					status: RefundStatus.FAILED,
+					failureReason, // Stocker le code d'échec Stripe
+				},
 			});
 
 			await tx.refundHistory.create({
 				data: {
 					refundId: refund.id,
 					action: RefundAction.FAILED,
-					note: `Échec Stripe: ${stripeRefund.failure_reason || "Raison inconnue"}`,
+					note: `Échec Stripe: ${failureReason}`,
 				},
 			});
 		});
 
-		console.log(`✅ [WEBHOOK] Refund ${refund.id} marked as FAILED`);
+		console.log(`✅ [WEBHOOK] Refund ${refund.id} marked as FAILED (reason: ${failureReason})`);
 
 		// 4. Alerter l'admin
 		try {

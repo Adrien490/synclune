@@ -55,6 +55,10 @@ export type SupportedStripeEvent =
 	| "checkout.session.async_payment_succeeded"
 	| "checkout.session.async_payment_failed"
 	| "charge.dispute.created"
+	| "charge.dispute.updated"
+	| "charge.dispute.closed"
+	| "charge.dispute.funds_withdrawn"
+	| "charge.dispute.funds_reinstated"
 	| "invoice.finalized"
 	| "invoice.paid"
 	| "invoice.payment_failed";

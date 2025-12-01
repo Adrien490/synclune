@@ -27,7 +27,7 @@ export async function handleInvoiceFinalized(invoice: Stripe.Invoice): Promise<v
 					where: { id: order.id },
 					data: {
 						invoiceNumber: invoice.number || undefined,
-						invoiceStatus: "FINALIZED",
+						invoiceStatus: "OPEN", // Facture finalisée = statut OPEN chez Stripe
 					},
 				});
 				console.log(`✅ [WEBHOOK] Invoice ${invoice.number} linked to order ${order.orderNumber}`);
@@ -48,7 +48,7 @@ export async function handleInvoiceFinalized(invoice: Stripe.Invoice): Promise<v
 						data: {
 							stripeInvoiceId: invoice.id,
 							invoiceNumber: invoice.number || undefined,
-							invoiceStatus: "FINALIZED",
+							invoiceStatus: "OPEN", // Facture finalisée = statut OPEN chez Stripe
 						},
 					});
 					console.log(`✅ [WEBHOOK] Invoice ${invoice.number} linked to order ${orderByNumber.orderNumber}`);
@@ -66,7 +66,7 @@ export async function handleInvoiceFinalized(invoice: Stripe.Invoice): Promise<v
 			data: {
 				stripeInvoiceId: invoice.id,
 				invoiceNumber: invoice.number || undefined,
-				invoiceStatus: "FINALIZED",
+				invoiceStatus: "OPEN", // Facture finalisée = statut OPEN chez Stripe
 			},
 		});
 

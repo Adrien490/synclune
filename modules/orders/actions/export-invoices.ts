@@ -112,11 +112,11 @@ export async function exportInvoices(
 		}
 
 		// Filtre de statut
-		// On exporte uniquement les factures finalisées (FINALIZED ou PAID)
+		// On exporte uniquement les factures finalisées (OPEN ou PAID)
 		if (params.invoiceStatus === "sent" || params.invoiceStatus === "archived" || params.invoiceStatus === "all") {
-			whereClause.invoiceStatus = { in: ["FINALIZED", "PAID"] };
+			whereClause.invoiceStatus = { in: ["OPEN", "PAID"] };
 		} else {
-			whereClause.invoiceStatus = { in: ["FINALIZED", "PAID"] };
+			whereClause.invoiceStatus = { in: ["OPEN", "PAID"] };
 		}
 
 		// Recuperer les commandes avec leurs factures
@@ -181,7 +181,7 @@ export async function exportInvoices(
 
 				// Statut
 				const statusLabel =
-					order.invoiceStatus === "FINALIZED" || order.invoiceStatus === "PAID"
+					order.invoiceStatus === "OPEN" || order.invoiceStatus === "PAID"
 						? "Finalisée"
 						: "En attente";
 
