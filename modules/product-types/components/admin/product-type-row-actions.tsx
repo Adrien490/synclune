@@ -12,7 +12,8 @@ import {
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { MoreVertical, Pencil, ShieldCheck, Trash2 } from "lucide-react";
+import { ExternalLink, MoreVertical, Pencil, ShieldCheck, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { DELETE_PRODUCT_TYPE_DIALOG_ID } from "./delete-product-type-alert-dialog";
 
 interface ProductTypeRowActionsProps {
@@ -22,6 +23,7 @@ interface ProductTypeRowActionsProps {
 	label: string;
 	description?: string | null;
 	slug: string;
+	productsCount?: number;
 }
 
 export function ProductTypeRowActions({
@@ -31,6 +33,7 @@ export function ProductTypeRowActions({
 	label,
 	description,
 	slug,
+	productsCount = 0,
 }: ProductTypeRowActionsProps) {
 	const { open } = useDialog(PRODUCT_TYPE_DIALOG_ID);
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_TYPE_DIALOG_ID);
@@ -50,7 +53,7 @@ export function ProductTypeRowActions({
 		deleteDialog.open({
 			productTypeId,
 			label,
-			productsCount: 0, // TODO: Ajouter le vrai count depuis la BDD
+			productsCount,
 		});
 	};
 
@@ -75,6 +78,13 @@ export function ProductTypeRowActions({
 				<DropdownMenuItem onClick={handleEdit} disabled={isSystem}>
 					<Pencil className="h-4 w-4" />
 					{isSystem ? "Voir (lecture seule)" : "Éditer"}
+				</DropdownMenuItem>
+
+				<DropdownMenuItem asChild>
+					<Link href={`/admin/catalogue/produits?productTypeId=${productTypeId}`}>
+						<ExternalLink className="h-4 w-4" />
+						Voir les produits
+					</Link>
 				</DropdownMenuItem>
 
 				{!isSystem && (

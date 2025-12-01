@@ -16,7 +16,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Eye, MoreVertical, RefreshCw } from "lucide-react";
+import { ExternalLink, Eye, MoreVertical, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 interface StripePaymentsRowActionsProps {
@@ -70,12 +70,24 @@ export function StripePaymentsRowActions({
 					<DropdownMenuLabel>Actions</DropdownMenuLabel>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem onClick={() => setIsViewDialogOpen(true)}>
-						<Eye className="mr-2 h-4 w-4" />
+						<Eye className="h-4 w-4" />
 						Voir les détails
 					</DropdownMenuItem>
+					{payment.stripePaymentIntentId && (
+						<DropdownMenuItem asChild>
+							<a
+								href={`https://dashboard.stripe.com/payments/${payment.stripePaymentIntentId}`}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<ExternalLink className="h-4 w-4" />
+								Voir sur Stripe
+							</a>
+						</DropdownMenuItem>
+					)}
 					{canRefund && (
 						<DropdownMenuItem onClick={handleRefund} disabled={isProcessing}>
-							<RefreshCw className="mr-2 h-4 w-4" />
+							<RefreshCw className="h-4 w-4" />
 							Rembourser
 						</DropdownMenuItem>
 					)}

@@ -60,7 +60,6 @@ export default async function ColorsAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Couleurs"
-				description="Gérez les couleurs de vos produits"
 				actions={<CreateColorButton />}
 			/>
 

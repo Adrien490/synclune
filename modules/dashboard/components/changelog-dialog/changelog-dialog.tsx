@@ -1,5 +1,4 @@
 import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -8,6 +7,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/shared/components/ui/dialog";
+import { SidebarMenuButton } from "@/shared/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { formatDate, formatVersionDisplay, isWithinDays } from "@/shared/utils/dates";
 import { HandIcon, SparklesIcon } from "lucide-react";
@@ -54,12 +54,10 @@ export async function ChangelogDialog({
 	// Guard contre tableau vide - afficher un état désactivé
 	if (!changelogsWithContent || changelogsWithContent.length === 0) {
 		return (
-			<Button variant="ghost" size="sm" disabled className="gap-2 opacity-50">
-				<SparklesIcon className="h-4 w-4" aria-hidden="true" />
-				<span className="hidden sm:inline">Changelog</span>
-				<span className="sm:hidden">Changelog</span>
-				<span className="sr-only">Aucun changelog disponible</span>
-			</Button>
+			<SidebarMenuButton size="sm" disabled className="text-xs opacity-50">
+				<SparklesIcon className="size-3" aria-hidden="true" />
+				<span>Changelog</span>
+			</SidebarMenuButton>
 		);
 	}
 
@@ -70,34 +68,20 @@ export async function ChangelogDialog({
 	return (
 		<Dialog>
 			<DialogTrigger asChild>
-				<Button
-					variant="outline"
+				<SidebarMenuButton
 					size="sm"
-					className="h-9 gap-2 relative cursor-pointer"
-					aria-label={`Ouvrir le changelog${isRecentRelease ? ". Nouvelle version disponible" : ""}. Version ${latestChangelog.metadata.version}`}
-					aria-describedby={
-						isRecentRelease ? "new-release-indicator" : undefined
-					}
+					className="text-xs text-muted-foreground hover:text-foreground relative cursor-pointer"
+					aria-label={`Changelog version ${latestChangelog.metadata.version}${isRecentRelease ? ". Nouvelle version disponible" : ""}`}
 				>
-					<SparklesIcon
-						className="h-4 w-4"
-						aria-hidden="true"
-					/>
+					<SparklesIcon className="size-3" aria-hidden="true" />
 					<span>v{latestChangelog.metadata.version}</span>
-					{/* Indicateur de nouvelle version */}
 					{isRecentRelease && (
-						<>
-							<span
-								id="new-release-indicator"
-								className="absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full animate-pulse motion-reduce:animate-none"
-								aria-hidden="true"
-							/>
-							<span className="sr-only">
-								Nouvelle version publiée récemment
-							</span>
-						</>
+						<span
+							className="absolute top-1 right-1 size-1.5 bg-primary rounded-full animate-pulse motion-reduce:animate-none"
+							aria-hidden="true"
+						/>
 					)}
-				</Button>
+				</SidebarMenuButton>
 			</DialogTrigger>
 
 			<DialogContent className="max-w-2xl max-h-[min(80vh,800px)] min-h-[400px] overflow-hidden flex flex-col p-0">

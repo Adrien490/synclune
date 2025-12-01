@@ -99,7 +99,6 @@ export default async function CollectionsAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Collections"
-				description="Gérez vos collections de bijoux"
 				actions={<CreateCollectionButton />}
 			/>
 

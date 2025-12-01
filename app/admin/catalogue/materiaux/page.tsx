@@ -65,7 +65,6 @@ export default async function MaterialsAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Matériaux"
-				description="Gérez les matériaux de vos produits"
 				actions={<CreateMaterialButton />}
 			/>
 

@@ -10,9 +10,6 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
-import { ChangelogDialog } from "@/modules/dashboard/components/changelog-dialog/changelog-dialog";
-import { ChangelogDialogSkeleton } from "@/modules/dashboard/components/changelog-dialog/changelog-dialog-skeleton";
 
 interface DashboardHeaderProps {
 	user?: {
@@ -34,10 +31,10 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 			aria-label="En-tête du tableau de bord"
 		>
 			<div className="flex items-center gap-2 px-4 flex-1 min-w-0">
-				{/* Toggle sidebar avec raccourci clavier */}
+				{/* Toggle sidebar avec raccourci clavier - caché sur mobile */}
 				<Tooltip>
 					<TooltipTrigger asChild>
-						<SidebarTrigger className="-ml-1 shrink-0" />
+						<SidebarTrigger className="-ml-1 shrink-0 hidden md:flex" />
 					</TooltipTrigger>
 					<TooltipContent side="right" sideOffset={8}>
 						<span>Basculer le menu</span>
@@ -48,7 +45,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 				</Tooltip>
 				<Separator
 					orientation="vertical"
-					className="mr-2 h-4 data-[orientation=vertical]:h-4 shrink-0"
+					className="mr-2 h-4 data-[orientation=vertical]:h-4 shrink-0 hidden md:block"
 				/>
 				{/* Breadcrumb dynamique - amélioré pour mobile */}
 				<div className="min-w-0 flex-1">
@@ -77,11 +74,6 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 						Voir le site
 					</TooltipContent>
 				</Tooltip>
-
-				{/* Changelog */}
-				<Suspense fallback={<ChangelogDialogSkeleton />}>
-					<ChangelogDialog />
-				</Suspense>
 
 				{/* User dropdown */}
 				{user && <UserDropdown user={user} />}

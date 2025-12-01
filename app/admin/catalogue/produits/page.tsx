@@ -134,7 +134,6 @@ export default async function ProductsAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Produits"
-				description="Gérez votre catalogue de produits"
 				actions={
 					<Button asChild>
 						<Link href="/admin/catalogue/produits/nouveau">

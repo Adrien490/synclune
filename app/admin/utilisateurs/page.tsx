@@ -100,7 +100,6 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
 			<PageHeader
 				variant="compact"
 				title="Utilisateurs"
-				description="Gérez les utilisateurs et leur historique de commandes"
 				actions={
 					<Button asChild>
 						<Link href="/admin/utilisateurs/new">Nouvel utilisateur</Link>

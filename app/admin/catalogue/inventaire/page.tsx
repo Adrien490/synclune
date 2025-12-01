@@ -95,7 +95,6 @@ export default async function InventoryAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Inventaire"
-				description="Gérez le stock de tous vos produits"
 			/>
 
 			<div className="space-y-6">

@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
+	ChevronDown,
 	Clock,
 	CreditCard,
 	Package,
@@ -14,6 +16,7 @@ import {
 	Edit,
 } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -22,6 +25,8 @@ import {
 } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
 import type { OrderAction } from "@/app/generated/prisma/client";
+
+const VISIBLE_COUNT = 5;
 
 interface OrderHistoryEntry {
 	id: string;
@@ -115,6 +120,8 @@ function getStatusLabel(status: string | null | undefined): string {
 }
 
 export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
+	const [isExpanded, setIsExpanded] = useState(false);
+
 	if (history.length === 0) {
 		return (
 			<Card>
@@ -132,25 +139,34 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 		);
 	}
 
+	const visibleHistory = isExpanded ? history : history.slice(0, VISIBLE_COUNT);
+	const hiddenCount = history.length - VISIBLE_COUNT;
+	const canExpand = hiddenCount > 0;
+
 	return (
 		<Card>
 			<CardHeader className="pb-3">
 				<CardTitle className="text-base font-medium">
 					Historique des actions
+					{history.length > 0 && (
+						<Badge variant="secondary" className="ml-2">
+							{history.length}
+						</Badge>
+					)}
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<div className="relative">
 					{/* Ligne verticale */}
-					<div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+					<div className="absolute left-4 top-0 bottom-0 w-px bg-border" aria-hidden="true" />
 
-					<div className="space-y-4">
-						{history.map((entry) => {
+					<ol className="space-y-4" aria-label="Historique chronologique des actions">
+						{visibleHistory.map((entry) => {
 							const config = ACTION_CONFIG[entry.action];
 							const Icon = config.icon;
 
 							return (
-								<div key={entry.id} className="relative pl-10">
+								<li key={entry.id} className="relative pl-10">
 									{/* Icône sur la ligne */}
 									<div
 										className={cn(
@@ -233,10 +249,40 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 											)}
 										</div>
 									</div>
-								</div>
+								</li>
 							);
 						})}
-					</div>
+					</ol>
+
+					{/* Bouton pour afficher plus */}
+					{canExpand && !isExpanded && (
+						<div className="mt-4 flex justify-center">
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => setIsExpanded(true)}
+								className="text-muted-foreground"
+							>
+								<ChevronDown className="h-4 w-4 mr-1" aria-hidden="true" />
+								Voir {hiddenCount} entrées plus anciennes
+							</Button>
+						</div>
+					)}
+
+					{/* Bouton pour réduire */}
+					{isExpanded && canExpand && (
+						<div className="mt-4 flex justify-center">
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => setIsExpanded(false)}
+								className="text-muted-foreground"
+							>
+								<ChevronDown className="h-4 w-4 mr-1 rotate-180" aria-hidden="true" />
+								Réduire
+							</Button>
+						</div>
+					)}
 				</div>
 			</CardContent>
 		</Card>

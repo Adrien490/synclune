@@ -95,7 +95,6 @@ export default async function NewsletterPage({
 			<PageHeader
 				variant="compact"
 				title="Newsletter"
-				description="Envoyez des emails à vos abonnés et gérez votre liste de diffusion"
 			/>
 
 			{/* Statistiques */}

@@ -1,7 +1,8 @@
 import { getOrderById } from "@/modules/orders/data/get-order-by-id";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
-import { OrderDetailCard } from "@/modules/orders/components/admin/order-detail-card";
+import { OrderDetailPage as OrderDetail } from "@/modules/orders/components/admin/order-detail";
+import { OrderDetailSkeleton } from "@/modules/orders/components/admin/order-detail/order-detail-skeleton";
 import { CancelOrderAlertDialog } from "@/modules/orders/components/admin/cancel-order-alert-dialog";
 import { MarkAsPaidAlertDialog } from "@/modules/orders/components/admin/mark-as-paid-alert-dialog";
 import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
@@ -10,6 +11,15 @@ import { UpdateTrackingDialog } from "@/modules/orders/components/admin/update-t
 import { MarkAsProcessingAlertDialog } from "@/modules/orders/components/admin/mark-as-processing-alert-dialog";
 import { RevertToProcessingDialog } from "@/modules/orders/components/admin/revert-to-processing-dialog";
 import { MarkAsReturnedAlertDialog } from "@/modules/orders/components/admin/mark-as-returned-alert-dialog";
+import { OrderNotesDialog } from "@/modules/orders/components/admin/order-notes-dialog";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/shared/components/ui/breadcrumb";
 
 type OrderDetailPageParams = Promise<{ id: string }>;
 
@@ -46,10 +56,27 @@ export default async function OrderDetailPage({
 	}
 
 	return (
-		<>
-			<OrderDetailCard order={order} />
+		<div className="space-y-6">
+			{/* Breadcrumb */}
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin/ventes/commandes">Commandes</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbPage>{order.orderNumber}</BreadcrumbPage>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
 
-			{/* Alert Dialogs */}
+			<OrderDetail order={order} />
+
+			{/* Dialogs */}
 			<CancelOrderAlertDialog />
 			<MarkAsPaidAlertDialog />
 			<MarkAsShippedDialog />
@@ -58,6 +85,7 @@ export default async function OrderDetailPage({
 			<MarkAsProcessingAlertDialog />
 			<RevertToProcessingDialog />
 			<MarkAsReturnedAlertDialog />
-		</>
+			<OrderNotesDialog />
+		</div>
 	);
 }

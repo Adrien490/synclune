@@ -85,7 +85,6 @@ export default async function PaymentsAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Paiements"
-				description="Consultez tous les paiements Stripe de votre boutique"
 			/>
 
 			<div className="space-y-6">

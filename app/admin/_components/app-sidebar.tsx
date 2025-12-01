@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import * as React from "react";
+import { Suspense } from "react";
 
+import { ChangelogDialog } from "@/modules/dashboard/components/changelog-dialog/changelog-dialog";
+import { ChangelogDialogSkeleton } from "@/modules/dashboard/components/changelog-dialog/changelog-dialog-skeleton";
 import {
 	Sidebar,
 	SidebarContent,
+	SidebarFooter,
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
@@ -50,6 +53,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<SidebarContent>
 				<NavMain />
 			</SidebarContent>
+			<SidebarFooter>
+				<Suspense fallback={<ChangelogDialogSkeleton />}>
+					<ChangelogDialog />
+				</Suspense>
+			</SidebarFooter>
 		</Sidebar>
 	);
 }

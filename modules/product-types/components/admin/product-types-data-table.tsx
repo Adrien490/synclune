@@ -175,6 +175,7 @@ export async function ProductTypesDataTable({
 												label={productType.label}
 												description={productType.description}
 												slug={productType.slug}
+												productsCount={productsCount}
 											/>
 										</TableCell>
 									</TableRow>

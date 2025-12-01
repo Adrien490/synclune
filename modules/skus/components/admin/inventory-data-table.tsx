@@ -277,6 +277,7 @@ export async function InventoryDataTable({
 												priceInclTax={sku.priceInclTax}
 												compareAtPrice={sku.compareAtPrice}
 												isActive={sku.isActive}
+												isDefault={sku.isDefault}
 											/>
 										</TableCell>
 									</TableRow>

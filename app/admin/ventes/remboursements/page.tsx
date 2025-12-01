@@ -63,7 +63,6 @@ export default async function RefundsAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Remboursements"
-				description="Gérez les demandes de remboursement"
 			/>
 
 			<div className="space-y-6">

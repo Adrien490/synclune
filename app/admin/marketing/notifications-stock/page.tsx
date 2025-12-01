@@ -91,7 +91,6 @@ export default async function NotificationsStockPage({
 				<PageHeader
 					variant="compact"
 					title="Alertes stock"
-					description="Demandes de notification de retour en stock"
 				/>
 				<CleanupExpiredButton />
 			</div>

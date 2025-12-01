@@ -10,7 +10,18 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Edit, MoreVertical, Trash2 } from "lucide-react";
+import { useDuplicateMaterial } from "@/modules/materials/hooks/use-duplicate-material";
+import { useToggleMaterialStatus } from "@/modules/materials/hooks/use-toggle-material-status";
+import {
+	Copy,
+	Edit,
+	ExternalLink,
+	MoreVertical,
+	Power,
+	PowerOff,
+	Trash2,
+} from "lucide-react";
+import Link from "next/link";
 import { MATERIAL_DIALOG_ID } from "./material-form-dialog";
 import { DELETE_MATERIAL_DIALOG_ID } from "@/modules/materials/components/admin/delete-material-alert-dialog";
 
@@ -31,6 +42,8 @@ export function MaterialsRowActions({
 }: MaterialsRowActionsProps) {
 	const { open: openDialog } = useDialog(MATERIAL_DIALOG_ID);
 	const { open: openAlert } = useAlertDialog(DELETE_MATERIAL_DIALOG_ID);
+	const { duplicate, isPending: isDuplicating } = useDuplicateMaterial();
+	const { toggleStatus, isPending: isToggling } = useToggleMaterialStatus();
 
 	const handleEdit = () => {
 		openDialog({
@@ -51,6 +64,10 @@ export function MaterialsRowActions({
 		});
 	};
 
+	const handleToggle = () => {
+		toggleStatus(materialId, !materialIsActive);
+	};
+
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -62,6 +79,32 @@ export function MaterialsRowActions({
 				<DropdownMenuItem onClick={handleEdit}>
 					<Edit className="h-4 w-4" />
 					Éditer
+				</DropdownMenuItem>
+				<DropdownMenuItem
+					onClick={() => duplicate(materialId, materialName)}
+					disabled={isDuplicating}
+				>
+					<Copy className="h-4 w-4" />
+					Dupliquer
+				</DropdownMenuItem>
+				<DropdownMenuItem asChild>
+					<Link href={`/admin/catalogue/inventaire?materialId=${materialId}`}>
+						<ExternalLink className="h-4 w-4" />
+						Voir les variantes
+					</Link>
+				</DropdownMenuItem>
+				<DropdownMenuItem onClick={handleToggle} disabled={isToggling}>
+					{materialIsActive ? (
+						<>
+							<PowerOff className="h-4 w-4" />
+							Désactiver
+						</>
+					) : (
+						<>
+							<Power className="h-4 w-4" />
+							Activer
+						</>
+					)}
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onClick={handleDelete} className="text-destructive">

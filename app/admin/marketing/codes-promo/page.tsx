@@ -85,7 +85,6 @@ export default async function DiscountsAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Codes promo"
-				description="Gérez vos codes promotionnels"
 				actions={<CreateDiscountButton />}
 			/>
 

@@ -11,7 +11,6 @@ import {
 	SORT_LABELS,
 } from "@/modules/product-types/data/get-product-types";
 import { getFirstParam } from "@/shared/utils/params";
-import { Trash2 } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -96,7 +95,6 @@ export default async function ProductTypesAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Types de bijoux"
-				description="Gérez les types de bijoux"
 				actions={
 					<div className="flex gap-3">
 						<Button asChild variant="outline">

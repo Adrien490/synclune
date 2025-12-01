@@ -12,9 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useDeleteMaterial } from "@/modules/materials/hooks/use-delete-material";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { ActionStatus } from "@/shared/types/server-action";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
 
 export const DELETE_MATERIAL_DIALOG_ID = "delete-material";
 
@@ -26,14 +24,11 @@ interface DeleteMaterialData {
 
 export function DeleteMaterialAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteMaterialData>(DELETE_MATERIAL_DIALOG_ID);
-	const { state, action, isPending } = useDeleteMaterial();
-
-	// Fermer le dialog après une suppression réussie
-	useEffect(() => {
-		if (state?.status === ActionStatus.SUCCESS) {
+	const { action, isPending } = useDeleteMaterial({
+		onSuccess: () => {
 			deleteDialog.close();
-		}
-	}, [state, deleteDialog]);
+		},
+	});
 
 	const handleOpenChange = (open: boolean) => {
 		if (!open && !isPending) {

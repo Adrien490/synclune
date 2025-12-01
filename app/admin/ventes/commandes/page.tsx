@@ -81,7 +81,6 @@ export default async function OrdersAdminPage({
 			<PageHeader
 				variant="compact"
 				title="Commandes"
-				description="Gérez toutes les commandes de votre boutique"
 			/>
 
 			<div className="space-y-6">
