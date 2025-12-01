@@ -34,6 +34,7 @@ import {
 
 // Module imports
 import { GetProductsReturn } from "@/modules/products/data/get-products";
+import { STOCK_THRESHOLDS } from "@/modules/products/constants/product";
 
 // Local components
 import { ProductRowActions } from "./product-row-actions";
@@ -97,22 +98,39 @@ export async function ProductsDataTable({
 
 	// Helper pour obtenir la plage de prix (min-max)
 	const getPriceRange = (product: (typeof products)[0]) => {
-		if (!product.skus || product.skus.length === 0) return "—";
+		if (!product.skus || product.skus.length === 0) return null;
 		const prices = product.skus.map((sku) => sku.priceInclTax);
 		const minPrice = Math.min(...prices);
 		const maxPrice = Math.max(...prices);
 
+		return { minPrice, maxPrice };
+	};
+
+	// Helper pour formater l'affichage du prix
+	const formatPriceDisplay = (priceData: { minPrice: number; maxPrice: number } | null) => {
+		if (!priceData) return "—";
+		const { minPrice, maxPrice } = priceData;
 		if (minPrice === maxPrice) {
 			return formatPrice(minPrice);
 		}
 		return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
 	};
 
+	// Helper pour formater l'aria-label du prix (lecteurs d'écran)
+	const formatPriceAriaLabel = (priceData: { minPrice: number; maxPrice: number } | null) => {
+		if (!priceData) return "Prix non défini";
+		const { minPrice, maxPrice } = priceData;
+		if (minPrice === maxPrice) {
+			return `Prix : ${formatPrice(minPrice)}`;
+		}
+		return `Prix : de ${formatPrice(minPrice)} à ${formatPrice(maxPrice)}`;
+	};
+
 	if (products.length === 0) {
 		return (
 			<Empty className="py-12">
 				<EmptyHeader>
-					<EmptyMedia variant="icon">
+					<EmptyMedia variant="jewelry">
 						<Package />
 					</EmptyMedia>
 					<EmptyTitle>Aucun bijou trouvé</EmptyTitle>
@@ -135,7 +153,7 @@ export async function ProductsDataTable({
 		<Card>
 			<CardContent>
 				<ProductsSelectionToolbar products={products} />
-					<TableScrollContainer>
+				<TableScrollContainer>
 					<Table
 						role="table"
 						aria-label="Liste des bijoux"
@@ -216,6 +234,7 @@ export async function ProductsDataTable({
 									scope="col"
 									role="columnheader"
 									className="w-[12%] sm:w-[10%]"
+									aria-label="Actions disponibles pour chaque produit"
 								>
 									Actions
 								</TableHead>
@@ -270,7 +289,7 @@ export async function ProductsDataTable({
 													<Link
 														href={`/admin/catalogue/produits/${product.slug}/modifier`}
 														className="font-semibold text-foreground hover:underline hover:text-foreground truncate block"
-														title={product.title}
+														title={`Modifier ${product.title}`}
 														aria-label={`Modifier ${product.title}`}
 													>
 														{product.title}
@@ -320,10 +339,10 @@ export async function ProductsDataTable({
 										<TableCell role="gridcell" className="hidden lg:table-cell text-right">
 											<span
 												className="text-sm font-medium"
-												title={priceRange}
-												aria-label={`Prix : ${priceRange}`}
+												title={formatPriceDisplay(priceRange)}
+												aria-label={formatPriceAriaLabel(priceRange)}
 											>
-												{priceRange}
+												{formatPriceDisplay(priceRange)}
 											</span>
 										</TableCell>
 										<TableCell
@@ -331,8 +350,20 @@ export async function ProductsDataTable({
 											className="hidden lg:table-cell text-center"
 										>
 											<Badge
-												variant={totalStock === 0 ? "destructive" : "success"}
-												aria-label={totalStock === 0 ? "Stock épuisé" : `${totalStock} en stock`}
+												variant={
+													totalStock === 0
+														? "destructive"
+														: totalStock <= STOCK_THRESHOLDS.LOW_STOCK
+															? "warning"
+															: "success"
+												}
+												aria-label={
+													totalStock === 0
+														? "Stock épuisé"
+														: totalStock <= STOCK_THRESHOLDS.LOW_STOCK
+															? `Stock faible : ${totalStock} en stock`
+															: `${totalStock} en stock`
+												}
 											>
 												{totalStock}
 											</Badge>

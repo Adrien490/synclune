@@ -23,6 +23,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
+import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
 import { Package } from "lucide-react";
 import Image from "next/image";
@@ -152,6 +153,7 @@ export async function ProductVariantsDataTable({
 									key="actions"
 									role="columnheader"
 									className="text-right"
+									aria-label="Actions disponibles pour chaque variante"
 								>
 									Actions
 								</TableHead>
@@ -274,7 +276,22 @@ export async function ProductVariantsDataTable({
 											role="gridcell"
 											className="hidden sm:table-cell text-center"
 										>
-											<Badge variant={availableStock === 0 ? "destructive" : "success"}>
+											<Badge
+												variant={
+													availableStock === 0
+														? "destructive"
+														: availableStock <= STOCK_THRESHOLDS.LOW
+															? "warning"
+															: "success"
+												}
+												aria-label={
+													availableStock === 0
+														? "Stock épuisé"
+														: availableStock <= STOCK_THRESHOLDS.LOW
+															? `Stock faible : ${availableStock} disponible(s)`
+															: `${availableStock} en stock`
+												}
+											>
 												{availableStock}
 											</Badge>
 										</TableCell>

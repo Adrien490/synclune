@@ -86,7 +86,12 @@ export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
 								>
 									Inscription
 								</TableHead>
-								<TableHead scope="col" role="columnheader" className="w-[12%] text-right">
+								<TableHead
+									scope="col"
+									role="columnheader"
+									className="w-[12%] text-right"
+									aria-label="Actions disponibles pour chaque utilisateur"
+								>
 									Actions
 								</TableHead>
 							</TableRow>

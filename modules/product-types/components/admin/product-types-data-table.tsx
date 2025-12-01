@@ -111,6 +111,7 @@ export async function ProductTypesDataTable({
 									scope="col"
 									role="columnheader"
 									className="w-[15%] sm:w-[10%] text-right"
+									aria-label="Actions disponibles pour chaque type de produit"
 								>
 									Actions
 								</TableHead>

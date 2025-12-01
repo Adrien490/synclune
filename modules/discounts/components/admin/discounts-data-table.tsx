@@ -145,6 +145,7 @@ export async function DiscountsDataTable({
 									scope="col"
 									role="columnheader"
 									className="w-[10%] text-right"
+									aria-label="Actions disponibles pour chaque code promo"
 								>
 									Actions
 								</TableHead>

@@ -110,6 +110,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 									scope="col"
 									role="columnheader"
 									className="w-[15%] sm:w-[10%] text-right"
+									aria-label="Actions disponibles pour chaque commande"
 								>
 									Actions
 								</TableHead>

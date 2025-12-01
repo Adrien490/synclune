@@ -78,7 +78,7 @@ export async function StripePaymentsDataTable({
 								<TableHead scope="col" className="hidden xl:table-cell w-[16%]">
 									Stripe ID
 								</TableHead>
-								<TableHead scope="col" className="w-[10%] text-right">Actions</TableHead>
+								<TableHead scope="col" className="w-[10%] text-right" aria-label="Actions disponibles pour chaque paiement">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>

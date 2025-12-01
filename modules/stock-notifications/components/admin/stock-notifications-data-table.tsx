@@ -77,7 +77,7 @@ export async function StockNotificationsDataTable({
 								<TableHead className="w-[10%]">Statut</TableHead>
 								<TableHead className="w-[8%] text-center">Stock</TableHead>
 								<TableHead className="hidden sm:table-cell w-[12%]">Date</TableHead>
-								<TableHead className="w-[6%] text-right">Actions</TableHead>
+								<TableHead className="w-[6%] text-right" aria-label="Actions disponibles pour chaque notification">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
 					<TableBody>
@@ -223,7 +223,7 @@ export function StockNotificationsDataTableSkeleton() {
 							<TableHead className="w-[12%]">Statut</TableHead>
 							<TableHead className="w-[10%] text-center">Stock</TableHead>
 							<TableHead className="hidden sm:table-cell w-[12%]">Date</TableHead>
-							<TableHead className="w-[6%] text-right">Actions</TableHead>
+							<TableHead className="w-[6%] text-right" aria-label="Actions disponibles pour chaque notification">Actions</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>

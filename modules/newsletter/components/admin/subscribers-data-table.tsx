@@ -67,7 +67,7 @@ export async function SubscribersDataTable({
 								<TableHead scope="col" className="w-[15%] sm:w-[15%]">Statut</TableHead>
 								<TableHead scope="col" className="hidden sm:table-cell w-[20%]">Date d'inscription</TableHead>
 								<TableHead scope="col" className="hidden md:table-cell w-[15%]">Dernière mise à jour</TableHead>
-								<TableHead scope="col" className="w-[10%] text-right">Actions</TableHead>
+								<TableHead scope="col" className="w-[10%] text-right" aria-label="Actions disponibles pour chaque abonné">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>

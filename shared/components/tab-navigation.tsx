@@ -13,6 +13,8 @@ interface TabNavigationProps {
     items: TabNavigationItem[];
     activeValue?: string;
     ariaLabel?: string;
+    /** Activer le prefetch des liens (défaut: false) */
+    prefetch?: boolean;
 }
 
 /**
@@ -23,16 +25,17 @@ export function TabNavigation({
     items,
     activeValue,
     ariaLabel = "Navigation par onglets",
+    prefetch = false,
 }: TabNavigationProps) {
     const getTabClasses = (value: string) => {
         const isActive = value === activeValue;
 
         return cn(
-            "inline-flex h-9 items-center justify-center gap-1.5",
+            "inline-flex h-11 sm:h-9 items-center justify-center gap-1.5",
             "rounded-md px-3 py-1.5",
             "text-sm font-medium whitespace-nowrap",
             "transition-all duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-offset-2",
             isActive && [
                 "bg-background text-foreground",
                 "shadow-sm border border-border",
@@ -48,24 +51,25 @@ export function TabNavigation({
 
     return (
         <nav aria-label={ariaLabel} className="w-full">
-            <div role="tablist" className="flex flex-wrap gap-1 bg-muted rounded-lg p-1">
+            <div className="flex flex-wrap gap-1 sm:gap-1.5 bg-muted rounded-lg p-1">
                 {items.map((item) => (
                     <Link
                         key={item.value}
                         href={item.href}
-                        prefetch={false}
+                        prefetch={prefetch}
                         className={getTabClasses(item.value)}
                         aria-current={activeValue === item.value ? "page" : undefined}
                     >
                         {item.label}
                         {item.count !== undefined && (
                             <span
+                                title={`${item.count} élément${item.count > 1 ? "s" : ""}`}
                                 className={cn(
-                                    "ml-1 inline-flex items-center justify-center",
+                                    "ml-1.5 inline-flex items-center justify-center",
                                     "min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs",
                                     activeValue === item.value
                                         ? "bg-primary/10 text-primary"
-                                        : "bg-muted-foreground/30 text-muted-foreground"
+                                        : "bg-muted-foreground/20 text-foreground/70"
                                 )}
                             >
                                 {item.count}
