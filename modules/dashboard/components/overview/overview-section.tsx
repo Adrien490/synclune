@@ -35,9 +35,17 @@ export async function OverviewSection() {
 
 			{/* Graphiques principaux */}
 			<div className="grid gap-6 lg:grid-cols-2">
+				{/* Revenus 30 jours */}
 				<div className="lg:col-span-2">
 					<Suspense fallback={<ChartSkeleton />}>
 						<RevenueChart chartPromise={revenueChartPromise} />
+					</Suspense>
+				</div>
+
+				{/* Tendances 12 mois - juste en dessous du graphique revenus */}
+				<div className="lg:col-span-2">
+					<Suspense fallback={<ChartSkeleton />}>
+						<RevenueYearChart chartPromise={revenueTrendsPromise} />
 					</Suspense>
 				</div>
 
@@ -52,13 +60,6 @@ export async function OverviewSection() {
 				<Suspense fallback={<ChartSkeleton />}>
 					<FulfillmentStatusChart chartPromise={fulfillmentStatusPromise} />
 				</Suspense>
-
-				{/* Tendances 12 mois */}
-				<div className="lg:col-span-2">
-					<Suspense fallback={<ChartSkeleton />}>
-						<RevenueYearChart chartPromise={revenueTrendsPromise} />
-					</Suspense>
-				</div>
 			</div>
 		</div>
 	);
