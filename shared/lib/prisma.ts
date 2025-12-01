@@ -1,5 +1,11 @@
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
+
+// Required for Node.js serverless environments (Vercel Functions)
+// Without this, WebSocket connections will fail with "Connection closed" errors
+neonConfig.webSocketConstructor = ws;
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
 
