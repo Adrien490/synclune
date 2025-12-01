@@ -75,11 +75,16 @@ export function RevenueYearChart({ chartPromise }: RevenueYearChartProps) {
 				</div>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-					<BarChart
-						data={data}
-						margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-					>
+				<div role="figure" aria-label="Graphique des tendances sur 12 mois">
+					<span className="sr-only">
+						Graphique en barres montrant l'evolution mensuelle du chiffre d'affaires sur les 12 derniers mois
+					</span>
+					<ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+						<BarChart
+							accessibilityLayer
+							data={data}
+							margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+						>
 						<CartesianGrid vertical={false} strokeDasharray="3 3" />
 						<XAxis
 							dataKey="month"
@@ -127,8 +132,9 @@ export function RevenueYearChart({ chartPromise }: RevenueYearChartProps) {
 							fill="var(--color-revenue)"
 							radius={[4, 4, 0, 0]}
 						/>
-					</BarChart>
-				</ChartContainer>
+						</BarChart>
+					</ChartContainer>
+				</div>
 			</CardContent>
 		</Card>
 	);

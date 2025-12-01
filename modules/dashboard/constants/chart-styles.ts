@@ -72,6 +72,16 @@ export const CHART_STYLES = {
     /** Transition rapide pour interactions */
     fast: "transition-all duration-200",
   },
+
+  /** Dimensions Recharts standardisees (en pixels) */
+  dimensions: {
+    /** Largeur Y-axis responsive */
+    yAxis: { sm: 80, md: 100, lg: 120 },
+    /** Hauteurs de chart */
+    chartHeight: { compact: 250, default: 300, expanded: 400 },
+    /** Marges internes Recharts */
+    margin: { top: 10, right: 10, bottom: 0, left: 0 },
+  },
 } as const
 
 /** Type pour les cles de hauteur */

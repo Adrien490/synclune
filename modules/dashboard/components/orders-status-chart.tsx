@@ -75,8 +75,12 @@ export function OrdersStatusChart({ chartPromise }: OrdersStatusChartProps) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className="min-h-[300px] w-full aspect-square mx-auto">
-					<PieChart>
+				<div role="figure" aria-label="Graphique de repartition des statuts de commandes">
+					<span className="sr-only">
+						Graphique circulaire montrant la repartition des commandes par statut: en attente, en traitement, expediees, livrees
+					</span>
+					<ChartContainer config={chartConfig} className="min-h-[300px] w-full aspect-square mx-auto">
+						<PieChart accessibilityLayer>
 						<ChartTooltip
 							content={
 								<ChartTooltipContent
@@ -112,8 +116,9 @@ export function OrdersStatusChart({ chartPromise }: OrdersStatusChartProps) {
 								<Cell key={`cell-${index}`} fill={entry.fill} />
 							))}
 						</Pie>
-					</PieChart>
-				</ChartContainer>
+						</PieChart>
+					</ChartContainer>
+				</div>
 			</CardContent>
 		</Card>
 	);

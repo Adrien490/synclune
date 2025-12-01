@@ -67,52 +67,7 @@ export async function deleteProductType(
 			};
 		}
 
-		// 5. Verifier s'il y a des produits actifs lies (PUBLIC avec SKUs actifs)
-		const activeProducts = await prisma.product.findMany({
-			where: {
-				typeId: productTypeId,
-				status: "PUBLIC",
-				skus: {
-					some: {
-						isActive: true,
-					},
-				},
-			},
-			select: {
-				id: true,
-				title: true,
-				status: true,
-			},
-			take: 3, // Limiter a 3 pour le message
-		});
-
-		const activeProductsCount = await prisma.product.count({
-			where: {
-				typeId: productTypeId,
-				status: "PUBLIC",
-				skus: {
-					some: {
-						isActive: true,
-					},
-				},
-			},
-		});
-
-		if (activeProductsCount > 0) {
-			// Construire un message detaille
-			const productList = activeProducts
-				.map((p) => `- ${p.title} (${p.status})`)
-				.join("\n");
-			const moreProducts =
-				activeProductsCount > 3 ? `\n...et ${activeProductsCount - 3} autre(s)` : "";
-
-			return {
-				status: ActionStatus.ERROR,
-				message: `Impossible de supprimer ce type car ${activeProductsCount} produit(s) public(s) actif(s) y sont lies :\n${productList}${moreProducts}`,
-			};
-		}
-
-		// 5. Suppression
+		// 5. Suppression (les produits liés auront leur typeId mis à null automatiquement)
 		await prisma.productType.delete({
 			where: { id: productTypeId },
 		});

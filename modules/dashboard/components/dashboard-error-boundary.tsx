@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
+import { ChartError } from "./chart-error";
 
 interface DashboardErrorBoundaryProps {
 	children: ReactNode;
@@ -51,8 +52,7 @@ export class DashboardErrorBoundary extends Component<
 				return this.props.fallback;
 			}
 
-			// Import dynamique du fallback par defaut
-			const ChartError = require("./chart-error").ChartError;
+			// Utilise le ChartError importe statiquement
 			return <ChartError onRetry={this.handleRetry} />;
 		}
 

@@ -1,4 +1,3 @@
-import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboardRevenueByCollection } from "../constants/cache";
 import type { GetRevenueByCollectionReturn } from "../types/dashboard.types";
@@ -13,6 +12,7 @@ import {
 
 /**
  * Calcule les revenus par collection pour une periode donnee
+ * Optimise avec agregation SQL cote DB (evite de charger tous les OrderItems en memoire)
  */
 export async function fetchRevenueByCollection(
 	period: DashboardPeriod,
@@ -29,104 +29,72 @@ export async function fetchRevenueByCollection(
 		customEndDate
 	);
 
-	// Recuperer les OrderItems avec leurs produits et collections
-	const orderItems = await prisma.orderItem.findMany({
-		where: {
-			order: {
-				paymentStatus: PaymentStatus.PAID,
-				createdAt: { gte: startDate, lte: endDate },
-			},
-			productId: { not: null },
-		},
-		select: {
-			price: true,
-			quantity: true,
-			orderId: true,
-			product: {
-				select: {
-					collections: {
-						select: {
-							collection: {
-								select: {
-									id: true,
-									name: true,
-									slug: true,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	});
-
-	// Agreger par collection
-	const collectionMap = new Map<
-		string,
-		{
+	// Requete SQL optimisee avec agregation cote DB
+	// Note: Un produit peut appartenir a plusieurs collections, donc le revenu
+	// est attribue a chaque collection (appartenances multiples comptees)
+	const collectionsData = await prisma.$queryRaw<
+		Array<{
 			collectionId: string;
 			collectionName: string;
 			collectionSlug: string;
-			revenue: number;
-			orderIds: Set<string>;
-			unitsSold: number;
-		}
-	>();
+			revenue: bigint;
+			ordersCount: bigint;
+			unitsSold: bigint;
+		}>
+	>`
+    SELECT
+      c.id as "collectionId",
+      c.name as "collectionName",
+      c.slug as "collectionSlug",
+      COALESCE(SUM(oi.price * oi.quantity), 0) as revenue,
+      COUNT(DISTINCT o.id) as "ordersCount",
+      COALESCE(SUM(oi.quantity), 0) as "unitsSold"
+    FROM "Collection" c
+    INNER JOIN "ProductCollection" pc ON pc."collectionId" = c.id
+    INNER JOIN "Product" p ON p.id = pc."productId"
+    INNER JOIN "OrderItem" oi ON oi."productId" = p.id
+    INNER JOIN "Order" o ON o.id = oi."orderId"
+    WHERE o."paymentStatus" = 'PAID'
+      AND o."createdAt" >= ${startDate}
+      AND o."createdAt" <= ${endDate}
+    GROUP BY c.id, c.name, c.slug
+    ORDER BY revenue DESC
+  `;
 
-	let totalRevenue = 0;
-	let uncategorizedRevenue = 0;
+	// Total et produits sans collection (uncategorized)
+	const totals = await prisma.$queryRaw<
+		[
+			{
+				totalRevenue: bigint;
+				uncategorizedRevenue: bigint;
+			},
+		]
+	>`
+    SELECT
+      COALESCE(SUM(oi.price * oi.quantity), 0) as "totalRevenue",
+      COALESCE(SUM(
+        CASE WHEN NOT EXISTS (
+          SELECT 1 FROM "ProductCollection" pc WHERE pc."productId" = oi."productId"
+        ) THEN oi.price * oi.quantity ELSE 0 END
+      ), 0) as "uncategorizedRevenue"
+    FROM "OrderItem" oi
+    INNER JOIN "Order" o ON o.id = oi."orderId"
+    WHERE o."paymentStatus" = 'PAID'
+      AND o."createdAt" >= ${startDate}
+      AND o."createdAt" <= ${endDate}
+      AND oi."productId" IS NOT NULL
+  `;
 
-	for (const item of orderItems) {
-		const itemRevenue = item.price * item.quantity;
-		totalRevenue += itemRevenue;
-
-		// Un produit peut appartenir a plusieurs collections
-		const collections = item.product?.collections || [];
-
-		if (collections.length === 0) {
-			// Produit sans collection
-			uncategorizedRevenue += itemRevenue;
-			continue;
-		}
-
-		// Repartir le revenu entre les collections du produit
-		// (ou attribuer 100% a chaque collection si on veut compter les appartenances multiples)
-		for (const pc of collections) {
-			const collection = pc.collection;
-			const existing = collectionMap.get(collection.id);
-
-			if (existing) {
-				existing.revenue += itemRevenue;
-				existing.orderIds.add(item.orderId);
-				existing.unitsSold += item.quantity;
-			} else {
-				collectionMap.set(collection.id, {
-					collectionId: collection.id,
-					collectionName: collection.name,
-					collectionSlug: collection.slug,
-					revenue: itemRevenue,
-					orderIds: new Set([item.orderId]),
-					unitsSold: item.quantity,
-				});
-			}
-		}
-	}
-
-	// Convertir en tableau et trier par revenu decroissant
-	const collections = Array.from(collectionMap.values())
-		.map((c) => ({
+	return {
+		collections: collectionsData.map((c) => ({
 			collectionId: c.collectionId,
 			collectionName: c.collectionName,
 			collectionSlug: c.collectionSlug,
-			revenue: c.revenue,
-			ordersCount: c.orderIds.size,
-			unitsSold: c.unitsSold,
-		}))
-		.sort((a, b) => b.revenue - a.revenue);
-
-	return {
-		collections,
-		uncategorizedRevenue,
-		totalRevenue,
+			revenue: Number(c.revenue),
+			ordersCount: Number(c.ordersCount),
+			unitsSold: Number(c.unitsSold),
+		})),
+		uncategorizedRevenue: Number(totals[0].uncategorizedRevenue),
+		totalRevenue: Number(totals[0].totalRevenue),
 	};
 }

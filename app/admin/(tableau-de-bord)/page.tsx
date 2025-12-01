@@ -61,7 +61,6 @@ export default async function AdminDashboardPage({
 			<PageHeader
 				variant="compact"
 				title="Tableau de bord"
-				description="Vue d'ensemble de votre boutique en temps reel"
 			/>
 
 			{/* Navigation et filtres */}

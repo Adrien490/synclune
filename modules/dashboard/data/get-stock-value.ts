@@ -8,38 +8,43 @@ import type { StockValueReturn } from "../types/dashboard.types";
 
 /**
  * Calcule la valeur totale du stock
+ * Optimise avec agregation SQL cote DB (evite de charger tous les SKUs en memoire)
  */
 export async function fetchStockValue(): Promise<StockValueReturn> {
 	"use cache: remote";
 
 	cacheDashboardStockValue();
 
-	const skus = await prisma.productSku.findMany({
-		where: {
-			isActive: true,
-			inventory: { gt: 0 },
-		},
-		select: {
-			inventory: true,
-			priceInclTax: true,
-		},
-	});
+	// Agregation SQL optimisee - une seule requete au lieu de charger tous les SKUs
+	const result = await prisma.$queryRaw<
+		[
+			{
+				totalValue: bigint | null;
+				totalUnits: bigint | null;
+				skuCount: bigint;
+			},
+		]
+	>`
+    SELECT
+      COALESCE(SUM(inventory * "priceInclTax"), 0) as "totalValue",
+      COALESCE(SUM(inventory), 0) as "totalUnits",
+      COUNT(*) as "skuCount"
+    FROM "ProductSku"
+    WHERE "isActive" = true AND inventory > 0
+  `;
 
-	let totalValue = 0;
-	let totalUnits = 0;
-
-	for (const sku of skus) {
-		totalValue += Math.round(sku.inventory * sku.priceInclTax * 100) / 100;
-		totalUnits += sku.inventory;
-	}
-
-	const skuCount = skus.length;
-	const averageUnitValue = totalUnits > 0 ? Math.round((totalValue / totalUnits) * 100) / 100 : 0;
+	const { totalValue, totalUnits, skuCount } = result[0];
+	const totalValueNum = Number(totalValue ?? 0);
+	const totalUnitsNum = Number(totalUnits ?? 0);
+	const skuCountNum = Number(skuCount);
 
 	return {
-		totalValue,
-		skuCount,
-		totalUnits,
-		averageUnitValue,
+		totalValue: totalValueNum,
+		skuCount: skuCountNum,
+		totalUnits: totalUnitsNum,
+		averageUnitValue:
+			totalUnitsNum > 0
+				? Math.round((totalValueNum / totalUnitsNum) * 100) / 100
+				: 0,
 	};
 }

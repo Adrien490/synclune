@@ -1,4 +1,3 @@
-import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboardRevenueByType } from "../constants/cache";
 import type { GetRevenueByTypeReturn } from "../types/dashboard.types";
@@ -13,6 +12,7 @@ import {
 
 /**
  * Calcule les revenus par type de produit pour une periode donnee
+ * Optimise avec agregation SQL cote DB (evite de charger tous les OrderItems en memoire)
  */
 export async function fetchRevenueByType(
 	period: DashboardPeriod,
@@ -29,94 +29,68 @@ export async function fetchRevenueByType(
 		customEndDate
 	);
 
-	// Recuperer les OrderItems avec leurs produits et types
-	const orderItems = await prisma.orderItem.findMany({
-		where: {
-			order: {
-				paymentStatus: PaymentStatus.PAID,
-				createdAt: { gte: startDate, lte: endDate },
-			},
-			productId: { not: null },
-		},
-		select: {
-			price: true,
-			quantity: true,
-			orderId: true,
-			product: {
-				select: {
-					type: {
-						select: {
-							id: true,
-							label: true,
-							slug: true,
-						},
-					},
-				},
-			},
-		},
-	});
-
-	// Agreger par type de produit
-	const typeMap = new Map<
-		string,
-		{
+	// Requete SQL optimisee avec agregation cote DB
+	const typesData = await prisma.$queryRaw<
+		Array<{
 			typeId: string;
 			typeLabel: string;
 			typeSlug: string;
-			revenue: number;
-			orderIds: Set<string>;
-			unitsSold: number;
-		}
-	>();
+			revenue: bigint;
+			ordersCount: bigint;
+			unitsSold: bigint;
+		}>
+	>`
+    SELECT
+      pt.id as "typeId",
+      pt.label as "typeLabel",
+      pt.slug as "typeSlug",
+      COALESCE(SUM(oi.price * oi.quantity), 0) as revenue,
+      COUNT(DISTINCT o.id) as "ordersCount",
+      COALESCE(SUM(oi.quantity), 0) as "unitsSold"
+    FROM "ProductType" pt
+    INNER JOIN "Product" p ON p."typeId" = pt.id
+    INNER JOIN "OrderItem" oi ON oi."productId" = p.id
+    INNER JOIN "Order" o ON o.id = oi."orderId"
+    WHERE o."paymentStatus" = 'PAID'
+      AND o."createdAt" >= ${startDate}
+      AND o."createdAt" <= ${endDate}
+    GROUP BY pt.id, pt.label, pt.slug
+    ORDER BY revenue DESC
+  `;
 
-	let totalRevenue = 0;
-	let uncategorizedRevenue = 0;
+	// Total et produits sans type (uncategorized)
+	const totals = await prisma.$queryRaw<
+		[
+			{
+				totalRevenue: bigint;
+				uncategorizedRevenue: bigint;
+			},
+		]
+	>`
+    SELECT
+      COALESCE(SUM(oi.price * oi.quantity), 0) as "totalRevenue",
+      COALESCE(SUM(
+        CASE WHEN p."typeId" IS NULL THEN oi.price * oi.quantity ELSE 0 END
+      ), 0) as "uncategorizedRevenue"
+    FROM "OrderItem" oi
+    INNER JOIN "Order" o ON o.id = oi."orderId"
+    LEFT JOIN "Product" p ON p.id = oi."productId"
+    WHERE o."paymentStatus" = 'PAID'
+      AND o."createdAt" >= ${startDate}
+      AND o."createdAt" <= ${endDate}
+      AND oi."productId" IS NOT NULL
+  `;
 
-	for (const item of orderItems) {
-		const itemRevenue = item.price * item.quantity;
-		totalRevenue += itemRevenue;
-
-		const productType = item.product?.type;
-
-		if (!productType) {
-			// Produit sans type
-			uncategorizedRevenue += itemRevenue;
-			continue;
-		}
-
-		const existing = typeMap.get(productType.id);
-
-		if (existing) {
-			existing.revenue += itemRevenue;
-			existing.orderIds.add(item.orderId);
-			existing.unitsSold += item.quantity;
-		} else {
-			typeMap.set(productType.id, {
-				typeId: productType.id,
-				typeLabel: productType.label,
-				typeSlug: productType.slug,
-				revenue: itemRevenue,
-				orderIds: new Set([item.orderId]),
-				unitsSold: item.quantity,
-			});
-		}
-	}
-
-	// Convertir en tableau et trier par revenu decroissant
-	const types = Array.from(typeMap.values())
-		.map((t) => ({
+	return {
+		types: typesData.map((t) => ({
 			typeId: t.typeId,
 			typeLabel: t.typeLabel,
 			typeSlug: t.typeSlug,
-			revenue: t.revenue,
-			ordersCount: t.orderIds.size,
-			unitsSold: t.unitsSold,
-		}))
-		.sort((a, b) => b.revenue - a.revenue);
-
-	return {
-		types,
-		uncategorizedRevenue,
-		totalRevenue,
+			revenue: Number(t.revenue),
+			ordersCount: Number(t.ordersCount),
+			unitsSold: Number(t.unitsSold),
+		})),
+		uncategorizedRevenue: Number(totals[0].uncategorizedRevenue),
+		totalRevenue: Number(totals[0].totalRevenue),
 	};
 }

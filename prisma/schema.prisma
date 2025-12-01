@@ -437,6 +437,7 @@ model Cart {
   @@index([expiresAt])
   @@index([userId])
   @@index([sessionId])
+  @@index([createdAt, userId]) // Dashboard: abandon de panier
 }
 
 model CartItem {
@@ -888,6 +889,7 @@ model Refund {
   @@index([orderId])
   @@index([createdAt(sort: Desc)])
   @@index([status, createdAt]) // Couvre aussi status seul
+  @@index([status, processedAt]) // Dashboard: stats remboursements par periode
   @@index([deletedAt])
 }
 

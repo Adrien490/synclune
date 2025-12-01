@@ -63,8 +63,12 @@ export function RevenueChart({ chartPromise }: RevenueChartProps) {
 				{!hasRevenue ? (
 					<ChartEmpty type="noRevenue" minHeight={300} />
 				) : (
-					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
-						<LineChart
+					<div role="figure" aria-label="Graphique des revenus sur 30 jours">
+						<span className="sr-only">
+							Graphique en ligne montrant l'evolution du chiffre d'affaires quotidien sur les 30 derniers jours
+						</span>
+						<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
+							<LineChart accessibilityLayer
 							data={chartData}
 							margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
 						>
@@ -100,6 +104,7 @@ export function RevenueChart({ chartPromise }: RevenueChartProps) {
 							/>
 						</LineChart>
 					</ChartContainer>
+					</div>
 				)}
 			</CardContent>
 		</Card>

@@ -57,8 +57,12 @@ export function TopProductsChart({ chartPromise }: TopProductsChartProps) {
 				{!hasProducts ? (
 					<ChartEmpty type="noTopProducts" minHeight={300} />
 				) : (
-					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
-						<BarChart accessibilityLayer data={chartData} layout="vertical">
+					<div role="figure" aria-label="Graphique des 5 meilleurs produits vendus">
+						<span className="sr-only">
+							Graphique en barres horizontales montrant les 5 bijoux les plus vendus par chiffre d'affaires
+						</span>
+						<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
+							<BarChart accessibilityLayer data={chartData} layout="vertical">
 							<CartesianGrid horizontal={false} />
 							<YAxis
 								dataKey="product"
@@ -99,8 +103,9 @@ export function TopProductsChart({ chartPromise }: TopProductsChartProps) {
 								fill="var(--color-revenue)"
 								radius={[0, 4, 4, 0]}
 							/>
-						</BarChart>
-					</ChartContainer>
+							</BarChart>
+						</ChartContainer>
+					</div>
 				)}
 			</CardContent>
 		</Card>
