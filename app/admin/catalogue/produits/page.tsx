@@ -1,4 +1,5 @@
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
+import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -102,21 +103,23 @@ export default async function ProductsAdminPage({
 	});
 
 	// Load filter options data and counts in parallel
-	const [productTypesData, collectionsData, productCounts] = await Promise.all([
-		getProductTypes({
-			perPage: 100,
-			sortBy: "label-ascending",
-			sortOrder: "asc",
-		}),
-		getCollections({
-			perPage: 100,
-			sortBy: "name-ascending",
-			filters: {
-				hasProducts: undefined,
-			},
-		}),
-		getProductCountsByStatus(),
-	]);
+	const [productTypesData, collectionsData, productCounts, toolbarCollapsed] =
+		await Promise.all([
+			getProductTypes({
+				perPage: 100,
+				sortBy: "label-ascending",
+				sortOrder: "asc",
+			}),
+			getCollections({
+				perPage: 100,
+				sortBy: "name-ascending",
+				filters: {
+					hasProducts: undefined,
+				},
+			}),
+			getProductCountsByStatus(),
+			getToolbarCollapsed(),
+		]);
 
 	const productTypes = productTypesData.productTypes.map((t) => ({
 		id: t.id,
@@ -151,34 +154,34 @@ export default async function ProductsAdminPage({
 					counts={productCounts}
 				/>
 
-				<DataTableToolbar ariaLabel="Barre d'outils de gestion des produits">
-					<div className="flex-1 w-full sm:max-w-md min-w-0">
+				<DataTableToolbar
+					ariaLabel="Barre d'outils de gestion des produits"
+					initialCollapsed={toolbarCollapsed}
+					search={
 						<SearchForm
 							paramName="search"
 							placeholder="Rechercher par titre, type..."
 							ariaLabel="Rechercher un produit par titre ou type"
 							className="w-full"
 						/>
-					</div>
-
-					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-						<ProductsQuickFilters />
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={GET_PRODUCTS_SORT_FIELDS.map((field) => ({
-								value: field,
-								label: SORT_LABELS[field] || field,
-							}))}
-							placeholder="Plus récents"
-							className="w-full sm:min-w-[180px]"
-						/>
-						<ProductsFilterSheet
-							productTypes={productTypes}
-							collections={collections}
-						/>
-						<RefreshProductsButton />
-					</div>
+					}
+				>
+					<ProductsQuickFilters />
+					<SelectFilter
+						filterKey="sortBy"
+						label="Trier par"
+						options={GET_PRODUCTS_SORT_FIELDS.map((field) => ({
+							value: field,
+							label: SORT_LABELS[field] || field,
+						}))}
+						placeholder="Plus récents"
+						className="w-full sm:min-w-[180px]"
+					/>
+					<ProductsFilterSheet
+						productTypes={productTypes}
+						collections={collections}
+					/>
+					<RefreshProductsButton />
 				</DataTableToolbar>
 
 				{/* Badges de filtres actifs */}

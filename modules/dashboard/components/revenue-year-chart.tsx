@@ -19,6 +19,7 @@ import {
 import type { GetRevenueYearReturn } from "../types/dashboard.types";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { ChartScrollContainer } from "./chart-scroll-container";
 
 interface RevenueYearChartProps {
 	chartPromise: Promise<GetRevenueYearReturn>;
@@ -79,61 +80,63 @@ export function RevenueYearChart({ chartPromise }: RevenueYearChartProps) {
 					<span className="sr-only">
 						Graphique en barres montrant l'evolution mensuelle du chiffre d'affaires sur les 12 derniers mois
 					</span>
-					<ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-						<BarChart
-							accessibilityLayer
-							data={data}
-							margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-						>
-						<CartesianGrid vertical={false} strokeDasharray="3 3" />
-						<XAxis
-							dataKey="month"
-							tickLine={false}
-							axisLine={false}
-							tickMargin={8}
-							fontSize={12}
-						/>
-						<YAxis
-							tickLine={false}
-							axisLine={false}
-							tickMargin={8}
-							fontSize={12}
-							tickFormatter={(value) =>
-								value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
-							}
-						/>
-						<ChartTooltip
-							content={
-								<ChartTooltipContent
-									labelFormatter={(value) => `Mois: ${value}`}
-									formatter={(value, name, item) => {
-										const ordersCount = item.payload.ordersCount;
-										return [
-											`${Number(value).toLocaleString("fr-FR", {
-												minimumFractionDigits: 2,
-												maximumFractionDigits: 2,
-											})} € (${ordersCount} cmd)`,
-											"CA",
-										];
-									}}
-								/>
-							}
-						/>
-						<ChartLegend
-							content={(props) => (
-								<ChartLegendContent
-									payload={props.payload}
-									verticalAlign={props.verticalAlign}
-								/>
-							)}
-						/>
-						<Bar
-							dataKey="revenue"
-							fill="var(--color-revenue)"
-							radius={[4, 4, 0, 0]}
-						/>
-						</BarChart>
-					</ChartContainer>
+					<ChartScrollContainer>
+						<ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+							<BarChart
+								accessibilityLayer
+								data={data}
+								margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+							>
+							<CartesianGrid vertical={false} strokeDasharray="3 3" />
+							<XAxis
+								dataKey="month"
+								tickLine={false}
+								axisLine={false}
+								tickMargin={8}
+								fontSize={12}
+							/>
+							<YAxis
+								tickLine={false}
+								axisLine={false}
+								tickMargin={8}
+								fontSize={12}
+								tickFormatter={(value) =>
+									value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
+								}
+							/>
+							<ChartTooltip
+								content={
+									<ChartTooltipContent
+										labelFormatter={(value) => `Mois: ${value}`}
+										formatter={(value, name, item) => {
+											const ordersCount = item.payload.ordersCount;
+											return [
+												`${Number(value).toLocaleString("fr-FR", {
+													minimumFractionDigits: 2,
+													maximumFractionDigits: 2,
+												})} € (${ordersCount} cmd)`,
+												"CA",
+											];
+										}}
+									/>
+								}
+							/>
+							<ChartLegend
+								content={(props) => (
+									<ChartLegendContent
+										payload={props.payload}
+										verticalAlign={props.verticalAlign}
+									/>
+								)}
+							/>
+							<Bar
+								dataKey="revenue"
+								fill="var(--color-revenue)"
+								radius={[4, 4, 0, 0]}
+							/>
+							</BarChart>
+						</ChartContainer>
+					</ChartScrollContainer>
 				</div>
 			</CardContent>
 		</Card>

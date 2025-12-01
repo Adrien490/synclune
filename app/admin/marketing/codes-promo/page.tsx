@@ -22,6 +22,7 @@ import { DeleteDiscountAlertDialog } from "@/modules/discounts/components/admin/
 import { ToggleDiscountStatusAlertDialog } from "@/modules/discounts/components/admin/toggle-discount-status-alert-dialog";
 import { DiscountUsagesDialog } from "@/modules/discounts/components/admin/discount-usages-dialog";
 import { RefreshDiscountsButton } from "@/modules/discounts/components/admin/refresh-discounts-button";
+import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { parseFilters } from "./_utils/params";
 
 export type DiscountsSearchParams = {
@@ -65,6 +66,9 @@ export default async function DiscountsAdminPage({
 		| "usage-ascending";
 	const search = getFirstParam(params.search);
 
+	const toolbarCollapsed = await getToolbarCollapsed();
+
+	// La promise de codes promo n'est PAS awaitée pour permettre le streaming
 	const discountsPromise = getDiscounts({
 		cursor,
 		direction,
@@ -89,30 +93,30 @@ export default async function DiscountsAdminPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar ariaLabel="Barre d'outils de gestion des codes promo">
-					<div className="flex-1 w-full sm:max-w-md min-w-0">
+				<DataTableToolbar
+					ariaLabel="Barre d'outils de gestion des codes promo"
+					initialCollapsed={toolbarCollapsed}
+					search={
 						<SearchForm
 							paramName="search"
 							placeholder="Rechercher par code..."
 							ariaLabel="Rechercher un code promo"
 							className="w-full"
 						/>
-					</div>
-
-					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={Object.entries(DISCOUNTS_SORT_LABELS).map(([value, label]) => ({
-								value,
-								label,
-							}))}
-							placeholder="Plus récents"
-							className="w-full sm:min-w-[180px]"
-						/>
-						<DiscountsFilterSheet />
-						<RefreshDiscountsButton />
-					</div>
+					}
+				>
+					<SelectFilter
+						filterKey="sortBy"
+						label="Trier par"
+						options={Object.entries(DISCOUNTS_SORT_LABELS).map(([value, label]) => ({
+							value,
+							label,
+						}))}
+						placeholder="Plus récents"
+						className="w-full sm:min-w-[180px]"
+					/>
+					<DiscountsFilterSheet />
+					<RefreshDiscountsButton />
 				</DataTableToolbar>
 
 				<DiscountsFilterBadges />

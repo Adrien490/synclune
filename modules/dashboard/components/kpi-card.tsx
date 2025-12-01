@@ -1,5 +1,6 @@
 "use client";
 
+import { cva, type VariantProps } from "class-variance-authority";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import {
@@ -12,8 +13,48 @@ import { ArrowDown, ArrowUp, ChevronRight, Info } from "lucide-react";
 import { NumberTicker } from "@/shared/components/ui/number-ticker";
 import Link from "next/link";
 import { CHART_STYLES } from "../constants/chart-styles";
+import { Sparkline } from "./sparkline";
 
-export interface KpiCardProps {
+/**
+ * CVA variants pour la hierarchie visuelle des KPIs
+ */
+const kpiCardVariants = cva(
+	"relative overflow-hidden border-l-4 bg-gradient-to-br via-background to-transparent hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col",
+	{
+		variants: {
+			size: {
+				/** KPIs principaux - CA mois, Commandes mois */
+				featured: "min-h-[180px]",
+				/** KPIs standards - CA jour, Panier moyen */
+				default: "min-h-[140px]",
+				/** KPIs compacts - Alertes, compteurs */
+				compact: "min-h-[100px]",
+			},
+			priority: {
+				/** Metriques business critiques */
+				critical: "border-primary/60 from-primary/10 shadow-md",
+				/** Metriques operationnelles */
+				operational: "border-blue-500/40 from-blue-500/5",
+				/** Alertes et avertissements */
+				alert: "border-amber-500/50 from-amber-500/5",
+				/** Informations secondaires */
+				info: "border-muted-foreground/30 from-muted/5",
+			},
+			status: {
+				default: "",
+				danger: "border-red-500/50 from-red-500/5",
+				warning: "border-orange-500/50 from-orange-500/5",
+			},
+		},
+		defaultVariants: {
+			size: "default",
+			priority: "operational",
+			status: "default",
+		},
+	}
+);
+
+export interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	title: string;
 	value: string | number;
 	evolution?: number;
@@ -23,7 +64,7 @@ export interface KpiCardProps {
 	};
 	subtitle?: string;
 	icon?: React.ReactNode;
-	/** Variante de couleur pour les alertes */
+	/** @deprecated Utiliser priority et status a la place */
 	variant?: "default" | "danger" | "warning" | "info";
 	/** Valeur numerique pour l'animation (si fournie, utilise NumberTicker) */
 	numericValue?: number;
@@ -37,8 +78,13 @@ export interface KpiCardProps {
 	href?: string;
 	/** Texte explicatif affiche dans un tooltip */
 	tooltip?: string;
+	/** Label explicite de la periode de comparaison (ex: "vs 30j precedents") */
+	comparisonLabel?: string;
+	/** Donnees pour le sparkline (7 derniers jours) - Phase 2 */
+	sparklineData?: { value: number }[];
 }
 
+/** @deprecated Utiliser les variants CVA */
 const variantStyles = {
 	default: "border-primary/40 from-primary/5",
 	danger: "border-red-500/50 from-red-500/5",
@@ -54,13 +100,33 @@ export function KpiCard({
 	subtitle,
 	icon,
 	variant = "default",
+	size = "default",
+	priority = "operational",
+	status = "default",
 	numericValue,
 	suffix,
 	decimalPlaces = 0,
 	animationDelay = 0,
 	href,
 	tooltip,
+	comparisonLabel,
+	sparklineData,
 }: KpiCardProps) {
+	// Determiner les styles de valeur selon la taille
+	const valueClassName = cn(
+		"font-semibold tracking-tight text-foreground",
+		size === "featured" && "text-4xl",
+		size === "default" && "text-3xl",
+		size === "compact" && "text-2xl"
+	);
+
+	// Determiner les styles d'icone selon la taille
+	const iconClassName = cn(
+		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/20 text-primary group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300",
+		size === "featured" && "w-10 h-10",
+		size === "default" && "w-8 h-8",
+		size === "compact" && "w-6 h-6"
+	);
 	const cardContent = (
 		<>
 			{/* Particule décorative subtile */}
@@ -100,13 +166,13 @@ export function KpiCard({
 					)}
 				</div>
 				{icon && (
-					<div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/15 border border-primary/20 text-primary group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
+					<div className={iconClassName}>
 						{icon}
 					</div>
 				)}
 			</CardHeader>
 			<CardContent>
-				<div className="text-3xl font-semibold tracking-tight text-foreground">
+				<div className={valueClassName}>
 					{numericValue !== undefined ? (
 						<>
 							<NumberTicker
@@ -120,21 +186,26 @@ export function KpiCard({
 						value
 					)}
 				</div>
-				<div className="flex items-center gap-2 mt-2">
+				<div className="flex flex-wrap items-center gap-1.5 mt-2">
 					{evolution !== undefined && (
-						<div
-							className={cn(
-								"flex items-center text-xs font-medium",
-								evolution >= 0 ? CHART_STYLES.evolution.positive : CHART_STYLES.evolution.negative
+						<div className="flex items-center gap-1.5">
+							<div
+								className={cn(
+									"flex items-center text-xs font-medium",
+									evolution >= 0 ? CHART_STYLES.evolution.positive : CHART_STYLES.evolution.negative
+								)}
+								aria-label={`${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)} pourcent`}
+							>
+								{evolution >= 0 ? (
+									<ArrowUp className="w-3 h-3 mr-0.5" aria-hidden="true" />
+								) : (
+									<ArrowDown className="w-3 h-3 mr-0.5" aria-hidden="true" />
+								)}
+								<span className="font-semibold">{Math.abs(evolution).toFixed(1)}%</span>
+							</div>
+							{comparisonLabel && (
+								<span className="text-xs text-muted-foreground">{comparisonLabel}</span>
 							)}
-							aria-label={`${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)} pourcent`}
-						>
-							{evolution >= 0 ? (
-								<ArrowUp className="w-3 h-3 mr-0.5" aria-hidden="true" />
-							) : (
-								<ArrowDown className="w-3 h-3 mr-0.5" aria-hidden="true" />
-							)}
-							<span className="font-semibold">{Math.abs(evolution).toFixed(1)}%</span>
 						</div>
 					)}
 					{badge && (
@@ -149,21 +220,34 @@ export function KpiCard({
 						<p className="text-xs text-muted-foreground font-medium line-clamp-1">{subtitle}</p>
 					)}
 				</div>
+			{/* Sparkline pour featured et default uniquement */}
+			{sparklineData && sparklineData.length > 1 && size !== "compact" && (
+				<div className="mt-3 -mx-1">
+					<Sparkline
+						data={sparklineData}
+						height={size === "featured" ? 40 : 28}
+						positiveColor="var(--chart-1)"
+						negativeColor="var(--destructive)"
+						showGradient={size === "featured"}
+					/>
+				</div>
+			)}
 			</CardContent>
 		</>
 	);
 
+	// Utiliser CVA pour les variants, avec fallback pour retrocompatibilite
 	const cardClassName = cn(
-		"relative overflow-hidden border-l-4 bg-gradient-to-br via-background to-transparent hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group",
-		"min-h-[140px] flex flex-col", // Hauteur minimale pour éviter CLS, peut s'etendre si contenu long
-		variantStyles[variant],
+		kpiCardVariants({ size, priority, status }),
+		// Retrocompatibilite: si variant (deprecie) est utilise et pas de priority, appliquer les anciens styles
+		!priority && variant !== "default" && variantStyles[variant],
 		href && "cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 	);
 
 	// Generer le texte accessible pour les screen readers
 	const displayValue = numericValue !== undefined ? `${numericValue}${suffix || ""}` : value;
 	const evolutionText = evolution !== undefined
-		? `. ${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)}%`
+		? `. ${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)}%${comparisonLabel ? ` ${comparisonLabel}` : ""}`
 		: "";
 	const accessibleLabel = `${title}: ${displayValue}${evolutionText}${href ? ". Cliquer pour voir les details" : ""}`;
 

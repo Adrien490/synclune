@@ -74,7 +74,7 @@ export default async function AdminDashboardPage({
 				<div className="flex items-center gap-3">
 				{tab !== "inventory" && (
 					<Suspense fallback={null}>
-						<PeriodSelector showQuickButtons={true} />
+						<PeriodSelector />
 					</Suspense>
 				)}
 				<Suspense fallback={null}>

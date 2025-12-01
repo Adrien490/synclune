@@ -18,6 +18,7 @@ import { Mail, Users } from "lucide-react";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { SubscribersDataTable } from "@/modules/newsletter/components/admin/subscribers-data-table";
+import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -53,7 +54,10 @@ export default async function NewsletterPage({
 	await connection();
 
 	const params = await searchParams;
-	const stats = await getNewsletterStats();
+	const [stats, toolbarCollapsed] = await Promise.all([
+		getNewsletterStats(),
+		getToolbarCollapsed(),
+	]);
 
 	const cursor = getFirstParam(params.cursor);
 	const direction = (getFirstParam(params.direction) || "forward") as
@@ -175,29 +179,27 @@ export default async function NewsletterPage({
 				</TabsContent>
 
 				<TabsContent value="subscribers" className="space-y-6">
-					<DataTableToolbar ariaLabel="Barre d'outils de gestion des abonnés">
-						<div className="flex-1 w-full sm:max-w-md min-w-0">
+					<DataTableToolbar
+						ariaLabel="Barre d'outils de gestion des abonnés"
+						initialCollapsed={toolbarCollapsed}
+						search={
 							<SearchForm
 								paramName="search"
 								placeholder="Rechercher un email..."
 								ariaLabel="Rechercher un abonné par email"
 								className="w-full"
 							/>
-						</div>
-
-						<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-							<SelectFilter
-								filterKey="sortBy"
-								label="Trier par"
-								options={sortOptions}
-								placeholder="Plus récents"
-								className="w-full sm:min-w-[180px]"
-							/>
-
-							{/* Bouton Export CSV avec menu déroulant */}
-							<ExportSubscribersButton />
-							<RefreshNewsletterButton />
-						</div>
+						}
+					>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={sortOptions}
+							placeholder="Plus récents"
+							className="w-full sm:min-w-[180px]"
+						/>
+						<ExportSubscribersButton />
+						<RefreshNewsletterButton />
 					</DataTableToolbar>
 
 					<Suspense fallback={<div>Chargement...</div>}>

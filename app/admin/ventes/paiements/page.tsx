@@ -1,4 +1,5 @@
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
+import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -71,6 +72,9 @@ export default async function PaymentsAdminPage({
 	const { cursor, direction, perPage, sortBy, search, filters } =
 		parsePaymentsParams(params);
 
+	const toolbarCollapsed = await getToolbarCollapsed();
+
+	// La promise de paiements n'est PAS awaitée pour permettre le streaming
 	const paymentsPromise = getStripePayments({
 		cursor,
 		direction,
@@ -88,41 +92,41 @@ export default async function PaymentsAdminPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar ariaLabel="Barre d'outils de consultation des paiements">
-					<div className="flex-1 w-full sm:max-w-md min-w-0">
+				<DataTableToolbar
+					ariaLabel="Barre d'outils de consultation des paiements"
+					initialCollapsed={toolbarCollapsed}
+					search={
 						<SearchForm
 							paramName="search"
 							placeholder="Rechercher par numéro, email, Payment Intent..."
 							ariaLabel="Rechercher un paiement"
 							className="w-full"
 						/>
-					</div>
-
-					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-						<SelectFilter
-							filterKey="filter_paymentStatus"
-							label="Statut"
-							options={Object.entries(PAYMENT_STATUS_LABELS).map(
-								([value, label]) => ({
-									value,
-									label,
-								})
-							)}
-							placeholder="Tous les statuts"
-							className="w-full sm:min-w-[160px]"
-						/>
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+					}
+				>
+					<SelectFilter
+						filterKey="filter_paymentStatus"
+						label="Statut"
+						options={Object.entries(PAYMENT_STATUS_LABELS).map(
+							([value, label]) => ({
 								value,
 								label,
-							}))}
-							placeholder="Plus récents"
-							className="w-full sm:min-w-[180px]"
-						/>
-						<RefreshPaymentsButton />
-					</div>
+							})
+						)}
+						placeholder="Tous les statuts"
+						className="w-full sm:min-w-[160px]"
+					/>
+					<SelectFilter
+						filterKey="sortBy"
+						label="Trier par"
+						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+							value,
+							label,
+						}))}
+						placeholder="Plus récents"
+						className="w-full sm:min-w-[180px]"
+					/>
+					<RefreshPaymentsButton />
 				</DataTableToolbar>
 
 				<Suspense fallback={<StripePaymentsDataTableSkeleton />}>

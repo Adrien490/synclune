@@ -22,6 +22,7 @@ import { getProductSkus } from "@/modules/skus/data/get-skus";
 import { parseProductSkuParams } from "@/modules/skus/utils/parse-sku-params";
 import { getColorOptions } from "@/modules/colors/data/get-colors";
 import { getMaterialOptions } from "@/modules/materials/data/get-materials";
+import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { SORT_LABELS } from "@/modules/skus/constants/skus-constants";
 import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-data-table";
 import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
@@ -128,9 +129,10 @@ export default async function ProductVariantsPage({
 	}
 
 	// Les options de filtre sont awaited car necessaires immediatement
-	const [colorOptions, materialOptions] = await Promise.all([
+	const [colorOptions, materialOptions, toolbarCollapsed] = await Promise.all([
 		getColorOptions(),
 		getMaterialOptions(),
+		getToolbarCollapsed(),
 	]);
 
 	// La promise de SKUs n'est PAS awaited pour permettre le streaming
@@ -199,30 +201,33 @@ export default async function ProductVariantsPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar ariaLabel="Barre d'outils de gestion des variantes">
-					<div className="flex-1 w-full sm:max-w-md min-w-0">
+				<DataTableToolbar
+					ariaLabel="Barre d'outils de gestion des variantes"
+					initialCollapsed={toolbarCollapsed}
+					search={
 						<SearchForm
 							paramName="search"
 							placeholder="Rechercher une variante..."
+							ariaLabel="Rechercher une variante"
+							className="w-full"
 						/>
-					</div>
-					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2 w-full sm:w-auto">
-						<SkusFilterSheet
-							colorOptions={colorOptions}
-							materialOptions={materialOptions}
-						/>
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-								value,
-								label,
-							}))}
-							placeholder="Plus recents"
-							className="w-full sm:min-w-[180px]"
-						/>
-						<RefreshSkusButton productId={product.id} />
-					</div>
+					}
+				>
+					<SkusFilterSheet
+						colorOptions={colorOptions}
+						materialOptions={materialOptions}
+					/>
+					<SelectFilter
+						filterKey="sortBy"
+						label="Trier par"
+						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+							value,
+							label,
+						}))}
+						placeholder="Plus recents"
+						className="w-full sm:min-w-[180px]"
+					/>
+					<RefreshSkusButton productId={product.id} />
 				</DataTableToolbar>
 
 				<SkusFilterBadges colors={colorOptions} materials={materialOptions} />

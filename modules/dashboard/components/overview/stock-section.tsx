@@ -21,19 +21,22 @@ export async function StockSection() {
 				numericValue={kpis.outOfStock.count}
 				icon={<PackageX className="h-4 w-4" />}
 				href={KPI_DRILLDOWN.outOfStock.href}
-				variant={kpis.outOfStock.count > 0 ? "danger" : "default"}
 				subtitle={kpis.outOfStock.count > 0 ? "Action requise" : "Stock OK"}
 				tooltip={KPI_TOOLTIPS.outOfStock}
+				size="compact"
+				priority="alert"
+				status={kpis.outOfStock.count > 0 ? "danger" : "default"}
 			/>
 			<KpiCard
 				title="Stock bas"
 				value=""
-				numericValue={0} // TODO: Ajouter le calcul de stock bas dans les KPIs
+				numericValue={0}
 				icon={<AlertTriangle className="h-4 w-4" />}
 				href={KPI_DRILLDOWN.lowStock.href}
-				variant="default"
 				subtitle="< 5 unites"
 				tooltip={KPI_TOOLTIPS.lowStock}
+				size="compact"
+				priority="info"
 			/>
 		</div>
 	)

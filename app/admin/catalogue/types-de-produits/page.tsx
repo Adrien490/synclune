@@ -1,5 +1,6 @@
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
+import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -76,7 +77,9 @@ export default async function ProductTypesAdminPage({
 		| "desc";
 	const search = getFirstParam(params.search);
 
-	// Create product types promise
+	const toolbarCollapsed = await getToolbarCollapsed();
+
+	// La promise de types de produits n'est PAS awaitée pour permettre le streaming
 	const productTypesPromise = getProductTypes({
 		cursor,
 		direction,
@@ -108,30 +111,30 @@ export default async function ProductTypesAdminPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar ariaLabel="Barre d'outils de gestion des types de bijoux">
-					<div className="flex-1 w-full sm:max-w-md min-w-0">
+				<DataTableToolbar
+					ariaLabel="Barre d'outils de gestion des types de bijoux"
+					initialCollapsed={toolbarCollapsed}
+					search={
 						<SearchForm
 							paramName="search"
 							placeholder="Rechercher par label, slug..."
 							ariaLabel="Rechercher un type de bijou par label ou slug"
 							className="w-full"
 						/>
-					</div>
-
-					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-								value,
-								label,
-							}))}
-							placeholder="Label (A-Z)"
-							className="w-full sm:min-w-[180px]"
-						/>
-						<ProductTypesFilterSheet />
-						<RefreshProductTypesButton />
-					</div>
+					}
+				>
+					<SelectFilter
+						filterKey="sortBy"
+						label="Trier par"
+						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+							value,
+							label,
+						}))}
+						placeholder="Label (A-Z)"
+						className="w-full sm:min-w-[180px]"
+					/>
+					<ProductTypesFilterSheet />
+					<RefreshProductTypesButton />
 				</DataTableToolbar>
 
 				{/* Badges de filtres actifs */}

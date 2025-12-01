@@ -20,6 +20,7 @@ import {
 import { StockNotificationsFilterBadges } from "@/modules/stock-notifications/components/admin/stock-notifications-filter-badges";
 import { CleanupExpiredButton } from "@/modules/stock-notifications/components/admin/cleanup-expired-button";
 import { STOCK_NOTIFICATION_STATUS_LABELS } from "@/modules/stock-notifications/constants/stock-notification.constants";
+import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { SORT_OPTIONS_FOR_SELECT, DEFAULT_SORT } from "./_constants/sort-options";
 
 export const metadata: Metadata = {
@@ -63,7 +64,11 @@ export default async function NotificationsStockPage({
 			: undefined;
 
 	// Fetch data
-	const statsPromise = getStockNotificationsStats();
+	const [stats, toolbarCollapsed] = await Promise.all([
+		getStockNotificationsStats(),
+		getToolbarCollapsed(),
+	]);
+
 	const notificationsPromise = getStockNotificationsAdmin({
 		cursor,
 		direction,
@@ -74,8 +79,6 @@ export default async function NotificationsStockPage({
 			search,
 		},
 	});
-
-	const stats = await statsPromise;
 
 	// Options pour le filtre de statut
 	const statusOptions = Object.entries(STOCK_NOTIFICATION_STATUS_LABELS).map(
@@ -99,33 +102,32 @@ export default async function NotificationsStockPage({
 			<StockNotificationsStatsCards stats={stats} />
 
 			{/* Toolbar */}
-			<DataTableToolbar ariaLabel="Barre d'outils des alertes stock">
-				<div className="flex-1 w-full sm:max-w-md min-w-0">
+			<DataTableToolbar
+				ariaLabel="Barre d'outils des alertes stock"
+				initialCollapsed={toolbarCollapsed}
+				search={
 					<SearchForm
 						paramName="search"
 						placeholder="Rechercher un email ou produit..."
 						ariaLabel="Rechercher une demande"
 						className="w-full"
 					/>
-				</div>
-
-				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-					<SelectFilter
-						filterKey="filter_status"
-						label="Statut"
-						options={statusOptions}
-						placeholder="Tous les statuts"
-						className="w-full sm:min-w-[160px]"
-					/>
-
-					<SelectFilter
-						filterKey="sortBy"
-						label="Trier par"
-						options={SORT_OPTIONS_FOR_SELECT}
-						placeholder="Date (recent)"
-						className="w-full sm:min-w-[160px]"
-					/>
-				</div>
+				}
+			>
+				<SelectFilter
+					filterKey="filter_status"
+					label="Statut"
+					options={statusOptions}
+					placeholder="Tous les statuts"
+					className="w-full sm:min-w-[160px]"
+				/>
+				<SelectFilter
+					filterKey="sortBy"
+					label="Trier par"
+					options={SORT_OPTIONS_FOR_SELECT}
+					placeholder="Date (recent)"
+					className="w-full sm:min-w-[160px]"
+				/>
 			</DataTableToolbar>
 
 			{/* Badges de filtres actifs */}

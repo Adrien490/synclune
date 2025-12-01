@@ -18,21 +18,34 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts";
 import type { GetStockByColorReturn } from "../../types/dashboard.types";
 import { truncateText, TRUNCATE_PRESETS } from "../../utils/truncate-text";
 import { CHART_STYLES } from "../../constants/chart-styles";
+import { ChartScrollContainer } from "../chart-scroll-container";
+import { useChartDrilldown, type ChartDrilldownProps } from "../../hooks";
 
-interface StockByColorChartProps {
+interface StockByColorChartProps extends ChartDrilldownProps {
 	dataPromise: Promise<GetStockByColorReturn>;
 }
 
 /**
  * Graphique du stock par couleur
  */
-export function StockByColorChart({ dataPromise }: StockByColorChartProps) {
+export function StockByColorChart({ dataPromise, enableDrilldown = true }: StockByColorChartProps) {
 	const data = use(dataPromise);
+	const { handleClick } = useChartDrilldown("stockByColor");
 
 	// Preparer les donnees pour le graphique (top 8) avec une cle unique
 	const chartData = useMemo(() => {
-		const items = data.colors.slice(0, 8).map((c, index) => ({
+		const items: {
+			key: string;
+			colorId: string | null;
+			name: string;
+			fullName: string;
+			units: number;
+			value: number;
+			color: string;
+			skus: number;
+		}[] = data.colors.slice(0, 8).map((c, index) => ({
 			key: `color-${index}`,
+			colorId: c.id,
 			name: truncateText(c.name, TRUNCATE_PRESETS.badge),
 			fullName: c.name,
 			units: c.totalUnits,
@@ -45,6 +58,7 @@ export function StockByColorChart({ dataPromise }: StockByColorChartProps) {
 		if (data.uncategorized.totalUnits > 0) {
 			items.push({
 				key: "uncategorized",
+				colorId: null,
 				name: "Sans couleur",
 				fullName: "Sans couleur",
 				units: data.uncategorized.totalUnits,
@@ -56,6 +70,14 @@ export function StockByColorChart({ dataPromise }: StockByColorChartProps) {
 
 		return items;
 	}, [data]);
+
+	// Handler pour le clic sur une barre
+	const onBarClick = (data: unknown) => {
+		if (!enableDrilldown) return;
+		const entry = data as { colorId?: string | null };
+		if (!entry?.colorId) return;
+		handleClick(entry.colorId);
+	};
 
 	// Generer la config dynamiquement avec les couleurs hex reelles
 	const chartConfig = useMemo(() => {
@@ -92,40 +114,57 @@ export function StockByColorChart({ dataPromise }: StockByColorChartProps) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
-					<BarChart
-						data={chartData}
-						layout="vertical"
-						margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-					>
-						<CartesianGrid strokeDasharray="3 3" horizontal={false} />
-						<XAxis type="number" />
-						<YAxis
-							type="category"
-							dataKey="name"
-							width={80}
-							tick={{ fontSize: 12 }}
-						/>
-						<ChartTooltip
-							content={
-								<ChartTooltipContent
-									formatter={(value, name, item) => {
-										const entry = item.payload;
-										return [
-											`${value} unites (${entry.value.toFixed(2)} €)`,
-											entry.fullName,
-										];
-									}}
+				<div role="figure" aria-label="Graphique du stock par couleur">
+					<span className="sr-only">
+						Graphique en barres horizontales montrant la repartition du stock par couleur de bijou
+					</span>
+					<ChartScrollContainer>
+						<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
+							<BarChart
+								accessibilityLayer
+								data={chartData}
+								layout="vertical"
+								margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+							>
+								<CartesianGrid strokeDasharray="3 3" horizontal={false} />
+								<XAxis type="number" />
+								<YAxis
+									type="category"
+									dataKey="name"
+									width={80}
+									tick={{ fontSize: 12 }}
 								/>
-							}
-						/>
-						<Bar dataKey="units" radius={[0, 4, 4, 0]}>
-							{chartData.map((entry) => (
-								<Cell key={entry.key} fill={entry.color} />
-							))}
-						</Bar>
-					</BarChart>
-				</ChartContainer>
+								<ChartTooltip
+									content={
+										<ChartTooltipContent
+											formatter={(value, name, item) => {
+												const entry = item.payload;
+												return [
+													`${value} unites (${entry.value.toFixed(2)} €)`,
+													entry.fullName,
+												];
+											}}
+										/>
+									}
+								/>
+								<Bar
+									dataKey="units"
+									radius={[0, 4, 4, 0]}
+									onClick={(data) => onBarClick(data)}
+									className={enableDrilldown ? "cursor-pointer" : ""}
+								>
+									{chartData.map((entry) => (
+										<Cell
+											key={entry.key}
+											fill={entry.color}
+											className={enableDrilldown ? "hover:opacity-80 transition-opacity" : ""}
+										/>
+									))}
+								</Bar>
+							</BarChart>
+						</ChartContainer>
+					</ChartScrollContainer>
+				</div>
 			</CardContent>
 		</Card>
 	);

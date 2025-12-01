@@ -68,45 +68,50 @@ export function RepeatVsNewChart({ chartPromise }: RepeatVsNewChartProps) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className="min-h-[300px] w-full aspect-square mx-auto">
-					<PieChart>
-						<ChartTooltip
-							content={
-								<ChartTooltipContent
-									hideLabel
-									formatter={(value, name, item) => {
-										const percentage = ((Number(value) / total) * 100).toFixed(1);
-										return [
-											`${value} clients (${percentage}%)`,
-											item.payload.label,
-										];
-									}}
-								/>
-							}
-						/>
-						<ChartLegend
-							verticalAlign="bottom"
-							content={(props) => (
-								<ChartLegendContent
-									payload={props.payload}
-									verticalAlign={props.verticalAlign}
-									nameKey="label"
-								/>
-							)}
-						/>
-						<Pie
-							data={chartData}
-							dataKey="count"
-							nameKey="label"
-							innerRadius={60}
-							strokeWidth={5}
-						>
-							{chartData.map((entry, index) => (
-								<Cell key={`cell-${index}`} fill={entry.fill} />
-							))}
-						</Pie>
-					</PieChart>
-				</ChartContainer>
+				<div role="figure" aria-label="Graphique de repartition des clients">
+					<span className="sr-only">
+						Graphique en secteurs montrant la repartition entre nouveaux clients et clients recurrents
+					</span>
+					<ChartContainer config={chartConfig} className="min-h-[300px] w-full aspect-square mx-auto">
+						<PieChart accessibilityLayer>
+							<ChartTooltip
+								content={
+									<ChartTooltipContent
+										hideLabel
+										formatter={(value, name, item) => {
+											const percentage = ((Number(value) / total) * 100).toFixed(1);
+											return [
+												`${value} clients (${percentage}%)`,
+												item.payload.label,
+											];
+										}}
+									/>
+								}
+							/>
+							<ChartLegend
+								verticalAlign="bottom"
+								content={(props) => (
+									<ChartLegendContent
+										payload={props.payload}
+										verticalAlign={props.verticalAlign}
+										nameKey="label"
+									/>
+								)}
+							/>
+							<Pie
+								data={chartData}
+								dataKey="count"
+								nameKey="label"
+								innerRadius={60}
+								strokeWidth={5}
+							>
+								{chartData.map((entry, index) => (
+									<Cell key={`cell-${index}`} fill={entry.fill} />
+								))}
+							</Pie>
+						</PieChart>
+					</ChartContainer>
+				</div>
 			</CardContent>
 		</Card>
 	);

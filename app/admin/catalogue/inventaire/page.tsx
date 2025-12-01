@@ -1,4 +1,5 @@
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
+import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -85,9 +86,10 @@ export default async function InventoryAdminPage({
 	});
 
 	// Les options de filtre sont awaited car nécessaires immédiatement
-	const [colorOptions, materialOptions] = await Promise.all([
+	const [colorOptions, materialOptions, toolbarCollapsed] = await Promise.all([
 		getColorOptions(),
 		getMaterialOptions(),
+		getToolbarCollapsed(),
 	]);
 
 	return (
@@ -98,33 +100,33 @@ export default async function InventoryAdminPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar ariaLabel="Barre d'outils de l'inventaire">
-					<div className="flex-1 w-full sm:max-w-md min-w-0">
+				<DataTableToolbar
+					ariaLabel="Barre d'outils de l'inventaire"
+					initialCollapsed={toolbarCollapsed}
+					search={
 						<SearchForm
 							paramName="search"
 							placeholder="Rechercher un produit..."
 							ariaLabel="Rechercher dans l'inventaire"
 							className="w-full"
 						/>
-					</div>
-
-					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-						<InventoryFilterSheet
-							colorOptions={colorOptions}
-							materialOptions={materialOptions}
-						/>
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-								value,
-								label,
-							}))}
-							placeholder="Plus récents"
-							className="w-full sm:min-w-[180px]"
-						/>
-						<RefreshSkusButton />
-					</div>
+					}
+				>
+					<InventoryFilterSheet
+						colorOptions={colorOptions}
+						materialOptions={materialOptions}
+					/>
+					<SelectFilter
+						filterKey="sortBy"
+						label="Trier par"
+						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+							value,
+							label,
+						}))}
+						placeholder="Plus récents"
+						className="w-full sm:min-w-[180px]"
+					/>
+					<RefreshSkusButton />
 				</DataTableToolbar>
 
 				<Suspense fallback={<InventoryDataTableSkeleton />}>

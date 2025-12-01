@@ -19,8 +19,9 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { truncateText, TRUNCATE_PRESETS } from "../utils/truncate-text";
 import { CHART_STYLES } from "../constants/chart-styles";
 import { ChartEmpty } from "./chart-empty";
+import { useChartDrilldown, type ChartDrilldownProps } from "../hooks";
 
-interface TopProductsChartProps {
+interface TopProductsChartProps extends ChartDrilldownProps {
 	chartPromise: Promise<GetDashboardTopProductsReturn>;
 }
 
@@ -31,8 +32,9 @@ const chartConfig = {
 	},
 } satisfies ChartConfig;
 
-export function TopProductsChart({ chartPromise }: TopProductsChartProps) {
+export function TopProductsChart({ chartPromise, enableDrilldown = true }: TopProductsChartProps) {
 	const { products } = use(chartPromise);
+	const { handleClick, ariaLabel } = useChartDrilldown("topProducts");
 
 	// Formater les données pour le chart
 	const chartData = products.map((product: TopProductItem) => ({
@@ -44,6 +46,14 @@ export function TopProductsChart({ chartPromise }: TopProductsChartProps) {
 
 	// Verifier s'il y a des produits vendus
 	const hasProducts = products.length > 0;
+
+	// Handler pour le clic sur une barre
+	const onBarClick = (data: unknown) => {
+		if (!enableDrilldown) return;
+		const entry = data as { fullName?: string };
+		if (!entry?.fullName) return;
+		handleClick(entry.fullName);
+	};
 
 	return (
 		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
@@ -57,9 +67,10 @@ export function TopProductsChart({ chartPromise }: TopProductsChartProps) {
 				{!hasProducts ? (
 					<ChartEmpty type="noTopProducts" minHeight={300} />
 				) : (
-					<div role="figure" aria-label="Graphique des 5 meilleurs produits vendus">
+					<div role="figure" aria-label={`Graphique des 5 meilleurs produits vendus${enableDrilldown ? ". " + ariaLabel : ""}`}>
 						<span className="sr-only">
-							Graphique en barres horizontales montrant les 5 bijoux les plus vendus par chiffre d'affaires
+							Graphique en barres horizontales montrant les 5 bijoux les plus vendus par chiffre d'affaires.
+							{enableDrilldown && " Cliquez sur une barre pour voir le produit."}
 						</span>
 						<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
 							<BarChart accessibilityLayer data={chartData} layout="vertical">
@@ -102,6 +113,8 @@ export function TopProductsChart({ chartPromise }: TopProductsChartProps) {
 								dataKey="revenue"
 								fill="var(--color-revenue)"
 								radius={[0, 4, 4, 0]}
+								onClick={(data) => onBarClick(data)}
+								className={enableDrilldown ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}
 							/>
 							</BarChart>
 						</ChartContainer>

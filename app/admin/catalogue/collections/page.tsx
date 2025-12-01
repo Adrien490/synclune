@@ -1,5 +1,6 @@
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
+import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -76,8 +77,12 @@ export default async function CollectionsAdminPage({
 	const search = getFirstParam(params.search);
 	const status = parseStatus(params);
 
-	const collectionCounts = await getCollectionCountsByStatus();
+	const [collectionCounts, toolbarCollapsed] = await Promise.all([
+		getCollectionCountsByStatus(),
+		getToolbarCollapsed(),
+	]);
 
+	// La promise de collections n'est PAS awaitée pour permettre le streaming
 	const collectionsPromise = getCollections({
 		cursor,
 		direction,
@@ -110,30 +115,30 @@ export default async function CollectionsAdminPage({
 					counts={collectionCounts}
 				/>
 
-				<DataTableToolbar ariaLabel="Barre d'outils de gestion des collections">
-					<div className="flex-1 w-full sm:max-w-md min-w-0">
+				<DataTableToolbar
+					ariaLabel="Barre d'outils de gestion des collections"
+					initialCollapsed={toolbarCollapsed}
+					search={
 						<SearchForm
 							paramName="search"
 							placeholder="Rechercher par nom, slug, description..."
 							ariaLabel="Rechercher une collection par nom, slug ou description"
 							className="w-full"
 						/>
-					</div>
-
-					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-								value,
-								label,
-							}))}
-							placeholder="Position"
-							className="w-full sm:min-w-[180px]"
-						/>
-						<CollectionsFilterSheet />
-						<RefreshCollectionsButton />
-					</div>
+					}
+				>
+					<SelectFilter
+						filterKey="sortBy"
+						label="Trier par"
+						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+							value,
+							label,
+						}))}
+						placeholder="Position"
+						className="w-full sm:min-w-[180px]"
+					/>
+					<CollectionsFilterSheet />
+					<RefreshCollectionsButton />
 				</DataTableToolbar>
 
 				{/* Badges de filtres actifs */}

@@ -20,12 +20,14 @@ export async function OperationsSection() {
 				subtitle={
 					kpis.pendingOrders.urgentCount > 0
 						? `dont ${kpis.pendingOrders.urgentCount} urgente(s)`
-						: "Tout à jour"
+						: "Tout a jour"
 				}
 				icon={<Clock className="h-4 w-4" />}
 				href={KPI_DRILLDOWN.pendingOrders.href}
-				variant={kpis.pendingOrders.urgentCount > 0 ? "warning" : "default"}
 				tooltip={KPI_TOOLTIPS.pendingOrders}
+				size="compact"
+				priority="operational"
+				status={kpis.pendingOrders.urgentCount > 0 ? "warning" : "default"}
 			/>
 			<KpiCard
 				title="Commandes urgentes"
@@ -34,8 +36,10 @@ export async function OperationsSection() {
 				subtitle="> 48h en attente"
 				icon={<AlertTriangle className="h-4 w-4" />}
 				href={KPI_DRILLDOWN.urgentOrders.href}
-				variant={kpis.pendingOrders.urgentCount > 0 ? "danger" : "default"}
 				tooltip={KPI_TOOLTIPS.urgentOrders}
+				size="compact"
+				priority="alert"
+				status={kpis.pendingOrders.urgentCount > 0 ? "danger" : "default"}
 			/>
 		</div>
 	)

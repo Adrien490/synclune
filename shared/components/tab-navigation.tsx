@@ -15,6 +15,8 @@ interface TabNavigationProps {
     ariaLabel?: string;
     /** Activer le prefetch des liens (défaut: false) */
     prefetch?: boolean;
+    /** Activer le scroll horizontal sur mobile au lieu de wrap (défaut: false) */
+    scrollOnMobile?: boolean;
 }
 
 /**
@@ -26,6 +28,7 @@ export function TabNavigation({
     activeValue,
     ariaLabel = "Navigation par onglets",
     prefetch = false,
+    scrollOnMobile = false,
 }: TabNavigationProps) {
     const getTabClasses = (value: string) => {
         const isActive = value === activeValue;
@@ -36,6 +39,8 @@ export function TabNavigation({
             "text-sm font-medium whitespace-nowrap",
             "transition-all duration-200",
             "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-offset-2",
+            // Snap pour scroll mobile
+            scrollOnMobile && "snap-start shrink-0",
             isActive && [
                 "bg-background text-foreground",
                 "shadow-sm border border-border",
@@ -51,7 +56,13 @@ export function TabNavigation({
 
     return (
         <nav aria-label={ariaLabel} className="w-full">
-            <div className="flex flex-wrap gap-1 sm:gap-1.5 bg-muted rounded-lg p-1">
+            <div className={cn(
+                "bg-muted rounded-lg p-1",
+                scrollOnMobile
+                    ? "flex overflow-x-auto snap-x snap-mandatory scrollbar-none md:flex-wrap md:overflow-visible"
+                    : "flex flex-wrap",
+                "gap-1 sm:gap-1.5"
+            )}>
                 {items.map((item) => (
                     <Link
                         key={item.value}

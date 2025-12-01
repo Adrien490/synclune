@@ -12,8 +12,9 @@ import {
 import type { GetDashboardOrdersStatusReturn, OrderStatusItem } from "@/modules/dashboard/data/get-orders-status";
 import { use } from "react";
 import { Cell, Pie, PieChart } from "recharts";
+import { useChartDrilldown, type ChartDrilldownProps } from "../hooks";
 
-interface OrdersStatusChartProps {
+interface OrdersStatusChartProps extends ChartDrilldownProps {
 	chartPromise: Promise<GetDashboardOrdersStatusReturn>;
 }
 
@@ -53,8 +54,9 @@ const chartConfig = {
 	},
 } satisfies ChartConfig;
 
-export function OrdersStatusChart({ chartPromise }: OrdersStatusChartProps) {
+export function OrdersStatusChart({ chartPromise, enableDrilldown = true }: OrdersStatusChartProps) {
 	const { statuses } = use(chartPromise);
+	const { handleClick, ariaLabel } = useChartDrilldown("ordersStatus");
 
 	// Formater les données pour le chart
 	const chartData = statuses.map((item: OrderStatusItem) => ({
@@ -66,6 +68,15 @@ export function OrdersStatusChart({ chartPromise }: OrdersStatusChartProps) {
 
 	const total = statuses.reduce((sum, item) => sum + item.count, 0);
 
+	// Handler pour le clic sur un segment
+	const onSegmentClick = (index: number) => {
+		if (!enableDrilldown) return;
+		const item = chartData[index];
+		if (item) {
+			handleClick(item.status);
+		}
+	};
+
 	return (
 		<Card className="border-l-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
 			<CardHeader>
@@ -75,9 +86,10 @@ export function OrdersStatusChart({ chartPromise }: OrdersStatusChartProps) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<div role="figure" aria-label="Graphique de repartition des statuts de commandes">
+				<div role="figure" aria-label={`Graphique de repartition des statuts de commandes${enableDrilldown ? ". " + ariaLabel : ""}`}>
 					<span className="sr-only">
-						Graphique circulaire montrant la repartition des commandes par statut: en attente, en traitement, expediees, livrees
+						Graphique circulaire montrant la repartition des commandes par statut: en attente, en traitement, expediees, livrees.
+						{enableDrilldown && " Cliquez sur un segment pour filtrer les commandes."}
 					</span>
 					<ChartContainer config={chartConfig} className="min-h-[300px] w-full aspect-square mx-auto">
 						<PieChart accessibilityLayer>
@@ -111,9 +123,15 @@ export function OrdersStatusChart({ chartPromise }: OrdersStatusChartProps) {
 							nameKey="label"
 							innerRadius={60}
 							strokeWidth={5}
+							onClick={(_, index) => onSegmentClick(index)}
+							className={enableDrilldown ? "cursor-pointer" : ""}
 						>
 							{chartData.map((entry, index) => (
-								<Cell key={`cell-${index}`} fill={entry.fill} />
+								<Cell
+									key={`cell-${index}`}
+									fill={entry.fill}
+									className={enableDrilldown ? "hover:opacity-80 transition-opacity" : ""}
+								/>
 							))}
 						</Pie>
 						</PieChart>

@@ -82,6 +82,14 @@ export const CHART_STYLES = {
     /** Marges internes Recharts */
     margin: { top: 10, right: 10, bottom: 0, left: 0 },
   },
+
+  /** Styles mobile */
+  mobile: {
+    /** Container scroll horizontal mobile */
+    scrollContainer: "overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible",
+    /** Largeur minimum pour scroll */
+    minChartWidth: "min-w-[500px] md:min-w-0",
+  },
 } as const
 
 /** Type pour les cles de hauteur */

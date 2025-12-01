@@ -1,5 +1,6 @@
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
+import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -49,6 +50,9 @@ export default async function MaterialsAdminPage({
 	const search = getFirstParam(params.search);
 	const filterIsActive = getFirstParam(params.filter_isActive);
 
+	const toolbarCollapsed = await getToolbarCollapsed();
+
+	// La promise de matériaux n'est PAS awaitée pour permettre le streaming
 	const materialsPromise = getMaterials({
 		cursor,
 		direction,
@@ -69,30 +73,30 @@ export default async function MaterialsAdminPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar ariaLabel="Barre d'outils de gestion des matériaux">
-					<div className="flex-1 w-full sm:max-w-md min-w-0">
+				<DataTableToolbar
+					ariaLabel="Barre d'outils de gestion des matériaux"
+					initialCollapsed={toolbarCollapsed}
+					search={
 						<SearchForm
 							paramName="search"
 							placeholder="Rechercher par nom, slug ou description..."
 							ariaLabel="Rechercher un matériau par nom, slug ou description"
 							className="w-full"
 						/>
-					</div>
-
-					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={Object.entries(SORT_LABELS).map(([value, label]) => ({
-								value,
-								label,
-							}))}
-							placeholder="Position"
-							className="w-full sm:min-w-[180px]"
-						/>
-						<MaterialsFilterSheet />
-						<RefreshMaterialsButton />
-					</div>
+					}
+				>
+					<SelectFilter
+						filterKey="sortBy"
+						label="Trier par"
+						options={Object.entries(SORT_LABELS).map(([value, label]) => ({
+							value,
+							label,
+						}))}
+						placeholder="Position"
+						className="w-full sm:min-w-[180px]"
+					/>
+					<MaterialsFilterSheet />
+					<RefreshMaterialsButton />
 				</DataTableToolbar>
 
 				{/* Badges de filtres actifs */}

@@ -19,8 +19,9 @@ import {
 import { PieChart, Pie, Cell } from "recharts";
 import type { GetRevenueByTypeReturn } from "../../types/dashboard.types";
 import { CHART_STYLES } from "../../constants/chart-styles";
+import { useChartDrilldown, type ChartDrilldownProps } from "../../hooks";
 
-interface RevenueByTypeChartProps {
+interface RevenueByTypeChartProps extends ChartDrilldownProps {
 	dataPromise: Promise<GetRevenueByTypeReturn>;
 }
 
@@ -35,8 +36,9 @@ const CHART_COLORS = [
 /**
  * Graphique des revenus par type de produit
  */
-export function RevenueByTypeChart({ dataPromise }: RevenueByTypeChartProps) {
+export function RevenueByTypeChart({ dataPromise, enableDrilldown = true }: RevenueByTypeChartProps) {
 	const data = use(dataPromise);
+	const { handleClick } = useChartDrilldown("revenueByType");
 
 	// Preparer les donnees pour le graphique avec une cle unique
 	const chartData = useMemo(() => {
@@ -63,6 +65,15 @@ export function RevenueByTypeChart({ dataPromise }: RevenueByTypeChartProps) {
 
 		return items;
 	}, [data]);
+
+	// Handler pour le clic sur un segment
+	const onSegmentClick = (index: number) => {
+		if (!enableDrilldown) return;
+		const item = chartData[index];
+		if (item && item.name !== "Non categorise") {
+			handleClick(item.name);
+		}
+	};
 
 	// Generer la config dynamiquement
 	const chartConfig = useMemo(() => {
@@ -98,45 +109,56 @@ export function RevenueByTypeChart({ dataPromise }: RevenueByTypeChartProps) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
-					<PieChart>
-						<ChartTooltip
-							content={
-								<ChartTooltipContent
-									hideLabel
-									formatter={(value, name, item) => {
-										const percentage = ((Number(value) / total) * 100).toFixed(1);
-										return [`${Number(value).toFixed(2)} € (${percentage}%)`, item.payload.name];
-									}}
-								/>
-							}
-						/>
-						<ChartLegend
-							verticalAlign="bottom"
-							content={(props) => (
-								<ChartLegendContent
-									payload={props.payload}
-									verticalAlign={props.verticalAlign}
-									nameKey="name"
-								/>
-							)}
-						/>
-						<Pie
-							data={chartData}
-							cx="50%"
-							cy="50%"
-							innerRadius={60}
-							outerRadius={80}
-							paddingAngle={2}
-							dataKey="value"
-							nameKey="name"
-						>
-							{chartData.map((entry) => (
-								<Cell key={entry.key} fill={entry.fill} />
-							))}
-						</Pie>
-					</PieChart>
-				</ChartContainer>
+				<div role="figure" aria-label="Graphique des revenus par type de bijou">
+					<span className="sr-only">
+						Graphique en secteurs montrant la repartition du chiffre d'affaires par type de bijou
+					</span>
+					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
+						<PieChart accessibilityLayer>
+							<ChartTooltip
+								content={
+									<ChartTooltipContent
+										hideLabel
+										formatter={(value, name, item) => {
+											const percentage = ((Number(value) / total) * 100).toFixed(1);
+											return [`${Number(value).toFixed(2)} € (${percentage}%)`, item.payload.name];
+										}}
+									/>
+								}
+							/>
+							<ChartLegend
+								verticalAlign="bottom"
+								content={(props) => (
+									<ChartLegendContent
+										payload={props.payload}
+										verticalAlign={props.verticalAlign}
+										nameKey="name"
+									/>
+								)}
+							/>
+							<Pie
+								data={chartData}
+								cx="50%"
+								cy="50%"
+								innerRadius={60}
+								outerRadius={80}
+								paddingAngle={2}
+								dataKey="value"
+								nameKey="name"
+								onClick={(_, index) => onSegmentClick(index)}
+								className={enableDrilldown ? "cursor-pointer" : ""}
+							>
+								{chartData.map((entry) => (
+									<Cell
+										key={entry.key}
+										fill={entry.fill}
+										className={enableDrilldown ? "hover:opacity-80 transition-opacity" : ""}
+									/>
+								))}
+							</Pie>
+						</PieChart>
+					</ChartContainer>
+				</div>
 			</CardContent>
 		</Card>
 	);
