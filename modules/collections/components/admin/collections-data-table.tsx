@@ -1,5 +1,6 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -88,7 +89,7 @@ export async function CollectionsDataTable({
 		<Card>
 			<CardContent>
 				<CollectionsSelectionToolbar collections={collectionsData} />
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des collections" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -224,7 +225,7 @@ export async function CollectionsDataTable({
 								})}
 						</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination

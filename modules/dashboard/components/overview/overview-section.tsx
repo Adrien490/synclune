@@ -1,66 +1,86 @@
-import { Suspense } from "react";
-import { fetchDashboardKpis } from "../../data/get-kpis";
-import { fetchDashboardRevenueChart } from "../../data/get-revenue-chart";
-import { fetchDashboardTopProducts } from "../../data/get-top-products";
-import { fetchDashboardOrdersStatus } from "../../data/get-orders-status";
-import { fetchFulfillmentStatus } from "../../data/get-fulfillment-status";
-import { fetchRevenueTrends } from "../../data/get-revenue-trends";
-import { DashboardKpis } from "../dashboard-kpis";
-import { RevenueChart } from "../revenue-chart";
-import { TopProductsChart } from "../top-products-chart";
-import { OrdersStatusChart } from "../orders-status-chart";
-import { FulfillmentStatusChart } from "../fulfillment-status-chart";
-import { RevenueYearChart } from "../revenue-year-chart";
-import { KpisSkeleton, ChartSkeleton } from "../skeletons";
+import { Suspense } from "react"
+import { OverviewAccordion } from "./overview-accordion"
+import { SectionWrapper } from "./section-wrapper"
+import { PerformanceSection } from "./performance-section"
+import { OperationsSection } from "./operations-section"
+import { StockSection } from "./stock-section"
+import { TrendsSection } from "./trends-section"
+import { KpisSkeleton, ChartSkeleton } from "../skeletons"
+import { DashboardErrorBoundary } from "../dashboard-error-boundary"
+import { ChartError } from "../chart-error"
 
 /**
  * Section Vue d'ensemble du dashboard
- * Affiche les KPIs principaux et les graphiques de synthese
+ * Reorganisee en sections pliables (accordions) pour reduire la surcharge cognitive
+ *
+ * Sections:
+ * - Performance: CA jour, CA mois, Panier moyen, Commandes
+ * - Operations: Commandes en traitement, fulfillment status
+ * - Stock: Ruptures, alertes stock
+ * - Tendances: Charts revenus, top produits
  */
 export async function OverviewSection() {
-	// Creer les promises pour les donnees
-	const kpisPromise = fetchDashboardKpis();
-	const revenueChartPromise = fetchDashboardRevenueChart();
-	const topProductsPromise = fetchDashboardTopProducts();
-	const ordersStatusPromise = fetchDashboardOrdersStatus();
-	const fulfillmentStatusPromise = fetchFulfillmentStatus();
-	const revenueTrendsPromise = fetchRevenueTrends();
-
 	return (
-		<div className="space-y-6">
-			{/* KPIs */}
-			<Suspense fallback={<KpisSkeleton count={6} ariaLabel="Chargement des indicateurs cles" />}>
-				<DashboardKpis kpisPromise={kpisPromise} />
-			</Suspense>
-
-			{/* Graphiques principaux */}
-			<div className="grid gap-6 lg:grid-cols-2">
-				{/* Revenus 30 jours */}
-				<div className="lg:col-span-2">
-					<Suspense fallback={<ChartSkeleton />}>
-						<RevenueChart chartPromise={revenueChartPromise} />
+		<OverviewAccordion>
+			{/* Section Performance */}
+			<SectionWrapper sectionId="performance">
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur de chargement" description="Impossible de charger les indicateurs de performance" minHeight={120} />}
+				>
+					<Suspense
+						fallback={
+							<KpisSkeleton count={4} ariaLabel="Chargement des indicateurs de performance" />
+						}
+					>
+						<PerformanceSection />
 					</Suspense>
-				</div>
+				</DashboardErrorBoundary>
+			</SectionWrapper>
 
-				{/* Tendances 12 mois - juste en dessous du graphique revenus */}
-				<div className="lg:col-span-2">
-					<Suspense fallback={<ChartSkeleton />}>
-						<RevenueYearChart chartPromise={revenueTrendsPromise} />
+			{/* Section Operations */}
+			<SectionWrapper sectionId="operations">
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur de chargement" description="Impossible de charger les indicateurs d'operations" minHeight={120} />}
+				>
+					<Suspense
+						fallback={
+							<KpisSkeleton count={4} ariaLabel="Chargement des indicateurs d'operations" />
+						}
+					>
+						<OperationsSection />
 					</Suspense>
-				</div>
+				</DashboardErrorBoundary>
+			</SectionWrapper>
 
-				<Suspense fallback={<ChartSkeleton />}>
-					<TopProductsChart chartPromise={topProductsPromise} />
-				</Suspense>
+			{/* Section Stock */}
+			<SectionWrapper sectionId="stock">
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur de chargement" description="Impossible de charger les indicateurs de stock" minHeight={120} />}
+				>
+					<Suspense
+						fallback={
+							<KpisSkeleton count={4} ariaLabel="Chargement des indicateurs de stock" />
+						}
+					>
+						<StockSection />
+					</Suspense>
+				</DashboardErrorBoundary>
+			</SectionWrapper>
 
-				<Suspense fallback={<ChartSkeleton />}>
-					<OrdersStatusChart chartPromise={ordersStatusPromise} />
-				</Suspense>
-
-				<Suspense fallback={<ChartSkeleton />}>
-					<FulfillmentStatusChart chartPromise={fulfillmentStatusPromise} />
-				</Suspense>
-			</div>
-		</div>
-	);
+			{/* Section Tendances */}
+			<SectionWrapper sectionId="trends">
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur de chargement" description="Impossible de charger les tendances" minHeight={300} />}
+				>
+					<Suspense
+						fallback={
+							<ChartSkeleton height={300} ariaLabel="Chargement des tendances" />
+						}
+					>
+						<TrendsSection />
+					</Suspense>
+				</DashboardErrorBoundary>
+			</SectionWrapper>
+		</OverviewAccordion>
+	)
 }

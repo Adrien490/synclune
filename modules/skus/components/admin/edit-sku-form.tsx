@@ -14,7 +14,7 @@ import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
-import { Euro, ImagePlus, Info, Upload } from "lucide-react";
+import { Euro, ImagePlus, Image as ImageIcon, Info, Palette, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -123,6 +123,7 @@ export function EditProductVariantForm({
 					<FormSection
 						title="La variante"
 						description="Caractéristiques, prix et disponibilité"
+						icon={<Palette />}
 					>
 						<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 							{/* Colonne gauche : Caractéristiques */}
@@ -316,7 +317,8 @@ export function EditProductVariantForm({
 					    ═══════════════════════════════════════════════════════════════════════ */}
 					<FormSection
 						title="Visuels"
-						description="Image principale et galerie de médias"
+						description="Image principale et galerie"
+						icon={<ImageIcon />}
 					>
 						<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 							{/* Image principale */}

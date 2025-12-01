@@ -1,7 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
+import { ViewTransition } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
 	Table,
@@ -64,7 +66,7 @@ export async function StockNotificationsDataTable({
 		<Card>
 			<CardContent>
 				<StockNotificationsSelectionToolbar notificationIds={notificationIds} />
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des demandes de notification">
 						<TableHeader>
 							<TableRow>
@@ -89,7 +91,7 @@ export async function StockNotificationsDataTable({
 						))}
 					</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination
@@ -145,12 +147,14 @@ function StockNotificationRow({
 							<Bell className="h-4 w-4 text-muted-foreground" />
 						</div>
 					)}
-					<Link
-						href={`/admin/catalogue/produits/${sku.product.id}`}
-						className="font-medium hover:underline truncate max-w-[180px]"
-					>
-						{sku.product.title}
-					</Link>
+					<ViewTransition name={`admin-product-${sku.product.id}`}>
+						<Link
+							href={`/admin/catalogue/produits/${sku.product.id}`}
+							className="font-medium hover:underline truncate max-w-[180px]"
+						>
+							{sku.product.title}
+						</Link>
+					</ViewTransition>
 				</div>
 			</TableCell>
 

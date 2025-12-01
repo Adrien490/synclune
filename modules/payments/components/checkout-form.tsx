@@ -9,7 +9,7 @@ import type { Session } from "@/modules/auth/lib/auth";
 import { getFinalShippingCost } from "@/modules/orders/constants/shipping";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { CreditCard, Info, Mail, Shield } from "lucide-react";
+import { CreditCard, Info, Mail, MapPin, Receipt, Shield } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
 	SORTED_SHIPPING_COUNTRIES,
@@ -185,7 +185,8 @@ export function CheckoutForm({
 			{isGuest && (
 				<FormSection
 					title="Ton email"
-					description="Pour recevoir la confirmation de commande"
+					description="Pour recevoir la confirmation"
+					icon={<Mail />}
 				>
 					<div className="space-y-4">
 						<form.AppField
@@ -270,6 +271,7 @@ export function CheckoutForm({
 			<FormSection
 				title="Adresse de livraison"
 				description="Où souhaites-tu recevoir ta commande ?"
+				icon={<MapPin />}
 			>
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{/* Prénom */}
@@ -470,6 +472,7 @@ export function CheckoutForm({
 			<FormSection
 				title="Adresse de facturation"
 				description="Par défaut, identique à l'adresse de livraison"
+				icon={<Receipt />}
 			>
 				<form.AppField name="billingDifferent">
 					{(field) => (
@@ -724,6 +727,7 @@ export function CheckoutForm({
 			<FormSection
 				title="Conditions et consentements"
 				description="Informations légales"
+				icon={<Shield />}
 			>
 				{/* CGV */}
 				<form.AppField

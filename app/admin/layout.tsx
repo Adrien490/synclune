@@ -69,7 +69,7 @@ export default async function AdminLayout({
 				<main
 					id="main-content"
 					role="main"
-					className="p-6 space-y-6 pb-6 md:pb-6 mb-16 md:mb-0"
+					className="p-6 space-y-6 pb-20 md:pb-6"
 				>
 					<SelectionProvider selectionKey="selected">
 						{children}

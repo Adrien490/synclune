@@ -4,6 +4,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
 import { AlertCircle, CheckCircle, AlertTriangle, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 
@@ -55,7 +56,6 @@ export function ProductPrice({ selectedSku, product }: ProductPriceProps) {
 		: 0;
 
 	// Calculer le stock status (en stock, stock limité, ou rupture)
-	const LOW_STOCK_THRESHOLD = 5;
 	const inventory = selectedSku?.inventory || 0;
 	const isAvailable = selectedSku ? inventory > 0 && selectedSku.isActive : false;
 	const stockStatus =

@@ -1,4 +1,5 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -86,12 +87,13 @@ export async function ProductVariantsDataTable({
 		<Card>
 			<CardContent>
 				<ProductVariantsSelectionToolbar />
-				<div className="overflow-x-auto">
-					<Table className="min-w-full">
+				<TableScrollContainer>
+					<Table role="table" aria-label="Liste des variantes du produit" className="min-w-full">
 						<TableHeader>
 							<TableRow>
 								<TableHead
 									key="select"
+									scope="col"
 									role="columnheader"
 									className="w-12"
 									aria-label="Sélection de variantes"
@@ -103,16 +105,18 @@ export async function ProductVariantsDataTable({
 								</TableHead>
 								<TableHead
 									key="image"
+									scope="col"
 									role="columnheader"
 									className="hidden md:table-cell w-20"
 								>
 									Image
 								</TableHead>
-								<TableHead key="sku" role="columnheader">
+								<TableHead key="sku" scope="col" role="columnheader">
 									Référence
 								</TableHead>
 								<TableHead
 									key="color"
+									scope="col"
 									role="columnheader"
 									className="hidden sm:table-cell"
 								>
@@ -120,6 +124,7 @@ export async function ProductVariantsDataTable({
 								</TableHead>
 								<TableHead
 									key="material"
+									scope="col"
 									role="columnheader"
 									className="hidden xl:table-cell"
 								>
@@ -127,16 +132,18 @@ export async function ProductVariantsDataTable({
 								</TableHead>
 								<TableHead
 									key="size"
+									scope="col"
 									role="columnheader"
 									className="hidden 2xl:table-cell"
 								>
 									Taille
 								</TableHead>
-								<TableHead key="priceTTC" role="columnheader">
+								<TableHead key="priceTTC" scope="col" role="columnheader">
 									Prix TTC
 								</TableHead>
 								<TableHead
 									key="priceHT"
+									scope="col"
 									role="columnheader"
 									className="hidden xl:table-cell text-sm"
 								>
@@ -144,6 +151,7 @@ export async function ProductVariantsDataTable({
 								</TableHead>
 								<TableHead
 									key="stock"
+									scope="col"
 									role="columnheader"
 									className="hidden sm:table-cell text-center"
 								>
@@ -151,6 +159,7 @@ export async function ProductVariantsDataTable({
 								</TableHead>
 									<TableHead
 									key="actions"
+									scope="col"
 									role="columnheader"
 									className="text-right"
 									aria-label="Actions disponibles pour chaque variante"
@@ -312,7 +321,7 @@ export async function ProductVariantsDataTable({
 								})}
 						</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination

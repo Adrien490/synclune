@@ -2,6 +2,74 @@
  * Utilitaires pour la manipulation de dates
  */
 
+import { format as formatFns } from "date-fns";
+import { fr } from "date-fns/locale";
+
+/**
+ * Formate une date au format court "d MMM yyyy" (ex: "1 déc 2024")
+ *
+ * @param date - Date à formater (Date ou string ISO)
+ * @returns Date formatée
+ *
+ * @example
+ * ```ts
+ * formatDateShort(new Date()) // "1 déc 2024"
+ * formatDateShort("2024-12-01") // "1 déc 2024"
+ * ```
+ */
+export function formatDateShort(date: Date | string): string {
+	const dateObj = typeof date === "string" ? new Date(date) : date;
+	return formatFns(dateObj, "d MMM yyyy", { locale: fr });
+}
+
+/**
+ * Formate une date avec heure "d MMM yyyy à HH:mm" (ex: "1 déc 2024 à 14:30")
+ *
+ * @param date - Date à formater (Date ou string ISO)
+ * @returns Date et heure formatées
+ *
+ * @example
+ * ```ts
+ * formatDateTime(new Date()) // "1 déc 2024 à 14:30"
+ * ```
+ */
+export function formatDateTime(date: Date | string): string {
+	const dateObj = typeof date === "string" ? new Date(date) : date;
+	return formatFns(dateObj, "d MMM yyyy 'à' HH:mm", { locale: fr });
+}
+
+/**
+ * Formate une date au format "dd/MM/yyyy HH:mm" (ex: "01/12/2024 14:30")
+ *
+ * @param date - Date à formater (Date ou string ISO)
+ * @returns Date et heure formatées au format numérique
+ *
+ * @example
+ * ```ts
+ * formatDateTimeNumeric(new Date()) // "01/12/2024 14:30"
+ * ```
+ */
+export function formatDateTimeNumeric(date: Date | string): string {
+	const dateObj = typeof date === "string" ? new Date(date) : date;
+	return formatFns(dateObj, "dd/MM/yyyy HH:mm", { locale: fr });
+}
+
+/**
+ * Formate une date au format long "d MMMM yyyy" (ex: "1 décembre 2024")
+ *
+ * @param date - Date à formater (Date ou string ISO)
+ * @returns Date formatée au format long
+ *
+ * @example
+ * ```ts
+ * formatDateLong(new Date()) // "1 décembre 2024"
+ * ```
+ */
+export function formatDateLong(date: Date | string): string {
+	const dateObj = typeof date === "string" ? new Date(date) : date;
+	return formatFns(dateObj, "d MMMM yyyy", { locale: fr });
+}
+
 /**
  * Vérifie si une date est récente (dans les N derniers jours)
  *

@@ -18,6 +18,7 @@ import { use } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { truncateText, TRUNCATE_PRESETS } from "../utils/truncate-text";
 import { CHART_STYLES } from "../constants/chart-styles";
+import { ChartEmpty } from "./chart-empty";
 
 interface TopProductsChartProps {
 	chartPromise: Promise<GetDashboardTopProductsReturn>;
@@ -41,6 +42,9 @@ export function TopProductsChart({ chartPromise }: TopProductsChartProps) {
 		unitsSold: product.unitsSold,
 	}));
 
+	// Verifier s'il y a des produits vendus
+	const hasProducts = products.length > 0;
+
 	return (
 		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
@@ -50,50 +54,54 @@ export function TopProductsChart({ chartPromise }: TopProductsChartProps) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
-					<BarChart accessibilityLayer data={chartData} layout="vertical">
-						<CartesianGrid horizontal={false} />
-						<YAxis
-							dataKey="product"
-							type="category"
-							tickLine={false}
-							axisLine={false}
-							width={150}
-						/>
-						<XAxis type="number" hide />
-						<ChartTooltip
-							content={
-								<ChartTooltipContent
-									labelFormatter={(_, payload) => {
-										if (payload && payload[0]) {
-											return payload[0].payload.fullName;
-										}
-										return "";
-									}}
-									formatter={(value, name, item) => {
-										if (name === "revenue") {
-											return [
-												<div key="revenue" className="flex flex-col gap-1">
-													<span>{`${Number(value).toFixed(2)} €`}</span>
-													<span className="text-xs text-muted-foreground">
-														{item.payload.unitsSold} unités vendues
-													</span>
-												</div>,
-												"CA",
-											];
-										}
-										return [value, name];
-									}}
-								/>
-							}
-						/>
-						<Bar
-							dataKey="revenue"
-							fill="var(--color-revenue)"
-							radius={[0, 4, 4, 0]}
-						/>
-					</BarChart>
-				</ChartContainer>
+				{!hasProducts ? (
+					<ChartEmpty type="noTopProducts" minHeight={300} />
+				) : (
+					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
+						<BarChart accessibilityLayer data={chartData} layout="vertical">
+							<CartesianGrid horizontal={false} />
+							<YAxis
+								dataKey="product"
+								type="category"
+								tickLine={false}
+								axisLine={false}
+								width={150}
+							/>
+							<XAxis type="number" hide />
+							<ChartTooltip
+								content={
+									<ChartTooltipContent
+										labelFormatter={(_, payload) => {
+											if (payload && payload[0]) {
+												return payload[0].payload.fullName;
+											}
+											return "";
+										}}
+										formatter={(value, name, item) => {
+											if (name === "revenue") {
+												return [
+													<div key="revenue" className="flex flex-col gap-1">
+														<span>{`${Number(value).toFixed(2)} €`}</span>
+														<span className="text-xs text-muted-foreground">
+															{item.payload.unitsSold} unités vendues
+														</span>
+													</div>,
+													"CA",
+												];
+											}
+											return [value, name];
+										}}
+									/>
+								}
+							/>
+							<Bar
+								dataKey="revenue"
+								fill="var(--color-revenue)"
+								radius={[0, 4, 4, 0]}
+							/>
+						</BarChart>
+					</ChartContainer>
+				)}
 			</CardContent>
 		</Card>
 	);

@@ -44,7 +44,7 @@ export function ColorsDataTableSkeleton() {
 									</TableCell>
 									{/* Color preview circle */}
 									<TableCell className="hidden md:table-cell">
-										<Skeleton className="h-[30px] w-[30px] rounded-full" />
+										<Skeleton className="h-8 w-8 rounded-full" />
 									</TableCell>
 									{/* Name */}
 									<TableCell>

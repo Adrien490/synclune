@@ -1,5 +1,6 @@
 import { RefundStatus, RefundReason } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -23,8 +24,8 @@ import {
 	REFUND_REASON_LABELS,
 } from "@/modules/refunds/constants/refund.constants";
 import type { GetRefundsReturn } from "@/modules/refunds/types/refund.types";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { formatEuro } from "@/shared/utils/format-euro";
+import { formatDateShort } from "@/shared/utils/dates";
 import { ReceiptText } from "lucide-react";
 import Link from "next/link";
 import { ViewTransition } from "react";
@@ -35,14 +36,6 @@ import { RefundsTableSelectionCell } from "./refunds-table-selection-cell";
 export interface RefundsDataTableProps {
 	refundsPromise: Promise<GetRefundsReturn>;
 }
-
-// Helper pour formater les prix en euros (format français)
-const formatPrice = (priceInCents: number) => {
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: "EUR",
-	}).format(priceInCents / 100);
-};
 
 export async function RefundsDataTable({
 	refundsPromise,
@@ -70,7 +63,7 @@ export async function RefundsDataTable({
 		<Card>
 			<CardContent>
 				<RefundsSelectionToolbar />
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des remboursements" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -154,9 +147,7 @@ export async function RefundsDataTable({
 									</TableCell>
 									<TableCell role="gridcell" className="hidden sm:table-cell">
 										<span className="text-sm whitespace-nowrap">
-											{format(refund.createdAt, "d MMM yyyy", {
-												locale: fr,
-											})}
+											{formatDateShort(refund.createdAt)}
 										</span>
 									</TableCell>
 									<TableCell role="gridcell">
@@ -195,7 +186,7 @@ export async function RefundsDataTable({
 									</TableCell>
 									<TableCell role="gridcell" className="text-right">
 										<span className="text-sm font-bold">
-											{formatPrice(refund.amount)}
+											{formatEuro(refund.amount)}
 										</span>
 									</TableCell>
 									<TableCell role="gridcell" className="text-right">
@@ -213,7 +204,7 @@ export async function RefundsDataTable({
 								))}
 						</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination

@@ -22,13 +22,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					<SidebarMenuItem>
 						<SidebarMenuButton size="lg" asChild>
 							<Link href="/admin">
-								<div className="relative flex aspect-square items-center justify-center rounded-lg overflow-hidden size-8 bg-sidebar-primary text-sidebar-primary-foreground">
+								<div className="relative flex aspect-square items-center justify-center rounded-lg overflow-hidden size-10 bg-sidebar-primary text-sidebar-primary-foreground">
 									<Image
 										src="https://x1ain1wpub.ufs.sh/f/nyHesfTydKuS7ITGCqR4OX2w0CSRulvbQWiftspFAahYELrj"
 										alt="Logo Synclune"
 										fill
 										className="object-cover"
-										sizes="32px"
+										sizes="40px"
 										quality={80}
 									/>
 								</div>
@@ -36,7 +36,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 									<span
 										className={cn(
 											dancingScript.className,
-											"font-medium text-xl"
+											"font-semibold text-2xl"
 										)}
 									>
 										Synclune

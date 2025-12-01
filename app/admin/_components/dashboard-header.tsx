@@ -34,7 +34,18 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 			aria-label="En-tête du tableau de bord"
 		>
 			<div className="flex items-center gap-2 px-4 flex-1 min-w-0">
-				<SidebarTrigger className="-ml-1 shrink-0" />
+				{/* Toggle sidebar avec raccourci clavier */}
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<SidebarTrigger className="-ml-1 shrink-0" />
+					</TooltipTrigger>
+					<TooltipContent side="right" sideOffset={8}>
+						<span>Basculer le menu</span>
+						<kbd className="ml-2 inline-flex items-center gap-0.5 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+							<span className="text-xs">⌘</span>B
+						</kbd>
+					</TooltipContent>
+				</Tooltip>
 				<Separator
 					orientation="vertical"
 					className="mr-2 h-4 data-[orientation=vertical]:h-4 shrink-0"

@@ -1,4 +1,5 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -13,7 +14,6 @@ import {
 	Table,
 	TableBody,
 	TableCell,
-	TableFooter,
 	TableHead,
 	TableHeader,
 	TableRow,
@@ -64,7 +64,7 @@ export async function ProductTypesDataTable({
 		<Card>
 			<CardContent>
 				<ProductTypesSelectionToolbar productTypeIds={productTypeIds} />
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des types de produits" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -181,21 +181,18 @@ export async function ProductTypesDataTable({
 								);
 								})}
 						</TableBody>
-						<TableFooter>
-							<TableRow>
-								<TableCell colSpan={6}>
-									<CursorPagination
-										perPage={productTypes.length}
-										hasNextPage={pagination.hasNextPage}
-										hasPreviousPage={pagination.hasPreviousPage}
-										currentPageSize={productTypes.length}
-										nextCursor={pagination.nextCursor}
-										prevCursor={pagination.prevCursor}
-									/>
-								</TableCell>
-							</TableRow>
-						</TableFooter>
 					</Table>
+				</TableScrollContainer>
+
+				<div className="mt-4">
+					<CursorPagination
+						perPage={productTypes.length}
+						hasNextPage={pagination.hasNextPage}
+						hasPreviousPage={pagination.hasPreviousPage}
+						currentPageSize={productTypes.length}
+						nextCursor={pagination.nextCursor}
+						prevCursor={pagination.prevCursor}
+					/>
 				</div>
 			</CardContent>
 		</Card>

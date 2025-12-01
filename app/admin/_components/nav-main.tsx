@@ -3,82 +3,78 @@ import {
 	SidebarGroupLabel,
 	SidebarMenu,
 	SidebarMenuItem,
-	SidebarMenuSub,
-	SidebarMenuSubItem,
 	SidebarSeparator,
 } from "@/shared/components/ui/sidebar";
+import { Badge } from "@/shared/components/ui/badge";
 import { Fragment } from "react";
 import { NavMainClient } from "./nav-main-client";
 import { navigationData } from "./navigation-config";
+import { getNavBadges, type NavBadges } from "./nav-badges-data";
 
 /**
- * Navigation principale avec icônes
+ * Navigation principale du dashboard admin
+ * - Affiche les groupes de navigation avec icônes
+ * - Affiche les badges de notification (commandes, remboursements, alertes)
  */
-export function NavMain() {
+export async function NavMain() {
+	// Récupérer les compteurs pour les badges
+	const badges = await getNavBadges();
 
 	return (
 		<>
 			{navigationData.navGroups.map((group, index) => {
 				const groupId = `nav-group-${index}`;
 				const isLastGroup = index === navigationData.navGroups.length - 1;
+
 				return (
 					<Fragment key={group.label}>
-					<SidebarGroup role="group" aria-labelledby={groupId}>
-						<SidebarGroupLabel
-							id={groupId}
-							className="text-xs font-semibold uppercase tracking-wider text-[color:var(--sidebar-muted-foreground)]"
-						>
-							{group.label}
-						</SidebarGroupLabel>
-						<SidebarMenu className="gap-1" aria-label={group.label}>
-							{group.items.map((item) => {
-							const Icon = item.icon;
+						<SidebarGroup role="group" aria-labelledby={groupId}>
+							<SidebarGroupLabel
+								id={groupId}
+								className="text-xs font-semibold uppercase tracking-wider text-[color:var(--sidebar-muted-foreground)]"
+							>
+								{group.label}
+							</SidebarGroupLabel>
+							<SidebarMenu className="gap-1" aria-label={group.label}>
+								{group.items.map((item) => {
+									const Icon = item.icon;
+									const badgeCount = item.badge ? badges[item.badge] : 0;
 
-							// Si l'item a des sous-items, afficher le parent + enfants
-							if (item.items && item.items.length > 0) {
-								return (
-									<SidebarMenuItem key={item.title}>
-										<SidebarMenuSub className="ml-0 border-l-0 px-0">
-											{/* Parent item */}
-											<SidebarMenuSubItem>
-												<NavMainClient url={item.url}>
-													<Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-													<span>{item.title}</span>
-												</NavMainClient>
-											</SidebarMenuSubItem>
-											{/* Sous-items */}
-											{item.items.map((subItem) => (
-												<SidebarMenuSubItem key={subItem.title}>
-													<NavMainClient url={subItem.url}>
-														<span>{subItem.title}</span>
-													</NavMainClient>
-												</SidebarMenuSubItem>
-											))}
-										</SidebarMenuSub>
-									</SidebarMenuItem>
-								);
-							}
-
-							// Item simple sans sous-items
-							return (
-								<SidebarMenuItem key={item.title}>
-									<SidebarMenuSub className="ml-0 border-l-0 px-0">
-										<SidebarMenuSubItem>
+									return (
+										<SidebarMenuItem key={item.id}>
 											<NavMainClient url={item.url}>
-												<Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-												<span>{item.title}</span>
+												<Icon
+													className="h-5 w-5 shrink-0"
+													aria-hidden="true"
+												/>
+												<span className="flex-1">{item.title}</span>
+												{badgeCount > 0 && (
+													<NavBadge count={badgeCount} />
+												)}
 											</NavMainClient>
-										</SidebarMenuSubItem>
-									</SidebarMenuSub>
-								</SidebarMenuItem>
-							);
-						})}
-						</SidebarMenu>
-					</SidebarGroup>
-					{!isLastGroup && <SidebarSeparator className="my-2" />}
+										</SidebarMenuItem>
+									);
+								})}
+							</SidebarMenu>
+						</SidebarGroup>
+						{!isLastGroup && <SidebarSeparator className="my-2" />}
 					</Fragment>
 				);
 			})}
 		</>
+	);
+}
+
+/**
+ * Badge de notification pour les items de navigation
+ */
+function NavBadge({ count }: { count: number }) {
+	return (
+		<Badge
+			variant="secondary"
+			className="ml-auto h-5 min-w-5 justify-center rounded-full bg-primary/10 px-1.5 text-xs font-medium text-primary"
+		>
+			{count > 99 ? "99+" : count}
+		</Badge>
 	);
 }

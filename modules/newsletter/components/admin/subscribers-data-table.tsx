@@ -1,5 +1,6 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
 	Empty,
@@ -17,8 +18,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import { GetSubscribersReturn } from "@/modules/newsletter/data/get-subscribers";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { formatDateShort } from "@/shared/utils/dates";
 import { CheckCircle2, Clock, Mail, XCircle } from "lucide-react";
 import { NEWSLETTER_STATUS_LABELS } from "@/modules/newsletter/constants/newsletter-status.constants";
 import { ViewTransition } from "react";
@@ -56,7 +56,7 @@ export async function SubscribersDataTable({
 		<Card>
 			<CardContent>
 				<SubscribersSelectionToolbar subscriberIds={subscriberIds} />
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des abonnés newsletter">
 						<TableHeader>
 							<TableRow>
@@ -100,18 +100,10 @@ export async function SubscribersDataTable({
 										)}
 									</TableCell>
 									<TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-										{format(
-											new Date(subscriber.subscribedAt),
-											"d MMM yyyy",
-											{ locale: fr }
-										)}
+										{formatDateShort(subscriber.subscribedAt)}
 									</TableCell>
 									<TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-										{format(
-											new Date(subscriber.updatedAt),
-											"d MMM yyyy",
-											{ locale: fr }
-										)}
+										{formatDateShort(subscriber.updatedAt)}
 									</TableCell>
 									<TableCell className="text-right">
 										<SubscriberRowActions
@@ -127,7 +119,7 @@ export async function SubscribersDataTable({
 								))}
 						</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination

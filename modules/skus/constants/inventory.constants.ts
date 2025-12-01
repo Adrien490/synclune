@@ -13,9 +13,9 @@ import { Prisma } from "@/app/generated/prisma/client";
  */
 export const STOCK_THRESHOLDS = {
 	/** Stock critique : < CRITICAL (alertes urgentes) */
-	CRITICAL: 5,
+	CRITICAL: 3,
 	/** Stock bas : < LOW (alertes préventives) */
-	LOW: 10,
+	LOW: 3,
 	/** Stock normal max : <= NORMAL_MAX */
 	NORMAL_MAX: 50,
 } as const;

@@ -61,7 +61,7 @@ export function SkusDataTableSkeleton() {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{Array.from({ length: 5 }).map((_, i) => (
+							{Array.from({ length: 10 }).map((_, i) => (
 								<TableRow key={i}>
 									{/* Select checkbox */}
 									<TableCell>

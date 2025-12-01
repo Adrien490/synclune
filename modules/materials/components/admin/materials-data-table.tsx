@@ -1,4 +1,5 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
 	Empty,
@@ -51,7 +52,7 @@ export function MaterialsDataTable({ materialsPromise }: MaterialsDataTableProps
 		<Card>
 			<CardContent>
 				<MaterialsSelectionToolbar materialIds={materialIds} />
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des matériaux" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -156,7 +157,7 @@ export function MaterialsDataTable({ materialsPromise }: MaterialsDataTableProps
 								})}
 						</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination

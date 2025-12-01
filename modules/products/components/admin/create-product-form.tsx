@@ -14,7 +14,7 @@ import { useCreateProductForm } from "@/modules/products/hooks/use-create-produc
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
-import { Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
+import { Euro, Gem, ImagePlus, Image as ImageIcon, Info, Package, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -137,7 +137,8 @@ export function CreateProductForm({
 				{/* SECTION 1 : Le bijou */}
 				<FormSection
 					title="Le bijou"
-					description="Informations et caractéristiques de votre création"
+					description="Informations et caractéristiques"
+					icon={<Gem />}
 				>
 					{/* Titre */}
 					<form.AppField
@@ -335,6 +336,7 @@ export function CreateProductForm({
 				<FormSection
 					title="Prix et stock"
 					description="Tarification et disponibilité"
+					icon={<Euro />}
 				>
 					{/* Prix de vente */}
 					<form.AppField
@@ -439,7 +441,8 @@ export function CreateProductForm({
 			    ═══════════════════════════════════════════════════════════════════════ */}
 			<FormSection
 				title="Visuels"
-				description="Image principale et galerie de médias"
+				description="Image principale et galerie"
+				icon={<ImageIcon />}
 			>
 				<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 					{/* Image principale */}

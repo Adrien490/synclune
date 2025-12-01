@@ -125,9 +125,33 @@ export function PeriodSelector({
 	return (
 		<div
 			data-pending={isPending ? "" : undefined}
-			className={cn("flex items-center gap-2", className)}
+			className={cn(
+				"flex items-center gap-2",
+				"data-[pending]:opacity-60 data-[pending]:pointer-events-none transition-opacity duration-200",
+				className
+			)}
 		>
-			{/* Boutons rapides (desktop) */}
+			{/* Boutons rapides mobile (2 premiers seulement) - touch target 44px */}
+			{showQuickButtons && (
+				<div className="flex md:hidden items-center gap-1">
+					{QUICK_PERIOD_OPTIONS.slice(0, 2).map((option) => (
+						<Button
+							key={option.value}
+							variant={optimisticPeriod === option.value ? "default" : "ghost"}
+							size="sm"
+							disabled={isPending}
+							onClick={() => handlePeriodChange(option.value)}
+							className="h-11 px-3 min-w-[44px]"
+							aria-label={`Afficher les donnees des ${option.label}`}
+							aria-pressed={optimisticPeriod === option.value}
+						>
+							{option.shortLabel}
+						</Button>
+					))}
+				</div>
+			)}
+
+			{/* Boutons rapides desktop (tous) - touch target 44px */}
 			{showQuickButtons && (
 				<div className="hidden md:flex items-center gap-1">
 					{QUICK_PERIOD_OPTIONS.map((option) => (
@@ -137,7 +161,9 @@ export function PeriodSelector({
 							size="sm"
 							disabled={isPending}
 							onClick={() => handlePeriodChange(option.value)}
-							className="h-8 px-3"
+							className="h-11 px-3"
+							aria-label={`Afficher les donnees des ${option.label}`}
+							aria-pressed={optimisticPeriod === option.value}
 						>
 							{option.shortLabel}
 						</Button>
@@ -151,7 +177,7 @@ export function PeriodSelector({
 				onValueChange={(value) => handlePeriodChange(value as DashboardPeriod)}
 				disabled={isPending}
 			>
-				<SelectTrigger className="w-[180px] h-9">
+				<SelectTrigger className="w-[180px] h-11" aria-label="Selectionner une periode">
 					<SelectValue placeholder="Periode">{getPeriodLabel()}</SelectValue>
 				</SelectTrigger>
 				<SelectContent>
@@ -163,16 +189,18 @@ export function PeriodSelector({
 				</SelectContent>
 			</Select>
 
-			{/* Bouton calendrier pour dates custom */}
+			{/* Bouton calendrier pour dates custom - touch target 44px */}
 			<Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
 				<PopoverTrigger asChild>
 					<Button
 						variant={optimisticPeriod === "custom" ? "default" : "outline"}
 						size="icon"
-						className="h-9 w-9"
+						className="h-11 w-11"
 						disabled={isPending}
+						aria-label="Selectionner une periode personnalisee"
+						aria-expanded={isCalendarOpen}
 					>
-						<CalendarIcon className="h-4 w-4" />
+						<CalendarIcon className="h-4 w-4" aria-hidden="true" />
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="w-auto p-0" align="end">

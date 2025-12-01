@@ -18,7 +18,8 @@ export const productSkuFiltersSchema = z
 		// Filtres recommandés
 		productId: stringOrStringArray, // Fortement recommandé
 		colorId: stringOrStringArray,
-		material: stringOrStringArray, // Material is now a string field
+		materialId: stringOrStringArray, // Filtre par ID de matériau
+		material: stringOrStringArray, // Filtre par nom de matériau (legacy)
 
 		// Filtres de base
 		sku: stringOrStringArray, // Pour recherche de préfixe

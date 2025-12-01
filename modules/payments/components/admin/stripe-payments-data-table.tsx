@@ -1,4 +1,5 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -12,7 +13,6 @@ import {
 	Table,
 	TableBody,
 	TableCell,
-	TableFooter,
 	TableHead,
 	TableHeader,
 	TableRow,
@@ -22,28 +22,24 @@ import {
 	PAYMENT_STATUS_VARIANTS,
 } from "@/modules/orders/constants/status-display";
 import type { GetStripePaymentsReturn } from "@/modules/payments/data/get-stripe-payments";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { formatEuro } from "@/shared/utils/format-euro";
+import { formatDateShort } from "@/shared/utils/dates";
 import { CreditCard } from "lucide-react";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { StripePaymentsRowActions } from "./stripe-payments-row-actions";
+import { StripePaymentsSelectionToolbar } from "./stripe-payments-selection-toolbar";
+import { StripePaymentsTableSelectionCell } from "./stripe-payments-table-selection-cell";
 
 interface StripePaymentsDataTableProps {
 	paymentsPromise: Promise<GetStripePaymentsReturn>;
 }
 
-// Helper pour formater les prix en euros (format français)
-const formatPrice = (priceInCents: number) => {
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: "EUR",
-	}).format(priceInCents / 100);
-};
-
 export async function StripePaymentsDataTable({
 	paymentsPromise,
 }: StripePaymentsDataTableProps) {
 	const { payments, pagination } = await paymentsPromise;
+	const paymentIds = payments.map((payment) => payment.id);
 
 	if (payments.length === 0) {
 		return (
@@ -64,21 +60,25 @@ export async function StripePaymentsDataTable({
 	return (
 		<Card>
 			<CardContent>
-				<div className="overflow-x-auto">
+				<StripePaymentsSelectionToolbar paymentIds={paymentIds} />
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des paiements" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
-								<TableHead scope="col" className="w-[18%]">Commande</TableHead>
-								<TableHead scope="col" className="w-[22%]">Client</TableHead>
-								<TableHead scope="col" className="w-[12%] text-right">Montant</TableHead>
-								<TableHead scope="col" className="w-[14%] text-center">Statut</TableHead>
-								<TableHead scope="col" className="hidden lg:table-cell w-[14%]">
+								<TableHead scope="col" className="w-[5%]">
+									<StripePaymentsTableSelectionCell type="header" paymentIds={paymentIds} />
+								</TableHead>
+								<TableHead scope="col" className="w-[15%]">Commande</TableHead>
+								<TableHead scope="col" className="w-[20%]">Client</TableHead>
+								<TableHead scope="col" className="w-[10%] text-right">Montant</TableHead>
+								<TableHead scope="col" className="w-[12%] text-center">Statut</TableHead>
+								<TableHead scope="col" className="hidden lg:table-cell w-[12%]">
 									Payé le
 								</TableHead>
-								<TableHead scope="col" className="hidden xl:table-cell w-[16%]">
+								<TableHead scope="col" className="hidden xl:table-cell w-[14%]">
 									Stripe ID
 								</TableHead>
-								<TableHead scope="col" className="w-[10%] text-right" aria-label="Actions disponibles pour chaque paiement">Actions</TableHead>
+								<TableHead scope="col" className="w-[8%] text-right" aria-label="Actions disponibles pour chaque paiement">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -87,14 +87,20 @@ export async function StripePaymentsDataTable({
 
 								return (
 									<TableRow key={payment.id}>
+										{/* Sélection */}
+										<TableCell>
+											<StripePaymentsTableSelectionCell type="row" paymentId={payment.id} />
+										</TableCell>
 										{/* Commande */}
 										<TableCell>
-											<Link
-												href={`/dashboard/orders/${payment.id}`}
-												className="font-medium text-foreground hover:underline"
-											>
-												{payment.orderNumber}
-											</Link>
+											<ViewTransition name={`admin-order-${payment.id}`}>
+												<Link
+													href={`/admin/ventes/commandes/${payment.id}`}
+													className="font-mono text-sm font-medium text-foreground underline"
+												>
+													{payment.orderNumber}
+												</Link>
+											</ViewTransition>
 										</TableCell>
 
 										{/* Client */}
@@ -117,7 +123,7 @@ export async function StripePaymentsDataTable({
 
 										{/* Montant */}
 										<TableCell className="text-right font-semibold">
-											{formatPrice(payment.total)}
+											{formatEuro(payment.total)}
 										</TableCell>
 
 										{/* Statut */}
@@ -133,9 +139,7 @@ export async function StripePaymentsDataTable({
 										{/* Payé le */}
 										<TableCell className="hidden lg:table-cell text-sm">
 											{payment.paidAt
-												? format(new Date(payment.paidAt), "d MMM yyyy", {
-														locale: fr,
-													})
+												? formatDateShort(payment.paidAt)
 												: "-"}
 										</TableCell>
 
@@ -161,21 +165,18 @@ export async function StripePaymentsDataTable({
 								);
 								})}
 						</TableBody>
-						<TableFooter>
-							<TableRow>
-								<TableCell colSpan={8} className="text-center py-4">
-									<CursorPagination
-										perPage={payments.length}
-										hasNextPage={pagination.hasNextPage}
-										hasPreviousPage={pagination.hasPreviousPage}
-										currentPageSize={payments.length}
-										nextCursor={pagination.nextCursor}
-										prevCursor={pagination.prevCursor}
-									/>
-								</TableCell>
-							</TableRow>
-						</TableFooter>
 					</Table>
+				</TableScrollContainer>
+
+				<div className="mt-4">
+					<CursorPagination
+						perPage={payments.length}
+						hasNextPage={pagination.hasNextPage}
+						hasPreviousPage={pagination.hasPreviousPage}
+						currentPageSize={payments.length}
+						nextCursor={pagination.nextCursor}
+						prevCursor={pagination.prevCursor}
+					/>
 				</div>
 			</CardContent>
 		</Card>

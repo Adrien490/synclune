@@ -62,6 +62,15 @@ export function RefundsDataTableSkeleton() {
 						</TableBody>
 					</Table>
 				</div>
+
+				{/* Pagination skeleton */}
+				<div className="mt-4 flex items-center justify-between">
+					<Skeleton className="h-4 w-32" />
+					<div className="flex gap-2">
+						<Skeleton className="h-8 w-24" />
+						<Skeleton className="h-8 w-24" />
+					</div>
+				</div>
 			</CardContent>
 		</Card>
 	);

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SidebarMenuSubButton } from "@/shared/components/ui/sidebar";
+import { SidebarMenuButton } from "@/shared/components/ui/sidebar";
+import { isRouteActive } from "@/shared/lib/navigation";
 
 interface NavMainClientProps {
 	url: string;
@@ -17,13 +18,13 @@ export function NavMainClient({ url, children }: NavMainClientProps) {
 	const pathname = usePathname();
 
 	// Déterminer si le lien est actif
-	const isActive = pathname === url || pathname.startsWith(url + "/");
+	const isActive = isRouteActive(pathname, url);
 
 	return (
-		<SidebarMenuSubButton asChild isActive={isActive}>
+		<SidebarMenuButton asChild isActive={isActive} className="h-9">
 			<Link href={url} aria-current={isActive ? "page" : undefined}>
 				{children}
 			</Link>
-		</SidebarMenuSubButton>
+		</SidebarMenuButton>
 	);
 }

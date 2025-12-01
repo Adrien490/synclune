@@ -1,4 +1,5 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
 	Empty,
@@ -26,6 +27,7 @@ import { DiscountRowActions } from "./discount-row-actions";
 import { DiscountsSelectionToolbar } from "./discounts-selection-toolbar";
 import { DiscountsTableSelectionCell } from "./discounts-table-selection-cell";
 import { CreateDiscountButton } from "./create-discount-button";
+import { formatEuro } from "@/shared/utils/format-euro";
 
 interface DiscountsDataTableProps {
 	discountsPromise: Promise<GetDiscountsReturn>;
@@ -42,19 +44,11 @@ export async function DiscountsDataTable({
 		usageCount: discount.usageCount,
 	}));
 
-	// Helper pour formater les prix en euros (format français)
-	const formatPrice = (priceInCents: number) => {
-		return new Intl.NumberFormat("fr-FR", {
-			style: "currency",
-			currency: "EUR",
-		}).format(priceInCents / 100);
-	};
-
 	const formatValue = (type: DiscountType, value: number) => {
 		if (type === DiscountType.PERCENTAGE) {
 			return `${value}%`;
 		}
-		return formatPrice(value);
+		return formatEuro(value);
 	};
 
 	const formatUsage = (usageCount: number, maxUsageCount: number | null) => {
@@ -90,7 +84,7 @@ export async function DiscountsDataTable({
 					discountIds={discountIds}
 					discounts={discountsData}
 				/>
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des codes promo" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -204,7 +198,7 @@ export async function DiscountsDataTable({
 								))}
 						</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination

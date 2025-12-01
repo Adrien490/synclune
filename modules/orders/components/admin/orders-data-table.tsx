@@ -1,5 +1,6 @@
 import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -23,6 +24,7 @@ import {
 } from "@/modules/orders/constants/status-display";
 import type { GetOrdersReturn } from "@/modules/orders/types/orders.types";
 import { cn } from "@/shared/utils/cn";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { ViewTransition } from "react";
@@ -33,14 +35,6 @@ import { OrdersTableSelectionCell } from "./orders-table-selection-cell";
 export interface OrdersDataTableProps {
 	ordersPromise: Promise<GetOrdersReturn>;
 }
-
-// Helper pour formater les prix en euros (format français)
-const formatPrice = (priceInCents: number) => {
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: "EUR",
-	}).format(priceInCents / 100);
-};
 
 export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 	const { orders, pagination } = await ordersPromise;
@@ -66,7 +60,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 		<Card>
 			<CardContent>
 				<OrdersSelectionToolbar orderIds={orderIds} />
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des commandes" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -85,7 +79,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 									key="client"
 									scope="col"
 									role="columnheader"
-									className="w-[25%] sm:w-[20%]"
+									className="hidden sm:table-cell w-[20%]"
 								>
 									Client
 								</TableHead>
@@ -101,7 +95,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 									key="total"
 									scope="col"
 									role="columnheader"
-									className="w-[15%] sm:w-[10%] text-right"
+									className="hidden sm:table-cell w-[10%] text-right"
 								>
 									Montant
 								</TableHead>
@@ -136,7 +130,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 												</Link>
 											</ViewTransition>
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell role="gridcell" className="hidden sm:table-cell">
 											<span className="text-sm font-medium truncate block">
 												{userName}
 											</span>
@@ -146,9 +140,9 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 												{ORDER_STATUS_LABELS[order.status as OrderStatus]}
 											</Badge>
 										</TableCell>
-										<TableCell role="gridcell" className="text-right">
+										<TableCell role="gridcell" className="hidden sm:table-cell text-right">
 											<span className="text-sm font-bold">
-												{formatPrice(order.total)}
+												{formatEuro(order.total)}
 											</span>
 										</TableCell>
 										<TableCell role="gridcell" className="text-right">
@@ -170,7 +164,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 							})}
 						</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination

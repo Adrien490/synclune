@@ -1,4 +1,5 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
 	Empty,
@@ -59,7 +60,7 @@ export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
 		<Card>
 			<CardContent>
 				<UsersSelectionToolbar userIds={userIds} />
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des clients" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -165,7 +166,7 @@ export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
 							})}
 						</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination

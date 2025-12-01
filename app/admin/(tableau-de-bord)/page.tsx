@@ -1,10 +1,10 @@
 import { PageHeader } from "@/shared/components/page-header";
-import { connection } from "next/server";
 import { Suspense } from "react";
 import { Metadata } from "next";
 
 import { DashboardTabs } from "@/modules/dashboard/components/dashboard-tabs";
 import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
+import { RefreshButton } from "@/modules/dashboard/components/refresh-button";
 import { OverviewSection } from "@/modules/dashboard/components/overview/overview-section";
 import { SalesSection } from "@/modules/dashboard/components/sales/sales-section";
 import { InventorySection } from "@/modules/dashboard/components/inventory/inventory-section";
@@ -21,39 +21,12 @@ import {
 } from "@/modules/dashboard/constants/periods";
 import { dashboardPeriodSchema } from "@/modules/dashboard/schemas/dashboard.schemas";
 import type { DashboardPeriod } from "@/modules/dashboard/utils/period-resolver";
-import { Card, CardContent } from "@/shared/components/ui/card";
-import { Skeleton } from "@/shared/components/ui/skeleton";
+import { KpisSkeleton } from "@/modules/dashboard/components/skeletons";
 
 export const metadata: Metadata = {
 	title: "Tableau de bord - Administration",
 	description: "Vue d'ensemble de votre boutique",
 };
-
-// Skeleton pour le chargement des sections
-function SectionSkeleton() {
-	return (
-		<div className="space-y-6">
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-				{[...Array(4)].map((_, i) => (
-					<Card key={i} className="border-l-4 border-primary/40">
-						<CardContent className="p-6">
-							<Skeleton className="h-4 w-24 mb-2" />
-							<Skeleton className="h-8 w-32 mb-2" />
-							<Skeleton className="h-3 w-16" />
-						</CardContent>
-					</Card>
-				))}
-			</div>
-			<div className="grid gap-6 lg:grid-cols-2">
-				<Card className="lg:col-span-2 border-l-4 border-primary/30">
-					<CardContent className="p-6">
-						<Skeleton className="h-[300px] w-full" />
-					</CardContent>
-				</Card>
-			</div>
-		</div>
-	);
-}
 
 interface AdminDashboardPageProps {
 	searchParams: Promise<{
@@ -67,10 +40,7 @@ interface AdminDashboardPageProps {
 export default async function AdminDashboardPage({
 	searchParams,
 }: AdminDashboardPageProps) {
-	// Rend la page dynamique pour permettre use cache: remote dans les fonctions
-	await connection();
-
-	// Parser les parametres
+	// Parser les parametres (searchParams est un Promise, ce qui rend la page dynamique)
 	const params = await searchParams;
 
 	// Valider l'onglet
@@ -102,15 +72,20 @@ export default async function AdminDashboardPage({
 					fromDate={fromDate}
 					toDate={toDate}
 				/>
+				<div className="flex items-center gap-3">
 				{tab !== "inventory" && (
 					<Suspense fallback={null}>
 						<PeriodSelector showQuickButtons={true} />
 					</Suspense>
 				)}
+				<Suspense fallback={null}>
+					<RefreshButton showTimestamp={false} />
+				</Suspense>
+			</div>
 			</div>
 
 			{/* Contenu de la section active */}
-			<Suspense fallback={<SectionSkeleton />}>
+			<Suspense fallback={<KpisSkeleton count={4} ariaLabel="Chargement de la section" />}>
 				{tab === "overview" && <OverviewSection />}
 				{tab === "sales" && (
 					<SalesSection

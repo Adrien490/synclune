@@ -39,7 +39,19 @@ export const buildFilterConditions = (
 		}
 	}
 
-	// Material - filter by material.name
+	// MaterialId - filter by material ID (preferred)
+	if (filters.materialId !== undefined) {
+		const materialIds = Array.isArray(filters.materialId)
+			? filters.materialId
+			: [filters.materialId];
+		if (materialIds.length === 1) {
+			conditions.push({ materialId: materialIds[0] });
+		} else if (materialIds.length > 1) {
+			conditions.push({ materialId: { in: materialIds } });
+		}
+	}
+
+	// Material - filter by material.name (legacy)
 	if (filters.material !== undefined) {
 		const materials = Array.isArray(filters.material)
 			? filters.material

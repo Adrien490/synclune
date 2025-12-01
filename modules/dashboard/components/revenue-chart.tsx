@@ -18,6 +18,8 @@ import {
 import type { GetDashboardRevenueChartReturn, RevenueDataPoint } from "@/modules/dashboard/data/get-revenue-chart";
 import { use } from "react";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { ChartEmpty } from "./chart-empty";
+import { CHART_STYLES } from "../constants/chart-styles";
 
 interface RevenueChartProps {
 	chartPromise: Promise<GetDashboardRevenueChartReturn>;
@@ -46,52 +48,59 @@ export function RevenueChart({ chartPromise }: RevenueChartProps) {
 		revenue: item.revenue,
 	}));
 
+	// Verifier s'il y a des donnees avec du revenu
+	const hasRevenue = chartData.some((item) => item.revenue > 0);
+
 	return (
-		<Card className="border-l-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
-				<CardTitle className="text-xl font-semibold tracking-wide">Revenus des 30 derniers jours</CardTitle>
-				<CardDescription className="text-sm">
+				<CardTitle className={CHART_STYLES.title}>Revenus des 30 derniers jours</CardTitle>
+				<CardDescription className={CHART_STYLES.description}>
 					Évolution du chiffre d'affaires
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-					<LineChart
-						data={chartData}
-						margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-					>
-						<CartesianGrid vertical={false} />
-						<XAxis
-							dataKey="date"
-							tickLine={false}
-							axisLine={false}
-							tickMargin={8}
-						/>
-						<ChartTooltip
-							content={
-								<ChartTooltipContent
-									labelFormatter={(value) => `Date: ${value}`}
-									formatter={(value) => `${Number(value).toFixed(2)} €`}
-								/>
-							}
-						/>
-						<ChartLegend
-							content={(props) => (
-								<ChartLegendContent
-									payload={props.payload}
-									verticalAlign={props.verticalAlign}
-								/>
-							)}
-						/>
-						<Line
-							dataKey="revenue"
-							type="monotone"
-							stroke="var(--color-revenue)"
-							strokeWidth={2}
-							dot={false}
-						/>
-					</LineChart>
-				</ChartContainer>
+				{!hasRevenue ? (
+					<ChartEmpty type="noRevenue" minHeight={300} />
+				) : (
+					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
+						<LineChart
+							data={chartData}
+							margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+						>
+							<CartesianGrid vertical={false} />
+							<XAxis
+								dataKey="date"
+								tickLine={false}
+								axisLine={false}
+								tickMargin={8}
+							/>
+							<ChartTooltip
+								content={
+									<ChartTooltipContent
+										labelFormatter={(value) => `Date: ${value}`}
+										formatter={(value) => `${Number(value).toFixed(2)} €`}
+									/>
+								}
+							/>
+							<ChartLegend
+								content={(props) => (
+									<ChartLegendContent
+										payload={props.payload}
+										verticalAlign={props.verticalAlign}
+									/>
+								)}
+							/>
+							<Line
+								dataKey="revenue"
+								type="monotone"
+								stroke="var(--color-revenue)"
+								strokeWidth={2}
+								dot={false}
+							/>
+						</LineChart>
+					</ChartContainer>
+				)}
 			</CardContent>
 		</Card>
 	);

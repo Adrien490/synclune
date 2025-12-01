@@ -63,19 +63,6 @@ function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
 					found = true;
 					break;
 				}
-
-				// Chercher dans les sous-items
-				if (item.items) {
-					for (const subItem of item.items) {
-						if (subItem.url === currentPath) {
-							label = subItem.title;
-							found = true;
-							break;
-						}
-					}
-				}
-
-				if (found) break;
 			}
 			if (found) break;
 		}
@@ -138,7 +125,7 @@ export function DashboardBreadcrumb() {
 					</Button>
 				)}
 				<span
-					className="text-sm font-medium truncate max-w-[200px]"
+					className="text-sm font-medium truncate flex-1 min-w-0"
 					aria-current="page"
 					title={currentPage.label}
 				>

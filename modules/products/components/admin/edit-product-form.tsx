@@ -15,7 +15,7 @@ import { useUpdateProductForm } from "@/modules/products/hooks/use-update-produc
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
-import { Euro, ImagePlus, Info, Upload, X } from "lucide-react";
+import { Euro, Gem, ImagePlus, Image as ImageIcon, Info, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, ViewTransition } from "react";
 import { toast } from "sonner";
@@ -212,6 +212,7 @@ export function EditProductForm({
 					<FormSection
 						title="Le bijou"
 						description="Informations et caractéristiques"
+						icon={<Gem />}
 					>
 						{/* Titre */}
 						<form.AppField
@@ -405,6 +406,7 @@ export function EditProductForm({
 					<FormSection
 						title="Prix et stock"
 						description="Tarification et disponibilité du SKU par défaut"
+						icon={<Euro />}
 					>
 						{/* Prix TTC */}
 						<form.AppField
@@ -514,7 +516,8 @@ export function EditProductForm({
 				    ═══════════════════════════════════════════════════════════════════════ */}
 				<FormSection
 					title="Visuels"
-					description="Image principale et galerie de médias"
+					description="Image principale et galerie"
+					icon={<ImageIcon />}
 				>
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 						{/* Image principale */}

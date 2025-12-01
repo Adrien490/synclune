@@ -165,7 +165,7 @@ export async function ProductsDataTable({
 									key="select"
 									scope="col"
 									role="columnheader"
-									className="w-[8%] sm:w-[5%]"
+									className="w-10 sm:w-[5%] lg:w-[4%]"
 									aria-label="Sélection de produits"
 								>
 									<ProductsTableSelectionCell
@@ -177,7 +177,7 @@ export async function ProductsDataTable({
 									key="image"
 									scope="col"
 									role="columnheader"
-									className="hidden md:table-cell w-[10%]"
+									className="hidden sm:table-cell w-[12%] lg:w-[8%]"
 								>
 									Image
 								</TableHead>
@@ -185,7 +185,7 @@ export async function ProductsDataTable({
 									key="title"
 									scope="col"
 									role="columnheader"
-									className="w-[70%] sm:w-[40%] md:w-[30%] lg:w-[22%]"
+									className="w-auto sm:w-[30%] lg:w-[20%]"
 								>
 									Titre
 								</TableHead>
@@ -233,7 +233,7 @@ export async function ProductsDataTable({
 									key="actions"
 									scope="col"
 									role="columnheader"
-									className="w-[12%] sm:w-[10%]"
+									className="w-12 sm:w-[10%] lg:w-[8%]"
 									aria-label="Actions disponibles pour chaque produit"
 								>
 									Actions
@@ -259,7 +259,7 @@ export async function ProductsDataTable({
 										</TableCell>
 										<TableCell
 											role="gridcell"
-											className="hidden md:table-cell py-3"
+											className="hidden sm:table-cell py-3"
 										>
 											<ViewTransition name={`admin-product-image-${product.slug}`}>
 												<div className="w-20 h-20 relative shrink-0">

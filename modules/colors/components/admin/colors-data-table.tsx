@@ -1,4 +1,5 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
 	Empty,
@@ -50,7 +51,7 @@ export function ColorsDataTable({ colorsPromise }: ColorsDataTableProps) {
 		<Card>
 			<CardContent>
 				<ColorsSelectionToolbar colorIds={colorIds} />
-				<div className="overflow-x-auto">
+				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des couleurs" className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
@@ -140,7 +141,7 @@ export function ColorsDataTable({ colorsPromise }: ColorsDataTableProps) {
 								})}
 						</TableBody>
 					</Table>
-				</div>
+				</TableScrollContainer>
 
 				<div className="mt-4">
 					<CursorPagination

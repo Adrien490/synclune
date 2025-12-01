@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin, enforceRateLimitForCurrentUser } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
@@ -24,6 +24,10 @@ export async function adjustSkuStock(
 	reason?: string
 ): Promise<ActionState> {
 	try {
+		// 0. Rate limiting (20 requêtes par minute)
+		const rateLimit = await enforceRateLimitForCurrentUser({ limit: 20, windowMs: 60000 });
+		if ("error" in rateLimit) return rateLimit.error;
+
 		// 1. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
