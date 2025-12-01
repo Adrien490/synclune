@@ -3,9 +3,12 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import { neonConfig } from "@neondatabase/serverless";
 import ws from "ws";
 
-// Required for Node.js serverless environments (Vercel Functions)
-// Without this, WebSocket connections will fail with "Connection closed" errors
+// Configuration Neon pour environnements serverless (Vercel Functions)
+// 1. WebSocket polyfill pour Node.js (requis car Node n'a pas de WebSocket natif)
 neonConfig.webSocketConstructor = ws;
+// 2. Mode HTTP fetch - plus robuste que WebSocket pour serverless
+//    Évite les erreurs "Connection closed" sur Vercel
+neonConfig.poolQueryViaFetch = true;
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
 
