@@ -48,7 +48,7 @@ export const GET_ORDER_ITEMS_DEFAULT_SELECT = {
 					hex: true,
 				},
 			},
-			materialRelation: {
+			material: {
 				select: {
 					id: true,
 					name: true,

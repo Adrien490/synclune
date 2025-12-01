@@ -40,7 +40,7 @@ export const buildWhereClause = (
 				},
 			},
 			{
-				materialRelation: {
+				material: {
 					name: {
 						contains: searchTerm,
 						mode: Prisma.QueryMode.insensitive,

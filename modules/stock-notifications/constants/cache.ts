@@ -3,7 +3,7 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 // ============================================
 // CACHE TAGS
@@ -62,7 +62,7 @@ export function getStockNotificationInvalidationTags(
 	const tags: string[] = [
 		STOCK_NOTIFICATIONS_CACHE_TAGS.PENDING_LIST,
 		STOCK_NOTIFICATIONS_CACHE_TAGS.BY_SKU(skuId),
-		DASHBOARD_CACHE_TAGS.BADGES,
+		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
 
 	if (userId) {

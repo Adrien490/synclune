@@ -6,7 +6,7 @@
  */
 
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache"
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache"
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 
 // ============================================
 // CACHE TAGS
@@ -28,5 +28,5 @@ export { ORDERS_CACHE_TAGS }
  * - Les badges de la sidebar
  */
 export function getRefundInvalidationTags(userId?: string): string[] {
-	return [...getOrderInvalidationTags(userId), DASHBOARD_CACHE_TAGS.BADGES]
+	return [...getOrderInvalidationTags(userId), SHARED_CACHE_TAGS.ADMIN_BADGES]
 }

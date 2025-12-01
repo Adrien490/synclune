@@ -59,9 +59,9 @@ export function buildInventoryFilterConditions(
 			? filters.material
 			: [filters.material];
 		if (materials.length === 1) {
-			conditions.materialRelation = { name: materials[0] };
+			conditions.material = { name: materials[0] };
 		} else if (materials.length > 1) {
-			conditions.materialRelation = { name: { in: materials } };
+			conditions.material = { name: { in: materials } };
 		}
 	}
 

@@ -30,7 +30,7 @@ export interface StockNotificationRequestWithSku extends StockNotificationReques
 		inventory: number;
 		priceInclTax: number;
 		color: { name: string; hex: string } | null;
-		materialRelation: { id: string; name: string } | null;
+		material: { id: string; name: string } | null;
 		size: string | null;
 		images: Array<{ url: string; altText: string | null; isPrimary: boolean }>;
 		product: {

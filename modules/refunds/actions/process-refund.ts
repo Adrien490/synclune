@@ -8,7 +8,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath, updateTag } from "next/cache";
 
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
@@ -258,8 +258,8 @@ export async function processRefund(
 		// Invalider le cache d'inventaire si des articles ont été restockés
 		const restockedCount = refundData.items.filter((i) => i.restock).length;
 		if (restockedCount > 0) {
-			updateTag(DASHBOARD_CACHE_TAGS.INVENTORY_LIST);
-			updateTag(DASHBOARD_CACHE_TAGS.BADGES);
+			updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
+			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		}
 		const restockMessage =
 			restockedCount > 0

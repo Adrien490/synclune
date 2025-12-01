@@ -77,16 +77,15 @@ model User {
   refundsCreated       Refund[]        @relation("RefundCreator")
   refundHistoryActions RefundHistory[] @relation("RefundHistoryAuthor")
 
-  @@index([deletedAt])
   @@index([suspendedAt])
   @@index([role, id])
   @@index([emailVerified, id])
   @@index([createdAt, id])
-  @@index([deletedAt, role]) // Index composite pour queries admin filtrant utilisateurs actifs par rôle
+  @@index([deletedAt, role]) // Index composite pour queries admin filtrant utilisateurs actifs par rôle (couvre aussi deletedAt seul)
   @@index([accountStatus])
   @@index([deletionRequestedAt])
   @@index([anonymizedAt])
-  @@index([deletedAt, emailVerified])
+  @@index([deletedAt, emailVerified]) // Couvre aussi deletedAt seul
 }
 
 model Session {
@@ -101,8 +100,7 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([token])
-  @@index([userId])
-  @@index([userId, expiresAt])
+  @@index([userId, expiresAt]) // Couvre aussi userId seul
 }
 
 model Account {
@@ -157,8 +155,7 @@ model Address {
   // Note: Contrainte unique partielle ajoutée via migration SQL brute
   // pour garantir qu'un seul enregistrement a isDefault: true par userId
 
-  @@index([userId])
-  @@index([userId, isDefault])
+  @@index([userId, isDefault]) // Couvre aussi userId seul
   @@index([userId, createdAt(sort: Desc)])
 }
 
@@ -340,13 +337,11 @@ model Product {
   skus       ProductSku[]
   orderItems OrderItem[]
 
-  @@index([status, id])
   @@index([title, id])
   @@index([typeId])
   @@index([createdAt, id])
-  @@index([deletedAt])
-  @@index([deletedAt, status])
-  @@index([status, createdAt(sort: Desc)]) // Nouveautés
+  @@index([deletedAt, status]) // Couvre aussi deletedAt seul
+  @@index([status, createdAt(sort: Desc)]) // Nouveautés, couvre aussi status seul
   @@index([typeId, status]) // Filtrage par type
   @@index([status, minPriceInclTax]) // Tri par prix
   @@index([deletedAt, status, minPriceInclTax]) // Tri par prix avec soft delete
@@ -361,8 +356,8 @@ model ProductSku {
   colorId  String?
   color    Color?  @relation(fields: [colorId], references: [id], onDelete: SetNull)
 
-  materialId       String?
-  materialRelation Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  materialId String?
+  material   Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
 
   size String? @db.VarChar(50)
 
@@ -390,8 +385,7 @@ model ProductSku {
   // Évite les doublons de variantes (ex: 2 SKUs "Bague Rouge Taille 52 Argent")
   @@unique([productId, colorId, size, materialId])
   // Indexes optimisés pour requêtes fréquentes
-  @@index([productId, isActive])
-  @@index([productId, isActive, inventory]) // Stock actif par produit
+  @@index([productId, isActive, inventory]) // Stock actif par produit, couvre aussi [productId, isActive]
   @@index([isActive, inventory, updatedAt(sort: Desc)])
   @@index([isActive, priceInclTax])
   @@index([productId, isDefault])
@@ -502,8 +496,7 @@ model WishlistItem {
   // Un SKU ne peut être ajouté qu'une seule fois par wishlist
   @@unique([wishlistId, skuId])
   @@index([wishlistId])
-  @@index([skuId])
-  @@index([skuId, createdAt]) // Notifications baisse de prix
+  @@index([skuId, createdAt]) // Notifications baisse de prix, couvre aussi skuId seul
 }
 
 // ============================================================================
@@ -893,9 +886,8 @@ model Refund {
   deletedAt DateTime?
 
   @@index([orderId])
-  @@index([status])
   @@index([createdAt(sort: Desc)])
-  @@index([status, createdAt])
+  @@index([status, createdAt]) // Couvre aussi status seul
   @@index([deletedAt])
 }
 
@@ -944,8 +936,7 @@ model RefundHistory {
 
   createdAt DateTime @default(now())
 
-  @@index([refundId])
-  @@index([refundId, createdAt])
+  @@index([refundId, createdAt]) // Couvre aussi refundId seul
 }
 
 // ============================================================================
@@ -991,8 +982,7 @@ model Discount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([code])
-  @@index([code, isActive]) // Validation code promo actif
+  @@index([code, isActive]) // Validation code promo actif, couvre aussi code seul
   @@index([isActive, startsAt, endsAt])
   @@index([createdAt, id])
 }
@@ -1016,11 +1006,9 @@ model DiscountUsage {
   createdAt DateTime @default(now())
   deletedAt DateTime? // Soft delete pour audit trail comptable
 
-  @@index([discountId])
-  @@index([userId])
   @@index([orderId])
-  @@index([discountId, userId]) // Pour vérifier usage par utilisateur
-  @@index([userId, discountId, deletedAt]) // Vérification limite par user avec soft-delete
+  @@index([discountId, userId]) // Pour vérifier usage par utilisateur, couvre aussi discountId seul
+  @@index([userId, discountId, deletedAt]) // Vérification limite par user avec soft-delete, couvre aussi userId seul
   @@index([deletedAt])
 }
 

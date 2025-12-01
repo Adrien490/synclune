@@ -118,7 +118,7 @@ export async function fetchStockByMaterial(): Promise<GetStockByMaterialReturn> 
 			inventory: true,
 			priceInclTax: true,
 			materialId: true,
-			materialRelation: {
+			material: {
 				select: {
 					id: true,
 					name: true,
@@ -145,21 +145,21 @@ export async function fetchStockByMaterial(): Promise<GetStockByMaterialReturn> 
 	for (const sku of skus) {
 		const itemValue = sku.inventory * sku.priceInclTax;
 
-		if (!sku.materialRelation) {
+		if (!sku.material) {
 			uncategorizedUnits += sku.inventory;
 			uncategorizedValue += itemValue;
 			continue;
 		}
 
-		const existing = materialMap.get(sku.materialRelation.id);
+		const existing = materialMap.get(sku.material.id);
 		if (existing) {
 			existing.totalUnits += sku.inventory;
 			existing.skuCount += 1;
 			existing.value += itemValue;
 		} else {
-			materialMap.set(sku.materialRelation.id, {
-				id: sku.materialRelation.id,
-				name: sku.materialRelation.name,
+			materialMap.set(sku.material.id, {
+				id: sku.material.id,
+				name: sku.material.name,
 				totalUnits: sku.inventory,
 				skuCount: 1,
 				value: itemValue,

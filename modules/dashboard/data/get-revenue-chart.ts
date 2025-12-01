@@ -1,5 +1,4 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 
@@ -34,8 +33,15 @@ export async function getRevenueChart(): Promise<GetRevenueChartReturn> {
 	return await fetchDashboardRevenueChart();
 }
 
+// Type pour le résultat de la requête SQL
+type RevenueRow = {
+	date: string;
+	revenue: bigint;
+};
+
 /**
  * Récupère les données de revenus des 30 derniers jours depuis la DB avec cache
+ * Optimisé: agrégation côté DB via GROUP BY au lieu de traitement JS
  */
 export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartReturn> {
 	"use cache: remote";
@@ -47,41 +53,35 @@ export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartRetur
 	thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 	thirtyDaysAgo.setHours(0, 0, 0, 0);
 
-	const orders = await prisma.order.findMany({
-		where: {
-			createdAt: { gte: thirtyDaysAgo },
-			paymentStatus: PaymentStatus.PAID,
-		},
-		select: {
-			createdAt: true,
-			total: true,
-		},
-		orderBy: {
-			createdAt: "asc",
-		},
-	});
+	// Agrégation côté DB - plus efficace que de récupérer tous les ordres
+	const revenueRows = await prisma.$queryRaw<RevenueRow[]>`
+		SELECT
+			TO_CHAR("createdAt", 'YYYY-MM-DD') as date,
+			COALESCE(SUM(total), 0) as revenue
+		FROM "Order"
+		WHERE "createdAt" >= ${thirtyDaysAgo}
+			AND "paymentStatus" = 'PAID'::"PaymentStatus"
+		GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+		ORDER BY date ASC
+	`;
 
-	const revenueByDay = new Map<string, number>();
+	// Créer un map avec les résultats DB
+	const revenueMap = new Map<string, number>();
+	for (const row of revenueRows) {
+		revenueMap.set(row.date, Number(row.revenue));
+	}
 
+	// Remplir les jours sans revenus avec 0
+	const data: RevenueDataPoint[] = [];
 	for (let i = 0; i < 30; i++) {
 		const date = new Date(thirtyDaysAgo);
 		date.setDate(date.getDate() + i);
 		const dateKey = date.toISOString().split("T")[0];
-		revenueByDay.set(dateKey, 0);
+		data.push({
+			date: dateKey,
+			revenue: revenueMap.get(dateKey) || 0,
+		});
 	}
-
-	orders.forEach((order) => {
-		const dateKey = order.createdAt.toISOString().split("T")[0];
-		const existing = revenueByDay.get(dateKey) || 0;
-		revenueByDay.set(dateKey, existing + order.total);
-	});
-
-	const data = Array.from(revenueByDay.entries())
-		.sort((a, b) => a[0].localeCompare(b[0]))
-		.map(([date, revenue]) => ({
-			date,
-			revenue,
-		}));
 
 	return { data };
 }

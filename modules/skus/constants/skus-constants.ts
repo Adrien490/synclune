@@ -32,7 +32,7 @@ export const GET_PRODUCT_SKUS_LIGHT_SELECT = {
 			slug: true,
 		},
 	},
-	materialRelation: {
+	material: {
 		select: {
 			id: true,
 			name: true,
@@ -74,7 +74,7 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 			hex: true,
 		},
 	},
-	materialRelation: {
+	material: {
 		select: {
 			id: true,
 			name: true,

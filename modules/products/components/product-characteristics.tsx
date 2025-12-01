@@ -32,13 +32,13 @@ export function ProductCharacteristics({
 	selectedSku,
 }: ProductCharacteristicsProps) {
 	const primarySku = product.skus[0];
-	const primaryMaterial = primarySku?.materialRelation?.name;
+	const primaryMaterial = primarySku?.material?.name;
 
 	// Calculer les dimensions du SKU sélectionné
 	const dimensions = selectedSku
 		? {
 				dimensions:
-					[selectedSku.size, selectedSku.materialRelation?.name].filter(Boolean).join(" - ") ||
+					[selectedSku.size, selectedSku.material?.name].filter(Boolean).join(" - ") ||
 					undefined,
 				requiresSize:
 					product.type?.slug === "ring" ||
@@ -119,7 +119,7 @@ export function ProductCharacteristics({
 							<h3 className="text-sm/6 font-semibold tracking-tight antialiased flex items-center gap-2">
 								<Ruler className="w-4 h-4" aria-hidden="true" />
 								Dimensions{" "}
-								{selectedSku.materialRelation?.name && `(${selectedSku.materialRelation.name})`}
+								{selectedSku.material?.name && `(${selectedSku.material.name})`}
 							</h3>
 
 							<div className="p-2 bg-muted/50 rounded-lg">

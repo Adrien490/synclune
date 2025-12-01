@@ -37,7 +37,7 @@ export interface StockNotificationAdmin {
 		inventory: number;
 		priceInclTax: number;
 		color: { name: string; hex: string } | null;
-		materialRelation: { id: string; name: string } | null;
+		material: { id: string; name: string } | null;
 		size: string | null;
 		images: Array<{ url: string; isPrimary: boolean }>;
 		product: {
@@ -85,7 +85,7 @@ const ADMIN_SELECT = {
 			color: {
 				select: { name: true, hex: true },
 			},
-			materialRelation: {
+			material: {
 				select: { id: true, name: true },
 			},
 			size: true,

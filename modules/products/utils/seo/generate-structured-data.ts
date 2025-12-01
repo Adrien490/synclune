@@ -122,8 +122,8 @@ export function generateStructuredData(
 		...(product.type && {
 			category: product.type.label,
 		}),
-		...(selectedSku?.materialRelation?.name && {
-			material: selectedSku.materialRelation.name,
+		...(selectedSku?.material?.name && {
+			material: selectedSku.material.name,
 		}),
 		...(selectedSku?.color && {
 			color: selectedSku.color.name,

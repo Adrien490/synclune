@@ -95,7 +95,7 @@ export async function validateSkuAndStock(input: {
 						hex: true,
 					},
 				},
-				materialRelation: {
+				material: {
 					select: {
 						id: true,
 						name: true,
@@ -149,7 +149,7 @@ export async function validateSkuAndStock(input: {
 					compareAtPrice: sku.compareAtPrice,
 					inventory: sku.inventory,
 					isActive: sku.isActive,
-					material: sku.materialRelation?.name || undefined,
+					material: sku.material?.name || undefined,
 					colorId: sku.colorId || undefined,
 					color: sku.color
 						? {
@@ -211,7 +211,7 @@ export async function getSkuDetails(input: {
 						hex: true,
 					},
 				},
-				materialRelation: {
+				material: {
 					select: {
 						id: true,
 						name: true,
@@ -237,7 +237,7 @@ export async function getSkuDetails(input: {
 					compareAtPrice: sku.compareAtPrice,
 					inventory: sku.inventory,
 					isActive: sku.isActive,
-					material: sku.materialRelation?.name || undefined,
+					material: sku.material?.name || undefined,
 					colorId: sku.colorId || undefined,
 					color: sku.color
 						? {

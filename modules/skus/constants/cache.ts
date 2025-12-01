@@ -4,7 +4,7 @@
 
 import { cacheLife, cacheTag, updateTag } from "next/cache"
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache"
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache"
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 
 // ============================================
 // CACHE CONFIGURATION HELPERS
@@ -46,8 +46,8 @@ export function getSkuInvalidationTags(sku: string, productId?: string, productS
 	const tags = [
 		PRODUCTS_CACHE_TAGS.SKUS_LIST,
 		PRODUCTS_CACHE_TAGS.SKU_DETAIL(sku),
-		DASHBOARD_CACHE_TAGS.INVENTORY_LIST,
-		DASHBOARD_CACHE_TAGS.BADGES,
+		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
+		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	]
 
 	if (productId) {
@@ -71,8 +71,8 @@ export function getInventoryInvalidationTags(productSlug: string, productId: str
 	return [
 		PRODUCTS_CACHE_TAGS.DETAIL(productSlug),
 		PRODUCTS_CACHE_TAGS.SKUS(productId),
-		DASHBOARD_CACHE_TAGS.INVENTORY_LIST,
-		DASHBOARD_CACHE_TAGS.BADGES,
+		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
+		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	]
 }
 

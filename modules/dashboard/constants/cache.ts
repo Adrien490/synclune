@@ -1,22 +1,35 @@
 /**
  * Cache configuration for Dashboard module
+ *
+ * NOTE: Les tags partagés (BADGES, ORDERS_LIST, CUSTOMERS_LIST, INVENTORY_LIST)
+ * sont désormais définis dans @/shared/constants/cache-tags.
+ * Les exports ici sont conservés pour compatibilité mais marqués @deprecated.
  */
 
 import { cacheLife, cacheTag } from "next/cache"
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 
 // ============================================
 // CACHE TAGS
 // ============================================
 
 export const DASHBOARD_CACHE_TAGS = {
-	/** Badges de la sidebar (counts pour notifications) */
-	BADGES: "dashboard-badges",
-	/** Liste des commandes (dashboard admin) */
-	ORDERS_LIST: "orders-list",
-	/** Liste des clients (dashboard admin) */
-	CUSTOMERS_LIST: "customers-list",
-	/** Liste de l'inventaire (dashboard admin) */
-	INVENTORY_LIST: "inventory-list",
+	/**
+	 * @deprecated Utiliser SHARED_CACHE_TAGS.ADMIN_BADGES depuis @/shared/constants/cache-tags
+	 */
+	BADGES: SHARED_CACHE_TAGS.ADMIN_BADGES,
+	/**
+	 * @deprecated Utiliser SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST depuis @/shared/constants/cache-tags
+	 */
+	ORDERS_LIST: SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
+	/**
+	 * @deprecated Utiliser SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST depuis @/shared/constants/cache-tags
+	 */
+	CUSTOMERS_LIST: SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST,
+	/**
+	 * @deprecated Utiliser SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST depuis @/shared/constants/cache-tags
+	 */
+	INVENTORY_LIST: SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 
 	// ========== STATS VENTES (parametriques par periode) ==========
 	/** Taux de conversion panier -> commande */

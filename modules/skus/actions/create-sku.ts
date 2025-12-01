@@ -210,7 +210,7 @@ export async function createProductSku(
 							name: true,
 						},
 					},
-					materialRelation: {
+					material: {
 						select: {
 							name: true,
 						},
@@ -244,7 +244,7 @@ export async function createProductSku(
 		// 8. Build success message
 		const variantDetails = [
 			productSku.color?.name,
-			productSku.materialRelation?.name,
+			productSku.material?.name,
 			productSku.size,
 		]
 			.filter(Boolean)

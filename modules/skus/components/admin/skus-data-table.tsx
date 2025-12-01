@@ -244,8 +244,8 @@ export async function ProductVariantsDataTable({
 											)}
 										</TableCell>
 										<TableCell role="gridcell" className="hidden xl:table-cell">
-											{sku.materialRelation ? (
-												<span className="text-sm">{sku.materialRelation.name}</span>
+											{sku.material ? (
+												<span className="text-sm">{sku.material.name}</span>
 											) : (
 												<span className="text-muted-foreground text-sm">—</span>
 											)}

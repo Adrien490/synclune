@@ -143,8 +143,8 @@ export function CartItemRow({ item }: CartItemRowProps) {
 									{item.sku.color.name}
 								</span>
 							),
-							item.sku.materialRelation && (
-								<span key="material">{item.sku.materialRelation.name}</span>
+							item.sku.material && (
+								<span key="material">{item.sku.material.name}</span>
 							),
 							item.sku.size && <span key="size">{item.sku.size}</span>,
 						]

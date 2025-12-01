@@ -39,14 +39,14 @@ export const buildFilterConditions = (
 		}
 	}
 
-	// Material - filter by materialRelation.name
+	// Material - filter by material.name
 	if (filters.material !== undefined) {
 		const materials = Array.isArray(filters.material)
 			? filters.material
 			: [filters.material];
 		if (materials.length === 1) {
 			conditions.push({
-				materialRelation: {
+				material: {
 					name: {
 						contains: materials[0],
 						mode: Prisma.QueryMode.insensitive,
@@ -57,7 +57,7 @@ export const buildFilterConditions = (
 			// Pour plusieurs matériaux, utiliser OR
 			conditions.push({
 				OR: materials.map((mat) => ({
-					materialRelation: {
+					material: {
 						name: {
 							contains: mat,
 							mode: Prisma.QueryMode.insensitive,

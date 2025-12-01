@@ -3,7 +3,7 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache"
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache"
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 
 // ============================================
 // CACHE TAGS
@@ -39,7 +39,7 @@ export function cacheNewsletterSubscribers() {
  * Tags à invalider lors de la modification d'un abonnement newsletter
  */
 export function getNewsletterInvalidationTags(userId?: string): string[] {
-	const tags: string[] = [NEWSLETTER_CACHE_TAGS.LIST, DASHBOARD_CACHE_TAGS.BADGES]
+	const tags: string[] = [NEWSLETTER_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES]
 
 	if (userId) {
 		tags.push(NEWSLETTER_CACHE_TAGS.USER_STATUS(userId))

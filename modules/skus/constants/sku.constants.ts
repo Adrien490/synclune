@@ -20,7 +20,7 @@ export const GET_PRODUCT_SKU_SELECT = {
 		},
 	},
 	materialId: true,
-	materialRelation: {
+	material: {
 		select: {
 			id: true,
 			name: true,

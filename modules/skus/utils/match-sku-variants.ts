@@ -74,13 +74,13 @@ export function matchMaterial(
 	if (!material && !materialSlug) return true;
 
 	// Pas de matériau sur le SKU = pas de match
-	if (!sku.materialRelation) return false;
+	if (!sku.material) return false;
 
 	const targetMaterial = materialSlug || material;
 	if (!targetMaterial) return true;
 
 	// Comparaison normalisée via slugify
-	return slugify(sku.materialRelation.name) === slugify(targetMaterial);
+	return slugify(sku.material.name) === slugify(targetMaterial);
 }
 
 /**

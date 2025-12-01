@@ -6,7 +6,7 @@ import { updateTag } from "next/cache";
 import { requireAdmin } from "@/shared/lib/actions";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { STOCK_NOTIFICATIONS_CACHE_TAGS } from "../constants/cache";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { STOCK_NOTIFICATION_EXPIRY_DAYS } from "../constants/stock-notification.constants";
 
 /**
@@ -39,7 +39,7 @@ export async function cleanupExpiredNotifications(): Promise<{
 			// Invalider le cache
 			const tagsToInvalidate = [
 				STOCK_NOTIFICATIONS_CACHE_TAGS.PENDING_LIST,
-				DASHBOARD_CACHE_TAGS.BADGES,
+				SHARED_CACHE_TAGS.ADMIN_BADGES,
 			];
 			tagsToInvalidate.forEach((tag) => updateTag(tag));
 		}

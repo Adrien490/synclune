@@ -4,7 +4,7 @@ import {
 	processCursorResults,
 } from "@/shared/components/cursor-pagination/pagination";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { cacheLife, cacheTag } from "next/cache";
@@ -65,7 +65,7 @@ async function fetchSkuStocks(
 ): Promise<GetSkuStocksReturn> {
 	"use cache";
 	cacheLife({ stale: 60 });
-	cacheTag(DASHBOARD_CACHE_TAGS.INVENTORY_LIST);
+	cacheTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
 
 	try {
 		const where = buildInventoryWhereClause(params);

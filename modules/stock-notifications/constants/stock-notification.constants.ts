@@ -58,7 +58,7 @@ export const STOCK_NOTIFICATION_WITH_SKU_SELECT = {
 					hex: true,
 				},
 			},
-			materialRelation: {
+			material: {
 				select: {
 					id: true,
 					name: true,

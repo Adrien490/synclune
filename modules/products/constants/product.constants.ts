@@ -79,7 +79,7 @@ export const GET_PRODUCT_SELECT = {
 					hex: true,
 				},
 			},
-			materialRelation: {
+			material: {
 				select: {
 					id: true,
 					name: true,
@@ -175,7 +175,7 @@ export const GET_PRODUCTS_SELECT = {
 					createdAt: "asc",
 				},
 			},
-			materialRelation: {
+			material: {
 				select: {
 					id: true,
 					name: true,

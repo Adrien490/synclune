@@ -5,7 +5,7 @@ import { requireAdmin } from "@/shared/lib/actions/auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export async function refreshSkus(
 	_prevState: unknown,
@@ -19,8 +19,8 @@ export async function refreshSkus(
 
 		// Invalider les tags des SKUs
 		updateTag(PRODUCTS_CACHE_TAGS.SKUS_LIST);
-		updateTag(DASHBOARD_CACHE_TAGS.BADGES);
-		updateTag(DASHBOARD_CACHE_TAGS.INVENTORY_LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
 
 		// Si un productId est fourni, invalider aussi les SKUs de ce produit
 		if (productId) {

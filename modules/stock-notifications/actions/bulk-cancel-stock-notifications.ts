@@ -9,7 +9,7 @@ import { updateTag } from "next/cache";
 
 import { bulkCancelStockNotificationsSchema } from "../schemas/stock-notification.schemas";
 import { STOCK_NOTIFICATIONS_CACHE_TAGS } from "../constants/cache";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 /**
  * Server Action ADMIN pour annuler plusieurs notifications de stock en masse
@@ -73,7 +73,7 @@ export async function bulkCancelStockNotifications(
 		// Invalider le cache
 		const tagsToInvalidate = [
 			STOCK_NOTIFICATIONS_CACHE_TAGS.PENDING_LIST,
-			DASHBOARD_CACHE_TAGS.BADGES,
+			SHARED_CACHE_TAGS.ADMIN_BADGES,
 		];
 		tagsToInvalidate.forEach((tag) => updateTag(tag));
 

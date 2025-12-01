@@ -57,7 +57,7 @@ export const GET_INVENTORY_SELECT = {
 			name: true,
 		},
 	},
-	materialRelation: {
+	material: {
 		select: {
 			id: true,
 			name: true,

@@ -62,7 +62,7 @@ export const GET_DASHBOARD_STOCK_ALERTS_SELECT = {
 			name: true,
 		},
 	},
-	materialRelation: {
+	material: {
 		select: {
 			id: true,
 			name: true,

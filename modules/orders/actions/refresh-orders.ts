@@ -5,7 +5,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export async function refreshOrders(
 	_prevState: unknown,
@@ -22,7 +22,7 @@ export async function refreshOrders(
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(ORDERS_CACHE_TAGS.CUSTOMERS_LIST);
-		updateTag(DASHBOARD_CACHE_TAGS.BADGES);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 		return {
 			status: ActionStatus.SUCCESS,

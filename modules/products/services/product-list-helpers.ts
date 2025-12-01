@@ -117,7 +117,7 @@ export function getPrimaryColorForList(product: ProductFromList): {
 	const primarySku = getPrimarySkuForList(product);
 	if (!primarySku) return {};
 
-	const fallbackName = primarySku.materialRelation?.name || undefined;
+	const fallbackName = primarySku.material?.name || undefined;
 
 	if (primarySku.color?.hex) {
 		return {
@@ -159,7 +159,7 @@ export function getPrimaryImageForList(product: ProductFromList): {
 				alt: truncateAltText(
 					primaryImage.altText ||
 						`${product.title} - ${
-							primarySku.materialRelation?.name ||
+							primarySku.material?.name ||
 							primarySku.color?.name ||
 							"Image principale"
 						}`
@@ -177,7 +177,7 @@ export function getPrimaryImageForList(product: ProductFromList): {
 				alt: truncateAltText(
 					firstImage.altText ||
 						`${product.title} - ${
-							primarySku.materialRelation?.name ||
+							primarySku.material?.name ||
 							primarySku.color?.name ||
 							"Image principale"
 						}`
@@ -202,7 +202,7 @@ export function getPrimaryImageForList(product: ProductFromList): {
 						alt: truncateAltText(
 							skuImage.altText ||
 								`${product.title} - ${
-									sku.materialRelation?.name || sku.color?.name || "Variante"
+									sku.material?.name || sku.color?.name || "Variante"
 								}`
 						),
 					};
@@ -286,7 +286,7 @@ export function getVariantCountForList(product: ProductFromList): {
 
 	for (const sku of activeSkus) {
 		if (sku.color?.hex) uniqueColors.add(sku.color.hex);
-		if (sku.materialRelation?.name) uniqueMaterials.add(sku.materialRelation.name);
+		if (sku.material?.name) uniqueMaterials.add(sku.material.name);
 		if (sku.size) uniqueSizes.add(sku.size);
 		totalSkus++;
 	}

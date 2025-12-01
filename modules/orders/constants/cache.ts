@@ -3,7 +3,7 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache"
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache"
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 
 // ============================================
 // CACHE TAGS
@@ -47,7 +47,7 @@ export function cacheUserOrders(userId: string) {
  * - Les badges de la sidebar (affecte le count de commandes en attente)
  */
 export function getOrderInvalidationTags(userId?: string): string[] {
-	const tags: string[] = [ORDERS_CACHE_TAGS.LIST, DASHBOARD_CACHE_TAGS.BADGES]
+	const tags: string[] = [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES]
 
 	if (userId) {
 		tags.push(ORDERS_CACHE_TAGS.USER_ORDERS(userId))
