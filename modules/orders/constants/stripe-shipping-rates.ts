@@ -93,3 +93,27 @@ export const SHIPPING_RATE_NAMES: Record<string, string> = {
 export function getShippingRateName(shippingRateId: string): string {
 	return SHIPPING_RATE_NAMES[shippingRateId] || "Colissimo";
 }
+
+/**
+ * Détermine la méthode de livraison (enum) à partir du shipping rate ID
+ *
+ * @param shippingRateId - ID du shipping rate Stripe (shr_xxx)
+ * @returns La méthode de livraison (STANDARD ou EXPRESS)
+ */
+export function getShippingMethodFromRate(shippingRateId: string): "STANDARD" | "EXPRESS" {
+	// Tous les tarifs Colissimo sont STANDARD pour l'instant
+	// Si ajout d'un tarif EXPRESS futur (ex: Chronopost), mapper ici
+	return "STANDARD";
+}
+
+/**
+ * Détermine le transporteur à partir du shipping rate ID
+ *
+ * @param shippingRateId - ID du shipping rate Stripe (shr_xxx)
+ * @returns Le transporteur (enum ShippingCarrier)
+ */
+export function getShippingCarrierFromRate(shippingRateId: string): "COLISSIMO" | "CHRONOPOST" | "MONDIAL_RELAY" | "DPD" | "OTHER" {
+	// Tous nos tarifs sont Colissimo
+	// Si ajout d'autres transporteurs, mapper ici selon l'ID
+	return "COLISSIMO";
+}

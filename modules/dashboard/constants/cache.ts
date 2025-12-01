@@ -34,6 +34,34 @@ export const DASHBOARD_CACHE_TAGS = {
 	/** KPIs de la section ventes */
 	SALES_KPIS: (period: string) => `dashboard-sales-kpis-${period}`,
 
+	// ========== STATS CLIENTS (parametriques par periode) ==========
+	/** KPIs clients */
+	CUSTOMER_KPIS: (period: string) => `dashboard-customer-kpis-${period}`,
+	/** Acquisition clients */
+	CUSTOMER_ACQUISITION: (period: string) => `dashboard-customer-acquisition-${period}`,
+	/** Clients recurrents */
+	REPEAT_CUSTOMERS: (period: string) => `dashboard-repeat-customers-${period}`,
+	/** Top clients */
+	TOP_CUSTOMERS: (period: string) => `dashboard-top-customers-${period}`,
+
+	// ========== STATS REMBOURSEMENTS ==========
+	/** Stats remboursements */
+	REFUND_STATS: (period: string) => `dashboard-refund-stats-${period}`,
+
+	// ========== STATS PROMOS ==========
+	/** Stats codes promo */
+	DISCOUNT_STATS: (period: string) => `dashboard-discount-stats-${period}`,
+	/** Top codes promo */
+	TOP_DISCOUNTS: (period: string) => `dashboard-top-discounts-${period}`,
+
+	// ========== STATS FULFILLMENT ==========
+	/** Distribution statuts fulfillment */
+	FULFILLMENT_STATUS: "dashboard-fulfillment-status",
+
+	// ========== TENDANCES ==========
+	/** Revenus 12 mois */
+	REVENUE_YEAR: "dashboard-revenue-year",
+
 	// ========== STATS INVENTAIRE (fixes) ==========
 	/** Valeur totale du stock */
 	STOCK_VALUE: "dashboard-stock-value",
@@ -170,8 +198,80 @@ export function cacheDashboardStockByMaterial() {
 	cacheTag(DASHBOARD_CACHE_TAGS.STOCK_BY_MATERIAL)
 }
 
+/**
+ * Configure le cache pour les KPIs clients
+ */
+export function cacheDashboardCustomerKpis(period: string) {
+	cacheLife("dashboard")
+	cacheTag(DASHBOARD_CACHE_TAGS.CUSTOMER_KPIS(period))
+}
+
+/**
+ * Configure le cache pour l'acquisition clients
+ */
+export function cacheDashboardCustomerAcquisition(period: string) {
+	cacheLife("dashboard")
+	cacheTag(DASHBOARD_CACHE_TAGS.CUSTOMER_ACQUISITION(period))
+}
+
+/**
+ * Configure le cache pour les clients recurrents
+ */
+export function cacheDashboardRepeatCustomers(period: string) {
+	cacheLife("dashboard")
+	cacheTag(DASHBOARD_CACHE_TAGS.REPEAT_CUSTOMERS(period))
+}
+
+/**
+ * Configure le cache pour les top clients
+ */
+export function cacheDashboardTopCustomers(period: string) {
+	cacheLife("dashboard")
+	cacheTag(DASHBOARD_CACHE_TAGS.TOP_CUSTOMERS(period))
+}
+
+/**
+ * Configure le cache pour les stats remboursements
+ */
+export function cacheDashboardRefundStats(period: string) {
+	cacheLife("dashboard")
+	cacheTag(DASHBOARD_CACHE_TAGS.REFUND_STATS(period))
+}
+
+/**
+ * Configure le cache pour les stats promos
+ */
+export function cacheDashboardDiscountStats(period: string) {
+	cacheLife("dashboard")
+	cacheTag(DASHBOARD_CACHE_TAGS.DISCOUNT_STATS(period))
+}
+
+/**
+ * Configure le cache pour les top codes promo
+ */
+export function cacheDashboardTopDiscounts(period: string) {
+	cacheLife("dashboard")
+	cacheTag(DASHBOARD_CACHE_TAGS.TOP_DISCOUNTS(period))
+}
+
+/**
+ * Configure le cache pour les statuts fulfillment
+ */
+export function cacheDashboardFulfillmentStatus() {
+	cacheLife("dashboard")
+	cacheTag(DASHBOARD_CACHE_TAGS.FULFILLMENT_STATUS)
+}
+
+/**
+ * Configure le cache pour les revenus 12 mois
+ */
+export function cacheDashboardRevenueYear() {
+	cacheLife("dashboard")
+	cacheTag(DASHBOARD_CACHE_TAGS.REVENUE_YEAR)
+}
+
 // ============================================
-// INVALIDATION HELPER
+// INVALIDATION HELPERS
 // ============================================
 
 /**
@@ -179,6 +279,49 @@ export function cacheDashboardStockByMaterial() {
  */
 export function getDashboardBadgesInvalidationTags(): string[] {
 	return [DASHBOARD_CACHE_TAGS.BADGES]
+}
+
+/**
+ * Tags à invalider pour les KPIs de ventes (toutes périodes)
+ */
+export function getSalesKpisInvalidationTags(): string[] {
+	const periods = ["today", "yesterday", "last7days", "last30days", "thisMonth", "lastMonth", "thisYear", "lastYear", "custom"]
+	return periods.map(p => DASHBOARD_CACHE_TAGS.SALES_KPIS(p))
+}
+
+/**
+ * Tags à invalider pour l'inventaire
+ */
+export function getInventoryInvalidationTags(): string[] {
+	return [
+		DASHBOARD_CACHE_TAGS.INVENTORY_KPIS,
+		DASHBOARD_CACHE_TAGS.STOCK_VALUE,
+		DASHBOARD_CACHE_TAGS.NEVER_SOLD,
+		DASHBOARD_CACHE_TAGS.STOCK_BY_COLOR,
+		DASHBOARD_CACHE_TAGS.STOCK_BY_MATERIAL,
+		DASHBOARD_CACHE_TAGS.INVENTORY_LIST,
+	]
+}
+
+/**
+ * Tags à invalider pour les revenus (toutes périodes)
+ */
+export function getRevenueInvalidationTags(): string[] {
+	const periods = ["today", "yesterday", "last7days", "last30days", "thisMonth", "lastMonth", "thisYear", "lastYear", "custom"]
+	return [
+		...periods.map(p => DASHBOARD_CACHE_TAGS.REVENUE_CHART(p)),
+		...periods.map(p => DASHBOARD_CACHE_TAGS.REVENUE_COLLECTIONS(p)),
+		...periods.map(p => DASHBOARD_CACHE_TAGS.REVENUE_TYPES(p)),
+		...periods.map(p => DASHBOARD_CACHE_TAGS.TOP_PRODUCTS(p)),
+	]
+}
+
+/**
+ * Tags à invalider pour l'abandon panier (toutes périodes)
+ */
+export function getAbandonmentInvalidationTags(): string[] {
+	const periods = ["today", "yesterday", "last7days", "last30days", "thisMonth", "lastMonth", "thisYear", "lastYear", "custom"]
+	return periods.map(p => DASHBOARD_CACHE_TAGS.ABANDONMENT_RATE(p))
 }
 
 // ============================================

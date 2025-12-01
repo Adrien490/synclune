@@ -76,13 +76,14 @@ async function fetchProducts(
 		const where = buildProductWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
+		// Tri SQL natif - utilise minPriceInclTax dénormalisé pour le tri par prix
 		const orderBy: Prisma.ProductOrderByWithRelationInput[] =
 			params.sortBy.startsWith("best-selling")
 				? [{ createdAt: direction }, { id: "asc" }]
 				: params.sortBy.startsWith("title-")
 					? [{ title: direction }, { id: "asc" }]
 					: params.sortBy.startsWith("price-")
-						? [{ createdAt: direction }, { id: "asc" }]
+						? [{ minPriceInclTax: direction }, { id: "asc" }]
 						: params.sortBy.startsWith("created-")
 							? [{ createdAt: direction }, { id: "asc" }]
 							: [{ createdAt: "desc" }, { id: "asc" }];
@@ -98,99 +99,31 @@ async function fetchProducts(
 			take,
 		});
 
-		// Special handling for price sorting
-		// Note: Le tri par prix nécessite de charger tous les produits en mémoire
-		// car le prix minimum est calculé à partir des SKUs.
-		// Quick fix: Limite à 500 produits pour éviter les problèmes de mémoire.
-		// TODO: Implémenter une colonne dénormalisée minPriceInclTax pour un tri SQL natif.
-		if (params.sortBy.startsWith("price-")) {
-			const MAX_PRODUCTS_FOR_PRICE_SORT = 500;
-
-			const allProducts = await prisma.product.findMany({
-				where,
-				select: GET_PRODUCTS_SELECT,
-				orderBy: [{ id: "asc" }],
-				take: MAX_PRODUCTS_FOR_PRICE_SORT,
-			});
-
-			if (allProducts.length >= MAX_PRODUCTS_FOR_PRICE_SORT) {
-				console.warn(
-					`[getProducts] Price sort: ${allProducts.length} products loaded (limit reached). Consider implementing denormalized minPrice column.`
-				);
-			}
-
-			const sortedProducts = allProducts.sort((a, b) => {
-				const getPriceMin = (product: typeof a) => {
-					if (!product.skus || product.skus.length === 0) return 0;
-					return Math.min(...product.skus.map((sku) => sku.priceInclTax));
-				};
-				const priceA = getPriceMin(a);
-				const priceB = getPriceMin(b);
-				return direction === "asc" ? priceA - priceB : priceB - priceA;
-			});
-
-			let paginatedProducts: typeof sortedProducts;
-
-			if (!params.cursor) {
-				paginatedProducts = sortedProducts.slice(0, take + 1);
-			} else {
-				const cursorIndex = sortedProducts.findIndex(
-					(p) => p.id === params.cursor
-				);
-
-				if (cursorIndex === -1) {
-					paginatedProducts = [];
-				} else if (params.direction === "backward") {
-					const endIndex = cursorIndex;
-					const startIndex = Math.max(0, endIndex - (take + 1));
-					paginatedProducts = sortedProducts.slice(startIndex, endIndex);
-				} else {
-					const startIndex = cursorIndex + 1;
-					paginatedProducts = sortedProducts.slice(
-						startIndex,
-						startIndex + take + 1
-					);
-				}
-			}
-
-			const { items, pagination } = processCursorResults(
-				paginatedProducts,
-				take,
-				params.direction,
-				params.cursor
-			);
-
-			return { products: items, pagination };
-		}
+		// Filtrage par prix via WHERE clause (utilise minPriceInclTax dénormalisé)
+		const priceWhere =
+			params.filters?.priceMin !== undefined ||
+			params.filters?.priceMax !== undefined
+				? {
+						minPriceInclTax: {
+							...(params.filters?.priceMin !== undefined && {
+								gte: params.filters.priceMin,
+							}),
+							...(params.filters?.priceMax !== undefined && {
+								lte: params.filters.priceMax,
+							}),
+						},
+					}
+				: {};
 
 		const products = await prisma.product.findMany({
-			where,
+			where: { ...where, ...priceWhere },
 			select: GET_PRODUCTS_SELECT,
 			orderBy,
 			...cursorConfig,
 		});
 
-		let filteredProducts = products;
-		if (
-			params.filters?.priceMin !== undefined &&
-			params.filters?.priceMax !== undefined
-		) {
-			filteredProducts = products.filter((product) => {
-				if (!product.skus || product.skus.length === 0) return false;
-				const activePrices = product.skus
-					.filter((sku) => sku.isActive)
-					.map((sku) => sku.priceInclTax);
-				if (activePrices.length === 0) return false;
-				const minPrice = Math.min(...activePrices);
-				return (
-					minPrice >= params.filters!.priceMin! &&
-					minPrice <= params.filters!.priceMax!
-				);
-			});
-		}
-
 		const { items, pagination } = processCursorResults(
-			filteredProducts,
+			products,
 			take,
 			params.direction,
 			params.cursor

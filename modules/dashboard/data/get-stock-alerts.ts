@@ -2,25 +2,10 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import type { StockAlertItem, GetStockAlertsReturn } from "../types/dashboard.types";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export type StockAlertItem = {
-	skuId: string;
-	sku: string;
-	productTitle: string;
-	inventory: number;
-	alertType: "out_of_stock" | "low_stock";
-};
-
-export type GetStockAlertsReturn = {
-	alerts: StockAlertItem[];
-	totalCount: number;
-};
-
-// Alias pour compatibilité avec les imports existants
+// Re-export pour compatibilité
+export type { StockAlertItem, GetStockAlertsReturn } from "../types/dashboard.types";
 export type GetDashboardStockAlertsReturn = GetStockAlertsReturn;
 
 // ============================================================================

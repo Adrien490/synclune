@@ -1,6 +1,6 @@
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { getUserAddresses } from "../../data/get-user-addresses";
+import { getUserAddresses } from "../data/get-user-addresses";
 import { ArrowRight, MapPin } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";

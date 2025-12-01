@@ -9,6 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { updateProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../constants/cache";
 import { triggerStockNotificationsIfNeeded } from "@/modules/stock-notifications/utils/trigger-stock-notifications";
+import { syncProductPriceAndInventory } from "@/modules/products/services/sync-product-price";
 import {
 	parsePrimaryImageFromForm,
 	parseGalleryMediaFromForm,
@@ -254,6 +255,9 @@ export async function updateProductSku(
 					});
 				}
 			}
+
+			// Synchroniser les champs dénormalisés du Product (minPriceInclTax, etc.)
+			await syncProductPriceAndInventory(updatedSku.productId, tx);
 
 			return { productSku: updatedSku, previousInventory };
 		});

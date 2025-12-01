@@ -74,6 +74,7 @@ export async function fetchRevenueByCollection(
 	>();
 
 	let totalRevenue = 0;
+	let uncategorizedRevenue = 0;
 
 	for (const item of orderItems) {
 		const itemRevenue = item.price * item.quantity;
@@ -83,7 +84,8 @@ export async function fetchRevenueByCollection(
 		const collections = item.product?.collections || [];
 
 		if (collections.length === 0) {
-			// Produit sans collection - ignorer ou ajouter a "Non classe"
+			// Produit sans collection
+			uncategorizedRevenue += itemRevenue;
 			continue;
 		}
 
@@ -124,6 +126,7 @@ export async function fetchRevenueByCollection(
 
 	return {
 		collections,
+		uncategorizedRevenue,
 		totalRevenue,
 	};
 }

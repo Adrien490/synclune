@@ -92,7 +92,7 @@ export async function contactAdrien(
 		// 6. Envoyer l'email
 		const info = await transporter.sendMail({
 			from: session.user.email,
-			to: "contact@adrienpoirier.fr",
+			to: process.env.CONTACT_ADRIEN_EMAIL || "contact@adrienpoirier.fr",
 			replyTo: session.user.email,
 			subject: `[Dashboard Synclune] ${typeLabel} - ${session.user.name}`,
 			html: `

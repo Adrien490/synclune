@@ -6,6 +6,11 @@ import { sendAdminRefundFailedAlert } from "@/shared/lib/email";
 /**
  * 🔴 CRITIQUE - Gère le succès d'un paiement via Payment Intent
  * Utilisé pour les flux de paiement directs (non Checkout Session)
+ *
+ * NOTE: Ce handler ne gère PAS l'envoi d'emails car :
+ * - L'événement payment_intent.succeeded arrive APRÈS checkout.session.completed
+ * - Les emails et la décrémentation du stock sont gérés dans handleCheckoutSessionCompleted
+ * - Évite les doublons d'emails et les doubles décrementations de stock
  */
 export async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<void> {
 	const orderId = paymentIntent.metadata.order_id;

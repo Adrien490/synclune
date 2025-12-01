@@ -559,7 +559,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 					where: { email: finalEmail },
 				});
 
-				if (!existingSubscriber || (!existingSubscriber.isActive && !existingSubscriber.emailVerified)) {
+				if (!existingSubscriber || existingSubscriber.status !== "CONFIRMED") {
 					// Créer ou réactiver l'inscription avec double opt-in
 					const confirmationToken = randomUUID();
 
@@ -570,7 +570,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 							data: {
 								confirmationToken,
 								confirmationSentAt: new Date(),
-								isActive: false,
+								status: "PENDING",
 								emailVerified: false,
 								consentSource: "checkout_form",
 								consentTimestamp: new Date(),
@@ -591,7 +591,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 								consentTimestamp: new Date(),
 								confirmationToken,
 								confirmationSentAt: new Date(),
-								isActive: false,
+								status: "PENDING",
 								emailVerified: false,
 							},
 						});

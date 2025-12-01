@@ -16,6 +16,8 @@ import {
 } from "@/shared/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import type { GetRevenueByCollectionReturn } from "../../types/dashboard.types";
+import { truncateText, TRUNCATE_PRESETS } from "../../utils/truncate-text";
+import { CHART_STYLES } from "../../constants/chart-styles";
 
 const chartConfig = {
 	revenue: {
@@ -38,9 +40,7 @@ export function RevenueByCollectionChart({
 
 	// Preparer les donnees pour le graphique (top 5)
 	const chartData = data.collections.slice(0, 5).map((c) => ({
-		name: c.collectionName.length > 15
-			? c.collectionName.slice(0, 15) + "..."
-			: c.collectionName,
+		name: truncateText(c.collectionName, TRUNCATE_PRESETS.collection),
 		revenue: c.revenue / 100,
 		fullName: c.collectionName,
 		orders: c.ordersCount,
@@ -49,25 +49,25 @@ export function RevenueByCollectionChart({
 
 	if (chartData.length === 0) {
 		return (
-			<Card className="border-l-4 border-primary/30">
+			<Card className={CHART_STYLES.card}>
 				<CardHeader>
-					<CardTitle className="text-lg">Revenus par collection</CardTitle>
-					<CardDescription>Aucune vente sur cette periode</CardDescription>
+					<CardTitle className={CHART_STYLES.title}>Revenus par collection</CardTitle>
+					<CardDescription className={CHART_STYLES.description}>Aucune vente sur cette periode</CardDescription>
 				</CardHeader>
 			</Card>
 		);
 	}
 
 	return (
-		<Card className="border-l-4 border-primary/30">
+		<Card className={CHART_STYLES.card}>
 			<CardHeader>
-				<CardTitle className="text-lg">Revenus par collection</CardTitle>
-				<CardDescription>
+				<CardTitle className={CHART_STYLES.title}>Revenus par collection</CardTitle>
+				<CardDescription className={CHART_STYLES.description}>
 					Top 5 des collections • Total: {(data.totalRevenue / 100).toFixed(2)} €
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+				<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
 					<BarChart
 						data={chartData}
 						layout="vertical"

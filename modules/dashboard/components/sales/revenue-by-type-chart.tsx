@@ -18,6 +18,7 @@ import {
 } from "@/shared/components/ui/chart";
 import { PieChart, Pie, Cell } from "recharts";
 import type { GetRevenueByTypeReturn } from "../../types/dashboard.types";
+import { CHART_STYLES } from "../../constants/chart-styles";
 
 interface RevenueByTypeChartProps {
 	dataPromise: Promise<GetRevenueByTypeReturn>;
@@ -77,10 +78,10 @@ export function RevenueByTypeChart({ dataPromise }: RevenueByTypeChartProps) {
 
 	if (chartData.length === 0) {
 		return (
-			<Card className="border-l-4 border-primary/30">
+			<Card className={CHART_STYLES.card}>
 				<CardHeader>
-					<CardTitle className="text-lg">Revenus par type</CardTitle>
-					<CardDescription>Aucune vente sur cette periode</CardDescription>
+					<CardTitle className={CHART_STYLES.title}>Revenus par type</CardTitle>
+					<CardDescription className={CHART_STYLES.description}>Aucune vente sur cette periode</CardDescription>
 				</CardHeader>
 			</Card>
 		);
@@ -89,15 +90,15 @@ export function RevenueByTypeChart({ dataPromise }: RevenueByTypeChartProps) {
 	const total = chartData.reduce((sum, item) => sum + item.value, 0);
 
 	return (
-		<Card className="border-l-4 border-primary/30">
+		<Card className={CHART_STYLES.card}>
 			<CardHeader>
-				<CardTitle className="text-lg">Revenus par type de bijou</CardTitle>
-				<CardDescription>
+				<CardTitle className={CHART_STYLES.title}>Revenus par type de bijou</CardTitle>
+				<CardDescription className={CHART_STYLES.description}>
 					Total: {(data.totalRevenue / 100).toFixed(2)} €
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+				<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
 					<PieChart>
 						<ChartTooltip
 							content={

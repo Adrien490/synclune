@@ -136,18 +136,21 @@ export async function addToCart(
 			let newQuantity;
 			let isUpdate = false;
 
+			// Verrouiller le SKU avec FOR UPDATE pour éviter les race conditions sur le stock
+			const skuRows = await tx.$queryRaw<Array<{ inventory: number; isActive: boolean }>>`
+				SELECT inventory, "isActive"
+				FROM "ProductSku"
+				WHERE id = ${validatedData.skuId}
+				FOR UPDATE
+			`;
+
+			const sku = skuRows[0];
+			if (!sku || !sku.isActive) {
+				throw new Error("Ce produit n'est plus disponible");
+			}
+
 			if (existingItem) {
 				newQuantity = existingItem.quantity + validatedData.quantity;
-
-				// Vérifier le stock disponible pour la nouvelle quantité totale
-				const sku = await tx.productSku.findUnique({
-					where: { id: validatedData.skuId },
-					select: { inventory: true, isActive: true },
-				});
-
-				if (!sku || !sku.isActive) {
-					throw new Error("Ce produit n'est plus disponible");
-				}
 
 				if (sku.inventory < newQuantity) {
 					const currentInCart = existingItem.quantity;
@@ -168,16 +171,6 @@ export async function addToCart(
 				isUpdate = true;
 			} else {
 				newQuantity = validatedData.quantity;
-
-				// Vérifier le stock dans la transaction (protection contre race conditions)
-				const sku = await tx.productSku.findUnique({
-					where: { id: validatedData.skuId },
-					select: { inventory: true, isActive: true },
-				});
-
-				if (!sku || !sku.isActive) {
-					throw new Error("Ce produit n'est plus disponible");
-				}
 
 				if (sku.inventory < validatedData.quantity) {
 					throw new Error(

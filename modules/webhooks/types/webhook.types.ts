@@ -25,7 +25,11 @@ export type PostWebhookTask =
  */
 export interface WebhookHandlerResult {
 	success: boolean;
-	tasks: PostWebhookTask[];
+	tasks?: PostWebhookTask[];
+	/** Indique si l'événement a été ignoré (type non supporté, etc.) */
+	skipped?: boolean;
+	/** Raison de l'ignorance si skipped=true */
+	reason?: string;
 }
 
 /**

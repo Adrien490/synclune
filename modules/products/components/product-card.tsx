@@ -126,7 +126,7 @@ export function ProductCard({
 							{stockMessage}
 						</div>
 					)}
-					<ViewTransition name={`product-image-${slug}`}>
+					<ViewTransition name={`product-card-image-${slug}`}>
 						<Image
 							src={primaryImage.url}
 							alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
@@ -145,7 +145,7 @@ export function ProductCard({
 				{/* Contenu (plus de Link imbriqué) */}
 				<div className="flex flex-col gap-2 relative p-4">
 					{/* Titre avec hiérarchie tokenisée responsive */}
-					<ViewTransition name={`product-title-${slug}`}>
+					<ViewTransition name={`product-card-title-${slug}`}>
 						<h3
 							id={titleId}
 							className={cn(

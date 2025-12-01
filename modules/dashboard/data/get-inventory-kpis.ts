@@ -4,6 +4,12 @@ import { LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constant
 import { cacheDashboardInventoryStats } from "../constants/cache";
 import type { InventoryKpisReturn } from "../types/dashboard.types";
 
+// Type pour les résultats de l'agrégation SQL
+type StockValueResult = {
+	total_value: bigint | null;
+	total_units: bigint | null;
+};
+
 // ============================================================================
 // MAIN FUNCTION
 // ============================================================================
@@ -17,7 +23,7 @@ export async function fetchInventoryKpis(): Promise<InventoryKpisReturn> {
 
 	cacheDashboardInventoryStats();
 
-	const [outOfStock, lowStock, stockValue, pendingNotifications] =
+	const [outOfStock, lowStock, stockValueResult, pendingNotifications] =
 		await Promise.all([
 			// SKUs en rupture de stock (inventory = 0)
 			prisma.productSku.count({
@@ -38,17 +44,14 @@ export async function fetchInventoryKpis(): Promise<InventoryKpisReturn> {
 				},
 			}),
 
-			// Valeur totale du stock
-			prisma.productSku.findMany({
-				where: {
-					isActive: true,
-					inventory: { gt: 0 },
-				},
-				select: {
-					inventory: true,
-					priceInclTax: true,
-				},
-			}),
+			// Valeur totale du stock - Agrégation SQL directe (optimisé)
+			prisma.$queryRaw<StockValueResult[]>`
+				SELECT
+					SUM(inventory * "priceInclTax") as total_value,
+					SUM(inventory) as total_units
+				FROM "ProductSku"
+				WHERE "isActive" = true AND inventory > 0
+			`,
 
 			// Demandes de notification en attente
 			prisma.stockNotificationRequest.count({
@@ -58,14 +61,10 @@ export async function fetchInventoryKpis(): Promise<InventoryKpisReturn> {
 			}),
 		]);
 
-	// Calculer la valeur du stock et le total d'unites
-	let totalValue = 0;
-	let totalUnits = 0;
-
-	for (const sku of stockValue) {
-		totalValue += sku.inventory * sku.priceInclTax;
-		totalUnits += sku.inventory;
-	}
+	// Extraire les résultats de l'agrégation
+	const stockAgg = stockValueResult[0];
+	const totalValue = Number(stockAgg?.total_value ?? 0);
+	const totalUnits = Number(stockAgg?.total_units ?? 0);
 
 	return {
 		outOfStock: {

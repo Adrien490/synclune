@@ -12,6 +12,7 @@ import type { GetDashboardStockAlertsReturn, StockAlertItem } from "@/modules/da
 import { AlertTriangle, PackageX } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
+import { CHART_STYLES } from "../constants/chart-styles";
 
 interface StockAlertsListProps {
 	alertsPromise: Promise<GetDashboardStockAlertsReturn>;
@@ -21,10 +22,10 @@ export function StockAlertsList({ alertsPromise }: StockAlertsListProps) {
 	const { alerts } = use(alertsPromise);
 
 	return (
-		<Card className="border-l-4 border-secondary/40 bg-gradient-to-br from-secondary/5 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
-				<CardTitle className="text-xl font-semibold tracking-wide">Alertes stock</CardTitle>
-				<CardDescription className="text-sm">
+				<CardTitle className={CHART_STYLES.title}>Alertes stock</CardTitle>
+				<CardDescription className={CHART_STYLES.description}>
 					Bijoux en rupture ou en faible stock
 				</CardDescription>
 			</CardHeader>

@@ -8,6 +8,7 @@ import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
 import { OverviewSection } from "@/modules/dashboard/components/overview/overview-section";
 import { SalesSection } from "@/modules/dashboard/components/sales/sales-section";
 import { InventorySection } from "@/modules/dashboard/components/inventory/inventory-section";
+import { CustomersSection } from "@/modules/dashboard/components/customers/customers-section";
 
 import {
 	DEFAULT_TAB,
@@ -16,9 +17,7 @@ import {
 } from "@/modules/dashboard/constants/tabs";
 import {
 	DEFAULT_PERIOD,
-	FROM_DATE_URL_KEY,
-	PERIOD_URL_KEY,
-	TO_DATE_URL_KEY,
+	
 } from "@/modules/dashboard/constants/periods";
 import { dashboardPeriodSchema } from "@/modules/dashboard/schemas/dashboard.schemas";
 import type { DashboardPeriod } from "@/modules/dashboard/utils/period-resolver";
@@ -121,6 +120,13 @@ export default async function AdminDashboardPage({
 					/>
 				)}
 				{tab === "inventory" && <InventorySection />}
+				{tab === "customers" && (
+					<CustomersSection
+						period={period}
+						fromDate={fromDate}
+						toDate={toDate}
+					/>
+				)}
 			</Suspense>
 		</>
 	);

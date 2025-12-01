@@ -19,9 +19,14 @@ import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-t
  * - Refund.stripeRefundId @unique (évite double remboursement)
  */
 export async function POST(req: Request) {
+	const correlationId = crypto.randomUUID().slice(0, 8); // ID court pour les logs
+
 	try {
+		console.log(`📥 [WEBHOOK:${correlationId}] Incoming webhook request`);
+
 		// 1. Validation des variables d'environnement
 		if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+			console.error(`❌ [WEBHOOK:${correlationId}] Stripe configuration missing`);
 			return NextResponse.json(
 				{ error: "Stripe configuration missing" },
 				{ status: 500 }
@@ -56,7 +61,7 @@ export async function POST(req: Request) {
 		// Rejeter les événements trop anciens pour éviter les attaques de replay
 		const eventAgeSeconds = Math.floor(Date.now() / 1000) - event.created;
 		if (eventAgeSeconds > ANTI_REPLAY_WINDOW_SECONDS) {
-			console.warn(`⚠️ [WEBHOOK] Event ${event.id} too old (${eventAgeSeconds}s), rejecting for anti-replay`);
+			console.warn(`⚠️ [WEBHOOK:${correlationId}] Event ${event.id} too old (${eventAgeSeconds}s), rejecting for anti-replay`);
 			return NextResponse.json(
 				{ error: "Event too old (anti-replay protection)" },
 				{ status: 400 }
@@ -71,7 +76,7 @@ export async function POST(req: Request) {
 		});
 
 		if (existingEvent?.status === WebhookEventStatus.COMPLETED) {
-			console.log(`⏭️ [WEBHOOK] Event ${event.id} already processed, skipping`);
+			console.log(`⏭️ [WEBHOOK:${correlationId}] Event ${event.id} already processed, skipping`);
 			return NextResponse.json({ received: true, status: "duplicate" });
 		}
 
@@ -108,13 +113,16 @@ export async function POST(req: Request) {
 
 			// Exécuter les tâches post-webhook (emails, cache) via after()
 			// Ne bloque pas la réponse au webhook
-			if (result?.tasks?.length) {
+			const tasks = result?.tasks;
+			if (tasks?.length) {
 				after(async () => {
-					console.log(`📧 [WEBHOOK-AFTER] Executing ${result.tasks.length} post-webhook tasks...`);
-					await executePostWebhookTasks(result.tasks);
-					console.log(`✅ [WEBHOOK-AFTER] All post-webhook tasks completed`);
+					console.log(`📧 [WEBHOOK:${correlationId}] Executing ${tasks.length} post-webhook tasks...`);
+					await executePostWebhookTasks(tasks);
+					console.log(`✅ [WEBHOOK:${correlationId}] All post-webhook tasks completed`);
 				});
 			}
+
+			console.log(`✅ [WEBHOOK:${correlationId}] Event ${event.type} processed successfully`);
 
 			return response;
 		} catch (error) {
@@ -127,7 +135,7 @@ export async function POST(req: Request) {
 					processedAt: new Date(),
 				},
 			});
-			console.error("❌ Error processing webhook event:", error);
+			console.error(`❌ [WEBHOOK:${correlationId}] Error processing webhook event:`, error);
 			throw error;
 		}
 	} catch {

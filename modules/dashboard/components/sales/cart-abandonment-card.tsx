@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { ShoppingCart, TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import type { CartAbandonmentReturn } from "../../types/dashboard.types";
+import { CHART_STYLES } from "../../constants/chart-styles";
 
 interface CartAbandonmentCardProps {
 	dataPromise: Promise<CartAbandonmentReturn>;
@@ -22,12 +23,12 @@ export function CartAbandonmentCard({ dataPromise }: CartAbandonmentCardProps) {
 	const EvolutionIcon = isImproved ? TrendingDown : TrendingUp;
 
 	return (
-		<Card className="border-l-4 border-orange-500/50">
+		<Card className={CHART_STYLES.card}>
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium text-muted-foreground">
+				<CardTitle className={CHART_STYLES.title}>
 					Taux d'abandon de panier
 				</CardTitle>
-				<ShoppingCart className="h-4 w-4 text-muted-foreground" />
+				<ShoppingCart className="h-5 w-5 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>
 				<div className="flex items-baseline gap-2">

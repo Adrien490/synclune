@@ -7,6 +7,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateProductSkuStatusSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../constants/cache";
+import { syncProductPriceAndInventory } from "@/modules/products/services/sync-product-price";
 
 /**
  * Server Action pour mettre a jour le statut actif/inactif d'un SKU
@@ -73,15 +74,22 @@ export async function updateProductSkuStatus(
 			};
 		}
 
-		// 6. Mettre a jour le statut
-		const updatedSku = await prisma.productSku.update({
-			where: { id: validatedSkuId },
-			data: { isActive: validatedIsActive },
-			select: {
-				id: true,
-				sku: true,
-				isActive: true,
-			},
+		// 6. Mettre a jour le statut et synchroniser les prix
+		const updatedSku = await prisma.$transaction(async (tx) => {
+			const sku = await tx.productSku.update({
+				where: { id: validatedSkuId },
+				data: { isActive: validatedIsActive },
+				select: {
+					id: true,
+					sku: true,
+					isActive: true,
+				},
+			});
+
+			// Synchroniser les champs dénormalisés du Product (minPriceInclTax, etc.)
+			await syncProductPriceAndInventory(existingSku.productId, tx);
+
+			return sku;
 		});
 
 		// 7. Invalider les cache tags concernes

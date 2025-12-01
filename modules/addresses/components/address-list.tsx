@@ -1,8 +1,8 @@
-import type { UserAddress } from "../../types/user-addresses.types";
+import type { UserAddress } from "../types/user-addresses.types";
 import { MapPin } from "lucide-react";
 import { use } from "react";
 import { AddressCard } from "./address-card";
-import { CreateAddressButton } from "../addresses/create-address-button";
+import { CreateAddressButton } from "./create-address-button";
 
 interface AddressListProps {
 	addressesPromise: Promise<UserAddress[] | null>;

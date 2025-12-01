@@ -1,6 +1,6 @@
 import { Badge } from "@/shared/components/ui/badge";
 import { Star, Phone } from "lucide-react";
-import type { UserAddress } from "../../types/user-addresses.types";
+import type { UserAddress } from "../types/user-addresses.types";
 import { AddressCardActions } from "./address-card-actions";
 import { cn } from "@/shared/utils/cn";
 

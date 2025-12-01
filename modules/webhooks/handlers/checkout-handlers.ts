@@ -3,7 +3,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
-import { getShippingRateName } from "@/modules/orders/constants/stripe-shipping-rates";
+import { getShippingRateName, getShippingMethodFromRate, getShippingCarrierFromRate } from "@/modules/orders/constants/stripe-shipping-rates";
 import type { PostWebhookTask, WebhookHandlerResult } from "../types/webhook.types";
 
 /**
@@ -138,10 +138,9 @@ export async function handleCheckoutSessionCompleted(
 					stripeCheckoutSessionId: session.id,
 					stripeCustomerId: (session.customer as string) || null,
 					shippingCost,
-					// ⚠️ AUDIT FIX: shippingMethod est maintenant un enum (STANDARD, EXPRESS, etc.)
-					// La valeur textuelle "Colissimo France" est stockée dans shippingCarrier via le nom de la rate
-					shippingMethod: "STANDARD", // Par défaut pour Colissimo
-					shippingCarrier: "COLISSIMO", // Transporteur
+					// Mapping dynamique basé sur le shipping rate sélectionné
+					shippingMethod: getShippingMethodFromRate(shippingRateId || ""),
+					shippingCarrier: getShippingCarrierFromRate(shippingRateId || ""),
 					// Micro-entreprise : taxAmount = 0, taxRate/taxJurisdiction/taxType/taxDetails = null
 				},
 			});

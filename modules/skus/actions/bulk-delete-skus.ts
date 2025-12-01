@@ -6,6 +6,7 @@ import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { bulkDeleteSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../constants/cache";
+import { syncMultipleProductsPriceAndInventory } from "@/modules/products/services/sync-product-price";
 
 const utapi = new UTApi();
 
@@ -124,13 +125,19 @@ export async function bulkDeleteSkus(
 			}
 		}
 
-		// Supprimer toutes les variantes
-		await prisma.productSku.deleteMany({
-			where: {
-				id: {
-					in: ids,
+		// Supprimer toutes les variantes et synchroniser les prix
+		const productIds = [...new Set(skusData.map((s) => s.productId))];
+		await prisma.$transaction(async (tx) => {
+			await tx.productSku.deleteMany({
+				where: {
+					id: {
+						in: ids,
+					},
 				},
-			},
+			});
+
+			// Synchroniser les champs dénormalisés des Products concernés
+			await syncMultipleProductsPriceAndInventory(productIds, tx);
 		});
 
 		// Invalider le cache (deduplique automatiquement les tags)

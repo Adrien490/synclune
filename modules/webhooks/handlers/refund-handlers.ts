@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { PaymentStatus, RefundStatus, RefundAction } from "@/app/generated/prisma/client";
+import { PaymentStatus, RefundStatus, RefundAction, CurrencyCode } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendRefundConfirmationEmail, sendAdminRefundFailedAlert } from "@/shared/lib/email";
 
@@ -100,7 +100,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<void>
 							orderId: order.id,
 							stripeRefundId: stripeRefund.id,
 							amount: stripeRefund.amount || 0,
-							currency: "EUR", // ⚠️ AUDIT FIX: CurrencyCode enum
+							currency: (stripeRefund.currency?.toUpperCase() || "EUR") as CurrencyCode,
 							reason: "OTHER",
 							status: stripeRefund.status === "succeeded"
 								? RefundStatus.COMPLETED

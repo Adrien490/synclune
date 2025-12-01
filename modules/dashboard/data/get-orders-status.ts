@@ -2,21 +2,16 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { OrderStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import type { OrderStatusCount } from "../types/dashboard.types";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export type OrderStatusItem = {
-	status: OrderStatus;
-	count: number;
-};
+// Types locaux simplifiés pour ce cas d'usage spécifique
+// (le type central GetOrdersStatusReturn inclut plus de détails)
+export type OrderStatusItem = OrderStatusCount;
 
 export type GetOrdersStatusReturn = {
 	statuses: OrderStatusItem[];
 };
 
-// Alias pour compatibilité
 export type GetDashboardOrdersStatusReturn = GetOrdersStatusReturn;
 
 // ============================================================================

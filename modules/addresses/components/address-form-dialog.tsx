@@ -12,10 +12,10 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Label } from "@/shared/components/ui/label";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
-import { useCreateAddress } from "../../hooks/use-create-address";
-import type { UserAddress } from "../../types/user-addresses.types";
-import type { SearchAddressResult } from "../../data/types";
-import { useUpdateAddress } from "../../hooks/use-update-address";
+import { useCreateAddress } from "@/modules/addresses/hooks/use-create-address";
+import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
+import type { SearchAddressResult } from "@/modules/addresses/data/types";
+import { useUpdateAddress } from "@/modules/addresses/hooks/use-update-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, XCircle } from "lucide-react";

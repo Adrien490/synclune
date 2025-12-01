@@ -91,31 +91,21 @@ export type GetRecentOrdersReturn = {
 // TYPES - TOP PRODUCTS
 // ============================================================================
 
-export type TopProductItem = {
-	id: string;
-	title: string;
-	slug: string;
-	imageUrl: string | null;
-	totalSold: number;
-	revenue: number;
-};
-
-export type GetTopProductsReturn = {
-	products: TopProductItem[];
-};
+// NOTE: Le type TopProductItem est défini dans:
+// - modules/dashboard/data/get-top-products.ts (via TopProductStats)
+// - modules/dashboard/services/aggregate-top-products.ts
+// Utiliser l'import depuis ces fichiers pour le typage des composants.
 
 // ============================================================================
 // TYPES - STOCK ALERTS
 // ============================================================================
 
 export type StockAlertItem = {
-	id: string;
+	skuId: string;
 	sku: string;
-	productId: string;
 	productTitle: string;
-	productSlug: string;
 	inventory: number;
-	variant: string;
+	alertType: "out_of_stock" | "low_stock";
 };
 
 export type GetStockAlertsReturn = {
@@ -199,6 +189,7 @@ export type RevenueByCollectionItem = {
 
 export type GetRevenueByCollectionReturn = {
 	collections: RevenueByCollectionItem[];
+	uncategorizedRevenue: number;
 	totalRevenue: number;
 };
 
@@ -309,4 +300,149 @@ export type GetStockByMaterialReturn = {
 		totalUnits: number;
 		value: number;
 	};
+};
+
+// ============================================================================
+// TYPES - CUSTOMER STATS (Section Clients)
+// ============================================================================
+
+export type CustomerKpisReturn = {
+	/** Nombre total de clients */
+	totalCustomers: {
+		count: number;
+		evolution: number;
+	};
+	/** Nouveaux clients sur la periode */
+	newCustomers: {
+		count: number;
+		evolution: number;
+	};
+	/** Taux de clients recurrents (>1 commande) */
+	repeatRate: {
+		rate: number;
+		evolution: number;
+	};
+	/** Panier moyen premiere commande vs recurrents */
+	firstOrderAov: {
+		amount: number;
+		repeatAov: number;
+	};
+};
+
+export type CustomerAcquisitionDataPoint = {
+	date: string;
+	count: number;
+};
+
+export type GetCustomerAcquisitionReturn = {
+	data: CustomerAcquisitionDataPoint[];
+	totalNew: number;
+};
+
+export type RepeatCustomersReturn = {
+	/** Nombre de clients avec 1 seule commande */
+	oneTimeCustomers: number;
+	/** Nombre de clients avec 2+ commandes */
+	repeatCustomers: number;
+	/** Nombre total de clients */
+	totalCustomers: number;
+	/** Taux de recurrence */
+	repeatRate: number;
+};
+
+export type TopCustomerItem = {
+	userId: string;
+	name: string;
+	email: string;
+	ordersCount: number;
+	totalSpent: number;
+	lastOrderDate: Date;
+};
+
+export type GetTopCustomersReturn = {
+	customers: TopCustomerItem[];
+};
+
+// ============================================================================
+// TYPES - REFUND STATS
+// ============================================================================
+
+export type RefundStatsReturn = {
+	/** Montant total rembourse */
+	totalRefunded: {
+		amount: number;
+		evolution: number;
+	};
+	/** Nombre de remboursements */
+	refundCount: {
+		count: number;
+		evolution: number;
+	};
+	/** Taux de remboursement (refunds / orders) */
+	refundRate: {
+		rate: number;
+		evolution: number;
+	};
+};
+
+// ============================================================================
+// TYPES - DISCOUNT STATS
+// ============================================================================
+
+export type DiscountStatsReturn = {
+	/** CA avec remise */
+	revenueWithDiscount: {
+		amount: number;
+		evolution: number;
+	};
+	/** Montant total des remises */
+	totalDiscountAmount: {
+		amount: number;
+		evolution: number;
+	};
+	/** Nombre de commandes avec remise */
+	ordersWithDiscount: {
+		count: number;
+		evolution: number;
+	};
+	/** Codes promo non utilises */
+	unusedCodes: {
+		count: number;
+	};
+};
+
+export type TopDiscountItem = {
+	code: string;
+	type: "PERCENTAGE" | "FIXED_AMOUNT";
+	value: number;
+	usageCount: number;
+	totalDiscountGiven: number;
+};
+
+export type GetTopDiscountsReturn = {
+	discounts: TopDiscountItem[];
+};
+
+// ============================================================================
+// TYPES - FULFILLMENT STATS
+// ============================================================================
+
+export type GetFulfillmentStatusReturn = {
+	statuses: FulfillmentStatusCount[];
+};
+
+// ============================================================================
+// TYPES - REVENUE TRENDS (12 mois)
+// ============================================================================
+
+export type RevenueYearDataPoint = {
+	month: string;
+	revenue: number;
+	ordersCount: number;
+};
+
+export type GetRevenueYearReturn = {
+	data: RevenueYearDataPoint[];
+	totalRevenue: number;
+	yoyEvolution: number;
 };

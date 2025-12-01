@@ -29,12 +29,12 @@ export async function fetchStockValue(): Promise<StockValueReturn> {
 	let totalUnits = 0;
 
 	for (const sku of skus) {
-		totalValue += sku.inventory * sku.priceInclTax;
+		totalValue += Math.round(sku.inventory * sku.priceInclTax * 100) / 100;
 		totalUnits += sku.inventory;
 	}
 
 	const skuCount = skus.length;
-	const averageUnitValue = totalUnits > 0 ? totalValue / totalUnits : 0;
+	const averageUnitValue = totalUnits > 0 ? Math.round((totalValue / totalUnits) * 100) / 100 : 0;
 
 	return {
 		totalValue,

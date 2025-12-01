@@ -2,7 +2,7 @@
  * Configuration des onglets du dashboard admin
  */
 
-export type DashboardTab = "overview" | "sales" | "inventory";
+export type DashboardTab = "overview" | "sales" | "inventory" | "customers";
 
 export interface DashboardTabConfig {
 	value: DashboardTab;
@@ -28,6 +28,11 @@ export const DASHBOARD_TABS: DashboardTabConfig[] = [
 		value: "inventory",
 		label: "Inventaire",
 		description: "Gestion du stock et alertes",
+	},
+	{
+		value: "customers",
+		label: "Clients",
+		description: "Analyse de la base clients et fidelisation",
 	},
 ] as const;
 

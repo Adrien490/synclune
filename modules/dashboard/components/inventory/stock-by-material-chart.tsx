@@ -18,6 +18,7 @@ import {
 } from "@/shared/components/ui/chart";
 import { PieChart, Pie, Cell } from "recharts";
 import type { GetStockByMaterialReturn } from "../../types/dashboard.types";
+import { CHART_STYLES } from "../../constants/chart-styles";
 
 interface StockByMaterialChartProps {
 	dataPromise: Promise<GetStockByMaterialReturn>;
@@ -77,10 +78,10 @@ export function StockByMaterialChart({ dataPromise }: StockByMaterialChartProps)
 
 	if (chartData.length === 0) {
 		return (
-			<Card className="border-l-4 border-primary/30">
+			<Card className={CHART_STYLES.card}>
 				<CardHeader>
-					<CardTitle className="text-lg">Stock par materiau</CardTitle>
-					<CardDescription>Aucun stock disponible</CardDescription>
+					<CardTitle className={CHART_STYLES.title}>Stock par materiau</CardTitle>
+					<CardDescription className={CHART_STYLES.description}>Aucun stock disponible</CardDescription>
 				</CardHeader>
 			</Card>
 		);
@@ -90,15 +91,15 @@ export function StockByMaterialChart({ dataPromise }: StockByMaterialChartProps)
 	const totalUnits = chartData.reduce((sum, m) => sum + m.value, 0);
 
 	return (
-		<Card className="border-l-4 border-primary/30">
+		<Card className={CHART_STYLES.card}>
 			<CardHeader>
-				<CardTitle className="text-lg">Stock par materiau</CardTitle>
-				<CardDescription>
+				<CardTitle className={CHART_STYLES.title}>Stock par materiau</CardTitle>
+				<CardDescription className={CHART_STYLES.description}>
 					{totalUnits} unites au total
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+				<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
 					<PieChart>
 						<ChartTooltip
 							content={

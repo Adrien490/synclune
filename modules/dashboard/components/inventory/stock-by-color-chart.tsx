@@ -16,6 +16,8 @@ import {
 } from "@/shared/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts";
 import type { GetStockByColorReturn } from "../../types/dashboard.types";
+import { truncateText, TRUNCATE_PRESETS } from "../../utils/truncate-text";
+import { CHART_STYLES } from "../../constants/chart-styles";
 
 interface StockByColorChartProps {
 	dataPromise: Promise<GetStockByColorReturn>;
@@ -31,7 +33,7 @@ export function StockByColorChart({ dataPromise }: StockByColorChartProps) {
 	const chartData = useMemo(() => {
 		const items = data.colors.slice(0, 8).map((c, index) => ({
 			key: `color-${index}`,
-			name: c.name.length > 12 ? c.name.slice(0, 12) + "..." : c.name,
+			name: truncateText(c.name, TRUNCATE_PRESETS.badge),
 			fullName: c.name,
 			units: c.totalUnits,
 			value: c.value / 100,
@@ -69,10 +71,10 @@ export function StockByColorChart({ dataPromise }: StockByColorChartProps) {
 
 	if (chartData.length === 0) {
 		return (
-			<Card className="border-l-4 border-primary/30">
+			<Card className={CHART_STYLES.card}>
 				<CardHeader>
-					<CardTitle className="text-lg">Stock par couleur</CardTitle>
-					<CardDescription>Aucun stock disponible</CardDescription>
+					<CardTitle className={CHART_STYLES.title}>Stock par couleur</CardTitle>
+					<CardDescription className={CHART_STYLES.description}>Aucun stock disponible</CardDescription>
 				</CardHeader>
 			</Card>
 		);
@@ -82,15 +84,15 @@ export function StockByColorChart({ dataPromise }: StockByColorChartProps) {
 	const totalUnits = chartData.reduce((sum, c) => sum + c.units, 0);
 
 	return (
-		<Card className="border-l-4 border-primary/30">
+		<Card className={CHART_STYLES.card}>
 			<CardHeader>
-				<CardTitle className="text-lg">Stock par couleur</CardTitle>
-				<CardDescription>
+				<CardTitle className={CHART_STYLES.title}>Stock par couleur</CardTitle>
+				<CardDescription className={CHART_STYLES.description}>
 					{totalUnits} unites au total
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+				<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
 					<BarChart
 						data={chartData}
 						layout="vertical"

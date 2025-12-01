@@ -331,6 +331,12 @@ model Product {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete pour préserver historique commandes
 
+  // === CHAMPS DÉNORMALISÉS (Performance tri/filtrage) ===
+  // Calculés depuis les SKUs actifs, mis à jour via trigger/fonction
+  minPriceInclTax Int? // Prix min des SKUs actifs (centimes)
+  maxPriceInclTax Int? // Prix max des SKUs actifs (centimes)
+  totalInventory  Int  @default(0) // Stock total des SKUs actifs
+
   skus       ProductSku[]
   orderItems OrderItem[]
 
@@ -342,6 +348,8 @@ model Product {
   @@index([deletedAt, status])
   @@index([status, createdAt(sort: Desc)]) // Nouveautés
   @@index([typeId, status]) // Filtrage par type
+  @@index([status, minPriceInclTax]) // Tri par prix
+  @@index([deletedAt, status, minPriceInclTax]) // Tri par prix avec soft delete
 }
 
 model ProductSku {
@@ -391,6 +399,7 @@ model ProductSku {
   @@index([materialId, isActive]) // Filtrage catalogue par matériau
   @@index([deletedAt])
   @@index([productId, isActive, deletedAt])
+  @@index([isActive, inventory, priceInclTax]) // Covering index calcul valeur stock
 }
 
 model SkuMedia {
@@ -697,6 +706,7 @@ model Order {
   @@index([stripePaymentIntentId])
   @@index([stripeCheckoutSessionId])
   @@index([stripeCustomerId])
+  @@index([stripeChargeId]) // Recherche remboursements
   @@index([createdAt(sort: Desc)]) // Listing commandes récentes
 }
 
@@ -1029,11 +1039,8 @@ model NewsletterSubscriber {
   email            String  @unique
   unsubscribeToken String  @unique @default(cuid())
 
-  // === STATUT NEWSLETTER (remplace isActive) ===
+  // === STATUT NEWSLETTER ===
   status NewsletterStatus @default(PENDING)
-
-  // @deprecated - Sera supprimé après migration des données vers `status`
-  isActive Boolean @default(false)
 
   // Lien optionnel avec un compte utilisateur
   userId String? @unique
@@ -1084,9 +1091,9 @@ enum StockNotificationStatus {
 model StockNotificationRequest {
   id String @id @default(cuid())
 
-  // SKU concerné (Restrict pour ne pas perdre les demandes si SKU désactivé)
+  // SKU concerné (Cascade cohérent avec CartItem/WishlistItem)
   skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
 
   // Utilisateur (optionnel : peut être un visiteur non connecté)
   userId String?
@@ -1115,10 +1122,10 @@ model StockNotificationRequest {
   deletedAt DateTime? // Soft delete pour RGPD
 
   // ⚠️ AUDIT FIX: Contrainte unicité au niveau DB (avant: gérée côté applicatif)
+  // Note: @@unique crée automatiquement un index, pas besoin de @@index([email, skuId])
   @@unique([email, skuId])
 
   // Indexes pour performances
-  @@index([email, skuId])
   @@index([skuId, status])
   @@index([email])
   @@index([userId])

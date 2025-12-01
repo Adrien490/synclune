@@ -16,6 +16,8 @@ import {
 import type { GetDashboardTopProductsReturn, TopProductItem } from "@/modules/dashboard/data/get-top-products";
 import { use } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { truncateText, TRUNCATE_PRESETS } from "../utils/truncate-text";
+import { CHART_STYLES } from "../constants/chart-styles";
 
 interface TopProductsChartProps {
 	chartPromise: Promise<GetDashboardTopProductsReturn>;
@@ -33,25 +35,22 @@ export function TopProductsChart({ chartPromise }: TopProductsChartProps) {
 
 	// Formater les données pour le chart
 	const chartData = products.map((product: TopProductItem) => ({
-		product:
-			product.productTitle.length > 20
-				? product.productTitle.substring(0, 20) + "..."
-				: product.productTitle,
+		product: truncateText(product.productTitle, TRUNCATE_PRESETS.chart),
 		fullName: product.productTitle,
 		revenue: product.revenue,
 		unitsSold: product.unitsSold,
 	}));
 
 	return (
-		<Card className="border-l-4 border-secondary/40 bg-gradient-to-br from-secondary/5 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
-				<CardTitle className="text-xl font-semibold tracking-wide">Top 5 bijoux vendus</CardTitle>
-				<CardDescription className="text-sm">
+				<CardTitle className={CHART_STYLES.title}>Top 5 bijoux vendus</CardTitle>
+				<CardDescription className={CHART_STYLES.description}>
 					Classement par chiffre d'affaires (30 derniers jours)
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+				<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
 					<BarChart accessibilityLayer data={chartData} layout="vertical">
 						<CartesianGrid horizontal={false} />
 						<YAxis

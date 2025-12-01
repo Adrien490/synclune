@@ -2,10 +2,10 @@ import { PageHeader } from "@/shared/components/page-header";
 import { AccountNav } from "@/modules/users/components/account-nav";
 import { searchAddress } from "@/modules/addresses/data/autocomplete-address-api";
 import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
-import { AddressFormDialog } from "@/modules/addresses/components/address/address-form-dialog";
-import { AddressList } from "@/modules/addresses/components/address/address-list";
-import { AddressListSkeleton } from "@/modules/addresses/components/address/address-list-skeleton";
-import { DeleteAddressAlertDialog } from "@/modules/addresses/components/addresses/delete-address-alert-dialog";
+import { AddressFormDialog } from "@/modules/addresses/components/address-form-dialog";
+import { AddressList } from "@/modules/addresses/components/address-list";
+import { AddressListSkeleton } from "@/modules/addresses/components/address-list-skeleton";
+import { DeleteAddressAlertDialog } from "@/modules/addresses/components/delete-address-alert-dialog";
 import { Metadata } from "next";
 import { Suspense } from "react";
 

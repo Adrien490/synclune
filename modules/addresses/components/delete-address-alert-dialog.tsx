@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
-import { useDeleteAddress } from "../../hooks/use-delete-address";
+import { useDeleteAddress } from "../hooks/use-delete-address";
 
 export const DELETE_ADDRESS_DIALOG_ID = "delete-address";
 
