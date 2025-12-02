@@ -21,11 +21,7 @@ export interface NavBadges {
 export async function getNavBadges(): Promise<NavBadges> {
 	"use cache: remote";
 
-	cacheLife({
-		stale: 30,
-		revalidate: 15,
-		expire: 60,
-	});
+	cacheLife("skuStock");
 	cacheTag("nav-badges");
 
 	const [pendingOrders, pendingRefunds, stockAlerts] = await Promise.all([

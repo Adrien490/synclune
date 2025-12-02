@@ -51,11 +51,12 @@ export const InputGroupField = ({
 		}
 	};
 
-	// Pour les inputs number, on affiche une chaîne vide uniquement si null ou NaN
+	// Pour les inputs number, on affiche une chaîne vide uniquement si null, undefined ou NaN
 	// Le 0 doit pouvoir être affiché et saisi
-	const displayValue: string | number | undefined =
+	const displayValue: string | number =
 		type === "number"
 			? field.state.value === null ||
+				field.state.value === undefined ||
 				(typeof field.state.value === "number" && isNaN(field.state.value))
 				? ""
 				: (field.state.value as number)

@@ -18,6 +18,7 @@ export const getProductSkuSchema = z.object({
  */
 const ALLOWED_MEDIA_DOMAINS = [
 	"utfs.io",
+	"ufs.sh",
 	"uploadthing.com",
 	"uploadthing-prod.s3.us-west-2.amazonaws.com",
 ];

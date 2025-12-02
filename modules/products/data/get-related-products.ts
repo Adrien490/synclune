@@ -58,7 +58,7 @@ async function fetchPublicRelatedProducts(
 	limit: number
 ): Promise<RelatedProduct[]> {
 	"use cache";
-	cacheLife({ stale: 3600, revalidate: 900, expire: 21600 }); // 1h stale, 15min revalidate, 6h expire
+	cacheLife("collections");
 	cacheTag("related-products-public");
 
 	try {
