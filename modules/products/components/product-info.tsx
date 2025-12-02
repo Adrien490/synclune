@@ -59,7 +59,11 @@ export function ProductInfo({
 				)}
 
 				{product.collections?.map((pc) => (
-					<Link key={pc.collection.id} href={`/collections/${pc.collection.slug}`}>
+					<Link
+						key={pc.collection.id}
+						href={`/collections/${pc.collection.slug}`}
+						aria-label={`Voir la collection ${pc.collection.name}`}
+					>
 						<Badge
 							variant="outline"
 							className="text-xs/5 tracking-normal antialiased font-medium px-3 py-1 gap-1.5 cursor-pointer hover:bg-primary/10 transition-colors"
@@ -74,6 +78,7 @@ export function ProductInfo({
 			{/* Description */}
 			{product.description && (
 				<div
+					id="product-description"
 					className="text-base/7 tracking-normal antialiased text-muted-foreground prose-sm max-w-none space-y-2"
 					itemProp="description"
 				>

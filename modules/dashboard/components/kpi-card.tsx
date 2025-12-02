@@ -9,11 +9,11 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { ArrowDown, ArrowUp, ChevronRight, Info } from "lucide-react";
-import { NumberTicker } from "@/shared/components/ui/number-ticker";
+import { ChevronRight, Info } from "lucide-react";
 import Link from "next/link";
-import { CHART_STYLES } from "../constants/chart-styles";
 import { Sparkline } from "./sparkline";
+import { KpiEvolution } from "./kpi-evolution";
+import { KpiValue } from "./kpi-value";
 
 /**
  * CVA variants pour la hierarchie visuelle des KPIs
@@ -78,7 +78,7 @@ export interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	tooltip?: string;
 	/** Label explicite de la periode de comparaison (ex: "vs 30j precedents") */
 	comparisonLabel?: string;
-	/** Donnees pour le sparkline (7 derniers jours) - Phase 2 */
+	/** Donnees pour le sparkline (7 derniers jours) */
 	sparklineData?: { value: number }[];
 }
 
@@ -101,14 +101,6 @@ export function KpiCard({
 	comparisonLabel,
 	sparklineData,
 }: KpiCardProps) {
-	// Determiner les styles de valeur selon la taille
-	const valueClassName = cn(
-		"font-semibold tracking-tight text-foreground",
-		size === "featured" && "text-4xl",
-		size === "default" && "text-3xl",
-		size === "compact" && "text-2xl"
-	);
-
 	// Determiner les styles d'icone selon la taille
 	const iconClassName = cn(
 		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/20 text-primary group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300",
@@ -116,6 +108,7 @@ export function KpiCard({
 		size === "default" && "w-8 h-8",
 		size === "compact" && "w-6 h-6"
 	);
+
 	const cardContent = (
 		<>
 			{/* Particule décorative subtile */}
@@ -154,48 +147,25 @@ export function KpiCard({
 						</Tooltip>
 					)}
 				</div>
-				{icon && (
-					<div className={iconClassName}>
-						{icon}
-					</div>
-				)}
+				{icon && <div className={iconClassName}>{icon}</div>}
 			</CardHeader>
+
 			<CardContent>
-				<div className={valueClassName}>
-					{numericValue !== undefined ? (
-						<>
-							<NumberTicker
-								value={numericValue}
-								decimalPlaces={decimalPlaces}
-								delay={animationDelay}
-							/>
-							{suffix}
-						</>
-					) : (
-						value
-					)}
-				</div>
+				<KpiValue
+					value={value}
+					numericValue={numericValue}
+					suffix={suffix}
+					decimalPlaces={decimalPlaces}
+					animationDelay={animationDelay}
+					size={size ?? "default"}
+				/>
+
 				<div className="flex flex-wrap items-center gap-1.5 mt-2">
 					{evolution !== undefined && (
-						<div className="flex items-center gap-1.5">
-							<div
-								className={cn(
-									"flex items-center text-xs font-medium",
-									evolution >= 0 ? CHART_STYLES.evolution.positive : CHART_STYLES.evolution.negative
-								)}
-								aria-label={`${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)} pourcent`}
-							>
-								{evolution >= 0 ? (
-									<ArrowUp className="w-3 h-3 mr-0.5" aria-hidden="true" />
-								) : (
-									<ArrowDown className="w-3 h-3 mr-0.5" aria-hidden="true" />
-								)}
-								<span className="font-semibold">{Math.abs(evolution).toFixed(1)}%</span>
-							</div>
-							{comparisonLabel && (
-								<span className="text-xs text-muted-foreground">{comparisonLabel}</span>
-							)}
-						</div>
+						<KpiEvolution
+							evolution={evolution}
+							comparisonLabel={comparisonLabel}
+						/>
 					)}
 					{badge && (
 						<Badge
@@ -206,50 +176,50 @@ export function KpiCard({
 						</Badge>
 					)}
 					{subtitle && (
-						<p className="text-xs text-muted-foreground font-medium line-clamp-1">{subtitle}</p>
+						<p className="text-xs text-muted-foreground font-medium line-clamp-1">
+							{subtitle}
+						</p>
 					)}
 				</div>
-			{/* Sparkline pour featured et default uniquement */}
-			{sparklineData && sparklineData.length > 1 && size !== "compact" && (
-				<div className="mt-3 -mx-1">
-					<Sparkline
-						data={sparklineData}
-						height={size === "featured" ? 40 : 28}
-						positiveColor="var(--chart-1)"
-						negativeColor="var(--destructive)"
-						showGradient={size === "featured"}
-					/>
-				</div>
-			)}
+
+				{/* Sparkline pour featured et default uniquement */}
+				{sparklineData && sparklineData.length > 1 && size !== "compact" && (
+					<div className="mt-3 -mx-1">
+						<Sparkline
+							data={sparklineData}
+							height={size === "featured" ? 40 : 28}
+							positiveColor="var(--chart-1)"
+							negativeColor="var(--destructive)"
+							showGradient={size === "featured"}
+						/>
+					</div>
+				)}
 			</CardContent>
 		</>
 	);
 
 	const cardClassName = cn(
 		kpiCardVariants({ size, priority, status }),
-		href && "cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+		href &&
+			"cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 	);
 
 	// Generer le texte accessible pour les screen readers
-	const displayValue = numericValue !== undefined ? `${numericValue}${suffix || ""}` : value;
-	const evolutionText = evolution !== undefined
-		? `. ${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)}%${comparisonLabel ? ` ${comparisonLabel}` : ""}`
-		: "";
+	const displayValue =
+		numericValue !== undefined ? `${numericValue}${suffix || ""}` : value;
+	const evolutionText =
+		evolution !== undefined
+			? `. ${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)}%${comparisonLabel ? ` ${comparisonLabel}` : ""}`
+			: "";
 	const accessibleLabel = `${title}: ${displayValue}${evolutionText}${href ? ". Cliquer pour voir les details" : ""}`;
 
 	if (href) {
 		return (
 			<Link href={href} className="block" aria-label={accessibleLabel}>
-				<Card className={cardClassName}>
-					{cardContent}
-				</Card>
+				<Card className={cardClassName}>{cardContent}</Card>
 			</Link>
 		);
 	}
 
-	return (
-		<Card className={cardClassName}>
-			{cardContent}
-		</Card>
-	);
+	return <Card className={cardClassName}>{cardContent}</Card>;
 }

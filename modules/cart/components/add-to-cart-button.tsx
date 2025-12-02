@@ -103,7 +103,7 @@ export function AddToCartButton({
 											disabled={field.state.value <= 1}
 											className="h-8 w-8 p-0"
 											aria-label="Diminuer la quantité"
-											aria-describedby="quantity-value"
+											aria-controls="quantity-value"
 										>
 											-
 										</Button>
@@ -133,7 +133,7 @@ export function AddToCartButton({
 											}
 											className="h-8 w-8 p-0"
 											aria-label="Augmenter la quantité"
-											aria-describedby="quantity-value"
+											aria-controls="quantity-value"
 										>
 											+
 										</Button>

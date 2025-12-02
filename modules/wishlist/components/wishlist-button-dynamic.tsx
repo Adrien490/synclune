@@ -4,11 +4,14 @@ import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { WishlistButtonCompact } from "./wishlist-button-compact";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
+import { useMemo } from "react";
 
 interface WishlistButtonDynamicProps {
 	product: GetProductReturn;
 	defaultSku: ProductSku;
 	initialIsInWishlist: boolean;
+	/** Map optionnelle SKU ID -> état wishlist (pour précharger plusieurs états) */
+	wishlistStates?: Record<string, boolean>;
 }
 
 /**
@@ -20,23 +23,38 @@ interface WishlistButtonDynamicProps {
  * Pattern : Le SKU est calculé côté client depuis les searchParams,
  * permettant une mise à jour instantanée sans attendre le SSR.
  *
- * Note : initialIsInWishlist n'est valide que pour le defaultSku.
- * Quand l'utilisateur change de variante, on réinitialise à false car
- * on ne connaît pas l'état wishlist du nouveau SKU sans requête serveur.
- * L'utilisateur peut toujours toggle et l'état se mettra à jour via optimistic UI.
+ * Comportement wishlist lors du changement de SKU :
+ * - Pour le defaultSku : utilise initialIsInWishlist (pré-fetchée côté serveur)
+ * - Pour les autres SKUs : utilise wishlistStates si fourni, sinon false
+ * - L'utilisateur peut toujours toggle et l'optimistic UI affiche le changement immédiatement
+ * - Le serveur gère l'état réel et la persistance
+ *
+ * Pour améliorer l'UX, le parent peut passer wishlistStates avec l'état de tous les SKUs.
  */
 export function WishlistButtonDynamic({
 	product,
 	defaultSku,
 	initialIsInWishlist,
+	wishlistStates,
 }: WishlistButtonDynamicProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 	const currentSku = selectedSku ?? defaultSku;
 
-	// L'état wishlist initial n'est valide que pour le defaultSku
-	// Pour les autres SKUs, on part de false (l'utilisateur peut toggle)
-	const isCurrentSkuDefault = currentSku.id === defaultSku.id;
-	const currentIsInWishlist = isCurrentSkuDefault ? initialIsInWishlist : false;
+	// Déterminer l'état wishlist pour le SKU actuel
+	const currentIsInWishlist = useMemo(() => {
+		// Priorité 1 : État préchargé dans wishlistStates
+		if (wishlistStates && currentSku.id in wishlistStates) {
+			return wishlistStates[currentSku.id];
+		}
+
+		// Priorité 2 : État initial si c'est le defaultSku
+		if (currentSku.id === defaultSku.id) {
+			return initialIsInWishlist;
+		}
+
+		// Fallback : false (l'utilisateur peut toggle, optimistic UI affichera le changement)
+		return false;
+	}, [currentSku.id, defaultSku.id, initialIsInWishlist, wishlistStates]);
 
 	return (
 		<WishlistButtonCompact

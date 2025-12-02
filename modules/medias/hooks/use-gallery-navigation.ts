@@ -82,19 +82,21 @@ export function useGalleryNavigation({
 	);
 
 	// Navigation suivante (circulaire)
+	// Utilise selectedIndex (source de vérité URL) pour éviter race conditions lors de clics rapides
 	const navigateNext = useCallback(() => {
 		if (totalImages === 0) return;
-		const nextIndex = (optimisticIndex + 1) % totalImages;
+		const nextIndex = (selectedIndex + 1) % totalImages;
 		navigateToIndex(nextIndex);
-	}, [optimisticIndex, totalImages, navigateToIndex]);
+	}, [selectedIndex, totalImages, navigateToIndex]);
 
 	// Navigation précédente (circulaire)
+	// Utilise selectedIndex (source de vérité URL) pour éviter race conditions lors de clics rapides
 	const navigatePrev = useCallback(() => {
 		if (totalImages === 0) return;
 		const prevIndex =
-			optimisticIndex === 0 ? totalImages - 1 : optimisticIndex - 1;
+			selectedIndex === 0 ? totalImages - 1 : selectedIndex - 1;
 		navigateToIndex(prevIndex);
-	}, [optimisticIndex, totalImages, navigateToIndex]);
+	}, [selectedIndex, totalImages, navigateToIndex]);
 
 	return {
 		selectedIndex,

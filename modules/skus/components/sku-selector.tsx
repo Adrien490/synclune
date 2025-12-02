@@ -60,7 +60,9 @@ export function VariantSelector({ product }: VariantSelectorProps) {
 					id="variant-selector-title"
 					className="text-base/6 tracking-tight antialiased flex items-center gap-2"
 				>
-					<span className="text-primary" aria-hidden="true">✨</span>
+					<span className="text-primary" aria-hidden="true">
+						✨
+					</span>
 					Personnalisez votre bijou
 				</CardTitle>
 				<CardDescription className="text-sm/6 tracking-normal antialiased">

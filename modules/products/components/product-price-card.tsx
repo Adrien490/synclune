@@ -92,14 +92,34 @@ export function ProductPrice({ selectedSku, product }: ProductPriceProps) {
 		);
 	}
 
+	// URL Schema.org pour la disponibilité
+	const availabilityUrl =
+		stockStatus === "out_of_stock"
+			? "https://schema.org/OutOfStock"
+			: stockStatus === "low_stock"
+				? "https://schema.org/LimitedAvailability"
+				: "https://schema.org/InStock";
+
 	return (
-		<Card role="region" aria-labelledby="product-price-selected">
+		<Card
+			role="region"
+			aria-labelledby="product-price-selected"
+			itemScope
+			itemType="https://schema.org/Offer"
+			itemProp="offers"
+		>
+			{/* Microdata Schema.org cachées */}
+			<meta itemProp="priceCurrency" content="EUR" />
+			<link itemProp="availability" href={availabilityUrl} />
+
 			<CardContent className="pt-6 space-y-3">
 				<div className="flex items-baseline gap-3 flex-wrap">
 					{/* Prix principal */}
 					<p
 						id="product-price-selected"
 						className="h3 text-foreground"
+						itemProp="price"
+						content={String(selectedSku.priceInclTax)}
 						aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)} TTC${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ''}`}
 					>
 						{formatEuro(selectedSku.priceInclTax)}

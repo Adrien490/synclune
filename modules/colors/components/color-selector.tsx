@@ -96,8 +96,10 @@ export function ColorSelector({
 			</div>
 			<div className="flex flex-wrap gap-3">
 				{colors.map((color) => {
-					const isSelected = color.id === selectedColor;
-					const isAvailable = isColorAvailable(color.id);
+					// Utiliser le slug pour l'URL (cohérence avec material/size selectors)
+					const colorIdentifier = color.slug || color.id;
+					const isSelected = colorIdentifier === selectedColor;
+					const isAvailable = isColorAvailable(colorIdentifier);
 
 					return (
 						<button
@@ -106,7 +108,7 @@ export function ColorSelector({
 							role="radio"
 							aria-checked={isSelected}
 							aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
-							onClick={() => updateColor(color.id)}
+							onClick={() => updateColor(colorIdentifier)}
 							disabled={!isAvailable || isPending}
 							className={cn(
 								"group relative flex items-center gap-2 p-3 rounded-lg border-2 transition-all",

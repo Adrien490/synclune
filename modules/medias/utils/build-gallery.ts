@@ -9,6 +9,23 @@ const MAX_GALLERY_IMAGES = 20;
 /** Nombre minimum d'images avant de chercher dans les autres SKUs */
 const MIN_GALLERY_IMAGES = 5;
 
+/**
+ * Génère un alt text propre pour un média
+ * Évite les textes mal formés quand material/color sont undefined
+ */
+function buildAltText(
+	productTitle: string,
+	variantInfo?: { materialName?: string | null; colorName?: string | null },
+	fallbackSuffix = "Photo produit"
+): string {
+	const { materialName, colorName } = variantInfo || {};
+
+	// Priorité: material > color > fallback
+	const suffix = materialName || colorName || fallbackSuffix;
+
+	return `${productTitle} - ${suffix}`;
+}
+
 interface BuildGalleryOptions {
 	product: GetProductReturn;
 	selectedVariants: {
@@ -98,26 +115,26 @@ export function buildGallery({
 
 	// Priorité 1: Images du SKU sélectionné
 	if (selectedSku?.images) {
+		const altText = buildAltText(
+			product.title,
+			{ materialName: selectedSku.material?.name, colorName: selectedSku.color?.name },
+			"Variante sélectionnée"
+		);
 		for (const skuImage of selectedSku.images) {
-			addUniqueImage(
-				skuImage,
-				`${product.title} - ${selectedSku.material?.name || selectedSku.color?.name || "Variante sélectionnée"}`,
-				"selected",
-				selectedSku.id
-			);
+			addUniqueImage(skuImage, altText, "selected", selectedSku.id);
 		}
 	}
 
 	// Priorité 2: Images du SKU par défaut (product.skus[0])
 	const defaultSku = product.skus[0];
 	if (defaultSku && defaultSku.id !== selectedSku?.id && defaultSku.images) {
+		const altText = buildAltText(
+			product.title,
+			{ materialName: defaultSku.material?.name, colorName: defaultSku.color?.name },
+			"Image principale"
+		);
 		for (const skuImage of defaultSku.images) {
-			addUniqueImage(
-				skuImage,
-				`${product.title} - ${defaultSku.material?.name || defaultSku.color?.name || "Image principale"}`,
-				"default",
-				defaultSku.id
-			);
+			addUniqueImage(skuImage, altText, "default", defaultSku.id);
 		}
 	}
 
@@ -128,14 +145,14 @@ export function buildGallery({
 			if (gallery.length >= MAX_GALLERY_IMAGES) break;
 
 			if (sku.images) {
+				const altText = buildAltText(
+					product.title,
+					{ materialName: sku.material?.name, colorName: sku.color?.name },
+					"Variante"
+				);
 				for (const skuImage of sku.images) {
 					if (gallery.length >= MAX_GALLERY_IMAGES) break;
-					addUniqueImage(
-						skuImage,
-						`${product.title} - ${sku.material?.name || sku.color?.name || "Variante"}`,
-						"sku",
-						sku.id
-					);
+					addUniqueImage(skuImage, altText, "sku", sku.id);
 				}
 			}
 		}

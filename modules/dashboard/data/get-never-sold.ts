@@ -1,6 +1,16 @@
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboardNeverSold } from "../constants/cache";
 import type { GetNeverSoldProductsReturn, NeverSoldProductItem } from "../types/dashboard.types";
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Limite maximale de résultats pour éviter les requêtes trop coûteuses */
+const MAX_TAKE = 100;
+const DEFAULT_TAKE = 20;
+const DEFAULT_SKIP = 0;
 
 // ============================================================================
 // TYPES
@@ -32,12 +42,16 @@ type CountRow = {
  * @param take - Nombre de produits a retourner (pagination)
  */
 export async function fetchNeverSoldProducts(
-	skip: number = 0,
-	take: number = 20
+	skip: number = DEFAULT_SKIP,
+	take: number = DEFAULT_TAKE
 ): Promise<GetNeverSoldProductsReturn> {
 	"use cache: remote";
 
 	cacheDashboardNeverSold();
+
+	// Valider et limiter les paramètres de pagination pour la sécurité
+	const validatedSkip = Math.max(0, Math.floor(skip));
+	const validatedTake = Math.min(Math.max(1, Math.floor(take)), MAX_TAKE);
 
 	// Compter le total avec une requête SQL optimisée
 	const [countResult] = await prisma.$queryRaw<CountRow[]>`
@@ -71,8 +85,8 @@ export async function fetchNeverSoldProducts(
 			AND oi.id IS NULL
 		GROUP BY p.id, p.title, p.slug, p."createdAt"
 		ORDER BY p."createdAt" ASC
-		LIMIT ${take}
-		OFFSET ${skip}
+		LIMIT ${validatedTake}
+		OFFSET ${validatedSkip}
 	`;
 
 	// Convertir les bigint en number

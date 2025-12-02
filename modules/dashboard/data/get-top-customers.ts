@@ -1,4 +1,3 @@
-import { PaymentStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboardTopCustomers } from "../constants/cache";
@@ -12,6 +11,14 @@ import {
 export type { GetTopCustomersReturn, TopCustomerItem } from "../types/dashboard.types";
 
 // ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Limite maximale de résultats pour éviter les requêtes trop coûteuses */
+const MAX_LIMIT = 50;
+const DEFAULT_LIMIT = 10;
+
+// ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
 
@@ -22,7 +29,7 @@ export async function getTopCustomers(
 	period: DashboardPeriod,
 	customStartDate?: Date,
 	customEndDate?: Date,
-	limit: number = 10
+	limit: number = DEFAULT_LIMIT
 ): Promise<GetTopCustomersReturn> {
 	const admin = await isAdmin();
 
@@ -30,7 +37,10 @@ export async function getTopCustomers(
 		throw new Error("Admin access required");
 	}
 
-	return await fetchTopCustomers(period, customStartDate, customEndDate, limit);
+	// Valider et limiter le paramètre limit
+	const validatedLimit = Math.min(Math.max(1, Math.floor(limit)), MAX_LIMIT);
+
+	return await fetchTopCustomers(period, customStartDate, customEndDate, validatedLimit);
 }
 
 /**
@@ -40,11 +50,14 @@ export async function fetchTopCustomers(
 	period: DashboardPeriod,
 	customStartDate?: Date,
 	customEndDate?: Date,
-	limit: number = 10
+	limit: number = DEFAULT_LIMIT
 ): Promise<GetTopCustomersReturn> {
 	"use cache: remote";
 
 	cacheDashboardTopCustomers(period);
+
+	// Valider et limiter le paramètre limit pour la sécurité
+	const validatedLimit = Math.min(Math.max(1, Math.floor(limit)), MAX_LIMIT);
 
 	const { startDate, endDate } = resolvePeriodToDates(
 		period,
@@ -77,7 +90,7 @@ export async function fetchTopCustomers(
 		AND o."paidAt" <= ${endDate}
 		GROUP BY u.id, u.name, u.email
 		ORDER BY "totalSpent" DESC
-		LIMIT ${limit}
+		LIMIT ${validatedLimit}
 	`;
 
 	const customers: TopCustomerItem[] = topCustomersRaw.map((row) => ({

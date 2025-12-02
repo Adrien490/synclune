@@ -54,7 +54,11 @@ export class GalleryErrorBoundary extends Component<
 			}
 
 			return (
-				<div className="w-full aspect-square rounded-3xl bg-muted flex items-center justify-center">
+				<div
+					className="w-full aspect-square rounded-3xl bg-muted flex items-center justify-center"
+					role="alert"
+					aria-live="assertive"
+				>
 					<div className="text-center space-y-4 p-8">
 						<p className="text-sm font-medium text-muted-foreground">
 							Impossible de charger la galerie

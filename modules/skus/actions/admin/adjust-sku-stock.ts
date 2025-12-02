@@ -15,15 +15,20 @@ const adjustStockSchema = z.object({
 
 /**
  * Server Action ADMIN pour ajuster le stock d'un SKU
- *
- * @param adjustment - Quantité à ajouter (positif) ou retirer (négatif)
+ * Compatible avec useActionState (signature FormData)
  */
 export async function adjustSkuStock(
-	skuId: string,
-	adjustment: number,
-	reason?: string
+	_prevState: ActionState | undefined,
+	formData: FormData
 ): Promise<ActionState> {
 	try {
+		// Extraire les données du FormData
+		const skuId = formData.get("skuId") as string;
+		const adjustmentRaw = formData.get("adjustment") as string;
+		const reason = formData.get("reason") as string | null;
+
+		const adjustment = parseInt(adjustmentRaw, 10);
+
 		// 0. Rate limiting (20 requêtes par minute)
 		const rateLimit = await enforceRateLimitForCurrentUser({ limit: 20, windowMs: 60000 });
 		if ("error" in rateLimit) return rateLimit.error;
@@ -33,7 +38,11 @@ export async function adjustSkuStock(
 		if ("error" in adminCheck) return adminCheck.error;
 
 		// 2. Validation
-		const validation = adjustStockSchema.safeParse({ skuId, adjustment, reason });
+		const validation = adjustStockSchema.safeParse({
+			skuId,
+			adjustment,
+			reason: reason || undefined,
+		});
 		if (!validation.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,

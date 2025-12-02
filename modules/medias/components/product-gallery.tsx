@@ -3,11 +3,6 @@
 import type { Slide } from "yet-another-react-lightbox";
 import { OpenLightboxButton } from "@/modules/medias/components/open-lightbox-button";
 import { Button } from "@/shared/components/ui/button";
-import {
-	Carousel,
-	CarouselContent,
-	CarouselItem,
-} from "@/shared/components/ui/carousel";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { cn } from "@/shared/utils/cn";
 import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
@@ -22,20 +17,16 @@ import { useGalleryKeyboard } from "@/modules/medias/hooks/use-gallery-keyboard"
 import { useGalleryNavigation } from "@/modules/medias/hooks/use-gallery-navigation";
 import { useGallerySwipe } from "@/modules/medias/hooks/use-gallery-swipe";
 import { useMediaErrors } from "@/modules/medias/hooks/use-media-errors";
+import {
+	MAX_IMAGE_SIZE,
+	LIGHTBOX_QUALITY,
+	nextImageUrl,
+	IMAGE_SIZES,
+	DEVICE_SIZES,
+} from "@/modules/medias/constants/image-config";
 
 import type { ProductMedia } from "@/modules/medias/types/product-media.types";
-import { GalleryThumbnail } from "@/modules/medias/components/gallery-thumbnail";
-
-// Constantes pour l'optimisation des images
-const IMAGE_SIZES = [16, 32, 48, 64, 96, 128, 256, 384] as const;
-const DEVICE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048, 3840] as const;
-const MAX_IMAGE_SIZE = 3840;
-const LIGHTBOX_QUALITY = 95;
-
-// Fonction stable pour générer les URLs Next.js optimisées (extraite pour éviter recréation)
-function nextImageUrl(src: string, size: number) {
-	return `/_next/image?url=${encodeURIComponent(src)}&w=${size}&q=${LIGHTBOX_QUALITY}`;
-}
+import { ThumbnailsGrid, ThumbnailsCarousel } from "@/modules/medias/components/thumbnails-list";
 
 interface ProductGalleryProps {
 	product: GetProductReturn;
@@ -212,11 +203,12 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 		>
 			{({ openLightbox }) => (
 				<div
-					className="product-gallery w-full"
+					className="product-gallery w-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
 					ref={galleryRef}
 					role="region"
 					aria-label={`Galerie d'images pour ${title}`}
 					aria-describedby="gallery-instructions"
+					tabIndex={safeImages.length > 1 ? 0 : -1}
 				>
 					{/* Annonce dynamique pour lecteurs d'écran */}
 					<div className="sr-only" aria-live="polite" aria-atomic="true">
@@ -229,19 +221,15 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 						{/* Thumbnails verticales - Desktop uniquement */}
 						{safeImages.length > 1 && (
 							<div className="hidden lg:flex flex-col gap-2 order-1 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent pr-1">
-								{safeImages.map((media, index) => (
-									<GalleryThumbnail
-										key={media.id}
-										media={media}
-										index={index}
-										isActive={index === optimisticIndex}
-										hasError={hasError(media.id)}
-										title={title}
-										onClick={() => navigateToIndex(index)}
-										onError={() => handleMediaError(media.id)}
-										className="flex-shrink-0 h-auto hover:shadow-sm"
-									/>
-								))}
+								<ThumbnailsGrid
+									medias={safeImages}
+									currentIndex={optimisticIndex}
+									title={title}
+									onNavigate={navigateToIndex}
+									onError={handleMediaError}
+									hasError={hasError}
+									thumbnailClassName="flex-shrink-0 h-auto hover:shadow-sm"
+								/>
 							</div>
 						)}
 
@@ -372,57 +360,40 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 						<div className="lg:hidden mt-4 sm:mt-6">
 							{safeImages.length > 6 ? (
 								/* Carousel horizontal si plus de 6 images */
-								<Carousel
-									opts={{
-										align: "start",
-										dragFree: true,
-									}}
+								<ThumbnailsCarousel
+									medias={safeImages}
+									currentIndex={optimisticIndex}
+									title={title}
+									onNavigate={navigateToIndex}
+									onError={handleMediaError}
+									hasError={hasError}
 									className="w-full"
-								>
-									<CarouselContent className="-ml-2">
-										{safeImages.map((media, index) => (
-											<CarouselItem key={media.id} className="pl-2 basis-1/4 sm:basis-1/5 md:basis-1/6">
-												<GalleryThumbnail
-													media={media}
-													index={index}
-													isActive={index === optimisticIndex}
-													hasError={hasError(media.id)}
-													title={title}
-													onClick={() => navigateToIndex(index)}
-													onError={() => handleMediaError(media.id)}
-												/>
-											</CarouselItem>
-										))}
-									</CarouselContent>
-								</Carousel>
+								/>
 							) : (
 								/* Grille standard si 6 images ou moins */
 								<div className="gallery-thumbnails w-full">
 									<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3">
-										{safeImages.map((media, index) => (
-											<GalleryThumbnail
-												key={media.id}
-												media={media}
-												index={index}
-												isActive={index === optimisticIndex}
-												hasError={hasError(media.id)}
-												title={title}
-												onClick={() => navigateToIndex(index)}
-												onError={() => handleMediaError(media.id)}
-											/>
-										))}
+										<ThumbnailsGrid
+											medias={safeImages}
+											currentIndex={optimisticIndex}
+											title={title}
+											onNavigate={navigateToIndex}
+											onError={handleMediaError}
+											hasError={hasError}
+										/>
 									</div>
 								</div>
 							)}
 						</div>
 					)}
 
-					{/* Instructions pour la navigation clavier (masquées visuellement) */}
+					{/* Instructions pour la navigation (masquées visuellement) */}
 					{safeImages.length > 1 && (
 						<div id="gallery-instructions" className="sr-only">
-							Utilisez les flèches gauche et droite pour naviguer entre les
-							images. Appuyez sur Début pour aller à la première image ou Fin
-							pour la dernière.
+							Galerie de {safeImages.length} images.
+							Sur clavier : utilisez les flèches gauche et droite pour naviguer.
+							Appuyez sur Début pour la première image, Fin pour la dernière.
+							Sur écran tactile : glissez vers la gauche ou la droite pour changer d'image.
 						</div>
 					)}
 				</div>

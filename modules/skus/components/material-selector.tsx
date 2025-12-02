@@ -96,7 +96,9 @@ export function MaterialSelector({
 			</div>
 			<div className="grid grid-cols-2 gap-2">
 				{materials.map((material) => {
-					const isSelected = material.name === selectedMaterial;
+					// Comparaison insensible à la casse pour éviter les problèmes de matching
+					const isSelected =
+						material.name.toLowerCase() === selectedMaterial?.toLowerCase();
 					const isAvailable = isMaterialAvailable(material.name);
 
 					return (

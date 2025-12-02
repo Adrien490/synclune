@@ -34,16 +34,11 @@ export function ProductCharacteristics({
 	const primarySku = product.skus[0];
 	const primaryMaterial = primarySku?.material?.name;
 
-	// Calculer les dimensions du SKU sélectionné
-	const dimensions = selectedSku
+	// Informations de taille du SKU sélectionné (séparé du matériau pour clarté)
+	const sizeInfo = selectedSku?.size
 		? {
-				dimensions:
-					[selectedSku.size, selectedSku.material?.name].filter(Boolean).join(" - ") ||
-					undefined,
-				requiresSize:
-					product.type?.slug === "ring" ||
-					product.type?.slug === "bracelet" ||
-					selectedSku.size !== null,
+				size: selectedSku.size,
+				isAdjustable: selectedSku.size.toLowerCase().includes("ajustable"),
 			}
 		: null;
 
@@ -111,24 +106,23 @@ export function ProductCharacteristics({
 					</div>
 				</dl>
 
-				{/* Dimensions du SKU sélectionné */}
-				{dimensions && dimensions.dimensions && selectedSku && (
+				{/* Taille du SKU sélectionné */}
+				{sizeInfo && selectedSku && (
 					<>
 						<Separator />
 						<div className="space-y-3">
 							<h3 className="text-sm/6 font-semibold tracking-tight antialiased flex items-center gap-2">
 								<Ruler className="w-4 h-4" aria-hidden="true" />
-								Dimensions{" "}
-								{selectedSku.material?.name && `(${selectedSku.material.name})`}
+								Taille
 							</h3>
 
 							<div className="p-2 bg-muted/50 rounded-lg">
 								<span className="text-sm/6 tracking-normal antialiased">
-									{dimensions.dimensions}
+									{sizeInfo.size}
 								</span>
 							</div>
 
-							{selectedSku?.size?.toLowerCase().includes("ajustable") && (
+							{sizeInfo.isAdjustable && (
 								<div className="p-3 bg-accent rounded-lg border border-primary/20">
 									<div className="flex items-center gap-2">
 										<Ruler className="w-4 h-4 text-primary" aria-hidden="true" />

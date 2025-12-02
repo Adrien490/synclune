@@ -1,100 +1,85 @@
 "use server";
 
-import { auth } from "@/modules/auth/lib/auth";
-import { ActionState, ActionStatus } from "@/shared/types/server-action";
-import { headers } from "next/headers";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+import {
+	requireAuth,
+	validateFormData,
+	enforceRateLimitForCurrentUser,
+	handleActionError,
+} from "@/shared/lib/actions";
+import { forbidden, success } from "@/shared/lib/actions/responses";
+import { sanitizeForEmail, newlinesToBr } from "@/shared/lib/sanitize";
+import { EMAIL_FROM, EMAIL_ADMIN } from "@/shared/lib/email-config";
+import type { ActionState } from "@/shared/types/server-action";
 import { contactAdrienSchema } from "../schemas/dashboard.schemas";
 import { CONTACT_TYPES } from "../constants/contact-adrien.constants";
 
-/**
- * Échappe les caractères HTML pour prévenir les injections XSS
- */
-function escapeHtml(str: string): string {
-	return str
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;");
-}
+// Initialiser le client Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Server Action pour envoyer un email à Adrien (créateur du site)
- * Utilise Nodemailer avec SMTP Resend
+ * Utilise le SDK Resend natif
  *
- * Protection: Nécessite un compte ADMIN
+ * Protection:
+ * - Nécessite un compte authentifié avec rôle ADMIN
+ * - Rate limit: 5 emails par heure
  */
 export async function contactAdrien(
 	_previousState: unknown,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Vérifier l'authentification et le rôle admin
-		const session = await auth.api.getSession({
-			headers: await headers(),
+		// 1. Rate limiting - 5 emails par heure
+		const rateCheck = await enforceRateLimitForCurrentUser({
+			limit: 5,
+			windowMs: 60 * 60 * 1000, // 1 heure
 		});
+		if ("error" in rateCheck) return rateCheck.error;
 
-		if (!session?.user) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Vous devez être connecté pour effectuer cette action",
-			};
+		// 2. Vérifier l'authentification
+		const auth = await requireAuth();
+		if ("error" in auth) return auth.error;
+
+		const { user } = auth;
+
+		// 3. Vérifier le rôle admin
+		if (user.role !== "ADMIN") {
+			return forbidden(
+				"Vous n'avez pas les permissions pour effectuer cette action"
+			);
 		}
 
-		if (session.user.role !== "ADMIN") {
-			return {
-				status: ActionStatus.FORBIDDEN,
-				message: "Vous n'avez pas les permissions pour effectuer cette action",
-			};
-		}
+		// 4. Extraction et validation des données
+		const validated = validateFormData(
+			formData,
+			(fd) => ({
+				type: fd.get("type"),
+				message: fd.get("message"),
+			}),
+			contactAdrienSchema
+		);
 
-		// 2. Extraction et validation des données
-		const type = formData.get("type");
-		const message = formData.get("message");
+		if ("error" in validated) return validated.error;
 
-		const result = contactAdrienSchema.safeParse({ type, message });
-
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
-
-		const { type: validatedType, message: validatedMessage } = result.data;
-
-		// 3. Vérifier que la clé API Resend est configurée
-		const resendApiKey = process.env.RESEND_API_KEY;
-		if (!resendApiKey) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Configuration email manquante",
-			};
-		}
-
-		// 4. Configurer le transporteur Nodemailer avec SMTP Resend
-		const transporter = nodemailer.createTransport({
-			host: "smtp.resend.com",
-			secure: true,
-			port: 465,
-			auth: {
-				user: "resend",
-				pass: resendApiKey,
-			},
-		});
+		const { type, message } = validated.data;
 
 		// 5. Labels pour les types de message (centralisés dans constants)
 		const typeLabel =
-			CONTACT_TYPES[validatedType as keyof typeof CONTACT_TYPES]?.emailLabel ||
+			CONTACT_TYPES[type as keyof typeof CONTACT_TYPES]?.emailLabel ||
 			"Message";
 
-		// 6. Envoyer l'email
-		const info = await transporter.sendMail({
-			from: session.user.email,
-			to: process.env.CONTACT_ADRIEN_EMAIL || "contact@adrienpoirier.fr",
-			replyTo: session.user.email,
-			subject: `[Dashboard Synclune] ${typeLabel} - ${session.user.name}`,
+		// 6. Sanitizer le message pour l'HTML
+		const sanitizedMessage = newlinesToBr(sanitizeForEmail(message));
+		const sanitizedName = sanitizeForEmail(user.name || "Administrateur");
+		const sanitizedEmail = sanitizeForEmail(user.email || "");
+
+		// 7. Envoyer l'email avec SDK Resend
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to: EMAIL_ADMIN,
+			replyTo: user.email || undefined,
+			subject: `[Dashboard Synclune] ${typeLabel} - ${user.name || "Admin"}`,
 			html: `
 				<!DOCTYPE html>
 				<html>
@@ -163,14 +148,14 @@ export async function contactAdrien(
 						<div>
 							<div class="label">De</div>
 							<div class="value">
-								${escapeHtml(session.user.name || "")}<br>
-								<a href="mailto:${escapeHtml(session.user.email || "")}" style="color: #ec4899;">${escapeHtml(session.user.email || "")}</a>
+								${sanitizedName}<br>
+								<a href="mailto:${sanitizedEmail}" style="color: #ec4899;">${sanitizedEmail}</a>
 							</div>
 						</div>
 
 						<div>
 							<div class="label">Message</div>
-							<div class="value message">${escapeHtml(validatedMessage).replace(/\n/g, "<br>")}</div>
+							<div class="value message">${sanitizedMessage}</div>
 						</div>
 
 						<div class="footer">
@@ -182,30 +167,30 @@ export async function contactAdrien(
 			`,
 			text: `
 Type: ${typeLabel}
-De: ${session.user.name} (${session.user.email})
+De: ${user.name || "Admin"} (${user.email || ""})
 
 Message:
-${validatedMessage}
+${message}
 
 ---
 Ce message a été envoyé depuis le dashboard Synclune Bijoux
 			`.trim(),
 		});
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Message envoyé avec succès",
-			data: {
-				messageId: info.messageId,
-			},
-		};
+		if (error) {
+			return handleActionError(
+				error,
+				"Une erreur est survenue lors de l'envoi du message"
+			);
+		}
+
+		return success("Message envoyé avec succès", {
+			messageId: data?.id,
+		});
 	} catch (error) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de l'envoi du message",
-		};
+		return handleActionError(
+			error,
+			"Une erreur est survenue lors de l'envoi du message"
+		);
 	}
 }

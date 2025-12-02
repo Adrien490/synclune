@@ -74,10 +74,11 @@ export function SizeSelector({
 
 	if (!shouldShow || sizes.length === 0) return null;
 
-	// Label adapté au type de produit
+	// Label adapté au type de produit (comparaison insensible à la casse)
 	const getSizeLabel = () => {
-		if (productTypeSlug === "RINGS") return "Taille (Diamètre)";
-		if (productTypeSlug === "BRACELETS") return "Taille (Tour de poignet)";
+		const slug = productTypeSlug?.toLowerCase();
+		if (slug === "rings" || slug === "ring") return "Taille (Diamètre)";
+		if (slug === "bracelets" || slug === "bracelet") return "Taille (Tour de poignet)";
 		return "Taille";
 	};
 

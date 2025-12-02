@@ -74,6 +74,12 @@ export function useGallerySwipe({
 			const currentX = touch.clientX;
 			let offset = currentX - touchStartRef.current;
 
+			// Prévenir le scroll de la page si le swipe horizontal est significatif
+			// Seuil de 10px pour distinguer swipe intentionnel du scroll vertical
+			if (Math.abs(offset) > 10) {
+				e.preventDefault();
+			}
+
 			// Résistance élastique aux bords (premier/dernier)
 			const isAtStart = currentIndex === 0;
 			const isAtEnd = currentIndex === totalImages - 1;

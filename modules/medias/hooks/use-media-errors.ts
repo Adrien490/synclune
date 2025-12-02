@@ -12,6 +12,10 @@ export interface UseMediaErrorsReturn {
 	clearErrors: () => void;
 	/** Retry: supprime l'erreur d'un média spécifique pour permettre un rechargement */
 	retryMedia: (mediaId: string) => void;
+	/** Indique si la limite MAX_ERRORS a été atteinte */
+	isMaxErrorsReached: boolean;
+	/** Nombre d'erreurs actuellement trackées */
+	errorCount: number;
 }
 
 /**
@@ -64,5 +68,7 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 		hasError,
 		clearErrors,
 		retryMedia,
+		isMaxErrorsReached: mediaErrors.size >= MAX_ERRORS,
+		errorCount: mediaErrors.size,
 	};
 }

@@ -4,14 +4,14 @@ import type { ProductMedia } from "@/modules/medias/types/product-media.types";
 import { MediaErrorFallback } from "@/modules/medias/components/media-error-fallback";
 import { VideoPlayBadge } from "@/modules/medias/components/video-play-badge";
 import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
+import {
+	THUMBNAIL_IMAGE_QUALITY,
+	EAGER_LOAD_THUMBNAILS,
+} from "@/modules/medias/constants/image-config";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import { memo } from "react";
-
-// Constantes pour l'optimisation
-const THUMBNAIL_IMAGE_QUALITY = 85;
-const EAGER_LOAD_THUMBNAILS = 6;
 
 interface GalleryThumbnailProps {
 	media: ProductMedia;
@@ -80,20 +80,23 @@ function GalleryThumbnailComponent({
 	);
 }
 
-/**
- * Contenu vidéo pour les thumbnails (avec miniature ou player)
- */
-function ThumbnailVideoContent({
-	media,
-	index,
-	title,
-	onError,
-}: {
+interface ThumbnailVideoContentProps {
 	media: ProductMedia;
 	index: number;
 	title: string;
 	onError: () => void;
-}) {
+}
+
+/**
+ * Contenu vidéo pour les thumbnails (avec miniature ou player)
+ * Mémorisé pour éviter les re-renders coûteux (élément vidéo)
+ */
+const ThumbnailVideoContent = memo(function ThumbnailVideoContent({
+	media,
+	index,
+	title,
+	onError,
+}: ThumbnailVideoContentProps) {
 	// Priorité: thumbnailSmallUrl (160px optimisé) > thumbnailUrl (480px) > fallback vidéo
 	const thumbnailSrc = media.thumbnailSmallUrl || media.thumbnailUrl;
 
@@ -127,7 +130,7 @@ function ThumbnailVideoContent({
 			<VideoPlayBadge />
 		</div>
 	);
-}
+});
 
 // Export mémorisé pour éviter re-renders inutiles lors de la navigation
 export const GalleryThumbnail = memo(GalleryThumbnailComponent);

@@ -25,8 +25,9 @@ export async function toggleContactAdrienVisibility(
 		cookieStore.set(COOKIE_NAME, "true", {
 			path: "/",
 			maxAge: COOKIE_MAX_AGE,
-			httpOnly: false, // Accessible côté client si besoin
-			sameSite: "lax",
+			httpOnly: true,
+			sameSite: "strict",
+			secure: process.env.NODE_ENV === "production",
 		});
 	} else {
 		cookieStore.delete(COOKIE_NAME);

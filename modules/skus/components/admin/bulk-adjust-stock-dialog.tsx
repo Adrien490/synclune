@@ -70,7 +70,7 @@ export function BulkAdjustStockDialog() {
 							<DialogTitle>Ajuster le stock</DialogTitle>
 						</div>
 						<DialogDescription>
-							{count} variante{count > 1 ? "s" : ""} selectionnee{count > 1 ? "s" : ""}
+							{count} variante{count > 1 ? "s" : ""} sélectionnée{count > 1 ? "s" : ""}
 						</DialogDescription>
 					</DialogHeader>
 
@@ -153,7 +153,7 @@ export function BulkAdjustStockDialog() {
 							) : (
 								<>
 									Le stock de toutes les variantes sera{" "}
-									<span className="font-semibold">defini a {value}</span>
+									<span className="font-semibold">défini à {value}</span>
 								</>
 							)}
 						</div>
