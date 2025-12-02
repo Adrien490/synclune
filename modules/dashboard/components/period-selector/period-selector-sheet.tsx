@@ -3,13 +3,13 @@
 import { Button } from "@/shared/components/ui/button"
 import { Calendar } from "@/shared/components/ui/calendar"
 import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "@/shared/components/ui/sheet"
+	Drawer,
+	DrawerContent,
+	DrawerDescription,
+	DrawerHeader,
+	DrawerTitle,
+	DrawerTrigger,
+} from "@/shared/components/ui/drawer"
 import { cn } from "@/shared/utils/cn"
 import { CalendarDays, ChevronDown, Check } from "lucide-react"
 import { fr } from "date-fns/locale"
@@ -22,7 +22,7 @@ interface PeriodSelectorSheetProps {
 }
 
 /**
- * Sheet mobile pour la selection de periode
+ * Drawer mobile pour la selection de periode
  * Interface unifiee avec liste de periodes + calendrier integre
  */
 export function PeriodSelectorSheet({ state, className }: PeriodSelectorSheetProps) {
@@ -38,8 +38,8 @@ export function PeriodSelectorSheet({ state, className }: PeriodSelectorSheetPro
 	} = state
 
 	return (
-		<Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-			<SheetTrigger asChild>
+		<Drawer open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+			<DrawerTrigger asChild>
 				<Button
 					variant="outline"
 					size="sm"
@@ -55,21 +55,21 @@ export function PeriodSelectorSheet({ state, className }: PeriodSelectorSheetPro
 					<span className="truncate">{getPeriodShortLabel()}</span>
 					<ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />
 				</Button>
-			</SheetTrigger>
-			<SheetContent
-				side="bottom"
+			</DrawerTrigger>
+			<DrawerContent
+				bottomInset
 				className={cn(
-					"h-auto max-h-[85dvh] overflow-y-auto",
+					"max-h-[85dvh] overflow-y-auto",
 					// Safe area pour iPhone notch/home indicator
 					"pb-[max(1rem,env(safe-area-inset-bottom))]"
 				)}
 			>
-				<SheetHeader className="text-left">
-					<SheetTitle>Periode d'analyse</SheetTitle>
-					<SheetDescription>
+				<DrawerHeader className="text-left">
+					<DrawerTitle>Periode d'analyse</DrawerTitle>
+					<DrawerDescription>
 						Selectionnez la periode pour afficher les statistiques
-					</SheetDescription>
-				</SheetHeader>
+					</DrawerDescription>
+				</DrawerHeader>
 
 				{/* Liste des periodes - padding horizontal harmonise avec SheetHeader */}
 				<div className="grid gap-2 px-4 pb-4">
@@ -110,7 +110,7 @@ export function PeriodSelectorSheet({ state, className }: PeriodSelectorSheetPro
 						/>
 					</div>
 				</div>
-			</SheetContent>
-		</Sheet>
+			</DrawerContent>
+		</Drawer>
 	)
 }
