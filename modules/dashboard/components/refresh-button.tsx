@@ -40,7 +40,7 @@ export function RefreshButton({
 		: null
 
 	return (
-		<div className={cn("flex items-center gap-2 min-h-[44px]", className)}>
+		<div className={cn("hidden md:flex items-center gap-2 min-h-[44px]", className)}>
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<Button

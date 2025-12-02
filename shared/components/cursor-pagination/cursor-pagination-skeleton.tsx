@@ -15,7 +15,7 @@ export function CursorPaginationSkeleton() {
 			{/* Contrôles de pagination */}
 			<div className="flex items-center gap-2">
 				{/* Bouton retour au début */}
-				<Skeleton className="h-9 w-20 max-sm:w-11" />
+				<Skeleton className="h-9 w-20 max-sm:h-11 max-sm:w-11" />
 
 				{/* Groupe de boutons */}
 				<div className="flex items-center">
@@ -23,7 +23,7 @@ export function CursorPaginationSkeleton() {
 					<Skeleton className="h-9 w-9 max-sm:h-11 max-sm:w-11 rounded-r-none" />
 
 					{/* Indicateur de page */}
-					<Skeleton className="h-9 min-w-[80px] sm:min-w-[100px] rounded-none" />
+					<Skeleton className="h-9 max-sm:h-11 min-w-[80px] sm:min-w-[100px] rounded-none" />
 
 					{/* Bouton suivant */}
 					<Skeleton className="h-9 w-9 max-sm:h-11 max-sm:w-11 rounded-l-none" />

@@ -77,7 +77,7 @@ export default async function AdminLayout({
 				</main>
 			</SidebarInset>
 			<ContactAdrien initialHidden={isContactAdrienHidden} />
-			<BottomNavigation />
+			<BottomNavigation user={user} />
 		</SidebarProvider>
 	);
 }

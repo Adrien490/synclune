@@ -26,7 +26,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ user }: DashboardHeaderProps) {
 	return (
 		<header
-			className="relative flex h-14 md:h-16 shrink-0 items-center gap-2 justify-between transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-border"
+			className="relative hidden md:flex h-14 md:h-16 shrink-0 items-center gap-2 justify-between transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-border"
 			role="banner"
 			aria-label="En-tête du tableau de bord"
 		>

@@ -8,14 +8,16 @@ export function RefreshMaterialsButton() {
 	const { refresh, isPending } = useRefreshMaterials();
 
 	return (
-		<Button
-			variant="outline"
-			size="icon"
-			onClick={refresh}
-			disabled={isPending}
-			title="Rafraîchir les matériaux"
-		>
-			<RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
-		</Button>
+		<div className="hidden md:block">
+			<Button
+				variant="outline"
+				size="icon"
+				onClick={refresh}
+				disabled={isPending}
+				title="Rafraîchir les matériaux"
+			>
+				<RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+			</Button>
+		</div>
 	);
 }
