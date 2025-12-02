@@ -80,7 +80,10 @@ export function DeleteGalleryMediaAlertDialog() {
 					</AlertDialogCancel>
 					<AlertDialogAction
 						type="button"
-						onClick={handleDelete}
+						onClick={(e) => {
+							e.preventDefault();
+							handleDelete();
+						}}
 						disabled={isPending}
 						className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 					>
