@@ -14,7 +14,7 @@ import { useDeleteUploadThingFiles } from "@/modules/medias/lib/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, X } from "lucide-react";
 import Image from "next/image";
-import { startTransition, useState } from "react";
+import { startTransition, useState, useRef, useEffect } from "react";
 import { MediaTypeBadge } from "@/modules/medias/components/media-type-badge";
 
 interface PrimaryImageUploadProps {
@@ -37,6 +37,19 @@ export function PrimaryImageUpload({
 	skipUtapiDelete,
 }: PrimaryImageUploadProps) {
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const videoRef = useRef<HTMLVideoElement>(null);
+
+	// Cleanup video element on unmount or when URL changes to prevent memory leaks
+	useEffect(() => {
+		return () => {
+			const video = videoRef.current;
+			if (video) {
+				video.pause();
+				video.src = "";
+				video.load();
+			}
+		};
+	}, [imageUrl]);
 
 	const { isPending, deleteFiles } = useDeleteUploadThingFiles({
 		onSuccess: () => {
@@ -78,6 +91,7 @@ export function PrimaryImageUpload({
 							{mediaType === "VIDEO" ? (
 								<div className="relative w-full h-full">
 									<video
+										ref={videoRef}
 										src={imageUrl}
 										className="w-full h-full object-cover"
 										loop

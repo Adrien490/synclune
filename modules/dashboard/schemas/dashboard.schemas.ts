@@ -31,6 +31,36 @@ export const dashboardPeriodSchema = z.enum([
 ]).default("last30days");
 
 // ============================================================================
+// DASHBOARD FILTERS SCHEMA (avec validation période custom)
+// ============================================================================
+
+export const dashboardFiltersSchema = z.object({
+	period: dashboardPeriodSchema,
+	startDate: z.coerce.date().optional(),
+	endDate: z.coerce.date().optional(),
+}).refine(
+	(data) => {
+		// Si période "custom", les dates sont obligatoires
+		if (data.period === "custom") {
+			return data.startDate != null && data.endDate != null;
+		}
+		return true;
+	},
+	{ message: "Les dates de début et de fin sont requises pour une période personnalisée", path: ["startDate"] }
+).refine(
+	(data) => {
+		// Validation que startDate <= endDate si les deux sont présentes
+		if (data.startDate && data.endDate) {
+			return data.startDate <= data.endDate;
+		}
+		return true;
+	},
+	{ message: "La date de début doit être antérieure ou égale à la date de fin", path: ["endDate"] }
+);
+
+export type DashboardFiltersInput = z.infer<typeof dashboardFiltersSchema>;
+
+// ============================================================================
 // VAT BREAKDOWN SCHEMA
 // ============================================================================
 

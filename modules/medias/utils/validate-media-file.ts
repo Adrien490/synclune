@@ -1,0 +1,158 @@
+/**
+ * Constantes et utilitaires de validation des fichiers média
+ *
+ * Centralise la logique de validation des tailles de fichiers
+ * pour éviter la duplication entre les différents formulaires d'upload.
+ */
+
+/**
+ * Limites de taille des fichiers par type de média
+ */
+export const MEDIA_SIZE_LIMITS = {
+	/** Images: 4MB max */
+	IMAGE: 4 * 1024 * 1024,
+	/** Vidéos: 512MB max */
+	VIDEO: 512 * 1024 * 1024,
+} as const;
+
+/**
+ * Types MIME considérés comme des vidéos
+ */
+export const VIDEO_MIME_PREFIXES = ["video/"] as const;
+
+/**
+ * Résultat de la validation d'un fichier média
+ */
+export interface MediaFileValidationResult {
+	/** true si le fichier est valide */
+	valid: boolean;
+	/** Message d'erreur si invalide */
+	error?: string;
+	/** Type de média détecté */
+	mediaType: "IMAGE" | "VIDEO";
+	/** Taille du fichier en bytes */
+	fileSize: number;
+	/** Limite de taille applicable en bytes */
+	sizeLimit: number;
+}
+
+/**
+ * Détermine si un fichier est une vidéo basé sur son type MIME
+ */
+export function isVideoFile(file: File): boolean {
+	return VIDEO_MIME_PREFIXES.some((prefix) => file.type.startsWith(prefix));
+}
+
+/**
+ * Valide un fichier média (image ou vidéo) selon les limites de taille
+ *
+ * @param file - Le fichier à valider
+ * @returns Résultat de la validation avec détails
+ *
+ * @example
+ * const result = validateMediaFile(file);
+ * if (!result.valid) {
+ *   toast.error(result.error);
+ *   return;
+ * }
+ */
+export function validateMediaFile(file: File): MediaFileValidationResult {
+	const isVideo = isVideoFile(file);
+	const mediaType = isVideo ? "VIDEO" : "IMAGE";
+	const sizeLimit = isVideo ? MEDIA_SIZE_LIMITS.VIDEO : MEDIA_SIZE_LIMITS.IMAGE;
+
+	if (file.size > sizeLimit) {
+		const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+		const limitMB = sizeLimit / 1024 / 1024;
+		return {
+			valid: false,
+			error: `Le fichier dépasse la limite de ${limitMB}MB (${sizeMB}MB)`,
+			mediaType,
+			fileSize: file.size,
+			sizeLimit,
+		};
+	}
+
+	return {
+		valid: true,
+		mediaType,
+		fileSize: file.size,
+		sizeLimit,
+	};
+}
+
+/**
+ * Valide un fichier destiné à être l'image principale (pas de vidéo autorisée)
+ *
+ * @param file - Le fichier à valider
+ * @returns Résultat de la validation
+ *
+ * @example
+ * const result = validatePrimaryImage(file);
+ * if (!result.valid) {
+ *   toast.error(result.error);
+ *   return;
+ * }
+ */
+export function validatePrimaryImage(file: File): MediaFileValidationResult {
+	const isVideo = isVideoFile(file);
+
+	if (isVideo) {
+		return {
+			valid: false,
+			error: "Les vidéos ne peuvent pas être utilisées comme média principal. Veuillez uploader une image (JPG, PNG, WebP, GIF ou AVIF).",
+			mediaType: "VIDEO",
+			fileSize: file.size,
+			sizeLimit: MEDIA_SIZE_LIMITS.VIDEO,
+		};
+	}
+
+	return validateMediaFile(file);
+}
+
+/**
+ * Valide plusieurs fichiers et retourne les fichiers valides + les erreurs
+ *
+ * @param files - Les fichiers à valider
+ * @param options - Options de validation
+ * @returns Fichiers valides et erreurs rencontrées
+ */
+export function validateMediaFiles(
+	files: File[],
+	options?: {
+		/** Si true, rejette les vidéos */
+		rejectVideos?: boolean;
+		/** Nombre maximum de fichiers à garder */
+		maxFiles?: number;
+	}
+): {
+	validFiles: File[];
+	errors: string[];
+	skipped: number;
+} {
+	const validFiles: File[] = [];
+	const errors: string[] = [];
+	let skipped = 0;
+
+	const filesToProcess = options?.maxFiles
+		? files.slice(0, options.maxFiles)
+		: files;
+
+	if (options?.maxFiles && files.length > options.maxFiles) {
+		skipped = files.length - options.maxFiles;
+	}
+
+	for (const file of filesToProcess) {
+		const result = options?.rejectVideos
+			? validatePrimaryImage(file)
+			: validateMediaFile(file);
+
+		if (result.valid) {
+			validFiles.push(file);
+		} else if (result.error) {
+			errors.push(`${file.name}: ${result.error}`);
+		}
+	}
+
+	return { validFiles, errors, skipped };
+}

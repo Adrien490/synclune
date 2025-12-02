@@ -1,7 +1,24 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboardNeverSold } from "../constants/cache";
-import type { GetNeverSoldProductsReturn } from "../types/dashboard.types";
+import type { GetNeverSoldProductsReturn, NeverSoldProductItem } from "../types/dashboard.types";
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+type NeverSoldRow = {
+	productId: string;
+	title: string;
+	slug: string;
+	createdAt: Date;
+	skuCount: bigint;
+	totalInventory: bigint;
+	totalValue: bigint;
+};
+
+type CountRow = {
+	count: bigint;
+};
 
 // ============================================================================
 // MAIN FUNCTION
@@ -9,6 +26,7 @@ import type { GetNeverSoldProductsReturn } from "../types/dashboard.types";
 
 /**
  * Recupere les produits publics qui n'ont jamais ete vendus
+ * Utilise des requêtes SQL agrégées pour de meilleures performances
  *
  * @param skip - Nombre de produits a ignorer (pagination)
  * @param take - Nombre de produits a retourner (pagination)
@@ -21,61 +39,55 @@ export async function fetchNeverSoldProducts(
 
 	cacheDashboardNeverSold();
 
-	// Compter le total
-	const totalCount = await prisma.product.count({
-		where: {
-			status: ProductStatus.PUBLIC,
-			orderItems: { none: {} },
-		},
-	});
+	// Compter le total avec une requête SQL optimisée
+	const [countResult] = await prisma.$queryRaw<CountRow[]>`
+		SELECT COUNT(DISTINCT p.id) as count
+		FROM "Product" p
+		LEFT JOIN "OrderItem" oi ON oi."productId" = p.id
+		WHERE
+			p.status = 'PUBLIC'
+			AND p."deletedAt" IS NULL
+			AND oi.id IS NULL
+	`;
 
-	// Recuperer les produits avec leurs SKUs
-	const products = await prisma.product.findMany({
-		where: {
-			status: ProductStatus.PUBLIC,
-			orderItems: { none: {} },
-		},
-		select: {
-			id: true,
-			title: true,
-			slug: true,
-			createdAt: true,
-			skus: {
-				where: { isActive: true },
-				select: {
-					inventory: true,
-					priceInclTax: true,
-				},
-			},
-		},
-		orderBy: { createdAt: "asc" }, // Plus vieux en premier
-		skip,
-		take,
-	});
+	const totalCount = Number(countResult?.count ?? 0);
 
-	// Transformer les donnees
-	const result = products.map((product) => {
-		let totalInventory = 0;
-		let totalValue = 0;
+	// Récupérer les produits avec agrégation des SKUs en une seule requête
+	const rows = await prisma.$queryRaw<NeverSoldRow[]>`
+		SELECT
+			p.id as "productId",
+			p.title,
+			p.slug,
+			p."createdAt" as "createdAt",
+			COUNT(ps.id) as "skuCount",
+			COALESCE(SUM(ps.inventory), 0) as "totalInventory",
+			COALESCE(SUM(ps.inventory * ps."priceInclTax"), 0) as "totalValue"
+		FROM "Product" p
+		LEFT JOIN "ProductSku" ps ON ps."productId" = p.id AND ps."isActive" = true
+		LEFT JOIN "OrderItem" oi ON oi."productId" = p.id
+		WHERE
+			p.status = 'PUBLIC'
+			AND p."deletedAt" IS NULL
+			AND oi.id IS NULL
+		GROUP BY p.id, p.title, p.slug, p."createdAt"
+		ORDER BY p."createdAt" ASC
+		LIMIT ${take}
+		OFFSET ${skip}
+	`;
 
-		for (const sku of product.skus) {
-			totalInventory += sku.inventory;
-			totalValue += sku.inventory * sku.priceInclTax;
-		}
-
-		return {
-			productId: product.id,
-			title: product.title,
-			slug: product.slug,
-			createdAt: product.createdAt,
-			skuCount: product.skus.length,
-			totalInventory,
-			totalValue,
-		};
-	});
+	// Convertir les bigint en number
+	const products: NeverSoldProductItem[] = rows.map((row) => ({
+		productId: row.productId,
+		title: row.title,
+		slug: row.slug,
+		createdAt: row.createdAt,
+		skuCount: Number(row.skuCount),
+		totalInventory: Number(row.totalInventory),
+		totalValue: Number(row.totalValue),
+	}));
 
 	return {
-		products: result,
+		products,
 		totalCount,
 	};
 }

@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus, FulfillmentStatus, DiscountType } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // TYPES - KPIs
@@ -92,9 +92,8 @@ export type GetRecentOrdersReturn = {
 // ============================================================================
 
 // NOTE: Le type TopProductItem est défini dans:
-// - modules/dashboard/data/get-top-products.ts (via TopProductStats)
-// - modules/dashboard/services/aggregate-top-products.ts
-// Utiliser l'import depuis ces fichiers pour le typage des composants.
+// - modules/dashboard/data/get-top-products.ts
+// Utiliser l'import depuis ce fichier pour le typage des composants.
 
 // ============================================================================
 // TYPES - STOCK ALERTS
@@ -413,7 +412,7 @@ export type DiscountStatsReturn = {
 
 export type TopDiscountItem = {
 	code: string;
-	type: "PERCENTAGE" | "FIXED_AMOUNT";
+	type: DiscountType;
 	value: number;
 	usageCount: number;
 	totalDiscountGiven: number;

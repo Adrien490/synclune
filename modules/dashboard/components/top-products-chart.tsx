@@ -25,6 +25,14 @@ interface TopProductsChartProps extends ChartDrilldownProps {
 	chartDataPromise: Promise<GetDashboardTopProductsReturn>;
 }
 
+// Type strict pour les données du chart
+interface ChartDataItem {
+	product: string;
+	fullName: string;
+	revenue: number;
+	unitsSold: number;
+}
+
 const chartConfig = {
 	revenue: {
 		label: "Chiffre d'affaires",
@@ -36,8 +44,8 @@ export function TopProductsChart({ chartDataPromise, enableDrilldown = true }: T
 	const { products } = use(chartDataPromise);
 	const { handleClick, ariaLabel } = useChartDrilldown("topProducts");
 
-	// Formater les données pour le chart
-	const chartData = products.map((product: TopProductItem) => ({
+	// Formater les données pour le chart avec typage strict
+	const chartData: ChartDataItem[] = products.map((product: TopProductItem) => ({
 		product: truncateText(product.productTitle, TRUNCATE_PRESETS.chart),
 		fullName: product.productTitle,
 		revenue: product.revenue,
@@ -47,12 +55,13 @@ export function TopProductsChart({ chartDataPromise, enableDrilldown = true }: T
 	// Verifier s'il y a des produits vendus
 	const hasProducts = products.length > 0;
 
-	// Handler pour le clic sur une barre
+	// Handler pour le clic sur une barre avec validation du type
 	const onBarClick = (data: unknown) => {
 		if (!enableDrilldown) return;
-		const entry = data as { fullName?: string };
-		if (!entry?.fullName) return;
-		handleClick(entry.fullName);
+		// Validation type-safe des données
+		const item = data as Record<string, unknown>;
+		if (typeof item?.fullName !== "string") return;
+		handleClick(item.fullName);
 	};
 
 	return (

@@ -10,6 +10,9 @@ import {
 	subtractDays,
 } from "./date-helpers";
 
+// Réexport pour compatibilité avec les imports existants
+export { calculateEvolutionRate as calculateEvolution } from "./calculations";
+
 export type DashboardPeriod = z.infer<typeof dashboardPeriodSchema>;
 
 export interface DateRange {
@@ -175,20 +178,6 @@ export function resolvePeriodToDates(
 			};
 		}
 	}
-}
-
-/**
- * Calcule le pourcentage d'évolution entre deux valeurs
- *
- * @param current - Valeur actuelle
- * @param previous - Valeur précédente
- * @returns Pourcentage d'évolution (positif = hausse, négatif = baisse)
- */
-export function calculateEvolution(current: number, previous: number): number {
-	if (previous === 0) {
-		return current > 0 ? 100 : 0;
-	}
-	return ((current - previous) / previous) * 100;
 }
 
 /**

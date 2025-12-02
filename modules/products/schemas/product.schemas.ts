@@ -206,7 +206,11 @@ const initialSkuSchema = z.object({
 	primaryImage: imageSchema.optional(),
 	galleryMedia: z
 		.array(imageSchema)
-		.max(10, { error: "Maximum 10 médias dans la galerie" })
+		.max(10, { message: "Maximum 10 médias dans la galerie" })
+		.refine(
+			(media) => new Set(media.map((m) => m.url)).size === media.length,
+			{ message: "Les URLs de médias doivent être uniques" }
+		)
 		.default([]),
 }).refine(
 	(data) => {
@@ -258,7 +262,11 @@ const defaultSkuSchema = z.object({
 	primaryImage: imageSchema.optional(),
 	galleryMedia: z
 		.array(imageSchema)
-		.max(10, { error: "Maximum 10 médias dans la galerie" })
+		.max(10, { message: "Maximum 10 médias dans la galerie" })
+		.refine(
+			(media) => new Set(media.map((m) => m.url)).size === media.length,
+			{ message: "Les URLs de médias doivent être uniques" }
+		)
 		.default([]),
 }).refine(
 	(data) => {

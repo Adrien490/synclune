@@ -2,6 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
+import { cn } from "@/shared/utils/cn";
 import { AlertCircle, RotateCcw } from "lucide-react";
 import { CHART_STYLES } from "../constants/chart-styles";
 
@@ -30,7 +31,7 @@ export function ChartError({
 	className,
 }: ChartErrorProps) {
 	return (
-		<Card className={`${CHART_STYLES.card} ${className || ""}`}>
+		<Card className={cn(CHART_STYLES.card, className)}>
 			<CardContent className={CHART_STYLES.padding.card}>
 				<div
 					className="flex flex-col items-center justify-center text-center"

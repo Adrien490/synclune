@@ -76,6 +76,7 @@ export const InputField = ({
 	// Pour les inputs number, on affiche une chaîne vide si null, NaN ou 0
 	const fieldValue = field.state.value;
 	const isEmpty =
+		fieldValue === undefined ||
 		fieldValue === null ||
 		fieldValue === 0 ||
 		fieldValue === "0" ||

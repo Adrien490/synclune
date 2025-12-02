@@ -4,9 +4,9 @@ export const createProductSkuFormOpts = {
 	defaultValues: {
 		productId: "",
 		sku: "",
-		priceInclTaxEuros: 0,
+		priceInclTaxEuros: null as number | null,
 		compareAtPriceEuros: undefined as number | undefined,
-		inventory: 0,
+		inventory: null as number | null,
 		isDefault: false,
 		isActive: true,
 		colorId: "",

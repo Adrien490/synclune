@@ -38,7 +38,7 @@ export function RecentOrdersList({ listDataPromise }: RecentOrdersListProps) {
 					{orders.map((order: RecentOrderItem) => (
 						<Link
 							key={order.id}
-							href={` /dashboard/orders/${order.id}`}
+							href={`/admin/ventes/commandes/${order.id}`}
 							className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors"
 						>
 							<div className="space-y-1 flex-1">

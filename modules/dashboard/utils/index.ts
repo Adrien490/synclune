@@ -1,5 +1,6 @@
 export {
 	calculateEvolutionRate,
+	calculateEvolutionRate as calculateEvolution, // Alias pour compatibilité
 	calculatePercentage,
 	calculateRate,
 	roundToDecimals,
@@ -21,7 +22,6 @@ export {
 
 export {
 	resolvePeriodToDates,
-	calculateEvolution,
 	formatPeriodLabel,
 	type DashboardPeriod,
 	type DateRange,

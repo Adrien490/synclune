@@ -200,14 +200,15 @@ export function EditProductForm({
 					}}
 				</form.Subscribe>
 
-				<form.AppForm>
-					<form.FormErrorDisplay />
-				</form.AppForm>
+				<div className="space-y-6">
+					<form.AppForm>
+						<form.FormErrorDisplay />
+					</form.AppForm>
 
-				{/* ═══════════════════════════════════════════════════════════════════════
-				    SECTION 1 : Le bijou + SECTION 2 : Prix et stock
-				    ═══════════════════════════════════════════════════════════════════════ */}
-				<FormLayout cols={2}>
+					{/* ═══════════════════════════════════════════════════════════════════════
+					    SECTION 1 : Le bijou + SECTION 2 : Prix et stock
+					    ═══════════════════════════════════════════════════════════════════════ */}
+					<FormLayout cols={2}>
 					{/* SECTION 1 : Le bijou */}
 					<FormSection
 						title="Le bijou"
@@ -1087,6 +1088,7 @@ export function EditProductForm({
 						</div>
 					</div>
 				</form.AppForm>
+				</div>
 			</form>
 		</>
 	);

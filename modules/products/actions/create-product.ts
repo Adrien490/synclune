@@ -15,16 +15,36 @@ import { getProductInvalidationTags } from "../constants/cache";
 /**
  * Sanitise une chaîne en supprimant les balises HTML potentiellement dangereuses
  * Protection contre XSS pour les champs texte utilisateur
+ *
+ * IMPORTANT: Cette fonction supprime les balises HTML mais préserve le texte.
+ * Les entités HTML sont d'abord décodées AVANT la suppression des balises,
+ * puis le résultat est ré-encodé pour garantir la sécurité.
  */
 function sanitizeText(text: string): string {
-	return text
-		.replace(/<[^>]*>/g, "") // Supprime toutes les balises HTML
-		.replace(/&lt;/g, "<")   // Decode les entités échappées
+	// 1. D'abord décoder les entités HTML pour capturer les tentatives d'évasion
+	//    Ex: "&lt;script&gt;" devient "<script>"
+	const decoded = text
+		.replace(/&lt;/g, "<")
 		.replace(/&gt;/g, ">")
 		.replace(/&amp;/g, "&")
 		.replace(/&quot;/g, '"')
 		.replace(/&#x27;/g, "'")
 		.replace(/&#x2F;/g, "/")
+		.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)))
+		.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+			String.fromCharCode(parseInt(hex, 16))
+		);
+
+	// 2. Supprimer toutes les balises HTML (maintenant visibles après décodage)
+	const stripped = decoded.replace(/<[^>]*>/g, "");
+
+	// 3. Ré-encoder les caractères dangereux pour le stockage sécurisé
+	return stripped
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#x27;")
 		.trim();
 }
 
@@ -47,12 +67,22 @@ export async function createProduct(
 		}
 
 		// 2. Extraction des donnees du FormData
-		// Helper pour parser JSON de maniere safe
-		const parseJSON = <T>(value: FormDataEntryValue | null, fallback: T): T => {
+		// Helper pour parser JSON de maniere safe avec logging en dev
+		const parseJSON = <T>(
+			value: FormDataEntryValue | null,
+			fallback: T,
+			fieldName?: string
+		): T => {
 			if (value && typeof value === "string") {
 				try {
 					return JSON.parse(value);
-				} catch {
+				} catch (e) {
+					if (process.env.NODE_ENV === "development") {
+						console.warn(
+							`[createProduct.parseJSON] Échec du parsing JSON pour ${fieldName || "champ inconnu"}:`,
+							e
+						);
+					}
 					return fallback;
 				}
 			}
@@ -64,7 +94,11 @@ export async function createProduct(
 			title: formData.get("title"),
 			description: formData.get("description"),
 			typeId: formData.get("typeId") || "",
-			collectionIds: parseJSON<string[]>(formData.get("collectionIds"), []),
+			collectionIds: parseJSON<string[]>(
+				formData.get("collectionIds"),
+				[],
+				"collectionIds"
+			),
 			status: formData.get("status") || "PUBLIC",
 			initialSku: {
 				sku: formData.get("initialSku.sku"),
@@ -78,8 +112,16 @@ export async function createProduct(
 				colorId: formData.get("initialSku.colorId") || "",
 				materialId: formData.get("initialSku.materialId") || "",
 				size: formData.get("initialSku.size") || "",
-				primaryImage: parseJSON(formData.get("initialSku.primaryImage"), undefined),
-				galleryMedia: parseJSON(formData.get("initialSku.galleryMedia"), []),
+				primaryImage: parseJSON(
+					formData.get("initialSku.primaryImage"),
+					undefined,
+					"initialSku.primaryImage"
+				),
+				galleryMedia: parseJSON(
+					formData.get("initialSku.galleryMedia"),
+					[],
+					"initialSku.galleryMedia"
+				),
 			},
 		};
 
@@ -119,14 +161,7 @@ export async function createProduct(
 			? sanitizeText(validatedData.description)
 			: null;
 
-		// 5. Generate unique slug
-		const finalSlug = await generateSlug(
-			prisma,
-			"product",
-			validatedData.title
-		);
-
-		// 6. Convert priceInclTaxEuros to cents for database
+		// 5. Convert priceInclTaxEuros to cents for database
 		const priceInclTaxCents = Math.round(
 			validatedData.initialSku.priceInclTaxEuros * 100
 		);
@@ -134,26 +169,21 @@ export async function createProduct(
 			? Math.round(validatedData.initialSku.compareAtPriceEuros * 100)
 			: null;
 
-		// 7. Combine primary image and gallery images
+		// 6. Combine primary image and gallery images
+		// Note: La validation que primaryImage est une IMAGE (pas VIDEO) est faite
+		// dans le schéma Zod (createProductSchema.refine)
 		const allImages: Array<{
 			url: string;
 			thumbnailUrl?: string | null;
+			thumbnailSmallUrl?: string | null;
 			altText?: string;
 			mediaType?: "IMAGE" | "VIDEO";
 			isPrimary: boolean;
 		}> = [];
 		if (validatedData.initialSku.primaryImage) {
-			// VALIDATION: Le media principal DOIT etre une IMAGE (jamais une VIDEO)
-			const primaryMediaType = validatedData.initialSku.primaryImage.mediaType || detectMediaType(validatedData.initialSku.primaryImage.url);
-			if (primaryMediaType === "VIDEO") {
-				return {
-					status: ActionStatus.VALIDATION_ERROR,
-					message: "Le media principal ne peut pas etre une video. Veuillez selectionner une image comme media principal.",
-				};
-			}
 			allImages.push({
 				...validatedData.initialSku.primaryImage,
-				mediaType: "IMAGE", // Force IMAGE type for primary media
+				mediaType: "IMAGE", // Force IMAGE type for primary media (validated by schema)
 				isPrimary: true,
 			});
 		}
@@ -166,8 +196,11 @@ export async function createProduct(
 			);
 		}
 
-		// 8. Create product in transaction
+		// 7. Create product in transaction
 		const product = await prisma.$transaction(async (tx) => {
+			// Generate unique slug INSIDE transaction to prevent race conditions
+			const finalSlug = await generateSlug(tx, "product", validatedData.title);
+
 			// Validate references exist within the transaction
 			if (normalizedTypeId) {
 				const productType = await tx.productType.findUnique({
@@ -291,7 +324,7 @@ export async function createProduct(
 			return createdProduct;
 		});
 
-		// 9. Invalidate cache tags
+		// 8. Invalidate cache tags
 		// Invalider le cache produit
 		const productTags = getProductInvalidationTags(product.slug, product.id);
 		productTags.forEach(tag => updateTag(tag));
@@ -308,7 +341,7 @@ export async function createProduct(
 			}
 		}
 
-		// 10. Success - Return ActionState format
+		// 9. Success - Return ActionState format
 		return {
 			status: ActionStatus.SUCCESS,
 			message: `Produit "${product.title}" créé avec succès${

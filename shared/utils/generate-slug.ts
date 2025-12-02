@@ -1,9 +1,18 @@
-import { PrismaClient } from "@/app/generated/prisma/client";
+import type { PrismaClient } from "@/app/generated/prisma/client";
+
+/**
+ * Type pour le client Prisma ou un client de transaction
+ * Compatible avec $transaction() où certaines méthodes sont omises
+ */
+type PrismaClientOrTransaction = Pick<
+	PrismaClient,
+	"product" | "collection" | "productType" | "color" | "material"
+>;
 
 /**
  * Génère un slug unique en kebab-case pour les modèles supportés.
  *
- * @param prisma - Instance du client Prisma
+ * @param prisma - Instance du client Prisma ou client de transaction
  * @param model - Type de modèle supporté
  * @param value - Chaîne à convertir en slug
  * @returns Promise<string> - Slug unique généré
@@ -17,10 +26,16 @@ import { PrismaClient } from "@/app/generated/prisma/client";
  *
  * // Si le slug existe déjà
  * await generateSlug(prisma, "product", "Bague Minimaliste") // → "bague-minimaliste-2"
+ *
+ * // Peut être utilisé dans une transaction
+ * const product = await prisma.$transaction(async (tx) => {
+ *   const slug = await generateSlug(tx, "product", "Nouveau Produit");
+ *   return tx.product.create({ data: { slug, ... } });
+ * });
  * ```
  */
 export async function generateSlug(
-	prisma: PrismaClient,
+	prisma: PrismaClientOrTransaction,
 	model: "product" | "collection" | "productType" | "color" | "material",
 	value: string
 ): Promise<string> {

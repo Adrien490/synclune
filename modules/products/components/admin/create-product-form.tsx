@@ -79,6 +79,15 @@ export function CreateProductForm({
 				void form.handleSubmit();
 			}}
 		>
+			{/* ══════════════════════════════════════════════════════════════════
+			    HIDDEN FIELDS - Sérialisation des données complexes
+
+			    TanStack Form gère l'état côté client mais FormData ne supporte
+			    pas les objets imbriqués. Ces hidden fields sérialisent en JSON
+			    les données complexes (images, tableaux) pour la Server Action.
+			    Le parsing est fait dans create-product.ts via parseJSON().
+			    ══════════════════════════════════════════════════════════════════ */}
+
 			{/* Champs cachés pour sérialiser l'image principale */}
 			<form.Subscribe
 				selector={(state) => [state.values.initialSku.primaryImage]}
@@ -125,15 +134,16 @@ export function CreateProductForm({
 				)}
 			</form.Subscribe>
 
-			{/* Erreurs globales du formulaire */}
-			<form.AppForm>
-				<form.FormErrorDisplay />
-			</form.AppForm>
+			<div className="space-y-6">
+				{/* Erreurs globales du formulaire */}
+				<form.AppForm>
+					<form.FormErrorDisplay />
+				</form.AppForm>
 
-			{/* ═══════════════════════════════════════════════════════════════════════
-			    SECTION 1 : Le bijou + SECTION 2 : Prix et stock
-			    ═══════════════════════════════════════════════════════════════════════ */}
-			<FormLayout cols={2}>
+				{/* ═══════════════════════════════════════════════════════════════════════
+				    SECTION 1 : Le bijou + SECTION 2 : Prix et stock
+				    ═══════════════════════════════════════════════════════════════════════ */}
+				<FormLayout cols={2}>
 				{/* SECTION 1 : Le bijou */}
 				<FormSection
 					title="Le bijou"
@@ -842,7 +852,6 @@ export function CreateProductForm({
 																	| "VIDEO"
 																	| undefined) || "IMAGE";
 
-															const newMediaIndex = field.state.value.length;
 															const newMedia = {
 																url: imageUrl,
 																altText: form.state.values.title || undefined,
@@ -852,15 +861,29 @@ export function CreateProductForm({
 
 															// Si c'est une vidéo, générer thumbnail automatiquement en arrière-plan
 															if (mediaType === "VIDEO") {
-																generateThumbnail(imageUrl).then((result) => {
-																	if (result.mediumUrl) {
-																		field.replaceValue(newMediaIndex, {
-																			...newMedia,
-																			thumbnailUrl: result.mediumUrl,
-																			thumbnailSmallUrl: result.smallUrl,
-																		});
-																	}
-																});
+																generateThumbnail(imageUrl)
+																	.then((result) => {
+																		if (result.mediumUrl) {
+																			// Utiliser l'URL pour retrouver l'index actuel (évite race condition)
+																			const currentIndex = field.state.value.findIndex(
+																				(m) => m.url === imageUrl
+																			);
+																			if (currentIndex !== -1) {
+																				const currentMedia = field.state.value[currentIndex];
+																				field.replaceValue(currentIndex, {
+																					...currentMedia,
+																					thumbnailUrl: result.mediumUrl,
+																					thumbnailSmallUrl: result.smallUrl,
+																				});
+																			}
+																		}
+																	})
+																	.catch(() => {
+																		toast.warning(
+																			"Impossible de générer la miniature vidéo",
+																			{ description: "La vidéo sera affichée sans aperçu" }
+																		);
+																	});
 															}
 														}
 													});
@@ -883,7 +906,6 @@ export function CreateProductForm({
 																				) as "IMAGE" | "VIDEO" | undefined) ||
 																				"IMAGE";
 
-																			const newMediaIndex = field.state.value.length;
 																			const newMedia = {
 																				url: imageUrl,
 																				altText:
@@ -894,15 +916,29 @@ export function CreateProductForm({
 
 																			// Si c'est une vidéo, générer thumbnail automatiquement
 																			if (mediaType === "VIDEO") {
-																				generateThumbnail(imageUrl).then((result) => {
-																					if (result.mediumUrl) {
-																						field.replaceValue(newMediaIndex, {
-																							...newMedia,
-																							thumbnailUrl: result.mediumUrl,
-																							thumbnailSmallUrl: result.smallUrl,
-																						});
-																					}
-																				});
+																				generateThumbnail(imageUrl)
+																					.then((result) => {
+																						if (result.mediumUrl) {
+																							// Utiliser l'URL pour retrouver l'index actuel (évite race condition)
+																							const currentIndex = field.state.value.findIndex(
+																								(m) => m.url === imageUrl
+																							);
+																							if (currentIndex !== -1) {
+																								const currentMedia = field.state.value[currentIndex];
+																								field.replaceValue(currentIndex, {
+																									...currentMedia,
+																									thumbnailUrl: result.mediumUrl,
+																									thumbnailSmallUrl: result.smallUrl,
+																								});
+																							}
+																						}
+																					})
+																					.catch(() => {
+																						toast.warning(
+																							"Impossible de générer la miniature vidéo",
+																							{ description: "La vidéo sera affichée sans aperçu" }
+																						);
+																					});
 																			}
 																		}
 																	});
@@ -1060,10 +1096,18 @@ export function CreateProductForm({
 				</div>
 			</FormSection>
 
-			{/* Footer avec bouton d'action */}
+			{/* Footer avec boutons d'action */}
 			<form.AppForm>
 				<div className="mt-6">
-					<div className="flex justify-end">
+					<div className="flex justify-end gap-3">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => router.push("/admin/catalogue/produits")}
+							disabled={isPending || isPrimaryImageUploading || isGalleryUploading}
+						>
+							Annuler
+						</Button>
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button
@@ -1092,7 +1136,7 @@ export function CreateProductForm({
 					</div>
 				</div>
 			</form.AppForm>
-
+			</div>
 		</form>
 	);
 }
