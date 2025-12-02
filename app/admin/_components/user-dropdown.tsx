@@ -1,7 +1,6 @@
 import { BadgeCheck, ChevronDown, LogOut } from "lucide-react";
 import Link from "next/link";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
@@ -23,14 +22,6 @@ interface UserDropdownProps {
 }
 
 export function UserDropdown({ user }: UserDropdownProps) {
-	// Générer les initiales pour l'avatar fallback
-	const initials = user.name
-		.split(" ")
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
-
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -41,15 +32,7 @@ export function UserDropdown({ user }: UserDropdownProps) {
 					aria-label={`Menu utilisateur de ${user.name}`}
 					aria-haspopup="menu"
 				>
-					<Avatar className="h-7 w-7">
-						{user.avatar && <AvatarImage src={user.avatar} alt="" />}
-						<AvatarFallback className="bg-primary text-primary-foreground text-xs">
-							{initials}
-						</AvatarFallback>
-					</Avatar>
-					<span className="hidden md:inline-block text-sm font-medium" aria-hidden="true">
-						{user.name}
-					</span>
+					<span className="text-sm font-medium">{user.name}</span>
 					<ChevronDown className="h-4 w-4 opacity-50" aria-hidden="true" />
 				</Button>
 			</DropdownMenuTrigger>
@@ -59,21 +42,11 @@ export function UserDropdown({ user }: UserDropdownProps) {
 				sideOffset={8}
 			>
 				<DropdownMenuLabel className="p-0 font-normal">
-					<div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
-						<Avatar className="h-8 w-8">
-							{user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-							<AvatarFallback className="bg-primary text-primary-foreground">
-								{initials}
-							</AvatarFallback>
-						</Avatar>
-						<div className="grid flex-1 text-left text-sm leading-tight">
-							<span className="truncate font-light tracking-normal">
-								{user.name}
-							</span>
-							<span className="truncate text-xs tracking-normal text-muted-foreground font-light">
-								{user.email}
-							</span>
-						</div>
+					<div className="px-2 py-2 text-left text-sm">
+						<p className="truncate font-light tracking-normal">{user.name}</p>
+						<p className="truncate text-xs tracking-normal text-muted-foreground font-light">
+							{user.email}
+						</p>
 					</div>
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />

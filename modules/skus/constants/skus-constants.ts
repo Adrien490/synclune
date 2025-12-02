@@ -86,6 +86,7 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 		select: {
 			id: true,
 			url: true,
+			blurDataUrl: true,
 			altText: true,
 			isPrimary: true,
 			mediaType: true,

@@ -208,6 +208,8 @@ export async function ProductVariantsDataTable({
 															sizes="80px"
 															quality={80}
 															className="rounded-md object-cover"
+															placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
+															blurDataURL={primaryImage.blurDataUrl ?? undefined}
 														/>
 													)
 												) : (

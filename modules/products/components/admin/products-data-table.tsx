@@ -270,6 +270,8 @@ export async function ProductsDataTable({
 															sizes="80px"
 															quality={80}
 															className="rounded-md object-cover"
+															placeholder={defaultImage.blurDataUrl ? "blur" : "empty"}
+															blurDataURL={defaultImage.blurDataUrl ?? undefined}
 														/>
 													) : (
 														<div

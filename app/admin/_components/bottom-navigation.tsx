@@ -13,7 +13,6 @@ import {
 	DrawerTrigger,
 } from "@/shared/components/ui/drawer";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { Separator } from "@/shared/components/ui/separator";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import {
@@ -48,14 +47,6 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 	const isMoreItemActive = secondaryItems.some((item) =>
 		isRouteActive(pathname, item.url)
 	);
-
-	// Générer les initiales pour l'avatar fallback
-	const initials = user.name
-		.split(" ")
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
 
 	return (
 		<nav
@@ -104,17 +95,9 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 						<ScrollArea className="flex-1">
 							{/* Section utilisateur */}
 							<div className="px-4 pb-4">
-								<div className="flex items-center gap-3 p-3 rounded-lg bg-accent/30">
-									<Avatar className="h-10 w-10">
-										{user.avatar && <AvatarImage src={user.avatar} alt="" />}
-										<AvatarFallback className="bg-primary text-primary-foreground text-sm">
-											{initials}
-										</AvatarFallback>
-									</Avatar>
-									<div className="flex-1 min-w-0">
-										<p className="text-sm font-medium truncate">{user.name}</p>
-										<p className="text-xs text-muted-foreground truncate">{user.email}</p>
-									</div>
+								<div className="p-3 rounded-lg bg-accent/30">
+									<p className="text-sm font-medium truncate">{user.name}</p>
+									<p className="text-xs text-muted-foreground truncate">{user.email}</p>
 								</div>
 							</div>
 
