@@ -1,6 +1,7 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Suspense } from "react";
 import { Metadata } from "next";
+import { connection } from "next/server";
 
 import { DashboardTabs } from "@/modules/dashboard/components/dashboard-tabs";
 import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
@@ -40,7 +41,9 @@ interface AdminDashboardPageProps {
 export default async function AdminDashboardPage({
 	searchParams,
 }: AdminDashboardPageProps) {
-	// Parser les parametres (searchParams est un Promise, ce qui rend la page dynamique)
+	// Force dynamic rendering pour activer "use cache: remote" dans les fonctions de donnees
+	await connection();
+
 	const params = await searchParams;
 
 	// Valider l'onglet
