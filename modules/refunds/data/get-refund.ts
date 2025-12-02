@@ -1,6 +1,8 @@
 import { prisma } from "@/shared/lib/prisma";
+import { cacheLife, cacheTag } from "next/cache";
 
 import { GET_REFUND_SELECT } from "../constants/refund.constants";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { getRefundSchema } from "../schemas/refund.schemas";
 import type { GetRefundParams, GetRefundReturn } from "../types/refund.types";
 
@@ -32,6 +34,10 @@ export async function getRefundById(
 async function fetchRefund(
 	params: GetRefundParams
 ): Promise<GetRefundReturn> {
+	"use cache";
+	cacheLife("dashboard");
+	cacheTag(ORDERS_CACHE_TAGS.LIST);
+
 	try {
 		const refund = await prisma.refund.findUnique({
 			where: {

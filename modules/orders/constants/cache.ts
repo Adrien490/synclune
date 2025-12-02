@@ -30,7 +30,7 @@ export const ORDERS_CACHE_TAGS = {
  * - Durée : 2min fraîche, 1min revalidation, 5min expiration
  */
 export function cacheUserOrders(userId: string) {
-	cacheLife({ stale: 120, revalidate: 60, expire: 300 }) // 2min
+	cacheLife("userOrders")
 	cacheTag(ORDERS_CACHE_TAGS.USER_ORDERS(userId))
 }
 

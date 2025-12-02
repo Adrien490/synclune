@@ -28,7 +28,7 @@ export async function getSkuStock(skuId: string): Promise<GetSkuStockReturn> {
  */
 async function fetchSkuStock(skuId: string): Promise<GetSkuStockReturn> {
 	"use cache: remote";
-	cacheLife({ expire: 60 });
+	cacheLife("skuStock");
 	cacheTag(`sku-stock-${skuId}`);
 
 	try {

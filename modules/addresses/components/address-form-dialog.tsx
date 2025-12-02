@@ -180,6 +180,9 @@ export function AddressFormDialog({
 									<field.InputField
 										label="Prénom"
 										type="text"
+										autoComplete="given-name"
+										autoCapitalize="words"
+										enterKeyHint="next"
 										disabled={isPending}
 										required
 									/>
@@ -204,6 +207,9 @@ export function AddressFormDialog({
 									<field.InputField
 										label="Nom"
 										type="text"
+										autoComplete="family-name"
+										autoCapitalize="words"
+										enterKeyHint="next"
 										disabled={isPending}
 										required
 									/>
@@ -312,6 +318,8 @@ export function AddressFormDialog({
 								<field.InputField
 									label="Complément d'adresse (optionnel)"
 									type="text"
+									autoComplete="address-line2"
+									enterKeyHint="next"
 									placeholder="Appartement, bâtiment, etc."
 									disabled={isPending}
 								/>
@@ -338,6 +346,10 @@ export function AddressFormDialog({
 									<field.InputField
 										label="Code postal"
 										type="text"
+										inputMode="numeric"
+										autoComplete="postal-code"
+										pattern="[0-9]{5}"
+										enterKeyHint="next"
 										disabled={isPending}
 										maxLength={5}
 										required
@@ -363,6 +375,9 @@ export function AddressFormDialog({
 									<field.InputField
 										label="Ville"
 										type="text"
+										autoComplete="address-level2"
+										autoCapitalize="words"
+										enterKeyHint="next"
 										disabled={isPending}
 										required
 									/>
@@ -410,6 +425,9 @@ export function AddressFormDialog({
 									<field.InputField
 										label="Téléphone"
 										type="tel"
+										inputMode="tel"
+										autoComplete="tel"
+										enterKeyHint="done"
 										placeholder="0612345678"
 										disabled={isPending}
 										required

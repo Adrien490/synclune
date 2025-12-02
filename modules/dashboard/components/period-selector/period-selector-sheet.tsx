@@ -1,7 +1,6 @@
 "use client"
 
 import { Button } from "@/shared/components/ui/button"
-import { Calendar } from "@/shared/components/ui/calendar"
 import {
 	Drawer,
 	DrawerContent,
@@ -12,7 +11,6 @@ import {
 } from "@/shared/components/ui/drawer"
 import { cn } from "@/shared/utils/cn"
 import { CalendarDays, ChevronDown, Check } from "lucide-react"
-import { fr } from "date-fns/locale"
 import { PERIOD_OPTIONS } from "../../constants/periods"
 import type { usePeriodSelector } from "./use-period-selector"
 
@@ -29,11 +27,9 @@ export function PeriodSelectorSheet({ state, className }: PeriodSelectorSheetPro
 	const {
 		isPending,
 		optimisticPeriod,
-		customDateRange,
 		isSheetOpen,
 		setIsSheetOpen,
 		handlePeriodChange,
-		handleDateRangeSelect,
 		getPeriodShortLabel,
 	} = state
 
@@ -49,7 +45,7 @@ export function PeriodSelectorSheet({ state, className }: PeriodSelectorSheetPro
 						isPending && "opacity-60",
 						className
 					)}
-					aria-label="Ouvrir le selecteur de periode"
+					aria-label="Ouvrir le sélecteur de période"
 				>
 					<CalendarDays className="h-4 w-4 shrink-0" aria-hidden="true" />
 					<span className="truncate">{getPeriodShortLabel()}</span>
@@ -58,16 +54,12 @@ export function PeriodSelectorSheet({ state, className }: PeriodSelectorSheetPro
 			</DrawerTrigger>
 			<DrawerContent
 				bottomInset
-				className={cn(
-					"max-h-[85dvh] overflow-y-auto",
-					// Safe area pour iPhone notch/home indicator
-					"pb-[max(1rem,env(safe-area-inset-bottom))]"
-				)}
+				className="pb-[max(1rem,env(safe-area-inset-bottom))]"
 			>
 				<DrawerHeader className="text-left">
-					<DrawerTitle>Periode d'analyse</DrawerTitle>
+					<DrawerTitle>Période d'analyse</DrawerTitle>
 					<DrawerDescription>
-						Selectionnez la periode pour afficher les statistiques
+						Sélectionnez la période pour afficher les statistiques
 					</DrawerDescription>
 				</DrawerHeader>
 
@@ -91,26 +83,7 @@ export function PeriodSelectorSheet({ state, className }: PeriodSelectorSheetPro
 					))}
 				</div>
 
-				{/* Section calendrier personnalise */}
-				<div className="border-t mx-4 pt-4">
-					<p className="text-sm font-medium text-muted-foreground mb-3">
-						Ou choisissez des dates personnalisees
-					</p>
-					{/* Container centre avec overflow pour petits ecrans */}
-					<div className="flex justify-center overflow-x-auto -mx-4 px-4">
-						<Calendar
-							mode="range"
-							selected={customDateRange}
-							onSelect={handleDateRangeSelect}
-							numberOfMonths={1}
-							locale={fr}
-							disabled={(date) => date > new Date()}
-							defaultMonth={customDateRange?.from}
-							className="rounded-md border shrink-0"
-						/>
-					</div>
-				</div>
-			</DrawerContent>
+				</DrawerContent>
 		</Drawer>
 	)
 }

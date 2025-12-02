@@ -5,6 +5,8 @@ import {
 } from "@/shared/components/cursor-pagination/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
+import { cacheLife, cacheTag } from "next/cache";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 
 import {
 	GET_REFUNDS_DEFAULT_PER_PAGE,
@@ -133,6 +135,10 @@ export async function getRefunds(
 async function fetchRefunds(
 	params: GetRefundsParams
 ): Promise<GetRefundsReturn> {
+	"use cache";
+	cacheLife("dashboard");
+	cacheTag(ORDERS_CACHE_TAGS.LIST);
+
 	try {
 		const where = buildRefundWhereClause(params);
 		const direction = getSortDirection(params.sortBy);

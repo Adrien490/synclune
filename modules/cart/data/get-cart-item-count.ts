@@ -47,7 +47,7 @@ export async function fetchCartItemCount(
 	sessionId?: string
 ): Promise<GetCartItemCountReturn> {
 	"use cache: private";
-	cacheLife({ stale: 300 });
+	cacheLife("cart");
 
 	cacheTag(
 		userId

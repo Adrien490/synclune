@@ -2,6 +2,8 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
 import { Prisma } from "@/app/generated/prisma/client";
+import { cacheLife, cacheTag } from "next/cache";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 
 // ============================================================================
 // SCHEMA
@@ -95,15 +97,28 @@ export async function getOrderForRefund(
 		return null;
 	}
 
+	return fetchOrderForRefund(validation.data.orderId);
+}
+
+/**
+ * Récupère la commande depuis la DB (avec cache)
+ */
+async function fetchOrderForRefund(
+	orderId: string
+): Promise<OrderForRefund | null> {
+	"use cache";
+	cacheLife("dashboard");
+	cacheTag(ORDERS_CACHE_TAGS.LIST);
+
 	try {
 		const order = await prisma.order.findUnique({
-			where: { id: validation.data.orderId },
+			where: { id: orderId },
 			select: GET_ORDER_FOR_REFUND_SELECT,
 		});
 
 		return order;
 	} catch (error) {
-		console.error("getOrderForRefund error:", error);
+		console.error("fetchOrderForRefund error:", error);
 		return null;
 	}
 }

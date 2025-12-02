@@ -31,7 +31,7 @@ export const CART_CACHE_TAGS = {
  * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
  */
 export function cacheCart(userId?: string, sessionId?: string) {
-	cacheLife({ stale: 300 })
+	cacheLife("cart")
 	cacheTag(CART_CACHE_TAGS.CART(userId, sessionId))
 }
 
@@ -40,7 +40,7 @@ export function cacheCart(userId?: string, sessionId?: string) {
  * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
  */
 export function cacheCartCount(userId?: string, sessionId?: string) {
-	cacheLife({ stale: 300 })
+	cacheLife("cart")
 	cacheTag(CART_CACHE_TAGS.COUNT(userId, sessionId))
 }
 
@@ -49,7 +49,7 @@ export function cacheCartCount(userId?: string, sessionId?: string) {
  * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
  */
 export function cacheCartSummary(userId?: string, sessionId?: string) {
-	cacheLife({ stale: 300 })
+	cacheLife("cart")
 	cacheTag(CART_CACHE_TAGS.SUMMARY(userId, sessionId))
 }
 

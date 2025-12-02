@@ -57,7 +57,7 @@ export async function fetchCurrentUser(
 	userId: string
 ): Promise<GetCurrentUserReturn> {
 	"use cache: private";
-	cacheLife({ stale: 60 }); // 1min minimum pour runtime prefetch
+	cacheLife("session");
 	cacheTag(`user-${userId}`);
 	const user = await prisma.user.findUnique({
 		where: {

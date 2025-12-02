@@ -26,7 +26,7 @@ export const DISCOUNT_CACHE_TAGS = {
  * - Durée : 5min fraîche, 10min revalidation, 30min expiration
  */
 export function cacheDiscounts() {
-	cacheLife({ stale: 300, revalidate: 600, expire: 1800 }) // 5min fraîche
+	cacheLife("cart")
 	cacheTag(DISCOUNT_CACHE_TAGS.LIST)
 }
 
@@ -36,7 +36,7 @@ export function cacheDiscounts() {
  * - Durée : 5min fraîche, 5min revalidation, 30min expiration
  */
 export function cacheDiscountDetail(idOrCode: string) {
-	cacheLife({ stale: 300, revalidate: 300, expire: 1800 }) // 5min fraîche
+	cacheLife("cart")
 	cacheTag(DISCOUNT_CACHE_TAGS.DETAIL(idOrCode), DISCOUNT_CACHE_TAGS.LIST)
 }
 

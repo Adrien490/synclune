@@ -12,6 +12,7 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "@/shared/components/ui/drawer";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { Separator } from "@/shared/components/ui/separator";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
@@ -95,88 +96,90 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 							<span className="text-xs font-medium leading-none">Plus</span>
 						</button>
 					</DrawerTrigger>
-					<DrawerContent bottomInset>
+					<DrawerContent bottomInset className="min-h-[60vh]">
 						<DrawerHeader>
 							<DrawerTitle>Plus d'options</DrawerTitle>
 						</DrawerHeader>
 
-						{/* Section utilisateur */}
-						<div className="px-4 pb-4">
-							<div className="flex items-center gap-3 p-3 rounded-lg bg-accent/30">
-								<Avatar className="h-10 w-10">
-									{user.avatar && <AvatarImage src={user.avatar} alt="" />}
-									<AvatarFallback className="bg-primary text-primary-foreground text-sm">
-										{initials}
-									</AvatarFallback>
-								</Avatar>
-								<div className="flex-1 min-w-0">
-									<p className="text-sm font-medium truncate">{user.name}</p>
-									<p className="text-xs text-muted-foreground truncate">{user.email}</p>
+						<ScrollArea className="flex-1">
+							{/* Section utilisateur */}
+							<div className="px-4 pb-4">
+								<div className="flex items-center gap-3 p-3 rounded-lg bg-accent/30">
+									<Avatar className="h-10 w-10">
+										{user.avatar && <AvatarImage src={user.avatar} alt="" />}
+										<AvatarFallback className="bg-primary text-primary-foreground text-sm">
+											{initials}
+										</AvatarFallback>
+									</Avatar>
+									<div className="flex-1 min-w-0">
+										<p className="text-sm font-medium truncate">{user.name}</p>
+										<p className="text-xs text-muted-foreground truncate">{user.email}</p>
+									</div>
 								</div>
 							</div>
-						</div>
 
-						{/* Actions rapides */}
-						<div className="px-4 pb-4 grid grid-cols-3 gap-3">
-							<Link
-								href="/"
-								target="_blank"
-								rel="noopener noreferrer"
-								onClick={() => setIsDrawerOpen(false)}
-								className={cn(
-									"flex flex-col items-center justify-center gap-2 p-4 rounded-lg",
-									"text-muted-foreground hover:text-foreground hover:bg-accent/50",
-									"motion-safe:transition-all motion-safe:active:scale-95"
-								)}
-							>
-								<ExternalLink className="h-5 w-5" aria-hidden="true" />
-								<span className="text-xs text-center">Voir le site</span>
-							</Link>
-							<Link
-								href="/admin/compte"
-								onClick={() => setIsDrawerOpen(false)}
-								className={cn(
-									"flex flex-col items-center justify-center gap-2 p-4 rounded-lg",
-									isRouteActive(pathname, "/admin/compte")
-										? "bg-accent/50 text-foreground font-semibold"
-										: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-									"motion-safe:transition-all motion-safe:active:scale-95"
-								)}
-							>
-								<User className="h-5 w-5" aria-hidden="true" />
-								<span className="text-xs text-center">Mon compte</span>
-							</Link>
-							<LogoutAlertDialog>
-								<button
-									type="button"
+							{/* Actions rapides */}
+							<div className="px-4 pb-4 grid grid-cols-3 gap-3">
+								<Link
+									href="/"
+									target="_blank"
+									rel="noopener noreferrer"
+									onClick={() => setIsDrawerOpen(false)}
 									className={cn(
-										"flex flex-col items-center justify-center gap-2 p-4 rounded-lg w-full",
-										"text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+										"flex flex-col items-center justify-center gap-2 p-4 rounded-lg",
+										"text-muted-foreground hover:text-foreground hover:bg-accent/50",
 										"motion-safe:transition-all motion-safe:active:scale-95"
 									)}
 								>
-									<LogOut className="h-5 w-5" aria-hidden="true" />
-									<span className="text-xs text-center">Déconnexion</span>
-								</button>
-							</LogoutAlertDialog>
-						</div>
+									<ExternalLink className="h-5 w-5" aria-hidden="true" />
+									<span className="text-xs text-center">Voir le site</span>
+								</Link>
+								<Link
+									href="/admin/compte"
+									onClick={() => setIsDrawerOpen(false)}
+									className={cn(
+										"flex flex-col items-center justify-center gap-2 p-4 rounded-lg",
+										isRouteActive(pathname, "/admin/compte")
+											? "bg-accent/50 text-foreground font-semibold"
+											: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+										"motion-safe:transition-all motion-safe:active:scale-95"
+									)}
+								>
+									<User className="h-5 w-5" aria-hidden="true" />
+									<span className="text-xs text-center">Mon compte</span>
+								</Link>
+								<LogoutAlertDialog>
+									<button
+										type="button"
+										className={cn(
+											"flex flex-col items-center justify-center gap-2 p-4 rounded-lg w-full",
+											"text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+											"motion-safe:transition-all motion-safe:active:scale-95"
+										)}
+									>
+										<LogOut className="h-5 w-5" aria-hidden="true" />
+										<span className="text-xs text-center">Déconnexion</span>
+									</button>
+								</LogoutAlertDialog>
+							</div>
 
-						<Separator className="mx-4" />
+							<Separator className="mx-4" />
 
-						{/* Navigation secondaire */}
-						<nav aria-label="Navigation secondaire" className="px-4 py-4">
-							<ul className="grid grid-cols-3 gap-3" role="menu">
-								{secondaryItems.map((item) => (
-									<li key={item.id} role="none">
-										<BottomNavDrawerItem
-											item={item}
-											isActive={isRouteActive(pathname, item.url)}
-											onClick={() => setIsDrawerOpen(false)}
-										/>
-									</li>
-								))}
-							</ul>
-						</nav>
+							{/* Navigation secondaire */}
+							<nav aria-label="Navigation secondaire" className="px-4 py-4">
+								<ul className="grid grid-cols-3 gap-3" role="menu">
+									{secondaryItems.map((item) => (
+										<li key={item.id} role="none">
+											<BottomNavDrawerItem
+												item={item}
+												isActive={isRouteActive(pathname, item.url)}
+												onClick={() => setIsDrawerOpen(false)}
+											/>
+										</li>
+									))}
+								</ul>
+							</nav>
+						</ScrollArea>
 					</DrawerContent>
 				</Drawer>
 			</div>

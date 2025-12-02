@@ -36,7 +36,7 @@ export async function fetchUserOrders(
 	params: GetUserOrdersParams
 ): Promise<GetUserOrdersReturn> {
 	"use cache: private";
-	cacheLife({ stale: 120 }); // 2min - les commandes changent rarement
+	cacheLife("userOrders");
 	cacheTag(`orders-user-${userId}`);
 
 	try {

@@ -163,6 +163,61 @@ const nextConfig: NextConfig = {
       revalidate: 3600, // 1 heure - vérification périodique
       expire: 604800,  // 7 jours - expiration longue
     },
+
+    /**
+     * PANIER & DONNÉES PRIVÉES COURANTES
+     * Cache court pour les données utilisateur fréquemment consultées
+     * Utilisé par : cart, wishlist, addresses, newsletter status
+     */
+    cart: {
+      stale: 300,      // 5 minutes
+      revalidate: 60,  // 1 minute
+      expire: 1800,    // 30 minutes
+    },
+
+    /**
+     * SESSION UTILISATEUR
+     * Cache très court pour la session authentifiée
+     * Utilisé par : getSession, getCurrentUser
+     */
+    session: {
+      stale: 60,       // 1 minute
+      revalidate: 30,  // 30 secondes
+      expire: 300,     // 5 minutes
+    },
+
+    /**
+     * COMMANDES UTILISATEUR
+     * Cache court pour l'historique des commandes
+     * Utilisé par : fetchUserOrders, getLastOrder, getAccountStats
+     */
+    userOrders: {
+      stale: 120,      // 2 minutes
+      revalidate: 60,  // 1 minute
+      expire: 600,     // 10 minutes
+    },
+
+    /**
+     * PRODUITS SIMILAIRES
+     * Cache moyen pour les recommandations produits
+     * Utilisé par : fetchPersonalizedRelatedProducts, fetchContextualRelatedProducts
+     */
+    relatedProducts: {
+      stale: 1800,     // 30 minutes
+      revalidate: 600, // 10 minutes
+      expire: 10800,   // 3 heures
+    },
+
+    /**
+     * STOCK SKU TEMPS RÉEL
+     * Cache très court pour le stock en temps réel
+     * Utilisé par : getSkuStock
+     */
+    skuStock: {
+      stale: 30,       // 30 secondes
+      revalidate: 15,  // 15 secondes
+      expire: 60,      // 1 minute
+    },
   },
 };
 

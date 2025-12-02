@@ -18,7 +18,9 @@
 		"verify:stripe": "tsx scripts/verify-stripe-config.ts",
 		"validate:production-ready": "tsx scripts/validate-production-ready.ts",
 		"validate:changelogs": "tsx scripts/validate-changelogs.ts",
-		"generate:video-thumbnails": "tsx scripts/generate-video-thumbnails.ts"
+		"generate:video-thumbnails": "tsx scripts/generate-video-thumbnails.ts",
+		"db:test": "tsx scripts/test-database.ts",
+		"db:studio": "prisma studio"
 	},
 	"dependencies": {
 		"@arcjet/inspect": "1.0.0-beta.15",
@@ -30,6 +32,7 @@
 		"@next/mdx": "^16.0.6",
 		"@prisma/adapter-neon": "^7.0.1",
 		"@prisma/client": "^7.0.1",
+		"@prisma/extension-accelerate": "^3.0.0",
 		"@radix-ui/react-accordion": "^1.2.12",
 		"@radix-ui/react-alert-dialog": "^1.1.15",
 		"@radix-ui/react-avatar": "^1.1.11",
@@ -69,6 +72,7 @@
 		"cmdk": "^1.1.1",
 		"color": "^5.0.3",
 		"date-fns": "^4.1.0",
+		"dotenv": "^17.2.3",
 		"embla-carousel-autoplay": "^8.6.0",
 		"embla-carousel-react": "^8.6.0",
 		"framer-motion": "^12.23.25",

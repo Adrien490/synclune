@@ -1,7 +1,6 @@
 import { auth } from "@/modules/auth/lib/auth";
 import { headers } from "next/headers";
 import { cacheLife, cacheTag } from "next/cache";
-import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
 
 /**
  * Récupère la session de l'utilisateur avec cache privé
@@ -12,20 +11,18 @@ import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
  * - Réduire les appels répétés à auth.api.getSession()
  * - Permettre le runtime prefetching des pages qui dépendent de la session
  *
- * Cache : 1min stale minimum pour le prefetching
+ * Note: Le cacheTag est appliqué AVANT la requête avec un tag générique
+ * car les tags dynamiques post-requête ne sont pas garantis par Next.js.
+ * L'invalidation utilise updateTag("session") pour invalider toutes les sessions.
  */
 export async function getSession() {
 	"use cache: private";
-	cacheLife({ stale: 60 }); // 1min minimum pour runtime prefetch
+	cacheLife("session");
+	cacheTag("session"); // Tag appliqué AVANT la requête async
 
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
-
-	// Tag pour invalidation lors de la déconnexion
-	if (session?.user?.id) {
-		cacheTag(USERS_CACHE_TAGS.SESSION(session.user.id));
-	}
 
 	return session;
 }

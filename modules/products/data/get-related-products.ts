@@ -58,7 +58,7 @@ async function fetchPublicRelatedProducts(
 	limit: number
 ): Promise<RelatedProduct[]> {
 	"use cache";
-	cacheLife({ stale: 3600 });
+	cacheLife({ stale: 3600, revalidate: 900, expire: 21600 }); // 1h stale, 15min revalidate, 6h expire
 	cacheTag("related-products-public");
 
 	try {
@@ -91,7 +91,7 @@ async function fetchPersonalizedRelatedProducts(
 	limit: number
 ): Promise<RelatedProduct[]> {
 	"use cache: private";
-	cacheLife({ stale: 1800 });
+	cacheLife("relatedProducts");
 	cacheTag(`related-products-user-${userId}`);
 
 	try {
@@ -182,7 +182,7 @@ async function fetchContextualRelatedProducts(
 	limit: number
 ): Promise<RelatedProduct[]> {
 	"use cache";
-	cacheLife({ stale: 1800 });
+	cacheLife("relatedProducts");
 	cacheTag(`related-products-contextual-${currentProductSlug}`);
 
 	try {

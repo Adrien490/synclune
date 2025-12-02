@@ -31,7 +31,7 @@ export const metadata: Metadata = {
  */
 export default async function CustomizationPage() {
 	"use cache";
-	cacheLife("days");
+	cacheLife("reference");
 	cacheTag("customization-page");
 
 	// Récupérer les types de bijoux pour le formulaire

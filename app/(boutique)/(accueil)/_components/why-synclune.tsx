@@ -4,6 +4,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { ArrowRight, Heart, Leaf, Palette, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { cacheLife, cacheTag } from "next/cache";
 
 interface ValuePillar {
 	icon: React.ReactNode;
@@ -68,6 +69,8 @@ const valuePillars: ValuePillar[] = [
  */
 export async function WhySynclune() {
 	"use cache";
+	cacheLife("reference");
+	cacheTag("why-synclune");
 
 	return (
 		<section

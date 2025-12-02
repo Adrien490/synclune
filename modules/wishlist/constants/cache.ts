@@ -37,7 +37,7 @@ export const WISHLIST_CACHE_TAGS = {
  * - Durée : 5min fraîche, 1min revalidation, 1h expiration
  */
 export function cacheWishlist(userId?: string, sessionId?: string) {
-	cacheLife({ stale: 300, revalidate: 60, expire: 3600 }) // 5min fraîche
+	cacheLife("cart")
 	cacheTag(WISHLIST_CACHE_TAGS.WISHLIST(userId, sessionId))
 }
 
@@ -46,7 +46,7 @@ export function cacheWishlist(userId?: string, sessionId?: string) {
  * - Durée : 5min fraîche, 1min revalidation, 1h expiration
  */
 export function cacheWishlistCount(userId?: string, sessionId?: string) {
-	cacheLife({ stale: 300, revalidate: 60, expire: 3600 }) // 5min fraîche
+	cacheLife("cart")
 	cacheTag(WISHLIST_CACHE_TAGS.COUNT(userId, sessionId))
 }
 

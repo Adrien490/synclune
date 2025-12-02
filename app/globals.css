@@ -224,6 +224,108 @@
 }
 
 /* ========================================================================
+   PWA - ADAPTATION MOBILE & STANDALONE
+   ======================================================================== */
+
+/* Prévenir le bounce/overscroll iOS en mode standalone */
+html {
+	overscroll-behavior-y: none;
+}
+
+body {
+	overscroll-behavior-y: none;
+	/* Safe area pour notch/bords arrondis */
+	padding-top: env(safe-area-inset-top);
+	padding-bottom: env(safe-area-inset-bottom);
+	padding-left: env(safe-area-inset-left);
+	padding-right: env(safe-area-inset-right);
+}
+
+/* Optimisation touch pour éléments interactifs */
+a,
+button,
+input,
+select,
+textarea,
+[role="button"],
+[tabindex]:not([tabindex="-1"]) {
+	touch-action: manipulation;
+}
+
+/* Prévenir sélection texte sur éléments non-textuels */
+button,
+[role="button"],
+nav a,
+.select-none {
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+/* Prévenir zoom iOS sur focus input (font-size >= 16px) */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+textarea,
+select {
+	font-size: max(16px, 1rem);
+}
+
+/* Curseur pointer pour éléments tactiles */
+@media (hover: hover) and (pointer: fine) {
+	button:not(:disabled),
+	[role="button"]:not([aria-disabled="true"]),
+	a[href] {
+		cursor: pointer;
+	}
+}
+
+/* Highlight tap iOS/Android */
+a,
+button,
+input,
+select,
+textarea {
+	-webkit-tap-highlight-color: oklch(0.8593 0.097 340.78 / 0.2);
+}
+
+/* Styles spécifiques mode standalone (PWA installée) */
+@media (display-mode: standalone) {
+	/* Header fixe : respecter safe-area top */
+	.pwa-header {
+		padding-top: env(safe-area-inset-top);
+	}
+
+	/* Footer fixe : respecter safe-area bottom */
+	.pwa-footer {
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+
+	/* Désactiver pull-to-refresh natif */
+	body {
+		overscroll-behavior-y: contain;
+	}
+}
+
+/* Support pour les claviers virtuels (iOS 16.4+) */
+@supports (height: 100dvh) {
+	body {
+		min-height: 100dvh;
+	}
+}
+
+/* Fallback pour navigateurs sans dvh */
+@supports not (height: 100dvh) {
+	body {
+		min-height: 100vh;
+		min-height: -webkit-fill-available;
+	}
+}
+
+/* ========================================================================
    UTILITIES - Accents avec couleurs logo
    ======================================================================== */
 @layer utilities {

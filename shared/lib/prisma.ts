@@ -4,7 +4,7 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
 
 /**
- * Client Prisma avec configuration PostgreSQL
+ * Client Prisma avec Neon serverless adapter
  *
  * Soft Delete :
  * - Les modèles Order, User, Refund ont un champ `deletedAt` pour le soft delete
@@ -17,20 +17,16 @@ const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
  * - Utiliser le soft delete : update({ data: { deletedAt: new Date() } })
  * - Conservation obligatoire : 10 ans
  */
-const prismaClientSingleton = () => {
-  return new PrismaClient({
-    adapter,
-  });
-};
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-declare const globalThis: {
-  prismaGlobal: ReturnType<typeof prismaClientSingleton>;
-} & typeof global;
-
-const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
+const prisma =
+	globalForPrisma.prisma ||
+	new PrismaClient({
+		adapter,
+	});
 
 if (process.env.NODE_ENV !== "production") {
-  globalThis.prismaGlobal = prisma;
+	globalForPrisma.prisma = prisma;
 }
 
 export { prisma };

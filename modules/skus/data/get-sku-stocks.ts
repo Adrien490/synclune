@@ -64,7 +64,7 @@ async function fetchSkuStocks(
 	params: GetSkuStocksParams
 ): Promise<GetSkuStocksReturn> {
 	"use cache";
-	cacheLife({ stale: 60 });
+	cacheLife("dashboard");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
 
 	try {

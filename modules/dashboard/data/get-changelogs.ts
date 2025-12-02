@@ -1,5 +1,3 @@
-"use server";
-
 import fs from "fs";
 import path from "path";
 import { cacheChangelogs } from "@/modules/dashboard/constants/cache";
@@ -59,7 +57,7 @@ export interface ChangelogData {
  * @returns Liste des changelogs triés par version décroissante
  */
 export async function getChangelogs(): Promise<ChangelogData[]> {
-	"use cache";
+	"use cache: remote";
 	cacheChangelogs();
 	const contentDirectory = path.join(process.cwd(), CHANGELOG_CONFIG.CONTENT_PATH);
 

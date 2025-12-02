@@ -15,6 +15,14 @@ interface HTMLInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
  * Pour les champs numériques, les valeurs vides retournent `null`,
  * permettant de distinguer "pas de valeur" de "zéro".
  *
+ * Props mobile PWA supportées:
+ * - `inputMode`: Clavier virtuel optimisé (email, tel, numeric, decimal, search)
+ * - `enterKeyHint`: Label bouton Entrée (done, next, go, search, send)
+ * - `autoComplete`: Autofill navigateur (email, tel, given-name, etc.)
+ * - `pattern`: Regex validation HTML5
+ * - `spellCheck`: Correction orthographique (false pour email/password)
+ * - `autoCapitalize`: Capitalisation auto (off, words, sentences)
+ *
  * @example
  * ```tsx
  * <form.AppField name="email">
@@ -22,6 +30,10 @@ interface HTMLInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
  *     <field.InputField
  *       label="Email"
  *       type="email"
+ *       inputMode="email"
+ *       autoComplete="email"
+ *       enterKeyHint="next"
+ *       spellCheck={false}
  *       placeholder="votre@email.com"
  *       required
  *     />
@@ -39,6 +51,15 @@ export const InputField = ({
 	step,
 	value,
 	className,
+	// Props mobile PWA
+	inputMode,
+	enterKeyHint,
+	autoComplete,
+	pattern,
+	spellCheck,
+	autoCapitalize,
+	maxLength,
+	...rest
 }: HTMLInputProps) => {
 	const field = useFieldContext<string | number | null>();
 
@@ -90,7 +111,16 @@ export const InputField = ({
 					field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
 				}
 				aria-required={required}
+				// Props mobile PWA
+				inputMode={inputMode}
+				enterKeyHint={enterKeyHint}
+				autoComplete={autoComplete}
+				pattern={pattern}
+				spellCheck={spellCheck}
+				autoCapitalize={autoCapitalize}
+				maxLength={maxLength}
 				className={cn("border-input focus:ring-1 focus:ring-primary", className)}
+				{...rest}
 			/>
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>

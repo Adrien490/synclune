@@ -39,7 +39,7 @@ export async function fetchCart(
 	sessionId?: string
 ): Promise<GetCartReturn> {
 	"use cache: private";
-	cacheLife({ stale: 300 });
+	cacheLife("cart");
 
 	cacheTag(
 		userId

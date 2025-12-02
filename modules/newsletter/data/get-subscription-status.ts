@@ -50,8 +50,7 @@ export async function fetchSubscriptionStatus(
 	userId: string
 ): Promise<{ status: string } | null> {
 	"use cache: private";
-	// Cache configuration: 5min stale, revalidate après 1min, expire après 1h
-	cacheLife({ stale: 300, revalidate: 60, expire: 3600 });
+	cacheLife("cart");
 	cacheTag(`newsletter-user-${userId}`);
 
 	try {

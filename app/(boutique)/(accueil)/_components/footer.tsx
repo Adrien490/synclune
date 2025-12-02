@@ -4,6 +4,7 @@ import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
 import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import Link from "next/link";
+import { cacheLife, cacheTag } from "next/cache";
 
 /**
  * Footer statique de l'application
@@ -12,7 +13,9 @@ import Link from "next/link";
  * car le contenu est entièrement statique (navigation, liens, contact).
  */
 export async function Footer() {
-	"use cache"; // Cache le footer statique pour toutes les pages
+	"use cache";
+	cacheLife("reference");
+	cacheTag("footer");
 
 	return (
 		<footer

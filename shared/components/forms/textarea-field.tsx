@@ -9,6 +9,15 @@ interface TextareaFieldProps extends React.ComponentProps<"textarea"> {
 	label?: string;
 }
 
+/**
+ * Champ textarea pour formulaires TanStack Form.
+ *
+ * Props mobile PWA supportées:
+ * - `enterKeyHint`: Label bouton Entrée (done, send, etc.)
+ * - `spellCheck`: Correction orthographique
+ * - `autoComplete`: Autofill navigateur
+ * - `autoCapitalize`: Capitalisation auto (sentences par défaut)
+ */
 export const TextareaField = ({
 	disabled,
 	label,
@@ -16,6 +25,13 @@ export const TextareaField = ({
 	placeholder,
 	required,
 	className,
+	// Props mobile PWA
+	enterKeyHint,
+	spellCheck,
+	autoComplete,
+	autoCapitalize,
+	maxLength,
+	...rest
 }: TextareaFieldProps) => {
 	const field = useFieldContext<string>();
 
@@ -45,7 +61,14 @@ export const TextareaField = ({
 					field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
 				}
 				aria-required={required}
+				// Props mobile PWA
+				enterKeyHint={enterKeyHint}
+				spellCheck={spellCheck}
+				autoComplete={autoComplete}
+				autoCapitalize={autoCapitalize}
+				maxLength={maxLength}
 				className={cn("border-input focus:ring-1 focus:ring-primary", className)}
+				{...rest}
 			/>
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>
