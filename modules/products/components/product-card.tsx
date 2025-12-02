@@ -9,6 +9,7 @@ import { ProductPriceCompact } from "./product-price";
  * Props pour le composant ProductCard
  */
 interface ProductCardProps {
+	id: string;
 	slug: string;
 	title: string;
 	description: string | null;
@@ -56,6 +57,7 @@ interface ProductCardProps {
  * @see {@link ProductPriceCompact} - Sous-composant utilisé pour l'affichage du prix
  */
 export function ProductCard({
+	id,
 	slug,
 	title,
 	description,
@@ -126,7 +128,7 @@ export function ProductCard({
 							{stockMessage}
 						</div>
 					)}
-					<ViewTransition name={`product-card-image-${slug}`}>
+					<ViewTransition name={`product-card-image-${id}`}>
 						<Image
 							src={primaryImage.url}
 							alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
@@ -145,7 +147,7 @@ export function ProductCard({
 				{/* Contenu (plus de Link imbriqué) */}
 				<div className="flex flex-col gap-2 relative p-4">
 					{/* Titre avec hiérarchie tokenisée responsive */}
-					<ViewTransition name={`product-card-title-${slug}`}>
+					<ViewTransition name={`product-card-title-${id}`}>
 						<h3
 							id={titleId}
 							className={cn(

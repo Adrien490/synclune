@@ -62,6 +62,7 @@ export function ProductList({
 					return (
 						<div key={product.id} className="product-item">
 							<ProductCard
+								id={product.id}
 								slug={product.slug}
 								title={product.title}
 								description={product.description}

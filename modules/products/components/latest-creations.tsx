@@ -95,6 +95,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 						return (
 							<ProductCard
 								key={product.id}
+								id={`mobile-${product.id}`}
 								slug={product.slug}
 								title={product.title}
 								description={product.description}
@@ -128,6 +129,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 						return (
 							<ProductCard
 								key={product.id}
+								id={`desktop-${product.id}`}
 								slug={product.slug}
 								title={product.title}
 								description={product.description}

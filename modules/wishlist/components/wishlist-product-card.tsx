@@ -43,6 +43,7 @@ export function WishlistProductCard({
 	return (
 		<div className="relative group">
 			<ProductCard
+				id={item.id}
 				slug={product.slug}
 				title={product.title}
 				description={null}

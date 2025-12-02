@@ -79,6 +79,7 @@ export async function RelatedProducts({
 					return (
 						<ProductCard
 							key={product.id}
+							id={product.id}
 							slug={product.slug}
 							title={product.title}
 							description={product.description}
