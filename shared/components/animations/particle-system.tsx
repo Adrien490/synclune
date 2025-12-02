@@ -3,7 +3,7 @@
 import { cn } from "@/shared/utils/cn";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { motion, useReducedMotion } from "framer-motion";
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 
 // ============================================================================
 // TYPES
@@ -54,8 +54,14 @@ const ParticleSystemBase = ({
 	duration = 20,
 	className,
 }: ParticleSystemProps) => {
+	const [isMounted, setIsMounted] = useState(false);
 	const reducedMotion = useReducedMotion();
 	const isMobile = useIsMobile();
+
+	// Évite l'hydration mismatch en rendant uniquement côté client
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
 
 	// Réduire le nombre de particules sur mobile
 	const particleCount = isMobile ? Math.ceil(count / 2) : count;
@@ -84,6 +90,11 @@ const ParticleSystemBase = ({
 			};
 		});
 	}, [particleCount, size, opacity, colors, duration]);
+
+	// Ne rien rendre côté serveur pour éviter l'hydration mismatch
+	if (!isMounted) {
+		return null;
+	}
 
 	// Pas d'animation si reduced motion
 	if (reducedMotion) {
