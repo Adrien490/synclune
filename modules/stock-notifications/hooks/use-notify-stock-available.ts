@@ -10,7 +10,6 @@ export function useNotifyStockAvailable() {
 		withCallbacks(
 			notifyStockAvailableAction,
 			createToastCallbacks({
-				loadingMessage: "Envoi des notifications...",
 			})
 		),
 		undefined

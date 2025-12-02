@@ -14,7 +14,6 @@ export function useCreateMaterial(options?: UseCreateMaterialOptions) {
 		withCallbacks(
 			createMaterial,
 			createToastCallbacks({
-				loadingMessage: "Création en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

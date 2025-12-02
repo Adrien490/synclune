@@ -22,7 +22,6 @@ export const useMarkAsShippedForm = (options: UseMarkAsShippedFormOptions) => {
 		withCallbacks(
 			markAsShipped,
 			createToastCallbacks({
-				loadingMessage: "Expédition en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

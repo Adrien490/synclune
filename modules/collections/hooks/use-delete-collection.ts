@@ -14,7 +14,6 @@ export const useDeleteCollection = (options?: UseDeleteCollectionOptions) => {
 		withCallbacks(
 			deleteCollection,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

@@ -17,7 +17,6 @@ export const useDeleteProductType = (options?: UseDeleteProductTypeOptions) => {
 		withCallbacks(
 			deleteProductType,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

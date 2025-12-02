@@ -62,7 +62,6 @@ export function CollectionFormDialog() {
 		withCallbacks(
 			createCollection,
 			createToastCallbacks({
-				loadingMessage: "Création de la collection...",
 				showSuccessToast: false,
 				onSuccess: (result) => {
 					close();
@@ -95,7 +94,6 @@ export function CollectionFormDialog() {
 		withCallbacks(
 			updateCollection,
 			createToastCallbacks({
-				loadingMessage: "Modification de la collection...",
 				onSuccess: () => {
 					close();
 				},

@@ -19,7 +19,6 @@ export const useBulkToggleMaterialStatus = (options?: UseBulkToggleMaterialStatu
 		withCallbacks(
 			bulkToggleMaterialStatus,
 			createToastCallbacks({
-				loadingMessage: "Modification du statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

@@ -14,7 +14,6 @@ export function useDeleteMaterial(options?: UseDeleteMaterialOptions) {
 		withCallbacks(
 			deleteMaterial,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

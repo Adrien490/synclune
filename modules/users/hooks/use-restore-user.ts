@@ -14,7 +14,6 @@ export const useRestoreUser = (options?: UseRestoreUserOptions) => {
 		withCallbacks(
 			restoreUser,
 			createToastCallbacks({
-				loadingMessage: "Restauration de l'utilisateur...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

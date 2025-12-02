@@ -10,7 +10,6 @@ export function useCleanupExpiredNotifications() {
 		withCallbacks(
 			cleanupExpiredNotificationsAction,
 			createToastCallbacks({
-				loadingMessage: "Nettoyage des demandes expirées...",
 			})
 		),
 		undefined

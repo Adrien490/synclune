@@ -32,7 +32,6 @@ export const useDeleteProductSku = (options?: UseDeleteProductSkuOptions) => {
 		withCallbacks(
 			deleteProductSku,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

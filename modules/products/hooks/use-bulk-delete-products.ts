@@ -17,7 +17,6 @@ export const useBulkDeleteProducts = (
 		withCallbacks(
 			bulkDeleteProducts,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

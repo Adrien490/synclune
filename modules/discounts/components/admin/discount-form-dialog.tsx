@@ -57,7 +57,6 @@ export function DiscountFormDialog() {
 		withCallbacks(
 			createDiscount,
 			createToastCallbacks({
-				loadingMessage: "Création du code promo...",
 				onSuccess: () => {
 					close();
 					form.reset();
@@ -72,7 +71,6 @@ export function DiscountFormDialog() {
 		withCallbacks(
 			updateDiscount,
 			createToastCallbacks({
-				loadingMessage: "Modification du code promo...",
 				onSuccess: () => {
 					close();
 				},

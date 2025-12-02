@@ -32,7 +32,6 @@ export const useUpdateMaterialForm = (options: UseUpdateMaterialFormOptions) => 
 		withCallbacks(
 			updateMaterial,
 			createToastCallbacks({
-				loadingMessage: "Modification du matériau en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

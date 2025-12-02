@@ -20,7 +20,6 @@ export const useRemoveUnavailableItems = (
 		withCallbacks(
 			removeUnavailableItems,
 			createToastCallbacks({
-				loadingMessage: "Suppression des articles indisponibles...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

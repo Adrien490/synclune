@@ -35,7 +35,6 @@ export const useUpdateProfile = (options?: UseUpdateProfileOptions) => {
 		withCallbacks(
 			updateProfile,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour du profil...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

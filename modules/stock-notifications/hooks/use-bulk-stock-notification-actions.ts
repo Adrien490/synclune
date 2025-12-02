@@ -16,7 +16,6 @@ export function useBulkCancelStockNotifications(options?: UseBulkStockNotificati
 		withCallbacks(
 			bulkCancelStockNotifications,
 			createToastCallbacks({
-				loadingMessage: "Annulation en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -54,7 +53,6 @@ export function useBulkDeleteStockNotifications(options?: UseBulkStockNotificati
 		withCallbacks(
 			bulkDeleteStockNotifications,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

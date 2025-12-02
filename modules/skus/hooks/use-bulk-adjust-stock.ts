@@ -15,7 +15,6 @@ export const useBulkAdjustStock = (options?: UseBulkAdjustStockOptions) => {
 		withCallbacks(
 			bulkAdjustStock,
 			createToastCallbacks({
-				loadingMessage: "Ajustement du stock en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

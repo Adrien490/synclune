@@ -14,7 +14,6 @@ export const useBulkDeleteUsers = (options?: UseBulkDeleteUsersOptions) => {
 		withCallbacks(
 			bulkDeleteUsers,
 			createToastCallbacks({
-				loadingMessage: "Suppression des utilisateurs...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

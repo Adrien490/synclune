@@ -33,7 +33,6 @@ export function useBulkToggleDiscountStatus(
 		withCallbacks(
 			bulkToggleDiscountStatus,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour en cours...",
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

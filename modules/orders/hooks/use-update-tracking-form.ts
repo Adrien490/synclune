@@ -26,7 +26,6 @@ export const useUpdateTrackingForm = (options: UseUpdateTrackingFormOptions) => 
 		withCallbacks(
 			updateTracking,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour du suivi...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

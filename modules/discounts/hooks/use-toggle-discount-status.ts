@@ -16,7 +16,6 @@ export const useToggleDiscountStatus = (
 		withCallbacks(
 			toggleDiscountStatus,
 			createToastCallbacks({
-				loadingMessage: "Modification du statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

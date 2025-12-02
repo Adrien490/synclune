@@ -17,7 +17,6 @@ export const useBulkDeactivateSkus = (
 		withCallbacks(
 			bulkDeactivateSkus,
 			createToastCallbacks({
-				loadingMessage: "Désactivation en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

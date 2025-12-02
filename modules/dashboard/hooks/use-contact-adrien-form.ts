@@ -22,7 +22,6 @@ export function useContactAdrienForm(options?: UseContactAdrienFormOptions) {
 		withCallbacks(
 			contactAdrien,
 			createToastCallbacks({
-				loadingMessage: "Envoi du message en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

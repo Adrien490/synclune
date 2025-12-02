@@ -21,7 +21,6 @@ export const useUpdateProductSkuStatus = (
 		withCallbacks(
 			updateProductSkuStatus,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

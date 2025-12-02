@@ -14,7 +14,6 @@ export const useDeleteDiscount = (options?: UseDeleteDiscountOptions) => {
 		withCallbacks(
 			deleteDiscount,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

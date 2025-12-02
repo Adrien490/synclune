@@ -15,7 +15,6 @@ export function useBulkMarkAsDelivered(options?: UseBulkMarkAsDeliveredOptions) 
 		withCallbacks(
 			bulkMarkAsDelivered,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

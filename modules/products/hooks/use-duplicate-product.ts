@@ -15,7 +15,6 @@ export const useDuplicateProduct = (options?: UseDuplicateProductOptions) => {
 		withCallbacks(
 			duplicateProduct,
 			createToastCallbacks({
-				loadingMessage: "Duplication en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

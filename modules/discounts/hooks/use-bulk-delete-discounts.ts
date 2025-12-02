@@ -16,7 +16,6 @@ export const useBulkDeleteDiscounts = (
 		withCallbacks(
 			bulkDeleteDiscounts,
 			createToastCallbacks({
-				loadingMessage: "Suppression des codes promo...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

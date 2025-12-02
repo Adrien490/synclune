@@ -38,7 +38,6 @@ export const useSetDefaultAddress = (options?: UseSetDefaultAddressOptions) => {
 		withCallbacks(
 			setDefaultAddress,
 			createToastCallbacks({
-				loadingMessage: "Définition de l'adresse par défaut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

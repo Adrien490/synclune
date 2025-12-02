@@ -46,7 +46,6 @@ export function MaterialFormDialog() {
 		withCallbacks(
 			createMaterial,
 			createToastCallbacks({
-				loadingMessage: "Création du matériau...",
 				onSuccess: () => {
 					close();
 					form.reset();
@@ -61,7 +60,6 @@ export function MaterialFormDialog() {
 		withCallbacks(
 			updateMaterial,
 			createToastCallbacks({
-				loadingMessage: "Modification du matériau...",
 				onSuccess: () => {
 					close();
 				},

@@ -37,7 +37,6 @@ export const useUpdateAddress = (
 		withCallbacks(
 			updateAddress.bind(null, addressId),
 			createToastCallbacks({
-				loadingMessage: "Mise à jour de l'adresse...",
 				showErrorToast: false,
 				onSuccess: (result: unknown) => {
 					if (

@@ -20,7 +20,6 @@ export const useCreateColorForm = (options?: UseCreateColorFormOptions) => {
 		withCallbacks(
 			createColor,
 			createToastCallbacks({
-				loadingMessage: "Création de la couleur en cours...",
 				onSuccess: (result: unknown) => {
 					// Call the custom success callback if provided
 					if (

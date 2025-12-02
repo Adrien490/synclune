@@ -17,7 +17,6 @@ export const useToggleProductTypeStatus = (
 		withCallbacks(
 			toggleProductTypeStatus,
 			createToastCallbacks({
-				loadingMessage: "Changement de statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

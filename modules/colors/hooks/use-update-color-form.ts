@@ -31,7 +31,6 @@ export const useUpdateColorForm = (options: UseUpdateColorFormOptions) => {
 		withCallbacks(
 			updateColor,
 			createToastCallbacks({
-				loadingMessage: "Modification de la couleur en cours...",
 				onSuccess: (result: unknown) => {
 					// Call the custom success callback if provided
 					if (

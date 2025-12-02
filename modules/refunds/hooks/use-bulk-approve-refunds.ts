@@ -15,7 +15,6 @@ export function useBulkApproveRefunds(options?: UseBulkApproveRefundsOptions) {
 		withCallbacks(
 			bulkApproveRefunds,
 			createToastCallbacks({
-				loadingMessage: "Approbation en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

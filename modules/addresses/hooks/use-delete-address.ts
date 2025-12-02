@@ -38,7 +38,6 @@ export const useDeleteAddress = (options?: UseDeleteAddressOptions) => {
 		withCallbacks(
 			deleteAddress,
 			createToastCallbacks({
-				loadingMessage: "Suppression de l'adresse...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

@@ -35,7 +35,6 @@ export function useDeleteAccount(options?: UseDeleteAccountOptions) {
 		withCallbacks(
 			deleteAccount,
 			createToastCallbacks({
-				loadingMessage: "Suppression du compte...",
 				onSuccess: () => {
 					options?.onSuccess?.();
 					// Rediriger vers la page d'accueil après suppression

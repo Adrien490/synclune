@@ -20,7 +20,6 @@ export const useCreateMaterialForm = (options?: UseCreateMaterialFormOptions) =>
 		withCallbacks(
 			createMaterial,
 			createToastCallbacks({
-				loadingMessage: "Création du matériau en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

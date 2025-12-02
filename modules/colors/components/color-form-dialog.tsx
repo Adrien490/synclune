@@ -54,7 +54,6 @@ export function ColorFormDialog() {
 		withCallbacks(
 			createColor,
 			createToastCallbacks({
-				loadingMessage: "Création de la couleur...",
 				onSuccess: () => {
 					close();
 					form.reset();
@@ -69,7 +68,6 @@ export function ColorFormDialog() {
 		withCallbacks(
 			updateColor,
 			createToastCallbacks({
-				loadingMessage: "Modification de la couleur...",
 				onSuccess: () => {
 					close();
 				},

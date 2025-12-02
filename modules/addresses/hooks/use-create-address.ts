@@ -34,7 +34,6 @@ export const useCreateAddress = (options?: UseCreateAddressOptions) => {
 		withCallbacks(
 			createAddress,
 			createToastCallbacks({
-				loadingMessage: "Création de l'adresse...",
 				showErrorToast: false,
 				onSuccess: (result: unknown) => {
 					if (

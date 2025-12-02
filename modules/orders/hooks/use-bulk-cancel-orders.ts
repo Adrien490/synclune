@@ -15,7 +15,6 @@ export function useBulkCancelOrders(options?: UseBulkCancelOrdersOptions) {
 		withCallbacks(
 			bulkCancelOrders,
 			createToastCallbacks({
-				loadingMessage: "Annulation en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

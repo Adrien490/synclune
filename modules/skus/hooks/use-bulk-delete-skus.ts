@@ -15,7 +15,6 @@ export const useBulkDeleteSkus = (options?: UseBulkDeleteSkusOptions) => {
 		withCallbacks(
 			bulkDeleteSkus,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

@@ -22,7 +22,6 @@ export const useCreateProductTypeForm = (
 		withCallbacks(
 			createProductType,
 			createToastCallbacks({
-				loadingMessage: "Création du type de produit en cours...",
 				onSuccess: (result: unknown) => {
 					// Call the custom success callback if provided
 					if (

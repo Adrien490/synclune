@@ -24,7 +24,6 @@ export const useCreateProductSkuForm = (
 			createProductSku,
 			createToastCallbacks({
 				showSuccessToast: false,
-				loadingMessage: "Création de la variante en cours...",
 				onSuccess: (result: unknown) => {
 					// Call the custom success callback if provided
 					if (

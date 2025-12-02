@@ -17,7 +17,6 @@ export function useBulkUnsubscribeSubscribers(options?: UseBulkSubscriberActions
 		withCallbacks(
 			bulkUnsubscribeSubscribers,
 			createToastCallbacks({
-				loadingMessage: "Désabonnement en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -55,7 +54,6 @@ export function useBulkResubscribeSubscribers(options?: UseBulkSubscriberActions
 		withCallbacks(
 			bulkResubscribeSubscribers,
 			createToastCallbacks({
-				loadingMessage: "Réabonnement en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -93,7 +91,6 @@ export function useBulkDeleteSubscribers(options?: UseBulkSubscriberActionsOptio
 		withCallbacks(
 			bulkDeleteSubscribers,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

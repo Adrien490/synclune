@@ -22,7 +22,6 @@ export const useUpdateCollectionStatus = (
 		withCallbacks(
 			updateCollectionStatus,
 			createToastCallbacks({
-				loadingMessage: "Changement de statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

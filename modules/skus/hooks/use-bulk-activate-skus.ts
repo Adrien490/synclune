@@ -17,7 +17,6 @@ export const useBulkActivateSkus = (
 		withCallbacks(
 			bulkActivateSkus,
 			createToastCallbacks({
-				loadingMessage: "Activation en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

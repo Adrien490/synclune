@@ -10,7 +10,6 @@ export function useRevertToProcessing() {
 		withCallbacks(
 			revertToProcessing,
 			createToastCallbacks({
-				loadingMessage: "Annulation de l'expédition...",
 			})
 		),
 		undefined

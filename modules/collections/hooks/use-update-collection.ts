@@ -33,7 +33,6 @@ export const useUpdateCollectionForm = (
 		withCallbacks(
 			updateCollection,
 			createToastCallbacks({
-				loadingMessage: "Modification de la collection en cours...",
 				onSuccess: (result: unknown) => {
 					// Call the custom success callback if provided
 					if (

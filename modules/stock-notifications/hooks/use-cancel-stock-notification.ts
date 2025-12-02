@@ -10,7 +10,6 @@ export function useCancelStockNotification() {
 		withCallbacks(
 			cancelStockNotification,
 			createToastCallbacks({
-				loadingMessage: "Annulation en cours...",
 			})
 		),
 		undefined

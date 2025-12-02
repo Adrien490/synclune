@@ -22,7 +22,6 @@ export const useBulkArchiveCollections = (
 		withCallbacks(
 			bulkArchiveCollections,
 			createToastCallbacks({
-				loadingMessage: "Changement de statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

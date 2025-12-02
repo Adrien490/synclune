@@ -14,7 +14,6 @@ export function useDeleteColor(options?: UseDeleteColorOptions) {
 		withCallbacks(
 			deleteColor,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

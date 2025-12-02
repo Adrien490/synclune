@@ -30,7 +30,6 @@ export const useCheckoutForm = (options: UseCheckoutFormOptions) => {
 		withCallbacks(
 			createCheckoutSession,
 			createToastCallbacks({
-				loadingMessage: "Préparation de ton paiement sécurisé...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

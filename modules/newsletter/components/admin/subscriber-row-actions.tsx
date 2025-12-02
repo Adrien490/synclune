@@ -76,7 +76,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					{/* Renvoyer email de confirmation */}
 					{canResendConfirmation && (
 						<DropdownMenuItem
-							onClick={() => resendConfirmation(subscriber.id, subscriber.email)}
+							onClick={() => resendConfirmation(subscriber.id)}
 							disabled={isPending}
 							className="flex items-center cursor-pointer"
 						>
@@ -132,7 +132,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => unsubscribe(subscriber.id, subscriber.email)}
+							onClick={() => unsubscribe(subscriber.id)}
 							disabled={isPending}
 						>
 							{isPending ? (
@@ -166,7 +166,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => resubscribe(subscriber.id, subscriber.email)}
+							onClick={() => resubscribe(subscriber.id)}
 							disabled={isPending}
 						>
 							{isPending ? (
@@ -202,7 +202,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => deleteSubscriber(subscriber.id, subscriber.email)}
+							onClick={() => deleteSubscriber(subscriber.id)}
 							disabled={isPending}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>

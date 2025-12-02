@@ -22,7 +22,6 @@ export const useCreateCollectionForm = (
 		withCallbacks(
 			createCollection,
 			createToastCallbacks({
-				loadingMessage: "Création de la collection en cours...",
 				onSuccess: (result: unknown) => {
 					// Call the custom success callback if provided
 					if (

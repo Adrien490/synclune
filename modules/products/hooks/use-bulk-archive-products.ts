@@ -34,7 +34,6 @@ export const useBulkArchiveProducts = (
 		withCallbacks(
 			bulkArchiveProducts,
 			createToastCallbacks({
-				loadingMessage: "Archivage en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

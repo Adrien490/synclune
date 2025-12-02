@@ -14,7 +14,6 @@ export function useRequestPasswordReset(options?: UseRequestPasswordResetOptions
 		withCallbacks(
 			requestPasswordReset,
 			createToastCallbacks({
-				loadingMessage: "Envoi du lien de réinitialisation...",
 				onSuccess: options?.onSuccess,
 			})
 		),

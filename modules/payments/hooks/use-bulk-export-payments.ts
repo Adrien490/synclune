@@ -16,7 +16,6 @@ export function useBulkExportPayments(options?: UseBulkExportPaymentsOptions) {
 		withCallbacks(
 			bulkExportPayments,
 			createToastCallbacks({
-				loadingMessage: "Export en cours...",
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

@@ -33,7 +33,6 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 		withCallbacks(
 			updateProduct,
 			createToastCallbacks({
-				loadingMessage: "Modification du produit en cours...",
 				onSuccess: (result: unknown) => {
 					// Call the custom success callback if provided
 					if (

@@ -18,15 +18,11 @@ interface UseSubscriberActionsOptions {
  */
 async function executeWithToast(
 	action: () => Promise<ActionState>,
-	loadingMessage: string,
 	errorFallback: string,
 	options?: UseSubscriberActionsOptions
 ): Promise<void> {
-	const toastId = toast.loading(loadingMessage);
-
 	try {
 		const result = await action();
-		toast.dismiss(toastId);
 
 		if (result.status === ActionStatus.SUCCESS) {
 			toast.success(result.message);
@@ -36,7 +32,6 @@ async function executeWithToast(
 			options?.onError?.(result.message);
 		}
 	} catch (error) {
-		toast.dismiss(toastId);
 		const message = error instanceof Error ? error.message : errorFallback;
 		toast.error(message);
 		options?.onError?.(message);
@@ -50,11 +45,10 @@ export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 	const [isPending, startTransition] = useTransition();
 
 	const unsubscribe = useCallback(
-		(subscriberId: string, email: string) => {
+		(subscriberId: string) => {
 			startTransition(() =>
 				executeWithToast(
 					() => unsubscribeSubscriberAdmin(subscriberId),
-					`Désabonnement de ${email}...`,
 					"Erreur lors du désabonnement",
 					options
 				)
@@ -64,11 +58,10 @@ export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 	);
 
 	const resubscribe = useCallback(
-		(subscriberId: string, email: string) => {
+		(subscriberId: string) => {
 			startTransition(() =>
 				executeWithToast(
 					() => resubscribeSubscriberAdmin(subscriberId),
-					`Réabonnement de ${email}...`,
 					"Erreur lors du réabonnement",
 					options
 				)
@@ -78,11 +71,10 @@ export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 	);
 
 	const resendConfirmation = useCallback(
-		(subscriberId: string, email: string) => {
+		(subscriberId: string) => {
 			startTransition(() =>
 				executeWithToast(
 					() => resendConfirmationAdmin(subscriberId),
-					`Envoi de l'email à ${email}...`,
 					"Erreur lors de l'envoi",
 					options
 				)
@@ -92,11 +84,10 @@ export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 	);
 
 	const deleteSubscriber = useCallback(
-		(subscriberId: string, email: string) => {
+		(subscriberId: string) => {
 			startTransition(() =>
 				executeWithToast(
 					() => deleteSubscriberAdmin(subscriberId),
-					`Suppression de ${email}...`,
 					"Erreur lors de la suppression",
 					options
 				)

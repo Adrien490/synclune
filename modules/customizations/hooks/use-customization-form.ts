@@ -23,7 +23,6 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 		withCallbacks(
 			sendCustomizationRequest,
 			createToastCallbacks({
-				loadingMessage: "Envoi de ton message en cours...",
 				showSuccessToast: false, // Désactiver le toast automatique (géré manuellement)
 				showErrorToast: false, // Désactiver les toasts d'erreur automatiques
 				onSuccess: (result: unknown) => {

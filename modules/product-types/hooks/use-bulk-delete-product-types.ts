@@ -15,7 +15,6 @@ export function useBulkDeleteProductTypes(options?: UseBulkDeleteProductTypesOpt
 		withCallbacks(
 			bulkDeleteProductTypes,
 			createToastCallbacks({
-				loadingMessage: "Suppression en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

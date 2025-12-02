@@ -10,7 +10,6 @@ export function useSubscribeToStockNotification() {
 		withCallbacks(
 			subscribeToStockNotification,
 			createToastCallbacks({
-				loadingMessage: "Inscription en cours...",
 			})
 		),
 		undefined

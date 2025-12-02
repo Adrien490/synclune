@@ -10,7 +10,6 @@ export function useUnsubscribeFromStockNotification() {
 		withCallbacks(
 			unsubscribeFromStockNotification,
 			createToastCallbacks({
-				loadingMessage: "Désinscription en cours...",
 			})
 		),
 		undefined
