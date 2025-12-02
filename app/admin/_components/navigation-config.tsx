@@ -189,7 +189,7 @@ export const navigationData: NavigationData = {
  * - Les autres items sont accessibles via le menu "Plus"
  */
 export const bottomNavConfig = {
-	primaryIds: ["dashboard", "orders", "inventory"] as const,
+	primaryIds: ["dashboard", "orders", "products"] as const,
 };
 
 // ============================================================================
