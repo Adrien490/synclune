@@ -29,17 +29,17 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 interface RevenueByCollectionChartProps extends ChartDrilldownProps {
-	dataPromise: Promise<GetRevenueByCollectionReturn>;
+	chartDataPromise: Promise<GetRevenueByCollectionReturn>;
 }
 
 /**
  * Graphique des revenus par collection
  */
 export function RevenueByCollectionChart({
-	dataPromise,
+	chartDataPromise,
 	enableDrilldown = true,
 }: RevenueByCollectionChartProps) {
-	const data = use(dataPromise);
+	const data = use(chartDataPromise);
 	const { handleClick, ariaLabel } = useChartDrilldown("revenueByCollection");
 
 	// Preparer les donnees pour le graphique (top 5)

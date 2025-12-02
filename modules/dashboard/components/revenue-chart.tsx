@@ -23,7 +23,7 @@ import { ChartScrollContainer } from "./chart-scroll-container";
 import { CHART_STYLES } from "../constants/chart-styles";
 
 interface RevenueChartProps {
-	chartPromise: Promise<GetDashboardRevenueChartReturn>;
+	chartDataPromise: Promise<GetDashboardRevenueChartReturn>;
 }
 
 /**
@@ -37,8 +37,8 @@ const chartConfig = {
 	},
 } satisfies ChartConfig;
 
-export function RevenueChart({ chartPromise }: RevenueChartProps) {
-	const { data } = use(chartPromise);
+export function RevenueChart({ chartDataPromise }: RevenueChartProps) {
+	const { data } = use(chartDataPromise);
 
 	// Formater les données pour le chart
 	const chartData = data.map((item: RevenueDataPoint) => ({

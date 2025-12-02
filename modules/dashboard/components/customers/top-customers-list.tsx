@@ -6,13 +6,14 @@ import { Crown, Mail, ShoppingBag } from "lucide-react";
 import type { GetTopCustomersReturn } from "../../types/dashboard.types";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { CHART_STYLES } from "../../constants/chart-styles";
 
 interface TopCustomersListProps {
-	listPromise: Promise<GetTopCustomersReturn>;
+	listDataPromise: Promise<GetTopCustomersReturn>;
 }
 
-export function TopCustomersList({ listPromise }: TopCustomersListProps) {
-	const { customers } = use(listPromise);
+export function TopCustomersList({ listDataPromise }: TopCustomersListProps) {
+	const { customers } = use(listDataPromise);
 
 	if (customers.length === 0) {
 		return (
@@ -29,9 +30,9 @@ export function TopCustomersList({ listPromise }: TopCustomersListProps) {
 	}
 
 	return (
-		<Card className="border-l-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
-				<CardTitle className="text-xl font-semibold tracking-wide flex items-center gap-2">
+				<CardTitle className={`${CHART_STYLES.title} flex items-center gap-2`}>
 					<Crown className="h-5 w-5 text-yellow-500" />
 					Meilleurs clients
 				</CardTitle>

@@ -13,7 +13,7 @@ const BATCH_SIZE = 100;
 const MAX_CONCURRENT_SENDS = 10;
 
 export async function sendNewsletterEmail(
-	_previousState: ActionState | null,
+	_previousState: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {

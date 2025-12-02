@@ -22,14 +22,14 @@ import { ChartScrollContainer } from "../chart-scroll-container";
 import { useChartDrilldown, type ChartDrilldownProps } from "../../hooks";
 
 interface StockByColorChartProps extends ChartDrilldownProps {
-	dataPromise: Promise<GetStockByColorReturn>;
+	chartDataPromise: Promise<GetStockByColorReturn>;
 }
 
 /**
  * Graphique du stock par couleur
  */
-export function StockByColorChart({ dataPromise, enableDrilldown = true }: StockByColorChartProps) {
-	const data = use(dataPromise);
+export function StockByColorChart({ chartDataPromise, enableDrilldown = true }: StockByColorChartProps) {
+	const data = use(chartDataPromise);
 	const { handleClick } = useChartDrilldown("stockByColor");
 
 	// Preparer les donnees pour le graphique (top 8) avec une cle unique

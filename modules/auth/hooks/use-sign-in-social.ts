@@ -1,14 +1,25 @@
 "use client";
 
-import { ActionStatus } from "@/shared/types/server-action";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
-import { signInSocial } from "@/modules/auth/actions/sign-in-social";
+import { signInSocial } from "../actions/sign-in-social";
 
-export function useSignInSocial() {
-	const [state, action, isPending] = useActionState(signInSocial, {
-		status: ActionStatus.INITIAL,
-		message: "",
-	});
+interface UseSignInSocialOptions {
+	onSuccess?: () => void;
+}
+
+export function useSignInSocial(options?: UseSignInSocialOptions) {
+	const [state, action, isPending] = useActionState(
+		withCallbacks(
+			signInSocial,
+			createToastCallbacks({
+				showSuccessToast: false,
+				onSuccess: options?.onSuccess,
+			})
+		),
+		undefined
+	);
 
 	return { state, action, isPending };
 }

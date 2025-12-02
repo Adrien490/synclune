@@ -24,6 +24,8 @@ export function CustomerKpis({ kpisPromise }: CustomerKpisProps) {
 				evolution={kpis.totalCustomers.evolution}
 				subtitle="avec au moins 1 commande"
 				icon={<Users className="h-4 w-4" />}
+				size="featured"
+				priority="critical"
 			/>
 			<KpiCard
 				title="Nouveaux clients"
@@ -32,6 +34,7 @@ export function CustomerKpis({ kpisPromise }: CustomerKpisProps) {
 				evolution={kpis.newCustomers.evolution}
 				subtitle="sur la periode"
 				icon={<UserPlus className="h-4 w-4" />}
+				priority="operational"
 			/>
 			<KpiCard
 				title="Taux de recurrence"
@@ -42,6 +45,7 @@ export function CustomerKpis({ kpisPromise }: CustomerKpisProps) {
 				evolution={kpis.repeatRate.evolution}
 				subtitle="clients avec 2+ commandes"
 				icon={<Repeat className="h-4 w-4" />}
+				priority="operational"
 			/>
 			<KpiCard
 				title="Panier 1ere commande"
@@ -51,6 +55,7 @@ export function CustomerKpis({ kpisPromise }: CustomerKpisProps) {
 				decimalPlaces={2}
 				subtitle={`vs ${(kpis.firstOrderAov.repeatAov / 100).toFixed(2)} € recurrents`}
 				icon={<ShoppingCart className="h-4 w-4" />}
+				priority="info"
 			/>
 		</div>
 	);

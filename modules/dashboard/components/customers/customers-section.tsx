@@ -6,6 +6,8 @@ import { CustomerKpis } from "./customer-kpis";
 import { RepeatVsNewChart } from "./repeat-vs-new-chart";
 import { TopCustomersList } from "./top-customers-list";
 import { KpisSkeleton, ChartSkeleton } from "../skeletons";
+import { DashboardErrorBoundary } from "../dashboard-error-boundary";
+import { ChartError } from "../chart-error";
 import type { DashboardPeriod } from "../../utils/period-resolver";
 
 interface CustomersSectionProps {
@@ -35,19 +37,31 @@ export async function CustomersSection({
 	return (
 		<div className="space-y-6">
 			{/* KPIs Clients */}
-			<Suspense fallback={<KpisSkeleton count={4} ariaLabel="Chargement des indicateurs clients" />}>
-				<CustomerKpis kpisPromise={kpisPromise} />
-			</Suspense>
+			<DashboardErrorBoundary
+				fallback={<ChartError title="Erreur" description="Impossible de charger les indicateurs clients" minHeight={140} />}
+			>
+				<Suspense fallback={<KpisSkeleton count={4} ariaLabel="Chargement des indicateurs clients" />}>
+					<CustomerKpis kpisPromise={kpisPromise} />
+				</Suspense>
+			</DashboardErrorBoundary>
 
 			{/* Graphiques et listes */}
 			<div className="grid gap-6 lg:grid-cols-2">
-				<Suspense fallback={<ChartSkeleton />}>
-					<RepeatVsNewChart chartPromise={repeatCustomersPromise} />
-				</Suspense>
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur" description="Impossible de charger la repartition clients" />}
+				>
+					<Suspense fallback={<ChartSkeleton />}>
+						<RepeatVsNewChart chartDataPromise={repeatCustomersPromise} />
+					</Suspense>
+				</DashboardErrorBoundary>
 
-				<Suspense fallback={<ChartSkeleton />}>
-					<TopCustomersList listPromise={topCustomersPromise} />
-				</Suspense>
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur" description="Impossible de charger les meilleurs clients" />}
+				>
+					<Suspense fallback={<ChartSkeleton />}>
+						<TopCustomersList listDataPromise={topCustomersPromise} />
+					</Suspense>
+				</DashboardErrorBoundary>
 			</div>
 		</div>
 	);

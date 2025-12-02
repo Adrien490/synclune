@@ -5,6 +5,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";
 import { batchValidateSkusForMerge } from "@/modules/cart/lib/sku-validation";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 
 export type MergeCartsResult =
 	| {
@@ -86,6 +87,30 @@ export async function mergeCarts(
 	sessionId: string
 ): Promise<MergeCartsResult> {
 	try {
+		// 0a. Rate limiting (10 requêtes par minute par utilisateur)
+		const rateLimitId = `merge-carts:${userId}`;
+		const rateLimit = checkRateLimit(rateLimitId, { limit: 10, windowMs: 60 * 1000 });
+
+		if (!rateLimit.success) {
+			return {
+				status: ActionStatus.ERROR,
+				message: "Trop de requêtes. Veuillez réessayer plus tard.",
+			};
+		}
+
+		// 0b. Vérifier que l'utilisateur existe (protection contre appels directs)
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+			select: { id: true, deletedAt: true },
+		});
+
+		if (!user || user.deletedAt) {
+			return {
+				status: ActionStatus.ERROR,
+				message: "Utilisateur non trouvé",
+			};
+		}
+
 		// 1. Récupérer les deux paniers
 		const [guestCart, userCart] = await Promise.all([
 			prisma.cart.findUnique({

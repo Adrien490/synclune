@@ -15,7 +15,7 @@ interface KpisSkeletonProps {
  */
 function KpiCardSkeleton() {
 	return (
-		<Card className="border-l-4 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent min-h-[140px]">
+		<Card className={`${CHART_STYLES.card} min-h-[140px]`}>
 			{/* Header avec titre et icone */}
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 				<Skeleton className="h-4 w-24" /> {/* Titre */}

@@ -2,6 +2,7 @@ import { Logo } from "@/shared/components/logo";
 import { Button } from "@/shared/components/ui/button";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
 import { auth } from "@/modules/auth/lib/auth";
+import { ajAuth } from "@/shared/lib/arcjet";
 import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -28,15 +29,28 @@ interface VerifyEmailPageProps {
 
 async function verifyEmailToken(token: string) {
 	try {
+		// Protection Arcjet contre le brute-force de tokens
+		const headersList = await headers();
+		const request = new Request("https://synclune.fr/verifier-email", {
+			method: "GET",
+			headers: headersList,
+		});
+
+		const decision = await ajAuth.protect(request, { requested: 1 });
+
+		// Bloquer si rate limit atteint ou bot détecté
+		if (decision.isDenied()) {
+			return { success: false, rateLimited: true };
+		}
+
 		await auth.api.verifyEmail({
 			query: {
 				token,
 			},
-			headers: await headers(),
+			headers: headersList,
 		});
 		return { success: true };
 	} catch {
-		// console.error("Erreur lors de la vérification:", error);
 		return { success: false };
 	}
 }
@@ -71,6 +85,8 @@ export default async function VerifyEmailPage({
 		if (result.success) {
 			// Marquer comme succès pour afficher le message
 			isSuccess = true;
+		} else if ("rateLimited" in result && result.rateLimited) {
+			errorMessage = "Trop de tentatives. Veuillez réessayer dans quelques minutes.";
 		} else {
 			errorMessage = "Le lien de vérification est invalide ou a expiré.";
 		}

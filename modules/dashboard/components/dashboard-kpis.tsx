@@ -27,6 +27,7 @@ export function DashboardKpis({ kpisPromise }: DashboardKpisProps) {
 				evolution={kpis.todayRevenue.evolution}
 				subtitle="vs hier"
 				icon={<Euro className="h-4 w-4" />}
+				priority="critical"
 			/>
 			<KpiCard
 				title="CA du mois"
@@ -37,6 +38,8 @@ export function DashboardKpis({ kpisPromise }: DashboardKpisProps) {
 				evolution={kpis.monthlyRevenue.evolution}
 				subtitle="vs mois dernier"
 				icon={<TrendingUp className="h-4 w-4" />}
+				size="featured"
+				priority="critical"
 			/>
 			<KpiCard
 				title="Panier moyen"
@@ -47,6 +50,7 @@ export function DashboardKpis({ kpisPromise }: DashboardKpisProps) {
 				evolution={kpis.averageOrderValue.evolution}
 				subtitle="vs mois dernier"
 				icon={<ShoppingCart className="h-4 w-4" />}
+				priority="operational"
 			/>
 			<KpiCard
 				title="Commandes du mois"
@@ -55,6 +59,8 @@ export function DashboardKpis({ kpisPromise }: DashboardKpisProps) {
 				evolution={kpis.monthlyOrders.evolution}
 				subtitle="vs mois dernier"
 				icon={<ShoppingCart className="h-4 w-4" />}
+				size="featured"
+				priority="critical"
 			/>
 			<KpiCard
 				title="Commandes en traitement"
@@ -62,12 +68,17 @@ export function DashboardKpis({ kpisPromise }: DashboardKpisProps) {
 				numericValue={kpis.pendingOrders.count}
 				subtitle={kpis.pendingOrders.urgentCount > 0 ? `dont ${kpis.pendingOrders.urgentCount} urgente(s)` : "Tout à jour"}
 				icon={<Clock className="h-4 w-4" />}
+				priority="operational"
+				status={kpis.pendingOrders.urgentCount > 0 ? "warning" : "default"}
 			/>
 			<KpiCard
 				title="Bijoux en rupture"
 				value=""
 				numericValue={kpis.outOfStock.count}
 				icon={<PackageX className="h-4 w-4" />}
+				size="compact"
+				priority="alert"
+				status={kpis.outOfStock.count > 0 ? "danger" : "default"}
 			/>
 		</div>
 	);

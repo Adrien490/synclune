@@ -22,7 +22,7 @@ import { CHART_STYLES } from "../../constants/chart-styles";
 import { useChartDrilldown, type ChartDrilldownProps } from "../../hooks";
 
 interface StockByMaterialChartProps extends ChartDrilldownProps {
-	dataPromise: Promise<GetStockByMaterialReturn>;
+	chartDataPromise: Promise<GetStockByMaterialReturn>;
 }
 
 const CHART_COLORS = [
@@ -36,8 +36,8 @@ const CHART_COLORS = [
 /**
  * Graphique du stock par materiau
  */
-export function StockByMaterialChart({ dataPromise, enableDrilldown = true }: StockByMaterialChartProps) {
-	const data = use(dataPromise);
+export function StockByMaterialChart({ chartDataPromise, enableDrilldown = true }: StockByMaterialChartProps) {
+	const data = use(chartDataPromise);
 	const { handleClick } = useChartDrilldown("stockByMaterial");
 
 	// Preparer les donnees pour le graphique avec une cle unique

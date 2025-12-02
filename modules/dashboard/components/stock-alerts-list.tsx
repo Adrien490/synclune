@@ -15,11 +15,11 @@ import { use } from "react";
 import { CHART_STYLES } from "../constants/chart-styles";
 
 interface StockAlertsListProps {
-	alertsPromise: Promise<GetDashboardStockAlertsReturn>;
+	listDataPromise: Promise<GetDashboardStockAlertsReturn>;
 }
 
-export function StockAlertsList({ alertsPromise }: StockAlertsListProps) {
-	const { alerts } = use(alertsPromise);
+export function StockAlertsList({ listDataPromise }: StockAlertsListProps) {
+	const { alerts } = use(listDataPromise);
 
 	return (
 		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>

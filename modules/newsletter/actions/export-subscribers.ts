@@ -16,7 +16,7 @@ import { exportSubscribersSchema } from "@/modules/newsletter/schemas/newsletter
  * @returns ActionState avec data.csv (string base64) et data.filename
  */
 export async function exportSubscribers(
-	_previousState: ActionState | null,
+	_previousState: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {

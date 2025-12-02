@@ -17,7 +17,7 @@ export async function OverviewSection() {
 	const topProductsPromise = fetchDashboardTopProducts()
 
 	return (
-		<>
+		<div className="space-y-6">
 			<DashboardErrorBoundary
 				fallback={<ChartError title="Erreur de chargement" description="Impossible de charger les indicateurs de performance" minHeight={120} />}
 			>
@@ -37,7 +37,7 @@ export async function OverviewSection() {
 					fallback={<ChartError title="Erreur de chargement" description="Impossible de charger les top produits" minHeight={300} />}
 				>
 					<Suspense fallback={<ChartSkeleton height={300} ariaLabel="Chargement des top produits" />}>
-						<TopProductsChart chartPromise={topProductsPromise} />
+						<TopProductsChart chartDataPromise={topProductsPromise} />
 					</Suspense>
 				</DashboardErrorBoundary>
 
@@ -80,6 +80,6 @@ export async function OverviewSection() {
 					<TrendsSection />
 				</Suspense>
 			</DashboardErrorBoundary>
-		</>
+		</div>
 	)
 }

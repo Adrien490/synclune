@@ -12,9 +12,10 @@ import {
 import type { RepeatCustomersReturn } from "../../types/dashboard.types";
 import { use } from "react";
 import { Cell, Pie, PieChart } from "recharts";
+import { CHART_STYLES } from "../../constants/chart-styles";
 
 interface RepeatVsNewChartProps {
-	chartPromise: Promise<RepeatCustomersReturn>;
+	chartDataPromise: Promise<RepeatCustomersReturn>;
 }
 
 const chartConfig = {
@@ -28,8 +29,8 @@ const chartConfig = {
 	},
 } satisfies ChartConfig;
 
-export function RepeatVsNewChart({ chartPromise }: RepeatVsNewChartProps) {
-	const data = use(chartPromise);
+export function RepeatVsNewChart({ chartDataPromise }: RepeatVsNewChartProps) {
+	const data = use(chartDataPromise);
 
 	const chartData = [
 		{
@@ -60,9 +61,9 @@ export function RepeatVsNewChart({ chartPromise }: RepeatVsNewChartProps) {
 	}
 
 	return (
-		<Card className="border-l-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
-				<CardTitle className="text-xl font-semibold tracking-wide">Repartition des clients</CardTitle>
+				<CardTitle className={CHART_STYLES.title}>Repartition des clients</CardTitle>
 				<CardDescription className="text-sm">
 					Nouveaux vs recurrents • Taux de recurrence: {data.repeatRate.toFixed(1)}%
 				</CardDescription>

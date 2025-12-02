@@ -32,6 +32,22 @@ pnpm seed             # Seed database
 
 # Email development
 pnpm email:dev        # Preview emails on port 3001
+
+# Utility scripts
+pnpm validate:changelogs        # Validate changelog MDX files
+pnpm verify:stripe              # Verify Stripe configuration
+pnpm validate:production-ready  # Pre-deployment validation
+pnpm generate:video-thumbnails  # Generate video thumbnails (requires FFmpeg)
+```
+
+### Manual Scripts
+
+```bash
+# Generate blur placeholders for images
+pnpm exec tsx scripts/generate-blur-placeholders.ts [--dry-run] [--parallel=N]
+
+# Clean up expired guest carts
+pnpm exec tsx scripts/cleanup-expired-carts.ts [--dry-run]
 ```
 
 ## Directory Structure
@@ -105,6 +121,125 @@ Each module in `modules/` follows a consistent pattern:
 | `medias` | Image/video management (UploadThing) |
 | `webhooks` | Stripe webhook handlers |
 
+## Database Schema
+
+### Overview
+
+- **30 models** organized by domain
+- **14 enums** for type safety
+- **PostgreSQL** via Neon serverless adapter
+- **Prisma 7** ORM with custom constraints
+
+### Enums Reference
+
+| Category | Enums |
+|----------|-------|
+| Auth | `Role` (USER, ADMIN), `AccountStatus` (ACTIVE, INACTIVE, PENDING_DELETION, ANONYMIZED) |
+| Product | `ProductStatus`, `CollectionStatus`, `MediaType`, `CurrencyCode` |
+| Shipping | `ShippingCarrier` (COLISSIMO, CHRONOPOST, MONDIAL_RELAY, DPD, OTHER), `ShippingMethod` |
+| Orders | `OrderStatus`, `PaymentStatus`, `PaymentMethod`, `FulfillmentStatus`, `InvoiceStatus` |
+| Refunds | `RefundReason`, `RefundStatus`, `RefundAction` |
+| Audit | `OrderAction`, `OperationCategory` (GOODS, SERVICES, MIXED - French fiscal requirement) |
+| Marketing | `NewsletterStatus` (PENDING, CONFIRMED, UNSUBSCRIBED), `StockNotificationStatus`, `DiscountType` |
+| Webhooks | `DisputeStatus`, `WebhookEventStatus` |
+
+### Models by Domain
+
+#### Auth & Users (5 models)
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| `User` | User accounts | role, email, stripeCustomerId, RGPD fields (termsAcceptedAt, marketingEmailConsentedAt, anonymizedAt) |
+| `Session` | Auth sessions | token, expiresAt, ipAddress, userAgent |
+| `Account` | OAuth providers | providerId, accountId, accessToken, refreshToken |
+| `Verification` | Email verification | identifier, value, expiresAt |
+| `Address` | Shipping/billing | firstName, lastName, address1, postalCode, city, country, isDefault |
+
+#### Catalog (8 models)
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| `ProductType` | Product categories | slug, label, isSystem |
+| `Color` | Color attributes | slug, name, hex |
+| `Material` | Material attributes | slug, name, description |
+| `Collection` | Product groupings | slug, name, status |
+| `ProductCollection` | Many-to-many join | isFeatured, addedAt |
+| `Product` | Main products | slug, title, status, minPriceInclTax, maxPriceInclTax, totalInventory |
+| `ProductSku` | Variants | sku, priceInclTax, compareAtPrice, inventory, colorId, materialId, size |
+| `SkuMedia` | Images/videos | url, thumbnailUrl, blurDataUrl, mediaType, isPrimary |
+
+#### Shopping (4 models)
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| `Cart` | Shopping carts | userId OR sessionId, expiresAt |
+| `CartItem` | Cart contents | skuId, quantity, priceAtAdd |
+| `Wishlist` | Favorites | userId (unique) |
+| `WishlistItem` | Wishlist contents | skuId, priceAtAdd |
+
+#### Orders & Fulfillment (4 models)
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| `Order` | Orders | orderNumber, stripe IDs, addresses snapshot, amounts, status, paymentStatus, fulfillmentStatus |
+| `OrderItem` | Line items | productSnapshot, skuSnapshot, price, quantity |
+| `OrderHistory` | Audit trail | action, previousStatus, newStatus, authorId, source |
+| `OrderNote` | Internal notes | content, authorId, authorName |
+
+#### Refunds (3 models)
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| `Refund` | Refund requests | amount, reason, status, stripeRefundId, processedAt |
+| `RefundItem` | Refunded items | orderItemId, quantity, amount, restock |
+| `RefundHistory` | Refund audit | action, note, authorId |
+
+#### Discounts (2 models)
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| `Discount` | Promo codes | code, type (PERCENTAGE/FIXED_AMOUNT), value, startsAt, endsAt, usageCount |
+| `DiscountUsage` | Usage tracking | discountId, orderId, userId, amountApplied |
+
+#### Marketing (2 models)
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| `NewsletterSubscriber` | Newsletter (double opt-in) | email, status, confirmationToken, confirmedAt, unsubscribeToken |
+| `StockNotificationRequest` | Back in stock alerts | skuId, email, status, notifiedAt |
+
+#### Webhooks & Disputes (2 models)
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| `WebhookEvent` | Idempotency | stripeEventId, eventType, status, attempts, payload |
+| `Dispute` | Chargebacks | stripeDisputeId, orderId, amount, status, evidenceDueBy |
+
+### Database Patterns
+
+#### Soft Deletes (10-year retention - Art. L123-22 Code de Commerce)
+
+Models with `deletedAt`: User, Product, ProductSku, Order, Refund, OrderNote, DiscountUsage, NewsletterSubscriber, StockNotificationRequest
+
+#### Data Snapshots
+
+- `CartItem.priceAtAdd` / `WishlistItem.priceAtAdd` - Price at add time
+- `OrderItem.productSnapshot` / `skuSnapshot` - Full product state at order
+- `Order.shippingAddress` / `billingAddress` - Address at order time
+
+#### Denormalized Fields
+
+`Product.minPriceInclTax`, `maxPriceInclTax`, `totalInventory` - Computed from active SKUs
+
+#### Custom Constraints
+
+- Partial unique index: `Address(userId)` WHERE `isDefault = true`
+- Check constraint: `ProductSku.inventory >= 0`
+
+#### Micro-Enterprise Tax Regime
+
+Article 293 B CGI: TVA non applicable (CA < 91,900€/year). All prices are final prices without VAT. Tax fields reserved for future migration.
+
 ## Key Technologies
 
 - **Auth**: Better Auth with email/password, Google OAuth, GitHub OAuth
@@ -116,6 +251,44 @@ Each module in `modules/` follows a consistent pattern:
 - **Emails**: React Email + Resend
 - **Rate Limiting**: Arcjet
 - **UI**: shadcn/ui + Tailwind CSS + Framer Motion animations
+
+## Environment Variables
+
+### Validation (`shared/lib/env.ts`)
+
+All environment variables are validated at startup with Zod. App exits with detailed error if validation fails.
+
+### Required Variables
+
+| Variable | Service | Format |
+|----------|---------|--------|
+| `DATABASE_URL` | Database | PostgreSQL connection string (Neon) |
+| `BETTER_AUTH_SECRET` | Auth | Min 32 chars, cryptographically secure |
+| `RESEND_API_KEY` | Email | Starts with `re_` |
+| `STRIPE_SECRET_KEY` | Payments | Starts with `sk_` |
+| `STRIPE_WEBHOOK_SECRET` | Webhooks | Starts with `whsec_` |
+| `UPLOADTHING_TOKEN` | Upload | UploadThing API token |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Payments | Starts with `pk_` |
+
+### Optional Variables
+
+| Variable | Service | Purpose |
+|----------|---------|---------|
+| `GOOGLE_CLIENT_ID` | Auth | Google OAuth |
+| `GOOGLE_CLIENT_SECRET` | Auth | Google OAuth |
+| `ARCJET_KEY` | Security | Rate limiting & bot protection |
+| `CRON_SECRET` | Cron | Webhook validation for scheduled tasks |
+| `STRIPE_SHIPPING_RATE_*` | Payments | Shipping rate IDs (FRANCE, DOM_TOM, EUROPE) |
+
+### Helper Functions
+
+```typescript
+import { env, getEnvOrThrow, getEnvOrDefault } from "@/shared/lib/env"
+
+const apiKey = env.STRIPE_SECRET_KEY        // Type-safe access
+const optional = getEnvOrDefault("KEY", "") // With fallback
+const required = getEnvOrThrow("KEY", ctx)  // Throws with context if missing
+```
 
 ## Server Actions Pattern
 
@@ -299,6 +472,61 @@ export function MyForm({ onSuccess }: { onSuccess?: () => void }) {
 }
 ```
 
+## Form Components
+
+### Architecture
+
+Forms are built on **TanStack Form** with React 19 integration via custom `useAppForm` hook. Documentation: `shared/components/forms/README.md`
+
+### Available Field Types
+
+| Component | Purpose | Built-in Label |
+|-----------|---------|----------------|
+| `InputField` | Text, email, password, number | Yes |
+| `InputGroupField` | Input with prefix/suffix addons | No |
+| `SelectField` | Typed select with generics | Yes |
+| `CheckboxField` | Single checkbox | Yes |
+| `RadioGroupField` | Radio button group | Yes |
+| `TextareaField` | Multi-line text | Yes |
+| `TextareaGroupField` | Textarea with addons | No |
+
+### Layout Components
+
+| Component | Purpose |
+|-----------|---------|
+| `FormLayout` | Grid container (1-4 columns, responsive gap) |
+| `FormSection` | Section with title and description |
+| `FormFooter` | Sticky footer with actions, required field hint |
+| `FieldLabel` | Label with optional/required indicators, tooltip support |
+
+### Validation Pattern
+
+```typescript
+const form = useAppForm<MyInput>({
+  defaultValues: { name: "", email: "" },
+  validators: {
+    onChange: mySchema,              // Inline Zod validation
+    onChangeAsync: asyncValidator,   // Async validation
+    onChangeListenTo: ["otherField"] // Cross-field validation
+  },
+})
+```
+
+### Field Usage
+
+```typescript
+<form.AppField
+  name="price"
+  children={(field) => (
+    <InputGroupField
+      field={field}
+      type="number"
+      addon={{ position: "end", content: "€" }}
+    />
+  )}
+/>
+```
+
 ## Hooks Pattern
 
 Client hooks for Server Actions with toast feedback:
@@ -340,6 +568,71 @@ export function useMyAction(options?: UseMyActionOptions) {
 }
 ```
 
+## Utilities
+
+### Date Formatting (`shared/utils/dates.ts`)
+
+```typescript
+formatDateShort(date)        // "1 déc 2024"
+formatDateTime(date)         // "1 déc 2024 à 14:30"
+formatRelativeTime(date)     // "il y a 2 jours"
+isRecent(date, daysAgo)      // true if within N days
+```
+
+### URL Parameter Parsing (`shared/utils/parse-search-params.ts`)
+
+```typescript
+searchParamParsers.cursor(value)      // 25-char CUID validation
+searchParamParsers.direction(value)   // "forward" | "backward"
+searchParamParsers.perPage(value)     // Number with min/max bounds
+searchParamParsers.search(value)      // String with max length
+searchParamParsers.enum(value, opts)  // Type-safe enum parsing
+searchParamParsers.boolean(value)     // Parses "true"/"false"
+searchParamParsers.date(value)        // ISO datetime
+searchParamParsers.stringArray(value) // Array with optional schema
+```
+
+### Callback Patterns (`shared/utils/with-callbacks.ts`)
+
+```typescript
+const [state, action] = useActionState(
+  withCallbacks(myServerAction, {
+    onStart: () => toast.loading("..."),
+    onEnd: (ref) => toast.dismiss(ref),
+    onSuccess: (result) => { /* custom logic */ },
+    onError: (result) => { /* error handling */ }
+  }),
+  undefined
+)
+```
+
+### Toast Callbacks (`shared/utils/create-toast-callbacks.ts`)
+
+```typescript
+createToastCallbacks({
+  loadingMessage: "Opération en cours...",
+  onSuccess: () => router.refresh(),
+})
+```
+
+### Sanitization (`shared/lib/sanitize.ts`)
+
+```typescript
+sanitizeForEmail(str) // Removes control chars, escapes HTML, 10k limit
+escapeHtml(str)       // Basic HTML entity escaping
+newlinesToBr(str)     // Converts \n to <br> (call AFTER sanitize)
+```
+
+### Error Handling (`shared/lib/actions/errors.ts`)
+
+```typescript
+// In catch blocks - converts any error to ActionState
+return handleActionError(e, "Erreur lors de la création")
+
+// HOF wrapper for entire action
+const safeAction = withErrorHandling(myAction, "Erreur par défaut")
+```
+
 ## State Management
 
 ### Zustand Stores (`shared/stores/`)
@@ -368,7 +661,24 @@ openDialog("delete-confirm", {
 })
 ```
 
-**Cookie Consent Store** - RGPD cookie preferences
+**Cookie Consent Store** - RGPD cookie preferences (persisted in localStorage)
+
+### Store Providers
+
+Providers use singleton pattern with hydration handling:
+
+```typescript
+// In root layout
+<CookieConsentStoreProvider>
+  <DialogStoreProvider>
+    <AlertDialogStoreProvider>
+      {children}
+    </AlertDialogStoreProvider>
+  </DialogStoreProvider>
+</CookieConsentStoreProvider>
+```
+
+**Hydration Fix**: Providers use `useEffect` fallback for `onRehydrateStorage` race condition with Zustand persist middleware.
 
 ### URL State Hooks (`shared/hooks/`)
 
@@ -432,7 +742,90 @@ const { cursor, hasMore, loadMore } = useCursorPagination()
 
 Framer Motion components: Fade, Slide, Stagger, Reveal, Pulse, Hover, Tap, Presence
 
+## Data Tables
+
+### Toolbar Components
+
+| Component | Purpose |
+|-----------|---------|
+| `DataTableToolbar` | Container for search, filters, actions (responsive, collapsible on mobile) |
+| `SelectionToolbar` | Bulk actions bar when items selected (animated counter) |
+| `FilterSheetWrapper` | Mobile-friendly side panel for filters |
+| `TableEmptyState` | Empty state with icon, title, description, optional action |
+
+### Pagination
+
+| Component | Pattern | Use Case |
+|-----------|---------|----------|
+| `Pagination` | Offset-based | Admin lists with page-size selector (20, 50, 100, 200) |
+| `CursorPagination` | Cursor-based | Large datasets with "Load more" pattern |
+
+### Table Hooks
+
+```typescript
+// URL-based filter state
+const { setFilter, removeFilter, hasActiveFilters, clearAllFilters } = useFilter({
+  filterPrefix: "filter_",
+  preservePage: false,
+})
+
+// URL-based selection for bulk operations
+const { selectedItems, handleSelectionChange, clearAll, getSelectedCount } = useSelection("selected")
+
+// Cursor pagination for streaming data
+const { cursor, hasMore, loadMore } = useCursorPagination()
+
+// Sort dropdown state
+const { value, setSort, clearSort, isPending } = useSortSelect()
+
+// Toolbar collapse state (cookie-persisted)
+const { isCollapsed, toggle, isPending } = useToolbarCollapsed()
+```
+
+### Row Actions Pattern
+
+```typescript
+// In table row component
+const { openDialog } = useDialogStore()
+const { openDialog: openAlertDialog } = useAlertDialogStore()
+
+// Non-destructive action
+openDialog("edit-product", { productId: "123" })
+
+// Destructive action (delete confirmation)
+openAlertDialog("delete-confirm", {
+  title: "Supprimer ?",
+  onConfirm: () => handleDelete()
+})
+```
+
 ## Prisma Patterns
+
+### Client Configuration (`shared/lib/prisma.ts`)
+
+```typescript
+import { PrismaClient } from "@/app/generated/prisma"
+import { PrismaNeon } from "@prisma/adapter-neon"
+import { Pool } from "@neondatabase/serverless"
+
+// Neon serverless adapter for edge compatibility
+const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+const adapter = new PrismaNeon(pool)
+export const prisma = new PrismaClient({ adapter })
+
+// Soft delete helpers
+export const notDeleted = { deletedAt: null } as const
+
+export const softDelete = {
+  order: (id: string) => prisma.order.update({
+    where: { id },
+    data: { deletedAt: new Date() }
+  }),
+  user: (id: string) => prisma.user.update({ ... }),
+  refund: (id: string) => prisma.refund.update({ ... }),
+  // ... other models
+}
+```
 
 ### Soft Deletes
 
@@ -486,6 +879,22 @@ Webhooks use `WebhookEvent` model to prevent duplicate processing:
 - 5-minute replay window
 - `stripeEventId` as idempotency key
 - Signature verification before processing
+
+### Cron Jobs (`vercel.json`)
+
+| Schedule | Endpoint | Purpose |
+|----------|----------|---------|
+| 2:00 AM UTC | `/api/cron/cleanup-carts` | Remove expired guest carts (>30 days) |
+| 3:00 AM UTC | `/api/cron/cleanup-newsletter-tokens` | Remove expired verification tokens |
+
+Both routes require `CRON_SECRET` header for verification:
+
+```typescript
+// In cron route handler
+if (request.headers.get("Authorization") !== `Bearer ${env.CRON_SECRET}`) {
+  return new Response("Unauthorized", { status: 401 })
+}
+```
 
 ## Email System
 
@@ -547,7 +956,36 @@ Each module exports constants in `constants/`:
 
 ## Security
 
-### Rate Limiting (Arcjet)
+### Rate Limiting Strategy
+
+**Dual-layer protection:**
+1. **Arcjet** - DDoS protection, bot detection, global rate limits
+2. **In-memory** - Per-action fine-grained limits
+
+#### Arcjet Instances (`shared/lib/arcjet.ts`)
+
+| Instance | Purpose | Config |
+|----------|---------|--------|
+| `aj` | General API | Shield + Bot Detection + Rate Limiting |
+| `ajNewsletter` | Newsletter subs | Strict, no bots allowed |
+| `ajAuth` | Authentication | 5 attempts / 15 minutes |
+| `ajEmailValidation` | Email checks | Built-in Arcjet validation |
+| `ajNewsletterConfirm` | Token validation | 10 / hour |
+| `ajNewsletterUnsubscribe` | Unsubscribe | 10 / hour |
+
+#### Per-Action Limits (`shared/lib/rate-limit-config.ts`)
+
+| Action | Limit | Window |
+|--------|-------|--------|
+| Cart operations | 15 | 1 minute |
+| Login attempts | 5 | 15 minutes |
+| Signups | 3 | 1 hour |
+| Newsletter | 5 | 1 hour |
+| Password reset | 3 | 15 minutes |
+
+*Dev mode multiplies all limits by 10.*
+
+#### Usage Pattern
 
 ```typescript
 import { enforceRateLimitForCurrentUser } from "@/shared/lib/actions"
@@ -580,6 +1018,29 @@ All inputs validated server-side with Zod:
 - Data export functionality (`modules/users/actions/export-user-data.ts`)
 - Anonymization fields available
 
+### Error Handling
+
+#### Error Boundaries
+
+```typescript
+// Custom error boundary pattern (e.g., GalleryErrorBoundary)
+export class GalleryErrorBoundary extends Component {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("[GalleryErrorBoundary] Erreur capturée:", error)
+    // TODO: Sentry integration for production monitoring
+  }
+}
+```
+
+#### Error Pages
+
+| File | Purpose | Accessibility |
+|------|---------|---------------|
+| `error.tsx` | Runtime errors | `role="alert"`, `aria-live="assertive"` |
+| `not-found.tsx` | 404 pages | Custom design with `aria-hidden` decorative elements |
+
+Both pages include retry functionality and proper error digest display.
+
 ## Performance
 
 ### Image Optimization
@@ -605,6 +1066,65 @@ Skeletons match exact structure of content for **zero CLS**.
 - Offset pagination for admin lists (with URL state)
 - Cursor pagination for large datasets (better performance)
 - Per-page options: 10, 25, 50, 100
+
+## SEO & Metadata
+
+### Configuration (`shared/constants/seo-config.ts`)
+
+```typescript
+import { SITE_URL, BUSINESS_INFO, SEO_DEFAULTS } from "@/shared/constants/seo-config"
+import { getLocalBusinessSchema, getWebSiteSchema } from "@/shared/constants/seo-config"
+```
+
+### Page Metadata Pattern
+
+```typescript
+// Static metadata in page.tsx
+export const metadata: Metadata = {
+  title: "Page Title",
+  description: "...",
+  openGraph: { type: "website", locale: "fr_FR", ... },
+}
+
+// Dynamic metadata
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const product = await getProduct(params.slug)
+  return generateProductMetadata(product)
+}
+```
+
+### Structured Data (JSON-LD)
+
+```typescript
+import { generateStructuredData } from "@/modules/products/utils/seo"
+
+// In page component
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{ __html: JSON.stringify(generateStructuredData(product)) }}
+/>
+```
+
+### Local Business Schema
+
+Includes SIREN/SIRET, GPS coordinates (Nantes), VAT info for local SEO.
+
+## Analytics
+
+### Vercel Analytics (RGPD-compliant)
+
+Analytics only loads if user accepted cookies:
+
+```typescript
+// shared/components/conditional-analytics.tsx
+export function ConditionalAnalytics() {
+  const { accepted } = useCookieConsentStore()
+  if (!accepted) return null
+  return <Analytics />
+}
+```
+
+Used in root layout alongside `<CookieBanner />` for RGPD compliance.
 
 ## Conventions
 

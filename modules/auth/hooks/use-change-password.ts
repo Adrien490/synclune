@@ -1,27 +1,31 @@
-import { ActionStatus } from "@/shared/types/server-action";
+"use client";
+
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 import { changePassword } from "../actions/change-password";
 
-export function useChangePassword(onOpenChange?: (open: boolean) => void) {
+interface UseChangePasswordOptions {
+	onSuccess?: () => void;
+	onOpenChange?: (open: boolean) => void;
+}
+
+export function useChangePassword(options?: UseChangePasswordOptions) {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			changePassword,
 			createToastCallbacks({
 				onSuccess: () => {
-					if (onOpenChange) {
+					options?.onSuccess?.();
+					if (options?.onOpenChange) {
 						setTimeout(() => {
-							onOpenChange(false);
+							options.onOpenChange?.(false);
 						}, 2000);
 					}
 				},
 			})
 		),
-		{
-			status: ActionStatus.INITIAL,
-			message: "",
-		}
+		undefined
 	);
 
 	return {

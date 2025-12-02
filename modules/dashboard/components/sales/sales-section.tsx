@@ -11,6 +11,8 @@ import { RevenueByCollectionChart } from "./revenue-by-collection-chart";
 import { RevenueByTypeChart } from "./revenue-by-type-chart";
 import { DiscountStatsCard } from "./discount-stats-card";
 import { KpisSkeleton, ChartSkeleton } from "../skeletons";
+import { DashboardErrorBoundary } from "../dashboard-error-boundary";
+import { ChartError } from "../chart-error";
 
 interface SalesSectionProps {
 	period: DashboardPeriod;
@@ -40,30 +42,50 @@ export async function SalesSection({
 	return (
 		<div className="space-y-6">
 			{/* KPIs Ventes */}
-			<Suspense fallback={<KpisSkeleton />}>
-				<SalesKpis kpisPromise={salesKpisPromise} />
-			</Suspense>
+			<DashboardErrorBoundary
+				fallback={<ChartError title="Erreur" description="Impossible de charger les indicateurs de ventes" minHeight={140} />}
+			>
+				<Suspense fallback={<KpisSkeleton count={4} ariaLabel="Chargement des indicateurs de ventes" />}>
+					<SalesKpis kpisPromise={salesKpisPromise} />
+				</Suspense>
+			</DashboardErrorBoundary>
 
 			{/* Taux d'abandon et Stats promos */}
 			<div className="grid gap-6 lg:grid-cols-2">
-				<Suspense fallback={<ChartSkeleton />}>
-					<CartAbandonmentCard dataPromise={abandonmentPromise} />
-				</Suspense>
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur" description="Impossible de charger le taux d'abandon" />}
+				>
+					<Suspense fallback={<ChartSkeleton />}>
+						<CartAbandonmentCard dataPromise={abandonmentPromise} />
+					</Suspense>
+				</DashboardErrorBoundary>
 
-				<Suspense fallback={<ChartSkeleton />}>
-					<DiscountStatsCard dataPromise={discountStatsPromise} />
-				</Suspense>
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur" description="Impossible de charger les stats promos" />}
+				>
+					<Suspense fallback={<ChartSkeleton />}>
+						<DiscountStatsCard dataPromise={discountStatsPromise} />
+					</Suspense>
+				</DashboardErrorBoundary>
 			</div>
 
 			{/* Graphiques revenus */}
 			<div className="grid gap-6 lg:grid-cols-2">
-				<Suspense fallback={<ChartSkeleton />}>
-					<RevenueByCollectionChart dataPromise={revenueByCollectionPromise} />
-				</Suspense>
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur" description="Impossible de charger les revenus par collection" />}
+				>
+					<Suspense fallback={<ChartSkeleton />}>
+						<RevenueByCollectionChart chartDataPromise={revenueByCollectionPromise} />
+					</Suspense>
+				</DashboardErrorBoundary>
 
-				<Suspense fallback={<ChartSkeleton />}>
-					<RevenueByTypeChart dataPromise={revenueByTypePromise} />
-				</Suspense>
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur" description="Impossible de charger les revenus par type" />}
+				>
+					<Suspense fallback={<ChartSkeleton />}>
+						<RevenueByTypeChart chartDataPromise={revenueByTypePromise} />
+					</Suspense>
+				</DashboardErrorBoundary>
 			</div>
 		</div>
 	);

@@ -72,7 +72,7 @@ export default async function AdminDashboardPage({
 					toDate={toDate}
 				/>
 				<div className="flex items-center gap-3">
-				{tab !== "inventory" && (
+				{(tab === "sales" || tab === "customers") && (
 					<Suspense fallback={null}>
 						<PeriodSelector />
 					</Suspense>

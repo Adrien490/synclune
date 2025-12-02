@@ -277,6 +277,7 @@ export async function getSkuDetails(input: {
 }
 
 // Action: Valider plusieurs SKUs d'un coup (pour validation du panier complet)
+// Optimisé: utilise une seule requête DB au lieu de N requêtes
 export async function validateCartItems(input: {
 	items: Array<{
 		skuId: string;
@@ -293,17 +294,63 @@ export async function validateCartItems(input: {
 	}>;
 }> {
 	try {
-		const validationResults = await Promise.all(
-			input.items.map(async (item) => {
-				const result = await validateSkuAndStock(item);
+		// Single batch query for all SKUs
+		const batchResults = await batchValidateSkusForMerge(input.items);
+
+		const validationResults = input.items.map((item) => {
+			const result = batchResults.get(item.skuId);
+
+			if (!result) {
 				return {
 					skuId: item.skuId,
-					isValid: result.success,
-					error: result.error,
-					availableStock: result.data?.sku.inventory,
+					isValid: false,
+					error: CART_ERROR_MESSAGES.SKU_NOT_FOUND,
+					availableStock: 0,
 				};
-			})
-		);
+			}
+
+			if (!result.isActive) {
+				return {
+					skuId: item.skuId,
+					isValid: false,
+					error: CART_ERROR_MESSAGES.SKU_INACTIVE,
+					availableStock: result.inventory,
+				};
+			}
+
+			if (result.productStatus !== "PUBLIC") {
+				return {
+					skuId: item.skuId,
+					isValid: false,
+					error: CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
+					availableStock: result.inventory,
+				};
+			}
+
+			if (result.inventory === 0) {
+				return {
+					skuId: item.skuId,
+					isValid: false,
+					error: CART_ERROR_MESSAGES.OUT_OF_STOCK,
+					availableStock: 0,
+				};
+			}
+
+			if (result.inventory < item.quantity) {
+				return {
+					skuId: item.skuId,
+					isValid: false,
+					error: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(result.inventory),
+					availableStock: result.inventory,
+				};
+			}
+
+			return {
+				skuId: item.skuId,
+				isValid: true,
+				availableStock: result.inventory,
+			};
+		});
 
 		const hasErrors = validationResults.some((result) => !result.isValid);
 

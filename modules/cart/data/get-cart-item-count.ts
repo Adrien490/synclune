@@ -61,17 +61,11 @@ export async function fetchCartItemCount(
 		return 0;
 	}
 
-	const cart = await prisma.cart.findFirst({
-		where: userId ? { userId } : { sessionId },
-		select: { id: true },
-	});
-
-	if (!cart) {
-		return 0;
-	}
-
+	// Single query: agrégation directe sur CartItem via relation cart
 	const result = await prisma.cartItem.aggregate({
-		where: { cartId: cart.id },
+		where: {
+			cart: userId ? { userId } : { sessionId },
+		},
 		_sum: {
 			quantity: true,
 		},

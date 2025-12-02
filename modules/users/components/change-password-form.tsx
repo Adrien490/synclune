@@ -14,7 +14,7 @@ interface ChangePasswordFormProps {
 }
 
 export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
-	const { action, isPending, state } = useChangePassword(onOpenChange);
+	const { action, isPending, state } = useChangePassword({ onOpenChange });
 	const [revokeOtherSessions, setRevokeOtherSessions] = useState(false);
 
 	// TanStack Form setup

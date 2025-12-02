@@ -18,7 +18,7 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
 			className={cn(className)}
 			onClick={() => {
 				startTransition(() => {
-					action();
+					action(new FormData());
 				});
 			}}
 		>

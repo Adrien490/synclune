@@ -23,7 +23,8 @@ export function InventoryKpis({ kpisPromise }: InventoryKpisProps) {
 				numericValue={kpis.outOfStock.count}
 				subtitle="SKUs sans stock"
 				icon={<PackageX className="h-4 w-4" />}
-				variant={kpis.outOfStock.count > 0 ? "danger" : "default"}
+				priority="alert"
+				status={kpis.outOfStock.count > 0 ? "danger" : "default"}
 			/>
 			<KpiCard
 				title="Stock bas"
@@ -31,7 +32,8 @@ export function InventoryKpis({ kpisPromise }: InventoryKpisProps) {
 				numericValue={kpis.lowStock.count}
 				subtitle={`< ${kpis.lowStock.threshold} unites`}
 				icon={<AlertTriangle className="h-4 w-4" />}
-				variant={kpis.lowStock.count > 0 ? "warning" : "default"}
+				priority="alert"
+				status={kpis.lowStock.count > 0 ? "warning" : "default"}
 			/>
 			<KpiCard
 				title="Valeur du stock"
@@ -41,6 +43,7 @@ export function InventoryKpis({ kpisPromise }: InventoryKpisProps) {
 				decimalPlaces={2}
 				subtitle={`${kpis.stockValue.totalUnits} unites`}
 				icon={<Wallet className="h-4 w-4" />}
+				priority="operational"
 			/>
 			<KpiCard
 				title="Demandes retour stock"
@@ -48,7 +51,7 @@ export function InventoryKpis({ kpisPromise }: InventoryKpisProps) {
 				numericValue={kpis.stockNotifications.pendingCount}
 				subtitle="en attente"
 				icon={<Bell className="h-4 w-4" />}
-				variant={kpis.stockNotifications.pendingCount > 0 ? "info" : "default"}
+				priority="info"
 			/>
 		</div>
 	);

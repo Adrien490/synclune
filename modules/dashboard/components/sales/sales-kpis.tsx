@@ -26,6 +26,8 @@ export function SalesKpis({ kpisPromise }: SalesKpisProps) {
 				evolution={kpis.revenue.evolution}
 				subtitle="vs periode precedente"
 				icon={<Euro className="h-4 w-4" />}
+				size="featured"
+				priority="critical"
 			/>
 			<KpiCard
 				title="Commandes"
@@ -34,6 +36,8 @@ export function SalesKpis({ kpisPromise }: SalesKpisProps) {
 				evolution={kpis.ordersCount.evolution}
 				subtitle="vs periode precedente"
 				icon={<ShoppingCart className="h-4 w-4" />}
+				size="featured"
+				priority="critical"
 			/>
 			<KpiCard
 				title="Panier moyen"
@@ -44,6 +48,7 @@ export function SalesKpis({ kpisPromise }: SalesKpisProps) {
 				evolution={kpis.averageOrderValue.evolution}
 				subtitle="vs periode precedente"
 				icon={<TrendingUp className="h-4 w-4" />}
+				priority="operational"
 			/>
 			<KpiCard
 				title="Taux de conversion"
@@ -54,6 +59,7 @@ export function SalesKpis({ kpisPromise }: SalesKpisProps) {
 				evolution={kpis.conversionRate.evolution}
 				subtitle="panier → commande"
 				icon={<Percent className="h-4 w-4" />}
+				priority="operational"
 			/>
 		</div>
 	);

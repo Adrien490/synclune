@@ -22,7 +22,7 @@ import { ChartEmpty } from "./chart-empty";
 import { useChartDrilldown, type ChartDrilldownProps } from "../hooks";
 
 interface TopProductsChartProps extends ChartDrilldownProps {
-	chartPromise: Promise<GetDashboardTopProductsReturn>;
+	chartDataPromise: Promise<GetDashboardTopProductsReturn>;
 }
 
 const chartConfig = {
@@ -32,8 +32,8 @@ const chartConfig = {
 	},
 } satisfies ChartConfig;
 
-export function TopProductsChart({ chartPromise, enableDrilldown = true }: TopProductsChartProps) {
-	const { products } = use(chartPromise);
+export function TopProductsChart({ chartDataPromise, enableDrilldown = true }: TopProductsChartProps) {
+	const { products } = use(chartDataPromise);
 	const { handleClick, ariaLabel } = useChartDrilldown("topProducts");
 
 	// Formater les données pour le chart

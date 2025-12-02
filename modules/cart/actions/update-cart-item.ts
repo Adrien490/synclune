@@ -100,12 +100,15 @@ export async function updateCartItem(
 
 		// 7. Transaction: Mettre à jour l'item et le panier
 		await prisma.$transaction(async (tx) => {
-			// 7a. Vérifier le stock disponible
-			const sku = await tx.productSku.findUnique({
-				where: { id: cartItem.skuId },
-				select: { inventory: true, isActive: true },
-			});
+			// 7a. Verrouiller le SKU avec FOR UPDATE pour éviter les race conditions sur le stock
+			const skuRows = await tx.$queryRaw<Array<{ inventory: number; isActive: boolean }>>`
+				SELECT inventory, "isActive"
+				FROM "ProductSku"
+				WHERE id = ${cartItem.skuId}
+				FOR UPDATE
+			`;
 
+			const sku = skuRows[0];
 			if (!sku || !sku.isActive) {
 				throw new Error("Ce produit n'est plus disponible");
 			}

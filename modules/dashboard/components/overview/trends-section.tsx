@@ -4,6 +4,8 @@ import { fetchRevenueTrends } from "../../data/get-revenue-trends"
 import { RevenueChart } from "../revenue-chart"
 import { RevenueYearChart } from "../revenue-year-chart"
 import { ChartSkeleton } from "../skeletons"
+import { DashboardErrorBoundary } from "../dashboard-error-boundary"
+import { ChartError } from "../chart-error"
 
 /**
  * Section Tendances du dashboard Overview
@@ -18,13 +20,21 @@ export async function TrendsSection() {
 		<div className="space-y-6">
 			{/* Charts revenus */}
 			<div className="grid gap-6">
-				<Suspense fallback={<ChartSkeleton height={300} ariaLabel="Chargement du graphique des revenus" />}>
-					<RevenueChart chartPromise={revenueChartPromise} />
-				</Suspense>
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur" description="Impossible de charger le graphique des revenus" minHeight={300} />}
+				>
+					<Suspense fallback={<ChartSkeleton height={300} ariaLabel="Chargement du graphique des revenus" />}>
+						<RevenueChart chartDataPromise={revenueChartPromise} />
+					</Suspense>
+				</DashboardErrorBoundary>
 
-				<Suspense fallback={<ChartSkeleton height={300} ariaLabel="Chargement des tendances annuelles" />}>
-					<RevenueYearChart chartPromise={revenueTrendsPromise} />
-				</Suspense>
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur" description="Impossible de charger les tendances annuelles" minHeight={300} />}
+				>
+					<Suspense fallback={<ChartSkeleton height={300} ariaLabel="Chargement des tendances annuelles" />}>
+						<RevenueYearChart chartDataPromise={revenueTrendsPromise} />
+					</Suspense>
+				</DashboardErrorBoundary>
 			</div>
 		</div>
 	)

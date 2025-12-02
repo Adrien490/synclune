@@ -22,7 +22,7 @@ import { CHART_STYLES } from "../../constants/chart-styles";
 import { useChartDrilldown, type ChartDrilldownProps } from "../../hooks";
 
 interface RevenueByTypeChartProps extends ChartDrilldownProps {
-	dataPromise: Promise<GetRevenueByTypeReturn>;
+	chartDataPromise: Promise<GetRevenueByTypeReturn>;
 }
 
 const CHART_COLORS = [
@@ -36,8 +36,8 @@ const CHART_COLORS = [
 /**
  * Graphique des revenus par type de produit
  */
-export function RevenueByTypeChart({ dataPromise, enableDrilldown = true }: RevenueByTypeChartProps) {
-	const data = use(dataPromise);
+export function RevenueByTypeChart({ chartDataPromise, enableDrilldown = true }: RevenueByTypeChartProps) {
+	const data = use(chartDataPromise);
 	const { handleClick } = useChartDrilldown("revenueByType");
 
 	// Preparer les donnees pour le graphique avec une cle unique

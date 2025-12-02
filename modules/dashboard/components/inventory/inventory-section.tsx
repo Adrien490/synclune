@@ -7,6 +7,8 @@ import { NeverSoldProductsList } from "./never-sold-products-list";
 import { StockByColorChart } from "./stock-by-color-chart";
 import { StockByMaterialChart } from "./stock-by-material-chart";
 import { KpisSkeleton, ChartSkeleton, ListSkeleton } from "../skeletons";
+import { DashboardErrorBoundary } from "../dashboard-error-boundary";
+import { ChartError } from "../chart-error";
 
 /**
  * Section Inventaire & Stock du dashboard
@@ -21,25 +23,41 @@ export async function InventorySection() {
 	return (
 		<div className="space-y-6">
 			{/* KPIs Inventaire */}
-			<Suspense fallback={<KpisSkeleton />}>
-				<InventoryKpis kpisPromise={inventoryKpisPromise} />
-			</Suspense>
+			<DashboardErrorBoundary
+				fallback={<ChartError title="Erreur" description="Impossible de charger les indicateurs d'inventaire" minHeight={140} />}
+			>
+				<Suspense fallback={<KpisSkeleton count={4} ariaLabel="Chargement des indicateurs d'inventaire" />}>
+					<InventoryKpis kpisPromise={inventoryKpisPromise} />
+				</Suspense>
+			</DashboardErrorBoundary>
 
 			{/* Graphiques stock */}
 			<div className="grid gap-6 lg:grid-cols-2">
-				<Suspense fallback={<ChartSkeleton />}>
-					<StockByColorChart dataPromise={stockByColorPromise} />
-				</Suspense>
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur" description="Impossible de charger le stock par couleur" />}
+				>
+					<Suspense fallback={<ChartSkeleton />}>
+						<StockByColorChart chartDataPromise={stockByColorPromise} />
+					</Suspense>
+				</DashboardErrorBoundary>
 
-				<Suspense fallback={<ChartSkeleton />}>
-					<StockByMaterialChart dataPromise={stockByMaterialPromise} />
-				</Suspense>
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur" description="Impossible de charger le stock par materiau" />}
+				>
+					<Suspense fallback={<ChartSkeleton />}>
+						<StockByMaterialChart chartDataPromise={stockByMaterialPromise} />
+					</Suspense>
+				</DashboardErrorBoundary>
 			</div>
 
 			{/* Produits jamais vendus */}
-			<Suspense fallback={<ListSkeleton />}>
-				<NeverSoldProductsList dataPromise={neverSoldPromise} />
-			</Suspense>
+			<DashboardErrorBoundary
+				fallback={<ChartError title="Erreur" description="Impossible de charger les produits jamais vendus" />}
+			>
+				<Suspense fallback={<ListSkeleton />}>
+					<NeverSoldProductsList listDataPromise={neverSoldPromise} />
+				</Suspense>
+			</DashboardErrorBoundary>
 		</div>
 	);
 }

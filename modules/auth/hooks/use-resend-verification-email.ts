@@ -1,12 +1,23 @@
 "use client";
 
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
-import { resendVerificationEmail } from "@/modules/auth/actions/resend-verification-email";
+import { resendVerificationEmail } from "../actions/resend-verification-email";
 
-export function useResendVerificationEmail() {
+interface UseResendVerificationEmailOptions {
+	onSuccess?: () => void;
+}
+
+export function useResendVerificationEmail(options?: UseResendVerificationEmailOptions) {
 	const [state, action, isPending] = useActionState(
-		resendVerificationEmail,
-		null
+		withCallbacks(
+			resendVerificationEmail,
+			createToastCallbacks({
+				onSuccess: options?.onSuccess,
+			})
+		),
+		undefined
 	);
 
 	return {

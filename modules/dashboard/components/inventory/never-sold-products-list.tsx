@@ -17,16 +17,16 @@ import { ExternalLink, Package } from "lucide-react";
 import type { GetNeverSoldProductsReturn } from "../../types/dashboard.types";
 
 interface NeverSoldProductsListProps {
-	dataPromise: Promise<GetNeverSoldProductsReturn>;
+	listDataPromise: Promise<GetNeverSoldProductsReturn>;
 }
 
 /**
  * Liste des produits jamais vendus
  */
 export function NeverSoldProductsList({
-	dataPromise,
+	listDataPromise,
 }: NeverSoldProductsListProps) {
-	const data = use(dataPromise);
+	const data = use(listDataPromise);
 
 	if (data.products.length === 0) {
 		return (

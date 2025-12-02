@@ -2,6 +2,8 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
+import { headers } from "next/headers";
 
 export interface CartValidationIssue {
 	cartItemId: string;
@@ -36,19 +38,41 @@ export interface ValidateCartResult {
  */
 export async function validateCart(cartId: string): Promise<ValidateCartResult> {
 	try {
-		// 1. Récupérer le panier avec tous ses items et relations
+		// 0. Rate limiting (protection anti-spam) - 100 requêtes par heure par IP
+		const headersList = await headers();
+		const ipAddress = await getClientIp(headersList);
+		const rateLimitId = `validate-cart:${ipAddress}`;
+		const rateLimit = checkRateLimit(rateLimitId, { limit: 100, windowMs: 60 * 60 * 1000 });
+
+		if (!rateLimit.success) {
+			return {
+				isValid: false,
+				issues: [],
+			};
+		}
+
+		// 1. Récupérer le panier avec tous ses items et relations (select optimisé)
 		const cart = await prisma.cart.findUnique({
 			where: { id: cartId },
-			include: {
+			select: {
+				id: true,
 				items: {
-					include: {
+					select: {
+						id: true,
+						skuId: true,
+						quantity: true,
 						sku: {
-							include: {
+							select: {
+								id: true,
+								isActive: true,
+								inventory: true,
+								deletedAt: true,
 								product: {
 									select: {
 										id: true,
 										title: true,
 										status: true,
+										deletedAt: true,
 									},
 								},
 							},
@@ -81,7 +105,19 @@ export async function validateCart(cartId: string): Promise<ValidateCartResult> 
 				continue;
 			}
 
-			// 2b. Vérifier l'activation du SKU
+			// 2b. Vérifier les soft deletes (SKU ou Product supprimé)
+			if (item.sku.deletedAt || item.sku.product.deletedAt) {
+				issues.push({
+					cartItemId: item.id,
+					skuId: item.skuId,
+					productTitle: item.sku.product.title,
+					issueType: "DELETED",
+					message: CART_ERROR_MESSAGES.PRODUCT_DELETED,
+				});
+				continue;
+			}
+
+			// 2c. Vérifier l'activation du SKU
 			if (!item.sku.isActive) {
 				issues.push({
 					cartItemId: item.id,
@@ -93,7 +129,7 @@ export async function validateCart(cartId: string): Promise<ValidateCartResult> 
 				continue;
 			}
 
-			// 2c. Vérifier le statut du produit
+			// 2d. Vérifier le statut du produit
 			if (item.sku.product.status !== "PUBLIC") {
 				issues.push({
 					cartItemId: item.id,
@@ -105,7 +141,7 @@ export async function validateCart(cartId: string): Promise<ValidateCartResult> 
 				continue;
 			}
 
-			// 2d. Vérifier le stock
+			// 2e. Vérifier le stock
 			if (item.sku.inventory === 0) {
 				issues.push({
 					cartItemId: item.id,

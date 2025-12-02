@@ -13,9 +13,10 @@ import type { GetDashboardOrdersStatusReturn, OrderStatusItem } from "@/modules/
 import { use } from "react";
 import { Cell, Pie, PieChart } from "recharts";
 import { useChartDrilldown, type ChartDrilldownProps } from "../hooks";
+import { CHART_STYLES } from "../constants/chart-styles";
 
 interface OrdersStatusChartProps extends ChartDrilldownProps {
-	chartPromise: Promise<GetDashboardOrdersStatusReturn>;
+	chartDataPromise: Promise<GetDashboardOrdersStatusReturn>;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -54,8 +55,8 @@ const chartConfig = {
 	},
 } satisfies ChartConfig;
 
-export function OrdersStatusChart({ chartPromise, enableDrilldown = true }: OrdersStatusChartProps) {
-	const { statuses } = use(chartPromise);
+export function OrdersStatusChart({ chartDataPromise, enableDrilldown = true }: OrdersStatusChartProps) {
+	const { statuses } = use(chartDataPromise);
 	const { handleClick, ariaLabel } = useChartDrilldown("ordersStatus");
 
 	// Formater les données pour le chart
@@ -78,9 +79,9 @@ export function OrdersStatusChart({ chartPromise, enableDrilldown = true }: Orde
 	};
 
 	return (
-		<Card className="border-l-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
-				<CardTitle className="text-xl font-semibold tracking-wide">Statuts des commandes</CardTitle>
+				<CardTitle className={CHART_STYLES.title}>Statuts des commandes</CardTitle>
 				<CardDescription className="text-sm">
 					Répartition de toutes les commandes par statut
 				</CardDescription>

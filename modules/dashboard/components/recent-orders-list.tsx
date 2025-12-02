@@ -18,18 +18,19 @@ import {
 	ORDER_STATUS_VARIANTS,
 	PAYMENT_STATUS_LABELS,
 } from "../constants/order-status";
+import { CHART_STYLES } from "../constants/chart-styles";
 
 interface RecentOrdersListProps {
-	ordersPromise: Promise<GetDashboardRecentOrdersReturn>;
+	listDataPromise: Promise<GetDashboardRecentOrdersReturn>;
 }
 
-export function RecentOrdersList({ ordersPromise }: RecentOrdersListProps) {
-	const { orders } = use(ordersPromise);
+export function RecentOrdersList({ listDataPromise }: RecentOrdersListProps) {
+	const { orders } = use(listDataPromise);
 
 	return (
-		<Card className="border-l-4 border-primary/40 bg-gradient-to-br from-primary/5 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
-				<CardTitle className="text-xl font-semibold tracking-wide">Dernières commandes</CardTitle>
+				<CardTitle className={CHART_STYLES.title}>Dernières commandes</CardTitle>
 				<CardDescription className="text-sm">Les 5 commandes les plus récentes</CardDescription>
 			</CardHeader>
 			<CardContent>

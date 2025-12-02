@@ -20,9 +20,10 @@ import type { GetRevenueYearReturn } from "../types/dashboard.types";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { ChartScrollContainer } from "./chart-scroll-container";
+import { CHART_STYLES } from "../constants/chart-styles";
 
 interface RevenueYearChartProps {
-	chartPromise: Promise<GetRevenueYearReturn>;
+	chartDataPromise: Promise<GetRevenueYearReturn>;
 }
 
 const chartConfig = {
@@ -32,17 +33,17 @@ const chartConfig = {
 	},
 } satisfies ChartConfig;
 
-export function RevenueYearChart({ chartPromise }: RevenueYearChartProps) {
-	const { data, totalRevenue, yoyEvolution } = use(chartPromise);
+export function RevenueYearChart({ chartDataPromise }: RevenueYearChartProps) {
+	const { data, totalRevenue, yoyEvolution } = use(chartDataPromise);
 
 	const isPositive = yoyEvolution >= 0;
 
 	return (
-		<Card className="border-l-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
 				<div className="flex items-center justify-between">
 					<div>
-						<CardTitle className="text-xl font-semibold tracking-wide">
+						<CardTitle className={CHART_STYLES.title}>
 							Tendances 12 mois
 						</CardTitle>
 						<CardDescription className="text-sm">
@@ -59,7 +60,7 @@ export function RevenueYearChart({ chartPromise }: RevenueYearChartProps) {
 						</p>
 						<div
 							className={`flex items-center gap-1 text-sm ${
-								isPositive ? "text-green-600" : "text-red-600"
+								isPositive ? CHART_STYLES.evolution.positive : CHART_STYLES.evolution.negative
 							}`}
 						>
 							{isPositive ? (

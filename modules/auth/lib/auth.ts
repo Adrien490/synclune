@@ -10,22 +10,15 @@ import { createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { customSession } from "better-auth/plugins";
 import Stripe from "stripe";
+import {
+	AUTH_PASSWORD_CONFIG,
+	AUTH_RATE_LIMIT_RULES,
+	AUTH_SESSION_CONFIG,
+	validateAuthEnvironment,
+} from "./auth-env";
 
-// Vérifier les variables d'environnement critiques en production
-if (process.env.NODE_ENV === "production") {
-	if (!process.env.STRIPE_SECRET_KEY) {
-		throw new Error("STRIPE_SECRET_KEY est requis en production");
-	}
-	if (!process.env.BETTER_AUTH_SECRET) {
-		throw new Error("BETTER_AUTH_SECRET est requis en production");
-	}
-	if (!process.env.BETTER_AUTH_URL) {
-		throw new Error("BETTER_AUTH_URL est requis en production");
-	}
-	if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-		// Google OAuth non configuré en production
-	}
-}
+// Valider les variables d'environnement au démarrage
+validateAuthEnvironment();
 
 // Initialiser Stripe client avec valeur par défaut pour le build
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -47,40 +40,9 @@ export const auth = betterAuth({
 	},
 	rateLimit: {
 		enabled: true,
-		window: 60, // 60 secondes
-		max: 100, // 100 requêtes max par minute (par défaut)
-		customRules: {
-			// Login: 5 tentatives par 15 minutes
-			"/sign-in/email": {
-				window: 15 * 60, // 15 minutes en secondes
-				max: 5,
-			},
-			// Signup: 3 inscriptions par heure
-			"/sign-up/email": {
-				window: 60 * 60, // 1 heure en secondes
-				max: 3,
-			},
-			// Password reset request: 3 demandes par heure
-			"/forget-password": {
-				window: 60 * 60, // 1 heure en secondes
-				max: 3,
-			},
-			// Password reset: 3 tentatives par heure
-			"/reset-password": {
-				window: 60 * 60, // 1 heure en secondes
-				max: 3,
-			},
-			// Email verification: 5 envois par heure
-			"/send-verification-email": {
-				window: 60 * 60, // 1 heure en secondes
-				max: 5,
-			},
-			// Change password: 3 changements par heure
-			"/change-password": {
-				window: 60 * 60, // 1 heure en secondes
-				max: 3,
-			},
-		},
+		window: 60,
+		max: 100,
+		customRules: AUTH_RATE_LIMIT_RULES,
 	},
 	socialProviders: {
 		google: {
@@ -103,9 +65,9 @@ export const auth = betterAuth({
 		onPasswordReset: async ({ user }) => {
 			// Mot de passe réinitialisé
 		},
-		resetPasswordTokenExpiresIn: 60 * 60, // 1 heure
-		minPasswordLength: 8,
-		maxPasswordLength: 128,
+		resetPasswordTokenExpiresIn: AUTH_PASSWORD_CONFIG.resetTokenExpiresIn,
+		minPasswordLength: AUTH_PASSWORD_CONFIG.minLength,
+		maxPasswordLength: AUTH_PASSWORD_CONFIG.maxLength,
 	},
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url, token }) => {
@@ -267,18 +229,9 @@ export const auth = betterAuth({
 		signUp: "/signup",
 	},
 	session: {
-		expiresIn: 60 * 60 * 24 * 7, // 7 jours (par défaut)
-		updateAge: 60 * 60 * 24, // 24 heures - la session est rafraîchie quotidiennement
-
-		// ✅ RGPD 2025 : Cookie Cache - Optimisation de performance
-		// ⚠️ IMPORTANT : Ces cookies (better-auth.session_token et better-auth.session_data)
-		//    sont créés UNIQUEMENT lors de la connexion/inscription.
-		//    Aucun cookie Better Auth n'est placé avant l'authentification.
-		//    Comportement vérifié et conforme RGPD.
-		cookieCache: {
-			enabled: true,
-			maxAge: 5 * 60, // 5 minutes (en secondes, pas millisecondes)
-		},
+		expiresIn: AUTH_SESSION_CONFIG.expiresIn,
+		updateAge: AUTH_SESSION_CONFIG.updateAge,
+		cookieCache: AUTH_SESSION_CONFIG.cookieCache,
 	},
 	hooks: {
 		after: createAuthMiddleware(async (ctx) => {

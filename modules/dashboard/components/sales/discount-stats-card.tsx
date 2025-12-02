@@ -4,6 +4,7 @@ import { use } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Percent, Tag, ShoppingBag, AlertCircle } from "lucide-react";
 import type { DiscountStatsReturn } from "../../types/dashboard.types";
+import { CHART_STYLES } from "../../constants/chart-styles";
 
 interface DiscountStatsCardProps {
 	dataPromise: Promise<DiscountStatsReturn>;
@@ -18,9 +19,9 @@ export function DiscountStatsCard({ dataPromise }: DiscountStatsCardProps) {
 	const data = use(dataPromise);
 
 	return (
-		<Card className="border-l-4 border-primary/30 bg-gradient-to-br from-primary/3 to-transparent hover:shadow-lg transition-all duration-300">
+		<Card className={`${CHART_STYLES.card} hover:shadow-lg transition-all duration-300`}>
 			<CardHeader>
-				<CardTitle className="text-xl font-semibold tracking-wide flex items-center gap-2">
+				<CardTitle className={`${CHART_STYLES.title} flex items-center gap-2`}>
 					<Tag className="h-5 w-5 text-primary" />
 					Codes promo
 				</CardTitle>
@@ -42,8 +43,8 @@ export function DiscountStatsCard({ dataPromise }: DiscountStatsCardProps) {
 						<p
 							className={`text-xs ${
 								data.revenueWithDiscount.evolution >= 0
-									? "text-green-600"
-									: "text-red-600"
+									? CHART_STYLES.evolution.positive
+									: CHART_STYLES.evolution.negative
 							}`}
 						>
 							{formatEvolution(data.revenueWithDiscount.evolution)} vs periode prec.
@@ -63,7 +64,7 @@ export function DiscountStatsCard({ dataPromise }: DiscountStatsCardProps) {
 							className={`text-xs ${
 								data.totalDiscountAmount.evolution >= 0
 									? "text-orange-600"
-									: "text-green-600"
+									: CHART_STYLES.evolution.positive
 							}`}
 						>
 							{formatEvolution(data.totalDiscountAmount.evolution)} vs periode prec.
@@ -82,8 +83,8 @@ export function DiscountStatsCard({ dataPromise }: DiscountStatsCardProps) {
 						<p
 							className={`text-xs ${
 								data.ordersWithDiscount.evolution >= 0
-									? "text-green-600"
-									: "text-red-600"
+									? CHART_STYLES.evolution.positive
+									: CHART_STYLES.evolution.negative
 							}`}
 						>
 							{formatEvolution(data.ordersWithDiscount.evolution)} vs periode prec.

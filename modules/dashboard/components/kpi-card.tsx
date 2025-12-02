@@ -64,8 +64,6 @@ export interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	};
 	subtitle?: string;
 	icon?: React.ReactNode;
-	/** @deprecated Utiliser priority et status a la place */
-	variant?: "default" | "danger" | "warning" | "info";
 	/** Valeur numerique pour l'animation (si fournie, utilise NumberTicker) */
 	numericValue?: number;
 	/** Suffixe a afficher apres la valeur animee (ex: " €", " %") */
@@ -84,14 +82,6 @@ export interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	sparklineData?: { value: number }[];
 }
 
-/** @deprecated Utiliser les variants CVA */
-const variantStyles = {
-	default: "border-primary/40 from-primary/5",
-	danger: "border-red-500/50 from-red-500/5",
-	warning: "border-orange-500/50 from-orange-500/5",
-	info: "border-blue-500/50 from-blue-500/5",
-};
-
 export function KpiCard({
 	title,
 	value,
@@ -99,7 +89,6 @@ export function KpiCard({
 	badge,
 	subtitle,
 	icon,
-	variant = "default",
 	size = "default",
 	priority = "operational",
 	status = "default",
@@ -236,11 +225,8 @@ export function KpiCard({
 		</>
 	);
 
-	// Utiliser CVA pour les variants, avec fallback pour retrocompatibilite
 	const cardClassName = cn(
 		kpiCardVariants({ size, priority, status }),
-		// Retrocompatibilite: si variant (deprecie) est utilise et pas de priority, appliquer les anciens styles
-		!priority && variant !== "default" && variantStyles[variant],
 		href && "cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 	);
 
