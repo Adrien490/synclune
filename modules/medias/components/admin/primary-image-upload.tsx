@@ -1,25 +1,34 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
-import { useDeleteUploadThingFiles } from "@/modules/medias/lib/uploadthing";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import Image from "next/image";
-import { startTransition, useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { MediaTypeBadge } from "@/modules/medias/components/media-type-badge";
+import { DELETE_PRIMARY_IMAGE_DIALOG_ID } from "./delete-primary-image-alert-dialog";
+
+/**
+ * Détecte le type de média à partir de l'URL si non fourni
+ */
+function detectMediaTypeFromUrl(url?: string): "IMAGE" | "VIDEO" | undefined {
+	if (!url) return undefined;
+	const extension = url.toLowerCase().match(/\.(\w+)(?:\?|#|$)/)?.[1];
+	const videoExtensions = ["mp4", "webm", "ogg", "ogv", "mov", "avi", "mkv"];
+	if (extension && videoExtensions.includes(extension)) {
+		return "VIDEO";
+	}
+	return "IMAGE";
+}
 
 interface PrimaryImageUploadProps {
 	imageUrl?: string;
 	mediaType?: "IMAGE" | "VIDEO";
+	/**
+	 * URL de la miniature pour les vidéos (poster)
+	 */
+	thumbnailUrl?: string;
 	onRemove: () => void;
 	renderUploadZone: () => React.ReactNode;
 	/**
@@ -32,17 +41,21 @@ interface PrimaryImageUploadProps {
 export function PrimaryImageUpload({
 	imageUrl,
 	mediaType,
+	thumbnailUrl,
 	onRemove,
 	renderUploadZone,
 	skipUtapiDelete,
 }: PrimaryImageUploadProps) {
-	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const videoRef = useRef<HTMLVideoElement>(null);
+	const deleteDialog = useAlertDialog(DELETE_PRIMARY_IMAGE_DIALOG_ID);
+
+	// Détection automatique du mediaType si non fourni
+	const effectiveMediaType = mediaType ?? detectMediaTypeFromUrl(imageUrl);
 
 	// Cleanup video element on unmount or when URL changes to prevent memory leaks
 	useEffect(() => {
+		const video = videoRef.current;
 		return () => {
-			const video = videoRef.current;
 			if (video) {
 				video.pause();
 				video.src = "";
@@ -51,26 +64,12 @@ export function PrimaryImageUpload({
 		};
 	}, [imageUrl]);
 
-	const { isPending, deleteFiles } = useDeleteUploadThingFiles({
-		onSuccess: () => {
-			onRemove();
-			setShowDeleteDialog(false);
-		},
-	});
-
-	const handleDelete = () => {
+	const handleOpenDeleteDialog = () => {
 		if (!imageUrl) return;
-
-		// Si skipUtapiDelete, on supprime juste localement sans passer par UTAPI
-		if (skipUtapiDelete) {
-			onRemove();
-			setShowDeleteDialog(false);
-			return;
-		}
-
-		// Sinon, suppression immédiate via UTAPI
-		startTransition(() => {
-			deleteFiles(imageUrl);
+		deleteDialog.open({
+			imageUrl,
+			skipUtapiDelete,
+			onRemove,
 		});
 	};
 
@@ -88,11 +87,16 @@ export function PrimaryImageUpload({
 						className="relative w-full max-w-md"
 					>
 						<div className="relative aspect-square w-full rounded-lg overflow-hidden border-2 border-primary/20 shadow group bg-muted">
-							{mediaType === "VIDEO" ? (
-								<div className="relative w-full h-full">
+							{effectiveMediaType === "VIDEO" ? (
+								<div
+									className="relative w-full h-full"
+									role="img"
+									aria-label="Aperçu du média principal"
+								>
 									<video
 										ref={videoRef}
 										src={imageUrl}
+										poster={thumbnailUrl}
 										className="w-full h-full object-cover"
 										loop
 										muted
@@ -120,8 +124,12 @@ export function PrimaryImageUpload({
 									{/* Icône play au centre */}
 									<div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 transition-opacity">
 										<div className="bg-black/70 rounded-full p-4 shadow-xl">
-											<svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 16 16">
-												<path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+											<svg
+												className="w-8 h-8 text-white"
+												fill="currentColor"
+												viewBox="0 0 16 16"
+											>
+												<path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z" />
 											</svg>
 										</div>
 									</div>
@@ -137,28 +145,25 @@ export function PrimaryImageUpload({
 								/>
 							)}
 
-							{/* Badge étoile (seulement si IMAGE) */}
-							{mediaType !== "VIDEO" && (
-								<div className="absolute top-2 left-2 z-10">
-									<div className="bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded-md shadow flex items-center gap-1">
-										<span>★</span>
-										<span>Principal</span>
-									</div>
+							{/* Badge Principal (toujours visible) */}
+							<div className="absolute top-2 left-2 z-10">
+								<div className="bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded-md shadow flex items-center gap-1">
+									<span>★</span>
+									<span>Principal</span>
 								</div>
-							)}
+							</div>
 
-							{/* Overlay au hover */}
-							<div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+							{/* Overlay au hover/focus */}
+							<div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center">
 								<Button
 									type="button"
 									variant="destructive"
 									size="sm"
-									onClick={() => setShowDeleteDialog(true)}
-									disabled={isPending}
+									onClick={handleOpenDeleteDialog}
 									className="gap-2"
-									aria-label="Supprimer l'image principale"
+									aria-label="Supprimer le média principal"
 								>
-									<X className="h-4 w-4" />
+									<Trash2 className="h-4 w-4" />
 									Supprimer
 								</Button>
 							</div>
@@ -176,45 +181,6 @@ export function PrimaryImageUpload({
 					</motion.div>
 				)}
 			</AnimatePresence>
-
-			{/* Dialog de confirmation de suppression */}
-			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Confirmer la suppression</DialogTitle>
-						<DialogDescription>
-							{skipUtapiDelete
-								? "Êtes-vous sûr de vouloir supprimer ce média principal ? Les modifications seront effectives après validation du formulaire."
-								: "Êtes-vous sûr de vouloir supprimer ce média principal ? Cette action est irréversible."}
-						</DialogDescription>
-					</DialogHeader>
-					<DialogFooter>
-						<DialogClose asChild>
-							<Button variant="outline" disabled={isPending}>
-								Annuler
-							</Button>
-						</DialogClose>
-						<Button
-							variant="destructive"
-							onClick={handleDelete}
-							disabled={isPending}
-							className="gap-2"
-						>
-							{isPending ? (
-								<>
-									<Loader2 className="h-4 w-4 animate-spin" />
-									Suppression...
-								</>
-							) : (
-								<>
-									<X className="h-4 w-4" />
-									{skipUtapiDelete ? "Supprimer" : "Supprimer définitivement"}
-								</>
-							)}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
 		</div>
 	);
 }

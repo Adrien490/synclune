@@ -2,7 +2,7 @@
 
 import { FieldLabel, FormSection } from "@/shared/components/forms";
 import { ImageCounterBadge } from "@/modules/medias/components/image-counter-badge";
-import { ImageGallery } from "@/modules/medias/components/admin/image-gallery";
+import { MediaGallery } from "@/modules/medias/components/admin/media-gallery";
 import { PrimaryImageUpload } from "@/modules/medias/components/admin/primary-image-upload";
 import { useAutoVideoThumbnail } from "@/modules/medias/hooks/use-auto-video-thumbnail";
 import { Button } from "@/shared/components/ui/button";
@@ -578,7 +578,7 @@ export function CreateProductVariantForm({
 														animate={{ opacity: 1 }}
 														exit={{ opacity: 0 }}
 													>
-														<ImageGallery
+														<MediaGallery
 															images={field.state.value}
 															onRemove={(index) => field.removeValue(index)}
 															skipUtapiDelete={true}

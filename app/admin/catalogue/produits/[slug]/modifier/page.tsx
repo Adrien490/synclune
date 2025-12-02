@@ -4,6 +4,8 @@ import { getProductTypes } from "@/modules/product-types/data/get-product-types"
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { notFound } from "next/navigation";
 import { EditProductForm } from "@/modules/products/components/admin/edit-product-form";
+import { DeletePrimaryImageAlertDialog } from "@/modules/medias/components/admin/delete-primary-image-alert-dialog";
+import { DeleteGalleryMediaAlertDialog } from "@/modules/medias/components/admin/delete-gallery-media-alert-dialog";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -75,6 +77,9 @@ export default async function EditProductPage({
 				collections={collectionsData.collections}
 				colors={colorsData.colors}
 			/>
+
+			<DeletePrimaryImageAlertDialog />
+			<DeleteGalleryMediaAlertDialog />
 		</div>
 	);
 }
