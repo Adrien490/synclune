@@ -7,8 +7,6 @@ const emptyVariants = cva(
 		variants: {
 			variant: {
 				default: "border border-dashed border-border",
-				jewelry: "border border-primary/15 bg-gradient-to-br from-primary/5 via-transparent to-secondary/10 backdrop-blur-sm",
-				luxury: "bg-gradient-organic border border-primary/20 shadow-lg",
 			},
 		},
 		defaultVariants: {

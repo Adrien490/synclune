@@ -130,7 +130,7 @@ export async function ProductsDataTable({
 		return (
 			<Empty className="py-12">
 				<EmptyHeader>
-					<EmptyMedia variant="jewelry">
+					<EmptyMedia>
 						<Package />
 					</EmptyMedia>
 					<EmptyTitle>Aucun bijou trouvé</EmptyTitle>
