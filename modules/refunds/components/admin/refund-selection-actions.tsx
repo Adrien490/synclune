@@ -100,7 +100,7 @@ export function RefundSelectionActions() {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending}>
+							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
 								{isApprovePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -143,6 +143,7 @@ export function RefundSelectionActions() {
 							<AlertDialogAction
 								type="submit"
 								disabled={isPending}
+								onClick={(e) => e.preventDefault()}
 								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isRejectPending ? (

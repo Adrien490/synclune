@@ -186,7 +186,10 @@ export function ProductVariantSelectionActions() {
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => deleteSkus(selectedItems)}
+							onClick={(e) => {
+								e.preventDefault();
+								deleteSkus(selectedItems);
+							}}
 							disabled={isDeleting}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>

@@ -82,6 +82,7 @@ export function ToggleDiscountStatusAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							onClick={(e) => e.preventDefault()}
 							className={cn(
 								"text-white",
 								isActive

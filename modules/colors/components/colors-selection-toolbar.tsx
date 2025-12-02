@@ -102,6 +102,7 @@ export function ColorsSelectionToolbar({}: ColorsSelectionToolbarProps) {
 							<AlertDialogAction
 								type="submit"
 								disabled={isPending}
+								onClick={(e) => e.preventDefault()}
 								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isPending ? (

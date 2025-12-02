@@ -129,7 +129,7 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending}>
+							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
 								{isUnsubscribePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -169,7 +169,7 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending}>
+							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
 								{isResubscribePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -214,6 +214,7 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 							<AlertDialogAction
 								type="submit"
 								disabled={isPending}
+								onClick={(e) => e.preventDefault()}
 								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isDeletePending ? (

@@ -132,7 +132,10 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => unsubscribe(subscriber.id)}
+							onClick={(e) => {
+								e.preventDefault();
+								unsubscribe(subscriber.id);
+							}}
 							disabled={isPending}
 						>
 							{isPending ? (
@@ -166,7 +169,10 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => resubscribe(subscriber.id)}
+							onClick={(e) => {
+								e.preventDefault();
+								resubscribe(subscriber.id);
+							}}
 							disabled={isPending}
 						>
 							{isPending ? (
@@ -202,7 +208,10 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => deleteSubscriber(subscriber.id)}
+							onClick={(e) => {
+								e.preventDefault();
+								deleteSubscriber(subscriber.id);
+							}}
 							disabled={isPending}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>

@@ -123,6 +123,7 @@ export function ChangeProductStatusAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							onClick={(e) => e.preventDefault()}
 							className={cn("text-white", config.color)}
 						>
 							{isPending ? (

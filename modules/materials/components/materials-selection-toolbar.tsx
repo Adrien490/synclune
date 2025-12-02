@@ -133,6 +133,7 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 							<AlertDialogAction
 								type="submit"
 								disabled={isPending}
+								onClick={(e) => e.preventDefault()}
 								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isDeletePending ? (
@@ -179,7 +180,7 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending}>
+							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
 								{isTogglePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -224,7 +225,7 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending}>
+							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
 								{isTogglePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />

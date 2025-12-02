@@ -101,6 +101,7 @@ export function ArchiveCollectionAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							onClick={(e) => e.preventDefault()}
 							className={
 								isArchiving
 									? "bg-orange-600 text-white hover:bg-orange-700"

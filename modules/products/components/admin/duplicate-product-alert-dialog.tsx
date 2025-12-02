@@ -80,6 +80,7 @@ export function DuplicateProductAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
+							onClick={(e) => e.preventDefault()}
 						>
 							{isPending ? (
 								<>

@@ -251,6 +251,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<AlertDialogAction
 								type="submit"
 								disabled={isPending}
+								onClick={(e) => e.preventDefault()}
 								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isDeletePending ? (
@@ -289,7 +290,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending}>
+							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
 								{isSuspendPending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -326,7 +327,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending}>
+							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
 								{isRestorePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -368,7 +369,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending}>
+							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
 								{isChangeRolePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -407,7 +408,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending}>
+							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
 								{isChangeRolePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />

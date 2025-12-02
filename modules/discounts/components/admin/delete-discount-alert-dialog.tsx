@@ -85,6 +85,7 @@ export function DeleteDiscountAlertDialog() {
 						<AlertDialogAction
 							type="submit"
 							disabled={isPending || usageCount > 0}
+							onClick={(e) => e.preventDefault()}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isPending ? (
