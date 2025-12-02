@@ -11,7 +11,7 @@ export const createProductFormOpts = {
 		status: "DRAFT" as ProductStatus,
 		initialSku: {
 			sku: "",
-			priceInclTaxEuros: 0,
+			priceInclTaxEuros: null as number | null,
 			compareAtPriceEuros: undefined as number | undefined,
 			inventory: 1,
 			isDefault: true,

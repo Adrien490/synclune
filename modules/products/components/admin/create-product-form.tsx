@@ -1021,20 +1021,24 @@ export function CreateProductForm({
 													if (isUploading) {
 														return (
 															<div
-																className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg z-10"
+																className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg z-10"
 																role="status"
 																aria-live="polite"
 															>
+																{/* Barre de progression visuelle */}
+																<div className="w-3/4 h-1.5 bg-muted rounded-full overflow-hidden">
+																	<div
+																		className="h-full bg-primary transition-all duration-300 ease-out"
+																		style={{ width: `${uploadProgress}%` }}
+																	/>
+																</div>
 																<div className="text-center">
 																	<TextShimmer
 																		className="text-sm font-medium"
 																		duration={1.5}
 																	>
-																		Ajout en cours...
+																		{`Ajout en cours... ${uploadProgress}%`}
 																	</TextShimmer>
-																	<p className="text-lg font-semibold text-primary mt-1">
-																		{uploadProgress}%
-																	</p>
 																</div>
 															</div>
 														);
