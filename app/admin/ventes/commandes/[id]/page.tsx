@@ -62,14 +62,14 @@ export default async function OrderDetailPage({
 			{/* Bouton retour mobile */}
 			<Link
 				href="/admin/ventes/commandes"
-				className="sm:hidden flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+				className="md:hidden flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
 			>
 				<ChevronLeft className="h-4 w-4" aria-hidden="true" />
 				Retour aux commandes
 			</Link>
 
 			{/* Breadcrumb (caché sur mobile) */}
-			<Breadcrumb className="hidden sm:flex">
+			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>

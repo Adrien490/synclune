@@ -55,7 +55,7 @@ export default async function EditProductPage({
 	return (
 		<div className="space-y-6">
 			{/* Breadcrumb personnalise avec titre du produit */}
-			<Breadcrumb>
+			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>

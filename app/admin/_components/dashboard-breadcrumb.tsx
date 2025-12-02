@@ -8,16 +8,15 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
-import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { ChevronLeft, MoreHorizontal } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 import { navigationData } from "./navigation-config";
 
@@ -119,12 +118,7 @@ function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
  */
 export function DashboardBreadcrumb() {
 	const pathname = usePathname();
-	const router = useRouter();
 	const breadcrumbs = generateBreadcrumbs(pathname);
-
-	const currentPage = breadcrumbs[breadcrumbs.length - 1];
-	const previousPage =
-		breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2] : null;
 
 	// Déterminer si on doit collapser les segments
 	const shouldCollapse = breadcrumbs.length > MAX_VISIBLE_SEGMENTS;
@@ -146,34 +140,7 @@ export function DashboardBreadcrumb() {
 	}
 
 	return (
-		<>
-			{/* Version mobile : Bouton back + page actuelle */}
-			<nav
-				className="flex items-center gap-2 md:hidden min-w-0"
-				aria-label="Fil d'Ariane"
-			>
-				{previousPage && (
-					<Button
-						variant="ghost"
-						size="sm"
-						className="size-9 p-0 shrink-0"
-						onClick={() => router.push(previousPage.href)}
-						aria-label={`Retour à ${previousPage.label}`}
-					>
-						<ChevronLeft className="h-4 w-4" aria-hidden="true" />
-					</Button>
-				)}
-				<span
-					className="text-sm font-medium truncate min-w-0"
-					aria-current="page"
-					title={currentPage.label}
-				>
-					{currentPage.label}
-				</span>
-			</nav>
-
-			{/* Version desktop : Breadcrumb complet avec collapse */}
-			<Breadcrumb className="hidden md:block min-w-0" aria-label="Fil d'Ariane">
+		<Breadcrumb className="hidden md:block min-w-0" aria-label="Fil d'Ariane">
 				<BreadcrumbList className="flex-nowrap">
 					{/* Premier segment (Tableau de bord) */}
 					<BreadcrumbItem className="shrink-0">
@@ -242,7 +209,6 @@ export function DashboardBreadcrumb() {
 						)
 					)}
 				</BreadcrumbList>
-			</Breadcrumb>
-		</>
+		</Breadcrumb>
 	);
 }

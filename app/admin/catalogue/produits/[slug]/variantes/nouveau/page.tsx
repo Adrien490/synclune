@@ -54,7 +54,7 @@ export default async function NewProductVariantPage({
 	return (
 		<div className="space-y-6">
 			{/* Breadcrumb personnalise */}
-			<Breadcrumb>
+			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>

@@ -157,7 +157,7 @@ export default async function ProductVariantsPage({
 			<BulkUpdatePriceDialog />
 
 			{/* Breadcrumb personnalise avec titre du produit */}
-			<Breadcrumb>
+			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
