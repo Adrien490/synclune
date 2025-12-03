@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
@@ -67,18 +67,18 @@ export function BulkUpdatePriceDialog() {
 			(mode === "absolute" && value > 0));
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => !open && !isPending && close()}>
-			<DialogContent className="sm:max-w-[450px]">
+		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && !isPending && close()}>
+			<ResponsiveDialogContent className="sm:max-w-[450px]">
 				<form onSubmit={handleSubmit}>
-					<DialogHeader>
+					<ResponsiveDialogHeader>
 						<div className="flex items-center gap-2">
 							<DollarSign className="h-5 w-5 text-primary" />
-							<DialogTitle>Modifier les prix</DialogTitle>
+							<ResponsiveDialogTitle>Modifier les prix</ResponsiveDialogTitle>
 						</div>
-						<DialogDescription>
+						<ResponsiveDialogDescription>
 							{count} variante{count > 1 ? "s" : ""} selectionnee{count > 1 ? "s" : ""}
-						</DialogDescription>
-					</DialogHeader>
+						</ResponsiveDialogDescription>
+					</ResponsiveDialogHeader>
 
 					<div className="py-6 space-y-6">
 						{/* Mode selection */}
@@ -167,7 +167,7 @@ export function BulkUpdatePriceDialog() {
 						</div>
 					</div>
 
-					<DialogFooter>
+					<ResponsiveDialogFooter>
 						<Button
 							type="button"
 							variant="outline"
@@ -186,9 +186,9 @@ export function BulkUpdatePriceDialog() {
 								<>Appliquer</>
 							)}
 						</Button>
-					</DialogFooter>
+					</ResponsiveDialogFooter>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

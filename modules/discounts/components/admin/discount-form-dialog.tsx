@@ -2,11 +2,11 @@
 
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { FieldLabel, FormLayout, useAppForm } from "@/shared/components/tanstack-form";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { createDiscount } from "@/modules/discounts/actions/create-discount";
@@ -106,7 +106,7 @@ export function DiscountFormDialog() {
 	}, [discount, form]);
 
 	return (
-		<Dialog
+		<ResponsiveDialog
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open && !isPending) {
@@ -114,12 +114,12 @@ export function DiscountFormDialog() {
 				}
 			}}
 		>
-			<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle>
+			<ResponsiveDialogContent className="max-w-2xl">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>
 						{isUpdateMode ? "Modifier le code promo" : "Créer un code promo"}
-					</DialogTitle>
-				</DialogHeader>
+					</ResponsiveDialogTitle>
+				</ResponsiveDialogHeader>
 
 				<form
 					action={action}
@@ -292,7 +292,7 @@ export function DiscountFormDialog() {
 						</form.Subscribe>
 					</div>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

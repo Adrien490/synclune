@@ -4,11 +4,11 @@ import { CollectionStatus } from "@/app/generated/prisma/enums";
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Label } from "@/shared/components/ui/label";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import {
@@ -123,7 +123,7 @@ export function CollectionFormDialog() {
 	}, [collection, form]);
 
 	return (
-		<Dialog
+		<ResponsiveDialog
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open && !isPending) {
@@ -131,12 +131,12 @@ export function CollectionFormDialog() {
 				}
 			}}
 		>
-			<DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle>
+			<ResponsiveDialogContent className="max-w-lg">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>
 						{isUpdateMode ? "Modifier la collection" : "Créer une collection"}
-					</DialogTitle>
-				</DialogHeader>
+					</ResponsiveDialogTitle>
+				</ResponsiveDialogHeader>
 
 				<form
 					action={action}
@@ -263,7 +263,7 @@ export function CollectionFormDialog() {
 						</form.Subscribe>
 					</div>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

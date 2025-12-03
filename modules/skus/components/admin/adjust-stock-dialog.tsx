@@ -3,13 +3,13 @@
 import { useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -50,15 +50,15 @@ function AdjustStockFormContent({
 
 	return (
 		<>
-			<DialogHeader>
-				<DialogTitle className="flex items-center gap-2">
+			<ResponsiveDialogHeader>
+				<ResponsiveDialogTitle className="flex items-center gap-2">
 					<Package className="h-5 w-5 text-primary" />
 					Ajuster le stock
-				</DialogTitle>
-				<DialogDescription>
+				</ResponsiveDialogTitle>
+				<ResponsiveDialogDescription>
 					Variante: <span className="font-semibold">{skuName}</span>
-				</DialogDescription>
-			</DialogHeader>
+				</ResponsiveDialogDescription>
+			</ResponsiveDialogHeader>
 
 			<form action={action} className="space-y-4 py-6">
 				{/* Hidden fields */}
@@ -168,7 +168,7 @@ function AdjustStockFormContent({
 					)}
 				</form.Field>
 
-				<DialogFooter className="pt-2">
+				<ResponsiveDialogFooter className="pt-2">
 					<Button
 						type="button"
 						variant="outline"
@@ -187,7 +187,7 @@ function AdjustStockFormContent({
 							<>Confirmer</>
 						)}
 					</Button>
-				</DialogFooter>
+				</ResponsiveDialogFooter>
 			</form>
 		</>
 	);
@@ -197,8 +197,8 @@ export function AdjustStockDialog() {
 	const { isOpen, data, close } = useDialog<AdjustStockDialogData>(ADJUST_STOCK_DIALOG_ID);
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<DialogContent className="sm:max-w-[400px]">
+		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
+			<ResponsiveDialogContent className="sm:max-w-[400px]">
 				{data && (
 					<AdjustStockFormContent
 						skuId={data.skuId}
@@ -207,7 +207,7 @@ export function AdjustStockDialog() {
 						onClose={close}
 					/>
 				)}
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

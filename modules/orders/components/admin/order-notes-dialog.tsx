@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useOrderNotes } from "@/modules/orders/hooks/use-order-notes";
@@ -74,14 +74,14 @@ export function OrderNotesDialog() {
 	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
-				<DialogHeader>
-					<DialogTitle>Notes internes</DialogTitle>
-					<DialogDescription>
+		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
+			<ResponsiveDialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>Notes internes</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
 						Commande: <span className="font-semibold font-mono">{data?.orderNumber}</span>
-					</DialogDescription>
-				</DialogHeader>
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 
 				{/* Formulaire d'ajout */}
 				<div className="space-y-2 pb-4 border-b">
@@ -165,7 +165,7 @@ export function OrderNotesDialog() {
 						Fermer
 					</Button>
 				</div>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

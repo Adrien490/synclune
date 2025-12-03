@@ -3,13 +3,13 @@
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
@@ -94,15 +94,15 @@ function UpdateTrackingFormContent({
 
 	return (
 		<>
-			<DialogHeader>
-				<DialogTitle className="flex items-center gap-2">
+			<ResponsiveDialogHeader>
+				<ResponsiveDialogTitle className="flex items-center gap-2">
 					<Truck className="h-5 w-5" />
 					Modifier le suivi
-				</DialogTitle>
-				<DialogDescription>
+				</ResponsiveDialogTitle>
+				<ResponsiveDialogDescription>
 					Commande <strong>{orderNumber}</strong>
-				</DialogDescription>
-			</DialogHeader>
+				</ResponsiveDialogDescription>
+			</ResponsiveDialogHeader>
 
 			<form
 				action={action}
@@ -221,7 +221,7 @@ function UpdateTrackingFormContent({
 				</div>
 
 				{/* Submit buttons */}
-				<DialogFooter>
+				<ResponsiveDialogFooter>
 					<Button
 						type="button"
 						variant="outline"
@@ -236,7 +236,7 @@ function UpdateTrackingFormContent({
 					>
 						{isPending ? "Mise à jour..." : "Mettre à jour"}
 					</Button>
-				</DialogFooter>
+				</ResponsiveDialogFooter>
 			</form>
 		</>
 	);
@@ -252,8 +252,8 @@ export function UpdateTrackingDialog() {
 	};
 
 	return (
-		<Dialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<DialogContent className="sm:max-w-md">
+		<ResponsiveDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveDialogContent className="sm:max-w-md">
 				{dialog.data && (
 					<UpdateTrackingFormContent
 						orderId={dialog.data.orderId}
@@ -265,7 +265,7 @@ export function UpdateTrackingDialog() {
 						onClose={dialog.close}
 					/>
 				)}
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

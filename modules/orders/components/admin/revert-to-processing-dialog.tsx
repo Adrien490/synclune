@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -54,11 +54,11 @@ export function RevertToProcessingDialog() {
 	};
 
 	return (
-		<Dialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Annuler l'expédition</DialogTitle>
-					<DialogDescription asChild>
+		<ResponsiveDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveDialogContent>
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>Annuler l'expédition</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription asChild>
 						<div>
 							<p>
 								Es-tu sûr de vouloir annuler l'expédition de la commande{" "}
@@ -71,8 +71,8 @@ export function RevertToProcessingDialog() {
 								</p>
 							)}
 						</div>
-					</DialogDescription>
-				</DialogHeader>
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 
 				<div className="space-y-2 py-4">
 					<Label htmlFor="reason">
@@ -90,7 +90,7 @@ export function RevertToProcessingDialog() {
 					</p>
 				</div>
 
-				<DialogFooter>
+				<ResponsiveDialogFooter>
 					<Button variant="outline" onClick={() => handleOpenChange(false)}>
 						Fermer
 					</Button>
@@ -101,8 +101,8 @@ export function RevertToProcessingDialog() {
 					>
 						Annuler l'expédition
 					</Button>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+				</ResponsiveDialogFooter>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

@@ -5,11 +5,11 @@ import { useAppForm } from "@/shared/components/tanstack-form";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Label } from "@/shared/components/ui/label";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { useCreateAddress } from "@/modules/addresses/hooks/use-create-address";
@@ -108,7 +108,7 @@ export function AddressFormDialog({
 		mode === "create" ? createHook : updateHook;
 
 	return (
-		<Dialog
+		<ResponsiveDialog
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open) {
@@ -123,12 +123,12 @@ export function AddressFormDialog({
 				}
 			}}
 		>
-			<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle>
+			<ResponsiveDialogContent className="max-w-2xl">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>
 						{mode === "create" ? "Ajouter une adresse" : "Modifier l'adresse"}
-					</DialogTitle>
-				</DialogHeader>
+					</ResponsiveDialogTitle>
+				</ResponsiveDialogHeader>
 
 				<form
 					action={action}
@@ -455,7 +455,7 @@ export function AddressFormDialog({
 						</form.Subscribe>
 					</div>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

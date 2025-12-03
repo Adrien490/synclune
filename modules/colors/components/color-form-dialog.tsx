@@ -10,11 +10,11 @@ import {
 	ColorPickerSelection,
 } from "@/shared/components/ui/color-picker";
 import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Label } from "@/shared/components/ui/label";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { useAppForm } from "@/shared/components/tanstack-form";
@@ -95,7 +95,7 @@ export function ColorFormDialog() {
 	}, [color, form]);
 
 	return (
-		<Dialog
+		<ResponsiveDialog
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open && !isPending) {
@@ -103,12 +103,12 @@ export function ColorFormDialog() {
 				}
 			}}
 		>
-			<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle>
+			<ResponsiveDialogContent className="max-w-2xl">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>
 						{isUpdateMode ? "Modifier la couleur" : "Créer une couleur"}
-					</DialogTitle>
-				</DialogHeader>
+					</ResponsiveDialogTitle>
+				</ResponsiveDialogHeader>
 
 				<form
 					action={action}
@@ -210,7 +210,7 @@ export function ColorFormDialog() {
 						</form.Subscribe>
 					</div>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

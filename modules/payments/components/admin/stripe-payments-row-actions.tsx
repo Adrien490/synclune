@@ -2,12 +2,12 @@
 
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -94,14 +94,14 @@ export function StripePaymentsRowActions({
 				</DropdownMenuContent>
 			</DropdownMenu>
 
-			<Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-				<DialogContent className="max-w-2xl">
-					<DialogHeader>
-						<DialogTitle>Détails du paiement</DialogTitle>
-						<DialogDescription>
+			<ResponsiveDialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+				<ResponsiveDialogContent className="max-w-2xl">
+					<ResponsiveDialogHeader>
+						<ResponsiveDialogTitle>Détails du paiement</ResponsiveDialogTitle>
+						<ResponsiveDialogDescription>
 							Commande: {payment.orderNumber}
-						</DialogDescription>
-					</DialogHeader>
+						</ResponsiveDialogDescription>
+					</ResponsiveDialogHeader>
 					<div className="space-y-4">
 						<div className="grid grid-cols-2 gap-4">
 							<div>
@@ -139,8 +139,8 @@ export function StripePaymentsRowActions({
 							</p>
 						</div>
 					</div>
-				</DialogContent>
-			</Dialog>
+				</ResponsiveDialogContent>
+			</ResponsiveDialog>
 		</>
 	);
 }

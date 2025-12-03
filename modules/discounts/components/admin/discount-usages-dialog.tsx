@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import {
 	Table,
 	TableBody,
@@ -66,14 +66,14 @@ export function DiscountUsagesDialog() {
 	}, [isOpen, data]);
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
-				<DialogHeader>
-					<DialogTitle>Utilisations du code promo</DialogTitle>
-					<DialogDescription>
+		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
+			<ResponsiveDialogContent className="sm:max-w-[700px]">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>Utilisations du code promo</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
 						Code: <span className="font-semibold font-mono">{data?.discountCode}</span>
-					</DialogDescription>
-				</DialogHeader>
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 
 				<div className="flex-1 overflow-auto">
 					{isLoading ? (
@@ -160,7 +160,7 @@ export function DiscountUsagesDialog() {
 						Fermer
 					</Button>
 				</div>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

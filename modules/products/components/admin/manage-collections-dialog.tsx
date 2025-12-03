@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useUpdateProductCollections } from "@/modules/products/hooks/use-update-product-collections";
@@ -81,15 +81,15 @@ export function ManageCollectionsDialog() {
 	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<DialogContent className="sm:max-w-[450px]">
+		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
+			<ResponsiveDialogContent className="sm:max-w-[450px]">
 				<form onSubmit={handleSubmit}>
-					<DialogHeader>
-						<DialogTitle>Gérer les collections</DialogTitle>
-						<DialogDescription>
+					<ResponsiveDialogHeader>
+						<ResponsiveDialogTitle>Gérer les collections</ResponsiveDialogTitle>
+						<ResponsiveDialogDescription>
 							Produit: <span className="font-semibold">{data?.productTitle}</span>
-						</DialogDescription>
-					</DialogHeader>
+						</ResponsiveDialogDescription>
+					</ResponsiveDialogHeader>
 
 					<div className="py-6">
 						{isLoading ? (
@@ -127,7 +127,7 @@ export function ManageCollectionsDialog() {
 						)}
 					</div>
 
-					<DialogFooter>
+					<ResponsiveDialogFooter>
 						<Button
 							type="button"
 							variant="outline"
@@ -146,9 +146,9 @@ export function ManageCollectionsDialog() {
 								<>Enregistrer</>
 							)}
 						</Button>
-					</DialogFooter>
+					</ResponsiveDialogFooter>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

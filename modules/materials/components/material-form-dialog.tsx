@@ -2,11 +2,11 @@
 
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { useAppForm } from "@/shared/components/tanstack-form";
 import { createMaterial } from "@/modules/materials/actions/create-material";
@@ -89,7 +89,7 @@ export function MaterialFormDialog() {
 	}, [material, form]);
 
 	return (
-		<Dialog
+		<ResponsiveDialog
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open && !isPending) {
@@ -97,12 +97,12 @@ export function MaterialFormDialog() {
 				}
 			}}
 		>
-			<DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle>
+			<ResponsiveDialogContent className="max-w-lg">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>
 						{isUpdateMode ? "Modifier le matériau" : "Créer un matériau"}
-					</DialogTitle>
-				</DialogHeader>
+					</ResponsiveDialogTitle>
+				</ResponsiveDialogHeader>
 
 				<form
 					action={action}
@@ -182,7 +182,7 @@ export function MaterialFormDialog() {
 						</form.Subscribe>
 					</div>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

@@ -2,12 +2,12 @@
 
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -206,15 +206,15 @@ export function ExportInvoicesButton() {
 			</DropdownMenu>
 
 			{/* Dialog pour export personnalisé */}
-			<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-				<DialogContent className="sm:max-w-[500px]">
-					<DialogHeader>
-						<DialogTitle>Export personnalisé du livre de recettes</DialogTitle>
-						<DialogDescription>
+			<ResponsiveDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+				<ResponsiveDialogContent className="sm:max-w-[500px]">
+					<ResponsiveDialogHeader>
+						<ResponsiveDialogTitle>Export personnalisé du livre de recettes</ResponsiveDialogTitle>
+						<ResponsiveDialogDescription>
 							Configurez les filtres pour générer votre export comptable au
 							format CSV.
-						</DialogDescription>
-					</DialogHeader>
+						</ResponsiveDialogDescription>
+					</ResponsiveDialogHeader>
 
 					<div className="grid gap-4 py-4">
 						{/* Type de période */}
@@ -361,8 +361,8 @@ export function ExportInvoicesButton() {
 							)}
 						</Button>
 					</div>
-				</DialogContent>
-			</Dialog>
+				</ResponsiveDialogContent>
+			</ResponsiveDialog>
 		</>
 	);
 }

@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -66,15 +66,15 @@ export function UpdatePriceDialog() {
 	const isValid = priceValue > 0 && (!compareAtPrice || compareAtPriceValue > priceValue);
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<DialogContent className="sm:max-w-[400px]">
+		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
+			<ResponsiveDialogContent className="sm:max-w-[400px]">
 				<form onSubmit={handleSubmit}>
-					<DialogHeader>
-						<DialogTitle>Modifier le prix</DialogTitle>
-						<DialogDescription>
+					<ResponsiveDialogHeader>
+						<ResponsiveDialogTitle>Modifier le prix</ResponsiveDialogTitle>
+						<ResponsiveDialogDescription>
 							Variante: <span className="font-semibold">{data?.skuName}</span>
-						</DialogDescription>
-					</DialogHeader>
+						</ResponsiveDialogDescription>
+					</ResponsiveDialogHeader>
 
 					<div className="py-6 space-y-4">
 						<div>
@@ -126,7 +126,7 @@ export function UpdatePriceDialog() {
 						</div>
 					</div>
 
-					<DialogFooter>
+					<ResponsiveDialogFooter>
 						<Button
 							type="button"
 							variant="outline"
@@ -145,9 +145,9 @@ export function UpdatePriceDialog() {
 								<>Enregistrer</>
 							)}
 						</Button>
-					</DialogFooter>
+					</ResponsiveDialogFooter>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

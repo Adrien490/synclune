@@ -19,7 +19,6 @@ import { useGallerySwipe } from "@/modules/medias/hooks/use-gallery-swipe";
 import { useMediaErrors } from "@/modules/medias/hooks/use-media-errors";
 import {
 	MAX_IMAGE_SIZE,
-	LIGHTBOX_QUALITY,
 	nextImageUrl,
 	IMAGE_SIZES,
 	DEVICE_SIZES,

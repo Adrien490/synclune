@@ -2,12 +2,12 @@
 
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { useCreateProductTypeForm } from "@/modules/product-types/hooks/use-create-product-type-form";
 import { useUpdateProductTypeForm } from "@/modules/product-types/hooks/use-update-product-type-form";
@@ -54,7 +54,7 @@ export function ProductTypeFormDialog() {
 	if (!productType) {
 		const { form, action, isPending } = createFormHook;
 		return (
-			<Dialog
+			<ResponsiveDialog
 				open={isOpen}
 				onOpenChange={(open) => {
 					if (!open && !isPending) {
@@ -62,13 +62,13 @@ export function ProductTypeFormDialog() {
 					}
 				}}
 			>
-				<DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle>Créer un type de produit</DialogTitle>
-						<DialogDescription>
+				<ResponsiveDialogContent className="max-w-md">
+					<ResponsiveDialogHeader>
+						<ResponsiveDialogTitle>Créer un type de produit</ResponsiveDialogTitle>
+						<ResponsiveDialogDescription>
 							Ajoutez un nouveau type pour catégoriser vos produits.
-						</DialogDescription>
-					</DialogHeader>
+						</ResponsiveDialogDescription>
+					</ResponsiveDialogHeader>
 
 					<form
 						action={action}
@@ -138,15 +138,15 @@ export function ProductTypeFormDialog() {
 							</form.Subscribe>
 						</div>
 					</form>
-				</DialogContent>
-			</Dialog>
+				</ResponsiveDialogContent>
+			</ResponsiveDialog>
 		);
 	}
 
 	// Render update form
 	const { form, action, isPending } = updateFormHook;
 	return (
-		<Dialog
+		<ResponsiveDialog
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open && !isPending) {
@@ -154,14 +154,14 @@ export function ProductTypeFormDialog() {
 				}
 			}}
 		>
-			<DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle>Modifier le type de produit</DialogTitle>
-					<DialogDescription>
+			<ResponsiveDialogContent className="max-w-md">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>Modifier le type de produit</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
 						Modifiez les informations du type. Les changements seront
 						appliqués à tous les produits utilisant ce type.
-					</DialogDescription>
-				</DialogHeader>
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 
 				<form
 					action={action}
@@ -233,7 +233,7 @@ export function ProductTypeFormDialog() {
 						</form.Subscribe>
 					</div>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

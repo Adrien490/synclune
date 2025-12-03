@@ -3,13 +3,13 @@
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+	ResponsiveDialogTrigger,
+} from "@/shared/components/ui/responsive-dialog";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import {
 	Tooltip,
@@ -217,10 +217,10 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 				</Tooltip>
 
 				{/* Dialog avec formulaire de contact */}
-				<Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
+				<ResponsiveDialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
 					<Tooltip>
 						<TooltipTrigger asChild>
-							<DialogTrigger asChild>
+							<ResponsiveDialogTrigger asChild>
 								<Button
 									ref={mainButtonRef}
 									size="lg"
@@ -240,7 +240,7 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 								>
 									<MessageSquare className="h-6 w-6" aria-hidden="true" />
 								</Button>
-							</DialogTrigger>
+							</ResponsiveDialogTrigger>
 						</TooltipTrigger>
 						<TooltipContent side="left" sideOffset={12}>
 							<p className="font-medium">Contacter Adri</p>
@@ -250,14 +250,14 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 						</TooltipContent>
 					</Tooltip>
 
-					<DialogContent className="sm:max-w-[525px] max-h-[90vh] flex flex-col">
-						<DialogHeader className="shrink-0">
-							<DialogTitle>Contacter Adri</DialogTitle>
-							<DialogDescription>
+					<ResponsiveDialogContent className="sm:max-w-[525px]">
+						<ResponsiveDialogHeader className="shrink-0">
+							<ResponsiveDialogTitle>Contacter Adri</ResponsiveDialogTitle>
+							<ResponsiveDialogDescription>
 								Signale un bug, demande une nouvelle fonctionnalité ou pose une
 								question.
-							</DialogDescription>
-						</DialogHeader>
+							</ResponsiveDialogDescription>
+						</ResponsiveDialogHeader>
 
 						<form
 							action={action}
@@ -358,7 +358,7 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 							<form.Subscribe selector={(formState) => [formState.canSubmit]}>
 								{([canSubmit]) => (
 									<div className="flex justify-end gap-2">
-										<DialogTrigger asChild>
+										<ResponsiveDialogTrigger asChild>
 											<Button
 												type="button"
 												variant="outline"
@@ -366,7 +366,7 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 											>
 												Annuler
 											</Button>
-										</DialogTrigger>
+										</ResponsiveDialogTrigger>
 										<Button
 											type="submit"
 											disabled={
@@ -384,8 +384,8 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 								)}
 							</form.Subscribe>
 						</form>
-					</DialogContent>
-				</Dialog>
+					</ResponsiveDialogContent>
+				</ResponsiveDialog>
 
 				{/* Description cachée pour screen readers */}
 				<span id="fab-description" className="sr-only">

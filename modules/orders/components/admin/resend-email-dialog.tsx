@@ -6,13 +6,13 @@ import {
 	FulfillmentStatus,
 } from "@/app/generated/prisma/browser";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@/shared/components/ui/responsive-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
@@ -94,15 +94,15 @@ export function ResendEmailDialog() {
 	});
 
 	return (
-		<Dialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<DialogContent className="sm:max-w-[425px]">
-				<DialogHeader>
-					<DialogTitle>Renvoyer un email</DialogTitle>
-					<DialogDescription>
+		<ResponsiveDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveDialogContent className="sm:max-w-[425px]">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>Renvoyer un email</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
 						Choisissez le type d'email à renvoyer pour la commande{" "}
 						<strong>{dialog.data?.orderNumber}</strong>
-					</DialogDescription>
-				</DialogHeader>
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 
 				<div className="py-4">
 					<RadioGroup
@@ -144,7 +144,7 @@ export function ResendEmailDialog() {
 					)}
 				</div>
 
-				<DialogFooter>
+				<ResponsiveDialogFooter>
 					<Button
 						variant="outline"
 						onClick={() => handleOpenChange(false)}
@@ -165,8 +165,8 @@ export function ResendEmailDialog() {
 							</>
 						)}
 					</Button>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+				</ResponsiveDialogFooter>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }
