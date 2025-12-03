@@ -6,9 +6,7 @@ import {
 	ChevronRight,
 	ExternalLink,
 	LogOut,
-	MessageSquare,
 	MoreHorizontal,
-	Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -55,10 +53,6 @@ const drawerItemStyles = {
 	active: "bg-accent/50 text-foreground font-semibold",
 	inactive:
 		"text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium",
-} as const;
-
-const quickActionStyles = {
-	base: "flex flex-col items-center justify-center gap-2 p-4 rounded-lg motion-safe:transition-all motion-safe:active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-muted-foreground hover:text-foreground hover:bg-accent/50",
 } as const;
 
 interface BottomNavigationProps {
@@ -159,8 +153,8 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 									</Avatar>
 									<div className="flex-1 min-w-0">
 										<p className="text-sm font-medium truncate">{user.name}</p>
-										<p className="text-xs text-muted-foreground">
-											Voir mon compte
+										<p className="text-xs text-muted-foreground truncate">
+											{user.email}
 										</p>
 									</div>
 									<ChevronRight
@@ -168,32 +162,6 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 										aria-hidden="true"
 									/>
 								</Link>
-
-								{/* Actions rapides */}
-								<section aria-label="Actions rapides" className="space-y-2">
-									<SectionHeader icon={Zap} label="Actions rapides" />
-									<div className="grid grid-cols-2 gap-3">
-										<Link
-											href="/"
-											target="_blank"
-											rel="noopener noreferrer"
-											onClick={closeDrawer}
-											aria-label="Voir le site (s'ouvre dans un nouvel onglet)"
-											className={quickActionStyles.base}
-										>
-											<ExternalLink className="h-5 w-5" aria-hidden="true" />
-											<span className="text-xs text-center">Voir le site</span>
-										</Link>
-										<Link
-											href="/admin/contact"
-											onClick={closeDrawer}
-											className={quickActionStyles.base}
-										>
-											<MessageSquare className="h-5 w-5" aria-hidden="true" />
-											<span className="text-xs text-center">Contacter Adri</span>
-										</Link>
-									</div>
-								</section>
 
 								{/* Groupes de navigation */}
 								{secondaryGroups.map((group) => (
@@ -207,9 +175,29 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 							</div>
 						</ScrollArea>
 
-						{/* Logout Footer */}
-						<DrawerFooter>
-							<Separator className="mb-4" />
+						{/* Footer sticky avec actions */}
+						<DrawerFooter className="border-t pt-3 mt-0">
+							{/* Voir le site */}
+							<Link
+								href="/"
+								target="_blank"
+								rel="noopener noreferrer"
+								onClick={closeDrawer}
+								className={cn(
+									"w-full flex items-center justify-center gap-2 p-3 rounded-lg",
+									"text-muted-foreground hover:text-foreground hover:bg-accent/50",
+									"motion-safe:transition-all motion-safe:active:scale-95",
+									"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+								)}
+								aria-label="Voir le site (s'ouvre dans un nouvel onglet)"
+							>
+								<ExternalLink className="h-5 w-5" aria-hidden="true" />
+								<span className="text-sm font-medium">Voir le site</span>
+							</Link>
+
+							<Separator />
+
+							{/* Déconnexion */}
 							<LogoutAlertDialog>
 								<button
 									type="button"
@@ -233,24 +221,6 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 }
 
 /**
- * Header de section avec icône et label
- */
-function SectionHeader({
-	icon: Icon,
-	label,
-}: {
-	icon: React.ComponentType<{ className?: string }>;
-	label: string;
-}) {
-	return (
-		<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-			<Icon className="h-3.5 w-3.5" aria-hidden="true" />
-			{label}
-		</div>
-	);
-}
-
-/**
  * Groupe de navigation dans le drawer
  */
 const DrawerNavGroup = memo(function DrawerNavGroup({
@@ -270,7 +240,7 @@ const DrawerNavGroup = memo(function DrawerNavGroup({
 				{GroupIcon && <GroupIcon className="h-3.5 w-3.5" aria-hidden="true" />}
 				{group.label}
 			</div>
-			<div className="grid grid-cols-3 gap-2">
+			<div className="grid grid-cols-2 gap-2">
 				{group.items.map((item) => (
 					<BottomNavDrawerItem
 						key={item.id}
@@ -351,12 +321,12 @@ const BottomNavDrawerItem = memo(function BottomNavDrawerItem({
 });
 
 /**
- * Indicateur visuel pour l'item actif (barre verticale gauche)
+ * Indicateur visuel pour l'item actif (barre horizontale en haut - style iOS)
  */
 function ActiveIndicator() {
 	return (
 		<span
-			className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-primary rounded-full"
+			className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-8 bg-primary rounded-full"
 			aria-hidden="true"
 		/>
 	);
