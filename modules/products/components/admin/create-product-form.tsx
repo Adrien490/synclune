@@ -9,12 +9,12 @@ import {
 	WizardMobileShell,
 	createTanStackFormAdapter,
 	type WizardStep,
-} from "@/shared/components/wizard";
+} from "@/shared/features/form-wizard";
 import { ImageCounterBadge } from "@/modules/medias/components/image-counter-badge";
 import { MediaGallery } from "@/modules/medias/components/admin/media-gallery";
 import { PrimaryImageUpload } from "@/modules/medias/components/admin/primary-image-upload";
 import { useAutoVideoThumbnail } from "@/modules/medias/hooks/use-auto-video-thumbnail";
-import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
+import { useUnsavedChanges } from "@/shared/features/form-wizard";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";

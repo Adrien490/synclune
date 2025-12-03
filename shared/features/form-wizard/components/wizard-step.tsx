@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/shared/utils/cn"
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config"
 import { useWizardContext } from "./wizard-context"
-import type { WizardStep } from "./types"
+import type { WizardStep } from "../types"
 
 interface WizardStepContainerProps {
 	step: WizardStep
@@ -58,8 +58,7 @@ export const WizardStepContainer = memo(function WizardStepContainer({
 				ref={refCallback}
 				className="hidden"
 				data-step={step.id}
-				// @ts-expect-error - inert is a valid HTML attribute but not yet in React types
-				inert=""
+				inert={true}
 			>
 				{children}
 			</div>

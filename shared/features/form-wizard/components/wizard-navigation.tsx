@@ -4,7 +4,7 @@ import { memo } from "react"
 import { Button } from "@/shared/components/ui/button"
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
-import { WIZARD_MESSAGES } from "./constants"
+import { WIZARD_MESSAGES } from "../constants"
 
 interface WizardNavigationProps {
 	isFirstStep: boolean

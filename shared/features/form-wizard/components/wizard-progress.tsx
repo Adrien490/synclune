@@ -4,7 +4,7 @@ import { memo, useCallback, type KeyboardEvent } from "react"
 import { Check } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import { Progress } from "@/shared/components/ui/progress"
-import type { WizardStep, WizardProgressVariant } from "./types"
+import type { WizardStep, WizardProgressVariant } from "../types"
 
 interface WizardProgressProps {
 	steps: WizardStep[]

@@ -9,7 +9,7 @@ import {
 	type ReactNode,
 } from "react"
 import { useIsMobile } from "@/shared/hooks/use-mobile"
-import type { WizardMode } from "./types"
+import type { WizardMode } from "../types"
 
 interface WizardContextValue {
 	currentStep: number

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { toast } from "sonner"
-import { useWizardContext } from "../wizard-context"
+import { useWizardContext } from "../components/wizard-context"
 import { useWizardNavigation } from "./use-wizard-navigation"
 import { useWizardValidation } from "./use-wizard-validation"
 import { useWizardAccessibility } from "./use-wizard-accessibility"

@@ -1,6 +1,13 @@
-// Context
-export { WizardProvider, useWizardContext } from "./wizard-context"
-export type { WizardProviderProps } from "./wizard-context"
+// Components
+export {
+	WizardProvider,
+	useWizardContext,
+	WizardProgress,
+	WizardNavigation,
+	WizardStepContainer,
+	WizardMobileShell,
+} from "./components"
+export type { WizardProviderProps } from "./components"
 
 // Hooks
 export {
@@ -9,6 +16,8 @@ export {
 	useWizardValidation,
 	useWizardAccessibility,
 	useWizardPersistence,
+	useUnsavedChanges,
+	useUnsavedChangesWithOptions,
 } from "./hooks"
 export type { UseFormWizardOptions, UseFormWizardReturn } from "./hooks"
 
@@ -25,12 +34,7 @@ export type {
 
 // Constants
 export { WIZARD_MESSAGES, mergeMessages } from "./constants"
+export type { MergedWizardMessages } from "./constants"
 
 // Adapters
 export { createTanStackFormAdapter } from "./adapters"
-
-// Components
-export { WizardProgress } from "./wizard-progress"
-export { WizardNavigation } from "./wizard-navigation"
-export { WizardStepContainer } from "./wizard-step"
-export { WizardMobileShell } from "./wizard-mobile-shell"

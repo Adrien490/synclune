@@ -1,4 +1,4 @@
-import type { WizardMessages } from "./types"
+import type { WizardMessages } from "../types"
 
 /**
  * Messages par défaut du wizard (français)
