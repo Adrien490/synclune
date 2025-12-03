@@ -1,6 +1,6 @@
 "use client";
 
-import { FieldLabel, FormSection } from "@/shared/components/forms";
+import { FieldLabel, FormSection } from "@/shared/components/tanstack-form";
 import { ImageCounterBadge } from "@/modules/medias/components/image-counter-badge";
 import { MediaGallery } from "@/modules/medias/components/admin/media-gallery";
 import { PrimaryImageUpload } from "@/modules/medias/components/admin/primary-image-upload";
@@ -247,7 +247,7 @@ export function CreateProductVariantForm({
 								<form.AppField
 									name="priceInclTaxEuros"
 									validators={{
-										onChange: ({ value }: { value: number }) => {
+										onChange: ({ value }: { value: number | null }) => {
 											if (!value || value <= 0) {
 												return "Le prix doit être supérieur à 0";
 											}

@@ -18,7 +18,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/shared/components/ui/select";
-import { useAppForm } from "@/shared/components/forms";
+import { useAppForm } from "@/shared/components/tanstack-form";
 import { createCollection } from "@/modules/collections/actions/create-collection";
 import { updateCollection } from "@/modules/collections/actions/update-collection";
 import { useDialog } from "@/shared/providers/dialog-store-provider";

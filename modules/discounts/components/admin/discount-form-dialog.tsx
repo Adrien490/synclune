@@ -7,7 +7,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/shared/components/ui/dialog";
-import { FieldLabel, FormLayout, useAppForm } from "@/shared/components/forms";
+import { FieldLabel, FormLayout, useAppForm } from "@/shared/components/tanstack-form";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { createDiscount } from "@/modules/discounts/actions/create-discount";
 import { updateDiscount } from "@/modules/discounts/actions/update-discount";

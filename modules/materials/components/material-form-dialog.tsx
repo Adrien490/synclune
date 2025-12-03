@@ -8,7 +8,7 @@ import {
 	DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
-import { useAppForm } from "@/shared/components/forms";
+import { useAppForm } from "@/shared/components/tanstack-form";
 import { createMaterial } from "@/modules/materials/actions/create-material";
 import { updateMaterial } from "@/modules/materials/actions/update-material";
 import { useDialog } from "@/shared/providers/dialog-store-provider";

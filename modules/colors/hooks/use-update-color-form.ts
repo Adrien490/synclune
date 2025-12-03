@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppForm } from "@/shared/components/forms";
+import { useAppForm } from "@/shared/components/tanstack-form";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";

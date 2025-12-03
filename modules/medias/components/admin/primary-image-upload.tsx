@@ -84,7 +84,7 @@ export function PrimaryImageUpload({
 						animate={{ opacity: 1, y: 0 }}
 						exit={{ opacity: 0, y: -10 }}
 						transition={{ duration: 0.3 }}
-						className="relative w-full max-w-md"
+						className="relative w-full max-w-xs sm:max-w-sm"
 					>
 						<div className="relative aspect-square w-full rounded-lg overflow-hidden border-2 border-primary/20 shadow group bg-muted">
 							{effectiveMediaType === "VIDEO" ? (
@@ -140,7 +140,7 @@ export function PrimaryImageUpload({
 									alt="Image principale"
 									fill
 									className="object-cover"
-									sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 448px"
+									sizes="(max-width: 640px) 320px, 384px"
 									quality={80}
 								/>
 							)}

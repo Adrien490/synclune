@@ -16,11 +16,11 @@ const colsMap = {
 
 /**
  * Simple grid layout for forms
- * Defaults to 1 column on mobile and 2 columns on desktop
+ * Responsive: 1 column on mobile, configurable columns on desktop
  */
 export function FormLayout({ children, className, cols = 2 }: FormLayoutProps) {
 	return (
-		<div className={cn("grid grid-cols-1 gap-6", colsMap[cols], className)}>
+		<div className={cn("grid grid-cols-1 gap-4 md:gap-6", colsMap[cols], className)}>
 			{children}
 		</div>
 	);

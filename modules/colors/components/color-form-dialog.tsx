@@ -17,7 +17,7 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Label } from "@/shared/components/ui/label";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
-import { useAppForm } from "@/shared/components/forms";
+import { useAppForm } from "@/shared/components/tanstack-form";
 import { createColor } from "@/modules/colors/actions/create-color";
 import { updateColor } from "@/modules/colors/actions/update-color";
 import { useDialog } from "@/shared/providers/dialog-store-provider";

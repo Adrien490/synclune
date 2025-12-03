@@ -1,6 +1,6 @@
 "use client";
 
-import { FieldLabel, FormSection } from "@/shared/components/forms";
+import { FieldLabel, FormSection } from "@/shared/components/tanstack-form";
 import { ImageCounterBadge } from "@/modules/medias/components/image-counter-badge";
 import { MediaGallery } from "@/modules/medias/components/admin/media-gallery";
 import { PrimaryImageUpload } from "@/modules/medias/components/admin/primary-image-upload";

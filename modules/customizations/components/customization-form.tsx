@@ -1,6 +1,6 @@
 "use client";
 
-import { FormLayout, FormSection } from "@/shared/components/forms";
+import { FormLayout, FormSection } from "@/shared/components/tanstack-form";
 import { Button } from "@/shared/components/ui/button";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import {

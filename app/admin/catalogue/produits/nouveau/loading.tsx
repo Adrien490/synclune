@@ -1,5 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
-import { FormLayout, FormSection } from "@/shared/components/forms";
+import { FormLayout, FormSection } from "@/shared/components/tanstack-form";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
