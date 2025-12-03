@@ -29,6 +29,12 @@ function DrawerClose({
   return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />
 }
 
+function DrawerNestedRoot({
+  ...props
+}: React.ComponentProps<typeof DrawerPrimitive.NestedRoot>) {
+  return <DrawerPrimitive.NestedRoot data-slot="drawer-nested-root" {...props} />
+}
+
 function DrawerOverlay({
   className,
   bottomInset,
@@ -64,7 +70,7 @@ function DrawerContent({
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(
-          "group/drawer-content bg-background fixed z-50 flex h-auto flex-col",
+          "group/drawer-content bg-background fixed z-50 flex h-auto flex-col px-4",
           "data-[vaul-drawer-direction=top]:inset-x-0 data-[vaul-drawer-direction=top]:top-0 data-[vaul-drawer-direction=top]:mb-24 data-[vaul-drawer-direction=top]:max-h-[80vh] data-[vaul-drawer-direction=top]:rounded-b-lg data-[vaul-drawer-direction=top]:border-b",
           "data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:rounded-t-lg data-[vaul-drawer-direction=bottom]:border-t",
           bottomInset
@@ -88,7 +94,7 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="drawer-header"
       className={cn(
-        "flex flex-col gap-0.5 p-4 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-center group-data-[vaul-drawer-direction=top]/drawer-content:text-center md:gap-1.5 md:text-left",
+        "flex flex-col gap-0.5 py-4 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-center group-data-[vaul-drawer-direction=top]/drawer-content:text-center md:gap-1.5 md:text-left",
         className
       )}
       {...props}
@@ -100,7 +106,17 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="drawer-footer"
-      className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+      className={cn("mt-auto flex flex-col gap-2 py-4", className)}
+      {...props}
+    />
+  )
+}
+
+function DrawerBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="drawer-body"
+      className={cn("flex-1", className)}
       {...props}
     />
   )
@@ -138,8 +154,10 @@ export {
   DrawerOverlay,
   DrawerTrigger,
   DrawerClose,
+  DrawerNestedRoot,
   DrawerContent,
   DrawerHeader,
+  DrawerBody,
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,

@@ -2,20 +2,25 @@
 
 import { memo, useMemo, useState } from "react";
 import { cn } from "@/shared/utils/cn";
-import { ExternalLink, LogOut, MoreHorizontal, User } from "lucide-react";
+import { ExternalLink, LogOut, MessageSquare, MoreHorizontal, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
 	Drawer,
+	DrawerBody,
 	DrawerContent,
 	DrawerDescription,
 	DrawerHeader,
+	DrawerNestedRoot,
+	DrawerOverlay,
+	DrawerPortal,
 	DrawerTitle,
 	DrawerTrigger,
 } from "@/shared/components/ui/drawer";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Separator } from "@/shared/components/ui/separator";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
+import { ContactAdrienForm } from "@/modules/dashboard/components/contact-adrien-form";
 import {
 	getBottomNavPrimaryItems,
 	getBottomNavSecondaryItems,
@@ -56,6 +61,7 @@ interface BottomNavigationProps {
 export function BottomNavigation({ user }: BottomNavigationProps) {
 	const pathname = usePathname();
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	const [isContactOpen, setIsContactOpen] = useState(false);
 
 	// Vérifie si une page du menu "Plus" est active (mémoïsé pour éviter les recalculs)
 	const isMoreItemActive = useMemo(
@@ -110,9 +116,9 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 							</DrawerDescription>
 						</DrawerHeader>
 
-						<ScrollArea className="flex-1">
+						<ScrollArea className="flex-1 min-h-0">
 							{/* Section utilisateur */}
-							<div className="px-4 pb-4">
+							<div className="pb-4">
 								<div className="p-3 rounded-lg bg-accent/30">
 									<p className="text-sm font-medium truncate">{user.name}</p>
 									<p className="text-xs text-muted-foreground truncate">{user.email}</p>
@@ -122,7 +128,7 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 							{/* Actions rapides */}
 							<section
 								aria-label="Actions rapides"
-								className="px-4 pb-4 grid grid-cols-3 gap-3"
+								className="pb-4 grid grid-cols-3 gap-3"
 							>
 								<Link
 									href="/"
@@ -151,24 +157,70 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 									<User className="h-5 w-5" aria-hidden="true" />
 									<span className="text-xs text-center">Mon compte</span>
 								</Link>
+								{/* Nested drawer pour contacter Adri */}
+								<DrawerNestedRoot open={isContactOpen} onOpenChange={setIsContactOpen}>
+									<DrawerTrigger asChild>
+										<button
+											type="button"
+											className={cn(
+												drawerItemStyles.base,
+												drawerItemStyles.inactive
+											)}
+										>
+											<MessageSquare className="h-5 w-5" aria-hidden="true" />
+											<span className="text-xs text-center">Contacter Adri</span>
+										</button>
+									</DrawerTrigger>
+									<DrawerPortal>
+										<DrawerOverlay />
+										<DrawerContent bottomInset>
+											<DrawerHeader>
+												<DrawerTitle>Contacter Adri</DrawerTitle>
+												<DrawerDescription>
+													Signale un bug, demande une fonctionnalité ou pose une question.
+												</DrawerDescription>
+											</DrawerHeader>
+											<DrawerBody>
+												<ContactAdrienForm
+													onSuccess={() => {
+														setIsContactOpen(false);
+														setIsDrawerOpen(false);
+													}}
+													onCancel={() => setIsContactOpen(false)}
+												/>
+											</DrawerBody>
+										</DrawerContent>
+									</DrawerPortal>
+								</DrawerNestedRoot>
+							</section>
+
+							<Separator />
+
+							{/* Déconnexion */}
+							<section
+								aria-label="Déconnexion"
+								className="py-4"
+							>
 								<LogoutAlertDialog>
 									<button
 										type="button"
 										className={cn(
-											drawerItemStyles.base,
-											"w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+											"w-full flex items-center justify-center gap-2 p-3 rounded-lg",
+											"text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+											"motion-safe:transition-all motion-safe:active:scale-95",
+											"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
 										)}
 									>
 										<LogOut className="h-5 w-5" aria-hidden="true" />
-										<span className="text-xs text-center">Déconnexion</span>
+										<span className="text-sm font-medium">Déconnexion</span>
 									</button>
 								</LogoutAlertDialog>
 							</section>
 
-							<Separator className="mx-4" />
+							<Separator />
 
 							{/* Navigation secondaire */}
-							<nav aria-label="Navigation secondaire" className="px-4 pt-4 pb-4">
+							<nav aria-label="Navigation secondaire" className="py-4">
 								<ul className="grid grid-cols-3 gap-3" role="menu">
 									{secondaryItems.map((item) => (
 										<li key={item.id} role="none">
