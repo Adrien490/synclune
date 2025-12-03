@@ -804,13 +804,11 @@ openAlertDialog("delete-confirm", {
 ### Client Configuration (`shared/lib/prisma.ts`)
 
 ```typescript
-import { PrismaClient } from "@/app/generated/prisma"
+import { PrismaClient } from "@/app/generated/prisma/client"
 import { PrismaNeon } from "@prisma/adapter-neon"
-import { Pool } from "@neondatabase/serverless"
 
-// Neon serverless adapter for edge compatibility
-const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-const adapter = new PrismaNeon(pool)
+// Neon serverless adapter for edge compatibility (Prisma 7)
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL })
 export const prisma = new PrismaClient({ adapter })
 
 // Soft delete helpers
