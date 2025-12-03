@@ -1,4 +1,4 @@
-import { Prisma, PaymentStatus } from "@/app/generated/prisma";
+import { Prisma, PaymentStatus } from "@/app/generated/prisma/client";
 import {
 	buildCursorPagination,
 	processCursorResults,

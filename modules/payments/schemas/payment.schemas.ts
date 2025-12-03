@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PaymentStatus } from "@/app/generated/prisma";
+import { PaymentStatus } from "@/app/generated/prisma/client";
 import {
 	GET_STRIPE_PAYMENTS_DEFAULT_PER_PAGE,
 	GET_STRIPE_PAYMENTS_MAX_RESULTS_PER_PAGE,

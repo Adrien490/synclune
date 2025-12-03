@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
-import { Prisma, StockNotificationStatus } from "@/app/generated/prisma";
+import { Prisma, StockNotificationStatus } from "@/app/generated/prisma/client";
 import { cacheLife, cacheTag } from "next/cache";
 import {
 	buildCursorPagination,

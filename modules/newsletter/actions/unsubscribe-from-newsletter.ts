@@ -1,6 +1,6 @@
 "use server";
 
-import { NewsletterStatus } from "@/app/generated/prisma";
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";

@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { PaymentStatus, RefundStatus, RefundAction, CurrencyCode } from "@/app/generated/prisma";
+import { PaymentStatus, RefundStatus, RefundAction, CurrencyCode } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendRefundConfirmationEmail, sendAdminRefundFailedAlert } from "@/shared/lib/email";
 

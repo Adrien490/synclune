@@ -3,7 +3,7 @@ import {
 	OrderStatus,
 	PaymentStatus,
 	FulfillmentStatus,
-} from "@/app/generated/prisma";
+} from "@/app/generated/prisma/client";
 import {
 	GET_ORDERS_DEFAULT_PER_PAGE,
 	GET_ORDERS_MAX_RESULTS_PER_PAGE,

@@ -1,6 +1,6 @@
 "use server";
 
-import { NewsletterStatus } from "@/app/generated/prisma";
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { auth } from "@/modules/auth/lib/auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";

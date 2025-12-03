@@ -1,6 +1,6 @@
 "use server";
 
-import { AccountStatus } from "@/app/generated/prisma";
+import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe } from "@/shared/lib/stripe";
 import type { ActionState } from "@/shared/types/server-action";

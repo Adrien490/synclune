@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Package } from "lucide-react";
 
 // Generated types
-import { ProductStatus } from "@/app/generated/prisma";
+import { ProductStatus } from "@/app/generated/prisma/client";
 
 // Shared components
 import { CursorPagination } from "@/shared/components/cursor-pagination";

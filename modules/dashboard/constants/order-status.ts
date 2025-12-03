@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentStatus } from "@/app/generated/prisma";
+import type { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // ORDER STATUS

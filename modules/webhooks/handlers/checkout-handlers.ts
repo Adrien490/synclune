@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { Prisma } from "@/app/generated/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";

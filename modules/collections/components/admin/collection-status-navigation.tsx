@@ -1,4 +1,4 @@
-import { CollectionStatus } from "@/app/generated/prisma";
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { TabNavigation } from "@/shared/components/tab-navigation";
 import type { CollectionCountsByStatus } from "@/modules/collections/types/collection-counts.types";
 

@@ -1,4 +1,4 @@
-import { StockNotificationStatus } from "@/app/generated/prisma";
+import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
 import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";

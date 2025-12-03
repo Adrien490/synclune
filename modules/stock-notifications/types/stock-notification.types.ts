@@ -1,4 +1,4 @@
-import { StockNotificationStatus } from "@/app/generated/prisma";
+import { StockNotificationStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // BASE TYPES

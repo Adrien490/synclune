@@ -1,4 +1,4 @@
-import { Prisma, DiscountType } from "@/app/generated/prisma";
+import { Prisma, DiscountType } from "@/app/generated/prisma/client";
 import { z } from "zod";
 import { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
 import {

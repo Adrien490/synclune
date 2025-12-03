@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
-import { StockNotificationStatus } from "@/app/generated/prisma";
+import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { auth } from "@/modules/auth/lib/auth";
 import { unsubscribeFromStockNotificationSchema } from "../schemas/stock-notification.schemas";

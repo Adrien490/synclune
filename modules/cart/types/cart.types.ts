@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 import { GET_CART_SELECT } from "../constants/cart.constants";
 
 // ============================================================================

@@ -1,4 +1,4 @@
-import { CollectionStatus, Prisma } from "@/app/generated/prisma";
+import { CollectionStatus, Prisma } from "@/app/generated/prisma/client";
 import type { CollectionFilters, GetCollectionsParams } from "../types/collection.types";
 
 // ============================================================================

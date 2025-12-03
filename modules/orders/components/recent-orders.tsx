@@ -1,4 +1,4 @@
-import { OrderStatus } from "@/app/generated/prisma";
+import { OrderStatus } from "@/app/generated/prisma/client";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Table,

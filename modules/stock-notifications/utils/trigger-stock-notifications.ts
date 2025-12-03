@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
-import { StockNotificationStatus } from "@/app/generated/prisma";
+import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { notifyStockAvailable } from "../actions/notify-stock-available";
 
 /**

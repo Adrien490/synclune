@@ -1,5 +1,5 @@
 // Form options for editing a product
-import type { ProductStatus } from "@/app/generated/prisma";
+import type { ProductStatus } from "@/app/generated/prisma/client";
 
 // Form options shared between client and server for editing
 export const editProductFormOpts = {

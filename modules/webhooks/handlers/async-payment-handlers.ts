@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { PaymentStatus } from "@/app/generated/prisma";
+import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendPaymentFailedEmail } from "@/shared/lib/email";
 import { handleCheckoutSessionCompleted } from "./checkout-handlers";

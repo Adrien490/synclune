@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 import { z } from "zod";
 import { GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
 import {

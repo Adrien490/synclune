@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { AccountStatus } from "@/app/generated/prisma";
+import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {

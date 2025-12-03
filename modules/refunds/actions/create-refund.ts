@@ -7,7 +7,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
 
-import { RefundAction, RefundReason } from "@/app/generated/prisma";
+import { RefundAction, RefundReason } from "@/app/generated/prisma/client";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createRefundSchema } from "../schemas/refund.schemas";
 

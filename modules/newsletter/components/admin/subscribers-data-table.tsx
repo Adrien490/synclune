@@ -1,4 +1,4 @@
-import { NewsletterStatus } from "@/app/generated/prisma";
+import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";

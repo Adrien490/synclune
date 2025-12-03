@@ -1,4 +1,4 @@
-import { DiscountType } from "@/app/generated/prisma";
+import { DiscountType } from "@/app/generated/prisma/client";
 
 export type CalculateDiscountParams = {
 	type: DiscountType;

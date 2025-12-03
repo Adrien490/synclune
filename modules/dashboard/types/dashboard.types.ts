@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus, FulfillmentStatus, DiscountType } from "@/app/generated/prisma";
+import { OrderStatus, PaymentStatus, FulfillmentStatus, DiscountType } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // TYPES - KPIs

@@ -1,4 +1,4 @@
-import { CollectionStatus } from "@/app/generated/prisma";
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import {
 	getLocalBusinessSchema,
 	getWebSiteSchema,

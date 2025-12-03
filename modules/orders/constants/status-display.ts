@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma";
+import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 	PENDING: "En attente",

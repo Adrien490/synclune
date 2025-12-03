@@ -1,6 +1,6 @@
 "use server";
 
-import { CollectionStatus } from "@/app/generated/prisma";
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";

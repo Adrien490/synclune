@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { Role } from "@/app/generated/prisma";
+import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import {
 	requireAdmin,

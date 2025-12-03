@@ -2,7 +2,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { Prisma } from "@/app/generated/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 
 import { GET_ORDER_ITEM_DEFAULT_SELECT } from "../constants/order-item.constants";
 import { getOrderItemSchema } from "../schemas/order-item.schemas";

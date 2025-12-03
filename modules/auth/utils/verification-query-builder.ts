@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 
 // Types locaux pour éviter les dépendances circulaires
 type VerificationFilters = {

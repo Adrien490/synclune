@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { prisma } from "@/shared/lib/prisma";
 import { sendAdminDisputeAlert } from "@/shared/lib/email";
-import { DisputeStatus } from "@/app/generated/prisma";
+import { DisputeStatus } from "@/app/generated/prisma/client";
 
 /**
  * Mappe le statut Stripe vers notre enum DisputeStatus

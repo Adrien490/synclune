@@ -1,4 +1,4 @@
-import type { Prisma } from "@/app/generated/prisma";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { DiscountType } from "@/app/generated/prisma/browser";
 
 // ============================================================================

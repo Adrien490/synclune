@@ -1,4 +1,4 @@
-import { CollectionStatus } from "@/app/generated/prisma";
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
 import {
 	GET_COLLECTIONS_DEFAULT_PER_PAGE,

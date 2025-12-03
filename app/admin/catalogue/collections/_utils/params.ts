@@ -1,4 +1,4 @@
-import { CollectionStatus } from "@/app/generated/prisma";
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import type { GetCollectionsParams } from "@/modules/collections/data/get-collections";
 import { getFirstParam } from "@/shared/utils/params";
 import type { CollectionsSearchParams } from "../page";

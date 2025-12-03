@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma";
+import { ProductStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
 import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,

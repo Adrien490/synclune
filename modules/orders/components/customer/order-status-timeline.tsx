@@ -2,7 +2,7 @@ import {
 	OrderStatus,
 	PaymentStatus,
 	FulfillmentStatus,
-} from "@/app/generated/prisma";
+} from "@/app/generated/prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
 import {

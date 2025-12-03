@@ -1,6 +1,6 @@
 "use client";
 
-import { RefundReason } from "@/app/generated/prisma/browser";
+import { RefundReason } from "@/app/generated/prisma/enums";
 import { createRefund } from "@/modules/refunds/actions/create-refund";
 import type { OrderItemForRefund } from "@/modules/refunds/data/get-order-for-refund";
 import { useAppForm } from "@/shared/components/tanstack-form";

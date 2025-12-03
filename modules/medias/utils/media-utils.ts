@@ -2,7 +2,7 @@
  * Utilitaires pour la gestion des médias (images et vidéos)
  */
 
-import type { MediaType } from "@/app/generated/prisma";
+import type { MediaType } from "@/app/generated/prisma/client";
 
 /**
  * Vérifie si un média est une vidéo en utilisant le champ mediaType de la base de données

@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 import { RELATED_PRODUCTS_SELECT } from "../constants/related-products.constants";
 
 // ============================================================================

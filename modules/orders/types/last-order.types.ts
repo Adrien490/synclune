@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 import { GET_LAST_ORDER_DEFAULT_SELECT } from "../constants/last-order.constants";
 
 // ============================================================================

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Role } from "@/app/generated/prisma";
+import { Role } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // DELETE USER SCHEMAS (Admin)

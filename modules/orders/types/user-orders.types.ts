@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 import { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
 import { z } from "zod";
 import { GET_USER_ORDERS_SELECT } from "../constants/user-orders.constants";

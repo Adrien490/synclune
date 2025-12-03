@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
-import type { Prisma } from "@/app/generated/prisma";
+import type { Prisma } from "@/app/generated/prisma/client";
 
 /**
  * Synchronise les champs dénormalisés d'un Product depuis ses SKUs actifs.

@@ -1,4 +1,4 @@
-import { PaymentStatus } from "@/app/generated/prisma";
+import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 

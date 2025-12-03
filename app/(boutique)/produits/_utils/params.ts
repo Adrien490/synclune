@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma";
+import { ProductStatus } from "@/app/generated/prisma/client";
 import type { ProductFilters } from "@/modules/products/data/get-products";
 import { productFiltersSchema } from "@/modules/products/data/get-products";
 import { getFirstParam } from "@/shared/utils/params";

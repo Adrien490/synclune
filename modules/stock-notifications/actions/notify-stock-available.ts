@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { StockNotificationStatus } from "@/app/generated/prisma";
+import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { sendBackInStockEmail } from "@/shared/lib/email";
 import { requireAdmin } from "@/shared/lib/actions";

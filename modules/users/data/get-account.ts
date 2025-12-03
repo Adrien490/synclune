@@ -1,6 +1,6 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { Prisma } from "@/app/generated/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
 import { cacheUserAccounts } from "../constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 

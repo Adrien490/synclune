@@ -3,7 +3,7 @@
 import {
 	OrderStatus,
 	FulfillmentStatus,
-} from "@/app/generated/prisma";
+} from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { sendTrackingUpdateEmail } from "@/shared/lib/email";

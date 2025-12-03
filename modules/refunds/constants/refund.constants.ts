@@ -1,4 +1,4 @@
-import { Prisma, RefundReason, RefundStatus } from "@/app/generated/prisma";
+import { Prisma, RefundReason, RefundStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // SELECT DEFINITIONS - REFUND LIST

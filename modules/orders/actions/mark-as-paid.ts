@@ -5,7 +5,7 @@ import {
 	PaymentStatus,
 	FulfillmentStatus,
 	Prisma,
-} from "@/app/generated/prisma";
+} from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";

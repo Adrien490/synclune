@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma";
+import { ProductStatus } from "@/app/generated/prisma/client";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { GET_PRODUCTS_SORT_FIELDS } from "../constants/product.constants";
 
