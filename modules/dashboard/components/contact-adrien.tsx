@@ -6,6 +6,7 @@ import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
 	ResponsiveDialogDescription,
+	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 	ResponsiveDialogTrigger,
@@ -357,7 +358,7 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 
 							<form.Subscribe selector={(formState) => [formState.canSubmit]}>
 								{([canSubmit]) => (
-									<div className="flex justify-end gap-2">
+									<ResponsiveDialogFooter>
 										<ResponsiveDialogTrigger asChild>
 											<Button
 												type="button"
@@ -380,7 +381,7 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 													? "Envoyé"
 													: "Envoyer"}
 										</Button>
-									</div>
+									</ResponsiveDialogFooter>
 								)}
 							</form.Subscribe>
 						</form>
