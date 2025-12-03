@@ -168,7 +168,7 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 							<Separator className="mx-4" />
 
 							{/* Navigation secondaire */}
-							<nav aria-label="Navigation secondaire" className="px-4 pt-4 pb-20">
+							<nav aria-label="Navigation secondaire" className="px-4 pt-4 pb-4">
 								<ul className="grid grid-cols-3 gap-3" role="menu">
 									{secondaryItems.map((item) => (
 										<li key={item.id} role="none">
