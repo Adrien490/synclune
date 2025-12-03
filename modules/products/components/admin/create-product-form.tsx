@@ -13,6 +13,7 @@ import { ImageCounterBadge } from "@/modules/medias/components/image-counter-bad
 import { MediaGallery } from "@/modules/medias/components/admin/media-gallery";
 import { PrimaryImageUpload } from "@/modules/medias/components/admin/primary-image-upload";
 import { useAutoVideoThumbnail } from "@/modules/medias/hooks/use-auto-video-thumbnail";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
@@ -128,6 +129,9 @@ function CreateProductFormContent({
 	});
 
 	const isUploading = isPrimaryImageUploading || isGalleryUploading || generatingUrls.size > 0;
+
+	// Warn user about unsaved changes before leaving the page
+	useUnsavedChanges(form.state.isDirty && !isPending);
 
 	// Render the step sections
 	const renderStepContent = (stepIndex: number) => {
@@ -876,6 +880,7 @@ function CreateProductFormContent({
 					onNext={wizard.goNext}
 					isSubmitting={isPending}
 					isValidating={wizard.isValidating}
+					getStepErrors={wizard.getStepErrors}
 				>
 					{PRODUCT_STEPS.map((step, index) => (
 						<WizardStepContainer key={step.id} step={step} stepIndex={index}>

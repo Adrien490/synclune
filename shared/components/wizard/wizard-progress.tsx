@@ -12,6 +12,8 @@ interface WizardProgressProps {
 	onStepClick?: (step: number) => void;
 	variant?: "dots" | "stepper" | "progress-bar";
 	className?: string;
+	/** Function to get errors for a step (for visual error indicator) */
+	getStepErrors?: (stepIndex: number) => string[];
 }
 
 export function WizardProgress({
@@ -21,7 +23,13 @@ export function WizardProgress({
 	onStepClick,
 	variant = "progress-bar",
 	className,
+	getStepErrors,
 }: WizardProgressProps) {
+	// Helper to check if step has errors
+	const hasStepErrors = (stepIndex: number): boolean => {
+		if (!getStepErrors) return false;
+		return getStepErrors(stepIndex).length > 0;
+	};
 	if (variant === "progress-bar") {
 		const progress = ((currentStep + 1) / steps.length) * 100;
 		return (
@@ -41,28 +49,38 @@ export function WizardProgress({
 
 	if (variant === "dots") {
 		return (
-			<div className={cn("flex items-center justify-center gap-2", className)}>
-				{steps.map((step, index) => (
-					<button
-						key={step.id}
-						type="button"
-						onClick={() => onStepClick?.(index)}
-						disabled={index > currentStep && !completedSteps.has(index)}
-						className={cn(
-							"size-2.5 rounded-full transition-all",
-							index === currentStep
-								? "bg-primary w-6"
-								: completedSteps.has(index)
-									? "bg-primary/60 hover:bg-primary/80"
-									: "bg-muted-foreground/30",
-							index > currentStep &&
-								!completedSteps.has(index) &&
-								"cursor-not-allowed"
-						)}
-						aria-label={`Étape ${index + 1}: ${step.label}`}
-						aria-current={index === currentStep ? "step" : undefined}
-					/>
-				))}
+			<div className={cn("flex items-center gap-3", className)}>
+				{steps.map((step, index) => {
+					const isActive = index === currentStep;
+					const isCompleted = completedSteps.has(index);
+					const hasErrors = hasStepErrors(index);
+					const canNavigate = index <= currentStep || isCompleted;
+
+					return (
+						<button
+							key={step.id}
+							type="button"
+							onClick={() => canNavigate && onStepClick?.(index)}
+							disabled={!canNavigate}
+							className={cn(
+								"relative size-3 rounded-full transition-all",
+								isActive
+									? "bg-primary scale-125"
+									: isCompleted
+										? "bg-primary/60 hover:bg-primary/80"
+										: "bg-muted-foreground/30",
+								!canNavigate && "cursor-not-allowed opacity-50"
+							)}
+							aria-label={`Étape ${index + 1}: ${step.label}${hasErrors ? " (contient des erreurs)" : ""}`}
+							aria-current={isActive ? "step" : undefined}
+						>
+							{/* Error indicator */}
+							{hasErrors && !isActive && (
+								<span className="absolute -top-0.5 -right-0.5 size-2 bg-destructive rounded-full animate-pulse" />
+							)}
+						</button>
+					);
+				})}
 			</div>
 		);
 	}
@@ -75,6 +93,7 @@ export function WizardProgress({
 					const isCompleted = completedSteps.has(index);
 					const isCurrent = index === currentStep;
 					const canNavigate = index <= currentStep || isCompleted;
+					const hasErrors = hasStepErrors(index);
 
 					return (
 						<li key={step.id} className="flex items-center gap-2 flex-1">
@@ -83,7 +102,7 @@ export function WizardProgress({
 								onClick={() => canNavigate && onStepClick?.(index)}
 								disabled={!canNavigate}
 								className={cn(
-									"flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium",
+									"relative flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium",
 									"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 									isCurrent && "bg-primary text-primary-foreground",
 									isCompleted &&
@@ -95,7 +114,12 @@ export function WizardProgress({
 									!canNavigate && "opacity-50 cursor-not-allowed"
 								)}
 								aria-current={isCurrent ? "step" : undefined}
+								aria-label={`${step.label}${hasErrors ? " (contient des erreurs)" : ""}`}
 							>
+								{/* Error indicator */}
+								{hasErrors && !isCurrent && (
+									<span className="absolute -top-1 -right-1 size-2 bg-destructive rounded-full animate-pulse" />
+								)}
 								<span
 									className={cn(
 										"flex items-center justify-center size-6 rounded-full text-xs font-bold shrink-0",
@@ -107,6 +131,8 @@ export function WizardProgress({
 								>
 									{isCompleted && !isCurrent ? (
 										<Check className="size-3.5" />
+									) : step.icon ? (
+										step.icon
 									) : (
 										index + 1
 									)}

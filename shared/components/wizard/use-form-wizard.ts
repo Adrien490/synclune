@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { useWizardContext } from "./wizard-context";
 
 export interface WizardStep {
@@ -34,16 +35,50 @@ export function useFormWizard({
 		totalSteps,
 		completedSteps,
 		markStepCompleted,
+		markStepIncomplete,
 		resetWizard,
 		isMobile,
 		desktopMode,
 	} = useWizardContext();
 
 	const [isValidating, setIsValidating] = useState(false);
+	const previousStepRef = useRef(currentStep);
 
 	const currentStepConfig = steps[currentStep];
 	const isFirstStep = currentStep === 0;
 	const isLastStep = currentStep === steps.length - 1;
+
+	// Focus first field when step changes (accessibility)
+	useEffect(() => {
+		if (previousStepRef.current !== currentStep) {
+			previousStepRef.current = currentStep;
+			// Small delay to ensure DOM is updated
+			const timer = setTimeout(() => {
+				const stepContainer = document.querySelector(`[data-step="${steps[currentStep]?.id}"]`);
+				if (stepContainer) {
+					const firstInput = stepContainer.querySelector<HTMLElement>(
+						'input:not([type="hidden"]), textarea, select, [tabindex="0"]'
+					);
+					firstInput?.focus();
+				}
+			}, 100);
+			return () => clearTimeout(timer);
+		}
+	}, [currentStep, steps]);
+
+	// Scroll to first error field
+	const scrollToFirstError = useCallback(() => {
+		// Wait for validation errors to be rendered
+		requestAnimationFrame(() => {
+			const firstErrorField = document.querySelector<HTMLElement>(
+				'[aria-invalid="true"], [data-invalid="true"]'
+			);
+			if (firstErrorField) {
+				firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
+				firstErrorField.focus();
+			}
+		});
+	}, []);
 
 	// Validate all fields in current step
 	const validateCurrentStep = useCallback(async (): Promise<boolean> => {
@@ -117,7 +152,11 @@ export function useFormWizard({
 		if (isLastStep) return false;
 
 		const isValid = await validateCurrentStep();
-		if (!isValid) return false;
+		if (!isValid) {
+			toast.error("Veuillez corriger les erreurs avant de continuer");
+			scrollToFirstError();
+			return false;
+		}
 
 		markStepCompleted(currentStep);
 		const nextStep = currentStep + 1;
@@ -127,6 +166,7 @@ export function useFormWizard({
 	}, [
 		isLastStep,
 		validateCurrentStep,
+		scrollToFirstError,
 		markStepCompleted,
 		currentStep,
 		setCurrentStep,
@@ -157,7 +197,11 @@ export function useFormWizard({
 			// Going forward requires validation of current step
 			if (targetStep > currentStep) {
 				const isValid = await validateCurrentStep();
-				if (!isValid) return false;
+				if (!isValid) {
+					toast.error("Veuillez corriger les erreurs avant de continuer");
+					scrollToFirstError();
+					return false;
+				}
 
 				markStepCompleted(currentStep);
 				setCurrentStep(targetStep);
@@ -171,6 +215,7 @@ export function useFormWizard({
 			steps.length,
 			currentStep,
 			validateCurrentStep,
+			scrollToFirstError,
 			markStepCompleted,
 			setCurrentStep,
 			onStepChange,
@@ -204,6 +249,8 @@ export function useFormWizard({
 		validateCurrentStep,
 		isStepValid,
 		getStepErrors,
+		scrollToFirstError,
+		markStepIncomplete,
 
 		// Progress
 		completedSteps,
