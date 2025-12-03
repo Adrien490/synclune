@@ -14,12 +14,6 @@ export {
 export { CHART_STYLES } from "./chart-styles";
 
 export {
-	CONTACT_TYPES,
-	CONTACT_TYPE_OPTIONS,
-	type FeedbackType,
-} from "./contact-adrien.constants";
-
-export {
 	GET_DASHBOARD_RECENT_ORDERS_SELECT,
 	GET_DASHBOARD_TOP_PRODUCTS_SELECT,
 	GET_DASHBOARD_STOCK_ALERTS_SELECT,

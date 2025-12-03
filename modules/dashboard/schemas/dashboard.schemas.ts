@@ -105,7 +105,6 @@ export const getStockAlertsSchema = z.object({
 // ============================================================================
 
 export const contactAdrienSchema = z.object({
-	type: z.enum(["bug", "feature", "improvement", "question", "other"]),
 	message: z
 		.string()
 		.min(10, "Le message doit contenir au moins 10 caractères")

@@ -2,12 +2,12 @@
 
 import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/shared/components/ui/select";
+	ResponsiveSelect,
+	ResponsiveSelectContent,
+	ResponsiveSelectItem,
+	ResponsiveSelectTrigger,
+	ResponsiveSelectValue,
+} from "@/shared/components/ui/responsive-select";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
@@ -75,14 +75,15 @@ export const SelectField = <T extends string>({
 					)}
 				</FieldLabel>
 			)}
-			<Select
+			<ResponsiveSelect
 				name={field.name}
 				disabled={disabled}
 				value={field.state.value ?? ""}
 				onValueChange={(value) => field.handleChange((value || undefined) as T | undefined)}
 				required={required}
+				title={label || placeholder}
 			>
-				<SelectTrigger
+				<ResponsiveSelectTrigger
 					id={field.name}
 					className="w-full"
 					onBlur={field.handleBlur}
@@ -99,7 +100,7 @@ export const SelectField = <T extends string>({
 							{renderValue && field.state.value ? (
 								renderValue(field.state.value)
 							) : (
-								<SelectValue placeholder={placeholder} />
+								<ResponsiveSelectValue placeholder={placeholder} />
 							)}
 						</span>
 						{clearable && field.state.value && (
@@ -134,15 +135,15 @@ export const SelectField = <T extends string>({
 							</span>
 						)}
 					</div>
-				</SelectTrigger>
-				<SelectContent className="max-h-[300px] overflow-y-auto">
+				</ResponsiveSelectTrigger>
+				<ResponsiveSelectContent className="max-h-[300px] overflow-y-auto">
 					{options.map((option) => (
-						<SelectItem key={option.value} value={option.value}>
+						<ResponsiveSelectItem key={option.value} value={option.value}>
 							{renderOption ? renderOption(option) : option.label}
-						</SelectItem>
+						</ResponsiveSelectItem>
 					))}
-				</SelectContent>
-			</Select>
+				</ResponsiveSelectContent>
+			</ResponsiveSelect>
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>
 	);

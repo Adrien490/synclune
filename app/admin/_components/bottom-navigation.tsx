@@ -2,47 +2,63 @@
 
 import { memo, useMemo, useState } from "react";
 import { cn } from "@/shared/utils/cn";
-import { ExternalLink, LogOut, MessageSquare, MoreHorizontal, User } from "lucide-react";
+import {
+	ChevronRight,
+	ExternalLink,
+	LogOut,
+	MessageSquare,
+	MoreHorizontal,
+	Zap,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
 	Drawer,
-	DrawerBody,
 	DrawerContent,
-	DrawerDescription,
+	DrawerFooter,
 	DrawerHeader,
-	DrawerNestedRoot,
-	DrawerOverlay,
-	DrawerPortal,
 	DrawerTitle,
 	DrawerTrigger,
 } from "@/shared/components/ui/drawer";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Separator } from "@/shared/components/ui/separator";
+import {
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
+} from "@/shared/components/ui/avatar";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
-import { ContactAdrienForm } from "@/modules/dashboard/components/contact-adrien-form";
 import {
 	getBottomNavPrimaryItems,
+	getBottomNavSecondaryGroups,
 	getBottomNavSecondaryItems,
+	type NavGroup,
 	type NavItem,
 } from "./navigation-config";
 import { isRouteActive } from "@/shared/lib/navigation";
 
 // Récupérer les items depuis la configuration centralisée
 const primaryItems = getBottomNavPrimaryItems();
+const secondaryGroups = getBottomNavSecondaryGroups();
 const secondaryItems = getBottomNavSecondaryItems();
 
 // Styles partagés pour les items de navigation
 const navItemStyles = {
 	base: "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-[64px] min-h-[48px] relative motion-safe:transition-all motion-safe:active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
 	active: "text-foreground font-semibold",
-	inactive: "text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium",
+	inactive:
+		"text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium",
 } as const;
 
 const drawerItemStyles = {
-	base: "flex flex-col items-center justify-center gap-2 p-4 rounded-lg relative motion-safe:transition-all motion-safe:active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+	base: "flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg relative motion-safe:transition-all motion-safe:active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 	active: "bg-accent/50 text-foreground font-semibold",
-	inactive: "text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium",
+	inactive:
+		"text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium",
+} as const;
+
+const quickActionStyles = {
+	base: "flex flex-col items-center justify-center gap-2 p-4 rounded-lg motion-safe:transition-all motion-safe:active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 text-muted-foreground hover:text-foreground hover:bg-accent/50",
 } as const;
 
 interface BottomNavigationProps {
@@ -54,6 +70,18 @@ interface BottomNavigationProps {
 }
 
 /**
+ * Génère les initiales à partir d'un nom
+ */
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.map((part) => part[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
+
+/**
  * Bottom Navigation pour mobile
  * Visible uniquement sur écrans < 768px (md breakpoint)
  * Position fixed en bas de l'écran avec backdrop-blur
@@ -61,13 +89,14 @@ interface BottomNavigationProps {
 export function BottomNavigation({ user }: BottomNavigationProps) {
 	const pathname = usePathname();
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-	const [isContactOpen, setIsContactOpen] = useState(false);
 
 	// Vérifie si une page du menu "Plus" est active (mémoïsé pour éviter les recalculs)
 	const isMoreItemActive = useMemo(
 		() => secondaryItems.some((item) => isRouteActive(pathname, item.url)),
 		[pathname]
 	);
+
+	const closeDrawer = () => setIsDrawerOpen(false);
 
 	return (
 		<nav
@@ -104,142 +133,156 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 						>
 							{/* Indicateur actif si une page du menu "Plus" est active */}
 							{isMoreItemActive && <ActiveIndicator />}
-							<MoreHorizontal className="h-5 w-5 shrink-0" aria-hidden="true" />
+							<MoreHorizontal
+								className="h-5 w-5 shrink-0"
+								aria-hidden="true"
+							/>
 							<span className="text-xs font-medium leading-none">Plus</span>
 						</button>
 					</DrawerTrigger>
-					<DrawerContent bottomInset className="min-h-[60vh]">
-						<DrawerHeader>
-							<DrawerTitle>Plus d'options</DrawerTitle>
-							<DrawerDescription>
-								Accédez aux autres sections de l'administration
-							</DrawerDescription>
+					<DrawerContent bottomInset className="max-h-[70vh]">
+						<DrawerHeader className="sr-only">
+							<DrawerTitle>Menu</DrawerTitle>
 						</DrawerHeader>
 
 						<ScrollArea className="flex-1 min-h-0">
-							{/* Section utilisateur */}
-							<div className="pb-4">
-								<div className="p-3 rounded-lg bg-accent/30">
-									<p className="text-sm font-medium truncate">{user.name}</p>
-									<p className="text-xs text-muted-foreground truncate">{user.email}</p>
-								</div>
-							</div>
-
-							{/* Actions rapides */}
-							<section
-								aria-label="Actions rapides"
-								className="pb-4 grid grid-cols-3 gap-3"
-							>
-								<Link
-									href="/"
-									target="_blank"
-									rel="noopener noreferrer"
-									onClick={() => setIsDrawerOpen(false)}
-									aria-label="Voir le site (s'ouvre dans un nouvel onglet)"
-									className={cn(
-										drawerItemStyles.base,
-										drawerItemStyles.inactive
-									)}
-								>
-									<ExternalLink className="h-5 w-5" aria-hidden="true" />
-									<span className="text-xs text-center">Voir le site</span>
-								</Link>
+							<div className="space-y-6 pb-4">
+								{/* User Card cliquable */}
 								<Link
 									href="/admin/compte"
-									onClick={() => setIsDrawerOpen(false)}
-									className={cn(
-										drawerItemStyles.base,
-										isRouteActive(pathname, "/admin/compte")
-											? drawerItemStyles.active
-											: drawerItemStyles.inactive
-									)}
+									onClick={closeDrawer}
+									className="flex items-center gap-3 p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors"
 								>
-									<User className="h-5 w-5" aria-hidden="true" />
-									<span className="text-xs text-center">Mon compte</span>
+									<Avatar className="h-10 w-10">
+										<AvatarImage src={user.avatar} alt={user.name} />
+										<AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+									</Avatar>
+									<div className="flex-1 min-w-0">
+										<p className="text-sm font-medium truncate">{user.name}</p>
+										<p className="text-xs text-muted-foreground">
+											Voir mon compte
+										</p>
+									</div>
+									<ChevronRight
+										className="h-4 w-4 text-muted-foreground shrink-0"
+										aria-hidden="true"
+									/>
 								</Link>
-								{/* Nested drawer pour contacter Adri */}
-								<DrawerNestedRoot open={isContactOpen} onOpenChange={setIsContactOpen}>
-									<DrawerTrigger asChild>
-										<button
-											type="button"
-											className={cn(
-												drawerItemStyles.base,
-												drawerItemStyles.inactive
-											)}
+
+								{/* Actions rapides */}
+								<section aria-label="Actions rapides" className="space-y-2">
+									<SectionHeader icon={Zap} label="Actions rapides" />
+									<div className="grid grid-cols-2 gap-3">
+										<Link
+											href="/"
+											target="_blank"
+											rel="noopener noreferrer"
+											onClick={closeDrawer}
+											aria-label="Voir le site (s'ouvre dans un nouvel onglet)"
+											className={quickActionStyles.base}
+										>
+											<ExternalLink className="h-5 w-5" aria-hidden="true" />
+											<span className="text-xs text-center">Voir le site</span>
+										</Link>
+										<Link
+											href="/admin/contact"
+											onClick={closeDrawer}
+											className={quickActionStyles.base}
 										>
 											<MessageSquare className="h-5 w-5" aria-hidden="true" />
 											<span className="text-xs text-center">Contacter Adri</span>
-										</button>
-									</DrawerTrigger>
-									<DrawerPortal>
-										<DrawerOverlay />
-										<DrawerContent bottomInset>
-											<DrawerHeader>
-												<DrawerTitle>Contacter Adri</DrawerTitle>
-												<DrawerDescription>
-													Signale un bug, demande une fonctionnalité ou pose une question.
-												</DrawerDescription>
-											</DrawerHeader>
-											<DrawerBody>
-												<ContactAdrienForm
-													onSuccess={() => {
-														setIsContactOpen(false);
-														setIsDrawerOpen(false);
-													}}
-													onCancel={() => setIsContactOpen(false)}
-												/>
-											</DrawerBody>
-										</DrawerContent>
-									</DrawerPortal>
-								</DrawerNestedRoot>
-							</section>
+										</Link>
+									</div>
+								</section>
 
-							<Separator />
-
-							{/* Déconnexion */}
-							<section
-								aria-label="Déconnexion"
-								className="py-4"
-							>
-								<LogoutAlertDialog>
-									<button
-										type="button"
-										className={cn(
-											"w-full flex items-center justify-center gap-2 p-3 rounded-lg",
-											"text-muted-foreground hover:text-destructive hover:bg-destructive/10",
-											"motion-safe:transition-all motion-safe:active:scale-95",
-											"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-										)}
-									>
-										<LogOut className="h-5 w-5" aria-hidden="true" />
-										<span className="text-sm font-medium">Déconnexion</span>
-									</button>
-								</LogoutAlertDialog>
-							</section>
-
-							<Separator />
-
-							{/* Navigation secondaire */}
-							<nav aria-label="Navigation secondaire" className="py-4">
-								<ul className="grid grid-cols-3 gap-3" role="menu">
-									{secondaryItems.map((item) => (
-										<li key={item.id} role="none">
-											<BottomNavDrawerItem
-												item={item}
-												isActive={isRouteActive(pathname, item.url)}
-												onClick={() => setIsDrawerOpen(false)}
-											/>
-										</li>
-									))}
-								</ul>
-							</nav>
+								{/* Groupes de navigation */}
+								{secondaryGroups.map((group) => (
+									<DrawerNavGroup
+										key={group.label}
+										group={group}
+										pathname={pathname}
+										onClose={closeDrawer}
+									/>
+								))}
+							</div>
 						</ScrollArea>
+
+						{/* Logout Footer */}
+						<DrawerFooter>
+							<Separator className="mb-4" />
+							<LogoutAlertDialog>
+								<button
+									type="button"
+									className={cn(
+										"w-full flex items-center justify-center gap-2 p-3 rounded-lg",
+										"text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+										"motion-safe:transition-all motion-safe:active:scale-95",
+										"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+									)}
+								>
+									<LogOut className="h-5 w-5" aria-hidden="true" />
+									<span className="text-sm font-medium">Déconnexion</span>
+								</button>
+							</LogoutAlertDialog>
+						</DrawerFooter>
 					</DrawerContent>
 				</Drawer>
 			</div>
 		</nav>
 	);
 }
+
+/**
+ * Header de section avec icône et label
+ */
+function SectionHeader({
+	icon: Icon,
+	label,
+}: {
+	icon: React.ComponentType<{ className?: string }>;
+	label: string;
+}) {
+	return (
+		<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+			<Icon className="h-3.5 w-3.5" aria-hidden="true" />
+			{label}
+		</div>
+	);
+}
+
+/**
+ * Groupe de navigation dans le drawer
+ */
+const DrawerNavGroup = memo(function DrawerNavGroup({
+	group,
+	pathname,
+	onClose,
+}: {
+	group: NavGroup;
+	pathname: string;
+	onClose: () => void;
+}) {
+	const GroupIcon = group.icon;
+
+	return (
+		<section aria-label={group.label} className="space-y-2">
+			<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+				{GroupIcon && <GroupIcon className="h-3.5 w-3.5" aria-hidden="true" />}
+				{group.label}
+			</div>
+			<div className="grid grid-cols-3 gap-2">
+				{group.items.map((item) => (
+					<BottomNavDrawerItem
+						key={item.id}
+						item={item}
+						isActive={isRouteActive(pathname, item.url)}
+						onClick={onClose}
+					/>
+				))}
+			</div>
+		</section>
+	);
+});
 
 /**
  * Item de navigation principal (barre du bas)
@@ -292,7 +335,6 @@ const BottomNavDrawerItem = memo(function BottomNavDrawerItem({
 		<Link
 			href={item.url}
 			onClick={onClick}
-			role="menuitem"
 			className={cn(
 				drawerItemStyles.base,
 				isActive ? drawerItemStyles.active : drawerItemStyles.inactive
@@ -319,4 +361,3 @@ function ActiveIndicator() {
 		/>
 	);
 }
-

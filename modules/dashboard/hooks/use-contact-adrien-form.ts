@@ -7,7 +7,6 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { contactAdrien } from "@/modules/dashboard/actions/contact-adrien";
-import type { FeedbackType } from "../constants/contact-adrien.constants";
 
 interface UseContactAdrienFormOptions {
 	onSuccess?: (message: string) => void;
@@ -39,7 +38,6 @@ export function useContactAdrienForm(options?: UseContactAdrienFormOptions) {
 
 	const form = useAppForm({
 		defaultValues: {
-			type: "bug" as FeedbackType,
 			message: "",
 		},
 		transform: useTransform(

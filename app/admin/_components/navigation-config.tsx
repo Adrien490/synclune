@@ -13,6 +13,8 @@ import {
 	Tag,
 	Palette,
 	Gem,
+	Megaphone,
+	Settings,
 } from "lucide-react";
 import type { NavBadgeKey } from "./nav-badges-data";
 
@@ -32,6 +34,7 @@ export interface NavItem {
 
 export interface NavGroup {
 	label: string;
+	icon?: LucideIcon;
 	items: NavItem[];
 }
 
@@ -50,6 +53,7 @@ export const navigationData: NavigationData = {
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Accueil",
+			icon: LayoutDashboard,
 			items: [
 				{
 					id: "dashboard",
@@ -65,6 +69,7 @@ export const navigationData: NavigationData = {
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Ventes",
+			icon: ShoppingBag,
 			items: [
 				{
 					id: "orders",
@@ -92,6 +97,7 @@ export const navigationData: NavigationData = {
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Catalogue",
+			icon: Package,
 			items: [
 				{
 					id: "products",
@@ -118,6 +124,7 @@ export const navigationData: NavigationData = {
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Marketing",
+			icon: Megaphone,
 			items: [
 				{
 					id: "promo-codes",
@@ -140,6 +147,7 @@ export const navigationData: NavigationData = {
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Clients",
+			icon: Users,
 			items: [
 				{
 					id: "customers",
@@ -154,6 +162,7 @@ export const navigationData: NavigationData = {
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Configuration",
+			icon: Settings,
 			items: [
 				{
 					id: "product-types",
@@ -225,4 +234,19 @@ export function getBottomNavPrimaryItems(): NavItem[] {
 export function getBottomNavSecondaryItems(): NavItem[] {
 	const primaryIds = new Set<string>(bottomNavConfig.primaryIds);
 	return getAllNavItems().filter((item) => !primaryIds.has(item.id));
+}
+
+/**
+ * Récupère les groupes de navigation pour le drawer mobile
+ * Exclut les items primaires (déjà dans la bottom bar) et les groupes vides
+ */
+export function getBottomNavSecondaryGroups(): NavGroup[] {
+	const primaryIds = new Set<string>(bottomNavConfig.primaryIds);
+
+	return navigationData.navGroups
+		.map((group) => ({
+			...group,
+			items: group.items.filter((item) => !primaryIds.has(item.id)),
+		}))
+		.filter((group) => group.items.length > 0);
 }

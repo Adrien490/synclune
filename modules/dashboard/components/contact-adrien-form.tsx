@@ -8,7 +8,6 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { cn } from "@/shared/utils/cn";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
-import { CONTACT_TYPE_OPTIONS } from "../constants/contact-adrien.constants";
 
 interface ContactAdrienFormProps {
 	/** Callback appelé après succès (auto-fermeture) */
@@ -98,25 +97,6 @@ export function ContactAdrienForm({
 
 			<FieldSet>
 				<FieldGroup>
-					<form.AppField
-						name="type"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value) return "Le type est requis";
-								return undefined;
-							},
-						}}
-					>
-						{(field) => (
-							<field.SelectField
-								label="Type de message"
-								options={CONTACT_TYPE_OPTIONS}
-								disabled={isPending || isSuccess}
-								required
-							/>
-						)}
-					</form.AppField>
-
 					<form.AppField
 						name="message"
 						validators={{

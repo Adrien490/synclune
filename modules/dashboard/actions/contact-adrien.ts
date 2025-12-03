@@ -12,7 +12,6 @@ import { sanitizeForEmail, newlinesToBr } from "@/shared/lib/sanitize";
 import { EMAIL_FROM, EMAIL_ADMIN } from "@/shared/lib/email-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { contactAdrienSchema } from "../schemas/dashboard.schemas";
-import { CONTACT_TYPES } from "../constants/contact-adrien.constants";
 
 // Initialiser le client Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -54,7 +53,6 @@ export async function contactAdrien(
 		const validated = validateFormData(
 			formData,
 			(fd) => ({
-				type: fd.get("type"),
 				message: fd.get("message"),
 			}),
 			contactAdrienSchema
@@ -62,24 +60,19 @@ export async function contactAdrien(
 
 		if ("error" in validated) return validated.error;
 
-		const { type, message } = validated.data;
+		const { message } = validated.data;
 
-		// 5. Labels pour les types de message (centralisés dans constants)
-		const typeLabel =
-			CONTACT_TYPES[type as keyof typeof CONTACT_TYPES]?.emailLabel ||
-			"Message";
-
-		// 6. Sanitizer le message pour l'HTML
+		// 5. Sanitizer le message pour l'HTML
 		const sanitizedMessage = newlinesToBr(sanitizeForEmail(message));
 		const sanitizedName = sanitizeForEmail(user.name || "Administrateur");
 		const sanitizedEmail = sanitizeForEmail(user.email || "");
 
-		// 7. Envoyer l'email avec SDK Resend
+		// 6. Envoyer l'email avec SDK Resend
 		const { data, error } = await resend.emails.send({
 			from: EMAIL_FROM,
 			to: EMAIL_ADMIN,
 			replyTo: user.email || undefined,
-			subject: `[Dashboard Synclune] ${typeLabel} - ${user.name || "Admin"}`,
+			subject: `[Dashboard Synclune] Message de ${user.name || "Admin"}`,
 			html: `
 				<!DOCTYPE html>
 				<html>
@@ -141,11 +134,6 @@ export async function contactAdrien(
 					</div>
 					<div class="content">
 						<div>
-							<div class="label">Type de message</div>
-							<div class="value">${typeLabel}</div>
-						</div>
-
-						<div>
 							<div class="label">De</div>
 							<div class="value">
 								${sanitizedName}<br>
@@ -166,7 +154,6 @@ export async function contactAdrien(
 				</html>
 			`,
 			text: `
-Type: ${typeLabel}
 De: ${user.name || "Admin"} (${user.email || ""})
 
 Message:

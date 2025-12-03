@@ -4,11 +4,25 @@ import { cn } from "@/shared/utils/cn"
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
+// Context pour détecter si on est dans un Drawer (évite nested drawers)
+const DrawerContext = React.createContext<boolean>(false)
+
+/**
+ * Hook pour savoir si le composant est rendu dans un Drawer.
+ * Utilisé par ResponsiveSelect pour éviter les nested drawers.
+ */
+export function useIsInsideDrawer() {
+  return React.useContext(DrawerContext)
+}
 
 function Drawer({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+  return (
+    <DrawerContext.Provider value={true}>
+      <DrawerPrimitive.Root data-slot="drawer" {...props} />
+    </DrawerContext.Provider>
+  )
 }
 
 function DrawerTrigger({
