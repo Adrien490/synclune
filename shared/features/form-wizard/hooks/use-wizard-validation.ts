@@ -60,9 +60,12 @@ export function useWizardValidation({
 				for (const fieldName of stepConfig.fields) {
 					try {
 						await form.validateField(fieldName, { cause: "change" })
-					} catch {
-						// Le champ peut ne pas exister ou la validation peut échouer
-						// On continue avec les autres champs
+					} catch (error) {
+						// Log l'erreur pour faciliter le debug (champ inexistant, erreur adaptateur, etc.)
+						console.warn(
+							`[FormWizard] Erreur validation champ "${fieldName}":`,
+							error instanceof Error ? error.message : String(error)
+						)
 					}
 				}
 

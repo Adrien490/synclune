@@ -11,6 +11,8 @@ interface UseWizardNavigationOptions {
 	validateBeforeNext?: () => Promise<boolean>
 	onValidationFailed?: () => void
 	markStepCompleted?: (step: number) => void
+	/** Callback lors de la navigation arrière (pour invalider le cache de validation) */
+	onNavigateBack?: (targetStep: number) => void
 }
 
 interface UseWizardNavigationReturn {
@@ -44,6 +46,7 @@ export function useWizardNavigation({
 	validateBeforeNext,
 	onValidationFailed,
 	markStepCompleted,
+	onNavigateBack,
 }: UseWizardNavigationOptions): UseWizardNavigationReturn {
 	// Protection contre les doubles clics / navigation rapide
 	const isNavigating = useRef(false)
@@ -90,6 +93,8 @@ export function useWizardNavigation({
 
 			// Navigation arrière: toujours permise
 			if (targetStep < currentStep) {
+				// Invalide le cache de validation pour l'étape cible (l'utilisateur peut avoir modifié des champs)
+				onNavigateBack?.(targetStep)
 				setCurrentStep(targetStep)
 				onStepChange?.(targetStep, "backward")
 				return true
@@ -127,6 +132,7 @@ export function useWizardNavigation({
 			validateBeforeNext,
 			onValidationFailed,
 			markStepCompleted,
+			onNavigateBack,
 		]
 	)
 
@@ -139,9 +145,12 @@ export function useWizardNavigation({
 	// Aller à l'étape précédente
 	const previousStep = useCallback(() => {
 		if (isFirstStep) return
-		setCurrentStep(currentStep - 1)
-		onStepChange?.(currentStep - 1, "backward")
-	}, [isFirstStep, currentStep, setCurrentStep, onStepChange])
+		const targetStep = currentStep - 1
+		// Invalide le cache de validation pour l'étape cible
+		onNavigateBack?.(targetStep)
+		setCurrentStep(targetStep)
+		onStepChange?.(targetStep, "backward")
+	}, [isFirstStep, currentStep, setCurrentStep, onStepChange, onNavigateBack])
 
 	return {
 		goToStep,

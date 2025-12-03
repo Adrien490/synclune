@@ -132,6 +132,8 @@ export function useFormWizard({
 		validateBeforeNext: validation.validateCurrentStep,
 		onValidationFailed,
 		markStepCompleted,
+		// Invalide le cache de validation quand on navigue en arrière
+		onNavigateBack: validation.clearStepErrorsCache,
 	})
 
 	// Progress percentage

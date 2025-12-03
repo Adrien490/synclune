@@ -46,7 +46,8 @@ export const WizardProgress = memo(function WizardProgress({
 			} else if (e.key === "ArrowRight" && currentStep < steps.length - 1) {
 				e.preventDefault()
 				const nextStep = currentStep + 1
-				const canNavigate = nextStep <= currentStep || completedSteps.has(nextStep)
+				// Permettre d'avancer si l'étape actuelle est complétée ou si l'étape cible est déjà visitée
+				const canNavigate = completedSteps.has(currentStep) || completedSteps.has(nextStep)
 				if (canNavigate) {
 					onStepClick(nextStep)
 				}

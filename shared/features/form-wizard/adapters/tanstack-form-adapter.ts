@@ -35,6 +35,18 @@ type TanStackFormInstance = any
  * ```
  */
 export function createTanStackFormAdapter(form: TanStackFormInstance): FormLike {
+	// Validation des méthodes requises pour un meilleur debug
+	if (!form?.validateField) {
+		throw new Error(
+			"[FormWizard] L'adaptateur nécessite la méthode validateField sur le formulaire"
+		)
+	}
+	if (!form?.getFieldMeta) {
+		throw new Error(
+			"[FormWizard] L'adaptateur nécessite la méthode getFieldMeta sur le formulaire"
+		)
+	}
+
 	return {
 		validateField: async (name: string, opts?: { cause: string }) => {
 			// TanStack Form expects the cause directly, not wrapped in an object
