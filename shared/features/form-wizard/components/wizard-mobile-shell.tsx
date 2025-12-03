@@ -23,6 +23,8 @@ interface WizardMobileShellProps {
 	className?: string;
 	/** Function to get errors for a step (for visual indicator) */
 	getStepErrors?: (stepIndex: number) => string[];
+	/** Custom footer for the last step (replaces default submit button) */
+	renderLastStepFooter?: () => React.ReactNode;
 }
 
 export function WizardMobileShell({
@@ -40,6 +42,7 @@ export function WizardMobileShell({
 	children,
 	className,
 	getStepErrors,
+	renderLastStepFooter,
 }: WizardMobileShellProps) {
 	// Live region for screen reader announcements
 	const [announcement, setAnnouncement] = useState("");
@@ -115,14 +118,18 @@ export function WizardMobileShell({
 
 			{/* Sticky footer with navigation - positioned above bottom-nav (h-16 = 64px) */}
 			<div className="sticky bottom-16 z-10 -mx-4 px-4 py-3 border-t bg-background/95 backdrop-blur-sm mt-auto">
-				<WizardNavigation
-					isFirstStep={isFirstStep}
-					isLastStep={isLastStep}
-					onPrevious={onPrevious}
-					onNext={onNext}
-					isSubmitting={isSubmitting}
-					isValidating={isValidating}
-				/>
+				{isLastStep && renderLastStepFooter ? (
+					renderLastStepFooter()
+				) : (
+					<WizardNavigation
+						isFirstStep={isFirstStep}
+						isLastStep={isLastStep}
+						onPrevious={onPrevious}
+						onNext={onNext}
+						isSubmitting={isSubmitting}
+						isValidating={isValidating}
+					/>
+				)}
 			</div>
 		</div>
 	);

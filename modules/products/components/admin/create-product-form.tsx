@@ -39,7 +39,6 @@ const PRODUCT_STEPS: WizardStep[] = [
 			"description",
 			"typeId",
 			"collectionIds",
-			"status",
 			"initialSku.colorId",
 			"initialSku.materialId",
 			"initialSku.size",
@@ -303,24 +302,6 @@ function CreateProductFormContent({
 									)}
 								</form.AppField>
 							</div>
-
-							<form.AppField name="status">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel required>Statut</FieldLabel>
-										<field.RadioGroupField
-											label=""
-											options={[
-												{ value: "DRAFT", label: "Brouillon" },
-												{ value: "PUBLIC", label: "Public" },
-											]}
-										/>
-										<p className="text-xs text-muted-foreground">
-											Les brouillons ne sont pas visibles sur la boutique
-										</p>
-									</div>
-								)}
-							</form.AppField>
 						</div>
 					</FormSection>
 				);
@@ -345,19 +326,14 @@ function CreateProductFormContent({
 							>
 								{(field) => (
 									<div className="space-y-2">
-										<FieldLabel required>Prix de vente TTC</FieldLabel>
+										<FieldLabel required>Prix de vente final</FieldLabel>
 										<field.InputGroupField type="number" step="0.01" required>
 											<InputGroupAddon>
 												<Euro className="h-4 w-4" />
 											</InputGroupAddon>
-											<InputGroupAddon align="inline-end">
-												<InputGroupText className="text-xs text-muted-foreground">
-													TTC
-												</InputGroupText>
-											</InputGroupAddon>
 										</field.InputGroupField>
 										<p className="text-xs text-muted-foreground">
-											Le prix que paiera le client (taxes comprises)
+											Le prix que paiera le client
 										</p>
 									</div>
 								)}
@@ -395,11 +371,6 @@ function CreateProductFormContent({
 										<field.InputGroupField type="number" step="0.01">
 											<InputGroupAddon>
 												<Euro className="h-4 w-4" />
-											</InputGroupAddon>
-											<InputGroupAddon align="inline-end">
-												<InputGroupText className="text-xs text-muted-foreground">
-													TTC
-												</InputGroupText>
 											</InputGroupAddon>
 										</field.InputGroupField>
 										<p className="text-xs text-muted-foreground">
@@ -782,31 +753,35 @@ function CreateProductFormContent({
 	const renderFooter = () => (
 		<form.AppForm>
 			<div className="mt-6 flex justify-end gap-3">
-				<Button
-					type="button"
-					variant="outline"
-					onClick={() => router.push("/admin/catalogue/produits")}
-					disabled={isPending || isUploading}
-				>
-					Annuler
-				</Button>
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (
-						<Button
-							type="submit"
-							disabled={!canSubmit || isPending || isUploading}
-							className="min-w-[160px]"
-						>
-							{isPending
-								? "Enregistrement..."
-								: isPrimaryImageUploading
-									? "Upload image..."
-									: isGalleryUploading
-										? "Upload galerie..."
-										: generatingUrls.size > 0
-											? "Génération miniatures..."
-											: "Créer le bijou"}
-						</Button>
+						<>
+							<Button
+								type="submit"
+								variant="secondary"
+								disabled={!canSubmit || isPending || isUploading}
+								onClick={() => form.setFieldValue("status", "DRAFT")}
+							>
+								{isPending && form.state.values.status === "DRAFT"
+									? "Enregistrement..."
+									: "Enregistrer comme brouillon"}
+							</Button>
+							<Button
+								type="submit"
+								disabled={!canSubmit || isPending || isUploading}
+								onClick={() => form.setFieldValue("status", "PUBLIC")}
+							>
+								{isPending && form.state.values.status === "PUBLIC"
+									? "Enregistrement..."
+									: isPrimaryImageUploading
+										? "Upload image..."
+										: isGalleryUploading
+											? "Upload galerie..."
+											: generatingUrls.size > 0
+												? "Génération miniatures..."
+												: "Publier le bijou"}
+							</Button>
+						</>
 					)}
 				</form.Subscribe>
 			</div>
@@ -877,6 +852,46 @@ function CreateProductFormContent({
 					isSubmitting={isPending}
 					isValidating={wizard.isValidating}
 					getStepErrors={wizard.getStepErrors}
+					renderLastStepFooter={() => (
+						<div className="flex items-center gap-3">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={wizard.goPrevious}
+								disabled={isPending || isUploading}
+								className="flex-1 h-12"
+							>
+								Précédent
+							</Button>
+							<form.Subscribe selector={(state) => [state.canSubmit]}>
+								{([canSubmit]) => (
+									<>
+										<Button
+											type="submit"
+											variant="secondary"
+											disabled={!canSubmit || isPending || isUploading}
+											onClick={() => form.setFieldValue("status", "DRAFT")}
+											className="flex-1 h-12"
+										>
+											{isPending && form.state.values.status === "DRAFT"
+												? "..."
+												: "Brouillon"}
+										</Button>
+										<Button
+											type="submit"
+											disabled={!canSubmit || isPending || isUploading}
+											onClick={() => form.setFieldValue("status", "PUBLIC")}
+											className="flex-1 h-12"
+										>
+											{isPending && form.state.values.status === "PUBLIC"
+												? "..."
+												: "Publier"}
+										</Button>
+									</>
+								)}
+							</form.Subscribe>
+						</div>
+					)}
 				>
 					{PRODUCT_STEPS.map((step, index) => (
 						<WizardStepContainer key={step.id} step={step} stepIndex={index}>

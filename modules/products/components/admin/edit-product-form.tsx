@@ -409,7 +409,7 @@ export function EditProductForm({
 						description="Tarification et disponibilité du SKU par défaut"
 						icon={<Euro />}
 					>
-						{/* Prix TTC */}
+						{/* Prix final */}
 						<form.AppField
 							name="defaultSku.priceInclTaxEuros"
 							validators={{
@@ -422,7 +422,7 @@ export function EditProductForm({
 						>
 							{(field) => (
 								<div className="space-y-2">
-									<FieldLabel required>Prix de vente TTC</FieldLabel>
+									<FieldLabel required>Prix de vente final</FieldLabel>
 									<field.InputGroupField
 										type="number"
 										step="0.01"
@@ -432,14 +432,9 @@ export function EditProductForm({
 										<InputGroupAddon>
 											<Euro className="h-4 w-4" />
 										</InputGroupAddon>
-										<InputGroupAddon align="inline-end">
-											<InputGroupText className="text-xs text-muted-foreground">
-												TTC
-											</InputGroupText>
-										</InputGroupAddon>
 									</field.InputGroupField>
 									<p className="text-xs text-muted-foreground">
-										Le prix que paiera le client (taxes comprises)
+										Le prix que paiera le client
 									</p>
 								</div>
 							)}
@@ -480,11 +475,6 @@ export function EditProductForm({
 									>
 										<InputGroupAddon>
 											<Euro className="h-4 w-4" />
-										</InputGroupAddon>
-										<InputGroupAddon align="inline-end">
-											<InputGroupText className="text-xs text-muted-foreground">
-												TTC
-											</InputGroupText>
 										</InputGroupAddon>
 									</field.InputGroupField>
 									<p className="text-xs text-muted-foreground">
