@@ -1,4 +1,4 @@
-import { Role } from "@/app/generated/prisma/client";
+import { Role } from "@/app/generated/prisma";
 import type { userFiltersSchema } from "@/modules/users/data/get-users";
 import type { z } from "zod";
 import type { CustomersSearchParams } from "../page";

@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
-import { StockNotificationStatus } from "@/app/generated/prisma/client";
+import { StockNotificationStatus } from "@/app/generated/prisma";
 import {
 	cacheStockNotificationsBySku,
 	STOCK_NOTIFICATIONS_CACHE_TAGS,

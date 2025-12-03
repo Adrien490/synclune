@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import { z } from "zod";
 import { GET_ACCOUNT_DEFAULT_SELECT } from "../constants/account.constants";
 import { getAccountSchema } from "../schemas/accounts.schemas";

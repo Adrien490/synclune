@@ -1,4 +1,4 @@
-import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
+import { PaymentStatus, RefundStatus } from "@/app/generated/prisma";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";

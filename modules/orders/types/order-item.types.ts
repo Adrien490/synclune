@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import { z } from "zod";
 import { GET_ORDER_ITEM_DEFAULT_SELECT } from "../constants/order-item.constants";
 import { getOrderItemSchema } from "../schemas/order-item.schemas";

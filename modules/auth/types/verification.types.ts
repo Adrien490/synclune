@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import { z } from "zod";
 import { GET_VERIFICATION_SELECT } from "../constants/verification.constants";
 import { getVerificationSchema } from "../schemas/verification.schemas";

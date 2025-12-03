@@ -3,7 +3,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 
 import { GET_ORDER_SELECT } from "../constants/order.constants";
 import { getOrderSchema } from "../schemas/order.schemas";

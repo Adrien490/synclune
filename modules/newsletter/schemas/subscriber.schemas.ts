@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NewsletterStatus } from "@/app/generated/prisma/client";
+import { NewsletterStatus } from "@/app/generated/prisma";
 import { SORT_OPTIONS } from "../constants/subscriber.constants";
 
 // ============================================================================

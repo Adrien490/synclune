@@ -1,6 +1,6 @@
 "use server";
 
-import { Prisma, PaymentStatus, RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { Prisma, PaymentStatus, RefundAction, RefundStatus } from "@/app/generated/prisma";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";

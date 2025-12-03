@@ -1,4 +1,4 @@
-import { OrderStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus, FulfillmentStatus } from "@/app/generated/prisma";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";

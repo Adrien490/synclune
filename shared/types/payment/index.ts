@@ -1,4 +1,4 @@
-import { PaymentStatus } from "@/app/generated/prisma/client";
+import { PaymentStatus } from "@/app/generated/prisma";
 
 export type StripePaymentFilters = {
 	paymentStatus?: PaymentStatus;

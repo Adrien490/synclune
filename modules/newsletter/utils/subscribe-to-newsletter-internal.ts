@@ -1,6 +1,6 @@
 "use server";
 
-import { NewsletterStatus } from "@/app/generated/prisma/client";
+import { NewsletterStatus } from "@/app/generated/prisma";
 import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
 import { randomUUID } from "crypto";

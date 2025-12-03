@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@/app/generated/prisma/client";
+import type { PrismaClient } from "@/app/generated/prisma";
 
 /**
  * Type pour le client Prisma ou un client de transaction

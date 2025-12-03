@@ -23,7 +23,7 @@ import {
 } from "./_constants/sort-options";
 import { parseFilters } from "./_utils/params";
 import { Metadata } from "next";
-import type { Role } from "@/app/generated/prisma/client";
+import type { Role } from "@/app/generated/prisma";
 
 export type CustomerFiltersSearchParams = {
 	filter_role?: string;

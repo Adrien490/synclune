@@ -1,6 +1,6 @@
 "use server";
 
-import { NewsletterStatus } from "@/app/generated/prisma/client";
+import { NewsletterStatus } from "@/app/generated/prisma";
 import { sendNewsletterEmail as sendEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";

@@ -3,7 +3,7 @@
 import { FilterBadges } from "@/shared/components/filter-badges";
 import type { FilterDefinition } from "@/shared/hooks/use-filter";
 import { STOCK_NOTIFICATION_STATUS_LABELS } from "../../constants/stock-notification.constants";
-import { StockNotificationStatus } from "@/app/generated/prisma/client";
+import { StockNotificationStatus } from "@/app/generated/prisma";
 
 function formatStockNotificationFilter(
 	filter: FilterDefinition

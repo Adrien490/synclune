@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import type { GetStripePaymentsParams } from "../types/payment.types";
 
 // ============================================================================

@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 
 export const GET_ORDERS_DEFAULT_SELECT = {
 	id: true,

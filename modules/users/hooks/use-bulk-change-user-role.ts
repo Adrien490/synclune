@@ -4,7 +4,7 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useTransition } from "react";
 import { bulkChangeUserRole } from "@/modules/users/actions/admin/bulk-change-user-role";
-import { Role } from "@/app/generated/prisma/client";
+import { Role } from "@/app/generated/prisma";
 
 interface UseBulkChangeUserRoleOptions {
 	onSuccess?: (message: string) => void;

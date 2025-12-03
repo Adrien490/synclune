@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RefundReason, RefundStatus } from "@/app/generated/prisma/client";
+import { RefundReason, RefundStatus } from "@/app/generated/prisma";
 import {
 	GET_REFUNDS_DEFAULT_PER_PAGE,
 	GET_REFUNDS_MAX_RESULTS_PER_PAGE,

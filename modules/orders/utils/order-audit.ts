@@ -1,11 +1,11 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import { prisma } from "@/shared/lib/prisma";
 import type {
 	OrderAction,
 	OrderStatus,
 	PaymentStatus,
 	FulfillmentStatus,
-} from "@/app/generated/prisma/client";
+} from "@/app/generated/prisma";
 
 // ============================================================================
 // 🔴 ORDER AUDIT TRAIL (Best Practice Stripe 2025 + Conformité FR)

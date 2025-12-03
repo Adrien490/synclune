@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import {
 	buildCursorPagination,
 	processCursorResults,

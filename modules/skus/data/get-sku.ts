@@ -1,6 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
-import type { MediaType } from "@/app/generated/prisma/client";
+import type { MediaType } from "@/app/generated/prisma";
 
 import { GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
 import { getProductSkuSchema } from "../schemas/sku.schemas";

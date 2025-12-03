@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DiscountType } from "@/app/generated/prisma/client";
+import { DiscountType } from "@/app/generated/prisma";
 import {
 	GET_DISCOUNTS_DEFAULT_PER_PAGE,
 	GET_DISCOUNTS_MAX_RESULTS_PER_PAGE,

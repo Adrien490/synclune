@@ -1,4 +1,4 @@
-import { NewsletterStatus } from "@/app/generated/prisma/client";
+import { NewsletterStatus } from "@/app/generated/prisma";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";

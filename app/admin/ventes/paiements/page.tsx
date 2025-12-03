@@ -12,7 +12,7 @@ import { StripePaymentsDataTable } from "@/modules/payments/components/admin/str
 import { StripePaymentsDataTableSkeleton } from "@/modules/payments/components/admin/stripe-payments-data-table-skeleton";
 import { RefreshPaymentsButton } from "@/modules/payments/components/admin/refresh-payments-button";
 import type { Metadata } from "next";
-import type { PaymentStatus } from "@/app/generated/prisma/client";
+import type { PaymentStatus } from "@/app/generated/prisma";
 import { PAYMENT_STATUS_LABELS } from "@/modules/orders/constants/status-display";
 
 export const metadata: Metadata = {

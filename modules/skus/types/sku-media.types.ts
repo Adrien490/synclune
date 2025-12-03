@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import { z } from "zod";
 import { GET_SKU_MEDIA_SELECT } from "../constants/sku-media.constants";
 import { getSkuMediaSchema } from "../schemas/sku-media.schemas";

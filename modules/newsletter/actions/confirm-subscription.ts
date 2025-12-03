@@ -1,6 +1,6 @@
 "use server";
 
-import { NewsletterStatus } from "@/app/generated/prisma/client";
+import { NewsletterStatus } from "@/app/generated/prisma";
 import { ajNewsletterConfirm } from "@/shared/lib/arcjet";
 import { sendNewsletterWelcomeEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";

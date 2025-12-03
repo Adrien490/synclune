@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { ProductStatus } from "@/app/generated/prisma";
 import { TabNavigation } from "@/shared/components/tab-navigation";
 import type { ProductCountsByStatus } from "@/modules/products/types/product-counts.types";
 

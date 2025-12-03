@@ -6,7 +6,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getFirstParam } from "@/shared/utils/params";
-import { StockNotificationStatus } from "@/app/generated/prisma/client";
+import { StockNotificationStatus } from "@/app/generated/prisma";
 import {
 	getStockNotificationsAdmin,
 	getStockNotificationsStats,

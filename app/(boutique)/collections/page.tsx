@@ -1,4 +1,4 @@
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { CollectionStatus } from "@/app/generated/prisma";
 import { PageHeader } from "@/shared/components/page-header";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { CollectionGrid } from "@/modules/collections/components/collection-grid";

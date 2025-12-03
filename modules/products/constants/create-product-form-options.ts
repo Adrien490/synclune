@@ -1,5 +1,5 @@
 // shared-code.ts - Form options partagées entre client et serveur
-import type { ProductStatus } from "@/app/generated/prisma/client";
+import type { ProductStatus } from "@/app/generated/prisma";
 
 // Form options shared between client and server
 export const createProductFormOpts = {

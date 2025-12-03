@@ -1,4 +1,4 @@
-import { NewsletterStatus, Prisma } from "@/app/generated/prisma/client";
+import { NewsletterStatus, Prisma } from "@/app/generated/prisma";
 import type {
 	GetSubscribersParams,
 	SubscriberFilters,

@@ -4,7 +4,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { StockNotificationStatus } from "@/app/generated/prisma/client";
+import { StockNotificationStatus } from "@/app/generated/prisma";
 import { updateTag } from "next/cache";
 
 import { bulkCancelStockNotificationsSchema } from "../schemas/stock-notification.schemas";

@@ -1,4 +1,4 @@
-import type { Dispute, DisputeStatus, CurrencyCode } from "@/app/generated/prisma/client";
+import type { Dispute, DisputeStatus, CurrencyCode } from "@/app/generated/prisma";
 
 /**
  * Dispute avec order résumé (pour liste admin)

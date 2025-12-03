@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/shared/components/ui/badge";
 import type { GetDiscountsReturn } from "@/modules/discounts/data/get-discounts";
 import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.constants";
-import { DiscountType } from "@/app/generated/prisma/client";
+import { DiscountType } from "@/app/generated/prisma";
 import { Ticket } from "lucide-react";
 import { ViewTransition } from "react";
 import { DiscountRowActions } from "./discount-row-actions";

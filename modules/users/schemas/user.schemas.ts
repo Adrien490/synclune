@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Role } from "@/app/generated/prisma/client";
+import { Role } from "@/app/generated/prisma";
 import {
 	GET_USERS_DEFAULT_PER_PAGE,
 	GET_USERS_DEFAULT_SORT_BY,

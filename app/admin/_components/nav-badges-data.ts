@@ -3,7 +3,7 @@ import {
 	OrderStatus,
 	RefundStatus,
 	StockNotificationStatus,
-} from "@/app/generated/prisma/client";
+} from "@/app/generated/prisma";
 import { prisma } from "@/shared/lib/prisma";
 
 export type NavBadgeKey = "pendingOrders" | "pendingRefunds" | "stockAlerts";

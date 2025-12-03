@@ -2,7 +2,7 @@ import { after } from "next/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { WebhookEventStatus } from "@/app/generated/prisma/client";
+import { WebhookEventStatus } from "@/app/generated/prisma";
 import { prisma } from "@/shared/lib/prisma";
 import { ANTI_REPLAY_WINDOW_SECONDS } from "@/modules/webhooks/constants/webhook.constants";
 import { dispatchEvent } from "@/modules/webhooks/utils/event-registry";

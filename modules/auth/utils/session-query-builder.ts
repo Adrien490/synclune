@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import type { GetSessionsParams, SessionFilters } from "../types/session.types";
 
 // ============================================================================

@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import { GET_CURRENT_USER_DEFAULT_SELECT } from "../constants/current-user.constants";
 
 // ============================================================================

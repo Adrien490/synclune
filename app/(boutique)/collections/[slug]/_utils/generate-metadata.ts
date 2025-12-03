@@ -1,4 +1,4 @@
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { CollectionStatus } from "@/app/generated/prisma";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import type { Metadata } from "next";
 

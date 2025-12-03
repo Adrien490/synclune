@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import type { GetOrdersParams, OrderFilters } from "../types/order.types";
 
 // ============================================================================

@@ -24,7 +24,7 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
-import type { OrderAction } from "@/app/generated/prisma/client";
+import type { OrderAction } from "@/app/generated/prisma";
 
 const VISIBLE_COUNT = 5;
 

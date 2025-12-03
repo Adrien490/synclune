@@ -1,5 +1,5 @@
 import { getFirstParam } from "@/shared/utils/params";
-import { DiscountType } from "@/app/generated/prisma/client";
+import { DiscountType } from "@/app/generated/prisma";
 import type { DiscountFilters } from "@/modules/discounts/types/discount.types";
 import type { DiscountsSearchParams } from "../page";
 

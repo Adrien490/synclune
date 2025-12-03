@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma";
 import { z } from "zod";
 import { productSkuFiltersSchema } from "@/modules/skus/schemas/sku-filters-schema";
 
