@@ -158,7 +158,7 @@ export function ProductsFilterSheet({
 					{(field) => (
 						<div className="space-y-3">
 							<h4 className="font-medium text-sm text-foreground">
-								Prix TTC (€)
+								Prix final (€)
 							</h4>
 							<div className="space-y-3">
 								<Slider

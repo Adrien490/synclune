@@ -42,7 +42,7 @@ export function SkusDataTableSkeleton() {
 								<TableHead className="hidden 2xl:table-cell">
 									<Skeleton className="h-4 w-12" />
 								</TableHead>
-								{/* Prix TTC */}
+								{/* Prix final */}
 								<TableHead>
 									<Skeleton className="h-4 w-14" />
 								</TableHead>
@@ -93,7 +93,7 @@ export function SkusDataTableSkeleton() {
 									<TableCell className="hidden 2xl:table-cell">
 										<Skeleton className="h-4 w-12" />
 									</TableCell>
-									{/* Prix TTC */}
+									{/* Prix final */}
 									<TableCell>
 										<Skeleton className="h-4 w-16" />
 									</TableCell>

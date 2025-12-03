@@ -243,7 +243,7 @@ export function CreateProductVariantForm({
 
 							{/* Colonne droite : Prix et stock */}
 							<div className="space-y-4">
-								{/* Prix TTC */}
+								{/* Prix final */}
 								<form.AppField
 									name="priceInclTaxEuros"
 									validators={{
@@ -256,7 +256,7 @@ export function CreateProductVariantForm({
 								>
 									{(field) => (
 										<div className="space-y-2">
-											<FieldLabel required>Prix TTC</FieldLabel>
+											<FieldLabel required>Prix final</FieldLabel>
 											<field.InputGroupField
 												type="number"
 												step="0.01"
@@ -265,11 +265,6 @@ export function CreateProductVariantForm({
 											>
 												<InputGroupAddon>
 													<Euro className="h-4 w-4" />
-												</InputGroupAddon>
-												<InputGroupAddon align="inline-end">
-													<InputGroupText className="text-xs text-muted-foreground">
-														TTC
-													</InputGroupText>
 												</InputGroupAddon>
 											</field.InputGroupField>
 										</div>

@@ -79,7 +79,7 @@ export function UpdatePriceDialog() {
 					<div className="py-6 space-y-4">
 						<div>
 							<Label htmlFor="price" className="text-sm font-medium">
-								Prix TTC (€)
+								Prix final (€)
 							</Label>
 							<div className="relative mt-2">
 								<Input
