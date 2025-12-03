@@ -134,7 +134,7 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 							<span className="text-xs font-medium leading-none">Plus</span>
 						</button>
 					</DrawerTrigger>
-					<DrawerContent bottomInset className="max-h-[70vh]">
+					<DrawerContent className="max-h-[70vh]">
 						<DrawerHeader className="sr-only">
 							<DrawerTitle>Menu</DrawerTitle>
 						</DrawerHeader>

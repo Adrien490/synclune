@@ -52,10 +52,7 @@ export function PeriodSelectorSheet({ state, className }: PeriodSelectorSheetPro
 					<ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />
 				</Button>
 			</DrawerTrigger>
-			<DrawerContent
-				bottomInset
-				className="pb-[max(1rem,env(safe-area-inset-bottom))]"
-			>
+			<DrawerContent className="pb-[max(1rem,env(safe-area-inset-bottom))]">
 				<DrawerHeader className="text-left">
 					<DrawerTitle>Période d'analyse</DrawerTitle>
 					<DrawerDescription>

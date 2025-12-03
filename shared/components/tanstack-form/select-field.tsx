@@ -100,7 +100,10 @@ export const SelectField = <T extends string>({
 							{renderValue && field.state.value ? (
 								renderValue(field.state.value)
 							) : (
-								<ResponsiveSelectValue placeholder={placeholder} />
+								<ResponsiveSelectValue placeholder={placeholder}>
+								{field.state.value &&
+									options.find((o) => o.value === field.state.value)?.label}
+							</ResponsiveSelectValue>
 							)}
 						</span>
 						{clearable && field.state.value && (

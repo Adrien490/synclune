@@ -83,15 +83,11 @@ function ResponsiveDialog({
 
 // Props du contenu
 interface ResponsiveDialogContentProps
-	extends React.ComponentProps<typeof DialogContent> {
-	/** Préserver un espace pour la bottom-nav sur mobile */
-	bottomInset?: boolean;
-}
+	extends React.ComponentProps<typeof DialogContent> {}
 
 function ResponsiveDialogContent({
 	children,
 	className,
-	bottomInset = true, // Par défaut true pour préserver l'espace de la bottom-nav
 	showCloseButton = true,
 	...props
 }: ResponsiveDialogContentProps) {
@@ -112,11 +108,7 @@ function ResponsiveDialogContent({
 		// souvent des max-width (sm:max-w-[500px]) destinées au Dialog desktop.
 		// Le drawer doit toujours être pleine largeur sur mobile.
 		return (
-			<DrawerContent
-				className="px-4 pb-6"
-				bottomInset={bottomInset}
-				{...drawerProps}
-			>
+			<DrawerContent className="px-4 pb-6" {...drawerProps}>
 				{children}
 			</DrawerContent>
 		);

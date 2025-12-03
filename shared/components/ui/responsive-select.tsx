@@ -260,7 +260,7 @@ function ResponsiveSelectContent({
 
 	// Mode drawer: juste DrawerContent (le Drawer est au niveau root)
 	return (
-		<DrawerContent className="pb-6">
+		<DrawerContent className="pb-[max(1.5rem,env(safe-area-inset-bottom))]">
 			{title && (
 				<DrawerHeader>
 					<DrawerTitle>{title}</DrawerTitle>
