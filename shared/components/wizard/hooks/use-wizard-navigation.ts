@@ -1,0 +1,147 @@
+"use client"
+
+import { useCallback, useMemo } from "react"
+import type { WizardStep, WizardDirection } from "../types"
+
+interface UseWizardNavigationOptions {
+	steps: WizardStep[]
+	currentStep: number
+	setCurrentStep: (step: number) => void
+	onStepChange?: (step: number, direction: WizardDirection) => void
+	validateBeforeNext?: () => Promise<boolean>
+	onValidationFailed?: () => void
+	markStepCompleted?: (step: number) => void
+}
+
+interface UseWizardNavigationReturn {
+	/** Aller à une étape spécifique */
+	goToStep: (targetStep: number) => Promise<boolean>
+	/** Aller à l'étape suivante */
+	nextStep: () => Promise<boolean>
+	/** Aller à l'étape précédente */
+	previousStep: () => void
+	/** Peut-on aller à l'étape suivante */
+	canGoNext: boolean
+	/** Peut-on aller à l'étape précédente */
+	canGoPrevious: boolean
+	/** Est-ce la première étape */
+	isFirstStep: boolean
+	/** Est-ce la dernière étape */
+	isLastStep: boolean
+	/** Configuration de l'étape courante */
+	currentStepConfig: WizardStep | undefined
+	/** Étapes visibles (filtrées par condition) */
+	visibleSteps: WizardStep[]
+	/** Index de l'étape courante parmi les étapes visibles */
+	visibleCurrentIndex: number
+}
+
+export function useWizardNavigation({
+	steps,
+	currentStep,
+	setCurrentStep,
+	onStepChange,
+	validateBeforeNext,
+	onValidationFailed,
+	markStepCompleted,
+}: UseWizardNavigationOptions): UseWizardNavigationReturn {
+	// Filtrer les étapes selon leurs conditions
+	const visibleSteps = useMemo(() => {
+		return steps.filter((step) => !step.condition || step.condition())
+	}, [steps])
+
+	// Trouver l'index visible correspondant
+	const visibleCurrentIndex = useMemo(() => {
+		const currentStepConfig = steps[currentStep]
+		if (!currentStepConfig) return 0
+		return visibleSteps.findIndex((s) => s.id === currentStepConfig.id)
+	}, [steps, currentStep, visibleSteps])
+
+	const currentStepConfig = steps[currentStep]
+	const isFirstStep = currentStep === 0
+	const isLastStep = currentStep === steps.length - 1
+
+	// Vérifier si l'étape cible est navigable
+	const isStepNavigable = useCallback(
+		(stepIndex: number): boolean => {
+			const step = steps[stepIndex]
+			if (!step) return false
+			if (step.disabled) return false
+			if (step.condition && !step.condition()) return false
+			return true
+		},
+		[steps]
+	)
+
+	const canGoNext = !isLastStep && isStepNavigable(currentStep + 1)
+	const canGoPrevious = !isFirstStep && isStepNavigable(currentStep - 1)
+
+	// Navigation vers une étape spécifique
+	const goToStep = useCallback(
+		async (targetStep: number): Promise<boolean> => {
+			if (targetStep < 0 || targetStep >= steps.length) return false
+			if (!isStepNavigable(targetStep)) return false
+
+			// Navigation arrière: toujours permise
+			if (targetStep < currentStep) {
+				setCurrentStep(targetStep)
+				onStepChange?.(targetStep, "backward")
+				return true
+			}
+
+			// Navigation avant: nécessite validation
+			if (targetStep > currentStep) {
+				if (validateBeforeNext) {
+					const isValid = await validateBeforeNext()
+					if (!isValid) {
+						onValidationFailed?.()
+						return false
+					}
+				}
+
+				markStepCompleted?.(currentStep)
+				setCurrentStep(targetStep)
+				onStepChange?.(targetStep, "forward")
+				return true
+			}
+
+			return true
+		},
+		[
+			steps.length,
+			currentStep,
+			isStepNavigable,
+			setCurrentStep,
+			onStepChange,
+			validateBeforeNext,
+			onValidationFailed,
+			markStepCompleted,
+		]
+	)
+
+	// Aller à l'étape suivante
+	const nextStep = useCallback(async (): Promise<boolean> => {
+		if (isLastStep) return false
+		return goToStep(currentStep + 1)
+	}, [isLastStep, goToStep, currentStep])
+
+	// Aller à l'étape précédente
+	const previousStep = useCallback(() => {
+		if (isFirstStep) return
+		setCurrentStep(currentStep - 1)
+		onStepChange?.(currentStep - 1, "backward")
+	}, [isFirstStep, currentStep, setCurrentStep, onStepChange])
+
+	return {
+		goToStep,
+		nextStep,
+		previousStep,
+		canGoNext,
+		canGoPrevious,
+		isFirstStep,
+		isLastStep,
+		currentStepConfig,
+		visibleSteps,
+		visibleCurrentIndex,
+	}
+}

@@ -1,41 +1,43 @@
-"use client";
+"use client"
 
-import { Button } from "@/shared/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { cn } from "@/shared/utils/cn";
+import { memo } from "react"
+import { Button } from "@/shared/components/ui/button"
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { cn } from "@/shared/utils/cn"
+import { WIZARD_MESSAGES } from "./constants"
 
 interface WizardNavigationProps {
-	isFirstStep: boolean;
-	isLastStep: boolean;
-	onPrevious: () => void;
-	onNext: () => Promise<boolean>;
-	isSubmitting?: boolean;
-	isValidating?: boolean;
-	previousLabel?: string;
-	nextLabel?: string;
-	submitLabel?: string;
-	className?: string;
+	isFirstStep: boolean
+	isLastStep: boolean
+	onPrevious: () => void
+	onNext: () => Promise<boolean>
+	isSubmitting?: boolean
+	isValidating?: boolean
+	previousLabel?: string
+	nextLabel?: string
+	submitLabel?: string
+	className?: string
 }
 
-export function WizardNavigation({
+export const WizardNavigation = memo(function WizardNavigation({
 	isFirstStep,
 	isLastStep,
 	onPrevious,
 	onNext,
 	isSubmitting = false,
 	isValidating = false,
-	previousLabel = "Précédent",
-	nextLabel = "Suivant",
-	submitLabel = "Enregistrer",
+	previousLabel = WIZARD_MESSAGES.navigation.previous,
+	nextLabel = WIZARD_MESSAGES.navigation.next,
+	submitLabel = WIZARD_MESSAGES.navigation.submit,
 	className,
 }: WizardNavigationProps) {
 	const handleNext = async () => {
 		if (!isLastStep) {
-			await onNext();
+			await onNext()
 		}
-	};
+	}
 
-	const isLoading = isSubmitting || isValidating;
+	const isLoading = isSubmitting || isValidating
 
 	return (
 		<div
@@ -99,5 +101,5 @@ export function WizardNavigation({
 				</Button>
 			)}
 		</div>
-	);
-}
+	)
+})

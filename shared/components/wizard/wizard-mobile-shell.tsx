@@ -5,7 +5,7 @@ import { useSwipeable } from "react-swipeable";
 import { cn } from "@/shared/utils/cn";
 import { WizardProgress } from "./wizard-progress";
 import { WizardNavigation } from "./wizard-navigation";
-import type { WizardStep } from "./use-form-wizard";
+import type { WizardStep } from "./types";
 
 interface WizardMobileShellProps {
 	steps: WizardStep[];

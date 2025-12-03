@@ -7,6 +7,7 @@ import {
 	useFormWizard,
 	WizardStepContainer,
 	WizardMobileShell,
+	createTanStackFormAdapter,
 	type WizardStep,
 } from "@/shared/components/wizard";
 import { ImageCounterBadge } from "@/modules/medias/components/image-counter-badge";
@@ -117,15 +118,10 @@ function CreateProductFormContent({
 		},
 	});
 
-	// Now create wizard with form
+	// Now create wizard with form (using adapter for type safety)
 	const wizard = useFormWizard({
 		steps: PRODUCT_STEPS,
-		form: {
-			validateField: async (name, opts) => {
-				await form.validateField(name as never, opts?.cause as never);
-			},
-			getFieldMeta: (name) => form.getFieldMeta(name as never),
-		},
+		form: createTanStackFormAdapter(form),
 	});
 
 	const isUploading = isPrimaryImageUploading || isGalleryUploading || generatingUrls.size > 0;
