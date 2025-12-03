@@ -1,24 +1,30 @@
 import type { FormLike } from "../types"
 
 /**
- * Type minimal pour un formulaire compatible avec le wizard
- * Conçu pour fonctionner avec TanStack Form et autres librairies similaires
+ * Type représentant un formulaire TanStack Form.
+ *
+ * Utilise `any` intentionnellement car TanStack Form utilise des types génériques
+ * stricts où les noms de champs sont des unions littérales typées (ex: "title" | "description").
+ * Un adapter doit accepter n'importe quel formulaire indépendamment de ses champs.
+ *
+ * Le duck typing de l'implémentation garantit la présence des méthodes nécessaires
+ * à l'exécution : validateField, getFieldMeta, getFieldValue, state.isDirty.
  */
-interface WizardCompatibleForm {
-	validateField: (name: string, cause: unknown) => Promise<void> | void
-	getFieldMeta: (name: string) => { errors: string[] } | undefined
-	getFieldValue?: (name: string) => unknown
-	state: {
-		isDirty: boolean
-	}
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TanStackFormInstance = any
 
 /**
- * Crée un adaptateur FormLike à partir d'un formulaire TanStack Form
+ * Crée un adaptateur FormLike à partir d'un formulaire TanStack Form.
+ *
+ * L'adapter convertit l'API de TanStack Form vers l'interface FormLike
+ * utilisée par le wizard pour la validation et l'état du formulaire.
+ *
+ * @param form - Instance de formulaire TanStack Form (useAppForm, useForm, etc.)
+ * @returns Adaptateur FormLike compatible avec useFormWizard
  *
  * @example
  * ```tsx
- * import { createTanStackFormAdapter } from "@/shared/components/wizard/adapters"
+ * import { createTanStackFormAdapter } from "@/shared/features/form-wizard/adapters"
  *
  * const form = useAppForm<ProductFormInput>({ ... })
  *
@@ -28,10 +34,7 @@ interface WizardCompatibleForm {
  * })
  * ```
  */
-export function createTanStackFormAdapter(
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	form: WizardCompatibleForm | any
-): FormLike {
+export function createTanStackFormAdapter(form: TanStackFormInstance): FormLike {
 	return {
 		validateField: async (name: string, opts?: { cause: string }) => {
 			// TanStack Form expects the cause directly, not wrapped in an object

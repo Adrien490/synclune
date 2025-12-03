@@ -58,7 +58,9 @@ export function WizardMobileShell({
 		onSwipedLeft: () => {
 			// Swipe left = go to next step (with validation)
 			if (!isLastStep && !isSubmitting && !isValidating) {
-				void onNext();
+				onNext().catch(() => {
+					// Validation failed - handled by wizard validation system
+				})
 			}
 		},
 		onSwipedRight: () => {

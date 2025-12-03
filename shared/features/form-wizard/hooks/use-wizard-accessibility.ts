@@ -41,6 +41,13 @@ export function useWizardAccessibility({
 	const previousStep = useRef(currentStep)
 	const [announcement, setAnnouncement] = useState("")
 
+	// Cleanup des refs au démontage pour éviter les memory leaks
+	useEffect(() => {
+		return () => {
+			stepRefs.current.clear()
+		}
+	}, [])
+
 	// Enregistre une ref pour une étape
 	const registerStepRef = useCallback((stepIndex: number, element: HTMLElement | null) => {
 		if (element) {
