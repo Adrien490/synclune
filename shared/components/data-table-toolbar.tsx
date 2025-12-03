@@ -1,10 +1,9 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Button } from "./ui/button";
 import { SlidersHorizontal } from "lucide-react";
-import { useToolbarCollapsed } from "@/shared/hooks/use-toolbar-collapsed";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -72,13 +71,7 @@ export function DataTableToolbar({
 	initialCollapsed = true,
 }: DataTableToolbarProps) {
 	const isMobile = useIsMobile();
-	const {
-		isCollapsed,
-		toggle,
-		isPending: isTogglePending,
-	} = useToolbarCollapsed({
-		initialCollapsed,
-	});
+	const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
 
 	// Si search est fourni → nouvelle structure avec collapse mobile
 	// Sinon → ancienne structure (compatibilité)
@@ -143,8 +136,7 @@ export function DataTableToolbar({
 						<Button
 							variant="outline"
 							size="icon"
-							onClick={toggle}
-							disabled={isTogglePending}
+							onClick={() => setIsCollapsed((prev) => !prev)}
 							className="shrink-0 h-[44px] w-[44px]"
 							aria-expanded={!isCollapsed}
 							aria-label={

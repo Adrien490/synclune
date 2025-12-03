@@ -22,7 +22,6 @@ import { DeleteDiscountAlertDialog } from "@/modules/discounts/components/admin/
 import { ToggleDiscountStatusAlertDialog } from "@/modules/discounts/components/admin/toggle-discount-status-alert-dialog";
 import { DiscountUsagesDialog } from "@/modules/discounts/components/admin/discount-usages-dialog";
 import { RefreshDiscountsButton } from "@/modules/discounts/components/admin/refresh-discounts-button";
-import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { parseFilters } from "./_utils/params";
 
 export type DiscountsSearchParams = {
@@ -66,8 +65,6 @@ export default async function DiscountsAdminPage({
 		| "usage-ascending";
 	const search = getFirstParam(params.search);
 
-	const toolbarCollapsed = await getToolbarCollapsed();
-
 	// La promise de codes promo n'est PAS awaitée pour permettre le streaming
 	const discountsPromise = getDiscounts({
 		cursor,
@@ -95,7 +92,6 @@ export default async function DiscountsAdminPage({
 			<div className="space-y-6">
 				<DataTableToolbar
 					ariaLabel="Barre d'outils de gestion des codes promo"
-					initialCollapsed={toolbarCollapsed}
 					search={
 						<SearchForm
 							paramName="search"

@@ -1,10 +1,16 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
 	DialogTrigger,
 } from "@/shared/components/ui/dialog";
+import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import {
 	Tooltip,
 	TooltipContent,
@@ -13,12 +19,11 @@ import {
 import { useContactAdrienForm } from "@/modules/dashboard/hooks/use-contact-adrien-form";
 import { ActionStatus } from "@/shared/types/server-action";
 import { cn } from "@/shared/utils/cn";
-import { ChevronRight, MessageSquare } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useToggleContactAdrienVisibility } from "../hooks/use-toggle-contact-adrien-visibility";
-import { ContactAdrienHiddenToggle } from "./contact-adrien-hidden-toggle";
-import { ContactAdrienDialogForm } from "./contact-adrien-dialog-form";
+import { CONTACT_TYPE_OPTIONS } from "../constants/contact-adrien.constants";
 
 interface ContactAdrienProps {
 	/** Etat initial de visibilité (depuis le cookie serveur) */
@@ -113,13 +118,51 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 	// Mode caché : affiche juste une flèche pour réouvrir
 	if (isHidden) {
 		return (
-			<ContactAdrienHiddenToggle
-				ref={toggleButtonRef}
-				toggle={toggle}
-				isPending={isPending}
-				prefersReducedMotion={prefersReducedMotion}
-				transition={transition}
-			/>
+			<AnimatePresence>
+				<motion.div
+					initial={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
+					animate={{ opacity: 1, x: 0 }}
+					exit={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
+					transition={transition}
+					className={cn(
+						"fixed z-40",
+						"bottom-20 right-0",
+						"md:bottom-6 md:right-0"
+					)}
+				>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								ref={toggleButtonRef}
+								onClick={toggle}
+								variant="outline"
+								size="sm"
+								className={cn(
+									"rounded-l-full rounded-r-none",
+									"h-10 w-8 p-0",
+									"bg-background",
+									"border-r-0",
+									"shadow-md",
+									"cursor-pointer",
+									"hover:bg-accent",
+									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+									"focus-visible:outline-none"
+								)}
+								aria-label="Afficher le bouton de contact"
+								aria-expanded={false}
+							>
+								<ChevronLeft
+									className={cn("h-4 w-4", isPending && "animate-pulse")}
+									aria-hidden="true"
+								/>
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent side="left" sideOffset={4}>
+							<p className="text-sm">Afficher Contacter Adri</p>
+						</TooltipContent>
+					</Tooltip>
+				</motion.div>
+			</AnimatePresence>
 		);
 	}
 
@@ -207,12 +250,141 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 						</TooltipContent>
 					</Tooltip>
 
-					<ContactAdrienDialogForm
-						form={form}
-						action={action}
-						isPending={isFormPending}
-						state={state}
-					/>
+					<DialogContent className="sm:max-w-[525px] max-h-[90vh] flex flex-col">
+						<DialogHeader className="shrink-0">
+							<DialogTitle>Contacter Adri</DialogTitle>
+							<DialogDescription>
+								Signale un bug, demande une nouvelle fonctionnalité ou pose une
+								question.
+							</DialogDescription>
+						</DialogHeader>
+
+						<form
+							action={action}
+							className="space-y-4 overflow-y-auto flex-1 px-1"
+							onSubmit={() => form.handleSubmit()}
+						>
+							{state?.status === ActionStatus.SUCCESS && state.message && (
+								<Alert>
+									<CheckCircle2 />
+									<AlertDescription>
+										<p className="font-medium text-primary">Message envoyé</p>
+										<p className="text-sm text-primary/90 mt-1">{state.message}</p>
+									</AlertDescription>
+								</Alert>
+							)}
+
+							{state?.status !== ActionStatus.SUCCESS &&
+								state?.status !== ActionStatus.INITIAL &&
+								state?.message && (
+									<Alert variant="destructive">
+										<AlertCircle />
+										<AlertDescription>
+											<p className="font-medium">Erreur</p>
+											<p className="text-sm mt-1">{state.message}</p>
+										</AlertDescription>
+									</Alert>
+								)}
+
+							<FieldSet>
+								<FieldGroup>
+									<form.AppField
+										name="type"
+										validators={{
+											onChange: ({ value }: { value: string }) => {
+												if (!value) return "Le type est requis";
+												return undefined;
+											},
+										}}
+									>
+										{(field) => (
+											<field.SelectField
+												label="Type de message"
+												options={CONTACT_TYPE_OPTIONS}
+												disabled={isFormPending || state?.status === ActionStatus.SUCCESS}
+												required
+											/>
+										)}
+									</form.AppField>
+
+									<form.AppField
+										name="message"
+										validators={{
+											onChange: ({ value }: { value: string }) => {
+												if (!value) return "Le message est requis";
+												if (value.length < 10)
+													return "Le message doit contenir au moins 10 caractères";
+												if (value.length > 5000)
+													return "Le message ne doit pas dépasser 5000 caractères";
+												return undefined;
+											},
+											onBlur: ({ value }) => {
+												if (!value) return "Le message est requis";
+												if (value.length < 10)
+													return "Le message doit contenir au moins 10 caractères";
+												if (value.length > 5000)
+													return "Le message ne doit pas dépasser 5000 caractères";
+												return undefined;
+											},
+										}}
+									>
+										{(field) => (
+											<div className="space-y-1">
+												<field.TextareaField
+													label="Message"
+													placeholder="Décrivez votre demande en détail..."
+													disabled={isFormPending || state?.status === ActionStatus.SUCCESS}
+													rows={6}
+													className={cn(
+														"resize-none transition-opacity",
+														isFormPending && "opacity-60"
+													)}
+													aria-describedby="message-counter"
+													required
+												/>
+												<p
+													id="message-counter"
+													className="text-xs text-muted-foreground"
+													aria-live="polite"
+												>
+													{field.state.value.length} / 5000 caractères
+												</p>
+											</div>
+										)}
+									</form.AppField>
+								</FieldGroup>
+							</FieldSet>
+
+							<form.Subscribe selector={(formState) => [formState.canSubmit]}>
+								{([canSubmit]) => (
+									<div className="flex justify-end gap-2">
+										<DialogTrigger asChild>
+											<Button
+												type="button"
+												variant="outline"
+												disabled={isFormPending || state?.status === ActionStatus.SUCCESS}
+											>
+												Annuler
+											</Button>
+										</DialogTrigger>
+										<Button
+											type="submit"
+											disabled={
+												!canSubmit || isFormPending || state?.status === ActionStatus.SUCCESS
+											}
+											aria-busy={isFormPending}
+										>
+											{isFormPending
+												? "Envoi..."
+												: state?.status === ActionStatus.SUCCESS
+													? "Envoyé"
+													: "Envoyer"}
+										</Button>
+									</div>
+								)}
+							</form.Subscribe>
+						</form>
+					</DialogContent>
 				</Dialog>
 
 				{/* Description cachée pour screen readers */}

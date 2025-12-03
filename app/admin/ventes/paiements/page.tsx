@@ -1,5 +1,4 @@
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
-import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -72,8 +71,6 @@ export default async function PaymentsAdminPage({
 	const { cursor, direction, perPage, sortBy, search, filters } =
 		parsePaymentsParams(params);
 
-	const toolbarCollapsed = await getToolbarCollapsed();
-
 	// La promise de paiements n'est PAS awaitée pour permettre le streaming
 	const paymentsPromise = getStripePayments({
 		cursor,
@@ -94,7 +91,6 @@ export default async function PaymentsAdminPage({
 			<div className="space-y-6">
 				<DataTableToolbar
 					ariaLabel="Barre d'outils de consultation des paiements"
-					initialCollapsed={toolbarCollapsed}
 					search={
 						<SearchForm
 							paramName="search"

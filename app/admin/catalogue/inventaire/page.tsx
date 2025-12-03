@@ -1,5 +1,4 @@
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
-import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -86,10 +85,9 @@ export default async function InventoryAdminPage({
 	});
 
 	// Les options de filtre sont awaited car nécessaires immédiatement
-	const [colorOptions, materialOptions, toolbarCollapsed] = await Promise.all([
+	const [colorOptions, materialOptions] = await Promise.all([
 		getColorOptions(),
 		getMaterialOptions(),
-		getToolbarCollapsed(),
 	]);
 
 	return (
@@ -102,7 +100,6 @@ export default async function InventoryAdminPage({
 			<div className="space-y-6">
 				<DataTableToolbar
 					ariaLabel="Barre d'outils de l'inventaire"
-					initialCollapsed={toolbarCollapsed}
 					search={
 						<SearchForm
 							paramName="search"

@@ -18,7 +18,6 @@ import { Mail, Users } from "lucide-react";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { SubscribersDataTable } from "@/modules/newsletter/components/admin/subscribers-data-table";
-import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -54,10 +53,7 @@ export default async function NewsletterPage({
 	await connection();
 
 	const params = await searchParams;
-	const [stats, toolbarCollapsed] = await Promise.all([
-		getNewsletterStats(),
-		getToolbarCollapsed(),
-	]);
+	const stats = await getNewsletterStats();
 
 	const cursor = getFirstParam(params.cursor);
 	const direction = (getFirstParam(params.direction) || "forward") as
@@ -181,7 +177,6 @@ export default async function NewsletterPage({
 				<TabsContent value="subscribers" className="space-y-6">
 					<DataTableToolbar
 						ariaLabel="Barre d'outils de gestion des abonnés"
-						initialCollapsed={toolbarCollapsed}
 						search={
 							<SearchForm
 								paramName="search"

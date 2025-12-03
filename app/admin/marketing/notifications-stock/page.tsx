@@ -20,7 +20,6 @@ import {
 import { StockNotificationsFilterBadges } from "@/modules/stock-notifications/components/admin/stock-notifications-filter-badges";
 import { CleanupExpiredButton } from "@/modules/stock-notifications/components/admin/cleanup-expired-button";
 import { STOCK_NOTIFICATION_STATUS_LABELS } from "@/modules/stock-notifications/constants/stock-notification.constants";
-import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { SORT_OPTIONS_FOR_SELECT, DEFAULT_SORT } from "./_constants/sort-options";
 
 export const metadata: Metadata = {
@@ -64,10 +63,7 @@ export default async function NotificationsStockPage({
 			: undefined;
 
 	// Fetch data
-	const [stats, toolbarCollapsed] = await Promise.all([
-		getStockNotificationsStats(),
-		getToolbarCollapsed(),
-	]);
+	const stats = await getStockNotificationsStats();
 
 	const notificationsPromise = getStockNotificationsAdmin({
 		cursor,
@@ -104,7 +100,6 @@ export default async function NotificationsStockPage({
 			{/* Toolbar */}
 			<DataTableToolbar
 				ariaLabel="Barre d'outils des alertes stock"
-				initialCollapsed={toolbarCollapsed}
 				search={
 					<SearchForm
 						paramName="search"

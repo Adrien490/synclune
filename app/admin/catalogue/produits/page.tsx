@@ -1,5 +1,4 @@
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
-import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -103,23 +102,21 @@ export default async function ProductsAdminPage({
 	});
 
 	// Load filter options data and counts in parallel
-	const [productTypesData, collectionsData, productCounts, toolbarCollapsed] =
-		await Promise.all([
-			getProductTypes({
-				perPage: 100,
-				sortBy: "label-ascending",
-				sortOrder: "asc",
-			}),
-			getCollections({
-				perPage: 100,
-				sortBy: "name-ascending",
-				filters: {
-					hasProducts: undefined,
-				},
-			}),
-			getProductCountsByStatus(),
-			getToolbarCollapsed(),
-		]);
+	const [productTypesData, collectionsData, productCounts] = await Promise.all([
+		getProductTypes({
+			perPage: 100,
+			sortBy: "label-ascending",
+			sortOrder: "asc",
+		}),
+		getCollections({
+			perPage: 100,
+			sortBy: "name-ascending",
+			filters: {
+				hasProducts: undefined,
+			},
+		}),
+		getProductCountsByStatus(),
+	]);
 
 	const productTypes = productTypesData.productTypes.map((t) => ({
 		id: t.id,
@@ -156,7 +153,6 @@ export default async function ProductsAdminPage({
 
 				<DataTableToolbar
 					ariaLabel="Barre d'outils de gestion des produits"
-					initialCollapsed={toolbarCollapsed}
 					search={
 						<SearchForm
 							paramName="search"

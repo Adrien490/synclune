@@ -1,6 +1,5 @@
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
-import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -77,10 +76,7 @@ export default async function CollectionsAdminPage({
 	const search = getFirstParam(params.search);
 	const status = parseStatus(params);
 
-	const [collectionCounts, toolbarCollapsed] = await Promise.all([
-		getCollectionCountsByStatus(),
-		getToolbarCollapsed(),
-	]);
+	const collectionCounts = await getCollectionCountsByStatus();
 
 	// La promise de collections n'est PAS awaitée pour permettre le streaming
 	const collectionsPromise = getCollections({
@@ -117,7 +113,6 @@ export default async function CollectionsAdminPage({
 
 				<DataTableToolbar
 					ariaLabel="Barre d'outils de gestion des collections"
-					initialCollapsed={toolbarCollapsed}
 					search={
 						<SearchForm
 							paramName="search"

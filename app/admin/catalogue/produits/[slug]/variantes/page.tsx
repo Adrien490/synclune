@@ -22,7 +22,6 @@ import { getProductSkus } from "@/modules/skus/data/get-skus";
 import { parseProductSkuParams } from "@/modules/skus/utils/parse-sku-params";
 import { getColorOptions } from "@/modules/colors/data/get-colors";
 import { getMaterialOptions } from "@/modules/materials/data/get-materials";
-import { getToolbarCollapsed } from "@/shared/data/get-toolbar-collapsed";
 import { SORT_LABELS } from "@/modules/skus/constants/skus-constants";
 import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-data-table";
 import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
@@ -129,10 +128,9 @@ export default async function ProductVariantsPage({
 	}
 
 	// Les options de filtre sont awaited car necessaires immediatement
-	const [colorOptions, materialOptions, toolbarCollapsed] = await Promise.all([
+	const [colorOptions, materialOptions] = await Promise.all([
 		getColorOptions(),
 		getMaterialOptions(),
-		getToolbarCollapsed(),
 	]);
 
 	// La promise de SKUs n'est PAS awaited pour permettre le streaming
@@ -203,7 +201,6 @@ export default async function ProductVariantsPage({
 			<div className="space-y-6">
 				<DataTableToolbar
 					ariaLabel="Barre d'outils de gestion des variantes"
-					initialCollapsed={toolbarCollapsed}
 					search={
 						<SearchForm
 							paramName="search"
