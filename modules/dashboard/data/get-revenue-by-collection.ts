@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboardRevenueByCollection } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { GetRevenueByCollectionReturn } from "../types/dashboard.types";
 import {
 	resolvePeriodToDates,
@@ -21,7 +21,7 @@ export async function fetchRevenueByCollection(
 ): Promise<GetRevenueByCollectionReturn> {
 	"use cache: remote";
 
-	cacheDashboardRevenueByCollection(period);
+	cacheDashboard(DASHBOARD_CACHE_TAGS.REVENUE_COLLECTIONS(period));
 
 	const { startDate, endDate } = resolvePeriodToDates(
 		period,

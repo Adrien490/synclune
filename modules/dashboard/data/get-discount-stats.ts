@@ -1,6 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboardDiscountStats } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { DiscountStatsReturn } from "../types/dashboard.types";
 import {
 	resolvePeriodToDates,
@@ -41,7 +41,7 @@ export async function fetchDiscountStats(
 ): Promise<DiscountStatsReturn> {
 	"use cache: remote";
 
-	cacheDashboardDiscountStats(period);
+	cacheDashboard(DASHBOARD_CACHE_TAGS.DISCOUNT_STATS(period));
 
 	const { startDate, endDate, previousStartDate, previousEndDate } =
 		resolvePeriodToDates(period, customStartDate, customEndDate);

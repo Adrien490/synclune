@@ -1,6 +1,6 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboardSales } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { SalesKpisReturn } from "../types/dashboard.types";
 import {
 	calculateEvolution,
@@ -79,7 +79,7 @@ export async function fetchSalesKpis(
 ): Promise<SalesKpisReturn> {
 	"use cache: remote";
 
-	cacheDashboardSales(period);
+	cacheDashboard(DASHBOARD_CACHE_TAGS.SALES_KPIS(period));
 
 	const { startDate, endDate, previousStartDate, previousEndDate } =
 		resolvePeriodToDates(period, customStartDate, customEndDate);

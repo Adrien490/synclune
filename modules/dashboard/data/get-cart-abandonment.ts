@@ -1,6 +1,6 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboardAbandonment } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { CartAbandonmentReturn } from "../types/dashboard.types";
 import {
 	calculateEvolution,
@@ -70,7 +70,7 @@ export async function fetchCartAbandonment(
 ): Promise<CartAbandonmentReturn> {
 	"use cache: remote";
 
-	cacheDashboardAbandonment(period);
+	cacheDashboard(DASHBOARD_CACHE_TAGS.ABANDONMENT_RATE(period));
 
 	const { startDate, endDate, previousStartDate, previousEndDate } =
 		resolvePeriodToDates(period, customStartDate, customEndDate);

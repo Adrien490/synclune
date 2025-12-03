@@ -1,6 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboardRevenueYear } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { GetRevenueYearReturn, RevenueYearDataPoint } from "../types/dashboard.types";
 
 // Re-export pour compatibilite
@@ -29,7 +29,7 @@ export async function getRevenueTrends(): Promise<GetRevenueYearReturn> {
 export async function fetchRevenueTrends(): Promise<GetRevenueYearReturn> {
 	"use cache: remote";
 
-	cacheDashboardRevenueYear();
+	cacheDashboard(DASHBOARD_CACHE_TAGS.REVENUE_YEAR);
 
 	const now = new Date();
 	const currentYear = now.getFullYear();

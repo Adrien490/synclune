@@ -1,7 +1,7 @@
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
-import { cacheDashboardInventoryStats } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { InventoryKpisReturn } from "../types/dashboard.types";
 
 // Type pour les résultats de l'agrégation SQL
@@ -21,7 +21,7 @@ type StockValueResult = {
 export async function fetchInventoryKpis(): Promise<InventoryKpisReturn> {
 	"use cache: remote";
 
-	cacheDashboardInventoryStats();
+	cacheDashboard(DASHBOARD_CACHE_TAGS.INVENTORY_KPIS);
 
 	const [outOfStock, lowStock, stockValueResult, pendingNotifications] =
 		await Promise.all([

@@ -5,7 +5,8 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/components/cursor-pagination/pagination";
-import { cacheDashboardOrders } from "@/modules/dashboard/constants/cache";
+import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 
@@ -68,7 +69,7 @@ export async function fetchStripePayments(
 	params: GetStripePaymentsParams
 ): Promise<GetStripePaymentsReturn> {
 	"use cache";
-	cacheDashboardOrders();
+	cacheDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 
 	const take = Math.min(
 		Math.max(1, params.perPage || GET_STRIPE_PAYMENTS_DEFAULT_PER_PAGE),

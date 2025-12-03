@@ -3,7 +3,8 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/components/cursor-pagination/pagination";
-import { cacheDashboardInventory } from "@/modules/dashboard/constants/cache";
+import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	GET_PRODUCT_SKUS_DEFAULT_PER_PAGE,
@@ -29,7 +30,7 @@ export async function fetchProductSkus(
 	"use cache";
 
 	// Cache configuration for dashboard inventory list
-	cacheDashboardInventory();
+	cacheDashboard(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
 
 	try {
 		const where = buildWhereClause(params);

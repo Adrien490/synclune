@@ -4,7 +4,8 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/components/cursor-pagination/pagination";
-import { cacheDashboardCustomers } from "@/modules/dashboard/constants/cache";
+import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
 
@@ -98,7 +99,7 @@ export async function fetchUsers(
 	params: GetUsersParams
 ): Promise<GetUsersReturn> {
 	"use cache";
-	cacheDashboardCustomers();
+	cacheDashboard(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 
 	const sortOrder = (params.sortOrder ||
 		GET_USERS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;

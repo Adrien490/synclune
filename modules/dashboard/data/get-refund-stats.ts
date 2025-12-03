@@ -1,7 +1,7 @@
 import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboardRefundStats } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { RefundStatsReturn } from "../types/dashboard.types";
 import {
 	resolvePeriodToDates,
@@ -43,7 +43,7 @@ export async function fetchRefundStats(
 ): Promise<RefundStatsReturn> {
 	"use cache: remote";
 
-	cacheDashboardRefundStats(period);
+	cacheDashboard(DASHBOARD_CACHE_TAGS.REFUND_STATS(period));
 
 	const { startDate, endDate, previousStartDate, previousEndDate } =
 		resolvePeriodToDates(period, customStartDate, customEndDate);

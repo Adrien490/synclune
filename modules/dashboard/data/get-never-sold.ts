@@ -1,6 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboardNeverSold } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { GetNeverSoldProductsReturn, NeverSoldProductItem } from "../types/dashboard.types";
 
 // ============================================================================
@@ -47,7 +47,7 @@ export async function fetchNeverSoldProducts(
 ): Promise<GetNeverSoldProductsReturn> {
 	"use cache: remote";
 
-	cacheDashboardNeverSold();
+	cacheDashboard(DASHBOARD_CACHE_TAGS.NEVER_SOLD);
 
 	// Valider et limiter les paramètres de pagination pour la sécurité
 	const validatedSkip = Math.max(0, Math.floor(skip));

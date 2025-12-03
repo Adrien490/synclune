@@ -1,7 +1,7 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboardRepeatCustomers } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { RepeatCustomersReturn } from "../types/dashboard.types";
 import {
 	resolvePeriodToDates,
@@ -42,7 +42,7 @@ export async function fetchRepeatCustomers(
 ): Promise<RepeatCustomersReturn> {
 	"use cache: remote";
 
-	cacheDashboardRepeatCustomers(period);
+	cacheDashboard(DASHBOARD_CACHE_TAGS.REPEAT_CUSTOMERS(period));
 
 	const { startDate, endDate } = resolvePeriodToDates(
 		period,

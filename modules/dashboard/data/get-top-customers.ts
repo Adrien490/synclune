@@ -1,6 +1,6 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboardTopCustomers } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { GetTopCustomersReturn, TopCustomerItem } from "../types/dashboard.types";
 import {
 	resolvePeriodToDates,
@@ -54,7 +54,7 @@ export async function fetchTopCustomers(
 ): Promise<GetTopCustomersReturn> {
 	"use cache: remote";
 
-	cacheDashboardTopCustomers(period);
+	cacheDashboard(DASHBOARD_CACHE_TAGS.TOP_CUSTOMERS(period));
 
 	// Valider et limiter le paramètre limit pour la sécurité
 	const validatedLimit = Math.min(Math.max(1, Math.floor(limit)), MAX_LIMIT);

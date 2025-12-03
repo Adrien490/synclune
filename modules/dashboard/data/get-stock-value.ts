@@ -1,5 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
-import { cacheDashboardStockValue } from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { StockValueReturn } from "../types/dashboard.types";
 
 // ============================================================================
@@ -13,7 +13,7 @@ import type { StockValueReturn } from "../types/dashboard.types";
 export async function fetchStockValue(): Promise<StockValueReturn> {
 	"use cache: remote";
 
-	cacheDashboardStockValue();
+	cacheDashboard(DASHBOARD_CACHE_TAGS.STOCK_VALUE);
 
 	// Agregation SQL optimisee - une seule requete au lieu de charger tous les SKUs
 	const result = await prisma.$queryRaw<

@@ -1,8 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
-import {
-	cacheDashboardStockByColor,
-	cacheDashboardStockByMaterial,
-} from "../constants/cache";
+import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type {
 	GetStockByColorReturn,
 	GetStockByMaterialReturn,
@@ -41,7 +38,7 @@ type StockByMaterialResult = {
 export async function fetchStockByColor(): Promise<GetStockByColorReturn> {
 	"use cache: remote";
 
-	cacheDashboardStockByColor();
+	cacheDashboard(DASHBOARD_CACHE_TAGS.STOCK_BY_COLOR);
 
 	const results = await prisma.$queryRaw<StockByColorResult[]>`
 		SELECT
@@ -100,7 +97,7 @@ export async function fetchStockByColor(): Promise<GetStockByColorReturn> {
 export async function fetchStockByMaterial(): Promise<GetStockByMaterialReturn> {
 	"use cache: remote";
 
-	cacheDashboardStockByMaterial();
+	cacheDashboard(DASHBOARD_CACHE_TAGS.STOCK_BY_MATERIAL);
 
 	const results = await prisma.$queryRaw<StockByMaterialResult[]>`
 		SELECT
