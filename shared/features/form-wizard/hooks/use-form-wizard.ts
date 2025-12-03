@@ -21,6 +21,8 @@ export interface UseFormWizardOptions {
 	messages?: WizardMessages
 	/** Active la persistence de l'étape (sessionStorage) */
 	persist?: boolean | string
+	/** Callback pour les erreurs de validation (par défaut: toast.error) */
+	onValidationError?: (message: string) => void
 }
 
 export interface UseFormWizardReturn {
@@ -71,6 +73,7 @@ export function useFormWizard({
 	onStepChange,
 	messages,
 	persist = false,
+	onValidationError,
 }: UseFormWizardOptions): UseFormWizardReturn {
 	const {
 		currentStep,
@@ -115,7 +118,8 @@ export function useFormWizard({
 
 	// Callback de validation échouée
 	const onValidationFailed = () => {
-		toast.error(mergedMessages.validation.errorsBeforeContinue)
+		const errorHandler = onValidationError ?? ((msg: string) => toast.error(msg))
+		errorHandler(mergedMessages.validation.errorsBeforeContinue)
 		accessibility.scrollToFirstError()
 	}
 

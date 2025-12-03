@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useRef } from "react"
 import type { WizardStep, WizardDirection } from "../types"
 
 interface UseWizardNavigationOptions {
@@ -45,6 +45,9 @@ export function useWizardNavigation({
 	onValidationFailed,
 	markStepCompleted,
 }: UseWizardNavigationOptions): UseWizardNavigationReturn {
+	// Protection contre les doubles clics / navigation rapide
+	const isNavigating = useRef(false)
+
 	// Filtrer les étapes selon leurs conditions
 	const visibleSteps = useMemo(() => {
 		return steps.filter((step) => !step.condition || step.condition())
@@ -79,6 +82,9 @@ export function useWizardNavigation({
 	// Navigation vers une étape spécifique
 	const goToStep = useCallback(
 		async (targetStep: number): Promise<boolean> => {
+			// Protection contre les doubles clics
+			if (isNavigating.current) return false
+
 			if (targetStep < 0 || targetStep >= steps.length) return false
 			if (!isStepNavigable(targetStep)) return false
 
@@ -91,18 +97,23 @@ export function useWizardNavigation({
 
 			// Navigation avant: nécessite validation
 			if (targetStep > currentStep) {
-				if (validateBeforeNext) {
-					const isValid = await validateBeforeNext()
-					if (!isValid) {
-						onValidationFailed?.()
-						return false
+				isNavigating.current = true
+				try {
+					if (validateBeforeNext) {
+						const isValid = await validateBeforeNext()
+						if (!isValid) {
+							onValidationFailed?.()
+							return false
+						}
 					}
-				}
 
-				markStepCompleted?.(currentStep)
-				setCurrentStep(targetStep)
-				onStepChange?.(targetStep, "forward")
-				return true
+					markStepCompleted?.(currentStep)
+					setCurrentStep(targetStep)
+					onStepChange?.(targetStep, "forward")
+					return true
+				} finally {
+					isNavigating.current = false
+				}
 			}
 
 			return true

@@ -1,7 +1,12 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { FOCUS_DELAY_MS, FOCUSABLE_SELECTOR, ERROR_FIELD_SELECTOR } from "../constants"
+import {
+	FOCUS_DELAY_MS,
+	FOCUSABLE_SELECTOR,
+	ERROR_FIELD_SELECTOR,
+	ANNOUNCEMENT_CLEAR_DELAY_MS,
+} from "../constants"
 import type { WizardStep } from "../types"
 
 interface UseWizardAccessibilityOptions {
@@ -84,7 +89,7 @@ export function useWizardAccessibility({
 	const announce = useCallback((message: string) => {
 		setAnnouncement(message)
 		// Efface l'annonce après un délai pour permettre une nouvelle annonce
-		setTimeout(() => setAnnouncement(""), 1000)
+		setTimeout(() => setAnnouncement(""), ANNOUNCEMENT_CLEAR_DELAY_MS)
 	}, [])
 
 	// Auto-focus lors du changement d'étape
@@ -92,7 +97,6 @@ export function useWizardAccessibility({
 		if (!enabled) return
 
 		if (previousStep.current !== currentStep) {
-			const previousStepValue = previousStep.current
 			previousStep.current = currentStep
 
 			// Annonce le changement d'étape

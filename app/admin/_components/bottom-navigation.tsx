@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { ExternalLink, LogOut, MoreHorizontal, User } from "lucide-react";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import {
 	Drawer,
 	DrawerContent,
+	DrawerDescription,
 	DrawerHeader,
 	DrawerTitle,
 	DrawerTrigger,
@@ -26,6 +27,19 @@ import { isRouteActive } from "@/shared/lib/navigation";
 const primaryItems = getBottomNavPrimaryItems();
 const secondaryItems = getBottomNavSecondaryItems();
 
+// Styles partagés pour les items de navigation
+const navItemStyles = {
+	base: "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-[64px] min-h-[48px] relative motion-safe:transition-all motion-safe:active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
+	active: "text-foreground font-semibold",
+	inactive: "text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium",
+} as const;
+
+const drawerItemStyles = {
+	base: "flex flex-col items-center justify-center gap-2 p-4 rounded-lg relative motion-safe:transition-all motion-safe:active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+	active: "bg-accent/50 text-foreground font-semibold",
+	inactive: "text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium",
+} as const;
+
 interface BottomNavigationProps {
 	user: {
 		name: string;
@@ -43,9 +57,10 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 	const pathname = usePathname();
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-	// Vérifie si une page du menu "Plus" est active
-	const isMoreItemActive = secondaryItems.some((item) =>
-		isRouteActive(pathname, item.url)
+	// Vérifie si une page du menu "Plus" est active (mémoïsé pour éviter les recalculs)
+	const isMoreItemActive = useMemo(
+		() => secondaryItems.some((item) => isRouteActive(pathname, item.url)),
+		[pathname]
 	);
 
 	return (
@@ -90,6 +105,9 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 					<DrawerContent bottomInset className="min-h-[60vh]">
 						<DrawerHeader>
 							<DrawerTitle>Plus d'options</DrawerTitle>
+							<DrawerDescription>
+								Accédez aux autres sections de l'administration
+							</DrawerDescription>
 						</DrawerHeader>
 
 						<ScrollArea className="flex-1">
@@ -102,16 +120,19 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 							</div>
 
 							{/* Actions rapides */}
-							<div className="px-4 pb-4 grid grid-cols-3 gap-3">
+							<section
+								aria-label="Actions rapides"
+								className="px-4 pb-4 grid grid-cols-3 gap-3"
+							>
 								<Link
 									href="/"
 									target="_blank"
 									rel="noopener noreferrer"
 									onClick={() => setIsDrawerOpen(false)}
+									aria-label="Voir le site (s'ouvre dans un nouvel onglet)"
 									className={cn(
-										"flex flex-col items-center justify-center gap-2 p-4 rounded-lg",
-										"text-muted-foreground hover:text-foreground hover:bg-accent/50",
-										"motion-safe:transition-all motion-safe:active:scale-95"
+										drawerItemStyles.base,
+										drawerItemStyles.inactive
 									)}
 								>
 									<ExternalLink className="h-5 w-5" aria-hidden="true" />
@@ -121,11 +142,10 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 									href="/admin/compte"
 									onClick={() => setIsDrawerOpen(false)}
 									className={cn(
-										"flex flex-col items-center justify-center gap-2 p-4 rounded-lg",
+										drawerItemStyles.base,
 										isRouteActive(pathname, "/admin/compte")
-											? "bg-accent/50 text-foreground font-semibold"
-											: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-										"motion-safe:transition-all motion-safe:active:scale-95"
+											? drawerItemStyles.active
+											: drawerItemStyles.inactive
 									)}
 								>
 									<User className="h-5 w-5" aria-hidden="true" />
@@ -135,21 +155,20 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 									<button
 										type="button"
 										className={cn(
-											"flex flex-col items-center justify-center gap-2 p-4 rounded-lg w-full",
-											"text-muted-foreground hover:text-destructive hover:bg-destructive/10",
-											"motion-safe:transition-all motion-safe:active:scale-95"
+											drawerItemStyles.base,
+											"w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
 										)}
 									>
 										<LogOut className="h-5 w-5" aria-hidden="true" />
 										<span className="text-xs text-center">Déconnexion</span>
 									</button>
 								</LogoutAlertDialog>
-							</div>
+							</section>
 
 							<Separator className="mx-4" />
 
 							{/* Navigation secondaire */}
-							<nav aria-label="Navigation secondaire" className="px-4 py-4">
+							<nav aria-label="Navigation secondaire" className="px-4 pt-4 pb-20">
 								<ul className="grid grid-cols-3 gap-3" role="menu">
 									{secondaryItems.map((item) => (
 										<li key={item.id} role="none">
@@ -172,8 +191,9 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 
 /**
  * Item de navigation principal (barre du bas)
+ * Mémoïsé pour éviter les re-renders inutiles
  */
-function BottomNavItem({
+const BottomNavItem = memo(function BottomNavItem({
 	item,
 	isActive,
 }: {
@@ -186,12 +206,8 @@ function BottomNavItem({
 		<Link
 			href={item.url}
 			className={cn(
-				"flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-[64px] relative",
-				"motion-safe:transition-all motion-safe:active:scale-95",
-				"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
-				isActive
-					? "text-foreground font-semibold"
-					: "text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium"
+				navItemStyles.base,
+				isActive ? navItemStyles.active : navItemStyles.inactive
 			)}
 			aria-label={item.title}
 			aria-current={isActive ? "page" : undefined}
@@ -203,12 +219,13 @@ function BottomNavItem({
 			</span>
 		</Link>
 	);
-}
+});
 
 /**
  * Item du Drawer "Plus"
+ * Mémoïsé pour éviter les re-renders inutiles
  */
-function BottomNavDrawerItem({
+const BottomNavDrawerItem = memo(function BottomNavDrawerItem({
 	item,
 	isActive,
 	onClick,
@@ -225,12 +242,8 @@ function BottomNavDrawerItem({
 			onClick={onClick}
 			role="menuitem"
 			className={cn(
-				"flex flex-col items-center justify-center gap-2 p-4 rounded-lg relative",
-				"motion-safe:transition-all motion-safe:active:scale-95",
-				"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-				isActive
-					? "bg-accent/50 text-foreground font-semibold"
-					: "text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium"
+				drawerItemStyles.base,
+				isActive ? drawerItemStyles.active : drawerItemStyles.inactive
 			)}
 			aria-current={isActive ? "page" : undefined}
 		>
@@ -241,7 +254,7 @@ function BottomNavDrawerItem({
 			</span>
 		</Link>
 	);
-}
+});
 
 /**
  * Indicateur visuel pour l'item actif (barre verticale gauche)

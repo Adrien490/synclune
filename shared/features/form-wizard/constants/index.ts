@@ -71,6 +71,12 @@ export const WIZARD_STORAGE_KEY_PREFIX = "wizard-step-"
 export const FOCUS_DELAY_MS = 50
 
 /**
+ * Délai avant de vider l'annonce screen reader (ms)
+ * Permet de répéter une annonce après ce délai
+ */
+export const ANNOUNCEMENT_CLEAR_DELAY_MS = 1000
+
+/**
  * Sélecteur CSS pour les éléments focusables
  */
 export const FOCUSABLE_SELECTOR =
