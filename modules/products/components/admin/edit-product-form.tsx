@@ -1,9 +1,7 @@
 "use client";
 
 import { FieldLabel, FormLayout, FormSection } from "@/shared/components/tanstack-form";
-import { ImageCounterBadge } from "@/modules/medias/components/image-counter-badge";
-import { MediaGallery } from "@/modules/medias/components/admin/media-gallery";
-import { PrimaryImageUpload } from "@/modules/medias/components/admin/primary-image-upload";
+import { UnifiedMediaUpload } from "@/modules/medias/components/admin/unified-media-upload";
 import { useAutoVideoThumbnail } from "@/modules/medias/hooks/use-auto-video-thumbnail";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
@@ -14,8 +12,7 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { useUpdateProductForm } from "@/modules/products/hooks/use-update-product-form";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
-import { AnimatePresence, motion } from "framer-motion";
-import { Euro, Gem, ImagePlus, Image as ImageIcon, Info, Upload, X } from "lucide-react";
+import { Euro, Gem, Image as ImageIcon, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, ViewTransition } from "react";
 import { toast } from "sonner";
@@ -51,11 +48,7 @@ export function EditProductForm({
 	// Hook pour génération automatique de thumbnail vidéo
 	const { generateThumbnail, generatingUrls } = useAutoVideoThumbnail();
 
-	const {
-		startUpload: startPrimaryImageUpload,
-		isUploading: isPrimaryImageUploading,
-	} = useUploadThing("catalogMedia");
-	const { startUpload: startGalleryUpload, isUploading: isGalleryUploading } =
+	const { startUpload: startMediaUpload, isUploading: isMediaUploading } =
 		useUploadThing("catalogMedia");
 
 	const { form, action, isPending } = useUpdateProductForm({
@@ -110,28 +103,14 @@ export function EditProductForm({
 				</form.Subscribe>
 
 				<form.Subscribe
-					selector={(state) => [state.values.defaultSku.primaryImage]}
+					selector={(state) => [state.values.defaultSku.media]}
 				>
-					{([primaryImage]) =>
-						primaryImage ? (
+					{([media]) =>
+						media && media.length > 0 ? (
 							<input
 								type="hidden"
-								name="defaultSku.primaryImage"
-								value={JSON.stringify(primaryImage)}
-							/>
-						) : null
-					}
-				</form.Subscribe>
-
-				<form.Subscribe
-					selector={(state) => [state.values.defaultSku.galleryMedia]}
-				>
-					{([galleryMedia]) =>
-						galleryMedia && galleryMedia.length > 0 ? (
-							<input
-								type="hidden"
-								name="defaultSku.galleryMedia"
-								value={JSON.stringify(galleryMedia)}
+								name="defaultSku.media"
+								value={JSON.stringify(media)}
 							/>
 						) : null
 					}
@@ -162,26 +141,14 @@ export function EditProductForm({
 				</form.Subscribe>
 
 				<form.Subscribe
-					selector={(state) => [
-						state.values.defaultSku.primaryImage,
-						state.values.defaultSku.galleryMedia,
-					]}
+					selector={(state) => [state.values.defaultSku.media]}
 				>
-					{([primaryImage, galleryMedia]) => {
+					{([media]) => {
 						const currentUrls: string[] = [];
-						if (
-							primaryImage &&
-							typeof primaryImage === "object" &&
-							!Array.isArray(primaryImage) &&
-							"url" in primaryImage &&
-							typeof primaryImage.url === "string"
-						) {
-							currentUrls.push(primaryImage.url);
-						}
-						if (galleryMedia && Array.isArray(galleryMedia)) {
-							galleryMedia.forEach((media: { url?: string }) => {
-								if (media && media.url) {
-									currentUrls.push(media.url);
+						if (media && Array.isArray(media)) {
+							media.forEach((m: { url?: string }) => {
+								if (m && m.url) {
+									currentUrls.push(m.url);
 								}
 							});
 						}
@@ -507,315 +474,74 @@ export function EditProductForm({
 				    ═══════════════════════════════════════════════════════════════════════ */}
 				<FormSection
 					title="Visuels"
-					description="Image principale et galerie"
+					description="Première image = principale • Glissez pour réordonner"
 					icon={<ImageIcon />}
 				>
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-						{/* Image principale */}
-						<form.Field
-							name="defaultSku.primaryImage"
-							validators={{
-								onBlur: ({ value }) => {
-									if (!value) {
-										return "L'image principale est requise";
+					<form.Field name="defaultSku.media" mode="array">
+						{(field) => {
+							const maxCount = 11;
+
+							const handleUploadComplete = (
+								uploadedFiles: Array<{
+									url: string;
+									name: string;
+									type: string;
+								}>
+							) => {
+								const remaining = maxCount - field.state.value.length;
+								const filesToAdd = uploadedFiles.slice(0, remaining);
+
+								if (uploadedFiles.length > remaining) {
+									toast.warning(
+										`Seulement ${remaining} média${remaining > 1 ? "s ont" : " a"} été ajouté${remaining > 1 ? "s" : ""}`
+									);
+								}
+
+								filesToAdd.forEach((file, index) => {
+									const mediaType = file.type.startsWith("video/")
+										? "VIDEO"
+										: "IMAGE";
+									const newMedia = {
+										url: file.url,
+										thumbnailUrl: undefined as string | undefined,
+										thumbnailSmallUrl: undefined as string | undefined,
+										altText: form.state.values.title || undefined,
+										mediaType: mediaType as "IMAGE" | "VIDEO",
+									};
+
+									const newMediaIndex = field.state.value.length + index;
+									field.pushValue(newMedia);
+
+									// Si c'est une vidéo, générer thumbnail automatiquement
+									if (mediaType === "VIDEO") {
+										generateThumbnail(file.url).then((result) => {
+											if (result.mediumUrl) {
+												field.replaceValue(newMediaIndex, {
+													...newMedia,
+													thumbnailUrl: result.mediumUrl ?? undefined,
+													thumbnailSmallUrl: result.smallUrl ?? undefined,
+												});
+											}
+										});
 									}
-								},
-								onSubmit: ({ value }) => {
-									if (!value) {
-										return "L'image principale est requise";
-									}
-								},
-							}}
-						>
-							{(field) => (
-								<div className="space-y-2">
-									<Label htmlFor="primary-image-upload">
-										Image principale <span className="text-destructive">*</span>
-									</Label>
-									<p className="text-xs text-muted-foreground">
-										⚠️ Les vidéos ne peuvent pas être utilisées comme média
-										principal.
-									</p>
-									<PrimaryImageUpload
-										imageUrl={field.state.value?.url}
-										mediaType={field.state.value?.mediaType}
-										onRemove={() => field.handleChange(undefined)}
+								});
+							};
+
+							return (
+								<div className="space-y-4">
+									<UnifiedMediaUpload
+										media={field.state.value}
+										onChange={(newMedia) => {
+											// Clear and repopulate the field
+											while (field.state.value.length > 0) {
+												field.removeValue(0);
+											}
+											newMedia.forEach((m) => field.pushValue(m));
+										}}
 										skipUtapiDelete={true}
+										generatingThumbnails={generatingUrls}
+										maxItems={maxCount}
 										renderUploadZone={() => (
-											<div className="relative">
-												<UploadDropzone
-													endpoint="catalogMedia"
-													onChange={async (files) => {
-														if (files.length > 1) {
-															toast.error(
-																"Vous ne pouvez uploader qu'une seule image principale"
-															);
-															return;
-														}
-
-														const file = files[0];
-														const isVideo = file.type.startsWith("video/");
-
-														if (isVideo) {
-															toast.error(
-																"Les vidéos ne peuvent pas être utilisées comme média principal."
-															);
-															return;
-														}
-
-														const maxSize = 4 * 1024 * 1024;
-														if (file.size > maxSize) {
-															const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-															toast.error(
-																`L'image dépasse la limite de 4MB (${sizeMB}MB)`
-															);
-															return;
-														}
-
-														try {
-															const res = await startPrimaryImageUpload(files);
-															const imageUrl = res?.[0]?.serverData?.url;
-															if (imageUrl) {
-																field.handleChange({
-																	url: imageUrl,
-																	thumbnailUrl: undefined,
-																	thumbnailSmallUrl: undefined,
-																	altText: form.state.values.title || undefined,
-																	mediaType: "IMAGE",
-																});
-															}
-														} catch {
-															toast.error(
-																"Échec de l'upload de l'image principale"
-															);
-														}
-													}}
-													onUploadError={(error) => {
-														toast.error(`Erreur: ${error.message}`);
-													}}
-													className="w-full *:after:hidden! *:before:hidden! [&>*::after]:hidden! [&>*::before]:hidden! ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden"
-													aria-label="Zone d'upload de l'image principale"
-													aria-required="true"
-													aria-invalid={field.state.meta.errors.length > 0}
-													appearance={{
-														container: ({ isDragActive, isUploading }) => ({
-															border: "3px dashed",
-															borderColor: isDragActive
-																? "hsl(var(--primary))"
-																: "hsl(var(--muted-foreground) / 0.25)",
-															borderRadius: "1rem",
-															backgroundColor: isDragActive
-																? "hsl(var(--primary) / 0.05)"
-																: "hsl(var(--muted) / 0.3)",
-															padding: "2rem",
-															transition: "all 0.2s ease-in-out",
-															height: "min(280px, 25vh)",
-															minHeight: "220px",
-															maxHeight: "350px",
-															display: "flex",
-															flexDirection: "column",
-															alignItems: "center",
-															justifyContent: "center",
-															gap: "0.75rem",
-															cursor: isUploading ? "not-allowed" : "pointer",
-															opacity: isUploading ? 0.7 : 1,
-															position: "relative",
-															boxShadow: isDragActive
-																? "0 0 0 2px hsl(var(--primary) / 0.2), 0 8px 24px hsl(var(--primary) / 0.15)"
-																: "0 2px 8px rgba(0, 0, 0, 0.1)",
-														}),
-														uploadIcon: ({ isDragActive, isUploading }) => ({
-															color: isDragActive
-																? "hsl(var(--primary))"
-																: "hsl(var(--primary) / 0.7)",
-															width: "3.5rem",
-															height: "3.5rem",
-															transition: "all 0.2s ease-in-out",
-															transform: isDragActive
-																? "scale(1.15)"
-																: "scale(1)",
-															opacity: isUploading ? 0.5 : 1,
-														}),
-														label: ({ isDragActive, isUploading }) => ({
-															color: isDragActive
-																? "hsl(var(--primary))"
-																: "hsl(var(--foreground))",
-															fontSize: "1rem",
-															fontWeight: "600",
-															textAlign: "center",
-															transition: "color 0.2s ease-in-out",
-															opacity: isUploading ? 0.5 : 1,
-															width: "100%",
-															wordBreak: "break-word",
-														}),
-														allowedContent: ({ isUploading }) => ({
-															color: "hsl(var(--muted-foreground))",
-															fontSize: "0.875rem",
-															textAlign: "center",
-															marginTop: "0.5rem",
-															opacity: isUploading ? 0.5 : 1,
-														}),
-													}}
-													content={{
-														uploadIcon: ({
-															isDragActive,
-															isUploading,
-															uploadProgress,
-														}) => {
-															if (isUploading) {
-																return (
-																	<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/90 backdrop-blur-sm rounded-lg z-10">
-																		<div className="text-center">
-																			<TextShimmer
-																				className="text-base font-semibold"
-																				duration={1.5}
-																			>
-																				{`Upload en cours... ${uploadProgress}%`}
-																			</TextShimmer>
-																		</div>
-																		{/* Barre de progression */}
-																		<div className="w-3/4 h-2 bg-muted rounded-full overflow-hidden">
-																			<div
-																				className="h-full bg-primary transition-all duration-300 ease-out"
-																				style={{ width: `${uploadProgress}%` }}
-																			/>
-																		</div>
-																	</div>
-																);
-															}
-															return (
-																<Upload
-																	className={cn(
-																		"h-16 w-16 transition-all duration-200",
-																		isDragActive
-																			? "text-primary scale-110"
-																			: "text-primary/70"
-																	)}
-																/>
-															);
-														},
-														label: ({ isDragActive, isUploading }) => {
-															if (isUploading) {
-																return null;
-															}
-
-															if (isDragActive) {
-																return (
-																	<div className="text-center">
-																		<p className="text-lg font-semibold text-primary">
-																			Relâchez pour uploader
-																		</p>
-																	</div>
-																);
-															}
-
-															return (
-																<div className="text-center space-y-2">
-																	<p className="text-lg font-semibold">
-																		Glissez votre image principale ici
-																	</p>
-																	<p className="text-sm text-muted-foreground">
-																		ou cliquez pour sélectionner
-																	</p>
-																	<p className="text-xs text-muted-foreground mt-2">
-																		Image • Max 4MB
-																	</p>
-																</div>
-															);
-														},
-														allowedContent: () => null,
-														button: () => (
-															<span className="sr-only">
-																Sélectionner une image principale
-															</span>
-														),
-													}}
-													config={{
-														mode: "auto",
-													}}
-												/>
-												{field.state.meta.errors.length > 0 && (
-													<ul
-														id="primary-image-error"
-														className="text-sm text-destructive mt-2 text-center list-none space-y-1"
-														role="alert"
-													>
-														{field.state.meta.errors.map((error, i) => (
-															<li key={i}>{error}</li>
-														))}
-													</ul>
-												)}
-											</div>
-										)}
-									/>
-									<p className="text-sm md:text-xs text-muted-foreground">
-										Format carré • 1200x1200px min • Max 4MB
-									</p>
-								</div>
-							)}
-						</form.Field>
-
-						{/* Galerie */}
-						<form.Field name="defaultSku.galleryMedia" mode="array">
-							{(field) => {
-								const currentCount = field.state.value.length;
-								const maxCount = 10;
-								const isAtLimit = currentCount >= maxCount;
-
-								return (
-									<div className="space-y-3">
-										<div className="flex items-center justify-between">
-											<Label>Galerie (optionnel)</Label>
-											<ImageCounterBadge count={currentCount} max={maxCount} />
-										</div>
-
-										{isAtLimit && (
-											<div className="bg-secondary/10 border border-secondary rounded-lg p-3 flex items-start gap-2">
-												<Info className="h-4 w-4 text-secondary-foreground mt-0.5 shrink-0" />
-												<div className="text-sm text-secondary-foreground">
-													<p className="font-medium">Limite atteinte</p>
-													<p className="text-xs mt-0.5">
-														Supprimez un média pour en ajouter un nouveau.
-													</p>
-												</div>
-											</div>
-										)}
-
-										<AnimatePresence mode="popLayout">
-											{field.state.value.length > 0 && (
-												<motion.div
-													initial={{ opacity: 0 }}
-													animate={{ opacity: 1 }}
-													exit={{ opacity: 0 }}
-													className="mb-3"
-													role="region"
-													aria-label="Galerie d'images"
-												>
-													<MediaGallery
-														images={field.state.value}
-														onRemove={(index) => field.removeValue(index)}
-														skipUtapiDelete={true}
-														generatingThumbnails={generatingUrls}
-													/>
-												</motion.div>
-											)}
-										</AnimatePresence>
-
-										{field.state.value.length === 0 && (
-											<div className="flex items-center gap-3 py-3 px-3 text-left bg-muted/20 rounded-lg border border-dashed border-border">
-												<ImagePlus className="h-6 w-6 text-muted-foreground/50 shrink-0" />
-												<div>
-													<p className="text-sm font-medium text-foreground">
-														Aucun média
-													</p>
-													<p className="text-xs text-muted-foreground">
-														Jusqu'à {maxCount} images et vidéos
-													</p>
-												</div>
-											</div>
-										)}
-
-										{!isAtLimit && (
 											<UploadDropzone
 												endpoint="catalogMedia"
 												onChange={async (files) => {
@@ -824,75 +550,41 @@ export function EditProductForm({
 
 													if (files.length > remaining) {
 														toast.warning(
-															`Seulement ${remaining} média${remaining > 1 ? "s" : ""} ${remaining > 1 ? "ont" : "a"} été ajouté${remaining > 1 ? "s" : ""}`
+															`Seulement ${remaining} média${remaining > 1 ? "s ont" : " a"} été ajouté${remaining > 1 ? "s" : ""}`
 														);
 													}
 
-													const fileTypeMap = new Map(
-														filesToUpload.map((f) => [
-															f.name,
-															f.type.startsWith("video/") ? "VIDEO" : "IMAGE",
-														])
-													);
-
+													// Vérifier la taille des fichiers
 													const oversizedFiles = filesToUpload.filter((f) => {
-														const maxSize = f.type.startsWith("video/")
+														const maxFileSize = f.type.startsWith("video/")
 															? 512 * 1024 * 1024
 															: 4 * 1024 * 1024;
-														return f.size > maxSize;
+														return f.size > maxFileSize;
 													});
 													if (oversizedFiles.length > 0) {
 														toast.error(
 															`${oversizedFiles.length} média(s) dépassent la limite`
 														);
 														filesToUpload = filesToUpload.filter((f) => {
-															const maxSize = f.type.startsWith("video/")
+															const maxFileSize = f.type.startsWith("video/")
 																? 512 * 1024 * 1024
 																: 4 * 1024 * 1024;
-															return f.size <= maxSize;
+															return f.size <= maxFileSize;
 														});
-														if (filesToUpload.length === 0) {
-															return;
-														}
+														if (filesToUpload.length === 0) return;
 													}
 
 													try {
-														const res = await startGalleryUpload(filesToUpload);
-
-														res?.forEach((uploadResult, index) => {
-															const imageUrl = uploadResult?.serverData?.url;
-															if (imageUrl) {
-																const originalFile = filesToUpload[index];
-																const mediaType =
-																	(fileTypeMap.get(originalFile.name) as
-																		| "IMAGE"
-																		| "VIDEO"
-																		| undefined) || "IMAGE";
-
-																const newMediaIndex = field.state.value.length;
-																const newMedia = {
-																	url: imageUrl,
-																	thumbnailUrl: undefined as string | undefined,
-																	thumbnailSmallUrl: undefined as string | undefined,
-																	altText: form.state.values.title || undefined,
-																	mediaType,
-																};
-																field.pushValue(newMedia);
-
-																// Si c'est une vidéo, générer thumbnail automatiquement
-																if (mediaType === "VIDEO") {
-																	generateThumbnail(imageUrl).then((result) => {
-																		if (result.mediumUrl) {
-																			field.replaceValue(newMediaIndex, {
-																				...newMedia,
-																				thumbnailUrl: result.mediumUrl ?? undefined,
-																				thumbnailSmallUrl: result.smallUrl ?? undefined,
-																			});
-																		}
-																	});
-																}
-															}
-														});
+														const res = await startMediaUpload(filesToUpload);
+														if (res) {
+															handleUploadComplete(
+																res.map((r, i) => ({
+																	url: r.serverData?.url || "",
+																	name: filesToUpload[i].name,
+																	type: filesToUpload[i].type,
+																}))
+															);
+														}
 													} catch {
 														toast.error("Échec de l'upload des médias");
 													}
@@ -901,7 +593,7 @@ export function EditProductForm({
 													toast.error(`Erreur: ${error.message}`);
 												}}
 												className="w-full *:after:hidden! *:before:hidden! [&>*::after]:hidden! [&>*::before]:hidden! ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden"
-												aria-label="Zone d'upload pour la galerie d'images"
+												aria-label="Zone d'upload des médias"
 												appearance={{
 													container: ({ isDragActive, isUploading }) => ({
 														border: "2px dashed",
@@ -912,10 +604,10 @@ export function EditProductForm({
 														backgroundColor: isDragActive
 															? "hsl(var(--primary) / 0.05)"
 															: "hsl(var(--muted) / 0.3)",
-														padding: "1rem",
+														padding: "1.5rem",
 														transition: "all 0.2s ease-in-out",
-														height: "min(140px, 20vh)",
-														minHeight: "120px",
+														height: "min(180px, 22vh)",
+														minHeight: "140px",
 														display: "flex",
 														flexDirection: "column",
 														alignItems: "center",
@@ -932,8 +624,8 @@ export function EditProductForm({
 														color: isDragActive
 															? "hsl(var(--primary))"
 															: "hsl(var(--primary) / 0.7)",
-														width: "2rem",
-														height: "2rem",
+														width: "2.5rem",
+														height: "2.5rem",
 														transition: "all 0.2s ease-in-out",
 														transform: isDragActive ? "scale(1.1)" : "scale(1)",
 														opacity: isUploading ? 0.5 : 1,
@@ -942,7 +634,7 @@ export function EditProductForm({
 														color: isDragActive
 															? "hsl(var(--primary))"
 															: "hsl(var(--foreground))",
-														fontSize: "0.875rem",
+														fontSize: "0.9rem",
 														fontWeight: "500",
 														textAlign: "center",
 														transition: "color 0.2s ease-in-out",
@@ -976,10 +668,9 @@ export function EditProductForm({
 																			className="text-sm font-medium"
 																			duration={1.5}
 																		>
-																			{`Ajout en cours... ${uploadProgress}%`}
+																			{`Upload en cours... ${uploadProgress}%`}
 																		</TextShimmer>
 																	</div>
-																	{/* Barre de progression */}
 																	<div className="w-3/4 h-1.5 bg-muted rounded-full overflow-hidden">
 																		<div
 																			className="h-full bg-primary transition-all duration-300 ease-out"
@@ -992,7 +683,7 @@ export function EditProductForm({
 														return (
 															<Upload
 																className={cn(
-																	"h-10 w-10 transition-all duration-200",
+																	"h-12 w-12 transition-all duration-200",
 																	isDragActive
 																		? "text-primary scale-110"
 																		: "text-primary/70"
@@ -1001,9 +692,7 @@ export function EditProductForm({
 														);
 													},
 													label: ({ isDragActive, isUploading }) => {
-														if (isUploading) {
-															return null;
-														}
+														if (isUploading) return null;
 
 														if (isDragActive) {
 															return (
@@ -1019,7 +708,7 @@ export function EditProductForm({
 														return (
 															<div className="text-center space-y-1">
 																<p className="text-sm font-medium">
-																	Ajouter à la galerie
+																	Glissez vos médias ici
 																</p>
 																<p className="text-xs text-muted-foreground">
 																	{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 4MB (image) / 512MB (vidéo)
@@ -1030,7 +719,7 @@ export function EditProductForm({
 													allowedContent: () => null,
 													button: () => (
 														<span className="sr-only">
-															Sélectionner des images pour la galerie
+															Sélectionner des médias
 														</span>
 													),
 												}}
@@ -1039,11 +728,24 @@ export function EditProductForm({
 												}}
 											/>
 										)}
-									</div>
-								);
-							}}
-						</form.Field>
-					</div>
+									/>
+									{field.state.meta.errors.length > 0 && (
+										<ul
+											className="text-sm text-destructive mt-2 list-none space-y-1"
+											role="alert"
+										>
+											{field.state.meta.errors.map((error, i) => (
+												<li key={i}>{error}</li>
+											))}
+										</ul>
+									)}
+									<p className="text-xs text-muted-foreground">
+										⚠️ La première position doit être une image (pas une vidéo) • Format carré recommandé • 1200x1200px min
+									</p>
+								</div>
+							);
+						}}
+					</form.Field>
 				</FormSection>
 
 				{/* Footer */}
@@ -1057,21 +759,18 @@ export function EditProductForm({
 										disabled={
 											!canSubmit ||
 											isPending ||
-											isPrimaryImageUploading ||
-											isGalleryUploading ||
+											isMediaUploading ||
 											generatingUrls.size > 0
 										}
 										className="min-w-[160px]"
 									>
 										{isPending
 											? "Enregistrement..."
-											: isPrimaryImageUploading
-												? "Upload image principale..."
-												: isGalleryUploading
-													? "Upload galerie..."
-													: generatingUrls.size > 0
-														? "Génération miniatures..."
-														: "Enregistrer les modifications"}
+											: isMediaUploading
+												? "Upload en cours..."
+												: generatingUrls.size > 0
+													? "Génération miniatures..."
+													: "Enregistrer les modifications"}
 									</Button>
 								)}
 							</form.Subscribe>

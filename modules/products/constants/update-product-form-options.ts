@@ -19,16 +19,7 @@ export const editProductFormOpts = {
 			colorId: "",
 			materialId: "",
 			size: "",
-			primaryImage: undefined as
-				| {
-						url: string;
-						thumbnailUrl?: string | null;
-						thumbnailSmallUrl?: string | null;
-						altText?: string;
-						mediaType: "IMAGE" | "VIDEO";
-				  }
-				| undefined,
-			galleryMedia: [] as Array<{
+			media: [] as Array<{
 				url: string;
 				thumbnailUrl?: string | null;
 				thumbnailSmallUrl?: string | null;

@@ -11,7 +11,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Expand, Loader2, MoreVertical, Play, Star, Trash2 } from "lucide-react";
+import { Expand, Loader2, MoreVertical, Play, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
 import { GalleryErrorBoundary } from "@/modules/medias/components/gallery-error-boundary";
@@ -97,7 +97,6 @@ export function MediaGallery({
 					const isGeneratingThumbnail =
 						isVideo && generatingThumbnails?.has(media.url);
 					const isImageLoaded = loadedImages.has(media.url);
-					const isPrimary = index === 0;
 
 					const handleOpenDeleteDialog = () => {
 						deleteDialog.open({
@@ -135,14 +134,13 @@ export function MediaGallery({
 								}
 							}}
 							role="listitem"
-							aria-label={`${isVideo ? "Vidéo" : "Image"} ${index + 1}${isPrimary ? " (principale)" : ""}`}
+							aria-label={`${isVideo ? "Vidéo" : "Image"} ${index + 1}`}
 							className={cn(
 								"group relative aspect-square rounded-lg overflow-hidden border-2 shrink-0",
 								"motion-safe:transition-all motion-safe:duration-200",
 								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 								"motion-safe:hover:scale-[1.02]",
-								"border-border hover:border-primary/50",
-								isPrimary && "ring-2 ring-amber-500/50 border-amber-500/50"
+								"border-border hover:border-primary/50"
 							)}
 						>
 							{/* Skeleton/Loading state */}
@@ -290,16 +288,6 @@ export function MediaGallery({
 									</DropdownMenuContent>
 								</DropdownMenu>
 							</div>
-
-							{/* Badge principal */}
-							{isPrimary && (
-								<div className="absolute top-1 left-1 z-10 pointer-events-none sm:top-2 sm:left-2">
-									<div className="flex items-center gap-1 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-										<Star className="w-3 h-3" />
-										<span className="hidden sm:inline">Principal</span>
-									</div>
-								</div>
-							)}
 						</motion.div>
 					);
 				})}

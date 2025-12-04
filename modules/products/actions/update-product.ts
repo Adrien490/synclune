@@ -61,6 +61,18 @@ export async function updateProduct(
 		};
 
 		// Extraire les donnees (approche simple comme collection)
+		// Parse media from form: primaryImage + galleryMedia → media array
+		const primaryImage = parseJSON(
+			formData.get("defaultSku.primaryImage"),
+			null
+		);
+		const galleryMedia = parseJSON<unknown[]>(
+			formData.get("defaultSku.galleryMedia"),
+			[]
+		);
+		// Combine: primary first, then gallery
+		const media = primaryImage ? [primaryImage, ...galleryMedia] : galleryMedia;
+
 		const rawData = {
 			productId: formData.get("productId"),
 			title: formData.get("title"),
@@ -77,8 +89,7 @@ export async function updateProduct(
 				colorId: formData.get("defaultSku.colorId") || "",
 				materialId: formData.get("defaultSku.materialId") || "",
 				size: formData.get("defaultSku.size") || "",
-				primaryImage: parseJSON(formData.get("defaultSku.primaryImage"), undefined),
-				galleryMedia: parseJSON(formData.get("defaultSku.galleryMedia"), []),
+				media,
 			},
 		};
 
@@ -182,40 +193,14 @@ export async function updateProduct(
 			? Math.round(validatedData.defaultSku.compareAtPriceEuros * 100)
 			: null;
 
-		// 8. Combine primary image and gallery images
-		const allImages: Array<{
-			url: string;
-			thumbnailUrl?: string | null;
-			altText?: string;
-			mediaType?: "IMAGE" | "VIDEO";
-			isPrimary: boolean;
-		}> = [];
-		if (validatedData.defaultSku.primaryImage) {
-			// VALIDATION: Le media principal DOIT etre une IMAGE (jamais une VIDEO)
-			const primaryMediaType =
-				validatedData.defaultSku.primaryImage.mediaType ||
-				detectMediaType(validatedData.defaultSku.primaryImage.url);
-			if (primaryMediaType === "VIDEO") {
-				return {
-					status: ActionStatus.VALIDATION_ERROR,
-					message:
-						"Le media principal ne peut pas etre une video. Veuillez selectionner une image comme media principal.",
-				};
-			}
-			allImages.push({
-				...validatedData.defaultSku.primaryImage,
-				mediaType: "IMAGE", // Force IMAGE type for primary media
-				isPrimary: true,
-			});
-		}
-		if (validatedData.defaultSku.galleryMedia) {
-			allImages.push(
-				...validatedData.defaultSku.galleryMedia.map((media) => ({
-					...media,
-					isPrimary: false,
-				}))
-			);
-		}
+		// 8. Prepare images with isPrimary flag (first = primary)
+		// Note: La validation que le premier média est une IMAGE (pas VIDEO) est faite
+		// dans le schéma Zod (updateProductSchema.refine)
+		const allImages = validatedData.defaultSku.media.map((media, index) => ({
+			...media,
+			mediaType: index === 0 ? ("IMAGE" as const) : media.mediaType, // Force IMAGE for first
+			isPrimary: index === 0,
+		}));
 
 		// 9. Update product in transaction
 		const updatedProduct = await prisma.$transaction(async (tx) => {

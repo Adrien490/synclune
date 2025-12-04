@@ -25,9 +25,17 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 	// Get default SKU (first one, should be isDefault: true)
 	const defaultSku = product.skus[0];
 
-	// Get primary image and gallery from SKU images
-	const primaryImage = defaultSku?.images.find((img) => img.isPrimary);
-	const galleryImages = defaultSku?.images.filter((img) => !img.isPrimary) || [];
+	// Get all images sorted by isPrimary (primary first)
+	const allMedia = defaultSku?.images
+		.slice()
+		.sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
+		.map((img) => ({
+			url: img.url,
+			thumbnailUrl: img.thumbnailUrl || undefined,
+			thumbnailSmallUrl: img.thumbnailSmallUrl || undefined,
+			altText: img.altText || undefined,
+			mediaType: img.mediaType,
+		})) || [];
 
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -67,22 +75,7 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 				colorId: defaultSku?.color?.id || "",
 				materialId: defaultSku?.material?.id || "",
 				size: defaultSku?.size || "",
-				primaryImage: primaryImage
-					? {
-							url: primaryImage.url,
-							thumbnailUrl: primaryImage.thumbnailUrl || undefined,
-							thumbnailSmallUrl: primaryImage.thumbnailSmallUrl || undefined,
-							altText: primaryImage.altText || undefined,
-							mediaType: primaryImage.mediaType,
-					  }
-					: undefined,
-				galleryMedia: galleryImages.map((img) => ({
-					url: img.url,
-					thumbnailUrl: img.thumbnailUrl || undefined,
-					thumbnailSmallUrl: img.thumbnailSmallUrl || undefined,
-					altText: img.altText || undefined,
-					mediaType: img.mediaType,
-				})),
+				media: allMedia,
 			},
 		},
 		// Merge server state with form state for validation errors

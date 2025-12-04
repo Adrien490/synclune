@@ -202,11 +202,10 @@ const initialSkuSchema = z.object({
 	materialId: z.string().optional().or(z.literal("")),
 	size: z.string().max(50).optional().or(z.literal("")),
 
-	// Medias (images et videos)
-	primaryImage: imageSchema.optional(),
-	galleryMedia: z
+	// Medias (images et videos) - premier = principal
+	media: z
 		.array(imageSchema)
-		.max(10, { message: "Maximum 10 médias dans la galerie" })
+		.max(11, { message: "Maximum 11 médias" })
 		.refine(
 			(media) => new Set(media.map((m) => m.url)).size === media.length,
 			{ message: "Les URLs de médias doivent être uniques" }
@@ -258,11 +257,10 @@ const defaultSkuSchema = z.object({
 	materialId: z.string().optional().or(z.literal("")),
 	size: z.string().max(50).optional().or(z.literal("")),
 
-	// Medias (images et videos)
-	primaryImage: imageSchema.optional(),
-	galleryMedia: z
+	// Medias (images et videos) - premier = principal
+	media: z
 		.array(imageSchema)
-		.max(10, { message: "Maximum 10 médias dans la galerie" })
+		.max(11, { message: "Maximum 11 médias" })
 		.refine(
 			(media) => new Set(media.map((m) => m.url)).size === media.length,
 			{ message: "Les URLs de médias doivent être uniques" }
@@ -322,18 +320,19 @@ export const createProductSchema = z
 		// Initial SKU (required for product creation)
 		initialSku: initialSkuSchema,
 	})
-	.refine((data) => data.initialSku.primaryImage !== undefined, {
-		message: "L'image principale est requise",
-		path: ["initialSku", "primaryImage"],
+	.refine((data) => data.initialSku.media.length > 0, {
+		message: "Au moins une image est requise",
+		path: ["initialSku", "media"],
 	})
 	.refine(
 		(data) => {
-			// Verifier que le media principal n'est PAS une video
-			if (!data.initialSku.primaryImage) return true;
-			const mediaType = data.initialSku.primaryImage.mediaType;
+			// Verifier que le premier media n'est PAS une video
+			const firstMedia = data.initialSku.media[0];
+			if (!firstMedia) return true;
+			const mediaType = firstMedia.mediaType;
 			if (!mediaType) {
 				// Si pas de mediaType specifie, verifier l'extension de l'URL
-				const url = data.initialSku.primaryImage.url.toLowerCase();
+				const url = firstMedia.url.toLowerCase();
 				return !(
 					url.endsWith(".mp4") ||
 					url.endsWith(".webm") ||
@@ -344,8 +343,8 @@ export const createProductSchema = z
 		},
 		{
 			message:
-				"Le media principal ne peut pas être une video. Veuillez sélectionner une image.",
-			path: ["initialSku", "primaryImage"],
+				"Le premier média doit être une image, pas une vidéo.",
+			path: ["initialSku", "media"],
 		}
 	);
 
@@ -390,18 +389,19 @@ export const updateProductSchema = z
 		// Default SKU (modifiable)
 		defaultSku: defaultSkuSchema,
 	})
-	.refine((data) => data.defaultSku.primaryImage !== undefined, {
-		message: "L'image principale est requise",
-		path: ["defaultSku", "primaryImage"],
+	.refine((data) => data.defaultSku.media.length > 0, {
+		message: "Au moins une image est requise",
+		path: ["defaultSku", "media"],
 	})
 	.refine(
 		(data) => {
-			// Verifier que le media principal n'est PAS une video
-			if (!data.defaultSku.primaryImage) return true;
-			const mediaType = data.defaultSku.primaryImage.mediaType;
+			// Verifier que le premier media n'est PAS une video
+			const firstMedia = data.defaultSku.media[0];
+			if (!firstMedia) return true;
+			const mediaType = firstMedia.mediaType;
 			if (!mediaType) {
 				// Si pas de mediaType specifie, verifier l'extension de l'URL
-				const url = data.defaultSku.primaryImage.url.toLowerCase();
+				const url = firstMedia.url.toLowerCase();
 				return !(
 					url.endsWith(".mp4") ||
 					url.endsWith(".webm") ||
@@ -412,8 +412,8 @@ export const updateProductSchema = z
 		},
 		{
 			message:
-				"Le media principal ne peut pas être une video. Veuillez sélectionner une image.",
-			path: ["defaultSku", "primaryImage"],
+				"Le premier média doit être une image, pas une vidéo.",
+			path: ["defaultSku", "media"],
 		}
 	);
 

@@ -90,6 +90,20 @@ export async function createProduct(
 		};
 
 		// Extraire les donnees (approche simple comme collection)
+		// Parse media from form: primaryImage + galleryMedia → media array
+		const primaryImage = parseJSON(
+			formData.get("initialSku.primaryImage"),
+			null,
+			"initialSku.primaryImage"
+		);
+		const galleryMedia = parseJSON<unknown[]>(
+			formData.get("initialSku.galleryMedia"),
+			[],
+			"initialSku.galleryMedia"
+		);
+		// Combine: primary first, then gallery
+		const media = primaryImage ? [primaryImage, ...galleryMedia] : galleryMedia;
+
 		const rawData = {
 			title: formData.get("title"),
 			description: formData.get("description"),
@@ -112,16 +126,7 @@ export async function createProduct(
 				colorId: formData.get("initialSku.colorId") || "",
 				materialId: formData.get("initialSku.materialId") || "",
 				size: formData.get("initialSku.size") || "",
-				primaryImage: parseJSON(
-					formData.get("initialSku.primaryImage"),
-					undefined,
-					"initialSku.primaryImage"
-				),
-				galleryMedia: parseJSON(
-					formData.get("initialSku.galleryMedia"),
-					[],
-					"initialSku.galleryMedia"
-				),
+				media,
 			},
 		};
 
@@ -169,32 +174,14 @@ export async function createProduct(
 			? Math.round(validatedData.initialSku.compareAtPriceEuros * 100)
 			: null;
 
-		// 6. Combine primary image and gallery images
-		// Note: La validation que primaryImage est une IMAGE (pas VIDEO) est faite
+		// 6. Prepare images with isPrimary flag (first = primary)
+		// Note: La validation que le premier média est une IMAGE (pas VIDEO) est faite
 		// dans le schéma Zod (createProductSchema.refine)
-		const allImages: Array<{
-			url: string;
-			thumbnailUrl?: string | null;
-			thumbnailSmallUrl?: string | null;
-			altText?: string;
-			mediaType?: "IMAGE" | "VIDEO";
-			isPrimary: boolean;
-		}> = [];
-		if (validatedData.initialSku.primaryImage) {
-			allImages.push({
-				...validatedData.initialSku.primaryImage,
-				mediaType: "IMAGE", // Force IMAGE type for primary media (validated by schema)
-				isPrimary: true,
-			});
-		}
-		if (validatedData.initialSku.galleryMedia) {
-			allImages.push(
-				...validatedData.initialSku.galleryMedia.map((media) => ({
-					...media,
-					isPrimary: false,
-				}))
-			);
-		}
+		const allImages = validatedData.initialSku.media.map((media, index) => ({
+			...media,
+			mediaType: index === 0 ? ("IMAGE" as const) : media.mediaType, // Force IMAGE for first
+			isPrimary: index === 0,
+		}));
 
 		// 7. Create product in transaction
 		const product = await prisma.$transaction(async (tx) => {
