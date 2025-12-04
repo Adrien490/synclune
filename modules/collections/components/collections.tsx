@@ -42,7 +42,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 
 	return (
 		<section
-			className={`relative overflow-hidden bg-gradient-to-b from-pink-50/30 via-background to-background ${SECTION_SPACING.default}`}
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
 			aria-labelledby="collections-title"
 			aria-describedby="collections-subtitle"
 		>

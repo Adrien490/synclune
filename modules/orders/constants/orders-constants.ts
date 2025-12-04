@@ -33,11 +33,6 @@ export const GET_ORDERS_DEFAULT_SELECT = {
 	paymentMethod: true,
 	paidAt: true,
 
-	// === FACTURATION ===
-	invoiceNumber: true,
-	invoiceStatus: true,
-	invoiceGeneratedAt: true,
-
 	createdAt: true,
 	updatedAt: true,
 

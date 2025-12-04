@@ -4,7 +4,6 @@ import {
 	sendAdminNewOrderEmail,
 	sendRefundConfirmationEmail,
 	sendPaymentFailedEmail,
-	sendAdminDisputeAlert,
 	sendAdminRefundFailedAlert,
 } from "@/shared/lib/email";
 import type { PostWebhookTask } from "../types/webhook.types";
@@ -28,9 +27,6 @@ export async function executePostWebhookTasks(tasks: PostWebhookTask[]): Promise
 					break;
 				case "PAYMENT_FAILED_EMAIL":
 					await sendPaymentFailedEmail(task.data);
-					break;
-				case "ADMIN_DISPUTE_ALERT":
-					await sendAdminDisputeAlert(task.data);
 					break;
 				case "ADMIN_REFUND_FAILED_ALERT":
 					await sendAdminRefundFailedAlert(task.data);

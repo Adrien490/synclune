@@ -18,7 +18,6 @@ import Stripe from "stripe";
 import { createCheckoutSessionSchema, type CreateCheckoutSessionData } from "@/modules/payments/schemas/create-checkout-session-schema";
 import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
 import { randomUUID } from "crypto";
-import { getInvoiceFooter, getVendorLegalInfo } from "@/shared/lib/stripe";
 import { ALLOWED_SHIPPING_COUNTRIES } from "@/modules/orders/constants/colissimo-rates";
 import { getStripeShippingOptions } from "@/modules/orders/constants/stripe-shipping-rates";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
@@ -718,37 +717,15 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				phone_number_collection: {
 					enabled: true,
 				},
-				// ✅ GÉNÉRATION AUTOMATIQUE DE FACTURES PDF (Conformité B2C France)
-				// Stripe génère automatiquement une facture PDF après paiement réussi
-				// Alternative simple à Stripe Invoicing API (élimine ~750 lignes de code)
+				// ✅ Stripe génère automatiquement une facture PDF après paiement
+				// Le client reçoit un email avec lien pour télécharger la facture
 				invoice_creation: {
 					enabled: true,
 					invoice_data: {
-						// Métadonnées pour traçabilité
 						metadata: {
 							orderNumber: order.orderNumber,
 							orderId: order.id,
 						},
-						// Custom fields affichés en en-tête de facture (max 4)
-						// SIRET + Code NAF obligatoires pour conformité française
-						custom_fields: [
-							{
-								name: "SIRET",
-								value: getVendorLegalInfo().company_siret,
-							},
-							{
-								name: "Code NAF",
-								value: getVendorLegalInfo().company_ape,
-							},
-							{
-								name: "N° Commande",
-								value: order.orderNumber,
-							},
-						],
-						// Footer avec mentions légales françaises complètes
-						// Inclut : SIRET, SIREN, adresse, TVA, assurance RC Pro, pénalités, RNE
-						footer: getInvoiceFooter(),
-						// Description pour la facture
 						description: `Commande ${order.orderNumber}`,
 					},
 				},

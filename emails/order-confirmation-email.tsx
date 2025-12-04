@@ -41,7 +41,6 @@ interface OrderConfirmationEmailProps {
 	};
 	trackingUrl: string;
 	orderId: string;
-	invoiceGenerated: boolean;
 }
 
 export const OrderConfirmationEmail = ({
@@ -56,7 +55,6 @@ export const OrderConfirmationEmail = ({
 	shippingAddress,
 	trackingUrl,
 	orderId,
-	invoiceGenerated,
 }: OrderConfirmationEmailProps) => {
 	return (
 		<Html>
@@ -398,47 +396,6 @@ export const OrderConfirmationEmail = ({
 							Suivre ma commande
 						</Button>
 					</Section>
-
-					{/* Facture */}
-					{invoiceGenerated && (
-						<Section
-							style={{
-								...EMAIL_STYLES.section.card,
-								marginBottom: "32px",
-								border: `1px solid ${EMAIL_COLORS.border}`,
-							}}
-						>
-							<Text
-								style={{
-									margin: "0 0 12px 0",
-									textAlign: "center",
-									fontSize: "16px",
-									fontWeight: "600",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								📄 Ta facture
-							</Text>
-							<Text
-								style={{
-									...EMAIL_STYLES.text.small,
-									marginBottom: "16px",
-									textAlign: "center",
-								}}
-							>
-								Ta facture a été générée et t'a été envoyée par email séparément.
-								Tu peux également la consulter dans ton espace client.
-							</Text>
-							<div style={{ textAlign: "center" }}>
-								<Button
-									href={trackingUrl}
-									style={EMAIL_STYLES.button.outline}
-								>
-									Voir ma facture
-								</Button>
-							</div>
-						</Section>
-					)}
 
 					{/* Message personnel */}
 					<Section

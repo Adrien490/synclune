@@ -153,7 +153,6 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 													status: order.status as OrderStatus,
 													paymentStatus: order.paymentStatus as PaymentStatus,
 													fulfillmentStatus: order.fulfillmentStatus as FulfillmentStatus,
-													invoiceNumber: order.invoiceNumber,
 													trackingNumber: order.trackingNumber,
 													trackingUrl: order.trackingUrl,
 												}}

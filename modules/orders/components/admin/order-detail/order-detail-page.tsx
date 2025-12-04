@@ -16,7 +16,6 @@ import { OrderCustomerCard } from "./order-customer-card";
 import { OrderRefundsCard } from "./order-refunds-card";
 import { OrderAddressCard } from "./order-address-card";
 import { OrderPaymentCard } from "./order-payment-card";
-import { OrderInvoiceCard } from "./order-invoice-card";
 import { OrderHistoryTimeline } from "../order-history-timeline";
 
 interface OrderDetailPageProps {
@@ -92,8 +91,6 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 					<OrderAddressCard order={order} />
 
 					<OrderPaymentCard order={order} />
-
-					{order.invoiceNumber && <OrderInvoiceCard order={order} />}
 
 					<OrderHistoryTimeline history={order.history || []} />
 				</div>

@@ -6,14 +6,6 @@ import { handleCheckoutSessionCompleted, handleCheckoutSessionExpired } from "..
 import { handlePaymentSuccess, handlePaymentFailure, handlePaymentCanceled } from "../handlers/payment-handlers";
 import { handleChargeRefunded, handleRefundUpdated, handleRefundFailed } from "../handlers/refund-handlers";
 import { handleAsyncPaymentSucceeded, handleAsyncPaymentFailed } from "../handlers/async-payment-handlers";
-import {
-	handleDisputeCreated,
-	handleDisputeUpdated,
-	handleDisputeClosed,
-	handleDisputeFundsWithdrawn,
-	handleDisputeFundsReinstated,
-} from "../handlers/dispute-handlers";
-import { handleInvoiceFinalized, handleInvoicePaid, handleInvoicePaymentFailed } from "../handlers/invoice-handlers";
 
 type EventHandler = (event: Stripe.Event) => Promise<WebhookHandlerResult | null>;
 
@@ -67,42 +59,6 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 		handleAsyncPaymentSucceeded(e.data.object as Stripe.Checkout.Session),
 	"checkout.session.async_payment_failed": async (e) => {
 		await handleAsyncPaymentFailed(e.data.object as Stripe.Checkout.Session);
-		return null;
-	},
-
-	// === DISPUTE / CHARGEBACK ===
-	"charge.dispute.created": async (e) => {
-		await handleDisputeCreated(e.data.object as Stripe.Dispute);
-		return null;
-	},
-	"charge.dispute.updated": async (e) => {
-		await handleDisputeUpdated(e.data.object as Stripe.Dispute);
-		return null;
-	},
-	"charge.dispute.closed": async (e) => {
-		await handleDisputeClosed(e.data.object as Stripe.Dispute);
-		return null;
-	},
-	"charge.dispute.funds_withdrawn": async (e) => {
-		await handleDisputeFundsWithdrawn(e.data.object as Stripe.Dispute);
-		return null;
-	},
-	"charge.dispute.funds_reinstated": async (e) => {
-		await handleDisputeFundsReinstated(e.data.object as Stripe.Dispute);
-		return null;
-	},
-
-	// === INVOICE ===
-	"invoice.finalized": async (e) => {
-		await handleInvoiceFinalized(e.data.object as Stripe.Invoice);
-		return null;
-	},
-	"invoice.paid": async (e) => {
-		await handleInvoicePaid(e.data.object as Stripe.Invoice);
-		return null;
-	},
-	"invoice.payment_failed": async (e) => {
-		await handleInvoicePaymentFailed(e.data.object as Stripe.Invoice);
 		return null;
 	},
 };

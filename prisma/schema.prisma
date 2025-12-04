@@ -522,16 +522,6 @@ enum PaymentStatus {
   REFUNDED
 }
 
-enum InvoiceStatus {
-  PENDING        // Interne: commande payée, facture en attente de génération Stripe
-  DRAFT          // Stripe: draft - Facture créée mais pas encore finalisée
-  OPEN           // Stripe: open - Facture finalisée, en attente de paiement
-  PAID           // Stripe: paid - Facture payée avec succès
-  UNCOLLECTIBLE  // Stripe: uncollectible - Facture marquée comme irrécupérable
-  VOID           // Stripe: void - Facture annulée
-  PAYMENT_FAILED // Interne: open + échec de paiement détecté via webhook
-}
-
 enum PaymentMethod {
   CARD
   BANK_TRANSFER
@@ -586,7 +576,6 @@ model Order {
   stripePaymentIntentId   String? @unique // pi_xxx
   stripeChargeId          String? // ch_xxx
   stripeCustomerId        String? // cus_xxx
-  stripeInvoiceId         String? @unique // in_xxx
   // ⚠️ PRÉPARATION TVA RÉGIME RÉEL : Champ conservé pour future activation de Stripe Tax
   // En micro-entreprise (CA < 91 900€/an), ce champ reste null
   // Si passage en régime réel TVA (> seuil), activer Stripe Tax et ce champ sera rempli
@@ -668,12 +657,6 @@ model Order {
   paymentMethod PaymentMethod @default(CARD)
   paidAt        DateTime?
 
-  // === FACTURATION (STRIPE INVOICING) ===
-  // ✅ Stripe génère automatiquement les factures PDF avec invoice_creation
-  invoiceNumber      String?       @unique // Numéro Stripe (ex: INV-XXXX)
-  invoiceGeneratedAt DateTime? // Date de génération automatique par Stripe
-  invoiceStatus      InvoiceStatus @default(PENDING)
-
   // === CONFORMITÉ LÉGALE FRANÇAISE ===
   // Obligation de conservation 10 ans (Art. L123-22 Code de commerce)
   operationCategory OperationCategory @default(GOODS) // Conformité fiscale depuis juillet 2024
@@ -683,7 +666,6 @@ model Order {
   items          OrderItem[]
   discountUsages DiscountUsage[]
   refunds        Refund[]
-  disputes       Dispute[] // Litiges/chargebacks Stripe
   notes          OrderNote[]
   history        OrderHistory[] // 🔴 Audit trail (conformité légale)
 
@@ -710,8 +692,6 @@ model Order {
   // Timestamps métier
   @@index([shippedAt, fulfillmentStatus]) // Timeline expéditions
   @@index([paidAt, paymentStatus]) // Rapports comptables
-  // Facturation
-  @@index([invoiceStatus, createdAt])
   @@index([fiscalYear, paymentStatus])
 
   // === INDEXES STRIPE (Réconciliation & Support) ===
@@ -1182,48 +1162,3 @@ model WebhookEvent {
   @@index([processedAt])
 }
 
-// ============================================================================
-// LITIGES STRIPE (Disputes/Chargebacks)
-// ============================================================================
-
-enum DisputeStatus {
-  NEEDS_RESPONSE  // needs_response - Preuves requises sous 7-21 jours
-  UNDER_REVIEW    // under_review - En cours d'examen par Stripe/banque
-  WON             // won - Litige gagné, fonds restitués
-  LOST            // lost - Litige perdu, fonds retirés définitivement
-  CHARGE_REFUNDED // charge_refunded - Remboursé avant résolution du litige
-  ACCEPTED        // warning_closed - Accepté sans contestation
-}
-
-/// Litiges/Chargebacks Stripe
-/// Un dispute est initié par le client via sa banque (différent d'un refund)
-/// Frais: 15€ par dispute (non tracké ici, visible dans Stripe Dashboard)
-model Dispute {
-  id              String        @id @default(cuid())
-  stripeDisputeId String        @unique // dp_xxx
-
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
-
-  // Montant contesté
-  amount   Int          // Montant en centimes
-  currency CurrencyCode @default(EUR)
-
-  // Raison du litige
-  reason            String  @db.VarChar(100) // fraudulent, duplicate, product_not_received, etc.
-  networkReasonCode String? @db.VarChar(20) // Code réseau carte (Visa/MC)
-
-  status DisputeStatus
-
-  // Date limite pour soumettre des preuves (critique !)
-  evidenceDueBy DateTime
-
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @default(now()) @updatedAt
-  resolvedAt DateTime? // Date de résolution (WON/LOST/CHARGE_REFUNDED/ACCEPTED)
-
-  @@index([orderId])
-  @@index([status])
-  @@index([evidenceDueBy])
-  @@index([createdAt(sort: Desc)])
-}

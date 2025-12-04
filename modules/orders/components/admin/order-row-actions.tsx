@@ -19,7 +19,6 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import {
 	CheckCircle,
 	CreditCard,
-	Download,
 	Eye,
 	ExternalLink,
 	Mail,
@@ -36,7 +35,6 @@ import {
 	XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useDownloadInvoiceAdmin } from "@/modules/orders/hooks/use-download-invoice-admin";
 import { useResendOrderEmail } from "@/modules/orders/hooks/use-resend-order-email";
 import { CANCEL_ORDER_DIALOG_ID } from "./cancel-order-alert-dialog";
 import { DELETE_ORDER_DIALOG_ID } from "./delete-order-alert-dialog";
@@ -55,7 +53,6 @@ interface OrderRowActionsProps {
 		status: OrderStatus;
 		paymentStatus: PaymentStatus;
 		fulfillmentStatus?: FulfillmentStatus | null;
-		invoiceNumber: string | null;
 		trackingNumber?: string | null;
 		trackingUrl?: string | null;
 	};
@@ -72,8 +69,6 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
 
-	// Hook pour télécharger la facture
-	const { download: downloadInvoice, isPending: isDownloadingInvoice } = useDownloadInvoiceAdmin();
 	// Hook pour renvoyer les emails
 	const { resend: resendEmail, isPending: isResendingEmail } = useResendOrderEmail();
 
@@ -99,10 +94,8 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	const canRefund = (isProcessing || isShipped || isDelivered) && isPaid;
 
 	// Une commande peut être supprimée si :
-	// - Pas de facture émise
 	// - Jamais payée (ni PAID ni REFUNDED)
 	const canDelete =
-		order.invoiceNumber === null &&
 		order.paymentStatus !== PaymentStatus.PAID &&
 		order.paymentStatus !== PaymentStatus.REFUNDED;
 
@@ -111,9 +104,6 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	const canRevertToProcessing = isShipped;
 	const canMarkAsReturned =
 		isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
-
-	// Facture disponible si invoiceNumber existe
-	const hasInvoice = !!order.invoiceNumber;
 
 	// =========================================================================
 	// HANDLERS
@@ -251,17 +241,6 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 						</DropdownMenuSubContent>
 					</DropdownMenuPortal>
 				</DropdownMenuSub>
-
-				{/* Télécharger la facture (si disponible) */}
-				{hasInvoice && (
-					<DropdownMenuItem
-						onClick={() => downloadInvoice(order.id)}
-						disabled={isDownloadingInvoice}
-					>
-						<Download className="h-4 w-4" />
-						Télécharger la facture
-					</DropdownMenuItem>
-				)}
 
 				{/* PENDING : Marquer comme payée */}
 				{canMarkAsPaid && (

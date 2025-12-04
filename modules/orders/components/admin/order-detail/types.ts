@@ -77,7 +77,3 @@ export interface OrderAddressCardProps {
 export interface OrderPaymentCardProps {
 	order: GetOrderReturn;
 }
-
-export interface OrderInvoiceCardProps {
-	order: GetOrderReturn;
-}

@@ -14,7 +14,6 @@ import { AdminNewOrderEmail } from "@/emails/admin-new-order-email";
 import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email";
 import { RefundConfirmationEmail } from "@/emails/refund-confirmation-email";
 import { RefundApprovedEmail } from "@/emails/refund-approved-email";
-import { AdminDisputeAlertEmail } from "@/emails/admin-dispute-alert-email";
 import { CustomizationRequestEmail } from "@/emails/customization-request-email";
 import { PaymentFailedEmail } from "@/emails/payment-failed-email";
 import { CancelOrderConfirmationEmail } from "@/emails/cancel-order-confirmation-email";
@@ -248,7 +247,6 @@ export async function sendOrderConfirmationEmail({
 	shippingAddress,
 	trackingUrl,
 	orderId,
-	invoiceGenerated,
 }: {
 	to: string;
 	orderNumber: string;
@@ -277,7 +275,6 @@ export async function sendOrderConfirmationEmail({
 	};
 	trackingUrl: string;
 	orderId: string;
-	invoiceGenerated: boolean;
 }) {
 	try {
 		const emailHtml = await render(
@@ -293,7 +290,6 @@ export async function sendOrderConfirmationEmail({
 				shippingAddress,
 				trackingUrl,
 				orderId,
-				invoiceGenerated,
 			})
 		);
 
@@ -909,72 +905,6 @@ export async function sendPaymentFailedEmail({
 		return { success: true, data };
 	} catch (error) {
 		console.error("[EMAIL] Exception sending payment failed email:", error);
-		return { success: false, error };
-	}
-}
-
-/**
- * Envoie une alerte admin en cas de litige (dispute) Stripe
- * URGENT : Délai de réponse limité (généralement 7 jours)
- */
-export async function sendAdminDisputeAlert({
-	orderNumber,
-	orderId,
-	customerEmail,
-	customerName,
-	disputeAmount,
-	disputeReason,
-	evidenceDueDate,
-	stripeDisputeId,
-	stripePaymentIntentId,
-	dashboardUrl,
-}: {
-	orderNumber: string;
-	orderId: string;
-	customerEmail: string;
-	customerName: string;
-	disputeAmount: number;
-	disputeReason: string;
-	evidenceDueDate: string;
-	stripeDisputeId: string;
-	stripePaymentIntentId: string;
-	dashboardUrl: string;
-}) {
-	try {
-		const stripeDashboardUrl = `https://dashboard.stripe.com/disputes/${stripeDisputeId}`;
-
-		const emailHtml = await render(
-			AdminDisputeAlertEmail({
-				orderNumber,
-				orderId,
-				customerEmail,
-				customerName,
-				disputeAmount,
-				disputeReason,
-				evidenceDueDate,
-				stripeDisputeId,
-				stripePaymentIntentId,
-				dashboardUrl,
-				stripeDashboardUrl,
-			})
-		);
-
-		const { data, error } = await resend.emails.send({
-			from: EMAIL_FROM,
-			to: EMAIL_ADMIN,
-			subject: `🚨 LITIGE URGENT : ${orderNumber} - Délai : ${evidenceDueDate}`,
-			html: emailHtml,
-		});
-
-		if (error) {
-			console.error("[EMAIL] Error sending dispute alert:", error);
-			return { success: false, error };
-		}
-
-		console.log(`🚨 [EMAIL] Dispute alert sent for order ${orderNumber}`);
-		return { success: true, data };
-	} catch (error) {
-		console.error("[EMAIL] Exception sending dispute alert:", error);
 		return { success: false, error };
 	}
 }

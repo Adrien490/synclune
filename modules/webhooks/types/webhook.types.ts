@@ -3,7 +3,6 @@ import type {
 	sendAdminNewOrderEmail,
 	sendRefundConfirmationEmail,
 	sendPaymentFailedEmail,
-	sendAdminDisputeAlert,
 	sendAdminRefundFailedAlert,
 } from "@/shared/lib/email";
 
@@ -16,7 +15,6 @@ export type PostWebhookTask =
 	| { type: "ADMIN_NEW_ORDER_EMAIL"; data: Parameters<typeof sendAdminNewOrderEmail>[0] }
 	| { type: "REFUND_CONFIRMATION_EMAIL"; data: Parameters<typeof sendRefundConfirmationEmail>[0] }
 	| { type: "PAYMENT_FAILED_EMAIL"; data: Parameters<typeof sendPaymentFailedEmail>[0] }
-	| { type: "ADMIN_DISPUTE_ALERT"; data: Parameters<typeof sendAdminDisputeAlert>[0] }
 	| { type: "ADMIN_REFUND_FAILED_ALERT"; data: Parameters<typeof sendAdminRefundFailedAlert>[0] }
 	| { type: "INVALIDATE_CACHE"; tags: string[] };
 
@@ -53,12 +51,4 @@ export type SupportedStripeEvent =
 	| "refund.updated"
 	| "refund.failed"
 	| "checkout.session.async_payment_succeeded"
-	| "checkout.session.async_payment_failed"
-	| "charge.dispute.created"
-	| "charge.dispute.updated"
-	| "charge.dispute.closed"
-	| "charge.dispute.funds_withdrawn"
-	| "charge.dispute.funds_reinstated"
-	| "invoice.finalized"
-	| "invoice.paid"
-	| "invoice.payment_failed";
+	| "checkout.session.async_payment_failed";

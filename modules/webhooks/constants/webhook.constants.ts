@@ -19,10 +19,6 @@ export const WEBHOOK_EVENT_LABELS: Record<string, string> = {
 	"refund.failed": "Remboursement échoué",
 	"checkout.session.async_payment_succeeded": "Paiement asynchrone réussi",
 	"checkout.session.async_payment_failed": "Paiement asynchrone échoué",
-	"charge.dispute.created": "Litige créé",
-	"invoice.finalized": "Facture finalisée",
-	"invoice.paid": "Facture payée",
-	"invoice.payment_failed": "Paiement facture échoué",
 } as const;
 
 /**
@@ -33,6 +29,4 @@ export const WEBHOOK_EVENT_CATEGORIES = {
 	PAYMENT: ["payment_intent.succeeded", "payment_intent.payment_failed", "payment_intent.canceled"],
 	REFUND: ["charge.refunded", "refund.created", "refund.updated", "refund.failed"],
 	ASYNC_PAYMENT: ["checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed"],
-	DISPUTE: ["charge.dispute.created"],
-	INVOICE: ["invoice.finalized", "invoice.paid", "invoice.payment_failed"],
 } as const;

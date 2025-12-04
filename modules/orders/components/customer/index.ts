@@ -5,4 +5,3 @@ export { OrderItemsList } from "./order-items-list";
 export { OrderTracking } from "./order-tracking";
 export { OrderSummaryCard } from "./order-summary-card";
 export { OrderAddressesCard } from "./order-addresses-card";
-export { DownloadInvoiceButton } from "./download-invoice-button";

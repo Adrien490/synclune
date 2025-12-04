@@ -78,7 +78,7 @@ export async function CreativeProcess() {
 
 	return (
 		<section
-			className={`relative overflow-hidden bg-gradient-to-b from-amber-50/25 via-background to-background ${SECTION_SPACING.default}`}
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
 			aria-labelledby="creative-process-title"
 		>
 			<div className="absolute inset-0" aria-hidden="true">
