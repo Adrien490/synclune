@@ -54,7 +54,7 @@ export function FilterSheetWrapper({
 	isPending = false,
 	triggerClassName,
 	title = "Filtres",
-	description = "Affinez votre recherche",
+	description = "Affine ta recherche",
 	applyButtonText = "Appliquer",
 	cancelButtonText = "Annuler",
 	showCancelButton = true,

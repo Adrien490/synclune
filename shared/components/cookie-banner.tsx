@@ -63,7 +63,7 @@ export function CookieBanner() {
 
 						{/* Message */}
 						<p className="text-sm text-muted-foreground leading-relaxed">
-							Nous utilisons des cookies pour améliorer votre expérience.{" "}
+							Nous utilisons des cookies pour améliorer ton expérience.{" "}
 							<Link
 								href="/legal/cookies"
 								className="text-foreground underline hover:no-underline"
