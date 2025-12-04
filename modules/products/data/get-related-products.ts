@@ -2,6 +2,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { auth } from "@/modules/auth/lib/auth";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
+import { headers } from "next/headers";
 
 import {
 	RELATED_PRODUCTS_DEFAULT_LIMIT,
@@ -39,7 +40,7 @@ export async function getRelatedProducts(options?: {
 	}
 
 	const session = await auth.api.getSession({
-		headers: await import("next/headers").then((m) => m.headers()),
+		headers: await headers(),
 	});
 
 	const userId = session?.user?.id;
