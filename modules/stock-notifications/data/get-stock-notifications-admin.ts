@@ -90,7 +90,7 @@ const ADMIN_SELECT = {
 			},
 			size: true,
 			images: {
-				select: { url: true, isPrimary: true },
+				select: { url: true, blurDataUrl: true, isPrimary: true },
 				orderBy: { isPrimary: "desc" as const },
 				take: 1,
 			},

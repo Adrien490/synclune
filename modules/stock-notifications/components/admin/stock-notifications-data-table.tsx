@@ -114,7 +114,9 @@ function StockNotificationRow({
 	notification: StockNotificationAdmin;
 }) {
 	const { sku } = notification;
-	const imageUrl = sku.images[0]?.url;
+	const primaryImage = sku.images[0];
+	const imageUrl = primaryImage?.url;
+	const blurDataUrl = primaryImage?.blurDataUrl;
 
 	// Construire la description de la variante
 	const variantParts: string[] = [];
@@ -141,6 +143,8 @@ function StockNotificationRow({
 							sizes="40px"
 							quality={80}
 							className="rounded-md object-cover"
+							placeholder={blurDataUrl ? "blur" : "empty"}
+							blurDataURL={blurDataUrl ?? undefined}
 						/>
 					) : (
 						<div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
