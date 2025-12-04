@@ -3,155 +3,216 @@ import { FormLayout, FormSection } from "@/shared/components/tanstack-form";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
- * Loading skeleton pour la page de création de produit
- * Structure: Header + 4 Form Sections (Image, Info, Prix, Galerie)
+ * Skeleton wizard pour mobile
+ * Structure: Barre de progression dots + Une section + Footer navigation
  */
-export default function CreateProductLoading() {
+function MobileWizardSkeleton() {
 	return (
-		<div className="space-y-6">
-			{/* Page Header */}
-			<PageHeader title="Nouveau produit" variant="compact" />
-
-			{/* Form Sections - 2 columns on desktop */}
-			<FormLayout cols={2}>
-				{/* Section 1: Média Principal */}
-				<FormSection
-					title="Média principal"
-					description="Image principale de votre bijou (requise)"
-				>
-					<div className="space-y-4">
-						{/* Upload zone */}
-						<div className="border-2 border-dashed rounded-lg p-8 text-center">
-							<Skeleton className="h-48 w-full rounded-md" />
-							<div className="mt-4 space-y-2">
-								<Skeleton className="h-4 w-48 mx-auto" />
-								<Skeleton className="h-3 w-32 mx-auto" />
-							</div>
-						</div>
+		<div className="flex flex-col min-h-0">
+			{/* Barre de progression sticky */}
+			<div className="sticky top-0 z-10 -mx-4 px-4 py-3 border-b bg-background/95 backdrop-blur-sm">
+				<div className="flex items-center justify-between gap-4">
+					{/* 3 dots de progression */}
+					<div className="flex gap-2">
+						<Skeleton className="size-3 rounded-full" />
+						<Skeleton className="size-3 rounded-full" />
+						<Skeleton className="size-3 rounded-full" />
 					</div>
-				</FormSection>
+					{/* Label de l'étape */}
+					<Skeleton className="h-4 w-20" />
+				</div>
+			</div>
 
-				{/* Section 2: Informations Générales */}
+			{/* Contenu - première étape (Le bijou) */}
+			<div className="py-4 space-y-6">
+				{/* Titre */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-28" />
+					<Skeleton className="h-10 w-full" />
+				</div>
+
+				{/* Description */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-24" />
+					<Skeleton className="h-24 w-full" />
+					<Skeleton className="h-3 w-32 ml-auto" />
+				</div>
+
+				{/* Type de bijou */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-28" />
+					<Skeleton className="h-10 w-full" />
+				</div>
+
+				{/* Collections */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-24" />
+					<Skeleton className="h-10 w-full" />
+					<Skeleton className="h-3 w-56" />
+				</div>
+
+				{/* Couleur */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-20" />
+					<Skeleton className="h-10 w-full" />
+				</div>
+			</div>
+
+			{/* Footer navigation sticky */}
+			<div className="sticky bottom-16 z-10 -mx-4 px-4 py-3 border-t bg-background/95 backdrop-blur-sm mt-auto">
+				<div className="flex gap-3">
+					<Skeleton className="h-12 flex-1" />
+					<Skeleton className="h-12 flex-1" />
+				</div>
+			</div>
+		</div>
+	);
+}
+
+/**
+ * Skeleton desktop pour le formulaire complet
+ * Structure: Header + 2 sections en grille + Section visuels + Footer
+ */
+function DesktopFormSkeleton() {
+	return (
+		<div className="space-y-6 pb-32">
+			{/* Sections 1 & 2 en grille */}
+			<FormLayout cols={2}>
+				{/* Section 1: Le bijou */}
 				<FormSection
-					title="Informations générales"
-					description="Les détails de votre bijou"
+					title="Le bijou"
+					description="Informations et caractéristiques"
 				>
-					<div className="space-y-4">
-						{/* Title */}
+					<div className="space-y-6">
+						{/* Titre */}
 						<div className="space-y-2">
-							<Skeleton className="h-4 w-20" />
+							<Skeleton className="h-4 w-28" />
 							<Skeleton className="h-10 w-full" />
 						</div>
 
 						{/* Description */}
 						<div className="space-y-2">
 							<Skeleton className="h-4 w-24" />
-							<Skeleton className="h-32 w-full" />
-							<Skeleton className="h-3 w-24 ml-auto" />
+							<Skeleton className="h-24 w-full" />
+							<Skeleton className="h-3 w-32 ml-auto" />
 						</div>
 
-						{/* Product Type */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-28" />
-							<Skeleton className="h-10 w-full" />
-						</div>
-
-						{/* Collection */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-24" />
-							<Skeleton className="h-10 w-full" />
-						</div>
-
-						{/* Color */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-20" />
-							<div className="flex gap-2">
-								<Skeleton className="h-10 flex-1" />
-								<Skeleton className="h-10 w-10 rounded-full" />
+						{/* Type + Collections */}
+						<div className="grid grid-cols-2 gap-4">
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-28" />
+								<Skeleton className="h-10 w-full" />
+							</div>
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-24" />
+								<Skeleton className="h-10 w-full" />
 							</div>
 						</div>
 
-						{/* Material */}
+						{/* Couleur */}
 						<div className="space-y-2">
 							<Skeleton className="h-4 w-20" />
 							<Skeleton className="h-10 w-full" />
 						</div>
 
-						{/* Size */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-16" />
-							<Skeleton className="h-10 w-full" />
-						</div>
-
-						{/* Status */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-32" />
-							<div className="flex gap-4">
-								<Skeleton className="h-10 w-28" />
-								<Skeleton className="h-10 w-28" />
+						{/* Matériau + Taille */}
+						<div className="grid grid-cols-2 gap-4">
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-20" />
+								<Skeleton className="h-10 w-full" />
+							</div>
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-16" />
+								<Skeleton className="h-10 w-full" />
 							</div>
 						</div>
 					</div>
 				</FormSection>
 
-				{/* Section 3: Prix et Disponibilité */}
+				{/* Section 2: Prix et stock */}
 				<FormSection
-					title="Prix et disponibilité"
-					description="Tarification et stock de votre bijou"
+					title="Prix et stock"
+					description="Tarification et disponibilité"
 				>
-					<div className="space-y-4">
-						{/* Sale Price */}
+					<div className="space-y-6">
+						{/* Prix de vente */}
 						<div className="space-y-2">
 							<Skeleton className="h-4 w-32" />
 							<Skeleton className="h-10 w-full" />
 							<Skeleton className="h-3 w-40" />
 						</div>
 
-						{/* Compare-at Price */}
+						{/* Prix comparé */}
 						<div className="space-y-2">
-							<Skeleton className="h-4 w-36" />
+							<Skeleton className="h-4 w-44" />
 							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-3 w-48" />
+							<Skeleton className="h-3 w-64" />
 						</div>
 
-						{/* Inventory */}
+						{/* Stock */}
 						<div className="space-y-2">
-							<Skeleton className="h-4 w-24" />
+							<Skeleton className="h-4 w-32" />
 							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-3 w-44" />
-						</div>
-					</div>
-				</FormSection>
-
-				{/* Section 4: Galerie d'Images et Vidéos */}
-				<FormSection
-					title="Galerie d'images et vidéos"
-					description="Ajoutez jusqu'à 10 images ou vidéos supplémentaires"
-				>
-					<div className="space-y-4">
-						{/* Media counter badge */}
-						<div className="flex items-center justify-between">
-							<Skeleton className="h-6 w-32" />
-						</div>
-
-						{/* Upload zone */}
-						<div className="border-2 border-dashed rounded-lg p-8 text-center">
-							<Skeleton className="h-32 w-full rounded-md" />
-							<div className="mt-4 space-y-2">
-								<Skeleton className="h-4 w-56 mx-auto" />
-								<Skeleton className="h-3 w-32 mx-auto" />
-							</div>
+							<Skeleton className="h-3 w-52" />
 						</div>
 					</div>
 				</FormSection>
 			</FormLayout>
 
-			{/* Form Footer */}
-			<div className="mt-6">
-				<div className="flex justify-end">
-					<Skeleton className="h-10 w-32" />
+			{/* Section 3: Visuels */}
+			<FormSection
+				title="Visuels"
+				description="Images et vidéos du produit"
+			>
+				<div className="space-y-3">
+					{/* Header avec compteur */}
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<Skeleton className="h-4 w-16" />
+							<Skeleton className="h-3 w-72" />
+						</div>
+						<Skeleton className="h-6 w-12 rounded-full" />
+					</div>
+
+					{/* Zone d'upload */}
+					<div className="border-2 border-dashed rounded-lg p-6">
+						<div className="flex flex-col items-center gap-3">
+							<Skeleton className="h-12 w-12 rounded-full" />
+							<Skeleton className="h-5 w-36" />
+							<Skeleton className="h-3 w-48" />
+						</div>
+					</div>
 				</div>
+			</FormSection>
+
+			{/* Footer */}
+			<div className="flex justify-end gap-3">
+				<Skeleton className="h-10 w-48" />
+				<Skeleton className="h-10 w-36" />
 			</div>
 		</div>
+	);
+}
+
+/**
+ * Loading skeleton adaptatif pour la page de création de produit
+ * - Mobile: Wizard avec une étape à la fois
+ * - Desktop: Formulaire complet en grille
+ */
+export default function CreateProductLoading() {
+	return (
+		<>
+			<PageHeader title="Nouveau produit" variant="compact" />
+
+			{/* Mobile: Wizard skeleton */}
+			<div className="md:hidden">
+				<MobileWizardSkeleton />
+			</div>
+
+			{/* Desktop: Formulaire complet */}
+			<div className="hidden md:block">
+				<DesktopFormSkeleton />
+			</div>
+		</>
 	);
 }
