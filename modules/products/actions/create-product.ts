@@ -90,19 +90,12 @@ export async function createProduct(
 		};
 
 		// Extraire les donnees (approche simple comme collection)
-		// Parse media from form: primaryImage + galleryMedia → media array
-		const primaryImage = parseJSON(
-			formData.get("initialSku.primaryImage"),
-			null,
-			"initialSku.primaryImage"
-		);
-		const galleryMedia = parseJSON<unknown[]>(
-			formData.get("initialSku.galleryMedia"),
+		// Parse media from form: initialSku.media is sent as JSON array
+		const media = parseJSON<unknown[]>(
+			formData.get("initialSku.media"),
 			[],
-			"initialSku.galleryMedia"
+			"initialSku.media"
 		);
-		// Combine: primary first, then gallery
-		const media = primaryImage ? [primaryImage, ...galleryMedia] : galleryMedia;
 
 		const rawData = {
 			title: formData.get("title"),
