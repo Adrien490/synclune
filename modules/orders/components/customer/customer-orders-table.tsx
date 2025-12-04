@@ -117,7 +117,7 @@ export async function CustomerOrdersTable({
 							{orders.map((order) => (
 								<TableRow key={order.id}>
 									<TableCell>
-										<ViewTransition name={`order-${order.id}`}>
+										<ViewTransition name={`order-${order.id}`} default="vt-table-link">
 											<Link
 												href={`/commandes/${order.orderNumber}`}
 												className="font-mono text-sm font-medium text-primary hover:underline"

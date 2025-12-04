@@ -12,6 +12,8 @@ interface BreadcrumbItem {
 interface PageHeaderProps {
 	/** Titre principal de la page (h1) */
 	title: string;
+	/** Slot optionnel pour remplacer le h1 par défaut (ex: avec ViewTransition) */
+	titleSlot?: ReactNode;
 	/** Description optionnelle sous le titre */
 	description?: string;
 	/** Chemin de navigation (breadcrumbs) - Accueil est toujours inclus automatiquement */
@@ -85,6 +87,7 @@ interface PageHeaderProps {
  */
 export function PageHeader({
 	title,
+	titleSlot,
 	description,
 	breadcrumbs = [],
 	action,
@@ -105,13 +108,15 @@ export function PageHeader({
 			>
 				<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 					<div className="min-w-0 flex-1 space-y-3">
-						<h1
-							id="page-title"
-							className="text-3xl lg:text-4xl font-display font-semibold tracking-wide text-foreground break-words"
-							title={title}
-						>
-							{title}
-						</h1>
+						{titleSlot ?? (
+							<h1
+								id="page-title"
+								className="text-3xl lg:text-4xl font-display font-semibold tracking-wide text-foreground break-words"
+								title={title}
+							>
+								{title}
+							</h1>
+						)}
 						{description && (
 							<p className="text-base lg:text-lg font-sans text-muted-foreground leading-relaxed max-w-prose break-words line-clamp-2 md:line-clamp-none overflow-hidden">
 								{description}
@@ -250,12 +255,14 @@ export function PageHeader({
 							)}
 
 							{/* Titre */}
-							<h1
-								id="page-title"
-								className="text-2xl sm:text-3xl font-display font-semibold text-foreground tracking-normal break-words"
-							>
-								{title}
-							</h1>
+							{titleSlot ?? (
+								<h1
+									id="page-title"
+									className="text-2xl sm:text-3xl font-display font-semibold text-foreground tracking-normal break-words"
+								>
+									{title}
+								</h1>
+							)}
 
 							{/* Description optionnelle */}
 							{description && (

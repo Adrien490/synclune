@@ -1,3 +1,4 @@
+import { ViewTransition } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { PageHeader } from "@/shared/components/page-header";
 import {
@@ -49,6 +50,16 @@ export default async function OrderDetailPage({
 		<div className="min-h-screen">
 			<PageHeader
 				title={`Commande ${order.orderNumber}`}
+				titleSlot={
+					<ViewTransition name={`order-${order.id}`} default="vt-title">
+						<h1
+							id="page-title"
+							className="text-2xl sm:text-3xl font-display font-semibold text-foreground tracking-normal break-words"
+						>
+							Commande {order.orderNumber}
+						</h1>
+					</ViewTransition>
+				}
 				description="Détails et suivi de votre commande"
 				breadcrumbs={[
 					{ label: "Mon compte", href: "/compte" },

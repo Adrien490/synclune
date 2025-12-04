@@ -176,7 +176,7 @@ export async function InventoryDataTable({
 										{/* Produit - titre avec variante */}
 										<TableCell>
 											<div className="overflow-hidden">
-												<ViewTransition name={`admin-sku-${sku.id}`} default="vt-table-link">
+												<ViewTransition name={`admin-sku-name-${sku.id}`} default="vt-table-link">
 													<Link
 														href={`/admin/catalogue/produits/${sku.product.slug}/variantes`}
 														className="font-semibold text-foreground hover:underline truncate block"

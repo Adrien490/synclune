@@ -147,9 +147,9 @@ function StockNotificationRow({
 							<Bell className="h-4 w-4 text-muted-foreground" />
 						</div>
 					)}
-					<ViewTransition name={`admin-product-${sku.product.id}`} default="vt-table-link">
+					<ViewTransition name={`admin-product-title-${sku.product.slug}`} default="vt-table-link">
 						<Link
-							href={`/admin/catalogue/produits/${sku.product.id}`}
+							href={`/admin/catalogue/produits/${sku.product.slug}/modifier`}
 							className="font-medium hover:underline truncate max-w-[180px]"
 						>
 							{sku.product.title}

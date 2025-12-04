@@ -133,6 +133,28 @@ import Image from "next/image";
 </ViewTransition>
 ```
 
+### Titre dans PageHeader (avec titleSlot)
+
+```tsx
+import { ViewTransition } from "react";
+import { PageHeader } from "@/shared/components/page-header";
+
+<PageHeader
+  title={`Commande ${order.orderNumber}`}
+  titleSlot={
+    <ViewTransition name={`order-${order.id}`} default="vt-title">
+      <h1
+        id="page-title"
+        className="text-2xl sm:text-3xl font-display font-semibold text-foreground tracking-normal break-words"
+      >
+        Commande {order.orderNumber}
+      </h1>
+    </ViewTransition>
+  }
+  description="Détails de votre commande"
+/>
+```
+
 ---
 
 ## Props disponibles
@@ -173,6 +195,8 @@ Toutes les animations respectent `prefers-reduced-motion: reduce` :
 - `modules/products/components/product-card.tsx` - Image, Titre
 - `modules/products/components/product-info.tsx` - Titre
 - `modules/media/components/media-renderer.tsx` - Image (première uniquement)
+- `modules/orders/components/customer/customer-orders-table.tsx` - Lien commande
+- `app/(boutique)/(espace-client)/commandes/[orderNumber]/page.tsx` - Titre commande
 
 ### Admin
 
