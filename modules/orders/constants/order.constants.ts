@@ -62,7 +62,7 @@ export const GET_ORDER_SELECT = {
 	stripePaymentIntentId: true,
 	stripeChargeId: true,
 	stripeCustomerId: true,
-	stripeInvoiceId: true,
+	// TODO: Ajouter stripeInvoiceId au schéma Prisma quand la feature factures sera implémentée
 	customerEmail: true,
 	customerName: true,
 	customerPhone: true,

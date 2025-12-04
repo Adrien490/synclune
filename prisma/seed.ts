@@ -229,10 +229,10 @@ async function main(): Promise<void> {
 
     const shippingData = generateShippingAddress();
 
-    // Générer un numéro de facture pour les commandes payées
-    const invoiceNumber = paymentStatus === PaymentStatus.PAID
-      ? `FAC-2025-${(i + 1).toString().padStart(5, "0")}`
-      : null;
+    // TODO: Générer invoiceNumber quand la feature factures sera implémentée dans le schéma Prisma
+    // const invoiceNumber = paymentStatus === PaymentStatus.PAID
+    //   ? `FAC-2025-${(i + 1).toString().padStart(5, "0")}`
+    //   : null;
 
     await prisma.order.create({
       data: {
@@ -245,7 +245,7 @@ async function main(): Promise<void> {
         status,
         paymentStatus,
         fulfillmentStatus,
-        invoiceNumber,
+        // TODO: Ajouter invoiceNumber quand le champ sera ajouté au schéma
         ...shippingData,
         paidAt: paymentStatus === PaymentStatus.PAID ? orderDate : null,
         createdAt: orderDate,
