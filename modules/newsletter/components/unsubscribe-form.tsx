@@ -103,7 +103,7 @@ export function UnsubscribeForm({
 										<field.InputField
 											type="text"
 											label="Code de désinscription (optionnel)"
-											placeholder="Si vous avez reçu un code par email"
+											placeholder="Si tu as reçu un code par email"
 											disabled={isPending}
 										/>
 										<p className="text-xs text-muted-foreground">
@@ -135,9 +135,9 @@ export function UnsubscribeForm({
 			{/* Message de réassurance */}
 			{state?.status !== ActionStatus.SUCCESS && (
 				<div className="text-center text-sm text-muted-foreground space-y-2">
-					<p>Vous pouvez toujours vous réinscrire plus tard</p>
+					<p>Tu peux toujours te réinscrire plus tard</p>
 					<p>
-						Vous avez changé d'avis ?{" "}
+						Tu as changé d'avis ?{" "}
 						<Link href="/#newsletter" className="text-primary underline">
 							Rester abonné(e)
 						</Link>

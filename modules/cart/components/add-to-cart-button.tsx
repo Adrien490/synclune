@@ -190,7 +190,7 @@ export function AddToCartButton({
 						<span>
 							{hasOnlyOneSku
 								? "Produit non disponible"
-								: validationErrors[0] || "Sélectionnez vos options"}
+								: validationErrors[0] || "Sélectionne tes options"}
 						</span>
 					) : (
 						<div className="flex items-center gap-2">

@@ -60,20 +60,20 @@ export function ClearWishlistAlertDialog() {
 				<form action={action}>
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							Vider votre wishlist ?
+							Vider ta wishlist ?
 						</AlertDialogTitle>
 						<AlertDialogDescription>
-							Vous voulez vraiment retirer{" "}
+							Tu veux vraiment retirer{" "}
 							<span className="font-medium text-foreground">
 								{itemCount === 1
 									? "l'article"
 									: `les ${itemCount} articles`}
 							</span>{" "}
-							de votre wishlist ?
+							de ta wishlist ?
 							<br />
 							<br />
 							<span className="text-muted-foreground text-sm">
-								Bon, pas de panique ! Vous pourrez toujours retrouver ces bijoux dans la boutique 💕
+								Bon, pas de panique ! Tu pourras toujours retrouver ces bijoux dans la boutique 💕
 							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>

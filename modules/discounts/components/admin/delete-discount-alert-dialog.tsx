@@ -66,7 +66,7 @@ export function DeleteDiscountAlertDialog() {
 										supprimé.
 									</span>
 									<br />
-									Vous pouvez le désactiver à la place pour empêcher son
+									Tu peux le désactiver à la place pour empêcher son
 									utilisation.
 									<br />
 									<br />

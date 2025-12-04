@@ -31,8 +31,8 @@ export function OrdersList({ ordersPromise }: OrdersListProps) {
 					</EmptyMedia>
 					<EmptyTitle>Aucune commande pour le moment</EmptyTitle>
 					<EmptyDescription>
-						Vous n'avez pas encore passé de commande. Découvrez nos créations
-						uniques et laissez-vous tenter par nos bijoux faits main avec amour.
+						Tu n'as pas encore passé de commande. Découvre nos créations
+						uniques et laisse-toi tenter par nos bijoux faits main avec amour.
 					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>

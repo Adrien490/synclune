@@ -82,7 +82,7 @@ export function CartItemRow({ item }: CartItemRowProps) {
 									src={primaryImage.url}
 									type={getVideoMimeType(primaryImage.url)}
 								/>
-								Votre navigateur ne supporte pas la lecture de vidéos.
+								Ton navigateur ne supporte pas la lecture de vidéos.
 							</video>
 						) : (
 							<Image
@@ -189,7 +189,7 @@ export function CartItemRow({ item }: CartItemRowProps) {
 							)}
 							{isOutOfStock && (
 								<>
-									<p>Stock insuffisant pour votre quantité</p>
+									<p>Stock insuffisant pour ta quantité</p>
 									{item.sku.inventory > 0 && (
 										<CartItemAdjustButton
 											cartItemId={item.id}

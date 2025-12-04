@@ -38,12 +38,12 @@ export async function WishlistList({
 					<EmptyMedia variant="icon">
 						<Heart className="size-6" />
 					</EmptyMedia>
-					<EmptyTitle>Votre wishlist est vide</EmptyTitle>
+					<EmptyTitle>Ta wishlist est vide</EmptyTitle>
 				</EmptyHeader>
 				<EmptyContent>
 					<p className="text-muted-foreground max-w-md mb-6">
-						Découvrez nos créations artisanales et ajoutez vos coups de cœur à
-						votre wishlist pour les retrouver facilement.
+						Découvre nos créations artisanales et ajoute tes coups de cœur à
+						ta wishlist pour les retrouver facilement.
 					</p>
 					<div className="flex flex-col sm:flex-row gap-3">
 						<Button asChild variant="primary" size="lg">

@@ -53,7 +53,7 @@ export function DeleteProductTypeAlertDialog() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Supprimer ce type de bijou ?</AlertDialogTitle>
 						<AlertDialogDescription>
-							Voulez-vous vraiment supprimer le type{" "}
+							Veux-tu vraiment supprimer le type{" "}
 							<strong>&quot;{deleteDialog.data?.label}&quot;</strong> ?
 							<br />
 							<br />

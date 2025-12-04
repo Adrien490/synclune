@@ -36,8 +36,8 @@ export function CartBadge({ count }: CartBadgeProps) {
 			{/* Annonce aria-live pour les lecteurs d'écran */}
 			<div aria-live="polite" aria-atomic="true" className="sr-only">
 				{count === 1
-					? "1 article dans votre panier"
-					: `${count} articles dans votre panier`}
+					? "1 article dans ton panier"
+					: `${count} articles dans ton panier`}
 			</div>
 
 			<div className="absolute -top-1 -right-1">

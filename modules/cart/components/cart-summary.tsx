@@ -129,7 +129,7 @@ export function CartSummary({ cart }: CartSummaryProps) {
 							))}
 						</ul>
 						<p className="mt-2 text-xs/5 tracking-normal antialiased text-destructive/80">
-							Ajustez votre panier pour continuer votre commande 💕
+							Ajuste ton panier pour continuer ta commande 💕
 						</p>
 						{/* Bouton pour retirer automatiquement les articles indisponibles */}
 						<div className="mt-3">

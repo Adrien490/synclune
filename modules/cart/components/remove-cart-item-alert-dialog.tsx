@@ -60,24 +60,24 @@ export function RemoveCartItemAlertDialog() {
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							Retirer ce bijou de votre panier ?
+							Retirer ce bijou de ton panier ?
 						</AlertDialogTitle>
 						<AlertDialogDescription>
 							{removeDialog.data?.itemName ? (
 								<>
-									Vous voulez vraiment retirer{" "}
+									Tu veux vraiment retirer{" "}
 									<span className="font-medium text-foreground">
 										{removeDialog.data.itemName}
 									</span>{" "}
-									de votre panier ?
+									de ton panier ?
 								</>
 							) : (
-								"Vous voulez vraiment retirer ce bijou de votre panier ?"
+								"Tu veux vraiment retirer ce bijou de ton panier ?"
 							)}
 							<br />
 							<br />
 							<span className="text-muted-foreground text-sm">
-								Vous pourrez toujours le retrouver dans la boutique si vous changez d'avis !
+								Tu pourras toujours le retrouver dans la boutique si tu changes d'avis !
 							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>

@@ -37,7 +37,7 @@ export function NeverSoldProductsList({
 						Produits jamais vendus
 					</CardTitle>
 					<CardDescription>
-						Tous vos produits ont ete vendus au moins une fois
+						Tous tes produits ont été vendus au moins une fois
 					</CardDescription>
 				</CardHeader>
 			</Card>

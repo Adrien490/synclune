@@ -58,7 +58,7 @@ export function CancelRefundAlertDialog() {
 									<strong>{dialog.data?.orderNumber}</strong> ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
-									La demande sera supprimée. Vous pourrez en créer une nouvelle si
+									La demande sera supprimée. Tu pourras en créer une nouvelle si
 									nécessaire.
 								</p>
 							</div>

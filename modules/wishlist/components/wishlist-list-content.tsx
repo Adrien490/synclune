@@ -35,7 +35,7 @@ export function WishlistListContent({
 			{/* Header avec count et bouton vider */}
 			<div className="flex justify-between items-center">
 				<p className="text-sm text-muted-foreground">
-					{totalCount} création{totalCount > 1 ? 's' : ''} dans votre wishlist
+					{totalCount} création{totalCount > 1 ? 's' : ''} dans ta wishlist
 				</p>
 				<ClearWishlistButton itemCount={totalCount} />
 			</div>

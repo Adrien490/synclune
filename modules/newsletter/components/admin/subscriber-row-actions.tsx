@@ -123,7 +123,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					<AlertDialogHeader>
 						<AlertDialogTitle>Désabonner</AlertDialogTitle>
 						<AlertDialogDescription>
-							Etes-vous sur de vouloir désabonner{" "}
+							Es-tu sûr(e) de vouloir désabonner{" "}
 							<span className="font-semibold">{subscriber.email}</span> ?
 							<br /><br />
 							L'abonné ne recevra plus d'emails de la newsletter.
@@ -160,7 +160,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					<AlertDialogHeader>
 						<AlertDialogTitle>Réabonner</AlertDialogTitle>
 						<AlertDialogDescription>
-							Etes-vous sur de vouloir réabonner{" "}
+							Es-tu sûr(e) de vouloir réabonner{" "}
 							<span className="font-semibold">{subscriber.email}</span> ?
 							<br /><br />
 							L'abonné recevra à nouveau les emails de la newsletter.
@@ -197,7 +197,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					<AlertDialogHeader>
 						<AlertDialogTitle>Supprimer définitivement</AlertDialogTitle>
 						<AlertDialogDescription>
-							Etes-vous sur de vouloir supprimer définitivement{" "}
+							Es-tu sûr(e) de vouloir supprimer définitivement{" "}
 							<span className="font-semibold">{subscriber.email}</span> ?
 							<br /><br />
 							<span className="text-destructive font-medium">

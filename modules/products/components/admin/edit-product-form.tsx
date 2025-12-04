@@ -716,7 +716,7 @@ export function EditProductForm({
 														return (
 															<div className="text-center space-y-1">
 																<p className="text-sm font-medium">
-																	Glissez vos médias ici
+																	Glisse tes médias ici
 																</p>
 																<p className="text-xs text-muted-foreground">
 																	{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 4MB (image) / 512MB (vidéo)

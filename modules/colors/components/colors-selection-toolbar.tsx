@@ -82,7 +82,7 @@ export function ColorsSelectionToolbar({}: ColorsSelectionToolbarProps) {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Supprimer les couleurs</AlertDialogTitle>
 							<AlertDialogDescription>
-								Êtes-vous sûr de vouloir supprimer{" "}
+								Es-tu sûr(e) de vouloir supprimer{" "}
 								<span className="font-semibold">
 									{selectedItems.length} couleur
 									{selectedItems.length > 1 ? "s" : ""}

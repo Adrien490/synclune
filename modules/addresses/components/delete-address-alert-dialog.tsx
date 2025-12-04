@@ -53,15 +53,15 @@ export function DeleteAddressAlertDialog() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Supprimer cette adresse ?</AlertDialogTitle>
 						<AlertDialogDescription>
-							Vous voulez vraiment supprimer l&apos;adresse{" "}
+							Tu veux vraiment supprimer l'adresse{" "}
 							<strong>&quot;{deleteDialog.data?.addressLabel}&quot;</strong> ?
 							<br />
 							<br />
 							{deleteDialog.data?.isDefault && (
 								<>
 									<span className="text-orange-600 dark:text-orange-400 font-medium">
-										C&apos;est votre adresse par défaut. Si vous en avez
-										d&apos;autres, une nouvelle sera automatiquement
+										C'est ton adresse par défaut. Si tu en as
+										d'autres, une nouvelle sera automatiquement
 										sélectionnée par défaut.
 									</span>
 									<br />
@@ -69,7 +69,7 @@ export function DeleteAddressAlertDialog() {
 								</>
 							)}
 							<span className="text-muted-foreground text-sm">
-								Vous ne pourrez pas annuler cette action.
+								Tu ne pourras pas annuler cette action.
 							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>

@@ -183,7 +183,7 @@ export function MediaGallery({
 												}}
 												aria-label={media.altText || `Aperçu vidéo ${index + 1}`}
 											>
-												Votre navigateur ne supporte pas la lecture de vidéos.
+												Ton navigateur ne supporte pas la lecture de vidéos.
 											</video>
 										)}
 										<div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 motion-safe:transition-opacity">

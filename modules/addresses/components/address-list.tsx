@@ -20,7 +20,7 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 						Adresses enregistrées
 					</h2>
 					<p className="text-sm text-muted-foreground mt-1">
-						Gérez vos adresses de livraison
+						Gère tes adresses de livraison
 					</p>
 				</div>
 				{addresses && addresses.length > 0 && (

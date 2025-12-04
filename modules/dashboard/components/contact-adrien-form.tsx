@@ -122,7 +122,7 @@ export function ContactAdrienForm({
 							<div className="space-y-1">
 								<field.TextareaField
 									label="Message"
-									placeholder="Décrivez votre demande en détail..."
+									placeholder="Décris ta demande en détail..."
 									disabled={isPending || isSuccess}
 									rows={6}
 									className={cn(

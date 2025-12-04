@@ -17,7 +17,7 @@ export function CartItemsList({ cartPromise }: CartItemsListProps) {
 	return (
 		<div className="space-y-4">
 			{/* Heading h2 pour lecteurs d'écran (améliore accessibilité WCAG AAA) */}
-			<h2 className="sr-only">Articles dans votre panier</h2>
+			<h2 className="sr-only">Articles dans ton panier</h2>
 
 			<AnimatePresence mode="popLayout">
 				{cart.items.map((item) => (

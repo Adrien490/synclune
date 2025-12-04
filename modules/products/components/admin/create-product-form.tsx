@@ -18,6 +18,7 @@ import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
 import { TextShimmer } from "@/shared/components/ui/text-shimmer";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { MultiSelect } from "@/shared/components/multi-select";
 import { useCreateProductForm } from "@/modules/products/hooks/use-create-product-form";
 import { cn } from "@/shared/utils/cn";
@@ -27,6 +28,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 const PRODUCT_STEPS: WizardStep[] = [
+	{
+		id: "visuels",
+		label: "Visuels",
+		description: "Images et vidéos du produit",
+		icon: <ImageIcon className="size-4" />,
+		fields: ["initialSku.media"],
+	},
 	{
 		id: "bijou",
 		label: "Le bijou",
@@ -52,13 +60,6 @@ const PRODUCT_STEPS: WizardStep[] = [
 			"initialSku.compareAtPriceEuros",
 			"initialSku.inventory",
 		],
-	},
-	{
-		id: "visuels",
-		label: "Visuels",
-		description: "Images et vidéos du produit",
-		icon: <ImageIcon className="size-4" />,
-		fields: ["initialSku.media"],
 	},
 ];
 
@@ -128,7 +129,7 @@ function CreateProductFormContent({
 	// Render the step sections
 	const renderStepContent = (stepIndex: number) => {
 		switch (stepIndex) {
-			case 0:
+			case 1:
 				return (
 					<FormSection
 						title="Le bijou"
@@ -225,6 +226,31 @@ function CreateProductFormContent({
 								</form.AppField>
 							</div>
 
+							{/* Section attributs de la variante initiale */}
+							<div className="space-y-1 pt-4 border-t border-border/50">
+								<div className="flex items-center gap-2">
+									<h4 className="text-sm font-medium text-foreground/80">
+										Attributs de la variante
+									</h4>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<button type="button" className="inline-flex">
+												<Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+											</button>
+										</TooltipTrigger>
+										<TooltipContent side="right" className="max-w-[250px]">
+											<p>
+												Ces attributs concernent la première variante du produit.
+												Tu pourras ajouter d'autres variantes après la création.
+											</p>
+										</TooltipContent>
+									</Tooltip>
+								</div>
+								<p className="text-xs text-muted-foreground">
+									Caractéristiques de la première variante
+								</p>
+							</div>
+
 							<form.AppField name="initialSku.colorId">
 								{(field) => (
 									<div className="space-y-2">
@@ -303,7 +329,7 @@ function CreateProductFormContent({
 					</FormSection>
 				);
 
-			case 1:
+			case 2:
 				return (
 					<FormSection
 						title="Prix et stock"
@@ -363,7 +389,7 @@ function CreateProductFormContent({
 								{(field) => (
 									<div className="space-y-2">
 										<FieldLabel optional>
-											Prix comparé (avant réduction)
+											Ancien prix (affiché barré)
 										</FieldLabel>
 										<field.InputGroupField type="number" step="0.01">
 											<InputGroupAddon>
@@ -371,8 +397,8 @@ function CreateProductFormContent({
 											</InputGroupAddon>
 										</field.InputGroupField>
 										<p className="text-xs text-muted-foreground">
-											Si renseigné, le prix de vente sera affiché comme une
-											promotion
+											Sera affiché barré à côté du prix actuel (ex:{" "}
+											<span className="line-through">45€</span> → 39€)
 										</p>
 									</div>
 								)}
@@ -400,7 +426,7 @@ function CreateProductFormContent({
 					</FormSection>
 				);
 
-			case 2:
+			case 0:
 				return (
 					<FormSection
 						title="Visuels"
@@ -412,9 +438,7 @@ function CreateProductFormContent({
 							name="initialSku.media"
 							mode="array"
 							validators={{
-								onBlur: ({ value }) =>
-									value.length === 0 ? "Au moins une image est requise" : undefined,
-								onSubmit: ({ value }) =>
+								onChange: ({ value }) =>
 									value.length === 0 ? "Au moins une image est requise" : undefined,
 							}}
 						>
@@ -757,43 +781,48 @@ function CreateProductFormContent({
 					isValidating={wizard.isValidating}
 					getStepErrors={wizard.getStepErrors}
 					renderLastStepFooter={() => (
-						<div className="flex items-center gap-3">
+						<div className="space-y-2">
+							{/* Ligne 1: Navigation */}
 							<Button
 								type="button"
-								variant="outline"
+								variant="ghost"
+								size="sm"
 								onClick={wizard.goPrevious}
 								disabled={isPending || isUploading}
-								className="flex-1 h-12"
+								className="w-full text-muted-foreground"
 							>
-								Précédent
+								← Étape précédente
 							</Button>
-							<form.Subscribe selector={(state) => [state.canSubmit]}>
-								{([canSubmit]) => (
-									<>
-										<Button
-											type="submit"
-											variant="secondary"
-											disabled={!canSubmit || isPending || isUploading}
-											onClick={() => form.setFieldValue("status", "DRAFT")}
-											className="flex-1 h-12"
-										>
-											{isPending && form.state.values.status === "DRAFT"
-												? "..."
-												: "Brouillon"}
-										</Button>
-										<Button
-											type="submit"
-											disabled={!canSubmit || isPending || isUploading}
-											onClick={() => form.setFieldValue("status", "PUBLIC")}
-											className="flex-1 h-12"
-										>
-											{isPending && form.state.values.status === "PUBLIC"
-												? "..."
-												: "Publier"}
-										</Button>
-									</>
-								)}
-							</form.Subscribe>
+							{/* Ligne 2: Actions */}
+							<div className="flex items-center gap-3">
+								<form.Subscribe selector={(state) => [state.canSubmit]}>
+									{([canSubmit]) => (
+										<>
+											<Button
+												type="submit"
+												variant="secondary"
+												disabled={!canSubmit || isPending || isUploading}
+												onClick={() => form.setFieldValue("status", "DRAFT")}
+												className="flex-1 h-12"
+											>
+												{isPending && form.state.values.status === "DRAFT"
+													? "..."
+													: "Brouillon"}
+											</Button>
+											<Button
+												type="submit"
+												disabled={!canSubmit || isPending || isUploading}
+												onClick={() => form.setFieldValue("status", "PUBLIC")}
+												className="flex-1 h-12"
+											>
+												{isPending && form.state.values.status === "PUBLIC"
+													? "..."
+													: "Publier"}
+											</Button>
+										</>
+									)}
+								</form.Subscribe>
+							</div>
 						</div>
 					)}
 				>
@@ -846,12 +875,12 @@ function CreateProductFormContent({
 					<form.FormErrorDisplay />
 				</form.AppForm>
 
-				<FormLayout cols={2}>
-					{renderStepContent(0)}
-					{renderStepContent(1)}
-				</FormLayout>
+				{renderStepContent(0)}
 
-				{renderStepContent(2)}
+				<FormLayout cols={2}>
+					{renderStepContent(1)}
+					{renderStepContent(2)}
+				</FormLayout>
 
 				{renderFooter()}
 			</div>

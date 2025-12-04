@@ -1,13 +1,12 @@
 "use client"
 
 import { useMemo } from "react"
-import { toast } from "sonner"
 import { useWizardContext } from "../components/wizard-context"
 import { useWizardNavigation } from "./use-wizard-navigation"
 import { useWizardValidation } from "./use-wizard-validation"
 import { useWizardAccessibility } from "./use-wizard-accessibility"
 import { useWizardPersistence } from "./use-wizard-persistence"
-import { WIZARD_MESSAGES, mergeMessages } from "../constants"
+import { mergeMessages } from "../constants"
 import type { FormLike, WizardStep, WizardDirection, WizardMessages } from "../types"
 
 export interface UseFormWizardOptions {
@@ -21,8 +20,6 @@ export interface UseFormWizardOptions {
 	messages?: WizardMessages
 	/** Active la persistence de l'étape (sessionStorage) */
 	persist?: boolean | string
-	/** Callback pour les erreurs de validation (par défaut: toast.error) */
-	onValidationError?: (message: string) => void
 }
 
 export interface UseFormWizardReturn {
@@ -73,7 +70,6 @@ export function useFormWizard({
 	onStepChange,
 	messages,
 	persist = false,
-	onValidationError,
 }: UseFormWizardOptions): UseFormWizardReturn {
 	const {
 		currentStep,
@@ -118,8 +114,7 @@ export function useFormWizard({
 
 	// Callback de validation échouée
 	const onValidationFailed = () => {
-		const errorHandler = onValidationError ?? ((msg: string) => toast.error(msg))
-		errorHandler(mergedMessages.validation.errorsBeforeContinue)
+		// Scroll vers la première erreur (pas de toast, l'erreur est déjà visible dans l'UI)
 		accessibility.scrollToFirstError()
 	}
 

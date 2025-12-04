@@ -168,7 +168,7 @@ export function ProductVariantSelectionActions() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Supprimer les variantes</AlertDialogTitle>
 						<AlertDialogDescription>
-							Etes-vous sur de vouloir supprimer{" "}
+							Es-tu sûr(e) de vouloir supprimer{" "}
 							<span className="font-semibold">
 								{selectedItems.length} variante
 								{selectedItems.length > 1 ? "s" : ""}

@@ -221,7 +221,7 @@ export function ProductFilterSheet({
 						<div>
 							<SheetTitle className="text-lg font-semibold">Filtres</SheetTitle>
 							<SheetDescription className="text-sm text-muted-foreground">
-								Affinez votre recherche
+								Affine ta recherche
 							</SheetDescription>
 						</div>
 						{hasActiveFilters && (

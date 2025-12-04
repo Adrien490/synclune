@@ -90,8 +90,8 @@ export function ConfirmSubscriptionForm({
 				{!defaultToken && !isPending && (
 					<div className="text-center space-y-4">
 						<p className="text-sm text-muted-foreground">
-							Le lien de confirmation est manquant. Veuillez vérifier l'email
-							que vous avez reçu ou vous réinscrire.
+							Le lien de confirmation est manquant. Vérifie l'email
+							que tu as reçu ou réinscris-toi.
 						</p>
 						<Button asChild variant="outline">
 							<Link href="/#newsletter">Me réinscrire</Link>

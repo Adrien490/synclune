@@ -49,7 +49,7 @@ export function DeleteColorAlertDialog() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
 						<AlertDialogDescription>
-							Êtes-vous sûr de vouloir supprimer la couleur{" "}
+							Es-tu sûr(e) de vouloir supprimer la couleur{" "}
 							<strong>&quot;{deleteDialog.data?.colorName}&quot;</strong> ?
 							<br />
 							<br />

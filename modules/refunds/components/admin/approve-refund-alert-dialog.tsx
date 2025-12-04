@@ -57,7 +57,7 @@ export function ApproveRefundAlertDialog() {
 									pour la commande <strong>{dialog.data?.orderNumber}</strong> ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
-									Après approbation, vous pourrez procéder au remboursement effectif
+									Après approbation, tu pourras procéder au remboursement effectif
 									via Stripe.
 								</p>
 							</div>

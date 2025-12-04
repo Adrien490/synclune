@@ -58,7 +58,7 @@ export function BulkDeleteDiscountsAlertDialog() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
 						<AlertDialogDescription>
-							Êtes-vous sûr de vouloir supprimer{" "}
+							Es-tu sûr(e) de vouloir supprimer{" "}
 							<strong>
 								{count} code{count > 1 ? "s" : ""} promo
 							</strong>{" "}

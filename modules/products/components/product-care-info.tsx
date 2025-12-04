@@ -27,16 +27,16 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold">
 					<div className="flex items-center gap-2">
 						<Droplets className="w-4 h-4 text-primary" aria-hidden="true" />
-						<span>Entretien de votre bijou</span>
+						<span>Entretien de ton bijou</span>
 					</div>
 				</AccordionTrigger>
 				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">
 					<p>
-						J'ai passé des heures à créer votre bijou (parfois avec quelques galères), alors voici mes conseils pour qu'il dure longtemps :
+						J'ai passé des heures à créer ton bijou (parfois avec quelques galères), alors voici mes conseils pour qu'il dure longtemps :
 					</p>
 					<ul className="space-y-2 list-disc list-inside">
-						<li>Évitez l'eau, les parfums et les produits cosmétiques (ça n'aime pas trop)</li>
-						<li>Rangez-le dans son petit écrin après chaque utilisation</li>
+						<li>Évite l'eau, les parfums et les produits cosmétiques (ça n'aime pas trop)</li>
+						<li>Range-le dans son petit écrin après chaque utilisation</li>
 						<li>Un petit coup de chiffon doux de temps en temps, et c'est nickel</li>
 						{primaryMaterial?.toLowerCase().includes("argent") && (
 							<li>Pour l'argent : un chiffon anti-oxydation, c'est la base</li>
@@ -46,7 +46,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 						)}
 					</ul>
 					<p className="text-xs italic">
-						Votre bijou a été créé avec passion, prenez-en soin et il vous le rendra !{" "}
+						Ton bijou a été créé avec passion, prends-en soin et il te le rendra !{" "}
 						<span aria-hidden="true">✨</span>
 					</p>
 				</AccordionContent>
@@ -83,7 +83,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 							<Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
 							<div>
 								<p className="font-medium text-foreground">Les frais de port</p>
-								<p>Calculés au moment du paiement selon votre destination (France et Union européenne)</p>
+								<p>Calculés au moment du paiement selon ta destination (France et Union européenne)</p>
 							</div>
 						</div>
 					</div>

@@ -63,10 +63,10 @@ export function VariantSelector({ product }: VariantSelectorProps) {
 					<span className="text-primary" aria-hidden="true">
 						✨
 					</span>
-					Personnalisez votre bijou
+					Personnalise ton bijou
 				</CardTitle>
 				<CardDescription className="text-sm/6 tracking-normal antialiased">
-					Chaque détail compte pour créer VOTRE pièce unique
+					Chaque détail compte pour créer TA pièce unique
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-6">

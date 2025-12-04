@@ -211,7 +211,7 @@ export function ExportInvoicesButton() {
 					<ResponsiveDialogHeader>
 						<ResponsiveDialogTitle>Export personnalisé du livre de recettes</ResponsiveDialogTitle>
 						<ResponsiveDialogDescription>
-							Configurez les filtres pour générer votre export comptable au
+							Configure les filtres pour générer ton export comptable au
 							format CSV.
 						</ResponsiveDialogDescription>
 					</ResponsiveDialogHeader>

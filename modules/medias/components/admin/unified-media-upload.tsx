@@ -166,7 +166,7 @@ function SortableMediaItem({
 								}}
 								aria-label={media.altText || `Aperçu vidéo ${index + 1}`}
 							>
-								Votre navigateur ne supporte pas la lecture de vidéos.
+								Ton navigateur ne supporte pas la lecture de vidéos.
 							</video>
 						)}
 						<div

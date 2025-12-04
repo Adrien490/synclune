@@ -130,7 +130,7 @@ export function SendNewsletterEmailForm() {
 							<div className="space-y-1">
 								<field.TextareaField
 									label="Contenu de l'email"
-									placeholder="Écrivez le contenu de votre newsletter..."
+									placeholder="Écris le contenu de ta newsletter..."
 									disabled={isPending || state?.status === ActionStatus.SUCCESS}
 									rows={10}
 									required

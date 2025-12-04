@@ -84,7 +84,7 @@ export function ProductPrice({ selectedSku, product }: ProductPriceProps) {
 					</div>
 					{priceInfo.hasMultiplePrices && (
 						<p className="text-xs text-muted-foreground" role="status">
-							Sélectionnez vos options pour voir le prix exact
+							Sélectionne tes options pour voir le prix exact
 						</p>
 					)}
 				</CardContent>

@@ -31,11 +31,11 @@ export function LogoutAlertDialog({ children }: LogoutAlertDialogProps) {
 				<AlertDialogHeader>
 					<AlertDialogTitle>Se déconnecter ?</AlertDialogTitle>
 					<AlertDialogDescription>
-						Voulez-vous vraiment vous déconnecter de votre compte ?
+						Veux-tu vraiment te déconnecter de ton compte ?
 						<br />
 						<br />
 						<span className="text-muted-foreground text-sm">
-							Vous pourrez vous reconnecter à tout moment.
+							Tu pourras te reconnecter à tout moment.
 						</span>
 					</AlertDialogDescription>
 				</AlertDialogHeader>

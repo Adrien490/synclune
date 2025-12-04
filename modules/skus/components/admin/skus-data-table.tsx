@@ -198,7 +198,7 @@ export async function ProductVariantsDataTable({
 															aria-label={primaryImage.altText || `Vidéo variante ${sku.sku}`}
 														>
 															<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
-															Votre navigateur ne supporte pas la lecture de vidéos.
+															Ton navigateur ne supporte pas la lecture de vidéos.
 														</video>
 													) : (
 														<Image

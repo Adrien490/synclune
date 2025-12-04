@@ -335,7 +335,7 @@ export function EditProductVariantForm({
 														onChange={async (files) => {
 															if (files.length > 1) {
 																toast.error(
-																	"Vous ne pouvez uploader qu'une seule image principale"
+																	"Tu ne peux uploader qu'une seule image principale"
 																);
 																return;
 															}
@@ -492,10 +492,10 @@ export function EditProductVariantForm({
 																return (
 																	<div className="text-center space-y-2">
 																		<p className="text-lg font-semibold">
-																			Glissez votre image principale ici
+																			Glisse ton image principale ici
 																		</p>
 																		<p className="text-sm text-muted-foreground">
-																			ou cliquez pour sélectionner
+																			ou clique pour sélectionner
 																		</p>
 																		<p className="text-xs text-muted-foreground mt-2">
 																			Image • Max 4MB

@@ -58,7 +58,7 @@ export function BulkDeleteCollectionsAlertDialog() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
 						<AlertDialogDescription>
-							Êtes-vous sûr de vouloir supprimer{" "}
+							Es-tu sûr(e) de vouloir supprimer{" "}
 							<strong>
 								{count} collection{count > 1 ? "s" : ""}
 							</strong>{" "}

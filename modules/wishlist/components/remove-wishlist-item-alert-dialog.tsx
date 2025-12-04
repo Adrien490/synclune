@@ -43,8 +43,8 @@ export function RemoveWishlistItemAlertDialog() {
 			removeDialog.close();
 
 			// Toast de confirmation empathique
-			toast.success("Article retiré de votre wishlist", {
-				description: "Vous pourrez toujours le retrouver dans nos créations.",
+			toast.success("Article retiré de ta wishlist", {
+				description: "Tu pourras toujours le retrouver dans nos créations.",
 			});
 		},
 	});
@@ -76,24 +76,24 @@ export function RemoveWishlistItemAlertDialog() {
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							Retirer ce bijou de votre wishlist ?
+							Retirer ce bijou de ta wishlist ?
 						</AlertDialogTitle>
 						<AlertDialogDescription>
 							{removeDialog.data?.itemName ? (
 								<>
-									Vous voulez vraiment retirer{" "}
+									Tu veux vraiment retirer{" "}
 									<span className="font-medium text-foreground">
 										{removeDialog.data.itemName}
 									</span>{" "}
-									de votre wishlist ?
+									de ta wishlist ?
 								</>
 							) : (
-								"Vous voulez vraiment retirer ce bijou de votre wishlist ?"
+								"Tu veux vraiment retirer ce bijou de ta wishlist ?"
 							)}
 							<br />
 							<br />
 							<span className="text-muted-foreground text-sm">
-								Vous pourrez toujours le retrouver dans la boutique 💕
+								Tu pourras toujours le retrouver dans la boutique 💕
 							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
