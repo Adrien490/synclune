@@ -1,5 +1,6 @@
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getColors } from "@/modules/colors/data/get-colors";
+import { getMaterials } from "@/modules/materials/data/get-materials";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { notFound } from "next/navigation";
@@ -33,8 +34,8 @@ export default async function EditProductPage({
 		notFound();
 	}
 
-	// Récupérer les types de produits, collections et couleurs pour les selects
-	const [productTypesData, collectionsData, colorsData] = await Promise.all([
+	// Récupérer les types de produits, collections, couleurs et matériaux pour les selects
+	const [productTypesData, collectionsData, colorsData, materialsData] = await Promise.all([
 		getProductTypes({
 			perPage: 100,
 			sortBy: "label-ascending",
@@ -48,6 +49,10 @@ export default async function EditProductPage({
 			sortBy: "name-ascending",
 			direction: "forward",
 			filters: {},
+		}),
+		getMaterials({
+			perPage: 100,
+			sortBy: "name-ascending",
 		}),
 	]);
 
@@ -75,6 +80,7 @@ export default async function EditProductPage({
 				productTypes={productTypesData.productTypes}
 				collections={collectionsData.collections}
 				colors={colorsData.colors}
+				materials={materialsData.materials}
 			/>
 
 			<DeleteGalleryMediaAlertDialog />

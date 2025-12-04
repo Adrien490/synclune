@@ -8,6 +8,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { randomUUID } from "crypto";
 import { subscriberIdSchema } from "../../schemas/subscriber.schemas";
+import { NEWSLETTER_BASE_URL } from "../../constants/urls";
 
 /**
  * Server Action ADMIN pour renvoyer l'email de confirmation newsletter
@@ -59,8 +60,7 @@ export async function resendConfirmationAdmin(subscriberId: string): Promise<Act
 		});
 
 		// 5. Envoyer l'email de confirmation
-		const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
-		const confirmationUrl = `${baseUrl}/newsletter/confirm?token=${confirmationToken}`;
+		const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
 
 		await sendNewsletterConfirmationEmail({
 			to: subscriber.email,

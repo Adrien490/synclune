@@ -5,7 +5,8 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
+import { getNewsletterInvalidationTags } from "../../constants/cache";
 
 import { bulkUnsubscribeSubscribersSchema } from "../../schemas/subscriber.schemas";
 
@@ -42,7 +43,7 @@ export async function bulkUnsubscribeSubscribers(
 		if (idsRaw.length > MAX_JSON_LENGTH) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: `Trop d'IDs dans la requête (max ${MAX_BULK_IDS})`,
+				message: `Données trop volumineuses (max ${MAX_JSON_LENGTH} caractères)`,
 			};
 		}
 
@@ -72,13 +73,15 @@ export async function bulkUnsubscribeSubscribers(
 			};
 		}
 
-		// Désabonner en masse avec une seule query (optimisation)
-		const updateResult = await prisma.newsletterSubscriber.updateMany({
-			where: {
-				id: { in: result.data.ids },
-				status: { not: NewsletterStatus.UNSUBSCRIBED },
-			},
-			data: { status: NewsletterStatus.UNSUBSCRIBED, unsubscribedAt: new Date() },
+		// Désabonner en masse avec transaction pour atomicité
+		const updateResult = await prisma.$transaction(async (tx) => {
+			return tx.newsletterSubscriber.updateMany({
+				where: {
+					id: { in: result.data.ids },
+					status: { not: NewsletterStatus.UNSUBSCRIBED },
+				},
+				data: { status: NewsletterStatus.UNSUBSCRIBED, unsubscribedAt: new Date() },
+			});
 		});
 
 		if (updateResult.count === 0) {
@@ -88,7 +91,8 @@ export async function bulkUnsubscribeSubscribers(
 			};
 		}
 
-		revalidatePath("/admin/marketing/newsletter");
+		// Invalider le cache
+		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		// Audit log
 		console.log(

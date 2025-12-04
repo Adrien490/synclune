@@ -21,7 +21,6 @@ export {
 	DASHBOARD_TOP_PRODUCTS_LIMIT,
 	DASHBOARD_STOCK_ALERTS_LIMIT,
 	DASHBOARD_LOW_STOCK_THRESHOLD,
-	DASHBOARD_CACHE_SETTINGS,
 } from "./dashboard.constants";
 
 export { EMPTY_STATES } from "./empty-states";

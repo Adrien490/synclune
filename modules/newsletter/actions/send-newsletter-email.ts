@@ -4,6 +4,7 @@ import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { sendNewsletterEmail as sendEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
+import { sanitizeForEmail, newlinesToBr } from "@/shared/lib/sanitize";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { sendNewsletterEmailSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 import { NEWSLETTER_BASE_URL } from "@/modules/newsletter/constants/urls";
@@ -35,6 +36,10 @@ export async function sendNewsletterEmail(
 
 		const { subject: validatedSubject, content: validatedContent } =
 			result.data;
+
+		// Sanitizer le contenu pour éviter XSS et injection de caractères de contrôle
+		const sanitizedSubject = sanitizeForEmail(validatedSubject);
+		const sanitizedContent = newlinesToBr(sanitizeForEmail(validatedContent));
 
 		// Compter d'abord le nombre total d'abonnés confirmés
 		const totalCount = await prisma.newsletterSubscriber.count({
@@ -82,13 +87,28 @@ export async function sendNewsletterEmail(
 
 					return sendEmail({
 						to: subscriber.email,
-						subject: validatedSubject,
-						content: validatedContent,
+						subject: sanitizedSubject,
+						content: sanitizedContent,
 						unsubscribeUrl,
 					});
 				});
 
 				const results = await Promise.allSettled(sendPromises);
+
+				// Logger les erreurs pour chaque envoi échoué
+				results.forEach((r, index) => {
+					if (r.status === "rejected") {
+						console.error(
+							`[SEND_NEWSLETTER] Échec envoi à ${chunk[index].email}:`,
+							r.reason
+						);
+					} else if (!r.value.success) {
+						console.error(
+							`[SEND_NEWSLETTER] Échec Resend pour ${chunk[index].email}:`,
+							r.value.error
+						);
+					}
+				});
 
 				successCount += results.filter(
 					(r) => r.status === "fulfilled" && r.value.success

@@ -1,4 +1,5 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { CartAbandonmentReturn } from "../types/dashboard.types";
@@ -57,13 +58,30 @@ async function fetchAbandonmentData(startDate: Date, endDate: Date) {
 }
 
 // ============================================================================
-// MAIN FUNCTION
+// MAIN FUNCTIONS
 // ============================================================================
 
 /**
- * Calcule le taux d'abandon de panier pour une periode donnee
+ * Action serveur pour recuperer le taux d'abandon de panier
  */
-export async function fetchCartAbandonment(
+export async function getCartAbandonment(
+	period: DashboardPeriod,
+	customStartDate?: Date,
+	customEndDate?: Date
+): Promise<CartAbandonmentReturn> {
+	const admin = await isAdmin();
+
+	if (!admin) {
+		throw new Error("Admin access required");
+	}
+
+	return await fetchCartAbandonment(period, customStartDate, customEndDate);
+}
+
+/**
+ * Calcule le taux d'abandon de panier pour une periode donnee (avec cache)
+ */
+async function fetchCartAbandonment(
 	period: DashboardPeriod,
 	customStartDate?: Date,
 	customEndDate?: Date

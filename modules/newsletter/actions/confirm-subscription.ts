@@ -9,6 +9,7 @@ import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
+import { confirmationTokenSchema } from "../schemas/newsletter.schemas";
 
 export async function confirmSubscription(
 	_previousState: ActionState | undefined,
@@ -53,27 +54,19 @@ export async function confirmSubscription(
 
 		const token = formData.get("token");
 
-		// Validation type du token
-		if (!token || typeof token !== "string") {
+		// Validation du token avec Zod
+		const validation = confirmationTokenSchema.safeParse({ token });
+		if (!validation.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: "Token de confirmation manquant",
+				message: validation.error.issues[0]?.message || "Token invalide",
 			};
 		}
-
-		// Validation format UUID du token (randomUUID génère des UUIDs v4)
-		const uuidRegex =
-			/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-		if (!uuidRegex.test(token)) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Token de confirmation invalide",
-			};
-		}
+		const validatedToken = validation.data.token;
 
 		// Trouver l'abonné avec ce token
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
-			where: { confirmationToken: token },
+			where: { confirmationToken: validatedToken },
 		});
 
 		if (!subscriber) {

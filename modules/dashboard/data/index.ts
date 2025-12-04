@@ -6,7 +6,7 @@
  */
 
 // Cart & Checkout
-export { fetchCartAbandonment } from "./get-cart-abandonment";
+export { getCartAbandonment } from "./get-cart-abandonment";
 
 // Changelogs
 export { getChangelogs } from "./get-changelogs";
@@ -63,7 +63,7 @@ export { fetchSalesKpis } from "./get-sales-kpis";
 export { getStockAlerts, fetchDashboardStockAlerts } from "./get-stock-alerts";
 
 // Stock By Attribute
-export { fetchStockByColor, fetchStockByMaterial } from "./get-stock-by-attribute";
+export { getStockByColor, getStockByMaterial } from "./get-stock-by-attribute";
 
 // Stock Value
 export { fetchStockValue } from "./get-stock-value";

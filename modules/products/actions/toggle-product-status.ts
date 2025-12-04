@@ -47,7 +47,8 @@ export async function toggleProductStatus(
 
 		const { productId, currentStatus, targetStatus } = result.data;
 
-		// 4. Verifier que le produit existe (recuperer le slug pour invalidation cache)
+		// 4. Verifier que le produit existe et recuperer toutes les donnees necessaires
+		// (requete unique pour eviter N+1)
 		const existingProduct = await prisma.product.findUnique({
 			where: { id: productId },
 			select: {
@@ -55,6 +56,18 @@ export async function toggleProductStatus(
 				title: true,
 				slug: true,
 				status: true,
+				description: true,
+				skus: {
+					where: { isActive: true },
+					select: {
+						id: true,
+						inventory: true,
+						images: {
+							where: { isPrimary: true },
+							select: { id: true },
+						},
+					},
+				},
 			},
 		});
 
@@ -86,35 +99,8 @@ export async function toggleProductStatus(
 
 		// 5.5. Validation metier : Un produit PUBLIC doit avoir au moins 1 SKU actif avec stock
 		if (newStatus === "PUBLIC") {
-			// Verifier les champs essentiels du produit
-			const productDetails = await prisma.product.findUnique({
-				where: { id: productId },
-				select: {
-					title: true,
-					description: true,
-					skus: {
-						where: { isActive: true },
-						select: {
-							id: true,
-							inventory: true,
-							images: {
-								where: { isPrimary: true },
-								select: { id: true },
-							},
-						},
-					},
-				},
-			});
-
-			if (!productDetails) {
-				return {
-					status: ActionStatus.NOT_FOUND,
-					message: "Le produit n'existe pas.",
-				};
-			}
-
 			// Validation: titre requis
-			if (!productDetails.title || productDetails.title.trim().length === 0) {
+			if (!existingProduct.title || existingProduct.title.trim().length === 0) {
 				return {
 					status: ActionStatus.VALIDATION_ERROR,
 					message:
@@ -123,7 +109,7 @@ export async function toggleProductStatus(
 			}
 
 			// Validation: au moins 1 SKU actif
-			if (productDetails.skus.length === 0) {
+			if (existingProduct.skus.length === 0) {
 				return {
 					status: ActionStatus.VALIDATION_ERROR,
 					message:
@@ -132,7 +118,7 @@ export async function toggleProductStatus(
 			}
 
 			// Validation: au moins 1 SKU actif avec stock
-			const hasStock = productDetails.skus.some(sku => sku.inventory > 0);
+			const hasStock = existingProduct.skus.some(sku => sku.inventory > 0);
 			if (!hasStock) {
 				return {
 					status: ActionStatus.VALIDATION_ERROR,
@@ -142,7 +128,7 @@ export async function toggleProductStatus(
 			}
 
 			// Validation: au moins 1 SKU actif avec image principale
-			const hasImage = productDetails.skus.some(sku => sku.images.length > 0);
+			const hasImage = existingProduct.skus.some(sku => sku.images.length > 0);
 			if (!hasImage) {
 				return {
 					status: ActionStatus.VALIDATION_ERROR,

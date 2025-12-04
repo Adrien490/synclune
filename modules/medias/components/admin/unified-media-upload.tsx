@@ -448,7 +448,7 @@ export function UnifiedMediaUpload({
 
 						{/* Zone d'upload */}
 						{canAddMore && renderUploadZone && (
-							<div className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 motion-safe:transition-colors overflow-hidden">
+							<div className="aspect-square rounded-lg overflow-hidden">
 								{renderUploadZone()}
 							</div>
 						)}

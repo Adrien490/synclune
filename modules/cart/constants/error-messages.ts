@@ -5,8 +5,9 @@
 
 export const CART_ERROR_MESSAGES = {
 	// Erreurs liées au stock
-	INSUFFICIENT_STOCK: (available: number) =>
-		`Désolé, il ne reste que ${available} exemplaire${available > 1 ? "s" : ""} disponible${available > 1 ? "s" : ""}`,
+	// Note: On ne divulgue pas le stock exact pour eviter les fuites d'information business
+	INSUFFICIENT_STOCK: (_available: number) =>
+		"Stock insuffisant pour cette quantite",
 	OUT_OF_STOCK: "Cet article n'est plus en stock",
 	STOCK_CHANGED: "Le stock a changé depuis votre dernière visite",
 
@@ -21,8 +22,8 @@ export const CART_ERROR_MESSAGES = {
 	INVALID_QUANTITY: "La quantité doit être comprise entre 1 et 99",
 	QUANTITY_MIN: "La quantité minimale est de 1",
 	QUANTITY_MAX: "Quantité maximale : 99 par article. Pour une commande en gros, contactez-nous.",
-	QUANTITY_EXCEEDS_STOCK: (available: number) =>
-		`Quantité demandée supérieure au stock disponible (${available} disponible${available > 1 ? "s" : ""})`,
+	QUANTITY_EXCEEDS_STOCK: (_available: number) =>
+		"Quantite demandee superieure au stock disponible",
 
 	// Erreurs de panier
 	CART_EXPIRED: "Votre panier a expiré. Veuillez ajouter vos articles à nouveau",

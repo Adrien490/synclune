@@ -5,8 +5,9 @@ import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
 import { subscriberIdSchema } from "../../schemas/subscriber.schemas";
+import { getNewsletterInvalidationTags } from "../../constants/cache";
 
 /**
  * Server Action ADMIN pour réabonner un abonné newsletter désactivé
@@ -62,8 +63,8 @@ export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<
 			},
 		});
 
-		// 5. Revalider
-		revalidatePath("/admin/marketing/newsletter");
+		// 5. Invalider le cache
+		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

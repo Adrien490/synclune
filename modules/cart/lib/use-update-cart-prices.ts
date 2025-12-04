@@ -14,6 +14,9 @@ export function useUpdateCartPrices() {
 		withCallbacks(
 			updateCartPrices,
 			createToastCallbacks({
+				loadingMessage: "Mise a jour des prix...",
+				showSuccessToast: true,
+				showErrorToast: true,
 			})
 		),
 		undefined

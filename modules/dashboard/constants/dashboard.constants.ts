@@ -83,24 +83,3 @@ export const DASHBOARD_STOCK_ALERTS_LIMIT = 10;
  */
 export { LOW_STOCK_THRESHOLD as DASHBOARD_LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
 
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const DASHBOARD_CACHE_SETTINGS = {
-	kpis: {
-		stale: 120,
-		revalidate: 60,
-		expire: 300,
-	},
-	revenueChart: {
-		stale: 120,
-		revalidate: 60,
-		expire: 300,
-	},
-	recentOrders: {
-		stale: 60,
-		revalidate: 30,
-		expire: 180,
-	},
-} as const;

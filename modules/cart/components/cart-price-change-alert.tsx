@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { Button } from "@/shared/components/ui/button";
@@ -19,23 +20,25 @@ interface CartPriceChangeAlertProps {
  */
 export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 	const { action, isPending } = useUpdateCartPrices();
-	const itemsWithPriceChange = items.filter(
-		(item) => item.priceAtAdd !== item.sku.priceInclTax
-	);
+
+	// Memoize les calculs couteux pour eviter re-calcul a chaque render
+	const { itemsWithPriceChange, itemsWithPriceDecrease, totalSavings } = useMemo(() => {
+		const changed = items.filter(
+			(item) => item.priceAtAdd !== item.sku.priceInclTax
+		);
+		const decreased = changed.filter(
+			(item) => item.sku.priceInclTax < item.priceAtAdd
+		);
+		const savings = decreased.reduce(
+			(sum, item) => sum + (item.priceAtAdd - item.sku.priceInclTax) * item.quantity,
+			0
+		);
+		return { itemsWithPriceChange: changed, itemsWithPriceDecrease: decreased, totalSavings: savings };
+	}, [items]);
 
 	if (itemsWithPriceChange.length === 0) {
 		return null;
 	}
-
-	// Calculer si certains prix ont baissé (opportunité d'économie)
-	const itemsWithPriceDecrease = itemsWithPriceChange.filter(
-		(item) => item.sku.priceInclTax < item.priceAtAdd
-	);
-
-	const totalSavings = itemsWithPriceDecrease.reduce(
-		(sum, item) => sum + (item.priceAtAdd - item.sku.priceInclTax) * item.quantity,
-		0
-	);
 
 	const handleUpdatePrices = () => {
 		action(new FormData());
@@ -47,7 +50,10 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 			role="alert"
 			aria-live="polite"
 		>
-			<p className="font-medium mb-1">💎 Prix mis à jour</p>
+			<p className="font-medium mb-1">
+				<span aria-hidden="true">💎</span>
+				<span className="sr-only">Information :</span> Prix mis à jour
+			</p>
 			<ul className="list-disc list-inside space-y-0.5 text-blue-600/90 dark:text-blue-400/90">
 				{itemsWithPriceChange.map((item) => {
 					const priceIncrease = item.sku.priceInclTax > item.priceAtAdd;
@@ -60,7 +66,11 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 							>
 								{formatEuro(item.sku.priceInclTax)}
 							</span>
-							{priceIncrease ? " 📈" : " 📉"}
+							{priceIncrease ? (
+								<span aria-label="prix en hausse"> 📈</span>
+							) : (
+								<span aria-label="prix en baisse"> 📉</span>
+							)}
 						</li>
 					);
 				})}
@@ -92,7 +102,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 						)}
 					</Button>
 					<p className="text-xs text-green-600 dark:text-green-400 font-medium text-center sm:text-left">
-						💚 Économisez {formatEuro(totalSavings)} en actualisant !
+						<span aria-hidden="true">💚</span> Économisez {formatEuro(totalSavings)} en actualisant !
 					</p>
 				</div>
 			)}

@@ -18,7 +18,10 @@ export const dashboardDateRangeSchema = z.object({
 // DASHBOARD PERIOD SCHEMA
 // ============================================================================
 
-export const dashboardPeriodSchema = z.enum([
+/**
+ * Toutes les périodes disponibles pour le dashboard
+ */
+export const DASHBOARD_PERIODS = [
 	"today",
 	"yesterday",
 	"last7days",
@@ -28,7 +31,9 @@ export const dashboardPeriodSchema = z.enum([
 	"thisYear",
 	"lastYear",
 	"custom",
-]).default("last30days");
+] as const;
+
+export const dashboardPeriodSchema = z.enum(DASHBOARD_PERIODS).default("last30days");
 
 // ============================================================================
 // DASHBOARD FILTERS SCHEMA (avec validation période custom)

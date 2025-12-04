@@ -4,7 +4,8 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
+import { getNewsletterInvalidationTags } from "../../constants/cache";
 
 import { bulkDeleteSubscribersSchema } from "../../schemas/subscriber.schemas";
 
@@ -41,7 +42,7 @@ export async function bulkDeleteSubscribers(
 		if (idsRaw.length > MAX_JSON_LENGTH) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: `Trop d'IDs dans la requête (max ${MAX_BULK_IDS})`,
+				message: `Données trop volumineuses (max ${MAX_JSON_LENGTH} caractères)`,
 			};
 		}
 
@@ -71,12 +72,15 @@ export async function bulkDeleteSubscribers(
 			};
 		}
 
-		// Supprimer en masse
-		const deleteResult = await prisma.newsletterSubscriber.deleteMany({
-			where: { id: { in: result.data.ids } },
+		// Supprimer en masse avec transaction pour atomicité
+		const deleteResult = await prisma.$transaction(async (tx) => {
+			return tx.newsletterSubscriber.deleteMany({
+				where: { id: { in: result.data.ids } },
+			});
 		});
 
-		revalidatePath("/admin/marketing/newsletter");
+		// Invalider le cache
+		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		// Audit log
 		console.log(

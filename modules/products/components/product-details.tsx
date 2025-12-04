@@ -1,7 +1,7 @@
 "use client";
 
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
-import { ProductPrice } from "./product-price-card";
+import { ProductPriceDisplay } from "./product-price-display";
 import { ProductCharacteristics } from "./product-characteristics";
 import { AddToCartButton } from "@/modules/cart/components/add-to-cart-button";
 import { ProductCareInfo } from "./product-care-info";
@@ -34,7 +34,7 @@ export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 	return (
 		<>
 			{/* Prix du SKU sélectionné */}
-			<ProductPrice selectedSku={currentSku} product={product} />
+			<ProductPriceDisplay selectedSku={currentSku} product={product} />
 
 			{/* Caractéristiques principales */}
 			<ProductCharacteristics product={product} selectedSku={currentSku} />

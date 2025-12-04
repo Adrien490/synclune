@@ -35,6 +35,10 @@ interface EditProductFormProps {
 		name: string;
 		hex: string;
 	}>;
+	materials: Array<{
+		id: string;
+		name: string;
+	}>;
 }
 
 export function EditProductForm({
@@ -42,6 +46,7 @@ export function EditProductForm({
 	productTypes,
 	collections,
 	colors,
+	materials,
 }: EditProductFormProps) {
 	const router = useRouter();
 
@@ -334,7 +339,15 @@ export function EditProductForm({
 								{(field) => (
 									<div className="space-y-2">
 										<FieldLabel optional>Matériau</FieldLabel>
-										<field.InputGroupField placeholder="ID du matériau..." />
+										<field.SelectField
+											label=""
+											options={materials.map((m) => ({
+												value: m.id,
+												label: m.name,
+											}))}
+											placeholder="Sélectionner un matériau"
+											clearable
+										/>
 									</div>
 								)}
 							</form.AppField>

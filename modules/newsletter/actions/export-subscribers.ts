@@ -1,10 +1,9 @@
 "use server";
 
 import { NewsletterStatus } from "@/app/generated/prisma/client";
-import { auth } from "@/modules/auth/lib/auth";
+import { requireAdmin } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
-import { headers } from "next/headers";
 import { exportSubscribersSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 
 /**
@@ -21,21 +20,8 @@ export async function exportSubscribers(
 ): Promise<ActionState> {
 	try {
 		// Vérification admin
-		const session = await auth.api.getSession({ headers: await headers() });
-
-		if (!session?.user) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Vous devez être connecté pour effectuer cette action",
-			};
-		}
-
-		if (session.user.role !== "ADMIN") {
-			return {
-				status: ActionStatus.FORBIDDEN,
-				message: "Vous n'avez pas les permissions pour effectuer cette action",
-			};
-		}
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
 
 		// Validation avec Zod
 		const statusParam = formData.get("status") || "all";
@@ -86,7 +72,7 @@ export async function exportSubscribers(
 
 		// Audit log de l'export
 		console.log(
-			`[EXPORT_AUDIT] Admin ${session.user.id} exported ${subscribers.length} subscribers (status: ${status})`
+			`[EXPORT_AUDIT] Admin exported ${subscribers.length} subscribers (status: ${status})`
 		);
 
 		// Générer CSV avec BOM UTF-8 (pour Excel)

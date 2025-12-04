@@ -395,9 +395,11 @@ export async function batchValidateSkusForMerge(
 			id: true,
 			inventory: true,
 			isActive: true,
+			deletedAt: true,
 			product: {
 				select: {
 					status: true,
+					deletedAt: true,
 				},
 			},
 		},
@@ -407,7 +409,10 @@ export async function batchValidateSkusForMerge(
 
 	for (const sku of skus) {
 		const requestedQty = quantityMap.get(sku.id) || 0;
+		// Verifier aussi les soft-deletes pour eviter d'ajouter des produits supprimes
 		const isValid =
+			!sku.deletedAt &&
+			!sku.product.deletedAt &&
 			sku.isActive &&
 			sku.product.status === "PUBLIC" &&
 			sku.inventory >= requestedQty;

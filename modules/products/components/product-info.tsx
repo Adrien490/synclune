@@ -83,7 +83,7 @@ export function ProductInfo({
 					itemProp="description"
 				>
 					{product.description.split("\n").map((line, i) => (
-						<p key={i}>{line || "\u00A0"}</p>
+						<p key={`desc-line-${i}`}>{line || "\u00A0"}</p>
 					))}
 				</div>
 			)}

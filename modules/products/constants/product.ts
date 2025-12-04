@@ -3,7 +3,8 @@
  * Centralisation pour éviter les hardcoded strings et faciliter l'i18n future
  */
 
-import { LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
+import { STOCK_THRESHOLDS as SKU_STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
+
 
 export const PRODUCT_TEXTS = {
 	// Descriptions par défaut
@@ -150,10 +151,10 @@ export type ProductTypeRequiringSize =
 
 /**
  * Seuils de stock pour les badges
- * @deprecated Utiliser LOW_STOCK_THRESHOLD depuis @/modules/skus/constants/inventory.constants
+ * @deprecated Utiliser STOCK_THRESHOLDS depuis @/modules/skus/constants/inventory.constants
  */
 export const STOCK_THRESHOLDS = {
-	LOW_STOCK: LOW_STOCK_THRESHOLD,
+	LOW_STOCK: SKU_STOCK_THRESHOLDS.LOW,
 	VERY_LOW_STOCK: 2,
 	OUT_OF_STOCK: 0,
 } as const;

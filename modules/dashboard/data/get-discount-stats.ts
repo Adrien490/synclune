@@ -2,6 +2,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { DiscountStatsReturn } from "../types/dashboard.types";
+import { calculateEvolutionRate } from "../utils/calculations";
 import {
 	resolvePeriodToDates,
 	type DashboardPeriod,
@@ -64,26 +65,20 @@ export async function fetchDiscountStats(
 	});
 
 	// Calcul des evolutions
-	const revenueEvolution =
-		previousStats.revenueWithDiscount > 0
-			? ((currentStats.revenueWithDiscount - previousStats.revenueWithDiscount) /
-					previousStats.revenueWithDiscount) *
-				100
-			: 0;
+	const revenueEvolution = calculateEvolutionRate(
+		currentStats.revenueWithDiscount,
+		previousStats.revenueWithDiscount
+	);
 
-	const discountEvolution =
-		previousStats.totalDiscountAmount > 0
-			? ((currentStats.totalDiscountAmount - previousStats.totalDiscountAmount) /
-					previousStats.totalDiscountAmount) *
-				100
-			: 0;
+	const discountEvolution = calculateEvolutionRate(
+		currentStats.totalDiscountAmount,
+		previousStats.totalDiscountAmount
+	);
 
-	const ordersEvolution =
-		previousStats.ordersCount > 0
-			? ((currentStats.ordersCount - previousStats.ordersCount) /
-					previousStats.ordersCount) *
-				100
-			: 0;
+	const ordersEvolution = calculateEvolutionRate(
+		currentStats.ordersCount,
+		previousStats.ordersCount
+	);
 
 	return {
 		revenueWithDiscount: {

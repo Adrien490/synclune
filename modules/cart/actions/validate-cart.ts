@@ -2,8 +2,11 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
-import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
+import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
+import { getSession } from "@/modules/auth/lib/get-current-session";
+import { getCartSessionId } from "@/modules/cart/lib/cart-session";
+import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 
 export interface CartValidationIssue {
 	cartItemId: string;
@@ -38,11 +41,16 @@ export interface ValidateCartResult {
  */
 export async function validateCart(cartId: string): Promise<ValidateCartResult> {
 	try {
-		// 0. Rate limiting (protection anti-spam) - 100 requêtes par heure par IP
+		// 0a. Recuperer les identifiants de session/utilisateur
+		const session = await getSession();
+		const userId = session?.user?.id;
+		const sessionId = await getCartSessionId();
+
+		// 0b. Rate limiting uniforme avec les autres actions cart
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
-		const rateLimitId = `validate-cart:${ipAddress}`;
-		const rateLimit = checkRateLimit(rateLimitId, { limit: 100, windowMs: 60 * 60 * 1000 });
+		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
+		const rateLimit = checkRateLimit(`validate-cart:${rateLimitId}`, CART_LIMITS.VALIDATE);
 
 		if (!rateLimit.success) {
 			return {
@@ -51,9 +59,16 @@ export async function validateCart(cartId: string): Promise<ValidateCartResult> 
 			};
 		}
 
-		// 1. Récupérer le panier avec tous ses items et relations (select optimisé)
+		// 1. Recuperer le panier avec verification d'ownership
 		const cart = await prisma.cart.findUnique({
-			where: { id: cartId },
+			where: {
+				id: cartId,
+				// Verification ownership: le panier doit appartenir a l'utilisateur ou a la session
+				OR: [
+					...(userId ? [{ userId }] : []),
+					...(sessionId ? [{ sessionId }] : []),
+				],
+			},
 			select: {
 				id: true,
 				items: {

@@ -44,17 +44,21 @@ async function executeWithToast(
 export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 	const [isPending, startTransition] = useTransition();
 
+	// Extraire les callbacks en variables stables pour éviter les re-renders
+	const onSuccess = options?.onSuccess;
+	const onError = options?.onError;
+
 	const unsubscribe = useCallback(
 		(subscriberId: string) => {
 			startTransition(() =>
 				executeWithToast(
 					() => unsubscribeSubscriberAdmin(subscriberId),
 					"Erreur lors du désabonnement",
-					options
+					{ onSuccess, onError }
 				)
 			);
 		},
-		[options]
+		[onSuccess, onError]
 	);
 
 	const resubscribe = useCallback(
@@ -63,11 +67,11 @@ export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 				executeWithToast(
 					() => resubscribeSubscriberAdmin(subscriberId),
 					"Erreur lors du réabonnement",
-					options
+					{ onSuccess, onError }
 				)
 			);
 		},
-		[options]
+		[onSuccess, onError]
 	);
 
 	const resendConfirmation = useCallback(
@@ -76,11 +80,11 @@ export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 				executeWithToast(
 					() => resendConfirmationAdmin(subscriberId),
 					"Erreur lors de l'envoi",
-					options
+					{ onSuccess, onError }
 				)
 			);
 		},
-		[options]
+		[onSuccess, onError]
 	);
 
 	const deleteSubscriber = useCallback(
@@ -89,11 +93,11 @@ export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 				executeWithToast(
 					() => deleteSubscriberAdmin(subscriberId),
 					"Erreur lors de la suppression",
-					options
+					{ onSuccess, onError }
 				)
 			);
 		},
-		[options]
+		[onSuccess, onError]
 	);
 
 	return {

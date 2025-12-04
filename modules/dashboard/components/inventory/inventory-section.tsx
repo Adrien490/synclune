@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { fetchInventoryKpis } from "../../data/get-inventory-kpis";
 import { fetchNeverSoldProducts } from "../../data/get-never-sold";
-import { fetchStockByColor, fetchStockByMaterial } from "../../data/get-stock-by-attribute";
+import { getStockByColor, getStockByMaterial } from "../../data/get-stock-by-attribute";
 import { InventoryKpis } from "./inventory-kpis";
 import { NeverSoldProductsList } from "./never-sold-products-list";
 import { StockByColorChart } from "./stock-by-color-chart";
@@ -17,8 +17,8 @@ export async function InventorySection() {
 	// Creer les promises pour les donnees
 	const inventoryKpisPromise = fetchInventoryKpis();
 	const neverSoldPromise = fetchNeverSoldProducts(10);
-	const stockByColorPromise = fetchStockByColor();
-	const stockByMaterialPromise = fetchStockByMaterial();
+	const stockByColorPromise = getStockByColor();
+	const stockByMaterialPromise = getStockByMaterial();
 
 	return (
 		<div className="space-y-6">

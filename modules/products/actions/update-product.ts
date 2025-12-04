@@ -14,16 +14,36 @@ import { getProductInvalidationTags } from "../constants/cache";
 /**
  * Sanitise une chaîne en supprimant les balises HTML potentiellement dangereuses
  * Protection contre XSS pour les champs texte utilisateur
+ *
+ * IMPORTANT: Cette fonction supprime les balises HTML mais préserve le texte.
+ * Les entités HTML sont d'abord décodées AVANT la suppression des balises,
+ * puis le résultat est ré-encodé pour garantir la sécurité.
  */
 function sanitizeText(text: string): string {
-	return text
-		.replace(/<[^>]*>/g, "") // Supprime toutes les balises HTML
-		.replace(/&lt;/g, "<")   // Decode les entités échappées
+	// 1. D'abord décoder les entités HTML pour capturer les tentatives d'évasion
+	//    Ex: "&lt;script&gt;" devient "<script>"
+	const decoded = text
+		.replace(/&lt;/g, "<")
 		.replace(/&gt;/g, ">")
 		.replace(/&amp;/g, "&")
 		.replace(/&quot;/g, '"')
 		.replace(/&#x27;/g, "'")
 		.replace(/&#x2F;/g, "/")
+		.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)))
+		.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+			String.fromCharCode(parseInt(hex, 16))
+		);
+
+	// 2. Supprimer toutes les balises HTML (maintenant visibles après décodage)
+	const stripped = decoded.replace(/<[^>]*>/g, "");
+
+	// 3. Ré-encoder les caractères dangereux pour le stockage sécurisé
+	return stripped
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#x27;")
 		.trim();
 }
 
@@ -343,9 +363,9 @@ export async function updateProduct(
 			try {
 				const utapi = new UTApi();
 				await utapi.deleteFiles(deletedImageUrls);
-			} catch (error) {
-				// Log error but don't fail the request - DB update was successful
-// console.error("[UPDATE_PRODUCT] Failed to delete files from UploadThing:", error);
+			} catch {
+				// Silently ignore UploadThing deletion failures
+				// DB update already succeeded, orphaned files are acceptable
 			}
 		}
 

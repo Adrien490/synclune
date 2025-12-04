@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { DashboardPeriod } from "../../utils/period-resolver";
 import { fetchSalesKpis } from "../../data/get-sales-kpis";
-import { fetchCartAbandonment } from "../../data/get-cart-abandonment";
+import { getCartAbandonment } from "../../data/get-cart-abandonment";
 import { fetchRevenueByCollection } from "../../data/get-revenue-by-collection";
 import { fetchRevenueByType } from "../../data/get-revenue-by-type";
 import { fetchDiscountStats } from "../../data/get-discount-stats";
@@ -34,7 +34,7 @@ export async function SalesSection({
 
 	// Creer les promises pour les donnees
 	const salesKpisPromise = fetchSalesKpis(period, customStartDate, customEndDate);
-	const abandonmentPromise = fetchCartAbandonment(period, customStartDate, customEndDate);
+	const abandonmentPromise = getCartAbandonment(period, customStartDate, customEndDate);
 	const revenueByCollectionPromise = fetchRevenueByCollection(period, customStartDate, customEndDate);
 	const revenueByTypePromise = fetchRevenueByType(period, customStartDate, customEndDate);
 	const discountStatsPromise = fetchDiscountStats(period, customStartDate, customEndDate);

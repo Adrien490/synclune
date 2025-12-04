@@ -71,6 +71,28 @@ export const CART_REMOVE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1), // par minute
 };
 
+/**
+ * Limite pour la validation du panier (pre-checkout)
+ *
+ * Plus permissive car utilisee lors du checkout
+ * Evite le blocage de l'utilisateur au moment critique
+ */
+export const CART_VALIDATE_LIMIT: RateLimitConfig = {
+	limit: 30, // 30 validations maximum
+	windowMs: minutes(5), // par 5 minutes
+};
+
+/**
+ * Limite pour la fusion des paniers (guest -> user)
+ *
+ * Stricte car ne doit pas etre appelee souvent
+ * Declenchee uniquement a la connexion
+ */
+export const CART_MERGE_LIMIT: RateLimitConfig = {
+	limit: 10, // 10 fusions maximum
+	windowMs: minutes(1), // par minute
+};
+
 // ========================================
 // 💳 PAIEMENT (PAYMENT)
 // ========================================
@@ -344,6 +366,8 @@ export const CART_LIMITS = {
 	ADD: CART_ADD_LIMIT,
 	UPDATE: CART_UPDATE_LIMIT,
 	REMOVE: CART_REMOVE_LIMIT,
+	VALIDATE: CART_VALIDATE_LIMIT,
+	MERGE: CART_MERGE_LIMIT,
 } as const;
 
 /**

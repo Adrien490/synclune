@@ -141,3 +141,24 @@ export type SendNewsletterEmailInput = z.infer<
 	typeof sendNewsletterEmailSchema
 >;
 
+// ============================================================================
+// CONFIRMATION TOKEN SCHEMA
+// ============================================================================
+
+/**
+ * Regex UUID v4 strict pour valider les tokens de confirmation
+ * randomUUID() génère des UUIDs v4 qui suivent ce format
+ */
+const UUID_V4_REGEX =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export const confirmationTokenSchema = z.object({
+	token: z
+		.string({ message: "Token de confirmation manquant" })
+		.min(1, "Token de confirmation manquant")
+		.refine((val) => UUID_V4_REGEX.test(val), {
+			message: "Token de confirmation invalide",
+		}),
+});
+
+export type ConfirmationTokenInput = z.infer<typeof confirmationTokenSchema>;

@@ -1,6 +1,16 @@
 import { Prisma } from "@/app/generated/prisma/client";
 
 // ============================================================================
+// CART LIMITS
+// ============================================================================
+
+/**
+ * Quantite maximale par article dans une commande
+ * Limite UX pour eviter les commandes excessives sur un site artisanal
+ */
+export const MAX_QUANTITY_PER_ORDER = 10;
+
+// ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
 

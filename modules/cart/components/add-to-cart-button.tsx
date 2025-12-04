@@ -13,6 +13,7 @@ import type {
 import { ShoppingCart, Truck, ShieldCheck, RotateCcw, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart.constants";
 
 interface AddToCartButtonProps {
 	product: GetProductReturn;
@@ -123,13 +124,13 @@ export function AddToCartButton({
 											onClick={() =>
 												field.handleChange(
 													Math.min(
-														Math.min(selectedSku.inventory, 10),
+														Math.min(selectedSku.inventory, MAX_QUANTITY_PER_ORDER),
 														field.state.value + 1
 													)
 												)
 											}
 											disabled={
-												field.state.value >= Math.min(selectedSku.inventory, 10)
+												field.state.value >= Math.min(selectedSku.inventory, MAX_QUANTITY_PER_ORDER)
 											}
 											className="h-8 w-8 p-0"
 											aria-label="Augmenter la quantité"
@@ -144,7 +145,6 @@ export function AddToCartButton({
 						{/* Message explicatif sur la limite de quantité */}
 						<form.Subscribe selector={(state) => [state.values.quantity]}>
 							{([quantity]) => {
-								const MAX_QUANTITY_PER_ORDER = 10;
 								const maxAvailable = Math.min(selectedSku.inventory, MAX_QUANTITY_PER_ORDER);
 
 								// Afficher quand on atteint la limite ou quand le stock est limité

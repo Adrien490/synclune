@@ -7,6 +7,7 @@
 
 import { cacheLife, cacheTag } from "next/cache"
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
+import { DASHBOARD_PERIODS } from "../schemas/dashboard.schemas"
 
 // ============================================
 // CACHE TAGS
@@ -104,8 +105,7 @@ export function getDashboardBadgesInvalidationTags(): string[] {
  * Tags à invalider pour les KPIs de ventes (toutes périodes)
  */
 export function getSalesKpisInvalidationTags(): string[] {
-	const periods = ["today", "yesterday", "last7days", "last30days", "thisMonth", "lastMonth", "thisYear", "lastYear", "custom"]
-	return periods.map(p => DASHBOARD_CACHE_TAGS.SALES_KPIS(p))
+	return DASHBOARD_PERIODS.map(p => DASHBOARD_CACHE_TAGS.SALES_KPIS(p))
 }
 
 /**
@@ -126,12 +126,11 @@ export function getInventoryInvalidationTags(): string[] {
  * Tags à invalider pour les revenus (toutes périodes)
  */
 export function getRevenueInvalidationTags(): string[] {
-	const periods = ["today", "yesterday", "last7days", "last30days", "thisMonth", "lastMonth", "thisYear", "lastYear", "custom"]
 	return [
-		...periods.map(p => DASHBOARD_CACHE_TAGS.REVENUE_CHART(p)),
-		...periods.map(p => DASHBOARD_CACHE_TAGS.REVENUE_COLLECTIONS(p)),
-		...periods.map(p => DASHBOARD_CACHE_TAGS.REVENUE_TYPES(p)),
-		...periods.map(p => DASHBOARD_CACHE_TAGS.TOP_PRODUCTS(p)),
+		...DASHBOARD_PERIODS.map(p => DASHBOARD_CACHE_TAGS.REVENUE_CHART(p)),
+		...DASHBOARD_PERIODS.map(p => DASHBOARD_CACHE_TAGS.REVENUE_COLLECTIONS(p)),
+		...DASHBOARD_PERIODS.map(p => DASHBOARD_CACHE_TAGS.REVENUE_TYPES(p)),
+		...DASHBOARD_PERIODS.map(p => DASHBOARD_CACHE_TAGS.TOP_PRODUCTS(p)),
 	]
 }
 
@@ -139,8 +138,7 @@ export function getRevenueInvalidationTags(): string[] {
  * Tags à invalider pour l'abandon panier (toutes périodes)
  */
 export function getAbandonmentInvalidationTags(): string[] {
-	const periods = ["today", "yesterday", "last7days", "last30days", "thisMonth", "lastMonth", "thisYear", "lastYear", "custom"]
-	return periods.map(p => DASHBOARD_CACHE_TAGS.ABANDONMENT_RATE(p))
+	return DASHBOARD_PERIODS.map(p => DASHBOARD_CACHE_TAGS.ABANDONMENT_RATE(p))
 }
 
 // ============================================

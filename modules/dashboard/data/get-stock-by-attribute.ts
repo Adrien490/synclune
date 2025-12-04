@@ -1,3 +1,4 @@
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type {
@@ -32,10 +33,23 @@ type StockByMaterialResult = {
 // ============================================================================
 
 /**
- * Recupere le stock agrege par couleur
+ * Action serveur pour recuperer le stock par couleur
+ */
+export async function getStockByColor(): Promise<GetStockByColorReturn> {
+	const admin = await isAdmin();
+
+	if (!admin) {
+		throw new Error("Admin access required");
+	}
+
+	return await fetchStockByColor();
+}
+
+/**
+ * Recupere le stock agrege par couleur (avec cache)
  * Utilise une requete SQL native avec GROUP BY pour la performance
  */
-export async function fetchStockByColor(): Promise<GetStockByColorReturn> {
+async function fetchStockByColor(): Promise<GetStockByColorReturn> {
 	"use cache: remote";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.STOCK_BY_COLOR);
@@ -91,10 +105,23 @@ export async function fetchStockByColor(): Promise<GetStockByColorReturn> {
 // ============================================================================
 
 /**
- * Recupere le stock agrege par materiau
+ * Action serveur pour recuperer le stock par materiau
+ */
+export async function getStockByMaterial(): Promise<GetStockByMaterialReturn> {
+	const admin = await isAdmin();
+
+	if (!admin) {
+		throw new Error("Admin access required");
+	}
+
+	return await fetchStockByMaterial();
+}
+
+/**
+ * Recupere le stock agrege par materiau (avec cache)
  * Utilise une requete SQL native avec GROUP BY pour la performance
  */
-export async function fetchStockByMaterial(): Promise<GetStockByMaterialReturn> {
+async function fetchStockByMaterial(): Promise<GetStockByMaterialReturn> {
 	"use cache: remote";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.STOCK_BY_MATERIAL);

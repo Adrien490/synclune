@@ -4,7 +4,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
+import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { AlertCircle, CheckCircle, AlertTriangle, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 
@@ -14,7 +14,7 @@ interface ProductPriceProps {
 }
 
 /**
- * ProductPrice - Affiche le prix du SKU sélectionné avec sa disponibilité
+ * ProductPriceDisplay - Affiche le prix du SKU sélectionné avec sa disponibilité
  *
  * Responsabilités :
  * - Afficher le prix TTC formaté en euros avec "À partir de" si plusieurs prix
@@ -22,7 +22,7 @@ interface ProductPriceProps {
  * - Afficher le badge de réduction
  * - Afficher le badge de disponibilité (En stock / Stock limité / Rupture)
  */
-export function ProductPrice({ selectedSku, product }: ProductPriceProps) {
+export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps) {
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
 	const priceInfo = useMemo(() => {
 		if (!product || !product.skus || product.skus.length === 0) {
@@ -61,7 +61,7 @@ export function ProductPrice({ selectedSku, product }: ProductPriceProps) {
 	const stockStatus =
 		!selectedSku?.isActive || inventory === 0
 			? "out_of_stock"
-			: inventory <= LOW_STOCK_THRESHOLD
+			: inventory <= STOCK_THRESHOLDS.LOW
 				? "low_stock"
 				: "in_stock";
 
@@ -119,7 +119,7 @@ export function ProductPrice({ selectedSku, product }: ProductPriceProps) {
 						id="product-price-selected"
 						className="h3 text-foreground"
 						itemProp="price"
-						content={String(selectedSku.priceInclTax)}
+						content={String(selectedSku.priceInclTax / 100)}
 						aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)} TTC${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ''}`}
 					>
 						{formatEuro(selectedSku.priceInclTax)}

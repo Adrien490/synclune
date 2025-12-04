@@ -5,7 +5,8 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
+import { getNewsletterInvalidationTags } from "../../constants/cache";
 
 import { bulkResubscribeSubscribersSchema } from "../../schemas/subscriber.schemas";
 
@@ -43,7 +44,7 @@ export async function bulkResubscribeSubscribers(
 		if (idsRaw.length > MAX_JSON_LENGTH) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: `Trop d'IDs dans la requête (max ${MAX_BULK_IDS})`,
+				message: `Données trop volumineuses (max ${MAX_JSON_LENGTH} caractères)`,
 			};
 		}
 
@@ -73,15 +74,17 @@ export async function bulkResubscribeSubscribers(
 			};
 		}
 
-		// Réabonner en masse avec une seule query (optimisation)
+		// Réabonner en masse avec transaction pour atomicité
 		// Ne réabonne que les abonnés déjà confirmés dans le passé (confirmedAt)
-		const updateResult = await prisma.newsletterSubscriber.updateMany({
-			where: {
-				id: { in: result.data.ids },
-				status: NewsletterStatus.UNSUBSCRIBED,
-				confirmedAt: { not: null },
-			},
-			data: { status: NewsletterStatus.CONFIRMED, unsubscribedAt: null },
+		const updateResult = await prisma.$transaction(async (tx) => {
+			return tx.newsletterSubscriber.updateMany({
+				where: {
+					id: { in: result.data.ids },
+					status: NewsletterStatus.UNSUBSCRIBED,
+					confirmedAt: { not: null },
+				},
+				data: { status: NewsletterStatus.CONFIRMED, unsubscribedAt: null },
+			});
 		});
 
 		if (updateResult.count === 0) {
@@ -91,7 +94,8 @@ export async function bulkResubscribeSubscribers(
 			};
 		}
 
-		revalidatePath("/admin/marketing/newsletter");
+		// Invalider le cache
+		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		// Audit log
 		console.log(

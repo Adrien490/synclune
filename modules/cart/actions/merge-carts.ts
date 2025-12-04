@@ -5,7 +5,9 @@ import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";
 import { batchValidateSkusForMerge } from "@/modules/cart/lib/sku-validation";
-import { checkRateLimit } from "@/shared/lib/rate-limit";
+import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
+import { headers } from "next/headers";
 
 export type MergeCartsResult =
 	| {
@@ -87,9 +89,11 @@ export async function mergeCarts(
 	sessionId: string
 ): Promise<MergeCartsResult> {
 	try {
-		// 0a. Rate limiting (10 requêtes par minute par utilisateur)
-		const rateLimitId = `merge-carts:${userId}`;
-		const rateLimit = checkRateLimit(rateLimitId, { limit: 10, windowMs: 60 * 1000 });
+		// 0a. Rate limiting uniforme avec les autres actions cart (avec IP fallback)
+		const headersList = await headers();
+		const ipAddress = await getClientIp(headersList);
+		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
+		const rateLimit = checkRateLimit(`merge-carts:${rateLimitId}`, CART_LIMITS.MERGE);
 
 		if (!rateLimit.success) {
 			return {
