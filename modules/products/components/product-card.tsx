@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
 import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
+import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { ProductPriceCompact } from "./product-price";
 
 /**
@@ -16,6 +17,8 @@ interface ProductCardProps {
 	price: number;
 	stockStatus: "in_stock" | "out_of_stock"; // Système simplifié : en stock ou rupture
 	stockMessage: string;
+	/** Inventaire total pour afficher l'urgence ("Plus que X!") */
+	inventory?: number;
 	primaryImage: {
 		url: string;
 		alt: string | null;
@@ -71,6 +74,7 @@ export function ProductCard({
 	price,
 	stockStatus,
 	stockMessage,
+	inventory,
 	primaryImage,
 	showDescription = false,
 	size = "md",
@@ -79,6 +83,13 @@ export function ProductCard({
 }: ProductCardProps) {
 	// Génération ID unique pour aria-labelledby (RSC compatible)
 	const titleId = `product-title-${slug}`;
+
+	// Déterminer si on affiche le badge urgency (stock bas mais pas rupture)
+	const showUrgencyBadge =
+		stockStatus === "in_stock" &&
+		typeof inventory === "number" &&
+		inventory > 0 &&
+		inventory <= STOCK_THRESHOLDS.LOW;
 
 	// Préfixe ViewTransition avec contexte optionnel pour éviter les conflits
 	const vtPrefix = viewTransitionContext ? `${viewTransitionContext}-` : "";
@@ -137,6 +148,12 @@ export function ProductCard({
 					{stockStatus === "out_of_stock" && (
 						<div className="absolute top-2.5 left-2.5 bg-foreground/80 text-background px-2.5 py-1 rounded-full text-xs font-medium z-10 shadow-md backdrop-blur-sm">
 							{stockMessage}
+						</div>
+					)}
+					{/* Badge urgency - Stock bas mais disponible */}
+					{showUrgencyBadge && (
+						<div className="absolute top-2.5 left-2.5 bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium z-10 shadow-md">
+							Plus que {inventory} !
 						</div>
 					)}
 					<ViewTransition name={`${vtPrefix}product-image-${slug}`} default="vt-product-image" share="vt-product-image">

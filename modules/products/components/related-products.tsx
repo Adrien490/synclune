@@ -86,6 +86,7 @@ export async function RelatedProducts({
 							price={primarySku?.priceInclTax || 0}
 							stockStatus={totalStock === 0 ? "out_of_stock" : "in_stock"}
 							stockMessage={totalStock === 0 ? "Rupture de stock" : "En stock"}
+							inventory={totalStock}
 							primaryImage={{
 								url: primaryImage?.url || FALLBACK_IMAGE_URL,
 								alt: primaryImage?.altText ?? null,

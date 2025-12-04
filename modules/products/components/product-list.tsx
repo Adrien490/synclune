@@ -69,6 +69,7 @@ export function ProductList({
 								price={price}
 								stockStatus={stockInfo.status}
 								stockMessage={stockInfo.message}
+								inventory={stockInfo.totalInventory}
 								primaryImage={{
 									url: primaryImage.url,
 									alt: primaryImage.alt || null,

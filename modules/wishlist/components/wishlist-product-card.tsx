@@ -50,6 +50,8 @@ export function WishlistProductCard({
 				price={priceInclTax}
 				stockStatus={stockStatus}
 				stockMessage={stockMessage}
+				// Pas d'inventory si changement de prix (éviter superposition badges)
+				inventory={priceDropped || priceIncreased ? undefined : inventory}
 				primaryImage={{
 					url: primaryImage?.url || FALLBACK_IMAGE_URL,
 					alt: primaryImage?.altText ?? null,

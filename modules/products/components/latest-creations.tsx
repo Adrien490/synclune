@@ -102,6 +102,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 								price={price}
 								stockStatus={stockInfo.status}
 								stockMessage={stockInfo.message}
+								inventory={stockInfo.totalInventory}
 								primaryImage={{
 									url: primaryImage.url,
 									alt: primaryImage.alt || null,
@@ -138,6 +139,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 								price={price}
 								stockStatus={stockInfo.status}
 								stockMessage={stockInfo.message}
+								inventory={stockInfo.totalInventory}
 								primaryImage={{
 									url: primaryImage.url,
 									alt: primaryImage.alt || null,
