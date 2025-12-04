@@ -27,9 +27,11 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
+import { useReducedMotion } from "framer-motion";
 import { Expand, GripVertical, Loader2, MoreVertical, Play, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
+import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
 import { toast } from "sonner";
 import { GalleryErrorBoundary } from "@/modules/medias/components/gallery-error-boundary";
 import ProductLightbox from "@/modules/medias/components/product-lightbox";
@@ -65,6 +67,7 @@ interface SortableMediaItemProps {
 	isPrimary: boolean;
 	isImageLoaded: boolean;
 	isGeneratingThumbnail: boolean;
+	shouldReduceMotion: boolean | null;
 	onImageLoaded: (url: string) => void;
 	onOpenLightbox: (index: number) => void;
 	onOpenDeleteDialog: () => void;
@@ -76,6 +79,7 @@ function SortableMediaItem({
 	isPrimary,
 	isImageLoaded,
 	isGeneratingThumbnail,
+	shouldReduceMotion,
 	onImageLoaded,
 	onOpenLightbox,
 	onOpenDeleteDialog,
@@ -91,7 +95,7 @@ function SortableMediaItem({
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
-		transition,
+		transition: shouldReduceMotion ? undefined : transition,
 		zIndex: isDragging ? 50 : undefined,
 	};
 
@@ -101,9 +105,18 @@ function SortableMediaItem({
 		<div
 			ref={setNodeRef}
 			style={style}
+			tabIndex={0}
+			onKeyDown={(e) => {
+				if (e.key === "Delete" || e.key === "Backspace") {
+					e.preventDefault();
+					onOpenDeleteDialog();
+				}
+			}}
 			className={cn(
 				"group relative aspect-square rounded-lg overflow-hidden border-2 shrink-0",
-				"motion-safe:transition-all motion-safe:duration-200",
+				shouldReduceMotion
+					? ""
+					: "motion-safe:transition-all motion-safe:duration-200",
 				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 				isDragging && "opacity-50 scale-105 shadow-xl",
 				isPrimary
@@ -127,7 +140,7 @@ function SortableMediaItem({
 								alt={media.altText || `Miniature vidéo ${index + 1}`}
 								fill
 								className="object-cover"
-								sizes="25vw"
+								sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
 								quality={80}
 								loading="lazy"
 								decoding="async"
@@ -156,7 +169,12 @@ function SortableMediaItem({
 								Votre navigateur ne supporte pas la lecture de vidéos.
 							</video>
 						)}
-						<div className="absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0 motion-safe:transition-opacity">
+						<div
+							className={cn(
+								"absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0",
+								shouldReduceMotion ? "" : "motion-safe:transition-opacity"
+							)}
+						>
 							<div className="bg-black/70 rounded-full p-3 shadow-xl">
 								<Play className="w-6 h-6 text-white" fill="white" />
 							</div>
@@ -173,10 +191,11 @@ function SortableMediaItem({
 						alt={media.altText || `Image ${index + 1}`}
 						fill
 						className={cn(
-							"object-cover motion-safe:transition-opacity",
+							"object-cover",
+							shouldReduceMotion ? "" : "motion-safe:transition-opacity",
 							isImageLoaded ? "opacity-100" : "opacity-0"
 						)}
-						sizes="25vw"
+						sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
 						quality={80}
 						loading={index > 0 ? "lazy" : undefined}
 						decoding="async"
@@ -199,11 +218,12 @@ function SortableMediaItem({
 			<div
 				{...attributes}
 				{...listeners}
+				aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
 				className={cn(
 					"absolute top-1 right-10 z-20 cursor-grab active:cursor-grabbing",
 					"hidden sm:flex",
 					"opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
-					"motion-safe:transition-opacity"
+					shouldReduceMotion ? "" : "motion-safe:transition-opacity"
 				)}
 			>
 				<div className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 flex items-center justify-center">
@@ -297,6 +317,7 @@ export function UnifiedMediaUpload({
 	renderUploadZone,
 }: UnifiedMediaUploadProps) {
 	const deleteDialog = useAlertDialog(DELETE_GALLERY_MEDIA_DIALOG_ID);
+	const shouldReduceMotion = useReducedMotion();
 
 	// État de chargement des images
 	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
@@ -324,7 +345,7 @@ export function UnifiedMediaUpload({
 				if (m.mediaType === "VIDEO") {
 					return {
 						type: "video" as const,
-						sources: [{ src: m.url, type: "video/mp4" }],
+						sources: [{ src: m.url, type: getVideoMimeType(m.url) }],
 						poster: m.thumbnailUrl || undefined,
 					};
 				}
@@ -417,6 +438,7 @@ export function UnifiedMediaUpload({
 									isPrimary={index === 0}
 									isImageLoaded={isImageLoaded}
 									isGeneratingThumbnail={isGeneratingThumbnail}
+									shouldReduceMotion={shouldReduceMotion}
 									onImageLoaded={handleImageLoaded}
 									onOpenLightbox={openLightbox}
 									onOpenDeleteDialog={() => handleOpenDeleteDialog(index)}
