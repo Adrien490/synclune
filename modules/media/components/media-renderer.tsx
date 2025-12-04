@@ -1,9 +1,9 @@
 "use client";
 
-import type { ProductMedia } from "@/modules/medias/types/product-media.types";
-import { MediaErrorFallback } from "@/modules/medias/components/media-error-fallback";
-import { MediaTypeBadge } from "@/modules/medias/components/media-type-badge";
-import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
+import type { ProductMedia } from "@/modules/media/types/product-media.types";
+import { MediaErrorFallback } from "@/modules/media/components/media-error-fallback";
+import { MediaTypeBadge } from "@/modules/media/components/media-type-badge";
+import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import Image from "next/image";
 import { ViewTransition } from "react";

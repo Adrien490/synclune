@@ -13,7 +13,7 @@ import { checkIsInWishlist } from "@/modules/wishlist/data/check-is-in-wishlist"
 
 import { PageHeader } from "@/shared/components/page-header";
 import { ProductDetails } from "@/modules/products/components/product-details";
-import { ProductGallery } from "@/modules/medias/components/product-gallery";
+import { ProductGallery } from "@/modules/media/components/product-gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
 
 import { RelatedProducts } from "@/modules/products/components/related-products";

@@ -1,10 +1,10 @@
 "use client";
 
 import { FieldLabel, FormSection } from "@/shared/components/tanstack-form";
-import { ImageCounterBadge } from "@/modules/medias/components/image-counter-badge";
-import { MediaGallery } from "@/modules/medias/components/admin/media-gallery";
-import { PrimaryImageUpload } from "@/modules/medias/components/admin/primary-image-upload";
-import { useAutoVideoThumbnail } from "@/modules/medias/hooks/use-auto-video-thumbnail";
+import { ImageCounterBadge } from "@/modules/media/components/image-counter-badge";
+import { MediaGallery } from "@/modules/media/components/admin/media-gallery";
+import { PrimaryImageUpload } from "@/modules/media/components/admin/primary-image-upload";
+import { useAutoVideoThumbnail } from "@/modules/media/hooks/use-auto-video-thumbnail";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
@@ -12,7 +12,7 @@ import { TextShimmer } from "@/shared/components/ui/text-shimmer";
 import { useUpdateProductSkuForm } from "@/modules/skus/hooks/use-update-sku-form";
 import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
-import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
+import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
 import { Euro, ImagePlus, Image as ImageIcon, Info, Palette, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";

@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useEffect } from "react";
-import { MediaTypeBadge } from "@/modules/medias/components/media-type-badge";
+import { MediaTypeBadge } from "@/modules/media/components/media-type-badge";
 import { DELETE_PRIMARY_IMAGE_DIALOG_ID } from "./delete-primary-image-alert-dialog";
 
 /**

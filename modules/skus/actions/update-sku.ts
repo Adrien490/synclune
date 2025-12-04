@@ -1,7 +1,7 @@
 "use server";
 
 import { requireAdmin } from "@/shared/lib/actions/auth";
-import { detectMediaType } from "@/modules/medias/constants/media.constants";
+import { detectMediaType } from "@/modules/media/constants/media.constants";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";

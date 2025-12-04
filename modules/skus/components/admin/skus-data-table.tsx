@@ -25,7 +25,7 @@ import {
 } from "@/shared/components/ui/tooltip";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
-import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
+import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";

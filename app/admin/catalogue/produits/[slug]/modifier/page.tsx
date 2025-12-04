@@ -5,7 +5,7 @@ import { getProductTypes } from "@/modules/product-types/data/get-product-types"
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { notFound } from "next/navigation";
 import { EditProductForm } from "@/modules/products/components/admin/edit-product-form";
-import { DeleteGalleryMediaAlertDialog } from "@/modules/medias/components/admin/delete-gallery-media-alert-dialog";
+import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
 import {
 	Breadcrumb,
 	BreadcrumbItem,

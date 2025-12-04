@@ -1,7 +1,7 @@
 "use client";
 
-import type { ProductMedia } from "@/modules/medias/types/product-media.types";
-import { GalleryThumbnail } from "@/modules/medias/components/gallery-thumbnail";
+import type { ProductMedia } from "@/modules/media/types/product-media.types";
+import { GalleryThumbnail } from "@/modules/media/components/gallery-thumbnail";
 import {
 	Carousel,
 	CarouselContent,

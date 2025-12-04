@@ -1,31 +1,31 @@
 "use client";
 
 import type { Slide } from "yet-another-react-lightbox";
-import { OpenLightboxButton } from "@/modules/medias/components/open-lightbox-button";
+import { OpenLightboxButton } from "@/modules/media/components/open-lightbox-button";
 import { Button } from "@/shared/components/ui/button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { cn } from "@/shared/utils/cn";
-import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
+import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useRef } from "react";
-import { buildGallery } from "@/modules/medias/utils/build-gallery";
-import { GalleryErrorBoundary } from "@/modules/medias/components/gallery-error-boundary";
-import { MediaRenderer } from "@/modules/medias/components/media-renderer";
-import { useGalleryKeyboard } from "@/modules/medias/hooks/use-gallery-keyboard";
-import { useGalleryNavigation } from "@/modules/medias/hooks/use-gallery-navigation";
-import { useGallerySwipe } from "@/modules/medias/hooks/use-gallery-swipe";
-import { useMediaErrors } from "@/modules/medias/hooks/use-media-errors";
+import { buildGallery } from "@/modules/media/utils/build-gallery";
+import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
+import { MediaRenderer } from "@/modules/media/components/media-renderer";
+import { useGalleryKeyboard } from "@/modules/media/hooks/use-gallery-keyboard";
+import { useGalleryNavigation } from "@/modules/media/hooks/use-gallery-navigation";
+import { useGallerySwipe } from "@/modules/media/hooks/use-gallery-swipe";
+import { useMediaErrors } from "@/modules/media/hooks/use-media-errors";
 import {
 	MAX_IMAGE_SIZE,
 	nextImageUrl,
 	IMAGE_SIZES,
 	DEVICE_SIZES,
-} from "@/modules/medias/constants/image-config.constants";
+} from "@/modules/media/constants/image-config.constants";
 
-import type { ProductMedia } from "@/modules/medias/types/product-media.types";
-import { ThumbnailsGrid, ThumbnailsCarousel } from "@/modules/medias/components/thumbnails-list";
+import type { ProductMedia } from "@/modules/media/types/product-media.types";
+import { ThumbnailsGrid, ThumbnailsCarousel } from "@/modules/media/components/thumbnails-list";
 
 interface ProductGalleryProps {
 	product: GetProductReturn;

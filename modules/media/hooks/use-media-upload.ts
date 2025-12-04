@@ -1,6 +1,6 @@
 "use client";
 
-import { useUploadThing } from "@/modules/medias/utils/uploadthing";
+import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { toast } from "sonner";
 
 // ============================================================================

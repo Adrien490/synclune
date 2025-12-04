@@ -13,8 +13,8 @@ import {
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getSkuById } from "@/modules/skus/data/get-sku";
 import { EditProductVariantForm } from "@/modules/skus/components/admin/edit-sku-form";
-import { DeletePrimaryImageAlertDialog } from "@/modules/medias/components/admin/delete-primary-image-alert-dialog";
-import { DeleteGalleryMediaAlertDialog } from "@/modules/medias/components/admin/delete-gallery-media-alert-dialog";
+import { DeletePrimaryImageAlertDialog } from "@/modules/media/components/admin/delete-primary-image-alert-dialog";
+import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
 import { prisma } from "@/shared/lib/prisma";
 
 type EditSkuPageParams = Promise<{ slug: string; skuId: string }>;

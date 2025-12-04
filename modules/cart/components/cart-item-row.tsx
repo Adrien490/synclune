@@ -4,7 +4,7 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
 import { CartItemAdjustButton } from "./cart-item-adjust-button";
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
-import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
+import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { formatEuro } from "@/shared/utils/format-euro";
 import Image from "next/image";
 import Link from "next/link";

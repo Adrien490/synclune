@@ -10,9 +10,9 @@ import {
 	createTanStackFormAdapter,
 	type WizardStep,
 } from "@/shared/features/form-wizard";
-import { ImageCounterBadge } from "@/modules/medias/components/image-counter-badge";
-import { UnifiedMediaUpload } from "@/modules/medias/components/admin/unified-media-upload";
-import { useAutoVideoThumbnail } from "@/modules/medias/hooks/use-auto-video-thumbnail";
+import { ImageCounterBadge } from "@/modules/media/components/image-counter-badge";
+import { UnifiedMediaUpload } from "@/modules/media/components/admin/unified-media-upload";
+import { useAutoVideoThumbnail } from "@/modules/media/hooks/use-auto-video-thumbnail";
 import { useUnsavedChanges } from "@/shared/features/form-wizard";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
@@ -22,7 +22,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import { MultiSelect } from "@/shared/components/multi-select";
 import { useCreateProductForm } from "@/modules/products/hooks/use-create-product-form";
 import { cn } from "@/shared/utils/cn";
-import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
+import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { Euro, Gem, ImagePlus, Image as ImageIcon, Info, Package, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";

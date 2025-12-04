@@ -1,13 +1,13 @@
 "use client";
 
-import type { ProductMedia } from "@/modules/medias/types/product-media.types";
-import { MediaErrorFallback } from "@/modules/medias/components/media-error-fallback";
-import { VideoPlayBadge } from "@/modules/medias/components/video-play-badge";
-import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
+import type { ProductMedia } from "@/modules/media/types/product-media.types";
+import { MediaErrorFallback } from "@/modules/media/components/media-error-fallback";
+import { VideoPlayBadge } from "@/modules/media/components/video-play-badge";
+import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import {
 	THUMBNAIL_IMAGE_QUALITY,
 	EAGER_LOAD_THUMBNAILS,
-} from "@/modules/medias/constants/image-config.constants";
+} from "@/modules/media/constants/image-config.constants";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";

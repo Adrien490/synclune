@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { useUploadThing } from "@/modules/medias/utils/uploadthing";
+import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { THUMBNAIL_CONFIG } from "../constants/media.constants";
 import { withRetry, CORSError } from "../utils/retry";
 

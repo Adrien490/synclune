@@ -11,7 +11,7 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useDeleteUploadThingFiles } from "@/modules/medias/lib/uploadthing";
+import { useDeleteUploadThingFiles } from "@/modules/media/lib/uploadthing";
 import { Loader2, Trash2 } from "lucide-react";
 import { startTransition } from "react";
 

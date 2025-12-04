@@ -2,8 +2,8 @@ import { getProductBySlug } from "@/modules/products/data/get-product";
 import { prisma } from "@/shared/lib/prisma";
 import { notFound } from "next/navigation";
 import { CreateProductVariantForm } from "@/modules/skus/components/admin/create-sku-form";
-import { DeletePrimaryImageAlertDialog } from "@/modules/medias/components/admin/delete-primary-image-alert-dialog";
-import { DeleteGalleryMediaAlertDialog } from "@/modules/medias/components/admin/delete-gallery-media-alert-dialog";
+import { DeletePrimaryImageAlertDialog } from "@/modules/media/components/admin/delete-primary-image-alert-dialog";
+import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
 import {
 	Breadcrumb,
 	BreadcrumbItem,

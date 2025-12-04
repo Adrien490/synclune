@@ -1,8 +1,8 @@
 "use client";
 
 import { FieldLabel, FormLayout, FormSection } from "@/shared/components/tanstack-form";
-import { UnifiedMediaUpload } from "@/modules/medias/components/admin/unified-media-upload";
-import { useAutoVideoThumbnail } from "@/modules/medias/hooks/use-auto-video-thumbnail";
+import { UnifiedMediaUpload } from "@/modules/media/components/admin/unified-media-upload";
+import { useAutoVideoThumbnail } from "@/modules/media/hooks/use-auto-video-thumbnail";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
@@ -11,7 +11,7 @@ import { MultiSelect } from "@/shared/components/multi-select";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { useUpdateProductForm } from "@/modules/products/hooks/use-update-product-form";
 import { cn } from "@/shared/utils/cn";
-import { UploadDropzone, useUploadThing } from "@/modules/medias/utils/uploadthing";
+import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { Euro, Gem, Image as ImageIcon, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, ViewTransition } from "react";

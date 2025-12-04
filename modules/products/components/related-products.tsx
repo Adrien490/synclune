@@ -1,6 +1,6 @@
 import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
-import { FALLBACK_IMAGE_URL } from "@/modules/medias/constants/product-fallback-image.constants";
+import { FALLBACK_IMAGE_URL } from "@/modules/media/constants/product-fallback-image.constants";
 import { Reveal, Stagger } from "@/shared/components/animations";
 
 interface RelatedProductsProps {

@@ -14,8 +14,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Expand, Loader2, MoreVertical, Play, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
-import { GalleryErrorBoundary } from "@/modules/medias/components/gallery-error-boundary";
-import ProductLightbox from "@/modules/medias/components/product-lightbox";
+import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
+import ProductLightbox from "@/modules/media/components/product-lightbox";
 import { DELETE_GALLERY_MEDIA_DIALOG_ID } from "./delete-gallery-media-alert-dialog";
 import type { Slide } from "yet-another-react-lightbox";
 
