@@ -57,13 +57,24 @@ Format : `{scope}-{type}-{identifier}`
 
 ## Classes CSS
 
-| Classe | Usage | Durée |
-|--------|-------|-------|
-| `vt-product-image` | Images produits (morphing) | 400ms |
-| `vt-title` | Titres et noms | 250ms |
-| `vt-badge` | Badges de statut | 200ms |
-| `vt-table-link` | Liens dans tableaux | 150ms |
-| `vt-color-preview` | Aperçus couleurs | 300ms |
+| Classe | Usage | Durée | Animation |
+|--------|-------|-------|-----------|
+| `vt-product-image` | Images produits (morphing) | 400ms | Cross-fade avec easing |
+| `vt-title` | Titres et noms | 250ms | Cross-fade |
+| `vt-badge` | Badges de statut | 200ms | Cross-fade |
+| `vt-table-link` | Liens dans tableaux | 150ms | Cross-fade |
+| `vt-color-preview` | Aperçus couleurs | 300ms | Scale bounce |
+| `vt-slide-in` | Entrées avec slide | 300ms | Slide up |
+| `vt-slide-out` | Sorties avec slide | 300ms | Slide down |
+
+### Structure CSS (selon doc officielle)
+
+Chaque classe définit 3 pseudo-sélecteurs :
+```css
+::view-transition-group(.class-name)   /* Position et taille */
+::view-transition-old(.class-name)     /* Animation sortante */
+::view-transition-new(.class-name)     /* Animation entrante */
+```
 
 ---
 
@@ -222,13 +233,77 @@ Toutes les animations respectent `prefers-reduced-motion: reduce` :
 
 ## Bonnes pratiques
 
-1. **Noms uniques** : Chaque `name` doit être unique sur la page. Deux ViewTransition avec le même `name` montés simultanément causent une erreur.
+### Règles essentielles (documentation officielle)
 
-2. **Transition partagée** : Pour un morphing entre pages, les deux ViewTransition (source et destination) doivent avoir le même `name`.
+1. **Placement avant DOM nodes** : `<ViewTransition>` doit envelopper directement l'élément DOM, pas être à l'intérieur.
+   ```tsx
+   // ✅ Correct
+   <ViewTransition><div>...</div></ViewTransition>
 
-3. **Première image seulement** : Dans les galeries, seule la première image a une ViewTransition pour éviter les conflits.
+   // ❌ Incorrect - ViewTransition ne s'activera pas pour les updates
+   <div><ViewTransition>...</ViewTransition></div>
+   ```
 
-4. **Server Components** : ViewTransition fonctionne mieux avec les Server Components pour les transitions de page.
+2. **Noms uniques** : Chaque `name` doit être unique dans toute l'application. Deux ViewTransition avec le même `name` montés simultanément causent une erreur.
+   ```tsx
+   // ✅ Correct - ID unique
+   <ViewTransition name={`product-${id}`}>
+
+   // ❌ Incorrect - nom dupliqué possible
+   <ViewTransition name="product">
+   ```
+
+3. **Transition partagée (share)** : Pour un morphing entre pages, les deux ViewTransition (source et destination) doivent avoir le même `name` et une classe `share`.
+
+4. **Première image seulement** : Dans les galeries, seule la première image a une ViewTransition pour éviter les conflits de noms.
+
+5. **Accessibilité** : Toujours respecter `prefers-reduced-motion`. Défini dans `globals.css`.
+
+### Types d'activation
+
+| Type | Déclencheur | Usage |
+|------|-------------|-------|
+| `enter` | ViewTransition monté | Apparition d'élément |
+| `exit` | ViewTransition démonté | Disparition d'élément |
+| `update` | Mutation DOM interne | Changement de contenu |
+| `share` | Paire mount/unmount avec même `name` | Morphing entre pages |
+
+### Props recommandées
+
+```tsx
+// Transition partagée (morphing)
+<ViewTransition
+  name={`unique-${id}`}    // Obligatoire pour share
+  default="vt-title"       // Classe par défaut
+  share="vt-title"         // Classe pour le morphing
+/>
+
+// Animations enter/exit personnalisées
+<ViewTransition
+  enter="vt-slide-in"      // Animation d'entrée
+  exit="vt-slide-out"      // Animation de sortie
+  default="vt-title"       // Fallback
+/>
+```
+
+### Éviter les conflits de noms
+
+Si le même produit peut apparaître plusieurs fois sur la même page (ex: dans la page de détail + produits similaires), utilisez un préfixe de contexte :
+
+```tsx
+// ProductCard supporte viewTransitionContext pour éviter les conflits
+<ProductCard
+  slug={product.slug}
+  viewTransitionContext="related"  // Génère: related-product-image-{slug}
+  ...
+/>
+
+// Sans contexte (défaut) : product-image-{slug}
+// Avec contexte "related" : related-product-image-{slug}
+```
+
+**Cas d'usage :**
+- `RelatedProducts` utilise `viewTransitionContext="related"` pour éviter les conflits avec `ProductInfo` et `MediaRenderer` sur la page de détail produit.
 
 ---
 

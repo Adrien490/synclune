@@ -94,6 +94,7 @@ export async function RelatedProducts({
 							showDescription={false}
 							size="md"
 							index={index}
+							viewTransitionContext="related"
 						/>
 					);
 				})}

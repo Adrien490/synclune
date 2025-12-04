@@ -108,6 +108,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 									mediaType: primaryImage.mediaType,
 								}}
 								index={index}
+								viewTransitionContext="mobile"
 							/>
 						);
 					})}

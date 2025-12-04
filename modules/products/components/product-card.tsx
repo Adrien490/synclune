@@ -25,6 +25,12 @@ interface ProductCardProps {
 	size?: "sm" | "md" | "lg";
 	/** Index dans la liste (pour priority images above-fold) */
 	index?: number;
+	/**
+	 * Préfixe de contexte pour éviter les conflits ViewTransition
+	 * quand le même produit apparaît plusieurs fois sur la page.
+	 * Exemple: "related" pour les produits similaires
+	 */
+	viewTransitionContext?: string;
 }
 
 /**
@@ -68,9 +74,13 @@ export function ProductCard({
 	showDescription = false,
 	size = "md",
 	index,
+	viewTransitionContext,
 }: ProductCardProps) {
 	// Génération ID unique pour aria-labelledby (RSC compatible)
 	const titleId = `product-title-${slug}`;
+
+	// Préfixe ViewTransition avec contexte optionnel pour éviter les conflits
+	const vtPrefix = viewTransitionContext ? `${viewTransitionContext}-` : "";
 
 	// URL canonique uniquement (stratégie SEO e-commerce recommandée)
 	// Toujours pointer vers /creations/[slug] pour consolider les signaux SEO
@@ -128,7 +138,7 @@ export function ProductCard({
 							{stockMessage}
 						</div>
 					)}
-					<ViewTransition name={`product-image-${slug}`} default="vt-product-image" share="vt-product-image">
+					<ViewTransition name={`${vtPrefix}product-image-${slug}`} default="vt-product-image" share="vt-product-image">
 						<Image
 							src={primaryImage.url}
 							alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
@@ -147,7 +157,7 @@ export function ProductCard({
 				{/* Contenu (plus de Link imbriqué) */}
 				<div className="flex flex-col gap-2 relative p-4">
 					{/* Titre avec hiérarchie tokenisée responsive */}
-					<ViewTransition name={`product-title-${slug}`} default="vt-title">
+					<ViewTransition name={`${vtPrefix}product-title-${slug}`} default="vt-title">
 						<h3
 							id={titleId}
 							className={cn(
