@@ -6,7 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
-import { getFinalShippingCost } from "@/modules/orders/constants/shipping";
+import { getFinalShippingCost } from "@/modules/orders/constants/shipping.constants";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { CreditCard, Info, Mail, MapPin, Receipt, Shield } from "lucide-react";

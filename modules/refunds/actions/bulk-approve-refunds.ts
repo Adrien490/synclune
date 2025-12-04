@@ -1,6 +1,7 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
+import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -75,14 +76,25 @@ export async function bulkApproveRefunds(
 			};
 		}
 
-		// Approuver tous les remboursements éligibles
-		await prisma.refund.updateMany({
-			where: {
-				id: { in: refunds.map((r) => r.id) },
-			},
-			data: {
-				status: RefundStatus.APPROVED,
-			},
+		// Récupérer la session pour l'audit trail
+		const session = await getSession();
+
+		// Approuver tous les remboursements avec audit trail
+		await prisma.$transaction(async (tx) => {
+			for (const refund of refunds) {
+				await tx.refund.update({
+					where: { id: refund.id },
+					data: { status: RefundStatus.APPROVED },
+				});
+
+				await tx.refundHistory.create({
+					data: {
+						refundId: refund.id,
+						action: RefundAction.APPROVED,
+						authorId: session?.user?.id,
+					},
+				});
+			}
 		});
 
 		revalidatePath("/admin/ventes/remboursements");

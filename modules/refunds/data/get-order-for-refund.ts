@@ -1,7 +1,7 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma, RefundStatus } from "@/app/generated/prisma/client";
 import { cacheLife, cacheTag } from "next/cache";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 
@@ -42,7 +42,7 @@ export const GET_ORDER_FOR_REFUND_SELECT = {
 				where: {
 					refund: {
 						status: {
-							in: ["PENDING", "APPROVED", "COMPLETED"],
+							in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
 						},
 					},
 				},
@@ -54,7 +54,7 @@ export const GET_ORDER_FOR_REFUND_SELECT = {
 	},
 	refunds: {
 		where: {
-			status: "COMPLETED",
+			status: RefundStatus.COMPLETED,
 		},
 		select: {
 			amount: true,

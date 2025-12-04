@@ -6,7 +6,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { randomUUID } from "crypto";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
-import { NEWSLETTER_BASE_URL } from "../constants/urls";
+import { NEWSLETTER_BASE_URL } from "../constants/urls.constants";
 
 interface SubscribeToNewsletterInternalParams {
 	email: string;

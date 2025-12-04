@@ -6,7 +6,8 @@ import {
 	OrderTracking,
 	OrderSummaryCard,
 	OrderAddressesCard,
-	DownloadInvoiceButton,
+	// TODO: Implémenter DownloadInvoiceButton
+	// DownloadInvoiceButton,
 } from "@/modules/orders/components/customer";
 import { getOrder } from "@/modules/orders/data/get-order";
 import { ArrowLeft } from "lucide-react";
@@ -131,12 +132,13 @@ export default async function OrderDetailPage({
 								}}
 							/>
 
-							{order.invoiceNumber && (
+							{/* TODO: Implémenter DownloadInvoiceButton */}
+							{/* {order.invoiceNumber && (
 								<DownloadInvoiceButton
 									orderId={order.id}
 									invoiceNumber={order.invoiceNumber}
 								/>
-							)}
+							)} */}
 						</div>
 					</div>
 				</div>

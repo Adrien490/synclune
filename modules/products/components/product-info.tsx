@@ -31,7 +31,7 @@ export function ProductInfo({
 		<div className="space-y-4">
 			{/* Titre avec bouton wishlist */}
 			<div className="flex items-start justify-between gap-3">
-				<ViewTransition name={`product-detail-title-${product.slug}`}>
+				<ViewTransition name={`product-title-${product.slug}`}>
 					<h1
 						className="text-3xl/10 sm:text-4xl/10 font-bold tracking-tight text-foreground flex-1"
 						itemProp="name"

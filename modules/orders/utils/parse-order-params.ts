@@ -1,5 +1,5 @@
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
-import { GET_ORDERS_SORT_FIELDS } from "../constants/orders-constants";
+import { GET_ORDERS_SORT_FIELDS } from "../constants/order.constants";
 
 /**
  * Parse and validate order search parameters from URL

@@ -12,6 +12,7 @@ export const GET_REFUNDS_SELECT = {
 	currency: true,
 	reason: true,
 	status: true,
+	failureReason: true,
 	note: true,
 	createdBy: true,
 	processedAt: true,
@@ -45,6 +46,7 @@ export const GET_REFUND_SELECT = {
 	currency: true,
 	reason: true,
 	status: true,
+	failureReason: true,
 	note: true,
 	createdBy: true,
 	processedAt: true,
@@ -168,12 +170,3 @@ export const REFUND_ERROR_MESSAGES = {
 	QUANTITY_EXCEEDS_AVAILABLE: "La quantité demandée dépasse la quantité disponible.",
 } as const;
 
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-export const GET_REFUNDS_DEFAULT_CACHE = {
-	revalidate: 60 * 5,
-	stale: 60 * 10,
-	expire: 60 * 30,
-} as const;

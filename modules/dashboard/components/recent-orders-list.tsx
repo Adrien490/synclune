@@ -17,7 +17,7 @@ import {
 	ORDER_STATUS_LABELS,
 	ORDER_STATUS_VARIANTS,
 	PAYMENT_STATUS_LABELS,
-} from "../constants/order-status";
+} from "../constants/order-status.constants";
 import { CHART_STYLES } from "../constants/chart-styles";
 
 interface RecentOrdersListProps {

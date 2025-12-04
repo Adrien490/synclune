@@ -6,7 +6,7 @@ import {
 	GET_PRODUCT_SKUS_ADMIN_FALLBACK_SORT_BY,
 	GET_PRODUCT_SKUS_DEFAULT_SORT_BY,
 	GET_PRODUCT_SKUS_DEFAULT_PER_PAGE,
-} from "../constants/skus-constants";
+} from "../constants/sku.constants";
 import { getProductSkusSchema } from "../schemas";
 import type { GetProductSkusReturn } from "../types/skus.types";
 import { fetchProductSkus } from "../utils/fetch-skus";

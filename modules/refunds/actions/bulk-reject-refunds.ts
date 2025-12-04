@@ -1,6 +1,7 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
+import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -78,25 +79,36 @@ export async function bulkRejectRefunds(
 			};
 		}
 
-		// Rejeter tous les remboursements éligibles
-		// Si une raison est fournie, on l'ajoute à la note
-		const updatePromises = refunds.map((refund) => {
-			const updatedNote = result.data.reason
-				? refund.note
-					? `${refund.note}\n\n[REFUSÉ] ${result.data.reason}`
-					: `[REFUSÉ] ${result.data.reason}`
-				: refund.note;
+		// Récupérer la session pour l'audit trail
+		const session = await getSession();
 
-			return prisma.refund.update({
-				where: { id: refund.id },
-				data: {
-					status: RefundStatus.REJECTED,
-					note: updatedNote,
-				},
-			});
+		// Rejeter tous les remboursements avec audit trail
+		await prisma.$transaction(async (tx) => {
+			for (const refund of refunds) {
+				const updatedNote = result.data.reason
+					? refund.note
+						? `${refund.note}\n\n[REFUSÉ] ${result.data.reason}`
+						: `[REFUSÉ] ${result.data.reason}`
+					: refund.note;
+
+				await tx.refund.update({
+					where: { id: refund.id },
+					data: {
+						status: RefundStatus.REJECTED,
+						note: updatedNote,
+					},
+				});
+
+				await tx.refundHistory.create({
+					data: {
+						refundId: refund.id,
+						action: RefundAction.REJECTED,
+						note: result.data.reason || undefined,
+						authorId: session?.user?.id,
+					},
+				});
+			}
 		});
-
-		await Promise.all(updatePromises);
 
 		revalidatePath("/admin/ventes/remboursements");
 

@@ -27,7 +27,7 @@ import { ArrowLeft, Package, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import {
 	useCreateRefundForm,
 	getDefaultRestock,
@@ -388,7 +388,7 @@ interface RefundItemRowProps {
 	onRestockToggle: (orderItemId: string, checked: boolean) => void;
 }
 
-function RefundItemRow({
+const RefundItemRow = memo(function RefundItemRow({
 	orderItem,
 	itemState,
 	isPending,
@@ -439,6 +439,7 @@ function RefundItemRow({
 				onCheckedChange={(checked) => onToggle(orderItem.id, checked === true)}
 				disabled={isPending}
 				className="mt-1"
+				aria-label={`Sélectionner ${orderItem.productTitle} pour remboursement`}
 			/>
 
 			{/* Image */}
@@ -504,6 +505,7 @@ function RefundItemRow({
 									onRestockToggle(orderItem.id, checked === true)
 								}
 								disabled={isPending}
+								aria-label={`Restocker ${orderItem.productTitle}`}
 							/>
 							<Label
 								htmlFor={`restock-${orderItem.id}`}
@@ -526,4 +528,6 @@ function RefundItemRow({
 			)}
 		</div>
 	);
-}
+});
+
+RefundItemRow.displayName = "RefundItemRow";

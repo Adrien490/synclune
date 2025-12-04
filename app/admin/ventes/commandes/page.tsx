@@ -3,9 +3,10 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getOrders } from "@/modules/orders/data/get-orders";
-import { SORT_LABELS as ORDERS_SORT_LABELS } from "@/modules/orders/constants/orders-constants";
+import { SORT_LABELS as ORDERS_SORT_LABELS } from "@/modules/orders/constants/order.constants";
 import { parseOrderParams } from "@/modules/orders/utils/parse-order-params";
-import { ExportInvoicesButton } from "@/modules/orders/components/admin/export-invoices-button";
+// TODO: Implémenter ExportInvoicesButton
+// import { ExportInvoicesButton } from "@/modules/orders/components/admin/export-invoices-button";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { OrdersDataTable } from "@/modules/orders/components/admin/orders-data-table";
@@ -106,7 +107,7 @@ export default async function OrdersAdminPage({
 						className="w-full sm:min-w-[180px]"
 					/>
 					<OrdersFilterSheet />
-					<ExportInvoicesButton />
+					{/* TODO: Implémenter ExportInvoicesButton */}
 					<RefreshOrdersButton />
 				</DataTableToolbar>
 

@@ -1,5 +1,5 @@
 import { Card } from "@/shared/components/ui/card";
-import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes";
+import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
 import { crimsonPro } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { Gem } from "lucide-react";

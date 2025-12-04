@@ -7,8 +7,8 @@ import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
 import {
 	THUMBNAIL_IMAGE_QUALITY,
 	EAGER_LOAD_THUMBNAILS,
-} from "@/modules/medias/constants/image-config";
-import { PRODUCT_TEXTS } from "@/modules/products/constants/product";
+} from "@/modules/medias/constants/image-config.constants";
+import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import { memo } from "react";

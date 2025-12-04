@@ -4,7 +4,7 @@ import type { ProductMedia } from "@/modules/medias/types/product-media.types";
 import { MediaErrorFallback } from "@/modules/medias/components/media-error-fallback";
 import { MediaTypeBadge } from "@/modules/medias/components/media-type-badge";
 import { getVideoMimeType } from "@/modules/medias/utils/media-utils";
-import { PRODUCT_TEXTS } from "@/modules/products/constants/product";
+import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import Image from "next/image";
 import { ViewTransition } from "react";
 import { memo } from "react";
@@ -96,7 +96,7 @@ function MediaRendererComponent({
 	// Première image avec ViewTransition pour transition fluide entre pages
 	if (isFirst) {
 		return (
-			<ViewTransition name={`product-gallery-image-${productSlug}`}>
+			<ViewTransition name={`product-image-${productSlug}`}>
 				{ImageComponent}
 			</ViewTransition>
 		);

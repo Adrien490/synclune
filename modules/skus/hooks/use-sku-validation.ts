@@ -1,6 +1,6 @@
 import { extractVariantInfo } from "@/modules/skus/services/extract-sku-info";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product";
+import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
 import { useMemo } from "react";
 
 interface VariantSelection {

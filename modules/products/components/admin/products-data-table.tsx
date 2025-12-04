@@ -34,7 +34,7 @@ import {
 
 // Module imports
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import { STOCK_THRESHOLDS } from "@/modules/products/constants/product";
+import { STOCK_THRESHOLDS } from "@/modules/products/constants/product-texts.constants";
 
 // Local components
 import { ProductRowActions } from "./product-row-actions";

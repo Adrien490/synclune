@@ -3,6 +3,7 @@
 import { RefundReason } from "@/app/generated/prisma/enums";
 import { createRefund } from "@/modules/refunds/actions/create-refund";
 import type { OrderItemForRefund } from "@/modules/refunds/data/get-order-for-refund";
+import { shouldRestockByDefault } from "@/modules/refunds/utils/refund-utils.browser";
 import { useAppForm } from "@/shared/components/tanstack-form";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -38,14 +39,9 @@ interface UseCreateRefundFormOptions {
 // ============================================================================
 
 /**
- * Détermine si le restock est recommandé selon le motif
+ * Alias pour l'export (rétrocompatibilité)
  */
-export function getDefaultRestock(reason: RefundReason): boolean {
-	return (
-		reason === RefundReason.CUSTOMER_REQUEST ||
-		reason === RefundReason.WRONG_ITEM
-	);
-}
+export const getDefaultRestock = shouldRestockByDefault;
 
 /**
  * Calcule la quantité disponible pour remboursement

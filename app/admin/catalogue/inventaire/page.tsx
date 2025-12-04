@@ -5,7 +5,7 @@ import { SelectFilter } from "@/shared/components/select-filter";
 import { getInventory } from "@/modules/skus/data/get-inventory";
 import { getColorOptions } from "@/modules/colors/data/get-colors";
 import { getMaterialOptions } from "@/modules/materials/data/get-materials";
-import { SORT_LABELS } from "@/modules/skus/constants/skus-constants";
+import { SORT_LABELS } from "@/modules/skus/constants/sku.constants";
 import { Suspense } from "react";
 import { InventoryDataTable } from "@/modules/skus/components/admin/inventory-data-table";
 import { InventoryDataTableSkeleton } from "@/modules/skus/components/admin/inventory-data-table-skeleton";

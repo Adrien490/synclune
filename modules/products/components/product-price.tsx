@@ -1,5 +1,5 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { PRODUCT_TEXTS } from "@/modules/products/constants/product";
+import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 
 interface ProductPriceProps {
 	price: number;

@@ -10,7 +10,7 @@ import {
 	GET_PRODUCT_SKUS_DEFAULT_PER_PAGE,
 	GET_PRODUCT_SKUS_DEFAULT_SELECT,
 	GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE,
-} from "../constants/skus-constants";
+} from "../constants/sku.constants";
 import { GetProductSkusParams, GetProductSkusReturn } from "../types/skus.types";
 import { buildWhereClause } from "@/modules/products/services/build-where-clause";
 

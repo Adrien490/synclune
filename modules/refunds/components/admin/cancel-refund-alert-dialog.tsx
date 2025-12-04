@@ -12,6 +12,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelRefund } from "@/modules/refunds/hooks/use-cancel-refund";
+import { ActionStatus } from "@/shared/types/server-action";
 import { Loader2 } from "lucide-react";
 
 export const CANCEL_REFUND_DIALOG_ID = "cancel-refund";
@@ -26,7 +27,7 @@ interface CancelRefundData {
 export function CancelRefundAlertDialog() {
 	const dialog = useAlertDialog<CancelRefundData>(CANCEL_REFUND_DIALOG_ID);
 
-	const { action, isPending } = useCancelRefund({
+	const { state, action, isPending } = useCancelRefund({
 		onSuccess: () => {
 			dialog.close();
 		},
@@ -64,6 +65,9 @@ export function CancelRefundAlertDialog() {
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
+					{state?.status && state.status !== ActionStatus.SUCCESS && (
+						<p className="text-sm text-destructive mb-4">{state.message}</p>
+					)}
 					<AlertDialogFooter>
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Fermer

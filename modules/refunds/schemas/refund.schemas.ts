@@ -90,7 +90,11 @@ export const getRefundsSchema = z.object({
 export const createRefundItemSchema = z.object({
 	orderItemId: z.cuid2(),
 	quantity: z.number().int().positive("La quantité doit être positive"),
-	amount: z.number().int().nonnegative("Le montant doit être positif ou nul"),
+	amount: z
+		.number()
+		.int()
+		.nonnegative("Le montant doit être positif ou nul")
+		.max(999999999, "Montant trop élevé"),
 	restock: z.boolean().default(true),
 });
 

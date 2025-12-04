@@ -19,10 +19,11 @@ export const GET_USER_ORDERS_SELECT = {
 	actualDelivery: true,
 	paymentMethod: true,
 	paidAt: true,
-	invoiceNumber: true,
-	invoiceGeneratedAt: true,
-	invoiceStatus: true,
-	stripeInvoiceId: true,
+	// TODO: Ajouter ces champs quand la feature factures sera implémentée dans le schéma Prisma
+	// invoiceNumber: true,
+	// invoiceGeneratedAt: true,
+	// invoiceStatus: true,
+	// stripeInvoiceId: true,
 	createdAt: true,
 	_count: {
 		select: {

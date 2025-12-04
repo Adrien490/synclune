@@ -24,9 +24,10 @@ export const GET_ORDERS_SELECT = {
 	shippedAt: true,
 	paymentMethod: true,
 	paidAt: true,
-	invoiceNumber: true,
-	invoiceStatus: true,
-	invoiceGeneratedAt: true,
+	// TODO: Ajouter ces champs quand la feature factures sera implémentée dans le schéma Prisma
+	// invoiceNumber: true,
+	// invoiceStatus: true,
+	// invoiceGeneratedAt: true,
 	createdAt: true,
 	updatedAt: true,
 	user: {
@@ -42,6 +43,12 @@ export const GET_ORDERS_SELECT = {
 		},
 	},
 } as const satisfies Prisma.OrderSelect;
+
+/**
+ * Alias pour compatibilité (même select que GET_ORDERS_SELECT)
+ * @deprecated Utiliser GET_ORDERS_SELECT à la place
+ */
+export const GET_ORDERS_DEFAULT_SELECT = GET_ORDERS_SELECT;
 
 // ============================================================================
 // SELECT DEFINITIONS - ORDER DETAIL
@@ -94,9 +101,10 @@ export const GET_ORDER_SELECT = {
 	fulfillmentStatus: true,
 	paymentMethod: true,
 	paidAt: true,
-	invoiceNumber: true,
-	invoiceGeneratedAt: true,
-	invoiceStatus: true,
+	// TODO: Ajouter ces champs quand la feature factures sera implémentée dans le schéma Prisma
+	// invoiceNumber: true,
+	// invoiceGeneratedAt: true,
+	// invoiceStatus: true,
 	createdAt: true,
 	updatedAt: true,
 	items: {

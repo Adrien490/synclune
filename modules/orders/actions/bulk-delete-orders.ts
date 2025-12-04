@@ -53,15 +53,15 @@ export async function bulkDeleteOrders(
 			select: {
 				id: true,
 				orderNumber: true,
-				invoiceNumber: true,
+				// TODO: Ajouter invoiceNumber au schéma Prisma quand la feature factures sera implémentée
 				paymentStatus: true,
 			},
 		});
 
 		// Filtrer les commandes éligibles à la suppression
+		// TODO: Ajouter vérification invoiceNumber === null quand la feature factures sera implémentée
 		const deletableOrders = orders.filter(
 			(order) =>
-				order.invoiceNumber === null &&
 				order.paymentStatus !== PaymentStatus.PAID &&
 				order.paymentStatus !== PaymentStatus.REFUNDED
 		);

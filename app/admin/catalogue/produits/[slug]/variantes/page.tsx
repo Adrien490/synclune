@@ -22,7 +22,7 @@ import { getProductSkus } from "@/modules/skus/data/get-skus";
 import { parseProductSkuParams } from "@/modules/skus/utils/parse-sku-params";
 import { getColorOptions } from "@/modules/colors/data/get-colors";
 import { getMaterialOptions } from "@/modules/materials/data/get-materials";
-import { SORT_LABELS } from "@/modules/skus/constants/skus-constants";
+import { SORT_LABELS } from "@/modules/skus/constants/sku.constants";
 import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-data-table";
 import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
 import { RefreshSkusButton } from "@/modules/skus/components/admin/refresh-skus-button";

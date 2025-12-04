@@ -1,5 +1,5 @@
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
-import { GET_PRODUCT_SKUS_SORT_FIELDS } from "../constants/skus-constants";
+import { GET_PRODUCT_SKUS_SORT_FIELDS } from "../constants/sku.constants";
 
 /**
  * Parse and validate product SKU search parameters from URL

@@ -8,7 +8,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { randomUUID } from "crypto";
 import { subscriberIdSchema } from "../../schemas/subscriber.schemas";
-import { NEWSLETTER_BASE_URL } from "../../constants/urls";
+import { NEWSLETTER_BASE_URL } from "../../constants/urls.constants";
 
 /**
  * Server Action ADMIN pour renvoyer l'email de confirmation newsletter

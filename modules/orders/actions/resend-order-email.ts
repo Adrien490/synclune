@@ -82,7 +82,6 @@ export async function resendOrderEmail(
 					},
 					trackingUrl: `${baseUrl}/mon-compte/commandes/${order.id}`,
 					orderId: order.id,
-					invoiceGenerated: !!order.invoiceNumber,
 				});
 
 				if (!result.success) {

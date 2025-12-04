@@ -1,4 +1,4 @@
-import { FALLBACK_PRODUCT_IMAGE } from "@/modules/medias/constants/product-fallback-image";
+import { FALLBACK_PRODUCT_IMAGE } from "@/modules/medias/constants/product-fallback-image.constants";
 import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/medias/types/product-media.types";

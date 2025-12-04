@@ -4,7 +4,7 @@ import {
 	SKU_FILTERS_MIN_DATE,
 	SKU_FILTERS_MAX_INVENTORY,
 	SKU_FILTERS_MAX_PRICE_CENTS,
-} from "../constants/skus-constants";
+} from "../constants/sku.constants";
 
 const stringOrStringArray = z
 	.union([

@@ -56,7 +56,7 @@ export async function deleteOrder(
 			select: {
 				id: true,
 				orderNumber: true,
-				invoiceNumber: true,
+				// TODO: Ajouter invoiceNumber au schéma Prisma quand la feature factures sera implémentée
 				paymentStatus: true,
 			},
 		});
@@ -68,13 +68,7 @@ export async function deleteOrder(
 			};
 		}
 
-		// Règle 1 : Vérifier qu'aucune facture n'a été émise
-		if (order.invoiceNumber !== null) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.HAS_INVOICE,
-			};
-		}
+		// TODO: Règle 1 - Vérifier invoiceNumber === null quand la feature factures sera implémentée
 
 		// Règle 2 : Vérifier que la commande n'a jamais été payée
 		// PAID ou REFUNDED signifie qu'il y a eu un paiement

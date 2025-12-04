@@ -2,7 +2,7 @@ import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
-import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product";
+import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { ProductPriceCompact } from "./product-price";
 
 /**
@@ -128,7 +128,7 @@ export function ProductCard({
 							{stockMessage}
 						</div>
 					)}
-					<ViewTransition name={`product-card-image-${id}`}>
+					<ViewTransition name={`product-image-${slug}`}>
 						<Image
 							src={primaryImage.url}
 							alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
@@ -147,7 +147,7 @@ export function ProductCard({
 				{/* Contenu (plus de Link imbriqué) */}
 				<div className="flex flex-col gap-2 relative p-4">
 					{/* Titre avec hiérarchie tokenisée responsive */}
-					<ViewTransition name={`product-card-title-${id}`}>
+					<ViewTransition name={`product-title-${slug}`}>
 						<h3
 							id={titleId}
 							className={cn(

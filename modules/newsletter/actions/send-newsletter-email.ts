@@ -7,7 +7,7 @@ import { requireAdmin } from "@/shared/lib/actions";
 import { sanitizeForEmail, newlinesToBr } from "@/shared/lib/sanitize";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { sendNewsletterEmailSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
-import { NEWSLETTER_BASE_URL } from "@/modules/newsletter/constants/urls";
+import { NEWSLETTER_BASE_URL } from "@/modules/newsletter/constants/urls.constants";
 
 // Configuration batching pour éviter surcharge mémoire
 const BATCH_SIZE = 100;

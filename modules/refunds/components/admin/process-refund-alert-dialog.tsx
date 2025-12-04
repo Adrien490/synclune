@@ -12,6 +12,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useProcessRefund } from "@/modules/refunds/hooks/use-process-refund";
+import { ActionStatus } from "@/shared/types/server-action";
 import { Loader2 } from "lucide-react";
 
 export const PROCESS_REFUND_DIALOG_ID = "process-refund";
@@ -26,7 +27,7 @@ interface ProcessRefundData {
 export function ProcessRefundAlertDialog() {
 	const dialog = useAlertDialog<ProcessRefundData>(PROCESS_REFUND_DIALOG_ID);
 
-	const { action, isPending } = useProcessRefund({
+	const { state, action, isPending } = useProcessRefund({
 		onSuccess: () => {
 			dialog.close();
 		},
@@ -68,6 +69,9 @@ export function ProcessRefundAlertDialog() {
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
+					{state?.status && state.status !== ActionStatus.SUCCESS && (
+						<p className="text-sm text-destructive mb-4">{state.message}</p>
+					)}
 					<AlertDialogFooter>
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler

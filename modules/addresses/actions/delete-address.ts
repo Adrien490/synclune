@@ -6,7 +6,7 @@ import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { ADDRESS_ERROR_MESSAGES } from "../constants/address";
+import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
 
 export async function deleteAddress(
 	_prev: ActionState | undefined,

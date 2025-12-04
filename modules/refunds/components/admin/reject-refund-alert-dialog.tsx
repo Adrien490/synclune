@@ -12,6 +12,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useRejectRefund } from "@/modules/refunds/hooks/use-reject-refund";
+import { ActionStatus } from "@/shared/types/server-action";
 import { Loader2 } from "lucide-react";
 
 export const REJECT_REFUND_DIALOG_ID = "reject-refund";
@@ -26,7 +27,7 @@ interface RejectRefundData {
 export function RejectRefundAlertDialog() {
 	const dialog = useAlertDialog<RejectRefundData>(REJECT_REFUND_DIALOG_ID);
 
-	const { action, isPending } = useRejectRefund({
+	const { state, action, isPending } = useRejectRefund({
 		onSuccess: () => {
 			dialog.close();
 		},
@@ -64,6 +65,9 @@ export function RejectRefundAlertDialog() {
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
+					{state?.status && state.status !== ActionStatus.SUCCESS && (
+						<p className="text-sm text-destructive mb-4">{state.message}</p>
+					)}
 					<AlertDialogFooter>
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler

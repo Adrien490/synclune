@@ -12,6 +12,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useApproveRefund } from "@/modules/refunds/hooks/use-approve-refund";
+import { ActionStatus } from "@/shared/types/server-action";
 import { Loader2 } from "lucide-react";
 
 export const APPROVE_REFUND_DIALOG_ID = "approve-refund";
@@ -26,7 +27,7 @@ interface ApproveRefundData {
 export function ApproveRefundAlertDialog() {
 	const dialog = useAlertDialog<ApproveRefundData>(APPROVE_REFUND_DIALOG_ID);
 
-	const { action, isPending } = useApproveRefund({
+	const { state, action, isPending } = useApproveRefund({
 		onSuccess: () => {
 			dialog.close();
 		},
@@ -63,6 +64,9 @@ export function ApproveRefundAlertDialog() {
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
+					{state?.status && state.status !== ActionStatus.SUCCESS && (
+						<p className="text-sm text-destructive mb-4">{state.message}</p>
+					)}
 					<AlertDialogFooter>
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler

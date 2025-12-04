@@ -109,21 +109,25 @@ export async function approveRefund(
 
 		revalidatePath("/admin/ventes/remboursements");
 
-		// Envoyer l'email de notification au client
+		// Envoyer l'email de notification au client (non bloquant)
 		if (refund.order.user?.email) {
-			const isPartialRefund = refund.amount < refund.order.total;
-			const orderDetailsUrl = `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"}/mon-compte/commandes/${refund.order.id}`;
+			try {
+				const isPartialRefund = refund.amount < refund.order.total;
+				const orderDetailsUrl = `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"}/mon-compte/commandes/${refund.order.id}`;
 
-			await sendRefundApprovedEmail({
-				to: refund.order.user.email,
-				orderNumber: refund.order.orderNumber,
-				customerName: refund.order.user.name || "Client",
-				refundAmount: refund.amount,
-				originalOrderTotal: refund.order.total,
-				reason: refund.reason,
-				isPartialRefund,
-				orderDetailsUrl,
-			});
+				await sendRefundApprovedEmail({
+					to: refund.order.user.email,
+					orderNumber: refund.order.orderNumber,
+					customerName: refund.order.user.name || "Client",
+					refundAmount: refund.amount,
+					originalOrderTotal: refund.order.total,
+					reason: refund.reason,
+					isPartialRefund,
+					orderDetailsUrl,
+				});
+			} catch (emailError) {
+				console.error("[APPROVE_REFUND] Échec envoi email:", emailError);
+			}
 		}
 
 		return {

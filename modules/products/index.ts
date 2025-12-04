@@ -45,7 +45,7 @@ export {
 
 export {
 	STOCK_THRESHOLDS,
-} from "./constants/product";
+} from "./constants/product-texts.constants";
 
 // =============================================================================
 // Schemas (pour validation côté client)

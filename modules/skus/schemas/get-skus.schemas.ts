@@ -3,7 +3,7 @@ import {
 	GET_PRODUCT_SKUS_DEFAULT_PER_PAGE,
 	GET_PRODUCT_SKUS_DEFAULT_SORT_BY,
 	GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE,
-} from "../constants/skus-constants";
+} from "../constants/sku.constants";
 import { productSkuFiltersSchema } from "./sku-filters-schema";
 import { productSkuSortBySchema } from "./sku-sort-by-schema";
 

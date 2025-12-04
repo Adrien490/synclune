@@ -22,7 +22,7 @@ import {
 	nextImageUrl,
 	IMAGE_SIZES,
 	DEVICE_SIZES,
-} from "@/modules/medias/constants/image-config";
+} from "@/modules/medias/constants/image-config.constants";
 
 import type { ProductMedia } from "@/modules/medias/types/product-media.types";
 import { ThumbnailsGrid, ThumbnailsCarousel } from "@/modules/medias/components/thumbnails-list";

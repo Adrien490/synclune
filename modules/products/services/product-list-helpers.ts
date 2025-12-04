@@ -1,5 +1,5 @@
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import { FALLBACK_PRODUCT_IMAGE } from "@/modules/medias/constants/product-fallback-image";
+import { FALLBACK_PRODUCT_IMAGE } from "@/modules/medias/constants/product-fallback-image.constants";
 import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
 
 /**

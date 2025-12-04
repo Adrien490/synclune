@@ -30,7 +30,7 @@ export {
 	ORDER_STATUS_VARIANTS,
 	PAYMENT_STATUS_LABELS,
 	PAYMENT_STATUS_VARIANTS,
-} from "./order-status";
+} from "./order-status.constants";
 
 export {
 	PERIOD_OPTIONS,

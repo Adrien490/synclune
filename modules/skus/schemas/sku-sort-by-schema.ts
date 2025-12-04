@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
 	GET_PRODUCT_SKUS_DEFAULT_SORT_BY,
 	GET_PRODUCT_SKUS_SORT_FIELDS,
-} from "../constants/skus-constants";
+} from "../constants/sku.constants";
 
 export const productSkuSortBySchema = z.preprocess((value) => {
 	return typeof value === "string" &&
