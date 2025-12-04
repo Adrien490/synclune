@@ -529,7 +529,7 @@ function CreateProductFormContent({
 												<UploadDropzone
 													endpoint="catalogMedia"
 													onChange={handleUpload}
-													onUploadError={(error) => toast.error(`Erreur: ${error.message}`)}
+													onUploadError={(error) => { toast.error(`Erreur: ${error.message}`); }}
 													className="w-full"
 													appearance={{
 														container: ({ isDragActive, isUploading: uploading }) => ({
@@ -595,7 +595,15 @@ function CreateProductFormContent({
 													for (let i = currentLength - 1; i >= 0; i--) {
 														field.removeValue(i);
 													}
-													newMedia.forEach((m) => field.pushValue(m));
+													newMedia.forEach((m) =>
+														field.pushValue({
+															url: m.url,
+															mediaType: m.mediaType,
+															altText: m.altText ?? undefined,
+															thumbnailUrl: m.thumbnailUrl ?? undefined,
+															thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
+														})
+													);
 												}}
 												generatingThumbnails={generatingUrls}
 												maxItems={maxCount}
@@ -606,7 +614,7 @@ function CreateProductFormContent({
 																<UploadDropzone
 																	endpoint="catalogMedia"
 																	onChange={handleUpload}
-																	onUploadError={(error) => toast.error(`Erreur: ${error.message}`)}
+																	onUploadError={(error) => { toast.error(`Erreur: ${error.message}`); }}
 																	className="w-full h-full min-h-0"
 																	appearance={{
 																		container: ({ isDragActive, isUploading: uploading }) => ({

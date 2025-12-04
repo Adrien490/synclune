@@ -536,7 +536,15 @@ export function EditProductForm({
 											while (field.state.value.length > 0) {
 												field.removeValue(0);
 											}
-											newMedia.forEach((m) => field.pushValue(m));
+											newMedia.forEach((m) =>
+												field.pushValue({
+													url: m.url,
+													mediaType: m.mediaType,
+													altText: m.altText ?? undefined,
+													thumbnailUrl: m.thumbnailUrl ?? undefined,
+													thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
+												})
+											);
 										}}
 										skipUtapiDelete={true}
 										generatingThumbnails={generatingUrls}

@@ -1,7 +1,6 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { prisma } from "@/shared/lib/prisma";
 import { CreateProductForm } from "@/modules/products/components/admin/create-product-form";
-import { DeletePrimaryImageAlertDialog } from "@/modules/medias/components/admin/delete-primary-image-alert-dialog";
 import { DeleteGalleryMediaAlertDialog } from "@/modules/medias/components/admin/delete-gallery-media-alert-dialog";
 import { headers } from "next/headers";
 import { Metadata } from "next";
@@ -63,7 +62,6 @@ export default async function NewProductPage() {
 				materials={materials}
 			/>
 
-			<DeletePrimaryImageAlertDialog />
 			<DeleteGalleryMediaAlertDialog />
 		</>
 	);
