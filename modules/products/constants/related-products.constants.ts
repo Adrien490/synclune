@@ -65,6 +65,7 @@ export const RELATED_PRODUCTS_SELECT = {
 				select: {
 					id: true,
 					url: true,
+					blurDataUrl: true,
 					altText: true,
 					mediaType: true,
 					isPrimary: true,

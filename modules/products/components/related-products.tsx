@@ -90,6 +90,7 @@ export async function RelatedProducts({
 								url: primaryImage?.url || FALLBACK_IMAGE_URL,
 								alt: primaryImage?.altText ?? null,
 								mediaType: "IMAGE" as const,
+								blurDataUrl: primaryImage?.blurDataUrl ?? undefined,
 							}}
 							showDescription={false}
 							size="md"

@@ -92,6 +92,8 @@ export function CartItemRow({ item }: CartItemRowProps) {
 								className="object-cover"
 								sizes="96px"
 								quality={80}
+								placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
+								blurDataURL={primaryImage.blurDataUrl ?? undefined}
 							/>
 						)
 					) : (

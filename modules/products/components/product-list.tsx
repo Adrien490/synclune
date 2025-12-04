@@ -73,6 +73,7 @@ export function ProductList({
 									url: primaryImage.url,
 									alt: primaryImage.alt || null,
 									mediaType: primaryImage.mediaType,
+									blurDataUrl: primaryImage.blurDataUrl,
 								}}
 							/>
 						</div>

@@ -20,6 +20,7 @@ interface ProductCardProps {
 		url: string;
 		alt: string | null;
 		mediaType: "IMAGE"; // Les médias principaux sont TOUJOURS des images
+		blurDataUrl?: string; // Base64 blur placeholder pour CLS optimization
 	}; // IMPORTANT: primaryImage n'est jamais null grâce à getPrimaryImage()
 	showDescription?: boolean;
 	size?: "sm" | "md" | "lg";
@@ -144,7 +145,8 @@ export function ProductCard({
 							alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
 							fill
 							className="object-cover rounded-t-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
-							placeholder="empty"
+							placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
+							blurDataURL={primaryImage.blurDataUrl}
 							// Preload pour les 4 premières images (above-fold) - Next.js 16
 							preload={index !== undefined && index < 4}
 							loading={index !== undefined && index < 4 ? undefined : "lazy"}

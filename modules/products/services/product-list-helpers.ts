@@ -145,6 +145,7 @@ export function getPrimaryImageForList(product: ProductFromList): {
 	url: string;
 	alt?: string;
 	mediaType: "IMAGE";
+	blurDataUrl?: string;
 } {
 	// Priorité 1: Image du SKU principal
 	const primarySku = getPrimarySkuForList(product);
@@ -164,6 +165,7 @@ export function getPrimaryImageForList(product: ProductFromList): {
 							"Image principale"
 						}`
 				),
+				blurDataUrl: primaryImage.blurDataUrl ?? undefined,
 			};
 		}
 
@@ -182,6 +184,7 @@ export function getPrimaryImageForList(product: ProductFromList): {
 							"Image principale"
 						}`
 				),
+				blurDataUrl: firstImage.blurDataUrl ?? undefined,
 			};
 		}
 	}
@@ -205,6 +208,7 @@ export function getPrimaryImageForList(product: ProductFromList): {
 									sku.material?.name || sku.color?.name || "Variante"
 								}`
 						),
+						blurDataUrl: skuImage.blurDataUrl ?? undefined,
 					};
 				}
 			}

@@ -106,6 +106,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 									url: primaryImage.url,
 									alt: primaryImage.alt || null,
 									mediaType: primaryImage.mediaType,
+									blurDataUrl: primaryImage.blurDataUrl,
 								}}
 								index={index}
 								viewTransitionContext="mobile"
@@ -141,6 +142,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 									url: primaryImage.url,
 									alt: primaryImage.alt || null,
 									mediaType: primaryImage.mediaType,
+									blurDataUrl: primaryImage.blurDataUrl,
 								}}
 								index={index}
 							/>

@@ -304,6 +304,8 @@ Si le même produit peut apparaître plusieurs fois sur la même page (ex: dans 
 
 **Cas d'usage :**
 - `RelatedProducts` utilise `viewTransitionContext="related"` pour éviter les conflits avec `ProductInfo` et `MediaRenderer` sur la page de détail produit.
+- `LatestCreations` utilise `viewTransitionContext="mobile"` pour la grille mobile (les mêmes produits sont rendus deux fois : mobile + desktop).
+- `WishlistProductCard` utilise `viewTransitionContext="wishlist"` pour les favoris.
 
 ---
 

@@ -24,6 +24,7 @@ export interface GalleryMedia {
 	altText?: string;
 	mediaType: "IMAGE" | "VIDEO";
 	thumbnailUrl?: string | null;
+	blurDataUrl?: string | null;
 }
 
 interface MediaGalleryProps {
@@ -211,6 +212,8 @@ export function MediaGallery({
 										loading={index > 0 ? "lazy" : undefined}
 										decoding="async"
 										onLoad={() => handleImageLoaded(media.url)}
+										placeholder={media.blurDataUrl ? "blur" : "empty"}
+										blurDataURL={media.blurDataUrl ?? undefined}
 									/>
 								)}
 							</div>
