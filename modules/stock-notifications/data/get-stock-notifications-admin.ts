@@ -39,7 +39,7 @@ export interface StockNotificationAdmin {
 		color: { name: string; hex: string } | null;
 		material: { id: string; name: string } | null;
 		size: string | null;
-		images: Array<{ url: string; blurDataUrl: string | null; isPrimary: boolean }>;
+		images: { url: string; blurDataUrl: string | null; isPrimary: boolean }[];
 		product: {
 			id: string;
 			slug: string;
