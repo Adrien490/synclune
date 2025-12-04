@@ -136,7 +136,7 @@ export async function RefundsDataTable({
 										<RefundsTableSelectionCell type="row" refundId={refund.id} />
 									</TableCell>
 									<TableCell role="gridcell">
-										<ViewTransition name={`admin-order-${refund.order.id}`}>
+										<ViewTransition name={`admin-order-${refund.order.id}`} default="vt-table-link">
 											<Link
 												href={`/admin/ventes/commandes/${refund.order.id}`}
 												className="font-mono text-sm font-medium text-foreground underline"

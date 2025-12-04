@@ -185,7 +185,7 @@ export async function ProductVariantsDataTable({
 											role="gridcell"
 											className="hidden md:table-cell py-3"
 										>
-											<ViewTransition name={`admin-sku-image-${sku.id}`}>
+											<ViewTransition name={`admin-sku-image-${sku.id}`} default="vt-product-image" share="vt-product-image">
 											<div className="w-20 h-20 relative shrink-0">
 												{primaryImage ? (
 													primaryImage.mediaType === "VIDEO" ? (
@@ -221,7 +221,7 @@ export async function ProductVariantsDataTable({
 										</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-sku-name-${sku.id}`}>
+											<ViewTransition name={`admin-sku-name-${sku.id}`} default="vt-title">
 												<div className="flex flex-col gap-1">
 													<span className="font-medium">{sku.sku}</span>
 													{sku.isDefault && (

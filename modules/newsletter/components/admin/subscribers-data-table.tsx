@@ -77,7 +77,7 @@ export async function SubscribersDataTable({
 										<SubscribersTableSelectionCell type="row" subscriberId={subscriber.id} />
 									</TableCell>
 									<TableCell className="font-medium">
-										<ViewTransition name={`admin-subscriber-${subscriber.id}`}>
+										<ViewTransition name={`admin-subscriber-${subscriber.id}`} default="vt-table-link">
 											<span>{subscriber.email}</span>
 										</ViewTransition>
 									</TableCell>

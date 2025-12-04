@@ -121,7 +121,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 											<OrdersTableSelectionCell type="row" orderId={order.id} />
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-order-${order.id}`}>
+											<ViewTransition name={`admin-order-${order.id}`} default="vt-table-link">
 												<Link
 													href={`/admin/ventes/commandes/${order.id}`}
 													className="font-mono text-sm font-medium text-foreground underline"

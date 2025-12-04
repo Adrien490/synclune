@@ -93,7 +93,7 @@ export async function StripePaymentsDataTable({
 										</TableCell>
 										{/* Commande */}
 										<TableCell>
-											<ViewTransition name={`admin-order-${payment.id}`}>
+											<ViewTransition name={`admin-order-${payment.id}`} default="vt-table-link">
 												<Link
 													href={`/admin/ventes/commandes/${payment.id}`}
 													className="font-mono text-sm font-medium text-foreground underline"

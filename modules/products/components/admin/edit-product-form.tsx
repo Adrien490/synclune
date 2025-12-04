@@ -84,7 +84,7 @@ export function EditProductForm({
 
 	return (
 		<>
-			<ViewTransition name={`admin-product-title-${product.slug}`}>
+			<ViewTransition name={`admin-product-title-${product.slug}`} default="vt-title">
 				<h1 className="text-2xl font-semibold mb-6">{product.title}</h1>
 			</ViewTransition>
 			<form

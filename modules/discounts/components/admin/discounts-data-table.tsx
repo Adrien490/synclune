@@ -155,7 +155,7 @@ export async function DiscountsDataTable({
 											/>
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-discount-${discount.id}`}>
+											<ViewTransition name={`admin-discount-${discount.id}`} default="vt-table-link">
 												<code className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded">
 													{discount.code}
 												</code>

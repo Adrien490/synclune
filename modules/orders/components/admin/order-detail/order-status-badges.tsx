@@ -17,7 +17,7 @@ export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 
 	return (
 		<div className="flex flex-wrap gap-2" role="group" aria-label="Statuts de la commande">
-			<ViewTransition name={`admin-order-${order.id}-status`}>
+			<ViewTransition name={`admin-order-${order.id}-status`} default="vt-badge">
 				<Badge
 					variant={ORDER_STATUS_VARIANTS[order.status]}
 					className="text-sm"
@@ -27,7 +27,7 @@ export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 					{orderStatusLabel}
 				</Badge>
 			</ViewTransition>
-			<ViewTransition name={`admin-order-${order.id}-payment`}>
+			<ViewTransition name={`admin-order-${order.id}-payment`} default="vt-badge">
 				<Badge
 					variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}
 					className="text-sm"
@@ -37,7 +37,7 @@ export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 					{paymentStatusLabel}
 				</Badge>
 			</ViewTransition>
-			<ViewTransition name={`admin-order-${order.id}-fulfillment`}>
+			<ViewTransition name={`admin-order-${order.id}-fulfillment`} default="vt-badge">
 				<Badge
 					variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
 					className="text-sm"

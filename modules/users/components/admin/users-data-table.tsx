@@ -111,7 +111,7 @@ export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
 											<UsersTableSelectionCell type="row" userId={user.id} />
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-user-name-${user.id}`}>
+											<ViewTransition name={`admin-user-name-${user.id}`} default="vt-title">
 												<div className="overflow-hidden">
 													<span
 														className="font-bold truncate block"
@@ -123,7 +123,7 @@ export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
 											</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-user-email-${user.id}`}>
+											<ViewTransition name={`admin-user-email-${user.id}`} default="vt-table-link">
 												<div className="flex items-center gap-2">
 													<span className="text-sm truncate">{user.email}</span>
 													{user.emailVerified && (

@@ -260,7 +260,7 @@ export async function ProductsDataTable({
 											role="gridcell"
 											className="hidden sm:table-cell py-3"
 										>
-											<ViewTransition name={`admin-product-image-${product.slug}`}>
+											<ViewTransition name={`admin-product-image-${product.slug}`} default="vt-product-image" share="vt-product-image">
 												<div className="w-20 h-20 relative shrink-0">
 													{defaultImage ? (
 														<Image
@@ -286,7 +286,7 @@ export async function ProductsDataTable({
 										</TableCell>
 										<TableCell role="gridcell">
 											<div className="overflow-hidden">
-												<ViewTransition name={`admin-product-title-${product.slug}`}>
+												<ViewTransition name={`admin-product-title-${product.slug}`} default="vt-title">
 													<Link
 														href={`/admin/catalogue/produits/${product.slug}/modifier`}
 														className="font-semibold text-foreground hover:underline hover:text-foreground truncate block"

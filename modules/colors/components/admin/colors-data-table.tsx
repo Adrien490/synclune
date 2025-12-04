@@ -103,7 +103,7 @@ export function ColorsDataTable({ colorsPromise }: ColorsDataTableProps) {
 											<ColorsTableSelectionCell type="row" colorId={color.id} />
 										</TableCell>
 										<TableCell role="gridcell" className="hidden md:table-cell">
-											<ViewTransition name={`admin-color-preview-${color.id}`}>
+											<ViewTransition name={`admin-color-preview-${color.id}`} default="vt-color-preview">
 												<div
 													className="w-[30px] h-[30px] rounded-full inline-flex border border-border"
 													style={{ backgroundColor: color.hex }}
@@ -111,7 +111,7 @@ export function ColorsDataTable({ colorsPromise }: ColorsDataTableProps) {
 											</ViewTransition>
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-color-name-${color.id}`}>
+											<ViewTransition name={`admin-color-name-${color.id}`} default="vt-title">
 												<div className="overflow-hidden">
 													<span
 														className="font-semibold text-foreground truncate block"

@@ -96,7 +96,7 @@ function MediaRendererComponent({
 	// Première image avec ViewTransition pour transition fluide entre pages
 	if (isFirst) {
 		return (
-			<ViewTransition name={`product-image-${productSlug}`}>
+			<ViewTransition name={`product-image-${productSlug}`} default="vt-product-image" share="vt-product-image">
 				{ImageComponent}
 			</ViewTransition>
 		);

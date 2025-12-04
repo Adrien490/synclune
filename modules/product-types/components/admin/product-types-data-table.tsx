@@ -130,7 +130,7 @@ export async function ProductTypesDataTable({
 											/>
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-product-type-${productType.id}`}>
+											<ViewTransition name={`admin-product-type-${productType.id}`} default="vt-title">
 												<div className="overflow-hidden">
 													<span
 														className="font-semibold text-foreground truncate block"

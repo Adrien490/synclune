@@ -158,7 +158,7 @@ export async function CollectionsDataTable({
 											/>
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-collection-name-${collection.id}`}>
+											<ViewTransition name={`admin-collection-name-${collection.id}`} default="vt-title">
 												<div className="overflow-hidden">
 													<span
 														className="font-semibold text-foreground truncate block"

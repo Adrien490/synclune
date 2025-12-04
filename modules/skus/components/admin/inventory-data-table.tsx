@@ -129,7 +129,7 @@ export async function InventoryDataTable({
 									<TableRow key={sku.id}>
 										{/* Image - 80x80 comme products */}
 										<TableCell className="hidden sm:table-cell py-3">
-											<ViewTransition name={`admin-sku-image-${sku.id}`}>
+											<ViewTransition name={`admin-sku-image-${sku.id}`} default="vt-product-image" share="vt-product-image">
 												<div className="w-20 h-20 relative shrink-0">
 													{primaryImage ? (
 														primaryImage.mediaType === "VIDEO" ? (
@@ -176,7 +176,7 @@ export async function InventoryDataTable({
 										{/* Produit - titre avec variante */}
 										<TableCell>
 											<div className="overflow-hidden">
-												<ViewTransition name={`admin-sku-${sku.id}`}>
+												<ViewTransition name={`admin-sku-${sku.id}`} default="vt-table-link">
 													<Link
 														href={`/admin/catalogue/produits/${sku.product.slug}/variantes`}
 														className="font-semibold text-foreground hover:underline truncate block"

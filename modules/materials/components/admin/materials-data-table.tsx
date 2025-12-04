@@ -112,7 +112,7 @@ export function MaterialsDataTable({ materialsPromise }: MaterialsDataTableProps
 											<MaterialsTableSelectionCell type="row" materialId={material.id} />
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-material-name-${material.id}`}>
+											<ViewTransition name={`admin-material-name-${material.id}`} default="vt-title">
 												<div className="overflow-hidden">
 													<span
 														className="font-semibold text-foreground truncate block"
