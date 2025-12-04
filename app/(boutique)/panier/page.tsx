@@ -14,6 +14,10 @@ import { CartItemsListSkeleton } from "@/modules/cart/components/cart-items-list
 import { CartSummary } from "@/modules/cart/components/cart-summary";
 import { getCart } from "@/modules/cart/data/get-cart";
 import { RemoveCartItemAlertDialog } from "@/modules/cart/components/remove-cart-item-alert-dialog";
+import {
+  CartRecommendations,
+  CartRecommendationsSkeleton,
+} from "@/modules/products/components/cart-recommendations";
 import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from "next";
@@ -103,6 +107,11 @@ export default async function CartPage() {
                 </Button>
               </EmptyContent>
             </Empty>
+
+            {/* Recommandations même si panier vide */}
+            <Suspense fallback={<CartRecommendationsSkeleton limit={4} />}>
+              <CartRecommendations limit={4} />
+            </Suspense>
           </div>
         </section>
       </div>
@@ -135,6 +144,11 @@ export default async function CartPage() {
               </Suspense>
             </div>
           </div>
+
+          {/* Recommandations "Tu pourrais aimer" */}
+          <Suspense fallback={<CartRecommendationsSkeleton limit={4} />}>
+            <CartRecommendations limit={4} />
+          </Suspense>
         </div>
       </section>
 

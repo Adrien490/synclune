@@ -2,8 +2,9 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { motion, useReducedMotion } from "framer-motion";
-import { memo, useEffect, useMemo, useState } from "react";
+import { motion, useInView, useReducedMotion } from "framer-motion";
+import { memo, useMemo, useRef, useSyncExternalStore } from "react";
+import { MOTION_CONFIG } from "./motion.config";
 
 // ============================================================================
 // TYPES
@@ -54,14 +55,19 @@ const ParticleSystemBase = ({
 	duration = 20,
 	className,
 }: ParticleSystemProps) => {
-	const [isMounted, setIsMounted] = useState(false);
+	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
 	const isMobile = useIsMobile();
 
-	// Évite l'hydration mismatch en rendant uniquement côté client
-	useEffect(() => {
-		setIsMounted(true);
-	}, []);
+	// Évite l'hydration mismatch avec useSyncExternalStore (pattern React 19)
+	const isMounted = useSyncExternalStore(
+		() => () => {},
+		() => true,
+		() => false
+	);
+
+	// Lazy rendering : n'anime que si visible
+	const isInView = useInView(containerRef, { once: true, margin: "-100px" });
 
 	// Réduire le nombre de particules sur mobile
 	const particleCount = isMobile ? Math.ceil(count / 2) : count;
@@ -100,6 +106,7 @@ const ParticleSystemBase = ({
 	if (reducedMotion) {
 		return (
 			<div
+				ref={containerRef}
 				aria-hidden="true"
 				className={cn("absolute inset-0 pointer-events-none overflow-hidden", className)}
 			>
@@ -124,34 +131,37 @@ const ParticleSystemBase = ({
 
 	return (
 		<div
+			ref={containerRef}
 			aria-hidden="true"
 			className={cn("absolute inset-0 pointer-events-none overflow-hidden", className)}
 		>
-			{particles.map((p) => (
-				<motion.span
-					key={p.id}
-					className="absolute rounded-full will-change-transform"
-					style={{
-						left: `${p.x}%`,
-						top: `${p.y}%`,
-						backgroundColor: p.color,
-						filter: `blur(${blur}px)`,
-					}}
-					animate={{
-						width: [p.size, p.size * 1.4, p.size * 0.8, p.size],
-						height: [p.size, p.size * 1.4, p.size * 0.8, p.size],
-						opacity: [p.opacity, p.opacity * 1.5, p.opacity * 0.6, p.opacity],
-						x: ["0%", "8%", "-8%", "0%"],
-						y: ["0%", "-6%", "6%", "0%"],
-					}}
-					transition={{
-						duration: p.duration,
-						delay: p.delay,
-						ease: "easeInOut",
-						repeat: Infinity,
-					}}
-				/>
-			))}
+			{isInView &&
+				particles.map((p) => (
+					<motion.span
+						key={p.id}
+						className="absolute rounded-full will-change-transform"
+						style={{
+							width: p.size,
+							height: p.size,
+							left: `${p.x}%`,
+							top: `${p.y}%`,
+							backgroundColor: p.color,
+							filter: `blur(${blur}px)`,
+						}}
+						animate={{
+							scale: [1, 1.4, 0.8, 1],
+							opacity: [p.opacity, p.opacity * 1.5, p.opacity * 0.6, p.opacity],
+							x: ["0%", "8%", "-8%", "0%"],
+							y: ["0%", "-6%", "6%", "0%"],
+						}}
+						transition={{
+							duration: p.duration,
+							delay: p.delay,
+							ease: MOTION_CONFIG.easing.easeInOut,
+							repeat: Infinity,
+						}}
+					/>
+				))}
 		</div>
 	);
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import { memo, useMemo, useRef } from "react";
 
@@ -121,16 +122,6 @@ const generateBubbles = (count: number): Bubble[] => {
 		waveAmplitude: random(DEFAULT_CONFIG.WAVE_MIN, DEFAULT_CONFIG.WAVE_MAX),
 		color: BUBBLE_COLORS[Math.floor(Math.random() * BUBBLE_COLORS.length)],
 	}));
-};
-
-/**
- * Détecte si on est sur mobile
- */
-const useIsMobile = (): boolean => {
-	return useMemo(() => {
-		if (typeof window === "undefined") return false;
-		return window.innerWidth < 768;
-	}, []);
 };
 
 /**
