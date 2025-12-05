@@ -816,3 +816,58 @@ textarea {
 		transform: scale(1);
 	}
 }
+
+/* ============================================
+   SONNER TOASTS - Design Bijoux Synclune
+   ============================================ */
+
+[data-sonner-toast] {
+	background: oklch(from var(--card) l c h / 0.95) !important;
+	backdrop-filter: blur(4px);
+	border: 1px solid oklch(from var(--border) l c h / 0.4) !important;
+	border-radius: var(--radius-xl) !important;
+	box-shadow:
+		0 4px 6px -1px oklch(from var(--primary) l c h / 0.05),
+		0 2px 4px -2px oklch(from var(--primary) l c h / 0.05) !important;
+	padding: 0.875rem 1rem !important;
+	gap: 0.75rem !important;
+}
+
+.dark [data-sonner-toast] {
+	box-shadow:
+		0 4px 6px -1px oklch(from var(--primary) l c h / 0.1),
+		0 2px 4px -2px oklch(from var(--primary) l c h / 0.1) !important;
+}
+
+[data-sonner-toast] [data-title] {
+	font-weight: 500 !important;
+	font-size: 0.875rem !important;
+	color: var(--foreground) !important;
+	letter-spacing: -0.01em !important;
+}
+
+[data-sonner-toast] [data-description] {
+	font-size: 0.875rem !important;
+	color: var(--muted-foreground) !important;
+}
+
+/* Bordure latérale par type */
+[data-sonner-toast][data-type="success"] {
+	border-left: 3px solid var(--primary) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+	border-left: 3px solid var(--destructive) !important;
+}
+
+[data-sonner-toast][data-type="warning"] {
+	border-left: 3px solid var(--secondary) !important;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+	[data-sonner-toast] {
+		animation: none !important;
+		transition: none !important;
+	}
+}

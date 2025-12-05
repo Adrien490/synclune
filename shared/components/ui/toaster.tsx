@@ -5,12 +5,17 @@ import { useTheme } from "next-themes";
 
 /**
  * Icônes bijoux raffinées pour les toasts Synclune
- * Design ultrathink avec touches rose & doré
+ * Design ultrathink (stroke 1.5) avec touches rose & doré
+ *
+ * Métaphores:
+ * - Success: Diamant avec sparkle doré
+ * - Error: Coeur brisé
+ * - Warning: Étoile/sparkle
+ * - Loading: Anneau/bague qui tourne
  */
 const icons = {
 	success: (
-		<div className="relative">
-			{/* Diamant/gemme - symbole de réussite précieuse */}
+		<div className="relative" aria-hidden="true">
 			<svg
 				className="size-[18px] text-primary"
 				viewBox="0 0 24 24"
@@ -23,20 +28,15 @@ const icons = {
 					strokeLinejoin="round"
 					d="M12 3L4 9l8 12 8-12-8-6z"
 				/>
-				<path
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					d="M4 9h16"
-				/>
+				<path strokeLinecap="round" strokeLinejoin="round" d="M4 9h16" />
 				<path
 					strokeLinecap="round"
 					strokeLinejoin="round"
 					d="M8.5 9L12 21l3.5-12"
 				/>
 			</svg>
-			{/* Sparkle doré subtil */}
 			<svg
-				className="absolute -top-0.5 -right-0.5 size-2 text-secondary animate-pulse"
+				className="absolute -top-0.5 -right-0.5 size-2 text-secondary animate-sparkle-pulse"
 				viewBox="0 0 24 24"
 				fill="currentColor"
 			>
@@ -51,8 +51,8 @@ const icons = {
 			fill="none"
 			strokeWidth="1.5"
 			stroke="currentColor"
+			aria-hidden="true"
 		>
-			{/* Coeur brisé - métaphore bijou */}
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"
@@ -72,8 +72,8 @@ const icons = {
 			fill="none"
 			strokeWidth="1.5"
 			stroke="currentColor"
+			aria-hidden="true"
 		>
-			{/* Étoile/sparkle - attention élégante */}
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"
@@ -82,24 +82,8 @@ const icons = {
 			<circle cx="12" cy="12" r="1" fill="currentColor" />
 		</svg>
 	),
-	info: (
-		<svg
-			className="size-[18px] text-muted-foreground"
-			viewBox="0 0 24 24"
-			fill="none"
-			strokeWidth="1.5"
-			stroke="currentColor"
-		>
-			{/* Perle - information précieuse */}
-			<circle cx="12" cy="12" r="8" />
-			<ellipse cx="9" cy="9" rx="2" ry="1.5" className="opacity-40" fill="currentColor" />
-			<path strokeLinecap="round" d="M12 11v5" />
-			<circle cx="12" cy="8" r="0.5" fill="currentColor" />
-		</svg>
-	),
 	loading: (
-		<div className="relative size-[18px]">
-			{/* Anneau/bague qui tourne - loading bijou */}
+		<div className="relative size-[18px]" aria-hidden="true">
 			<svg
 				className="size-full text-primary/30"
 				viewBox="0 0 24 24"
@@ -113,22 +97,10 @@ const icons = {
 				className="absolute inset-0 size-full text-primary animate-spin"
 				viewBox="0 0 24 24"
 				fill="none"
-				strokeWidth="2"
+				strokeWidth="1.5"
 				stroke="currentColor"
 			>
-				<path
-					strokeLinecap="round"
-					d="M12 4a8 8 0 0 1 6.93 4"
-				/>
-			</svg>
-			{/* Petite gemme sur l'anneau */}
-			<svg
-				className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-px size-1.5 text-secondary animate-spin"
-				style={{ animationDuration: "1s" }}
-				viewBox="0 0 24 24"
-				fill="currentColor"
-			>
-				<path d="M12 2L14 10L12 12L10 10L12 2Z" />
+				<path strokeLinecap="round" d="M12 4a8 8 0 0 1 6.93 4" />
 			</svg>
 		</div>
 	),
@@ -144,17 +116,6 @@ export function AppToaster() {
 			duration={2500}
 			visibleToasts={3}
 			icons={icons}
-			toastOptions={{
-				classNames: {
-					toast: "!bg-card/95 !backdrop-blur-sm !border-border/40 !rounded-xl !shadow-lg !shadow-primary/5 !py-3.5 !px-4 !gap-3",
-					title: "!font-medium !text-sm !text-foreground !tracking-tight",
-					description: "!text-sm !text-muted-foreground",
-					success: "!border-l-[3px] !border-l-primary !shadow-primary/10",
-					error: "!border-l-[3px] !border-l-destructive !shadow-destructive/10",
-					warning: "!border-l-[3px] !border-l-secondary !shadow-secondary/10",
-					info: "!border-l-[3px] !border-l-muted-foreground/30",
-				},
-			}}
 		/>
 	);
 }

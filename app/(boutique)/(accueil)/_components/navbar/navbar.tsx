@@ -12,8 +12,8 @@ import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarWrapper } from "./navbar-wrapper";
 
-/** Classes communes pour les liens icônes de la navbar */
-const iconLinkClassName = "relative inline-flex items-center justify-center p-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group";
+/** Classes communes pour les liens icônes de la navbar (sans display pour permettre hidden/inline-flex conditionnel) */
+const iconLinkClassName = "relative items-center justify-center p-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group";
 
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
@@ -99,7 +99,7 @@ export async function Navbar() {
 								{userIsAdmin && (
 									<Link
 										href="/admin"
-										className={`hidden sm:inline-flex ${iconLinkClassName}`}
+										className={`inline-flex ${iconLinkClassName}`}
 										aria-label="Accéder au tableau de bord"
 									>
 										<LayoutDashboard
@@ -125,10 +125,10 @@ export async function Navbar() {
 									/>
 								</Link>
 
-								{/* Icône favoris (toujours visible) */}
+								{/* Icône favoris (desktop uniquement) */}
 								<Link
 									href="/favoris"
-									className={iconLinkClassName}
+									className={`hidden sm:inline-flex ${iconLinkClassName}`}
 									aria-label="Ouvrir mes favoris"
 								>
 									<Heart
@@ -142,7 +142,7 @@ export async function Navbar() {
 								{/* Icône panier (toujours visible) */}
 								<Link
 									href="/panier"
-									className={iconLinkClassName}
+									className={`inline-flex ${iconLinkClassName}`}
 									aria-label="Ouvrir mon panier"
 								>
 									<ShoppingCart

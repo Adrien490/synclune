@@ -34,6 +34,13 @@ export function Logo({
 	// Taille du texte proportionnelle à la taille du logo
 	const textSizeClass = size >= 64 ? "text-3xl" : size >= 48 ? "text-2xl" : "text-xl";
 
+	// Classes communes pour les liens (évite la duplication)
+	const linkClassName = cn(
+		"inline-flex items-center",
+		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+		"rounded-full transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+	);
+
 	const logoContent = (
 		<div className={cn("inline-flex items-center gap-3", className)}>
 			<div
@@ -51,6 +58,7 @@ export function Logo({
 					placeholder="blur"
 					blurDataURL={BLUR_DATA_URL}
 					aria-hidden={showText || undefined}
+					itemProp="image"
 				/>
 			</div>
 			{showText && (
@@ -80,8 +88,8 @@ export function Logo({
 					href={href}
 					rel="home"
 					itemProp="url"
-					className="inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
-					aria-label={showText ? "Retour à l'accueil" : `Retour à l'accueil - ${BRAND.name}`}
+					className={linkClassName}
+					aria-label={showText ? undefined : `${BRAND.name} - Accueil`}
 				>
 					<div itemProp="logo">{logoContent}</div>
 				</Link>
@@ -95,8 +103,8 @@ export function Logo({
 		return (
 			<Link
 				href={href}
-				className="inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
-				aria-label={showText ? undefined : BRAND.name}
+				className={linkClassName}
+				aria-label={showText ? undefined : `${BRAND.name} - Accueil`}
 			>
 				{logoContent}
 			</Link>
