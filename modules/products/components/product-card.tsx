@@ -7,6 +7,8 @@ import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { ProductPriceCompact } from "./product-price";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
+import { ColorSwatches } from "./color-swatches";
+import type { ColorSwatch } from "@/modules/products/services/product-list-helpers";
 
 /**
  * Props pour le composant ProductCard
@@ -41,6 +43,14 @@ interface ProductCardProps {
 	primarySkuId?: string;
 	/** Indique si le SKU est dans la wishlist (optionnel, défaut false) */
 	isInWishlist?: boolean;
+	/** Couleurs disponibles pour les pastilles (si multi-variantes) */
+	colors?: ColorSwatch[];
+	/** Indique si le produit a plusieurs variantes nécessitant un drawer */
+	hasMultipleVariants?: boolean;
+	/** Callback pour ouvrir le drawer de sélection (panier) */
+	onOpenCartDrawer?: () => void;
+	/** Callback pour ouvrir le drawer de sélection (wishlist) */
+	onOpenWishlistDrawer?: () => void;
 }
 
 /**
@@ -88,6 +98,10 @@ export function ProductCard({
 	viewTransitionContext,
 	primarySkuId,
 	isInWishlist,
+	colors,
+	hasMultipleVariants = false,
+	onOpenCartDrawer,
+	onOpenWishlistDrawer,
 }: ProductCardProps) {
 	// Génération ID unique pour aria-labelledby (RSC compatible)
 	// Sanitise le slug pour éviter les ID HTML invalides (accents, apostrophes, etc.)
@@ -181,6 +195,8 @@ export function ProductCard({
 							isInWishlist={isInWishlist ?? false}
 							variant="card"
 							productTitle={title}
+							hasMultipleVariants={hasMultipleVariants}
+							onOpenDrawer={onOpenWishlistDrawer}
 						/>
 					)}
 					<ViewTransition name={`${vtPrefix}product-image-${slug}`} default="vt-product-image" share="vt-product-image">
@@ -203,6 +219,8 @@ export function ProductCard({
 						<AddToCartCardButton
 							skuId={primarySkuId}
 							productTitle={title}
+							hasMultipleVariants={hasMultipleVariants}
+							onOpenDrawer={onOpenCartDrawer}
 						/>
 					)}
 				</div>
@@ -222,6 +240,11 @@ export function ProductCard({
 							{title}
 						</h3>
 					</ViewTransition>
+
+					{/* Pastilles couleur pour les produits multi-variantes */}
+					{colors && colors.length > 1 && (
+						<ColorSwatches colors={colors} maxVisible={4} size="sm" />
+					)}
 
 					{/* Information de rupture de stock pour les technologies d'assistance */}
 					{stockStatus === "out_of_stock" && (

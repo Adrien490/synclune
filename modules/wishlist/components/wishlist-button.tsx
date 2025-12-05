@@ -17,6 +17,10 @@ interface WishlistButtonProps {
 	variant?: "detail" | "card";
 	productTitle?: string;
 	className?: string;
+	/** Si true, le produit a plusieurs variantes et nécessite le drawer */
+	hasMultipleVariants?: boolean;
+	/** Callback pour ouvrir le drawer de sélection */
+	onOpenDrawer?: () => void;
 }
 
 /**
@@ -27,6 +31,7 @@ interface WishlistButtonProps {
  * - `card` : Cartes produit, sans tooltip, visible au hover
  *
  * Optimistic UI pour feedback instantané.
+ * Si hasMultipleVariants: ouvre le drawer au lieu d'ajouter directement.
  */
 export function WishlistButton({
 	skuId,
@@ -34,6 +39,8 @@ export function WishlistButton({
 	variant = "detail",
 	productTitle,
 	className,
+	hasMultipleVariants = false,
+	onOpenDrawer,
 }: WishlistButtonProps) {
 	const { isInWishlist, action, isPending } = useWishlistToggle({
 		initialIsInWishlist,
@@ -93,6 +100,57 @@ export function WishlistButton({
 	}
 
 	// Variant: card (cartes produit)
+	// Si multi-variantes et callback fourni, ouvrir le drawer au click
+	const shouldOpenDrawer = variant === "card" && hasMultipleVariants && onOpenDrawer;
+
+	const handleCardClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		e.preventDefault();
+		if (shouldOpenDrawer) {
+			onOpenDrawer?.();
+		}
+	};
+
+	// Pour les produits multi-variantes avec variant card, bouton qui ouvre le drawer
+	if (shouldOpenDrawer) {
+		return (
+			<div
+				className={cn(
+					"absolute top-2.5 right-2.5 z-20",
+					"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100",
+					"transition-opacity duration-200",
+					className
+				)}
+			>
+				<button
+					type="button"
+					onClick={handleCardClick}
+					className={cn(
+						"h-9 w-9 rounded-full",
+						"flex items-center justify-center",
+						"hover:scale-110 active:scale-95",
+						"motion-safe:transition-all motion-safe:duration-300",
+						"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+					)}
+					aria-label={`Choisir les options pour ajouter ${productTitle ?? "ce produit"} à la wishlist`}
+				>
+					<HeartIcon
+						variant={isInWishlist ? "filled" : "outline"}
+						size={22}
+						decorative
+						className={cn(
+							"motion-safe:transition-all motion-safe:duration-300",
+							"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
+							isInWishlist &&
+								"scale-110 drop-shadow-[0_0_6px_rgba(215,168,178,0.7)]"
+						)}
+					/>
+				</button>
+			</div>
+		);
+	}
+
+	// Variant card standard (mono-SKU ou sans callback)
 	return (
 		<form
 			action={action}

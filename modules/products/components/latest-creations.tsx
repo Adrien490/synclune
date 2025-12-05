@@ -2,13 +2,15 @@ import { Stagger } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
-import { ProductCard } from "@/modules/products/components/product-card";
+import { ProductCardWithDrawer } from "@/modules/products/components/product-card-with-drawer";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
 	getPrimarySkuForList,
 	getStockInfoForList,
+	hasMultipleVariants,
+	getAvailableColorsForList,
 } from "@/modules/products/services/product-list-helpers";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { ArrowRight } from "lucide-react";
@@ -95,9 +97,11 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 						const { price } = getPrimaryPriceForList(product);
 						const stockInfo = getStockInfoForList(product);
 						const primaryImage = getPrimaryImageForList(product);
+						const multiVariants = hasMultipleVariants(product);
+						const colors = getAvailableColorsForList(product);
 
 						return (
-							<ProductCard
+							<ProductCardWithDrawer
 								key={product.id}
 								id={`mobile-${product.id}`}
 								slug={product.slug}
@@ -117,6 +121,9 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 								viewTransitionContext="mobile"
 								primarySkuId={primarySku?.id}
 								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
+								colors={colors}
+								hasMultipleVariants={multiVariants}
+								product={product}
 							/>
 						);
 					})}
@@ -135,9 +142,11 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 						const { price } = getPrimaryPriceForList(product);
 						const stockInfo = getStockInfoForList(product);
 						const primaryImage = getPrimaryImageForList(product);
+						const multiVariants = hasMultipleVariants(product);
+						const colors = getAvailableColorsForList(product);
 
 						return (
-							<ProductCard
+							<ProductCardWithDrawer
 								key={product.id}
 								id={`desktop-${product.id}`}
 								slug={product.slug}
@@ -156,6 +165,9 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 								index={index}
 								primarySkuId={primarySku?.id}
 								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
+								colors={colors}
+								hasMultipleVariants={multiVariants}
+								product={product}
 							/>
 						);
 					})}

@@ -12,6 +12,14 @@ export type SkuFromList = ProductFromList["skus"][0];
 
 export type StockStatus = "in_stock" | "out_of_stock"; // Système simplifié
 
+/** Type pour les pastilles couleur sur ProductCard */
+export type ColorSwatch = {
+	slug: string;
+	hex: string;
+	name: string;
+	inStock: boolean;
+};
+
 export type ProductStockInfo = {
 	status: StockStatus;
 	totalInventory: number;
@@ -333,4 +341,52 @@ export function getVariantCountForList(product: ProductFromList): {
 		sizes: uniqueSizes.size,
 		total: totalSkus,
 	};
+}
+
+/**
+ * Vérifie si un produit a plusieurs variantes nécessitant une sélection
+ * Retourne true si le produit a plus d'une couleur, matière OU taille
+ */
+export function hasMultipleVariants(product: ProductFromList): boolean {
+	const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
+	if (activeSkus.length <= 1) return false;
+
+	const uniqueColors = new Set(
+		activeSkus.map((s) => s.color?.slug).filter(Boolean)
+	);
+	const uniqueMaterials = new Set(
+		activeSkus.map((s) => s.material?.name).filter(Boolean)
+	);
+	const uniqueSizes = new Set(activeSkus.map((s) => s.size).filter(Boolean));
+
+	return (
+		uniqueColors.size > 1 || uniqueMaterials.size > 1 || uniqueSizes.size > 1
+	);
+}
+
+/**
+ * Extrait les couleurs disponibles pour les pastilles sur ProductCard
+ * Retourne un tableau de ColorSwatch avec info stock
+ */
+export function getAvailableColorsForList(product: ProductFromList): ColorSwatch[] {
+	const activeSkus = product.skus?.filter((sku) => sku.isActive && sku.color) || [];
+	const colorMap = new Map<string, ColorSwatch>();
+
+	for (const sku of activeSkus) {
+		if (!sku.color?.slug || !sku.color?.hex) continue;
+
+		const existing = colorMap.get(sku.color.slug);
+		// Si la couleur existe déjà et était en stock, on garde cet état
+		// Sinon on met à jour avec le stock du SKU actuel
+		const inStock = existing?.inStock || sku.inventory > 0;
+
+		colorMap.set(sku.color.slug, {
+			slug: sku.color.slug,
+			hex: sku.color.hex,
+			name: sku.color.name,
+			inStock,
+		});
+	}
+
+	return Array.from(colorMap.values());
 }

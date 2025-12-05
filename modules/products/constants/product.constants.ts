@@ -184,6 +184,7 @@ export const GET_PRODUCTS_SELECT = {
 			color: {
 				select: {
 					id: true,
+					slug: true,
 					name: true,
 					hex: true,
 				},
