@@ -163,7 +163,7 @@ export function ProductCard({
 							Plus que {inventory} !
 						</div>
 					)}
-					{/* Bouton wishlist - visible au hover */}
+					{/* Bouton wishlist - toujours visible sur mobile, visible au hover sur desktop */}
 					{primarySkuId && (
 						<WishlistButton
 							skuId={primarySkuId}
