@@ -61,29 +61,47 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		},
 	];
 
-	// Récupérer tous les produits publics
-	const { products } = await getProducts({
-		perPage: 1000,
-		sortBy: "created-descending",
-		filters: {
-			status: "PUBLIC",
-		},
-	});
+	// Récupérer tous les produits publics (pagination pour respecter la limite de 200)
+	const allProducts: Array<{ slug: string; updatedAt: Date }> = [];
+	let productCursor: string | undefined;
+	let hasMoreProducts = true;
 
-	const productPages: MetadataRoute.Sitemap = products.map((product) => ({
+	while (hasMoreProducts) {
+		const { products, nextCursor } = await getProducts({
+			perPage: 200,
+			cursor: productCursor,
+			sortBy: "created-descending",
+			filters: { status: "PUBLIC" },
+		});
+		allProducts.push(...products);
+		productCursor = nextCursor ?? undefined;
+		hasMoreProducts = !!nextCursor;
+	}
+
+	const productPages: MetadataRoute.Sitemap = allProducts.map((product) => ({
 		url: `${SITE_URL}/creations/${product.slug}`,
 		lastModified: new Date(product.updatedAt),
 		changeFrequency: "weekly",
 		priority: 0.7,
 	}));
 
-	// Récupérer toutes les collections
-	const { collections } = await getCollections({
-		perPage: 1000,
-		sortBy: "name-ascending",
-	});
+	// Récupérer toutes les collections (pagination)
+	const allCollections: Array<{ slug: string; updatedAt: Date }> = [];
+	let collectionCursor: string | undefined;
+	let hasMoreCollections = true;
 
-	const collectionPages: MetadataRoute.Sitemap = collections.map(
+	while (hasMoreCollections) {
+		const { collections, nextCursor } = await getCollections({
+			perPage: 200,
+			cursor: collectionCursor,
+			sortBy: "name-ascending",
+		});
+		allCollections.push(...collections);
+		collectionCursor = nextCursor ?? undefined;
+		hasMoreCollections = !!nextCursor;
+	}
+
+	const collectionPages: MetadataRoute.Sitemap = allCollections.map(
 		(collection) => ({
 			url: `${SITE_URL}/collections/${collection.slug}`,
 			lastModified: new Date(collection.updatedAt),
@@ -94,11 +112,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 	// Récupérer tous les types de produits actifs
 	const { productTypes } = await getProductTypes({
-		perPage: 100,
+		perPage: 200,
 		sortBy: "label-ascending",
-		filters: {
-			isActive: true,
-		},
+		filters: { isActive: true },
 	});
 
 	const productTypePages: MetadataRoute.Sitemap = productTypes.map((type) => ({

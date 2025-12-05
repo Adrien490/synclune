@@ -21,8 +21,8 @@ export type { CartSummary, GetCartSummaryReturn } from "../types/cart.types";
 export async function getCartSummary(): Promise<GetCartSummaryReturn> {
 	const session = await getSession();
 
-	const userId = session?.user?.id ?? null;
-	const sessionId = !userId ? await getCartSessionId() : null;
+	const userId = session?.user?.id;
+	const sessionId = !userId ? (await getCartSessionId()) ?? undefined : undefined;
 
 	return fetchCartSummary(userId, sessionId);
 }
@@ -41,11 +41,11 @@ export async function getCartSummary(): Promise<GetCartSummaryReturn> {
  * @returns Le résumé du panier
  */
 export async function fetchCartSummary(
-	userId: string | null,
-	sessionId: string | null
+	userId: string | undefined,
+	sessionId: string | undefined
 ): Promise<GetCartSummaryReturn> {
 	"use cache: private";
-	cacheCartSummary(userId ?? undefined, sessionId ?? undefined);
+	cacheCartSummary(userId, sessionId);
 
 	try {
 		const cart = await prisma.cart.findFirst({

@@ -50,7 +50,7 @@ export async function validateCart(cartId: string): Promise<ValidateCartResult> 
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
-		const rateLimit = checkRateLimit(`validate-cart:${rateLimitId}`, CART_LIMITS.VALIDATE);
+		const rateLimit = checkRateLimit(rateLimitId, CART_LIMITS.VALIDATE);
 
 		if (!rateLimit.success) {
 			return {
@@ -188,7 +188,13 @@ export async function validateCart(cartId: string): Promise<ValidateCartResult> 
 			issues,
 		};
 	} catch (error) {
-		throw error;
+		// Retourner un résultat structuré au lieu de throw
+		// pour rester cohérent avec le type ValidateCartResult
+		console.error("[validateCart] Erreur inattendue:", error);
+		return {
+			isValid: false,
+			issues: [],
+		};
 	}
 }
 

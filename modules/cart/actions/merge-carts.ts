@@ -93,7 +93,7 @@ export async function mergeCarts(
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-		const rateLimit = checkRateLimit(`merge-carts:${rateLimitId}`, CART_LIMITS.MERGE);
+		const rateLimit = checkRateLimit(rateLimitId, CART_LIMITS.MERGE);
 
 		if (!rateLimit.success) {
 			return {

@@ -5,6 +5,8 @@ import {
 	useOptimistic,
 	useCallback,
 	useTransition,
+	useRef,
+	useEffect,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { toggleWishlistItem } from "@/modules/wishlist/actions/toggle-wishlist-item";
@@ -55,6 +57,14 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		initialIsInWishlist
 	);
 
+	// Ref pour tracker l'état actuel sans re-render (évite closure stale)
+	const isInWishlistRef = useRef(initialIsInWishlist);
+
+	// Mise à jour de la ref dans useEffect pour éviter setState pendant le render
+	useEffect(() => {
+		isInWishlistRef.current = optimisticIsInWishlist;
+	}, [optimisticIsInWishlist]);
+
 	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(
 			toggleWishlistItem,
@@ -104,18 +114,19 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	const action = useCallback(
 		(formData: FormData) => {
 			startTransition(() => {
-				// Utilise la fonction updater pour éviter closure stale
-				// et avoir un callback stable sans optimisticIsInWishlist en dépendance
-				setOptimisticIsInWishlist((prev) => {
-					const newState = !prev;
-					// Mise à jour optimistic du badge navbar
-					if (newState) {
-						incrementWishlist();
-					} else {
-						decrementWishlist();
-					}
-					return newState;
-				});
+				// Utilise la ref pour lire l'état actuel (évite closure stale)
+				const currentState = isInWishlistRef.current;
+				const newState = !currentState;
+
+				// Mise à jour optimistic de l'icône coeur
+				setOptimisticIsInWishlist(newState);
+
+				// Mise à jour optimistic du badge navbar (séparé pour éviter setState pendant render)
+				if (newState) {
+					incrementWishlist();
+				} else {
+					decrementWishlist();
+				}
 
 				formAction(formData);
 			});

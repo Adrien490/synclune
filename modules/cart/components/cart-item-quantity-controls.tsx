@@ -48,7 +48,12 @@ export function CartItemQuantityControls({
 			</form>
 
 			{/* Affichage de la quantité */}
-			<ButtonGroupText className="h-10 min-w-[3rem] justify-center font-mono font-medium text-sm">
+			<ButtonGroupText
+				className="h-10 min-w-[3rem] justify-center font-mono font-medium text-sm"
+				role="status"
+				aria-live="polite"
+				aria-label={`Quantité : ${quantity}`}
+			>
 				{quantity}
 			</ButtonGroupText>
 
