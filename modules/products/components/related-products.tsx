@@ -101,7 +101,7 @@ export async function RelatedProducts({
 							index={index}
 							viewTransitionContext="related"
 							primarySkuId={primarySku?.id}
-							isInWishlist={wishlistSkuIds.has(primarySku?.id ?? "")}
+							isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 						/>
 					);
 				})}

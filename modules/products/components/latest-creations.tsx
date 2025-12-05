@@ -116,7 +116,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 								index={index}
 								viewTransitionContext="mobile"
 								primarySkuId={primarySku?.id}
-								isInWishlist={wishlistSkuIds.has(primarySku?.id ?? "")}
+								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 							/>
 						);
 					})}
@@ -155,7 +155,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 								}}
 								index={index}
 								primarySkuId={primarySku?.id}
-								isInWishlist={wishlistSkuIds.has(primarySku?.id ?? "")}
+								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 							/>
 						);
 					})}

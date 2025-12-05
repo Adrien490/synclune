@@ -97,7 +97,7 @@ export async function CartRecommendations({
 							index={index}
 							viewTransitionContext="cart-recommendations"
 							primarySkuId={primarySku?.id}
-							isInWishlist={wishlistSkuIds.has(primarySku?.id ?? "")}
+							isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 						/>
 					);
 				})}

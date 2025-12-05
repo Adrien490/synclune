@@ -81,7 +81,7 @@ export function ProductList({
 									blurDataUrl: primaryImage.blurDataUrl,
 								}}
 								primarySkuId={primarySku?.id}
-							isInWishlist={wishlistSkuIds.has(primarySku?.id ?? "")}
+							isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 							/>
 						</div>
 					);
