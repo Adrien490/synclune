@@ -2,25 +2,29 @@ import { Logo } from "@/shared/components/logo";
 import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/navigation";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
+import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { LayoutDashboard, ShoppingCart, User } from "lucide-react";
+import { Heart, LayoutDashboard, ShoppingCart, User } from "lucide-react";
 import Link from "next/link";
 import { CartBadge } from "@/modules/cart/components/cart-badge";
+import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarWrapper } from "./navbar-wrapper";
 
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
-	const [session, cartCount, userIsAdmin] =
+	const [session, cartCount, wishlistCount, userIsAdmin] =
 		await Promise.all([
 			getSession(),
 			getCartItemCount(),
+			getWishlistItemCount(),
 			isAdmin(),
 		]);
 
 	// Protection si les fonctions retournent undefined/null
 	const safeCartCount = cartCount ?? 0;
+	const safeWishlistCount = wishlistCount ?? 0;
 
 	// Générer les items de navigation mobile en fonction de la session et statut admin
 	const mobileNavItems = getMobileNavItems(session, [], [], userIsAdmin);
@@ -111,6 +115,20 @@ export async function Navbar() {
 										className="transition-transform duration-300 ease-out group-hover:scale-105"
 										aria-hidden="true"
 									/>
+								</Link>
+
+								{/* Icône wishlist (toujours visible) */}
+								<Link
+									href="/favoris"
+									className="relative inline-flex items-center justify-center p-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group"
+									aria-label="Ouvrir ma wishlist"
+								>
+									<Heart
+										size={20}
+										className="transition-transform duration-300 ease-out group-hover:scale-110"
+										aria-hidden="true"
+									/>
+									<WishlistBadge count={safeWishlistCount} />
 								</Link>
 
 								{/* Icône panier (toujours visible) */}

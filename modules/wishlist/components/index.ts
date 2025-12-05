@@ -1,3 +1,4 @@
+export { WishlistBadge } from "./wishlist-badge";
 export { WishlistButton } from "./wishlist-button";
 export { WishlistButtonCompact } from "./wishlist-button-compact";
 export { WishlistGrid } from "./wishlist-grid";
