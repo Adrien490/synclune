@@ -52,7 +52,7 @@ export function AddToCartCardButton({
 				)}
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
-				{isPending ? "Ajout..." : "Ajouter au panier"}
+				Ajouter au panier
 			</button>
 		</form>
 	);
