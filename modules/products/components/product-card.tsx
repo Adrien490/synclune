@@ -6,6 +6,7 @@ import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { ProductPriceCompact } from "./product-price";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
+import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
 
 /**
  * Props pour le composant ProductCard
@@ -89,7 +90,9 @@ export function ProductCard({
 	isInWishlist,
 }: ProductCardProps) {
 	// Génération ID unique pour aria-labelledby (RSC compatible)
-	const titleId = `product-title-${slug}`;
+	// Sanitise le slug pour éviter les ID HTML invalides (accents, apostrophes, etc.)
+	const sanitizedSlug = slug.replace(/[^a-z0-9-]/gi, "");
+	const titleId = `product-title-${sanitizedSlug}`;
 
 	// Déterminer si on affiche le badge urgency (stock bas mais pas rupture)
 	const showUrgencyBadge =
@@ -150,16 +153,24 @@ export function ProductCard({
 				aria-labelledby={titleId}
 			>
 				{/* Image principale (jamais de vidéo, jamais null grâce à getPrimaryImage()) */}
-				<div className="product-card-media relative aspect-4/5 overflow-hidden bg-muted transition-all duration-400 rounded-t-lg">
+				<div className="product-card-media relative aspect-4/5 overflow-hidden bg-muted transition-all duration-400 rounded-lg">
 					{/* Badge rupture de stock - Style plus doux */}
 					{stockStatus === "out_of_stock" && (
-						<div className="absolute top-2.5 left-2.5 bg-foreground/80 text-background px-2.5 py-1 rounded-full text-xs font-medium z-10 shadow-md backdrop-blur-sm">
+						<div
+							role="status"
+							aria-label={stockMessage}
+							className="absolute top-2.5 left-2.5 bg-foreground/80 text-background px-2.5 py-1 rounded-full text-xs font-medium z-10 shadow-md backdrop-blur-sm"
+						>
 							{stockMessage}
 						</div>
 					)}
 					{/* Badge urgency - Stock bas mais disponible */}
 					{showUrgencyBadge && (
-						<div className="absolute top-2.5 left-2.5 bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium z-10 shadow-md">
+						<div
+							role="status"
+							aria-label={`Stock limité : plus que ${inventory} exemplaire${inventory && inventory > 1 ? "s" : ""} disponible${inventory && inventory > 1 ? "s" : ""}`}
+							className="absolute top-2.5 left-2.5 bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium z-10 shadow-md"
+						>
 							Plus que {inventory} !
 						</div>
 					)}
@@ -177,7 +188,7 @@ export function ProductCard({
 							src={primaryImage.url}
 							alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
 							fill
-							className="object-cover rounded-t-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
+							className="object-cover rounded-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
 							placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={primaryImage.blurDataUrl}
 							// Preload pour les 4 premières images (above-fold) - Next.js 16
@@ -187,6 +198,13 @@ export function ProductCard({
 							itemProp="image"
 						/>
 					</ViewTransition>
+					{/* Bouton d'ajout au panier (visible au hover, masqué si rupture) */}
+					{primarySkuId && stockStatus === "in_stock" && (
+						<AddToCartCardButton
+							skuId={primarySkuId}
+							productTitle={title}
+						/>
+					)}
 				</div>
 
 				{/* Contenu (plus de Link imbriqué) */}

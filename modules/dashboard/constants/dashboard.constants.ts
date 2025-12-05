@@ -78,8 +78,4 @@ export const GET_DASHBOARD_STOCK_ALERTS_SELECT = {
 export const DASHBOARD_RECENT_ORDERS_LIMIT = 5;
 export const DASHBOARD_TOP_PRODUCTS_LIMIT = 5;
 export const DASHBOARD_STOCK_ALERTS_LIMIT = 10;
-/**
- * @deprecated Utiliser LOW_STOCK_THRESHOLD depuis @/modules/skus/constants/inventory.constants
- */
-export { LOW_STOCK_THRESHOLD as DASHBOARD_LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
 

@@ -1,5 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
+import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import type { StockAlertItem, GetStockAlertsReturn } from "../types/dashboard.types";
@@ -14,7 +14,7 @@ export type GetDashboardStockAlertsReturn = GetStockAlertsReturn;
 
 /**
  * Action serveur pour recuperer les alertes stock
- * Ruptures (inventory = 0) + faible stock (inventory < LOW_STOCK_THRESHOLD)
+ * Ruptures (inventory = 0) + faible stock (inventory <= STOCK_THRESHOLDS.LOW)
  *
  * @param skip - Nombre d'alertes a ignorer (pagination)
  * @param take - Nombre d'alertes a retourner (pagination)
@@ -49,7 +49,7 @@ export async function fetchDashboardStockAlerts(
 	const whereClause = {
 		isActive: true,
 		inventory: {
-			lt: LOW_STOCK_THRESHOLD,
+			lte: STOCK_THRESHOLDS.LOW,
 		},
 	};
 

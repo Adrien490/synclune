@@ -20,7 +20,6 @@ export {
 	DASHBOARD_RECENT_ORDERS_LIMIT,
 	DASHBOARD_TOP_PRODUCTS_LIMIT,
 	DASHBOARD_STOCK_ALERTS_LIMIT,
-	DASHBOARD_LOW_STOCK_THRESHOLD,
 } from "./dashboard.constants";
 
 export { EMPTY_STATES } from "./empty-states";

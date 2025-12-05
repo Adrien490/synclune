@@ -1,29 +1,19 @@
+"use client";
+
+import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { Badge } from "@/shared/components/ui/badge";
 
-interface CartBadgeProps {
-	count: number;
-}
-
 /**
- * Badge du panier - 100% Server Component
+ * Badge panier - Client Component avec optimistic UI
  *
- * Architecture optimale Next.js 15+ :
- * - Aucune logique client (pas de JS envoyé au navigateur pour ce composant)
- * - Cache automatique via "use cache: private" dans getCartItemCount()
- * - Invalidation ciblée via updateTags() dans les server actions
- * - Le Router Cache gère la synchronisation automatiquement
- *
- * Flux après mutation (ex: ajout au panier):
- * 1. Server Action → updateTags(['cart-count-user-123'])
- * 2. Router Cache invalide ce tag spécifique
- * 3. Navbar se re-render (car dans Suspense)
- * 4. getCartItemCount() → nouveau count
- * 5. CartBadge affiche la nouvelle valeur ✨
- *
- * Pas de Zustand = Pas de complexité = Architecture simple et performante
+ * Lit le count depuis le store Zustand pour affichage instantané.
+ * Le store est hydraté par BadgeCountsStoreProvider avec la valeur serveur,
+ * puis mis à jour de façon optimistic par useAddToCart, useRemoveFromCart, etc.
  */
-export function CartBadge({ count }: CartBadgeProps) {
-	// Validation défensive : protège contre undefined, null, NaN et valeurs négatives
+export function CartBadge() {
+	const count = useBadgeCountsStore((state) => state.cartCount);
+
+	// Validation défensive
 	if (!count || count <= 0) {
 		return null;
 	}

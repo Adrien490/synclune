@@ -1,7 +1,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 
-import { LOW_STOCK_THRESHOLD } from "../constants/inventory.constants";
+import { STOCK_THRESHOLDS } from "../constants/inventory.constants";
 import type { GetSkuStockReturn } from "../types/sku-stock.types";
 
 // Re-export pour compatibilité
@@ -50,7 +50,7 @@ async function fetchSkuStock(skuId: string): Promise<GetSkuStockReturn> {
 			available,
 			isInStock: available > 0,
 			isActive: sku.isActive,
-			lowStock: available > 0 && available < LOW_STOCK_THRESHOLD,
+			lowStock: available > 0 && available <= STOCK_THRESHOLDS.LOW,
 		};
 	} catch {
 		return null;

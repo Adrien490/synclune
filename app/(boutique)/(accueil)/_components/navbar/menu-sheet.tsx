@@ -16,7 +16,6 @@ import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { cn } from "@/shared/utils/cn";
 import { Menu } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 /**
  * Composant Menu Sheet pour la navigation mobile
@@ -41,7 +40,6 @@ interface MenuSheetProps {
 
 export function MenuSheet({ navItems }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
-	const pathname = usePathname();
 
 	// Séparer les items en deux zones: Découverte et Compte
 	// Zone découverte: Accueil, Collections, Mes créations, Personnaliser
@@ -78,7 +76,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 	};
 
 	return (
-		<Sheet key={pathname}>
+		<Sheet>
 			<SheetTrigger asChild>
 				<Button
 					variant="ghost"
@@ -126,24 +124,27 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 					<div className="w-full space-y-2">
 						<SheetClose asChild>
 							<Link
-								href="/legal"
+								href="/mentions-legales"
 								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-2.5 rounded-none"
+								aria-label="Consulter les mentions légales"
 							>
 								Mentions légales
 							</Link>
 						</SheetClose>
 						<SheetClose asChild>
 							<Link
-								href="/privacy"
+								href="/confidentialite"
 								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-2.5 rounded-none"
+								aria-label="Consulter la politique de confidentialité"
 							>
 								Confidentialité
 							</Link>
 						</SheetClose>
 						<SheetClose asChild>
 							<Link
-								href="/accessibility"
+								href="/accessibilite"
 								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-2.5 rounded-none"
+								aria-label="Consulter la déclaration d'accessibilité"
 							>
 								Accessibilité
 							</Link>

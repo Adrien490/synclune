@@ -2,9 +2,9 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState, useCallback, useRef, useTransition } from "react";
 import { addToCart } from "@/modules/cart/actions/add-to-cart";
+import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 
 interface UseAddToCartOptions {
 	onSuccess?: (message: string) => void;
@@ -14,16 +14,23 @@ interface UseAddToCartOptions {
  * Hook pour ajouter un article au panier
  * Compatible avec useActionState de React 19
  *
- * Affiche un toast de succès avec un bouton "Voir le panier" pour faciliter
- * la navigation vers le panier après ajout d'un article
+ * Pas de toast de succès (optimistic UI via badge suffit).
+ * Toast d'erreur uniquement en cas de problème.
  */
 export const useAddToCart = (options?: UseAddToCartOptions) => {
-	const router = useRouter();
+	// Store pour optimistic UI du badge navbar
+	const adjustCart = useBadgeCountsStore((state) => state.adjustCart);
 
-	const [state, action, isPending] = useActionState(
+	// Ref pour stocker la quantité pending (pour rollback)
+	const pendingQuantityRef = useRef<number>(0);
+
+	const [isTransitionPending, startTransition] = useTransition();
+
+	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(
 			addToCart,
 			createToastCallbacks({
+				showSuccessToast: false,
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -34,19 +41,34 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 						options?.onSuccess?.(result.message);
 					}
 				},
-				// Use Sonner's recommended object format
-				successAction: {
-					label: "Voir le panier",
-					onClick: () => router.push("/panier"),
+				onError: () => {
+					// Rollback du badge navbar
+					adjustCart(-pendingQuantityRef.current);
 				},
 			})
 		),
 		undefined
 	);
 
+	const action = useCallback(
+		(formData: FormData) => {
+			startTransition(() => {
+				// Extraire la quantité pour l'optimistic update
+				const quantity = Number(formData.get("quantity")) || 1;
+				pendingQuantityRef.current = quantity;
+
+				// Mise à jour optimistic du badge navbar
+				adjustCart(quantity);
+
+				formAction(formData);
+			});
+		},
+		[adjustCart, formAction]
+	);
+
 	return {
 		state,
 		action,
-		isPending,
+		isPending: isTransitionPending || isActionPending,
 	};
 };

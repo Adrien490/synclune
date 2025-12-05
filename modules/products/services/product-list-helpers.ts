@@ -20,6 +20,38 @@ export type ProductStockInfo = {
 };
 
 /**
+ * Calcule les informations de stock à partir d'un tableau de SKUs.
+ * Fonction utilitaire générique pour tout contexte (produits, related, cart).
+ *
+ * @param skus - Tableau de SKUs avec au minimum { inventory: number }
+ * @returns Infos stock formatées pour ProductCard
+ */
+export function computeStockFromSkus<T extends { inventory: number }>(
+	skus: T[]
+): ProductStockInfo {
+	const totalInventory = skus.reduce((sum, sku) => sum + sku.inventory, 0);
+	const availableSkus = skus.filter((sku) => sku.inventory > 0).length;
+
+	let status: StockStatus;
+	let message: string;
+
+	if (totalInventory === 0) {
+		status = "out_of_stock";
+		message = "Rupture de stock";
+	} else {
+		status = "in_stock";
+		message = "En stock";
+	}
+
+	return {
+		status,
+		totalInventory,
+		availableSkus,
+		message,
+	};
+}
+
+/**
  * Tronque le texte alternatif pour SEO (max 120 caractères par défaut)
  */
 function truncateAltText(

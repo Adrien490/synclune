@@ -3,24 +3,28 @@ import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/naviga
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
-import { isAdmin } from "@/modules/auth/utils/guards";
 import { Heart, LayoutDashboard, ShoppingCart, User } from "lucide-react";
 import Link from "next/link";
 import { CartBadge } from "@/modules/cart/components/cart-badge";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
+import { BadgeCountsStoreProvider } from "@/shared/stores/badge-counts-store-provider";
 import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarWrapper } from "./navbar-wrapper";
 
+/** Classes communes pour les liens icônes de la navbar */
+const iconLinkClassName = "relative inline-flex items-center justify-center p-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group";
+
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
-	const [session, cartCount, wishlistCount, userIsAdmin] =
-		await Promise.all([
-			getSession(),
-			getCartItemCount(),
-			getWishlistItemCount(),
-			isAdmin(),
-		]);
+	const [session, cartCount, wishlistCount] = await Promise.all([
+		getSession(),
+		getCartItemCount(),
+		getWishlistItemCount(),
+	]);
+
+	// Dériver isAdmin depuis la session (évite un appel DB redondant)
+	const userIsAdmin = session?.user?.role === "ADMIN";
 
 	// Protection si les fonctions retournent undefined/null
 	const safeCartCount = cartCount ?? 0;
@@ -33,6 +37,10 @@ export async function Navbar() {
 	const desktopNavItems = getDesktopNavItems();
 
 	return (
+		<BadgeCountsStoreProvider
+			initialWishlistCount={safeWishlistCount}
+			initialCartCount={safeCartCount}
+		>
 		<NavbarWrapper>
 			{/* Skip navigation link pour accessibilité */}
 			<a
@@ -91,7 +99,7 @@ export async function Navbar() {
 								{userIsAdmin && (
 									<Link
 										href="/admin"
-										className="hidden sm:inline-flex items-center justify-center p-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group"
+										className={`hidden sm:inline-flex ${iconLinkClassName}`}
 										aria-label="Accéder au tableau de bord"
 									>
 										<LayoutDashboard
@@ -105,7 +113,7 @@ export async function Navbar() {
 								{/* Icône compte / Se connecter (visible sur desktop seulement) */}
 								<Link
 									href={session ? "/compte" : "/connexion"}
-									className="hidden sm:inline-flex items-center justify-center p-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group"
+									className={`hidden sm:inline-flex ${iconLinkClassName}`}
 									aria-label={
 										session ? "Accéder à mon compte personnel" : "Se connecter"
 									}
@@ -117,24 +125,24 @@ export async function Navbar() {
 									/>
 								</Link>
 
-								{/* Icône wishlist (toujours visible) */}
+								{/* Icône favoris (toujours visible) */}
 								<Link
 									href="/favoris"
-									className="relative inline-flex items-center justify-center p-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group"
-									aria-label="Ouvrir ma wishlist"
+									className={iconLinkClassName}
+									aria-label="Ouvrir mes favoris"
 								>
 									<Heart
 										size={20}
 										className="transition-transform duration-300 ease-out group-hover:scale-110"
 										aria-hidden="true"
 									/>
-									<WishlistBadge count={safeWishlistCount} />
+									<WishlistBadge />
 								</Link>
 
 								{/* Icône panier (toujours visible) */}
 								<Link
 									href="/panier"
-									className="relative inline-flex items-center justify-center p-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group"
+									className={iconLinkClassName}
 									aria-label="Ouvrir mon panier"
 								>
 									<ShoppingCart
@@ -142,7 +150,7 @@ export async function Navbar() {
 										className="transition-transform duration-300 ease-out group-hover:rotate-6"
 										aria-hidden="true"
 									/>
-									<CartBadge count={safeCartCount} />
+									<CartBadge />
 								</Link>
 							</div>
 						</div>
@@ -150,5 +158,6 @@ export async function Navbar() {
 				</div>
 			</nav>
 		</NavbarWrapper>
+		</BadgeCountsStoreProvider>
 	);
 }

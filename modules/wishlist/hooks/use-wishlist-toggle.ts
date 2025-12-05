@@ -11,6 +11,7 @@ import { toggleWishlistItem } from "@/modules/wishlist/actions/toggle-wishlist-i
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { ActionStatus } from "@/shared/types/server-action";
+import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 
 interface UseWishlistToggleOptions {
 	initialIsInWishlist?: boolean;
@@ -41,6 +42,14 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	const router = useRouter();
 	const pathname = usePathname();
 
+	// Store pour optimistic UI du badge navbar
+	const incrementWishlist = useBadgeCountsStore(
+		(state) => state.incrementWishlist
+	);
+	const decrementWishlist = useBadgeCountsStore(
+		(state) => state.decrementWishlist
+	);
+
 	const [isTransitionPending, startTransition] = useTransition();
 	const [optimisticIsInWishlist, setOptimisticIsInWishlist] = useOptimistic(
 		initialIsInWishlist
@@ -66,8 +75,15 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 					}
 				},
 				onError: (result: unknown) => {
-					// Rollback de l'état optimiste
+					// Rollback de l'état optimiste (coeur)
 					setOptimisticIsInWishlist(initialIsInWishlist);
+
+					// Rollback du badge navbar
+					if (initialIsInWishlist) {
+						incrementWishlist(); // On avait decrementé à tort
+					} else {
+						decrementWishlist(); // On avait incrementé à tort
+					}
 
 					// Redirection vers connexion si non authentifié
 					if (
@@ -88,11 +104,29 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	const action = useCallback(
 		(formData: FormData) => {
 			startTransition(() => {
-				setOptimisticIsInWishlist(!optimisticIsInWishlist);
+				// Utilise le store pour obtenir l'état actuel et éviter les closures stale
+				// lors de clics rapides successifs
+				const currentState = optimisticIsInWishlist;
+				const newState = !currentState;
+				setOptimisticIsInWishlist(newState);
+
+				// Mise à jour optimistic du badge navbar
+				if (newState) {
+					incrementWishlist();
+				} else {
+					decrementWishlist();
+				}
+
 				formAction(formData);
 			});
 		},
-		[optimisticIsInWishlist, setOptimisticIsInWishlist, formAction]
+		[
+			optimisticIsInWishlist,
+			setOptimisticIsInWishlist,
+			formAction,
+			incrementWishlist,
+			decrementWishlist,
+		]
 	);
 
 	return {

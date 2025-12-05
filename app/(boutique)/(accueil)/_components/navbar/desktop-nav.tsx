@@ -82,12 +82,13 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 															{child.imageUrl && (
 																<Image
 																	src={child.imageUrl}
-																	alt={child.label}
+																	alt=""
 																	width={64}
 																	height={64}
 																	className="w-16 h-16 object-cover rounded-md bg-secondary/20 shrink-0"
 																	sizes="64px"
 																	quality={85}
+																	placeholder="empty"
 																/>
 															)}
 															<div className="flex flex-col gap-1.5 flex-1 min-w-0 overflow-hidden">

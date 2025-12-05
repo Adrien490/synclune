@@ -34,7 +34,7 @@ import {
 
 // Module imports
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import { STOCK_THRESHOLDS } from "@/modules/products/constants/product-texts.constants";
+import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 
 // Local components
 import { ProductRowActions } from "./product-row-actions";
@@ -356,14 +356,14 @@ export async function ProductsDataTable({
 												variant={
 													totalStock === 0
 														? "destructive"
-														: totalStock <= STOCK_THRESHOLDS.LOW_STOCK
+														: totalStock <= STOCK_THRESHOLDS.LOW
 															? "warning"
 															: "success"
 												}
 												aria-label={
 													totalStock === 0
 														? "Stock épuisé"
-														: totalStock <= STOCK_THRESHOLDS.LOW_STOCK
+														: totalStock <= STOCK_THRESHOLDS.LOW
 															? `Stock faible : ${totalStock} en stock`
 															: `${totalStock} en stock`
 												}

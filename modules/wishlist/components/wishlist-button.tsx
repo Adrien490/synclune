@@ -61,7 +61,8 @@ export function WishlistButton({
 								variant="ghost"
 								size="icon"
 								disabled={isPending}
-								className="relative group h-10 w-10 rounded-full hover:bg-accent hover:scale-110 transition-all duration-300"
+								aria-disabled={isPending}
+								className="relative group h-10 w-10 rounded-full hover:bg-accent hover:scale-110 motion-safe:transition-all motion-safe:duration-300 disabled:opacity-50"
 								aria-label={ariaLabel}
 								aria-pressed={isInWishlist}
 							>
@@ -70,7 +71,7 @@ export function WishlistButton({
 									size={22}
 									decorative
 									className={cn(
-										"transition-all duration-300",
+										"motion-safe:transition-all motion-safe:duration-300",
 										isInWishlist
 											? "text-primary scale-110"
 											: "text-muted-foreground group-hover:text-primary"
@@ -106,14 +107,15 @@ export function WishlistButton({
 			<button
 				type="submit"
 				disabled={isPending}
+				aria-disabled={isPending}
 				onClick={(e) => e.stopPropagation()}
 				className={cn(
 					"h-9 w-9 rounded-full",
 					"flex items-center justify-center",
 					"hover:scale-110 active:scale-95",
-					"transition-all duration-300",
+					"motion-safe:transition-all motion-safe:duration-300",
 					"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-					isPending && "opacity-50 cursor-not-allowed"
+					"disabled:opacity-50 disabled:cursor-not-allowed"
 				)}
 				aria-label={ariaLabel}
 				aria-pressed={isInWishlist}
@@ -123,7 +125,7 @@ export function WishlistButton({
 					size={22}
 					decorative
 					className={cn(
-						"transition-all duration-300",
+						"motion-safe:transition-all motion-safe:duration-300",
 						"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
 						isInWishlist &&
 							"scale-110 drop-shadow-[0_0_6px_rgba(215,168,178,0.7)]"

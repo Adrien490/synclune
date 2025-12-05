@@ -1,27 +1,19 @@
+"use client";
+
+import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { Badge } from "@/shared/components/ui/badge";
 
-interface WishlistBadgeProps {
-	count: number;
-}
-
 /**
- * Badge de la wishlist - 100% Server Component
+ * Badge wishlist - Client Component avec optimistic UI
  *
- * Architecture optimale Next.js 15+ :
- * - Aucune logique client (pas de JS envoyé au navigateur pour ce composant)
- * - Cache automatique via "use cache: private" dans getWishlistItemCount()
- * - Invalidation ciblée via updateTags() dans les server actions
- * - Le Router Cache gère la synchronisation automatiquement
- *
- * Flux après mutation (ex: ajout à la wishlist):
- * 1. Server Action → updateTags(['wishlist-count-user-123'])
- * 2. Router Cache invalide ce tag spécifique
- * 3. Navbar se re-render (car dans Suspense)
- * 4. getWishlistItemCount() → nouveau count
- * 5. WishlistBadge affiche la nouvelle valeur ✨
+ * Lit le count depuis le store Zustand pour affichage instantané.
+ * Le store est hydraté par BadgeCountsStoreProvider avec la valeur serveur,
+ * puis mis à jour de façon optimistic par useWishlistToggle.
  */
-export function WishlistBadge({ count }: WishlistBadgeProps) {
-	// Validation défensive : protège contre undefined, null, NaN et valeurs négatives
+export function WishlistBadge() {
+	const count = useBadgeCountsStore((state) => state.wishlistCount);
+
+	// Validation défensive
 	if (!count || count <= 0) {
 		return null;
 	}

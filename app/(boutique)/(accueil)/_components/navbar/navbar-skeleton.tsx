@@ -5,15 +5,19 @@
  * - Mobile: Menu burger à gauche, Logo centré (icône seule), Actions à droite
  * - Desktop: Logo avec texte à gauche, Navigation centrale, Actions à droite
  *
- * Container: max-w-7xl (cohérent avec navbar.tsx)
+ * Container: max-w-6xl (cohérent avec navbar.tsx)
  * Hauteur: h-16 sm:h-20 (cohérent avec navbar.tsx)
  */
 export function NavbarSkeleton() {
 	return (
-		<header className="fixed top-0 inset-x-0 z-40 transition-all duration-300 ease-out border-b bg-transparent border-transparent">
+		<header
+			className="fixed top-0 inset-x-0 z-40 transition-all duration-300 ease-out border-b bg-transparent border-transparent"
+			aria-busy="true"
+			aria-label="Chargement de la navigation"
+		>
 			<nav
 				role="navigation"
-				aria-label="Navigation principale"
+				aria-label="Navigation principale en cours de chargement"
 				className="transition-all duration-300 ease-in-out"
 			>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -48,11 +52,14 @@ export function NavbarSkeleton() {
 							</div>
 						</div>
 
-						{/* Section droite: Compte + Panier */}
+						{/* Section droite: Compte + Favoris + Panier */}
 						<div className="flex flex-1 items-center justify-end">
 							<div className="flex items-center gap-2 lg:gap-3">
 								{/* Icône compte skeleton (visible sur sm+ seulement) */}
 								<div className="hidden sm:inline-flex h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />
+
+								{/* Icône favoris skeleton (toujours visible) */}
+								<div className="h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />
 
 								{/* Icône panier skeleton (toujours visible) */}
 								<div className="h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />

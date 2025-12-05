@@ -43,9 +43,6 @@ export {
 	getProductInvalidationTags,
 } from "./constants/cache";
 
-export {
-	STOCK_THRESHOLDS,
-} from "./constants/product-texts.constants";
 
 // =============================================================================
 // Schemas (pour validation côté client)

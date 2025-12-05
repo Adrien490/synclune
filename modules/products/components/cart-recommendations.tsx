@@ -1,5 +1,6 @@
 import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
+import { computeStockFromSkus } from "@/modules/products/services/product-list-helpers";
 import { FALLBACK_IMAGE_URL } from "@/modules/media/constants/product-fallback-image.constants";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { Reveal, Stagger } from "@/shared/components/animations";
@@ -70,10 +71,7 @@ export async function CartRecommendations({
 					// ✅ SIMPLE : product.skus[0] = SKU principal (déjà trié)
 					const primarySku = product.skus[0];
 					const primaryImage = primarySku?.images[0];
-					const totalStock = product.skus.reduce(
-						(sum, s) => sum + s.inventory,
-						0
-					);
+					const stockInfo = computeStockFromSkus(product.skus);
 
 					return (
 						<ProductCard
@@ -83,9 +81,9 @@ export async function CartRecommendations({
 							title={product.title}
 							description={product.description}
 							price={primarySku?.priceInclTax || 0}
-							stockStatus={totalStock === 0 ? "out_of_stock" : "in_stock"}
-							stockMessage={totalStock === 0 ? "Rupture de stock" : "En stock"}
-							inventory={totalStock}
+							stockStatus={stockInfo.status}
+							stockMessage={stockInfo.message}
+							inventory={stockInfo.totalInventory}
 							primaryImage={{
 								url: primaryImage?.url || FALLBACK_IMAGE_URL,
 								alt: primaryImage?.altText ?? null,

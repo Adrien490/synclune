@@ -12,22 +12,14 @@ import { Prisma } from "@/app/generated/prisma/client";
  * - Alertes stock dans le dashboard admin
  */
 export const STOCK_THRESHOLDS = {
-	/** Stock critique : < CRITICAL (alertes urgentes) */
-	CRITICAL: 3,
-	/** Stock bas : < LOW (alertes préventives) */
+	/** Stock critique : <= CRITICAL (alertes urgentes, 1 seul item) */
+	CRITICAL: 1,
+	/** Stock bas : <= LOW (alertes préventives, 1-3 items) */
 	LOW: 3,
 	/** Stock normal max : <= NORMAL_MAX */
 	NORMAL_MAX: 50,
 } as const;
 
-/**
- * Seuil de stock bas pour l'affichage boutique.
- * Un SKU est considéré en "low stock" quand son inventaire
- * est strictement inférieur à ce seuil.
- *
- * @deprecated Utiliser STOCK_THRESHOLDS.LOW à la place
- */
-export const LOW_STOCK_THRESHOLD = STOCK_THRESHOLDS.LOW;
 
 // ============================================================================
 // SELECT DEFINITIONS

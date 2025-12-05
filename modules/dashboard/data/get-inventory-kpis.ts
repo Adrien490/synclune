@@ -1,6 +1,6 @@
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { LOW_STOCK_THRESHOLD } from "@/modules/skus/constants/inventory.constants";
+import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { cacheDashboard, DASHBOARD_CACHE_TAGS } from "../constants/cache";
 import type { InventoryKpisReturn } from "../types/dashboard.types";
 
@@ -33,13 +33,13 @@ export async function fetchInventoryKpis(): Promise<InventoryKpisReturn> {
 				},
 			}),
 
-			// SKUs en stock bas (0 < inventory < seuil)
+			// SKUs en stock bas (0 < inventory <= seuil)
 			prisma.productSku.count({
 				where: {
 					isActive: true,
 					inventory: {
 						gt: 0,
-						lt: LOW_STOCK_THRESHOLD,
+						lte: STOCK_THRESHOLDS.LOW,
 					},
 				},
 			}),
@@ -72,7 +72,7 @@ export async function fetchInventoryKpis(): Promise<InventoryKpisReturn> {
 		},
 		lowStock: {
 			count: lowStock,
-			threshold: LOW_STOCK_THRESHOLD,
+			threshold: STOCK_THRESHOLDS.LOW,
 		},
 		stockValue: {
 			amount: totalValue,
