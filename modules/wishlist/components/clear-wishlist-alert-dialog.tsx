@@ -12,10 +12,9 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useClearWishlist } from "@/modules/wishlist/hooks/use-clear-wishlist";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-export const CLEAR_WISHLIST_DIALOG_ID = "clear-wishlist";
 
 interface ClearWishlistData {
 	itemCount: number;
@@ -31,7 +30,7 @@ interface ClearWishlistData {
  */
 export function ClearWishlistAlertDialog() {
 	const clearDialog = useAlertDialog<ClearWishlistData>(
-		CLEAR_WISHLIST_DIALOG_ID
+		WISHLIST_DIALOG_IDS.CLEAR
 	);
 
 	const { action, isPending } = useClearWishlist({
@@ -73,7 +72,7 @@ export function ClearWishlistAlertDialog() {
 							<br />
 							<br />
 							<span className="text-muted-foreground text-sm">
-								Bon, pas de panique ! Tu pourras toujours retrouver ces bijoux dans la boutique 💕
+								Bon, pas de panique ! Tu pourras toujours retrouver ces bijoux dans la boutique<span aria-hidden="true"> 💕</span>
 							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>

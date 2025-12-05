@@ -30,7 +30,7 @@ export const getWishlistSchema = z.object({
  * Schéma de validation pour l'ajout à la wishlist
  */
 export const addToWishlistSchema = z.object({
-	skuId: z.string().cuid({ message: 'SKU invalide' }),
+	skuId: z.string().cuid2({ message: 'SKU invalide' }),
 });
 
 export type AddToWishlistInput = z.infer<typeof addToWishlistSchema>;
@@ -41,13 +41,13 @@ export type AddToWishlistInput = z.infer<typeof addToWishlistSchema>;
  */
 export const clearWishlistSchema = z.object({});
 
-export type ClearWishlistSchema = z.infer<typeof clearWishlistSchema>;
+export type ClearWishlistInput = z.infer<typeof clearWishlistSchema>;
 
 /**
  * Schéma de validation pour le retrait de la wishlist
  */
 export const removeFromWishlistSchema = z.object({
-	skuId: z.string().cuid({ message: 'SKU invalide' }),
+	skuId: z.string().cuid2({ message: 'SKU invalide' }),
 });
 
 export type RemoveFromWishlistInput = z.infer<typeof removeFromWishlistSchema>;
@@ -56,7 +56,7 @@ export type RemoveFromWishlistInput = z.infer<typeof removeFromWishlistSchema>;
  * Schéma de validation pour le toggle wishlist
  */
 export const toggleWishlistItemSchema = z.object({
-	skuId: z.string().cuid({ message: 'SKU invalide' }),
+	skuId: z.string().cuid2({ message: 'SKU invalide' }),
 });
 
 export type ToggleWishlistItemInput = z.infer<typeof toggleWishlistItemSchema>;

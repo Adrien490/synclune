@@ -13,10 +13,9 @@ import { Button } from "@/shared/components/ui/button";
 import { useRemoveFromWishlist } from "@/modules/wishlist/hooks/use-remove-from-wishlist";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { AlertDialogData } from "@/shared/stores/alert-dialog-store";
+import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-export const REMOVE_WISHLIST_ITEM_DIALOG_ID = "remove-wishlist-item";
 
 type RemoveWishlistItemData = AlertDialogData & {
 	skuId: string;
@@ -35,7 +34,7 @@ type RemoveWishlistItemData = AlertDialogData & {
  */
 export function RemoveWishlistItemAlertDialog() {
 	const removeDialog = useAlertDialog<RemoveWishlistItemData>(
-		REMOVE_WISHLIST_ITEM_DIALOG_ID
+		WISHLIST_DIALOG_IDS.REMOVE_ITEM
 	);
 
 	const { action, isPending } = useRemoveFromWishlist({
@@ -98,7 +97,7 @@ export function RemoveWishlistItemAlertDialog() {
 							<br />
 							<br />
 							<span className="text-muted-foreground text-sm">
-								Tu pourras toujours le retrouver dans la boutique 💕
+								Tu pourras toujours le retrouver dans la boutique<span aria-hidden="true"> 💕</span>
 							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>

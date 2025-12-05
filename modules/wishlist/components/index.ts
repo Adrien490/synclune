@@ -7,6 +7,9 @@ export { WishlistList } from "./wishlist-list";
 export { WishlistListContent } from "./wishlist-list-content";
 export { WishlistProductCard } from "./wishlist-product-card";
 export { WishlistRemoveButton } from "./wishlist-remove-button";
-export { ClearWishlistButton, CLEAR_WISHLIST_DIALOG_ID } from "./clear-wishlist-button";
+export { ClearWishlistButton } from "./clear-wishlist-button";
 export { ClearWishlistAlertDialog } from "./clear-wishlist-alert-dialog";
-export { RemoveWishlistItemAlertDialog, REMOVE_WISHLIST_ITEM_DIALOG_ID } from "./remove-wishlist-item-alert-dialog";
+export { RemoveWishlistItemAlertDialog } from "./remove-wishlist-item-alert-dialog";
+
+// Dialog IDs - ré-exportés depuis constants pour la rétro-compatibilité
+export { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";

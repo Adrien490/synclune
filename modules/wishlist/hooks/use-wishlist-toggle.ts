@@ -104,29 +104,23 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	const action = useCallback(
 		(formData: FormData) => {
 			startTransition(() => {
-				// Utilise le store pour obtenir l'état actuel et éviter les closures stale
-				// lors de clics rapides successifs
-				const currentState = optimisticIsInWishlist;
-				const newState = !currentState;
-				setOptimisticIsInWishlist(newState);
-
-				// Mise à jour optimistic du badge navbar
-				if (newState) {
-					incrementWishlist();
-				} else {
-					decrementWishlist();
-				}
+				// Utilise la fonction updater pour éviter closure stale
+				// et avoir un callback stable sans optimisticIsInWishlist en dépendance
+				setOptimisticIsInWishlist((prev) => {
+					const newState = !prev;
+					// Mise à jour optimistic du badge navbar
+					if (newState) {
+						incrementWishlist();
+					} else {
+						decrementWishlist();
+					}
+					return newState;
+				});
 
 				formAction(formData);
 			});
 		},
-		[
-			optimisticIsInWishlist,
-			setOptimisticIsInWishlist,
-			formAction,
-			incrementWishlist,
-			decrementWishlist,
-		]
+		[setOptimisticIsInWishlist, formAction, incrementWishlist, decrementWishlist]
 	);
 
 	return {

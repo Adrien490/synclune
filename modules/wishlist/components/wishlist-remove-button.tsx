@@ -2,8 +2,8 @@
 
 import { Button } from "@/shared/components/ui/button"
 import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider"
+import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids"
 import { X } from 'lucide-react'
-import { REMOVE_WISHLIST_ITEM_DIALOG_ID } from './remove-wishlist-item-alert-dialog'
 
 interface WishlistRemoveButtonProps {
 	skuId: string
@@ -28,7 +28,7 @@ export function WishlistRemoveButton({
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog)
 
 	const handleRemove = () => {
-		openAlertDialog(REMOVE_WISHLIST_ITEM_DIALOG_ID, {
+		openAlertDialog(WISHLIST_DIALOG_IDS.REMOVE_ITEM, {
 			skuId,
 			itemId,
 			itemName,
@@ -41,7 +41,7 @@ export function WishlistRemoveButton({
 			variant="destructive"
 			size="icon"
 			className="h-8 w-8 rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 focus-visible:opacity-100 transition-opacity duration-200 cursor-pointer"
-			aria-label="Retirer de la wishlist"
+			aria-label={`Retirer ${itemName} de la wishlist`}
 		>
 			<X size={16} />
 		</Button>

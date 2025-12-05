@@ -2,9 +2,8 @@
 
 import { Button } from "@/shared/components/ui/button"
 import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider"
+import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids"
 import { Trash2 } from 'lucide-react'
-
-export const CLEAR_WISHLIST_DIALOG_ID = "clear-wishlist"
 
 interface ClearWishlistButtonProps {
 	itemCount: number
@@ -22,7 +21,7 @@ export function ClearWishlistButton({ itemCount }: ClearWishlistButtonProps) {
 	const open = useAlertDialogStore((state) => state.openAlertDialog)
 
 	const handleClick = () => {
-		open(CLEAR_WISHLIST_DIALOG_ID, { itemCount })
+		open(WISHLIST_DIALOG_IDS.CLEAR, { itemCount })
 	}
 
 	return (

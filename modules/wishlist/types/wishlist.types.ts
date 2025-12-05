@@ -9,24 +9,43 @@ import {
 // TYPES - WISHLIST
 // ============================================================================
 
-// Type d'entrée flexible pour les paramètres
+/**
+ * Paramètres pour la récupération de la wishlist avec pagination cursor
+ * @param cursor - Curseur de pagination (CUID2)
+ * @param direction - Direction de pagination ("forward" | "backward")
+ * @param perPage - Nombre d'éléments par page
+ */
 export type GetWishlistParams = {
 	cursor?: string;
 	direction?: "forward" | "backward";
 	perPage?: number;
 };
 
+/**
+ * Type complet de la wishlist avec ses relations
+ * Inféré depuis le Prisma select pour garantir la cohérence
+ */
 export type Wishlist = Prisma.WishlistGetPayload<{
 	select: typeof GET_WISHLIST_SELECT;
 }>;
 
+/**
+ * Type d'un article de wishlist avec ses données SKU et produit
+ * Inclut: SKU (prix, inventaire, couleur, matériau), produit (titre, slug), image primaire
+ */
 export type WishlistItem = Prisma.WishlistItemGetPayload<{
 	select: typeof GET_WISHLIST_ITEM_SELECT;
 }>;
 
+/**
+ * Retour de getWishlist avec pagination et count total
+ */
 export type GetWishlistReturn = {
+	/** Liste des articles de la wishlist */
 	items: WishlistItem[];
+	/** Informations de pagination cursor-based */
 	pagination: PaginationInfo;
+	/** Nombre total d'articles dans la wishlist */
 	totalCount: number;
 };
 

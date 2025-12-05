@@ -49,7 +49,6 @@ export function WishlistButton({
 			<button
 				type="submit"
 				disabled={isPending}
-				aria-disabled={isPending}
 				onClick={(e) => e.stopPropagation()}
 				className={cn(
 					"h-9 w-9 rounded-full",
