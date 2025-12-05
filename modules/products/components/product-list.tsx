@@ -12,8 +12,10 @@ import { GetProductsReturn } from "@/modules/products/data/get-products";
 import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
+	getPrimarySkuForList,
 	getStockInfoForList,
 } from "@/modules/products/services/product-list-helpers";
+import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { SearchX } from "lucide-react";
 import { use } from "react";
 
@@ -27,6 +29,7 @@ export function ProductList({
 	perPage,
 }: ProductListProps) {
 	const { products, pagination } = use(productsPromise);
+	const wishlistSkuIds = use(getWishlistSkuIds());
 
 	// Afficher le composant Empty si aucun produit
 	if (!products || products.length === 0) {
@@ -55,6 +58,7 @@ export function ProductList({
 			{/* Grille des produits */}
 			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
 				{products.map((product) => {
+					const primarySku = getPrimarySkuForList(product);
 					const { price } = getPrimaryPriceForList(product);
 					const stockInfo = getStockInfoForList(product);
 					const primaryImage = getPrimaryImageForList(product);
@@ -76,6 +80,8 @@ export function ProductList({
 									mediaType: primaryImage.mediaType,
 									blurDataUrl: primaryImage.blurDataUrl,
 								}}
+								primarySkuId={primarySku?.id}
+							isInWishlist={wishlistSkuIds.has(primarySku?.id ?? "")}
 							/>
 						</div>
 					);

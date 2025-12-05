@@ -1,6 +1,7 @@
 import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
 import { FALLBACK_IMAGE_URL } from "@/modules/media/constants/product-fallback-image.constants";
+import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { Reveal, Stagger } from "@/shared/components/animations";
 
 interface RelatedProductsProps {
@@ -30,12 +31,14 @@ export async function RelatedProducts({
 	currentProductSlug,
 	limit = 8,
 }: RelatedProductsProps) {
-	// Récupérer les produits similaires avec algorithme contextuel
-	// Le filtre du produit actuel est géré dans l'algo, pas besoin de +1
-	const relatedProducts = await getRelatedProducts({
-		currentProductSlug,
-		limit,
-	});
+	// Récupérer les produits similaires et les SKU IDs wishlist en parallèle
+	const [relatedProducts, wishlistSkuIds] = await Promise.all([
+		getRelatedProducts({
+			currentProductSlug,
+			limit,
+		}),
+		getWishlistSkuIds(),
+	]);
 
 	// Ne rien afficher si pas de produits similaires
 	if (relatedProducts.length === 0) {
@@ -97,6 +100,8 @@ export async function RelatedProducts({
 							size="md"
 							index={index}
 							viewTransitionContext="related"
+							primarySkuId={primarySku?.id}
+							isInWishlist={wishlistSkuIds.has(primarySku?.id ?? "")}
 						/>
 					);
 				})}

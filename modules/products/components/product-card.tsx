@@ -5,6 +5,7 @@ import { ViewTransition } from "react";
 import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { ProductPriceCompact } from "./product-price";
+import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 
 /**
  * Props pour le composant ProductCard
@@ -35,6 +36,10 @@ interface ProductCardProps {
 	 * Exemple: "related" pour les produits similaires
 	 */
 	viewTransitionContext?: string;
+	/** ID du SKU primaire pour le bouton wishlist */
+	primarySkuId?: string;
+	/** Indique si le SKU est dans la wishlist (optionnel, défaut false) */
+	isInWishlist?: boolean;
 }
 
 /**
@@ -80,6 +85,8 @@ export function ProductCard({
 	size = "md",
 	index,
 	viewTransitionContext,
+	primarySkuId,
+	isInWishlist,
 }: ProductCardProps) {
 	// Génération ID unique pour aria-labelledby (RSC compatible)
 	const titleId = `product-title-${slug}`;
@@ -155,6 +162,15 @@ export function ProductCard({
 						<div className="absolute top-2.5 left-2.5 bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium z-10 shadow-md">
 							Plus que {inventory} !
 						</div>
+					)}
+					{/* Bouton wishlist - visible au hover */}
+					{primarySkuId && (
+						<WishlistButton
+							skuId={primarySkuId}
+							isInWishlist={isInWishlist ?? false}
+							variant="card"
+							productTitle={title}
+						/>
 					)}
 					<ViewTransition name={`${vtPrefix}product-image-${slug}`} default="vt-product-image" share="vt-product-image">
 						<Image

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
-import { WishlistButtonCompact } from "./wishlist-button-compact";
+import { WishlistButton } from "./wishlist-button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { useMemo } from "react";
@@ -57,7 +57,7 @@ export function WishlistButtonDynamic({
 	}, [currentSku.id, defaultSku.id, initialIsInWishlist, wishlistStates]);
 
 	return (
-		<WishlistButtonCompact
+		<WishlistButton
 			key={currentSku.id}
 			skuId={currentSku.id}
 			isInWishlist={currentIsInWishlist}

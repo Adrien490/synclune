@@ -7,8 +7,10 @@ import { GetProductsReturn } from "@/modules/products/data/get-products";
 import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
+	getPrimarySkuForList,
 	getStockInfoForList,
 } from "@/modules/products/services/product-list-helpers";
+import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
@@ -47,6 +49,7 @@ interface LatestCreationsProps {
  */
 export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 	const { products } = use(productsPromise);
+	const wishlistSkuIds = use(getWishlistSkuIds());
 
 	// Si aucun produit, ne pas afficher la section
 	if (products.length === 0) {
@@ -88,6 +91,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 					once={true}
 				>
 					{mobileProducts.map((product, index) => {
+						const primarySku = getPrimarySkuForList(product);
 						const { price } = getPrimaryPriceForList(product);
 						const stockInfo = getStockInfoForList(product);
 						const primaryImage = getPrimaryImageForList(product);
@@ -111,6 +115,8 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 								}}
 								index={index}
 								viewTransitionContext="mobile"
+								primarySkuId={primarySku?.id}
+								isInWishlist={wishlistSkuIds.has(primarySku?.id ?? "")}
 							/>
 						);
 					})}
@@ -125,6 +131,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 					once={true}
 				>
 					{products.map((product, index) => {
+						const primarySku = getPrimarySkuForList(product);
 						const { price } = getPrimaryPriceForList(product);
 						const stockInfo = getStockInfoForList(product);
 						const primaryImage = getPrimaryImageForList(product);
@@ -147,6 +154,8 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 									blurDataUrl: primaryImage.blurDataUrl,
 								}}
 								index={index}
+								primarySkuId={primarySku?.id}
+								isInWishlist={wishlistSkuIds.has(primarySku?.id ?? "")}
 							/>
 						);
 					})}

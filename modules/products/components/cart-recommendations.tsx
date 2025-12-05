@@ -1,6 +1,7 @@
 import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
 import { FALLBACK_IMAGE_URL } from "@/modules/media/constants/product-fallback-image.constants";
+import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { Reveal, Stagger } from "@/shared/components/animations";
 import { Separator } from "@/shared/components/ui/separator";
 
@@ -27,8 +28,11 @@ interface CartRecommendationsProps {
 export async function CartRecommendations({
 	limit = 4,
 }: CartRecommendationsProps) {
-	// Récupérer les recommandations personnalisées (sans slug = basé sur historique ou nouveautés)
-	const recommendations = await getRelatedProducts({ limit });
+	// Récupérer les recommandations et les SKU IDs wishlist en parallèle
+	const [recommendations, wishlistSkuIds] = await Promise.all([
+		getRelatedProducts({ limit }),
+		getWishlistSkuIds(),
+	]);
 
 	// Ne rien afficher si pas de recommandations
 	if (recommendations.length === 0) {
@@ -92,6 +96,8 @@ export async function CartRecommendations({
 							size="sm"
 							index={index}
 							viewTransitionContext="cart-recommendations"
+							primarySkuId={primarySku?.id}
+							isInWishlist={wishlistSkuIds.has(primarySku?.id ?? "")}
 						/>
 					);
 				})}

@@ -1,6 +1,6 @@
 export { WishlistBadge } from "./wishlist-badge";
 export { WishlistButton } from "./wishlist-button";
-export { WishlistButtonCompact } from "./wishlist-button-compact";
+export { WishlistButtonDynamic } from "./wishlist-button-dynamic";
 export { WishlistGrid } from "./wishlist-grid";
 export { WishlistGridSkeleton } from "./wishlist-grid-skeleton";
 export { WishlistList } from "./wishlist-list";
