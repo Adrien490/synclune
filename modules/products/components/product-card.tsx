@@ -132,8 +132,8 @@ export function ProductCard({
 						<WishlistButton
 							skuId={primarySku.id}
 							isInWishlist={isInWishlist ?? false}
-							variant="card"
 							productTitle={title}
+							className="absolute top-2.5 right-2.5 z-20 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200"
 						/>
 					)}
 					<ViewTransition name={`${vtPrefix}product-image-${slug}`} default="vt-product-image" share="vt-product-image">

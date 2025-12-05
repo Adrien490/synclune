@@ -1,44 +1,39 @@
 "use client";
 
 import { HeartIcon } from "@/shared/components/icons/heart-icon";
-import { Button } from "@/shared/components/ui/button";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
 import { useWishlistToggle } from "@/modules/wishlist/hooks/use-wishlist-toggle";
 import { cn } from "@/shared/utils/cn";
 
 interface WishlistButtonProps {
 	skuId: string;
 	isInWishlist: boolean;
-	variant?: "detail" | "card";
 	productTitle?: string;
 	className?: string;
 }
 
 /**
- * Bouton Wishlist unifié - Client Component
+ * Bouton Wishlist - Client Component
  *
- * Deux variants :
- * - `detail` : Page produit, avec tooltip, toujours visible
- * - `card` : Cartes produit, sans tooltip, visible au hover
- *
+ * Design unifié avec drop-shadow pour contraste sur images.
  * Optimistic UI pour feedback instantané.
+ *
+ * @example
+ * ```tsx
+ * // Dans une carte (positionnement géré par le parent)
+ * <div className="absolute top-2.5 right-2.5 z-20">
+ *   <WishlistButton skuId={sku.id} isInWishlist={false} />
+ * </div>
+ * ```
  */
 export function WishlistButton({
 	skuId,
 	isInWishlist: initialIsInWishlist,
-	variant = "detail",
 	productTitle,
 	className,
 }: WishlistButtonProps) {
 	const { isInWishlist, action, isPending } = useWishlistToggle({
 		initialIsInWishlist,
 	});
-
 
 	const ariaLabel = isInWishlist
 		? productTitle
@@ -48,61 +43,8 @@ export function WishlistButton({
 			? `Ajouter ${productTitle} à la wishlist`
 			: "Ajouter à la wishlist";
 
-	// Variant: detail (page produit)
-	if (variant === "detail") {
-		return (
-			<TooltipProvider>
-				<Tooltip delayDuration={300}>
-					<TooltipTrigger asChild>
-						<form action={action} className={className}>
-							<input type="hidden" name="skuId" value={skuId} />
-							<Button
-								type="submit"
-								variant="ghost"
-								size="icon"
-								disabled={isPending}
-								aria-disabled={isPending}
-								className="relative group h-10 w-10 rounded-full hover:bg-accent hover:scale-110 motion-safe:transition-all motion-safe:duration-300 disabled:opacity-50"
-								aria-label={ariaLabel}
-								aria-pressed={isInWishlist}
-							>
-								<HeartIcon
-									variant={isInWishlist ? "filled" : "outline"}
-									size={22}
-									decorative
-									className={cn(
-										"motion-safe:transition-all motion-safe:duration-300",
-										isInWishlist
-											? "text-primary scale-110"
-											: "text-muted-foreground group-hover:text-primary"
-									)}
-								/>
-							</Button>
-						</form>
-					</TooltipTrigger>
-					<TooltipContent side="bottom" sideOffset={5}>
-						<p className="text-xs">
-							{isInWishlist
-								? "Retirer de la wishlist"
-								: "Ajouter à la wishlist"}
-						</p>
-					</TooltipContent>
-				</Tooltip>
-			</TooltipProvider>
-		);
-	}
-
-	// Variant: card (cartes produit)
 	return (
-		<form
-			action={action}
-			className={cn(
-				"absolute top-2.5 right-2.5 z-20",
-				"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100",
-				"transition-opacity duration-200",
-				className
-			)}
-		>
+		<form action={action} className={className}>
 			<input type="hidden" name="skuId" value={skuId} />
 			<button
 				type="submit"
@@ -127,8 +69,7 @@ export function WishlistButton({
 					className={cn(
 						"motion-safe:transition-all motion-safe:duration-300",
 						"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
-						isInWishlist &&
-							"scale-110 drop-shadow-[0_0_6px_rgba(215,168,178,0.7)]"
+						isInWishlist && "scale-110 drop-shadow-[0_0_6px_rgba(215,168,178,0.7)]"
 					)}
 				/>
 			</button>
