@@ -19,7 +19,6 @@ interface UseToggleWishlistItemOptions {
  * Utilise withCallbacks pour :
  * - Rediriger vers la connexion si non authentifié
  * - Afficher un message avec timer si rate limited
- * - Afficher un toast de succès
  *
  * Usage:
  * ```tsx
@@ -50,8 +49,6 @@ export const useToggleWishlistItem = (options?: UseToggleWishlistItemOptions) =>
 							options?.onSuccess?.(result.message, actionValue)
 						}
 					}
-					// Toast de succès
-					toast.success(result.message)
 				},
 				onError: (result) => {
 					// Redirection vers connexion si non authentifié
