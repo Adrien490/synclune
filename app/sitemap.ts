@@ -67,15 +67,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	let hasMoreProducts = true;
 
 	while (hasMoreProducts) {
-		const { products, nextCursor } = await getProducts({
+		const { products, pagination } = await getProducts({
 			perPage: 200,
 			cursor: productCursor,
 			sortBy: "created-descending",
 			filters: { status: "PUBLIC" },
 		});
 		allProducts.push(...products);
-		productCursor = nextCursor ?? undefined;
-		hasMoreProducts = !!nextCursor;
+		productCursor = pagination.nextCursor ?? undefined;
+		hasMoreProducts = pagination.hasNextPage;
 	}
 
 	const productPages: MetadataRoute.Sitemap = allProducts.map((product) => ({
@@ -91,14 +91,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	let hasMoreCollections = true;
 
 	while (hasMoreCollections) {
-		const { collections, nextCursor } = await getCollections({
+		const { collections, pagination } = await getCollections({
 			perPage: 200,
 			cursor: collectionCursor,
 			sortBy: "name-ascending",
 		});
 		allCollections.push(...collections);
-		collectionCursor = nextCursor ?? undefined;
-		hasMoreCollections = !!nextCursor;
+		collectionCursor = pagination.nextCursor ?? undefined;
+		hasMoreCollections = pagination.hasNextPage;
 	}
 
 	const collectionPages: MetadataRoute.Sitemap = allCollections.map(
