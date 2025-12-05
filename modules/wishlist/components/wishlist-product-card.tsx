@@ -67,7 +67,8 @@ export function WishlistProductCard({
 			{priceDropped && (
 				<div className="absolute top-2 left-2 bg-green-600 text-white px-3 py-1.5 rounded-md text-sm font-bold shadow-lg z-10 flex items-center gap-1.5">
 					<TrendingDown size={16} strokeWidth={2.5} />
-					<span>-{Math.round((Math.abs(priceDifference) / priceAtAdd) * 100)}%</span>
+					{/* Calcul en centimes pour éviter erreurs floating point */}
+					<span>-{Math.round((Math.abs(priceDifference) * 100) / priceAtAdd)}%</span>
 				</div>
 			)}
 
@@ -75,7 +76,8 @@ export function WishlistProductCard({
 			{priceIncreased && (
 				<div className="absolute top-2 left-2 bg-orange-500 text-white px-3 py-1.5 rounded-md text-sm font-bold shadow-lg z-10 flex items-center gap-1.5">
 					<TrendingUp size={16} strokeWidth={2.5} />
-					<span>+{Math.round((priceDifference / priceAtAdd) * 100)}%</span>
+					{/* Calcul en centimes pour éviter erreurs floating point */}
+					<span>+{Math.round((priceDifference * 100) / priceAtAdd)}%</span>
 				</div>
 			)}
 

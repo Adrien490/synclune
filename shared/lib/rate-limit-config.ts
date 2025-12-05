@@ -450,8 +450,12 @@ export const PRODUCT_LIMITS = {
 
 /**
  * Toutes les limites de la wishlist
+ * Note: ADD, REMOVE, CLEAR utilisent la même limite que TOGGLE pour cohérence
  */
 export const WISHLIST_LIMITS = {
 	TOGGLE: WISHLIST_TOGGLE_LIMIT,
+	ADD: WISHLIST_TOGGLE_LIMIT,
+	REMOVE: WISHLIST_TOGGLE_LIMIT,
+	CLEAR: WISHLIST_TOGGLE_LIMIT,
 	MERGE: WISHLIST_MERGE_LIMIT,
 } as const;

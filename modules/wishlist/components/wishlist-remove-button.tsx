@@ -40,7 +40,7 @@ export function WishlistRemoveButton({
 			onClick={handleRemove}
 			variant="destructive"
 			size="icon"
-			className="h-8 w-8 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+			className="h-8 w-8 rounded-full shadow-lg opacity-0 group-hover:opacity-100 focus:opacity-100 focus-visible:opacity-100 transition-opacity duration-200 cursor-pointer"
 			aria-label="Retirer de la wishlist"
 		>
 			<X size={16} />

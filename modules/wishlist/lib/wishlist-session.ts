@@ -13,14 +13,24 @@ const WISHLIST_SESSION_COOKIE_NAME = "wishlist_session";
  */
 const WISHLIST_SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * WISHLIST_EXPIRATION_DAYS; // 30 jours en secondes
 
+// Regex UUID v4 pour validation
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 /**
  * Récupère l'identifiant de session de la wishlist depuis les cookies
- * @returns L'identifiant de session ou null s'il n'existe pas
+ * Valide que le sessionId est un UUID v4 valide (protection contre injection)
+ * @returns L'identifiant de session ou null s'il n'existe pas ou est invalide
  */
 export async function getWishlistSessionId(): Promise<string | null> {
 	const cookieStore = await cookies();
 	const sessionId = cookieStore.get(WISHLIST_SESSION_COOKIE_NAME)?.value;
-	return sessionId || null;
+
+	// Validation du format UUID v4
+	if (!sessionId || !UUID_V4_REGEX.test(sessionId)) {
+		return null;
+	}
+
+	return sessionId;
 }
 
 /**
@@ -34,7 +44,7 @@ export async function createWishlistSessionId(): Promise<string> {
 
 	cookieStore.set(WISHLIST_SESSION_COOKIE_NAME, sessionId, {
 		httpOnly: true, // Pas accessible en JavaScript (protection XSS)
-		secure: process.env.NODE_ENV === "production", // HTTPS uniquement en production
+		secure: process.env.NODE_ENV !== "development", // HTTPS en production ET staging
 		sameSite: "lax", // Protection CSRF
 		maxAge: WISHLIST_SESSION_COOKIE_MAX_AGE,
 		path: "/",
@@ -68,9 +78,9 @@ export async function clearWishlistSessionId(): Promise<void> {
 
 /**
  * Calcule la date d'expiration pour une wishlist visiteur (30 jours)
+ * Utilise Date.now() pour éviter les problèmes de timezone
  * Utilise WISHLIST_EXPIRATION_MS pour cohérence avec le cleanup
  */
 export function getWishlistExpirationDate(): Date {
-	const now = new Date();
-	return new Date(now.getTime() + WISHLIST_EXPIRATION_MS);
+	return new Date(Date.now() + WISHLIST_EXPIRATION_MS);
 }

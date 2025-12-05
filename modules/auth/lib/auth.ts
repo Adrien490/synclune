@@ -283,7 +283,8 @@ export const auth = betterAuth({
 						});
 					}
 				} catch (error) {
-					// Ignore - Cookie preserved for retry
+					// Log l'erreur pour debugging mais continue (cookie preserved for retry)
+					console.error('[AUTH] Wishlist merge failed:', error);
 				}
 			}
 		}),

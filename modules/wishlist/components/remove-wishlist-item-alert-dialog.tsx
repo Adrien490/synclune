@@ -52,10 +52,15 @@ export function RemoveWishlistItemAlertDialog() {
 
 	// Wrapper de l'action pour fermer le dialog après soumission
 	const handleAction = async (formData: FormData) => {
-		// 1. Appel de la server action
-		await action(formData);
+		// Guard: vérifier que skuId est présent avant soumission
+		const skuId = removeDialog.data?.skuId;
+		if (!skuId) {
+			removeDialog.close();
+			return;
+		}
 
-		// 2. Fermer le dialog après succès (géré dans onSuccess callback)
+		// Appel de la server action (fermeture dialog gérée dans onSuccess callback)
+		await action(formData);
 	};
 
 	const handleOpenChange = (open: boolean) => {

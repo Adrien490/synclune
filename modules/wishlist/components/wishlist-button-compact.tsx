@@ -45,10 +45,17 @@ export function WishlistButtonCompact({
 		(_, newValue: boolean) => newValue
 	)
 
-	// Action wrapper avec optimistic update
+	// Action wrapper avec optimistic update et rollback en cas d'échec
 	const handleAction = async (formData: FormData) => {
+		const previousValue = optimisticIsInWishlist
 		setOptimisticIsInWishlist(!optimisticIsInWishlist)
-		await action(formData)
+
+		try {
+			await action(formData)
+		} catch {
+			// Rollback en cas d'erreur réseau ou serveur
+			setOptimisticIsInWishlist(previousValue)
+		}
 	}
 
 	return (

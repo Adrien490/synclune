@@ -142,18 +142,33 @@ export async function mergeWishlists(
 
 		// 4. Préparer les items à fusionner (stratégie UNION)
 		const userSkuIds = new Set(targetWishlist.items.map((item) => item.skuId));
+		const guestSkuIds = guestWishlist.items.map((item) => item.skuId);
 
 		let addedCount = 0;
 		let skippedCount = 0;
 
 		// 5. Fusionner les items dans une transaction atomique
+		// Note: La validation des SKUs est faite INSIDE la transaction pour éviter les race conditions
 		await prisma.$transaction(async (tx) => {
+			// Re-valider les SKUs à l'intérieur de la transaction (protection contre race condition)
+			const validSkus = await tx.productSku.findMany({
+				where: {
+					id: { in: guestSkuIds },
+					isActive: true,
+					product: { status: "PUBLIC" },
+				},
+				select: {
+					id: true,
+					priceInclTax: true,
+				},
+			});
+			const validSkuMap = new Map(validSkus.map((sku) => [sku.id, sku]));
+
 			for (const guestItem of guestWishlist.items) {
-				// Skip les produits inactifs
-				if (
-					!guestItem.sku.isActive ||
-					guestItem.sku.product.status !== "PUBLIC"
-				) {
+				const sku = validSkuMap.get(guestItem.skuId);
+
+				// Skip les produits inactifs ou non trouvés
+				if (!sku) {
 					skippedCount++;
 					continue;
 				}
@@ -169,7 +184,7 @@ export async function mergeWishlists(
 					data: {
 						wishlistId: targetWishlist.id,
 						skuId: guestItem.skuId,
-						priceAtAdd: guestItem.sku.priceInclTax, // Prix actuel au moment du merge
+						priceAtAdd: sku.priceInclTax, // Prix actuel validé dans la transaction
 					},
 				});
 				addedCount++;
@@ -195,6 +210,7 @@ export async function mergeWishlists(
 			},
 		};
 	} catch (error) {
+		console.error('[MERGE_WISHLISTS] Error:', error);
 		return {
 			status: ActionStatus.ERROR,
 			message: "Une erreur est survenue lors de la fusion des favoris",

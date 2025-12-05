@@ -61,7 +61,7 @@ export async function clearWishlist(
 		const ipAddress = await getClientIp(headersList)
 
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress)
-		const rateLimit = checkRateLimit(`wishlist-clear:${rateLimitId}`, WISHLIST_LIMITS.TOGGLE)
+		const rateLimit = checkRateLimit(`wishlist-clear:${rateLimitId}`, WISHLIST_LIMITS.CLEAR)
 
 		if (!rateLimit.success) {
 			return {
@@ -96,16 +96,15 @@ export async function clearWishlist(
 				},
 			})
 
-			// Mettre à jour le updatedAt et rafraîchir l'expiration si des items ont été supprimés
-			if (result.count > 0) {
-				await tx.wishlist.update({
-					where: { id: wishlist.id },
-					data: {
-						updatedAt: new Date(),
-						expiresAt: userId ? null : getWishlistExpirationDate(),
-					},
-				})
-			}
+			// Toujours mettre à jour le updatedAt et rafraîchir l'expiration pour les visiteurs
+			// (même si aucun item supprimé, l'activité utilisateur prolonge la session)
+			await tx.wishlist.update({
+				where: { id: wishlist.id },
+				data: {
+					updatedAt: new Date(),
+					expiresAt: userId ? null : getWishlistExpirationDate(),
+				},
+			})
 
 			return result
 		})

@@ -73,7 +73,7 @@ export async function addToWishlist(
 		const ipAddress = await getClientIp(headersList);
 
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
-		const rateLimit = checkRateLimit(`wishlist-add:${rateLimitId}`, WISHLIST_LIMITS.TOGGLE);
+		const rateLimit = checkRateLimit(`wishlist-add:${rateLimitId}`, WISHLIST_LIMITS.ADD);
 
 		if (!rateLimit.success) {
 			return {

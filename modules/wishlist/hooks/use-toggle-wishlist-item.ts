@@ -42,10 +42,13 @@ export const useToggleWishlistItem = (options?: UseToggleWishlistItemOptions) =>
 			toggleWishlistItem,
 			{
 				onSuccess: (result) => {
-					// Callback personnalisé si fourni
+					// Callback personnalisé si fourni (avec validation de type)
 					if (result.data && typeof result.data === 'object' && 'action' in result.data) {
-						const action = result.data.action as 'added' | 'removed'
-						options?.onSuccess?.(result.message, action)
+						const actionValue = result.data.action
+						// Type guard pour valider la valeur avant cast
+						if (actionValue === 'added' || actionValue === 'removed') {
+							options?.onSuccess?.(result.message, actionValue)
+						}
 					}
 					// Toast de succès
 					toast.success(result.message)
@@ -58,11 +61,14 @@ export const useToggleWishlistItem = (options?: UseToggleWishlistItemOptions) =>
 						return
 					}
 
-					// Afficher le timer de rate limiting si disponible
+					// Afficher le timer de rate limiting si disponible (avec validation de type)
 					if (result.data && typeof result.data === 'object' && 'retryAfter' in result.data) {
-						const retryAfter = result.data.retryAfter as number
-						toast.error(`${result.message} Réessayez dans ${retryAfter}s`)
-						return
+						const retryAfterValue = result.data.retryAfter
+						// Type guard pour valider que c'est bien un nombre
+						if (typeof retryAfterValue === 'number') {
+							toast.error(`${result.message} Réessayez dans ${retryAfterValue}s`)
+							return
+						}
 					}
 
 					// Toast d'erreur standard

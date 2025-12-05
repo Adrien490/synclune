@@ -482,12 +482,14 @@ model Wishlist {
 
   items WishlistItem[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete (RGPD - Art. L123-22 Code de Commerce : 10 ans)
 
   @@index([expiresAt]) // Pour le nettoyage des wishlists expirées
   @@index([userId])
   @@index([sessionId])
+  @@index([deletedAt])
 }
 
 model WishlistItem {
@@ -501,13 +503,15 @@ model WishlistItem {
   // Prix snapshot au moment de l'ajout (pour notifier si baisse de prix)
   priceAtAdd Int
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete (RGPD - Art. L123-22 Code de Commerce : 10 ans)
 
   // Un SKU ne peut être ajouté qu'une seule fois par wishlist
   @@unique([wishlistId, skuId])
   @@index([wishlistId])
   @@index([skuId, createdAt]) // Notifications baisse de prix, couvre aussi skuId seul
+  @@index([deletedAt])
 }
 
 // ============================================================================

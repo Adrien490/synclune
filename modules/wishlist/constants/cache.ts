@@ -35,6 +35,11 @@ export const WISHLIST_CACHE_TAGS = {
 /**
  * Configure le cache pour la wishlist d'un utilisateur/visiteur
  * - Durée : 5min fraîche, 1min revalidation, 1h expiration
+ *
+ * Note: Utilise le profile "cart" intentionnellement car wishlist et panier
+ * ont le même cycle de vie : données personnelles nécessitant une fraîcheur
+ * similaire pour les mises à jour en temps réel (badges header, listes).
+ * Si les besoins divergent, créer un profile "wishlist" dans next.config.ts.
  */
 export function cacheWishlist(userId?: string, sessionId?: string) {
 	cacheLife("cart")
@@ -44,6 +49,8 @@ export function cacheWishlist(userId?: string, sessionId?: string) {
 /**
  * Configure le cache pour le compteur de wishlist
  * - Durée : 5min fraîche, 1min revalidation, 1h expiration
+ *
+ * Note: Même profile "cart" que cacheWishlist() - voir documentation ci-dessus.
  */
 export function cacheWishlistCount(userId?: string, sessionId?: string) {
 	cacheLife("cart")
