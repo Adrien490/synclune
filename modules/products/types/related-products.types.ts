@@ -1,12 +1,12 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { RELATED_PRODUCTS_SELECT } from "../constants/related-products.constants";
+import type { Product } from "./product.types";
 
 // ============================================================================
 // ENTITY TYPES
 // ============================================================================
 
-export type RelatedProduct = Prisma.ProductGetPayload<{
-	select: typeof RELATED_PRODUCTS_SELECT;
-}>;
+/**
+ * @deprecated Utiliser Product directement - getRelatedProducts retourne maintenant Product[]
+ */
+export type RelatedProduct = Product;
 
-export type GetRelatedProductsReturn = RelatedProduct[];
+export type GetRelatedProductsReturn = Product[];

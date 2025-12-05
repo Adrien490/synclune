@@ -4,13 +4,7 @@ import { SectionTitle } from "@/shared/components/ui/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import {
-	getPrimaryImageForList,
-	getPrimaryPriceForList,
-	getPrimarySkuForList,
-	getStockInfoForList,
-	getAvailableColorsForList,
-} from "@/modules/products/services/product-list-helpers";
+import { getPrimarySkuForList } from "@/modules/products/services/product-list-helpers";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -59,7 +53,6 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 
 	// Mobile: 6 produits, Desktop: tous (jusqu'à 12)
 	const mobileProducts = products.slice(0, 6);
-	const hasMoreProducts = products.length > 6;
 
 	return (
 		<section
@@ -93,32 +86,13 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 				>
 					{mobileProducts.map((product, index) => {
 						const primarySku = getPrimarySkuForList(product);
-						const { price } = getPrimaryPriceForList(product);
-						const stockInfo = getStockInfoForList(product);
-						const primaryImage = getPrimaryImageForList(product);
-						const colors = getAvailableColorsForList(product);
-
 						return (
 							<ProductCard
 								key={product.id}
-								id={`mobile-${product.id}`}
-								slug={product.slug}
-								title={product.title}
-								price={price}
-								stockStatus={stockInfo.status}
-								stockMessage={stockInfo.message}
-								inventory={stockInfo.totalInventory}
-								primaryImage={{
-									url: primaryImage.url,
-									alt: primaryImage.alt || null,
-									mediaType: primaryImage.mediaType,
-									blurDataUrl: primaryImage.blurDataUrl,
-								}}
+								product={product}
 								index={index}
 								viewTransitionContext="mobile"
-								primarySkuId={primarySku?.id}
 								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
-								colors={colors}
 							/>
 						);
 					})}
@@ -134,31 +108,12 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 				>
 					{products.map((product, index) => {
 						const primarySku = getPrimarySkuForList(product);
-						const { price } = getPrimaryPriceForList(product);
-						const stockInfo = getStockInfoForList(product);
-						const primaryImage = getPrimaryImageForList(product);
-						const colors = getAvailableColorsForList(product);
-
 						return (
 							<ProductCard
 								key={product.id}
-								id={`desktop-${product.id}`}
-								slug={product.slug}
-								title={product.title}
-								price={price}
-								stockStatus={stockInfo.status}
-								stockMessage={stockInfo.message}
-								inventory={stockInfo.totalInventory}
-								primaryImage={{
-									url: primaryImage.url,
-									alt: primaryImage.alt || null,
-									mediaType: primaryImage.mediaType,
-									blurDataUrl: primaryImage.blurDataUrl,
-								}}
+								product={product}
 								index={index}
-								primarySkuId={primarySku?.id}
 								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
-								colors={colors}
 							/>
 						);
 					})}

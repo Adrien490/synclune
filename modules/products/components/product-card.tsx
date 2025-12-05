@@ -8,26 +8,17 @@ import { ProductPriceCompact } from "./product-price";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
 import { ColorSwatches } from "./color-swatches";
-import type { ColorSwatch } from "@/modules/products/services/product-list-helpers";
+import type { Product } from "@/modules/products/types/product.types";
+import {
+	getPrimarySkuForList,
+	getPrimaryPriceForList,
+	getStockInfoForList,
+	getPrimaryImageForList,
+	getAvailableColorsForList,
+} from "@/modules/products/services/product-list-helpers";
 
-/**
- * Props pour le composant ProductCard
- */
 interface ProductCardProps {
-	id: string;
-	slug: string;
-	title: string;
-	price: number;
-	stockStatus: "in_stock" | "out_of_stock"; // Système simplifié : en stock ou rupture
-	stockMessage: string;
-	/** Inventaire total pour afficher l'urgence ("Plus que X!") */
-	inventory?: number;
-	primaryImage: {
-		url: string;
-		alt: string | null;
-		mediaType: "IMAGE"; // Les médias principaux sont TOUJOURS des images
-		blurDataUrl?: string; // Base64 blur placeholder pour CLS optimization
-	}; // IMPORTANT: primaryImage n'est jamais null grâce à getPrimaryImage()
+	product: Product;
 	/** Index dans la liste (pour priority images above-fold) */
 	index?: number;
 	/**
@@ -36,12 +27,8 @@ interface ProductCardProps {
 	 * Exemple: "related" pour les produits similaires
 	 */
 	viewTransitionContext?: string;
-	/** ID du SKU primaire pour le bouton wishlist */
-	primarySkuId?: string;
 	/** Indique si le SKU est dans la wishlist (optionnel, défaut false) */
 	isInWishlist?: boolean;
-	/** Couleurs disponibles pour les pastilles (si multi-variantes) */
-	colors?: ColorSwatch[];
 }
 
 /**
@@ -57,34 +44,27 @@ interface ProductCardProps {
  *
  * @example
  * ```tsx
- * <ProductCard
- *   slug="boucles-oreilles-rose"
- *   title="Boucles d'oreilles Rose Éternelle"
- *   price={4500}
- *   stockStatus="in_stock"
- *   stockMessage="En stock"
- *   primaryImage={{ url: "/images/...", alt: "...", mediaType: "IMAGE" }}
- *   index={0}
- * />
+ * <ProductCard product={product} index={0} />
  * ```
  *
  * @see {@link ProductPriceCompact} - Sous-composant utilisé pour l'affichage du prix
  */
 export function ProductCard({
-	id,
-	slug,
-	title,
-	price,
-	stockStatus,
-	stockMessage,
-	inventory,
-	primaryImage,
+	product,
 	index,
 	viewTransitionContext,
-	primarySkuId,
 	isInWishlist,
-	colors,
 }: ProductCardProps) {
+	// Déstructuration des données du produit
+	const { slug, title } = product;
+	const primarySku = getPrimarySkuForList(product);
+	const { price } = getPrimaryPriceForList(product);
+	const stockInfo = getStockInfoForList(product);
+	const primaryImage = getPrimaryImageForList(product);
+	const colors = getAvailableColorsForList(product);
+
+	const { status: stockStatus, message: stockMessage, totalInventory: inventory } = stockInfo;
+
 	// Génération ID unique pour aria-labelledby (RSC compatible)
 	// Sanitise le slug pour éviter les ID HTML invalides (accents, apostrophes, etc.)
 	const sanitizedSlug = slug.replace(/[^a-z0-9-]/gi, "");
@@ -103,9 +83,6 @@ export function ProductCard({
 	// URL canonique uniquement (stratégie SEO e-commerce recommandée)
 	// Toujours pointer vers /creations/[slug] pour consolider les signaux SEO
 	const productUrl = `/creations/${slug}`;
-
-	// Label accessible
-	const accessibleLabel = title;
 
 	return (
 		<article
@@ -151,9 +128,9 @@ export function ProductCard({
 						</div>
 					)}
 					{/* Bouton wishlist - toujours visible sur mobile, visible au hover sur desktop */}
-					{primarySkuId && (
+					{primarySku && (
 						<WishlistButton
-							skuId={primarySkuId}
+							skuId={primarySku.id}
 							isInWishlist={isInWishlist ?? false}
 							variant="card"
 							productTitle={title}
@@ -175,9 +152,9 @@ export function ProductCard({
 						/>
 					</ViewTransition>
 					{/* Bouton d'ajout au panier (visible au hover, masqué si rupture) */}
-					{primarySkuId && stockStatus === "in_stock" && (
+					{primarySku && stockStatus === "in_stock" && (
 						<AddToCartCardButton
-							skuId={primarySkuId}
+							skuId={primarySku.id}
 							productTitle={title}
 						/>
 					)}

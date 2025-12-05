@@ -1,4 +1,3 @@
-import { Prisma } from "@/app/generated/prisma/client";
 import { auth } from "@/modules/auth/lib/auth";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
@@ -6,16 +5,10 @@ import { headers } from "next/headers";
 
 import {
 	RELATED_PRODUCTS_DEFAULT_LIMIT,
-	RELATED_PRODUCTS_SELECT,
 	RELATED_PRODUCTS_STRATEGY,
 } from "../constants/related-products.constants";
-import type {
-	GetRelatedProductsReturn,
-	RelatedProduct,
-} from "../types/related-products.types";
-
-// Re-export pour compatibilité
-export type { GetRelatedProductsReturn, RelatedProduct } from "../types/related-products.types";
+import { GET_PRODUCTS_SELECT } from "../constants/product.constants";
+import type { Product } from "../types/product.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -31,7 +24,7 @@ export type { GetRelatedProductsReturn, RelatedProduct } from "../types/related-
 export async function getRelatedProducts(options?: {
 	currentProductSlug?: string;
 	limit?: number;
-}): Promise<GetRelatedProductsReturn> {
+}): Promise<Product[]> {
 	const limit = options?.limit ?? RELATED_PRODUCTS_DEFAULT_LIMIT;
 	const currentProductSlug = options?.currentProductSlug;
 
@@ -57,7 +50,7 @@ export async function getRelatedProducts(options?: {
  */
 async function fetchPublicRelatedProducts(
 	limit: number
-): Promise<RelatedProduct[]> {
+): Promise<Product[]> {
 	"use cache";
 	cacheLife("collections");
 	cacheTag("related-products-public");
@@ -73,7 +66,7 @@ async function fetchPublicRelatedProducts(
 					},
 				},
 			},
-			select: RELATED_PRODUCTS_SELECT,
+			select: GET_PRODUCTS_SELECT,
 			orderBy: {
 				createdAt: "desc",
 			},
@@ -90,7 +83,7 @@ async function fetchPublicRelatedProducts(
 async function fetchPersonalizedRelatedProducts(
 	userId: string,
 	limit: number
-): Promise<RelatedProduct[]> {
+): Promise<Product[]> {
 	"use cache: private";
 	cacheLife("relatedProducts");
 	cacheTag(`related-products-user-${userId}`);
@@ -141,7 +134,7 @@ async function fetchPersonalizedRelatedProducts(
 							: []),
 					],
 				},
-				select: RELATED_PRODUCTS_SELECT,
+				select: GET_PRODUCTS_SELECT,
 				orderBy: {
 					createdAt: "desc",
 				},
@@ -163,7 +156,7 @@ async function fetchPersonalizedRelatedProducts(
 					},
 				},
 			},
-			select: RELATED_PRODUCTS_SELECT,
+			select: GET_PRODUCTS_SELECT,
 			orderBy: {
 				createdAt: "desc",
 			},
@@ -181,7 +174,7 @@ async function fetchPersonalizedRelatedProducts(
 async function fetchContextualRelatedProducts(
 	currentProductSlug: string,
 	limit: number
-): Promise<RelatedProduct[]> {
+): Promise<Product[]> {
 	"use cache";
 	cacheLife("relatedProducts");
 	cacheTag(`related-products-contextual-${currentProductSlug}`);
@@ -212,10 +205,10 @@ async function fetchContextualRelatedProducts(
 			.map((sku) => sku.colorId)
 			.filter((id): id is string => id !== null);
 
-		const relatedProducts: RelatedProduct[] = [];
+		const relatedProducts: Product[] = [];
 		const addedProductIds = new Set<string>();
 
-		const addProducts = (products: RelatedProduct[], maxCount: number) => {
+		const addProducts = (products: Product[], maxCount: number) => {
 			let added = 0;
 			for (const product of products) {
 				if (added >= maxCount || relatedProducts.length >= limit) {
@@ -258,7 +251,7 @@ async function fetchContextualRelatedProducts(
 								some: { collectionId: { in: currentCollectionIds } },
 							},
 						},
-						select: RELATED_PRODUCTS_SELECT,
+						select: GET_PRODUCTS_SELECT,
 						orderBy: { createdAt: "desc" },
 						take: RELATED_PRODUCTS_STRATEGY.SAME_COLLECTION,
 					})
@@ -274,7 +267,7 @@ async function fetchContextualRelatedProducts(
 								? { NOT: { collections: { some: { collectionId: { in: currentCollectionIds } } } } }
 								: {}),
 						},
-						select: RELATED_PRODUCTS_SELECT,
+						select: GET_PRODUCTS_SELECT,
 						orderBy: { createdAt: "desc" },
 						take: RELATED_PRODUCTS_STRATEGY.SAME_TYPE,
 					})
@@ -296,7 +289,7 @@ async function fetchContextualRelatedProducts(
 								? { not: currentProduct.typeId }
 								: undefined,
 						},
-						select: RELATED_PRODUCTS_SELECT,
+						select: GET_PRODUCTS_SELECT,
 						orderBy: { createdAt: "desc" },
 						take: RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS,
 					})
@@ -305,7 +298,7 @@ async function fetchContextualRelatedProducts(
 			// STRATÉGIE 4 : Best-sellers pour compléter
 			prisma.product.findMany({
 				where: baseWhere,
-				select: RELATED_PRODUCTS_SELECT,
+				select: GET_PRODUCTS_SELECT,
 				orderBy: { createdAt: "desc" },
 				take: limit + 5,
 			}),

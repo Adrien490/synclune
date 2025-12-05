@@ -1,7 +1,6 @@
 import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
-import { computeStockFromSkus } from "@/modules/products/services/product-list-helpers";
-import { FALLBACK_IMAGE_URL } from "@/modules/media/constants/product-fallback-image.constants";
+import { getPrimarySkuForList } from "@/modules/products/services/product-list-helpers";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { Reveal, Stagger } from "@/shared/components/animations";
 import { Separator } from "@/shared/components/ui/separator";
@@ -68,33 +67,13 @@ export async function CartRecommendations({
 				amount={0.1}
 			>
 				{recommendations.map((product, index) => {
-					// ✅ SIMPLE : product.skus[0] = SKU principal (déjà trié)
-					const primarySku = product.skus[0];
-					const primaryImage = primarySku?.images[0];
-					const stockInfo = computeStockFromSkus(product.skus);
-
+					const primarySku = getPrimarySkuForList(product);
 					return (
 						<ProductCard
 							key={product.id}
-							id={product.id}
-							slug={product.slug}
-							title={product.title}
-							description={product.description}
-							price={primarySku?.priceInclTax || 0}
-							stockStatus={stockInfo.status}
-							stockMessage={stockInfo.message}
-							inventory={stockInfo.totalInventory}
-							primaryImage={{
-								url: primaryImage?.url || FALLBACK_IMAGE_URL,
-								alt: primaryImage?.altText ?? null,
-								mediaType: "IMAGE" as const,
-								blurDataUrl: primaryImage?.blurDataUrl ?? undefined,
-							}}
-							showDescription={false}
-							size="sm"
+							product={product}
 							index={index}
 							viewTransitionContext="cart-recommendations"
-							primarySkuId={primarySku?.id}
 							isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 						/>
 					);

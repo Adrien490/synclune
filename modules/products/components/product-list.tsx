@@ -9,13 +9,7 @@ import {
 } from "@/shared/components/ui/empty";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import {
-	getPrimaryImageForList,
-	getPrimaryPriceForList,
-	getPrimarySkuForList,
-	getStockInfoForList,
-	getAvailableColorsForList,
-} from "@/modules/products/services/product-list-helpers";
+import { getPrimarySkuForList } from "@/modules/products/services/product-list-helpers";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { SearchX } from "lucide-react";
 import { use } from "react";
@@ -60,30 +54,11 @@ export function ProductList({
 			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
 				{products.map((product) => {
 					const primarySku = getPrimarySkuForList(product);
-					const { price } = getPrimaryPriceForList(product);
-					const stockInfo = getStockInfoForList(product);
-					const primaryImage = getPrimaryImageForList(product);
-					const colors = getAvailableColorsForList(product);
-
 					return (
 						<div key={product.id} className="product-item">
 							<ProductCard
-								id={product.id}
-								slug={product.slug}
-								title={product.title}
-								price={price}
-								stockStatus={stockInfo.status}
-								stockMessage={stockInfo.message}
-								inventory={stockInfo.totalInventory}
-								primaryImage={{
-									url: primaryImage.url,
-									alt: primaryImage.alt || null,
-									mediaType: primaryImage.mediaType,
-									blurDataUrl: primaryImage.blurDataUrl,
-								}}
-								primarySkuId={primarySku?.id}
+								product={product}
 								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
-								colors={colors}
 							/>
 						</div>
 					);
