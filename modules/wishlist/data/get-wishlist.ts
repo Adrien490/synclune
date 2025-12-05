@@ -5,6 +5,7 @@ import {
 } from "@/shared/components/cursor-pagination/pagination";
 import { cacheWishlist } from "@/modules/wishlist/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
+import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 
 import {
 	GET_WISHLIST_SELECT,
@@ -38,9 +39,9 @@ export type {
 // ============================================================================
 
 /**
- * Récupère la wishlist de l'utilisateur connecté avec pagination
+ * Récupère la wishlist de l'utilisateur connecté ou du visiteur avec pagination
  *
- * Authentification requise: L'utilisateur doit être connecté pour accéder à sa wishlist.
+ * Supporte les utilisateurs connectés ET les visiteurs (sessions invité)
  *
  * @param params - Paramètres de pagination (cursor, direction, perPage)
  * @returns Wishlist items paginés avec informations de pagination
@@ -50,27 +51,31 @@ export async function getWishlist(
 ): Promise<GetWishlistReturn> {
 	const session = await getSession();
 	const userId = session?.user?.id;
+	const sessionId = !userId ? await getWishlistSessionId() : null;
 
-	return await fetchWishlist(userId, params);
+	return await fetchWishlist(userId, sessionId || undefined, params);
 }
 
 /**
- * Récupère la wishlist d'un utilisateur connecté avec pagination et cache
+ * Récupère la wishlist d'un utilisateur ou visiteur avec pagination et cache
  *
- * @param userId - ID de l'utilisateur connecté
+ * @param userId - ID de l'utilisateur connecté (optionnel)
+ * @param sessionId - ID de session visiteur (optionnel)
  * @param params - Paramètres de pagination (cursor, direction, perPage)
  * @returns Wishlist items paginés avec informations de pagination
  */
 export async function fetchWishlist(
 	userId?: string,
+	sessionId?: string,
 	params: GetWishlistParams = {}
 ): Promise<GetWishlistReturn> {
 	"use cache: private";
 
-	cacheWishlist(userId, undefined);
+	cacheWishlist(userId, sessionId);
 
 	try {
-		if (!userId) {
+		// Pas d'utilisateur ni de session = pas de wishlist
+		if (!userId && !sessionId) {
 			return {
 				items: [],
 				pagination: {
@@ -95,8 +100,9 @@ export async function fetchWishlist(
 		});
 
 		// Filtres communs pour les requêtes wishlistItem
+		// Supporte userId OU sessionId
 		const itemWhereClause = {
-			wishlist: { userId },
+			wishlist: userId ? { userId } : { sessionId },
 			sku: {
 				isActive: true,
 				product: {

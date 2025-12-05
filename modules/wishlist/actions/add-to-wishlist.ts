@@ -9,21 +9,22 @@ import {
 	getClientIp,
 	getRateLimitIdentifier,
 } from "@/shared/lib/rate-limit";
+import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { addToWishlistSchema } from "@/modules/wishlist/schemas/wishlist.schemas";
-
-// Rate limit config pour wishlist (moins strict que cart)
-const WISHLIST_RATE_LIMIT = {
-	maxRequests: 20,
-	windowMs: 60000, // 1 minute
-};
+import {
+	getOrCreateWishlistSessionId,
+	getWishlistExpirationDate,
+} from "@/modules/wishlist/lib/wishlist-session";
 
 /**
  * Server Action pour ajouter un article à la wishlist
  * Compatible avec useActionState de React 19
+ *
+ * Supporte les utilisateurs connectés ET les visiteurs (sessions invité)
  *
  * Pattern:
  * 1. Validation des données (Zod)
@@ -37,15 +38,16 @@ export async function addToWishlist(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Vérifier l'authentification
+		// 1. Récupérer l'authentification (user ou session invité)
 		const session = await getSession();
 		const userId = session?.user?.id;
+		const sessionId = !userId ? await getOrCreateWishlistSessionId() : null;
 
-		if (!userId) {
+		// Vérifier qu'on a soit un userId soit un sessionId
+		if (!userId && !sessionId) {
 			return {
 				status: ActionStatus.ERROR,
-				message:
-					"Vous devez être connecté pour ajouter des articles à votre wishlist",
+				message: "Impossible de créer une session wishlist",
 			};
 		}
 
@@ -70,8 +72,8 @@ export async function addToWishlist(
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 
-		const rateLimitId = getRateLimitIdentifier(userId, null, ipAddress);
-		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_RATE_LIMIT);
+		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
+		const rateLimit = checkRateLimit(`wishlist-add:${rateLimitId}`, WISHLIST_LIMITS.TOGGLE);
 
 		if (!rateLimit.success) {
 			return {
@@ -108,16 +110,22 @@ export async function addToWishlist(
 			};
 		}
 
-		// 6. Transaction: Récupérer la wishlist et ajouter l'item
+		// 6. Transaction: Récupérer/créer la wishlist et ajouter l'item
 		const transactionResult = await prisma.$transaction(async (tx) => {
-			// 6a. Récupérer la wishlist (normalement créée à l'inscription)
-			// Fallback avec upsert pour :
-			// - Utilisateurs existants créés avant cette fonctionnalité
-			// - Cas d'échec du hook onCustomerCreate lors de l'inscription
+			// 6a. Récupérer ou créer la wishlist
+			// Pour utilisateur connecté : upsert par userId
+			// Pour visiteur : upsert par sessionId
 			const wishlist = await tx.wishlist.upsert({
-				where: { userId },
-				create: { userId },
-				update: {},
+				where: userId ? { userId } : { sessionId: sessionId! },
+				create: {
+					userId: userId || null,
+					sessionId: sessionId || null,
+					expiresAt: userId ? null : getWishlistExpirationDate(),
+				},
+				update: {
+					// Rafraîchir l'expiration pour les visiteurs
+					expiresAt: userId ? null : getWishlistExpirationDate(),
+				},
 				select: {
 					id: true,
 				},
@@ -163,7 +171,7 @@ export async function addToWishlist(
 		// 7. Invalidation cache immédiate (read-your-own-writes)
 		const tags = getWishlistInvalidationTags(
 			userId,
-			undefined,
+			sessionId || undefined,
 			transactionResult.wishlist.id
 		);
 		tags.forEach(tag => updateTag(tag));

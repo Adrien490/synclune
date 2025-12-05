@@ -472,14 +472,22 @@ model CartItem {
 model Wishlist {
   id String @id @default(cuid())
 
-  // Support utilisateur connecté uniquement
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Support utilisateur connecté OU session invité
+  userId    String? @unique
+  user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String? @unique // UUID pour sessions invité (cookie httpOnly)
+
+  // Date d'expiration pour les wishlists invité (null = utilisateur connecté)
+  expiresAt DateTime?
 
   items WishlistItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([expiresAt]) // Pour le nettoyage des wishlists expirées
+  @@index([userId])
+  @@index([sessionId])
 }
 
 model WishlistItem {

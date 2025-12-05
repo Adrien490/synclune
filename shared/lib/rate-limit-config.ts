@@ -356,6 +356,33 @@ export function getConfigForEnvironment(config: RateLimitConfig): RateLimitConfi
 }
 
 // ========================================
+// ❤️ WISHLIST (FAVORIS)
+// ========================================
+
+/**
+ * Limite pour l'ajout/suppression de favoris
+ *
+ * Protège contre :
+ * - Spam de requêtes (bot qui ajoute en boucle)
+ * - Utilisateurs impatients qui cliquent plusieurs fois
+ */
+export const WISHLIST_TOGGLE_LIMIT: RateLimitConfig = {
+	limit: 20, // 20 toggles maximum
+	windowMs: minutes(1), // par minute
+};
+
+/**
+ * Limite pour la fusion des wishlists (guest -> user)
+ *
+ * Stricte car ne doit pas être appelée souvent
+ * Déclenchée uniquement à la connexion
+ */
+export const WISHLIST_MERGE_LIMIT: RateLimitConfig = {
+	limit: 10, // 10 fusions maximum
+	windowMs: minutes(1), // par minute
+};
+
+// ========================================
 // 📊 EXPORT GROUPÉ PAR DOMAINE
 // ========================================
 
@@ -419,4 +446,12 @@ export const ORDER_LIMITS = {
 export const PRODUCT_LIMITS = {
 	SEARCH: PRODUCT_SEARCH_LIMIT,
 	REVIEW: PRODUCT_REVIEW_LIMIT,
+} as const;
+
+/**
+ * Toutes les limites de la wishlist
+ */
+export const WISHLIST_LIMITS = {
+	TOGGLE: WISHLIST_TOGGLE_LIMIT,
+	MERGE: WISHLIST_MERGE_LIMIT,
 } as const;

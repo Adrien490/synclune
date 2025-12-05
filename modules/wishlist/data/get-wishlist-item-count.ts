@@ -1,6 +1,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { cacheWishlistCount } from "@/modules/wishlist/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
+import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 
 import type { GetWishlistItemCountReturn } from "../types/wishlist.types";
 
@@ -12,41 +13,45 @@ export type { GetWishlistItemCountReturn } from "../types/wishlist.types";
 // ============================================================================
 
 /**
- * Récupère le nombre d'items dans la wishlist de l'utilisateur connecté
+ * Récupère le nombre d'items dans la wishlist de l'utilisateur connecté ou du visiteur
  *
  * Utilisé pour afficher le badge dans le header
  *
- * Authentification requise: L'utilisateur doit être connecté.
+ * Supporte les utilisateurs connectés ET les visiteurs (sessions invité)
  *
  * @returns Nombre d'items dans la wishlist
  */
 export async function getWishlistItemCount(): Promise<GetWishlistItemCountReturn> {
 	const session = await getSession();
 	const userId = session?.user?.id;
+	const sessionId = !userId ? await getWishlistSessionId() : null;
 
-	return await fetchWishlistItemCount(userId);
+	return await fetchWishlistItemCount(userId, sessionId || undefined);
 }
 
 /**
- * Récupère le nombre d'items dans la wishlist d'un utilisateur connecté
+ * Récupère le nombre d'items dans la wishlist d'un utilisateur ou visiteur
  *
- * @param userId - ID de l'utilisateur connecté
+ * @param userId - ID de l'utilisateur connecté (optionnel)
+ * @param sessionId - ID de session visiteur (optionnel)
  * @returns Nombre d'items dans la wishlist
  */
 export async function fetchWishlistItemCount(
-	userId?: string
+	userId?: string,
+	sessionId?: string
 ): Promise<GetWishlistItemCountReturn> {
 	"use cache: private";
 
-	cacheWishlistCount(userId, undefined);
+	cacheWishlistCount(userId, sessionId);
 
 	try {
-		if (!userId) {
+		// Pas d'utilisateur ni de session = pas de wishlist
+		if (!userId && !sessionId) {
 			return 0;
 		}
 
-		const wishlist = await prisma.wishlist.findUnique({
-			where: { userId },
+		const wishlist = await prisma.wishlist.findFirst({
+			where: userId ? { userId } : { sessionId },
 			select: {
 				_count: {
 					select: { items: true },

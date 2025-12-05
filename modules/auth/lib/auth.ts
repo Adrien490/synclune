@@ -1,4 +1,5 @@
 import { mergeCarts } from "@/modules/cart/actions/merge-carts";
+import { mergeWishlists } from "@/modules/wishlist/actions/merge-wishlists";
 import { LEGAL_VERSIONS } from "@/shared/constants/legal-versions";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
@@ -256,6 +257,27 @@ export const auth = betterAuth({
 					if (cartResult.status === ActionStatus.SUCCESS) {
 						// ✅ Merge réussi : supprimer le cookie
 						ctx.setCookie("cart_session", "", {
+							maxAge: 0,
+							path: "/",
+						});
+					}
+				} catch (error) {
+					// Ignore - Cookie preserved for retry
+				}
+			}
+
+			// ❤️ MERGE DE LA WISHLIST
+			const wishlistSessionId = ctx.getCookie("wishlist_session");
+			if (wishlistSessionId) {
+				try {
+					const wishlistResult = await mergeWishlists(
+						newSession.user.id,
+						wishlistSessionId
+					);
+
+					if (wishlistResult.status === ActionStatus.SUCCESS) {
+						// ✅ Merge réussi : supprimer le cookie
+						ctx.setCookie("wishlist_session", "", {
 							maxAge: 0,
 							path: "/",
 						});

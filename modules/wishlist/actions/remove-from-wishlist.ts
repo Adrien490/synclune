@@ -5,26 +5,27 @@ import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache"
 import { updateTag } from "next/cache"
 import { prisma } from "@/shared/lib/prisma"
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit"
+import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config"
 import type { ActionState } from "@/shared/types/server-action"
 import { ActionStatus } from "@/shared/types/server-action"
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { removeFromWishlistSchema } from '@/modules/wishlist/schemas/wishlist.schemas'
-
-// Rate limit config pour wishlist
-const WISHLIST_RATE_LIMIT = {
-	maxRequests: 20,
-	windowMs: 60000, // 1 minute
-}
+import {
+	getWishlistSessionId,
+	getWishlistExpirationDate,
+} from "@/modules/wishlist/lib/wishlist-session"
 
 /**
  * Server Action pour retirer un article de la wishlist
  * Compatible avec useActionState de React 19
  *
+ * Supporte les utilisateurs connectés ET les visiteurs (sessions invité)
+ *
  * Pattern:
  * 1. Validation des données (Zod)
  * 2. Rate limiting (protection anti-spam)
- * 3. Authentification (wishlist requiert connexion)
+ * 3. Récupération wishlist (user ou session)
  * 4. Transaction DB (delete wishlist item)
  * 5. Invalidation cache immédiate (read-your-own-writes)
  */
@@ -33,14 +34,16 @@ export async function removeFromWishlist(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Vérifier l'authentification
+		// 1. Récupérer l'authentification (user ou session invité)
 		const session = await getSession()
 		const userId = session?.user?.id
+		const sessionId = !userId ? await getWishlistSessionId() : null
 
-		if (!userId) {
+		// Vérifier qu'on a soit un userId soit un sessionId
+		if (!userId && !sessionId) {
 			return {
 				status: ActionStatus.ERROR,
-				message: 'Vous devez être connecté pour retirer des articles de votre wishlist',
+				message: 'Aucune wishlist trouvée',
 			}
 		}
 
@@ -65,8 +68,8 @@ export async function removeFromWishlist(
 		const headersList = await headers()
 		const ipAddress = await getClientIp(headersList)
 
-		const rateLimitId = getRateLimitIdentifier(userId, null, ipAddress)
-		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_RATE_LIMIT)
+		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress)
+		const rateLimit = checkRateLimit(`wishlist-remove:${rateLimitId}`, WISHLIST_LIMITS.TOGGLE)
 
 		if (!rateLimit.success) {
 			return {
@@ -92,9 +95,9 @@ export async function removeFromWishlist(
 			}
 		}
 
-		// 6. Récupérer la wishlist de l'utilisateur
-		const wishlist = await prisma.wishlist.findUnique({
-			where: { userId },
+		// 6. Récupérer la wishlist de l'utilisateur ou visiteur
+		const wishlist = await prisma.wishlist.findFirst({
+			where: userId ? { userId } : { sessionId },
 			select: { id: true },
 		})
 
@@ -105,7 +108,7 @@ export async function removeFromWishlist(
 			}
 		}
 
-		// 8. Supprimer l'item de la wishlist et mettre à jour le timestamp
+		// 7. Supprimer l'item de la wishlist et mettre à jour le timestamp
 		const deleteResult = await prisma.$transaction(async (tx) => {
 			const result = await tx.wishlistItem.deleteMany({
 				where: {
@@ -114,22 +117,25 @@ export async function removeFromWishlist(
 				},
 			})
 
-			// Mettre à jour le updatedAt de la wishlist si un item a été supprimé
+			// Mettre à jour le updatedAt et rafraîchir l'expiration pour les visiteurs
 			if (result.count > 0) {
 				await tx.wishlist.update({
 					where: { id: wishlist.id },
-					data: { updatedAt: new Date() },
+					data: {
+						updatedAt: new Date(),
+						expiresAt: userId ? null : getWishlistExpirationDate(),
+					},
 				})
 			}
 
 			return result
 		})
 
-		// 9. Invalidation cache immédiate (read-your-own-writes)
-		const tags = getWishlistInvalidationTags(userId, undefined, wishlist.id)
+		// 8. Invalidation cache immédiate (read-your-own-writes)
+		const tags = getWishlistInvalidationTags(userId, sessionId || undefined, wishlist.id)
 		tags.forEach(tag => updateTag(tag))
 
-		// 10. Revalidation complète pour mise à jour du header (badge count)
+		// 9. Revalidation complète pour mise à jour du header (badge count)
 		revalidatePath('/', 'layout')
 
 		return {
