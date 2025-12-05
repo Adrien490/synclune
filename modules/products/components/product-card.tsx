@@ -17,7 +17,6 @@ interface ProductCardProps {
 	id: string;
 	slug: string;
 	title: string;
-	description: string | null;
 	price: number;
 	stockStatus: "in_stock" | "out_of_stock"; // Système simplifié : en stock ou rupture
 	stockMessage: string;
@@ -29,8 +28,6 @@ interface ProductCardProps {
 		mediaType: "IMAGE"; // Les médias principaux sont TOUJOURS des images
 		blurDataUrl?: string; // Base64 blur placeholder pour CLS optimization
 	}; // IMPORTANT: primaryImage n'est jamais null grâce à getPrimaryImage()
-	showDescription?: boolean;
-	size?: "sm" | "md" | "lg";
 	/** Index dans la liste (pour priority images above-fold) */
 	index?: number;
 	/**
@@ -45,12 +42,6 @@ interface ProductCardProps {
 	isInWishlist?: boolean;
 	/** Couleurs disponibles pour les pastilles (si multi-variantes) */
 	colors?: ColorSwatch[];
-	/** Indique si le produit a plusieurs variantes nécessitant un drawer */
-	hasMultipleVariants?: boolean;
-	/** Callback pour ouvrir le drawer de sélection (panier) */
-	onOpenCartDrawer?: () => void;
-	/** Callback pour ouvrir le drawer de sélection (wishlist) */
-	onOpenWishlistDrawer?: () => void;
 }
 
 /**
@@ -60,7 +51,7 @@ interface ProductCardProps {
  * Composant optimisé pour les Core Web Vitals avec:
  * - Preload des images above-fold (index < 4)
  * - Schema.org Product/Offer complet
- * - Support responsive avec 3 tailles (sm/md/lg)
+ * - Support responsive
  * - Animations respectant prefers-reduced-motion (WCAG 2.3.3)
  * - Internationalisation via PRODUCT_TEXTS
  *
@@ -69,14 +60,11 @@ interface ProductCardProps {
  * <ProductCard
  *   slug="boucles-oreilles-rose"
  *   title="Boucles d'oreilles Rose Éternelle"
- *   description="Bijou artisanal en argent 925"
  *   price={4500}
  *   stockStatus="in_stock"
  *   stockMessage="En stock"
  *   primaryImage={{ url: "/images/...", alt: "...", mediaType: "IMAGE" }}
  *   index={0}
- *   size="md"
- *   showDescription={true}
  * />
  * ```
  *
@@ -86,22 +74,16 @@ export function ProductCard({
 	id,
 	slug,
 	title,
-	description,
 	price,
 	stockStatus,
 	stockMessage,
 	inventory,
 	primaryImage,
-	showDescription = false,
-	size = "md",
 	index,
 	viewTransitionContext,
 	primarySkuId,
 	isInWishlist,
 	colors,
-	hasMultipleVariants = false,
-	onOpenCartDrawer,
-	onOpenWishlistDrawer,
 }: ProductCardProps) {
 	// Génération ID unique pour aria-labelledby (RSC compatible)
 	// Sanitise le slug pour éviter les ID HTML invalides (accents, apostrophes, etc.)
@@ -125,37 +107,17 @@ export function ProductCard({
 	// Label accessible
 	const accessibleLabel = title;
 
-	// Configuration responsive selon la taille
-	const sizeConfig = {
-		sm: {
-			container: "gap-2",
-			title: "text-sm break-words",
-			description: "text-xs line-clamp-2 leading-relaxed break-words overflow-hidden",
-		},
-		md: {
-			container: "gap-4",
-			title: "text-lg break-words",
-			description: "text-sm line-clamp-3 leading-relaxed break-words overflow-hidden",
-		},
-		lg: {
-			container: "gap-6",
-			title: "text-xl break-words",
-			description: "text-base line-clamp-4 leading-relaxed break-words overflow-hidden",
-		},
-	};
-
 	return (
 		<article
 			className={cn(
-				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent",
+				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent gap-4",
 				// Transition optimisée avec cubic-bezier pour fluidité
 				"transition-all duration-300 ease-out",
 				// Border, shadow et scale au hover
 				"shadow-sm motion-safe:hover:border-primary/30 motion-safe:hover:shadow-xl motion-safe:hover:shadow-primary/15",
 				"motion-safe:hover:-translate-y-1.5 motion-safe:hover:scale-[1.01] will-change-transform",
 				// Active state pour mobile
-				"active:scale-[0.98]",
-				sizeConfig[size].container
+				"active:scale-[0.98]"
 			)}
 			itemScope
 			itemType="https://schema.org/Product"
@@ -195,8 +157,6 @@ export function ProductCard({
 							isInWishlist={isInWishlist ?? false}
 							variant="card"
 							productTitle={title}
-							hasMultipleVariants={hasMultipleVariants}
-							onOpenDrawer={onOpenWishlistDrawer}
 						/>
 					)}
 					<ViewTransition name={`${vtPrefix}product-image-${slug}`} default="vt-product-image" share="vt-product-image">
@@ -219,8 +179,6 @@ export function ProductCard({
 						<AddToCartCardButton
 							skuId={primarySkuId}
 							productTitle={title}
-							hasMultipleVariants={hasMultipleVariants}
-							onOpenDrawer={onOpenCartDrawer}
 						/>
 					)}
 				</div>
@@ -231,10 +189,7 @@ export function ProductCard({
 					<ViewTransition name={`${vtPrefix}product-title-${slug}`} default="vt-title">
 						<h3
 							id={titleId}
-							className={cn(
-								"line-clamp-2 font-sans text-foreground",
-								sizeConfig[size].title
-							)}
+							className="line-clamp-2 font-sans text-foreground text-lg break-words"
 							itemProp="name"
 						>
 							{title}
@@ -250,22 +205,6 @@ export function ProductCard({
 					{stockStatus === "out_of_stock" && (
 						<span className="sr-only">{stockMessage}</span>
 					)}
-
-					{/* Description : toujours exposée pour SEO (meta si invisible) */}
-					{description &&
-						(showDescription ? (
-							<p
-								className={cn(
-									"text-foreground/70 transition-colors duration-300 ease-out group-hover:text-foreground/90",
-									sizeConfig[size].description
-								)}
-								itemProp="description"
-							>
-								{description}
-							</p>
-						) : (
-							<meta itemProp="description" content={description} />
-						))}
 
 					{/* Brand Schema.org (Synclune) */}
 					<div

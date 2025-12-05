@@ -7,14 +7,13 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
-import { ProductCardWithDrawer } from "@/modules/products/components/product-card-with-drawer";
+import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
 	getPrimarySkuForList,
 	getStockInfoForList,
-	hasMultipleVariants,
 	getAvailableColorsForList,
 } from "@/modules/products/services/product-list-helpers";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
@@ -64,16 +63,14 @@ export function ProductList({
 					const { price } = getPrimaryPriceForList(product);
 					const stockInfo = getStockInfoForList(product);
 					const primaryImage = getPrimaryImageForList(product);
-					const multiVariants = hasMultipleVariants(product);
 					const colors = getAvailableColorsForList(product);
 
 					return (
 						<div key={product.id} className="product-item">
-							<ProductCardWithDrawer
+							<ProductCard
 								id={product.id}
 								slug={product.slug}
 								title={product.title}
-								description={product.description}
 								price={price}
 								stockStatus={stockInfo.status}
 								stockMessage={stockInfo.message}
@@ -87,8 +84,6 @@ export function ProductList({
 								primarySkuId={primarySku?.id}
 								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 								colors={colors}
-								hasMultipleVariants={multiVariants}
-								product={product}
 							/>
 						</div>
 					);

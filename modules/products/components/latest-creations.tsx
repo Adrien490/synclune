@@ -2,14 +2,13 @@ import { Stagger } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
-import { ProductCardWithDrawer } from "@/modules/products/components/product-card-with-drawer";
+import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import {
 	getPrimaryImageForList,
 	getPrimaryPriceForList,
 	getPrimarySkuForList,
 	getStockInfoForList,
-	hasMultipleVariants,
 	getAvailableColorsForList,
 } from "@/modules/products/services/product-list-helpers";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
@@ -97,16 +96,14 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 						const { price } = getPrimaryPriceForList(product);
 						const stockInfo = getStockInfoForList(product);
 						const primaryImage = getPrimaryImageForList(product);
-						const multiVariants = hasMultipleVariants(product);
 						const colors = getAvailableColorsForList(product);
 
 						return (
-							<ProductCardWithDrawer
+							<ProductCard
 								key={product.id}
 								id={`mobile-${product.id}`}
 								slug={product.slug}
 								title={product.title}
-								description={product.description}
 								price={price}
 								stockStatus={stockInfo.status}
 								stockMessage={stockInfo.message}
@@ -122,8 +119,6 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 								primarySkuId={primarySku?.id}
 								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 								colors={colors}
-								hasMultipleVariants={multiVariants}
-								product={product}
 							/>
 						);
 					})}
@@ -142,16 +137,14 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 						const { price } = getPrimaryPriceForList(product);
 						const stockInfo = getStockInfoForList(product);
 						const primaryImage = getPrimaryImageForList(product);
-						const multiVariants = hasMultipleVariants(product);
 						const colors = getAvailableColorsForList(product);
 
 						return (
-							<ProductCardWithDrawer
+							<ProductCard
 								key={product.id}
 								id={`desktop-${product.id}`}
 								slug={product.slug}
 								title={product.title}
-								description={product.description}
 								price={price}
 								stockStatus={stockInfo.status}
 								stockMessage={stockInfo.message}
@@ -166,8 +159,6 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 								primarySkuId={primarySku?.id}
 								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 								colors={colors}
-								hasMultipleVariants={multiVariants}
-								product={product}
 							/>
 						);
 					})}
