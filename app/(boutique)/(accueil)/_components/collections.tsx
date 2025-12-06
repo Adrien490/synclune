@@ -5,8 +5,8 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import Link from "next/link";
 import { use } from "react";
-import { CollectionCard } from "./collection-card";
-import { CollectionCarouselWrapper } from "./collection-carousel-wrapper";
+import { CollectionCard } from "../../../../modules/collections/components/collection-card";
+import { CollectionCarouselWrapper } from "../../../../modules/collections/components/collection-carousel-wrapper";
 
 interface CollectionsProps {
 	collectionsPromise: Promise<GetCollectionsReturn>;
@@ -56,7 +56,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
 						<SectionTitle id="collections-title">
-							Dernières collections
+							Collections
 						</SectionTitle>
 					</Fade>
 					<Fade y={10} delay={0.1} duration={0.6}>
@@ -64,7 +64,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							id="collections-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
-							Chaque collection raconte une histoire différente. Des couleurs, des thèmes... J'adore créer ces petits univers !
+							Je rajoute une petite touche personnelle à chaque création 😊
 						</p>
 					</Fade>
 				</header>
@@ -109,11 +109,11 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 						aria-describedby="collections-cta-description"
 					>
 						<Link href="/collections">
-							Explorer mes univers
+							Explorer les collections
 						</Link>
 					</Button>
 					<span id="collections-cta-description" className="sr-only">
-						Découvrir toutes les collections de bijoux Synclune
+						Découvrir toutes les collections
 					</span>
 				</div>
 			</div>

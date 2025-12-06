@@ -1,6 +1,6 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
-import { LatestCreationsSkeleton } from "@/modules/products/components/latest-creations-skeleton";
+import { LatestCreationsSkeleton } from "@/app/(boutique)/(accueil)/_components/latest-creations-skeleton";
 import { ProductCarouselSkeleton } from "@/modules/products/components/product-carousel-skeleton";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 

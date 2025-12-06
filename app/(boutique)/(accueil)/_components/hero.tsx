@@ -44,13 +44,12 @@ export async function Hero() {
                   className="text-foreground lg:text-left"
                   itemProp="headline"
                 >
-                  Des bijoux à ton image
+                  Des bijoux colorés
                 </SectionTitle>
               </Fade>
               <Fade y={8} delay={0.2} duration={0.6}>
                 <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 text-foreground font-light tracking-tight antialiased max-w-2xl mx-auto lg:mx-0">
-                  Je transforme tes passions en bijoux colorés que tu ne
-                  trouveras nulle part ailleurs{" "}
+                  Pour des occasions particulières, ou pour sublimer votre quotidien{" "}
                   <span role="img" aria-label="coeur">
                     <Heart
                       size={22}
@@ -76,7 +75,7 @@ export async function Hero() {
                     aria-label="Découvrir mes créations de bijoux artisanaux colorés"
                     className="flex items-center justify-center"
                   >
-                    Découvrir mes créations
+                    Découvrir la boutique
                   </Link>
                 </Button>
                 <Button
@@ -90,7 +89,7 @@ export async function Hero() {
                     aria-label="Créer un bijou personnalisé sur-mesure - Contact gratuit"
                     className="flex items-center justify-center"
                   >
-                    Création sur-mesure
+                    Commander un bijou personnalisé
                   </Link>
                 </Button>
               </div>

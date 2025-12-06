@@ -2,7 +2,6 @@
 
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -10,6 +9,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useDeleteDiscount } from "@/modules/discounts/hooks/use-delete-discount";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
@@ -82,11 +82,10 @@ export function DeleteDiscountAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
+						<Button
 							type="submit"
+							variant="destructive"
 							disabled={isPending || usageCount > 0}
-							onClick={(e) => e.preventDefault()}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isPending ? (
 								<>
@@ -96,7 +95,7 @@ export function DeleteDiscountAlertDialog() {
 							) : (
 								"Supprimer"
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

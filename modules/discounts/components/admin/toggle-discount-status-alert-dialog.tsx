@@ -2,7 +2,6 @@
 
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -10,6 +9,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
 import { useToggleDiscountStatus } from "@/modules/discounts/hooks/use-toggle-discount-status";
@@ -79,10 +79,9 @@ export function ToggleDiscountStatusAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
+						<Button
 							type="submit"
 							disabled={isPending}
-							onClick={(e) => e.preventDefault()}
 							className={cn(
 								"text-white",
 								isActive
@@ -100,7 +99,7 @@ export function ToggleDiscountStatusAlertDialog() {
 							) : (
 								"Activer"
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

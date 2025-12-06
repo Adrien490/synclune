@@ -98,8 +98,8 @@ const f = createUploadthing({
 
 // FileRouter pour l'application
 export const ourFileRouter = {
-	// Route pour les images de collections (une seule image par collection)
-	collectionMedia: f({
+	// Route pour les images de témoignages (photo de l'auteur)
+	testimonialMedia: f({
 		image: { maxFileSize: "4MB", maxFileCount: 1 },
 	})
 		.middleware(async ({ files }) => {
@@ -109,10 +109,10 @@ export const ourFileRouter = {
 				throw new UploadThingError("Vous devez être connecté pour uploader des médias");
 			}
 			if (session.user.role !== "ADMIN") {
-				throw new UploadThingError("Seuls les administrateurs peuvent uploader des médias de collection");
+				throw new UploadThingError("Seuls les administrateurs peuvent uploader des photos de témoignages");
 			}
 
-			// 2. Rate limiting (5 uploads/minute pour collections)
+			// 2. Rate limiting (5 uploads/minute)
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
 			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
@@ -136,7 +136,7 @@ export const ourFileRouter = {
 			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
-			// Générer le blur placeholder pour les images de collection
+			// Générer le blur placeholder pour les photos de témoignages
 			const blurDataUrl = await generateBlurDataUrl(file.ufsUrl);
 
 			return {
@@ -148,7 +148,7 @@ export const ourFileRouter = {
 
 	// Route pour les médias de catalogue (produits et SKUs) - images et vidéos
 	catalogMedia: f({
-		image: { maxFileSize: "4MB", maxFileCount: 10 },
+		image: { maxFileSize: "16MB", maxFileCount: 10 },
 		video: { maxFileSize: "512MB", maxFileCount: 10 },
 	})
 		.middleware(async ({ files }) => {
@@ -183,7 +183,7 @@ export const ourFileRouter = {
 					validateFileSize(file, 512 * 1024 * 1024); // 512MB
 				} else if (isImage) {
 					validateMimeType(file, ALLOWED_IMAGE_TYPES);
-					validateFileSize(file, 4 * 1024 * 1024); // 4MB
+					validateFileSize(file, 16 * 1024 * 1024); // 16MB
 				} else {
 					throw new UploadThingError(
 						`Type de fichier non supporté: ${file.name} (${file.type}). Seules les images et vidéos sont acceptées.`

@@ -12,36 +12,11 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
-import type { IconName, getMobileNavItems } from "@/shared/constants/navigation";
+import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { cn } from "@/shared/utils/cn";
-import {
-	FolderOpen,
-	Gem,
-	Home,
-	Info,
-	LayoutDashboard,
-	LogIn,
-	Menu,
-	Sparkles,
-	User,
-	type LucideIcon,
-} from "lucide-react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
-
-/** Mapping des noms d'icônes vers les composants Lucide */
-const ICON_MAP: Record<IconName, LucideIcon> = {
-	home: Home,
-	gem: Gem,
-	sparkles: Sparkles,
-	"shopping-cart": Gem, // Fallback, pas utilisé dans le menu mobile
-	user: User,
-	"folder-open": FolderOpen,
-	heart: Gem, // Fallback
-	"log-in": LogIn,
-	info: Info,
-	"layout-dashboard": LayoutDashboard,
-};
 
 /** HREFs de la zone compte (memoisation) */
 const ACCOUNT_HREFS = ["/compte", "/connexion", "/admin", "/a-propos"] as const;
@@ -88,14 +63,13 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 	const renderNavItem = useCallback(
 		(item: (typeof navItems)[0]) => {
 			const isActive = isMenuItemActive(item.href);
-			const IconComponent = item.icon ? ICON_MAP[item.icon] : null;
 
 			return (
 				<SheetClose asChild key={item.href}>
 					<Link
 						href={item.href}
 						className={cn(
-							"flex items-center gap-3 text-base/6 font-medium tracking-wide antialiased transition-all duration-200 rounded-none px-4 py-3 relative border-b-2",
+							"flex items-center text-base/6 font-medium tracking-wide antialiased transition-all duration-200 rounded-none px-4 py-3 relative border-b-2",
 							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
 							isActive
 								? "font-semibold border-primary bg-primary/5"
@@ -103,16 +77,6 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 						)}
 						aria-current={isActive ? "page" : undefined}
 					>
-						{IconComponent && (
-							<IconComponent
-								size={20}
-								className={cn(
-									"shrink-0 transition-colors duration-200",
-									isActive ? "text-foreground" : "text-muted-foreground"
-								)}
-								aria-hidden="true"
-							/>
-						)}
 						<span>{item.label}</span>
 					</Link>
 				</SheetClose>

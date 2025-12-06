@@ -2,7 +2,6 @@
 
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -10,6 +9,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog"
+import { Button } from "@/shared/components/ui/button"
 import { deleteTestimonial } from "@/modules/testimonials/actions/delete-testimonial"
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider"
 import { useActionState } from "react"
@@ -59,9 +59,9 @@ export function DeleteTestimonialAlertDialog() {
 					<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
 					<form action={deleteAction}>
 						<input type="hidden" name="id" value={data?.testimonialId || ""} />
-						<AlertDialogAction type="submit" disabled={isPending}>
+						<Button type="submit" variant="destructive" disabled={isPending}>
 							{isPending ? "Suppression..." : "Supprimer"}
-						</AlertDialogAction>
+						</Button>
 					</form>
 				</AlertDialogFooter>
 			</AlertDialogContent>

@@ -80,6 +80,8 @@ export function RevenueChart({ chartDataPromise }: RevenueChartProps) {
 									tickLine={false}
 									axisLine={false}
 									tickMargin={8}
+									interval="preserveStartEnd"
+									tick={{ fontSize: 11 }}
 								/>
 								<ChartTooltip
 									content={

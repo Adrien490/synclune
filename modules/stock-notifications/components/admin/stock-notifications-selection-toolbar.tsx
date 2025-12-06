@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -114,7 +113,7 @@ export function StockNotificationsSelectionToolbar({}: StockNotificationsSelecti
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Fermer
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
+							<Button type="submit" disabled={isPending}>
 								{isCancelPending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -126,7 +125,7 @@ export function StockNotificationsSelectionToolbar({}: StockNotificationsSelecti
 										Annuler
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
@@ -156,11 +155,10 @@ export function StockNotificationsSelectionToolbar({}: StockNotificationsSelecti
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Fermer
 							</AlertDialogCancel>
-							<AlertDialogAction
+							<Button
 								type="submit"
+								variant="destructive"
 								disabled={isPending}
-								onClick={(e) => e.preventDefault()}
-								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isDeletePending ? (
 									<>
@@ -173,7 +171,7 @@ export function StockNotificationsSelectionToolbar({}: StockNotificationsSelecti
 										Supprimer
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>

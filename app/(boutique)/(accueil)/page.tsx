@@ -3,15 +3,18 @@ import {
 	getLocalBusinessSchema,
 	getWebSiteSchema,
 } from "@/shared/constants/seo-config";
-import { Collections } from "@/modules/collections/components/collections";
+import { Collections } from "@/app/(boutique)/(accueil)/_components/collections";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
+import { TestimonialsSection } from "@/app/(boutique)/(accueil)/_components/testimonials";
+import { TestimonialsSkeleton } from "@/modules/testimonials/components/testimonials-skeleton";
+import { getTestimonials } from "@/modules/testimonials/data/get-testimonials";
 import { Suspense } from "react";
 import { CreativeProcess } from "./_components/creative-process";
 import { Hero } from "./_components/hero";
-import { LatestCreations } from "@/modules/products/components/latest-creations";
-import { LatestCreationsSkeleton } from "@/modules/products/components/latest-creations-skeleton";
+import { LatestCreations } from "@/app/(boutique)/(accueil)/_components/latest-creations";
+import { LatestCreationsSkeleton } from "@/app/(boutique)/(accueil)/_components/latest-creations-skeleton";
 import { AtelierStory } from "./_components/atelier-story";
 import type { Metadata } from "next";
 
@@ -107,6 +110,11 @@ export default async function Page() {
 
 			{/* 5. CreativeProcess - Storytelling atelier + Connexion émotionnelle */}
 			<CreativeProcess />
+
+			{/* 6. Témoignages - Preuve sociale + Confiance client */}
+			<Suspense fallback={<TestimonialsSkeleton />}>
+				<TestimonialsSection testimonialsPromise={getTestimonials()} />
+			</Suspense>
 		</>
 	);
 }

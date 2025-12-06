@@ -79,7 +79,7 @@ export function ChartScrollContainer({
 					className
 				)}
 			>
-				<div className="min-w-[400px] sm:min-w-[500px] md:min-w-0">
+				<div className="w-full">
 					{children}
 				</div>
 			</div>

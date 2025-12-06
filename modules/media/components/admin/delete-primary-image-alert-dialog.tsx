@@ -2,7 +2,6 @@
 
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -10,6 +9,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteUploadThingFiles } from "@/modules/media/lib/uploadthing";
 import { Loader2, Trash2 } from "lucide-react";
@@ -75,14 +75,11 @@ export function DeletePrimaryImageAlertDialog() {
 					<AlertDialogCancel type="button" disabled={isPending}>
 						Annuler
 					</AlertDialogCancel>
-					<AlertDialogAction
+					<Button
 						type="button"
-						onClick={(e) => {
-							e.preventDefault();
-							handleDelete();
-						}}
+						variant="destructive"
+						onClick={handleDelete}
 						disabled={isPending}
-						className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 					>
 						{isPending ? (
 							<>
@@ -95,7 +92,7 @@ export function DeletePrimaryImageAlertDialog() {
 								Supprimer
 							</>
 						)}
-					</AlertDialogAction>
+					</Button>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>

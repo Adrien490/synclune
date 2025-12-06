@@ -1,14 +1,11 @@
 export {
 	DASHBOARD_CACHE_TAGS,
-	CHANGELOG_CACHE_TAGS,
 	cacheDashboard,
-	cacheChangelogs,
 	getDashboardBadgesInvalidationTags,
 	getSalesKpisInvalidationTags,
 	getInventoryInvalidationTags,
 	getRevenueInvalidationTags,
 	getAbandonmentInvalidationTags,
-	getChangelogInvalidationTags,
 } from "./cache";
 
 export { CHART_STYLES } from "./chart-styles";

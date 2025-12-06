@@ -4,7 +4,6 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -39,9 +38,9 @@ export function CleanupExpiredButton() {
 				<AlertDialogFooter>
 					<AlertDialogCancel>Annuler</AlertDialogCancel>
 					<form action={action}>
-						<AlertDialogAction type="submit" disabled={isPending}>
+						<Button type="submit" disabled={isPending}>
 							{isPending ? "Nettoyage..." : "Confirmer"}
-						</AlertDialogAction>
+						</Button>
 					</form>
 				</AlertDialogFooter>
 			</AlertDialogContent>

@@ -2,7 +2,6 @@
 
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -10,6 +9,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useDeleteCollection } from "@/modules/collections/hooks/use-delete-collection";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
@@ -81,10 +81,10 @@ export function DeleteCollectionAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
+						<Button
 							type="submit"
+							variant="destructive"
 							disabled={isPending}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isPending ? (
 								<>
@@ -94,7 +94,7 @@ export function DeleteCollectionAlertDialog() {
 							) : (
 								"Supprimer"
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

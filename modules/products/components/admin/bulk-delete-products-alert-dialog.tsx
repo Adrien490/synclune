@@ -2,7 +2,6 @@
 
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -10,6 +9,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkDeleteProducts } from "@/modules/products/hooks/use-bulk-delete-products";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
@@ -79,11 +79,10 @@ export function BulkDeleteProductsAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
+						<Button
 							type="submit"
+							variant="destructive"
 							disabled={isPending}
-							onClick={(e) => e.preventDefault()}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isPending ? (
 								<>
@@ -93,7 +92,7 @@ export function BulkDeleteProductsAlertDialog() {
 							) : (
 								"Supprimer"
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

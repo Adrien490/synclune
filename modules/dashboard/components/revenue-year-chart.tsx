@@ -94,13 +94,15 @@ export function RevenueYearChart({ chartDataPromise }: RevenueYearChartProps) {
 								tickLine={false}
 								axisLine={false}
 								tickMargin={8}
-								fontSize={12}
+								interval="preserveStartEnd"
+								tick={{ fontSize: 11 }}
 							/>
 							<YAxis
 								tickLine={false}
 								axisLine={false}
-								tickMargin={8}
-								fontSize={12}
+								tickMargin={4}
+								width={45}
+								tick={{ fontSize: 10 }}
 								tickFormatter={(value) =>
 									value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value
 								}

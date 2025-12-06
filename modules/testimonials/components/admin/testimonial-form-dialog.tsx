@@ -8,16 +8,17 @@ import {
 	ResponsiveDialogTitle,
 } from "@/shared/components/ui/responsive-dialog"
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note"
-import { useAppForm } from "@/shared/components/tanstack-form"
-import { createTestimonial } from "@/modules/testimonials/actions/create-testimonial"
-import { updateTestimonial } from "@/modules/testimonials/actions/update-testimonial"
-import { createTestimonialSchema } from "@/modules/testimonials/schemas/testimonial.schemas"
+import { useAppForm, FieldLabel } from "@/shared/components/tanstack-form"
+import { createTestimonial } from "../../actions/create-testimonial"
+import { updateTestimonial } from "../../actions/update-testimonial"
+import { createTestimonialSchema } from "../../schemas/testimonial.schemas"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { useEffect, useActionState } from "react"
 import { withCallbacks } from "@/shared/utils/with-callbacks"
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks"
 import { Checkbox } from "@/shared/components/ui/checkbox"
 import { Label } from "@/shared/components/ui/label"
+import { TestimonialImageUpload } from "./testimonial-image-upload"
 
 export const TESTIMONIAL_DIALOG_ID = "testimonial-form"
 
@@ -32,11 +33,6 @@ const validators = {
 	},
 	content: ({ value }: { value: string }) => {
 		const result = createTestimonialSchema.shape.content.safeParse(value)
-		return result.success ? undefined : result.error.issues[0]?.message
-	},
-	imageUrl: ({ value }: { value: string }) => {
-		if (!value) return undefined // Optional field
-		const result = createTestimonialSchema.shape.imageUrl.safeParse(value)
 		return result.success ? undefined : result.error.issues[0]?.message
 	},
 }
@@ -124,7 +120,7 @@ export function TestimonialFormDialog() {
 				}
 			}}
 		>
-			<ResponsiveDialogContent className="max-w-2xl">
+			<ResponsiveDialogContent className="max-w-3xl">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>
 						{isUpdateMode ? "Modifier le témoignage" : "Créer un témoignage"}
@@ -142,78 +138,88 @@ export function TestimonialFormDialog() {
 
 					<RequiredFieldsNote />
 
-					<div className="space-y-4">
-						<form.AppField
-							name="authorName"
-							validators={{ onChange: validators.authorName }}
-						>
-							{(field) => (
-								<field.InputField
-									label="Prénom"
-									type="text"
-									placeholder="ex: Marie"
-									disabled={isPending}
-									required
-								/>
-							)}
-						</form.AppField>
+					{/* Layout deux colonnes : Photo à gauche, Texte à droite */}
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						{/* Colonne gauche : Photo */}
+						<div className="space-y-4">
+							<form.AppField name="imageUrl">
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel optional>Photo de l'auteur</FieldLabel>
+										<TestimonialImageUpload
+											imageUrl={field.state.value || null}
+											onChange={(url) => field.handleChange(url || "")}
+											disabled={isPending}
+										/>
+										<input
+											type="hidden"
+											name="imageUrl"
+											value={field.state.value || ""}
+										/>
+									</div>
+								)}
+							</form.AppField>
+						</div>
 
-						<form.AppField
-							name="content"
-							validators={{ onChange: validators.content }}
-						>
-							{(field) => (
-								<field.TextareaField
-									label="Témoignage"
-									placeholder="Saisissez le témoignage du client..."
-									disabled={isPending}
-									required
-									rows={5}
-								/>
-							)}
-						</form.AppField>
-
-						<form.AppField
-							name="imageUrl"
-							validators={{ onChange: validators.imageUrl }}
-						>
-							{(field) => (
-								<field.InputField
-									label="URL de l'image"
-									type="url"
-									placeholder="https://..."
-									disabled={isPending}
-								/>
-							)}
-						</form.AppField>
-
-						<form.AppField name="isPublished">
-							{(field) => (
-								<div className="flex items-center space-x-2">
-									<Checkbox
-										id="isPublished"
-										name="isPublished"
-										checked={field.state.value}
-										onCheckedChange={(checked) =>
-											field.handleChange(checked === true)
-										}
+						{/* Colonne droite : Texte */}
+						<div className="space-y-4">
+							<form.AppField
+								name="authorName"
+								validators={{ onChange: validators.authorName }}
+							>
+								{(field) => (
+									<field.InputField
+										label="Prénom"
+										type="text"
+										placeholder="ex: Marie"
 										disabled={isPending}
+										required
 									/>
-									<input
-										type="hidden"
-										name="isPublished"
-										value={field.state.value ? "true" : "false"}
+								)}
+							</form.AppField>
+
+							<form.AppField
+								name="content"
+								validators={{ onChange: validators.content }}
+							>
+								{(field) => (
+									<field.TextareaField
+										label="Témoignage"
+										placeholder="Saisissez le témoignage du client..."
+										disabled={isPending}
+										required
+										rows={6}
 									/>
-									<Label htmlFor="isPublished" className="cursor-pointer">
-										Publier immédiatement
-									</Label>
-								</div>
-							)}
-						</form.AppField>
+								)}
+							</form.AppField>
+
+							<form.AppField name="isPublished">
+								{(field) => (
+									<div className="flex items-center space-x-2">
+										<Checkbox
+											id="isPublished"
+											checked={field.state.value}
+											onCheckedChange={(checked) =>
+												field.handleChange(checked === true)
+											}
+											disabled={isPending}
+										/>
+										<input
+											type="hidden"
+											name="isPublished"
+											value={field.state.value ? "true" : "false"}
+										/>
+										<Label htmlFor="isPublished" className="cursor-pointer">
+											Publier immédiatement
+										</Label>
+									</div>
+								)}
+							</form.AppField>
+						</div>
 					</div>
 
 					{/* Submit button */}
-					<div className="flex justify-end pt-4">
+					<div className="flex justify-end pt-4 border-t">
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button disabled={!canSubmit || isPending} type="submit">

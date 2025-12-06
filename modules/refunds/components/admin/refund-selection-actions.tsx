@@ -10,7 +10,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -100,7 +99,7 @@ export function RefundSelectionActions() {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending}>
+							<Button type="submit" disabled={isPending}>
 								{isApprovePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -112,7 +111,7 @@ export function RefundSelectionActions() {
 										Approuver
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
@@ -140,10 +139,10 @@ export function RefundSelectionActions() {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Retour
 							</AlertDialogCancel>
-							<AlertDialogAction
+							<Button
 								type="submit"
+								variant="destructive"
 								disabled={isPending}
-								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isRejectPending ? (
 									<>
@@ -156,7 +155,7 @@ export function RefundSelectionActions() {
 										Refuser
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>

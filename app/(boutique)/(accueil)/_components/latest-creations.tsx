@@ -68,8 +68,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 						id="latest-creations-subtitle"
 						className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto"
 					>
-						Mes tout nouveaux bijoux, juste sortis de l'atelier ! 5 à 10 pièces
-						maximum par modèle.
+						Mes tout nouveaux bijoux, juste sortis de l'atelier !
 					</p>
 				</header>
 

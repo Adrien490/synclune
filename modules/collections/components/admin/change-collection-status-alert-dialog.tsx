@@ -3,7 +3,6 @@
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -11,6 +10,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
@@ -118,7 +118,7 @@ export function ChangeCollectionStatusAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
+						<Button
 							type="submit"
 							disabled={isPending}
 							className={cn("text-white", config.color)}
@@ -131,7 +131,7 @@ export function ChangeCollectionStatusAlertDialog() {
 							) : (
 								`Changer en ${config.label}`
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

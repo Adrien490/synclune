@@ -3,15 +3,17 @@
 import { z } from "zod"
 import {
 	requireAdmin,
+	enforceRateLimitForCurrentUser,
 	success,
 	error,
 	validationError,
 } from "@/shared/lib/actions"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
+import { ADMIN_LIMITS } from "@/shared/lib/rate-limit-config"
 import type { ActionState } from "@/shared/types/server-action"
 import { updateTag } from "next/cache"
 
-import { getTestimonialInvalidationTags, TESTIMONIALS_CACHE_TAGS } from "../constants/cache"
+import { TESTIMONIALS_CACHE_TAGS } from "../constants/cache"
 
 const bulkDeleteSchema = z.object({
 	ids: z
@@ -29,7 +31,13 @@ export async function bulkDeleteTestimonials(
 		const adminCheck = await requireAdmin()
 		if ("error" in adminCheck) return adminCheck.error
 
-		// 2. Extraire et valider les IDs
+		// 2. Rate limiting
+		const rateLimitCheck = await enforceRateLimitForCurrentUser(
+			ADMIN_LIMITS.TESTIMONIAL_BULK_DELETE
+		)
+		if ("error" in rateLimitCheck) return rateLimitCheck.error
+
+		// 3. Extraire et valider les IDs
 		const idsString = formData.get("ids") as string
 		let ids: string[]
 
@@ -46,7 +54,7 @@ export async function bulkDeleteTestimonials(
 			return validationError(firstError?.message || "Données invalides")
 		}
 
-		// 3. Vérifier que les témoignages existent
+		// 4. Vérifier que les témoignages existent
 		const existing = await prisma.testimonial.findMany({
 			where: {
 				id: { in: validation.data.ids },
@@ -61,7 +69,7 @@ export async function bulkDeleteTestimonials(
 
 		const existingIds = existing.map((t) => t.id)
 
-		// 4. Soft delete en masse
+		// 5. Soft delete en masse
 		await prisma.testimonial.updateMany({
 			where: {
 				id: { in: existingIds },
@@ -71,7 +79,7 @@ export async function bulkDeleteTestimonials(
 			},
 		})
 
-		// 5. Invalider le cache
+		// 6. Invalider le cache
 		const tags = new Set<string>([
 			TESTIMONIALS_CACHE_TAGS.LIST,
 			TESTIMONIALS_CACHE_TAGS.ADMIN_LIST,

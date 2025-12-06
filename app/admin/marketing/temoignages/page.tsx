@@ -2,13 +2,19 @@ import { PageHeader } from "@/shared/components/page-header"
 import { getTestimonialsAdmin } from "@/modules/testimonials/data/get-testimonials-admin"
 import { connection } from "next/server"
 import { Suspense } from "react"
-import { TestimonialsList } from "@/modules/testimonials/components/admin/testimonials-list"
-import { TestimonialsListSkeleton } from "@/modules/testimonials/components/admin/testimonials-list-skeleton"
+import { TestimonialsDataTable } from "@/modules/testimonials/components/admin/testimonials-data-table"
+import { TestimonialsDataTableSkeleton } from "@/modules/testimonials/components/admin/testimonials-data-table-skeleton"
 import { CreateTestimonialButton } from "@/modules/testimonials/components/admin/create-testimonial-button"
 import { TestimonialFormDialog } from "@/modules/testimonials/components/admin/testimonial-form-dialog"
 import { DeleteTestimonialAlertDialog } from "@/modules/testimonials/components/admin/delete-testimonial-alert-dialog"
-import type { TestimonialFilters, TestimonialSortBy, TestimonialSortOrder } from "@/modules/testimonials/types/testimonial.types"
-import { Metadata } from "next"
+import { TestimonialsToolbar } from "@/modules/testimonials/components/admin/testimonials-toolbar"
+import { TestimonialsFilterBadges } from "@/modules/testimonials/components/admin/testimonials-filter-badges"
+import type {
+	TestimonialFilters,
+	TestimonialSortBy,
+	TestimonialSortOrder,
+} from "@/modules/testimonials/types/testimonial.types"
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
 	title: "Témoignages - Administration",
@@ -35,9 +41,16 @@ export default async function TestimonialsAdminPage({ searchParams }: PageProps)
 	// Parse les paramètres de pagination et filtres
 	const filters: TestimonialFilters = {
 		page: params.page ? Math.max(1, parseInt(params.page, 10)) : 1,
-		perPage: params.perPage ? Math.min(100, Math.max(1, parseInt(params.perPage, 10))) : 20,
+		perPage: params.perPage
+			? Math.min(100, Math.max(1, parseInt(params.perPage, 10)))
+			: 20,
 		search: params.search || undefined,
-		isPublished: params.isPublished === "true" ? true : params.isPublished === "false" ? false : undefined,
+		isPublished:
+			params.isPublished === "true"
+				? true
+				: params.isPublished === "false"
+					? false
+					: undefined,
 		sortBy: (params.sortBy as TestimonialSortBy) || "createdAt",
 		sortOrder: (params.sortOrder as TestimonialSortOrder) || "desc",
 	}
@@ -54,8 +67,11 @@ export default async function TestimonialsAdminPage({ searchParams }: PageProps)
 			/>
 
 			<div className="space-y-6">
-				<Suspense fallback={<TestimonialsListSkeleton />}>
-					<TestimonialsList testimonialsPromise={testimonialsPromise} />
+				<TestimonialsToolbar />
+				<TestimonialsFilterBadges />
+
+				<Suspense fallback={<TestimonialsDataTableSkeleton />}>
+					<TestimonialsDataTable testimonialsPromise={testimonialsPromise} />
 				</Suspense>
 			</div>
 

@@ -30,7 +30,7 @@ export interface MediaUploadResult {
 // CONSTANTS
 // ============================================================================
 
-const DEFAULT_MAX_SIZE_IMAGE = 4 * 1024 * 1024; // 4MB
+const DEFAULT_MAX_SIZE_IMAGE = 16 * 1024 * 1024; // 16MB
 const DEFAULT_MAX_SIZE_VIDEO = 512 * 1024 * 1024; // 512MB
 const DEFAULT_MAX_FILES = 10;
 

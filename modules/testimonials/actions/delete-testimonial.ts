@@ -2,12 +2,14 @@
 
 import {
 	requireAdmin,
+	enforceRateLimitForCurrentUser,
 	success,
 	error,
 	notFound,
 	validationError,
 } from "@/shared/lib/actions"
 import { prisma, notDeleted, softDelete } from "@/shared/lib/prisma"
+import { ADMIN_LIMITS } from "@/shared/lib/rate-limit-config"
 import type { ActionState } from "@/shared/types/server-action"
 import { updateTag } from "next/cache"
 
@@ -23,12 +25,18 @@ export async function deleteTestimonial(
 		const adminCheck = await requireAdmin()
 		if ("error" in adminCheck) return adminCheck.error
 
-		// 2. Extraire les données du FormData
+		// 2. Rate limiting
+		const rateLimitCheck = await enforceRateLimitForCurrentUser(
+			ADMIN_LIMITS.TESTIMONIAL_DELETE
+		)
+		if ("error" in rateLimitCheck) return rateLimitCheck.error
+
+		// 3. Extraire les données du FormData
 		const rawData = {
 			id: formData.get("id"),
 		}
 
-		// 3. Valider les données
+		// 4. Valider les données
 		const validation = deleteTestimonialSchema.safeParse(rawData)
 
 		if (!validation.success) {
@@ -36,7 +44,7 @@ export async function deleteTestimonial(
 			return validationError(firstError?.message || "Données invalides")
 		}
 
-		// 4. Vérifier que le témoignage existe
+		// 5. Vérifier que le témoignage existe
 		const existing = await prisma.testimonial.findFirst({
 			where: { id: validation.data.id, ...notDeleted },
 		})
@@ -45,10 +53,10 @@ export async function deleteTestimonial(
 			return notFound("Témoignage")
 		}
 
-		// 5. Soft delete du témoignage
+		// 6. Soft delete du témoignage
 		await softDelete.testimonial(validation.data.id)
 
-		// 6. Invalider le cache
+		// 7. Invalider le cache
 		const tags = getTestimonialInvalidationTags(validation.data.id)
 		tags.forEach((tag) => updateTag(tag))
 

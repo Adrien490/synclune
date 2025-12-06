@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -129,7 +128,7 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
+							<Button type="submit" disabled={isPending}>
 								{isUnsubscribePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -141,7 +140,7 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 										Désabonner
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
@@ -169,7 +168,7 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
+							<Button type="submit" disabled={isPending}>
 								{isResubscribePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -181,7 +180,7 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 										Réabonner
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
@@ -211,11 +210,10 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction
+							<Button
 								type="submit"
+								variant="destructive"
 								disabled={isPending}
-								onClick={(e) => e.preventDefault()}
-								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isDeletePending ? (
 									<>
@@ -228,7 +226,7 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 										Supprimer
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>

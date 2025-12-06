@@ -487,9 +487,31 @@ export const ADMIN_TESTIMONIAL_UPDATE_LIMIT: RateLimitConfig = {
 };
 
 /**
+ * Limite pour la suppression de témoignages (admin)
+ *
+ * Modéré car action irréversible (soft delete)
+ */
+export const ADMIN_TESTIMONIAL_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10, // 10 suppressions maximum
+	windowMs: minutes(5), // par 5 minutes
+};
+
+/**
+ * Limite pour la suppression en masse de témoignages (admin)
+ *
+ * Plus stricte pour éviter les suppressions accidentelles massives
+ */
+export const ADMIN_TESTIMONIAL_BULK_DELETE_LIMIT: RateLimitConfig = {
+	limit: 5, // 5 opérations bulk maximum
+	windowMs: minutes(5), // par 5 minutes
+};
+
+/**
  * Toutes les limites admin
  */
 export const ADMIN_LIMITS = {
 	TESTIMONIAL_CREATE: ADMIN_TESTIMONIAL_CREATE_LIMIT,
 	TESTIMONIAL_UPDATE: ADMIN_TESTIMONIAL_UPDATE_LIMIT,
+	TESTIMONIAL_DELETE: ADMIN_TESTIMONIAL_DELETE_LIMIT,
+	TESTIMONIAL_BULK_DELETE: ADMIN_TESTIMONIAL_BULK_DELETE_LIMIT,
 } as const;

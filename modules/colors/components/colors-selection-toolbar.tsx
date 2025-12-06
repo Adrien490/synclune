@@ -10,7 +10,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -99,11 +98,10 @@ export function ColorsSelectionToolbar({}: ColorsSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction
+							<Button
 								type="submit"
+								variant="destructive"
 								disabled={isPending}
-								onClick={(e) => e.preventDefault()}
-								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isPending ? (
 									<>
@@ -116,7 +114,7 @@ export function ColorsSelectionToolbar({}: ColorsSelectionToolbarProps) {
 										Supprimer
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>

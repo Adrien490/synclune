@@ -40,7 +40,6 @@ const nextConfig: NextConfig = {
     reference: { stale: 604800, revalidate: 86400, expire: 2592000 },
     productDetail: { stale: 900, revalidate: 300, expire: 21600 },
     dashboard: { stale: 60, revalidate: 30, expire: 300 },
-    changelog: { stale: 86400, revalidate: 3600, expire: 604800 },
     cart: { stale: 300, revalidate: 60, expire: 1800 },
     session: { stale: 60, revalidate: 30, expire: 300 },
     userOrders: { stale: 120, revalidate: 60, expire: 600 },

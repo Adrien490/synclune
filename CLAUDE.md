@@ -34,7 +34,6 @@ pnpm seed             # Seed database
 pnpm email:dev        # Preview emails on port 3001
 
 # Utility scripts
-pnpm validate:changelogs        # Validate changelog MDX files
 pnpm verify:stripe              # Verify Stripe configuration
 pnpm validate:production-ready  # Pre-deployment validation
 pnpm generate:video-thumbnails  # Generate video thumbnails (requires FFmpeg)
@@ -368,7 +367,6 @@ export async function createSomething(
 | `reference` | 7d | 1d | 30d | Colors, materials, types |
 | `productDetail` | 15m | 5m | 6h | Single product pages |
 | `dashboard` | 1m | 30s | 5m | Admin KPIs, charts |
-| `changelog` | 1d | 1h | 7d | Version history |
 
 ### Cache Configuration Pattern
 

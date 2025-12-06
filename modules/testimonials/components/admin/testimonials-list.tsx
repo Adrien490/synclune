@@ -1,7 +1,7 @@
 "use client"
 
-import { use } from "react"
-import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import { use, useCallback } from "react"
+import { useSearchParams, usePathname } from "next/navigation"
 import { Card, CardContent } from "@/shared/components/ui/card"
 import { Button } from "@/shared/components/ui/button"
 import { Badge } from "@/shared/components/ui/badge"
@@ -14,17 +14,17 @@ import {
 	PaginationPrevious,
 	PaginationEllipsis,
 } from "@/shared/components/ui/pagination"
+import { SelectionProvider } from "@/shared/contexts/selection-context"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider"
 import { TESTIMONIAL_DIALOG_ID } from "./testimonial-form-dialog"
 import { DELETE_TESTIMONIAL_DIALOG_ID } from "./delete-testimonial-alert-dialog"
-import { toggleTestimonialPublish } from "@/modules/testimonials/actions/toggle-publish"
-import type { TestimonialListResult } from "@/modules/testimonials/types/testimonial.types"
+import { useTogglePublish } from "../../hooks/use-toggle-publish"
+import type { TestimonialListResult } from "../../types/testimonial.types"
 import { formatDateShort } from "@/shared/utils/dates"
-import { useActionState, useCallback } from "react"
-import { withCallbacks } from "@/shared/utils/with-callbacks"
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks"
 import { Pencil, Trash2, Eye, EyeOff, Quote } from "lucide-react"
+import { TestimonialsSelectionToolbar } from "./testimonials-selection-toolbar"
+import { TestimonialsCardSelection } from "./testimonials-card-selection"
 
 interface TestimonialsListProps {
 	testimonialsPromise: Promise<TestimonialListResult>
@@ -33,11 +33,10 @@ interface TestimonialsListProps {
 export function TestimonialsList({
 	testimonialsPromise,
 }: TestimonialsListProps) {
-	const { testimonials, total, page, perPage, totalPages } = use(testimonialsPromise)
+	const { testimonials, total, page, totalPages } = use(testimonialsPromise)
 	const { open: openEditDialog } = useDialog(TESTIMONIAL_DIALOG_ID)
 	const { open: openDeleteDialog } = useAlertDialog(DELETE_TESTIMONIAL_DIALOG_ID)
 
-	const router = useRouter()
 	const pathname = usePathname()
 	const searchParams = useSearchParams()
 
@@ -96,73 +95,77 @@ export function TestimonialsList({
 	}
 
 	return (
-		<div className="space-y-6">
-			<p className="text-sm text-muted-foreground">
-				{total} témoignage{total > 1 ? "s" : ""}
-				{totalPages > 1 && ` • Page ${page} sur ${totalPages}`}
-			</p>
+		<SelectionProvider selectionKey="testimonials">
+			<div className="space-y-6">
+				<TestimonialsSelectionToolbar />
 
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{testimonials.map((testimonial) => (
-					<TestimonialCard
-						key={testimonial.id}
-						testimonial={testimonial}
-						onEdit={() =>
-							openEditDialog({
-								testimonial: {
-									...testimonial,
-								},
-							})
-						}
-						onDelete={() =>
-							openDeleteDialog({
-								testimonialId: testimonial.id,
-								authorName: testimonial.authorName,
-							})
-						}
-					/>
-				))}
+				<p className="text-sm text-muted-foreground">
+					{total} témoignage{total > 1 ? "s" : ""}
+					{totalPages > 1 && ` • Page ${page} sur ${totalPages}`}
+				</p>
+
+				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+					{testimonials.map((testimonial) => (
+						<TestimonialCard
+							key={testimonial.id}
+							testimonial={testimonial}
+							onEdit={() =>
+								openEditDialog({
+									testimonial: {
+										...testimonial,
+									},
+								})
+							}
+							onDelete={() =>
+								openDeleteDialog({
+									testimonialId: testimonial.id,
+									authorName: testimonial.authorName,
+								})
+							}
+						/>
+					))}
+				</div>
+
+				{totalPages > 1 && (
+					<Pagination>
+						<PaginationContent>
+							<PaginationItem>
+								<PaginationPrevious
+									href={page > 1 ? createPageUrl(page - 1) : undefined}
+									aria-disabled={page <= 1}
+									className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+								/>
+							</PaginationItem>
+
+							{getPageNumbers().map((pageNum, idx) =>
+								pageNum === "ellipsis" ? (
+									<PaginationItem key={`ellipsis-${idx}`}>
+										<PaginationEllipsis />
+									</PaginationItem>
+								) : (
+									<PaginationItem key={pageNum}>
+										<PaginationLink
+											href={createPageUrl(pageNum)}
+											isActive={pageNum === page}
+										>
+											{pageNum}
+										</PaginationLink>
+									</PaginationItem>
+								)
+							)}
+
+							<PaginationItem>
+								<PaginationNext
+									href={page < totalPages ? createPageUrl(page + 1) : undefined}
+									aria-disabled={page >= totalPages}
+									className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+								/>
+							</PaginationItem>
+						</PaginationContent>
+					</Pagination>
+				)}
 			</div>
-
-			{totalPages > 1 && (
-				<Pagination>
-					<PaginationContent>
-						<PaginationItem>
-							<PaginationPrevious
-								href={page > 1 ? createPageUrl(page - 1) : undefined}
-								aria-disabled={page <= 1}
-								className={page <= 1 ? "pointer-events-none opacity-50" : ""}
-							/>
-						</PaginationItem>
-
-						{getPageNumbers().map((pageNum, idx) =>
-							pageNum === "ellipsis" ? (
-								<PaginationItem key={`ellipsis-${idx}`}>
-									<PaginationEllipsis />
-								</PaginationItem>
-							) : (
-								<PaginationItem key={pageNum}>
-									<PaginationLink
-										href={createPageUrl(pageNum)}
-										isActive={pageNum === page}
-									>
-										{pageNum}
-									</PaginationLink>
-								</PaginationItem>
-							)
-						)}
-
-						<PaginationItem>
-							<PaginationNext
-								href={page < totalPages ? createPageUrl(page + 1) : undefined}
-								aria-disabled={page >= totalPages}
-								className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
-							/>
-						</PaginationItem>
-					</PaginationContent>
-				</Pagination>
-			)}
-		</div>
+		</SelectionProvider>
 	)
 }
 
@@ -177,13 +180,16 @@ function TestimonialCard({
 	onEdit,
 	onDelete,
 }: TestimonialCardProps) {
-	const [, toggleAction, isPending] = useActionState(
-		withCallbacks(toggleTestimonialPublish, createToastCallbacks({})),
-		undefined
-	)
+	const { action: toggleAction, isPending } = useTogglePublish()
 
 	return (
-		<Card className="overflow-hidden">
+		<Card className="overflow-hidden relative group">
+			{/* Checkbox de sélection */}
+			<TestimonialsCardSelection
+				testimonialId={testimonial.id}
+				authorName={testimonial.authorName}
+			/>
+
 			{testimonial.imageUrl && (
 				<div className="aspect-video relative bg-muted">
 					<img

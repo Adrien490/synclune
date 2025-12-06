@@ -2,115 +2,9 @@ import { Fade, Reveal, Stagger } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
-import { ImageIcon, Sparkles } from "lucide-react";
+import { Heart, ImageIcon, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
-
-/**
- * ============================================================================
- * ALTERNATIVES DE DESIGN - Documentation pour changement futur
- * ============================================================================
- *
- * OPTION A : "Lettre de l'atelier" (intimiste)
- * ---------------------------------------------
- * Layout : Photo portrait créatrice (60%) + texte à droite (40%)
- * Vibe : Chaleureux, personnel, connexion directe
- * Structure :
- *   - Grande photo portrait de Léane (aspect 3:4)
- *   - Texte "Salut toi, Si tu es là..."
- *   - Petite photo mains au travail en dessous
- *   - Signature manuscrite
- *   - CTA vers À propos
- * Idéal pour : Créer un lien personnel fort avec les visiteurs
- *
- * Texte suggéré :
- * ```
- * ✦ Depuis mon atelier
- *
- * Salut toi,
- *
- * Si tu es là, c'est peut-être que tu cherches plus qu'un simple bijou.
- * Quelque chose qui te ressemble, qui a une histoire.
- *
- * Depuis mon petit atelier nantais, je crée des pièces colorées, une par une,
- * à la main. Pas de machine, pas de production en série. Juste mes mains,
- * des perles que je sélectionne avec soin, et l'envie de créer quelque chose
- * d'unique.
- *
- * Chaque bijou existe en quelques exemplaires seulement.
- * Quand il n'y en a plus... il n'y en a plus.
- *
- * J'espère que tu trouveras ici la petite pépite qui t'accompagnera.
- *
- * — Léane ♡
- * ```
- *
- * ---------------------------------------------
- *
- * OPTION B : "L'envers du décor" (narratif)
- * ---------------------------------------------
- * Layout : 3 photos en grid + texte centré en dessous
- * Vibe : Curieux, processus, transparence
- * Structure :
- *   - Grid 3 photos (atelier, mains, matériaux)
- *   - Titre "L'envers du décor"
- *   - Texte narratif sur le processus
- *   - CTA vers À propos
- * Idéal pour : Montrer le travail artisanal et le processus
- *
- * Texte suggéré :
- * ```
- * L'envers du décor
- * ─────────────────
- *
- * Tu vois ces bijoux dans la boutique, mais tu ne vois pas les heures
- * passées à choisir chaque perle, à assembler chaque détail, à recommencer
- * quand ce n'est pas parfait.
- *
- * Mon atelier, c'est un petit coin de Nantes où la magie opère.
- * Une table, de la lumière, des centaines de perles colorées, et beaucoup
- * de patience.
- *
- * Je ne crée pas des bijoux pour tout le monde. Je crée des bijoux pour toi,
- * pour celle qui cherche quelque chose de différent, de personnel, de vivant.
- *
- * Envie d'en savoir plus ?
- * ```
- *
- * ---------------------------------------------
- *
- * OPTION C : "Split immersif" (visuel dominant)
- * ---------------------------------------------
- * Layout : 50% photo plein hauteur + 50% texte
- * Vibe : Élégant, moderne, impact visuel fort
- * Structure :
- *   - Photo atelier/ambiance (50% largeur, full height)
- *   - Texte poétique à droite
- *   - Pas de photos secondaires
- *   - CTA discret
- * Idéal pour : Impact visuel maximal, design épuré
- * Animation : Parallax léger sur l'image au scroll
- *
- * Texte suggéré :
- * ```
- * ✦
- *
- * Un bijou, c'est bien plus qu'un accessoire.
- *
- * C'est une histoire. Celle de mes mains qui assemblent, ajustent,
- * perfectionnent. Celle de mon atelier nantais où chaque création
- * prend vie, lentement.
- *
- * Ici, pas de production en masse. Juste de l'artisanat, du vrai.
- * Des pièces limitées, pensées pour durer.
- *
- * Et toi, tu fais partie de cette histoire.
- * ```
- *
- * ============================================================================
- * OPTION ACTUELLE : D - "Confession créative" (très personnel)
- * ============================================================================
- */
 
 /**
  * Placeholder esthetique avec gradient pour les photos en attente
@@ -137,17 +31,6 @@ function PlaceholderImage({
 	);
 }
 
-/**
- * Section "Confession créative" - Storytelling intimiste de Léane
- *
- * Approche narrative personnelle et authentique pour la page d'accueil.
- * Raconte l'histoire de la créatrice avec un ton intimiste (tutoiement).
- *
- * Utilise "use cache" car:
- * - Contenu statique (histoire de la créatrice)
- * - Partagé entre tous les visiteurs
- * - Améliore les performances de la page d'accueil
- */
 export async function AtelierStory() {
 	"use cache";
 	cacheLife("reference");
@@ -238,26 +121,21 @@ export async function AtelierStory() {
 						>
 							<p>
 								Quand j'ai commencé à créer des bijoux, c'était juste pour moi.
-								Pour le plaisir de faire quelque chose de mes mains, loin des
-								écrans. Je dessinais des Pikachu sur du plastique fou, je
-								peignais des nuits étoilées à la Van Gogh... Rien de sérieux.
 							</p>
 							<p>
 								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies.
-								Et me voilà, dans mon petit atelier à Nantes, à créer des bijoux
-								pour des personnes que je ne connais pas encore — mais que j'ai
-								hâte de rencontrer à travers leurs commandes.
+								Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base 😂
 							</p>
 							<p>
-								Chaque bijou que tu vois ici, je l'ai tenu dans mes mains. J'ai
+								Chaque bijou que tu vois ici, j'ai
 								choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il
-								n'existe qu'en quelques exemplaires — parfois moins de dix.
-								Quand il n'y en a plus... il n'y en a plus.
+								n'existe qu'en quelques exemplaires (parfois moins de dix).
+						
 							</p>
 							{/* Citation finale mise en valeur avec blockquote */}
 							<blockquote className="relative pl-6 border-l-2 border-primary/50 text-foreground font-medium text-left">
-								<p>Ce n'est pas du luxe. C'est de l'artisanat.</p>
-								<p>Du vrai, du fait-main, du cœur.</p>
+								<p>Tout est fait à la main !</p>
+								<p>Je mets du cœur à chaque création, j'espère que ça vous plaira{" "}<Heart className="w-4 h-4 text-primary inline-block align-middle" aria-hidden="true" /></p>
 							</blockquote>
 						</Stagger>
 
@@ -305,7 +183,7 @@ export async function AtelierStory() {
 									href="/a-propos"
 									aria-label="En savoir plus sur l'histoire de Léane et son atelier artisanal"
 								>
-									En savoir plus sur mon histoire
+									En savoir plus 
 								</Link>
 							</Button>
 						</div>

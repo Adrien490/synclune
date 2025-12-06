@@ -2,7 +2,6 @@
 
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -10,6 +9,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useDeleteProductType } from "@/modules/product-types/hooks/use-delete-product-type";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
@@ -76,10 +76,10 @@ export function DeleteProductTypeAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
+						<Button
 							type="submit"
+							variant="destructive"
 							disabled={isPending}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isPending ? (
 								<>
@@ -89,7 +89,7 @@ export function DeleteProductTypeAlertDialog() {
 							) : (
 								"Supprimer"
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

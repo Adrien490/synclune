@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -131,11 +130,8 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={(e) => {
-								e.preventDefault();
-								unsubscribe(subscriber.id);
-							}}
+						<Button
+							onClick={() => unsubscribe(subscriber.id)}
 							disabled={isPending}
 						>
 							{isPending ? (
@@ -149,7 +145,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 									Désabonner
 								</>
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
@@ -168,11 +164,8 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={(e) => {
-								e.preventDefault();
-								resubscribe(subscriber.id);
-							}}
+						<Button
+							onClick={() => resubscribe(subscriber.id)}
 							disabled={isPending}
 						>
 							{isPending ? (
@@ -186,7 +179,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 									Réabonner
 								</>
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
@@ -207,13 +200,10 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={(e) => {
-								e.preventDefault();
-								deleteSubscriber(subscriber.id);
-							}}
+						<Button
+							onClick={() => deleteSubscriber(subscriber.id)}
+							variant="destructive"
 							disabled={isPending}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isPending ? (
 								<>
@@ -226,7 +216,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 									Supprimer
 								</>
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>

@@ -8,9 +8,6 @@
 // Cart & Checkout
 export { getCartAbandonment } from "./get-cart-abandonment";
 
-// Changelogs
-export { getChangelogs } from "./get-changelogs";
-
 // Contact Adrien
 export { getContactAdrienVisibility } from "./get-contact-adrien-visibility";
 

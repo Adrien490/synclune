@@ -5,12 +5,13 @@ export * from "./types/testimonial.types"
 export * from "./schemas/testimonial.schemas"
 
 // Constants
-export * from "./constants/cache"
+export * from "./constants"
 
 // Data
 export { getTestimonials } from "./data/get-testimonials"
 export { getTestimonialsAdmin } from "./data/get-testimonials-admin"
 export { getTestimonialById } from "./data/get-testimonial-by-id"
+export { getTestimonialsStats, type TestimonialsStats } from "./data/get-testimonials-stats"
 
 // Actions
 export { createTestimonial } from "./actions/create-testimonial"
@@ -20,8 +21,11 @@ export { toggleTestimonialPublish } from "./actions/toggle-publish"
 export { bulkDeleteTestimonials } from "./actions/bulk-delete-testimonials"
 export { bulkTogglePublish } from "./actions/bulk-toggle-publish"
 
+// Hooks
+export * from "./hooks"
+
 // Public Components
-export { TestimonialCard } from "./components/public/testimonial-card"
-export { TestimonialsCarousel } from "./components/public/testimonials-carousel"
-export { TestimonialsSection } from "./components/public/testimonials-section"
-export { TestimonialsSkeleton } from "./components/public/testimonials-skeleton"
+export { TestimonialCard } from "./components/testimonial-card"
+export { TestimonialsBento } from "../../app/(boutique)/(accueil)/_components/testimonials-bento"
+export { TestimonialsSection } from "../../app/(boutique)/(accueil)/_components/testimonials"
+export { TestimonialsSkeleton } from "./components/testimonials-skeleton"

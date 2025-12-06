@@ -2,7 +2,6 @@
 
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -10,6 +9,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Loader2 } from "lucide-react";
 import { useBulkArchiveProducts } from "@/modules/products/hooks/use-bulk-archive-products";
@@ -101,10 +101,9 @@ export function BulkArchiveProductsAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
+						<Button
 							type="submit"
 							disabled={isPending}
-							onClick={(e) => e.preventDefault()}
 							className={
 								isArchiving
 									? "bg-orange-600 text-white hover:bg-orange-700"
@@ -119,7 +118,7 @@ export function BulkArchiveProductsAlertDialog() {
 							) : (
 								isArchiving ? "Archiver" : "Restaurer"
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

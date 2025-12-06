@@ -10,7 +10,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -185,13 +184,10 @@ export function ProductVariantSelectionActions() {
 						<AlertDialogCancel disabled={isDeleting}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={(e) => {
-								e.preventDefault();
-								deleteSkus(selectedItems);
-							}}
+						<Button
+							onClick={() => deleteSkus(selectedItems)}
+							variant="destructive"
 							disabled={isDeleting}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isDeleting ? (
 								<>
@@ -204,7 +200,7 @@ export function ProductVariantSelectionActions() {
 									Supprimer
 								</>
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>

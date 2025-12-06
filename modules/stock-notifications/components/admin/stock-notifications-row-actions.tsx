@@ -13,7 +13,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -121,17 +120,17 @@ export function StockNotificationsRowActions({
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isLoading}>Annuler</AlertDialogCancel>
-						<AlertDialogAction
+						<Button
 							onClick={handleCancel}
+							variant="destructive"
 							disabled={isLoading}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isLoading ? (
 								<Loader2 className="h-4 w-4 animate-spin" />
 							) : (
 								"Confirmer"
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
@@ -152,13 +151,13 @@ export function StockNotificationsRowActions({
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isLoading}>Annuler</AlertDialogCancel>
-						<AlertDialogAction onClick={handleNotify} disabled={isLoading}>
+						<Button onClick={handleNotify} disabled={isLoading}>
 							{isLoading ? (
 								<Loader2 className="h-4 w-4 animate-spin" />
 							) : (
 								"Envoyer"
 							)}
-						</AlertDialogAction>
+						</Button>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>

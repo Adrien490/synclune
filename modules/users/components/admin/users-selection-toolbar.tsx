@@ -14,7 +14,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -156,11 +155,10 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction
+							<Button
 								type="submit"
+								variant="destructive"
 								disabled={isPending}
-								onClick={(e) => e.preventDefault()}
-								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isDeletePending ? (
 									<>
@@ -173,7 +171,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 										Supprimer
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
@@ -202,7 +200,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
+							<Button type="submit" disabled={isPending}>
 								{isSuspendPending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -214,7 +212,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 										Suspendre
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
@@ -243,7 +241,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
+							<Button type="submit" disabled={isPending}>
 								{isRestorePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -255,7 +253,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 										Restaurer
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
@@ -288,7 +286,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
+							<Button type="submit" disabled={isPending}>
 								{isChangeRolePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -300,7 +298,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 										Promouvoir
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
@@ -330,7 +328,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
+							<Button type="submit" disabled={isPending}>
 								{isChangeRolePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -342,7 +340,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 										Retrograder
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>

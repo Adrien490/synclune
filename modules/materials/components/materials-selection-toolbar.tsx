@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -130,11 +129,10 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction
+							<Button
 								type="submit"
+								variant="destructive"
 								disabled={isPending}
-								onClick={(e) => e.preventDefault()}
-								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
 								{isDeletePending ? (
 									<>
@@ -147,7 +145,7 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 										Supprimer
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
@@ -180,7 +178,7 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
+							<Button type="submit" disabled={isPending}>
 								{isTogglePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -192,7 +190,7 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 										Activer
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
@@ -225,7 +223,7 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<AlertDialogAction type="submit" disabled={isPending} onClick={(e) => e.preventDefault()}>
+							<Button type="submit" disabled={isPending}>
 								{isTogglePending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -237,7 +235,7 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 										Desactiver
 									</>
 								)}
-							</AlertDialogAction>
+							</Button>
 						</AlertDialogFooter>
 					</form>
 				</AlertDialogContent>
