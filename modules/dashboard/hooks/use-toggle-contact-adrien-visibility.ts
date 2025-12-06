@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useOptimistic, useCallback, useTransition } from "react";
+import { useActionState, useOptimistic, useTransition } from "react";
 import { setContactAdrienVisibility } from "@/modules/dashboard/actions/set-contact-adrien-visibility";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -55,7 +55,7 @@ export function useToggleContactAdrienVisibility(
 	/**
 	 * Bascule la visibilité avec mise à jour optimiste
 	 */
-	const toggle = useCallback(() => {
+	const toggle = () => {
 		const newHiddenState = !optimisticHidden;
 
 		startTransition(() => {
@@ -67,7 +67,7 @@ export function useToggleContactAdrienVisibility(
 			formData.append("isHidden", newHiddenState.toString());
 			formAction(formData);
 		});
-	}, [optimisticHidden, setOptimisticHidden, formAction, startTransition]);
+	};
 
 	return {
 		state,

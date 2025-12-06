@@ -44,14 +44,17 @@ function EmptyHeader({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const emptyMediaVariants = cva(
-	"flex shrink-0 items-center justify-center mb-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 transition-transform duration-300",
+	"flex shrink-0 items-center justify-center mb-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 transition-all duration-300",
 	{
 		variants: {
 			variant: {
-				default: "bg-transparent [&_svg:not([class*='size-'])]:size-8",
-				icon: "bg-muted text-foreground flex size-12 shrink-0 items-center justify-center rounded-lg [&_svg:not([class*='size-'])]:size-7 hover:scale-105",
-				jewelry: "bg-primary/10 text-primary flex size-16 shrink-0 items-center justify-center rounded-full [&_svg:not([class*='size-'])]:size-9 animate-sparkle-pulse shadow-md shadow-primary/20",
-				luxury: "bg-gradient-to-br from-primary/20 to-secondary/20 text-primary flex size-20 shrink-0 items-center justify-center rounded-2xl [&_svg:not([class*='size-'])]:size-10 hover:scale-105 shadow-xl shadow-primary/10",
+				default:
+					"text-muted-foreground [&_svg:not([class*='size-'])]:size-8",
+				icon: "bg-muted/50 text-muted-foreground flex size-12 shrink-0 items-center justify-center rounded-xl border border-border/50 [&_svg:not([class*='size-'])]:size-6",
+				jewelry:
+					"bg-primary/10 text-primary flex size-14 shrink-0 items-center justify-center rounded-full ring-1 ring-primary/20 [&_svg:not([class*='size-'])]:size-7 animate-sparkle-pulse",
+				luxury:
+					"bg-gradient-to-br from-primary/15 via-secondary/10 to-primary/15 text-primary flex size-16 shrink-0 items-center justify-center rounded-2xl ring-1 ring-primary/20 shadow-lg shadow-primary/10 [&_svg:not([class*='size-'])]:size-8 hover:shadow-xl hover:shadow-primary/15 hover:scale-[1.02]",
 			},
 		},
 		defaultVariants: {

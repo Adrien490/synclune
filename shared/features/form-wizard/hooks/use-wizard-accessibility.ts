@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
 	FOCUS_DELAY_MS,
 	FOCUSABLE_SELECTOR,
@@ -49,21 +49,21 @@ export function useWizardAccessibility({
 	}, [])
 
 	// Enregistre une ref pour une étape
-	const registerStepRef = useCallback((stepIndex: number, element: HTMLElement | null) => {
+	const registerStepRef = (stepIndex: number, element: HTMLElement | null) => {
 		if (element) {
 			stepRefs.current.set(stepIndex, element)
 		} else {
 			stepRefs.current.delete(stepIndex)
 		}
-	}, [])
+	}
 
 	// Récupère la ref d'une étape
-	const getStepRef = useCallback((stepIndex: number): HTMLElement | null => {
+	const getStepRef = (stepIndex: number): HTMLElement | null => {
 		return stepRefs.current.get(stepIndex) ?? null
-	}, [])
+	}
 
 	// Focus le premier élément focusable d'une étape
-	const focusStep = useCallback((stepIndex: number) => {
+	const focusStep = (stepIndex: number) => {
 		const stepEl = stepRefs.current.get(stepIndex)
 		if (!stepEl) return
 
@@ -71,18 +71,18 @@ export function useWizardAccessibility({
 		if (firstFocusable) {
 			firstFocusable.focus()
 		}
-	}, [])
+	}
 
 	// Focus le premier champ en erreur
-	const focusFirstError = useCallback(() => {
+	const focusFirstError = () => {
 		const firstErrorField = document.querySelector<HTMLElement>(ERROR_FIELD_SELECTOR)
 		if (firstErrorField) {
 			firstErrorField.focus()
 		}
-	}, [])
+	}
 
 	// Scroll vers le premier champ en erreur
-	const scrollToFirstError = useCallback(() => {
+	const scrollToFirstError = () => {
 		requestAnimationFrame(() => {
 			const firstErrorField = document.querySelector<HTMLElement>(ERROR_FIELD_SELECTOR)
 			if (firstErrorField) {
@@ -90,14 +90,14 @@ export function useWizardAccessibility({
 				firstErrorField.focus()
 			}
 		})
-	}, [])
+	}
 
 	// Annonce un message pour les lecteurs d'écran
-	const announce = useCallback((message: string) => {
+	const announce = (message: string) => {
 		setAnnouncement(message)
 		// Efface l'annonce après un délai pour permettre une nouvelle annonce
 		setTimeout(() => setAnnouncement(""), ANNOUNCEMENT_CLEAR_DELAY_MS)
-	}, [])
+	}
 
 	// Auto-focus lors du changement d'étape
 	useEffect(() => {

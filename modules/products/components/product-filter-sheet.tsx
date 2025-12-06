@@ -22,7 +22,7 @@ import { cn } from "@/shared/utils/cn";
 import { useForm } from "@tanstack/react-form";
 import { Filter, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-materials";
@@ -48,17 +48,14 @@ export function ProductFilterSheet({
 	className,
 }: FilterSheetProps) {
 	// Range de prix dynamique basé sur les données réelles
-	const DEFAULT_PRICE_RANGE = useMemo(
-		() => [0, maxPriceInEuros],
-		[maxPriceInEuros]
-	);
+	const DEFAULT_PRICE_RANGE = [0, maxPriceInEuros];
 	const pathname = usePathname();
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
 	// Initialisation des valeurs depuis les paramètres URL
-	const initialValues = useMemo((): FilterFormData => {
+	const initialValues = ((): FilterFormData => {
 		const colors: string[] = [];
 		const materials: string[] = [];
 		let priceMin = DEFAULT_PRICE_RANGE[0];
@@ -82,7 +79,7 @@ export function ProductFilterSheet({
 			materials: [...new Set(materials)], // Dédoublonner
 			priceRange: [priceMin, priceMax],
 		};
-	}, [searchParams, DEFAULT_PRICE_RANGE]);
+	})();
 
 	// TanStack Form
 	const form = useForm({
@@ -161,7 +158,7 @@ export function ProductFilterSheet({
 	};
 
 	// Calculer si des filtres sont actifs depuis l'URL (source de vérité)
-	const { hasActiveFilters, activeFiltersCount } = useMemo(() => {
+	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0;
 
 		// Compter depuis l'URL plutôt que l'état local
@@ -186,7 +183,7 @@ export function ProductFilterSheet({
 			hasActiveFilters: count > 0,
 			activeFiltersCount: count,
 		};
-	}, [searchParams]);
+	})();
 
 	return (
 		<Sheet>

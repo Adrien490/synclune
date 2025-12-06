@@ -13,7 +13,7 @@ import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Expand, Loader2, MoreVertical, Play, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
 import ProductLightbox from "@/modules/media/components/product-lightbox";
 import { DELETE_GALLERY_MEDIA_DIALOG_ID } from "./delete-gallery-media-alert-dialog";
@@ -56,34 +56,30 @@ export function MediaGallery({
 	const [lightboxIndex, setLightboxIndex] = useState(0);
 
 	// Préparer les slides pour le lightbox
-	const slides: Slide[] = useMemo(
-		() =>
-			images.map((media) => {
-				if (media.mediaType === "VIDEO") {
-					return {
-						type: "video" as const,
-						sources: [{ src: media.url, type: "video/mp4" }],
-						poster: media.thumbnailUrl || undefined,
-					};
-				}
-				return {
-					src: media.url,
-					alt: media.altText || "Image du produit",
-				};
-			}),
-		[images]
-	);
+	const slides: Slide[] = images.map((media) => {
+		if (media.mediaType === "VIDEO") {
+			return {
+				type: "video" as const,
+				sources: [{ src: media.url, type: "video/mp4" }],
+				poster: media.thumbnailUrl || undefined,
+			};
+		}
+		return {
+			src: media.url,
+			alt: media.altText || "Image du produit",
+		};
+	});
 
 	// Marquer une image comme chargée
-	const handleImageLoaded = useCallback((url: string) => {
+	const handleImageLoaded = (url: string) => {
 		setLoadedImages((prev) => new Set(prev).add(url));
-	}, []);
+	};
 
 	// Ouvrir le lightbox
-	const openLightbox = useCallback((index: number) => {
+	const openLightbox = (index: number) => {
 		setLightboxIndex(index);
 		setLightboxOpen(true);
-	}, []);
+	};
 
 	return (
 		<>

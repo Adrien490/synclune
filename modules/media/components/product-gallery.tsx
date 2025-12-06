@@ -9,7 +9,7 @@ import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useMemo, useRef } from "react";
+import { Suspense, useRef } from "react";
 import { buildGallery } from "@/modules/media/utils/build-gallery";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
 import { MediaRenderer } from "@/modules/media/components/media-renderer";
@@ -76,50 +76,46 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 	const size = searchParams.get("size") || undefined;
 
 	// Calcul dynamique des images selon les variants sélectionnés
-	const safeImages: ProductMedia[] = useMemo(() => {
-		return buildGallery({
-			product,
-			selectedVariants: { colorSlug, materialSlug, size },
-		});
-	}, [product, colorSlug, materialSlug, size]);
+	const safeImages: ProductMedia[] = buildGallery({
+		product,
+		selectedVariants: { colorSlug, materialSlug, size },
+	});
 
 	// Conversion des médias en slides pour la lightbox (images + vidéos)
 	// Génère les URLs Next.js optimisées pour les images
 	// Utilise le format vidéo natif pour les vidéos
-	const lightboxSlides: Slide[] = useMemo(() => {
-		return safeImages.map((media) => {
-			if (media.mediaType === "VIDEO") {
-				return {
-					type: "video" as const,
-					sources: [
-						{
-							src: media.url,
-							type: getVideoMimeType(media.url),
-						},
-					],
-					poster: media.thumbnailUrl || media.thumbnailSmallUrl || undefined,
-					autoPlay: true,
-					muted: true,
-					loop: true,
-					playsInline: true,
-				};
-			}
-
+	const lightboxSlides: Slide[] = safeImages.map((media) => {
+		if (media.mediaType === "VIDEO") {
 			return {
-				src: nextImageUrl(media.url, MAX_IMAGE_SIZE),
-				alt: media.alt,
-				width: MAX_IMAGE_SIZE,
-				height: MAX_IMAGE_SIZE,
-				srcSet: [...IMAGE_SIZES, ...DEVICE_SIZES]
-					.filter((size) => size <= MAX_IMAGE_SIZE)
-					.map((size) => ({
-						src: nextImageUrl(media.url, size),
-						width: size,
-						height: size,
-					})),
+				type: "video" as const,
+				sources: [
+					{
+						src: media.url,
+						type: getVideoMimeType(media.url),
+					},
+				],
+				poster: media.thumbnailUrl || media.thumbnailSmallUrl || undefined,
+				autoPlay: true,
+				muted: true,
+				loop: true,
+				playsInline: true,
 			};
-		});
-	}, [safeImages]);
+		}
+
+		return {
+			src: nextImageUrl(media.url, MAX_IMAGE_SIZE),
+			alt: media.alt,
+			width: MAX_IMAGE_SIZE,
+			height: MAX_IMAGE_SIZE,
+			srcSet: [...IMAGE_SIZES, ...DEVICE_SIZES]
+				.filter((size) => size <= MAX_IMAGE_SIZE)
+				.map((size) => ({
+					src: nextImageUrl(media.url, size),
+					width: size,
+					height: size,
+				})),
+		};
+	});
 
 	// Hook: Navigation avec URL sync (optimiste = instantané, pas de loading)
 	const {
@@ -149,29 +145,20 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 	const { handleMediaError, hasError, retryMedia } = useMediaErrors();
 
 	// Handlers mémorisés pour les boutons navigation (évite re-renders)
-	const handlePrev = useCallback(
-		(e: React.MouseEvent) => {
-			e.stopPropagation();
-			navigatePrev();
-		},
-		[navigatePrev]
-	);
+	const handlePrev = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		navigatePrev();
+	};
 
-	const handleNext = useCallback(
-		(e: React.MouseEvent) => {
-			e.stopPropagation();
-			navigateNext();
-		},
-		[navigateNext]
-	);
+	const handleNext = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		navigateNext();
+	};
 
 	// Sync lightbox navigation avec URL galerie
-	const handleLightboxIndexChange = useCallback(
-		(index: number) => {
-			navigateToIndex(index);
-		},
-		[navigateToIndex]
-	);
+	const handleLightboxIndexChange = (index: number) => {
+		navigateToIndex(index);
+	};
 
 	// Cas limite : aucune image (ne devrait pas arriver grâce à buildGallery())
 	if (!safeImages.length) {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 
 const DEFAULT_MESSAGE = "Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter cette page?"
 
@@ -64,19 +64,16 @@ export function useUnsavedChanges(
 	const isBlockingRef = useRef(false)
 
 	// Handler for browser close/refresh
-	const handleBeforeUnload = useCallback(
-		(e: BeforeUnloadEvent) => {
-			// Standard way to trigger the browser's "unsaved changes" dialog
-			e.preventDefault()
-			// For older browsers, setting returnValue is necessary
-			e.returnValue = message
-			return message
-		},
-		[message]
-	)
+	const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+		// Standard way to trigger the browser's "unsaved changes" dialog
+		e.preventDefault()
+		// For older browsers, setting returnValue is necessary
+		e.returnValue = message
+		return message
+	}
 
 	// Handler for browser back/forward navigation
-	const handlePopState = useCallback(() => {
+	const handlePopState = () => {
 		if (isBlockingRef.current) return
 
 		// Show confirmation dialog
@@ -95,7 +92,7 @@ export function useUnsavedChanges(
 
 		// Call the onBlock callback if provided
 		onBlock?.()
-	}, [message, onBlock])
+	}
 
 	// Setup beforeunload listener
 	useEffect(() => {
@@ -106,7 +103,7 @@ export function useUnsavedChanges(
 		return () => {
 			window.removeEventListener("beforeunload", handleBeforeUnload)
 		}
-	}, [isDirty, enabled, handleBeforeUnload])
+	}, [isDirty, enabled, message])
 
 	// Setup popstate listener for browser navigation
 	useEffect(() => {
@@ -120,7 +117,7 @@ export function useUnsavedChanges(
 		return () => {
 			window.removeEventListener("popstate", handlePopState)
 		}
-	}, [isDirty, enabled, interceptHistoryNavigation, handlePopState])
+	}, [isDirty, enabled, interceptHistoryNavigation, message, onBlock])
 }
 
 /**

@@ -2,13 +2,7 @@
 
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-	useCallback,
-	useEffect,
-	useRef,
-	useTransition,
-	type RefObject,
-} from "react";
+import { useEffect, useRef, useTransition, type RefObject } from "react";
 
 export interface UseCursorPaginationProps {
 	nextCursor: string | null;
@@ -71,11 +65,11 @@ export function useCursorPagination({
 		}
 	}, [cursor, onNavigate, focusTargetRef]);
 
-	const preserveParams = useCallback(() => {
+	const preserveParams = () => {
 		return new URLSearchParams(searchParams.toString());
-	}, [searchParams]);
+	};
 
-	const handleNext = useCallback(() => {
+	const handleNext = () => {
 		if (!nextCursor) return;
 
 		const params = preserveParams();
@@ -85,9 +79,9 @@ export function useCursorPagination({
 		startTransition(() => {
 			router.push("?" + params.toString(), { scroll: false });
 		});
-	}, [nextCursor, preserveParams, router]);
+	};
 
-	const handlePrevious = useCallback(() => {
+	const handlePrevious = () => {
 		if (!prevCursor) return;
 
 		const params = preserveParams();
@@ -97,9 +91,9 @@ export function useCursorPagination({
 		startTransition(() => {
 			router.push("?" + params.toString(), { scroll: false });
 		});
-	}, [prevCursor, preserveParams, router]);
+	};
 
-	const handleReset = useCallback(() => {
+	const handleReset = () => {
 		const params = preserveParams();
 		params.delete("cursor");
 		params.delete("direction");
@@ -107,23 +101,20 @@ export function useCursorPagination({
 		startTransition(() => {
 			router.push("?" + params.toString(), { scroll: false });
 		});
-	}, [preserveParams, router]);
+	};
 
-	const handlePerPageChange = useCallback(
-		(newPerPage: number) => {
-			if (newPerPage === perPage) return;
+	const handlePerPageChange = (newPerPage: number) => {
+		if (newPerPage === perPage) return;
 
-			const params = preserveParams();
-			params.set("perPage", String(newPerPage));
-			params.delete("cursor");
-			params.delete("direction");
+		const params = preserveParams();
+		params.set("perPage", String(newPerPage));
+		params.delete("cursor");
+		params.delete("direction");
 
-			startTransition(() => {
-				router.push("?" + params.toString(), { scroll: false });
-			});
-		},
-		[perPage, preserveParams, router]
-	);
+		startTransition(() => {
+			router.push("?" + params.toString(), { scroll: false });
+		});
+	};
 
 	return {
 		perPage,

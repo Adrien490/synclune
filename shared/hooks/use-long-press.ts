@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useRef } from "react";
 
 interface UseLongPressOptions {
 	threshold?: number;
@@ -37,23 +37,20 @@ export function useLongPress(
 	const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 	const isLongPressRef = useRef(false);
 
-	const start = useCallback(
-		(e: React.PointerEvent) => {
-			// Empêche le menu contextuel sur mobile
-			e.preventDefault();
+	const start = (e: React.PointerEvent) => {
+		// Empêche le menu contextuel sur mobile
+		e.preventDefault();
 
-			isLongPressRef.current = false;
-			onStart?.();
+		isLongPressRef.current = false;
+		onStart?.();
 
-			timeoutRef.current = setTimeout(() => {
-				isLongPressRef.current = true;
-				callback();
-			}, threshold);
-		},
-		[callback, threshold, onStart]
-	);
+		timeoutRef.current = setTimeout(() => {
+			isLongPressRef.current = true;
+			callback();
+		}, threshold);
+	};
 
-	const cancel = useCallback(() => {
+	const cancel = () => {
 		if (timeoutRef.current) {
 			clearTimeout(timeoutRef.current);
 			timeoutRef.current = null;
@@ -62,7 +59,7 @@ export function useLongPress(
 				onCancel?.();
 			}
 		}
-	}, [onCancel]);
+	};
 
 	return {
 		onPointerDown: start,

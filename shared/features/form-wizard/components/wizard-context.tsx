@@ -4,8 +4,6 @@ import {
 	createContext,
 	useContext,
 	useState,
-	useCallback,
-	useMemo,
 	type ReactNode,
 } from "react"
 import { useIsMobile } from "@/shared/hooks/use-mobile"
@@ -51,53 +49,41 @@ export function WizardProvider({
 	const isMobile = useIsMobile()
 
 	// Optimisation: évite de créer un nouveau Set si l'étape est déjà complétée
-	const markStepCompleted = useCallback((step: number) => {
+	const markStepCompleted = (step: number) => {
 		setCompletedSteps((prev) => {
 			if (prev.has(step)) return prev // Même référence si pas de changement
 			const next = new Set(prev)
 			next.add(step)
 			return next
 		})
-	}, [])
+	}
 
 	// Optimisation: évite de créer un nouveau Set si l'étape n'est pas dans le set
-	const markStepIncomplete = useCallback((step: number) => {
+	const markStepIncomplete = (step: number) => {
 		setCompletedSteps((prev) => {
 			if (!prev.has(step)) return prev // Même référence si pas de changement
 			const next = new Set(prev)
 			next.delete(step)
 			return next
 		})
-	}, [])
+	}
 
-	const resetWizard = useCallback(() => {
+	const resetWizard = () => {
 		setCurrentStep(initialStep)
 		setCompletedSteps(new Set())
-	}, [initialStep])
+	}
 
-	const value = useMemo(
-		() => ({
-			currentStep,
-			setCurrentStep,
-			totalSteps,
-			completedSteps,
-			markStepCompleted,
-			markStepIncomplete,
-			resetWizard,
-			isMobile,
-			desktopMode,
-		}),
-		[
-			currentStep,
-			totalSteps,
-			completedSteps,
-			markStepCompleted,
-			markStepIncomplete,
-			resetWizard,
-			isMobile,
-			desktopMode,
-		]
-	)
+	const value = {
+		currentStep,
+		setCurrentStep,
+		totalSteps,
+		completedSteps,
+		markStepCompleted,
+		markStepIncomplete,
+		resetWizard,
+		isMobile,
+		desktopMode,
+	}
 
 	return (
 		<WizardContext.Provider value={value}>{children}</WizardContext.Provider>

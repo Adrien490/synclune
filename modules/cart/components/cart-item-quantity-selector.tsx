@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import {
 	Select,
 	SelectContent,
@@ -38,11 +37,8 @@ export function CartItemQuantitySelector({
 			currentQuantity,
 		});
 
-	// Memoize quantity options pour eviter re-calcul a chaque render
-	const quantityOptions = useMemo(
-		() => Array.from({ length: Math.min(99, maxQuantity) }, (_, i) => i + 1),
-		[maxQuantity]
-	);
+	// Génération directe des options de quantité
+	const quantityOptions = Array.from({ length: Math.min(99, maxQuantity) }, (_, i) => i + 1);
 
 	return (
 		<form ref={formRef} action={action}>

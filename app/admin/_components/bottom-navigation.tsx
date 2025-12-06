@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
+import { memo, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import {
 	ChevronRight,
@@ -84,11 +84,8 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 	const pathname = usePathname();
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-	// Vérifie si une page du menu "Plus" est active (mémoïsé pour éviter les recalculs)
-	const isMoreItemActive = useMemo(
-		() => secondaryItems.some((item) => isRouteActive(pathname, item.url)),
-		[pathname]
-	);
+	// Vérifie si une page du menu "Plus" est active
+	const isMoreItemActive = secondaryItems.some((item) => isRouteActive(pathname, item.url));
 
 	const closeDrawer = () => setIsDrawerOpen(false);
 

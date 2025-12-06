@@ -5,7 +5,7 @@ import { useAppForm } from "@/shared/components/tanstack-form";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 
 interface ColorsFilterSheetProps {
 	className?: string;
@@ -20,7 +20,7 @@ export function ColorsFilterSheet({ className }: ColorsFilterSheetProps) {
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	const initialValues = useMemo((): FilterFormData => {
+	const initialValues = ((): FilterFormData => {
 		let isActive = "all";
 
 		searchParams.forEach((value, key) => {
@@ -30,7 +30,7 @@ export function ColorsFilterSheet({ className }: ColorsFilterSheetProps) {
 		});
 
 		return { isActive };
-	}, [searchParams]);
+	})();
 
 	const form = useAppForm({
 		defaultValues: initialValues,
@@ -64,14 +64,14 @@ export function ColorsFilterSheet({ className }: ColorsFilterSheetProps) {
 		});
 	};
 
-	const { hasActiveFilters, activeFiltersCount } = useMemo(() => {
+	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0;
 		searchParams.forEach((value, key) => {
 			if (["page", "perPage", "sortBy", "search"].includes(key)) return;
 			if (key.startsWith("filter_")) count += 1;
 		});
 		return { hasActiveFilters: count > 0, activeFiltersCount: count };
-	}, [searchParams]);
+	})();
 
 	return (
 		<FilterSheetWrapper

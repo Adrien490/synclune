@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, useRef } from "react";
+import { memo, useRef } from "react";
 import { motion, useReducedMotion, useInView } from "framer-motion";
 import { cn } from "@/shared/utils/cn";
 
@@ -175,17 +175,10 @@ const GlitterSparklesBase = ({
 		margin: "-100px",
 	});
 
-	// Génération des paillettes pour desktop et mobile (mémoïsé)
+	// Génération des paillettes pour desktop et mobile
 	// CSS gère l'affichage conditionnel, évitant le flash d'hydratation
-	const desktopSparkles = useMemo(
-		() => generateSparkles(count ?? DEFAULT_CONFIG.COUNT_DESKTOP, sizeRange, glowIntensity),
-		[count, sizeRange, glowIntensity]
-	);
-
-	const mobileSparkles = useMemo(
-		() => generateSparkles(count ?? DEFAULT_CONFIG.COUNT_MOBILE, sizeRange, glowIntensity),
-		[count, sizeRange, glowIntensity]
-	);
+	const desktopSparkles = generateSparkles(count ?? DEFAULT_CONFIG.COUNT_DESKTOP, sizeRange, glowIntensity);
+	const mobileSparkles = generateSparkles(count ?? DEFAULT_CONFIG.COUNT_MOBILE, sizeRange, glowIntensity);
 
 	// Animation selon prefers-reduced-motion
 	const animation = reducedMotion

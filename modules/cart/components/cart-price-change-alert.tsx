@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { Button } from "@/shared/components/ui/button";
@@ -21,8 +20,8 @@ interface CartPriceChangeAlertProps {
 export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 	const { action, isPending } = useUpdateCartPrices();
 
-	// Memoize les calculs couteux pour eviter re-calcul a chaque render
-	const { itemsWithPriceChange, itemsWithPriceDecrease, totalSavings } = useMemo(() => {
+	// Calcul direct des changements de prix
+	const { itemsWithPriceChange, itemsWithPriceDecrease, totalSavings } = (() => {
 		const changed = items.filter(
 			(item) => item.priceAtAdd !== item.sku.priceInclTax
 		);
@@ -34,7 +33,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 			0
 		);
 		return { itemsWithPriceChange: changed, itemsWithPriceDecrease: decreased, totalSavings: savings };
-	}, [items]);
+	})();
 
 	if (itemsWithPriceChange.length === 0) {
 		return null;

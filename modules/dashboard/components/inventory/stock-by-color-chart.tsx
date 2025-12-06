@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use } from "react";
 import {
 	Card,
 	CardContent,
@@ -34,7 +34,7 @@ export function StockByColorChart({ chartDataPromise, enableDrilldown = true }: 
 	const yAxisWidth = useYAxisWidth("compact");
 
 	// Preparer les donnees pour le graphique (top 8) avec une cle unique
-	const chartData = useMemo(() => {
+	const chartData = (() => {
 		const items: {
 			key: string;
 			colorId: string | null;
@@ -70,7 +70,7 @@ export function StockByColorChart({ chartDataPromise, enableDrilldown = true }: 
 		}
 
 		return items;
-	}, [data]);
+	})();
 
 	// Handler pour le clic sur une barre
 	const onBarClick = (data: unknown) => {
@@ -81,7 +81,7 @@ export function StockByColorChart({ chartDataPromise, enableDrilldown = true }: 
 	};
 
 	// Generer la config dynamiquement avec les couleurs hex reelles
-	const chartConfig = useMemo(() => {
+	const chartConfig = (() => {
 		const config: ChartConfig = {};
 		chartData.forEach((item) => {
 			config[item.key] = {
@@ -90,7 +90,7 @@ export function StockByColorChart({ chartDataPromise, enableDrilldown = true }: 
 			};
 		});
 		return config;
-	}, [chartData]);
+	})();
 
 	if (chartData.length === 0) {
 		return (

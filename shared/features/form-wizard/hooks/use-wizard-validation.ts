@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import type { FormLike, WizardStep } from "../types"
 
 interface UseWizardValidationOptions {
@@ -37,112 +37,100 @@ export function useWizardValidation({
 	const errorsCache = useRef<Map<number, string[]>>(new Map())
 
 	// Efface le cache d'une étape ou de toutes
-	const clearStepErrorsCache = useCallback((stepIndex?: number) => {
+	const clearStepErrorsCache = (stepIndex?: number) => {
 		if (stepIndex !== undefined) {
 			errorsCache.current.delete(stepIndex)
 		} else {
 			errorsCache.current.clear()
 		}
-	}, [])
+	}
 
 	// Valide une étape spécifique
-	const validateStep = useCallback(
-		async (stepIndex: number): Promise<boolean> => {
-			const stepConfig = steps[stepIndex]
-			if (!stepConfig) return false
+	const validateStep = async (stepIndex: number): Promise<boolean> => {
+		const stepConfig = steps[stepIndex]
+		if (!stepConfig) return false
 
-			setIsValidating(true)
-			// Efface le cache pour cette étape avant revalidation
-			errorsCache.current.delete(stepIndex)
+		setIsValidating(true)
+		// Efface le cache pour cette étape avant revalidation
+		errorsCache.current.delete(stepIndex)
 
-			try {
-				// Valide chaque champ de l'étape
-				for (const fieldName of stepConfig.fields) {
-					try {
-						await form.validateField(fieldName, { cause: "change" })
-					} catch (error) {
-						// Log l'erreur pour faciliter le debug (champ inexistant, erreur adaptateur, etc.)
-						console.warn(
-							`[FormWizard] Erreur validation champ "${fieldName}":`,
-							error instanceof Error ? error.message : String(error)
-						)
-					}
+		try {
+			// Valide chaque champ de l'étape
+			for (const fieldName of stepConfig.fields) {
+				try {
+					await form.validateField(fieldName, { cause: "change" })
+				} catch (error) {
+					// Log l'erreur pour faciliter le debug (champ inexistant, erreur adaptateur, etc.)
+					console.warn(
+						`[FormWizard] Erreur validation champ "${fieldName}":`,
+						error instanceof Error ? error.message : String(error)
+					)
 				}
-
-				// Vérifie si des champs ont des erreurs
-				const hasErrors = stepConfig.fields.some((fieldName) => {
-					const meta = form.getFieldMeta(fieldName)
-					return meta && meta.errors.length > 0
-				})
-
-				return !hasErrors
-			} catch (error) {
-				console.error("[WizardValidation] Erreur de validation:", error)
-				return false
-			} finally {
-				setIsValidating(false)
 			}
-		},
-		[steps, form]
-	)
+
+			// Vérifie si des champs ont des erreurs
+			const hasErrors = stepConfig.fields.some((fieldName) => {
+				const meta = form.getFieldMeta(fieldName)
+				return meta && meta.errors.length > 0
+			})
+
+			return !hasErrors
+		} catch (error) {
+			console.error("[WizardValidation] Erreur de validation:", error)
+			return false
+		} finally {
+			setIsValidating(false)
+		}
+	}
 
 	// Valide l'étape courante
-	const validateCurrentStep = useCallback(async (): Promise<boolean> => {
+	const validateCurrentStep = async (): Promise<boolean> => {
 		return validateStep(currentStep)
-	}, [validateStep, currentStep])
+	}
 
 	// Vérifie si une étape est valide sans revalidation
-	const isStepValid = useCallback(
-		(stepIndex: number): boolean => {
-			const stepConfig = steps[stepIndex]
-			if (!stepConfig) return false
+	const isStepValid = (stepIndex: number): boolean => {
+		const stepConfig = steps[stepIndex]
+		if (!stepConfig) return false
 
-			return stepConfig.fields.every((fieldName) => {
-				const meta = form.getFieldMeta(fieldName)
-				return !meta || meta.errors.length === 0
-			})
-		},
-		[steps, form]
-	)
+		return stepConfig.fields.every((fieldName) => {
+			const meta = form.getFieldMeta(fieldName)
+			return !meta || meta.errors.length === 0
+		})
+	}
 
 	// Vérifie si une étape a des erreurs (avec cache)
-	const hasStepErrors = useCallback(
-		(stepIndex: number): boolean => {
-			return !isStepValid(stepIndex)
-		},
-		[isStepValid]
-	)
+	const hasStepErrors = (stepIndex: number): boolean => {
+		return !isStepValid(stepIndex)
+	}
 
 	// Récupère les erreurs d'une étape (avec cache)
-	const getStepErrors = useCallback(
-		(stepIndex: number): string[] => {
-			// Vérifie le cache d'abord
-			const cached = errorsCache.current.get(stepIndex)
-			if (cached !== undefined) {
-				return cached
+	const getStepErrors = (stepIndex: number): string[] => {
+		// Vérifie le cache d'abord
+		const cached = errorsCache.current.get(stepIndex)
+		if (cached !== undefined) {
+			return cached
+		}
+
+		const stepConfig = steps[stepIndex]
+		if (!stepConfig) {
+			errorsCache.current.set(stepIndex, [])
+			return []
+		}
+
+		const errors: string[] = []
+
+		for (const fieldName of stepConfig.fields) {
+			const meta = form.getFieldMeta(fieldName)
+			if (meta && meta.errors.length > 0) {
+				errors.push(...meta.errors)
 			}
+		}
 
-			const stepConfig = steps[stepIndex]
-			if (!stepConfig) {
-				errorsCache.current.set(stepIndex, [])
-				return []
-			}
-
-			const errors: string[] = []
-
-			for (const fieldName of stepConfig.fields) {
-				const meta = form.getFieldMeta(fieldName)
-				if (meta && meta.errors.length > 0) {
-					errors.push(...meta.errors)
-				}
-			}
-
-			// Met en cache
-			errorsCache.current.set(stepIndex, errors)
-			return errors
-		},
-		[steps, form]
-	)
+		// Met en cache
+		errorsCache.current.set(stepIndex, errors)
+		return errors
+	}
 
 	return {
 		validateCurrentStep,

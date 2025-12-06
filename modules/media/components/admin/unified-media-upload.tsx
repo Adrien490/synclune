@@ -30,7 +30,7 @@ import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "framer-motion";
 import { Expand, GripVertical, Loader2, MoreVertical, Play, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "sonner";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
@@ -339,72 +339,62 @@ export function UnifiedMediaUpload({
 	);
 
 	// Préparer les slides pour le lightbox
-	const slides: Slide[] = useMemo(
-		() =>
-			media.map((m) => {
-				if (m.mediaType === "VIDEO") {
-					return {
-						type: "video" as const,
-						sources: [{ src: m.url, type: getVideoMimeType(m.url) }],
-						poster: m.thumbnailUrl || undefined,
-					};
-				}
-				return {
-					src: m.url,
-					alt: m.altText || "Image du produit",
-				};
-			}),
-		[media]
-	);
+	const slides: Slide[] = media.map((m) => {
+		if (m.mediaType === "VIDEO") {
+			return {
+				type: "video" as const,
+				sources: [{ src: m.url, type: getVideoMimeType(m.url) }],
+				poster: m.thumbnailUrl || undefined,
+			};
+		}
+		return {
+			src: m.url,
+			alt: m.altText || "Image du produit",
+		};
+	});
 
 	// Marquer une image comme chargée
-	const handleImageLoaded = useCallback((url: string) => {
+	const handleImageLoaded = (url: string) => {
 		setLoadedImages((prev) => new Set(prev).add(url));
-	}, []);
+	};
 
 	// Ouvrir le lightbox
-	const openLightbox = useCallback((index: number) => {
+	const openLightbox = (index: number) => {
 		setLightboxIndex(index);
 		setLightboxOpen(true);
-	}, []);
+	};
 
 	// Gestion du drag end
-	const handleDragEnd = useCallback(
-		(event: DragEndEvent) => {
-			const { active, over } = event;
+	const handleDragEnd = (event: DragEndEvent) => {
+		const { active, over } = event;
 
-			if (over && active.id !== over.id) {
-				const oldIndex = media.findIndex((m) => m.url === active.id);
-				const newIndex = media.findIndex((m) => m.url === over.id);
+		if (over && active.id !== over.id) {
+			const oldIndex = media.findIndex((m) => m.url === active.id);
+			const newIndex = media.findIndex((m) => m.url === over.id);
 
-				// Empêcher de mettre une vidéo en première position
-				if (newIndex === 0 && media[oldIndex].mediaType === "VIDEO") {
-					toast.error("La première position doit être une image, pas une vidéo.");
-					return;
-				}
-
-				const newMedia = arrayMove(media, oldIndex, newIndex);
-				onChange(newMedia);
+			// Empêcher de mettre une vidéo en première position
+			if (newIndex === 0 && media[oldIndex].mediaType === "VIDEO") {
+				toast.error("La première position doit être une image, pas une vidéo.");
+				return;
 			}
-		},
-		[media, onChange]
-	);
+
+			const newMedia = arrayMove(media, oldIndex, newIndex);
+			onChange(newMedia);
+		}
+	};
 
 	// Ouvrir le dialog de suppression
-	const handleOpenDeleteDialog = useCallback(
-		(index: number) => {
-			deleteDialog.open({
-				index,
-				url: media[index].url,
-				skipUtapiDelete,
-				onRemove: () => {
-					const newMedia = media.filter((_, i) => i !== index);
-					onChange(newMedia);
-				},
-			});
-		},
-		[deleteDialog, media, onChange, skipUtapiDelete]
-	);
+	const handleOpenDeleteDialog = (index: number) => {
+		deleteDialog.open({
+			index,
+			url: media[index].url,
+			skipUtapiDelete,
+			onRemove: () => {
+				const newMedia = media.filter((_, i) => i !== index);
+				onChange(newMedia);
+			},
+		});
+	};
 
 	const canAddMore = media.length < maxItems;
 

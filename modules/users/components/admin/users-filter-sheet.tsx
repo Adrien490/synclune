@@ -2,7 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 
 import { Role } from "@/app/generated/prisma/browser";
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
@@ -25,7 +25,7 @@ export function UsersFilterSheet() {
 	const [isPending, startTransition] = useTransition();
 
 	// Compute active filter count
-	const activeFilterCount = useMemo(() => {
+	const activeFilterCount = (() => {
 		let count = 0;
 		if (searchParams.get("filter_role")) count++;
 		if (searchParams.get("filter_emailVerified")) count++;
@@ -33,10 +33,10 @@ export function UsersFilterSheet() {
 		if (searchParams.get("filter_hasOrders")) count++;
 		if (searchParams.get("filter_includeDeleted") === "true") count++;
 		return count;
-	}, [searchParams]);
+	})();
 
 	// Build initial values from URL params
-	const initialValues = useMemo((): FilterValues => {
+	const initialValues = ((): FilterValues => {
 		const roleParam = searchParams.get("filter_role");
 		const roles: Role[] = [];
 		if (roleParam) {
@@ -69,7 +69,7 @@ export function UsersFilterSheet() {
 						: undefined,
 			includeDeleted: searchParams.get("filter_includeDeleted") === "true",
 		};
-	}, [searchParams]);
+	})();
 
 	const form = useForm({
 		defaultValues: initialValues,

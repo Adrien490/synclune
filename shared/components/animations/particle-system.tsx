@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { memo, useMemo, useRef } from "react";
+import { memo, useRef } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
 // ============================================================================
@@ -245,17 +245,10 @@ const ParticleSystemBase = ({
 	// Lazy rendering : n'anime que si visible
 	const isInView = useInView(containerRef, { once: true, margin: "-100px" });
 
-	// Génération des deux sets de particules (mémoïsés séparément)
+	// Génération des deux sets de particules
 	// CSS media queries gèrent l'affichage → pas de flash d'hydratation
-	const desktopParticles = useMemo(
-		() => generateParticles(count, size, opacity, resolvedColors, duration, blur),
-		[count, size, opacity, resolvedColors, duration, blur]
-	);
-
-	const mobileParticles = useMemo(
-		() => generateParticles(Math.ceil(count / 2), size, opacity, resolvedColors, duration, blur),
-		[count, size, opacity, resolvedColors, duration, blur]
-	);
+	const desktopParticles = generateParticles(count, size, opacity, resolvedColors, duration, blur);
+	const mobileParticles = generateParticles(Math.ceil(count / 2), size, opacity, resolvedColors, duration, blur);
 
 	return (
 		<div

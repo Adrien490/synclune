@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface UseGallerySwipeOptions {
 	onSwipeLeft: () => void;
@@ -54,58 +54,55 @@ export function useGallerySwipe({
 		};
 	}, []);
 
-	const onTouchStart = useCallback((e: React.TouchEvent) => {
+	const onTouchStart = (e: React.TouchEvent) => {
 		// Guard: vérifier que le touch existe (multi-touch protection)
 		const touch = e.targetTouches[0];
 		if (!touch) return;
 
 		touchStartRef.current = touch.clientX;
 		setIsSwiping(true);
-	}, []);
+	};
 
-	const onTouchMove = useCallback(
-		(e: React.TouchEvent) => {
-			if (touchStartRef.current === null) return;
+	const onTouchMove = (e: React.TouchEvent) => {
+		if (touchStartRef.current === null) return;
 
-			// Guard: vérifier que le touch existe
-			const touch = e.targetTouches[0];
-			if (!touch) return;
+		// Guard: vérifier que le touch existe
+		const touch = e.targetTouches[0];
+		if (!touch) return;
 
-			const currentX = touch.clientX;
-			let offset = currentX - touchStartRef.current;
+		const currentX = touch.clientX;
+		let offset = currentX - touchStartRef.current;
 
-			// Prévenir le scroll de la page si le swipe horizontal est significatif
-			// Seuil de 10px pour distinguer swipe intentionnel du scroll vertical
-			if (Math.abs(offset) > 10) {
-				e.preventDefault();
-			}
+		// Prévenir le scroll de la page si le swipe horizontal est significatif
+		// Seuil de 10px pour distinguer swipe intentionnel du scroll vertical
+		if (Math.abs(offset) > 10) {
+			e.preventDefault();
+		}
 
-			// Résistance élastique aux bords (premier/dernier)
-			const isAtStart = currentIndex === 0;
-			const isAtEnd = currentIndex === totalImages - 1;
+		// Résistance élastique aux bords (premier/dernier)
+		const isAtStart = currentIndex === 0;
+		const isAtEnd = currentIndex === totalImages - 1;
 
-			// Si on est au début et on swipe vers la droite, ou à la fin et vers la gauche
-			// Appliquer une résistance (diviser le mouvement par 3)
-			if ((isAtStart && offset > 0) || (isAtEnd && offset < 0)) {
-				offset = offset / 3;
-			}
+		// Si on est au début et on swipe vers la droite, ou à la fin et vers la gauche
+		// Appliquer une résistance (diviser le mouvement par 3)
+		if ((isAtStart && offset > 0) || (isAtEnd && offset < 0)) {
+			offset = offset / 3;
+		}
 
-			// Mettre à jour la ref immédiatement (pour onTouchEnd)
-			swipeOffsetRef.current = offset;
+		// Mettre à jour la ref immédiatement (pour onTouchEnd)
+		swipeOffsetRef.current = offset;
 
-			// Throttle le re-render avec requestAnimationFrame
-			if (rafIdRef.current) {
-				cancelAnimationFrame(rafIdRef.current);
-			}
-			rafIdRef.current = requestAnimationFrame(() => {
-				setSwipeOffset(offset);
-				rafIdRef.current = null;
-			});
-		},
-		[currentIndex, totalImages]
-	);
+		// Throttle le re-render avec requestAnimationFrame
+		if (rafIdRef.current) {
+			cancelAnimationFrame(rafIdRef.current);
+		}
+		rafIdRef.current = requestAnimationFrame(() => {
+			setSwipeOffset(offset);
+			rafIdRef.current = null;
+		});
+	};
 
-	const onTouchEnd = useCallback(() => {
+	const onTouchEnd = () => {
 		// Annuler tout RAF en attente pour éviter state inconsistant
 		if (rafIdRef.current) {
 			cancelAnimationFrame(rafIdRef.current);
@@ -135,7 +132,7 @@ export function useGallerySwipe({
 		swipeOffsetRef.current = 0;
 		setSwipeOffset(0);
 		setIsSwiping(false);
-	}, [minSwipeDistance, onSwipeLeft, onSwipeRight]);
+	};
 
 	return {
 		onTouchStart,

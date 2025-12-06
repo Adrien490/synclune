@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useRef } from "react"
+import { useRef } from "react"
 import type { WizardStep, WizardDirection } from "../types"
 
 interface UseWizardNavigationOptions {
@@ -52,105 +52,87 @@ export function useWizardNavigation({
 	const isNavigating = useRef(false)
 
 	// Filtrer les étapes selon leurs conditions
-	const visibleSteps = useMemo(() => {
-		return steps.filter((step) => !step.condition || step.condition())
-	}, [steps])
+	const visibleSteps = steps.filter((step) => !step.condition || step.condition())
 
 	// Trouver l'index visible correspondant
-	const visibleCurrentIndex = useMemo(() => {
+	const visibleCurrentIndex = (() => {
 		const currentStepConfig = steps[currentStep]
 		if (!currentStepConfig) return 0
 		return visibleSteps.findIndex((s) => s.id === currentStepConfig.id)
-	}, [steps, currentStep, visibleSteps])
+	})()
 
 	const currentStepConfig = steps[currentStep]
 	const isFirstStep = currentStep === 0
 	const isLastStep = currentStep === steps.length - 1
 
 	// Vérifier si l'étape cible est navigable
-	const isStepNavigable = useCallback(
-		(stepIndex: number): boolean => {
-			const step = steps[stepIndex]
-			if (!step) return false
-			if (step.disabled) return false
-			if (step.condition && !step.condition()) return false
-			return true
-		},
-		[steps]
-	)
+	const isStepNavigable = (stepIndex: number): boolean => {
+		const step = steps[stepIndex]
+		if (!step) return false
+		if (step.disabled) return false
+		if (step.condition && !step.condition()) return false
+		return true
+	}
 
 	const canGoNext = !isLastStep && isStepNavigable(currentStep + 1)
 	const canGoPrevious = !isFirstStep && isStepNavigable(currentStep - 1)
 
 	// Navigation vers une étape spécifique
-	const goToStep = useCallback(
-		async (targetStep: number): Promise<boolean> => {
-			// Protection contre les doubles clics
-			if (isNavigating.current) return false
+	const goToStep = async (targetStep: number): Promise<boolean> => {
+		// Protection contre les doubles clics
+		if (isNavigating.current) return false
 
-			if (targetStep < 0 || targetStep >= steps.length) return false
-			if (!isStepNavigable(targetStep)) return false
+		if (targetStep < 0 || targetStep >= steps.length) return false
+		if (!isStepNavigable(targetStep)) return false
 
-			// Navigation arrière: toujours permise
-			if (targetStep < currentStep) {
-				// Invalide le cache de validation pour l'étape cible (l'utilisateur peut avoir modifié des champs)
-				onNavigateBack?.(targetStep)
-				setCurrentStep(targetStep)
-				onStepChange?.(targetStep, "backward")
-				return true
-			}
-
-			// Navigation avant: nécessite validation
-			if (targetStep > currentStep) {
-				isNavigating.current = true
-				try {
-					if (validateBeforeNext) {
-						const isValid = await validateBeforeNext()
-						if (!isValid) {
-							onValidationFailed?.()
-							return false
-						}
-					}
-
-					markStepCompleted?.(currentStep)
-					setCurrentStep(targetStep)
-					onStepChange?.(targetStep, "forward")
-					return true
-				} finally {
-					isNavigating.current = false
-				}
-			}
-
+		// Navigation arrière: toujours permise
+		if (targetStep < currentStep) {
+			// Invalide le cache de validation pour l'étape cible (l'utilisateur peut avoir modifié des champs)
+			onNavigateBack?.(targetStep)
+			setCurrentStep(targetStep)
+			onStepChange?.(targetStep, "backward")
 			return true
-		},
-		[
-			steps.length,
-			currentStep,
-			isStepNavigable,
-			setCurrentStep,
-			onStepChange,
-			validateBeforeNext,
-			onValidationFailed,
-			markStepCompleted,
-			onNavigateBack,
-		]
-	)
+		}
+
+		// Navigation avant: nécessite validation
+		if (targetStep > currentStep) {
+			isNavigating.current = true
+			try {
+				if (validateBeforeNext) {
+					const isValid = await validateBeforeNext()
+					if (!isValid) {
+						onValidationFailed?.()
+						return false
+					}
+				}
+
+				markStepCompleted?.(currentStep)
+				setCurrentStep(targetStep)
+				onStepChange?.(targetStep, "forward")
+				return true
+			} finally {
+				isNavigating.current = false
+			}
+		}
+
+		return true
+	}
 
 	// Aller à l'étape suivante
-	const nextStep = useCallback(async (): Promise<boolean> => {
+	const nextStep = async (): Promise<boolean> => {
 		if (isLastStep) return false
 		return goToStep(currentStep + 1)
-	}, [isLastStep, goToStep, currentStep])
+	}
 
 	// Aller à l'étape précédente
-	const previousStep = useCallback(() => {
+	const previousStep = () => {
 		if (isFirstStep) return
 		const targetStep = currentStep - 1
 		// Invalide le cache de validation pour l'étape cible
 		onNavigateBack?.(targetStep)
 		setCurrentStep(targetStep)
 		onStepChange?.(targetStep, "backward")
-	}, [isFirstStep, currentStep, setCurrentStep, onStepChange, onNavigateBack])
+	}
 
 	return {
 		goToStep,

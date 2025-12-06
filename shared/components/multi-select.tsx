@@ -338,18 +338,18 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 		const prevIsOpen = React.useRef(isPopoverOpen);
 		const prevSearchValue = React.useRef(searchValue);
 
-		const announce = React.useCallback(
-			(message: string, priority: "polite" | "assertive" = "polite") => {
-				if (priority === "assertive") {
-					setAssertiveMessage(message);
-					setTimeout(() => setAssertiveMessage(""), 100);
-				} else {
-					setPoliteMessage(message);
-					setTimeout(() => setPoliteMessage(""), 100);
-				}
-			},
-			[]
-		);
+		const announce = (
+			message: string,
+			priority: "polite" | "assertive" = "polite"
+		) => {
+			if (priority === "assertive") {
+				setAssertiveMessage(message);
+				setTimeout(() => setAssertiveMessage(""), 100);
+			} else {
+				setPoliteMessage(message);
+				setTimeout(() => setPoliteMessage(""), 100);
+			}
+		};
 
 		const multiSelectId = React.useId();
 		const listboxId = `${multiSelectId}-listbox`;
@@ -358,31 +358,25 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
 		const prevDefaultValueRef = React.useRef<string[]>(defaultValue);
 
-		const isGroupedOptions = React.useCallback(
-			(
-				opts: MultiSelectOption[] | MultiSelectGroup[]
-			): opts is MultiSelectGroup[] => {
-				return opts.length > 0 && "heading" in opts[0];
-			},
-			[]
-		);
+		const isGroupedOptions = (
+			opts: MultiSelectOption[] | MultiSelectGroup[]
+		): opts is MultiSelectGroup[] => {
+			return opts.length > 0 && "heading" in opts[0];
+		};
 
-		const arraysEqual = React.useCallback(
-			(a: string[], b: string[]): boolean => {
-				if (a.length !== b.length) return false;
-				const sortedA = [...a].sort();
-				const sortedB = [...b].sort();
-				return sortedA.every((val, index) => val === sortedB[index]);
-			},
-			[]
-		);
+		const arraysEqual = (a: string[], b: string[]): boolean => {
+			if (a.length !== b.length) return false;
+			const sortedA = [...a].sort();
+			const sortedB = [...b].sort();
+			return sortedA.every((val, index) => val === sortedB[index]);
+		};
 
-		const resetToDefault = React.useCallback(() => {
+		const resetToDefault = () => {
 			setSelectedValues(defaultValue);
 			setIsPopoverOpen(false);
 			setSearchValue("");
 			onValueChange(defaultValue);
-		}, [defaultValue, onValueChange]);
+		};
 
 		const buttonRef = React.useRef<HTMLButtonElement>(null);
 
@@ -443,7 +437,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			};
 		}, []);
 
-		const responsiveSettings = React.useMemo(() => {
+		const responsiveSettings = (() => {
 			if (!responsive) {
 				return {
 					maxCount: maxCount,
@@ -470,9 +464,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 				hideIcons: currentSettings?.hideIcons ?? false,
 				compactMode: currentSettings?.compactMode ?? false,
 			};
-		}, [responsive, screenSize, maxCount]);
+		})();
 
-		const badgeAnimationClass = React.useMemo(() => {
+		const badgeAnimationClass = (() => {
 			if (animationConfig?.badgeAnimation) {
 				switch (animationConfig.badgeAnimation) {
 					case "bounce":
@@ -492,9 +486,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 				}
 			}
 			return "";
-		}, [animationConfig?.badgeAnimation]);
+		})();
 
-		const popoverAnimationClass = React.useMemo(() => {
+		const popoverAnimationClass = (() => {
 			if (animationConfig?.popoverAnimation) {
 				switch (animationConfig.popoverAnimation) {
 					case "scale":
@@ -512,9 +506,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 				}
 			}
 			return "";
-		}, [animationConfig?.popoverAnimation]);
+		})();
 
-		const getAllOptions = React.useCallback((): MultiSelectOption[] => {
+		const getAllOptions = (): MultiSelectOption[] => {
 			if (options.length === 0) return [];
 			let allOptions: MultiSelectOption[];
 			if (isGroupedOptions(options)) {
@@ -537,22 +531,19 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 				}
 			});
 			return deduplicateOptions ? uniqueOptions : allOptions;
-		}, [options, deduplicateOptions, isGroupedOptions]);
+		};
 
-		const getOptionByValue = React.useCallback(
-			(value: string): MultiSelectOption | undefined => {
-				const option = getAllOptions().find((option) => option.value === value);
-				if (!option && process.env.NODE_ENV === "development") {
-					// console.warn(
-					// 	`MultiSelect: Option with value "${value}" not found in options list`
-					// );
-				}
-				return option;
-			},
-			[getAllOptions]
-		);
+		const getOptionByValue = (value: string): MultiSelectOption | undefined => {
+			const option = getAllOptions().find((option) => option.value === value);
+			if (!option && process.env.NODE_ENV === "development") {
+				// console.warn(
+				// 	`MultiSelect: Option with value "${value}" not found in options list`
+				// );
+			}
+			return option;
+		};
 
-		const filteredOptions = React.useMemo(() => {
+		const filteredOptions = (() => {
 			if (!searchable || !searchValue) return options;
 			if (options.length === 0) return [];
 			if (isGroupedOptions(options)) {
@@ -574,7 +565,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 					option.label.toLowerCase().includes(searchValue.toLowerCase()) ||
 					option.value.toLowerCase().includes(searchValue.toLowerCase())
 			);
-		}, [options, searchValue, searchable, isGroupedOptions]);
+		})();
 
 		const handleInputKeyDown = (
 			event: React.KeyboardEvent<HTMLInputElement>
@@ -651,7 +642,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			}
 		}, [defaultValue, selectedValues, arraysEqual, resetOnDefaultValueChange]);
 
-		const widthConstraints = React.useMemo(() => {
+		const widthConstraints = (() => {
 			const defaultMinWidth = screenSize === "mobile" ? "0px" : "200px";
 			const effectiveMinWidth = minWidth || defaultMinWidth;
 			const effectiveMaxWidth = maxWidth || "100%";
@@ -660,7 +651,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 				maxWidth: effectiveMaxWidth,
 				width: autoSize ? "auto" : "100%",
 			};
-		}, [screenSize, minWidth, maxWidth, autoSize]);
+		})();
 
 		React.useEffect(() => {
 			if (!isPopoverOpen) {

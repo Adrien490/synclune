@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { THUMBNAIL_CONFIG } from "../constants/media.constants";
 import { withRetry, CORSError } from "../utils/retry";
@@ -94,132 +94,126 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 	// Ref pour éviter les race conditions (state peut être stale dans useCallback)
 	const generatingUrlsRef = useRef<Set<string>>(new Set());
 
-	const generateThumbnailCore = useCallback(
-		async (videoUrl: string): Promise<ThumbnailResult> => {
-			const video = document.createElement("video");
+	const generateThumbnailCore = async (videoUrl: string): Promise<ThumbnailResult> => {
+		const video = document.createElement("video");
 
-			try {
-				// 1. Configurer élément vidéo
-				video.crossOrigin = "anonymous";
-				video.muted = true;
-				video.preload = "metadata";
+		try {
+			// 1. Configurer élément vidéo
+			video.crossOrigin = "anonymous";
+			video.muted = true;
+			video.preload = "metadata";
 
-				// 2. Charger la vidéo (avec timeout)
-				await new Promise<void>((resolve, reject) => {
-					const timeout = setTimeout(() => {
-						reject(new Error("Timeout chargement vidéo"));
-					}, THUMBNAIL_CONFIG.loadTimeout);
+			// 2. Charger la vidéo (avec timeout)
+			await new Promise<void>((resolve, reject) => {
+				const timeout = setTimeout(() => {
+					reject(new Error("Timeout chargement vidéo"));
+				}, THUMBNAIL_CONFIG.loadTimeout);
 
-					video.onloadedmetadata = () => {
-						clearTimeout(timeout);
-						resolve();
-					};
-					video.onerror = () => {
-						clearTimeout(timeout);
-						reject(new Error("Erreur chargement vidéo"));
-					};
-					video.src = videoUrl;
-				});
-
-				// 3. Seek à la position calculée (10% de la durée, max 1s)
-				const seekTime = Math.min(
-					THUMBNAIL_CONFIG.maxCaptureTime,
-					video.duration * THUMBNAIL_CONFIG.capturePosition
-				);
-				video.currentTime = seekTime;
-
-				await new Promise<void>((resolve) => {
-					video.onseeked = () => resolve();
-				});
-
-				// 4. Attendre que la frame soit prête
-				if (video.readyState < 2) {
-					await new Promise<void>((resolve) => {
-						video.oncanplay = () => resolve();
-					});
-				}
-
-				// 5. Capturer les deux tailles
-				const smallConfig = THUMBNAIL_CONFIG.SMALL;
-				const mediumConfig = THUMBNAIL_CONFIG.MEDIUM;
-
-				const [smallBlob, mediumBlob] = await Promise.all([
-					captureFrame(video, smallConfig.width, smallConfig.height, smallConfig.quality),
-					captureFrame(video, mediumConfig.width, mediumConfig.height, mediumConfig.quality),
-				]);
-
-				// 6. Upload les deux fichiers
-				const timestamp = Date.now();
-				const smallFile = new File(
-					[smallBlob],
-					`thumb-small-${timestamp}.webp`,
-					{ type: smallBlob.type }
-				);
-				const mediumFile = new File(
-					[mediumBlob],
-					`thumb-medium-${timestamp}.webp`,
-					{ type: mediumBlob.type }
-				);
-
-				const results = await startUpload([smallFile, mediumFile]);
-
-				return {
-					smallUrl: results?.[0]?.ufsUrl || null,
-					mediumUrl: results?.[1]?.ufsUrl || null,
+				video.onloadedmetadata = () => {
+					clearTimeout(timeout);
+					resolve();
 				};
-			} finally {
-				// Cleanup vidéo pour éviter memory leak
-				video.pause();
-				video.src = "";
-				video.load();
-				video.onloadedmetadata = null;
-				video.onerror = null;
-				video.onseeked = null;
-				video.oncanplay = null;
-			}
-		},
-		[startUpload]
-	);
+				video.onerror = () => {
+					clearTimeout(timeout);
+					reject(new Error("Erreur chargement vidéo"));
+				};
+				video.src = videoUrl;
+			});
 
-	const generateThumbnail = useCallback(
-		async (videoUrl: string): Promise<ThumbnailResult> => {
-			// Protection contre les appels dupliqués (race condition)
-			if (generatingUrlsRef.current.has(videoUrl)) {
-				return { smallUrl: null, mediumUrl: null };
-			}
+			// 3. Seek à la position calculée (10% de la durée, max 1s)
+			const seekTime = Math.min(
+				THUMBNAIL_CONFIG.maxCaptureTime,
+				video.duration * THUMBNAIL_CONFIG.capturePosition
+			);
+			video.currentTime = seekTime;
 
-			// Marquer comme en cours (ref + state)
-			generatingUrlsRef.current.add(videoUrl);
-			setGeneratingUrls((prev) => new Set(prev).add(videoUrl));
+			await new Promise<void>((resolve) => {
+				video.onseeked = () => resolve();
+			});
 
-			try {
-				// Utiliser withRetry pour la robustesse (sauf CORS qui échouera toujours)
-				return await withRetry(() => generateThumbnailCore(videoUrl), {
-					onRetry: (attempt, error) => {
-						// console.log(`Tentative ${attempt} échouée: ${error.message}`);
-					},
+			// 4. Attendre que la frame soit prête
+			if (video.readyState < 2) {
+				await new Promise<void>((resolve) => {
+					video.oncanplay = () => resolve();
 				});
-			} catch (error) {
-				const msg =
-					error instanceof CORSError
+			}
+
+			// 5. Capturer les deux tailles
+			const smallConfig = THUMBNAIL_CONFIG.SMALL;
+			const mediumConfig = THUMBNAIL_CONFIG.MEDIUM;
+
+			const [smallBlob, mediumBlob] = await Promise.all([
+				captureFrame(video, smallConfig.width, smallConfig.height, smallConfig.quality),
+				captureFrame(video, mediumConfig.width, mediumConfig.height, mediumConfig.quality),
+			]);
+
+			// 6. Upload les deux fichiers
+			const timestamp = Date.now();
+			const smallFile = new File(
+				[smallBlob],
+				`thumb-small-${timestamp}.webp`,
+				{ type: smallBlob.type }
+			);
+			const mediumFile = new File(
+				[mediumBlob],
+				`thumb-medium-${timestamp}.webp`,
+				{ type: mediumBlob.type }
+			);
+
+			const results = await startUpload([smallFile, mediumFile]);
+
+			return {
+				smallUrl: results?.[0]?.ufsUrl || null,
+				mediumUrl: results?.[1]?.ufsUrl || null,
+			};
+		} finally {
+			// Cleanup vidéo pour éviter memory leak
+			video.pause();
+			video.src = "";
+			video.load();
+			video.onloadedmetadata = null;
+			video.onerror = null;
+			video.onseeked = null;
+			video.oncanplay = null;
+		}
+	};
+
+	const generateThumbnail = async (videoUrl: string): Promise<ThumbnailResult> => {
+		// Protection contre les appels dupliqués (race condition)
+		if (generatingUrlsRef.current.has(videoUrl)) {
+			return { smallUrl: null, mediumUrl: null };
+		}
+
+		// Marquer comme en cours (ref + state)
+		generatingUrlsRef.current.add(videoUrl);
+		setGeneratingUrls((prev) => new Set(prev).add(videoUrl));
+
+		try {
+			// Utiliser withRetry pour la robustesse (sauf CORS qui échouera toujours)
+			return await withRetry(() => generateThumbnailCore(videoUrl), {
+				onRetry: (attempt, error) => {
+					// console.log(`Tentative ${attempt} échouée: ${error.message}`);
+				},
+			});
+		} catch (error) {
+			const msg =
+				error instanceof CORSError
+					? error.message
+					: error instanceof Error
 						? error.message
-						: error instanceof Error
-							? error.message
-							: "Erreur génération miniature";
-				options.onError?.(msg);
-				return { smallUrl: null, mediumUrl: null };
-			} finally {
-				// Cleanup ref + state
-				generatingUrlsRef.current.delete(videoUrl);
-				setGeneratingUrls((prev) => {
-					const next = new Set(prev);
-					next.delete(videoUrl);
-					return next;
-				});
-			}
-		},
-		[generateThumbnailCore, options]
-	);
+						: "Erreur génération miniature";
+			options.onError?.(msg);
+			return { smallUrl: null, mediumUrl: null };
+		} finally {
+			// Cleanup ref + state
+			generatingUrlsRef.current.delete(videoUrl);
+			setGeneratingUrls((prev) => {
+				const next = new Set(prev);
+				next.delete(videoUrl);
+				return next;
+			});
+		}
+	};
 
 	return { generateThumbnail, generatingUrls };
 }

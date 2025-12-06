@@ -18,10 +18,8 @@ import {
 	createContext,
 	type HTMLAttributes,
 	memo,
-	useCallback,
 	useContext,
 	useEffect,
-	useMemo,
 	useRef,
 	useState,
 } from "react";
@@ -162,72 +160,61 @@ export const ColorPickerSelection = memo(
 		const { hue, saturation, lightness, setSaturation, setLightness } =
 			useColorPicker();
 
-		const backgroundGradient = useMemo(() => {
-			return `linear-gradient(0deg, rgba(0,0,0,1), rgba(0,0,0,0)),
+		const backgroundGradient = `linear-gradient(0deg, rgba(0,0,0,1), rgba(0,0,0,0)),
             linear-gradient(90deg, rgba(255,255,255,1), rgba(255,255,255,0)),
             hsl(${hue}, 100%, 50%)`;
-		}, [hue]);
 
-		const updateFromPosition = useCallback(
-			(x: number, y: number) => {
-				setPositionX(x);
-				setPositionY(y);
-				setSaturation(x * 100);
-				const topLightness = x <= 0 ? 100 : 50 + 50 * (1 - x);
-				const newLightness = topLightness * (1 - y);
-				setLightness(newLightness);
-			},
-			[setSaturation, setLightness]
-		);
+		const updateFromPosition = (x: number, y: number) => {
+			setPositionX(x);
+			setPositionY(y);
+			setSaturation(x * 100);
+			const topLightness = x <= 0 ? 100 : 50 + 50 * (1 - x);
+			const newLightness = topLightness * (1 - y);
+			setLightness(newLightness);
+		};
 
-		const handlePointerMove = useCallback(
-			(event: PointerEvent) => {
-				if (!(isDragging && containerRef.current)) {
+		const handlePointerMove = (event: PointerEvent) => {
+			if (!(isDragging && containerRef.current)) {
+				return;
+			}
+			const rect = containerRef.current.getBoundingClientRect();
+			const x = Math.max(
+				0,
+				Math.min(1, (event.clientX - rect.left) / rect.width)
+			);
+			const y = Math.max(
+				0,
+				Math.min(1, (event.clientY - rect.top) / rect.height)
+			);
+			updateFromPosition(x, y);
+		};
+
+		const handleKeyDown = (e: React.KeyboardEvent) => {
+			const step = e.shiftKey ? 0.1 : 0.01;
+			let newX = positionX;
+			let newY = positionY;
+
+			switch (e.key) {
+				case "ArrowRight":
+					newX = Math.min(1, positionX + step);
+					break;
+				case "ArrowLeft":
+					newX = Math.max(0, positionX - step);
+					break;
+				case "ArrowUp":
+					e.preventDefault();
+					newY = Math.max(0, positionY - step);
+					break;
+				case "ArrowDown":
+					e.preventDefault();
+					newY = Math.min(1, positionY + step);
+					break;
+				default:
 					return;
-				}
-				const rect = containerRef.current.getBoundingClientRect();
-				const x = Math.max(
-					0,
-					Math.min(1, (event.clientX - rect.left) / rect.width)
-				);
-				const y = Math.max(
-					0,
-					Math.min(1, (event.clientY - rect.top) / rect.height)
-				);
-				updateFromPosition(x, y);
-			},
-			[isDragging, updateFromPosition]
-		);
+			}
 
-		const handleKeyDown = useCallback(
-			(e: React.KeyboardEvent) => {
-				const step = e.shiftKey ? 0.1 : 0.01;
-				let newX = positionX;
-				let newY = positionY;
-
-				switch (e.key) {
-					case "ArrowRight":
-						newX = Math.min(1, positionX + step);
-						break;
-					case "ArrowLeft":
-						newX = Math.max(0, positionX - step);
-						break;
-					case "ArrowUp":
-						e.preventDefault();
-						newY = Math.max(0, positionY - step);
-						break;
-					case "ArrowDown":
-						e.preventDefault();
-						newY = Math.min(1, positionY + step);
-						break;
-					default:
-						return;
-				}
-
-				updateFromPosition(newX, newY);
-			},
-			[positionX, positionY, updateFromPosition]
-		);
+			updateFromPosition(newX, newY);
+		};
 
 		useEffect(() => {
 			const handlePointerUp = () => setIsDragging(false);

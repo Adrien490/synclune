@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 
 interface UseRefreshDashboardReturn {
@@ -21,12 +21,12 @@ export function useRefreshDashboard(): UseRefreshDashboardReturn {
 	const [isPending, startTransition] = useTransition()
 	const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-	const refresh = useCallback(() => {
+	const refresh = () => {
 		startTransition(() => {
 			router.refresh()
 			setLastUpdated(new Date())
 		})
-	}, [router])
+	}
 
 	return {
 		refresh,

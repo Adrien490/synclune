@@ -93,38 +93,29 @@ function ResponsiveSelect({
 	const value = controlledValue ?? internalValue;
 	const open = controlledOpen ?? internalOpen;
 
-	const handleValueChange = React.useCallback(
-		(newValue: string) => {
-			if (controlledValue === undefined) {
-				setInternalValue(newValue);
-			}
-			onValueChange?.(newValue);
-		},
-		[controlledValue, onValueChange]
-	);
+	const handleValueChange = (newValue: string) => {
+		if (controlledValue === undefined) {
+			setInternalValue(newValue);
+		}
+		onValueChange?.(newValue);
+	};
 
-	const handleOpenChange = React.useCallback(
-		(newOpen: boolean) => {
-			if (controlledOpen === undefined) {
-				setInternalOpen(newOpen);
-			}
-			onOpenChange?.(newOpen);
-		},
-		[controlledOpen, onOpenChange]
-	);
+	const handleOpenChange = (newOpen: boolean) => {
+		if (controlledOpen === undefined) {
+			setInternalOpen(newOpen);
+		}
+		onOpenChange?.(newOpen);
+	};
 
-	const contextValue = React.useMemo(
-		() => ({
-			value,
-			onValueChange: handleValueChange,
-			open,
-			setOpen: handleOpenChange,
-			useDrawer,
-			disabled,
-			title,
-		}),
-		[value, handleValueChange, open, handleOpenChange, useDrawer, disabled, title]
-	);
+	const contextValue = {
+		value,
+		onValueChange: handleValueChange,
+		open,
+		setOpen: handleOpenChange,
+		useDrawer,
+		disabled,
+		title,
+	};
 
 	// Mode Desktop ou nested drawer: utiliser Select Radix standard
 	if (!useDrawer) {

@@ -1,7 +1,6 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useCallback } from "react"
 import {
 	CHART_DRILLDOWN,
 	buildChartDrilldownUrl,
@@ -21,13 +20,10 @@ export function useChartDrilldown(chartKey: ChartDrilldownKey) {
 	const router = useRouter()
 	const config = CHART_DRILLDOWN[chartKey]
 
-	const handleClick = useCallback(
-		(filterValue: string) => {
-			const url = buildChartDrilldownUrl(chartKey, filterValue)
-			router.push(url)
-		},
-		[chartKey, router]
-	)
+	const handleClick = (filterValue: string) => {
+		const url = buildChartDrilldownUrl(chartKey, filterValue)
+		router.push(url)
+	}
 
 	return {
 		/** Handler a appeler avec la valeur du filtre */

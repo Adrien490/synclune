@@ -23,7 +23,7 @@ import {
 	X,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useApplyDiscountCode } from "@/modules/discounts/hooks/use-apply-discount-code";
 
 interface AppliedDiscount {
@@ -85,17 +85,17 @@ export function CheckoutSummary({
 	const total = Math.max(0, subtotal - discountAmount + shipping);
 
 	// Appliquer un code promo
-	const handleApplyDiscount = useCallback(() => {
+	const handleApplyDiscount = () => {
 		if (!discountCode.trim()) return;
 		applyCode(discountCode, subtotal, userId, customerEmail);
-	}, [discountCode, subtotal, userId, customerEmail, applyCode]);
+	};
 
 	// Retirer le code promo
-	const handleRemoveDiscount = useCallback(() => {
+	const handleRemoveDiscount = () => {
 		setAppliedDiscount(null);
 		setDiscountCode("");
 		onDiscountChange?.(null);
-	}, [onDiscountChange]);
+	};
 
 	// Formater la valeur du discount pour affichage
 	const formatDiscountLabel = (discount: AppliedDiscount) => {

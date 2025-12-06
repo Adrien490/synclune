@@ -14,7 +14,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
 
 interface ProductCarouselItem {
@@ -39,7 +39,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 	const prefersReducedMotion = useReducedMotion();
 
 	// Plugin Autoplay - désactivé si l'utilisateur préfère les mouvements réduits (a11y WCAG 2.3.2)
-	const plugins = useMemo(() => {
+	const plugins = (() => {
 		if (prefersReducedMotion) {
 			return [];
 		}
@@ -51,7 +51,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 				stopOnFocusIn: true, // Pause au focus (a11y)
 			}),
 		];
-	}, [prefersReducedMotion]);
+	})();
 
 	// Tracking du slide actif
 	useEffect(() => {
@@ -70,12 +70,9 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 	}, [api]);
 
 	// Navigation avec scrollTo
-	const scrollTo = useCallback(
-		(index: number) => {
-			api?.scrollTo(index);
-		},
-		[api]
-	);
+	const scrollTo = (index: number) => {
+		api?.scrollTo(index);
+	};
 
 	if (products.length === 0) {
 		return (

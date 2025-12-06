@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use } from "react";
 import {
 	Card,
 	CardContent,
@@ -41,7 +41,7 @@ export function StockByMaterialChart({ chartDataPromise, enableDrilldown = true 
 	const { handleClick } = useChartDrilldown("stockByMaterial");
 
 	// Preparer les donnees pour le graphique avec une cle unique
-	const chartData = useMemo(() => {
+	const chartData = (() => {
 		const items: {
 			key: string;
 			materialId: string | null;
@@ -74,7 +74,7 @@ export function StockByMaterialChart({ chartDataPromise, enableDrilldown = true 
 		}
 
 		return items;
-	}, [data]);
+	})();
 
 	// Handler pour le clic sur un segment
 	const onSegmentClick = (index: number) => {
@@ -86,7 +86,7 @@ export function StockByMaterialChart({ chartDataPromise, enableDrilldown = true 
 	};
 
 	// Generer la config dynamiquement
-	const chartConfig = useMemo(() => {
+	const chartConfig = (() => {
 		const config: ChartConfig = {};
 		chartData.forEach((item, index) => {
 			config[item.key] = {
@@ -95,7 +95,7 @@ export function StockByMaterialChart({ chartDataPromise, enableDrilldown = true 
 			};
 		});
 		return config;
-	}, [chartData]);
+	})();
 
 	if (chartData.length === 0) {
 		return (

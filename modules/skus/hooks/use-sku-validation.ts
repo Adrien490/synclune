@@ -1,7 +1,6 @@
 import { extractVariantInfo } from "@/modules/skus/services/extract-sku-info";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
-import { useMemo } from "react";
 
 interface VariantSelection {
 	color: string | null;
@@ -59,7 +58,7 @@ export function useVariantValidation({
 		);
 
 	// Calculer les erreurs de validation
-	const validationErrors = useMemo(() => {
+	const validationErrors = (() => {
 		const errors: string[] = [];
 
 		if (requiresColor && !selection.color) {
@@ -75,7 +74,7 @@ export function useVariantValidation({
 		}
 
 		return errors;
-	}, [requiresColor, requiresMaterial, requiresSize, selection]);
+	})();
 
 	const isValid = validationErrors.length === 0;
 

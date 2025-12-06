@@ -1,7 +1,6 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
 import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
@@ -26,7 +25,7 @@ export function useSelectedSku({
 }: UseSelectedSkuOptions): UseSelectedSkuReturn {
 	const searchParams = useSearchParams();
 
-	const selectedSku = useMemo(() => {
+	const selectedSku = (() => {
 		const urlVariants = {
 			colorSlug: searchParams.get("color") ?? undefined,
 			materialSlug: searchParams.get("material") ?? undefined,
@@ -45,7 +44,7 @@ export function useSelectedSku({
 		// Sinon, premier SKU compatible
 		const compatibleSkus = filterCompatibleSkus(product, urlVariants);
 		return compatibleSkus[0] ?? defaultSku ?? product.skus[0] ?? null;
-	}, [product, defaultSku, searchParams]);
+	})();
 
 	return { selectedSku };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useOptimistic, useRef, useTransition } from "react";
+import { useOptimistic, useRef, useTransition } from "react";
 
 interface UseGalleryNavigationOptions {
 	totalImages: number;
@@ -58,57 +58,51 @@ export function useGalleryNavigation({
 	);
 
 	// Mise à jour de l'URL (dépendances stabilisées via ref)
-	const updateUrl = useCallback(
-		(newIndex: number) => {
-			// Validation défensive: clamper l'index dans les limites valides
-			const total = totalImagesRef.current;
-			const safeIndex = total > 0 ? Math.max(0, Math.min(total - 1, newIndex)) : 0;
+	const updateUrl = (newIndex: number) => {
+		// Validation défensive: clamper l'index dans les limites valides
+		const total = totalImagesRef.current;
+		const safeIndex = total > 0 ? Math.max(0, Math.min(total - 1, newIndex)) : 0;
 
-			const newSearchParams = new URLSearchParams(searchParamsRef.current);
+		const newSearchParams = new URLSearchParams(searchParamsRef.current);
 
-			if (safeIndex === 0) {
-				newSearchParams.delete("gallery");
-			} else {
-				newSearchParams.set("gallery", safeIndex.toString());
-			}
+		if (safeIndex === 0) {
+			newSearchParams.delete("gallery");
+		} else {
+			newSearchParams.set("gallery", safeIndex.toString());
+		}
 
-			const newUrl = `${pathname}${
-				newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""
-			}`;
-			router.replace(newUrl, { scroll: false });
-		},
-		[pathname, router]
-	);
+		const newUrl = `${pathname}${
+			newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""
+		}`;
+		router.replace(newUrl, { scroll: false });
+	};
 
 	// Navigation optimiste vers un index spécifique
-	const navigateToIndex = useCallback(
-		(newIndex: number) => {
-			if (newIndex < 0 || newIndex >= totalImages) return;
+	const navigateToIndex = (newIndex: number) => {
+		if (newIndex < 0 || newIndex >= totalImages) return;
 
-			startTransition(() => {
-				setOptimisticIndex(newIndex);
-				updateUrl(newIndex);
-			});
-		},
-		[totalImages, startTransition, updateUrl, setOptimisticIndex]
-	);
+		startTransition(() => {
+			setOptimisticIndex(newIndex);
+			updateUrl(newIndex);
+		});
+	};
 
 	// Navigation suivante (circulaire)
 	// Utilise optimisticIndex pour navigation fluide sans race condition lors de clics rapides
-	const navigateNext = useCallback(() => {
+	const navigateNext = () => {
 		if (totalImages === 0) return;
 		const nextIndex = (optimisticIndex + 1) % totalImages;
 		navigateToIndex(nextIndex);
-	}, [optimisticIndex, totalImages, navigateToIndex]);
+	};
 
 	// Navigation précédente (circulaire)
 	// Utilise optimisticIndex pour navigation fluide sans race condition lors de clics rapides
-	const navigatePrev = useCallback(() => {
+	const navigatePrev = () => {
 		if (totalImages === 0) return;
 		const prevIndex =
 			optimisticIndex === 0 ? totalImages - 1 : optimisticIndex - 1;
 		navigateToIndex(prevIndex);
-	}, [optimisticIndex, totalImages, navigateToIndex]);
+	};
 
 	return {
 		selectedIndex,

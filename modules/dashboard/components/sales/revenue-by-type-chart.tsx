@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use } from "react";
 import {
 	Card,
 	CardContent,
@@ -41,7 +41,7 @@ export function RevenueByTypeChart({ chartDataPromise, enableDrilldown = true }:
 	const { handleClick } = useChartDrilldown("revenueByType");
 
 	// Preparer les donnees pour le graphique avec une cle unique
-	const chartData = useMemo(() => {
+	const chartData = (() => {
 		const items = data.types.map((t, index) => ({
 			key: `type-${index}`,
 			name: t.typeLabel,
@@ -64,7 +64,7 @@ export function RevenueByTypeChart({ chartDataPromise, enableDrilldown = true }:
 		}
 
 		return items;
-	}, [data]);
+	})();
 
 	// Handler pour le clic sur un segment
 	const onSegmentClick = (index: number) => {
@@ -76,7 +76,7 @@ export function RevenueByTypeChart({ chartDataPromise, enableDrilldown = true }:
 	};
 
 	// Generer la config dynamiquement
-	const chartConfig = useMemo(() => {
+	const chartConfig = (() => {
 		const config: ChartConfig = {};
 		chartData.forEach((item, index) => {
 			config[item.key] = {
@@ -85,7 +85,7 @@ export function RevenueByTypeChart({ chartDataPromise, enableDrilldown = true }:
 			};
 		});
 		return config;
-	}, [chartData]);
+	})();
 
 	if (chartData.length === 0) {
 		return (

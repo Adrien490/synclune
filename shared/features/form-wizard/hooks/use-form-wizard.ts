@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo } from "react"
 import { useWizardContext } from "../components/wizard-context"
 import { useWizardNavigation } from "./use-wizard-navigation"
 import { useWizardValidation } from "./use-wizard-validation"
@@ -84,7 +83,7 @@ export function useFormWizard({
 	} = useWizardContext()
 
 	// Merge messages
-	const mergedMessages = useMemo(() => mergeMessages(messages), [messages])
+	const mergedMessages = mergeMessages(messages)
 
 	// Validation hook
 	const validation = useWizardValidation({
@@ -132,9 +131,7 @@ export function useFormWizard({
 	})
 
 	// Progress percentage
-	const progress = useMemo(() => {
-		return Math.round((completedSteps.size / totalSteps) * 100)
-	}, [completedSteps.size, totalSteps])
+	const progress = Math.round((completedSteps.size / totalSteps) * 100)
 
 	// Mode effectif basé sur le device
 	const effectiveMode = isMobile ? "wizard" : desktopMode

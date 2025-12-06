@@ -5,7 +5,7 @@ import { cn } from "@/shared/utils/cn";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useTransition } from "react";
 import type { Size } from "@/modules/skus/types/sku-selector.types";
 import { SizeGuideDialog } from "./size-guide-dialog";
 
@@ -45,33 +45,27 @@ export function SizeSelector({
 	const currentMaterial = searchParams.get("material");
 
 	// Calculer la disponibilité d'une taille
-	const isSizeAvailable = useCallback(
-		(size: string): boolean => {
-			const compatibleSkus = filterCompatibleSkus(product, {
-				colorSlug: currentColor || undefined,
-				materialSlug: currentMaterial || undefined,
-				size: size,
-			});
-			return compatibleSkus.length > 0;
-		},
-		[product, currentColor, currentMaterial]
-	);
+	const isSizeAvailable = (size: string): boolean => {
+		const compatibleSkus = filterCompatibleSkus(product, {
+			colorSlug: currentColor || undefined,
+			materialSlug: currentMaterial || undefined,
+			size: size,
+		});
+		return compatibleSkus.length > 0;
+	};
 
 	// Mettre à jour la taille dans l'URL
-	const updateSize = useCallback(
-		(size: string | null) => {
-			startTransition(() => {
-				const params = new URLSearchParams(searchParams.toString());
-				if (size) {
-					params.set("size", size);
-				} else {
-					params.delete("size");
-				}
-				router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-			});
-		},
-		[searchParams, pathname, router]
-	);
+	const updateSize = (size: string | null) => {
+		startTransition(() => {
+			const params = new URLSearchParams(searchParams.toString());
+			if (size) {
+				params.set("size", size);
+			} else {
+				params.delete("size");
+			}
+			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+		});
+	};
 
 	if (!shouldShow || sizes.length === 0) return null;
 

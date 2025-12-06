@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useCallback } from "react"
+import { use } from "react"
 import { useSearchParams, usePathname } from "next/navigation"
 import { Card, CardContent } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
@@ -50,14 +50,11 @@ export function TestimonialsDataTable({
 	const pathname = usePathname()
 	const searchParams = useSearchParams()
 
-	const createPageUrl = useCallback(
-		(pageNumber: number) => {
-			const params = new URLSearchParams(searchParams.toString())
-			params.set("page", pageNumber.toString())
-			return `${pathname}?${params.toString()}`
-		},
-		[pathname, searchParams]
-	)
+	const createPageUrl = (pageNumber: number) => {
+		const params = new URLSearchParams(searchParams.toString())
+		params.set("page", pageNumber.toString())
+		return `${pathname}?${params.toString()}`
+	}
 
 	// Génère les numéros de page à afficher
 	const getPageNumbers = () => {

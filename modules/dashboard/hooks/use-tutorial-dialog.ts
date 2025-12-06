@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import {
 	TUTORIAL_STEPS,
 	TUTORIAL_STORAGE_KEY,
@@ -35,36 +35,36 @@ export function useTutorialDialog(options: UseTutorialDialogOptions = {}) {
 		}
 	}, [autoOpen]);
 
-	const handleNext = useCallback(() => {
+	const handleNext = () => {
 		if (currentStep < TUTORIAL_STEPS.length - 1) {
 			setCurrentStep((prev) => prev + 1);
 		}
-	}, [currentStep]);
+	};
 
-	const handlePrevious = useCallback(() => {
+	const handlePrevious = () => {
 		if (currentStep > 0) {
 			setCurrentStep((prev) => prev - 1);
 		}
-	}, [currentStep]);
+	};
 
-	const handleReset = useCallback(() => {
+	const handleReset = () => {
 		setCurrentStep(0);
-	}, []);
+	};
 
-	const handleClose = useCallback(() => {
+	const handleClose = () => {
 		// Si "ne plus afficher" est coché, sauvegarder la préférence
 		if (dontShowAgain) {
 			localStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
 		}
 		setIsOpen(false);
 		setDontShowAgain(false);
-	}, [dontShowAgain]);
+	};
 
-	const goToStep = useCallback((index: number) => {
+	const goToStep = (index: number) => {
 		if (index >= 0 && index < TUTORIAL_STEPS.length) {
 			setCurrentStep(index);
 		}
-	}, []);
+	};
 
 	const step = TUTORIAL_STEPS[currentStep];
 	const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;

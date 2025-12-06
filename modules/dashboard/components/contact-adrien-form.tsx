@@ -7,7 +7,7 @@ import { useContactAdrienForm } from "@/modules/dashboard/hooks/use-contact-adri
 import { ActionStatus } from "@/shared/types/server-action";
 import { cn } from "@/shared/utils/cn";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 interface ContactAdrienFormProps {
 	/** Callback appelé après succès (auto-fermeture) */
@@ -55,7 +55,7 @@ export function ContactAdrienForm({
 		},
 	});
 
-	const handleCancel = useCallback(() => {
+	const handleCancel = () => {
 		if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
 		resetTimeoutRef.current = setTimeout(() => {
 			if (!isPending) {
@@ -63,7 +63,7 @@ export function ContactAdrienForm({
 			}
 		}, 300);
 		onCancel?.();
-	}, [form, isPending, onCancel]);
+	};
 
 	const isSuccess = state?.status === ActionStatus.SUCCESS;
 

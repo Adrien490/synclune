@@ -5,7 +5,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
 import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 
 interface ProductTypesFilterSheetProps {
 	className?: string;
@@ -23,7 +23,7 @@ export function ProductTypesFilterSheet({
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	const initialValues = useMemo((): FilterFormData => {
+	const initialValues = ((): FilterFormData => {
 		let isActive = "all";
 		let hasSize = "all";
 
@@ -39,7 +39,7 @@ export function ProductTypesFilterSheet({
 			isActive,
 			hasSize,
 		};
-	}, [searchParams]);
+	})();
 
 	const form = useForm({
 		defaultValues: initialValues,
@@ -92,14 +92,14 @@ export function ProductTypesFilterSheet({
 		});
 	};
 
-	const { hasActiveFilters, activeFiltersCount } = useMemo(() => {
+	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0;
 		searchParams.forEach((value, key) => {
 			if (["page", "perPage", "sortBy", "search"].includes(key)) return;
 			if (key.startsWith("filter_")) count += 1;
 		});
 		return { hasActiveFilters: count > 0, activeFiltersCount: count };
-	}, [searchParams]);
+	})();
 
 	return (
 		<FilterSheetWrapper

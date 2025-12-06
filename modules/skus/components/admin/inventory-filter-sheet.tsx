@@ -8,7 +8,7 @@ import type { ColorOption } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-materials";
 import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 
 interface InventoryFilterSheetProps {
 	className?: string;
@@ -38,7 +38,7 @@ export function InventoryFilterSheet({
 	const [isPending, startTransition] = useTransition();
 
 	// Initialiser les valeurs depuis l'URL
-	const initialValues = useMemo((): FilterFormData => {
+	const initialValues = ((): FilterFormData => {
 		const stockStatuses: string[] = [];
 		const colorIds: string[] = [];
 		const materialIds: string[] = [];
@@ -58,7 +58,7 @@ export function InventoryFilterSheet({
 			colorIds: [...new Set(colorIds)],
 			materialIds: [...new Set(materialIds)],
 		};
-	}, [searchParams]);
+	})();
 
 	const form = useForm({
 		defaultValues: initialValues,
@@ -130,7 +130,7 @@ export function InventoryFilterSheet({
 	};
 
 	// Calculer les filtres actifs depuis l'URL
-	const { hasActiveFilters, activeFiltersCount } = useMemo(() => {
+	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0;
 		const sheetFilterKeys = [
 			"filter_stockStatus",
@@ -143,7 +143,7 @@ export function InventoryFilterSheet({
 			}
 		});
 		return { hasActiveFilters: count > 0, activeFiltersCount: count };
-	}, [searchParams]);
+	})();
 
 	return (
 		<FilterSheetWrapper

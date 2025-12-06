@@ -2,7 +2,7 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useCallback, useRef, useTransition } from "react";
+import { useActionState, useRef, useTransition } from "react";
 import { updateCartItem } from "@/modules/cart/actions/update-cart-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 
@@ -52,26 +52,23 @@ export const useUpdateCartItem = (options?: UseUpdateCartItemOptions) => {
 		undefined
 	);
 
-	const action = useCallback(
-		(formData: FormData) => {
-			startTransition(() => {
-				// Calculer le delta (nouvelle quantité - ancienne quantité)
-				const newQuantity = Number(formData.get("quantity")) || 1;
-				const currentQuantity = options?.currentQuantity ?? 1;
-				const delta = newQuantity - currentQuantity;
+	const action = (formData: FormData) => {
+		startTransition(() => {
+			// Calculer le delta (nouvelle quantité - ancienne quantité)
+			const newQuantity = Number(formData.get("quantity")) || 1;
+			const currentQuantity = options?.currentQuantity ?? 1;
+			const delta = newQuantity - currentQuantity;
 
-				pendingDeltaRef.current = delta;
+			pendingDeltaRef.current = delta;
 
-				// Mise à jour optimistic du badge navbar
-				if (delta !== 0) {
-					adjustCart(delta);
-				}
+			// Mise à jour optimistic du badge navbar
+			if (delta !== 0) {
+				adjustCart(delta);
+			}
 
-				formAction(formData);
-			});
-		},
-		[adjustCart, formAction, options?.currentQuantity]
-	);
+			formAction(formData);
+		});
+	};
 
 	return {
 		state,

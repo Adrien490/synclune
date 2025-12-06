@@ -5,7 +5,7 @@ import { useAppForm } from "@/shared/components/tanstack-form"
 import { Label } from "@/shared/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useMemo, useTransition } from "react"
+import { useTransition } from "react"
 
 interface FilterFormData {
 	isPublished: string
@@ -20,7 +20,7 @@ export function TestimonialsFilterSheet() {
 	const searchParams = useSearchParams()
 	const [isPending, startTransition] = useTransition()
 
-	const initialValues = useMemo((): FilterFormData => {
+	const initialValues = ((): FilterFormData => {
 		const isPublished = searchParams.get("isPublished")
 		return {
 			isPublished:
@@ -30,7 +30,7 @@ export function TestimonialsFilterSheet() {
 						? "draft"
 						: "all",
 		}
-	}, [searchParams])
+	})()
 
 	const form = useAppForm({
 		defaultValues: initialValues,
@@ -64,11 +64,11 @@ export function TestimonialsFilterSheet() {
 		})
 	}
 
-	const { hasActiveFilters, activeFiltersCount } = useMemo(() => {
+	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0
 		if (searchParams.has("isPublished")) count++
 		return { hasActiveFilters: count > 0, activeFiltersCount: count }
-	}, [searchParams])
+	})()
 
 	return (
 		<FilterSheetWrapper

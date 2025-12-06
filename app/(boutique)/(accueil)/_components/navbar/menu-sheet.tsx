@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -47,43 +47,34 @@ interface MenuSheetProps {
 export function MenuSheet({ navItems }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 
-	// Séparer les items en deux zones (memoises pour eviter les recalculs)
+	// Séparer les items en deux zones
 	// Zone découverte: Accueil, Collections, Mes créations, Personnaliser
-	const discoveryItems = useMemo(
-		() => navItems.filter((item) => DISCOVERY_HREFS.includes(item.href as typeof DISCOVERY_HREFS[number])),
-		[navItems]
-	);
+	const discoveryItems = navItems.filter((item) => DISCOVERY_HREFS.includes(item.href as typeof DISCOVERY_HREFS[number]));
 	// Zone compte: Mon compte / Se connecter, Tableau de bord (admin), L'atelier
-	const accountItems = useMemo(
-		() => navItems.filter((item) => ACCOUNT_HREFS.includes(item.href as typeof ACCOUNT_HREFS[number])),
-		[navItems]
-	);
+	const accountItems = navItems.filter((item) => ACCOUNT_HREFS.includes(item.href as typeof ACCOUNT_HREFS[number]));
 
-	// Composant pour rendre un item de navigation (memoise)
-	const renderNavItem = useCallback(
-		(item: (typeof navItems)[0]) => {
-			const isActive = isMenuItemActive(item.href);
+	// Composant pour rendre un item de navigation
+	const renderNavItem = (item: (typeof navItems)[0]) => {
+		const isActive = isMenuItemActive(item.href);
 
-			return (
-				<SheetClose asChild key={item.href}>
-					<Link
-						href={item.href}
-						className={cn(
-							"flex items-center text-base/6 font-medium tracking-wide antialiased transition-all duration-200 rounded-none px-4 py-3 relative border-b-2",
-							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-							isActive
-								? "font-semibold border-primary bg-primary/5"
-								: "border-transparent hover:border-primary/50 hover:bg-accent/50"
-						)}
-						aria-current={isActive ? "page" : undefined}
-					>
-						<span>{item.label}</span>
-					</Link>
-				</SheetClose>
-			);
-		},
-		[isMenuItemActive]
-	);
+		return (
+			<SheetClose asChild key={item.href}>
+				<Link
+					href={item.href}
+					className={cn(
+						"flex items-center text-base/6 font-medium tracking-wide antialiased transition-all duration-200 rounded-none px-4 py-3 relative border-b-2",
+						"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+						isActive
+							? "font-semibold border-primary bg-primary/5"
+							: "border-transparent hover:border-primary/50 hover:bg-accent/50"
+					)}
+					aria-current={isActive ? "page" : undefined}
+				>
+					<span>{item.label}</span>
+				</Link>
+			</SheetClose>
+		);
+	};
 
 	// State pour aria-live (annonce ouverture/fermeture)
 	const [isOpen, setIsOpen] = useState(false);

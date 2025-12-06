@@ -15,7 +15,6 @@ import {
 	ChevronsLeft,
 	Loader2,
 } from "lucide-react";
-import { useMemo } from "react";
 import { Button } from "../ui/button";
 import { PER_PAGE_OPTIONS } from "./pagination";
 import { useCursorPagination } from "@/shared/hooks/use-cursor-pagination";
@@ -52,8 +51,8 @@ export function CursorPagination({
 	const isFirstPage = !cursor;
 	const canNavigate = hasNextPage || hasPreviousPage;
 
-	// Message mémoïsé pour les screen readers (optimisation performance)
-	const ariaLiveMessage = useMemo(() => {
+	// Message pour les screen readers
+	const ariaLiveMessage = (() => {
 		if (isPending) return "Chargement des résultats...";
 		if (currentPageSize === 0) return "Aucun résultat trouvé.";
 
@@ -74,7 +73,7 @@ export function CursorPagination({
 		}
 
 		return parts.join(" ");
-	}, [isPending, currentPageSize, hasNextPage, hasPreviousPage]);
+	})();
 
 	return (
 		<div

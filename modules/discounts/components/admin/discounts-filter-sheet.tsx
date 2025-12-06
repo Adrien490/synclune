@@ -5,7 +5,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
 import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 import { DiscountType } from "@/app/generated/prisma/browser";
 import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.constants";
 
@@ -24,7 +24,7 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	const initialValues = useMemo((): FilterFormData => {
+	const initialValues = ((): FilterFormData => {
 		const values: FilterFormData = {
 			type: "all",
 			isActive: "all",
@@ -44,7 +44,7 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 		});
 
 		return values;
-	}, [searchParams]);
+	})();
 
 	const form = useForm({
 		defaultValues: initialValues,
@@ -102,13 +102,13 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 		});
 	};
 
-	const { hasActiveFilters, activeFiltersCount } = useMemo(() => {
+	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0;
 		searchParams.forEach((_, key) => {
 			if (key.startsWith("filter_")) count += 1;
 		});
 		return { hasActiveFilters: count > 0, activeFiltersCount: count };
-	}, [searchParams]);
+	})();
 
 	return (
 		<FilterSheetWrapper

@@ -2,7 +2,7 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useCallback, useRef, useTransition } from "react";
+import { useActionState, useRef, useTransition } from "react";
 import { removeFromCart } from "@/modules/cart/actions/remove-from-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 
@@ -51,21 +51,18 @@ export const useRemoveFromCart = (options?: UseRemoveFromCartOptions) => {
 		undefined
 	);
 
-	const action = useCallback(
-		(formData: FormData) => {
-			startTransition(() => {
-				// Utiliser la quantité passée en option (défaut 1)
-				const quantity = options?.quantity ?? 1;
-				pendingQuantityRef.current = quantity;
+	const action = (formData: FormData) => {
+		startTransition(() => {
+			// Utiliser la quantité passée en option (défaut 1)
+			const quantity = options?.quantity ?? 1;
+			pendingQuantityRef.current = quantity;
 
-				// Mise à jour optimistic du badge navbar (on retire)
-				adjustCart(-quantity);
+			// Mise à jour optimistic du badge navbar (on retire)
+			adjustCart(-quantity);
 
-				formAction(formData);
-			});
-		},
-		[adjustCart, formAction, options?.quantity]
-	);
+			formAction(formData);
+		});
+	};
 
 	return {
 		state,

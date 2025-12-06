@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useCallback } from "react";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import {
 	exportUserData,
@@ -34,7 +34,7 @@ interface UseExportUserDataOptions {
 export function useExportUserData(options?: UseExportUserDataOptions) {
 	const [isPending, startTransition] = useTransition();
 
-	const exportData = useCallback(() => {
+	const exportData = () => {
 		startTransition(async () => {
 			const toastId = toast.loading("Export des données en cours...");
 
@@ -73,7 +73,7 @@ export function useExportUserData(options?: UseExportUserDataOptions) {
 				options?.onError?.(message);
 			}
 		});
-	}, [options]);
+	};
 
 	return {
 		exportData,

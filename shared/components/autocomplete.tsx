@@ -11,7 +11,7 @@ import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import Image from "next/image";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export interface AutocompleteProps<T> {
@@ -56,7 +56,7 @@ export function Autocomplete<T>({
 	// IDs uniques pour éviter les collisions
 	const id = useId();
 	const listboxId = `${id}-listbox`;
-	const getItemId = useCallback((index: number) => `${id}-item-${index}`, [id]);
+	const getItemId = (index: number) => `${id}-item-${index}`;
 
 	// États
 	const [isOpen, setIsOpen] = useState(false);

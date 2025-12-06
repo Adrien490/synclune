@@ -22,7 +22,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 
 interface OrdersFilterSheetProps {
 	className?: string;
@@ -40,15 +40,15 @@ interface FilterFormData {
 }
 
 const MAX_PRICE = 10000; // 100€ in cents
+const DEFAULT_PRICE_RANGE = [0, MAX_PRICE];
 
 export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
-	const DEFAULT_PRICE_RANGE = useMemo(() => [0, MAX_PRICE], []);
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
 	// Initialize values from URL params
-	const initialValues = useMemo((): FilterFormData => {
+	const initialValues = ((): FilterFormData => {
 		const statuses: string[] = [];
 		const paymentStatuses: string[] = [];
 		let priceMin = DEFAULT_PRICE_RANGE[0];
@@ -82,7 +82,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 			dateRange: { from: dateFrom, to: dateTo },
 			showDeleted,
 		};
-	}, [searchParams, DEFAULT_PRICE_RANGE]);
+	})();
 
 	const form = useAppForm({
 		defaultValues: initialValues,
@@ -183,7 +183,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 	};
 
 	// Calculate active filters from URL
-	const { hasActiveFilters, activeFiltersCount } = useMemo(() => {
+	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0;
 
 		searchParams.forEach((value, key) => {
@@ -207,7 +207,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 			hasActiveFilters: count > 0,
 			activeFiltersCount: count,
 		};
-	}, [searchParams]);
+	})();
 
 	return (
 		<FilterSheetWrapper

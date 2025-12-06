@@ -60,7 +60,7 @@ function ResponsiveDialog({
 	const isMobileDetected = useIsMobile();
 	const isMobile = forceMode ? forceMode === "drawer" : isMobileDetected;
 
-	const contextValue = React.useMemo(() => ({ isMobile }), [isMobile]);
+	const contextValue = { isMobile };
 
 	if (isMobile) {
 		return (

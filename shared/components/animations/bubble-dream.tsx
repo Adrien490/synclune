@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { memo, useMemo, useRef } from "react";
+import { memo, useRef } from "react";
 
 // ============================================================================
 // TYPES
@@ -203,17 +203,10 @@ const BubbleDreamBase = ({
 	// Clamp intensity entre 0.1 et 0.3
 	const safeIntensity = Math.max(0.1, Math.min(0.3, intensity));
 
-	// Génération des bulles pour desktop et mobile (mémoïsés séparément)
+	// Génération des bulles pour desktop et mobile
 	// CSS media queries gèrent l'affichage → pas de flash d'hydratation
-	const desktopBubbles = useMemo(
-		() => generateBubbles(count ?? DEFAULT_CONFIG.COUNT_DESKTOP),
-		[count]
-	);
-
-	const mobileBubbles = useMemo(
-		() => generateBubbles(count ?? DEFAULT_CONFIG.COUNT_MOBILE),
-		[count]
-	);
+	const desktopBubbles = generateBubbles(count ?? DEFAULT_CONFIG.COUNT_DESKTOP);
+	const mobileBubbles = generateBubbles(count ?? DEFAULT_CONFIG.COUNT_MOBILE);
 
 	return (
 		<div

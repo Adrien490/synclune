@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { THUMBNAIL_CONFIG } from "../constants/media.constants";
 
@@ -180,17 +180,7 @@ export function useVideoThumbnail(
 	options: UseVideoThumbnailOptions = {}
 ): UseVideoThumbnailReturn {
 	// Mémoriser les options pour éviter les re-renders infinis
-	const opts = useMemo(
-		() => ({ ...DEFAULT_OPTIONS, ...options }),
-		[
-			options.quality,
-			options.maxWidth,
-			options.maxHeight,
-			options.format,
-			options.onThumbnailGenerated,
-			options.onError,
-		]
-	);
+	const opts = { ...DEFAULT_OPTIONS, ...options };
 
 	const videoRef = useRef<HTMLVideoElement | null>(null);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -235,7 +225,7 @@ export function useVideoThumbnail(
 	}, []);
 
 	// Charger la vidéo
-	const loadVideo = useCallback(async (url: string): Promise<void> => {
+	const loadVideo = async (url: string): Promise<void> => {
 		// Annuler les chargements précédents (évite les race conditions)
 		abortControllerRef.current?.abort();
 		abortControllerRef.current = new AbortController();
@@ -345,20 +335,20 @@ export function useVideoThumbnail(
 			video.preload = "metadata";
 			video.src = url;
 		});
-	}, [opts]);
+	};
 
 	// Seek à un moment précis
-	const seekTo = useCallback((time: number): void => {
+	const seekTo = (time: number): void => {
 		const video = videoRef.current;
 		if (!video || !video.duration) return;
 
 		const clampedTime = Math.max(0, Math.min(time, video.duration));
 		video.currentTime = clampedTime;
 		setState((s) => ({ ...s, currentTime: clampedTime }));
-	}, []);
+	};
 
 	// Capturer la frame actuelle
-	const captureFrame = useCallback(async (): Promise<Blob | null> => {
+	const captureFrame = async (): Promise<Blob | null> => {
 		const video = videoRef.current;
 		if (!video || video.readyState < 2) {
 			setState((s) => ({ ...s, error: "Vidéo non prête pour la capture" }));
@@ -458,10 +448,10 @@ export function useVideoThumbnail(
 			opts.onError(msg);
 			return null;
 		}
-	}, [opts]);
+	};
 
 	// Générer et uploader la miniature
-	const generateAndUpload = useCallback(async (): Promise<string | null> => {
+	const generateAndUpload = async (): Promise<string | null> => {
 		const blob = await captureFrame();
 		if (!blob) return null;
 
@@ -498,10 +488,10 @@ export function useVideoThumbnail(
 			opts.onError(msg);
 			return null;
 		}
-	}, [captureFrame, startUpload, opts]);
+	};
 
 	// Reset
-	const reset = useCallback(() => {
+	const reset = () => {
 		// Cleanup preview URL
 		if (previewUrlRef.current) {
 			URL.revokeObjectURL(previewUrlRef.current);
@@ -509,7 +499,7 @@ export function useVideoThumbnail(
 		}
 
 		setState(INITIAL_STATE);
-	}, []);
+	};
 
 	return {
 		state: { ...state, isUploading: state.isUploading || isUploading },

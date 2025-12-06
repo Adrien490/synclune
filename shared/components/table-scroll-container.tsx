@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 
 interface TableScrollContainerProps {
 	children: ReactNode;
@@ -21,14 +21,14 @@ export function TableScrollContainer({
 	const [canScrollLeft, setCanScrollLeft] = useState(false);
 	const [canScrollRight, setCanScrollRight] = useState(false);
 
-	const updateScrollIndicators = useCallback(() => {
+	const updateScrollIndicators = () => {
 		const el = scrollRef.current;
 		if (!el) return;
 
 		const { scrollLeft, scrollWidth, clientWidth } = el;
 		setCanScrollLeft(scrollLeft > 0);
 		setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
-	}, []);
+	};
 
 	useEffect(() => {
 		const el = scrollRef.current;

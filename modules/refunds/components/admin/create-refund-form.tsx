@@ -27,7 +27,7 @@ import { ArrowLeft, Package, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { memo, useCallback } from "react";
+import { memo } from "react";
 import {
 	useCreateRefundForm,
 	getDefaultRestock,
@@ -93,78 +93,66 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 	const note = useStore(form.store, (s) => s.values.note);
 
 	// Handler pour changer le motif (met à jour le restock par défaut, pas de useEffect)
-	const handleReasonChange = useCallback(
-		(value: RefundReason) => {
-			form.setFieldValue("reason", value);
-			// Mettre à jour le restock par défaut pour tous les items
-			const defaultRestock = getDefaultRestock(value);
-			const currentItems = form.getFieldValue("items");
-			form.setFieldValue(
-				"items",
-				currentItems.map((item) => ({
-					...item,
-					restock: defaultRestock,
-				}))
-			);
-		},
-		[form]
-	);
+	const handleReasonChange = (value: RefundReason) => {
+		form.setFieldValue("reason", value);
+		// Mettre à jour le restock par défaut pour tous les items
+		const defaultRestock = getDefaultRestock(value);
+		const currentItems = form.getFieldValue("items");
+		form.setFieldValue(
+			"items",
+			currentItems.map((item) => ({
+				...item,
+				restock: defaultRestock,
+			}))
+		);
+	};
 
 	// Handlers
-	const handleItemToggle = useCallback(
-		(orderItemId: string, checked: boolean) => {
-			const currentItems = form.getFieldValue("items");
-			const orderItem = order.items.find((oi) => oi.id === orderItemId);
-			const available = orderItem ? getAvailableQuantity(orderItem) : 0;
+	const handleItemToggle = (orderItemId: string, checked: boolean) => {
+		const currentItems = form.getFieldValue("items");
+		const orderItem = order.items.find((oi) => oi.id === orderItemId);
+		const available = orderItem ? getAvailableQuantity(orderItem) : 0;
 
-			form.setFieldValue(
-				"items",
-				currentItems.map((item) => {
-					if (item.orderItemId !== orderItemId) return item;
-					return {
-						...item,
-						selected: checked,
-						quantity: checked ? Math.min(1, available) : 0,
-					};
-				})
-			);
-		},
-		[form, order.items]
-	);
+		form.setFieldValue(
+			"items",
+			currentItems.map((item) => {
+				if (item.orderItemId !== orderItemId) return item;
+				return {
+					...item,
+					selected: checked,
+					quantity: checked ? Math.min(1, available) : 0,
+				};
+			})
+		);
+	};
 
-	const handleQuantityChange = useCallback(
-		(orderItemId: string, quantity: number) => {
-			const orderItem = order.items.find((oi) => oi.id === orderItemId);
-			const available = orderItem ? getAvailableQuantity(orderItem) : 0;
-			const validQuantity = Math.max(0, Math.min(quantity, available));
+	const handleQuantityChange = (orderItemId: string, quantity: number) => {
+		const orderItem = order.items.find((oi) => oi.id === orderItemId);
+		const available = orderItem ? getAvailableQuantity(orderItem) : 0;
+		const validQuantity = Math.max(0, Math.min(quantity, available));
 
-			const currentItems = form.getFieldValue("items");
-			form.setFieldValue(
-				"items",
-				currentItems.map((item) =>
-					item.orderItemId === orderItemId
-						? { ...item, quantity: validQuantity, selected: validQuantity > 0 }
-						: item
-				)
-			);
-		},
-		[form, order.items]
-	);
+		const currentItems = form.getFieldValue("items");
+		form.setFieldValue(
+			"items",
+			currentItems.map((item) =>
+				item.orderItemId === orderItemId
+					? { ...item, quantity: validQuantity, selected: validQuantity > 0 }
+					: item
+			)
+		);
+	};
 
-	const handleRestockToggle = useCallback(
-		(orderItemId: string, checked: boolean) => {
-			const currentItems = form.getFieldValue("items");
-			form.setFieldValue(
-				"items",
-				currentItems.map((item) =>
-					item.orderItemId === orderItemId ? { ...item, restock: checked } : item
-				)
-			);
-		},
-		[form]
-	);
+	const handleRestockToggle = (orderItemId: string, checked: boolean) => {
+		const currentItems = form.getFieldValue("items");
+		form.setFieldValue(
+			"items",
+			currentItems.map((item) =>
+				item.orderItemId === orderItemId ? { ...item, restock: checked } : item
+			)
+		);
+	};
 
-	const handleSelectAll = useCallback(() => {
+	const handleSelectAll = () => {
 		const currentItems = form.getFieldValue("items");
 		form.setFieldValue(
 			"items",
@@ -178,7 +166,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 				};
 			})
 		);
-	}, [form, order.items]);
+	};
 
 	const canSubmit =
 		selectedItems.length > 0 && totalAmount > 0 && totalAmount <= maxRefundable;

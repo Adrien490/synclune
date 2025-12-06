@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useCallback } from "react";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import { unsubscribeSubscriberAdmin } from "@/modules/newsletter/actions/admin/unsubscribe-subscriber-admin";
 import { resubscribeSubscriberAdmin } from "@/modules/newsletter/actions/admin/resubscribe-subscriber-admin";
@@ -44,61 +44,45 @@ async function executeWithToast(
 export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 	const [isPending, startTransition] = useTransition();
 
-	// Extraire les callbacks en variables stables pour éviter les re-renders
-	const onSuccess = options?.onSuccess;
-	const onError = options?.onError;
+	const unsubscribe = (subscriberId: string) => {
+		startTransition(() =>
+			executeWithToast(
+				() => unsubscribeSubscriberAdmin(subscriberId),
+				"Erreur lors du désabonnement",
+				options
+			)
+		);
+	};
 
-	const unsubscribe = useCallback(
-		(subscriberId: string) => {
-			startTransition(() =>
-				executeWithToast(
-					() => unsubscribeSubscriberAdmin(subscriberId),
-					"Erreur lors du désabonnement",
-					{ onSuccess, onError }
-				)
-			);
-		},
-		[onSuccess, onError]
-	);
+	const resubscribe = (subscriberId: string) => {
+		startTransition(() =>
+			executeWithToast(
+				() => resubscribeSubscriberAdmin(subscriberId),
+				"Erreur lors du réabonnement",
+				options
+			)
+		);
+	};
 
-	const resubscribe = useCallback(
-		(subscriberId: string) => {
-			startTransition(() =>
-				executeWithToast(
-					() => resubscribeSubscriberAdmin(subscriberId),
-					"Erreur lors du réabonnement",
-					{ onSuccess, onError }
-				)
-			);
-		},
-		[onSuccess, onError]
-	);
+	const resendConfirmation = (subscriberId: string) => {
+		startTransition(() =>
+			executeWithToast(
+				() => resendConfirmationAdmin(subscriberId),
+				"Erreur lors de l'envoi",
+				options
+			)
+		);
+	};
 
-	const resendConfirmation = useCallback(
-		(subscriberId: string) => {
-			startTransition(() =>
-				executeWithToast(
-					() => resendConfirmationAdmin(subscriberId),
-					"Erreur lors de l'envoi",
-					{ onSuccess, onError }
-				)
-			);
-		},
-		[onSuccess, onError]
-	);
-
-	const deleteSubscriber = useCallback(
-		(subscriberId: string) => {
-			startTransition(() =>
-				executeWithToast(
-					() => deleteSubscriberAdmin(subscriberId),
-					"Erreur lors de la suppression",
-					{ onSuccess, onError }
-				)
-			);
-		},
-		[onSuccess, onError]
-	);
+	const deleteSubscriber = (subscriberId: string) => {
+		startTransition(() =>
+			executeWithToast(
+				() => deleteSubscriberAdmin(subscriberId),
+				"Erreur lors de la suppression",
+				options
+			)
+		);
+	};
 
 	return {
 		unsubscribe,

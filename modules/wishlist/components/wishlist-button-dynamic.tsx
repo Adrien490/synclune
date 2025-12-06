@@ -4,7 +4,6 @@ import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { WishlistButton } from "./wishlist-button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
-import { useMemo } from "react";
 
 interface WishlistButtonDynamicProps {
 	product: GetProductReturn;
@@ -41,7 +40,7 @@ export function WishlistButtonDynamic({
 	const currentSku = selectedSku ?? defaultSku;
 
 	// Déterminer l'état wishlist pour le SKU actuel
-	const currentIsInWishlist = useMemo(() => {
+	const currentIsInWishlist = (() => {
 		// Priorité 1 : État préchargé dans wishlistStates
 		if (wishlistStates && currentSku.id in wishlistStates) {
 			return wishlistStates[currentSku.id];
@@ -54,7 +53,7 @@ export function WishlistButtonDynamic({
 
 		// Fallback : false (l'utilisateur peut toggle, optimistic UI affichera le changement)
 		return false;
-	}, [currentSku.id, defaultSku.id, initialIsInWishlist, wishlistStates]);
+	})();
 
 	return (
 		<WishlistButton

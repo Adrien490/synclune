@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useTransition } from "react";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import { resendOrderEmail, type ResendEmailType } from "@/modules/orders/actions/resend-order-email";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -8,7 +8,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 export function useResendOrderEmail() {
 	const [isPending, startTransition] = useTransition();
 
-	const resend = useCallback((orderId: string, emailType: ResendEmailType) => {
+	const resend = (orderId: string, emailType: ResendEmailType) => {
 		startTransition(async () => {
 			const result = await resendOrderEmail(orderId, emailType);
 
@@ -18,7 +18,7 @@ export function useResendOrderEmail() {
 				toast.error(result.message);
 			}
 		});
-	}, []);
+	};
 
 	return {
 		resend,

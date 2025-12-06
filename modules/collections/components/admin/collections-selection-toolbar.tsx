@@ -20,7 +20,6 @@ import {
 	MoreVertical,
 	Trash2,
 } from "lucide-react";
-import { useMemo } from "react";
 import { toast } from "sonner";
 import { useBulkArchiveCollections } from "@/modules/collections/hooks/use-bulk-archive-collections";
 import { BULK_DELETE_COLLECTIONS_DIALOG_ID } from "./bulk-delete-collections-alert-dialog";
@@ -48,11 +47,11 @@ export function CollectionsSelectionToolbar({
 		});
 
 	// Determiner le statut des collections selectionnees
-	const selectedCollectionsStatus = useMemo(() => {
-		const selectedCollections = collections.filter((c) =>
-			selectedItems.includes(c.id)
-		);
+	const selectedCollections = collections.filter((c) =>
+		selectedItems.includes(c.id)
+	);
 
+	const selectedCollectionsStatus = (() => {
 		if (selectedCollections.length === 0) {
 			return {
 				allArchived: false,
@@ -90,7 +89,7 @@ export function CollectionsSelectionToolbar({
 			allPublic,
 			hasMixedStatus,
 		};
-	}, [collections, selectedItems]);
+	})();
 
 	const handleBulkArchive = () => {
 		if (selectedItems.length === 0) {

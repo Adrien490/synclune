@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { WIZARD_STORAGE_KEY_PREFIX } from "../constants"
 
 interface UseWizardPersistenceOptions {
@@ -35,20 +35,17 @@ export function useWizardPersistence({
 	const hasRestored = useRef(false)
 
 	// Sauvegarde l'étape courante
-	const persistStep = useCallback(
-		(step: number) => {
-			if (!enabled) return
-			try {
-				sessionStorage.setItem(key, String(step))
-			} catch {
-				// sessionStorage peut être indisponible (mode privé, etc.)
-			}
-		},
-		[key, enabled]
-	)
+	const persistStep = (step: number) => {
+		if (!enabled) return
+		try {
+			sessionStorage.setItem(key, String(step))
+		} catch {
+			// sessionStorage peut être indisponible (mode privé, etc.)
+		}
+	}
 
 	// Restaure l'étape sauvegardée
-	const restoreStep = useCallback((): number | null => {
+	const restoreStep = (): number | null => {
 		if (!enabled) return null
 		try {
 			const saved = sessionStorage.getItem(key)
@@ -62,26 +59,26 @@ export function useWizardPersistence({
 			// sessionStorage peut être indisponible
 		}
 		return null
-	}, [key, enabled])
+	}
 
 	// Efface la persistence
-	const clearPersistence = useCallback(() => {
+	const clearPersistence = () => {
 		try {
 			sessionStorage.removeItem(key)
 		} catch {
 			// sessionStorage peut être indisponible
 		}
-	}, [key])
+	}
 
 	// Vérifie si une étape est sauvegardée
-	const hasSavedStep = useCallback((): boolean => {
+	const hasSavedStep = (): boolean => {
 		if (!enabled) return false
 		try {
 			return sessionStorage.getItem(key) !== null
 		} catch {
 			return false
 		}
-	}, [key, enabled])
+	}
 
 	// Restauration automatique au montage
 	useEffect(() => {

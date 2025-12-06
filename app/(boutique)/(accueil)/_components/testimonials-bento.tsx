@@ -54,7 +54,7 @@ export function TestimonialsBento({
 				role="region"
 				aria-label="2 témoignages clients"
 				className={cn(
-					"grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6",
+					"grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 lg:gap-6",
 					className
 				)}
 			>
@@ -74,12 +74,12 @@ export function TestimonialsBento({
 			<div
 				role="region"
 				aria-label="3 témoignages clients"
-				className={cn("flex flex-col gap-4 lg:gap-6", className)}
+				className={cn("flex flex-col gap-4 md:gap-5 lg:gap-6", className)}
 			>
 				<Fade y={slideY} once inView>
 					<TestimonialCard testimonial={featured} variant="featured" />
 				</Fade>
-				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 lg:gap-6">
 					{rest.map((testimonial, index) => (
 						<Fade
 							key={testimonial.id}
@@ -102,19 +102,19 @@ export function TestimonialsBento({
 			role="region"
 			aria-label={`${Math.min(testimonials.length, 4)} témoignages clients`}
 			className={cn(
-				"grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6",
+				"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-5 lg:gap-6",
 				className
 			)}
 		>
 			{/* Featured - Grande carte à gauche, h-full pour occuper toute la hauteur du stack */}
-			<div className="lg:col-span-7">
+			<div className="md:col-span-1 lg:col-span-7">
 				<Fade y={slideY} once inView className="h-full">
 					<TestimonialCard testimonial={featured} variant="featured" />
 				</Fade>
 			</div>
 
 			{/* Stack - Cartes empilées à droite (max 3) */}
-			<div className="lg:col-span-5 flex flex-col gap-4">
+			<div className="md:col-span-1 lg:col-span-5 flex flex-col gap-4 md:gap-5">
 				{rest.slice(0, 3).map((testimonial, index) => (
 					<Fade
 						key={testimonial.id}

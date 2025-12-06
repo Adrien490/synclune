@@ -6,7 +6,7 @@ import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { AlertCircle, Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useTransition } from "react";
 import type { Material } from "@/modules/skus/types/sku-selector.types";
 
 interface MaterialSelectorProps {
@@ -40,33 +40,27 @@ export function MaterialSelector({
 	const currentSize = searchParams.get("size");
 
 	// Calculer la disponibilité d'un matériau
-	const isMaterialAvailable = useCallback(
-		(materialSlug: string): boolean => {
-			const compatibleSkus = filterCompatibleSkus(product, {
-				colorSlug: currentColor || undefined,
-				materialSlug: materialSlug,
-				size: currentSize || undefined,
-			});
-			return compatibleSkus.length > 0;
-		},
-		[product, currentColor, currentSize]
-	);
+	const isMaterialAvailable = (materialSlug: string): boolean => {
+		const compatibleSkus = filterCompatibleSkus(product, {
+			colorSlug: currentColor || undefined,
+			materialSlug: materialSlug,
+			size: currentSize || undefined,
+		});
+		return compatibleSkus.length > 0;
+	};
 
 	// Mettre à jour le matériau dans l'URL
-	const updateMaterial = useCallback(
-		(materialSlug: string | null) => {
-			startTransition(() => {
-				const params = new URLSearchParams(searchParams.toString());
-				if (materialSlug) {
-					params.set("material", materialSlug);
-				} else {
-					params.delete("material");
-				}
-				router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-			});
-		},
-		[searchParams, pathname, router]
-	);
+	const updateMaterial = (materialSlug: string | null) => {
+		startTransition(() => {
+			const params = new URLSearchParams(searchParams.toString());
+			if (materialSlug) {
+				params.set("material", materialSlug);
+			} else {
+				params.delete("material");
+			}
+			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+		});
+	};
 
 	// Ne pas afficher si un seul matériau ou aucun
 	if (materials.length <= 1) return null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 /** Limite pour éviter les memory leaks avec beaucoup d'erreurs */
 const MAX_ERRORS = 500;
@@ -37,7 +37,7 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 	const mediaErrorsRef = useRef(mediaErrors);
 	mediaErrorsRef.current = mediaErrors;
 
-	const handleMediaError = useCallback((mediaId: string) => {
+	const handleMediaError = (mediaId: string) => {
 		setMediaErrors((prev) => {
 			// Éviter les doublons
 			if (prev.has(mediaId)) return prev;
@@ -59,19 +59,19 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 
 			return next;
 		});
-	}, []);
+	};
 
 	// Fonction stable qui lit la ref courante (évite re-renders des composants utilisant hasError)
-	const hasError = useCallback((mediaId: string) => {
+	const hasError = (mediaId: string) => {
 		return mediaErrorsRef.current.has(mediaId);
-	}, []);
+	};
 
-	const clearErrors = useCallback(() => {
+	const clearErrors = () => {
 		setMediaErrors(new Set());
 		errorQueueRef.current = [];
-	}, []);
+	};
 
-	const retryMedia = useCallback((mediaId: string) => {
+	const retryMedia = (mediaId: string) => {
 		setMediaErrors((prev) => {
 			if (!prev.has(mediaId)) return prev;
 			const next = new Set(prev);
@@ -83,7 +83,7 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 			}
 			return next;
 		});
-	}, []);
+	};
 
 	return {
 		mediaErrors,

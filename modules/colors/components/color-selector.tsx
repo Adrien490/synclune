@@ -6,7 +6,7 @@ import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useTransition } from "react";
 import type { Color } from "@/modules/skus/types/sku-selector.types";
 
 interface ColorSelectorProps {
@@ -41,33 +41,27 @@ export function ColorSelector({
 	const currentSize = searchParams.get("size");
 
 	// Calculer la disponibilité d'une couleur
-	const isColorAvailable = useCallback(
-		(colorId: string): boolean => {
-			const compatibleSkus = filterCompatibleSkus(product, {
-				colorSlug: colorId,
-				materialSlug: currentMaterial || undefined,
-				size: currentSize || undefined,
-			});
-			return compatibleSkus.length > 0;
-		},
-		[product, currentMaterial, currentSize]
-	);
+	const isColorAvailable = (colorId: string): boolean => {
+		const compatibleSkus = filterCompatibleSkus(product, {
+			colorSlug: colorId,
+			materialSlug: currentMaterial || undefined,
+			size: currentSize || undefined,
+		});
+		return compatibleSkus.length > 0;
+	};
 
 	// Mettre à jour la couleur dans l'URL
-	const updateColor = useCallback(
-		(colorId: string | null) => {
-			startTransition(() => {
-				const params = new URLSearchParams(searchParams.toString());
-				if (colorId) {
-					params.set("color", colorId);
-				} else {
-					params.delete("color");
-				}
-				router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-			});
-		},
-		[searchParams, pathname, router]
-	);
+	const updateColor = (colorId: string | null) => {
+		startTransition(() => {
+			const params = new URLSearchParams(searchParams.toString());
+			if (colorId) {
+				params.set("color", colorId);
+			} else {
+				params.delete("color");
+			}
+			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+		});
+	};
 
 	if (colors.length === 0) return null;
 

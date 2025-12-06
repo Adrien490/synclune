@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useCallback } from "react";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import { duplicateSku } from "@/modules/skus/actions/admin/duplicate-sku";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -16,35 +16,32 @@ interface UseDuplicateSkuOptions {
 export function useDuplicateSku(options?: UseDuplicateSkuOptions) {
 	const [isPending, startTransition] = useTransition();
 
-	const duplicate = useCallback(
-		(skuId: string, skuName: string) => {
-			startTransition(async () => {
-				const toastId = toast.loading(`Duplication de ${skuName}...`);
+	const duplicate = (skuId: string, skuName: string) => {
+		startTransition(async () => {
+			const toastId = toast.loading(`Duplication de ${skuName}...`);
 
-				try {
-					const result = await duplicateSku(skuId);
-					toast.dismiss(toastId);
+			try {
+				const result = await duplicateSku(skuId);
+				toast.dismiss(toastId);
 
-					if (result.status === ActionStatus.SUCCESS) {
-						toast.success(result.message);
-						if (result.data) {
-							options?.onSuccess?.(result.data as { id: string; sku: string });
-						}
-					} else {
-						toast.error(result.message);
-						options?.onError?.(result.message);
+				if (result.status === ActionStatus.SUCCESS) {
+					toast.success(result.message);
+					if (result.data) {
+						options?.onSuccess?.(result.data as { id: string; sku: string });
 					}
-				} catch (error) {
-					toast.dismiss(toastId);
-					const message =
-						error instanceof Error ? error.message : "Erreur lors de la duplication";
-					toast.error(message);
-					options?.onError?.(message);
+				} else {
+					toast.error(result.message);
+					options?.onError?.(result.message);
 				}
-			});
-		},
-		[options]
-	);
+			} catch (error) {
+				toast.dismiss(toastId);
+				const message =
+					error instanceof Error ? error.message : "Erreur lors de la duplication";
+				toast.error(message);
+				options?.onError?.(message);
+			}
+		});
+	};
 
 	return {
 		duplicate,

@@ -12,6 +12,10 @@ interface TestimonialCardProps {
 	className?: string
 }
 
+/** Placeholder blur générique pour avatars */
+const AVATAR_BLUR_PLACEHOLDER =
+	"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMCwsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAAoACgDASIAAhEBAxEB/8QAGQAAAwEBAQAAAAAAAAAAAAAAAAUGBwQI/8QAKhAAAgEDAwMDBAMBAAAAAAAAAQIDBAURAAYhEjFBE1FhByJxgRQjkdH/xAAYAQADAQEAAAAAAAAAAAAAAAACAwQFAP/EAB4RAAICAgIDAAAAAAAAAAAAAAECAAMEERIhMUFR/9oADAMBAAIRAxEAPwDqt1FJVVEcES5eRgoHualds2m+XaOWG3W+orDGQH9CLqC/J8DVH9Ort9u7jLe6+NqWkiP9EUg+6Q+7Y7DH+68e+tC2vvSmsm3Y7Xb7NSUNQzySTNGmZJCx8sc+B2AxjUuRmNjkKo2JrYuGbV/JkN0+l26amJY2oRG45EkLdBH58HVBQbev9ijeLbt2ekjlOXEKj7j78EHOryW40U4H8mqhlHhlmU/7rru9fBZLPV3KpbpgpYXmkP4UZP8AuuTLtPQPcKMLhMesyzqO2d7UMaSVVnrOlQBmOEyDH7XOPnXL/boPw6/xNOdm/UPb+4rLTV9rnaWiqE64Xwcg8gqfBBBBHyNGvFLVHU3YftJPeadUP9Sfbw5cPRXq2iCloKh6jckDNGJBJDAH+4+cK5P28+2l+89wR3e5rTUUgltdAzRU7A8Ssc9Ug9+cD8DRo0s2qBMo4VduJz1Dln6JWZQSDnGCQDjjnRo0aBuTPZ//9k="
+
 /**
  * Carte de témoignage - Server Component
  *
@@ -20,6 +24,7 @@ interface TestimonialCardProps {
  * - "default" : Carte compacte avec avatar 40px
  *
  * Animations hover CSS-only pour performance optimale.
+ * Sémantique figure/figcaption pour accessibilité.
  */
 export function TestimonialCard({
 	testimonial,
@@ -32,10 +37,10 @@ export function TestimonialCard({
 		<Card
 			className={cn(
 				"group h-full border-0 backdrop-blur-sm",
-				"transition-all duration-300 ease-out",
+				"transition-[transform,box-shadow,background-color] duration-300 ease-out",
 				"hover:scale-[1.02] hover:shadow-lg",
 				isFeatured
-					? "bg-gradient-to-br from-primary/5 via-card/50 to-card/50 hover:from-primary/10 border-l-4 border-l-primary lg:border-l-0"
+					? "bg-gradient-to-br from-primary/5 via-card/50 to-card/50 hover:from-primary/10 border-l-4 border-l-primary"
 					: "bg-card/50 hover:bg-card/70",
 				className
 			)}
@@ -46,67 +51,73 @@ export function TestimonialCard({
 					isFeatured ? "p-8" : "p-5"
 				)}
 			>
-				<Quote
-					aria-hidden="true"
-					className={cn(
-						"shrink-0 text-primary/30",
-						"transition-all duration-300 ease-out",
-						"group-hover:text-primary/50 group-hover:scale-110 group-hover:rotate-6",
-						isFeatured ? "h-10 w-10 mb-6" : "h-7 w-7 mb-4"
-					)}
-				/>
-
-				<blockquote
-					className={cn(
-						"flex-1 leading-relaxed text-muted-foreground italic",
-						isFeatured ? "text-lg mb-8" : "text-base mb-5"
-					)}
-				>
-					&ldquo;{testimonial.content}&rdquo;
-				</blockquote>
-
-				<div className="flex items-center gap-3 mt-auto">
-					{testimonial.imageUrl ? (
-						<div
-							className={cn(
-								"relative shrink-0 rounded-full overflow-hidden bg-muted",
-								isFeatured ? "h-14 w-14" : "h-10 w-10"
-							)}
-						>
-							<Image
-								src={testimonial.imageUrl}
-								alt={`Photo de ${testimonial.authorName}`}
-								fill
-								sizes={isFeatured ? "56px" : "40px"}
-								className="object-cover"
-							/>
-						</div>
-					) : (
-						<div
-							className={cn(
-								"shrink-0 rounded-full bg-primary/10 flex items-center justify-center",
-								isFeatured ? "h-14 w-14" : "h-10 w-10"
-							)}
-						>
-							<span
-								className={cn(
-									"text-primary font-semibold",
-									isFeatured ? "text-lg" : "text-sm"
-								)}
-							>
-								{testimonial.authorName.charAt(0).toUpperCase()}
-							</span>
-						</div>
-					)}
-					<p
+				<figure className="flex flex-col h-full">
+					<Quote
+						aria-hidden="true"
 						className={cn(
-							"font-medium text-foreground",
-							isFeatured && "text-lg"
+							"shrink-0 text-primary/30",
+							"transition-[color,transform] duration-300 ease-out",
+							"group-hover:text-primary/50 group-hover:scale-110 group-hover:rotate-6",
+							isFeatured ? "h-10 w-10 mb-6" : "h-7 w-7 mb-4"
+						)}
+					/>
+
+					<blockquote
+						className={cn(
+							"flex-1 leading-relaxed text-muted-foreground italic",
+							isFeatured
+								? "text-lg mb-8 line-clamp-6"
+								: "text-base mb-5 line-clamp-4"
 						)}
 					>
-						{testimonial.authorName}
-					</p>
-				</div>
+						&ldquo;{testimonial.content}&rdquo;
+					</blockquote>
+
+					<figcaption className="flex items-center gap-3 mt-auto">
+						{testimonial.imageUrl ? (
+							<div
+								className={cn(
+									"relative shrink-0 rounded-full overflow-hidden bg-muted",
+									isFeatured ? "h-14 w-14" : "h-10 w-10"
+								)}
+							>
+								<Image
+									src={testimonial.imageUrl}
+									alt={`Photo de ${testimonial.authorName}`}
+									fill
+									sizes={isFeatured ? "56px" : "40px"}
+									className="object-cover"
+									placeholder="blur"
+									blurDataURL={AVATAR_BLUR_PLACEHOLDER}
+								/>
+							</div>
+						) : (
+							<div
+								className={cn(
+									"shrink-0 rounded-full bg-primary/10 flex items-center justify-center",
+									isFeatured ? "h-14 w-14" : "h-10 w-10"
+								)}
+							>
+								<span
+									className={cn(
+										"text-primary font-semibold",
+										isFeatured ? "text-lg" : "text-base"
+									)}
+								>
+									{testimonial.authorName.charAt(0).toUpperCase()}
+								</span>
+							</div>
+						)}
+						<span
+							className={cn(
+								"font-medium text-foreground",
+								isFeatured && "text-lg"
+							)}
+						>
+							{testimonial.authorName}
+						</span>
+					</figcaption>
+				</figure>
 			</CardContent>
 		</Card>
 	)

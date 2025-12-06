@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo } from "react";
+import { useId } from "react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { cn } from "@/shared/utils/cn";
 
@@ -41,7 +41,7 @@ export function Sparkline({
 	const reactId = useId();
 
 	// Calculer la tendance pour choisir la couleur
-	const { trend, color, gradientId } = useMemo(() => {
+	const { trend, color, gradientId } = (() => {
 		if (data.length < 2) {
 			return { trend: "neutral" as const, color: positiveColor, gradientId: `sparkline-${reactId}` };
 		}
@@ -53,7 +53,7 @@ export function Sparkline({
 			color: t === "positive" ? positiveColor : negativeColor,
 			gradientId: `sparkline-${reactId}`,
 		};
-	}, [data, positiveColor, negativeColor, reactId]);
+	})();
 
 	// Si pas assez de donnees, ne rien afficher
 	if (data.length < 2) {
