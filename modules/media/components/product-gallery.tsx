@@ -227,7 +227,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 					)}>
 						{/* Thumbnails verticales - Desktop uniquement */}
 						{safeImages.length > 1 && (
-							<div className="hidden lg:flex flex-col gap-2 order-1 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent pr-1">
+							<div className="hidden lg:flex flex-col gap-2 order-1 max-h-[min(500px,60vh)] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent pr-1">
 								<ThumbnailsGrid
 									medias={safeImages}
 									currentIndex={optimisticIndex}

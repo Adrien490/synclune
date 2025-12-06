@@ -7,6 +7,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { AlertCircle, CheckCircle, AlertTriangle, Sparkles } from "lucide-react";
 import { useMemo } from "react";
+import { StockNotificationForm } from "@/modules/stock-notifications/components/stock-notification-form";
 
 interface ProductPriceProps {
 	selectedSku: ProductSku | null;
@@ -189,14 +190,19 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 					</p>
 				)}
 
-				{/* Message d'information uniquement pour rupture de stock */}
+				{/* Section rupture de stock avec formulaire de notification */}
 				{stockStatus === "out_of_stock" && (
-					<div
-						className="text-xs/5 tracking-normal antialiased text-destructive p-2 bg-destructive/10 rounded border border-destructive/20 flex items-start gap-2"
-						role="alert"
-					>
-						<Sparkles className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-						<p>Cette petite merveille sera bientôt disponible ! Contactez-moi pour découvrir les délais de fabrication.</p>
+					<div className="space-y-3">
+						<div
+							className="text-xs/5 tracking-normal antialiased text-destructive p-2 bg-destructive/10 rounded border border-destructive/20 flex items-start gap-2"
+							role="alert"
+						>
+							<Sparkles className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+							<p>Cette petite merveille sera bientôt disponible !</p>
+						</div>
+
+						{/* Formulaire de notification de retour en stock */}
+						<StockNotificationForm skuId={selectedSku.id} />
 					</div>
 				)}
 			</CardContent>

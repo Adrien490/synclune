@@ -7,6 +7,7 @@ import { AddToCartButton } from "@/modules/cart/components/add-to-cart-button";
 import { ProductCareInfo } from "./product-care-info";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";
 import { Separator } from "@/shared/components/ui/separator";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 
@@ -25,23 +26,54 @@ interface ProductDetailsProps {
  * Responsabilités :
  * - Calculer le SKU sélectionné depuis les searchParams URL
  * - Orchestrer les composants enfants : Prix, Caractéristiques, Sélecteurs, Panier, Entretien
+ * - Animer les transitions lors du changement de variante
  */
 export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
+	const prefersReducedMotion = useReducedMotion();
 
 	const currentSku = selectedSku ?? defaultSku;
 
+	// Animation variants
+	const fadeVariants = {
+		initial: prefersReducedMotion ? {} : { opacity: 0, y: 4 },
+		animate: { opacity: 1, y: 0 },
+		exit: prefersReducedMotion ? {} : { opacity: 0, y: -4 },
+	};
+
 	return (
 		<>
-			{/* Prix du SKU sélectionné */}
-			<ProductPriceDisplay selectedSku={currentSku} product={product} />
+			{/* Prix du SKU sélectionné - avec animation */}
+			<AnimatePresence mode="wait">
+				<motion.div
+					key={`price-${currentSku?.id || "no-sku"}`}
+					variants={fadeVariants}
+					initial="initial"
+					animate="animate"
+					exit="exit"
+					transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+				>
+					<ProductPriceDisplay selectedSku={currentSku} product={product} />
+				</motion.div>
+			</AnimatePresence>
 
-			{/* Caractéristiques principales */}
-			<ProductCharacteristics product={product} selectedSku={currentSku} />
+			{/* Caractéristiques principales - avec animation */}
+			<AnimatePresence mode="wait">
+				<motion.div
+					key={`chars-${currentSku?.id || "no-sku"}`}
+					variants={fadeVariants}
+					initial="initial"
+					animate="animate"
+					exit="exit"
+					transition={{ duration: prefersReducedMotion ? 0 : 0.15, delay: 0.05 }}
+				>
+					<ProductCharacteristics product={product} selectedSku={currentSku} />
+				</motion.div>
+			</AnimatePresence>
 
 			<Separator className="bg-border" />
 
-			{/* Sélection des variantes */}
+			{/* Sélection des variantes - pas d'animation (interaction directe) */}
 			<VariantSelector product={product} />
 
 			{/* CTA principal */}

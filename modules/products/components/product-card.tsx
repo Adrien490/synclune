@@ -161,7 +161,7 @@ export function ProductCard({
 				aria-labelledby={titleId}
 			>
 				{/* Contenu */}
-				<div className="flex flex-col gap-2 relative p-4">
+				<div className="flex flex-col gap-2 sm:gap-3 relative p-4 sm:p-5">
 					{/* Titre avec hiérarchie tokenisée responsive */}
 					<h3
 						id={titleId}
@@ -173,7 +173,7 @@ export function ProductCard({
 
 					{/* Pastilles couleur pour les produits multi-variantes */}
 					{colors && colors.length > 1 && (
-						<ColorSwatches colors={colors} maxVisible={4} size="sm" />
+						<ColorSwatches colors={colors} maxVisible={4} size="xs" />
 					)}
 
 					{/* Information de rupture de stock pour les technologies d'assistance */}

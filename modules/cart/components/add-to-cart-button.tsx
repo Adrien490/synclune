@@ -171,8 +171,8 @@ export function AddToCartButton({
 				</Card>
 			)}
 
-			{/* Bouton ajout au panier */}
-			<div className="space-y-3 sticky bottom-0 left-0 right-0 z-20 lg:static bg-background/95 backdrop-blur lg:bg-transparent lg:backdrop-blur-none p-4 lg:p-0 -mx-4 lg:mx-0 shadow-lg lg:shadow-none border-t lg:border-t-0">
+			{/* Bouton ajout au panier - Sticky simplifié sur mobile */}
+			<div className="sticky bottom-0 left-0 right-0 z-20 lg:static bg-background/95 backdrop-blur lg:bg-transparent lg:backdrop-blur-none p-4 lg:p-0 -mx-4 lg:mx-0 shadow-lg lg:shadow-none border-t lg:border-t-0">
 				<Button
 					type="submit"
 					className="w-full shadow-md"
@@ -200,7 +200,47 @@ export function AddToCartButton({
 					)}
 				</Button>
 
-				{/* Trust badges - Réassurance */}
+				{/* Trust badges - Desktop uniquement dans le sticky */}
+				<div className="hidden lg:flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground py-2 mt-3">
+					<div className="flex items-center gap-1.5">
+						<ShieldCheck className="w-4 h-4 text-green-600" aria-hidden="true" />
+						<span>Paiement sécurisé</span>
+					</div>
+					<div className="flex items-center gap-1.5">
+						<RotateCcw className="w-4 h-4 text-blue-600" aria-hidden="true" />
+						<span>Retours 14 jours</span>
+					</div>
+					<div className="flex items-center gap-1.5">
+						<CreditCard className="w-4 h-4 text-primary" aria-hidden="true" />
+						<span>CB, PayPal, Stripe</span>
+					</div>
+				</div>
+
+				{/* Livraison + Personnalisation - Desktop uniquement dans le sticky */}
+				<div className="hidden lg:block space-y-3 mt-3">
+					<div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+						<Truck className="w-3.5 h-3.5" aria-hidden="true" />
+						<span>Livraison France et UE</span>
+					</div>
+
+					<div className="text-center space-y-2 p-4 bg-linear-card rounded-lg border border-primary/10">
+						<p className="text-sm/6 tracking-normal antialiased text-muted-foreground">
+							Une envie de personnalisation ?
+						</p>
+						<Link
+							className="inline-flex items-center gap-2 font-medium text-foreground underline-offset-4 hover:underline text-sm/6 tracking-normal antialiased transition-all duration-200 hover:gap-3"
+							href={`/personnalisation?product=${product.slug}`}
+						>
+							<span className="text-base" aria-hidden="true">✨</span>
+							<span>Parlons-en ensemble</span>
+							<span className="text-xs" aria-hidden="true">→</span>
+						</Link>
+					</div>
+				</div>
+			</div>
+
+			{/* Trust badges, Livraison, Personnalisation - Mobile uniquement (hors sticky) */}
+			<div className="lg:hidden space-y-3 pt-2">
 				<div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground py-2">
 					<div className="flex items-center gap-1.5">
 						<ShieldCheck className="w-4 h-4 text-green-600" aria-hidden="true" />
@@ -216,13 +256,11 @@ export function AddToCartButton({
 					</div>
 				</div>
 
-				{/* Frais de livraison */}
 				<div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-					<Truck className="w-3.5 h-3.5" />
+					<Truck className="w-3.5 h-3.5" aria-hidden="true" />
 					<span>Livraison France et UE</span>
 				</div>
 
-				{/* Contact */}
 				<div className="text-center space-y-2 p-4 bg-linear-card rounded-lg border border-primary/10">
 					<p className="text-sm/6 tracking-normal antialiased text-muted-foreground">
 						Une envie de personnalisation ?

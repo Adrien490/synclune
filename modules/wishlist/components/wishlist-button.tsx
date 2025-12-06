@@ -64,7 +64,7 @@ export function WishlistButton({
 			>
 				<HeartIcon
 					variant={isInWishlist ? "filled" : "outline"}
-					size={22}
+					size={20}
 					decorative
 					className={cn(
 						"motion-safe:transition-all motion-safe:duration-300",

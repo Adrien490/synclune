@@ -53,22 +53,35 @@ export default function ProductDetailLoading() {
 							{/* Product Content Grid - Gallery sticky on desktop */}
 							<div className="grid gap-6 lg:gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 								{/* Gallery Section - Left (sticky on desktop) */}
-								<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit">
-									<div className="space-y-4">
+								<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
+									{/* Grid layout matching product-gallery.tsx */}
+									<div className="grid gap-3 lg:gap-4 grid-cols-1 lg:grid-cols-[80px_1fr]">
+										{/* Thumbnails verticales - Desktop uniquement */}
+										<div className="hidden lg:flex flex-col gap-2 order-1">
+											{Array.from({ length: 4 }).map((_, i) => (
+												<Skeleton
+													key={i}
+													className="h-20 w-20 rounded-lg bg-muted/40"
+												/>
+											))}
+										</div>
+
 										{/* Main image */}
-										<div className="relative aspect-square overflow-hidden rounded-xl bg-muted/30 lg:rounded-2xl">
+										<div className="relative aspect-square overflow-hidden rounded-2xl lg:rounded-3xl bg-muted/30 order-2">
 											<Skeleton className="absolute inset-0 from-muted/60 via-muted/40 to-transparent" />
 											<div className="absolute inset-0 flex items-center justify-center">
 												<div className="h-16 w-16 rounded-full border-4 border-muted/60 border-t-primary/40 animate-spin" />
 											</div>
 										</div>
+									</div>
 
-										{/* Thumbnails */}
-										<div className="flex gap-3 overflow-x-auto pb-2">
+									{/* Thumbnails horizontales - Mobile uniquement */}
+									<div className="lg:hidden mt-4">
+										<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
 											{Array.from({ length: 4 }).map((_, i) => (
 												<Skeleton
 													key={i}
-													className="shrink-0 h-20 w-20 rounded-lg bg-muted/40"
+													className="aspect-square rounded-lg bg-muted/40"
 												/>
 											))}
 										</div>

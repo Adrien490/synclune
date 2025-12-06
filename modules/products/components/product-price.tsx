@@ -19,7 +19,7 @@ export function ProductPriceCompact({
 
 	return (
 		<div className={`flex items-center gap-2 ${className}`}>
-			<span className="font-mono font-semibold text-foreground text-sm">
+			<span className="font-mono font-semibold text-foreground text-sm sm:text-base">
 				{formatEuro(price)}
 			</span>
 			{hasDiscount && (

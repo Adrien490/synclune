@@ -11,13 +11,14 @@ import type { ColorSwatch } from "@/modules/products/services/product-list-helpe
 interface ColorSwatchesProps {
 	colors: ColorSwatch[];
 	maxVisible?: number;
-	size?: "sm" | "md";
+	size?: "xs" | "sm" | "md";
 	className?: string;
 }
 
 const sizeClasses = {
-	sm: "size-6", // 24px - WCAG 2.5.5 touch target minimum
-	md: "size-7", // 28px
+	xs: "size-4", // 16px - decorative only (non-interactive)
+	sm: "size-5", // 20px - compact for cards
+	md: "size-6", // 24px - WCAG touch target
 };
 
 /**

@@ -7,6 +7,7 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import type { Size } from "@/modules/skus/types/sku-selector.types";
+import { SizeGuideDialog } from "./size-guide-dialog";
 
 interface SizeSelectorProps {
 	sizes: Size[];
@@ -92,18 +93,21 @@ export function SizeSelector({
 				<legend className="text-sm/6 font-semibold tracking-tight antialiased">
 					{getSizeLabel()}
 				</legend>
-				{selectedSize && (
-					<Button
-						variant="ghost"
-						size="sm"
-						className="text-xs/5 tracking-normal antialiased text-muted-foreground"
-						onClick={() => updateSize(null)}
-						disabled={isPending}
-						type="button"
-					>
-						Réinitialiser
-					</Button>
-				)}
+				<div className="flex items-center gap-2">
+					<SizeGuideDialog productTypeSlug={productTypeSlug} />
+					{selectedSize && (
+						<Button
+							variant="ghost"
+							size="sm"
+							className="text-xs/5 tracking-normal antialiased text-muted-foreground"
+							onClick={() => updateSize(null)}
+							disabled={isPending}
+							type="button"
+						>
+							Réinitialiser
+						</Button>
+					)}
+				</div>
 			</div>
 			<div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
 				{sizes.map((sizeOption) => {
