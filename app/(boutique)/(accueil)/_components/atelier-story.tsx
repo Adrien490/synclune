@@ -1,8 +1,10 @@
 import { Fade, Reveal } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
+import { IMAGES } from "@/shared/constants/images";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
 import { ArrowRight, Sparkles } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -114,13 +116,22 @@ import { cacheLife, cacheTag } from "next/cache";
 
 /**
  * Placeholder esthetique avec gradient pour les photos en attente
+ * @param className - Classes additionnelles pour aspect ratio responsive
+ * @param label - Label accessible pour les lecteurs d'ecran (si fourni, le placeholder est annonce)
  */
-function PlaceholderImage({ aspectRatio = "4/3" }: { aspectRatio?: string }) {
+function PlaceholderImage({
+	className,
+	label,
+}: {
+	className?: string;
+	label?: string;
+}) {
 	return (
 		<div
-			className="relative rounded-xl overflow-hidden bg-gradient-to-br from-secondary/20 via-muted/30 to-primary/10"
-			style={{ aspectRatio }}
-			aria-hidden="true"
+			className={`relative rounded-xl overflow-hidden bg-gradient-to-br from-secondary/20 via-muted/30 to-primary/10 ${className ?? ""}`}
+			role={label ? "img" : undefined}
+			aria-label={label}
+			aria-hidden={label ? undefined : true}
 		/>
 	);
 }
@@ -145,19 +156,62 @@ export async function AtelierStory() {
 		<section
 			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
 			aria-labelledby="atelier-story-title"
+			itemScope
+			itemType="https://schema.org/AboutPage"
 		>
+			{/* Skip link pour accessibilite clavier */}
+			<a
+				href="#atelier-cta"
+				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+			>
+				Passer au bouton En savoir plus
+			</a>
+
+			{/* Titre descriptif pour SEO et lecteurs d'ecran */}
+			<h2 id="atelier-story-title" className="sr-only">
+				L'histoire de Léane, créatrice de bijoux artisanaux Synclune à Nantes
+			</h2>
+
+			{/* Microdata Schema.org pour l'artisan */}
+			<div
+				itemScope
+				itemType="https://schema.org/Person"
+				itemProp="author"
+				className="hidden"
+			>
+				<meta itemProp="name" content="Léane Taddei" />
+				<meta itemProp="jobTitle" content="Créatrice de bijoux artisanaux" />
+				<meta itemProp="worksFor" content="Synclune" />
+				<meta
+					itemProp="address"
+					content="Nantes, Loire-Atlantique, France"
+				/>
+			</div>
+
 			<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-				{/* Photo ambiance principale - full width du container */}
+				{/* Photo ambiance principale - aspect ratio adaptatif mobile/desktop */}
 				<Reveal y={20} duration={0.6} once>
-					<div className="mb-10 sm:mb-12">
-						<PlaceholderImage aspectRatio="16/9" />
+					<div className="mb-8 sm:mb-12">
+						<div className="relative aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden">
+							<Image
+								src={IMAGES.ATELIER}
+								alt="Atelier de création Synclune à Nantes - Léane travaillant sur ses bijoux artisanaux"
+								fill
+								priority
+								placeholder="blur"
+								blurDataURL={IMAGES.ATELIER_BLUR}
+								sizes="(max-width: 1024px) 100vw, 896px"
+								className="object-cover"
+								itemProp="image"
+							/>
+						</div>
 					</div>
 				</Reveal>
 
 				{/* Separateur decoratif anime */}
 				<Fade y={8} delay={0.1} duration={0.5} inView once>
 					<div
-						className="flex justify-center items-center gap-3 mb-10 sm:mb-12"
+						className="flex justify-center items-center gap-3 mb-8 sm:mb-12"
 						aria-hidden="true"
 					>
 						<Sparkles className="w-4 h-4 text-secondary" />
@@ -166,28 +220,24 @@ export async function AtelierStory() {
 					</div>
 				</Fade>
 
-				{/* Texte confession */}
-				<div className="max-w-3xl mx-auto text-center space-y-6 sm:space-y-8">
-					{/* Titre visible avec badge */}
-					<Fade y={8} duration={0.4} inView once>
-						<h2
-							id="atelier-story-title"
-							className="inline-block text-sm uppercase tracking-[0.2em] text-foreground/70 font-medium"
+				{/* Texte confession - animations groupees pour performance */}
+				<Fade y={12} delay={0.1} duration={0.5} inView once>
+					<div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
+						{/* Badge decoratif (le vrai h2 est sr-only plus haut) */}
+						<span
+							className="inline-block text-sm uppercase tracking-[0.2em] text-muted-foreground font-medium"
+							aria-hidden="true"
 						>
 							Depuis mon atelier
-						</h2>
-					</Fade>
+						</span>
 
-					{/* Intro accrocheuse */}
-					<Fade y={12} delay={0.1} duration={0.5} inView once>
-						<p className="text-3xl sm:text-4xl font-light text-foreground tracking-tight">
+						{/* Intro accrocheuse */}
+						<p className="text-2xl sm:text-3xl md:text-4xl font-light text-foreground tracking-tight">
 							Je vais te faire une confidence.
 						</p>
-					</Fade>
 
-					{/* Corps du texte */}
-					<Fade y={12} delay={0.2} duration={0.5} inView once>
-						<div className="space-y-6 text-base sm:text-lg/8 text-muted-foreground">
+						{/* Corps du texte */}
+						<div className="space-y-4 sm:space-y-6 text-base sm:text-lg/8 text-muted-foreground">
 							<p>
 								Quand j'ai commencé à créer des bijoux, c'était juste pour moi.
 								Pour le plaisir de faire quelque chose de mes mains, loin des
@@ -212,29 +262,38 @@ export async function AtelierStory() {
 								Du vrai, du fait-main, du cœur.
 							</p>
 						</div>
-					</Fade>
 
-					{/* Signature */}
-					<Fade y={8} delay={0.3} duration={0.4} inView once>
-						<p
-							className={`${dancingScript.className} text-2xl sm:text-3xl text-foreground italic pt-4`}
-						>
-							— Léane
-						</p>
-					</Fade>
-				</div>
+						{/* Signature */}
+						<footer className="pt-4">
+							<p
+								className={`${dancingScript.className} text-xl sm:text-2xl md:text-3xl text-foreground italic`}
+							>
+								— Léane
+							</p>
+						</footer>
+					</div>
+				</Fade>
 
 				{/* Photos secondaires + CTA */}
 				<Reveal y={25} delay={0.2} duration={0.6} once>
 					<div className="mt-12 sm:mt-16 space-y-10">
 						{/* Photos en grid 2 colonnes */}
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-							<PlaceholderImage aspectRatio="4/3" />
-							<PlaceholderImage aspectRatio="4/3" />
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+							<PlaceholderImage
+								className="aspect-[4/3]"
+								label="Photo des mains de Léane assemblant un bijou artisanal"
+							/>
+							<PlaceholderImage
+								className="aspect-[4/3]"
+								label="Perles et matériaux colorés utilisés pour la création"
+							/>
 						</div>
 
-						{/* CTA centré en dessous */}
-						<div className="flex flex-col items-center gap-4 text-center">
+						{/* CTA centre en dessous */}
+						<div
+							id="atelier-cta"
+							className="flex flex-col items-center gap-4 text-center"
+						>
 							<p className="text-sm text-muted-foreground max-w-md">
 								Envie d'en savoir plus sur mon parcours et mes inspirations ?
 							</p>
@@ -246,7 +305,7 @@ export async function AtelierStory() {
 							>
 								<Link
 									href="/a-propos"
-									aria-label="En savoir plus sur l'histoire de Leane et son atelier artisanal"
+									aria-label="En savoir plus sur l'histoire de Léane et son atelier artisanal"
 									className="flex items-center justify-center gap-2"
 								>
 									En savoir plus sur mon histoire

@@ -1,4 +1,4 @@
-import { Stagger } from "@/shared/components/animations";
+import { Reveal, Stagger } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { SectionTitle } from "@/shared/components/ui/section-title";
@@ -7,10 +7,10 @@ import { STEP_COLORS } from "@/shared/constants/process-steps";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { ScrollProgressLine } from "./scroll-progress-line";
+import { ParallaxImage } from "./parallax-image";
 
 interface ProcessStep {
 	icon: React.ReactNode;
@@ -56,6 +56,21 @@ const processSteps: ProcessStep[] = [
 		iconHoverClass: "group-hover:[&_svg]:text-green-500 group-hover:[&_svg]:scale-110",
 	},
 ];
+
+/**
+ * Système de crescendo visuel progressif
+ * Chaque étape gagne en intensité jusqu'à l'aboutissement final
+ */
+const STEP_INTENSITY = [
+	// Étape 1 - Subtil (début du parcours)
+	{ ring: "", shadow: "", scale: "" },
+	// Étape 2 - Léger (progression)
+	{ ring: "ring-1 ring-secondary/10", shadow: "shadow-sm shadow-secondary/20", scale: "" },
+	// Étape 3 - Modéré (montée en puissance)
+	{ ring: "ring-1 ring-secondary/20", shadow: "shadow-md shadow-secondary/30", scale: "" },
+	// Étape 4 - Climax (aboutissement)
+	{ ring: "ring-2 ring-secondary/30", shadow: "shadow-lg shadow-secondary/40", scale: "" },
+] as const;
 
 /**
  * Section Processus Créatif - Raconte l'histoire de création des bijoux
@@ -111,22 +126,24 @@ export async function CreativeProcess() {
 				</header>
 
 				<div className="grid lg:grid-cols-2 gap-12 items-center">
-					{/* Image atelier */}
-					<div className="relative order-2 lg:order-1 h-64 sm:h-80 lg:h-full">
+					{/* Image atelier avec animation d'entrée */}
+					<Reveal
+						y={20}
+						duration={0.6}
+						delay={0.2}
+						className="relative order-2 lg:order-1 h-64 sm:h-80 lg:h-full"
+					>
 						<div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-xl">
-							<Image
+							<ParallaxImage
 								src={IMAGES.ATELIER}
 								alt="Atelier de création Synclune - Bijoux colorés faits main à Nantes"
-								fill
-								className="object-cover object-center rounded-2xl saturate-[1.05] brightness-[1.02]"
-								loading="lazy"
-								quality={85}
-								sizes="(max-width: 1024px) 100vw, 50vw"
+								blurDataURL={IMAGES.ATELIER_BLUR}
+								className="object-cover object-center saturate-[1.05] brightness-[1.02]"
 							/>
 
 							{/* Badge Fait main - contraste amélioré */}
 							<div
-								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary backdrop-blur-md border-2 border-secondary-foreground/20 rounded-full shadow-lg"
+								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary/95 backdrop-blur-md border-2 border-secondary-foreground/20 rounded-full shadow-md"
 								aria-hidden="true"
 							>
 								<span className="text-xs/5 font-bold tracking-wider antialiased text-secondary-foreground drop-shadow-sm">
@@ -140,13 +157,19 @@ export async function CreativeProcess() {
 								aria-hidden="true"
 							/>
 						</div>
-					</div>
+					</Reveal>
 
 					{/* Timeline processus */}
 					<div className="relative order-1 lg:order-2">
 						<div className="relative space-y-8 sm:space-y-12 lg:space-y-16">
-							{/* Ligne verticale animée au scroll */}
+							{/* Ligne verticale animée au scroll (desktop) */}
 							<ScrollProgressLine />
+
+							{/* Ligne verticale simplifiée (mobile) */}
+							<div
+								className="absolute left-[22px] top-8 bottom-8 w-px bg-secondary/30 sm:hidden"
+								aria-hidden="true"
+							/>
 
 							<Stagger
 								role="list"
@@ -160,7 +183,7 @@ export async function CreativeProcess() {
 									<article
 										key={index}
 										role="listitem"
-										className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 transition-all duration-300 hover:bg-muted/30 hover:-translate-y-0.5"
+										className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 transition-all duration-300 hover:bg-muted/30 hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
 									>
 										{/* Accessibilité : numéro d'étape pour lecteurs d'écran */}
 										<span className="sr-only">Étape {index + 1} :</span>
@@ -174,8 +197,10 @@ export async function CreativeProcess() {
 												"group-hover:scale-110 group-hover:-rotate-3",
 												// Micro-interaction icône spécifique
 												step.iconHoverClass,
-												// Badge doré pour l'étape signature (index 2 = Création) - glow renforcé
-												index === 2 && "shadow-lg shadow-secondary/40 ring-2 ring-secondary/20"
+												// Crescendo progressif : intensité croissante
+												STEP_INTENSITY[index].ring,
+												STEP_INTENSITY[index].shadow,
+												STEP_INTENSITY[index].scale
 											)}
 										>
 											{step.icon}
@@ -188,8 +213,9 @@ export async function CreativeProcess() {
 												"flex sm:hidden shrink-0 w-11 h-11 rounded-full items-center justify-center font-bold text-lg transition-all duration-300",
 												step.color,
 												"group-hover:scale-110",
-												// Badge doré pour l'étape signature (index 2 = Création) - glow renforcé
-												index === 2 && "shadow-lg shadow-secondary/40 ring-2 ring-secondary/20"
+												// Crescendo progressif : intensité croissante
+												STEP_INTENSITY[index].ring,
+												STEP_INTENSITY[index].shadow
 											)}
 										>
 											{index + 1}
@@ -202,9 +228,10 @@ export async function CreativeProcess() {
 													{index + 1}.{" "}
 												</span>
 												{step.title}
-												{index === 2 && (
+												{/* Sparkles sur l'étape finale (climax) */}
+												{index === 3 && (
 													<Sparkles
-														className="inline-block w-4 h-4 ml-1.5 text-secondary"
+														className="inline-block w-4 h-4 ml-1.5 text-secondary animate-pulse"
 														aria-hidden="true"
 													/>
 												)}
@@ -218,30 +245,48 @@ export async function CreativeProcess() {
 							</Stagger>
 						</div>
 
-						{/* CTA vers Contact */}
-						<div className="mt-8 py-6 px-4 -mx-4 bg-secondary/10 rounded-xl border border-secondary/30">
-							<p className="text-sm text-muted-foreground mb-4 italic">
-								Tu as une idée de bijou ? N'hésite pas à m'en parler,
-								j'adore créer des pièces personnalisées !
-							</p>
-							<Button
-								asChild
-								variant="secondary"
-								size="lg"
-								className="w-full sm:w-auto shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group"
+						{/* CTA intégré comme continuation naturelle du processus */}
+						<div className="mt-4 flex items-start gap-4 group relative rounded-xl p-2 -m-2">
+							{/* Desktop : Icône dans cercle en pointillés */}
+							<div
+								className="hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center transition-all duration-300 group-hover:border-secondary group-hover:scale-105"
+								aria-hidden="true"
 							>
-								<Link
-									href="/personnalisation"
-									className="flex items-center justify-center gap-2"
+								<Sparkles className="w-5 h-5 text-secondary" />
+							</div>
+
+							{/* Mobile : Numéro bonus */}
+							<div
+								className="flex sm:hidden shrink-0 w-11 h-11 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center text-secondary font-bold"
+								aria-hidden="true"
+							>
+								+
+							</div>
+
+							<div className="flex-1">
+								<p className="text-sm text-muted-foreground mb-3 italic">
+									Tu as une idée de bijou ? N'hésite pas à m'en parler,
+									j'adore créer des pièces personnalisées !
+								</p>
+								<Button
+									asChild
+									variant="secondary"
+									size="lg"
+									className="w-full sm:w-auto shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/btn"
 								>
-									<Sparkles
-										size={18}
-										className="group-hover:rotate-12 transition-transform duration-300"
-										aria-hidden="true"
-									/>
-									Discutons de ton idée
-								</Link>
-							</Button>
+									<Link
+										href="/personnalisation"
+										className="flex items-center justify-center gap-2"
+									>
+										<Sparkles
+											size={18}
+											className="group-hover/btn:rotate-12 transition-transform duration-300"
+											aria-hidden="true"
+										/>
+										Discutons de ton idée
+									</Link>
+								</Button>
+							</div>
 						</div>
 					</div>
 				</div>
