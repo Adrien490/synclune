@@ -2,7 +2,7 @@
 
 import { requireAdmin } from "@/shared/lib/actions/auth";
 import { prisma } from "@/shared/lib/prisma";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { z } from "zod";
@@ -60,10 +60,10 @@ export async function updateSkuMediaThumbnail(
 		});
 
 		// 4. Invalider le cache du produit et des listes
-		revalidateTag(`product-${media.sku.product.slug}`);
-		revalidateTag(`product-${media.sku.productId}-skus`);
-		revalidateTag(PRODUCTS_CACHE_TAGS.LIST);
-		revalidateTag(PRODUCTS_CACHE_TAGS.SKUS_LIST);
+		updateTag(`product-${media.sku.product.slug}`);
+		updateTag(`product-${media.sku.productId}-skus`);
+		updateTag(PRODUCTS_CACHE_TAGS.LIST);
+		updateTag(PRODUCTS_CACHE_TAGS.SKUS_LIST);
 
 		return {
 			status: ActionStatus.SUCCESS,

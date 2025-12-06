@@ -25,7 +25,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
-import type { MaterialOption } from "@/modules/materials/data/get-materials";
+import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 
 interface FilterSheetProps {
 	colors: GetColorsReturn["colors"];
@@ -314,22 +314,22 @@ export function ProductFilterSheet({
 												<div className="space-y-2">
 													{materials.map((material) => {
 														const isSelected = field.state.value.includes(
-															material.slug
+															material.id
 														);
 														return (
 															<div
-																key={material.slug}
+																key={material.id}
 																className="flex items-center space-x-2"
 															>
 																<Checkbox
-																	id={`material-${material.slug}`}
+																	id={`material-${material.id}`}
 																	checked={isSelected}
 																	onCheckedChange={(checked) => {
 																		if (checked && !isSelected) {
-																			field.pushValue(material.slug);
+																			field.pushValue(material.id);
 																		} else if (!checked && isSelected) {
 																			const index = field.state.value.indexOf(
-																				material.slug
+																				material.id
 																			);
 																			field.removeValue(index);
 																		}
@@ -337,7 +337,7 @@ export function ProductFilterSheet({
 																	className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
 																/>
 																<Label
-																	htmlFor={`material-${material.slug}`}
+																	htmlFor={`material-${material.id}`}
 																	className="text-sm font-normal cursor-pointer flex-1"
 																>
 																	{material.name}

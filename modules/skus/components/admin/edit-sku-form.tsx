@@ -80,15 +80,16 @@ export function EditProductVariantForm({
 			type MediaItem = {
 				url: string;
 				mediaType: "IMAGE" | "VIDEO";
-				thumbnailUrl?: string;
-				thumbnailSmallUrl?: string;
-				altText?: string;
+				thumbnailUrl: string | undefined;
+				thumbnailSmallUrl: string | undefined;
+				blurDataUrl: string | undefined;
+				altText: string | undefined;
 			};
 			const mediaList = form.getFieldValue("galleryMedia") as MediaItem[];
 			const index = mediaList.findIndex((m) => m.url === videoUrl);
 			if (index === -1) return;
 
-			const updatedMedia = mediaList.map((m, i) => {
+			const updatedMedia = mediaList.map((m, i): MediaItem => {
 				if (i === index) {
 					return {
 						...m,
@@ -858,7 +859,7 @@ export function EditProductVariantForm({
 												form.state.isSubmitting ||
 												isPrimaryImageUploading ||
 												isGalleryUploading ||
-												allGeneratingThumbnails.size > 0
+												regeneratingUrl !== null
 											}
 											className="min-w-[160px]"
 										>
@@ -868,7 +869,7 @@ export function EditProductVariantForm({
 													? "Upload image..."
 													: isGalleryUploading
 														? "Upload galerie..."
-														: allGeneratingThumbnails.size > 0
+														: regeneratingUrl !== null
 															? "Génération miniatures..."
 															: "Mettre à jour"}
 										</Button>

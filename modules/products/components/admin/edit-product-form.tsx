@@ -62,15 +62,15 @@ export function EditProductForm({
 			type MediaItem = {
 				url: string;
 				mediaType: "IMAGE" | "VIDEO";
-				thumbnailUrl?: string;
-				thumbnailSmallUrl?: string;
-				altText?: string;
+				thumbnailUrl: string | undefined;
+				thumbnailSmallUrl: string | undefined;
+				altText: string | undefined;
 			};
 			const mediaList = form.getFieldValue("defaultSku.media") as MediaItem[];
 			const index = mediaList.findIndex((m) => m.url === videoUrl);
 			if (index === -1) return;
 
-			const updatedMedia = mediaList.map((m, i) => {
+			const updatedMedia = mediaList.map((m, i): MediaItem => {
 				if (i === index) {
 					return {
 						...m,
@@ -816,7 +816,7 @@ export function EditProductForm({
 											!canSubmit ||
 											isPending ||
 											isMediaUploading ||
-											allGeneratingThumbnails.size > 0
+											regeneratingUrl !== null
 										}
 										className="min-w-[160px]"
 									>
@@ -824,7 +824,7 @@ export function EditProductForm({
 											? "Enregistrement..."
 											: isMediaUploading
 												? "Upload en cours..."
-												: allGeneratingThumbnails.size > 0
+												: regeneratingUrl !== null
 													? "Génération miniatures..."
 													: "Enregistrer les modifications"}
 									</Button>

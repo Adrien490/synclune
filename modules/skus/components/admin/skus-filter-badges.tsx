@@ -2,8 +2,8 @@
 
 import { FilterBadges } from "@/shared/components/filter-badges";
 import { FilterDefinition } from "@/shared/hooks/use-filter";
-import type { ColorOption } from "@/modules/colors/data/get-colors";
-import type { MaterialOption } from "@/modules/materials/data/get-materials";
+import type { ColorOption } from "@/modules/colors/data/get-color-options";
+import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import { useMemo } from "react";
 
 const STOCK_STATUS_LABELS: Record<string, string> = {

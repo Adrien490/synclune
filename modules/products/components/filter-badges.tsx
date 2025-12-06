@@ -3,7 +3,7 @@
 import { createProductFilterFormatter } from "@/app/(boutique)/produits/_utils/format-product-filter";
 import { FilterBadges } from "@/shared/components/filter-badges";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
-import type { MaterialOption } from "@/modules/materials/data/get-materials";
+import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import { useSearchParams } from "next/navigation";
 
 interface ProductFilterBadgesProps {

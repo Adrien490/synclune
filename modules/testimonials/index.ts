@@ -20,12 +20,3 @@ export { deleteTestimonial } from "./actions/delete-testimonial"
 export { toggleTestimonialPublish } from "./actions/toggle-publish"
 export { bulkDeleteTestimonials } from "./actions/bulk-delete-testimonials"
 export { bulkTogglePublish } from "./actions/bulk-toggle-publish"
-
-// Hooks
-export * from "./hooks"
-
-// Public Components
-export { TestimonialCard } from "./components/testimonial-card"
-export { TestimonialsBento } from "../../app/(boutique)/(accueil)/_components/testimonials-bento"
-export { TestimonialsSection } from "../../app/(boutique)/(accueil)/_components/testimonials"
-export { TestimonialsSkeleton } from "./components/testimonials-skeleton"

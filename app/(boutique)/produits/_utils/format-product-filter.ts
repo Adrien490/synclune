@@ -1,5 +1,5 @@
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
-import type { MaterialOption } from "@/modules/materials/data/get-materials";
+import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import type { FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ReadonlyURLSearchParams } from "next/navigation";
@@ -34,7 +34,7 @@ export function createProductFilterFormatter(
 	// Créer le mapping dynamique des matériaux
 	const materialMapping: Record<string, string> = {};
 	materials.forEach((material) => {
-		materialMapping[material.slug] = material.name;
+		materialMapping[material.id] = material.name;
 	});
 
 	// Configuration des filtres avec mapping dynamique
