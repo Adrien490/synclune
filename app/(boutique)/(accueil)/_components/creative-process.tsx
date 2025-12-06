@@ -10,43 +10,50 @@ import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cacheLife } from "next/cache";
+import { ScrollProgressLine } from "./scroll-progress-line";
 
 interface ProcessStep {
 	icon: React.ReactNode;
 	title: string;
 	description: string;
 	color: string;
+	/** Animation CSS au hover du groupe */
+	iconHoverClass: string;
 }
 
 // Étapes du processus créatif - données statiques
 const processSteps: ProcessStep[] = [
 	{
-		icon: <Lightbulb className="w-6 h-6" aria-hidden="true" />,
+		icon: <Lightbulb className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "L'inspiration",
 		description:
-			"Je suis fan de Pokémon, Van Gogh et Twilight et j'en passe... Alors forcément mes créations s'en inspirent. L'idée naît souvent quand je regarde un film ou que je tombe sur une belle couleur",
+			"Fan de Pokémon, Van Gogh et Twilight... mes créations s'en inspirent ! L'idée naît souvent devant un film ou une belle couleur.",
 		color: STEP_COLORS.secondary,
+		iconHoverClass: "group-hover:[&_svg]:text-yellow-500 group-hover:[&_svg]:drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]",
 	},
 	{
-		icon: <Pencil className="w-6 h-6" aria-hidden="true" />,
+		icon: <Pencil className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "Le dessin et la peinture",
 		description:
 			"Je dessine mes motifs sur du plastique fou, puis je passe à la peinture. C'est minutieux et ça demande de la concentration, mais j'adore cette étape !",
 		color: STEP_COLORS.accent,
+		iconHoverClass: "group-hover:[&_svg]:rotate-[-15deg]",
 	},
 	{
-		icon: <Hammer className="w-6 h-6" aria-hidden="true" />,
+		icon: <Hammer className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "La cuisson et l'assemblage",
 		description:
 			"Cuisson au four, vernissage, montage sur les supports... Parfois il y a des surprises (le plastique fou, c'est pas toujours prévisible), mais ça fait partie du charme de l'artisanat",
 		color: STEP_COLORS.secondary,
+		iconHoverClass: "group-hover:[&_svg]:translate-y-[-2px] group-hover:[&_svg]:rotate-[-8deg]",
 	},
 	{
-		icon: <CheckCircle className="w-6 h-6" aria-hidden="true" />,
+		icon: <CheckCircle className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "La touche finale",
 		description:
 			"Je polis, je vérifie chaque détail... Bon, je suis un peu perfectionniste ! Et voilà, ton bijou est prêt.",
 		color: STEP_COLORS.accent,
+		iconHoverClass: "group-hover:[&_svg]:text-green-500 group-hover:[&_svg]:scale-110",
 	},
 ];
 
@@ -82,7 +89,14 @@ export async function CreativeProcess() {
 			aria-labelledby="creative-process-title"
 		>
 			<div className="absolute inset-0" aria-hidden="true">
-				<ParticleSystem count={4} className="absolute inset-0" />
+				<ParticleSystem
+					count={8}
+					colorPreset="dore"
+					blur={[15, 45]}
+					shape="diamond"
+					opacity={[0.12, 0.35]}
+					className="absolute inset-0"
+				/>
 			</div>
 
 			<div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -110,12 +124,12 @@ export async function CreativeProcess() {
 								sizes="(max-width: 1024px) 100vw, 50vw"
 							/>
 
-							{/* Badge Fait main */}
+							{/* Badge Fait main - contraste amélioré */}
 							<div
-								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary/95 backdrop-blur-md border-2 border-secondary rounded-full shadow-md"
+								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary backdrop-blur-md border-2 border-secondary-foreground/20 rounded-full shadow-lg"
 								aria-hidden="true"
 							>
-								<span className="text-xs/5 font-semibold tracking-wider antialiased text-secondary-foreground">
+								<span className="text-xs/5 font-bold tracking-wider antialiased text-secondary-foreground drop-shadow-sm">
 									Fait main à Nantes
 								</span>
 							</div>
@@ -131,18 +145,26 @@ export async function CreativeProcess() {
 					{/* Timeline processus */}
 					<div className="relative order-1 lg:order-2">
 						<div className="relative space-y-8 sm:space-y-12 lg:space-y-16">
-							{/* Ligne verticale décorative - limitée à la zone des étapes uniquement */}
-							<div
-								className="absolute left-6 top-[3rem] bottom-[1.5rem] w-0.75 bg-secondary/60 rounded-full hidden sm:block z-0"
-								aria-hidden="true"
-							/>
+							{/* Ligne verticale animée au scroll */}
+							<ScrollProgressLine />
 
-							<Stagger stagger={0.22} y={35} delay={0} inView once={true}>
+							<Stagger
+								role="list"
+								stagger={0.15}
+								y={35}
+								delay={0}
+								inView
+								once={true}
+							>
 								{processSteps.map((step, index) => (
 									<article
 										key={index}
-										className="flex items-start gap-4 group relative"
+										role="listitem"
+										className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 transition-all duration-300 hover:bg-muted/30 hover:-translate-y-0.5"
 									>
+										{/* Accessibilité : numéro d'étape pour lecteurs d'écran */}
+										<span className="sr-only">Étape {index + 1} :</span>
+
 										{/* Desktop : Icônes dans cercles avec ligne verticale */}
 										<div
 											className={cn(
@@ -150,21 +172,24 @@ export async function CreativeProcess() {
 												step.color,
 												// Animation hover subtile : légère rotation et scale
 												"group-hover:scale-110 group-hover:-rotate-3",
-												// Badge doré pour l'étape signature (index 2 = Création)
-												index === 2 && "shadow-lg shadow-secondary/30"
+												// Micro-interaction icône spécifique
+												step.iconHoverClass,
+												// Badge doré pour l'étape signature (index 2 = Création) - glow renforcé
+												index === 2 && "shadow-lg shadow-secondary/40 ring-2 ring-secondary/20"
 											)}
 										>
 											{step.icon}
 										</div>
 
-										{/* Mobile : Numéros colorés plus visibles (guidage progression) */}
+										{/* Mobile : Numéros colorés plus visibles (guidage progression) - 44px WCAG */}
 										<div
+											aria-hidden="true"
 											className={cn(
-												"flex sm:hidden shrink-0 w-10 h-10 rounded-full items-center justify-center font-bold text-lg transition-all duration-300",
+												"flex sm:hidden shrink-0 w-11 h-11 rounded-full items-center justify-center font-bold text-lg transition-all duration-300",
 												step.color,
 												"group-hover:scale-110",
-												// Badge doré pour l'étape signature (index 2 = Création)
-												index === 2 && "shadow-lg shadow-secondary/30"
+												// Badge doré pour l'étape signature (index 2 = Création) - glow renforcé
+												index === 2 && "shadow-lg shadow-secondary/40 ring-2 ring-secondary/20"
 											)}
 										>
 											{index + 1}
@@ -173,7 +198,9 @@ export async function CreativeProcess() {
 										<div className="flex-1 pb-8">
 											<h3 className="text-xl/7 font-semibold text-foreground mb-2 tracking-tight antialiased">
 												{/* Numérotation visible seulement sur desktop (mobile a déjà le numéro dans le cercle) */}
-												<span className="hidden sm:inline">{index + 1}. </span>
+												<span className="hidden sm:inline" aria-hidden="true">
+													{index + 1}.{" "}
+												</span>
 												{step.title}
 												{index === 2 && (
 													<Sparkles
@@ -192,14 +219,14 @@ export async function CreativeProcess() {
 						</div>
 
 						{/* CTA vers Contact */}
-						<div className="mt-8 pt-6 border-t border-border">
+						<div className="mt-8 py-6 px-4 -mx-4 bg-secondary/10 rounded-xl border border-secondary/30">
 							<p className="text-sm text-muted-foreground mb-4 italic">
 								Tu as une idée de bijou ? N'hésite pas à m'en parler,
 								j'adore créer des pièces personnalisées !
 							</p>
 							<Button
 								asChild
-								variant="default"
+								variant="secondary"
 								size="lg"
 								className="w-full sm:w-auto shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group"
 							>

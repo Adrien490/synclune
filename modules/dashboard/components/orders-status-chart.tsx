@@ -92,7 +92,7 @@ export function OrdersStatusChart({ chartDataPromise, enableDrilldown = true }: 
 						Graphique circulaire montrant la repartition des commandes par statut: en attente, en traitement, expediees, livrees.
 						{enableDrilldown && " Cliquez sur un segment pour filtrer les commandes."}
 					</span>
-					<ChartContainer config={chartConfig} className="min-h-[300px] w-full aspect-square mx-auto">
+					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.pie} ${CHART_STYLES.pie.container}`}>
 						<PieChart accessibilityLayer>
 						<ChartTooltip
 							content={

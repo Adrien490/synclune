@@ -19,10 +19,20 @@ export const CHART_STYLES = {
     default: "h-[300px]",
     /** Hauteur compacte pour les charts secondaires */
     compact: "h-[250px]",
-    /** Hauteur responsive (250px mobile, 300px desktop) */
-    responsive: "h-[250px] md:h-[300px]",
+    /** Hauteur responsive (220px sm, 250px md, 300px lg) */
+    responsive: "h-[220px] sm:h-[250px] md:h-[300px]",
     /** Hauteur compacte responsive */
-    compactResponsive: "h-[200px] md:h-[250px]",
+    compactResponsive: "h-[180px] sm:h-[200px] md:h-[250px]",
+    /** Hauteur fluide avec clamp() pour adaptation continue */
+    fluid: "h-[clamp(200px,40vw,300px)]",
+    /** Hauteur pour pie charts (carre contraint) */
+    pie: "h-[clamp(200px,min(50vw,50vh),300px)]",
+  },
+
+  /** Styles specifiques pour pie charts */
+  pie: {
+    /** Container pour centrer et limiter la taille */
+    container: "w-full max-w-[300px] mx-auto",
   },
 
   /** Padding standardise pour les cards */

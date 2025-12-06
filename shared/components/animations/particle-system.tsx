@@ -10,6 +10,12 @@ import { MOTION_CONFIG } from "./motion.config";
 // TYPES
 // ============================================================================
 
+/** Presets de couleurs thématiques */
+export type ColorPreset = "bijoux" | "rose" | "dore" | "pastel";
+
+/** Formes des particules */
+export type ParticleShape = "circle" | "diamond" | "soft-square";
+
 export interface ParticleSystemProps {
 	/** Nombre de particules (défaut: 6, mobile: divisé par 2) */
 	count?: number;
@@ -17,15 +23,55 @@ export interface ParticleSystemProps {
 	size?: [number, number];
 	/** Opacité min/max (défaut: [0.1, 0.4]) */
 	opacity?: [number, number];
-	/** Couleurs CSS des particules (défaut: primary + secondary) */
+	/** Preset de couleurs thématiques */
+	colorPreset?: ColorPreset;
+	/** Couleurs CSS des particules (override colorPreset) */
 	colors?: string[];
-	/** Intensité du blur en pixels (défaut: 20) */
-	blur?: number;
+	/** Blur min/max en pixels pour effet de profondeur (défaut: [12, 32]) */
+	blur?: number | [number, number];
 	/** Durée de l'animation en secondes (défaut: 20) */
 	duration?: number;
+	/** Forme des particules (défaut: "circle") */
+	shape?: ParticleShape;
 	/** Classes additionnelles */
 	className?: string;
 }
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Presets de couleurs utilisant les variables CSS du thème */
+const COLOR_PRESETS: Record<ColorPreset, string[]> = {
+	bijoux: [
+		"var(--color-primary)",
+		"var(--color-secondary)",
+		"var(--color-pastel-blush)",
+	],
+	rose: [
+		"var(--color-primary)",
+		"var(--color-pastel-blush)",
+		"var(--color-pastel-lavender)",
+	],
+	dore: [
+		"var(--color-secondary)",
+		"var(--color-pastel-peach)",
+		"var(--color-pastel-cream)",
+	],
+	pastel: [
+		"var(--color-pastel-peach)",
+		"var(--color-pastel-lavender)",
+		"var(--color-pastel-mint)",
+		"var(--color-pastel-blush)",
+	],
+};
+
+/** Styles CSS par forme de particule */
+const SHAPE_STYLES: Record<ParticleShape, React.CSSProperties> = {
+	circle: { borderRadius: "9999px" },
+	diamond: { borderRadius: "4px", rotate: "45deg" },
+	"soft-square": { borderRadius: "20%" },
+};
 
 // ============================================================================
 // UTILS
@@ -50,11 +96,19 @@ const ParticleSystemBase = ({
 	count = 6,
 	size = [8, 64],
 	opacity = [0.1, 0.4],
-	colors = ["var(--color-primary)", "var(--color-secondary)"],
-	blur = 20,
+	colorPreset,
+	colors,
+	blur = [12, 32],
 	duration = 20,
+	shape = "circle",
 	className,
 }: ParticleSystemProps) => {
+	// Résoudre les couleurs : colors override colorPreset
+	const resolvedColors =
+		colors ?? (colorPreset ? COLOR_PRESETS[colorPreset] : COLOR_PRESETS.bijoux);
+
+	// Styles de forme
+	const shapeStyles = SHAPE_STYLES[shape];
 	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
 	const isMobile = useIsMobile();
@@ -80,9 +134,13 @@ const ParticleSystemBase = ({
 			const particleOpacity = randomBetween(opacity[0], opacity[1], seed + 2);
 			const x = randomBetween(5, 95, seed + 3);
 			const y = randomBetween(5, 95, seed + 4);
-			const color = colors[i % colors.length];
+			const color = resolvedColors[i % resolvedColors.length];
 			const particleDuration = randomBetween(duration * 0.7, duration * 1.3, seed + 5);
 			const delay = randomBetween(0, duration * 0.5, seed + 6);
+			// Blur variable pour effet de profondeur
+			const particleBlur = Array.isArray(blur)
+				? randomBetween(blur[0], blur[1], seed + 7)
+				: blur;
 
 			return {
 				id: i,
@@ -93,9 +151,10 @@ const ParticleSystemBase = ({
 				color,
 				duration: particleDuration,
 				delay,
+				blur: particleBlur,
 			};
 		});
-	}, [particleCount, size, opacity, colors, duration]);
+	}, [particleCount, size, opacity, resolvedColors, duration, blur]);
 
 	// Ne rien rendre côté serveur pour éviter l'hydration mismatch
 	if (!isMounted) {
@@ -113,7 +172,7 @@ const ParticleSystemBase = ({
 				{particles.map((p) => (
 					<span
 						key={p.id}
-						className="absolute rounded-full"
+						className="absolute"
 						style={{
 							width: p.size,
 							height: p.size,
@@ -121,7 +180,8 @@ const ParticleSystemBase = ({
 							top: `${p.y}%`,
 							backgroundColor: p.color,
 							opacity: p.opacity,
-							filter: `blur(${blur}px)`,
+							filter: `blur(${p.blur}px)`,
+							...shapeStyles,
 						}}
 					/>
 				))}
@@ -139,14 +199,15 @@ const ParticleSystemBase = ({
 				particles.map((p) => (
 					<motion.span
 						key={p.id}
-						className="absolute rounded-full will-change-transform"
+						className="absolute will-change-transform"
 						style={{
 							width: p.size,
 							height: p.size,
 							left: `${p.x}%`,
 							top: `${p.y}%`,
 							backgroundColor: p.color,
-							filter: `blur(${blur}px)`,
+							filter: `blur(${p.blur}px)`,
+							...shapeStyles,
 						}}
 						animate={{
 							scale: [1, 1.4, 0.8, 1],
@@ -167,17 +228,23 @@ const ParticleSystemBase = ({
 };
 
 /**
- * Système de particules décoratives
+ * Système de particules décoratives avec effet de profondeur
  *
  * @example
- * // Défaut
+ * // Défaut (preset bijoux)
  * <ParticleSystem />
  *
- * // Personnalisé
- * <ParticleSystem count={8} size={[16, 80]} opacity={[0.2, 0.5]} />
+ * // Thème bijoux avec profondeur variable
+ * <ParticleSystem colorPreset="bijoux" blur={[10, 40]} />
  *
- * // Couleur unique
- * <ParticleSystem colors={["var(--color-primary)"]} />
+ * // Effet diamant luxe
+ * <ParticleSystem colorPreset="dore" shape="diamond" count={8} />
+ *
+ * // Pastels doux
+ * <ParticleSystem colorPreset="pastel" blur={[20, 45]} />
+ *
+ * // Override custom complet
+ * <ParticleSystem colors={["#FFD700", "#FFC0CB"]} blur={[8, 50]} />
  */
 export const ParticleSystem = memo(ParticleSystemBase);
 ParticleSystem.displayName = "ParticleSystem";

@@ -26,7 +26,7 @@ export const BRAND = {
 	},
 
 	contact: {
-		email: process.env.RESEND_CONTACT_EMAIL,
+		email: process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr",
 		location: {
 			city: "Nantes",
 			region: "Loire-Atlantique",

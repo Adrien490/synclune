@@ -113,7 +113,7 @@ export function RevenueByTypeChart({ chartDataPromise, enableDrilldown = true }:
 					<span className="sr-only">
 						Graphique en secteurs montrant la repartition du chiffre d'affaires par type de bijou
 					</span>
-					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
+					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.pie} ${CHART_STYLES.pie.container}`}>
 						<PieChart accessibilityLayer>
 							<ChartTooltip
 								content={

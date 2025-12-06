@@ -73,7 +73,7 @@ export function RepeatVsNewChart({ chartDataPromise }: RepeatVsNewChartProps) {
 					<span className="sr-only">
 						Graphique en secteurs montrant la repartition entre nouveaux clients et clients recurrents
 					</span>
-					<ChartContainer config={chartConfig} className="min-h-[300px] w-full aspect-square mx-auto">
+					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.pie} ${CHART_STYLES.pie.container}`}>
 						<PieChart accessibilityLayer>
 							<ChartTooltip
 								content={

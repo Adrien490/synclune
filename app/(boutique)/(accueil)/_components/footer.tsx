@@ -29,7 +29,6 @@ export async function Footer() {
 		>
 			{/* Meta tags invisibles pour schema.org (crawlables) */}
 			<meta itemProp="name" content="Synclune" />
-			<meta itemProp="alternateName" content="Synclune" />
 			<meta
 				itemProp="description"
 				content="Créatrice de bijoux artisanaux faits main à Nantes - Créations uniques pour occasions particulières"
@@ -46,36 +45,20 @@ export async function Footer() {
 
 			{/* Masque flou en haut pour transition douce */}
 			<div
-				className="absolute top-0 left-0 right-0 h-24 bg-linear-to-b from-background to-transparent pointer-events-none backdrop-blur-sm"
+				className="absolute top-0 left-0 right-0 h-12 bg-linear-to-b from-background to-transparent pointer-events-none"
 				aria-hidden="true"
-			/>
-
-			{/* Particules décoratives plus visibles pour footer */}
-			<div
-				className="absolute top-4 left-1/4 w-2 h-2 bg-primary rounded-full motion-safe:animate-pulse opacity-50"
-				aria-hidden="true"
-			/>
-			<div
-				className="absolute top-8 right-1/3 w-1.5 h-1.5 bg-accent rounded-full motion-safe:animate-pulse opacity-40"
-				aria-hidden="true"
-				style={{ animationDelay: "1s" }}
-			/>
-			<div
-				className="absolute bottom-12 left-1/3 w-1 h-1 bg-primary rounded-full motion-safe:animate-pulse opacity-35"
-				aria-hidden="true"
-				style={{ animationDelay: "2s" }}
 			/>
 
 			<div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 				{/* Navigation principale */}
-				<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+				<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-8">
 					{/* Colonne 1: Logo + phrase perso */}
 					<div className="space-y-4">
 						<div className="mb-4">
 							<Logo href="/" size={40} />
 						</div>
 						<div className="space-y-2 max-w-xs">
-							<p className="text-sm/6 tracking-normal antialiased text-muted-foreground">
+							<p className="text-sm/6 antialiased text-muted-foreground">
 								<span className="font-medium text-foreground">
 									Des bijoux colorés
 								</span>
@@ -89,7 +72,7 @@ export async function Footer() {
 					<nav aria-labelledby="footer-nav-title">
 						<h3
 							id="footer-nav-title"
-							className="text-base/6 font-medium tracking-normal antialiased text-foreground mb-4"
+							className="text-base/6 font-medium antialiased text-foreground mb-4"
 						>
 							Navigation
 						</h3>
@@ -98,7 +81,7 @@ export async function Footer() {
 								<li key={index} role="listitem">
 									<Link
 										href={item.href}
-										className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm inline-block px-2 py-3"
+										className="text-sm/6 antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm inline-block px-2 py-2"
 									>
 										{item.label}
 									</Link>
@@ -109,7 +92,7 @@ export async function Footer() {
 
 					{/* Colonne 3: Contact */}
 					<div>
-						<h3 className="text-base/6 font-medium tracking-normal antialiased text-foreground mb-4">
+						<h3 className="text-base/6 font-medium antialiased text-foreground mb-4">
 							Contact
 						</h3>
 						<div
@@ -120,12 +103,12 @@ export async function Footer() {
 						>
 							<div>
 								<a
-									href={`mailto:${process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}`}
+									href={`mailto:${BRAND.contact.email}`}
 									itemProp="email"
-									className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors duration-200 break-words focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+									className="text-sm/6 antialiased text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors duration-200 break-words focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
 									aria-label="Envoyer un email à Synclune"
 								>
-									{process.env.RESEND_CONTACT_EMAIL || "contact@synclune.fr"}
+									{BRAND.contact.email}
 								</a>
 							</div>
 
@@ -138,7 +121,7 @@ export async function Footer() {
 									itemProp="address"
 									itemScope
 									itemType="https://schema.org/PostalAddress"
-									className="text-sm/6 tracking-normal antialiased text-muted-foreground"
+									className="text-sm/6 antialiased text-muted-foreground"
 								>
 									<span>Atelier basé à </span>
 									<span itemProp="addressLocality">Nantes</span>
@@ -151,14 +134,12 @@ export async function Footer() {
 						</div>
 					</div>
 
-					{/* Colonne 4: Réseaux sociaux & légal */}
+					{/* Colonne 4: Réseaux sociaux */}
 					<div>
-						<h3 className="text-base/6 font-medium tracking-normal antialiased text-foreground mb-4">
+						<h3 className="text-base/6 font-medium antialiased text-foreground mb-4">
 							Réseaux sociaux
 						</h3>
-
-						{/* Réseaux sociaux */}
-						<div className="space-y-3 mb-6">
+						<div className="space-y-3">
 							{/* Instagram */}
 							<Link
 								href={BRAND.social.instagram.url}
@@ -173,7 +154,7 @@ export async function Footer() {
 									size={20}
 									className="text-foreground"
 								/>
-								<span className="text-sm/6 font-medium tracking-normal antialiased text-foreground">
+								<span className="text-sm/6 font-medium antialiased text-foreground">
 									{BRAND.social.instagram.handle}
 								</span>
 							</Link>
@@ -192,41 +173,34 @@ export async function Footer() {
 									size={20}
 									className="text-foreground"
 								/>
-								<span className="text-sm/6 font-medium tracking-normal antialiased text-foreground">
+								<span className="text-sm/6 font-medium antialiased text-foreground">
 									{BRAND.social.tiktok.handle}
 								</span>
 							</Link>
 						</div>
 
-						{/* Informations légales */}
-						<nav aria-labelledby="footer-legal-title">
-							<h4
-								id="footer-legal-title"
-								className="text-sm/6 font-medium tracking-normal antialiased text-foreground mb-3"
-							>
-								Informations légales
-							</h4>
-							<ul className="space-y-2" role="list">
-								{legalLinks.map((link, index) => (
-									<li key={index} role="listitem">
-										<Link
-											href={link.href}
-											className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm inline-block px-2 py-3"
-										>
-											{link.label}
-										</Link>
-									</li>
-								))}
-							</ul>
-						</nav>
-					</div>
+						</div>
 				</div>
 
-				{/* Copyright */}
-				<div className="flex justify-center items-center">
-					<p className="text-sm/6 tracking-normal antialiased text-muted-foreground/70 text-center">
+				{/* Copyright + Liens légaux */}
+				<div className="flex flex-col items-center gap-4">
+					<p className="text-sm/6 antialiased text-muted-foreground text-center">
 						© {new Date().getFullYear()} Synclune. Tous droits réservés.
 					</p>
+					<nav
+						aria-label="Liens légaux"
+						className="flex flex-wrap justify-center gap-x-4 gap-y-2"
+					>
+						{legalLinks.map((link, index) => (
+							<Link
+								key={index}
+								href={link.href}
+								className="text-xs antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+							>
+								{link.label}
+							</Link>
+						))}
+					</nav>
 				</div>
 			</div>
 		</footer>

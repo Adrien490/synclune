@@ -213,8 +213,8 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 								variant="ghost"
 								size="icon"
 								className={cn(
-									// Zone tactile responsive: 32px mobile (acceptable pour éléments groupés), 44px desktop
-									"h-10 w-10 sm:h-11 sm:w-11 p-0 cursor-pointer",
+									// Zone tactile 44px conforme WCAG 2.5.5
+									"h-11 w-11 p-0 cursor-pointer",
 									// Indicateur visuel centré dans la zone tactile
 									"flex items-center justify-center",
 									"transition-all duration-300",

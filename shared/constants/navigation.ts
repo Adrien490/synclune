@@ -204,11 +204,11 @@ export function getDesktopNavItems(): NavItemWithChildren[] {
 	return desktopNavItems as unknown as NavItemWithChildren[];
 }
 
-// Footer - Navigation simple
+// Footer - Navigation simple (labels harmonisés avec le header)
 export const footerNavItems = [
 	{ href: "/collections", label: "Collections" },
-	{ href: "/produits", label: "Bijoux" },
-	{ href: "/personnalisation", label: "Personnalisation" },
+	{ href: "/produits", label: "Mes créations" },
+	{ href: "/personnalisation", label: "Personnaliser" },
 	{ href: "/a-propos", label: "L'atelier" },
 	{ href: "/compte", label: "Mon compte" },
 	{ href: "/panier", label: "Panier" },

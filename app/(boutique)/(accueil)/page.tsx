@@ -12,7 +12,7 @@ import { CreativeProcess } from "./_components/creative-process";
 import { Hero } from "./_components/hero";
 import { LatestCreations } from "@/modules/products/components/latest-creations";
 import { LatestCreationsSkeleton } from "@/modules/products/components/latest-creations-skeleton";
-import { WhySynclune } from "./_components/why-synclune";
+import { AtelierStory } from "./_components/atelier-story";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -102,8 +102,8 @@ export default async function Page() {
 				/>
 			</Suspense>
 
-			{/* 4. WhySynclune - Réassurance artisan + Levée d'objections (après engagement produit) */}
-			<WhySynclune />
+			{/* 4. AtelierStory - Storytelling intimiste de Léane (après engagement produit) */}
+			<AtelierStory />
 
 			{/* 5. CreativeProcess - Storytelling atelier + Connexion émotionnelle */}
 			<CreativeProcess />

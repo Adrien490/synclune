@@ -19,7 +19,7 @@ import type { GetStockByColorReturn } from "../../types/dashboard.types";
 import { truncateText, TRUNCATE_PRESETS } from "../../utils/truncate-text";
 import { CHART_STYLES } from "../../constants/chart-styles";
 import { ChartScrollContainer } from "../chart-scroll-container";
-import { useChartDrilldown, type ChartDrilldownProps } from "../../hooks";
+import { useChartDrilldown, useYAxisWidth, type ChartDrilldownProps } from "../../hooks";
 
 interface StockByColorChartProps extends ChartDrilldownProps {
 	chartDataPromise: Promise<GetStockByColorReturn>;
@@ -31,6 +31,7 @@ interface StockByColorChartProps extends ChartDrilldownProps {
 export function StockByColorChart({ chartDataPromise, enableDrilldown = true }: StockByColorChartProps) {
 	const data = use(chartDataPromise);
 	const { handleClick } = useChartDrilldown("stockByColor");
+	const yAxisWidth = useYAxisWidth("compact");
 
 	// Preparer les donnees pour le graphique (top 8) avec une cle unique
 	const chartData = useMemo(() => {
@@ -131,7 +132,7 @@ export function StockByColorChart({ chartDataPromise, enableDrilldown = true }: 
 								<YAxis
 									type="category"
 									dataKey="name"
-									width={80}
+									width={yAxisWidth}
 									tick={{ fontSize: 12 }}
 								/>
 								<ChartTooltip

@@ -19,7 +19,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { truncateText, TRUNCATE_PRESETS } from "../utils/truncate-text";
 import { CHART_STYLES } from "../constants/chart-styles";
 import { ChartEmpty } from "./chart-empty";
-import { useChartDrilldown, type ChartDrilldownProps } from "../hooks";
+import { useChartDrilldown, useYAxisWidth, type ChartDrilldownProps } from "../hooks";
 
 interface TopProductsChartProps extends ChartDrilldownProps {
 	chartDataPromise: Promise<GetDashboardTopProductsReturn>;
@@ -43,6 +43,7 @@ const chartConfig = {
 export function TopProductsChart({ chartDataPromise, enableDrilldown = true }: TopProductsChartProps) {
 	const { products } = use(chartDataPromise);
 	const { handleClick, ariaLabel } = useChartDrilldown("topProducts");
+	const yAxisWidth = useYAxisWidth("wide");
 
 	// Formater les données pour le chart avec typage strict
 	const chartData: ChartDataItem[] = products.map((product: TopProductItem) => ({
@@ -89,7 +90,7 @@ export function TopProductsChart({ chartDataPromise, enableDrilldown = true }: T
 								type="category"
 								tickLine={false}
 								axisLine={false}
-								width={150}
+								width={yAxisWidth}
 							/>
 							<XAxis type="number" hide />
 							<ChartTooltip

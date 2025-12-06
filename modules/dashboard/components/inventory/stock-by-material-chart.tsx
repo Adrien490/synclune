@@ -124,7 +124,7 @@ export function StockByMaterialChart({ chartDataPromise, enableDrilldown = true 
 					<span className="sr-only">
 						Graphique en secteurs montrant la repartition du stock par materiau de bijou
 					</span>
-					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.default} w-full`}>
+					<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.pie} ${CHART_STYLES.pie.container}`}>
 						<PieChart accessibilityLayer>
 							<ChartTooltip
 								content={

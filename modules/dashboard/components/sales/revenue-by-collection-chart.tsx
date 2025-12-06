@@ -19,7 +19,7 @@ import type { GetRevenueByCollectionReturn } from "../../types/dashboard.types";
 import { truncateText, TRUNCATE_PRESETS } from "../../utils/truncate-text";
 import { CHART_STYLES } from "../../constants/chart-styles";
 import { ChartScrollContainer } from "../chart-scroll-container";
-import { useChartDrilldown, type ChartDrilldownProps } from "../../hooks";
+import { useChartDrilldown, useYAxisWidth, type ChartDrilldownProps } from "../../hooks";
 
 const chartConfig = {
 	revenue: {
@@ -41,6 +41,7 @@ export function RevenueByCollectionChart({
 }: RevenueByCollectionChartProps) {
 	const data = use(chartDataPromise);
 	const { handleClick, ariaLabel } = useChartDrilldown("revenueByCollection");
+	const yAxisWidth = useYAxisWidth("default");
 
 	// Preparer les donnees pour le graphique (top 5)
 	const chartData = data.collections.slice(0, 5).map((c) => ({
@@ -96,7 +97,7 @@ export function RevenueByCollectionChart({
 								<YAxis
 									type="category"
 									dataKey="name"
-									width={100}
+									width={yAxisWidth}
 									tick={{ fontSize: 12 }}
 								/>
 								<ChartTooltip

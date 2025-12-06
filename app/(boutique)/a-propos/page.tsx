@@ -1,10 +1,11 @@
+import { Fade, Reveal } from "@/shared/components/animations";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
 import { BRAND } from "@/shared/constants/brand";
 import { getAboutPageFullSchema } from "@/shared/constants/seo-config";
-import { Camera, Sparkles } from "lucide-react";
+import { ArrowRight, Camera, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -55,24 +56,30 @@ export default function AProposPage() {
 				<section className="bg-background py-8 sm:py-10 lg:py-12">
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
 						{/* Qui je suis - Layout avec image */}
-						<div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 lg:gap-12 items-start">
-							{/* Placeholder image */}
-							<div className="flex justify-center lg:justify-start">
-								<div className="relative w-64 h-80 rounded-2xl border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center gap-3 overflow-hidden">
-									<div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-										<Camera className="w-8 h-8 text-primary/60" />
+						<Reveal y={20} duration={0.6} once>
+							<div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 lg:gap-12 items-start">
+								{/* Placeholder image */}
+								<div className="flex justify-center lg:justify-start">
+									<div className="relative w-64 h-80 rounded-2xl border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center gap-3 overflow-hidden">
+										<div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+											<Camera className="w-8 h-8 text-primary/60" />
+										</div>
+										<span className="text-sm text-muted-foreground font-medium">
+											Photo à venir
+										</span>
 									</div>
-									<span className="text-sm text-muted-foreground font-medium">
-										Photo à venir
-									</span>
 								</div>
-							</div>
 
-							{/* Texte */}
-							<div className="space-y-6">
-								<h2 className="text-2xl font-light text-foreground">
-									Léane, créatrice de bijoux à Nantes
-								</h2>
+								{/* Texte */}
+								<div className="space-y-6">
+									{/* Badge contextuel */}
+									<span className="inline-block text-xs uppercase tracking-[0.2em] text-muted-foreground font-medium">
+										Mon histoire
+									</span>
+
+									<h2 className="text-2xl font-light text-foreground">
+										Léane, créatrice de bijoux à Nantes
+									</h2>
 								<div className="prose prose-lg max-w-none">
 									<p className="text-muted-foreground leading-relaxed">
 										Moi c'est Léane, je crée des bijoux à Nantes dans mon petit
@@ -97,13 +104,20 @@ export default function AProposPage() {
 										grand.
 									</p>
 								</div>
+
+								{/* Signature */}
+								<p className="font-script text-xl text-foreground pt-2">
+									— Léane
+								</p>
 							</div>
 						</div>
+					</Reveal>
 
-						{/* Inspirations */}
+					{/* Inspirations */}
+					<Fade y={12} delay={0.1} duration={0.5}>
 						<div className="space-y-4">
 							<h3 className="text-xl font-medium text-foreground flex items-center gap-2">
-								<Sparkles className="w-5 h-5 text-primary" />
+								<Sparkles className="w-5 h-5 text-muted-foreground" />
 								Mes inspirations
 							</h3>
 							<div className="prose max-w-none">
@@ -122,8 +136,10 @@ export default function AProposPage() {
 								</p>
 							</div>
 						</div>
+					</Fade>
 
-						{/* Réseaux sociaux */}
+					{/* Réseaux sociaux */}
+					<Fade y={12} delay={0.2} duration={0.5}>
 						<div className="space-y-4 pt-4">
 							<p className="text-sm text-muted-foreground font-medium">
 								Suivez mes créations en avant-première
@@ -164,8 +180,10 @@ export default function AProposPage() {
 								</Link>
 							</div>
 						</div>
+					</Fade>
 
-						{/* CTA */}
+					{/* CTA */}
+					<Reveal y={20} delay={0.1} duration={0.6} once>
 						<div className="pt-8 space-y-6 text-center border-t border-border">
 							<div className="space-y-3">
 								<h2 className="text-2xl font-light text-foreground">
@@ -181,18 +199,35 @@ export default function AProposPage() {
 							</div>
 
 							<div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
-								<Button asChild size="lg" className="shadow-lg hover:shadow-xl">
-									<Link href="/produits">
+								<Button
+									asChild
+									size="lg"
+									className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group"
+								>
+									<Link
+										href="/produits"
+										className="flex items-center gap-2"
+									>
 										Voir les créations
+										<ArrowRight
+											className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300"
+											aria-hidden="true"
+										/>
 									</Link>
 								</Button>
-								<Button asChild size="lg" variant="secondary" className="shadow-md hover:shadow-lg">
+								<Button
+									asChild
+									size="lg"
+									variant="secondary"
+									className="shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+								>
 									<Link href="/personnalisation">
 										Commander un bijou personnalisé
 									</Link>
 								</Button>
 							</div>
 						</div>
+					</Reveal>
 					</div>
 				</section>
 			</div>
