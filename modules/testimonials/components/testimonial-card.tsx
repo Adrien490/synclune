@@ -37,8 +37,8 @@ export function TestimonialCard({
 		<Card
 			className={cn(
 				"group h-full border-0 backdrop-blur-sm",
-				"transition-[transform,box-shadow,background-color] duration-300 ease-out",
-				"hover:scale-[1.02] hover:shadow-lg",
+				"transition-all duration-500 ease-in-out",
+				"hover:scale-[1.01] hover:shadow-lg",
 				isFeatured
 					? "bg-gradient-to-br from-primary/5 via-card/50 to-card/50 hover:from-primary/10 border-l-4 border-l-primary"
 					: "bg-card/50 hover:bg-card/70",
@@ -56,8 +56,8 @@ export function TestimonialCard({
 						aria-hidden="true"
 						className={cn(
 							"shrink-0 text-primary/30",
-							"transition-[color,transform] duration-300 ease-out",
-							"group-hover:text-primary/50 group-hover:scale-110 group-hover:rotate-6",
+							"transition-all duration-500 ease-in-out",
+							"group-hover:text-primary/50 group-hover:scale-105",
 							isFeatured ? "h-10 w-10 mb-6" : "h-7 w-7 mb-4"
 						)}
 					/>
