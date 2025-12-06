@@ -450,6 +450,15 @@ function CreateProductFormContent({
 								const handleUpload = async (files: File[]) => {
 									const remaining = maxCount - field.state.value.length;
 									let filesToUpload = files.slice(0, remaining);
+
+									// Trier: images d'abord, vidéos ensuite (l'ordre du navigateur n'est pas garanti)
+									filesToUpload = filesToUpload.sort((a, b) => {
+										const aIsVideo = a.type.startsWith("video/");
+										const bIsVideo = b.type.startsWith("video/");
+										if (aIsVideo === bIsVideo) return 0;
+										return aIsVideo ? 1 : -1;
+									});
+
 									if (files.length > remaining) {
 										toast.warning(`Seulement ${remaining} média(s) ajouté(s)`);
 									}

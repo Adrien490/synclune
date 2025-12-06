@@ -35,10 +35,14 @@ export function TestimonialCard({
 
 	return (
 		<Card
+			tabIndex={0}
 			className={cn(
 				"group h-full border-0 backdrop-blur-sm",
 				"transition-all duration-500 ease-in-out",
 				"hover:scale-[1.01] hover:shadow-lg",
+				"focus-visible:scale-[1.01] focus-visible:shadow-lg",
+				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+				"active:scale-[0.98]",
 				isFeatured
 					? "bg-gradient-to-br from-primary/5 via-card/50 to-card/50 hover:from-primary/10 border-l-4 border-l-primary"
 					: "bg-card/50 hover:bg-card/70",
@@ -48,7 +52,7 @@ export function TestimonialCard({
 			<CardContent
 				className={cn(
 					"flex flex-col h-full",
-					isFeatured ? "p-8" : "p-5"
+					isFeatured ? "p-5 sm:p-6 lg:p-8" : "p-4 sm:p-5"
 				)}
 			>
 				<figure className="flex flex-col h-full">
@@ -58,7 +62,9 @@ export function TestimonialCard({
 							"shrink-0 text-primary/30",
 							"transition-all duration-500 ease-in-out",
 							"group-hover:text-primary/50 group-hover:scale-105",
-							isFeatured ? "h-10 w-10 mb-6" : "h-7 w-7 mb-4"
+							isFeatured
+								? "h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10 mb-4 sm:mb-5 lg:mb-6"
+								: "h-6 w-6 sm:h-7 sm:w-7 mb-3 sm:mb-4"
 						)}
 					/>
 
@@ -66,8 +72,8 @@ export function TestimonialCard({
 						className={cn(
 							"flex-1 leading-relaxed text-muted-foreground italic",
 							isFeatured
-								? "text-lg mb-8 line-clamp-6"
-								: "text-base mb-5 line-clamp-4"
+								? "text-base sm:text-lg mb-5 sm:mb-6 lg:mb-8 line-clamp-5 sm:line-clamp-6"
+								: "text-sm sm:text-base mb-4 sm:mb-5 line-clamp-4"
 						)}
 					>
 						&ldquo;{testimonial.content}&rdquo;

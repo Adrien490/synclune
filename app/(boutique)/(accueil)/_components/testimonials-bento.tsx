@@ -114,7 +114,7 @@ export function TestimonialsBento({
 			</div>
 
 			{/* Stack - Cartes empilées à droite (max 3) */}
-			<div className="md:col-span-1 lg:col-span-5 flex flex-col gap-4 md:gap-5">
+			<div className="md:col-span-1 lg:col-span-5 flex flex-col gap-4 md:gap-5 lg:gap-6">
 				{rest.slice(0, 3).map((testimonial, index) => (
 					<Fade
 						key={testimonial.id}
