@@ -11,9 +11,10 @@ import {
 } from "@/shared/components/ui/carousel";
 import { cn } from "@/shared/utils/cn";
 import Autoplay from "embla-carousel-autoplay";
+import { useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
 
 interface ProductCarouselItem {
@@ -21,7 +22,7 @@ interface ProductCarouselItem {
 	slug: string;
 	title: string;
 	price: number;
-	image: { url: string; alt: string };
+	image: { url: string; alt: string; blurDataUrl?: string };
 }
 
 interface ProductCarouselUIProps {
@@ -35,16 +36,22 @@ interface ProductCarouselUIProps {
 export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 	const [api, setApi] = useState<CarouselApi>();
 	const [current, setCurrent] = useState(0);
+	const prefersReducedMotion = useReducedMotion();
 
-	// Plugin Autoplay (pattern officiel shadcn/ui)
-	const plugin = useRef(
-		Autoplay({
-			delay: PRODUCT_CAROUSEL_CONFIG.AUTOPLAY_DELAY,
-			stopOnInteraction: false, // Continue après interaction
-			stopOnMouseEnter: true, // Pause au survol
-			stopOnFocusIn: true, // Pause au focus (a11y)
-		})
-	);
+	// Plugin Autoplay - désactivé si l'utilisateur préfère les mouvements réduits (a11y WCAG 2.3.2)
+	const plugins = useMemo(() => {
+		if (prefersReducedMotion) {
+			return [];
+		}
+		return [
+			Autoplay({
+				delay: PRODUCT_CAROUSEL_CONFIG.AUTOPLAY_DELAY,
+				stopOnInteraction: false, // Continue après interaction
+				stopOnMouseEnter: true, // Pause au survol
+				stopOnFocusIn: true, // Pause au focus (a11y)
+			}),
+		];
+	}, [prefersReducedMotion]);
 
 	// Tracking du slide actif
 	useEffect(() => {
@@ -93,7 +100,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 
 				<Carousel
 					setApi={setApi}
-					plugins={[plugin.current]}
+					plugins={plugins}
 					opts={{
 						align: "start",
 						loop: true,
@@ -112,7 +119,9 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 										alt={product.image.alt}
 										fill
 										className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
-										preload={index === 0}
+										placeholder={product.image.blurDataUrl ? "blur" : "empty"}
+										blurDataURL={product.image.blurDataUrl}
+										priority={index === 0}
 										quality={index === 0 ? 90 : 80}
 										sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 50vw"
 									/>

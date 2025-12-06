@@ -35,6 +35,7 @@ export async function ProductCarousel() {
 			image: {
 				url: primaryImage.url,
 				alt: primaryImage.alt || product.title,
+				blurDataUrl: primaryImage.blurDataUrl,
 			},
 		};
 	});
