@@ -2,7 +2,7 @@
 
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { cn } from "@/shared/utils/cn";
-import { ShoppingBag } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface AddToCartCardButtonProps {
 	skuId: string;
@@ -14,7 +14,7 @@ interface AddToCartCardButtonProps {
  * Bouton d'ajout au panier pour les cartes produit
  *
  * Comportement responsive:
- * - Mobile: Bouton icône rond 44px transparent avec drop-shadow (style wishlist)
+ * - Mobile: Bouton rond 44px avec fond primary et icône "+"
  * - Desktop: Bouton pleine largeur "Ajouter au panier" avec fond primary
  *
  * - Disabled pendant le pending pour éviter double-click
@@ -52,18 +52,18 @@ export function AddToCartCardButton({
 				aria-disabled={isPending}
 				onClick={(e) => e.stopPropagation()}
 				className={cn(
-					// Mobile: bouton rond 44px
+					// Mobile: bouton rond 44px avec fond primary
 					"size-11 rounded-full flex items-center justify-center",
+					"bg-primary text-primary-foreground",
+					"shadow-md",
 					// Desktop: pleine largeur
 					"sm:w-full sm:h-auto sm:rounded-none sm:py-2.5 sm:px-4",
-					// Mobile: transparent, icône primary
-					"bg-transparent text-primary",
-					// Desktop: fond primary plein
-					"sm:bg-primary sm:text-primary-foreground sm:shadow-lg sm:shadow-black/20",
-					// Hover mobile: scale uniquement
-					"hover:scale-110 active:scale-95",
-					// Hover desktop: tracking + légère variation
-					"sm:hover:scale-100 sm:active:scale-100 sm:hover:bg-primary/90 sm:hover:tracking-widest",
+					"sm:shadow-lg sm:shadow-black/20",
+					// Hover mobile
+					"hover:scale-110 hover:bg-primary/90",
+					"active:scale-95",
+					// Hover desktop
+					"sm:hover:scale-100 sm:active:scale-100 sm:hover:tracking-widest",
 					// Transitions
 					"motion-safe:transition-all motion-safe:duration-300",
 					"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
@@ -71,12 +71,8 @@ export function AddToCartCardButton({
 				)}
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
-				{/* Mobile: icône shopping bag avec drop-shadow pour contraste */}
-				<ShoppingBag
-					size={20}
-					className="sm:hidden drop-shadow-[0_0_4px_rgba(255,255,255,1)] drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
-					aria-hidden="true"
-				/>
+				{/* Mobile: icône + simple */}
+				<Plus size={22} strokeWidth={2.5} className="sm:hidden" aria-hidden="true" />
 				{/* Desktop: texte */}
 				<span className="hidden sm:inline text-sm font-medium">
 					Ajouter au panier

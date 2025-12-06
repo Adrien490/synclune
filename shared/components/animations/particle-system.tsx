@@ -85,6 +85,14 @@ const SHAPE_STYLES: Record<ParticleShape, React.CSSProperties> = {
 	"soft-square": { borderRadius: "20%" },
 };
 
+/** Style d'animation float */
+const FLOAT_ANIMATION = (opacity: number) => ({
+	scale: [1, 1.4, 0.8, 1],
+	opacity: [opacity, opacity * 1.5, opacity * 0.6, opacity],
+	x: ["0%", "8%", "-8%", "0%"],
+	y: ["0%", "-6%", "6%", "0%"],
+});
+
 // ============================================================================
 // UTILS
 // ============================================================================
@@ -197,12 +205,7 @@ const ParticleSet = ({
 						filter: `blur(${p.blur}px)`,
 						...shapeStyles,
 					}}
-					animate={{
-						scale: [1, 1.4, 0.8, 1],
-						opacity: [p.opacity, p.opacity * 1.5, p.opacity * 0.6, p.opacity],
-						x: ["0%", "8%", "-8%", "0%"],
-						y: ["0%", "-6%", "6%", "0%"],
-					}}
+					animate={FLOAT_ANIMATION(p.opacity)}
 					transition={{
 						duration: p.duration,
 						delay: p.delay,
@@ -288,21 +291,21 @@ const ParticleSystemBase = ({
  * Utilise CSS media queries pour la détection mobile (pas de flash d'hydratation).
  * Desktop: count particules, Mobile: count/2 particules.
  *
+ * **Presets couleur** : bijoux, rose, dore, pastel
+ * **Formes** : circle, diamond, soft-square
+ *
  * @example
  * // Défaut (preset bijoux)
  * <ParticleSystem />
  *
- * // Thème bijoux avec profondeur variable
- * <ParticleSystem colorPreset="bijoux" blur={[10, 40]} />
+ * // Effet étincelles atelier
+ * <ParticleSystem colorPreset="dore" shape="diamond" />
  *
- * // Effet diamant luxe
- * <ParticleSystem colorPreset="dore" shape="diamond" count={8} />
+ * // Particules roses
+ * <ParticleSystem colorPreset="rose" count={5} />
  *
- * // Pastels doux
- * <ParticleSystem colorPreset="pastel" blur={[20, 45]} />
- *
- * // Override custom complet
- * <ParticleSystem colors={["#FFD700", "#FFC0CB"]} blur={[8, 50]} />
+ * // Particules pastel avec blur personnalisé
+ * <ParticleSystem colorPreset="pastel" blur={[15, 40]} />
  */
 export const ParticleSystem = memo(ParticleSystemBase);
 ParticleSystem.displayName = "ParticleSystem";

@@ -26,6 +26,8 @@ export { ParticleSystem } from "./particle-system";
 export { DecorativeHalo, DecorativeHaloGroup } from "./decorative-halo";
 export { BubbleDream } from "./bubble-dream";
 
+
+
 // Hero Backgrounds (compositions)
 export { HeroBackgroundGlitter } from "./hero-background-glitter";
 export * from "./hero-backgrounds";
@@ -43,6 +45,11 @@ export type { PresenceProps } from "./presence";
 // Background Animation Types
 export type { LiquidGradientProps } from "./liquid-gradient";
 export type { GlitterSparklesProps } from "./glitter-sparkles";
-export type { ParticleSystemProps } from "./particle-system";
+export type {
+	ParticleSystemProps,
+	ColorPreset,
+	ParticleShape,
+} from "./particle-system";
 export type { BubbleDreamProps } from "./bubble-dream";
 export type { HeroBackgroundGlitterProps } from "./hero-background-glitter";
+

@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import { memo, useMemo, useRef } from "react";
 
@@ -124,18 +123,68 @@ const generateBubbles = (count: number): Bubble[] => {
 	}));
 };
 
+// ============================================================================
+// BUBBLE SET COMPONENT
+// ============================================================================
+
+interface BubbleSetProps {
+	bubbles: Bubble[];
+	speed: number;
+	isInView: boolean;
+	reducedMotion: boolean | null;
+}
+
 /**
- * Retourne la hauteur de la fenêtre (SSR-safe)
+ * Composant interne pour rendre un ensemble de bulles
+ * Gère à la fois le rendu statique (reduced motion) et animé
  */
-const useWindowHeight = (): number => {
-	return useMemo(() => {
-		if (typeof window === "undefined") return 1000;
-		return window.innerHeight;
-	}, []);
+const BubbleSet = ({ bubbles, speed, isInView, reducedMotion }: BubbleSetProps) => {
+	if (!isInView) return null;
+
+	return (
+		<>
+			{bubbles.map((bubble) => {
+				// Animation selon prefers-reduced-motion
+				// Utilise 100vh comme approximation SSR-safe de la hauteur
+				const animation = reducedMotion
+					? REDUCED_MOTION_ANIMATION
+					: {
+							y: [0, `calc(-100vh - ${bubble.size}px)`],
+							x: [0, Math.sin(bubble.id) * bubble.waveAmplitude, 0],
+							opacity: [0, bubble.opacity, bubble.opacity, 0],
+						};
+
+				return (
+					<motion.div
+						key={bubble.id}
+						className="absolute rounded-full will-change-transform"
+						style={{
+							left: `${bubble.left}%`,
+							bottom: "-10%",
+							width: bubble.size,
+							height: bubble.size,
+							background: `radial-gradient(circle at 30% 30%, ${bubble.color.inner}, ${bubble.color.outer})`,
+							border: "1px solid oklch(0.9 0.05 340 / 0.2)",
+							boxShadow: "inset -10px -10px 20px oklch(1 0 0 / 0.3)",
+							backdropFilter: "blur(2px)",
+						}}
+						initial={{ y: 0, opacity: 0 }}
+						animate={animation}
+						transition={{
+							duration: bubble.duration / speed,
+							delay: bubble.delay,
+							repeat: reducedMotion ? 0 : Infinity,
+							ease: reducedMotion ? "easeInOut" : "linear",
+						}}
+					/>
+				);
+			})}
+		</>
+	);
 };
 
 // ============================================================================
-// COMPONENT
+// MAIN COMPONENT
 // ============================================================================
 
 const BubbleDreamBase = ({
@@ -146,23 +195,25 @@ const BubbleDreamBase = ({
 }: BubbleDreamProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
-	const isMobile = useIsMobile();
-	const windowHeight = useWindowHeight();
 	const isInView = useInView(containerRef, {
 		once: true,
 		margin: "-100px",
 	});
 
-	// Nombre de bulles adaptatif
-	const bubbleCount =
-		count ??
-		(isMobile ? DEFAULT_CONFIG.COUNT_MOBILE : DEFAULT_CONFIG.COUNT_DESKTOP);
-
-	// Génération des bulles (mémoïsé)
-	const bubbles = useMemo(() => generateBubbles(bubbleCount), [bubbleCount]);
-
 	// Clamp intensity entre 0.1 et 0.3
 	const safeIntensity = Math.max(0.1, Math.min(0.3, intensity));
+
+	// Génération des bulles pour desktop et mobile (mémoïsés séparément)
+	// CSS media queries gèrent l'affichage → pas de flash d'hydratation
+	const desktopBubbles = useMemo(
+		() => generateBubbles(count ?? DEFAULT_CONFIG.COUNT_DESKTOP),
+		[count]
+	);
+
+	const mobileBubbles = useMemo(
+		() => generateBubbles(count ?? DEFAULT_CONFIG.COUNT_MOBILE),
+		[count]
+	);
 
 	return (
 		<div
@@ -182,43 +233,25 @@ const BubbleDreamBase = ({
 			{/* Gradient de fond pastel doux */}
 			<div className="absolute inset-0 bg-linear-to-br from-pink-50/30 via-transparent to-amber-50/30" />
 
-			{/* Bulles animées */}
-			{isInView &&
-				bubbles.map((bubble) => {
-					// Animation selon prefers-reduced-motion
-					const animation = reducedMotion
-						? REDUCED_MOTION_ANIMATION
-						: {
-								y: [0, -(windowHeight + bubble.size)],
-								x: [0, Math.sin(bubble.id) * bubble.waveAmplitude, 0],
-								opacity: [0, bubble.opacity, bubble.opacity, 0],
-							};
+			{/* Desktop : visible uniquement sur md+ (768px+) */}
+			<div className="hidden md:contents">
+				<BubbleSet
+					bubbles={desktopBubbles}
+					speed={speed}
+					isInView={isInView}
+					reducedMotion={reducedMotion}
+				/>
+			</div>
 
-					return (
-						<motion.div
-							key={bubble.id}
-							className="absolute rounded-full will-change-transform"
-							style={{
-								left: `${bubble.left}%`,
-								bottom: "-10%",
-								width: bubble.size,
-								height: bubble.size,
-								background: `radial-gradient(circle at 30% 30%, ${bubble.color.inner}, ${bubble.color.outer})`,
-								border: "1px solid oklch(0.9 0.05 340 / 0.2)",
-								boxShadow: "inset -10px -10px 20px oklch(1 0 0 / 0.3)",
-								backdropFilter: "blur(2px)",
-							}}
-							initial={{ y: 0, opacity: 0 }}
-							animate={animation}
-							transition={{
-								duration: bubble.duration / speed,
-								delay: bubble.delay,
-								repeat: reducedMotion ? 0 : Infinity,
-								ease: reducedMotion ? "easeInOut" : "linear",
-							}}
-						/>
-					);
-				})}
+			{/* Mobile : visible uniquement sous md (< 768px) */}
+			<div className="contents md:hidden">
+				<BubbleSet
+					bubbles={mobileBubbles}
+					speed={speed}
+					isInView={isInView}
+					reducedMotion={reducedMotion}
+				/>
+			</div>
 		</div>
 	);
 };

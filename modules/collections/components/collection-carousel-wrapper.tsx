@@ -3,7 +3,9 @@
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useReducedMotion } from "framer-motion";
 import {
+	memo,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -110,7 +112,13 @@ interface CarouselDotsProps {
 	onDotClick: (index: number) => void;
 }
 
-function CarouselDots({ totalDots, activeIndex, onDotClick }: CarouselDotsProps) {
+const CarouselDots = memo(function CarouselDots({
+	totalDots,
+	activeIndex,
+	onDotClick,
+}: CarouselDotsProps) {
+	const prefersReducedMotion = useReducedMotion();
+
 	if (totalDots <= 1) return null;
 
 	return (
@@ -138,10 +146,11 @@ function CarouselDots({ totalDots, activeIndex, onDotClick }: CarouselDotsProps)
 						{/* Dot visuel interne */}
 						<span
 							className={cn(
-								"rounded-full transition-all duration-300 ease-out",
+								"rounded-full",
+								!prefersReducedMotion && "transition-all duration-300 ease-out",
 								index === activeIndex
-									? "w-6 h-2 bg-primary"
-									: "w-2 h-2 bg-muted-foreground/50 hover:bg-muted-foreground/70"
+									? "h-2 w-8 sm:h-2.5 sm:w-10 bg-primary shadow-md"
+									: "h-2 w-2 sm:h-2.5 sm:w-2.5 bg-muted-foreground/50 hover:bg-muted-foreground/70"
 							)}
 						/>
 					</button>
@@ -151,9 +160,13 @@ function CarouselDots({ totalDots, activeIndex, onDotClick }: CarouselDotsProps)
 			<span className="text-xs text-muted-foreground sr-only sm:not-sr-only">
 				{activeIndex + 1} sur {totalDots}
 			</span>
+			{/* Live region pour screen readers */}
+			<div className="sr-only" aria-live="polite" aria-atomic="true">
+				Collection {activeIndex + 1} sur {totalDots}
+			</div>
 		</div>
 	);
-}
+});
 
 // ============================================================================
 // CollectionCarouselWrapper - Composant principal
@@ -215,9 +228,9 @@ export function CollectionCarouselWrapper({
 		const dots = Math.max(1, Math.ceil(totalScrollable / scrollAmount));
 		setTotalDots(dots);
 
-		// Index actif basé sur la position de scroll
+		// Index actif basé sur la position de scroll (protection bounds min/max)
 		const currentIndex = Math.round(scrollLeft / scrollAmount);
-		setActiveIndex(Math.min(currentIndex, dots - 1));
+		setActiveIndex(Math.max(0, Math.min(currentIndex, dots - 1)));
 	}, [getScrollAmount]);
 
 	/**

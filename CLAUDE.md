@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Synclune is a French artisanal jewelry e-commerce platform built with Next.js 16 App Router, React 19, and TypeScript. It features:
+Synclune is a French handmade jewelry e-commerce platform built with Next.js 16 App Router, React 19, and TypeScript. The brand focuses on unique, handcrafted creations at accessible prices (not luxury/high-end). It features:
 - **Customer storefront** (`/boutique`) - Product browsing, cart, checkout, order tracking
 - **Admin dashboard** (`/admin`) - Inventory, orders, analytics, user management
 - **Stripe integration** - Payments, invoices, refunds, webhooks

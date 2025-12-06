@@ -3,7 +3,6 @@ import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 import { CollectionCard } from "./collection-card";
@@ -99,16 +98,6 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							))}
 						</Reveal>
 					</CollectionCarouselWrapper>
-
-					{/* Indicateur de scroll mobile */}
-					<div className="flex sm:hidden items-center justify-center gap-1.5 mt-2 text-muted-foreground">
-						<span className="text-xs tracking-wide">Glissez pour voir plus</span>
-						<ChevronRight
-							size={14}
-							className="animate-[pulse_1.5s_ease-in-out_infinite]"
-							aria-hidden="true"
-						/>
-					</div>
 				</div>
 
 				<div id="collections-cta" className="text-center">
