@@ -93,12 +93,21 @@ export function ProductCard({
 				// Border, shadow et scale au hover
 				"shadow-sm motion-safe:hover:border-primary/30 motion-safe:hover:shadow-xl motion-safe:hover:shadow-primary/15",
 				"motion-safe:hover:-translate-y-1.5 motion-safe:hover:scale-[1.01] will-change-transform",
-				// Active state pour mobile
-				"active:scale-[0.98]"
+				// Active state pour mobile - seulement sur le lien, pas sur les boutons interactifs
+				"has-[a:active]:motion-safe:scale-[0.98]"
 			)}
 			itemScope
 			itemType="https://schema.org/Product"
 		>
+			{/* Bouton wishlist - EN DEHORS du Link pour éviter les conflits d'événements sur mobile */}
+			{primarySku && (
+				<WishlistButton
+					skuId={primarySku.id}
+					isInWishlist={isInWishlist ?? false}
+					productTitle={title}
+					className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200"
+				/>
+			)}
 			{/* Link unique englobant toute la carte */}
 			<Link
 				href={productUrl}
@@ -126,15 +135,6 @@ export function ProductCard({
 						>
 							Plus que {inventory} !
 						</div>
-					)}
-					{/* Bouton wishlist - toujours visible sur mobile, visible au hover sur desktop */}
-					{primarySku && (
-						<WishlistButton
-							skuId={primarySku.id}
-							isInWishlist={isInWishlist ?? false}
-							productTitle={title}
-							className="absolute top-2.5 right-2.5 z-20 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200"
-						/>
 					)}
 					<ViewTransition name={`${vtPrefix}product-image-${slug}`} default="vt-product-image" share="vt-product-image">
 						<Image
