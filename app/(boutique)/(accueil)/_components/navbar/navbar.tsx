@@ -95,11 +95,11 @@ export async function Navbar() {
 						{/* Section droite: Tableau de bord (admin) + Compte + Panier */}
 						<div className="flex flex-1 items-center justify-end min-w-0">
 							<div className="flex items-center gap-3 shrink-0">
-								{/* Icône tableau de bord (visible uniquement pour les admins) */}
+								{/* Icône tableau de bord (visible uniquement pour les admins, desktop seulement) */}
 								{userIsAdmin && (
 									<Link
 										href="/admin"
-										className={`inline-flex ${iconLinkClassName}`}
+										className={`hidden sm:inline-flex ${iconLinkClassName}`}
 										aria-label="Accéder au tableau de bord"
 									>
 										<LayoutDashboard
