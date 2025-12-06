@@ -239,7 +239,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 								"relative aspect-square overflow-hidden rounded-2xl sm:rounded-3xl",
 								"bg-linear-organic border border-border sm:border-2",
 								"shadow-md sm:shadow-lg hover:shadow-lg transition-all duration-300",
-								"w-full max-w-[min(90vw,24rem)] sm:max-w-sm md:max-w-none mx-auto",
+								"w-full md:max-w-none",
 								current.mediaType === "IMAGE" && "cursor-zoom-in"
 							)}
 							{...(current.mediaType === "IMAGE" && {
