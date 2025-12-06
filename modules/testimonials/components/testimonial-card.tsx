@@ -35,14 +35,10 @@ export function TestimonialCard({
 
 	return (
 		<Card
-			tabIndex={0}
 			className={cn(
 				"group h-full border-0 backdrop-blur-sm",
-				"transition-all duration-500 ease-in-out",
-				"hover:scale-[1.01] hover:shadow-lg",
-				"focus-visible:scale-[1.01] focus-visible:shadow-lg",
-				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-				"active:scale-[0.98]",
+				"transition-shadow duration-500 ease-in-out",
+				"hover:shadow-lg",
 				isFeatured
 					? "bg-gradient-to-br from-primary/5 via-card/50 to-card/50 hover:from-primary/10 border-l-4 border-l-primary"
 					: "bg-card/50 hover:bg-card/70",
@@ -60,8 +56,8 @@ export function TestimonialCard({
 						aria-hidden="true"
 						className={cn(
 							"shrink-0 text-primary/30",
-							"transition-all duration-500 ease-in-out",
-							"group-hover:text-primary/50 group-hover:scale-105",
+							"transition-colors duration-500 ease-in-out",
+							"group-hover:text-primary/50",
 							isFeatured
 								? "h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10 mb-4 sm:mb-5 lg:mb-6"
 								: "h-6 w-6 sm:h-7 sm:w-7 mb-3 sm:mb-4"
@@ -76,7 +72,7 @@ export function TestimonialCard({
 								: "text-sm sm:text-base mb-4 sm:mb-5 line-clamp-4"
 						)}
 					>
-						&ldquo;{testimonial.content}&rdquo;
+						{testimonial.content}
 					</blockquote>
 
 					<figcaption className="flex items-center gap-3 mt-auto">
