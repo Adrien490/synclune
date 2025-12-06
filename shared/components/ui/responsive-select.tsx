@@ -325,7 +325,7 @@ function ResponsiveSelectItem({
 			className={cn(
 				"flex items-center gap-3 px-4 py-3 text-left text-sm",
 				"min-h-[48px]", // Touch target 48px
-				"hover:bg-accent focus:bg-accent focus:outline-none",
+				"hover:bg-accent focus:bg-accent focus:outline-hidden",
 				"disabled:pointer-events-none disabled:opacity-50",
 				isSelected && "bg-accent/50",
 				className

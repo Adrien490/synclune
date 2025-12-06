@@ -80,7 +80,7 @@ export const WizardProgress = memo(function WizardProgress({
 				aria-label="Navigation entre les étapes"
 				onKeyDown={handleKeyDown}
 				tabIndex={0}
-				className={cn("flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full", className)}
+				className={cn("flex items-center gap-3 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full", className)}
 			>
 				{steps.map((step, index) => {
 					const isActive = index === currentStep
@@ -126,7 +126,7 @@ export const WizardProgress = memo(function WizardProgress({
 			aria-label="Progression du formulaire"
 			onKeyDown={handleKeyDown}
 			tabIndex={0}
-			className={cn("focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg", className)}
+			className={cn("focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg", className)}
 		>
 			<ol role="tablist" className="flex items-center gap-2">
 				{steps.map((step, index) => {

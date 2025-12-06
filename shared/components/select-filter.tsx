@@ -63,7 +63,7 @@ export function SelectFilter({
 					onValueChange={handleSelect}
 					disabled={isPending}
 				>
-					<SelectTrigger className="flex-1 !h-[44px]">
+					<SelectTrigger className="flex-1 h-[44px]!">
 						<span className="text-muted-foreground text-xs mr-2">{label}</span>
 						<div className="flex-1">
 							<SelectValue placeholder={placeholder} />

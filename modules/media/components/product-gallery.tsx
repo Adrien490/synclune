@@ -235,7 +235,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 									onNavigate={navigateToIndex}
 									onError={handleMediaError}
 									hasError={hasError}
-									thumbnailClassName="flex-shrink-0 h-auto hover:shadow-sm"
+									thumbnailClassName="shrink-0 h-auto hover:shadow-sm"
 								/>
 							</div>
 						)}

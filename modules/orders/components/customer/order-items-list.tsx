@@ -49,7 +49,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 								className="flex gap-4 py-4 first:pt-0 last:pb-0"
 							>
 								{/* Image */}
-								<div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+								<div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
 									{imageUrl ? (
 										<Image
 											src={imageUrl}
@@ -82,7 +82,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 								</div>
 
 								{/* Price */}
-								<div className="text-right flex-shrink-0">
+								<div className="text-right shrink-0">
 									<p className="font-semibold text-sm">
 										{formatPrice(item.price * item.quantity)}
 									</p>

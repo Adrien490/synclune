@@ -231,7 +231,7 @@ export function Autocomplete<T>({
 							id={listboxId}
 							role="listbox"
 							aria-label="Résultats de recherche"
-							className="absolute z-10 w-full mt-1 max-h-60 md:max-h-80 overflow-auto rounded-md border shadow-lg py-1 text-base md:text-sm focus:outline-none bg-background"
+							className="absolute z-10 w-full mt-1 max-h-60 md:max-h-80 overflow-auto rounded-md border shadow-lg py-1 text-base md:text-sm focus:outline-hidden bg-background"
 							initial={{ opacity: 0, y: -10 }}
 							animate={{ opacity: 1, y: 0 }}
 							exit={{ opacity: 0, y: -10 }}
