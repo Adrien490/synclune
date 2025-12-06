@@ -32,7 +32,7 @@ const BLOB_CONFIG = [
 		// Taille
 		size: { width: "600px", height: "600px" },
 		// Couleur (utilise la variable CSS primary)
-		color: "oklch(0.8593 0.097 340.78 / var(--blob-opacity))",
+		color: "oklch(from var(--primary) l c h / var(--blob-opacity))",
 		// Animation
 		animation: {
 			x: [0, 100, 0],
@@ -47,7 +47,7 @@ const BLOB_CONFIG = [
 		id: "blob-dore",
 		position: { bottom: "-8rem", right: "-8rem" },
 		size: { width: "500px", height: "500px" },
-		color: "oklch(0.9221 0.0871 86.29 / var(--blob-opacity))",
+		color: "oklch(from var(--secondary) l c h / var(--blob-opacity))",
 		animation: {
 			x: [0, -80, 0],
 			y: [0, -60, 0],
