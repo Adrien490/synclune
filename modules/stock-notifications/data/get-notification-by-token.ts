@@ -21,6 +21,7 @@ export async function getNotificationByToken(
 		const notification = await prisma.stockNotificationRequest.findFirst({
 			where: {
 				unsubscribeToken: token,
+				deletedAt: null,
 				// Exclure les notifications d'utilisateurs soft-deleted
 				OR: [{ user: null }, { user: { deletedAt: null } }],
 			},
@@ -52,7 +53,7 @@ export async function getNotificationsByUser(
 
 	try {
 		const notifications = await prisma.stockNotificationRequest.findMany({
-			where: { userId },
+			where: { userId, deletedAt: null },
 			select: STOCK_NOTIFICATION_WITH_SKU_SELECT,
 			orderBy: { createdAt: "desc" },
 		});
@@ -82,7 +83,7 @@ export async function getNotificationsByEmail(
 
 	try {
 		const notifications = await prisma.stockNotificationRequest.findMany({
-			where: { email: email.toLowerCase() },
+			where: { email: email.toLowerCase(), deletedAt: null },
 			select: STOCK_NOTIFICATION_WITH_SKU_SELECT,
 			orderBy: { createdAt: "desc" },
 		});

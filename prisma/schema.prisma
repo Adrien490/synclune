@@ -1142,6 +1142,34 @@ model StockNotificationRequest {
 }
 
 // ============================================================================
+// TÉMOIGNAGES
+// ============================================================================
+
+model Testimonial {
+  id String @id @default(cuid())
+
+  // Contenu
+  authorName String @db.VarChar(50) // Prénom du client
+  content    String @db.Text        // Texte du témoignage
+
+  // Image (via UploadThing)
+  imageUrl String? @db.VarChar(2048) // URL de l'image (bijou porté)
+
+  // État
+  isPublished Boolean @default(false) // Brouillon ou publié
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?                 // Soft delete RGPD
+
+  @@index([isPublished])
+  @@index([deletedAt])
+  @@index([createdAt(sort: Desc)])
+  @@index([deletedAt, isPublished, createdAt(sort: Desc)]) // Query admin avec filtres
+}
+
+// ============================================================================
 // WEBHOOKS IDEMPOTENCY (Stripe)
 // ============================================================================
 

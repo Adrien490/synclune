@@ -2,6 +2,7 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { getClientIp } from "@/shared/lib/rate-limit";
+import { enforceRateLimit } from "@/shared/lib/actions";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { headers } from "next/headers";
@@ -21,10 +22,15 @@ export async function subscribeToStockNotification(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// Récupérer les informations de traçabilité RGPD
 		const headersList = await headers();
 		const ipAddress = (await getClientIp(headersList)) || "unknown";
-		const userAgent = headersList.get("user-agent") || "unknown";
+
+		// Rate limiting: 5 souscriptions par heure par IP (in-memory, non stocké en base)
+		const rateLimitCheck = enforceRateLimit(`stock-notification:${ipAddress}`, {
+			limit: 5,
+			windowMs: 60 * 60 * 1000, // 1 heure
+		});
+		if ("error" in rateLimitCheck) return rateLimitCheck.error;
 
 		// Vérifier si l'utilisateur est connecté
 		const session = await auth.api.getSession({ headers: headersList });
@@ -114,8 +120,6 @@ export async function subscribeToStockNotification(
 						userId, // Mettre à jour le userId si l'utilisateur s'est connecté entre temps
 						// notifiedAt conservé pour le cooldown
 						notifiedInventory: null,
-						ipAddress,
-						userAgent,
 					},
 				});
 			} else {
@@ -126,8 +130,6 @@ export async function subscribeToStockNotification(
 						userId,
 						email: normalizedEmail,
 						status: StockNotificationStatus.PENDING,
-						ipAddress,
-						userAgent,
 					},
 				});
 			}

@@ -91,7 +91,7 @@ export type SignInSocialInput = z.infer<typeof signInSocialSchema>;
 
 export const signUpEmailSchema = z
 	.object({
-		email: z.string().email({ message: "Format d'email invalide" }),
+		email: z.email({ message: "Format d'email invalide" }),
 		password: newPasswordSchema,
 		confirmPassword: z
 			.string()

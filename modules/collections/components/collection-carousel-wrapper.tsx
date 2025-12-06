@@ -41,6 +41,9 @@ interface CarouselState {
 	totalItems: number;
 }
 
+// État initial pour SSR (doit être stable/cached pour éviter boucle infinie)
+const INITIAL_STATE: CarouselState = { activeIndex: 0, totalItems: 0 };
+
 // ============================================================================
 // Store externe pour le carousel (pattern useSyncExternalStore)
 // ============================================================================
@@ -100,16 +103,17 @@ const CarouselArrowButton = memo(function CarouselArrowButton({
 				positionClass,
 				"hidden lg:flex",
 				"opacity-0 group-hover/carousel:opacity-100 group-focus-within/carousel:opacity-100",
-				"rounded-full bg-card border-2 border-secondary",
+				"rounded-full bg-card/95 backdrop-blur-sm",
+				"border border-primary/20",
 				"shadow-lg hover:shadow-xl",
-				"text-secondary",
-				"hover:bg-secondary hover:text-secondary-foreground hover:scale-105",
+				"text-foreground/70",
+				"hover:bg-primary/10 hover:text-primary hover:border-primary/40 hover:scale-105",
 				"disabled:opacity-40 disabled:pointer-events-none disabled:hover:scale-100",
 				"transition-all duration-300 ease-out"
 			)}
 			aria-label={label}
 		>
-			<Icon className="h-6 w-6" />
+			<Icon className="size-5" />
 		</Button>
 	);
 });
@@ -183,27 +187,49 @@ export function CollectionCarouselWrapper({
 	const storeRef = useRef(createCarouselStore());
 	const visibilityMapRef = useRef<Map<number, number>>(new Map());
 
+	// Refs pour éviter les race conditions scroll + IntersectionObserver
+	const isScrollingRef = useRef(false);
+	const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const itemCountRef = useRef(0);
+
 	// Souscription au store avec useSyncExternalStore (évite les tearing issues)
 	const { activeIndex, totalItems } = useSyncExternalStore(
 		storeRef.current.subscribe,
 		storeRef.current.getState,
-		// SSR: retourne l'état initial
-		() => ({ activeIndex: 0, totalItems: 0 })
+		// SSR: retourne l'état initial (doit être stable/cached)
+		() => INITIAL_STATE
 	);
 
-	// Scroll vers un item spécifique
+	// Scroll vers un item spécifique (avec protection race condition)
 	const scrollToItem = useCallback((index: number) => {
+		// Cancel le scroll précédent si en cours
+		if (scrollTimeoutRef.current) {
+			clearTimeout(scrollTimeoutRef.current);
+		}
+
 		const container = containerRef.current?.querySelector(
 			"[data-carousel-scroll]"
 		);
 		const item = container?.querySelector(
 			`[data-index="${index}"]`
 		) as HTMLElement;
-		item?.scrollIntoView({
+
+		if (!item) return;
+
+		// Flag pour ignorer les updates de l'IntersectionObserver pendant le scroll
+		isScrollingRef.current = true;
+
+		item.scrollIntoView({
 			behavior: "smooth",
 			inline: "center",
 			block: "nearest",
 		});
+
+		// Après le scroll smooth (~500ms), forcer l'index correct et réactiver l'observer
+		scrollTimeoutRef.current = setTimeout(() => {
+			isScrollingRef.current = false;
+			storeRef.current.setState({ activeIndex: index });
+		}, 500);
 	}, []);
 
 	// Navigation par flèches (utilise le store directement pour éviter les closures stales)
@@ -235,6 +261,15 @@ export function CollectionCarouselWrapper({
 		[handleScrollLeft, handleScrollRight]
 	);
 
+	// Cleanup du timeout au unmount
+	useEffect(() => {
+		return () => {
+			if (scrollTimeoutRef.current) {
+				clearTimeout(scrollTimeoutRef.current);
+			}
+		};
+	}, []);
+
 	// Setup de l'IntersectionObserver
 	useEffect(() => {
 		const container = containerRef.current?.querySelector(
@@ -244,6 +279,10 @@ export function CollectionCarouselWrapper({
 
 		const items = container.querySelectorAll("[data-index]");
 		const itemCount = items.length;
+
+		// Skip si le nombre d'items n'a pas changé (évite re-création inutile de l'observer)
+		if (itemCount === itemCountRef.current && itemCount > 0) return;
+		itemCountRef.current = itemCount;
 
 		// Met à jour le nombre total d'items
 		storeRef.current.setState({ totalItems: itemCount });
@@ -255,6 +294,9 @@ export function CollectionCarouselWrapper({
 
 		const observer = new IntersectionObserver(
 			(entries) => {
+				// Ignorer les updates pendant un scroll programmatique (évite race condition)
+				if (isScrollingRef.current) return;
+
 				// Met à jour les ratios de visibilité
 				for (const entry of entries) {
 					const index = Number(entry.target.getAttribute("data-index"));
@@ -267,21 +309,27 @@ export function CollectionCarouselWrapper({
 					}
 				}
 
-				// Trouve l'item avec le plus grand ratio de visibilité
+				// Si map vide (momentum scroll rapide), garder l'ancien activeIndex
+				if (visibilityMapRef.current.size === 0) return;
+
+				// Trouve les items avec le plus grand ratio de visibilité
 				let maxRatio = 0;
-				let mostVisibleIndex = 0;
+				const candidates: number[] = [];
 
 				visibilityMapRef.current.forEach((ratio, index) => {
 					if (ratio > maxRatio) {
 						maxRatio = ratio;
-						mostVisibleIndex = index;
+						candidates.length = 0;
+						candidates.push(index);
+					} else if (ratio === maxRatio) {
+						candidates.push(index);
 					}
 				});
 
-				// Met à jour l'index actif via le store
-				if (visibilityMapRef.current.size > 0) {
-					storeRef.current.setState({ activeIndex: mostVisibleIndex });
-				}
+				// Si plusieurs candidats avec même ratio (ex: tous visibles), prendre le médian
+				const mostVisibleIndex =
+					candidates[Math.floor(candidates.length / 2)] ?? 0;
+				storeRef.current.setState({ activeIndex: mostVisibleIndex });
 			},
 			{
 				root: container,

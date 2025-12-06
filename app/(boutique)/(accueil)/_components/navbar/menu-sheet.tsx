@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -12,11 +12,36 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
-import type { getMobileNavItems } from "@/shared/constants/navigation";
+import type { IconName, getMobileNavItems } from "@/shared/constants/navigation";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { cn } from "@/shared/utils/cn";
-import { Menu } from "lucide-react";
+import {
+	FolderOpen,
+	Gem,
+	Home,
+	Info,
+	LayoutDashboard,
+	LogIn,
+	Menu,
+	Sparkles,
+	User,
+	type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
+
+/** Mapping des noms d'icônes vers les composants Lucide */
+const ICON_MAP: Record<IconName, LucideIcon> = {
+	home: Home,
+	gem: Gem,
+	sparkles: Sparkles,
+	"shopping-cart": Gem, // Fallback, pas utilisé dans le menu mobile
+	user: User,
+	"folder-open": FolderOpen,
+	heart: Gem, // Fallback
+	"log-in": LogIn,
+	info: Info,
+	"layout-dashboard": LayoutDashboard,
+};
 
 /** HREFs de la zone compte (memoisation) */
 const ACCOUNT_HREFS = ["/compte", "/connexion", "/admin", "/a-propos"] as const;
@@ -63,6 +88,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 	const renderNavItem = useCallback(
 		(item: (typeof navItems)[0]) => {
 			const isActive = isMenuItemActive(item.href);
+			const IconComponent = item.icon ? ICON_MAP[item.icon] : null;
 
 			return (
 				<SheetClose asChild key={item.href}>
@@ -72,11 +98,21 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 							"flex items-center gap-3 text-base/6 font-medium tracking-wide antialiased transition-all duration-200 rounded-none px-4 py-3 relative border-b-2",
 							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
 							isActive
-								? "font-semibold border-secondary"
-								: "border-transparent hover:border-secondary"
+								? "font-semibold border-primary bg-primary/5"
+								: "border-transparent hover:border-primary/50 hover:bg-accent/50"
 						)}
 						aria-current={isActive ? "page" : undefined}
 					>
+						{IconComponent && (
+							<IconComponent
+								size={20}
+								className={cn(
+									"shrink-0 transition-colors duration-200",
+									isActive ? "text-foreground" : "text-muted-foreground"
+								)}
+								aria-hidden="true"
+							/>
+						)}
 						<span>{item.label}</span>
 					</Link>
 				</SheetClose>
@@ -85,8 +121,11 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 		[isMenuItemActive]
 	);
 
+	// State pour aria-live (annonce ouverture/fermeture)
+	const [isOpen, setIsOpen] = useState(false);
+
 	return (
-		<Sheet>
+		<Sheet onOpenChange={setIsOpen}>
 			<SheetTrigger asChild>
 				<Button
 					variant="ghost"
@@ -102,6 +141,12 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 					/>
 				</Button>
 			</SheetTrigger>
+
+			{/* Aria-live region pour annoncer l'état du menu aux lecteurs d'écran */}
+			<div aria-live="polite" aria-atomic="true" className="sr-only">
+				{isOpen ? "Menu de navigation ouvert" : "Menu de navigation fermé"}
+			</div>
+
 			<SheetContent
 				side="left"
 				className="w-[85vw] max-w-72 sm:w-80 sm:max-w-md border-r bg-background/95 p-6 flex flex-col"
@@ -115,14 +160,21 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 					</p>
 				</SheetHeader>
 
-				<nav aria-label="Menu principal" className="flex-1 overflow-y-auto">
+				<nav
+					aria-label="Menu principal"
+					className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]"
+				>
 					{/* Zone découverte: Accueil, Collections, Mes créations, Personnaliser */}
 					<Stagger stagger={0.04} delay={0.05} y={10} className="space-y-2">
 						{discoveryItems.map((item) => renderNavItem(item))}
 					</Stagger>
 
 					{/* Séparateur */}
-					<div className="my-6 border-t border-border/40" role="separator" />
+					<div
+						className="my-8 border-t border-border/60"
+						role="separator"
+						aria-hidden="true"
+					/>
 
 					{/* Zone compte: Mon compte / Se connecter, Tableau de bord (admin), L'atelier */}
 					<Stagger stagger={0.04} delay={0.15} y={10} className="space-y-2">

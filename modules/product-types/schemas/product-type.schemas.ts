@@ -85,7 +85,7 @@ export const createProductTypeSchema = z.object({
 });
 
 export const updateProductTypeSchema = z.object({
-	id: z.string().cuid("ID invalide"),
+	id: z.cuid("ID invalide"),
 	label: productTypeLabelSchema,
 	description: productTypeDescriptionSchema,
 });

@@ -124,7 +124,7 @@ export const createDiscountSchema = discountRefinements(baseDiscountSchema);
 
 export const updateDiscountSchema = discountRefinements(
 	baseDiscountSchema.extend({
-		id: z.string().cuid("ID invalide"),
+		id: z.cuid("ID invalide"),
 	})
 );
 
@@ -133,7 +133,7 @@ export const updateDiscountSchema = discountRefinements(
 // ============================================================================
 
 export const deleteDiscountSchema = z.object({
-	id: z.string().cuid("ID invalide"),
+	id: z.cuid("ID invalide"),
 });
 
 // ============================================================================
@@ -151,5 +151,5 @@ export const bulkDeleteDiscountsSchema = z.object({
 // ============================================================================
 
 export const toggleDiscountStatusSchema = z.object({
-	id: z.string().cuid("ID invalide"),
+	id: z.cuid("ID invalide"),
 });

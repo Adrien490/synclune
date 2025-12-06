@@ -35,6 +35,7 @@ export async function getPendingNotificationsBySku(
 			where: {
 				skuId,
 				status: StockNotificationStatus.PENDING,
+				deletedAt: null,
 			},
 			select: STOCK_NOTIFICATION_WITH_SKU_SELECT,
 			orderBy: { createdAt: "asc" },
@@ -83,6 +84,7 @@ export async function countPendingNotificationsBySku(
 			where: {
 				skuId,
 				status: StockNotificationStatus.PENDING,
+				deletedAt: null,
 			},
 		});
 	} catch (error) {
@@ -111,6 +113,7 @@ export async function hasExistingPendingNotification(
 				email: email.toLowerCase(),
 				skuId,
 				status: StockNotificationStatus.PENDING,
+				deletedAt: null,
 			},
 			select: { id: true },
 		});

@@ -1,6 +1,6 @@
 "use server";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -11,20 +11,15 @@ import { STOCK_NOTIFICATIONS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 /**
- * Server Action ADMIN pour supprimer définitivement plusieurs notifications (RGPD)
+ * Server Action ADMIN pour soft-delete plusieurs notifications (RGPD - retention 10 ans)
  */
 export async function bulkDeleteStockNotifications(
 	_prevState: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		const idsRaw = formData.get("ids") as string;
 		let ids: string[];
@@ -46,9 +41,13 @@ export async function bulkDeleteStockNotifications(
 			};
 		}
 
-		// Supprimer en masse
-		const deleteResult = await prisma.stockNotificationRequest.deleteMany({
-			where: { id: { in: result.data.ids } },
+		// Soft delete en masse (retention 10 ans - Art. L123-22 Code de Commerce)
+		const deleteResult = await prisma.stockNotificationRequest.updateMany({
+			where: {
+				id: { in: result.data.ids },
+				deletedAt: null, // Ne pas re-supprimer les déjà supprimés
+			},
+			data: { deletedAt: new Date() },
 		});
 
 		// Invalider le cache

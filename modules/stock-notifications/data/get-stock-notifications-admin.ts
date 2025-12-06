@@ -7,6 +7,7 @@ import {
 } from "@/shared/components/cursor-pagination/pagination";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { STOCK_NOTIFICATIONS_CACHE_TAGS } from "../constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 // ============================================================================
 // TYPES
@@ -256,6 +257,7 @@ export async function getStockNotificationsStats(): Promise<StockNotificationsSt
 	"use cache";
 	cacheLife("dashboard");
 	cacheTag(STOCK_NOTIFICATIONS_CACHE_TAGS.PENDING_LIST);
+	cacheTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 	try {
 		const now = new Date();

@@ -80,7 +80,7 @@ export const getSubscribersSchema = z.object({
 // ============================================================================
 
 export const subscriberIdSchema = z.object({
-	subscriberId: z.string().cuid2("ID d'abonné invalide"),
+	subscriberId: z.cuid2("ID d'abonné invalide"),
 });
 
 // ============================================================================

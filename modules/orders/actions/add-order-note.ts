@@ -9,7 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { z } from "zod";
 
 const addOrderNoteSchema = z.object({
-	orderId: z.string().cuid(),
+	orderId: z.cuid(),
 	content: z.string().min(1, "La note ne peut pas être vide").max(5000, "Note trop longue (max 5000 caractères)"),
 });
 

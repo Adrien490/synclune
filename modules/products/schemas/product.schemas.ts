@@ -225,7 +225,7 @@ const initialSkuSchema = z.object({
 
 // Schema pour SKU par defaut (pour update)
 const defaultSkuSchema = z.object({
-	skuId: z.string().cuid({ error: "ID SKU invalide" }),
+	skuId: z.cuid({ error: "ID SKU invalide" }),
 
 	// Prix en euros (sera converti en centimes cote serveur)
 	priceInclTaxEuros: z.coerce
@@ -309,7 +309,7 @@ export const createProductSchema = z
 
 		// Collections (many-to-many)
 		collectionIds: z
-			.array(z.string().cuid())
+			.array(z.cuid())
 			.max(10, { error: "Un produit ne peut appartenir qu'a 10 collections maximum" })
 			.optional()
 			.default([]),
@@ -351,7 +351,7 @@ export const createProductSchema = z
 export const updateProductSchema = z
 	.object({
 		// Product ID (required for update)
-		productId: z.string().cuid({ error: "ID produit invalide" }),
+		productId: z.cuid({ error: "ID produit invalide" }),
 
 		// Product fields (modifiables)
 		title: z
@@ -378,7 +378,7 @@ export const updateProductSchema = z
 
 		// Collections (many-to-many)
 		collectionIds: z
-			.array(z.string().cuid())
+			.array(z.cuid())
 			.max(10, { error: "Un produit ne peut appartenir qu'a 10 collections maximum" })
 			.optional()
 			.default([]),

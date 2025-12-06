@@ -255,12 +255,7 @@ export async function notifyStockAvailableAction(
 	formData: FormData
 ): Promise<ActionState> {
 	const admin = await requireAdmin();
-	if (!admin) {
-		return {
-			status: ActionStatus.UNAUTHORIZED,
-			message: "Accès non autorisé. Droits administrateur requis.",
-		};
-	}
+	if ("error" in admin) return admin.error;
 
 	const skuId = formData.get("skuId") as string;
 

@@ -459,3 +459,37 @@ export const WISHLIST_LIMITS = {
 	CLEAR: WISHLIST_TOGGLE_LIMIT,
 	MERGE: WISHLIST_MERGE_LIMIT,
 } as const;
+
+// ========================================
+// 🛡️ ADMINISTRATION (ADMIN)
+// ========================================
+
+/**
+ * Limite pour la création de témoignages (admin)
+ *
+ * Protège contre :
+ * - Spam de création (bot ou erreur de script)
+ * - Abus de l'interface admin
+ */
+export const ADMIN_TESTIMONIAL_CREATE_LIMIT: RateLimitConfig = {
+	limit: 20, // 20 créations maximum
+	windowMs: minutes(5), // par 5 minutes
+};
+
+/**
+ * Limite pour la mise à jour de témoignages (admin)
+ *
+ * Plus permissif car modifications fréquentes possibles
+ */
+export const ADMIN_TESTIMONIAL_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 30, // 30 modifications maximum
+	windowMs: minutes(5), // par 5 minutes
+};
+
+/**
+ * Toutes les limites admin
+ */
+export const ADMIN_LIMITS = {
+	TESTIMONIAL_CREATE: ADMIN_TESTIMONIAL_CREATE_LIMIT,
+	TESTIMONIAL_UPDATE: ADMIN_TESTIMONIAL_UPDATE_LIMIT,
+} as const;

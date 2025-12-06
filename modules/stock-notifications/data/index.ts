@@ -19,3 +19,8 @@ export {
 	STOCK_NOTIFICATIONS_SORT_LABELS,
 	type StockNotificationsStats,
 } from "./get-stock-notifications-admin";
+
+export {
+	getUserNotificationsForExport,
+	type StockNotificationExport,
+} from "./get-user-notifications-for-export";

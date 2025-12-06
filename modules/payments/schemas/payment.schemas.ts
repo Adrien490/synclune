@@ -164,7 +164,7 @@ export type CheckoutFormData = z.infer<typeof checkoutSchema>;
  * Schema pour exporter plusieurs paiements en CSV
  */
 export const bulkExportPaymentsSchema = z.object({
-	ids: z.array(z.string().cuid()).min(1, "Au moins un paiement doit être sélectionné"),
+	ids: z.array(z.cuid()).min(1, "Au moins un paiement doit être sélectionné"),
 });
 
 export type BulkExportPaymentsInput = z.infer<typeof bulkExportPaymentsSchema>;

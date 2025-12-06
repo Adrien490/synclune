@@ -15,6 +15,7 @@ import {
 	Gem,
 	Megaphone,
 	Settings,
+	Quote,
 } from "lucide-react";
 import type { NavBadgeKey } from "./nav-badges-data";
 
@@ -139,6 +140,12 @@ export const navigationData: NavigationData = {
 					url: "/admin/marketing/notifications-stock",
 					icon: Bell,
 					badge: "stockAlerts",
+				},
+				{
+					id: "testimonials",
+					title: "Témoignages",
+					url: "/admin/marketing/temoignages",
+					icon: Quote,
 				},
 			],
 		},
