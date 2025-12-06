@@ -10,12 +10,13 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { getColorOptions } from "@/modules/colors/data/get-color-options";
+import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getSkuById } from "@/modules/skus/data/get-sku";
 import { EditProductVariantForm } from "@/modules/skus/components/admin/edit-sku-form";
 import { DeletePrimaryImageAlertDialog } from "@/modules/media/components/admin/delete-primary-image-alert-dialog";
 import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
-import { prisma } from "@/shared/lib/prisma";
 
 type EditSkuPageParams = Promise<{ slug: string; skuId: string }>;
 
@@ -54,21 +55,8 @@ export default async function EditSkuPage({
 	const [product, sku, colors, materials] = await Promise.all([
 		getProductBySlug({ slug, includeDraft: true }),
 		getSkuById(skuId),
-		prisma.color.findMany({
-			select: {
-				id: true,
-				name: true,
-				hex: true,
-			},
-			orderBy: { name: "asc" },
-		}),
-		prisma.material.findMany({
-			select: {
-				id: true,
-				name: true,
-			},
-			orderBy: { name: "asc" },
-		}),
+		getColorOptions(),
+		getMaterialOptions(),
 	]);
 
 	if (!product || !sku) {

@@ -43,50 +43,8 @@ export { MATERIALS_SORT_LABELS as SORT_LABELS } from "../constants/materials.con
 export { MATERIALS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/materials.constants";
 
 // ============================================================================
-// TYPES
-// ============================================================================
-
-export type MaterialOption = {
-	id: string;
-	slug: string;
-	name: string;
-};
-
-// ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
-
-/**
- * Récupère tous les matériaux actifs pour les selects/filtres
- * Version simplifiée sans pagination
- */
-export async function getMaterialOptions(): Promise<MaterialOption[]> {
-	return fetchMaterialOptions();
-}
-
-/**
- * Récupère les matériaux pour les selects depuis la DB avec cache
- */
-async function fetchMaterialOptions(): Promise<MaterialOption[]> {
-	"use cache";
-	cacheMaterials();
-
-	try {
-		const materials = await prisma.material.findMany({
-			where: { isActive: true },
-			select: {
-				id: true,
-				slug: true,
-				name: true,
-			},
-			orderBy: { name: "asc" },
-		});
-
-		return materials;
-	} catch {
-		return [];
-	}
-}
 
 /**
  * Récupère la liste des matériaux avec pagination

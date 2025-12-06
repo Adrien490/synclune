@@ -1,7 +1,7 @@
-import { getCollections } from "@/modules/collections/data/get-collections";
-import { getColors } from "@/modules/colors/data/get-colors";
-import { getMaterials } from "@/modules/materials/data/get-materials";
-import { getProductTypes } from "@/modules/product-types/data/get-product-types";
+import { getCollectionOptions } from "@/modules/collections/data/get-collection-options";
+import { getColorOptions } from "@/modules/colors/data/get-color-options";
+import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
+import { getProductTypeOptions } from "@/modules/product-types/data/get-product-type-options";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { notFound } from "next/navigation";
 import { EditProductForm } from "@/modules/products/components/admin/edit-product-form";
@@ -34,26 +34,12 @@ export default async function EditProductPage({
 		notFound();
 	}
 
-	// Récupérer les types de produits, collections, couleurs et matériaux pour les selects
-	const [productTypesData, collectionsData, colorsData, materialsData] = await Promise.all([
-		getProductTypes({
-			perPage: 100,
-			sortBy: "label-ascending",
-		}),
-		getCollections({
-			perPage: 100,
-			sortBy: "name-ascending",
-		}),
-		getColors({
-			perPage: 100,
-			sortBy: "name-ascending",
-			direction: "forward",
-			filters: {},
-		}),
-		getMaterials({
-			perPage: 100,
-			sortBy: "name-ascending",
-		}),
+	// Récupérer les options avec cache des modules (sans pagination)
+	const [productTypes, collections, colors, materials] = await Promise.all([
+		getProductTypeOptions(),
+		getCollectionOptions(),
+		getColorOptions(),
+		getMaterialOptions(),
 	]);
 
 	return (
@@ -77,10 +63,10 @@ export default async function EditProductPage({
 
 			<EditProductForm
 				product={product}
-				productTypes={productTypesData.productTypes}
-				collections={collectionsData.collections}
-				colors={colorsData.colors}
-				materials={materialsData.materials}
+				productTypes={productTypes}
+				collections={collections}
+				colors={colors}
+				materials={materials}
 			/>
 
 			<DeleteGalleryMediaAlertDialog />

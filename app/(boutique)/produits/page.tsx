@@ -28,7 +28,7 @@ import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { TabNavigation } from "@/shared/components/tab-navigation";
 import { getColors } from "@/modules/colors/data/get-colors";
-import { getMaterialOptions } from "@/modules/materials/data/get-materials";
+import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
 import { ProductFilterSheet } from "@/modules/products/components/product-filter-sheet";

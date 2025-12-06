@@ -1,8 +1,10 @@
 import { PageHeader } from "@/shared/components/page-header";
-import { prisma } from "@/shared/lib/prisma";
 import { CreateProductForm } from "@/modules/products/components/admin/create-product-form";
 import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
-import { headers } from "next/headers";
+import { getProductTypeOptions } from "@/modules/product-types/data/get-product-type-options";
+import { getCollectionOptions } from "@/modules/collections/data/get-collection-options";
+import { getColorOptions } from "@/modules/colors/data/get-color-options";
+import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,44 +13,12 @@ export const metadata: Metadata = {
 };
 
 export default async function NewProductPage() {
-	// Access headers to mark this as dynamic (required for Cache Components with Prisma)
-	await headers();
-
-	// Récupérer les types de produits, collections, couleurs et matériaux
+	// Récupérer les options avec cache des modules (sans pagination)
 	const [productTypes, collections, colors, materials] = await Promise.all([
-		prisma.productType.findMany({
-			where: { isActive: true },
-			select: {
-				id: true,
-				label: true,
-				slug: true,
-				isActive: true,
-			},
-			orderBy: { label: "asc" },
-		}),
-		prisma.collection.findMany({
-			select: {
-				id: true,
-				name: true,
-				slug: true,
-			},
-			orderBy: { name: "asc" },
-		}),
-		prisma.color.findMany({
-			select: {
-				id: true,
-				name: true,
-				hex: true,
-			},
-			orderBy: { name: "asc" },
-		}),
-		prisma.material.findMany({
-			select: {
-				id: true,
-				name: true,
-			},
-			orderBy: { name: "asc" },
-		}),
+		getProductTypeOptions(),
+		getCollectionOptions(),
+		getColorOptions(),
+		getMaterialOptions(),
 	]);
 
 	return (

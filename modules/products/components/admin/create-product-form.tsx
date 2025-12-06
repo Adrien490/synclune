@@ -64,8 +64,8 @@ const PRODUCT_STEPS: WizardStep[] = [
 ];
 
 interface CreateProductFormProps {
-	productTypes: Array<{ id: string; label: string; slug: string; isActive: boolean }>;
-	collections: Array<{ id: string; name: string; slug: string }>;
+	productTypes: Array<{ id: string; label: string }>;
+	collections: Array<{ id: string; name: string }>;
 	colors: Array<{ id: string; name: string; hex: string }>;
 	materials: Array<{ id: string; name: string }>;
 }

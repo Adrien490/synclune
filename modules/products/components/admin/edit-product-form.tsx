@@ -19,26 +19,10 @@ import { toast } from "sonner";
 
 interface EditProductFormProps {
 	product: GetProductReturn;
-	productTypes: Array<{
-		id: string;
-		label: string;
-		slug: string;
-		isActive: boolean;
-	}>;
-	collections: Array<{
-		id: string;
-		name: string;
-		slug: string;
-	}>;
-	colors: Array<{
-		id: string;
-		name: string;
-		hex: string;
-	}>;
-	materials: Array<{
-		id: string;
-		name: string;
-	}>;
+	productTypes: Array<{ id: string; label: string }>;
+	collections: Array<{ id: string; name: string }>;
+	colors: Array<{ id: string; name: string; hex: string }>;
+	materials: Array<{ id: string; name: string }>;
 }
 
 export function EditProductForm({

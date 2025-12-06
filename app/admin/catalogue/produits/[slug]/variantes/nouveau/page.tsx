@@ -1,5 +1,6 @@
 import { getProductBySlug } from "@/modules/products/data/get-product";
-import { prisma } from "@/shared/lib/prisma";
+import { getColorOptions } from "@/modules/colors/data/get-color-options";
+import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
 import { notFound } from "next/navigation";
 import { CreateProductVariantForm } from "@/modules/skus/components/admin/create-sku-form";
 import { DeletePrimaryImageAlertDialog } from "@/modules/media/components/admin/delete-primary-image-alert-dialog";
@@ -32,23 +33,10 @@ export default async function NewProductVariantPage({
 		notFound();
 	}
 
-	// Récupérer les couleurs et matériaux disponibles en parallèle
+	// Récupérer les options avec cache des modules (sans pagination)
 	const [colors, materials] = await Promise.all([
-		prisma.color.findMany({
-			select: {
-				id: true,
-				name: true,
-				hex: true,
-			},
-			orderBy: { name: "asc" },
-		}),
-		prisma.material.findMany({
-			select: {
-				id: true,
-				name: true,
-			},
-			orderBy: { name: "asc" },
-		}),
+		getColorOptions(),
+		getMaterialOptions(),
 	]);
 
 	return (

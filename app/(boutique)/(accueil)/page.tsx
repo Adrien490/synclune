@@ -7,9 +7,6 @@ import { Collections } from "@/app/(boutique)/(accueil)/_components/collections"
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
-import { TestimonialsSection } from "@/app/(boutique)/(accueil)/_components/testimonials";
-import { TestimonialsSkeleton } from "@/modules/testimonials/components/testimonials-skeleton";
-import { getTestimonials } from "@/modules/testimonials/data/get-testimonials";
 import { Suspense } from "react";
 import { CreativeProcess } from "./_components/creative-process";
 import { Hero } from "./_components/hero";
@@ -110,11 +107,6 @@ export default async function Page() {
 
 			{/* 5. CreativeProcess - Storytelling atelier + Connexion émotionnelle */}
 			<CreativeProcess />
-
-			{/* 6. Témoignages - Preuve sociale + Confiance client */}
-			<Suspense fallback={<TestimonialsSkeleton />}>
-				<TestimonialsSection testimonialsPromise={getTestimonials()} />
-			</Suspense>
 		</>
 	);
 }
