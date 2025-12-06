@@ -11,22 +11,22 @@ interface CollectionCardProps {
 	name: string;
 	description: string | null;
 	imageUrl: string | null;
+	blurDataUrl?: string | null;
 	showDescription?: boolean;
-	size?: "sm" | "md" | "lg";
+	index?: number;
 }
 
 /**
  * Card de collection avec image, titre et description optionnelle
  *
  * ✅ OPTIMISATIONS APPLIQUÉES:
- * - Utilise composant Card shadcn/ui pour cohérence design system
- * - Border hover alignée avec ProductCard
- * - Shadow colorée primary/10 au hover
- * - Lift -translate-y-1 (plus visible)
- * - État active pour feedback tactile
- * - Border-radius cohérent (rounded-lg)
+ * - Composant Card shadcn/ui pour cohérence design system
+ * - Animations subtiles (différenciation avec ProductCard)
+ * - motion-safe: pour respect prefers-reduced-motion (WCAG 2.3.3)
+ * - Blur placeholder pour CLS optimisé
+ * - Preload above-fold (index < 4)
+ * - Schema.org Collection avec url
  * - Typography Crimson Pro uniformisée
- * - aria-hidden sur texte fallback redondant
  * - Quality 85 pour images premium
  */
 export function CollectionCard({
@@ -34,33 +34,15 @@ export function CollectionCard({
 	name,
 	description,
 	imageUrl,
+	blurDataUrl,
 	showDescription = false,
-	size = "md",
+	index,
 }: CollectionCardProps) {
 	// Génération ID unique pour aria-labelledby (RSC compatible)
 	const titleId = `collection-title-${slug}`;
 
-	// Configuration responsive selon la taille
-	const sizeConfig = {
-		sm: {
-			container: "gap-3",
-			title: "text-base/6 sm:text-lg/6 tracking-normal antialiased break-words",
-			description: "text-xs/5 tracking-normal antialiased line-clamp-2 break-words overflow-hidden",
-			padding: "p-3",
-		},
-		md: {
-			container: "gap-4",
-			title: "text-lg/7 sm:text-xl/7 tracking-tight antialiased break-words",
-			description: "text-sm/6 tracking-normal antialiased line-clamp-3 break-words overflow-hidden",
-			padding: "p-4",
-		},
-		lg: {
-			container: "gap-5",
-			title: "text-xl/8 sm:text-2xl/8 tracking-tight antialiased break-words",
-			description: "text-base/7 tracking-normal antialiased line-clamp-4 break-words overflow-hidden",
-			padding: "p-5",
-		},
-	};
+	// Preload above-fold images (4 premières)
+	const isAboveFold = index !== undefined && index < 4;
 
 	return (
 		<Link
@@ -74,22 +56,24 @@ export function CollectionCard({
 		>
 			<Card
 				className={cn(
-					"collection-card overflow-hidden",
+					"collection-card overflow-hidden gap-4",
 					// Supprimer le padding par défaut de Card (py-6)
 					"p-0",
-					// Border et shadow cohérents avec ProductCard
-					"border-transparent hover:border-primary/20",
-					"shadow-sm hover:shadow-lg hover:shadow-primary/10",
-					// Animations hover uniformisées
+					// Border et shadow (plus subtiles que ProductCard)
+					"border-transparent motion-safe:hover:border-primary/20",
+					"shadow-sm motion-safe:hover:shadow-lg motion-safe:hover:shadow-primary/10",
+					// Animations hover avec motion-safe (WCAG 2.3.3)
 					"transition-all duration-300 ease-out",
-					"hover:-translate-y-1 will-change-transform",
+					"motion-safe:hover:-translate-y-1 will-change-transform",
 					// État active pour feedback tactile
 					"active:scale-[0.98] active:translate-y-0",
-					sizeConfig[size].container
 				)}
 				itemScope
 				itemType="https://schema.org/Collection"
 			>
+				{/* SEO: URL de la collection */}
+				<meta itemProp="url" content={`/collections/${slug}`} />
+
 				{/* Image */}
 				<div className="collection-card-media relative aspect-square overflow-hidden bg-muted">
 					{imageUrl ? (
@@ -97,8 +81,11 @@ export function CollectionCard({
 							src={imageUrl}
 							alt={`Collection ${name} - Synclune bijoux artisanaux`}
 							fill
-							className="object-cover rounded-t-lg transition-transform duration-500 ease-out group-hover:scale-105"
-							loading="lazy"
+							className="object-cover rounded-t-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-105"
+							loading={isAboveFold ? undefined : "lazy"}
+							priority={isAboveFold}
+							placeholder={blurDataUrl ? "blur" : "empty"}
+							blurDataURL={blurDataUrl || undefined}
 							quality={85}
 							sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CARD}
 							itemProp="image"
@@ -123,27 +110,24 @@ export function CollectionCard({
 				</div>
 
 				{/* Contenu */}
-				<div className={cn("space-y-2 min-w-0 overflow-hidden", sizeConfig[size].padding)}>
+				<div className="space-y-2 min-w-0 overflow-hidden p-4">
 					{/* Titre avec Crimson Pro uniformisé */}
 					<h3
 						id={titleId}
 						className={cn(
 							crimsonPro.className,
 							"line-clamp-2 overflow-hidden text-foreground",
-							sizeConfig[size].title
+							"text-lg/7 sm:text-xl/7 tracking-tight antialiased break-words",
 						)}
 						itemProp="name"
 					>
 						{name}
 					</h3>
 
-					{/* Description optionnelle - Hover cohérent avec ProductCard */}
+					{/* Description optionnelle */}
 					{showDescription && description && (
 						<p
-							className={cn(
-								sizeConfig[size].description,
-								"text-foreground/70 transition-colors duration-300 ease-out group-hover:text-foreground/90"
-							)}
+							className="text-sm/6 tracking-normal antialiased line-clamp-3 break-words overflow-hidden text-foreground/70 transition-colors duration-300 ease-out motion-safe:group-hover:text-foreground/90"
 							itemProp="description"
 						>
 							{description}

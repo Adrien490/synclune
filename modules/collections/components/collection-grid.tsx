@@ -60,7 +60,7 @@ export function CollectionGrid({
 				stagger={0.05}
 				delay={0.1}
 			>
-				{collections.map((collection) => (
+				{collections.map((collection, index) => (
 					<div key={collection.id} role="listitem">
 						<CollectionCard
 							slug={collection.slug}
@@ -68,6 +68,7 @@ export function CollectionGrid({
 							description={collection.description}
 							imageUrl={collection.products[0]?.product?.skus[0]?.images[0]?.url || null}
 							showDescription={true}
+							index={index}
 						/>
 					</div>
 				))}

@@ -74,7 +74,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							data-carousel-scroll
 						>
 							<div role="list" className="flex gap-4 sm:gap-6">
-							{collections.map((collection) => (
+							{collections.map((collection, index) => (
 								<div
 									key={collection.id}
 									className="shrink-0 w-[clamp(260px,85vw,320px)] snap-center"
@@ -86,6 +86,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 										description={collection.description}
 										imageUrl={collection.products[0]?.product?.skus[0]?.images[0]?.url || null}
 										showDescription={false}
+										index={index}
 									/>
 								</div>
 							))}
