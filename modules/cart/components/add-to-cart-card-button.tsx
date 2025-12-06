@@ -14,7 +14,7 @@ interface AddToCartCardButtonProps {
  * Bouton d'ajout au panier pour les cartes produit
  *
  * Comportement responsive:
- * - Mobile: Bouton rond 44px avec fond primary et icône "+"
+ * - Mobile: Bouton rond 44px discret (ghost) avec icône "+"
  * - Desktop: Bouton pleine largeur "Ajouter au panier" avec fond primary
  *
  * - Disabled pendant le pending pour éviter double-click
@@ -52,20 +52,19 @@ export function AddToCartCardButton({
 				aria-disabled={isPending}
 				onClick={(e) => e.stopPropagation()}
 				className={cn(
-					// Mobile: bouton rond 44px avec fond primary
+					// Mobile: bouton discret sans fond (ghost) avec icône primary
 					"size-11 rounded-full flex items-center justify-center",
-					"bg-primary text-primary-foreground",
-					"shadow-md",
-					// Desktop: pleine largeur
+					"bg-transparent text-primary",
+					// Desktop: pleine largeur avec fond primary
+					"sm:bg-primary sm:text-primary-foreground",
 					"sm:w-full sm:h-auto sm:rounded-none sm:py-2.5 sm:px-4",
 					"sm:shadow-lg sm:shadow-black/20",
-					// Hover mobile
-					"hover:scale-110 hover:bg-primary/90",
+					// Active mobile: feedback tactile
 					"active:scale-95",
-					// Hover desktop
-					"sm:hover:scale-100 sm:active:scale-100 sm:hover:tracking-widest",
+					// Hover desktop uniquement
+					"sm:hover:bg-primary/90 sm:hover:tracking-widest",
 					// Transitions
-					"motion-safe:transition-all motion-safe:duration-300",
+					"motion-safe:transition-all motion-safe:duration-200",
 					"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 					"disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:tracking-normal disabled:hover:scale-100"
 				)}

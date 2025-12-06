@@ -141,7 +141,7 @@ export function TestimonialsDataTable({
 									<TableHead
 										scope="col"
 										role="columnheader"
-										className="w-[10%]"
+										className="w-[100px]"
 									>
 										Image
 									</TableHead>
@@ -190,11 +190,11 @@ export function TestimonialsDataTable({
 												<img
 													src={testimonial.imageUrl}
 													alt={`Témoignage de ${testimonial.authorName}`}
-													className="h-10 w-10 rounded object-cover"
+													className="h-20 w-20 rounded-lg object-cover"
 												/>
 											) : (
-												<div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
-													<ImageOff className="h-4 w-4 text-muted-foreground" />
+												<div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center">
+													<ImageOff className="h-6 w-6 text-muted-foreground" />
 												</div>
 											)}
 										</TableCell>
