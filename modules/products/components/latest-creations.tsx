@@ -7,7 +7,6 @@ import { GetProductsReturn } from "@/modules/products/data/get-products";
 import { getPrimarySkuForList } from "@/modules/products/services/product-list-helpers";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { cn } from "@/shared/utils/cn";
-import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 
@@ -106,19 +105,11 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 					<Button
 						asChild
 						size="lg"
-						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out group"
+						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
 						aria-describedby="latest-creations-cta-description"
 					>
-						<Link
-							href="/produits?filter_sortBy=created-descending"
-							className="flex items-center gap-2"
-						>
+						<Link href="/produits?filter_sortBy=created-descending">
 							Voir toutes mes créations
-							<ArrowRight
-								size={18}
-								className="group-hover:translate-x-1 transition-transform duration-300"
-								aria-hidden="true"
-							/>
 						</Link>
 					</Button>
 					<span id="latest-creations-cta-description" className="sr-only">

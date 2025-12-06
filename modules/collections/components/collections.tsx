@@ -3,7 +3,6 @@ import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import { Palette } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 import { CollectionCard } from "./collection-card";
@@ -105,15 +104,10 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 					<Button
 						asChild
 						size="lg"
-						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out group"
+						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
 						aria-describedby="collections-cta-description"
 					>
-						<Link href="/collections" className="flex items-center gap-2">
-							<Palette
-								size={18}
-								className="group-hover:rotate-12 transition-transform duration-300"
-								aria-hidden="true"
-							/>
+						<Link href="/collections">
 							Explorer mes univers
 						</Link>
 					</Button>

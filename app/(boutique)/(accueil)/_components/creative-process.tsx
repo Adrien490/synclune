@@ -272,17 +272,9 @@ export async function CreativeProcess() {
 									asChild
 									variant="secondary"
 									size="lg"
-									className="w-full sm:w-auto shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/btn"
+									className="w-full sm:w-auto shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
 								>
-									<Link
-										href="/personnalisation"
-										className="flex items-center justify-center gap-2"
-									>
-										<Sparkles
-											size={18}
-											className="group-hover/btn:rotate-12 transition-transform duration-300"
-											aria-hidden="true"
-										/>
+									<Link href="/personnalisation">
 										Discutons de ton idée
 									</Link>
 								</Button>

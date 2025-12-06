@@ -3,7 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { IMAGES } from "@/shared/constants/images";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
@@ -301,18 +301,13 @@ export async function AtelierStory() {
 								asChild
 								variant="default"
 								size="lg"
-								className="shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group"
+								className="shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
 							>
 								<Link
 									href="/a-propos"
 									aria-label="En savoir plus sur l'histoire de Léane et son atelier artisanal"
-									className="flex items-center justify-center gap-2"
 								>
 									En savoir plus sur mon histoire
-									<ArrowRight
-										className="w-4 h-4 transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary-foreground/80"
-										aria-hidden="true"
-									/>
 								</Link>
 							</Button>
 						</div>
