@@ -32,7 +32,7 @@ export async function InventorySection() {
 			</DashboardErrorBoundary>
 
 			{/* Graphiques stock */}
-			<div className="grid gap-6 lg:grid-cols-2">
+			<div className="grid gap-6 md:grid-cols-2">
 				<DashboardErrorBoundary
 					fallback={<ChartError title="Erreur" description="Impossible de charger le stock par couleur" />}
 				>
@@ -41,23 +41,28 @@ export async function InventorySection() {
 					</Suspense>
 				</DashboardErrorBoundary>
 
+				{/* Cacher sur mobile */}
+				<div className="hidden md:block">
+					<DashboardErrorBoundary
+						fallback={<ChartError title="Erreur" description="Impossible de charger le stock par materiau" />}
+					>
+						<Suspense fallback={<ChartSkeleton />}>
+							<StockByMaterialChart chartDataPromise={stockByMaterialPromise} />
+						</Suspense>
+					</DashboardErrorBoundary>
+				</div>
+			</div>
+
+			{/* Produits jamais vendus - Cacher sur mobile */}
+			<div className="hidden md:block">
 				<DashboardErrorBoundary
-					fallback={<ChartError title="Erreur" description="Impossible de charger le stock par materiau" />}
+					fallback={<ChartError title="Erreur" description="Impossible de charger les produits jamais vendus" />}
 				>
-					<Suspense fallback={<ChartSkeleton />}>
-						<StockByMaterialChart chartDataPromise={stockByMaterialPromise} />
+					<Suspense fallback={<ListSkeleton />}>
+						<NeverSoldProductsList listDataPromise={neverSoldPromise} />
 					</Suspense>
 				</DashboardErrorBoundary>
 			</div>
-
-			{/* Produits jamais vendus */}
-			<DashboardErrorBoundary
-				fallback={<ChartError title="Erreur" description="Impossible de charger les produits jamais vendus" />}
-			>
-				<Suspense fallback={<ListSkeleton />}>
-					<NeverSoldProductsList listDataPromise={neverSoldPromise} />
-				</Suspense>
-			</DashboardErrorBoundary>
 		</div>
 	);
 }

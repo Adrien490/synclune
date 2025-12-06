@@ -234,11 +234,11 @@ html {
 
 body {
 	overscroll-behavior-y: none;
-	/* Safe area pour notch/bords arrondis */
-	padding-top: env(safe-area-inset-top);
-	padding-bottom: env(safe-area-inset-bottom);
-	padding-left: env(safe-area-inset-left);
-	padding-right: env(safe-area-inset-right);
+	/* Safe area pour notch/bords arrondis - avec fallbacks */
+	padding-top: env(safe-area-inset-top, 0);
+	padding-bottom: env(safe-area-inset-bottom, 0);
+	padding-left: env(safe-area-inset-left, 0);
+	padding-right: env(safe-area-inset-right, 0);
 }
 
 /* Optimisation touch pour éléments interactifs */
@@ -296,17 +296,25 @@ textarea {
 @media (display-mode: standalone) {
 	/* Header fixe : respecter safe-area top */
 	.pwa-header {
-		padding-top: env(safe-area-inset-top);
+		padding-top: env(safe-area-inset-top, 0);
 	}
 
 	/* Footer fixe : respecter safe-area bottom */
 	.pwa-footer {
-		padding-bottom: env(safe-area-inset-bottom);
+		padding-bottom: env(safe-area-inset-bottom, 0);
 	}
 
 	/* Désactiver pull-to-refresh natif */
 	body {
 		overscroll-behavior-y: contain;
+	}
+}
+
+/* Mode paysage standalone - safe areas latérales pour notch */
+@media (display-mode: standalone) and (orientation: landscape) {
+	body {
+		padding-left: max(1rem, env(safe-area-inset-left, 0));
+		padding-right: max(1rem, env(safe-area-inset-right, 0));
 	}
 }
 
@@ -569,6 +577,42 @@ textarea {
 	.multiselect-singleline-scroll {
 		scrollbar-width: thin;
 		scrollbar-color: oklch(0.55 0.01 270 / 0.2) transparent;
+	}
+
+	/* ==========================================
+	   PWA SAFE AREA UTILITIES
+	   ========================================== */
+
+	/* Navigation/éléments fixés en bas - respecte safe-area */
+	.fixed-bottom-safe {
+		padding-bottom: env(safe-area-inset-bottom, 0);
+	}
+
+	/* Padding bottom combiné avec safe-area */
+	.pb-safe {
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+	}
+
+	/* ==========================================
+	   VIEWPORT UNITS STABLES (svh/lvh)
+	   ========================================== */
+
+	/* Small viewport height - stable, ne change pas au scroll */
+	.min-h-svh {
+		min-height: 100svh;
+	}
+
+	.h-svh {
+		height: 100svh;
+	}
+
+	/* Large viewport height - taille maximale du viewport */
+	.min-h-lvh {
+		min-height: 100lvh;
+	}
+
+	.h-lvh {
+		height: 100lvh;
 	}
 }
 

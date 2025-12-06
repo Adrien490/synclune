@@ -13,6 +13,10 @@ interface WizardNavigationProps {
 	onNext: () => Promise<boolean>
 	isSubmitting?: boolean
 	isValidating?: boolean
+	/** Bloque la navigation (ex: upload en cours, génération miniatures) */
+	isBlocked?: boolean
+	/** Message affiché quand isBlocked est true */
+	blockedMessage?: string
 	previousLabel?: string
 	nextLabel?: string
 	submitLabel?: string
@@ -26,6 +30,8 @@ export const WizardNavigation = memo(function WizardNavigation({
 	onNext,
 	isSubmitting = false,
 	isValidating = false,
+	isBlocked = false,
+	blockedMessage,
 	previousLabel = WIZARD_MESSAGES.navigation.previous,
 	nextLabel = WIZARD_MESSAGES.navigation.next,
 	submitLabel = WIZARD_MESSAGES.navigation.submit,
@@ -38,6 +44,7 @@ export const WizardNavigation = memo(function WizardNavigation({
 	}
 
 	const isLoading = isSubmitting || isValidating
+	const isDisabled = isLoading || isBlocked
 
 	return (
 		<div
@@ -53,7 +60,7 @@ export const WizardNavigation = memo(function WizardNavigation({
 					type="button"
 					variant="outline"
 					onClick={onPrevious}
-					disabled={isLoading}
+					disabled={isDisabled}
 					className="flex-1 h-12 md:h-10 md:flex-none md:w-auto"
 				>
 					<ChevronLeft className="size-4" />
@@ -67,13 +74,18 @@ export const WizardNavigation = memo(function WizardNavigation({
 				<Button
 					key="submit-btn"
 					type="submit"
-					disabled={isLoading}
+					disabled={isDisabled}
 					className="flex-1 h-12 md:h-10 md:flex-none md:w-auto"
 				>
 					{isSubmitting ? (
 						<>
 							<Loader2 className="size-4 animate-spin" />
 							Enregistrement...
+						</>
+					) : isBlocked && blockedMessage ? (
+						<>
+							<Loader2 className="size-4 animate-spin" />
+							{blockedMessage}
 						</>
 					) : (
 						submitLabel
@@ -84,13 +96,18 @@ export const WizardNavigation = memo(function WizardNavigation({
 					key="next-btn"
 					type="button"
 					onClick={handleNext}
-					disabled={isLoading}
+					disabled={isDisabled}
 					className="flex-1 h-12 md:h-10 md:flex-none md:w-auto"
 				>
 					{isValidating ? (
 						<>
 							<Loader2 className="size-4 animate-spin" />
 							Validation...
+						</>
+					) : isBlocked && blockedMessage ? (
+						<>
+							<Loader2 className="size-4 animate-spin" />
+							{blockedMessage}
 						</>
 					) : (
 						<>

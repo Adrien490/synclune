@@ -3,6 +3,7 @@
 import { FieldLabel, FormLayout, FormSection } from "@/shared/components/tanstack-form";
 import { UnifiedMediaUpload } from "@/modules/media/components/admin/unified-media-upload";
 import { useAutoVideoThumbnail } from "@/modules/media/hooks/use-auto-video-thumbnail";
+import { useRegenerateThumbnail } from "@/modules/media/hooks/use-regenerate-thumbnail";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
@@ -14,7 +15,7 @@ import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { Euro, Gem, Image as ImageIcon, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 
 interface EditProductFormProps {
@@ -35,7 +36,7 @@ export function EditProductForm({
 	const router = useRouter();
 
 	// Hook pour génération automatique de thumbnail vidéo
-	const { generateThumbnail, generatingUrls } = useAutoVideoThumbnail();
+	const { generateThumbnail, isGenerating } = useAutoVideoThumbnail();
 
 	const { startUpload: startMediaUpload, isUploading: isMediaUploading } =
 		useUploadThing("catalogMedia");
@@ -55,6 +56,35 @@ export function EditProductForm({
 		},
 	});
 
+	// Hook pour régénération manuelle de thumbnail avec callback
+	const { regenerate: regenerateThumbnail, regeneratingUrl } = useRegenerateThumbnail({
+		onSuccess: (result, videoUrl) => {
+			type MediaItem = {
+				url: string;
+				mediaType: "IMAGE" | "VIDEO";
+				thumbnailUrl?: string;
+				thumbnailSmallUrl?: string;
+				altText?: string;
+			};
+			const mediaList = form.getFieldValue("defaultSku.media") as MediaItem[];
+			const index = mediaList.findIndex((m) => m.url === videoUrl);
+			if (index === -1) return;
+
+			const updatedMedia = mediaList.map((m, i) => {
+				if (i === index) {
+					return {
+						...m,
+						thumbnailUrl: result.mediumUrl ?? undefined,
+						thumbnailSmallUrl: result.smallUrl ?? undefined,
+					};
+				}
+				return m;
+			});
+
+			form.setFieldValue("defaultSku.media", updatedMedia);
+		},
+	});
+
 	const originalImageUrls = useMemo(() => {
 		const urls: string[] = [];
 		const defaultSku = product.skus[0];
@@ -65,6 +95,12 @@ export function EditProductForm({
 		}
 		return urls;
 	}, [product]);
+
+	// Combiner les vérifications de génération (auto + manuelle)
+	const combinedIsGenerating = useCallback(
+		(url: string) => isGenerating(url) || regeneratingUrl === url,
+		[isGenerating, regeneratingUrl]
+	);
 
 	return (
 		<>
@@ -509,15 +545,19 @@ export function EditProductForm({
 
 									// Si c'est une vidéo, générer thumbnail automatiquement
 									if (mediaType === "VIDEO") {
-										generateThumbnail(file.url).then((result) => {
-											if (result.mediumUrl) {
-												field.replaceValue(newMediaIndex, {
-													...newMedia,
-													thumbnailUrl: result.mediumUrl ?? undefined,
-													thumbnailSmallUrl: result.smallUrl ?? undefined,
-												});
-											}
-										});
+										generateThumbnail(file.url)
+											.then((result) => {
+												if (result.mediumUrl) {
+													field.replaceValue(newMediaIndex, {
+														...newMedia,
+														thumbnailUrl: result.mediumUrl ?? undefined,
+														thumbnailSmallUrl: result.smallUrl ?? undefined,
+													});
+												} else {
+													toast.error("Impossible de générer la miniature vidéo");
+												}
+											})
+											.catch(() => toast.error("Erreur lors de la génération de la miniature vidéo"));
 									}
 								});
 							};
@@ -542,8 +582,13 @@ export function EditProductForm({
 											);
 										}}
 										skipUtapiDelete={true}
-										generatingThumbnails={generatingUrls}
+										isGeneratingThumbnail={combinedIsGenerating}
 										maxItems={maxCount}
+										onRegenerateThumbnail={(index) => {
+											const media = field.state.value[index];
+											if (!media || media.mediaType !== "VIDEO") return;
+											regenerateThumbnail(media.url);
+										}}
 										renderUploadZone={() => (
 											<UploadDropzone
 												endpoint="catalogMedia"
@@ -771,7 +816,7 @@ export function EditProductForm({
 											!canSubmit ||
 											isPending ||
 											isMediaUploading ||
-											generatingUrls.size > 0
+											allGeneratingThumbnails.size > 0
 										}
 										className="min-w-[160px]"
 									>
@@ -779,7 +824,7 @@ export function EditProductForm({
 											? "Enregistrement..."
 											: isMediaUploading
 												? "Upload en cours..."
-												: generatingUrls.size > 0
+												: allGeneratingThumbnails.size > 0
 													? "Génération miniatures..."
 													: "Enregistrer les modifications"}
 									</Button>

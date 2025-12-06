@@ -18,6 +18,10 @@ interface WizardMobileShellProps {
 	onNext: () => Promise<boolean>;
 	isSubmitting?: boolean;
 	isValidating?: boolean;
+	/** Bloque la navigation (ex: upload en cours, génération miniatures) */
+	isBlocked?: boolean;
+	/** Message affiché quand isBlocked est true */
+	blockedMessage?: string;
 	title?: string;
 	children: React.ReactNode;
 	className?: string;
@@ -38,6 +42,8 @@ export function WizardMobileShell({
 	onNext,
 	isSubmitting,
 	isValidating,
+	isBlocked,
+	blockedMessage,
 	title,
 	children,
 	className,
@@ -60,7 +66,8 @@ export function WizardMobileShell({
 	const swipeHandlers = useSwipeable({
 		onSwipedLeft: () => {
 			// Swipe left = go to next step (with validation)
-			if (!isLastStep && !isSubmitting && !isValidating) {
+			// Block if submitting, validating, or blocked (upload in progress)
+			if (!isLastStep && !isSubmitting && !isValidating && !isBlocked) {
 				onNext().catch(() => {
 					// Validation failed - handled by wizard validation system
 				})
@@ -68,7 +75,7 @@ export function WizardMobileShell({
 		},
 		onSwipedRight: () => {
 			// Swipe right = go to previous step (no validation)
-			if (!isFirstStep && !isSubmitting && !isValidating) {
+			if (!isFirstStep && !isSubmitting && !isValidating && !isBlocked) {
 				onPrevious();
 			}
 		},
@@ -128,6 +135,8 @@ export function WizardMobileShell({
 						onNext={onNext}
 						isSubmitting={isSubmitting}
 						isValidating={isValidating}
+						isBlocked={isBlocked}
+						blockedMessage={blockedMessage}
 					/>
 				)}
 			</div>

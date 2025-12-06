@@ -5,6 +5,7 @@ import { ImageCounterBadge } from "@/modules/media/components/image-counter-badg
 import { MediaGallery } from "@/modules/media/components/admin/media-gallery";
 import { PrimaryImageUpload } from "@/modules/media/components/admin/primary-image-upload";
 import { useAutoVideoThumbnail } from "@/modules/media/hooks/use-auto-video-thumbnail";
+import { useRegenerateThumbnail } from "@/modules/media/hooks/use-regenerate-thumbnail";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
@@ -14,6 +15,7 @@ import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
+import { useCallback } from "react";
 import { Euro, ImagePlus, Image as ImageIcon, Info, Palette, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -46,7 +48,7 @@ export function EditProductVariantForm({
 	const router = useRouter();
 
 	// Hook pour génération automatique de thumbnail vidéo
-	const { generateThumbnail, generatingUrls } = useAutoVideoThumbnail();
+	const { generateThumbnail, isGenerating } = useAutoVideoThumbnail();
 
 	const {
 		startUpload: startPrimaryImageUpload,
@@ -71,6 +73,41 @@ export function EditProductVariantForm({
 			}, 2000);
 		},
 	});
+
+	// Hook pour régénération manuelle de thumbnail avec callback
+	const { regenerate: regenerateThumbnail, regeneratingUrl } = useRegenerateThumbnail({
+		onSuccess: (result, videoUrl) => {
+			type MediaItem = {
+				url: string;
+				mediaType: "IMAGE" | "VIDEO";
+				thumbnailUrl?: string;
+				thumbnailSmallUrl?: string;
+				altText?: string;
+			};
+			const mediaList = form.getFieldValue("galleryMedia") as MediaItem[];
+			const index = mediaList.findIndex((m) => m.url === videoUrl);
+			if (index === -1) return;
+
+			const updatedMedia = mediaList.map((m, i) => {
+				if (i === index) {
+					return {
+						...m,
+						thumbnailUrl: result.mediumUrl ?? undefined,
+						thumbnailSmallUrl: result.smallUrl ?? undefined,
+					};
+				}
+				return m;
+			});
+
+			form.setFieldValue("galleryMedia", updatedMedia);
+		},
+	});
+
+	// Combiner les vérifications de génération (auto + manuelle)
+	const combinedIsGenerating = useCallback(
+		(url: string) => isGenerating(url) || regeneratingUrl === url,
+		[isGenerating, regeneratingUrl]
+	);
 
 	return (
 		<>
@@ -558,7 +595,12 @@ export function EditProductVariantForm({
 															images={field.state.value}
 															onRemove={(index) => field.removeValue(index)}
 															skipUtapiDelete={true}
-															generatingThumbnails={generatingUrls}
+															isGeneratingThumbnail={combinedIsGenerating}
+															onRegenerateThumbnail={(index) => {
+																const media = field.state.value[index];
+																if (!media || media.mediaType !== "VIDEO") return;
+																regenerateThumbnail(media.url);
+															}}
 														/>
 													</motion.div>
 												)}
@@ -624,15 +666,19 @@ export function EditProductVariantForm({
 
 																	// Si c'est une vidéo, générer thumbnail automatiquement
 																	if (mediaType === "VIDEO") {
-																		generateThumbnail(serverData.url).then((result) => {
-																			if (result.mediumUrl) {
-																				field.replaceValue(newMediaIndex, {
-																					...newMedia,
-																					thumbnailUrl: result.mediumUrl ?? undefined,
-																					thumbnailSmallUrl: result.smallUrl ?? undefined,
-																				});
-																			}
-																		});
+																		generateThumbnail(serverData.url)
+																			.then((result) => {
+																				if (result.mediumUrl) {
+																					field.replaceValue(newMediaIndex, {
+																						...newMedia,
+																						thumbnailUrl: result.mediumUrl ?? undefined,
+																						thumbnailSmallUrl: result.smallUrl ?? undefined,
+																					});
+																				} else {
+																					toast.error("Impossible de générer la miniature vidéo");
+																				}
+																			})
+																			.catch(() => toast.error("Erreur lors de la génération de la miniature vidéo"));
 																	}
 																}
 															});
@@ -812,7 +858,7 @@ export function EditProductVariantForm({
 												form.state.isSubmitting ||
 												isPrimaryImageUploading ||
 												isGalleryUploading ||
-												generatingUrls.size > 0
+												allGeneratingThumbnails.size > 0
 											}
 											className="min-w-[160px]"
 										>
@@ -822,7 +868,7 @@ export function EditProductVariantForm({
 													? "Upload image..."
 													: isGalleryUploading
 														? "Upload galerie..."
-														: generatingUrls.size > 0
+														: allGeneratingThumbnails.size > 0
 															? "Génération miniatures..."
 															: "Mettre à jour"}
 										</Button>

@@ -2,12 +2,15 @@
 
 import {
 	DndContext,
+	DragOverlay,
 	closestCenter,
 	KeyboardSensor,
 	PointerSensor,
+	TouchSensor,
 	useSensor,
 	useSensors,
 	type DragEndEvent,
+	type DragStartEvent,
 } from "@dnd-kit/core";
 import {
 	arrayMove,
@@ -28,7 +31,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "framer-motion";
-import { Expand, GripVertical, Loader2, MoreVertical, Play, Star, Trash2 } from "lucide-react";
+import { Expand, GripVertical, Loader2, MoreVertical, Play, RefreshCw, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
@@ -53,12 +56,14 @@ interface UnifiedMediaUploadProps {
 	onChange: (media: MediaItem[]) => void;
 	/** Si true, ne supprime pas via UTAPI immédiatement (mode édition) */
 	skipUtapiDelete?: boolean;
-	/** URLs des vidéos dont la miniature est en cours de génération */
-	generatingThumbnails?: Set<string>;
+	/** Fonction pour vérifier si une vidéo est en cours de génération de thumbnail */
+	isGeneratingThumbnail?: (url: string) => boolean;
 	/** Nombre maximum de médias autorisés */
 	maxItems?: number;
 	/** Zone d'upload (rendu par le parent) */
 	renderUploadZone?: () => React.ReactNode;
+	/** Callback pour régénérer la miniature d'une vidéo */
+	onRegenerateThumbnail?: (index: number) => void;
 }
 
 interface SortableMediaItemProps {
@@ -71,6 +76,7 @@ interface SortableMediaItemProps {
 	onImageLoaded: (url: string) => void;
 	onOpenLightbox: (index: number) => void;
 	onOpenDeleteDialog: () => void;
+	onRegenerateThumbnail?: () => void;
 }
 
 function SortableMediaItem({
@@ -83,6 +89,7 @@ function SortableMediaItem({
 	onImageLoaded,
 	onOpenLightbox,
 	onOpenDeleteDialog,
+	onRegenerateThumbnail,
 }: SortableMediaItemProps) {
 	const {
 		attributes,
@@ -153,8 +160,23 @@ function SortableMediaItem({
 								loop
 								muted
 								playsInline
-								preload="none"
+								preload="metadata"
+								onTouchEnd={(e) => {
+									// Sur mobile : tap pour play, re-tap pour pause
+									e.stopPropagation();
+									const video = e.currentTarget;
+									if (video.paused) {
+										if (video.readyState === 0) {
+											video.load();
+										}
+										void video.play();
+									} else {
+										video.pause();
+										video.currentTime = 0;
+									}
+								}}
 								onMouseEnter={(e) => {
+									// Desktop hover : auto-play
 									if (e.currentTarget.readyState === 0) {
 										e.currentTarget.load();
 									}
@@ -169,9 +191,11 @@ function SortableMediaItem({
 								Ton navigateur ne supporte pas la lecture de vidéos.
 							</video>
 						)}
+						{/* Icône Play - masquée sur desktop au hover uniquement */}
 						<div
 							className={cn(
-								"absolute inset-0 flex items-center justify-center pointer-events-none group-hover:opacity-0",
+								"absolute inset-0 flex items-center justify-center pointer-events-none",
+								"sm:group-hover:opacity-0",
 								shouldReduceMotion ? "" : "motion-safe:transition-opacity"
 							)}
 						>
@@ -204,30 +228,32 @@ function SortableMediaItem({
 				)}
 			</div>
 
-			{/* Badge principal */}
+			{/* Badge principal - En bas sur mobile (évite collision avec drag handle) */}
 			{isPrimary && (
-				<div className="absolute top-1 left-1 z-10 pointer-events-none sm:top-2 sm:left-2">
-					<div className="flex items-center gap-1 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-						<Star className="w-3 h-3" />
+				<div className="absolute bottom-2 left-2 sm:top-2 sm:bottom-auto sm:left-2 z-10 pointer-events-none">
+					<div className="flex items-center gap-1 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-md">
+						<Star className="w-3 h-3" fill="currentColor" />
+						<span className="sm:hidden">1</span>
 						<span className="hidden sm:inline">Principal</span>
 					</div>
 				</div>
 			)}
 
-			{/* Handle de drag - Desktop */}
+			{/* Handle de drag - Positionné à gauche sur mobile pour éviter collision avec menu */}
 			<div
 				{...attributes}
 				{...listeners}
 				aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
 				className={cn(
-					"absolute top-1 right-10 z-20 cursor-grab active:cursor-grabbing",
-					"hidden sm:flex",
-					"opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+					"absolute z-20 cursor-grab active:cursor-grabbing",
+					"top-2 left-2 sm:top-1 sm:left-auto sm:right-10",
+					"flex",
+					"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
 					shouldReduceMotion ? "" : "motion-safe:transition-opacity"
 				)}
 			>
-				<div className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 flex items-center justify-center">
-					<GripVertical className="h-4 w-4 text-white" />
+				<div className="h-12 w-12 sm:h-8 sm:w-8 rounded-full bg-black/70 hover:bg-black/90 flex items-center justify-center shadow-lg">
+					<GripVertical className="h-5 w-5 sm:h-4 sm:w-4 text-white" />
 				</div>
 			</div>
 
@@ -249,11 +275,28 @@ function SortableMediaItem({
 						e.stopPropagation();
 						onOpenLightbox(index);
 					}}
-					className="h-9 w-9 rounded-full"
+					className="h-10 w-10 sm:h-9 sm:w-9 rounded-full"
 					aria-label={`Agrandir le média ${index + 1}`}
 				>
 					<Expand className="h-4 w-4" />
 				</Button>
+				{isVideo && onRegenerateThumbnail && (
+					<Button
+						type="button"
+						variant="secondary"
+						size="icon"
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							onRegenerateThumbnail();
+						}}
+						disabled={isGeneratingThumbnail}
+						className="h-10 w-10 sm:h-9 sm:w-9 rounded-full"
+						aria-label={`Régénérer la miniature de la vidéo ${index + 1}`}
+					>
+						<RefreshCw className={cn("h-4 w-4", isGeneratingThumbnail && "animate-spin")} />
+					</Button>
+				)}
 				<Button
 					type="button"
 					variant="destructive"
@@ -263,7 +306,7 @@ function SortableMediaItem({
 						e.stopPropagation();
 						onOpenDeleteDialog();
 					}}
-					className="h-9 w-9 rounded-full"
+					className="h-10 w-10 sm:h-9 sm:w-9 rounded-full"
 					aria-label={`Supprimer le média ${index + 1}`}
 				>
 					<Trash2 className="h-4 w-4" />
@@ -271,17 +314,17 @@ function SortableMediaItem({
 			</div>
 
 			{/* Actions Mobile - DropdownMenu */}
-			<div className="absolute top-1 right-1 z-20 sm:hidden">
+			<div className="absolute top-2 right-2 z-20 sm:hidden">
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button
 							type="button"
 							variant="secondary"
 							size="icon"
-							className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 border-0"
+							className="h-11 w-11 rounded-full bg-black/70 hover:bg-black/90 border-0"
 							aria-label={`Actions pour le média ${index + 1}`}
 						>
-							<MoreVertical className="h-4 w-4 text-white" />
+							<MoreVertical className="h-5 w-5 text-white" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="min-w-[160px]">
@@ -292,6 +335,19 @@ function SortableMediaItem({
 							<Expand className="h-4 w-4" />
 							Agrandir
 						</DropdownMenuItem>
+						{isVideo && onRegenerateThumbnail && (
+							<>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									onClick={onRegenerateThumbnail}
+									disabled={isGeneratingThumbnail}
+									className="gap-2 py-2.5"
+								>
+									<RefreshCw className={cn("h-4 w-4", isGeneratingThumbnail && "animate-spin")} />
+									Régénérer miniature
+								</DropdownMenuItem>
+							</>
+						)}
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
 							variant="destructive"
@@ -312,9 +368,10 @@ export function UnifiedMediaUpload({
 	media,
 	onChange,
 	skipUtapiDelete,
-	generatingThumbnails,
+	isGeneratingThumbnail,
 	maxItems = 11,
 	renderUploadZone,
+	onRegenerateThumbnail,
 }: UnifiedMediaUploadProps) {
 	const deleteDialog = useAlertDialog(DELETE_GALLERY_MEDIA_DIALOG_ID);
 	const shouldReduceMotion = useReducedMotion();
@@ -326,11 +383,21 @@ export function UnifiedMediaUpload({
 	const [lightboxOpen, setLightboxOpen] = useState(false);
 	const [lightboxIndex, setLightboxIndex] = useState(0);
 
-	// Sensors pour le drag & drop
+	// État du drag actif pour DragOverlay
+	const [activeId, setActiveId] = useState<string | null>(null);
+	const activeMedia = activeId ? media.find((m) => m.url === activeId) : null;
+
+	// Sensors pour le drag & drop (desktop + mobile)
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {
 				distance: 8,
+			},
+		}),
+		useSensor(TouchSensor, {
+			activationConstraint: {
+				delay: 250, // Long press 250ms pour mobile
+				tolerance: 5, // Tolérance mouvement 5px
 			},
 		}),
 		useSensor(KeyboardSensor, {
@@ -364,9 +431,16 @@ export function UnifiedMediaUpload({
 		setLightboxOpen(true);
 	};
 
+	// Gestion du drag start
+	const handleDragStart = (event: DragStartEvent) => {
+		setActiveId(event.active.id as string);
+	};
+
 	// Gestion du drag end
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
+
+		setActiveId(null);
 
 		if (over && active.id !== over.id) {
 			const oldIndex = media.findIndex((m) => m.url === active.id);
@@ -381,6 +455,11 @@ export function UnifiedMediaUpload({
 			const newMedia = arrayMove(media, oldIndex, newIndex);
 			onChange(newMedia);
 		}
+	};
+
+	// Gestion du drag cancel
+	const handleDragCancel = () => {
+		setActiveId(null);
 	};
 
 	// Ouvrir le dialog de suppression
@@ -403,21 +482,29 @@ export function UnifiedMediaUpload({
 			<DndContext
 				sensors={sensors}
 				collisionDetection={closestCenter}
+				onDragStart={(event) => {
+					handleDragStart(event);
+					// Feedback haptique sur mobile si supporté
+					if (typeof navigator !== "undefined" && navigator.vibrate) {
+						navigator.vibrate(50);
+					}
+				}}
 				onDragEnd={handleDragEnd}
+				onDragCancel={handleDragCancel}
 			>
 				<SortableContext
 					items={media.map((m) => m.url)}
 					strategy={rectSortingStrategy}
 				>
 					<div
-						className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 w-full"
+						className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3 lg:gap-4 w-full"
 						role="list"
 						aria-label="Médias du produit"
 					>
 						{media.map((m, index) => {
 							const isVideo = m.mediaType === "VIDEO";
-							const isGeneratingThumbnail =
-								isVideo && (generatingThumbnails?.has(m.url) ?? false);
+							const isGenerating =
+								isVideo && (isGeneratingThumbnail?.(m.url) ?? false);
 							const isImageLoaded = loadedImages.has(m.url);
 
 							return (
@@ -427,11 +514,16 @@ export function UnifiedMediaUpload({
 									index={index}
 									isPrimary={index === 0}
 									isImageLoaded={isImageLoaded}
-									isGeneratingThumbnail={isGeneratingThumbnail}
+									isGeneratingThumbnail={isGenerating}
 									shouldReduceMotion={shouldReduceMotion}
 									onImageLoaded={handleImageLoaded}
 									onOpenLightbox={openLightbox}
 									onOpenDeleteDialog={() => handleOpenDeleteDialog(index)}
+									onRegenerateThumbnail={
+										isVideo && onRegenerateThumbnail
+											? () => onRegenerateThumbnail(index)
+											: undefined
+									}
 								/>
 							);
 						})}
@@ -444,6 +536,44 @@ export function UnifiedMediaUpload({
 						)}
 					</div>
 				</SortableContext>
+
+				{/* DragOverlay pour un meilleur feedback visuel pendant le drag */}
+				<DragOverlay adjustScale={!shouldReduceMotion}>
+					{activeMedia ? (
+						<div className="aspect-square rounded-lg overflow-hidden border-2 border-primary shadow-2xl bg-muted">
+							{activeMedia.mediaType === "VIDEO" ? (
+								<div className="relative w-full h-full">
+									{activeMedia.thumbnailUrl ? (
+										<Image
+											src={activeMedia.thumbnailUrl}
+											alt="Vidéo en cours de déplacement"
+											fill
+											className="object-cover"
+											sizes="150px"
+										/>
+									) : (
+										<div className="w-full h-full bg-muted flex items-center justify-center">
+											<Play className="w-8 h-8 text-muted-foreground" />
+										</div>
+									)}
+									<div className="absolute inset-0 flex items-center justify-center">
+										<div className="bg-black/70 rounded-full p-2">
+											<Play className="w-5 h-5 text-white" fill="white" />
+										</div>
+									</div>
+								</div>
+							) : (
+								<Image
+									src={activeMedia.url}
+									alt="Image en cours de déplacement"
+									fill
+									className="object-cover"
+									sizes="150px"
+								/>
+							)}
+						</div>
+					) : null}
+				</DragOverlay>
 			</DndContext>
 
 			{/* Lightbox */}

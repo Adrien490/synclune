@@ -95,7 +95,7 @@ function CreateProductFormContent({
 	materials,
 }: CreateProductFormProps) {
 	const router = useRouter();
-	const { generateThumbnail, generatingUrls } = useAutoVideoThumbnail();
+	const { generateThumbnail, generatingCount, isGenerating } = useAutoVideoThumbnail();
 	const { startUpload, isUploading: isMediaUploading } = useUploadThing("catalogMedia");
 
 	// Get resetWizard and isMobile from context first (needed for onSuccess)
@@ -121,7 +121,7 @@ function CreateProductFormContent({
 		form: createTanStackFormAdapter(form),
 	});
 
-	const isUploading = isMediaUploading || generatingUrls.size > 0;
+	const isUploading = isMediaUploading || generatingCount > 0;
 
 	// Warn user about unsaved changes before leaving the page
 	useUnsavedChanges(form.state.isDirty && !isPending);
@@ -517,9 +517,11 @@ function CreateProductFormContent({
 																		thumbnailSmallUrl: result.smallUrl,
 																	});
 																}
+															} else {
+																toast.error("Impossible de générer la miniature vidéo");
 															}
 														})
-														.catch(() => toast.warning("Miniature vidéo non générée"));
+														.catch(() => toast.error("Erreur lors de la génération de la miniature vidéo"));
 												}
 											}
 										});
@@ -638,7 +640,7 @@ function CreateProductFormContent({
 														})
 													);
 												}}
-												generatingThumbnails={generatingUrls}
+												isGeneratingThumbnail={isGenerating}
 												maxItems={maxCount}
 												renderUploadZone={
 													isAtLimit
@@ -727,7 +729,7 @@ function CreateProductFormContent({
 									? "Enregistrement..."
 									: isMediaUploading
 										? "Upload médias..."
-										: generatingUrls.size > 0
+										: generatingCount > 0
 											? "Génération miniatures..."
 											: "Publier le bijou"}
 							</Button>
@@ -788,6 +790,14 @@ function CreateProductFormContent({
 					onNext={wizard.goNext}
 					isSubmitting={isPending}
 					isValidating={wizard.isValidating}
+					isBlocked={isUploading}
+					blockedMessage={
+						isMediaUploading
+							? "Upload..."
+							: generatingCount > 0
+								? "Miniatures..."
+								: undefined
+					}
 					getStepErrors={wizard.getStepErrors}
 					renderLastStepFooter={() => (
 						<div className="space-y-2">

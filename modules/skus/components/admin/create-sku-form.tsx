@@ -44,7 +44,7 @@ export function CreateProductVariantForm({
 	const router = useRouter();
 
 	// Hook pour génération automatique de thumbnail vidéo
-	const { generateThumbnail, generatingUrls } = useAutoVideoThumbnail();
+	const { generateThumbnail, generatingCount, isGenerating } = useAutoVideoThumbnail();
 
 	const {
 		startUpload: startPrimaryImageUpload,
@@ -577,7 +577,7 @@ export function CreateProductVariantForm({
 															images={field.state.value}
 															onRemove={(index) => field.removeValue(index)}
 															skipUtapiDelete={true}
-															generatingThumbnails={generatingUrls}
+															isGeneratingThumbnail={isGenerating}
 														/>
 													</motion.div>
 												)}
@@ -641,15 +641,19 @@ export function CreateProductVariantForm({
 
 																	// Si c'est une vidéo, générer thumbnail automatiquement
 																	if (mediaType === "VIDEO") {
-																		generateThumbnail(serverData.url).then((result) => {
-																			if (result.mediumUrl) {
-																				field.replaceValue(newMediaIndex, {
-																					...newMedia,
-																					thumbnailUrl: result.mediumUrl,
-																					thumbnailSmallUrl: result.smallUrl,
-																				});
-																			}
-																		});
+																		generateThumbnail(serverData.url)
+																			.then((result) => {
+																				if (result.mediumUrl) {
+																					field.replaceValue(newMediaIndex, {
+																						...newMedia,
+																						thumbnailUrl: result.mediumUrl,
+																						thumbnailSmallUrl: result.smallUrl,
+																					});
+																				} else {
+																					toast.error("Impossible de générer la miniature vidéo");
+																				}
+																			})
+																			.catch(() => toast.error("Erreur lors de la génération de la miniature vidéo"));
 																	}
 																}
 															});
@@ -829,7 +833,7 @@ export function CreateProductVariantForm({
 												form.state.isSubmitting ||
 												isPrimaryImageUploading ||
 												isGalleryUploading ||
-												generatingUrls.size > 0
+												generatingCount > 0
 											}
 											className="min-w-[160px]"
 										>
@@ -839,7 +843,7 @@ export function CreateProductVariantForm({
 													? "Upload image..."
 													: isGalleryUploading
 														? "Upload galerie..."
-														: generatingUrls.size > 0
+														: generatingCount > 0
 															? "Génération miniatures..."
 															: "Créer la variante"}
 										</Button>

@@ -75,7 +75,11 @@ export function DeleteGalleryMediaAlertDialog() {
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					<AlertDialogCancel type="button" disabled={isPending}>
+					<AlertDialogCancel
+						type="button"
+						disabled={isPending}
+						className="w-full sm:w-auto"
+					>
 						Annuler
 					</AlertDialogCancel>
 					<Button
@@ -83,6 +87,7 @@ export function DeleteGalleryMediaAlertDialog() {
 						variant="destructive"
 						onClick={handleDelete}
 						disabled={isPending}
+						className="w-full sm:w-auto"
 					>
 						{isPending ? (
 							<>

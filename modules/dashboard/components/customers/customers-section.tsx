@@ -46,7 +46,7 @@ export async function CustomersSection({
 			</DashboardErrorBoundary>
 
 			{/* Graphiques et listes */}
-			<div className="grid gap-6 lg:grid-cols-2">
+			<div className="grid gap-6 md:grid-cols-2">
 				<DashboardErrorBoundary
 					fallback={<ChartError title="Erreur" description="Impossible de charger la repartition clients" />}
 				>
@@ -55,13 +55,16 @@ export async function CustomersSection({
 					</Suspense>
 				</DashboardErrorBoundary>
 
-				<DashboardErrorBoundary
-					fallback={<ChartError title="Erreur" description="Impossible de charger les meilleurs clients" />}
-				>
-					<Suspense fallback={<ChartSkeleton />}>
-						<TopCustomersList listDataPromise={topCustomersPromise} />
-					</Suspense>
-				</DashboardErrorBoundary>
+				{/* Cacher sur mobile */}
+				<div className="hidden md:block">
+					<DashboardErrorBoundary
+						fallback={<ChartError title="Erreur" description="Impossible de charger les meilleurs clients" />}
+					>
+						<Suspense fallback={<ChartSkeleton />}>
+							<TopCustomersList listDataPromise={topCustomersPromise} />
+						</Suspense>
+					</DashboardErrorBoundary>
+				</div>
 			</div>
 		</div>
 	);

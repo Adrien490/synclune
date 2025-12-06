@@ -1,21 +1,52 @@
 /**
- * Script de migration pour générer les miniatures des vidéos existantes
+ * Script de migration pour generer les miniatures des videos existantes
  *
- * Ce script :
- * 1. Récupère tous les SkuMedia de type VIDEO sans thumbnailUrl
- * 2. Télécharge chaque vidéo temporairement
- * 3. Extrait une frame à 1 seconde avec FFmpeg
- * 4. Upload la miniature sur UploadThing
- * 5. Met à jour la base de données
+ * Ce script genere deux tailles de thumbnails (SMALL 160px, MEDIUM 480px) pour
+ * toutes les videos SkuMedia qui n'ont pas encore de thumbnailSmallUrl.
  *
- * Prérequis :
- * - FFmpeg installé (`brew install ffmpeg` sur macOS)
- * - Variables d'environnement configurées (DATABASE_URL, UPLOADTHING_TOKEN)
+ * Etapes:
+ * 1. Recupere les SkuMedia de type VIDEO sans thumbnailSmallUrl
+ * 2. Telecharge chaque video temporairement
+ * 3. Extrait une frame a 10% de la duree (max 1s) avec FFmpeg
+ * 4. Genere 2 thumbnails WebP (small + medium)
+ * 5. Upload sur UploadThing et met a jour la base de donnees
  *
- * Usage :
- * pnpm generate:video-thumbnails
- * pnpm generate:video-thumbnails --dry-run       # Pour voir ce qui serait fait
- * pnpm generate:video-thumbnails --parallel=3   # Traiter 3 vidéos en parallèle
+ * ============================================================================
+ * PREREQUIS: FFmpeg doit etre installe sur le systeme
+ * ============================================================================
+ *
+ * Installation FFmpeg:
+ *
+ *   macOS (Homebrew):
+ *     brew install ffmpeg
+ *
+ *   Ubuntu/Debian:
+ *     sudo apt update && sudo apt install ffmpeg
+ *
+ *   Windows (Chocolatey):
+ *     choco install ffmpeg
+ *
+ *   Windows (winget):
+ *     winget install FFmpeg
+ *
+ *   Docker (si execution dans container):
+ *     RUN apt-get update && apt-get install -y ffmpeg
+ *
+ * Verification:
+ *   ffmpeg -version
+ *
+ * ============================================================================
+ * Variables d'environnement requises:
+ * - DATABASE_URL: Connection string PostgreSQL
+ * - UPLOADTHING_TOKEN: Token API UploadThing
+ * ============================================================================
+ *
+ * Usage:
+ *   pnpm generate:video-thumbnails                 # Traiter toutes les videos
+ *   pnpm generate:video-thumbnails --dry-run      # Simuler sans modification
+ *   pnpm generate:video-thumbnails --parallel=3   # Parallelisation (defaut: 5)
+ *
+ * @see modules/media/hooks/use-auto-video-thumbnail.ts pour la generation cote client
  */
 
 import { exec } from "child_process";
@@ -25,7 +56,7 @@ import { promisify } from "util";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../app/generated/prisma/client";
 import { UTApi } from "uploadthing/server";
-import { THUMBNAIL_CONFIG } from "../modules/medias/constants/media.constants";
+import { THUMBNAIL_CONFIG } from "../modules/media/constants/media.constants";
 
 const execAsync = promisify(exec);
 
@@ -48,7 +79,7 @@ const TEMP_DIR = join(process.cwd(), ".tmp-thumbnails");
 // Timeouts et limites
 const DOWNLOAD_TIMEOUT = 60000; // 60 secondes pour télécharger
 const FFMPEG_TIMEOUT = 30000; // 30 secondes pour FFmpeg
-const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500 MB max
+const MAX_VIDEO_SIZE = 512 * 1024 * 1024; // 512 MB max (aligné sur UploadThing)
 
 // Retry configuration
 const MAX_RETRIES = 3;
@@ -432,14 +463,21 @@ async function main(): Promise<void> {
 		console.log("\n⚠️  Mode DRY-RUN activé - aucune modification ne sera effectuée");
 	}
 
-	// Vérifier FFmpeg
-	console.log("\nVérification de FFmpeg...");
+	// Verifier FFmpeg
+	console.log("\nVerification de FFmpeg...");
 	const ffmpegInstalled = await checkFFmpegInstalled();
 	if (!ffmpegInstalled) {
-		console.error("❌ FFmpeg n'est pas installé. Installez-le avec: brew install ffmpeg");
+		console.error("❌ FFmpeg n'est pas installe!");
+		console.error("");
+		console.error("Installation:");
+		console.error("  macOS:        brew install ffmpeg");
+		console.error("  Ubuntu:       sudo apt install ffmpeg");
+		console.error("  Windows:      choco install ffmpeg");
+		console.error("");
+		console.error("Verification:   ffmpeg -version");
 		process.exit(1);
 	}
-	console.log("✅ FFmpeg est installé");
+	console.log("✅ FFmpeg est installe");
 
 	// Créer le dossier temporaire
 	if (!existsSync(TEMP_DIR)) {

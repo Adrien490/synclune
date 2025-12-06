@@ -11,7 +11,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Expand, Loader2, MoreVertical, Play, Trash2 } from "lucide-react";
+import { Expand, Loader2, MoreVertical, Play, RefreshCw, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
@@ -35,15 +35,18 @@ interface MediaGalleryProps {
 	 * Utilisé pour le mode édition où la suppression est différée.
 	 */
 	skipUtapiDelete?: boolean;
-	/** URLs des vidéos dont la miniature est en cours de génération */
-	generatingThumbnails?: Set<string>;
+	/** Fonction pour vérifier si une vidéo est en cours de génération de thumbnail */
+	isGeneratingThumbnail?: (url: string) => boolean;
+	/** Callback pour régénérer la miniature d'une vidéo */
+	onRegenerateThumbnail?: (index: number) => void;
 }
 
 export function MediaGallery({
 	images,
 	onRemove,
 	skipUtapiDelete,
-	generatingThumbnails,
+	isGeneratingThumbnail,
+	onRegenerateThumbnail,
 }: MediaGalleryProps) {
 	const deleteDialog = useAlertDialog(DELETE_GALLERY_MEDIA_DIALOG_ID);
 	const shouldReduceMotion = useReducedMotion();
@@ -91,8 +94,8 @@ export function MediaGallery({
 			<AnimatePresence mode="popLayout">
 				{images.map((media, index) => {
 					const isVideo = media.mediaType === "VIDEO";
-					const isGeneratingThumbnail =
-						isVideo && generatingThumbnails?.has(media.url);
+					const isGenerating =
+						isVideo && (isGeneratingThumbnail?.(media.url) ?? false);
 					const isImageLoaded = loadedImages.has(media.url);
 
 					const handleOpenDeleteDialog = () => {
@@ -188,7 +191,7 @@ export function MediaGallery({
 												<Play className="w-6 h-6 text-white" fill="white" />
 											</div>
 										</div>
-										{isGeneratingThumbnail && (
+										{isGenerating && (
 											<div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
 												<Loader2 className="h-8 w-8 text-white motion-safe:animate-spin" />
 											</div>
@@ -237,6 +240,23 @@ export function MediaGallery({
 								>
 									<Expand className="h-4 w-4" />
 								</Button>
+								{isVideo && onRegenerateThumbnail && (
+									<Button
+										type="button"
+										variant="secondary"
+										size="icon"
+										onClick={(e) => {
+											e.preventDefault();
+											e.stopPropagation();
+											onRegenerateThumbnail(index);
+										}}
+										disabled={isGenerating}
+										className="h-9 w-9 rounded-full"
+										aria-label={`Régénérer la miniature de la vidéo ${index + 1}`}
+									>
+										<RefreshCw className={cn("h-4 w-4", isGenerating && "animate-spin")} />
+									</Button>
+								)}
 								<Button
 									type="button"
 									variant="destructive"
@@ -275,6 +295,19 @@ export function MediaGallery({
 											<Expand className="h-4 w-4" />
 											Agrandir
 										</DropdownMenuItem>
+										{isVideo && onRegenerateThumbnail && (
+											<>
+												<DropdownMenuSeparator />
+												<DropdownMenuItem
+													onClick={() => onRegenerateThumbnail(index)}
+													disabled={isGenerating}
+													className="gap-2 py-2.5"
+												>
+													<RefreshCw className={cn("h-4 w-4", isGenerating && "animate-spin")} />
+													Régénérer miniature
+												</DropdownMenuItem>
+											</>
+										)}
 										<DropdownMenuSeparator />
 										<DropdownMenuItem
 											variant="destructive"

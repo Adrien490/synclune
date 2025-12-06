@@ -70,7 +70,7 @@ export async function SalesSection({
 			</div>
 
 			{/* Graphiques revenus */}
-			<div className="grid gap-6 lg:grid-cols-2">
+			<div className="grid gap-6 md:grid-cols-2">
 				<DashboardErrorBoundary
 					fallback={<ChartError title="Erreur" description="Impossible de charger les revenus par collection" />}
 				>
@@ -79,13 +79,16 @@ export async function SalesSection({
 					</Suspense>
 				</DashboardErrorBoundary>
 
-				<DashboardErrorBoundary
-					fallback={<ChartError title="Erreur" description="Impossible de charger les revenus par type" />}
-				>
-					<Suspense fallback={<ChartSkeleton />}>
-						<RevenueByTypeChart chartDataPromise={revenueByTypePromise} />
-					</Suspense>
-				</DashboardErrorBoundary>
+				{/* Cacher sur mobile */}
+				<div className="hidden md:block">
+					<DashboardErrorBoundary
+						fallback={<ChartError title="Erreur" description="Impossible de charger les revenus par type" />}
+					>
+						<Suspense fallback={<ChartSkeleton />}>
+							<RevenueByTypeChart chartDataPromise={revenueByTypePromise} />
+						</Suspense>
+					</DashboardErrorBoundary>
+				</div>
 			</div>
 		</div>
 	);

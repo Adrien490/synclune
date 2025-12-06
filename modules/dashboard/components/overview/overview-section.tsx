@@ -69,17 +69,20 @@ export async function OverviewSection() {
 				</div>
 			</div>
 
-			<DashboardErrorBoundary
-				fallback={<ChartError title="Erreur de chargement" description="Impossible de charger les tendances" minHeight={300} />}
-			>
-				<Suspense
-					fallback={
-						<ChartSkeleton height={300} ariaLabel="Chargement des tendances" />
-					}
+			{/* Cacher sur mobile */}
+			<div className="hidden md:block">
+				<DashboardErrorBoundary
+					fallback={<ChartError title="Erreur de chargement" description="Impossible de charger les tendances" minHeight={300} />}
 				>
-					<TrendsSection />
-				</Suspense>
-			</DashboardErrorBoundary>
+					<Suspense
+						fallback={
+							<ChartSkeleton height={300} ariaLabel="Chargement des tendances" />
+						}
+					>
+						<TrendsSection />
+					</Suspense>
+				</DashboardErrorBoundary>
+			</div>
 		</div>
 	)
 }

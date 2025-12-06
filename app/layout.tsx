@@ -90,6 +90,11 @@ export const metadata: Metadata = {
 		// google: "votre-code-google-search-console",
 		// bing: "votre-code-bing-webmaster",
 	},
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: "black-translucent",
+		title: "Synclune",
+	},
 };
 
 export const viewport = {
