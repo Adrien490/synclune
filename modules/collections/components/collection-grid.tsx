@@ -56,7 +56,7 @@ export function CollectionGrid({
 			{/* Grille des collections */}
 			<Stagger
 				role="list"
-				className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8"
+				className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6"
 				stagger={0.05}
 				delay={0.1}
 			>
@@ -75,7 +75,7 @@ export function CollectionGrid({
 			</Stagger>
 
 			{/* Pagination */}
-			<div className="flex justify-end mt-12">
+			<div className="flex justify-center">
 				<CursorPagination
 					perPage={perPage}
 					hasNextPage={hasNextPage}

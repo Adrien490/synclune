@@ -64,9 +64,9 @@ export function CollectionCard({
 					"shadow-sm motion-safe:hover:shadow-lg motion-safe:hover:shadow-primary/10",
 					// Animations hover avec motion-safe (WCAG 2.3.3)
 					"transition-all duration-300 ease-out",
-					"motion-safe:hover:-translate-y-1 will-change-transform",
+					"motion-safe:hover:-translate-y-1 motion-safe:hover:will-change-transform",
 					// État active pour feedback tactile
-					"active:scale-[0.98] active:translate-y-0",
+					"motion-safe:active:scale-[0.98] motion-safe:active:translate-y-0",
 				)}
 				itemScope
 				itemType="https://schema.org/Collection"
@@ -99,7 +99,7 @@ export function CollectionCard({
 							<div className="text-center space-y-3">
 								<Gem className="w-12 h-12 text-primary/40 mx-auto" />
 								<span
-									className="text-sm/6 tracking-normal antialiased text-muted-foreground"
+									className="text-sm/6 tracking-normal text-muted-foreground"
 									aria-hidden="true"
 								>
 									{name}
@@ -110,14 +110,14 @@ export function CollectionCard({
 				</div>
 
 				{/* Contenu */}
-				<div className="space-y-2 min-w-0 overflow-hidden p-4">
+				<div className="space-y-2 p-4">
 					{/* Titre avec Crimson Pro uniformisé */}
 					<h3
 						id={titleId}
 						className={cn(
 							crimsonPro.className,
 							"line-clamp-2 overflow-hidden text-foreground",
-							"text-lg/7 sm:text-xl/7 tracking-tight antialiased break-words",
+							"text-lg/7 sm:text-xl/7 tracking-tight break-words",
 						)}
 						itemProp="name"
 					>
@@ -127,7 +127,7 @@ export function CollectionCard({
 					{/* Description optionnelle */}
 					{showDescription && description && (
 						<p
-							className="text-sm/6 tracking-normal antialiased line-clamp-3 break-words overflow-hidden text-foreground/70 transition-colors duration-300 ease-out motion-safe:group-hover:text-foreground/90"
+							className="text-sm/6 tracking-normal line-clamp-3 break-words text-foreground/70 transition-colors duration-300 ease-out motion-safe:group-hover:text-foreground/90"
 							itemProp="description"
 						>
 							{description}

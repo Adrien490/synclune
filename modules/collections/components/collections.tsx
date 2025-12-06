@@ -46,6 +46,13 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 			aria-labelledby="collections-title"
 			aria-describedby="collections-subtitle"
 		>
+			{/* Skip link pour navigation clavier - sauter le carousel */}
+			<a
+				href="#collections-cta"
+				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-background focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-ring focus:text-foreground"
+			>
+				Passer au bouton Explorer
+			</a>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
@@ -56,24 +63,24 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 					<Fade y={10} delay={0.1} duration={0.6}>
 						<p
 							id="collections-subtitle"
-							className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto"
+							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
 							Chaque collection raconte une histoire différente. Des couleurs, des thèmes... J'adore créer ces petits univers !
 						</p>
 					</Fade>
 				</header>
 
-				<div className="mb-8 lg:mb-12">
+				<div className="mb-8 lg:mb-12 -mx-4 sm:-mx-6 lg:-mx-8">
 					<CollectionCarouselWrapper showArrows={collections.length > 3}>
 						<Reveal
+							role="list"
 							delay={0.2}
 							duration={0.8}
 							y={20}
 							once={true}
-							className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 px-4 sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mask-l-from-95% mask-r-from-95%"
+							className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 px-4 sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mask-carousel-edges"
 							data-carousel-scroll
 						>
-							<div role="list" className="flex gap-4 sm:gap-6">
 							{collections.map((collection, index) => (
 								<div
 									key={collection.id}
@@ -90,12 +97,11 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 									/>
 								</div>
 							))}
-							</div>
 						</Reveal>
 					</CollectionCarouselWrapper>
 				</div>
 
-				<div className="text-center">
+				<div id="collections-cta" className="text-center">
 					<Button
 						asChild
 						size="lg"

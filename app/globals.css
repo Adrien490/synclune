@@ -339,6 +339,53 @@ textarea {
 		);
 	}
 
+	/* Masque pour carousel avec fondu sur les bords - désactivé sur mobile pour ne pas couper le contenu */
+	.mask-carousel-edges {
+		mask-image: none;
+	}
+
+	@media (min-width: 640px) {
+		.mask-carousel-edges {
+			mask-image: linear-gradient(
+				to right,
+				transparent 0%,
+				black 3%,
+				black 97%,
+				transparent 100%
+			);
+		}
+	}
+
+	/* Animation hint swipe pour carousel mobile */
+	@keyframes swipe-hint {
+		0%,
+		100% {
+			transform: translateX(0);
+		}
+		50% {
+			transform: translateX(-12px);
+		}
+	}
+
+	/* Appliquer l'animation au scroll container quand data-swipe-hint est présent sur le parent */
+	[data-swipe-hint="true"] [data-carousel-scroll] {
+		animation: swipe-hint 1.5s ease-in-out 2;
+	}
+
+	/* Désactiver l'animation sur desktop (les flèches sont visibles) */
+	@media (min-width: 1024px) {
+		[data-swipe-hint="true"] [data-carousel-scroll] {
+			animation: none;
+		}
+	}
+
+	/* Respecter prefers-reduced-motion */
+	@media (prefers-reduced-motion: reduce) {
+		[data-swipe-hint="true"] [data-carousel-scroll] {
+			animation: none;
+		}
+	}
+
 	/* Animation sparkle */
 	@keyframes sparkle-pulse {
 		0%,
