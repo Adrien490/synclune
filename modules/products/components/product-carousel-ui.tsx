@@ -79,8 +79,15 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 
 	if (products.length === 0) {
 		return (
-			<div className="relative h-full min-h-[480px] rounded-2xl bg-muted flex items-center justify-center">
-				<p className="text-muted-foreground">Aucun bijou disponible</p>
+			<div className="relative h-full min-h-[320px] sm:min-h-[400px] lg:min-h-[480px] rounded-2xl bg-muted flex flex-col items-center justify-center gap-3">
+				<div className="size-12 rounded-full bg-muted-foreground/10 flex items-center justify-center">
+					<span className="text-2xl" role="img" aria-hidden="true">
+						✨
+					</span>
+				</div>
+				<p className="text-muted-foreground text-center px-4">
+					Aucun bijou disponible pour le moment
+				</p>
 			</div>
 		);
 	}
@@ -162,7 +169,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 							// Forme ronde
 							"rounded-full",
 							// Shadow pour profondeur et lisibilité
-							"shadow-lg hover:shadow-xl",
+							"shadow-lg hover:shadow-xl ring-1 ring-black/5",
 							// Icône sombre pour contraste sur fond blanc
 							"text-foreground/80",
 							// Hover state - fond plus opaque et icône plus sombre
@@ -192,7 +199,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 							// Forme ronde
 							"rounded-full",
 							// Shadow pour profondeur et lisibilité
-							"shadow-lg hover:shadow-xl",
+							"shadow-lg hover:shadow-xl ring-1 ring-black/5",
 							// Icône sombre pour contraste sur fond blanc
 							"text-foreground/80",
 							// Hover state - fond plus opaque et icône plus sombre

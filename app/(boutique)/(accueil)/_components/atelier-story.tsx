@@ -1,8 +1,8 @@
-import { Fade, Reveal } from "@/shared/components/animations";
+import { Fade, Reveal, Stagger } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
-import { Sparkles } from "lucide-react";
+import { ImageIcon, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -114,6 +114,7 @@ import { cacheLife, cacheTag } from "next/cache";
 
 /**
  * Placeholder esthetique avec gradient pour les photos en attente
+ * Ameliore : gradient plus visible, icone centrale, bordure subtile
  * @param className - Classes additionnelles pour aspect ratio responsive
  * @param label - Label accessible pour les lecteurs d'ecran (si fourni, le placeholder est annonce)
  */
@@ -126,11 +127,13 @@ function PlaceholderImage({
 }) {
 	return (
 		<div
-			className={`relative rounded-xl overflow-hidden bg-gradient-to-br from-secondary/20 via-muted/30 to-primary/10 ${className ?? ""}`}
+			className={`relative rounded-xl overflow-hidden bg-gradient-to-br from-secondary/40 via-muted/50 to-primary/30 border border-border/30 flex items-center justify-center transition-opacity duration-500 ${className ?? ""}`}
 			role={label ? "img" : undefined}
 			aria-label={label}
 			aria-hidden={label ? undefined : true}
-		/>
+		>
+			<ImageIcon className="w-12 h-12 text-muted-foreground/40" aria-hidden="true" />
+		</div>
 	);
 }
 
@@ -155,7 +158,7 @@ export async function AtelierStory() {
 			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
 			aria-labelledby="atelier-story-title"
 			itemScope
-			itemType="https://schema.org/AboutPage"
+			itemType="https://schema.org/Article"
 		>
 			{/* Skip link pour accessibilite clavier */}
 			<a
@@ -187,18 +190,18 @@ export async function AtelierStory() {
 			</div>
 
 			<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-				{/* Photo ambiance principale - aspect ratio adaptatif mobile/desktop */}
+				{/* Photo ambiance principale - hauteur reduite sur mobile pour meilleur flow */}
 				<Reveal y={20} duration={0.6} once>
 					<div className="mb-8 sm:mb-12">
 						<PlaceholderImage
-							className="aspect-[4/3] sm:aspect-[16/9]"
+							className="aspect-[3/2] sm:aspect-[16/9] max-h-[50vh] sm:max-h-none"
 							label="Atelier de création Synclune à Nantes - Léane travaillant sur ses bijoux artisanaux"
 						/>
 					</div>
 				</Reveal>
 
-				{/* Separateur decoratif anime */}
-				<Fade y={8} delay={0.1} duration={0.5} inView once>
+				{/* Separateur decoratif anime - delay 0 pour apparaitre en premier */}
+				<Fade y={8} delay={0} duration={0.5} inView once>
 					<div
 						className="flex justify-center items-center gap-3 mb-8 sm:mb-12"
 						aria-hidden="true"
@@ -209,8 +212,8 @@ export async function AtelierStory() {
 					</div>
 				</Fade>
 
-				{/* Texte confession - animations groupees pour performance */}
-				<Fade y={12} delay={0.1} duration={0.5} inView once>
+				{/* Texte confession - delay 0.15s apres sparkles, stagger sur paragraphes */}
+				<Fade y={12} delay={0.15} duration={0.5} inView once>
 					<div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
 						{/* Badge decoratif (le vrai h2 est sr-only plus haut) */}
 						<span
@@ -225,8 +228,14 @@ export async function AtelierStory() {
 							Je vais te faire une confidence.
 						</p>
 
-						{/* Corps du texte */}
-						<div className="space-y-4 sm:space-y-6 text-base sm:text-lg/8 text-muted-foreground">
+						{/* Corps du texte avec stagger pour lecture progressive */}
+						<Stagger
+							stagger={0.08}
+							y={12}
+							inView
+							once
+							className="space-y-4 sm:space-y-6 text-base sm:text-lg/8 text-muted-foreground"
+						>
 							<p>
 								Quand j'ai commencé à créer des bijoux, c'était juste pour moi.
 								Pour le plaisir de faire quelque chose de mes mains, loin des
@@ -245,27 +254,27 @@ export async function AtelierStory() {
 								n'existe qu'en quelques exemplaires — parfois moins de dix.
 								Quand il n'y en a plus... il n'y en a plus.
 							</p>
-							<p className="text-foreground font-medium">
-								Ce n'est pas du luxe. C'est de l'artisanat.
-								<br />
-								Du vrai, du fait-main, du cœur.
-							</p>
-						</div>
+							{/* Citation finale mise en valeur avec blockquote */}
+							<blockquote className="relative pl-6 border-l-2 border-primary/50 text-foreground font-medium text-left">
+								<p>Ce n'est pas du luxe. C'est de l'artisanat.</p>
+								<p>Du vrai, du fait-main, du cœur.</p>
+							</blockquote>
+						</Stagger>
 
-						{/* Signature */}
-						<footer className="pt-4">
+						{/* Signature - taille agrandie sur mobile */}
+						<div className="pt-6">
 							<p
-								className={`${dancingScript.className} text-xl sm:text-2xl md:text-3xl text-foreground italic`}
+								className={`${dancingScript.className} text-2xl sm:text-2xl md:text-3xl text-foreground italic`}
 							>
 								— Léane
 							</p>
-						</footer>
+						</div>
 					</div>
 				</Fade>
 
-				{/* Photos secondaires + CTA */}
-				<Reveal y={25} delay={0.2} duration={0.6} once>
-					<div className="mt-12 sm:mt-16 space-y-10">
+				{/* Photos secondaires + CTA - delay 0.3s pour sequence naturelle */}
+				<Reveal y={25} delay={0.3} duration={0.6} once>
+					<div className="mt-12 sm:mt-16 space-y-8">
 						{/* Photos en grid 2 colonnes */}
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 							<PlaceholderImage

@@ -83,6 +83,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							{collections.map((collection, index) => (
 								<div
 									key={collection.id}
+									data-index={index}
 									className="shrink-0 w-[clamp(220px,75vw,280px)] snap-center"
 									role="listitem"
 								>

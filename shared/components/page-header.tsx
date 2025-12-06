@@ -103,10 +103,10 @@ export function PageHeader({
 	if (isCompact) {
 		return (
 			<header
-				className={cn("space-y-6 mb-4 lg:mb-6", className)}
+				className={cn("space-y-6 mb-4 md:mb-6", className)}
 				aria-labelledby="page-title"
 			>
-				<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
 					<div className="min-w-0 flex-1 space-y-3">
 						{titleSlot ?? (
 							<h1
@@ -124,7 +124,11 @@ export function PageHeader({
 						)}
 					</div>
 					{displayActions && (
-						<div className="shrink-0 w-full lg:w-auto flex flex-wrap items-center justify-start lg:justify-end gap-3">
+						<div
+							role="group"
+							aria-label="Actions de la page"
+							className="shrink-0 w-full md:w-auto flex flex-wrap items-center justify-start md:justify-end gap-3"
+						>
 							{displayActions}
 						</div>
 					)}
@@ -137,7 +141,8 @@ export function PageHeader({
 	return (
 		<div className={className}>
 			{/* Header avec contexte - Background simple sans animations */}
-			<section
+			<header
+				aria-labelledby="page-title"
 				className={cn(
 					"relative overflow-hidden bg-background",
 					!navigation && "border-b border-border"
@@ -152,7 +157,7 @@ export function PageHeader({
 					{/* Breadcrumb et titre principal */}
 					<div
 						className={cn(
-							"flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4",
+							"flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4",
 							!navigation && "mb-6"
 						)}
 					>
@@ -171,7 +176,8 @@ export function PageHeader({
 													? breadcrumbs[breadcrumbs.length - 2].href
 													: "/"
 											}
-											className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+											aria-label={`Retour vers ${breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2].label : "Accueil"}`}
+											className="inline-flex items-center gap-1.5 py-2.5 -ml-2.5 px-2.5 text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
 										>
 											<ChevronLeft className="w-4 h-4" />
 											<span>
@@ -266,7 +272,7 @@ export function PageHeader({
 
 							{/* Description optionnelle */}
 							{description && (
-								<p className="text-base text-muted-foreground max-w-2xl break-words">
+								<p className="text-base text-muted-foreground max-w-2xl break-words line-clamp-3 sm:line-clamp-none">
 									{description}
 								</p>
 							)}
@@ -274,13 +280,17 @@ export function PageHeader({
 
 						{/* Action optionnelle (ex: bouton, recherche) */}
 						{displayActions && (
-							<div className="shrink-0 w-full sm:w-auto flex flex-wrap items-center justify-start sm:justify-end gap-3">
+							<div
+								role="group"
+								aria-label="Actions de la page"
+								className="shrink-0 w-full sm:w-auto flex flex-wrap items-center justify-start sm:justify-end gap-3"
+							>
 								{displayActions}
 							</div>
 						)}
 					</div>
 				</div>
-			</section>
+			</header>
 
 			{/* Contenu de navigation optionnel (ex: tabs, menu, etc.) */}
 			{navigation && (
@@ -294,36 +304,64 @@ export function PageHeader({
 	);
 }
 
+interface PageHeaderSkeletonProps {
+	/** Variant du header - default avec breadcrumbs, compact pour dashboard */
+	variant?: "default" | "compact";
+	/** Afficher le placeholder des actions */
+	hasActions?: boolean;
+	/** Afficher le placeholder de description */
+	hasDescription?: boolean;
+}
+
 /**
  * Skeleton pour le PageHeader - à utiliser dans les fichiers loading.tsx
  */
 export function PageHeaderSkeleton({
 	variant = "default",
-}: {
-	variant?: "default" | "compact";
-}) {
+	hasActions = false,
+	hasDescription = true,
+}: PageHeaderSkeletonProps) {
 	if (variant === "compact") {
 		return (
-			<div className="space-y-6 mb-4 lg:mb-6 animate-pulse">
-				<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+			<div className="space-y-6 mb-4 md:mb-6 animate-pulse">
+				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
 					<div className="min-w-0 flex-1 space-y-3">
 						<div className="h-9 w-48 bg-muted rounded" />
-						<div className="h-5 w-72 bg-muted rounded" />
+						{hasDescription && <div className="h-5 w-72 bg-muted rounded" />}
 					</div>
+					{hasActions && (
+						<div className="shrink-0 w-full md:w-auto">
+							<div className="h-9 w-32 bg-muted rounded" />
+						</div>
+					)}
 				</div>
 			</div>
 		);
 	}
 
 	return (
-		<section className="relative overflow-hidden bg-background border-b border-border">
+		<header className="relative overflow-hidden bg-background border-b border-border">
 			<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-6 animate-pulse">
-				<div className="space-y-2">
-					<div className="h-4 w-32 bg-muted rounded hidden sm:block" />
-					<div className="h-8 w-64 bg-muted rounded" />
-					<div className="h-5 w-96 max-w-full bg-muted rounded" />
+				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6">
+					<div className="min-w-0 flex-1 space-y-2">
+						{/* Breadcrumb mobile */}
+						<div className="sm:hidden h-5 w-20 bg-muted rounded" />
+						{/* Breadcrumb desktop */}
+						<div className="hidden sm:block h-4 w-32 bg-muted rounded" />
+						{/* Title */}
+						<div className="h-8 w-64 bg-muted rounded" />
+						{/* Description */}
+						{hasDescription && (
+							<div className="h-5 w-96 max-w-full bg-muted rounded" />
+						)}
+					</div>
+					{hasActions && (
+						<div className="shrink-0 w-full sm:w-auto">
+							<div className="h-9 w-32 bg-muted rounded" />
+						</div>
+					)}
 				</div>
 			</div>
-		</section>
+		</header>
 	);
 }

@@ -18,7 +18,7 @@ export function ProductCarouselSkeleton() {
 				<div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
 				{/* Info produit skeleton - en bas avec espacement responsive */}
-				<div className="absolute bottom-0 left-0 right-0 p-4 pb-14 sm:p-6 sm:pb-6 text-white z-10 space-y-2">
+				<div className="absolute bottom-0 left-0 right-0 p-4 pb-12 sm:p-6 sm:pb-6 text-white z-10 space-y-2">
 					<Skeleton className="h-8 w-3/4 bg-white/20 drop-shadow-lg" />
 					<Skeleton className="h-6 w-24 bg-white/20 drop-shadow-md" />
 				</div>
@@ -39,7 +39,7 @@ export function ProductCarouselSkeleton() {
 					{Array.from({ length: 3 }).map((_, index) => (
 						<div
 							key={index}
-							className="h-10 w-10 sm:h-11 sm:w-11 flex items-center justify-center"
+							className="h-11 w-11 flex items-center justify-center"
 						>
 							<Skeleton
 								className={

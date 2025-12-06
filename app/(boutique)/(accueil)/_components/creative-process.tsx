@@ -103,9 +103,17 @@ export async function CreativeProcess() {
 			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
 			aria-labelledby="creative-process-title"
 		>
+			{/* Skip link pour accessibilité */}
+			<a
+				href="#cta-personnalisation"
+				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-secondary focus:text-secondary-foreground focus:rounded-md focus:shadow-md"
+			>
+				Aller au formulaire de personnalisation
+			</a>
+
 			<div className="absolute inset-0" aria-hidden="true">
 				<ParticleSystem
-					count={8}
+					count={6}
 					colorPreset="dore"
 					blur={[15, 45]}
 					shape="diamond"
@@ -120,8 +128,11 @@ export async function CreativeProcess() {
 						Comment je crée tes bijoux
 					</SectionTitle>
 					<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto">
-						De l'idée de départ jusqu'au bijou terminé, je te montre les
-						coulisses de l'atelier.
+						De l'idée au bijou terminé
+						<span className="hidden sm:inline">
+							, je te montre les coulisses de l'atelier
+						</span>
+						.
 					</p>
 				</header>
 
@@ -131,7 +142,7 @@ export async function CreativeProcess() {
 						y={20}
 						duration={0.6}
 						delay={0.2}
-						className="relative order-1 h-48 sm:h-80 lg:h-full"
+						className="relative order-1 h-56 sm:h-80 lg:h-full"
 					>
 						<div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-xl">
 							<ParallaxImage
@@ -141,12 +152,12 @@ export async function CreativeProcess() {
 								className="object-cover object-center saturate-[1.05] brightness-[1.02]"
 							/>
 
-							{/* Badge Fait main - contraste amélioré */}
+							{/* Badge Fait main - contraste renforcé */}
 							<div
-								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary/95 backdrop-blur-md border-2 border-secondary-foreground/20 rounded-full shadow-md"
+								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary backdrop-blur-md border-2 border-white/30 rounded-full shadow-lg"
 								aria-hidden="true"
 							>
-								<span className="text-xs/5 font-bold tracking-wider antialiased text-secondary-foreground drop-shadow-sm">
+								<span className="text-xs/5 font-bold tracking-wider antialiased text-secondary-foreground">
 									Fait main à Nantes
 								</span>
 							</div>
@@ -167,7 +178,7 @@ export async function CreativeProcess() {
 
 							{/* Ligne verticale simplifiée (mobile) */}
 							<div
-								className="absolute left-[22px] top-8 bottom-8 w-px bg-secondary/30 sm:hidden"
+								className="absolute left-[22px] top-8 bottom-8 w-px bg-secondary/30 sm:hidden transition-colors duration-300"
 								aria-hidden="true"
 							/>
 
@@ -231,7 +242,7 @@ export async function CreativeProcess() {
 												{/* Sparkles sur l'étape finale (climax) */}
 												{index === 3 && (
 													<Sparkles
-														className="inline-block w-4 h-4 ml-1.5 text-secondary animate-pulse"
+														className="inline-block w-4 h-4 ml-1.5 text-secondary opacity-70 transition-opacity group-hover:opacity-100"
 														aria-hidden="true"
 													/>
 												)}
@@ -269,6 +280,7 @@ export async function CreativeProcess() {
 									j'adore créer des pièces personnalisées !
 								</p>
 								<Button
+									id="cta-personnalisation"
 									asChild
 									variant="secondary"
 									size="lg"

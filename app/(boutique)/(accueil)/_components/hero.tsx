@@ -105,7 +105,7 @@ export async function Hero() {
                     href={BRAND.social.instagram.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card/50 hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border border-transparent hover:border-primary/20"
+                    className="inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg bg-card/50 hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border border-transparent hover:border-primary/20"
                     aria-label="Suivre Synclune sur Instagram"
                   >
                     <InstagramIcon
@@ -121,7 +121,7 @@ export async function Hero() {
                     href={BRAND.social.tiktok.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card/50 hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border border-transparent hover:border-primary/20"
+                    className="inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg bg-card/50 hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border border-transparent hover:border-primary/20"
                     aria-label="Suivre Synclune sur TikTok"
                   >
                     <TikTokIcon
