@@ -67,7 +67,7 @@ export function ProductVariantSelectionActions() {
 
 	const handleExportCSV = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une variante.");
+			toast.error("Veuillez sélectionner au moins une variante.");
 			return;
 		}
 		toast.info("Export CSV non implemente");
@@ -75,7 +75,7 @@ export function ProductVariantSelectionActions() {
 
 	const handleActivate = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une variante.");
+			toast.error("Veuillez sélectionner au moins une variante.");
 			return;
 		}
 		activateSkus(selectedItems);
@@ -83,7 +83,7 @@ export function ProductVariantSelectionActions() {
 
 	const handleDeactivate = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une variante.");
+			toast.error("Veuillez sélectionner au moins une variante.");
 			return;
 		}
 		deactivateSkus(selectedItems);
@@ -91,7 +91,7 @@ export function ProductVariantSelectionActions() {
 
 	const handleAdjustStock = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une variante.");
+			toast.error("Veuillez sélectionner au moins une variante.");
 			return;
 		}
 		bulkAdjustStockDialog.open({ skuIds: selectedItems });
@@ -99,7 +99,7 @@ export function ProductVariantSelectionActions() {
 
 	const handleUpdatePrice = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une variante.");
+			toast.error("Veuillez sélectionner au moins une variante.");
 			return;
 		}
 		bulkUpdatePriceDialog.open({ skuIds: selectedItems });
@@ -107,7 +107,7 @@ export function ProductVariantSelectionActions() {
 
 	const handleDeleteClick = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une variante.");
+			toast.error("Veuillez sélectionner au moins une variante.");
 			return;
 		}
 		setDeleteDialogOpen(true);

@@ -593,195 +593,6 @@ textarea {
 	--shadow-2xl: 0 0.125rem -0.0625rem 0.5rem 0 hsl(0 0 0 / 1.25);
 }
 
-/* ========================================================================
-   VIEW TRANSITIONS
-   ======================================================================== */
-
-/* Animation par défaut pour les transitions partagées (morphing entre pages) */
-::view-transition-old(*),
-::view-transition-new(*) {
-	animation-duration: 0.3s;
-	animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Entrée seule (élément apparaît) : fade-in avec léger scale */
-::view-transition-new(*):only-child {
-	animation: vt-fade-scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Sortie seule (élément disparaît) : fade-out rapide */
-::view-transition-old(*):only-child {
-	animation: vt-fade-out 0.2s ease-out;
-}
-
-@keyframes vt-fade-scale-in {
-	from {
-		opacity: 0;
-		transform: scale(0.96);
-	}
-	to {
-		opacity: 1;
-		transform: scale(1);
-	}
-}
-
-@keyframes vt-fade-out {
-	from {
-		opacity: 1;
-	}
-	to {
-		opacity: 0;
-	}
-}
-
-/* Respecter prefers-reduced-motion (WCAG 2.3.3) */
-@media (prefers-reduced-motion: reduce) {
-	::view-transition-group(*),
-	::view-transition-old(*),
-	::view-transition-new(*) {
-		animation: none !important;
-	}
-}
-
-/* === CLASSES SPÉCIFIQUES PAR TYPE === */
-/* Documentation: https://react.dev/reference/react/ViewTransition */
-
-/* Images produits - transition lente avec morphing fluide (shared element) */
-::view-transition-group(.vt-product-image) {
-	animation-duration: 0.4s;
-	animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-::view-transition-old(.vt-product-image),
-::view-transition-new(.vt-product-image) {
-	animation-duration: 0.4s;
-	animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-/* Titres - transition rapide */
-::view-transition-group(.vt-title) {
-	animation-duration: 0.25s;
-	animation-timing-function: ease-out;
-}
-::view-transition-old(.vt-title),
-::view-transition-new(.vt-title) {
-	animation-duration: 0.25s;
-	animation-timing-function: ease-out;
-}
-
-/* Badges de statut - transition subtile */
-::view-transition-group(.vt-badge) {
-	animation-duration: 0.2s;
-	animation-timing-function: ease-out;
-}
-::view-transition-old(.vt-badge),
-::view-transition-new(.vt-badge) {
-	animation-duration: 0.2s;
-	animation-timing-function: ease-out;
-}
-
-/* Liens dans tableaux - transition discrète */
-::view-transition-group(.vt-table-link) {
-	animation-duration: 0.15s;
-	animation-timing-function: ease-out;
-}
-::view-transition-old(.vt-table-link),
-::view-transition-new(.vt-table-link) {
-	animation-duration: 0.15s;
-	animation-timing-function: ease-out;
-}
-
-/* Aperçus couleurs - animation personnalisée avec scale */
-::view-transition-group(.vt-color-preview) {
-	animation-duration: 0.3s;
-	animation-timing-function: ease-out;
-}
-::view-transition-old(.vt-color-preview) {
-	animation: vt-scale-out 0.3s ease-out forwards;
-}
-::view-transition-new(.vt-color-preview) {
-	animation: vt-scale-bounce-in 0.3s ease-out forwards;
-}
-
-@keyframes vt-scale-out {
-	from {
-		opacity: 1;
-		transform: scale(1);
-	}
-	to {
-		opacity: 0;
-		transform: scale(0.8);
-	}
-}
-
-@keyframes vt-scale-bounce-in {
-	0% {
-		opacity: 0;
-		transform: scale(0.8);
-	}
-	70% {
-		transform: scale(1.05);
-	}
-	100% {
-		opacity: 1;
-		transform: scale(1);
-	}
-}
-
-/* === ANIMATIONS ENTER/EXIT OPTIONNELLES === */
-
-/* Slide in - pour les entrées */
-::view-transition-new(.vt-slide-in) {
-	animation: vt-slide-in-up 0.3s ease-out forwards;
-}
-::view-transition-old(.vt-slide-out) {
-	animation: vt-slide-out-down 0.3s ease-out forwards;
-}
-
-@keyframes vt-slide-in-up {
-	from {
-		opacity: 0;
-		transform: translateY(20px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-@keyframes vt-slide-out-down {
-	from {
-		opacity: 1;
-		transform: translateY(0);
-	}
-	to {
-		opacity: 0;
-		transform: translateY(20px);
-	}
-}
-
-/* Respecter prefers-reduced-motion pour les classes spécifiques */
-@media (prefers-reduced-motion: reduce) {
-	::view-transition-group(.vt-product-image),
-	::view-transition-group(.vt-title),
-	::view-transition-group(.vt-badge),
-	::view-transition-group(.vt-table-link),
-	::view-transition-group(.vt-color-preview),
-	::view-transition-old(.vt-product-image),
-	::view-transition-new(.vt-product-image),
-	::view-transition-old(.vt-title),
-	::view-transition-new(.vt-title),
-	::view-transition-old(.vt-badge),
-	::view-transition-new(.vt-badge),
-	::view-transition-old(.vt-table-link),
-	::view-transition-new(.vt-table-link),
-	::view-transition-old(.vt-color-preview),
-	::view-transition-new(.vt-color-preview),
-	::view-transition-new(.vt-slide-in),
-	::view-transition-old(.vt-slide-out) {
-		animation: none !important;
-	}
-}
-
 /* ============================================
    Lightbox Premium Styles (yet-another-react-lightbox)
    ============================================ */
@@ -820,6 +631,11 @@ textarea {
 /* ============================================
    SONNER TOASTS - Design Bijoux Synclune
    ============================================ */
+
+/* Safe area pour iPhone notch */
+[data-sonner-toaster] {
+	padding-top: max(1rem, env(safe-area-inset-top)) !important;
+}
 
 [data-sonner-toast] {
 	background: oklch(from var(--card) l c h / 0.95) !important;
@@ -864,10 +680,20 @@ textarea {
 	border-left: 3px solid var(--secondary) !important;
 }
 
+/* Touch targets iOS (min 44px) */
+[data-sonner-toast] [data-button] {
+	min-height: 44px;
+	padding-inline: 1rem;
+}
+
 /* Respect prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
 	[data-sonner-toast] {
 		animation: none !important;
 		transition: none !important;
+	}
+
+	[data-sonner-toast] svg.animate-spin {
+		animation: none !important;
 	}
 }

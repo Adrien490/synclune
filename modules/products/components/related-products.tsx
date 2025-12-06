@@ -77,7 +77,6 @@ export async function RelatedProducts({
 							key={product.id}
 							product={product}
 							index={index}
-							viewTransitionContext="related"
 							isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 						/>
 					);

@@ -18,7 +18,7 @@ import {
 } from "@/shared/components/ui/table";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import { Palette } from "lucide-react";
-import { use, ViewTransition } from "react";
+import { use } from "react";
 import { ColorsRowActions } from "@/modules/colors/components/colors-row-actions";
 import { ColorsSelectionToolbar } from "@/modules/colors/components/colors-selection-toolbar";
 import { ColorsTableSelectionCell } from "@/modules/colors/components/colors-table-selection-cell";
@@ -103,25 +103,21 @@ export function ColorsDataTable({ colorsPromise }: ColorsDataTableProps) {
 											<ColorsTableSelectionCell type="row" colorId={color.id} />
 										</TableCell>
 										<TableCell role="gridcell" className="hidden md:table-cell">
-											<ViewTransition name={`admin-color-preview-${color.id}`} default="vt-color-preview">
-												<div
-													className="w-[30px] h-[30px] rounded-full inline-flex border border-border"
-													style={{ backgroundColor: color.hex }}
-												/>
-											</ViewTransition>
-										</TableCell>
-										<TableCell role="gridcell">
-											<ViewTransition name={`admin-color-name-${color.id}`} default="vt-title">
-												<div className="overflow-hidden">
-													<span
-														className="font-semibold text-foreground truncate block"
-														title={color.name}
-													>
-														{color.name}
-													</span>
-												</div>
-											</ViewTransition>
-										</TableCell>
+										<div
+											className="w-[30px] h-[30px] rounded-full inline-flex border border-border"
+											style={{ backgroundColor: color.hex }}
+										/>
+									</TableCell>
+									<TableCell role="gridcell">
+										<div className="overflow-hidden">
+											<span
+												className="font-semibold text-foreground truncate block"
+												title={color.name}
+											>
+												{color.name}
+											</span>
+										</div>
+									</TableCell>
 										<TableCell
 											role="gridcell"
 											className="hidden sm:table-cell text-center"

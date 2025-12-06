@@ -219,7 +219,12 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 					</div>
 
 					{/* Layout principal : Thumbnails verticales (desktop) | Image principale */}
-					<div className="grid grid-cols-1 lg:grid-cols-[80px_1fr] gap-3 lg:gap-4">
+					<div className={cn(
+						"grid gap-3 lg:gap-4",
+						safeImages.length > 1
+							? "grid-cols-1 lg:grid-cols-[80px_1fr]"
+							: "grid-cols-1"
+					)}>
 						{/* Thumbnails verticales - Desktop uniquement */}
 						{safeImages.length > 1 && (
 							<div className="hidden lg:flex flex-col gap-2 order-1 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent pr-1">

@@ -31,7 +31,6 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Eye, ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 
 export interface CustomerOrdersTableProps {
 	ordersPromise: Promise<GetUserOrdersReturn>;
@@ -117,14 +116,12 @@ export async function CustomerOrdersTable({
 							{orders.map((order) => (
 								<TableRow key={order.id}>
 									<TableCell>
-										<ViewTransition name={`order-${order.id}`} default="vt-table-link">
-											<Link
-												href={`/commandes/${order.orderNumber}`}
-												className="font-mono text-sm font-medium text-primary hover:underline"
-											>
-												{order.orderNumber}
-											</Link>
-										</ViewTransition>
+										<Link
+											href={`/commandes/${order.orderNumber}`}
+											className="font-mono text-sm font-medium text-primary hover:underline"
+										>
+											{order.orderNumber}
+										</Link>
 									</TableCell>
 									<TableCell className="hidden sm:table-cell">
 										<span className="text-sm whitespace-nowrap text-muted-foreground">

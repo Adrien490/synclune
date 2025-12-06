@@ -67,7 +67,7 @@ const icons = {
 	),
 	warning: (
 		<svg
-			className="size-[18px] text-secondary"
+			className="size-[18px] text-secondary-foreground"
 			viewBox="0 0 24 24"
 			fill="none"
 			strokeWidth="1.5"

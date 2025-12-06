@@ -27,7 +27,6 @@ import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { OrderRowActions } from "./order-row-actions";
 import { OrdersSelectionToolbar } from "./orders-selection-toolbar";
 import { OrdersTableSelectionCell } from "./orders-table-selection-cell";
@@ -121,15 +120,13 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 											<OrdersTableSelectionCell type="row" orderId={order.id} />
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-order-${order.id}`} default="vt-table-link">
-												<Link
-													href={`/admin/ventes/commandes/${order.id}`}
-													className="font-mono text-sm font-medium text-foreground underline"
-												>
-													{order.orderNumber}
-												</Link>
-											</ViewTransition>
-										</TableCell>
+										<Link
+											href={`/admin/ventes/commandes/${order.id}`}
+											className="font-mono text-sm font-medium text-foreground underline"
+										>
+											{order.orderNumber}
+										</Link>
+									</TableCell>
 										<TableCell role="gridcell" className="hidden sm:table-cell">
 											<span className="text-sm font-medium truncate block">
 												{userName}

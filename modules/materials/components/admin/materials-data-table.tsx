@@ -19,7 +19,7 @@ import {
 import type { GetMaterialsReturn } from "@/modules/materials/data/get-materials";
 import { MaterialActiveToggle } from "@/modules/materials/components/admin/material-active-toggle";
 import { Gem } from "lucide-react";
-import { use, ViewTransition } from "react";
+import { use } from "react";
 import { MaterialsRowActions } from "@/modules/materials/components/materials-row-actions";
 import { MaterialsSelectionToolbar } from "@/modules/materials/components/materials-selection-toolbar";
 import { MaterialsTableSelectionCell } from "@/modules/materials/components/materials-table-selection-cell";
@@ -112,17 +112,15 @@ export function MaterialsDataTable({ materialsPromise }: MaterialsDataTableProps
 											<MaterialsTableSelectionCell type="row" materialId={material.id} />
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-material-name-${material.id}`} default="vt-title">
-												<div className="overflow-hidden">
-													<span
-														className="font-semibold text-foreground truncate block"
-														title={material.name}
-													>
-														{material.name}
-													</span>
-												</div>
-											</ViewTransition>
-										</TableCell>
+										<div className="overflow-hidden">
+											<span
+												className="font-semibold text-foreground truncate block"
+												title={material.name}
+											>
+												{material.name}
+											</span>
+										</div>
+									</TableCell>
 										<TableCell role="gridcell" className="hidden md:table-cell">
 											<span className="text-sm text-muted-foreground line-clamp-2">
 												{material.description || "-"}

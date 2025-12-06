@@ -38,7 +38,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 
 	return (
-		<NavigationMenu className="hidden lg:flex" viewport={true}>
+		<NavigationMenu className="hidden lg:flex" viewport={true} delayDuration={200}>
 			<NavigationMenuList className="gap-1">
 				{navItems.map((item) => {
 					const isActive = isMenuItemActive(item.href);
@@ -87,7 +87,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 																	height={64}
 																	className="w-16 h-16 object-cover rounded-md bg-secondary/20 shrink-0"
 																	sizes="64px"
-																	quality={85}
+																	quality={90}
 																	placeholder="empty"
 																/>
 															)}

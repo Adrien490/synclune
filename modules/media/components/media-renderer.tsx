@@ -6,7 +6,6 @@ import { MediaTypeBadge } from "@/modules/media/components/media-type-badge";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import Image from "next/image";
-import { ViewTransition } from "react";
 import { memo } from "react";
 
 // Constantes - quality 85 offre un bon compromis taille/qualité (-50% vs 95)
@@ -26,7 +25,7 @@ interface MediaRendererProps {
 /**
  * Composant responsable du rendu des médias (images/vidéos) dans la galerie principale
  * Extrait la logique complexe de rendu conditionnel hors de ProductGallery
- * - Gère les images avec ViewTransition pour la première
+ * - Gère les images
  * - Gère les vidéos avec contrôles natifs
  * - Gère les erreurs avec fallback et retry
  */
@@ -91,15 +90,6 @@ function MediaRendererComponent({
 			draggable={false}
 		/>
 	);
-
-	// Première image avec ViewTransition pour transition fluide entre pages
-	if (isFirst) {
-		return (
-			<ViewTransition name={`product-image-${productSlug}`} default="vt-product-image" share="vt-product-image">
-				{ImageComponent}
-			</ViewTransition>
-		);
-	}
 
 	return ImageComponent;
 }

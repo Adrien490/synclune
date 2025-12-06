@@ -73,7 +73,6 @@ export async function CartRecommendations({
 							key={product.id}
 							product={product}
 							index={index}
-							viewTransitionContext="cart-recommendations"
 							isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
 						/>
 					);

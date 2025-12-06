@@ -6,6 +6,7 @@ import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import { getPrimarySkuForList } from "@/modules/products/services/product-list-helpers";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
+import { cn } from "@/shared/utils/cn";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
@@ -51,9 +52,6 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 		return null;
 	}
 
-	// Mobile: 6 produits, Desktop: tous (jusqu'à 12)
-	const mobileProducts = products.slice(0, 6);
-
 	return (
 		<section
 			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
@@ -76,45 +74,30 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 					</p>
 				</header>
 
-				{/* Grille mobile : 6 produits max */}
+				{/* Grille unifiée : 6 produits mobile, tous desktop (évite double rendering DOM) */}
 				<Stagger
-					className="grid grid-cols-2 gap-4 mb-6 sm:hidden"
+					className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
 					stagger={0.08}
 					y={30}
-					inView
-					once={true}
-				>
-					{mobileProducts.map((product, index) => {
-						const primarySku = getPrimarySkuForList(product);
-						return (
-							<ProductCard
-								key={product.id}
-								product={product}
-								index={index}
-								viewTransitionContext="mobile"
-								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
-							/>
-						);
-					})}
-				</Stagger>
-
-				{/* Grille desktop : tous les produits */}
-				<Stagger
-					className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8 lg:mb-12"
-					stagger={0.1}
-					y={40}
 					inView
 					once={true}
 				>
 					{products.map((product, index) => {
 						const primarySku = getPrimarySkuForList(product);
 						return (
-							<ProductCard
+							<div
 								key={product.id}
-								product={product}
-								index={index}
-								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
-							/>
+								className={cn(
+									// Cacher produits 7-12 sur mobile (< sm breakpoint)
+									index >= 6 && "hidden sm:block"
+								)}
+							>
+								<ProductCard
+									product={product}
+									index={index}
+									isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
+								/>
+							</div>
 						);
 					})}
 				</Stagger>

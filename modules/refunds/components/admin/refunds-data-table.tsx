@@ -28,7 +28,6 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
 import { ReceiptText } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { RefundRowActions } from "./refund-row-actions";
 import { RefundsSelectionToolbar } from "./refunds-selection-toolbar";
 import { RefundsTableSelectionCell } from "./refunds-table-selection-cell";
@@ -136,15 +135,13 @@ export async function RefundsDataTable({
 										<RefundsTableSelectionCell type="row" refundId={refund.id} />
 									</TableCell>
 									<TableCell role="gridcell">
-										<ViewTransition name={`admin-order-${refund.order.id}`} default="vt-table-link">
-											<Link
-												href={`/admin/ventes/commandes/${refund.order.id}`}
-												className="font-mono text-sm font-medium text-foreground underline"
-											>
-												{refund.order.orderNumber}
-											</Link>
-										</ViewTransition>
-									</TableCell>
+									<Link
+										href={`/admin/ventes/commandes/${refund.order.id}`}
+										className="font-mono text-sm font-medium text-foreground underline"
+									>
+										{refund.order.orderNumber}
+									</Link>
+								</TableCell>
 									<TableCell role="gridcell" className="hidden sm:table-cell">
 										<span className="text-sm whitespace-nowrap">
 											{formatDateShort(refund.createdAt)}

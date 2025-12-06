@@ -51,7 +51,8 @@ export function WishlistButton({
 				disabled={isPending}
 				onClick={(e) => e.stopPropagation()}
 				className={cn(
-					"h-9 w-9 rounded-full",
+					// Taille 44px conforme WCAG 2.5.5 (cible tactile minimum)
+					"h-11 w-11 rounded-full",
 					"flex items-center justify-center",
 					"hover:scale-110 active:scale-95",
 					"motion-safe:transition-all motion-safe:duration-300",

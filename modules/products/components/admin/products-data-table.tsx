@@ -1,5 +1,4 @@
 // React & Next.js
-import { ViewTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -260,42 +259,38 @@ export async function ProductsDataTable({
 											role="gridcell"
 											className="hidden sm:table-cell py-3"
 										>
-											<ViewTransition name={`admin-product-image-${product.slug}`} default="vt-product-image" share="vt-product-image">
-												<div className="w-20 h-20 relative shrink-0">
-													{defaultImage ? (
-														<Image
-															src={defaultImage.url}
-															alt={defaultImage.altText || product.title}
-															fill
-															sizes="80px"
-															quality={80}
-															className="rounded-md object-cover"
-															placeholder={defaultImage.blurDataUrl ? "blur" : "empty"}
-															blurDataURL={defaultImage.blurDataUrl ?? undefined}
-														/>
-													) : (
-														<div
-															className="flex w-full h-full items-center justify-center rounded-md bg-muted"
-															aria-label="Aucune image disponible"
-														>
-															<Package className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-														</div>
-													)}
-												</div>
-											</ViewTransition>
+											<div className="w-20 h-20 relative shrink-0">
+												{defaultImage ? (
+													<Image
+														src={defaultImage.url}
+														alt={defaultImage.altText || product.title}
+														fill
+														sizes="80px"
+														quality={80}
+														className="rounded-md object-cover"
+														placeholder={defaultImage.blurDataUrl ? "blur" : "empty"}
+														blurDataURL={defaultImage.blurDataUrl ?? undefined}
+													/>
+												) : (
+													<div
+														className="flex w-full h-full items-center justify-center rounded-md bg-muted"
+														aria-label="Aucune image disponible"
+													>
+														<Package className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+													</div>
+												)}
+											</div>
 										</TableCell>
 										<TableCell role="gridcell">
 											<div className="overflow-hidden">
-												<ViewTransition name={`admin-product-title-${product.slug}`} default="vt-title">
-													<Link
-														href={`/admin/catalogue/produits/${product.slug}/modifier`}
-														className="font-semibold text-foreground hover:underline hover:text-foreground truncate block"
-														title={`Modifier ${product.title}`}
-														aria-label={`Modifier ${product.title}`}
-													>
-														{product.title}
-													</Link>
-												</ViewTransition>
+												<Link
+													href={`/admin/catalogue/produits/${product.slug}/modifier`}
+													className="font-semibold text-foreground hover:underline hover:text-foreground truncate block"
+													title={`Modifier ${product.title}`}
+													aria-label={`Modifier ${product.title}`}
+												>
+													{product.title}
+												</Link>
 											</div>
 										</TableCell>
 										<TableCell role="gridcell" className="hidden sm:table-cell">

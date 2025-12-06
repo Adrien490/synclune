@@ -94,7 +94,7 @@ export async function Navbar() {
 
 						{/* Section droite: Tableau de bord (admin) + Compte + Panier */}
 						<div className="flex flex-1 items-center justify-end min-w-0">
-							<div className="flex items-center gap-2 lg:gap-3 shrink-0">
+							<div className="flex items-center gap-3 shrink-0">
 								{/* Icône tableau de bord (visible uniquement pour les admins) */}
 								{userIsAdmin && (
 									<Link
@@ -133,7 +133,7 @@ export async function Navbar() {
 								>
 									<Heart
 										size={20}
-										className="transition-transform duration-300 ease-out group-hover:scale-110"
+										className="transition-transform duration-300 ease-out group-hover:scale-105"
 										aria-hidden="true"
 									/>
 									<WishlistBadge />
@@ -147,7 +147,7 @@ export async function Navbar() {
 								>
 									<ShoppingCart
 										size={20}
-										className="transition-transform duration-300 ease-out group-hover:rotate-6"
+										className="transition-transform duration-300 ease-out group-hover:scale-105"
 										aria-hidden="true"
 									/>
 									<CartBadge />

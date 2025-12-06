@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ViewTransition } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
@@ -151,14 +150,12 @@ function StockNotificationRow({
 							<Bell className="h-4 w-4 text-muted-foreground" />
 						</div>
 					)}
-					<ViewTransition name={`admin-product-title-${sku.product.slug}`} default="vt-table-link">
-						<Link
-							href={`/admin/catalogue/produits/${sku.product.slug}/modifier`}
-							className="font-medium hover:underline truncate max-w-[180px]"
-						>
-							{sku.product.title}
-						</Link>
-					</ViewTransition>
+					<Link
+						href={`/admin/catalogue/produits/${sku.product.slug}/modifier`}
+						className="font-medium hover:underline truncate max-w-[180px]"
+					>
+						{sku.product.title}
+					</Link>
 				</div>
 			</TableCell>
 

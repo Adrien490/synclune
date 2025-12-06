@@ -87,7 +87,7 @@ export async function createProductSku(
 			if (primaryMediaType === "VIDEO") {
 				return {
 					status: ActionStatus.VALIDATION_ERROR,
-					message: "Le media principal ne peut pas etre une video. Veuillez selectionner une image comme media principal.",
+					message: "Le média principal ne peut pas être une vidéo. Veuillez sélectionner une image comme média principal.",
 				};
 			}
 			allMedia.push({

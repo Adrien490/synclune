@@ -5,7 +5,6 @@ import { FALLBACK_IMAGE_URL } from '@/modules/media/constants/product-fallback-i
 import { cn } from "@/shared/utils/cn"
 import Image from "next/image"
 import Link from "next/link"
-import { ViewTransition } from "react"
 import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants"
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants"
 import { ProductPriceCompact } from "@/modules/products/components/product-price"
@@ -95,31 +94,27 @@ export function WishlistProductCard({
 								Plus que {inventory} !
 							</div>
 						)}
-						<ViewTransition name={`wishlist-product-image-${product.slug}`} default="vt-product-image" share="vt-product-image">
 							<Image
-								src={primaryImage?.url || FALLBACK_IMAGE_URL}
-								alt={primaryImage?.altText || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(product.title)}
-								fill
-								className="object-cover rounded-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
-								placeholder={primaryImage?.blurDataUrl ? "blur" : "empty"}
-								blurDataURL={primaryImage?.blurDataUrl ?? undefined}
-								loading="lazy"
-								sizes={IMAGE_SIZES.PRODUCT_CARD}
-								itemProp="image"
-							/>
-						</ViewTransition>
+							src={primaryImage?.url || FALLBACK_IMAGE_URL}
+							alt={primaryImage?.altText || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(product.title)}
+							fill
+							className="object-cover rounded-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
+							placeholder={primaryImage?.blurDataUrl ? "blur" : "empty"}
+							blurDataURL={primaryImage?.blurDataUrl ?? undefined}
+							loading="lazy"
+							sizes={IMAGE_SIZES.PRODUCT_CARD}
+							itemProp="image"
+						/>
 					</div>
 
 					<div className="flex flex-col gap-2 relative p-4">
-						<ViewTransition name={`wishlist-product-title-${product.slug}`} default="vt-title">
-							<h3
-								id={titleId}
-								className="line-clamp-2 font-sans text-foreground text-lg break-words"
-								itemProp="name"
-							>
-								{product.title}
-							</h3>
-						</ViewTransition>
+						<h3
+							id={titleId}
+							className="line-clamp-2 font-sans text-foreground text-lg break-words"
+							itemProp="name"
+						>
+							{product.title}
+						</h3>
 
 						{stockStatus === "out_of_stock" && (
 							<span className="sr-only">{stockMessage}</span>

@@ -1,4 +1,3 @@
-import { ViewTransition } from "react";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	ORDER_STATUS_LABELS,
@@ -17,36 +16,30 @@ export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 
 	return (
 		<div className="flex flex-wrap gap-2" role="group" aria-label="Statuts de la commande">
-			<ViewTransition name={`admin-order-${order.id}-status`} default="vt-badge">
-				<Badge
-					variant={ORDER_STATUS_VARIANTS[order.status]}
-					className="text-sm"
-					role="status"
-					aria-label={`Statut de la commande : ${orderStatusLabel}`}
-				>
-					{orderStatusLabel}
-				</Badge>
-			</ViewTransition>
-			<ViewTransition name={`admin-order-${order.id}-payment`} default="vt-badge">
-				<Badge
-					variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}
-					className="text-sm"
-					role="status"
-					aria-label={`Statut du paiement : ${paymentStatusLabel}`}
-				>
-					{paymentStatusLabel}
-				</Badge>
-			</ViewTransition>
-			<ViewTransition name={`admin-order-${order.id}-fulfillment`} default="vt-badge">
-				<Badge
-					variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
-					className="text-sm"
-					role="status"
-					aria-label={`Statut du traitement : ${fulfillmentStatusLabel}`}
-				>
-					{fulfillmentStatusLabel}
-				</Badge>
-			</ViewTransition>
+			<Badge
+				variant={ORDER_STATUS_VARIANTS[order.status]}
+				className="text-sm"
+				role="status"
+				aria-label={`Statut de la commande : ${orderStatusLabel}`}
+			>
+				{orderStatusLabel}
+			</Badge>
+			<Badge
+				variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}
+				className="text-sm"
+				role="status"
+				aria-label={`Statut du paiement : ${paymentStatusLabel}`}
+			>
+				{paymentStatusLabel}
+			</Badge>
+			<Badge
+				variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
+				className="text-sm"
+				role="status"
+				aria-label={`Statut du traitement : ${fulfillmentStatusLabel}`}
+			>
+				{fulfillmentStatusLabel}
+			</Badge>
 		</div>
 	);
 }

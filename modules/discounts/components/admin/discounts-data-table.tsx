@@ -22,7 +22,6 @@ import type { GetDiscountsReturn } from "@/modules/discounts/data/get-discounts"
 import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.constants";
 import { DiscountType } from "@/app/generated/prisma/client";
 import { Ticket } from "lucide-react";
-import { ViewTransition } from "react";
 import { DiscountRowActions } from "./discount-row-actions";
 import { DiscountsSelectionToolbar } from "./discounts-selection-toolbar";
 import { DiscountsTableSelectionCell } from "./discounts-table-selection-cell";
@@ -155,12 +154,10 @@ export async function DiscountsDataTable({
 											/>
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-discount-${discount.id}`} default="vt-table-link">
-												<code className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded">
-													{discount.code}
-												</code>
-											</ViewTransition>
-										</TableCell>
+										<code className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded">
+											{discount.code}
+										</code>
+									</TableCell>
 										<TableCell role="gridcell" className="hidden sm:table-cell">
 											<span className="text-sm text-muted-foreground">
 												{DISCOUNT_TYPE_LABELS[discount.type]}

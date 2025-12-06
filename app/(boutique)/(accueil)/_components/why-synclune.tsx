@@ -114,7 +114,7 @@ export async function WhySynclune() {
 							role="article"
 							aria-labelledby={`pillar-title-${index}`}
 							className={cn(
-								"group text-center p-6 rounded-xl bg-card border shadow-sm",
+								"group text-center p-4 sm:p-6 rounded-xl bg-card border shadow-sm",
 								"hover:shadow-lg hover:border-secondary/40",
 								"transition-all duration-300 hover:-translate-y-1",
 								// Focus clavier accessible

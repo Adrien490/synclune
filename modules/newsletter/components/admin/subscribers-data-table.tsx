@@ -21,7 +21,6 @@ import { GetSubscribersReturn } from "@/modules/newsletter/data/get-subscribers"
 import { formatDateShort } from "@/shared/utils/dates";
 import { CheckCircle2, Clock, Mail, XCircle } from "lucide-react";
 import { NEWSLETTER_STATUS_LABELS } from "@/modules/newsletter/constants/newsletter-status.constants";
-import { ViewTransition } from "react";
 import { SubscriberRowActions } from "./subscriber-row-actions";
 import { SubscribersSelectionToolbar } from "./subscribers-selection-toolbar";
 import { SubscribersTableSelectionCell } from "./subscribers-table-selection-cell";
@@ -77,10 +76,8 @@ export async function SubscribersDataTable({
 										<SubscribersTableSelectionCell type="row" subscriberId={subscriber.id} />
 									</TableCell>
 									<TableCell className="font-medium">
-										<ViewTransition name={`admin-subscriber-${subscriber.id}`} default="vt-table-link">
-											<span>{subscriber.email}</span>
-										</ViewTransition>
-									</TableCell>
+									<span>{subscriber.email}</span>
+								</TableCell>
 									<TableCell>
 										{subscriber.status === NewsletterStatus.CONFIRMED ? (
 											<span className="inline-flex items-center gap-1.5 text-sm text-green-600">

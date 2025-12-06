@@ -1,7 +1,6 @@
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { ProductPriceCompact } from "./product-price";
@@ -21,12 +20,6 @@ interface ProductCardProps {
 	product: Product;
 	/** Index dans la liste (pour priority images above-fold) */
 	index?: number;
-	/**
-	 * Préfixe de contexte pour éviter les conflits ViewTransition
-	 * quand le même produit apparaît plusieurs fois sur la page.
-	 * Exemple: "related" pour les produits similaires
-	 */
-	viewTransitionContext?: string;
 	/** Indique si le SKU est dans la wishlist (optionnel, défaut false) */
 	isInWishlist?: boolean;
 }
@@ -52,7 +45,6 @@ interface ProductCardProps {
 export function ProductCard({
 	product,
 	index,
-	viewTransitionContext,
 	isInWishlist,
 }: ProductCardProps) {
 	// Déstructuration des données du produit
@@ -76,9 +68,6 @@ export function ProductCard({
 		typeof inventory === "number" &&
 		inventory > 0 &&
 		inventory <= STOCK_THRESHOLDS.LOW;
-
-	// Préfixe ViewTransition avec contexte optionnel pour éviter les conflits
-	const vtPrefix = viewTransitionContext ? `${viewTransitionContext}-` : "";
 
 	// URL canonique uniquement (stratégie SEO e-commerce recommandée)
 	// Toujours pointer vers /creations/[slug] pour consolider les signaux SEO
@@ -142,21 +131,19 @@ export function ProductCard({
 					/>
 				)}
 
-				<ViewTransition name={`${vtPrefix}product-image-${slug}`} default="vt-product-image" share="vt-product-image">
 					<Image
-						src={primaryImage.url}
-						alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
-						fill
-						className="object-cover rounded-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
-						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
-						blurDataURL={primaryImage.blurDataUrl}
-						// Preload pour les 4 premières images (above-fold) - Next.js 16
-						preload={index !== undefined && index < 4}
-						loading={index !== undefined && index < 4 ? undefined : "lazy"}
-						sizes={IMAGE_SIZES.PRODUCT_CARD}
-						itemProp="image"
-					/>
-				</ViewTransition>
+					src={primaryImage.url}
+					alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
+					fill
+					className="object-cover rounded-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
+					placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
+					blurDataURL={primaryImage.blurDataUrl}
+					// Preload pour les 4 premières images (above-fold) - Next.js 16
+					preload={index !== undefined && index < 4}
+					loading={index !== undefined && index < 4 ? undefined : "lazy"}
+					sizes={IMAGE_SIZES.PRODUCT_CARD}
+					itemProp="image"
+				/>
 
 				{/* Bouton d'ajout au panier - EN DEHORS du Link */}
 				{primarySku && stockStatus === "in_stock" && (
@@ -176,15 +163,13 @@ export function ProductCard({
 				{/* Contenu */}
 				<div className="flex flex-col gap-2 relative p-4">
 					{/* Titre avec hiérarchie tokenisée responsive */}
-					<ViewTransition name={`${vtPrefix}product-title-${slug}`} default="vt-title">
-						<h3
-							id={titleId}
-							className="line-clamp-2 font-sans text-foreground text-lg break-words"
-							itemProp="name"
-						>
-							{title}
-						</h3>
-					</ViewTransition>
+					<h3
+						id={titleId}
+						className="line-clamp-2 font-sans text-foreground text-base sm:text-lg break-words"
+						itemProp="name"
+					>
+						{title}
+					</h3>
 
 					{/* Pastilles couleur pour les produits multi-variantes */}
 					{colors && colors.length > 1 && (

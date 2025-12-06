@@ -27,7 +27,6 @@ import {
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import { AlertTriangle, FolderOpen } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { CollectionRowActions } from "./collection-row-actions";
 import { CollectionsSelectionToolbar } from "./collections-selection-toolbar";
 import { CollectionsTableSelectionCell } from "./collections-table-selection-cell";
@@ -158,17 +157,15 @@ export async function CollectionsDataTable({
 											/>
 										</TableCell>
 										<TableCell role="gridcell">
-											<ViewTransition name={`admin-collection-name-${collection.id}`} default="vt-title">
-												<div className="overflow-hidden">
-													<span
-														className="font-semibold text-foreground truncate block"
-														title={collection.name}
-													>
-														{collection.name}
-													</span>
-												</div>
-											</ViewTransition>
-										</TableCell>
+										<div className="overflow-hidden">
+											<span
+												className="font-semibold text-foreground truncate block"
+												title={collection.name}
+											>
+												{collection.name}
+											</span>
+										</div>
+									</TableCell>
 										<TableCell role="gridcell" className="hidden sm:table-cell">
 											<div className="flex items-center gap-2">
 												<Badge variant={STATUS_CONFIG[collection.status].variant}>

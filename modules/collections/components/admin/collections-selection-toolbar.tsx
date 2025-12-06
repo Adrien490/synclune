@@ -94,7 +94,7 @@ export function CollectionsSelectionToolbar({
 
 	const handleBulkArchive = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une collection.");
+			toast.error("Veuillez sélectionner au moins une collection.");
 			return;
 		}
 
@@ -106,7 +106,7 @@ export function CollectionsSelectionToolbar({
 
 	const handleBulkRestore = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une collection.");
+			toast.error("Veuillez sélectionner au moins une collection.");
 			return;
 		}
 
@@ -118,7 +118,7 @@ export function CollectionsSelectionToolbar({
 
 	const handleBulkDelete = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une collection.");
+			toast.error("Veuillez sélectionner au moins une collection.");
 			return;
 		}
 
@@ -139,7 +139,7 @@ export function CollectionsSelectionToolbar({
 
 	const handlePublish = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une collection.");
+			toast.error("Veuillez sélectionner au moins une collection.");
 			return;
 		}
 
@@ -148,7 +148,7 @@ export function CollectionsSelectionToolbar({
 
 	const handleUnpublish = () => {
 		if (selectedItems.length === 0) {
-			toast.error("Veuillez selectionner au moins une collection.");
+			toast.error("Veuillez sélectionner au moins une collection.");
 			return;
 		}
 

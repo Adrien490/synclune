@@ -1,6 +1,5 @@
 "use client";
 
-import { ViewTransition } from "react";
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
@@ -149,11 +148,9 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 	return (
 		<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
 			<div>
-				<ViewTransition name={`admin-order-${order.id}`} default="vt-title">
-					<h1 className="text-2xl font-semibold tracking-tight">
-						Commande {order.orderNumber}
-					</h1>
-				</ViewTransition>
+				<h1 className="text-2xl font-semibold tracking-tight">
+					Commande {order.orderNumber}
+				</h1>
 				<p className="text-sm text-muted-foreground">
 					Créée le{" "}
 					{format(order.createdAt, "d MMMM yyyy 'à' HH'h'mm", {

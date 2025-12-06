@@ -70,20 +70,14 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							duration={0.8}
 							y={20}
 							once={true}
-							className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mask-l-from-95% mask-r-from-95%"
+							className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 px-4 sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mask-l-from-95% mask-r-from-95%"
 							data-carousel-scroll
 						>
 							<div role="list" className="flex gap-4 sm:gap-6">
-							{collections.map((collection, index) => (
+							{collections.map((collection) => (
 								<div
 									key={collection.id}
-									className={`shrink-0 w-[280px] snap-center ${
-										index === 0 ? "ml-[calc(50vw-140px)] sm:ml-6 lg:ml-8" : ""
-									} ${
-										index === collections.length - 1
-											? "mr-[calc(50vw-140px)] sm:mr-6 lg:mr-8"
-											: ""
-									}`}
+									className="shrink-0 w-[280px] snap-center"
 									role="listitem"
 								>
 									<CollectionCard

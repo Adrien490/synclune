@@ -121,7 +121,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 									<div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
 									{/* Info produit */}
-									<div className="absolute bottom-0 left-0 right-0 p-4 pb-14 sm:p-6 sm:pb-6 text-white z-10">
+									<div className="absolute bottom-0 left-0 right-0 p-4 pb-12 sm:p-6 sm:pb-6 text-white z-10">
 										<h2 className="text-xl sm:text-2xl font-semibold mb-1 sm:mb-2 tracking-tight drop-shadow-lg line-clamp-2">
 											{product.title}
 										</h2>

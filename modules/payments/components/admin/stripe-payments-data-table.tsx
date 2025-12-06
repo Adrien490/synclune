@@ -26,7 +26,6 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
 import { CreditCard } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 import { StripePaymentsRowActions } from "./stripe-payments-row-actions";
 import { StripePaymentsSelectionToolbar } from "./stripe-payments-selection-toolbar";
 import { StripePaymentsTableSelectionCell } from "./stripe-payments-table-selection-cell";
@@ -93,14 +92,12 @@ export async function StripePaymentsDataTable({
 										</TableCell>
 										{/* Commande */}
 										<TableCell>
-											<ViewTransition name={`admin-order-${payment.id}`} default="vt-table-link">
-												<Link
-													href={`/admin/ventes/commandes/${payment.id}`}
-													className="font-mono text-sm font-medium text-foreground underline"
-												>
-													{payment.orderNumber}
-												</Link>
-											</ViewTransition>
+											<Link
+												href={`/admin/ventes/commandes/${payment.id}`}
+												className="font-mono text-sm font-medium text-foreground underline"
+											>
+												{payment.orderNumber}
+											</Link>
 										</TableCell>
 
 										{/* Client */}

@@ -23,11 +23,11 @@ export async function Hero() {
       itemType="https://schema.org/WebPageElement"
       itemProp="mainContentOfPage"
     >
-      {/* Couche 1: Liquid Gradient (base fluide) - Intensité augmentée pour plus de vie */}
-      <LiquidGradient intensity={0.25} speed={1} />
+      {/* Couche 1: Liquid Gradient (base fluide) - Intensité réduite pour mobile */}
+      <LiquidGradient intensity={0.15} speed={1} />
 
-      {/* Couche 2: Glitter Sparkles (overlay scintillant) - Plus visible et festif */}
-      <GlitterSparkles sizeRange={[2, 7]} glowIntensity={1.0} />
+      {/* Couche 2: Glitter Sparkles (overlay scintillant) - Allégé pour performance mobile */}
+      <GlitterSparkles sizeRange={[2, 5]} glowIntensity={0.6} />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">

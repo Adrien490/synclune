@@ -16,8 +16,8 @@ interface ColorSwatchesProps {
 }
 
 const sizeClasses = {
-	sm: "size-4",
-	md: "size-5",
+	sm: "size-6", // 24px - WCAG 2.5.5 touch target minimum
+	md: "size-7", // 28px
 };
 
 /**
@@ -63,7 +63,7 @@ export function ColorSwatches({
 			{remainingCount > 0 && (
 				<span
 					className={cn(
-						"flex items-center justify-center rounded-full bg-muted text-muted-foreground text-[10px] font-medium",
+						"flex items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium",
 						sizeClasses[size]
 					)}
 					aria-label={`${remainingCount} autres couleurs`}

@@ -14,7 +14,7 @@ import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { Euro, Gem, Image as ImageIcon, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, ViewTransition } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 
 interface EditProductFormProps {
@@ -84,9 +84,7 @@ export function EditProductForm({
 
 	return (
 		<>
-			<ViewTransition name={`admin-product-title-${product.slug}`} default="vt-title">
-				<h1 className="text-2xl font-semibold mb-6">{product.title}</h1>
-			</ViewTransition>
+			<h1 className="text-2xl font-semibold mb-6">{product.title}</h1>
 			<form
 				action={action}
 				className="space-y-6 pb-32"

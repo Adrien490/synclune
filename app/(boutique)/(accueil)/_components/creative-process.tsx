@@ -98,7 +98,7 @@ export async function CreativeProcess() {
 
 				<div className="grid lg:grid-cols-2 gap-12 items-center">
 					{/* Image atelier */}
-					<div className="relative order-2 lg:order-1 h-80 sm:h-96 lg:h-full">
+					<div className="relative order-2 lg:order-1 h-64 sm:h-80 lg:h-full">
 						<div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-xl">
 							<Image
 								src={IMAGES.ATELIER}
@@ -130,7 +130,7 @@ export async function CreativeProcess() {
 
 					{/* Timeline processus */}
 					<div className="relative order-1 lg:order-2">
-						<div className="relative space-y-16">
+						<div className="relative space-y-8 sm:space-y-12 lg:space-y-16">
 							{/* Ligne verticale décorative - limitée à la zone des étapes uniquement */}
 							<div
 								className="absolute left-6 top-[3rem] bottom-[1.5rem] w-0.75 bg-secondary/60 rounded-full hidden sm:block z-0"

@@ -29,8 +29,8 @@ export function NavbarSkeleton() {
 
 							{/* Logo skeleton (desktop uniquement) */}
 							<div className="hidden lg:flex items-center gap-3">
-								{/* Icône logo */}
-								<div className="h-12 w-12 animate-pulse bg-muted/60 rounded-full" />
+								{/* Icône logo - rounded-lg pour correspondre au vrai logo */}
+								<div className="h-12 w-12 animate-pulse bg-muted/60 rounded-lg" />
 								{/* Texte "SYNCLUNE" */}
 								<div className="h-6 w-24 animate-pulse bg-muted/60 rounded-md" />
 							</div>
@@ -38,16 +38,15 @@ export function NavbarSkeleton() {
 
 						{/* Section centrale: Logo (mobile) / Navigation desktop */}
 						<div className="flex items-center justify-center lg:flex-1">
-							{/* Logo skeleton centré (mobile uniquement - icône seule) */}
-							<div className="lg:hidden h-12 w-12 animate-pulse bg-muted/60 rounded-full" />
+							{/* Logo skeleton centré (mobile uniquement - icône seule) - rounded-lg pour correspondre au vrai logo */}
+							<div className="lg:hidden h-12 w-12 animate-pulse bg-muted/60 rounded-lg" />
 
 							{/* Navigation desktop skeleton (cachée sur mobile) */}
+							{/* 4 items: Collections, Mes créations, Personnaliser, L'atelier (synchronisé avec getDesktopNavItems) */}
 							<div className="hidden lg:flex items-center gap-1">
-								{/* 5 items de navigation compacts (Accueil, Bijoux, Collections, Personnaliser, À propos) */}
-								<div className="h-9 w-20 animate-pulse bg-muted/60 rounded-lg" />
 								<div className="h-9 w-24 animate-pulse bg-muted/60 rounded-lg" />
-								<div className="h-9 w-24 animate-pulse bg-muted/60 rounded-lg" />
-								<div className="h-9 w-24 animate-pulse bg-muted/60 rounded-lg" />
+								<div className="h-9 w-28 animate-pulse bg-muted/60 rounded-lg" />
+								<div className="h-9 w-26 animate-pulse bg-muted/60 rounded-lg" />
 								<div className="h-9 w-20 animate-pulse bg-muted/60 rounded-lg" />
 							</div>
 						</div>

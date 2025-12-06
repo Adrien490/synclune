@@ -4,7 +4,6 @@ import type { ProductSku } from "@/modules/products/types/product-services.types
 import { WishlistButtonDynamic } from "@/modules/wishlist/components/wishlist-button-dynamic";
 import { Crown, Heart } from "lucide-react";
 import Link from "next/link";
-import { ViewTransition } from "react";
 
 interface ProductInfoProps {
 	product: GetProductReturn;
@@ -31,14 +30,12 @@ export function ProductInfo({
 		<div className="space-y-4">
 			{/* Titre avec bouton wishlist */}
 			<div className="flex items-start justify-between gap-3">
-				<ViewTransition name={`product-title-${product.slug}`} default="vt-title">
-					<h1
-						className="text-3xl/10 sm:text-4xl/10 font-bold tracking-tight text-foreground flex-1"
-						itemProp="name"
-					>
-						{product.title}
-					</h1>
-				</ViewTransition>
+				<h1
+					className="text-3xl/10 sm:text-4xl/10 font-bold tracking-tight text-foreground flex-1"
+					itemProp="name"
+				>
+					{product.title}
+				</h1>
 				<WishlistButtonDynamic
 					product={product}
 					defaultSku={defaultSku}
