@@ -60,7 +60,6 @@ function MediaRendererComponent({
 					poster={media.thumbnailUrl || media.thumbnailSmallUrl || undefined}
 					aria-label={media.alt || `${title} - Vidéo ${index + 1}`}
 					onError={onError}
-					tabIndex={-1}
 				>
 					<source src={media.url} type={getVideoMimeType(media.url)} />
 				</video>

@@ -106,6 +106,12 @@ export function useGallerySwipe({
 	);
 
 	const onTouchEnd = useCallback(() => {
+		// Annuler tout RAF en attente pour éviter state inconsistant
+		if (rafIdRef.current) {
+			cancelAnimationFrame(rafIdRef.current);
+			rafIdRef.current = null;
+		}
+
 		if (touchStartRef.current === null) {
 			setIsSwiping(false);
 			setSwipeOffset(0);

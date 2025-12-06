@@ -86,7 +86,8 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 					aria-controls="mobile-menu-synclune"
 				>
 					<Menu
-						className="w-6 h-6 transition-transform duration-300 group-hover:rotate-6"
+						size={20}
+						className="transition-transform duration-300 group-hover:rotate-6"
 						aria-hidden="true"
 					/>
 				</Button>

@@ -11,17 +11,24 @@ const MIN_GALLERY_IMAGES = 5;
 
 /**
  * Génère un alt text propre pour un média
- * Évite les textes mal formés quand material/color sont undefined
+ * Évite les textes mal formés quand material/color/size sont undefined
+ * Inclut la taille pour les bijoux (important pour accessibilité)
  */
 function buildAltText(
 	productTitle: string,
-	variantInfo?: { materialName?: string | null; colorName?: string | null },
+	variantInfo?: { materialName?: string | null; colorName?: string | null; size?: string | null },
 	fallbackSuffix = "Photo produit"
 ): string {
-	const { materialName, colorName } = variantInfo || {};
+	const { materialName, colorName, size } = variantInfo || {};
 
-	// Priorité: material > color > fallback
-	const suffix = materialName || colorName || fallbackSuffix;
+	// Construire les parties du suffixe
+	const parts: string[] = [];
+	if (materialName) parts.push(materialName);
+	if (colorName && colorName !== materialName) parts.push(colorName);
+	if (size) parts.push(`Taille ${size}`);
+
+	// Utiliser les parties ou le fallback
+	const suffix = parts.length > 0 ? parts.join(" - ") : fallbackSuffix;
 
 	return `${productTitle} - ${suffix}`;
 }
@@ -117,10 +124,15 @@ export function buildGallery({
 	if (selectedSku?.images) {
 		const altText = buildAltText(
 			product.title,
-			{ materialName: selectedSku.material?.name, colorName: selectedSku.color?.name },
+			{
+				materialName: selectedSku.material?.name,
+				colorName: selectedSku.color?.name,
+				size: selectedSku.size,
+			},
 			"Variante sélectionnée"
 		);
 		for (const skuImage of selectedSku.images) {
+			if (gallery.length >= MAX_GALLERY_IMAGES) break;
 			addUniqueImage(skuImage, altText, "selected", selectedSku.id);
 		}
 	}
@@ -130,10 +142,15 @@ export function buildGallery({
 	if (defaultSku && defaultSku.id !== selectedSku?.id && defaultSku.images) {
 		const altText = buildAltText(
 			product.title,
-			{ materialName: defaultSku.material?.name, colorName: defaultSku.color?.name },
+			{
+				materialName: defaultSku.material?.name,
+				colorName: defaultSku.color?.name,
+				size: defaultSku.size,
+			},
 			"Image principale"
 		);
 		for (const skuImage of defaultSku.images) {
+			if (gallery.length >= MAX_GALLERY_IMAGES) break;
 			addUniqueImage(skuImage, altText, "default", defaultSku.id);
 		}
 	}
@@ -147,7 +164,11 @@ export function buildGallery({
 			if (sku.images) {
 				const altText = buildAltText(
 					product.title,
-					{ materialName: sku.material?.name, colorName: sku.color?.name },
+					{
+						materialName: sku.material?.name,
+						colorName: sku.color?.name,
+						size: sku.size,
+					},
 					"Variante"
 				);
 				for (const skuImage of sku.images) {

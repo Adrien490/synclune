@@ -23,10 +23,14 @@ export interface UseMediaErrorsReturn {
  * - Track les médias qui ont échoué au chargement
  * - Fonction helper pour vérifier si un média a une erreur
  * - Possibilité de réinitialiser toutes les erreurs ou une seule (retry)
- * - Limite à MAX_ERRORS pour éviter les memory leaks
+ * - Rotation FIFO à MAX_ERRORS pour éviter les memory leaks
  */
 export function useMediaErrors(): UseMediaErrorsReturn {
+	// Utilise Map pour garder l'ordre d'insertion (FIFO)
 	const [mediaErrors, setMediaErrors] = useState<Set<string>>(new Set());
+
+	// File FIFO pour l'ordre d'insertion (Set ne garantit pas l'ordre dans tous les cas)
+	const errorQueueRef = useRef<string[]>([]);
 
 	// Ref pour stabiliser hasError et éviter re-renders en cascade
 	// Assignation directe dans le render (pas besoin de useEffect)
@@ -35,12 +39,25 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 
 	const handleMediaError = useCallback((mediaId: string) => {
 		setMediaErrors((prev) => {
-			// Prévention memory leak : ne pas dépasser MAX_ERRORS
-			if (prev.size >= MAX_ERRORS) {
-				console.warn(`[MediaErrors] Limite de ${MAX_ERRORS} erreurs atteinte`);
-				return prev;
+			// Éviter les doublons
+			if (prev.has(mediaId)) return prev;
+
+			const next = new Set(prev);
+
+			// Rotation FIFO: supprimer le plus ancien si limite atteinte
+			if (next.size >= MAX_ERRORS) {
+				const oldest = errorQueueRef.current.shift();
+				if (oldest) {
+					next.delete(oldest);
+				}
+				console.warn(`[MediaErrors] Limite de ${MAX_ERRORS} erreurs - rotation FIFO`);
 			}
-			return new Set(prev).add(mediaId);
+
+			// Ajouter le nouveau
+			next.add(mediaId);
+			errorQueueRef.current.push(mediaId);
+
+			return next;
 		});
 	}, []);
 
@@ -51,6 +68,7 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 
 	const clearErrors = useCallback(() => {
 		setMediaErrors(new Set());
+		errorQueueRef.current = [];
 	}, []);
 
 	const retryMedia = useCallback((mediaId: string) => {
@@ -58,6 +76,11 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 			if (!prev.has(mediaId)) return prev;
 			const next = new Set(prev);
 			next.delete(mediaId);
+			// Supprimer aussi de la file FIFO
+			const queueIndex = errorQueueRef.current.indexOf(mediaId);
+			if (queueIndex !== -1) {
+				errorQueueRef.current.splice(queueIndex, 1);
+			}
 			return next;
 		});
 	}, []);

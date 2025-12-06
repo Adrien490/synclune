@@ -31,14 +31,22 @@ export function useGalleryNavigation({
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	// Ref pour stabiliser searchParams et éviter recréation des callbacks
+	// Refs pour stabiliser les valeurs et éviter recréation des callbacks
 	// Assignation directe dans le render (pas besoin de useEffect)
 	const searchParamsRef = useRef(searchParams);
 	searchParamsRef.current = searchParams;
+	const totalImagesRef = useRef(totalImages);
+	totalImagesRef.current = totalImages;
 
 	// Source de vérité : l'URL (avec validation NaN)
 	const rawGalleryParam = searchParams.get("gallery");
 	const parsedIndex = rawGalleryParam ? parseInt(rawGalleryParam, 10) : 0;
+
+	// Warning en dev si param invalide (aide au debug)
+	if (process.env.NODE_ENV === "development" && rawGalleryParam && Number.isNaN(parsedIndex)) {
+		console.warn(`[useGalleryNavigation] Paramètre gallery invalide: "${rawGalleryParam}" - utilisation de l'index 0`);
+	}
+
 	const selectedIndex = totalImages > 0
 		? Math.max(0, Math.min(totalImages - 1, Number.isNaN(parsedIndex) ? 0 : parsedIndex))
 		: 0;
@@ -52,12 +60,16 @@ export function useGalleryNavigation({
 	// Mise à jour de l'URL (dépendances stabilisées via ref)
 	const updateUrl = useCallback(
 		(newIndex: number) => {
+			// Validation défensive: clamper l'index dans les limites valides
+			const total = totalImagesRef.current;
+			const safeIndex = total > 0 ? Math.max(0, Math.min(total - 1, newIndex)) : 0;
+
 			const newSearchParams = new URLSearchParams(searchParamsRef.current);
 
-			if (newIndex === 0) {
+			if (safeIndex === 0) {
 				newSearchParams.delete("gallery");
 			} else {
-				newSearchParams.set("gallery", newIndex.toString());
+				newSearchParams.set("gallery", safeIndex.toString());
 			}
 
 			const newUrl = `${pathname}${
@@ -82,21 +94,21 @@ export function useGalleryNavigation({
 	);
 
 	// Navigation suivante (circulaire)
-	// Utilise selectedIndex (source de vérité URL) pour éviter race conditions lors de clics rapides
+	// Utilise optimisticIndex pour navigation fluide sans race condition lors de clics rapides
 	const navigateNext = useCallback(() => {
 		if (totalImages === 0) return;
-		const nextIndex = (selectedIndex + 1) % totalImages;
+		const nextIndex = (optimisticIndex + 1) % totalImages;
 		navigateToIndex(nextIndex);
-	}, [selectedIndex, totalImages, navigateToIndex]);
+	}, [optimisticIndex, totalImages, navigateToIndex]);
 
 	// Navigation précédente (circulaire)
-	// Utilise selectedIndex (source de vérité URL) pour éviter race conditions lors de clics rapides
+	// Utilise optimisticIndex pour navigation fluide sans race condition lors de clics rapides
 	const navigatePrev = useCallback(() => {
 		if (totalImages === 0) return;
 		const prevIndex =
-			selectedIndex === 0 ? totalImages - 1 : selectedIndex - 1;
+			optimisticIndex === 0 ? totalImages - 1 : optimisticIndex - 1;
 		navigateToIndex(prevIndex);
-	}, [selectedIndex, totalImages, navigateToIndex]);
+	}, [optimisticIndex, totalImages, navigateToIndex]);
 
 	return {
 		selectedIndex,

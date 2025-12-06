@@ -26,6 +26,7 @@ import {
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { ThumbnailsGrid, ThumbnailsCarousel } from "@/modules/media/components/thumbnails-list";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 
 interface ProductGalleryProps {
 	product: GetProductReturn;
@@ -68,17 +69,19 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 	const searchParams = useSearchParams();
 	const prefersReducedMotion = useReducedMotion();
 
+	// Extraire les params URL pour stabiliser les dépendances du useMemo
+	// (searchParams retourne un nouvel objet à chaque render)
+	const colorSlug = searchParams.get("color") || undefined;
+	const materialSlug = searchParams.get("material") || undefined;
+	const size = searchParams.get("size") || undefined;
+
 	// Calcul dynamique des images selon les variants sélectionnés
 	const safeImages: ProductMedia[] = useMemo(() => {
 		return buildGallery({
 			product,
-			selectedVariants: {
-				colorSlug: searchParams.get("color") || undefined,
-				materialSlug: searchParams.get("material") || undefined,
-				size: searchParams.get("size") || undefined,
-			},
+			selectedVariants: { colorSlug, materialSlug, size },
 		});
-	}, [product, searchParams]);
+	}, [product, colorSlug, materialSlug, size]);
 
 	// Conversion des médias en slides pour la lightbox (images + vidéos)
 	// Génère les URLs Next.js optimisées pour les images
@@ -286,7 +289,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 							<AnimatePresence mode="wait">
 								<motion.div
 									key={current.id}
-									initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.98 }}
+									initial={prefersReducedMotion ? false : { opacity: 0, scale: MOTION_CONFIG.transform.scaleFrom }}
 									animate={{
 										opacity: 1,
 										scale: 1,
@@ -294,9 +297,9 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 									}}
 									exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 1.02 }}
 									transition={{
-										duration: prefersReducedMotion ? 0 : (isSwiping ? 0 : 0.25),
-										ease: "easeOut",
-										x: { duration: prefersReducedMotion ? 0 : (isSwiping ? 0 : 0.3), ease: "easeOut" }
+										duration: prefersReducedMotion ? 0 : (isSwiping ? 0 : MOTION_CONFIG.duration.collapse),
+										ease: MOTION_CONFIG.easing.easeOut,
+										x: { duration: prefersReducedMotion ? 0 : (isSwiping ? 0 : MOTION_CONFIG.duration.collapse), ease: MOTION_CONFIG.easing.easeOut }
 									}}
 									className="absolute inset-0"
 									style={{ willChange: isSwiping ? "transform" : "auto" }}
