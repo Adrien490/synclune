@@ -99,68 +99,81 @@ export function ProductCard({
 			itemScope
 			itemType="https://schema.org/Product"
 		>
-			{/* Bouton wishlist - EN DEHORS du Link pour éviter les conflits d'événements sur mobile */}
-			{primarySku && (
-				<WishlistButton
-					skuId={primarySku.id}
-					isInWishlist={isInWishlist ?? false}
-					productTitle={title}
-					className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200"
-				/>
-			)}
-			{/* Link unique englobant toute la carte */}
+			{/* Conteneur image avec boutons interactifs EN DEHORS du Link */}
+			<div className="product-card-media relative aspect-4/5 overflow-hidden bg-muted rounded-lg">
+				{/* Link couvrant uniquement l'image */}
+				<Link
+					href={productUrl}
+					className="absolute inset-0 z-10 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-lg"
+					aria-labelledby={titleId}
+					tabIndex={-1}
+				>
+					<span className="sr-only">Voir {title}</span>
+				</Link>
+
+				{/* Badge rupture de stock - Style plus doux */}
+				{stockStatus === "out_of_stock" && (
+					<div
+						role="status"
+						aria-label={stockMessage}
+						className="absolute top-2.5 left-2.5 bg-foreground/80 text-background px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md backdrop-blur-sm"
+					>
+						{stockMessage}
+					</div>
+				)}
+				{/* Badge urgency - Stock bas mais disponible */}
+				{showUrgencyBadge && (
+					<div
+						role="status"
+						aria-label={`Stock limité : plus que ${inventory} exemplaire${inventory && inventory > 1 ? "s" : ""} disponible${inventory && inventory > 1 ? "s" : ""}`}
+						className="absolute top-2.5 left-2.5 bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md"
+					>
+						Plus que {inventory} !
+					</div>
+				)}
+
+				{/* Bouton wishlist - EN DEHORS du Link */}
+				{primarySku && (
+					<WishlistButton
+						skuId={primarySku.id}
+						isInWishlist={isInWishlist ?? false}
+						productTitle={title}
+						className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200"
+					/>
+				)}
+
+				<ViewTransition name={`${vtPrefix}product-image-${slug}`} default="vt-product-image" share="vt-product-image">
+					<Image
+						src={primaryImage.url}
+						alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
+						fill
+						className="object-cover rounded-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
+						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
+						blurDataURL={primaryImage.blurDataUrl}
+						// Preload pour les 4 premières images (above-fold) - Next.js 16
+						preload={index !== undefined && index < 4}
+						loading={index !== undefined && index < 4 ? undefined : "lazy"}
+						sizes={IMAGE_SIZES.PRODUCT_CARD}
+						itemProp="image"
+					/>
+				</ViewTransition>
+
+				{/* Bouton d'ajout au panier - EN DEHORS du Link */}
+				{primarySku && stockStatus === "in_stock" && (
+					<AddToCartCardButton
+						skuId={primarySku.id}
+						productTitle={title}
+					/>
+				)}
+			</div>
+
+			{/* Link pour le contenu texte */}
 			<Link
 				href={productUrl}
-				className="block focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm transition-all duration-300 ease-out relative z-10"
+				className="block focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm"
 				aria-labelledby={titleId}
 			>
-				{/* Image principale (jamais de vidéo, jamais null grâce à getPrimaryImage()) */}
-				<div className="product-card-media relative aspect-4/5 overflow-hidden bg-muted transition-all duration-400 rounded-lg">
-					{/* Badge rupture de stock - Style plus doux */}
-					{stockStatus === "out_of_stock" && (
-						<div
-							role="status"
-							aria-label={stockMessage}
-							className="absolute top-2.5 left-2.5 bg-foreground/80 text-background px-2.5 py-1 rounded-full text-xs font-medium z-10 shadow-md backdrop-blur-sm"
-						>
-							{stockMessage}
-						</div>
-					)}
-					{/* Badge urgency - Stock bas mais disponible */}
-					{showUrgencyBadge && (
-						<div
-							role="status"
-							aria-label={`Stock limité : plus que ${inventory} exemplaire${inventory && inventory > 1 ? "s" : ""} disponible${inventory && inventory > 1 ? "s" : ""}`}
-							className="absolute top-2.5 left-2.5 bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium z-10 shadow-md"
-						>
-							Plus que {inventory} !
-						</div>
-					)}
-					<ViewTransition name={`${vtPrefix}product-image-${slug}`} default="vt-product-image" share="vt-product-image">
-						<Image
-							src={primaryImage.url}
-							alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
-							fill
-							className="object-cover rounded-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
-							placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
-							blurDataURL={primaryImage.blurDataUrl}
-							// Preload pour les 4 premières images (above-fold) - Next.js 16
-							preload={index !== undefined && index < 4}
-							loading={index !== undefined && index < 4 ? undefined : "lazy"}
-							sizes={IMAGE_SIZES.PRODUCT_CARD}
-							itemProp="image"
-						/>
-					</ViewTransition>
-					{/* Bouton d'ajout au panier (visible au hover, masqué si rupture) */}
-					{primarySku && stockStatus === "in_stock" && (
-						<AddToCartCardButton
-							skuId={primarySku.id}
-							productTitle={title}
-						/>
-					)}
-				</div>
-
-				{/* Contenu (plus de Link imbriqué) */}
+				{/* Contenu */}
 				<div className="flex flex-col gap-2 relative p-4">
 					{/* Titre avec hiérarchie tokenisée responsive */}
 					<ViewTransition name={`${vtPrefix}product-title-${slug}`} default="vt-title">
