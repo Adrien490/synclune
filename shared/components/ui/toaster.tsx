@@ -116,6 +116,11 @@ export function AppToaster() {
 			duration={2500}
 			visibleToasts={3}
 			icons={icons}
+			// Safe-area pour iPhone notch/Dynamic Island
+			offset="max(1rem, env(safe-area-inset-top))"
+			toastOptions={{
+				className: "!mt-safe",
+			}}
 		/>
 	);
 }

@@ -1,10 +1,9 @@
 import { Fade, Slide } from "@/shared/components/animations";
+import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
+import { LiquidGradient } from "@/shared/components/animations/liquid-gradient";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { Button } from "@/shared/components/ui/button";
-
-import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
-import { LiquidGradient } from "@/shared/components/animations/liquid-gradient";
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { BRAND } from "@/shared/constants/brand";
 import { Heart } from "lucide-react";

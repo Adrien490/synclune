@@ -77,7 +77,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							{collections.map((collection) => (
 								<div
 									key={collection.id}
-									className="shrink-0 w-[280px] snap-center"
+									className="shrink-0 w-[clamp(260px,85vw,320px)] snap-center"
 									role="listitem"
 								>
 									<CollectionCard

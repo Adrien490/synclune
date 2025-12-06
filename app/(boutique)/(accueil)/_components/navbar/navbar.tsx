@@ -125,10 +125,10 @@ export async function Navbar() {
 									/>
 								</Link>
 
-								{/* Icône favoris (desktop uniquement) */}
+								{/* Icône favoris */}
 								<Link
 									href="/favoris"
-									className={`hidden sm:inline-flex ${iconLinkClassName}`}
+									className={`inline-flex ${iconLinkClassName}`}
 									aria-label="Ouvrir mes favoris"
 								>
 									<Heart

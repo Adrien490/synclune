@@ -20,6 +20,8 @@ interface MediaRendererProps {
 	hasError: boolean;
 	onError: () => void;
 	onRetry: () => void;
+	/** Indique si c'est une image above-fold (hero, première image galerie) */
+	priority?: boolean;
 }
 
 /**
@@ -38,6 +40,7 @@ function MediaRendererComponent({
 	hasError,
 	onError,
 	onRetry,
+	priority = false,
 }: MediaRendererProps) {
 	// Vidéo
 	if (media.mediaType === "VIDEO") {
@@ -75,13 +78,17 @@ function MediaRendererComponent({
 	}
 
 	// Image - composant commun
+	// priority active fetchPriority="high" automatiquement via Next.js Image
+	const shouldPrioritize = priority || isFirst;
+
 	const ImageComponent = (
 		<Image
 			src={media.url}
 			alt={media.alt || PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1)}
 			fill
 			className="object-cover"
-			preload={isFirst}
+			priority={shouldPrioritize}
+			fetchPriority={shouldPrioritize ? "high" : "auto"}
 			quality={MAIN_IMAGE_QUALITY}
 			sizes="(max-width: 768px) 100vw, 60vw"
 			placeholder={media.blurDataUrl ? "blur" : "empty"}
