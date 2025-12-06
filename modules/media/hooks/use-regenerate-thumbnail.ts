@@ -3,7 +3,6 @@
 import {
 	useOptimistic,
 	useTransition,
-	useCallback,
 	useRef,
 	useEffect,
 } from "react";
@@ -42,6 +41,7 @@ interface RegenerateOptions {
  *     updateMedia(index, {
  *       thumbnailUrl: result.mediumUrl,
  *       thumbnailSmallUrl: result.smallUrl,
+ *       blurDataUrl: result.blurDataUrl, // Nouveau: blur placeholder base64
  *     });
  *   }
  * });
@@ -64,59 +64,56 @@ export function useRegenerateThumbnail(options?: UseRegenerateThumbnailOptions) 
 		regeneratingUrlRef.current = optimisticUrl;
 	}, [optimisticUrl]);
 
-	const regenerate = useCallback(
-		(videoUrl: string, regenerateOptions?: RegenerateOptions) => {
-			// Skip si déjà en cours pour cette URL
-			if (regeneratingUrlRef.current === videoUrl) return;
+	const regenerate = (videoUrl: string, regenerateOptions?: RegenerateOptions) => {
+		// Skip si déjà en cours pour cette URL
+		if (regeneratingUrlRef.current === videoUrl) return;
 
-			startTransition(async () => {
-				// Mise à jour optimiste immédiate
-				setOptimisticUrl(videoUrl);
-				const toastId = toast.loading("Régénération de la miniature...");
+		startTransition(async () => {
+			// Mise à jour optimiste immédiate
+			setOptimisticUrl(videoUrl);
+			const toastId = toast.loading("Régénération de la miniature...");
 
-				try {
-					// 1. Générer les thumbnails côté client
-					const thumbnailResult = await generateThumbnail(videoUrl, {
-						captureTimeSeconds: regenerateOptions?.captureTimeSeconds,
-					});
+			try {
+				// 1. Générer les thumbnails côté client
+				const thumbnailResult = await generateThumbnail(videoUrl, {
+					captureTimeSeconds: regenerateOptions?.captureTimeSeconds,
+				});
 
-					if (!thumbnailResult.mediumUrl || !thumbnailResult.smallUrl) {
-						toast.error("Impossible de générer la miniature", { id: toastId });
-						options?.onError?.(videoUrl, "Impossible de générer la miniature");
+				if (!thumbnailResult.mediumUrl || !thumbnailResult.smallUrl) {
+					toast.error("Impossible de générer la miniature", { id: toastId });
+					options?.onError?.(videoUrl, "Impossible de générer la miniature");
+					return;
+				}
+
+				// 2. Si mediaId fourni, persister en BD
+				if (regenerateOptions?.mediaId) {
+					const formData = new FormData();
+					formData.set("mediaId", regenerateOptions.mediaId);
+					formData.set("thumbnailUrl", thumbnailResult.mediumUrl);
+					formData.set("thumbnailSmallUrl", thumbnailResult.smallUrl);
+
+					const persistResult = await updateSkuMediaThumbnail(
+						undefined,
+						formData
+					);
+
+					if (persistResult.status !== ActionStatus.SUCCESS) {
+						toast.error(persistResult.message, { id: toastId });
+						options?.onError?.(videoUrl, persistResult.message);
 						return;
 					}
-
-					// 2. Si mediaId fourni, persister en BD
-					if (regenerateOptions?.mediaId) {
-						const formData = new FormData();
-						formData.set("mediaId", regenerateOptions.mediaId);
-						formData.set("thumbnailUrl", thumbnailResult.mediumUrl);
-						formData.set("thumbnailSmallUrl", thumbnailResult.smallUrl);
-
-						const persistResult = await updateSkuMediaThumbnail(
-							undefined,
-							formData
-						);
-
-						if (persistResult.status !== ActionStatus.SUCCESS) {
-							toast.error(persistResult.message, { id: toastId });
-							options?.onError?.(videoUrl, persistResult.message);
-							return;
-						}
-					}
-
-					toast.success("Miniature régénérée avec succès", { id: toastId });
-					options?.onSuccess?.(thumbnailResult, videoUrl);
-				} catch {
-					toast.error("Erreur lors de la régénération", { id: toastId });
-					options?.onError?.(videoUrl, "Erreur lors de la régénération");
-				} finally {
-					setOptimisticUrl(null);
 				}
-			});
-		},
-		[generateThumbnail, options, setOptimisticUrl]
-	);
+
+				toast.success("Miniature régénérée avec succès", { id: toastId });
+				options?.onSuccess?.(thumbnailResult, videoUrl);
+			} catch {
+				toast.error("Erreur lors de la régénération", { id: toastId });
+				options?.onError?.(videoUrl, "Erreur lors de la régénération");
+			} finally {
+				setOptimisticUrl(null);
+			}
+		});
+	};
 
 	return {
 		regenerate,

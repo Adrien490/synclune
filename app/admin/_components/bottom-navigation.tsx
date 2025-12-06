@@ -1,78 +1,69 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useState, useCallback } from "react";
 import { cn } from "@/shared/utils/cn";
-import {
-	ChevronRight,
-	ExternalLink,
-	LogOut,
-	MoreHorizontal,
-} from "lucide-react";
+import { ChevronRight, ExternalLink, LogOut, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
 	Drawer,
 	DrawerContent,
+	DrawerDescription,
 	DrawerFooter,
 	DrawerHeader,
 	DrawerTitle,
 	DrawerTrigger,
 } from "@/shared/components/ui/drawer";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Separator } from "@/shared/components/ui/separator";
-import {
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
-} from "@/shared/components/ui/avatar";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import {
 	getBottomNavPrimaryItems,
-	getBottomNavSecondaryGroups,
 	getBottomNavSecondaryItems,
-	type NavGroup,
 	type NavItem,
 } from "./navigation-config";
 import { isRouteActive } from "@/shared/lib/navigation";
 
 // Récupérer les items depuis la configuration centralisée
 const primaryItems = getBottomNavPrimaryItems();
-const secondaryGroups = getBottomNavSecondaryGroups();
 const secondaryItems = getBottomNavSecondaryItems();
 
 // Styles partagés pour les items de navigation
+const sharedItemStyles = {
+	focusRing:
+		"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
+	transition: "motion-safe:transition-all motion-safe:active:scale-95",
+	layout: "flex flex-col items-center justify-center rounded-lg relative",
+} as const;
+
 const navItemStyles = {
-	base: "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-[64px] min-h-[48px] relative motion-safe:transition-all motion-safe:active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
+	base: cn(
+		sharedItemStyles.layout,
+		sharedItemStyles.transition,
+		sharedItemStyles.focusRing,
+		"gap-1 px-3 py-2 min-w-[64px] min-h-[48px]"
+	),
 	active: "text-foreground font-semibold",
 	inactive:
-		"text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium",
+		"text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30 font-medium",
 } as const;
 
 const drawerItemStyles = {
-	base: "flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg relative motion-safe:transition-all motion-safe:active:scale-95 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+	base: cn(
+		sharedItemStyles.layout,
+		sharedItemStyles.transition,
+		sharedItemStyles.focusRing,
+		"gap-1 py-3 px-2 min-h-[72px] rounded-xl"
+	),
 	active: "bg-accent/50 text-foreground font-semibold",
 	inactive:
-		"text-muted-foreground hover:text-foreground hover:bg-accent/50 font-medium",
+		"text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30 font-medium",
 } as const;
 
 interface BottomNavigationProps {
 	user: {
 		name: string;
 		email: string;
-		avatar?: string;
 	};
-}
-
-/**
- * Génère les initiales à partir d'un nom
- */
-function getInitials(name: string): string {
-	return name
-		.split(" ")
-		.map((part) => part[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
 }
 
 /**
@@ -87,14 +78,14 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 	// Vérifie si une page du menu "Plus" est active
 	const isMoreItemActive = secondaryItems.some((item) => isRouteActive(pathname, item.url));
 
-	const closeDrawer = () => setIsDrawerOpen(false);
+	const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
 
 	return (
 		<nav
 			className="md:hidden fixed bottom-0 left-0 right-0 z-[60] border-t bg-background/80 backdrop-blur-lg supports-backdrop-filter:bg-background/60 pointer-events-auto"
 			aria-label="Navigation mobile principale"
 		>
-			<div className="flex items-center justify-around h-16 px-4 safe-area-inset-bottom">
+			<div className="flex items-center justify-around h-16 px-4 pb-[env(safe-area-inset-bottom)]">
 				{/* Items principaux */}
 				{primaryItems.map((item) => (
 					<BottomNavItem
@@ -128,52 +119,49 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 								className="h-5 w-5 shrink-0"
 								aria-hidden="true"
 							/>
-							<span className="text-xs font-medium leading-none">Plus</span>
+							<span className="text-[13px] font-medium leading-none">Plus</span>
 						</button>
 					</DrawerTrigger>
 					<DrawerContent className="max-h-[70vh]">
 						<DrawerHeader className="sr-only">
-							<DrawerTitle>Menu</DrawerTitle>
+							<DrawerTitle>Menu de navigation</DrawerTitle>
+							<DrawerDescription>
+								{secondaryItems.length} options supplémentaires
+							</DrawerDescription>
 						</DrawerHeader>
 
-						<ScrollArea className="flex-1 min-h-0">
-							<div className="space-y-6 pb-4">
-								{/* User Card cliquable */}
-								<Link
-									href="/admin/compte"
-									onClick={closeDrawer}
-									className="flex items-center gap-3 p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors"
-								>
-									<Avatar className="h-10 w-10">
-										<AvatarImage src={user.avatar} alt={user.name} />
-										<AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-									</Avatar>
-									<div className="flex-1 min-w-0">
-										<p className="text-sm font-medium truncate">{user.name}</p>
-										<p className="text-xs text-muted-foreground truncate">
-											{user.email}
-										</p>
-									</div>
-									<ChevronRight
-										className="h-4 w-4 text-muted-foreground shrink-0"
-										aria-hidden="true"
-									/>
-								</Link>
-
-								{/* Groupes de navigation */}
-								{secondaryGroups.map((group) => (
-									<DrawerNavGroup
-										key={group.label}
-										group={group}
-										pathname={pathname}
-										onClose={closeDrawer}
-									/>
-								))}
+						{/* User Card cliquable */}
+						<Link
+							href="/admin/compte"
+							onClick={closeDrawer}
+							className="group flex items-center gap-3 mx-4 p-3 rounded-xl bg-accent/30 hover:bg-accent/50 transition-colors"
+						>
+							<div className="flex-1 min-w-0">
+								<p className="text-sm font-medium truncate">{user.name}</p>
+								<p className="text-xs text-muted-foreground truncate">
+									{user.email}
+								</p>
 							</div>
-						</ScrollArea>
+							<ChevronRight
+								className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5"
+								aria-hidden="true"
+							/>
+						</Link>
+
+						{/* Grille de navigation - liste simple sans groupement */}
+						<div className="grid grid-cols-3 gap-2 p-4">
+							{secondaryItems.map((item) => (
+								<DrawerNavItem
+									key={item.id}
+									item={item}
+									isActive={isRouteActive(pathname, item.url)}
+									onClick={closeDrawer}
+								/>
+							))}
+						</div>
 
 						{/* Footer sticky avec actions */}
-						<DrawerFooter className="border-t pt-3 mt-0">
+						<DrawerFooter className="border-t pt-3 mt-0 mb-4 pb-[env(safe-area-inset-bottom)]">
 							{/* Voir le site */}
 							<Link
 								href="/"
@@ -218,40 +206,6 @@ export function BottomNavigation({ user }: BottomNavigationProps) {
 }
 
 /**
- * Groupe de navigation dans le drawer
- */
-const DrawerNavGroup = memo(function DrawerNavGroup({
-	group,
-	pathname,
-	onClose,
-}: {
-	group: NavGroup;
-	pathname: string;
-	onClose: () => void;
-}) {
-	const GroupIcon = group.icon;
-
-	return (
-		<section aria-label={group.label} className="space-y-2">
-			<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-				{GroupIcon && <GroupIcon className="h-3.5 w-3.5" aria-hidden="true" />}
-				{group.label}
-			</div>
-			<div className="grid grid-cols-2 gap-2">
-				{group.items.map((item) => (
-					<BottomNavDrawerItem
-						key={item.id}
-						item={item}
-						isActive={isRouteActive(pathname, item.url)}
-						onClick={onClose}
-					/>
-				))}
-			</div>
-		</section>
-	);
-});
-
-/**
  * Item de navigation principal (barre du bas)
  * Mémoïsé pour éviter les re-renders inutiles
  */
@@ -276,7 +230,7 @@ const BottomNavItem = memo(function BottomNavItem({
 		>
 			{isActive && <ActiveIndicator />}
 			<Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-			<span className="text-xs leading-none">
+			<span className="text-[13px] leading-none">
 				{item.shortTitle || item.title}
 			</span>
 		</Link>
@@ -284,10 +238,10 @@ const BottomNavItem = memo(function BottomNavItem({
 });
 
 /**
- * Item du Drawer "Plus"
+ * Item de navigation dans le drawer "Plus"
  * Mémoïsé pour éviter les re-renders inutiles
  */
-const BottomNavDrawerItem = memo(function BottomNavDrawerItem({
+const DrawerNavItem = memo(function DrawerNavItem({
 	item,
 	isActive,
 	onClick,
@@ -309,8 +263,8 @@ const BottomNavDrawerItem = memo(function BottomNavDrawerItem({
 			aria-current={isActive ? "page" : undefined}
 		>
 			{isActive && <ActiveIndicator />}
-			<Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-			<span className="text-xs text-center leading-tight">
+			<Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+			<span className="text-xs text-center leading-tight line-clamp-2">
 				{item.shortTitle || item.title}
 			</span>
 		</Link>
@@ -323,7 +277,7 @@ const BottomNavDrawerItem = memo(function BottomNavDrawerItem({
 function ActiveIndicator() {
 	return (
 		<span
-			className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-8 bg-primary rounded-full"
+			className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-10 bg-primary rounded-full motion-safe:animate-in motion-safe:slide-in-from-top-1 motion-safe:duration-200"
 			aria-hidden="true"
 		/>
 	);

@@ -331,6 +331,48 @@ async function extractFrames(
 }
 
 /**
+ * Génère un blur data URL (base64) depuis une image thumbnail
+ * Redimensionne l'image à 10x10 pour un placeholder très léger
+ */
+async function generateBlurDataUrl(thumbnailPath: string): Promise<string | null> {
+	try {
+		// Générer une version 10x10 de la thumbnail small
+		const blurPath = thumbnailPath.replace(".webp", "-blur.webp");
+		const command = [
+			"ffmpeg",
+			"-y",
+			"-i", `"${thumbnailPath}"`,
+			"-vf", "scale=10:10",
+			"-c:v", "libwebp",
+			"-quality", "50",
+			`"${blurPath}"`,
+		].join(" ");
+
+		await execWithTimeout(command, 5000);
+
+		if (!existsSync(blurPath)) {
+			return null;
+		}
+
+		const blurBuffer = readFileSync(blurPath);
+		const base64 = blurBuffer.toString("base64");
+		const blurDataUrl = `data:image/webp;base64,${base64}`;
+
+		// Nettoyer le fichier blur temporaire
+		try {
+			unlinkSync(blurPath);
+		} catch {
+			// Ignorer
+		}
+
+		return blurDataUrl;
+	} catch (error) {
+		console.log(`    Blur generation échouée: ${error instanceof Error ? error.message : String(error)}`);
+		return null;
+	}
+}
+
+/**
  * Upload une miniature sur UploadThing
  */
 async function uploadThumbnail(filePath: string, mediaId: string): Promise<string> {
@@ -377,7 +419,16 @@ async function processVideo(media: VideoMedia, index: number, total: number): Pr
 		console.log("  Extraction des miniatures (small + medium)...");
 		await extractFrames(videoPath, smallThumbnailPath, mediumThumbnailPath, captureTime);
 
-		// 4. Upload les deux miniatures sur UploadThing
+		// 4. Générer le blur placeholder depuis la thumbnail small
+		console.log("  Génération du blur placeholder...");
+		const blurDataUrl = await generateBlurDataUrl(smallThumbnailPath);
+		if (blurDataUrl) {
+			console.log(`  Blur: ${blurDataUrl.length} caractères base64`);
+		} else {
+			console.log("  Blur: non généré (optionnel)");
+		}
+
+		// 5. Upload les deux miniatures sur UploadThing
 		console.log("  Upload des miniatures...");
 		const [thumbnailSmallUrl, thumbnailUrl] = await Promise.all([
 			withRetry(() => uploadThumbnail(smallThumbnailPath, `${media.id}-small`)),
@@ -386,13 +437,14 @@ async function processVideo(media: VideoMedia, index: number, total: number): Pr
 		console.log(`  Small: ${thumbnailSmallUrl.substring(0, 50)}...`);
 		console.log(`  Medium: ${thumbnailUrl.substring(0, 50)}...`);
 
-		// 5. Mettre à jour la base de données avec les deux URLs
+		// 6. Mettre à jour la base de données avec les URLs et le blur
 		console.log("  Mise à jour de la base de données...");
 		await prisma.skuMedia.update({
 			where: { id: media.id },
 			data: {
 				thumbnailUrl,
 				thumbnailSmallUrl,
+				...(blurDataUrl && { blurDataUrl }),
 			},
 		});
 

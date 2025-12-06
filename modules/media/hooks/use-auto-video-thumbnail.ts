@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useState } from "react";
+import { useRef, useState } from "react";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { THUMBNAIL_CONFIG } from "../constants/media.constants";
 import { withRetry, CORSError } from "../utils/retry";
@@ -16,6 +16,8 @@ export interface UseAutoVideoThumbnailOptions {
 export interface ThumbnailResult {
 	smallUrl: string | null;
 	mediumUrl: string | null;
+	/** Blur placeholder base64 (10x10) pour chargement progressif */
+	blurDataUrl: string | null;
 }
 
 export interface GenerateThumbnailOptions {
@@ -54,6 +56,34 @@ function testCORSAccess(video: HTMLVideoElement): void {
 	} finally {
 		testCanvas.width = 0;
 		testCanvas.height = 0;
+	}
+}
+
+/**
+ * Genere un blur placeholder base64 (10x10) depuis une frame video
+ * Utilise pour le chargement progressif (similaire aux images)
+ */
+function generateBlurDataUrl(video: HTMLVideoElement): string | null {
+	const canvas = document.createElement("canvas");
+
+	try {
+		// Taille 10x10 comme plaiceholder pour images
+		canvas.width = 10;
+		canvas.height = 10;
+
+		const ctx = canvas.getContext("2d");
+		if (!ctx) return null;
+
+		ctx.drawImage(video, 0, 0, 10, 10);
+
+		// Convertir en base64 WebP (qualite basse pour taille minimale)
+		return canvas.toDataURL("image/webp", 0.5);
+	} catch {
+		// Si echec (CORS, etc.), retourner null silencieusement
+		return null;
+	} finally {
+		canvas.width = 0;
+		canvas.height = 0;
 	}
 }
 
@@ -178,7 +208,10 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 			// 5. Test CORS precoce - echoue tot si acces bloque
 			testCORSAccess(video);
 
-			// 6. Capturer les deux tailles
+			// 6. Generer le blur placeholder (avant capture pour reutiliser la frame)
+			const blurDataUrl = generateBlurDataUrl(video);
+
+			// 7. Capturer les deux tailles
 			const smallConfig = THUMBNAIL_CONFIG.SMALL;
 			const mediumConfig = THUMBNAIL_CONFIG.MEDIUM;
 
@@ -187,7 +220,7 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 				captureFrame(video, mediumConfig.width, mediumConfig.height, mediumConfig.quality),
 			]);
 
-			// 7. Upload les deux fichiers
+			// 8. Upload les deux fichiers
 			const timestamp = Date.now();
 			const smallFile = new File(
 				[smallBlob],
@@ -205,6 +238,7 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 			return {
 				smallUrl: results?.[0]?.ufsUrl || null,
 				mediumUrl: results?.[1]?.ufsUrl || null,
+				blurDataUrl,
 			};
 		} finally {
 			// Cleanup video pour eviter memory leak
@@ -218,14 +252,14 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 		}
 	};
 
-	const generateThumbnail = useCallback(async (
+	const generateThumbnail = async (
 		videoUrl: string,
 		generateOptions?: GenerateThumbnailOptions
 	): Promise<ThumbnailResult> => {
 		// Protection contre les appels dupliques
 		if (generatingUrlsRef.current.has(videoUrl)) {
 			console.warn("[useAutoVideoThumbnail] Generation deja en cours pour:", videoUrl);
-			return { smallUrl: null, mediumUrl: null };
+			return { smallUrl: null, mediumUrl: null, blurDataUrl: null };
 		}
 
 		// Marquer comme en cours (ref + compteur)
@@ -251,20 +285,20 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 			});
 
 			options.onError?.(errorMessage);
-			return { smallUrl: null, mediumUrl: null };
+			return { smallUrl: null, mediumUrl: null, blurDataUrl: null };
 		} finally {
 			// Cleanup tracking (ref + compteur)
 			generatingUrlsRef.current.delete(videoUrl);
 			setGeneratingCount((c) => Math.max(0, c - 1));
 		}
-	}, [options, startUpload]);
+	};
 
 	/**
 	 * Verifie si une URL specifique est en cours de generation
 	 */
-	const isGenerating = useCallback((videoUrl: string): boolean => {
+	const isGenerating = (videoUrl: string): boolean => {
 		return generatingUrlsRef.current.has(videoUrl);
-	}, []);
+	};
 
 	return {
 		generateThumbnail,

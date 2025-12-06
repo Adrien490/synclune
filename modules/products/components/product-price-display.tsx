@@ -6,7 +6,6 @@ import type { GetProductReturn, ProductSku } from "@/modules/products/types/prod
 import { formatEuro } from "@/shared/utils/format-euro";
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { AlertCircle, CheckCircle, AlertTriangle, Sparkles } from "lucide-react";
-import { useMemo } from "react";
 import { StockNotificationForm } from "@/modules/stock-notifications/components/stock-notification-form";
 
 interface ProductPriceProps {
@@ -25,7 +24,7 @@ interface ProductPriceProps {
  */
 export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps) {
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
-	const priceInfo = useMemo(() => {
+	const priceInfo = (() => {
 		if (!product || !product.skus || product.skus.length === 0) {
 			return { minPrice: 0, hasMultiplePrices: false };
 		}
@@ -43,7 +42,7 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 		const hasMultiplePrices = minPrice !== maxPrice;
 
 		return { minPrice, hasMultiplePrices };
-	}, [product]);
+	})();
 
 	// Déterminer si on affiche "À partir de"
 	const showFromPrefix = priceInfo.hasMultiplePrices && !selectedSku;

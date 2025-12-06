@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useCallback } from "react"
+import { memo } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/shared/utils/cn"
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config"
@@ -30,12 +30,9 @@ export const WizardStepContainer = memo(function WizardStepContainer({
 	const effectiveMode = isMobile ? "wizard" : desktopMode
 
 	// Callback pour enregistrer la ref
-	const refCallback = useCallback(
-		(element: HTMLDivElement | null) => {
-			onRegisterRef?.(stepIndex, element)
-		},
-		[onRegisterRef, stepIndex]
-	)
+	const refCallback = (element: HTMLDivElement | null) => {
+		onRegisterRef?.(stepIndex, element)
+	}
 
 	// In "all" mode on desktop, always show all steps
 	if (effectiveMode === "all") {

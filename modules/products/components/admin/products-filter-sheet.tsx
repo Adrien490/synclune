@@ -7,7 +7,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Slider } from "@/shared/components/ui/slider";
 import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 
 interface ProductsFilterSheetProps {
 	className?: string;
@@ -28,12 +28,12 @@ export function ProductsFilterSheet({
 	productTypes = [],
 	collections = [],
 }: ProductsFilterSheetProps) {
-	const DEFAULT_PRICE_RANGE = useMemo(() => [0, MAX_PRICE], []);
+	const DEFAULT_PRICE_RANGE: [number, number] = [0, MAX_PRICE];
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	const initialValues = useMemo((): FilterFormData => {
+	const initialValues = ((): FilterFormData => {
 		const typeIds: string[] = [];
 		const collectionIds: string[] = [];
 		let priceMin = DEFAULT_PRICE_RANGE[0];
@@ -56,7 +56,7 @@ export function ProductsFilterSheet({
 			typeIds: [...new Set(typeIds)],
 			collectionIds: [...new Set(collectionIds)],
 		};
-	}, [searchParams, DEFAULT_PRICE_RANGE]);
+	})();
 
 	const form = useForm({
 		defaultValues: initialValues,
@@ -121,7 +121,7 @@ export function ProductsFilterSheet({
 		});
 	};
 
-	const { hasActiveFilters, activeFiltersCount } = useMemo(() => {
+	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0;
 		// Ne compter que les filtres gérés par ce sheet
 		const sheetFilterKeys = [
@@ -134,7 +134,7 @@ export function ProductsFilterSheet({
 			if (sheetFilterKeys.includes(key)) count += 1;
 		});
 		return { hasActiveFilters: count > 0, activeFiltersCount: count };
-	}, [searchParams]);
+	})();
 
 	return (
 		<FilterSheetWrapper

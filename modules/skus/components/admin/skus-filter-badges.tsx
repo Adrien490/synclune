@@ -4,7 +4,6 @@ import { FilterBadges } from "@/shared/components/filter-badges";
 import { FilterDefinition } from "@/shared/hooks/use-filter";
 import type { ColorOption } from "@/modules/colors/data/get-color-options";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
-import { useMemo } from "react";
 
 const STOCK_STATUS_LABELS: Record<string, string> = {
 	in_stock: "En stock",
@@ -72,13 +71,10 @@ function formatSkuFilter(
 
 export function SkusFilterBadges({ colors, materials }: SkusFilterBadgesProps) {
 	// Create lookup maps for efficient access
-	const filterMaps = useMemo(
-		() => ({
-			colors: new Map(colors.map((c) => [c.id, c.name])),
-			materials: new Map(materials.map((m) => [m.id, m.name])),
-		}),
-		[colors, materials]
-	);
+	const filterMaps = {
+		colors: new Map(colors.map((c) => [c.id, c.name])),
+		materials: new Map(materials.map((m) => [m.id, m.name])),
+	};
 
 	return (
 		<FilterBadges

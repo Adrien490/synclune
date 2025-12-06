@@ -5,7 +5,6 @@ import { FilterBadges } from "@/shared/components/filter-badges";
 import { FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
 
 const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
 	DRAFT: "Brouillon",
@@ -125,13 +124,10 @@ export function ProductsFilterBadges({
 	const searchParams = useSearchParams();
 
 	// Create lookup maps for efficient access
-	const filterMaps = useMemo(
-		() => ({
-			productTypes: new Map(productTypes.map((t) => [t.id, t.label])),
-			collections: new Map(collections.map((c) => [c.id, c.name])),
-		}),
-		[productTypes, collections]
-	);
+	const filterMaps = {
+		productTypes: new Map(productTypes.map((t) => [t.id, t.label])),
+		collections: new Map(collections.map((c) => [c.id, c.name])),
+	};
 
 	return (
 		<FilterBadges

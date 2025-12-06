@@ -3,7 +3,6 @@
 import {
 	useActionState,
 	useOptimistic,
-	useCallback,
 	useTransition,
 	useRef,
 	useEffect,
@@ -111,28 +110,25 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		undefined
 	);
 
-	const action = useCallback(
-		(formData: FormData) => {
-			startTransition(() => {
-				// Utilise la ref pour lire l'état actuel (évite closure stale)
-				const currentState = isInWishlistRef.current;
-				const newState = !currentState;
+	const action = (formData: FormData) => {
+		startTransition(() => {
+			// Utilise la ref pour lire l'état actuel (évite closure stale)
+			const currentState = isInWishlistRef.current;
+			const newState = !currentState;
 
-				// Mise à jour optimistic de l'icône coeur
-				setOptimisticIsInWishlist(newState);
+			// Mise à jour optimistic de l'icône coeur
+			setOptimisticIsInWishlist(newState);
 
-				// Mise à jour optimistic du badge navbar (séparé pour éviter setState pendant render)
-				if (newState) {
-					incrementWishlist();
-				} else {
-					decrementWishlist();
-				}
+			// Mise à jour optimistic du badge navbar (séparé pour éviter setState pendant render)
+			if (newState) {
+				incrementWishlist();
+			} else {
+				decrementWishlist();
+			}
 
-				formAction(formData);
-			});
-		},
-		[setOptimisticIsInWishlist, formAction, incrementWishlist, decrementWishlist]
-	);
+			formAction(formData);
+		});
+	};
 
 	return {
 		state,

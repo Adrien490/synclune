@@ -28,12 +28,17 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/shared/components/ui/tooltip";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "framer-motion";
 import { Expand, GripVertical, Loader2, MoreVertical, Play, RefreshCw, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "sonner";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
@@ -47,6 +52,7 @@ export interface MediaItem {
 	mediaType: "IMAGE" | "VIDEO";
 	thumbnailUrl?: string | null;
 	thumbnailSmallUrl?: string | null;
+	blurDataUrl?: string;
 }
 
 interface UnifiedMediaUploadProps {
@@ -73,6 +79,8 @@ interface SortableMediaItemProps {
 	isImageLoaded: boolean;
 	isGeneratingThumbnail: boolean;
 	shouldReduceMotion: boolean | null;
+	isDraggingAny: boolean;
+	showLongPressHint: boolean;
 	onImageLoaded: (url: string) => void;
 	onOpenLightbox: (index: number) => void;
 	onOpenDeleteDialog: () => void;
@@ -86,6 +94,8 @@ function SortableMediaItem({
 	isImageLoaded,
 	isGeneratingThumbnail,
 	shouldReduceMotion,
+	isDraggingAny,
+	showLongPressHint,
 	onImageLoaded,
 	onOpenLightbox,
 	onOpenDeleteDialog,
@@ -162,18 +172,11 @@ function SortableMediaItem({
 								playsInline
 								preload="metadata"
 								onTouchEnd={(e) => {
-									// Sur mobile : tap pour play, re-tap pour pause
+									// Sur mobile : tap ouvre le lightbox (comportement unifié)
+									// Ignorer si on est en cours de drag
+									if (isDraggingAny) return;
 									e.stopPropagation();
-									const video = e.currentTarget;
-									if (video.paused) {
-										if (video.readyState === 0) {
-											video.load();
-										}
-										void video.play();
-									} else {
-										video.pause();
-										video.currentTime = 0;
-									}
+									onOpenLightbox(index);
 								}}
 								onMouseEnter={(e) => {
 									// Desktop hover : auto-play
@@ -204,8 +207,9 @@ function SortableMediaItem({
 							</div>
 						</div>
 						{isGeneratingThumbnail && (
-							<div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
-								<Loader2 className="h-8 w-8 text-white motion-safe:animate-spin" />
+							<div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2 z-20">
+								<Loader2 className="h-8 w-8 text-white motion-safe:animate-spin" aria-hidden="true" />
+								<span className="text-white text-xs font-medium">Génération...</span>
 							</div>
 						)}
 					</div>
@@ -231,8 +235,8 @@ function SortableMediaItem({
 			{/* Badge principal - En bas sur mobile (évite collision avec drag handle) */}
 			{isPrimary && (
 				<div className="absolute bottom-2 left-2 sm:top-2 sm:bottom-auto sm:left-2 z-10 pointer-events-none">
-					<div className="flex items-center gap-1 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-md">
-						<Star className="w-3 h-3" fill="currentColor" />
+					<div className="flex items-center gap-1 bg-amber-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-md">
+						<Star className="w-3 h-3" fill="currentColor" aria-hidden="true" />
 						<span className="sm:hidden">1</span>
 						<span className="hidden sm:inline">Principal</span>
 					</div>
@@ -240,22 +244,40 @@ function SortableMediaItem({
 			)}
 
 			{/* Handle de drag - Positionné à gauche sur mobile pour éviter collision avec menu */}
-			<div
+			<button
+				type="button"
 				{...attributes}
 				{...listeners}
 				aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
+				aria-describedby="drag-instructions"
 				className={cn(
 					"absolute z-20 cursor-grab active:cursor-grabbing",
 					"top-2 left-2 sm:top-1 sm:left-auto sm:right-10",
 					"flex",
 					"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
+					"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full",
 					shouldReduceMotion ? "" : "motion-safe:transition-opacity"
 				)}
 			>
 				<div className="h-12 w-12 sm:h-8 sm:w-8 rounded-full bg-black/70 hover:bg-black/90 flex items-center justify-center shadow-lg">
-					<GripVertical className="h-5 w-5 sm:h-4 sm:w-4 text-white" />
+					<GripVertical className="h-5 w-5 sm:h-4 sm:w-4 text-white" aria-hidden="true" />
 				</div>
-			</div>
+			</button>
+
+			{/* Hint long-press mobile (première visite) */}
+			{showLongPressHint && (
+				<div
+					className={cn(
+						"absolute top-16 left-2 z-30 sm:hidden",
+						"animate-in fade-in-0 slide-in-from-top-2 duration-300"
+					)}
+					aria-hidden="true"
+				>
+					<div className="bg-black/90 text-white text-xs px-2.5 py-1.5 rounded-md shadow-lg whitespace-nowrap">
+						Maintenir pour déplacer
+					</div>
+				</div>
+			)}
 
 			{/* Actions Desktop - Overlay au hover */}
 			<div
@@ -266,51 +288,66 @@ function SortableMediaItem({
 					"opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
 				)}
 			>
-				<Button
-					type="button"
-					variant="secondary"
-					size="icon"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						onOpenLightbox(index);
-					}}
-					className="h-10 w-10 sm:h-9 sm:w-9 rounded-full"
-					aria-label={`Agrandir le média ${index + 1}`}
-				>
-					<Expand className="h-4 w-4" />
-				</Button>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							type="button"
+							variant="secondary"
+							size="icon"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								onOpenLightbox(index);
+							}}
+							className="h-10 w-10 rounded-full"
+							aria-label={`Agrandir le média ${index + 1}`}
+						>
+							<Expand className="h-4 w-4" aria-hidden="true" />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Agrandir</TooltipContent>
+				</Tooltip>
 				{isVideo && onRegenerateThumbnail && (
-					<Button
-						type="button"
-						variant="secondary"
-						size="icon"
-						onClick={(e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							onRegenerateThumbnail();
-						}}
-						disabled={isGeneratingThumbnail}
-						className="h-10 w-10 sm:h-9 sm:w-9 rounded-full"
-						aria-label={`Régénérer la miniature de la vidéo ${index + 1}`}
-					>
-						<RefreshCw className={cn("h-4 w-4", isGeneratingThumbnail && "animate-spin")} />
-					</Button>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								type="button"
+								variant="secondary"
+								size="icon"
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									onRegenerateThumbnail();
+								}}
+								disabled={isGeneratingThumbnail}
+								className="h-10 w-10 rounded-full"
+								aria-label={`Régénérer la miniature de la vidéo ${index + 1}`}
+							>
+								<RefreshCw className={cn("h-4 w-4", isGeneratingThumbnail && "animate-spin")} aria-hidden="true" />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>Régénérer miniature</TooltipContent>
+					</Tooltip>
 				)}
-				<Button
-					type="button"
-					variant="destructive"
-					size="icon"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						onOpenDeleteDialog();
-					}}
-					className="h-10 w-10 sm:h-9 sm:w-9 rounded-full"
-					aria-label={`Supprimer le média ${index + 1}`}
-				>
-					<Trash2 className="h-4 w-4" />
-				</Button>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							type="button"
+							variant="destructive"
+							size="icon"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								onOpenDeleteDialog();
+							}}
+							className="h-10 w-10 rounded-full"
+							aria-label={`Supprimer le média ${index + 1}`}
+						>
+							<Trash2 className="h-4 w-4" aria-hidden="true" />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Supprimer</TooltipContent>
+				</Tooltip>
 			</div>
 
 			{/* Actions Mobile - DropdownMenu */}
@@ -387,6 +424,29 @@ export function UnifiedMediaUpload({
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const activeMedia = activeId ? media.find((m) => m.url === activeId) : null;
 
+	// État pour les annonces accessibilité (aria-live)
+	const [announcement, setAnnouncement] = useState<string>("");
+
+	// État pour l'indication long-press mobile (première visite)
+	const [showLongPressHint, setShowLongPressHint] = useState(false);
+
+	// Afficher le hint long-press pour les nouveaux utilisateurs sur mobile
+	useEffect(() => {
+		// Vérifier si c'est la première visite et s'il y a des médias
+		if (media.length > 1 && typeof window !== "undefined") {
+			const hasSeenHint = localStorage.getItem("media-upload-hint-seen");
+			if (!hasSeenHint) {
+				setShowLongPressHint(true);
+				// Masquer après 4 secondes
+				const timer = setTimeout(() => {
+					setShowLongPressHint(false);
+					localStorage.setItem("media-upload-hint-seen", "true");
+				}, 4000);
+				return () => clearTimeout(timer);
+			}
+		}
+	}, [media.length]);
+
 	// Sensors pour le drag & drop (desktop + mobile)
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
@@ -433,7 +493,14 @@ export function UnifiedMediaUpload({
 
 	// Gestion du drag start
 	const handleDragStart = (event: DragStartEvent) => {
-		setActiveId(event.active.id as string);
+		const draggedId = event.active.id as string;
+		setActiveId(draggedId);
+
+		// Annonce pour les lecteurs d'écran
+		const draggedIndex = media.findIndex((m) => m.url === draggedId);
+		const draggedMedia = media[draggedIndex];
+		const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
+		setAnnouncement(`${mediaType} ${draggedIndex + 1} sélectionnée. Utilisez les flèches pour déplacer.`);
 	};
 
 	// Gestion du drag end
@@ -445,21 +512,32 @@ export function UnifiedMediaUpload({
 		if (over && active.id !== over.id) {
 			const oldIndex = media.findIndex((m) => m.url === active.id);
 			const newIndex = media.findIndex((m) => m.url === over.id);
+			const draggedMedia = media[oldIndex];
+			const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
 
 			// Empêcher de mettre une vidéo en première position
 			if (newIndex === 0 && media[oldIndex].mediaType === "VIDEO") {
 				toast.error("La première position doit être une image, pas une vidéo.");
+				setAnnouncement("Impossible de placer une vidéo en première position.");
 				return;
 			}
 
 			const newMedia = arrayMove(media, oldIndex, newIndex);
 			onChange(newMedia);
+
+			// Feedback visuel et sonore
+			toast.success("Ordre des médias mis à jour", { duration: 2000 });
+			setAnnouncement(`${mediaType} déplacée en position ${newIndex + 1}.`);
+		} else {
+			// Pas de changement
+			setAnnouncement("");
 		}
 	};
 
 	// Gestion du drag cancel
 	const handleDragCancel = () => {
 		setActiveId(null);
+		setAnnouncement("Déplacement annulé.");
 	};
 
 	// Ouvrir le dialog de suppression
@@ -496,6 +574,17 @@ export function UnifiedMediaUpload({
 					items={media.map((m) => m.url)}
 					strategy={rectSortingStrategy}
 				>
+					{/* Instructions pour le drag & drop au clavier (screen readers) */}
+					<span id="drag-instructions" className="sr-only">
+						Utilisez Espace ou Entrée pour saisir un élément, les flèches pour le déplacer,
+						Espace ou Entrée pour déposer, Échap pour annuler.
+					</span>
+
+					{/* Région aria-live pour les annonces de drag & drop */}
+					<div aria-live="polite" aria-atomic="true" className="sr-only">
+						{announcement}
+					</div>
+
 					<div
 						className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3 lg:gap-4 w-full"
 						role="list"
@@ -516,6 +605,8 @@ export function UnifiedMediaUpload({
 									isImageLoaded={isImageLoaded}
 									isGeneratingThumbnail={isGenerating}
 									shouldReduceMotion={shouldReduceMotion}
+									isDraggingAny={!!activeId}
+									showLongPressHint={showLongPressHint && index === 1}
 									onImageLoaded={handleImageLoaded}
 									onOpenLightbox={openLightbox}
 									onOpenDeleteDialog={() => handleOpenDeleteDialog(index)}

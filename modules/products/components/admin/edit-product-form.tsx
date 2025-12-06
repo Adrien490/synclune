@@ -15,7 +15,6 @@ import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { Euro, Gem, Image as ImageIcon, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 
 interface EditProductFormProps {
@@ -64,6 +63,7 @@ export function EditProductForm({
 				mediaType: "IMAGE" | "VIDEO";
 				thumbnailUrl: string | undefined;
 				thumbnailSmallUrl: string | undefined;
+				blurDataUrl: string | undefined;
 				altText: string | undefined;
 			};
 			const mediaList = form.getFieldValue("defaultSku.media") as MediaItem[];
@@ -76,6 +76,7 @@ export function EditProductForm({
 						...m,
 						thumbnailUrl: result.mediumUrl ?? undefined,
 						thumbnailSmallUrl: result.smallUrl ?? undefined,
+						blurDataUrl: result.blurDataUrl ?? undefined,
 					};
 				}
 				return m;
@@ -85,7 +86,7 @@ export function EditProductForm({
 		},
 	});
 
-	const originalImageUrls = useMemo(() => {
+	const originalImageUrls = (() => {
 		const urls: string[] = [];
 		const defaultSku = product.skus[0];
 		if (defaultSku) {
@@ -94,13 +95,10 @@ export function EditProductForm({
 			});
 		}
 		return urls;
-	}, [product]);
+	})();
 
 	// Combiner les vérifications de génération (auto + manuelle)
-	const combinedIsGenerating = useCallback(
-		(url: string) => isGenerating(url) || regeneratingUrl === url,
-		[isGenerating, regeneratingUrl]
-	);
+	const combinedIsGenerating = (url: string) => isGenerating(url) || regeneratingUrl === url;
 
 	return (
 		<>
@@ -536,6 +534,7 @@ export function EditProductForm({
 										url: file.url,
 										thumbnailUrl: undefined as string | undefined,
 										thumbnailSmallUrl: undefined as string | undefined,
+										blurDataUrl: undefined as string | undefined,
 										altText: form.state.values.title || undefined,
 										mediaType: mediaType as "IMAGE" | "VIDEO",
 									};
@@ -552,6 +551,7 @@ export function EditProductForm({
 														...newMedia,
 														thumbnailUrl: result.mediumUrl ?? undefined,
 														thumbnailSmallUrl: result.smallUrl ?? undefined,
+														blurDataUrl: result.blurDataUrl ?? undefined,
 													});
 												} else {
 													toast.error("Impossible de générer la miniature vidéo");
@@ -578,6 +578,7 @@ export function EditProductForm({
 													altText: m.altText ?? undefined,
 													thumbnailUrl: m.thumbnailUrl ?? undefined,
 													thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
+													blurDataUrl: m.blurDataUrl ?? undefined,
 												})
 											);
 										}}

@@ -11,7 +11,6 @@ import { Separator } from "@/shared/components/ui/separator";
 import { extractVariantInfo } from "@/modules/skus/services/extract-sku-info";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
 import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
 import { ColorSelector } from "@/modules/colors/components/color-selector";
 import { MaterialSelector } from "@/modules/skus/components/material-selector";
@@ -45,7 +44,7 @@ export function VariantSelector({ product }: VariantSelectorProps) {
 	const { requiresSize } = useVariantValidation({ product, selection: variants });
 
 	// Calculer les variantes disponibles depuis le produit
-	const variantInfo = useMemo(() => extractVariantInfo(product), [product]);
+	const variantInfo = extractVariantInfo(product);
 
 	// Vérifier si on doit afficher le sélecteur (plusieurs SKUs)
 	const shouldShowSelector = product.skus && product.skus.length > 1;

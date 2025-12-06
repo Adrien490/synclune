@@ -515,6 +515,7 @@ function CreateProductFormContent({
 																		...field.state.value[idx],
 																		thumbnailUrl: result.mediumUrl,
 																		thumbnailSmallUrl: result.smallUrl,
+																		blurDataUrl: result.blurDataUrl ?? undefined,
 																	});
 																}
 															} else {

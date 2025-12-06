@@ -15,7 +15,6 @@ import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback } from "react";
 import { Euro, ImagePlus, Image as ImageIcon, Info, Palette, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -95,6 +94,7 @@ export function EditProductVariantForm({
 						...m,
 						thumbnailUrl: result.mediumUrl ?? undefined,
 						thumbnailSmallUrl: result.smallUrl ?? undefined,
+						blurDataUrl: result.blurDataUrl ?? undefined,
 					};
 				}
 				return m;
@@ -105,10 +105,7 @@ export function EditProductVariantForm({
 	});
 
 	// Combiner les vérifications de génération (auto + manuelle)
-	const combinedIsGenerating = useCallback(
-		(url: string) => isGenerating(url) || regeneratingUrl === url,
-		[isGenerating, regeneratingUrl]
-	);
+	const combinedIsGenerating = (url: string) => isGenerating(url) || regeneratingUrl === url;
 
 	return (
 		<>
@@ -674,6 +671,7 @@ export function EditProductVariantForm({
 																						...newMedia,
 																						thumbnailUrl: result.mediumUrl ?? undefined,
 																						thumbnailSmallUrl: result.smallUrl ?? undefined,
+																						blurDataUrl: result.blurDataUrl ?? undefined,
 																					});
 																				} else {
 																					toast.error("Impossible de générer la miniature vidéo");

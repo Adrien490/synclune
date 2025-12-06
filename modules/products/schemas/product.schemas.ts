@@ -165,6 +165,7 @@ const imageSchema = z.object({
 		})
 		.optional()
 		.nullable(),
+	blurDataUrl: z.string().optional(),
 	altText: z.string().max(200).optional(),
 	mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
 });

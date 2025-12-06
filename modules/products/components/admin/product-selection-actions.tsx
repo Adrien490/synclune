@@ -19,7 +19,6 @@ import {
 	MoreVertical as MoreVerticalIcon,
 	Trash2,
 } from "lucide-react";
-import { useMemo } from "react";
 import { toast } from "sonner";
 import { useBulkChangeProductStatus } from "@/modules/products/hooks/use-bulk-change-product-status";
 import { BULK_ARCHIVE_PRODUCTS_DIALOG_ID } from "./bulk-archive-products-alert-dialog";
@@ -43,11 +42,11 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 		});
 
 	// Déterminer si tous les produits sélectionnés sont archivés
-	const selectedProductsStatus = useMemo(() => {
-		const selectedProducts = products.filter((p) =>
-			selectedItems.includes(p.id)
-		);
+	const selectedProducts = products.filter((p) =>
+		selectedItems.includes(p.id)
+	);
 
+	const selectedProductsStatus = (() => {
 		if (selectedProducts.length === 0) {
 			return {
 				allArchived: false,
@@ -77,7 +76,7 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 			allPublic,
 			hasMixedStatus,
 		};
-	}, [products, selectedItems]);
+	})();
 
 	const handleExportCSV = () => {
 		if (selectedItems.length === 0) {

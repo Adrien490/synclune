@@ -6,7 +6,7 @@ import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useTransition } from "react";
 
 interface Material {
 	id: string;
@@ -43,33 +43,27 @@ export function MaterialSelector({
 	const currentSize = searchParams.get("size");
 
 	// Calculer la disponibilité d'un matériau
-	const isMaterialAvailable = useCallback(
-		(materialId: string): boolean => {
-			const compatibleSkus = filterCompatibleSkus(product, {
-				colorSlug: currentColor || undefined,
-				materialSlug: materialId,
-				size: currentSize || undefined,
-			});
-			return compatibleSkus.length > 0;
-		},
-		[product, currentColor, currentSize]
-	);
+	const isMaterialAvailable = (materialId: string): boolean => {
+		const compatibleSkus = filterCompatibleSkus(product, {
+			colorSlug: currentColor || undefined,
+			materialSlug: materialId,
+			size: currentSize || undefined,
+		});
+		return compatibleSkus.length > 0;
+	};
 
 	// Mettre à jour le matériau dans l'URL
-	const updateMaterial = useCallback(
-		(materialId: string | null) => {
-			startTransition(() => {
-				const params = new URLSearchParams(searchParams.toString());
-				if (materialId) {
-					params.set("material", materialId);
-				} else {
-					params.delete("material");
-				}
-				router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-			});
-		},
-		[searchParams, pathname, router]
-	);
+	const updateMaterial = (materialId: string | null) => {
+		startTransition(() => {
+			const params = new URLSearchParams(searchParams.toString());
+			if (materialId) {
+				params.set("material", materialId);
+			} else {
+				params.delete("material");
+			}
+			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+		});
+	};
 
 	if (materials.length === 0) return null;
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useCallback, type KeyboardEvent } from "react"
+import { memo, type KeyboardEvent } from "react"
 import { Check } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import { Progress } from "@/shared/components/ui/progress"
@@ -36,25 +36,22 @@ export const WizardProgress = memo(function WizardProgress({
 	}
 
 	// Keyboard navigation handler
-	const handleKeyDown = useCallback(
-		(e: KeyboardEvent<HTMLDivElement>) => {
-			if (!enableKeyboardNav || !onStepClick) return
+	const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+		if (!enableKeyboardNav || !onStepClick) return
 
-			if (e.key === "ArrowLeft" && currentStep > 0) {
-				e.preventDefault()
-				onStepClick(currentStep - 1)
-			} else if (e.key === "ArrowRight" && currentStep < steps.length - 1) {
-				e.preventDefault()
-				const nextStep = currentStep + 1
-				// Permettre d'avancer si l'étape actuelle est complétée ou si l'étape cible est déjà visitée
-				const canNavigate = completedSteps.has(currentStep) || completedSteps.has(nextStep)
-				if (canNavigate) {
-					onStepClick(nextStep)
-				}
+		if (e.key === "ArrowLeft" && currentStep > 0) {
+			e.preventDefault()
+			onStepClick(currentStep - 1)
+		} else if (e.key === "ArrowRight" && currentStep < steps.length - 1) {
+			e.preventDefault()
+			const nextStep = currentStep + 1
+			// Permettre d'avancer si l'étape actuelle est complétée ou si l'étape cible est déjà visitée
+			const canNavigate = completedSteps.has(currentStep) || completedSteps.has(nextStep)
+			if (canNavigate) {
+				onStepClick(nextStep)
 			}
-		},
-		[enableKeyboardNav, onStepClick, currentStep, steps.length, completedSteps]
-	)
+		}
+	}
 
 	if (variant === "progress-bar") {
 		const progress = ((currentStep + 1) / steps.length) * 100;

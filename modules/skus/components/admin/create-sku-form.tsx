@@ -648,6 +648,7 @@ export function CreateProductVariantForm({
 																						...newMedia,
 																						thumbnailUrl: result.mediumUrl,
 																						thumbnailSmallUrl: result.smallUrl,
+																						blurDataUrl: result.blurDataUrl ?? undefined,
 																					});
 																				} else {
 																					toast.error("Impossible de générer la miniature vidéo");

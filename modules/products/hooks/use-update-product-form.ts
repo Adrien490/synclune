@@ -33,6 +33,7 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 			url: img.url,
 			thumbnailUrl: img.thumbnailUrl || undefined,
 			thumbnailSmallUrl: img.thumbnailSmallUrl || undefined,
+			blurDataUrl: img.blurDataUrl || undefined,
 			altText: img.altText || undefined,
 			mediaType: img.mediaType,
 		})) || [];
