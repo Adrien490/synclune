@@ -129,7 +129,7 @@ const CarouselDots = memo(function CarouselDots({
 
 	return (
 		<div
-			className="flex flex-col items-center gap-1 pt-4"
+			className="flex flex-col items-center gap-1 pt-4 lg:hidden"
 			role="tablist"
 			aria-label="Navigation du carousel"
 		>
