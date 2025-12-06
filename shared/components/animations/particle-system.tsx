@@ -1,9 +1,8 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { memo, useMemo, useRef, useSyncExternalStore } from "react";
+import { memo, useMemo, useRef } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
 // ============================================================================
@@ -35,6 +34,19 @@ export interface ParticleSystemProps {
 	shape?: ParticleShape;
 	/** Classes additionnelles */
 	className?: string;
+}
+
+/** Données d'une particule générée */
+interface Particle {
+	id: number;
+	size: number;
+	opacity: number;
+	x: number;
+	y: number;
+	color: string;
+	duration: number;
+	delay: number;
+	blur: number;
 }
 
 // ============================================================================
@@ -88,8 +100,123 @@ function randomBetween(min: number, max: number, seed: number) {
 	return min + seededRandom(seed) * (max - min);
 }
 
+/** Génère un tableau de particules avec des propriétés déterministes */
+function generateParticles(
+	count: number,
+	size: [number, number],
+	opacity: [number, number],
+	colors: string[],
+	duration: number,
+	blur: number | [number, number]
+): Particle[] {
+	return Array.from({ length: count }, (_, i) => {
+		const seed = i * 1000;
+		const particleSize = randomBetween(size[0], size[1], seed + 1);
+		const particleOpacity = randomBetween(opacity[0], opacity[1], seed + 2);
+		const x = randomBetween(5, 95, seed + 3);
+		const y = randomBetween(5, 95, seed + 4);
+		const color = colors[i % colors.length];
+		const particleDuration = randomBetween(duration * 0.7, duration * 1.3, seed + 5);
+		const delay = randomBetween(0, duration * 0.5, seed + 6);
+		const particleBlur = Array.isArray(blur)
+			? randomBetween(blur[0], blur[1], seed + 7)
+			: blur;
+
+		return {
+			id: i,
+			size: particleSize,
+			opacity: particleOpacity,
+			x,
+			y,
+			color,
+			duration: particleDuration,
+			delay,
+			blur: particleBlur,
+		};
+	});
+}
+
 // ============================================================================
-// COMPONENT
+// PARTICLE SET COMPONENT
+// ============================================================================
+
+interface ParticleSetProps {
+	particles: Particle[];
+	shapeStyles: React.CSSProperties;
+	isInView: boolean;
+	reducedMotion: boolean | null;
+}
+
+/**
+ * Composant interne pour rendre un ensemble de particules
+ * Gère à la fois le rendu statique (reduced motion) et animé
+ */
+const ParticleSet = ({
+	particles,
+	shapeStyles,
+	isInView,
+	reducedMotion,
+}: ParticleSetProps) => {
+	if (!isInView) return null;
+
+	if (reducedMotion) {
+		return (
+			<>
+				{particles.map((p) => (
+					<span
+						key={p.id}
+						className="absolute"
+						style={{
+							width: p.size,
+							height: p.size,
+							left: `${p.x}%`,
+							top: `${p.y}%`,
+							backgroundColor: p.color,
+							opacity: p.opacity,
+							filter: `blur(${p.blur}px)`,
+							...shapeStyles,
+						}}
+					/>
+				))}
+			</>
+		);
+	}
+
+	return (
+		<>
+			{particles.map((p) => (
+				<motion.span
+					key={p.id}
+					className="absolute will-change-transform"
+					style={{
+						width: p.size,
+						height: p.size,
+						left: `${p.x}%`,
+						top: `${p.y}%`,
+						backgroundColor: p.color,
+						filter: `blur(${p.blur}px)`,
+						...shapeStyles,
+					}}
+					animate={{
+						scale: [1, 1.4, 0.8, 1],
+						opacity: [p.opacity, p.opacity * 1.5, p.opacity * 0.6, p.opacity],
+						x: ["0%", "8%", "-8%", "0%"],
+						y: ["0%", "-6%", "6%", "0%"],
+					}}
+					transition={{
+						duration: p.duration,
+						delay: p.delay,
+						ease: MOTION_CONFIG.easing.easeInOut,
+						repeat: Infinity,
+					}}
+				/>
+			))}
+		</>
+	);
+};
+
+// ============================================================================
+// MAIN COMPONENT
 // ============================================================================
 
 const ParticleSystemBase = ({
@@ -111,83 +238,21 @@ const ParticleSystemBase = ({
 	const shapeStyles = SHAPE_STYLES[shape];
 	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
-	const isMobile = useIsMobile();
-
-	// Évite l'hydration mismatch avec useSyncExternalStore (pattern React 19)
-	const isMounted = useSyncExternalStore(
-		() => () => {},
-		() => true,
-		() => false
-	);
 
 	// Lazy rendering : n'anime que si visible
 	const isInView = useInView(containerRef, { once: true, margin: "-100px" });
 
-	// Réduire le nombre de particules sur mobile
-	const particleCount = isMobile ? Math.ceil(count / 2) : count;
+	// Génération des deux sets de particules (mémoïsés séparément)
+	// CSS media queries gèrent l'affichage → pas de flash d'hydratation
+	const desktopParticles = useMemo(
+		() => generateParticles(count, size, opacity, resolvedColors, duration, blur),
+		[count, size, opacity, resolvedColors, duration, blur]
+	);
 
-	// Génération déterministe des particules
-	const particles = useMemo(() => {
-		return Array.from({ length: particleCount }, (_, i) => {
-			const seed = i * 1000;
-			const particleSize = randomBetween(size[0], size[1], seed + 1);
-			const particleOpacity = randomBetween(opacity[0], opacity[1], seed + 2);
-			const x = randomBetween(5, 95, seed + 3);
-			const y = randomBetween(5, 95, seed + 4);
-			const color = resolvedColors[i % resolvedColors.length];
-			const particleDuration = randomBetween(duration * 0.7, duration * 1.3, seed + 5);
-			const delay = randomBetween(0, duration * 0.5, seed + 6);
-			// Blur variable pour effet de profondeur
-			const particleBlur = Array.isArray(blur)
-				? randomBetween(blur[0], blur[1], seed + 7)
-				: blur;
-
-			return {
-				id: i,
-				size: particleSize,
-				opacity: particleOpacity,
-				x,
-				y,
-				color,
-				duration: particleDuration,
-				delay,
-				blur: particleBlur,
-			};
-		});
-	}, [particleCount, size, opacity, resolvedColors, duration, blur]);
-
-	// Ne rien rendre côté serveur pour éviter l'hydration mismatch
-	if (!isMounted) {
-		return null;
-	}
-
-	// Pas d'animation si reduced motion
-	if (reducedMotion) {
-		return (
-			<div
-				ref={containerRef}
-				aria-hidden="true"
-				className={cn("absolute inset-0 pointer-events-none overflow-hidden", className)}
-			>
-				{particles.map((p) => (
-					<span
-						key={p.id}
-						className="absolute"
-						style={{
-							width: p.size,
-							height: p.size,
-							left: `${p.x}%`,
-							top: `${p.y}%`,
-							backgroundColor: p.color,
-							opacity: p.opacity,
-							filter: `blur(${p.blur}px)`,
-							...shapeStyles,
-						}}
-					/>
-				))}
-			</div>
-		);
-	}
+	const mobileParticles = useMemo(
+		() => generateParticles(Math.ceil(count / 2), size, opacity, resolvedColors, duration, blur),
+		[count, size, opacity, resolvedColors, duration, blur]
+	);
 
 	return (
 		<div
@@ -195,40 +260,33 @@ const ParticleSystemBase = ({
 			aria-hidden="true"
 			className={cn("absolute inset-0 pointer-events-none overflow-hidden", className)}
 		>
-			{isInView &&
-				particles.map((p) => (
-					<motion.span
-						key={p.id}
-						className="absolute will-change-transform"
-						style={{
-							width: p.size,
-							height: p.size,
-							left: `${p.x}%`,
-							top: `${p.y}%`,
-							backgroundColor: p.color,
-							filter: `blur(${p.blur}px)`,
-							...shapeStyles,
-						}}
-						animate={{
-							scale: [1, 1.4, 0.8, 1],
-							opacity: [p.opacity, p.opacity * 1.5, p.opacity * 0.6, p.opacity],
-							x: ["0%", "8%", "-8%", "0%"],
-							y: ["0%", "-6%", "6%", "0%"],
-						}}
-						transition={{
-							duration: p.duration,
-							delay: p.delay,
-							ease: MOTION_CONFIG.easing.easeInOut,
-							repeat: Infinity,
-						}}
-					/>
-				))}
+			{/* Desktop : visible uniquement sur md+ (768px+) */}
+			<div className="hidden md:contents">
+				<ParticleSet
+					particles={desktopParticles}
+					shapeStyles={shapeStyles}
+					isInView={isInView}
+					reducedMotion={reducedMotion}
+				/>
+			</div>
+			{/* Mobile : visible uniquement sous md (< 768px) */}
+			<div className="contents md:hidden">
+				<ParticleSet
+					particles={mobileParticles}
+					shapeStyles={shapeStyles}
+					isInView={isInView}
+					reducedMotion={reducedMotion}
+				/>
+			</div>
 		</div>
 	);
 };
 
 /**
  * Système de particules décoratives avec effet de profondeur
+ *
+ * Utilise CSS media queries pour la détection mobile (pas de flash d'hydratation).
+ * Desktop: count particules, Mobile: count/2 particules.
  *
  * @example
  * // Défaut (preset bijoux)

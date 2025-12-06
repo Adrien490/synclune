@@ -212,7 +212,7 @@ export function CollectionCarouselWrapper({
 
 		// Nombre total de "pages" scrollables
 		const totalScrollable = scrollWidth - clientWidth;
-		const dots = Math.max(1, Math.ceil(totalScrollable / scrollAmount) + 1);
+		const dots = Math.max(1, Math.ceil(totalScrollable / scrollAmount));
 		setTotalDots(dots);
 
 		// Index actif basé sur la position de scroll

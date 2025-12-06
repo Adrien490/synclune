@@ -17,7 +17,7 @@ export async function Hero() {
     <section
       id="hero"
       aria-labelledby="hero-title"
-      className="relative min-h-[calc(100vh-4rem)] sm:min-h-screen flex items-center overflow-hidden pt-20 sm:pt-24 md:pt-32 pb-16 sm:pb-20 md:pb-28"
+      className="relative min-h-[85vh] sm:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-24 md:pt-32 pb-12 sm:pb-20 md:pb-28"
       itemScope
       itemType="https://schema.org/WebPageElement"
       itemProp="mainContentOfPage"

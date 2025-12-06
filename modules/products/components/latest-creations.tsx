@@ -75,7 +75,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 
 				{/* Grille unifiée : 6 produits mobile, tous desktop (évite double rendering DOM) */}
 				<Stagger
-					className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
+					className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
 					stagger={0.08}
 					y={30}
 					inView
@@ -101,7 +101,13 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 					})}
 				</Stagger>
 
-				<div className="text-center">
+				<div className="text-center space-y-3">
+					{/* Indication mobile : nombre de produits non affichés */}
+					{products.length > 6 && (
+						<p className="sm:hidden text-sm text-muted-foreground">
+							+ {products.length - 6} autres créations à découvrir
+						</p>
+					)}
 					<Button
 						asChild
 						size="lg"

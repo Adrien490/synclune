@@ -1,10 +1,8 @@
 import { Fade, Reveal } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
-import { IMAGES } from "@/shared/constants/images";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
 import { Sparkles } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -192,19 +190,10 @@ export async function AtelierStory() {
 				{/* Photo ambiance principale - aspect ratio adaptatif mobile/desktop */}
 				<Reveal y={20} duration={0.6} once>
 					<div className="mb-8 sm:mb-12">
-						<div className="relative aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden">
-							<Image
-								src={IMAGES.ATELIER}
-								alt="Atelier de création Synclune à Nantes - Léane travaillant sur ses bijoux artisanaux"
-								fill
-								priority
-								placeholder="blur"
-								blurDataURL={IMAGES.ATELIER_BLUR}
-								sizes="(max-width: 1024px) 100vw, 896px"
-								className="object-cover"
-								itemProp="image"
-							/>
-						</div>
+						<PlaceholderImage
+							className="aspect-[4/3] sm:aspect-[16/9]"
+							label="Atelier de création Synclune à Nantes - Léane travaillant sur ses bijoux artisanaux"
+						/>
 					</div>
 				</Reveal>
 

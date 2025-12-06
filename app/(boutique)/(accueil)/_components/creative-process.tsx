@@ -53,7 +53,7 @@ const processSteps: ProcessStep[] = [
 		description:
 			"Je polis, je vérifie chaque détail... Bon, je suis un peu perfectionniste ! Et voilà, ton bijou est prêt.",
 		color: STEP_COLORS.accent,
-		iconHoverClass: "group-hover:[&_svg]:text-green-500 group-hover:[&_svg]:scale-110",
+		iconHoverClass: "group-hover:[&_svg]:scale-110",
 	},
 ];
 
@@ -126,12 +126,12 @@ export async function CreativeProcess() {
 				</header>
 
 				<div className="grid lg:grid-cols-2 gap-12 items-center">
-					{/* Image atelier avec animation d'entrée */}
+					{/* Image atelier avec animation d'entrée - Image en premier sur mobile */}
 					<Reveal
 						y={20}
 						duration={0.6}
 						delay={0.2}
-						className="relative order-2 lg:order-1 h-64 sm:h-80 lg:h-full"
+						className="relative order-1 h-48 sm:h-80 lg:h-full"
 					>
 						<div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-xl">
 							<ParallaxImage
@@ -160,7 +160,7 @@ export async function CreativeProcess() {
 					</Reveal>
 
 					{/* Timeline processus */}
-					<div className="relative order-1 lg:order-2">
+					<div className="relative order-2">
 						<div className="relative space-y-8 sm:space-y-12 lg:space-y-16">
 							{/* Ligne verticale animée au scroll (desktop) */}
 							<ScrollProgressLine />

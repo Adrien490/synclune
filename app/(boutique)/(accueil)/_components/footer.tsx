@@ -81,7 +81,7 @@ export async function Footer() {
 								<li key={index} role="listitem">
 									<Link
 										href={item.href}
-										className="text-sm/6 antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm inline-block px-2 py-2"
+										className="text-sm/6 antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm inline-flex items-center px-2 py-3 min-h-11"
 									>
 										{item.label}
 									</Link>
@@ -195,7 +195,7 @@ export async function Footer() {
 							<Link
 								key={index}
 								href={link.href}
-								className="text-xs antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+								className="text-xs antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm py-2 min-h-11 inline-flex items-center"
 							>
 								{link.label}
 							</Link>

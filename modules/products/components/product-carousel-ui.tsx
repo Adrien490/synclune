@@ -146,11 +146,13 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 						))}
 					</CarouselContent>
 
-					{/* Navigation - Fond blanc semi-transparent avec backdrop blur (meilleure pratique e-commerce) */}
+					{/* Navigation - Masquée sur mobile, visible au hover sur desktop */}
 					<CarouselPrevious
 						variant="ghost"
 						aria-label="Bijou précédent"
 						className={cn(
+							// Masqué sur mobile, flex sur desktop
+							"hidden sm:flex",
 							// Position
 							"left-4 top-1/2 -translate-y-1/2",
 							// Fond blanc semi-transparent avec effet verre dépoli
@@ -168,7 +170,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 							// Cursor pointer
 							"cursor-pointer",
 							// Caché par défaut, visible au survol du carousel
-							"opacity-60 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100",
+							"opacity-0 group-hover:opacity-100 focus-within:opacity-100",
 							// Disabled state - reste caché
 							"disabled:opacity-0 disabled:cursor-not-allowed disabled:hover:scale-100",
 							// Transition fluide
@@ -179,6 +181,8 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 						variant="ghost"
 						aria-label="Bijou suivant"
 						className={cn(
+							// Masqué sur mobile, flex sur desktop
+							"hidden sm:flex",
 							// Position
 							"right-4 top-1/2 -translate-y-1/2",
 							// Fond blanc semi-transparent avec effet verre dépoli
@@ -196,7 +200,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 							// Cursor pointer
 							"cursor-pointer",
 							// Caché par défaut, visible au survol du carousel
-							"opacity-60 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100",
+							"opacity-0 group-hover:opacity-100 focus-within:opacity-100",
 							// Disabled state - reste caché
 							"disabled:opacity-0 disabled:cursor-not-allowed disabled:hover:scale-100",
 							// Transition fluide
