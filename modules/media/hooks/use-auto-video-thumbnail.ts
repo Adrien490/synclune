@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { THUMBNAIL_CONFIG } from "../constants/media.constants";
 import { withRetry, CORSError } from "../utils/retry";
@@ -8,6 +8,14 @@ import { withRetry, CORSError } from "../utils/retry";
 // ============================================================================
 // TYPES
 // ============================================================================
+
+/** Erreur d'annulation (P10 - race conditions) */
+export class AbortedError extends Error {
+	constructor(message = "Opération annulée") {
+		super(message);
+		this.name = "AbortedError";
+	}
+}
 
 export interface UseAutoVideoThumbnailOptions {
 	onError?: (error: string) => void;
@@ -146,23 +154,42 @@ async function captureFrame(
  *
  * Ameliorations 2025:
  * - Test CORS precoce (detecte les erreurs avant le flux complet)
- * - Tracking simplifie via ref (evite les race conditions)
+ * - AbortController pour annulation propre (P10 - race conditions)
+ * - Cleanup automatique sur unmount
  * - Logging structure pour debugging
  *
  * @returns smallUrl (160px) pour miniatures galerie, mediumUrl (480px) pour poster
  */
 export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}) {
 	const { startUpload } = useUploadThing("catalogMedia");
-	// Ref pour le tracking interne (evite race conditions)
-	const generatingUrlsRef = useRef<Set<string>>(new Set());
+	// Map URL → AbortController pour gestion des annulations (P10)
+	const controllersRef = useRef<Map<string, AbortController>>(new Map());
 	// Compteur reactif pour l'UI (declenche re-render quand ca change)
 	const [generatingCount, setGeneratingCount] = useState(0);
 
+	// Cleanup sur unmount: annuler toutes les generations en cours
+	useEffect(() => {
+		return () => {
+			controllersRef.current.forEach((controller) => {
+				controller.abort();
+			});
+			controllersRef.current.clear();
+		};
+	}, []);
+
 	const generateThumbnailCore = async (
 		videoUrl: string,
-		generateOptions?: GenerateThumbnailOptions
+		generateOptions?: GenerateThumbnailOptions,
+		signal?: AbortSignal
 	): Promise<ThumbnailResult> => {
 		const video = document.createElement("video");
+
+		// Helper pour verifier l'annulation (P10)
+		const checkAborted = () => {
+			if (signal?.aborted) {
+				throw new AbortedError();
+			}
+		};
 
 		try {
 			// 1. Configurer element video
@@ -176,17 +203,28 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 					reject(new Error("Timeout chargement video (30s)"));
 				}, THUMBNAIL_CONFIG.loadTimeout);
 
+				// Ecouter l'abort signal
+				const abortHandler = () => {
+					clearTimeout(timeout);
+					reject(new AbortedError());
+				};
+				signal?.addEventListener("abort", abortHandler);
+
 				video.onloadedmetadata = () => {
 					clearTimeout(timeout);
+					signal?.removeEventListener("abort", abortHandler);
 					resolve();
 				};
 				video.onerror = () => {
 					clearTimeout(timeout);
+					signal?.removeEventListener("abort", abortHandler);
 					const errorMsg = video.error?.message || "Format non supporte ou URL invalide";
 					reject(new Error(`Erreur chargement video: ${errorMsg}`));
 				};
 				video.src = videoUrl;
 			});
+
+			checkAborted();
 
 			// 3. Seek a la position calculee
 			const seekTime = generateOptions?.captureTimeSeconds !== undefined
@@ -194,22 +232,38 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 				: Math.min(THUMBNAIL_CONFIG.maxCaptureTime, video.duration * THUMBNAIL_CONFIG.capturePosition);
 			video.currentTime = seekTime;
 
-			await new Promise<void>((resolve) => {
-				video.onseeked = () => resolve();
+			await new Promise<void>((resolve, reject) => {
+				const abortHandler = () => reject(new AbortedError());
+				signal?.addEventListener("abort", abortHandler);
+				video.onseeked = () => {
+					signal?.removeEventListener("abort", abortHandler);
+					resolve();
+				};
 			});
+
+			checkAborted();
 
 			// 4. Attendre que la frame soit prete
 			if (video.readyState < 2) {
-				await new Promise<void>((resolve) => {
-					video.oncanplay = () => resolve();
+				await new Promise<void>((resolve, reject) => {
+					const abortHandler = () => reject(new AbortedError());
+					signal?.addEventListener("abort", abortHandler);
+					video.oncanplay = () => {
+						signal?.removeEventListener("abort", abortHandler);
+						resolve();
+					};
 				});
 			}
+
+			checkAborted();
 
 			// 5. Test CORS precoce - echoue tot si acces bloque
 			testCORSAccess(video);
 
 			// 6. Generer le blur placeholder (avant capture pour reutiliser la frame)
 			const blurDataUrl = generateBlurDataUrl(video);
+
+			checkAborted();
 
 			// 7. Capturer les deux tailles
 			const smallConfig = THUMBNAIL_CONFIG.SMALL;
@@ -219,6 +273,8 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 				captureFrame(video, smallConfig.width, smallConfig.height, smallConfig.quality),
 				captureFrame(video, mediumConfig.width, mediumConfig.height, mediumConfig.quality),
 			]);
+
+			checkAborted();
 
 			// 8. Upload les deux fichiers
 			const timestamp = Date.now();
@@ -252,30 +308,49 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 		}
 	};
 
-	const generateThumbnail = async (
+	const generateThumbnail = useCallback(async (
 		videoUrl: string,
 		generateOptions?: GenerateThumbnailOptions
 	): Promise<ThumbnailResult> => {
-		// Protection contre les appels dupliques
-		if (generatingUrlsRef.current.has(videoUrl)) {
-			console.warn("[useAutoVideoThumbnail] Generation deja en cours pour:", videoUrl);
-			return { smallUrl: null, mediumUrl: null, blurDataUrl: null };
+		// Si generation en cours pour cette URL, annuler l'ancienne et relancer (P10)
+		const existingController = controllersRef.current.get(videoUrl);
+		if (existingController) {
+			console.log("[useAutoVideoThumbnail] Annulation generation precedente pour:", videoUrl);
+			existingController.abort();
+			controllersRef.current.delete(videoUrl);
 		}
 
-		// Marquer comme en cours (ref + compteur)
-		generatingUrlsRef.current.add(videoUrl);
+		// Creer un nouveau AbortController
+		const controller = new AbortController();
+		controllersRef.current.set(videoUrl, controller);
 		setGeneratingCount((c) => c + 1);
 
 		try {
-			// Utiliser withRetry pour la robustesse (sauf CORS qui echouera toujours)
-			return await withRetry(() => generateThumbnailCore(videoUrl, generateOptions), {
-				onRetry: (attempt, error) => {
-					console.warn(`[useAutoVideoThumbnail] Retry ${attempt}:`, error.message);
-				},
-			});
+			// Utiliser withRetry pour la robustesse (sauf CORS et Abort qui echoueront toujours)
+			return await withRetry(
+				() => generateThumbnailCore(videoUrl, generateOptions, controller.signal),
+				{
+					onRetry: (attempt, error) => {
+						console.warn(`[useAutoVideoThumbnail] Retry ${attempt}:`, error.message);
+					},
+					shouldRetry: (error) => {
+						// Ne pas retry les erreurs CORS ou Abort
+						if (error instanceof CORSError) return false;
+						if (error instanceof AbortedError) return false;
+						return true;
+					},
+				}
+			);
 		} catch (error) {
 			const isCORSError = error instanceof CORSError;
+			const isAborted = error instanceof AbortedError;
 			const errorMessage = error instanceof Error ? error.message : "Erreur generation miniature";
+
+			// Ne pas logger ni appeler onError pour les annulations volontaires
+			if (isAborted) {
+				console.log("[useAutoVideoThumbnail] Generation annulee:", videoUrl.substring(0, 50));
+				return { smallUrl: null, mediumUrl: null, blurDataUrl: null };
+			}
 
 			// Log structure pour debugging (prepare pour Sentry)
 			console.error("[useAutoVideoThumbnail] Echec generation thumbnail:", {
@@ -287,22 +362,48 @@ export function useAutoVideoThumbnail(options: UseAutoVideoThumbnailOptions = {}
 			options.onError?.(errorMessage);
 			return { smallUrl: null, mediumUrl: null, blurDataUrl: null };
 		} finally {
-			// Cleanup tracking (ref + compteur)
-			generatingUrlsRef.current.delete(videoUrl);
+			// Cleanup controller de la map
+			controllersRef.current.delete(videoUrl);
 			setGeneratingCount((c) => Math.max(0, c - 1));
 		}
-	};
+	}, [options, startUpload]);
 
 	/**
 	 * Verifie si une URL specifique est en cours de generation
 	 */
-	const isGenerating = (videoUrl: string): boolean => {
-		return generatingUrlsRef.current.has(videoUrl);
-	};
+	const isGenerating = useCallback((videoUrl: string): boolean => {
+		return controllersRef.current.has(videoUrl);
+	}, []);
+
+	/**
+	 * Annule la generation en cours pour une URL specifique (P10)
+	 */
+	const abort = useCallback((videoUrl: string): void => {
+		const controller = controllersRef.current.get(videoUrl);
+		if (controller) {
+			controller.abort();
+			controllersRef.current.delete(videoUrl);
+		}
+	}, []);
+
+	/**
+	 * Annule toutes les generations en cours (P10)
+	 */
+	const abortAll = useCallback((): void => {
+		controllersRef.current.forEach((controller) => {
+			controller.abort();
+		});
+		controllersRef.current.clear();
+		setGeneratingCount(0);
+	}, []);
 
 	return {
 		generateThumbnail,
 		isGenerating,
+		/** Annule la generation pour une URL specifique */
+		abort,
+		/** Annule toutes les generations en cours */
+		abortAll,
 		/** Nombre de generations en cours (pour l'UI) */
 		generatingCount,
 	};

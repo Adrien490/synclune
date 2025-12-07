@@ -85,12 +85,16 @@ export function useRegenerateThumbnail(options?: UseRegenerateThumbnailOptions) 
 					return;
 				}
 
-				// 2. Si mediaId fourni, persister en BD
+				// 2. Si mediaId fourni, persister en BD (incluant blurDataUrl)
 				if (regenerateOptions?.mediaId) {
 					const formData = new FormData();
 					formData.set("mediaId", regenerateOptions.mediaId);
 					formData.set("thumbnailUrl", thumbnailResult.mediumUrl);
 					formData.set("thumbnailSmallUrl", thumbnailResult.smallUrl);
+					// Persister blurDataUrl si disponible (nouveau 2025 - P8)
+					if (thumbnailResult.blurDataUrl) {
+						formData.set("blurDataUrl", thumbnailResult.blurDataUrl);
+					}
 
 					const persistResult = await updateSkuMediaThumbnail(
 						undefined,

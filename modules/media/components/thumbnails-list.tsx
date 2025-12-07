@@ -46,6 +46,8 @@ function ThumbnailsGridComponent({
 					onClick={() => onNavigate(index)}
 					onError={() => onError(media.id)}
 					className={thumbnailClassName}
+					// R1/R2 - Premier élément = candidat LCP potentiel
+					isLCPCandidate={index === 0}
 				/>
 			))}
 		</>
@@ -91,6 +93,8 @@ function ThumbnailsCarouselComponent({
 							title={title}
 							onClick={() => onNavigate(index)}
 							onError={() => onError(media.id)}
+							// R1/R2 - Premier élément = candidat LCP potentiel
+							isLCPCandidate={index === 0}
 						/>
 					</CarouselItem>
 				))}

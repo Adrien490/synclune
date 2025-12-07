@@ -85,10 +85,58 @@ const MAX_VIDEO_SIZE = 512 * 1024 * 1024; // 512 MB max (aligné sur UploadThing
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY = 1000; // 1 seconde, puis backoff exponentiel
 
+// P13 - Validation durée vidéo (optionnel, pour bijouterie)
+const MAX_VIDEO_DURATION = 120; // 2 minutes max recommandé pour les vidéos produit
+
 // Arguments CLI
 const DRY_RUN = process.argv.includes("--dry-run");
 const PARALLEL_ARG = process.argv.find((arg) => arg.startsWith("--parallel="));
 const PARALLEL_COUNT = PARALLEL_ARG ? parseInt(PARALLEL_ARG.split("=")[1], 10) : 5;
+const JSON_LOGS = process.argv.includes("--json");
+
+// ============================================================================
+// P14 - LOGS STRUCTURÉS (Sentry-ready)
+// ============================================================================
+
+interface StructuredLog {
+	timestamp: string;
+	level: "info" | "warn" | "error";
+	event: string;
+	data?: Record<string, unknown>;
+}
+
+function logStructured(log: StructuredLog): void {
+	if (JSON_LOGS) {
+		console.log(JSON.stringify(log));
+	}
+}
+
+function logSuccess(event: string, data?: Record<string, unknown>): void {
+	logStructured({
+		timestamp: new Date().toISOString(),
+		level: "info",
+		event,
+		data,
+	});
+}
+
+function logWarning(event: string, data?: Record<string, unknown>): void {
+	logStructured({
+		timestamp: new Date().toISOString(),
+		level: "warn",
+		event,
+		data,
+	});
+}
+
+function logError(event: string, data?: Record<string, unknown>): void {
+	logStructured({
+		timestamp: new Date().toISOString(),
+		level: "error",
+		event,
+		data,
+	});
+}
 
 // Initialisation Prisma
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
@@ -238,8 +286,9 @@ async function downloadVideo(url: string, outputPath: string): Promise<void> {
 
 /**
  * Obtient la durée d'une vidéo avec FFprobe
+ * P13 - Ajoute un warning si durée > MAX_VIDEO_DURATION
  */
-async function getVideoDuration(videoPath: string): Promise<number> {
+async function getVideoDuration(videoPath: string, mediaId?: string): Promise<number> {
 	const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${videoPath}"`;
 
 	try {
@@ -249,6 +298,20 @@ async function getVideoDuration(videoPath: string): Promise<number> {
 			console.log("    Durée non détectée, utilisation de 1s par défaut");
 			return 10; // Fallback pour calculer 10% = 1s
 		}
+
+		// P13 - Avertissement si vidéo trop longue
+		if (duration > MAX_VIDEO_DURATION) {
+			const durationMin = Math.floor(duration / 60);
+			const durationSec = Math.round(duration % 60);
+			console.log(`    ⚠️  Vidéo longue: ${durationMin}m${durationSec}s (recommandé: <${MAX_VIDEO_DURATION / 60}min pour les produits)`);
+			logWarning("video_duration_warning", {
+				mediaId,
+				duration,
+				maxRecommended: MAX_VIDEO_DURATION,
+				durationFormatted: `${durationMin}m${durationSec}s`,
+			});
+		}
+
 		return duration;
 	} catch {
 		console.log("    FFprobe échoué, utilisation de 1s par défaut");
@@ -410,8 +473,8 @@ async function processVideo(media: VideoMedia, index: number, total: number): Pr
 		console.log("  Téléchargement de la vidéo...");
 		await withRetry(() => downloadVideo(media.url, videoPath));
 
-		// 2. Obtenir la durée et calculer la position de capture
-		const duration = await getVideoDuration(videoPath);
+		// 2. Obtenir la durée et calculer la position de capture (P13 vérifie durée max)
+		const duration = await getVideoDuration(videoPath, media.id);
 		const captureTime = Math.min(MAX_CAPTURE_TIME, duration * CAPTURE_POSITION);
 		console.log(`  Durée: ${duration.toFixed(1)}s, capture à ${captureTime.toFixed(2)}s`);
 
@@ -575,10 +638,25 @@ async function main(): Promise<void> {
 		console.log(`  ❌ Erreurs: ${errorCount}`);
 		console.log(`  📹 Total: ${videosWithoutThumbnail.length}`);
 
+		// P14 - Log structuré du résumé (Sentry-ready)
+		logSuccess("batch_completed", {
+			successCount,
+			errorCount,
+			totalProcessed: videosWithoutThumbnail.length,
+			dryRun: DRY_RUN,
+			parallelCount: PARALLEL_COUNT,
+			errors: errors.map((e) => ({ id: e.id, error: e.error })),
+		});
+
 		if (errors.length > 0) {
 			console.log("\n📋 Erreurs détaillées:");
 			for (const error of errors) {
 				console.log(`  - ${error.id}: ${error.error}`);
+				// P14 - Log structuré par erreur
+				logError("video_processing_failed", {
+					mediaId: error.id,
+					error: error.error,
+				});
 			}
 		}
 

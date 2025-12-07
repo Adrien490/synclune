@@ -36,7 +36,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "framer-motion";
-import { Expand, GripVertical, Loader2, MoreVertical, Play, RefreshCw, Star, Trash2 } from "lucide-react";
+import { Check, Expand, GripVertical, Loader2, MoreVertical, Play, RefreshCw, Star, Trash2, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
@@ -156,11 +156,19 @@ function SortableMediaItem({
 								src={media.thumbnailUrl}
 								alt={media.altText || `Miniature vidéo ${index + 1}`}
 								fill
-								className="object-cover"
+								className={cn(
+									"object-cover",
+									// P6 - Transition blur pour remplacement fluide
+									shouldReduceMotion ? "" : "motion-safe:transition-opacity motion-safe:duration-300",
+									isImageLoaded ? "opacity-100" : "opacity-0"
+								)}
 								sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
 								quality={80}
 								loading="lazy"
 								decoding="async"
+								// P6 - Utiliser blur placeholder pendant chargement
+								placeholder={media.blurDataUrl ? "blur" : "empty"}
+								blurDataURL={media.blurDataUrl}
 								onLoad={() => onImageLoaded(media.url)}
 							/>
 						) : (
@@ -212,6 +220,30 @@ function SortableMediaItem({
 								<span className="text-white text-xs font-medium">Génération...</span>
 							</div>
 						)}
+						{/* P2 - Badge état miniature vidéo */}
+						{!isGeneratingThumbnail && (
+							<div className="absolute bottom-2 right-2 z-10 pointer-events-none">
+								{media.thumbnailUrl ? (
+									<div className="flex items-center gap-0.5 bg-emerald-600 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded shadow-md">
+										<Check className="w-2.5 h-2.5" aria-hidden="true" />
+										<span className="hidden sm:inline">Miniature</span>
+									</div>
+								) : (
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<div className="flex items-center gap-0.5 bg-amber-500 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded shadow-md cursor-help pointer-events-auto">
+												<AlertTriangle className="w-2.5 h-2.5" aria-hidden="true" />
+												<span className="hidden sm:inline">Fallback</span>
+											</div>
+										</TooltipTrigger>
+										<TooltipContent side="top">
+											<p className="text-xs">Pas de miniature générée.</p>
+											<p className="text-xs text-muted-foreground">Cliquez sur "Régénérer" pour créer une miniature.</p>
+										</TooltipContent>
+									</Tooltip>
+								)}
+							</div>
+						)}
 					</div>
 				) : (
 					<Image
@@ -244,25 +276,34 @@ function SortableMediaItem({
 			)}
 
 			{/* Handle de drag - Positionné à gauche sur mobile pour éviter collision avec menu */}
-			<button
-				type="button"
-				{...attributes}
-				{...listeners}
-				aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
-				aria-describedby="drag-instructions"
-				className={cn(
-					"absolute z-20 cursor-grab active:cursor-grabbing",
-					"top-2 left-2 sm:top-1 sm:left-auto sm:right-10",
-					"flex",
-					"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
-					"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full",
-					shouldReduceMotion ? "" : "motion-safe:transition-opacity"
-				)}
-			>
-				<div className="h-12 w-12 sm:h-8 sm:w-8 rounded-full bg-black/70 hover:bg-black/90 flex items-center justify-center shadow-lg">
-					<GripVertical className="h-5 w-5 sm:h-4 sm:w-4 text-white" aria-hidden="true" />
-				</div>
-			</button>
+			{/* P3/P4 - Taille unifiée + Tooltip persistant */}
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<button
+						type="button"
+						{...attributes}
+						{...listeners}
+						aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
+						aria-describedby="drag-instructions"
+						className={cn(
+							"absolute z-20 cursor-grab active:cursor-grabbing",
+							"top-2 left-2 sm:top-1 sm:left-auto sm:right-10",
+							"flex",
+							"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
+							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full",
+							shouldReduceMotion ? "" : "motion-safe:transition-opacity"
+						)}
+					>
+						{/* P3 - Taille unifiée: 10x10 minimum pour accessibilité tactile */}
+						<div className="h-10 w-10 rounded-full bg-black/70 hover:bg-black/90 flex items-center justify-center shadow-lg">
+							<GripVertical className="h-5 w-5 text-white" aria-hidden="true" />
+						</div>
+					</button>
+				</TooltipTrigger>
+				<TooltipContent side="bottom" className="sm:hidden">
+					Maintenir pour déplacer
+				</TooltipContent>
+			</Tooltip>
 
 			{/* Hint long-press mobile (première visite) */}
 			{showLongPressHint && (

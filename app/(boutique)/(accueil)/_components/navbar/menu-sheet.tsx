@@ -104,7 +104,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 
 			<SheetContent
 				side="left"
-				className="w-[85vw] max-w-72 sm:w-80 sm:max-w-md border-r bg-background/95 p-6 flex flex-col"
+				className="w-[min(85vw,320px)] sm:w-80 sm:max-w-md border-r bg-background/95 p-6 flex flex-col"
 				id="mobile-menu-synclune"
 				aria-describedby="mobile-menu-synclune-description"
 			>
@@ -126,7 +126,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 
 					{/* Séparateur */}
 					<div
-						className="my-8 border-t border-border/60"
+						className="my-6 border-t border-border/60"
 						role="separator"
 						aria-hidden="true"
 					/>

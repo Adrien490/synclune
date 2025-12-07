@@ -53,8 +53,8 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 									data-active={isActive}
 									className={cn(
 										"h-auto px-3 py-2 rounded-md text-sm font-medium tracking-normal relative overflow-visible",
-										// Bordure bottom animée avec ::after
-										"after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-secondary after:origin-center",
+										// Bordure bottom animée avec ::after (primary pour cohérence avec mobile)
+										"after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-primary after:origin-center",
 										"after:scale-x-0 after:transition-transform after:duration-200 after:ease-out",
 										"hover:after:scale-x-100 data-[active=true]:after:scale-x-100"
 									)}
@@ -75,11 +75,11 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 															className={cn(
 																"flex flex-row gap-3 p-4 rounded-md w-full overflow-hidden transition-all duration-200 border-l-2",
 																isChildActive
-																	? "font-medium bg-secondary/10 border-secondary"
-																	: "border-transparent hover:bg-secondary/5 hover:border-secondary/50"
+																	? "font-medium bg-primary/10 border-primary"
+																	: "border-transparent hover:bg-primary/5 hover:border-primary/50"
 															)}
 														>
-															{child.imageUrl && (
+															{child.imageUrl ? (
 																<Image
 																	src={child.imageUrl}
 																	alt=""
@@ -90,6 +90,25 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 																	quality={90}
 																	placeholder="empty"
 																/>
+															) : (
+																<div
+																	className="w-16 h-16 rounded-md bg-secondary/20 shrink-0 flex items-center justify-center"
+																	aria-hidden="true"
+																>
+																	<svg
+																		className="w-6 h-6 text-muted-foreground/50"
+																		fill="none"
+																		stroke="currentColor"
+																		viewBox="0 0 24 24"
+																	>
+																		<path
+																			strokeLinecap="round"
+																			strokeLinejoin="round"
+																			strokeWidth={1.5}
+																			d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+																		/>
+																	</svg>
+																</div>
 															)}
 															<div className="flex flex-col gap-1.5 flex-1 min-w-0 overflow-hidden">
 																<div className="flex items-center justify-between gap-2 min-w-0">
@@ -128,8 +147,8 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 								className={cn(
 									navigationMenuTriggerStyle(),
 									"h-auto px-3 py-2 rounded-md text-sm font-medium tracking-normal relative overflow-visible",
-									// Bordure bottom animée avec ::after
-									"after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-secondary after:origin-center",
+									// Bordure bottom animée avec ::after (primary pour cohérence avec mobile)
+									"after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-primary after:origin-center",
 									"after:scale-x-0 after:transition-transform after:duration-200 after:ease-out",
 									"hover:after:scale-x-100 data-[active=true]:after:scale-x-100"
 								)}

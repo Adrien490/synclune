@@ -22,12 +22,16 @@ interface GalleryThumbnailProps {
 	onClick: () => void;
 	onError: () => void;
 	className?: string;
+	/** Élément LCP potentiel - recevra fetchPriority="high" (R1/R2) */
+	isLCPCandidate?: boolean;
 }
 
 /**
  * Composant thumbnail réutilisable pour la galerie produit
  * Gère les images et vidéos avec fallback d'erreur
  * Mémorisé pour éviter les re-renders inutiles
+ *
+ * @perf R1/R2 - fetchPriority="high" pour le candidat LCP améliore le temps de chargement initial
  */
 function GalleryThumbnailComponent({
 	media,
@@ -38,6 +42,7 @@ function GalleryThumbnailComponent({
 	onClick,
 	onError,
 	className,
+	isLCPCandidate = false,
 }: GalleryThumbnailProps) {
 	return (
 		<button
@@ -61,6 +66,7 @@ function GalleryThumbnailComponent({
 					index={index}
 					title={title}
 					onError={onError}
+					isLCPCandidate={isLCPCandidate}
 				/>
 			) : (
 				<Image
@@ -71,6 +77,8 @@ function GalleryThumbnailComponent({
 					sizes="80px"
 					quality={THUMBNAIL_IMAGE_QUALITY}
 					loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
+					// R1/R2 - fetchPriority pour améliorer LCP
+					fetchPriority={isLCPCandidate ? "high" : "auto"}
 					placeholder={media.blurDataUrl ? "blur" : "empty"}
 					blurDataURL={media.blurDataUrl}
 					onError={onError}
@@ -85,17 +93,22 @@ interface ThumbnailVideoContentProps {
 	index: number;
 	title: string;
 	onError: () => void;
+	/** Élément LCP potentiel - recevra fetchPriority="high" */
+	isLCPCandidate?: boolean;
 }
 
 /**
  * Contenu vidéo pour les thumbnails (avec miniature ou player)
  * Mémorisé pour éviter les re-renders coûteux (élément vidéo)
+ *
+ * @perf R1/R2 - fetchPriority="high" pour le candidat LCP
  */
 const ThumbnailVideoContent = memo(function ThumbnailVideoContent({
 	media,
 	index,
 	title,
 	onError,
+	isLCPCandidate = false,
 }: ThumbnailVideoContentProps) {
 	// Priorité: thumbnailSmallUrl (160px optimisé) > thumbnailUrl (480px) > fallback vidéo
 	const thumbnailSrc = media.thumbnailSmallUrl || media.thumbnailUrl;
@@ -111,6 +124,8 @@ const ThumbnailVideoContent = memo(function ThumbnailVideoContent({
 					sizes="80px"
 					quality={THUMBNAIL_IMAGE_QUALITY}
 					loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
+					// R1/R2 - fetchPriority pour améliorer LCP
+					fetchPriority={isLCPCandidate ? "high" : "auto"}
 					placeholder={media.blurDataUrl ? "blur" : "empty"}
 					blurDataURL={media.blurDataUrl}
 					onError={onError}
