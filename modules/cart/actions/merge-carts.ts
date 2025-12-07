@@ -8,6 +8,7 @@ import { batchValidateSkusForMerge } from "@/modules/cart/lib/sku-validation";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 
 export type MergeCartsResult =
 	| {
@@ -89,7 +90,17 @@ export async function mergeCarts(
 	sessionId: string
 ): Promise<MergeCartsResult> {
 	try {
-		// 0a. Rate limiting uniforme avec les autres actions cart (avec IP fallback)
+		// 0a. Vérification de sécurité: le userId doit correspondre à l'utilisateur connecté
+		// Empêche un attaquant de fusionner le panier d'un autre utilisateur
+		const currentSession = await getSession();
+		if (!currentSession?.user?.id || currentSession.user.id !== userId) {
+			return {
+				status: ActionStatus.ERROR,
+				message: "Non autorisé",
+			};
+		}
+
+		// 0b. Rate limiting uniforme avec les autres actions cart (avec IP fallback)
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
@@ -102,7 +113,7 @@ export async function mergeCarts(
 			};
 		}
 
-		// 0b. Vérifier que l'utilisateur existe (protection contre appels directs)
+		// 0c. Vérifier que l'utilisateur existe (protection contre appels directs)
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 			select: { id: true, deletedAt: true },

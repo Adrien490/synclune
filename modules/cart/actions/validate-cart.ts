@@ -36,10 +36,13 @@ export interface ValidateCartResult {
  * - Vérification atomique au moment du checkout
  * - Messages d'erreur explicites pour l'utilisateur
  *
- * @param cartId - ID du panier à valider
+ * Sécurité :
+ * - Le panier est récupéré par userId/sessionId (pas de paramètre cartId)
+ * - Empêche les attaques IDOR (accès aux paniers d'autres utilisateurs)
+ *
  * @returns ValidateCartResult avec liste des problèmes détectés
  */
-export async function validateCart(cartId: string): Promise<ValidateCartResult> {
+export async function validateCart(): Promise<ValidateCartResult> {
 	try {
 		// 0a. Recuperer les identifiants de session/utilisateur
 		const session = await getSession();
@@ -59,16 +62,9 @@ export async function validateCart(cartId: string): Promise<ValidateCartResult> 
 			};
 		}
 
-		// 1. Recuperer le panier avec verification d'ownership
-		const cart = await prisma.cart.findUnique({
-			where: {
-				id: cartId,
-				// Verification ownership: le panier doit appartenir a l'utilisateur ou a la session
-				OR: [
-					...(userId ? [{ userId }] : []),
-					...(sessionId ? [{ sessionId }] : []),
-				],
-			},
+		// 1. Recuperer le panier par userId ou sessionId (sécurisé - pas de cartId externe)
+		const cart = await prisma.cart.findFirst({
+			where: userId ? { userId } : sessionId ? { sessionId } : { id: "impossible" },
 			select: {
 				id: true,
 				items: {
@@ -200,10 +196,9 @@ export async function validateCart(cartId: string): Promise<ValidateCartResult> 
 
 /**
  * Variante simplifiée pour vérifier rapidement si le panier est valide
- * @param cartId - ID du panier à vérifier
  * @returns true si valide, false sinon
  */
-export async function isCartValid(cartId: string): Promise<boolean> {
-	const result = await validateCart(cartId);
+export async function isCartValid(): Promise<boolean> {
+	const result = await validateCart();
 	return result.isValid;
 }

@@ -596,9 +596,9 @@ function CreateProductFormContent({
 													content={{
 														uploadIcon: ({ isUploading: uploading, uploadProgress }) =>
 															uploading ? (
-																<TextShimmer className="text-sm font-medium" duration={1.5}>
+																<TextShimmerWave className="text-sm font-medium" duration={1.5}>
 																	{`Upload... ${uploadProgress}%`}
-																</TextShimmer>
+																</TextShimmerWave>
 															) : (
 																<Upload className="h-12 w-12 text-primary/70" />
 															),
@@ -673,9 +673,9 @@ function CreateProductFormContent({
 																	content={{
 																		uploadIcon: ({ isUploading: uploading, uploadProgress }) =>
 																			uploading ? (
-																				<TextShimmer className="text-xs" duration={1.5}>
+																				<TextShimmerWave className="text-xs" duration={1.5}>
 																					{`${uploadProgress}%`}
-																				</TextShimmer>
+																				</TextShimmerWave>
 																			) : (
 																				<Upload className="h-6 w-6 text-muted-foreground/50" />
 																			),

@@ -72,7 +72,7 @@ export async function validateSkuAndStock(input: {
 		// Validation des inputs
 		const validatedInput = validateSkuSchema.parse(input);
 
-		// Récupérer le SKU avec ses relations
+		// Récupérer le SKU avec ses relations (incluant deletedAt pour soft-delete check)
 		const sku = await prisma.productSku.findUnique({
 			where: { id: validatedInput.skuId },
 			include: {
@@ -83,6 +83,7 @@ export async function validateSkuAndStock(input: {
 						slug: true,
 						status: true,
 						description: true,
+						deletedAt: true,
 					},
 				},
 				images: {
@@ -108,6 +109,14 @@ export async function validateSkuAndStock(input: {
 			return {
 				success: false,
 				error: CART_ERROR_MESSAGES.SKU_NOT_FOUND,
+			};
+		}
+
+		// Vérifier les soft deletes (SKU ou Product supprimé)
+		if (sku.deletedAt || sku.product.deletedAt) {
+			return {
+				success: false,
+				error: CART_ERROR_MESSAGES.PRODUCT_DELETED,
 			};
 		}
 

@@ -721,12 +721,12 @@ export function EditProductForm({
 																	aria-live="polite"
 																>
 																	<div className="text-center">
-																		<TextShimmer
+																		<TextShimmerWave
 																			className="text-sm font-medium"
 																			duration={1.5}
 																		>
 																			{`Upload en cours... ${uploadProgress}%`}
-																		</TextShimmer>
+																		</TextShimmerWave>
 																	</div>
 																	<div className="w-3/4 h-1.5 bg-muted rounded-full overflow-hidden">
 																		<div

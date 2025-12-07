@@ -10,7 +10,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
+import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import {
 	getCartExpirationDate,
 	getOrCreateCartSessionId,
@@ -67,23 +67,7 @@ export async function addToCart(
 			};
 		}
 
-		// 4. Valider le SKU et le stock (première validation optimiste)
-		const skuValidation = await validateSkuAndStock({
-			skuId: validatedData.skuId,
-			quantity: validatedData.quantity,
-		});
-
-		if (!skuValidation.success || !skuValidation.data) {
-			return {
-				status: ActionStatus.ERROR,
-				message: skuValidation.error || "Produit indisponible",
-			};
-		}
-
-		// Conserver le prix pour réutilisation dans la transaction
-		const skuPriceAtAdd = skuValidation.data.sku.priceInclTax;
-
-		// 5. Vérifier que l'userId existe dans la base de données
+		// 4. Vérifier que l'userId existe dans la base de données
 		// Si l'userId n'existe pas, traiter comme un utilisateur non connecté
 		if (userId) {
 			const userExists = await prisma.user.findUnique({
@@ -137,26 +121,54 @@ export async function addToCart(
 			let isUpdate = false;
 
 			// Verrouiller le SKU avec FOR UPDATE pour éviter les race conditions sur le stock
-			const skuRows = await tx.$queryRaw<Array<{ inventory: number; isActive: boolean }>>`
-				SELECT inventory, "isActive"
-				FROM "ProductSku"
-				WHERE id = ${validatedData.skuId}
-				FOR UPDATE
+			// Récupère toutes les données nécessaires en une seule requête atomique
+			const skuRows = await tx.$queryRaw<Array<{
+				inventory: number;
+				isActive: boolean;
+				priceInclTax: number;
+				deletedAt: Date | null;
+				productStatus: string;
+				productDeletedAt: Date | null;
+			}>>`
+				SELECT
+					s.inventory,
+					s."isActive",
+					s."priceInclTax",
+					s."deletedAt",
+					p.status AS "productStatus",
+					p."deletedAt" AS "productDeletedAt"
+				FROM "ProductSku" s
+				JOIN "Product" p ON s."productId" = p.id
+				WHERE s.id = ${validatedData.skuId}
+				FOR UPDATE OF s
 			`;
 
 			const sku = skuRows[0];
-			if (!sku || !sku.isActive) {
-				throw new Error("Ce produit n'est plus disponible");
+
+			// Validation complète du SKU (toutes les vérifications dans la transaction)
+			if (!sku) {
+				throw new Error(CART_ERROR_MESSAGES.SKU_NOT_FOUND);
+			}
+
+			if (sku.deletedAt || sku.productDeletedAt) {
+				throw new Error(CART_ERROR_MESSAGES.PRODUCT_DELETED);
+			}
+
+			if (!sku.isActive) {
+				throw new Error(CART_ERROR_MESSAGES.SKU_INACTIVE);
+			}
+
+			if (sku.productStatus !== "PUBLIC") {
+				throw new Error(CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
 			}
 
 			if (existingItem) {
 				newQuantity = existingItem.quantity + validatedData.quantity;
 
+				// Vérification du stock (message générique pour ne pas révéler le stock exact)
 				if (sku.inventory < newQuantity) {
-					const currentInCart = existingItem.quantity;
 					throw new Error(
-						`Vous avez déjà ${currentInCart} article${currentInCart > 1 ? "s" : ""} dans votre panier. ` +
-						`Stock disponible : ${sku.inventory} exemplaire${sku.inventory > 1 ? "s" : ""}.`
+						"Stock insuffisant pour cette quantité. Veuillez réduire la quantité demandée."
 					);
 				}
 
@@ -172,19 +184,24 @@ export async function addToCart(
 			} else {
 				newQuantity = validatedData.quantity;
 
+				// Vérification du stock (message générique pour ne pas révéler le stock exact)
+				if (sku.inventory === 0) {
+					throw new Error(CART_ERROR_MESSAGES.OUT_OF_STOCK);
+				}
+
 				if (sku.inventory < validatedData.quantity) {
 					throw new Error(
-						`Stock insuffisant. Disponible : ${sku.inventory} exemplaire${sku.inventory > 1 ? "s" : ""}.`
+						"Stock insuffisant pour cette quantité. Veuillez réduire la quantité demandée."
 					);
 				}
 
-				// Créer le CartItem (prix réutilisé depuis validation initiale)
+				// Créer le CartItem avec le prix récupéré dans la transaction (atomique)
 				cartItem = await tx.cartItem.create({
 					data: {
 						cartId: cart.id,
 						skuId: validatedData.skuId,
 						quantity: validatedData.quantity,
-						priceAtAdd: skuPriceAtAdd,
+						priceAtAdd: sku.priceInclTax,
 					},
 				});
 			}

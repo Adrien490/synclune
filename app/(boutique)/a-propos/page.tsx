@@ -62,7 +62,7 @@ export default function AProposPage() {
 								<div className="flex justify-center lg:justify-start">
 									<div className="relative w-64 h-80 rounded-2xl border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center gap-3 overflow-hidden">
 										<div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-											<Camera className="w-8 h-8 text-primary/60" />
+											<Camera className="w-8 h-8 text-primary/60" aria-hidden="true" />
 										</div>
 										<span className="text-sm text-muted-foreground font-medium">
 											Photo à venir

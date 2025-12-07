@@ -50,7 +50,7 @@ export default async function CheckoutPage() {
 	}
 
 	// Valider le panier (stock, disponibilité)
-	const validation = await validateCart(cart.id);
+	const validation = await validateCart();
 
 	// Si le panier a des problèmes, rediriger vers le panier
 	if (validation.issues.length > 0) {

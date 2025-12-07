@@ -481,12 +481,12 @@ export function EditProductVariantForm({
 																	return (
 																		<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/90 backdrop-blur-sm rounded-lg z-10">
 																			<div className="text-center">
-																				<TextShimmer
+																				<TextShimmerWave
 																					className="text-base font-semibold"
 																					duration={1.5}
 																				>
 																					{`Upload en cours... ${uploadProgress}%`}
-																				</TextShimmer>
+																				</TextShimmerWave>
 																			</div>
 																			{/* Barre de progression */}
 																			<div className="w-3/4 h-2 bg-muted rounded-full overflow-hidden">
@@ -759,12 +759,12 @@ export function EditProductVariantForm({
 																		aria-live="polite"
 																	>
 																		<div className="text-center">
-																			<TextShimmer
+																			<TextShimmerWave
 																				className="text-sm font-medium"
 																				duration={1.5}
 																			>
 																				{`Ajout en cours... ${uploadProgress}%`}
-																			</TextShimmer>
+																			</TextShimmerWave>
 																		</div>
 																		{/* Barre de progression */}
 																		<div className="w-3/4 h-1.5 bg-muted rounded-full overflow-hidden">
