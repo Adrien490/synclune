@@ -67,7 +67,7 @@ export function AddToCartButton({
 	const canAddToCart = selectedSku && isAvailable;
 
 	return (
-		<form action={action} className="space-y-6">
+		<form action={action} className="space-y-6" data-cart-pending={isPending ? "" : undefined}>
 			{/* Champ caché pour le SKU */}
 			{selectedSku && (
 				<input type="hidden" name="skuId" value={selectedSku.id} />
