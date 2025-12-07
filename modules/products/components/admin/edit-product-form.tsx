@@ -7,7 +7,7 @@ import { useRegenerateThumbnail } from "@/modules/media/hooks/use-regenerate-thu
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
-import { TextShimmer } from "@/shared/components/ui/text-shimmer";
+import { TextShimmerWave } from "@/shared/components/ui/text-shimmer-wave";
 import { MultiSelect } from "@/shared/components/multi-select";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { useUpdateProductForm } from "@/modules/products/hooks/use-update-product-form";

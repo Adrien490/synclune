@@ -17,7 +17,7 @@ import { useUnsavedChanges } from "@/shared/features/form-wizard";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
-import { TextShimmer } from "@/shared/components/ui/text-shimmer";
+import { TextShimmerWave } from "@/shared/components/ui/text-shimmer-wave";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { MultiSelect } from "@/shared/components/multi-select";
 import { useCreateProductForm } from "@/modules/products/hooks/use-create-product-form";

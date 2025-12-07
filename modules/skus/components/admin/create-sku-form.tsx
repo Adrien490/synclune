@@ -8,7 +8,7 @@ import { useAutoVideoThumbnail } from "@/modules/media/hooks/use-auto-video-thum
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
-import { TextShimmer } from "@/shared/components/ui/text-shimmer";
+import { TextShimmerWave } from "@/shared/components/ui/text-shimmer-wave";
 import { useCreateProductSkuForm } from "@/modules/skus/hooks/use-create-sku-form";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
