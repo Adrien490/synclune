@@ -66,7 +66,7 @@ export async function StockNotificationsDataTable({
 			<CardContent>
 				<StockNotificationsSelectionToolbar notificationIds={notificationIds} />
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des demandes de notification">
+					<Table aria-label="Liste des demandes de notification" striped>
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">

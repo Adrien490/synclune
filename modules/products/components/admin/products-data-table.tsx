@@ -154,16 +154,13 @@ export async function ProductsDataTable({
 				<ProductsSelectionToolbar products={products} />
 				<TableScrollContainer>
 					<Table
-						role="table"
 						aria-label="Liste des bijoux"
+						striped
 						className="min-w-full table-fixed"
 					>
 						<TableHeader>
 							<TableRow>
 								<TableHead
-									key="select"
-									scope="col"
-									role="columnheader"
 									className="w-10 sm:w-[5%] lg:w-[4%]"
 									aria-label="Sélection de produits"
 								>
@@ -172,66 +169,28 @@ export async function ProductsDataTable({
 										productIds={productIds}
 									/>
 								</TableHead>
-								<TableHead
-									key="image"
-									scope="col"
-									role="columnheader"
-									className="hidden sm:table-cell w-[12%] lg:w-[8%]"
-								>
+								<TableHead className="hidden sm:table-cell w-[12%] lg:w-[8%]">
 									Image
 								</TableHead>
-								<TableHead
-									key="title"
-									scope="col"
-									role="columnheader"
-									className="w-auto sm:w-[30%] lg:w-[20%]"
-								>
+								<TableHead className="w-auto sm:w-[30%] lg:w-[20%]">
 									Titre
 								</TableHead>
-								<TableHead
-									key="status"
-									scope="col"
-									role="columnheader"
-									className="hidden sm:table-cell w-[12%] lg:w-[10%]"
-								>
+								<TableHead className="hidden sm:table-cell w-[12%] lg:w-[10%]">
 									Statut
 								</TableHead>
-								<TableHead
-									key="type"
-									scope="col"
-									role="columnheader"
-									className="hidden lg:table-cell w-[10%]"
-								>
+								<TableHead className="hidden lg:table-cell w-[10%]">
 									Type
 								</TableHead>
-								<TableHead
-									key="variants"
-									scope="col"
-									role="columnheader"
-									className="hidden sm:table-cell text-center w-[10%] lg:w-[8%]"
-								>
+								<TableHead className="hidden sm:table-cell text-center w-[10%] lg:w-[8%]">
 									Variantes
 								</TableHead>
-								<TableHead
-									key="price"
-									scope="col"
-									role="columnheader"
-									className="hidden lg:table-cell w-[12%] text-right"
-								>
+								<TableHead className="hidden lg:table-cell w-[12%] text-right">
 									Prix
 								</TableHead>
-								<TableHead
-									key="stock"
-									scope="col"
-									role="columnheader"
-									className="hidden lg:table-cell text-center w-[8%]"
-								>
+								<TableHead className="hidden lg:table-cell text-center w-[8%]">
 									Stock
 								</TableHead>
 								<TableHead
-									key="actions"
-									scope="col"
-									role="columnheader"
 									className="w-12 sm:w-[10%] lg:w-[8%]"
 									aria-label="Actions disponibles pour chaque produit"
 								>
@@ -248,17 +207,14 @@ export async function ProductsDataTable({
 
 								return (
 									<TableRow key={product.id}>
-										<TableCell role="gridcell">
+										<TableCell>
 											<ProductsTableSelectionCell
 												type="row"
 												productId={product.id}
 												productTitle={product.title}
 											/>
 										</TableCell>
-										<TableCell
-											role="gridcell"
-											className="hidden sm:table-cell py-3"
-										>
+										<TableCell className="hidden sm:table-cell py-3">
 											<div className="w-20 h-20 relative shrink-0">
 												{defaultImage ? (
 													<Image
@@ -281,7 +237,7 @@ export async function ProductsDataTable({
 												)}
 											</div>
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<div className="overflow-hidden">
 												<Link
 													href={`/admin/catalogue/produits/${product.slug}/modifier`}

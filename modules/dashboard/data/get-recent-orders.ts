@@ -46,14 +46,15 @@ export async function fetchDashboardRecentOrders(): Promise<GetRecentOrdersRetur
 
 	cacheDashboard();
 
-	// Exclure les commandes non payees (Stripe checkout abandonnes)
+	// Exclure les commandes non payees (Stripe checkout abandonnes) et supprimees
 	const orders = await prisma.order.findMany({
 		where: {
 			paymentStatus: PaymentStatus.PAID,
+			deletedAt: null,
 		},
 		take: DASHBOARD_RECENT_ORDERS_LIMIT,
 		orderBy: {
-			createdAt: "desc",
+			paidAt: "desc",
 		},
 		select: GET_DASHBOARD_RECENT_ORDERS_SELECT,
 	});

@@ -49,10 +49,10 @@ export function TableEmptyState({
 	className = "py-12",
 }: TableEmptyStateProps) {
 	return (
-		<Empty className={className}>
+		<Empty className={className} role="status" aria-label={title}>
 			<EmptyHeader>
 				<EmptyMedia variant="icon">
-					<Icon />
+					<Icon aria-hidden="true" />
 				</EmptyMedia>
 				<EmptyTitle>{title}</EmptyTitle>
 				<EmptyDescription>{description}</EmptyDescription>

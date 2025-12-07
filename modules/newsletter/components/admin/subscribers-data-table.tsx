@@ -56,42 +56,42 @@ export async function SubscribersDataTable({
 			<CardContent>
 				<SubscribersSelectionToolbar subscriberIds={subscriberIds} />
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des abonnés newsletter">
+					<Table aria-label="Liste des abonnés newsletter" striped>
 						<TableHeader>
 							<TableRow>
-								<TableHead scope="col" className="w-[5%]">
+								<TableHead className="w-[5%]">
 									<SubscribersTableSelectionCell type="header" subscriberIds={subscriberIds} />
 								</TableHead>
-								<TableHead scope="col" className="w-[35%] sm:w-[30%]">Email</TableHead>
-								<TableHead scope="col" className="w-[15%] sm:w-[15%]">Statut</TableHead>
-								<TableHead scope="col" className="hidden sm:table-cell w-[20%]">Date d'inscription</TableHead>
-								<TableHead scope="col" className="hidden md:table-cell w-[15%]">Dernière mise à jour</TableHead>
-								<TableHead scope="col" className="w-[10%] text-right" aria-label="Actions disponibles pour chaque abonné">Actions</TableHead>
+								<TableHead className="w-[35%] sm:w-[30%]">Email</TableHead>
+								<TableHead className="w-[15%] sm:w-[15%]">Statut</TableHead>
+								<TableHead className="hidden sm:table-cell w-[20%]">Date d'inscription</TableHead>
+								<TableHead className="hidden md:table-cell w-[15%]">Dernière mise à jour</TableHead>
+								<TableHead className="w-[10%] text-right" aria-label="Actions disponibles pour chaque abonné">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-								{subscribers.map((subscriber) => (
+							{subscribers.map((subscriber) => (
 								<TableRow key={subscriber.id}>
 									<TableCell>
 										<SubscribersTableSelectionCell type="row" subscriberId={subscriber.id} />
 									</TableCell>
 									<TableCell className="font-medium">
-									<span>{subscriber.email}</span>
-								</TableCell>
+										<span>{subscriber.email}</span>
+									</TableCell>
 									<TableCell>
 										{subscriber.status === NewsletterStatus.CONFIRMED ? (
 											<span className="inline-flex items-center gap-1.5 text-sm text-green-600">
-												<CheckCircle2 className="h-4 w-4" />
+												<CheckCircle2 className="h-4 w-4" aria-hidden="true" />
 												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.CONFIRMED]}
 											</span>
 										) : subscriber.status === NewsletterStatus.PENDING ? (
 											<span className="inline-flex items-center gap-1.5 text-sm text-yellow-600">
-												<Clock className="h-4 w-4" />
+												<Clock className="h-4 w-4" aria-hidden="true" />
 												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.PENDING]}
 											</span>
 										) : (
 											<span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-												<XCircle className="h-4 w-4" />
+												<XCircle className="h-4 w-4" aria-hidden="true" />
 												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.UNSUBSCRIBED]}
 											</span>
 										)}
@@ -113,7 +113,7 @@ export async function SubscribersDataTable({
 										/>
 									</TableCell>
 								</TableRow>
-								))}
+							))}
 						</TableBody>
 					</Table>
 				</TableScrollContainer>

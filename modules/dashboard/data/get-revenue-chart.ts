@@ -53,15 +53,16 @@ export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartRetur
 	thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 	thirtyDaysAgo.setHours(0, 0, 0, 0);
 
-	// Agrégation côté DB - plus efficace que de récupérer tous les ordres
+	// Agregation cote DB - plus efficace que de recuperer tous les ordres
 	const revenueRows = await prisma.$queryRaw<RevenueRow[]>`
 		SELECT
-			TO_CHAR("createdAt", 'YYYY-MM-DD') as date,
+			TO_CHAR("paidAt", 'YYYY-MM-DD') as date,
 			COALESCE(SUM(total), 0) as revenue
 		FROM "Order"
-		WHERE "createdAt" >= ${thirtyDaysAgo}
+		WHERE "paidAt" >= ${thirtyDaysAgo}
 			AND "paymentStatus" = 'PAID'::"PaymentStatus"
-		GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+			AND "deletedAt" IS NULL
+		GROUP BY TO_CHAR("paidAt", 'YYYY-MM-DD')
 		ORDER BY date ASC
 	`;
 

@@ -63,64 +63,31 @@ export async function RefundsDataTable({
 			<CardContent>
 				<RefundsSelectionToolbar />
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des remboursements" className="min-w-full table-fixed">
+					<Table aria-label="Liste des remboursements" striped className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
+								<TableHead className="w-[5%]">
 									<RefundsTableSelectionCell type="header" refundIds={refundIds} />
 								</TableHead>
-								<TableHead
-									key="orderNumber"
-									scope="col"
-									role="columnheader"
-									className="w-[15%]"
-								>
+								<TableHead className="w-[15%]">
 									Commande
 								</TableHead>
-								<TableHead
-									key="date"
-									scope="col"
-									role="columnheader"
-									className="hidden sm:table-cell w-[12%]"
-								>
+								<TableHead className="hidden sm:table-cell w-[12%]">
 									Date
 								</TableHead>
-								<TableHead
-									key="client"
-									scope="col"
-									role="columnheader"
-									className="w-[20%]"
-								>
+								<TableHead className="w-[20%]">
 									Client
 								</TableHead>
-								<TableHead
-									key="reason"
-									scope="col"
-									role="columnheader"
-									className="hidden md:table-cell w-[15%]"
-								>
+								<TableHead className="hidden md:table-cell w-[15%]">
 									Raison
 								</TableHead>
-								<TableHead
-									key="status"
-									scope="col"
-									role="columnheader"
-									className="w-[12%]"
-								>
+								<TableHead className="w-[12%]">
 									Statut
 								</TableHead>
-								<TableHead
-									key="amount"
-									scope="col"
-									role="columnheader"
-									className="w-[10%] text-right"
-								>
+								<TableHead className="w-[10%] text-right">
 									Montant
 								</TableHead>
 								<TableHead
-									key="actions"
-									scope="col"
-									role="columnheader"
 									className="w-[10%] text-right"
 									aria-label="Actions disponibles pour chaque remboursement"
 								>
@@ -131,10 +98,10 @@ export async function RefundsDataTable({
 						<TableBody>
 								{refunds.map((refund) => (
 								<TableRow key={refund.id}>
-									<TableCell role="gridcell">
+									<TableCell>
 										<RefundsTableSelectionCell type="row" refundId={refund.id} />
 									</TableCell>
-									<TableCell role="gridcell">
+									<TableCell>
 									<Link
 										href={`/admin/ventes/commandes/${refund.order.id}`}
 										className="font-mono text-sm font-medium text-foreground underline"
@@ -147,7 +114,7 @@ export async function RefundsDataTable({
 											{formatDateShort(refund.createdAt)}
 										</span>
 									</TableCell>
-									<TableCell role="gridcell">
+									<TableCell>
 										<div className="overflow-hidden">
 											<span className="text-sm font-medium truncate block">
 												{refund.order.customerName || refund.order.customerEmail}
@@ -164,7 +131,7 @@ export async function RefundsDataTable({
 											{REFUND_REASON_LABELS[refund.reason as RefundReason]}
 										</span>
 									</TableCell>
-									<TableCell role="gridcell">
+									<TableCell>
 										<Badge
 											variant="outline"
 											style={{

@@ -55,6 +55,7 @@ export async function fetchRevenueTrends(): Promise<GetRevenueYearReturn> {
 		WHERE "paymentStatus" = 'PAID'
 		AND "paidAt" >= ${startDate}
 		AND "paidAt" <= ${endDate}
+		AND "deletedAt" IS NULL
 		GROUP BY TO_CHAR("paidAt", 'YYYY-MM')
 		ORDER BY month ASC
 	`;
@@ -67,6 +68,7 @@ export async function fetchRevenueTrends(): Promise<GetRevenueYearReturn> {
 				gte: previousYearStartDate,
 				lte: previousYearEndDate,
 			},
+			deletedAt: null,
 		},
 		_sum: {
 			total: true,

@@ -30,8 +30,8 @@ export async function fetchRevenueByCollection(
 	);
 
 	// Requete SQL optimisee avec agregation cote DB
-	// Note: Un produit peut appartenir a plusieurs collections, donc le revenu
-	// est attribue a chaque collection (appartenances multiples comptees)
+	// Chaque vente est attribuee a la premiere collection du produit (par ordre alphabetique)
+	// pour eviter le double-comptage quand un produit est dans plusieurs collections
 	const collectionsData = await prisma.$queryRaw<
 		Array<{
 			collectionId: string;
@@ -42,6 +42,14 @@ export async function fetchRevenueByCollection(
 			unitsSold: bigint;
 		}>
 	>`
+    WITH product_primary_collection AS (
+      SELECT DISTINCT ON (pc."productId")
+        pc."productId",
+        pc."collectionId"
+      FROM "ProductCollection" pc
+      INNER JOIN "Collection" c ON c.id = pc."collectionId"
+      ORDER BY pc."productId", c.name ASC
+    )
     SELECT
       c.id as "collectionId",
       c.name as "collectionName",
@@ -50,13 +58,13 @@ export async function fetchRevenueByCollection(
       COUNT(DISTINCT o.id) as "ordersCount",
       COALESCE(SUM(oi.quantity), 0) as "unitsSold"
     FROM "Collection" c
-    INNER JOIN "ProductCollection" pc ON pc."collectionId" = c.id
-    INNER JOIN "Product" p ON p.id = pc."productId"
-    INNER JOIN "OrderItem" oi ON oi."productId" = p.id
+    INNER JOIN product_primary_collection ppc ON ppc."collectionId" = c.id
+    INNER JOIN "OrderItem" oi ON oi."productId" = ppc."productId"
     INNER JOIN "Order" o ON o.id = oi."orderId"
     WHERE o."paymentStatus" = 'PAID'
-      AND o."createdAt" >= ${startDate}
-      AND o."createdAt" <= ${endDate}
+      AND o."paidAt" >= ${startDate}
+      AND o."paidAt" <= ${endDate}
+      AND o."deletedAt" IS NULL
     GROUP BY c.id, c.name, c.slug
     ORDER BY revenue DESC
   `;
@@ -80,8 +88,9 @@ export async function fetchRevenueByCollection(
     FROM "OrderItem" oi
     INNER JOIN "Order" o ON o.id = oi."orderId"
     WHERE o."paymentStatus" = 'PAID'
-      AND o."createdAt" >= ${startDate}
-      AND o."createdAt" <= ${endDate}
+      AND o."paidAt" >= ${startDate}
+      AND o."paidAt" <= ${endDate}
+      AND o."deletedAt" IS NULL
       AND oi."productId" IS NOT NULL
   `;
 

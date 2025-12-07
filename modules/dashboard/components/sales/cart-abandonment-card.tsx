@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { ShoppingCart, TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import type { CartAbandonmentReturn } from "../../types/dashboard.types";
@@ -13,11 +13,12 @@ interface CartAbandonmentCardProps {
 
 /**
  * Carte affichant le taux d'abandon de panier
+ * Note: Ce taux concerne uniquement les visiteurs anonymes (non connectes)
  */
 export function CartAbandonmentCard({ dataPromise }: CartAbandonmentCardProps) {
 	const data = use(dataPromise);
 
-	// Pour le taux d'abandon, une baisse est une amélioration (moins d'abandons)
+	// Pour le taux d'abandon, une baisse est une amelioration (moins d'abandons)
 	const isImproved = data.evolution < 0;
 	const evolutionColor = isImproved ? CHART_STYLES.evolution.positive : CHART_STYLES.evolution.negative;
 	const EvolutionIcon = isImproved ? TrendingDown : TrendingUp;
@@ -25,9 +26,14 @@ export function CartAbandonmentCard({ dataPromise }: CartAbandonmentCardProps) {
 	return (
 		<Card className={CHART_STYLES.card}>
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className={CHART_STYLES.title}>
-					Taux d'abandon de panier
-				</CardTitle>
+				<div>
+					<CardTitle className={CHART_STYLES.title}>
+						Taux d'abandon de panier
+					</CardTitle>
+					<CardDescription className="text-xs mt-1">
+						Visiteurs anonymes uniquement
+					</CardDescription>
+				</div>
 				<ShoppingCart className="h-5 w-5 text-muted-foreground" />
 			</CardHeader>
 			<CardContent>

@@ -4,36 +4,83 @@ import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+interface TableProps extends React.ComponentProps<"table"> {
+	/** Activer le header sticky (nécessite sticky sur TableHeader aussi) */
+	stickyHeader?: boolean;
+	/** Alterner les couleurs des lignes (zebra striping) */
+	striped?: boolean;
+}
+
+function Table({
+	className,
+	stickyHeader,
+	striped,
+	...props
+}: TableProps) {
 	return (
 		<div
 			data-slot="table-container"
-			className="relative w-full overflow-x-auto scroll-smooth"
+			className={cn(
+				"relative w-full overflow-x-auto scroll-smooth",
+				stickyHeader && "max-h-[70vh] overflow-y-auto"
+			)}
 		>
 			<table
 				data-slot="table"
-				className={cn("w-full caption-bottom text-xs sm:text-sm", className)}
+				data-striped={striped || undefined}
+				className={cn(
+					"w-full caption-bottom text-sm",
+					striped && "[&_tbody_tr:nth-child(even)]:bg-muted/30",
+					className
+				)}
 				{...props}
 			/>
 		</div>
 	);
 }
 
-function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
+interface TableHeaderProps extends React.ComponentProps<"thead"> {
+	/** Rendre le header sticky (utiliser avec stickyHeader sur Table) */
+	sticky?: boolean;
+}
+
+function TableHeader({
+	className,
+	sticky,
+	...props
+}: TableHeaderProps) {
 	return (
 		<thead
 			data-slot="table-header"
-			className={cn("[&_tr]:border-b", className)}
+			className={cn(
+				"[&_tr]:border-b",
+				sticky && "sticky top-0 z-10 bg-background shadow-sm",
+				className
+			)}
 			{...props}
 		/>
 	);
 }
 
-function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
+interface TableBodyProps extends React.ComponentProps<"tbody"> {
+	/** État de chargement (réduit opacité et désactive interactions) */
+	isLoading?: boolean;
+}
+
+function TableBody({
+	className,
+	isLoading,
+	...props
+}: TableBodyProps) {
 	return (
 		<tbody
 			data-slot="table-body"
-			className={cn("[&_tr:last-child]:border-0", className)}
+			aria-busy={isLoading || undefined}
+			className={cn(
+				"[&_tr:last-child]:border-0",
+				isLoading && "opacity-50 pointer-events-none",
+				className
+			)}
 			{...props}
 		/>
 	);
@@ -65,16 +112,48 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
 	);
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+type SortDirection = "ascending" | "descending" | "none";
+
+interface TableHeadProps extends React.ComponentProps<"th"> {
+	/** Indique si la colonne est triable */
+	sortable?: boolean;
+	/** Direction du tri actuel (ARIA) */
+	sortDirection?: SortDirection;
+}
+
+function TableHead({
+	className,
+	sortable,
+	sortDirection,
+	children,
+	...props
+}: TableHeadProps) {
 	return (
 		<th
 			data-slot="table-head"
+			scope="col"
+			aria-sort={sortable ? (sortDirection || "none") : undefined}
 			className={cn(
-				"text-foreground h-11 px-2 sm:px-3 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+				"text-foreground h-11 px-2 sm:px-3 text-left align-middle font-medium whitespace-nowrap",
+				"[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+				sortable && "cursor-pointer select-none hover:bg-muted/50 transition-colors",
 				className
 			)}
 			{...props}
-		/>
+		>
+			{sortable ? (
+				<span className="inline-flex items-center gap-1">
+					{children}
+					{sortDirection && sortDirection !== "none" && (
+						<span className="text-muted-foreground" aria-hidden="true">
+							{sortDirection === "ascending" ? "↑" : "↓"}
+						</span>
+					)}
+				</span>
+			) : (
+				children
+			)}
+		</th>
 	);
 }
 
@@ -83,7 +162,8 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
 		<td
 			data-slot="table-cell"
 			className={cn(
-				"p-2 sm:px-3 align-middle whitespace-nowrap min-h-11 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+				"p-2 sm:p-3 align-middle whitespace-nowrap min-h-11",
+				"[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
 				className
 			)}
 			{...props}
@@ -113,4 +193,12 @@ export {
 	TableHead,
 	TableHeader,
 	TableRow,
+};
+
+export type {
+	TableProps,
+	TableHeaderProps,
+	TableBodyProps,
+	TableHeadProps,
+	SortDirection,
 };

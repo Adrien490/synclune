@@ -84,59 +84,31 @@ export async function DiscountsDataTable({
 					discounts={discountsData}
 				/>
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des codes promo" className="min-w-full table-fixed">
+					<Table aria-label="Liste des codes promo" striped className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
+								<TableHead className="w-[5%]">
 									<DiscountsTableSelectionCell
 										type="header"
 										discountIds={discountIds}
 									/>
 								</TableHead>
-								<TableHead
-									key="code"
-									scope="col"
-									role="columnheader"
-									className="w-[20%]"
-								>
+								<TableHead className="w-[20%]">
 									Code
 								</TableHead>
-								<TableHead
-									key="type"
-									scope="col"
-									role="columnheader"
-									className="hidden sm:table-cell w-[15%]"
-								>
+								<TableHead className="hidden sm:table-cell w-[15%]">
 									Type
 								</TableHead>
-								<TableHead
-									key="value"
-									scope="col"
-									role="columnheader"
-									className="w-[12%]"
-								>
+								<TableHead className="w-[12%]">
 									Valeur
 								</TableHead>
-								<TableHead
-									key="usage"
-									scope="col"
-									role="columnheader"
-									className="hidden md:table-cell w-[15%] text-center"
-								>
+								<TableHead className="hidden md:table-cell w-[15%] text-center">
 									Utilisations
 								</TableHead>
-								<TableHead
-									key="status"
-									scope="col"
-									role="columnheader"
-									className="w-[10%] text-center"
-								>
+								<TableHead className="w-[10%] text-center">
 									Statut
 								</TableHead>
 								<TableHead
-									key="actions"
-									scope="col"
-									role="columnheader"
 									className="w-[10%] text-right"
 									aria-label="Actions disponibles pour chaque code promo"
 								>
@@ -147,13 +119,13 @@ export async function DiscountsDataTable({
 						<TableBody>
 								{discounts.map((discount) => (
 									<TableRow key={discount.id}>
-										<TableCell role="gridcell">
+										<TableCell>
 											<DiscountsTableSelectionCell
 												type="row"
 												discountId={discount.id}
 											/>
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 										<code className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded">
 											{discount.code}
 										</code>
@@ -163,7 +135,7 @@ export async function DiscountsDataTable({
 												{DISCOUNT_TYPE_LABELS[discount.type]}
 											</span>
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<span className="text-sm font-medium">
 												{formatValue(discount.type, discount.value)}
 											</span>
@@ -184,7 +156,7 @@ export async function DiscountsDataTable({
 												</Badge>
 											)}
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<div className="flex justify-end">
 												<DiscountRowActions
 													discount={discount}

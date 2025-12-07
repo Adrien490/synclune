@@ -52,8 +52,9 @@ export async function fetchRevenueByType(
     INNER JOIN "OrderItem" oi ON oi."productId" = p.id
     INNER JOIN "Order" o ON o.id = oi."orderId"
     WHERE o."paymentStatus" = 'PAID'
-      AND o."createdAt" >= ${startDate}
-      AND o."createdAt" <= ${endDate}
+      AND o."paidAt" >= ${startDate}
+      AND o."paidAt" <= ${endDate}
+      AND o."deletedAt" IS NULL
     GROUP BY pt.id, pt.label, pt.slug
     ORDER BY revenue DESC
   `;
@@ -76,8 +77,9 @@ export async function fetchRevenueByType(
     INNER JOIN "Order" o ON o.id = oi."orderId"
     LEFT JOIN "Product" p ON p.id = oi."productId"
     WHERE o."paymentStatus" = 'PAID'
-      AND o."createdAt" >= ${startDate}
-      AND o."createdAt" <= ${endDate}
+      AND o."paidAt" >= ${startDate}
+      AND o."paidAt" <= ${endDate}
+      AND o."deletedAt" IS NULL
       AND oi."productId" IS NOT NULL
   `;
 

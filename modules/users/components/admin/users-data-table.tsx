@@ -61,35 +61,25 @@ export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
 			<CardContent>
 				<UsersSelectionToolbar userIds={userIds} />
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des clients" className="min-w-full table-fixed">
+					<Table aria-label="Liste des clients" striped className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
+								<TableHead className="w-[5%]">
 									<UsersTableSelectionCell type="header" userIds={userIds} />
 								</TableHead>
-								<TableHead scope="col" role="columnheader" className="w-[25%]">
+								<TableHead className="w-[25%]">
 									Nom
 								</TableHead>
-								<TableHead scope="col" role="columnheader" className="w-[30%]">
+								<TableHead className="w-[30%]">
 									Email
 								</TableHead>
-								<TableHead
-									scope="col"
-									role="columnheader"
-									className="hidden xl:table-cell w-[10%]"
-								>
+								<TableHead className="hidden xl:table-cell w-[10%]">
 									Commandes
 								</TableHead>
-								<TableHead
-									scope="col"
-									role="columnheader"
-									className="hidden sm:table-cell w-[18%]"
-								>
+								<TableHead className="hidden sm:table-cell w-[18%]">
 									Inscription
 								</TableHead>
 								<TableHead
-									scope="col"
-									role="columnheader"
 									className="w-[12%] text-right"
 									aria-label="Actions disponibles pour chaque utilisateur"
 								>
@@ -107,32 +97,33 @@ export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
 										key={user.id}
 										className={user.deletedAt ? "opacity-50" : undefined}
 									>
-										<TableCell role="gridcell">
+										<TableCell>
 											<UsersTableSelectionCell type="row" userId={user.id} />
 										</TableCell>
-										<TableCell role="gridcell">
-										<div className="overflow-hidden">
-											<span
-												className="font-bold truncate block"
-												title={displayName}
-											>
-												{displayName}
-											</span>
-										</div>
-									</TableCell>
-									<TableCell role="gridcell">
-										<div className="flex items-center gap-2">
-											<span className="text-sm truncate">{user.email}</span>
-											{user.emailVerified && (
-												<CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
-											)}
-										</div>
-									</TableCell>
-										<TableCell role="gridcell" className="hidden xl:table-cell">
+										<TableCell>
+											<div className="overflow-hidden">
+												<span
+													className="font-bold truncate block"
+													title={displayName}
+												>
+													{displayName}
+												</span>
+											</div>
+										</TableCell>
+										<TableCell>
+											<div className="flex items-center gap-2">
+												<span className="text-sm truncate">{user.email}</span>
+												{user.emailVerified && (
+													<CheckCircle className="h-4 w-4 text-green-600 shrink-0" aria-label="Email vérifié" />
+												)}
+											</div>
+										</TableCell>
+										<TableCell className="hidden xl:table-cell">
 											{orderCount > 0 ? (
 												<Link
 													href={`/admin/ventes/commandes?userId=${user.id}`}
 													className="text-foreground hover:underline font-medium"
+													aria-label={`${orderCount} commande${orderCount > 1 ? "s" : ""} - Voir les commandes`}
 												>
 													{orderCount}
 												</Link>
@@ -140,12 +131,12 @@ export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
 												<span className="text-muted-foreground">0</span>
 											)}
 										</TableCell>
-										<TableCell role="gridcell" className="hidden sm:table-cell">
+										<TableCell className="hidden sm:table-cell">
 											<span className="text-sm text-muted-foreground">
 												{formatDate(user.createdAt)}
 											</span>
 										</TableCell>
-										<TableCell role="gridcell" className="text-right">
+										<TableCell className="text-right">
 											<UsersRowActions
 												user={{
 													id: user.id,

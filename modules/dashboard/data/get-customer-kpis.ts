@@ -50,28 +50,20 @@ export async function fetchCustomerKpis(
 
 	// Requetes paralleles pour la periode actuelle
 	const [
-		totalCustomers,
+		totalCustomersInPeriod,
 		newCustomers,
 		customersWithMultipleOrders,
 		firstOrdersAov,
 		repeatOrdersAov,
 	] = await Promise.all([
-		// Total clients (tous les users avec au moins une commande payee)
-		prisma.user.count({
-			where: {
-				orders: {
-					some: {
-						paymentStatus: PaymentStatus.PAID,
-					},
-				},
-			},
-		}),
+		// Total clients uniques dans la periode
+		countTotalCustomersInPeriod(startDate, endDate),
 
 		// Nouveaux clients sur la periode (premiere commande dans la periode)
 		countNewCustomers(startDate, endDate),
 
-		// Clients avec plusieurs commandes (recurrents)
-		countRepeatCustomers(),
+		// Clients avec plusieurs commandes dans la periode (recurrents)
+		countRepeatCustomersInPeriod(startDate, endDate),
 
 		// AOV premiere commande (periode)
 		getFirstOrderAov(startDate, endDate),
@@ -83,23 +75,16 @@ export async function fetchCustomerKpis(
 	// Requetes pour la periode precedente
 	const [previousTotalCustomers, previousNewCustomers, previousRepeatCustomers] =
 		await Promise.all([
-			prisma.user.count({
-				where: {
-					orders: {
-						some: {
-							paymentStatus: PaymentStatus.PAID,
-							paidAt: { lte: previousEndDate },
-						},
-					},
-				},
-			}),
+			countTotalCustomersInPeriod(previousStartDate, previousEndDate),
 			countNewCustomers(previousStartDate, previousEndDate),
-			countRepeatCustomersBefore(previousEndDate),
+			countRepeatCustomersInPeriod(previousStartDate, previousEndDate),
 		]);
 
-	// Calcul du taux de recurrence
+	// Calcul du taux de recurrence (dans la periode)
 	const currentRepeatRate =
-		totalCustomers > 0 ? (customersWithMultipleOrders / totalCustomers) * 100 : 0;
+		totalCustomersInPeriod > 0
+			? (customersWithMultipleOrders / totalCustomersInPeriod) * 100
+			: 0;
 	const previousRepeatRate =
 		previousTotalCustomers > 0
 			? (previousRepeatCustomers / previousTotalCustomers) * 100
@@ -107,8 +92,8 @@ export async function fetchCustomerKpis(
 
 	return {
 		totalCustomers: {
-			count: totalCustomers,
-			evolution: calculateEvolution(totalCustomers, previousTotalCustomers),
+			count: totalCustomersInPeriod,
+			evolution: calculateEvolution(totalCustomersInPeriod, previousTotalCustomers),
 		},
 		newCustomers: {
 			count: newCustomers,
@@ -130,6 +115,22 @@ export async function fetchCustomerKpis(
 // ============================================================================
 
 /**
+ * Compte le total de clients uniques ayant passe une commande dans la periode
+ */
+async function countTotalCustomersInPeriod(startDate: Date, endDate: Date): Promise<number> {
+	const result = await prisma.$queryRaw<{ count: bigint }[]>`
+		SELECT COUNT(DISTINCT "userId") as count
+		FROM "Order"
+		WHERE "paymentStatus" = 'PAID'
+		AND "deletedAt" IS NULL
+		AND "userId" IS NOT NULL
+		AND "paidAt" >= ${startDate}
+		AND "paidAt" <= ${endDate}
+	`;
+	return Number(result[0]?.count ?? 0);
+}
+
+/**
  * Compte les nouveaux clients (premiere commande payee dans la periode)
  */
 async function countNewCustomers(startDate: Date, endDate: Date): Promise<number> {
@@ -139,12 +140,14 @@ async function countNewCustomers(startDate: Date, endDate: Date): Promise<number
 		FROM "User" u
 		INNER JOIN "Order" o ON o."userId" = u.id
 		WHERE o."paymentStatus" = 'PAID'
+		AND o."deletedAt" IS NULL
 		AND o."paidAt" >= ${startDate}
 		AND o."paidAt" <= ${endDate}
 		AND NOT EXISTS (
 			SELECT 1 FROM "Order" o2
 			WHERE o2."userId" = u.id
 			AND o2."paymentStatus" = 'PAID'
+			AND o2."deletedAt" IS NULL
 			AND o2."paidAt" < ${startDate}
 		)
 	`;
@@ -152,16 +155,19 @@ async function countNewCustomers(startDate: Date, endDate: Date): Promise<number
 }
 
 /**
- * Compte les clients avec plusieurs commandes payees
+ * Compte les clients avec plusieurs commandes payees dans une periode
  */
-async function countRepeatCustomers(): Promise<number> {
+async function countRepeatCustomersInPeriod(startDate: Date, endDate: Date): Promise<number> {
 	const result = await prisma.$queryRaw<{ count: bigint }[]>`
 		SELECT COUNT(*) as count
 		FROM (
 			SELECT "userId"
 			FROM "Order"
 			WHERE "paymentStatus" = 'PAID'
+			AND "deletedAt" IS NULL
 			AND "userId" IS NOT NULL
+			AND "paidAt" >= ${startDate}
+			AND "paidAt" <= ${endDate}
 			GROUP BY "userId"
 			HAVING COUNT(*) > 1
 		) sub
@@ -179,6 +185,7 @@ async function countRepeatCustomersBefore(beforeDate: Date): Promise<number> {
 			SELECT "userId"
 			FROM "Order"
 			WHERE "paymentStatus" = 'PAID'
+			AND "deletedAt" IS NULL
 			AND "userId" IS NOT NULL
 			AND "paidAt" <= ${beforeDate}
 			GROUP BY "userId"
@@ -197,12 +204,14 @@ async function getFirstOrderAov(startDate: Date, endDate: Date): Promise<number>
 			SELECT o.id, o.total
 			FROM "Order" o
 			WHERE o."paymentStatus" = 'PAID'
+			AND o."deletedAt" IS NULL
 			AND o."paidAt" >= ${startDate}
 			AND o."paidAt" <= ${endDate}
 			AND NOT EXISTS (
 				SELECT 1 FROM "Order" o2
 				WHERE o2."userId" = o."userId"
 				AND o2."paymentStatus" = 'PAID'
+				AND o2."deletedAt" IS NULL
 				AND o2."paidAt" < o."paidAt"
 			)
 		)
@@ -220,12 +229,14 @@ async function getRepeatOrderAov(startDate: Date, endDate: Date): Promise<number
 			SELECT o.id, o.total
 			FROM "Order" o
 			WHERE o."paymentStatus" = 'PAID'
+			AND o."deletedAt" IS NULL
 			AND o."paidAt" >= ${startDate}
 			AND o."paidAt" <= ${endDate}
 			AND EXISTS (
 				SELECT 1 FROM "Order" o2
 				WHERE o2."userId" = o."userId"
 				AND o2."paymentStatus" = 'PAID'
+				AND o2."deletedAt" IS NULL
 				AND o2."paidAt" < o."paidAt"
 			)
 		)

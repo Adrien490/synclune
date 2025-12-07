@@ -23,7 +23,6 @@ import {
 	ORDER_STATUS_VARIANTS,
 } from "@/modules/orders/constants/status-display";
 import type { GetOrdersReturn } from "@/modules/orders/types/orders.types";
-import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
@@ -60,48 +59,25 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 			<CardContent>
 				<OrdersSelectionToolbar orderIds={orderIds} />
 				<TableScrollContainer>
-					<Table role="table" aria-label="Liste des commandes" className="min-w-full table-fixed">
+					<Table aria-label="Liste des commandes" striped className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
+								<TableHead className="w-[5%]">
 									<OrdersTableSelectionCell type="header" orderIds={orderIds} />
 								</TableHead>
-								<TableHead
-									key="orderNumber"
-									scope="col"
-									role="columnheader"
-									className="w-[25%] sm:w-[20%]"
-								>
+								<TableHead className="w-[25%] sm:w-[20%]">
 									Commande
 								</TableHead>
-								<TableHead
-									key="client"
-									scope="col"
-									role="columnheader"
-									className="hidden sm:table-cell w-[20%]"
-								>
+								<TableHead className="hidden sm:table-cell w-[20%]">
 									Client
 								</TableHead>
-								<TableHead
-									key="status"
-									scope="col"
-									role="columnheader"
-									className="w-[20%] sm:w-[15%]"
-								>
-									Status
+								<TableHead className="w-[20%] sm:w-[15%]">
+									Statut
 								</TableHead>
-								<TableHead
-									key="total"
-									scope="col"
-									role="columnheader"
-									className="hidden sm:table-cell w-[10%] text-right"
-								>
+								<TableHead className="hidden sm:table-cell w-[10%] text-right">
 									Montant
 								</TableHead>
 								<TableHead
-									key="actions"
-									scope="col"
-									role="columnheader"
 									className="w-[15%] sm:w-[10%] text-right"
 									aria-label="Actions disponibles pour chaque commande"
 								>
@@ -115,34 +91,35 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 									order.user?.name || order.user?.email || "Invité";
 
 								return (
-									<TableRow key={order.id} className={cn()}>
-										<TableCell role="gridcell">
+									<TableRow key={order.id}>
+										<TableCell>
 											<OrdersTableSelectionCell type="row" orderId={order.id} />
 										</TableCell>
-										<TableCell role="gridcell">
-										<Link
-											href={`/admin/ventes/commandes/${order.id}`}
-											className="font-mono text-sm font-medium text-foreground underline"
-										>
-											{order.orderNumber}
-										</Link>
-									</TableCell>
-										<TableCell role="gridcell" className="hidden sm:table-cell">
+										<TableCell>
+											<Link
+												href={`/admin/ventes/commandes/${order.id}`}
+												className="font-mono text-sm font-medium text-foreground underline"
+												aria-label={`Voir commande ${order.orderNumber}`}
+											>
+												{order.orderNumber}
+											</Link>
+										</TableCell>
+										<TableCell className="hidden sm:table-cell">
 											<span className="text-sm font-medium truncate block">
 												{userName}
 											</span>
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<Badge variant={ORDER_STATUS_VARIANTS[order.status as OrderStatus]}>
 												{ORDER_STATUS_LABELS[order.status as OrderStatus]}
 											</Badge>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden sm:table-cell text-right">
+										<TableCell className="hidden sm:table-cell text-right">
 											<span className="text-sm font-bold">
 												{formatEuro(order.total)}
 											</span>
 										</TableCell>
-										<TableCell role="gridcell" className="text-right">
+										<TableCell className="text-right">
 											<OrderRowActions
 												order={{
 													id: order.id,

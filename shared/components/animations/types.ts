@@ -1,18 +1,4 @@
 import type { MotionProps, Transition, Variants } from "framer-motion";
-import type {
-	ComponentPropsWithRef,
-	ElementType,
-	PropsWithChildren,
-} from "react";
-
-/**
- * Polymorphic component props that allow changing the underlying element
- */
-export type PolymorphicProps<T extends ElementType, P = object> = PropsWithChildren<
-	P & Omit<ComponentPropsWithRef<T>, keyof P>
-> & {
-	as?: T;
-};
 
 /**
  * Base motion props that can be passed to override default animations
@@ -54,21 +40,6 @@ export interface SlideProps extends CommonAnimationProps {
 }
 
 /**
- * Props for Scale component
- */
-export interface ScaleProps extends CommonAnimationProps {
-	from?: number;
-	opacity?: boolean;
-}
-
-/**
- * Props for Rotate component
- */
-export interface RotateProps extends CommonAnimationProps {
-	from?: number;
-}
-
-/**
  * Props for Reveal component (whileInView)
  */
 export interface RevealProps extends CommonAnimationProps {
@@ -86,18 +57,6 @@ export interface StaggerProps extends BaseMotionProps {
 	delayChildren?: number;
 	initial?: "hidden" | false;
 	animate?: "show" | false;
-}
-
-/**
- * Props for Collapse component
- */
-export interface CollapseProps {
-	isOpen: boolean;
-	unmountOnExit?: boolean;
-	duration?: number;
-	easing?: number[];
-	className?: string;
-	children: React.ReactNode;
 }
 
 /**

@@ -62,11 +62,8 @@ export type FulfillmentStatusCount = {
 	count: number;
 };
 
-export type GetOrdersStatusReturn = {
-	orderStatuses: OrderStatusCount[];
-	paymentStatuses: PaymentStatusCount[];
-	fulfillmentStatuses: FulfillmentStatusCount[];
-};
+// Note: GetOrdersStatusReturn est defini et exporte depuis get-orders-status.ts
+// avec une structure simplifiee { statuses: OrderStatusCount[] }
 
 // ============================================================================
 // TYPES - RECENT ORDERS

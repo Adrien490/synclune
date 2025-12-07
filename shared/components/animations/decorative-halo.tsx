@@ -1,3 +1,6 @@
+"use client";
+
+import { useReducedMotion } from "framer-motion";
 import { cn } from "@/shared/utils/cn";
 
 interface DecorativeHaloProps {
@@ -90,12 +93,17 @@ export function DecorativeHalo({
 	animate = "float",
 	animationDelay = 0,
 }: DecorativeHaloProps) {
+	const shouldReduceMotion = useReducedMotion();
+
 	const style =
-		animationDelay > 0
+		animationDelay > 0 && !shouldReduceMotion
 			? {
 					animationDelay: `${animationDelay}s`,
 				}
 			: undefined;
+
+	// Désactive les animations si prefers-reduced-motion est activé
+	const effectiveAnimate = shouldReduceMotion ? "none" : animate;
 
 	return (
 		<div
@@ -106,7 +114,7 @@ export function DecorativeHalo({
 				position !== "custom" && positionClasses[position],
 				blurClasses[blur],
 				opacityClasses[opacity],
-				animationClasses[animate],
+				animationClasses[effectiveAnimate],
 				className
 			)}
 			style={style}

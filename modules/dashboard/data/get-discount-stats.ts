@@ -121,6 +121,7 @@ async function getDiscountStatsForPeriod(
 			discountAmount: {
 				gt: 0,
 			},
+			deletedAt: null,
 		},
 		_sum: {
 			total: true,

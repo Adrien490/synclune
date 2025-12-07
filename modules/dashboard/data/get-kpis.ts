@@ -21,18 +21,25 @@ async function fetchTodayRevenue() {
 	const yesterdayStart = new Date(todayStart);
 	yesterdayStart.setDate(yesterdayStart.getDate() - 1);
 
+	// Pour une comparaison equitable, on compare la meme tranche horaire
+	// Today: de minuit a maintenant vs Yesterday: de minuit a la meme heure hier
+	const yesterdaySameTime = new Date(yesterdayStart);
+	yesterdaySameTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+
 	const [todayOrders, yesterdayOrders] = await Promise.all([
 		prisma.order.aggregate({
 			where: {
-				createdAt: { gte: todayStart },
+				paidAt: { gte: todayStart },
 				paymentStatus: PaymentStatus.PAID,
+				deletedAt: null,
 			},
 			_sum: { total: true },
 		}),
 		prisma.order.aggregate({
 			where: {
-				createdAt: { gte: yesterdayStart, lt: todayStart },
+				paidAt: { gte: yesterdayStart, lt: yesterdaySameTime },
 				paymentStatus: PaymentStatus.PAID,
+				deletedAt: null,
 			},
 			_sum: { total: true },
 		}),
@@ -57,15 +64,17 @@ async function fetchMonthlyRevenue() {
 	const [currentMonthOrders, lastMonthOrders] = await Promise.all([
 		prisma.order.aggregate({
 			where: {
-				createdAt: { gte: currentMonthStart },
+				paidAt: { gte: currentMonthStart },
 				paymentStatus: PaymentStatus.PAID,
+				deletedAt: null,
 			},
 			_sum: { total: true },
 		}),
 		prisma.order.aggregate({
 			where: {
-				createdAt: { gte: lastMonthStart, lte: lastMonthEnd },
+				paidAt: { gte: lastMonthStart, lte: lastMonthEnd },
 				paymentStatus: PaymentStatus.PAID,
+				deletedAt: null,
 			},
 			_sum: { total: true },
 		}),
@@ -88,14 +97,16 @@ async function fetchMonthlyOrders() {
 	const [currentMonthCount, lastMonthCount] = await Promise.all([
 		prisma.order.count({
 			where: {
-				createdAt: { gte: currentMonthStart },
+				paidAt: { gte: currentMonthStart },
 				paymentStatus: PaymentStatus.PAID,
+				deletedAt: null,
 			},
 		}),
 		prisma.order.count({
 			where: {
-				createdAt: { gte: lastMonthStart, lte: lastMonthEnd },
+				paidAt: { gte: lastMonthStart, lte: lastMonthEnd },
 				paymentStatus: PaymentStatus.PAID,
+				deletedAt: null,
 			},
 		}),
 	]);
@@ -117,16 +128,18 @@ async function fetchAverageOrderValue() {
 	const [currentMonth, lastMonth] = await Promise.all([
 		prisma.order.aggregate({
 			where: {
-				createdAt: { gte: currentMonthStart },
+				paidAt: { gte: currentMonthStart },
 				paymentStatus: PaymentStatus.PAID,
+				deletedAt: null,
 			},
 			_sum: { total: true },
 			_count: true,
 		}),
 		prisma.order.aggregate({
 			where: {
-				createdAt: { gte: lastMonthStart, lte: lastMonthEnd },
+				paidAt: { gte: lastMonthStart, lte: lastMonthEnd },
 				paymentStatus: PaymentStatus.PAID,
+				deletedAt: null,
 			},
 			_sum: { total: true },
 			_count: true,

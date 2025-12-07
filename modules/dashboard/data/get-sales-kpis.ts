@@ -15,8 +15,9 @@ import {
 async function fetchRevenue(startDate: Date, endDate: Date) {
 	const result = await prisma.order.aggregate({
 		where: {
-			createdAt: { gte: startDate, lte: endDate },
+			paidAt: { gte: startDate, lte: endDate },
 			paymentStatus: PaymentStatus.PAID,
+			deletedAt: null,
 		},
 		_sum: { total: true },
 	});
@@ -26,8 +27,9 @@ async function fetchRevenue(startDate: Date, endDate: Date) {
 async function fetchOrdersCount(startDate: Date, endDate: Date) {
 	return prisma.order.count({
 		where: {
-			createdAt: { gte: startDate, lte: endDate },
+			paidAt: { gte: startDate, lte: endDate },
 			paymentStatus: PaymentStatus.PAID,
+			deletedAt: null,
 		},
 	});
 }
@@ -35,8 +37,9 @@ async function fetchOrdersCount(startDate: Date, endDate: Date) {
 async function fetchAverageOrderValue(startDate: Date, endDate: Date) {
 	const result = await prisma.order.aggregate({
 		where: {
-			createdAt: { gte: startDate, lte: endDate },
+			paidAt: { gte: startDate, lte: endDate },
 			paymentStatus: PaymentStatus.PAID,
+			deletedAt: null,
 		},
 		_sum: { total: true },
 		_count: true,
@@ -47,22 +50,32 @@ async function fetchAverageOrderValue(startDate: Date, endDate: Date) {
 }
 
 async function fetchConversionRate(startDate: Date, endDate: Date) {
-	const [paidOrders, totalCarts] = await Promise.all([
+	const now = new Date();
+
+	const [paidOrders, completedCarts] = await Promise.all([
 		prisma.order.count({
 			where: {
-				createdAt: { gte: startDate, lte: endDate },
+				paidAt: { gte: startDate, lte: endDate },
 				paymentStatus: PaymentStatus.PAID,
+				deletedAt: null,
 			},
 		}),
+		// On ne compte que les paniers qui ont eu le temps de se decider
+		// (expires ou convertis), pas les paniers actifs
 		prisma.cart.count({
 			where: {
 				createdAt: { gte: startDate, lte: endDate },
+				OR: [
+					{ expiresAt: { lt: now } }, // Paniers expires
+					{ expiresAt: null }, // Paniers sans expiration (rares)
+				],
 			},
 		}),
 	]);
 
-	if (totalCarts === 0) return 0;
-	return (paidOrders / totalCarts) * 100;
+	// Si aucun panier n'a complete son cycle, on ne peut pas calculer
+	if (completedCarts === 0) return 0;
+	return (paidOrders / completedCarts) * 100;
 }
 
 // ============================================================================

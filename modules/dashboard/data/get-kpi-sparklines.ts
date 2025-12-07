@@ -50,13 +50,14 @@ export async function fetchKpiSparklines(): Promise<KpiSparklineData> {
 		{ date: string; revenue: bigint; orders_count: bigint }[]
 	>`
 		SELECT
-			TO_CHAR("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date,
+			TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date,
 			COALESCE(SUM(total), 0) as revenue,
 			COUNT(*) as orders_count
 		FROM "Order"
-		WHERE "createdAt" AT TIME ZONE 'UTC' >= ${sevenDaysAgo}
+		WHERE "paidAt" AT TIME ZONE 'UTC' >= ${sevenDaysAgo}
 			AND "paymentStatus" = 'PAID'::"PaymentStatus"
-		GROUP BY TO_CHAR("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+			AND "deletedAt" IS NULL
+		GROUP BY TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
 		ORDER BY date ASC
 	`;
 

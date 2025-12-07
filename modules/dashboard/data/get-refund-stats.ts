@@ -55,6 +55,7 @@ export async function fetchRefundStats(
 			where: {
 				status: RefundStatus.COMPLETED,
 				processedAt: { gte: startDate, lte: endDate },
+				deletedAt: null,
 			},
 			_sum: { amount: true },
 			_count: { id: true },
@@ -64,6 +65,7 @@ export async function fetchRefundStats(
 			where: {
 				paymentStatus: PaymentStatus.PAID,
 				paidAt: { gte: startDate, lte: endDate },
+				deletedAt: null,
 			},
 		}),
 	]);
@@ -74,6 +76,7 @@ export async function fetchRefundStats(
 			where: {
 				status: RefundStatus.COMPLETED,
 				processedAt: { gte: previousStartDate, lte: previousEndDate },
+				deletedAt: null,
 			},
 			_sum: { amount: true },
 			_count: { id: true },
@@ -82,6 +85,7 @@ export async function fetchRefundStats(
 			where: {
 				paymentStatus: PaymentStatus.PAID,
 				paidAt: { gte: previousStartDate, lte: previousEndDate },
+				deletedAt: null,
 			},
 		}),
 	]);
