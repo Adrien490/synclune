@@ -9,10 +9,14 @@ import { UploadThingSSR } from "@/modules/media/lib/uploadthing/uploadthing-ssr"
 import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
+import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
+import { CartSheet } from "@/modules/cart/components/cart-sheet";
 import { MotionConfig } from "framer-motion";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import "./globals.css";
+import { getCart } from "@/modules/cart/data/get-cart";
+import { CartSheetSkeleton } from "@/modules/cart/components/cart-sheet-skeleton";
 
 export const metadata: Metadata = {
 	title: {
@@ -133,7 +137,15 @@ export default async function RootLayout({
 						<CookieConsentStoreProvider>
 							<ConditionalAnalytics />
 							<DialogStoreProvider>
-								<AlertDialogStoreProvider>{children}</AlertDialogStoreProvider>
+								<SheetStoreProvider>
+									<AlertDialogStoreProvider>
+										{children}
+
+										<Suspense fallback={<CartSheetSkeleton />}>
+										<CartSheet cartPromise={getCart()} />
+										</Suspense>
+									</AlertDialogStoreProvider>
+								</SheetStoreProvider>
 							</DialogStoreProvider>
 							<CookieBanner />
 						</CookieConsentStoreProvider>

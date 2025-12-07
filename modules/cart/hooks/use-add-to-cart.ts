@@ -5,9 +5,12 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useRef, useTransition } from "react";
 import { addToCart } from "@/modules/cart/actions/add-to-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
+import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 
 interface UseAddToCartOptions {
 	onSuccess?: (message: string) => void;
+	/** Ouvrir le cart sheet apres ajout reussi (defaut: true) */
+	openSheetOnSuccess?: boolean;
 }
 
 /**
@@ -21,6 +24,10 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 	// Store pour optimistic UI du badge navbar
 	const adjustCart = useBadgeCountsStore((state) => state.adjustCart);
 
+	// Store pour ouvrir le cart sheet
+	const openSheet = useSheetStore((state) => state.open);
+	const shouldOpenSheet = options?.openSheetOnSuccess ?? true;
+
 	// Ref pour stocker la quantité pending (pour rollback)
 	const pendingQuantityRef = useRef<number>(0);
 
@@ -32,6 +39,11 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 			createToastCallbacks({
 				showSuccessToast: false,
 				onSuccess: (result: unknown) => {
+					// Ouvrir le cart sheet apres ajout reussi
+					if (shouldOpenSheet) {
+						openSheet("cart");
+					}
+
 					if (
 						result &&
 						typeof result === "object" &&
