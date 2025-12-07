@@ -251,6 +251,15 @@ Article 293 B CGI: TVA non applicable (CA < 91,900€/year). All prices are fina
 - **Rate Limiting**: Arcjet
 - **UI**: shadcn/ui + Tailwind CSS + Framer Motion animations
 
+### React 19 Compiler Optimizations
+
+React 19 includes an automatic compiler that handles memoization. **Do NOT use:**
+- `useMemo()` - The compiler auto-memoizes computed values
+- `useCallback()` - The compiler auto-memoizes functions
+- `React.memo()` - The compiler optimizes re-renders automatically
+
+These hooks are unnecessary and add code complexity without benefit. The React 19 compiler analyzes components and applies optimizations automatically.
+
 ## Environment Variables
 
 ### Validation (`shared/lib/env.ts`)
