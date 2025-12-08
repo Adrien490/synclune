@@ -13,7 +13,7 @@ import { checkIsInWishlist } from "@/modules/wishlist/data/check-is-in-wishlist"
 
 import { PageHeader } from "@/shared/components/page-header";
 import { ProductDetails } from "@/modules/products/components/product-details";
-import { ProductGallery } from "@/modules/media/components/product-gallery";
+import { Gallery } from "@/modules/media/components/gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
 
 import { RelatedProducts } from "@/modules/products/components/related-products";
@@ -135,7 +135,7 @@ export default async function ProductPage({
 							<div className="grid gap-6 lg:gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 								{/* Galerie sticky sur desktop uniquement - avec hauteur max sécurisée */}
 								<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
-									<ProductGallery product={product} title={product.title} />
+									<Gallery product={product} title={product.title} />
 								</section>
 
 								{/* Informations et configurateur scrollables */}

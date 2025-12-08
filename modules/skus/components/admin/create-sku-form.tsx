@@ -1,10 +1,9 @@
 "use client";
 
 import { FieldLabel, FormSection } from "@/shared/components/tanstack-form";
-import { ImageCounterBadge } from "@/modules/media/components/image-counter-badge";
-import { MediaGallery } from "@/modules/media/components/admin/media-gallery";
+import { MediaCounterBadge } from "@/modules/media/components/media-counter-badge";
+import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
 import { PrimaryImageUpload } from "@/modules/media/components/admin/primary-image-upload";
-import { useAutoVideoThumbnail } from "@/modules/media/hooks/use-auto-video-thumbnail";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
@@ -42,9 +41,6 @@ export function CreateProductVariantForm({
 	productSlug,
 }: CreateProductVariantFormProps) {
 	const router = useRouter();
-
-	// Hook pour génération automatique de thumbnail vidéo
-	const { generateThumbnail, generatingCount, isGenerating } = useAutoVideoThumbnail();
 
 	const {
 		startUpload: startPrimaryImageUpload,
@@ -383,7 +379,7 @@ export function CreateProductVariantForm({
 																if (serverData?.url) {
 																	field.handleChange({
 																		url: serverData.url,
-																		blurDataUrl: serverData.blurDataUrl,
+																		blurDataUrl: serverData.blurDataUrl ?? undefined,
 																		altText: product.title,
 																		mediaType: "IMAGE",
 																	});
@@ -551,7 +547,7 @@ export function CreateProductVariantForm({
 										<div className="space-y-3">
 											<div className="flex items-center justify-between">
 												<Label>Galerie (optionnel)</Label>
-												<ImageCounterBadge count={currentCount} max={maxCount} />
+												<MediaCounterBadge count={currentCount} max={maxCount} />
 											</div>
 
 											{isAtLimit && (
@@ -573,11 +569,17 @@ export function CreateProductVariantForm({
 														animate={{ opacity: 1 }}
 														exit={{ opacity: 0 }}
 													>
-														<MediaGallery
-															images={field.state.value}
-															onRemove={(index) => field.removeValue(index)}
+														<MediaUploadGrid
+															media={field.state.value.map(m => ({
+																url: m.url,
+																mediaType: m.mediaType,
+																altText: m.altText ?? undefined,
+																thumbnailUrl: m.thumbnailUrl ?? undefined,
+																thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
+																blurDataUrl: m.blurDataUrl ?? undefined,
+															}))}
+															onChange={(newMedia) => field.setValue(newMedia)}
 															skipUtapiDelete={true}
-															isGeneratingThumbnail={isGenerating}
 														/>
 													</motion.div>
 												)}
@@ -630,32 +632,15 @@ export function CreateProductVariantForm({
 																			| "VIDEO"
 																			| undefined) || "IMAGE";
 
-																	const newMediaIndex = field.state.value.length;
-																	const newMedia = {
+																	// Les thumbnails vidéo sont générées côté serveur dans onUploadComplete
+																	field.pushValue({
 																		url: serverData.url,
-																		blurDataUrl: serverData.blurDataUrl,
+																		blurDataUrl: serverData.blurDataUrl ?? undefined,
+																		thumbnailUrl: serverData.thumbnailUrl ?? undefined,
+																		thumbnailSmallUrl: serverData.thumbnailSmallUrl ?? undefined,
 																		altText: product.title,
 																		mediaType,
-																	};
-																	field.pushValue(newMedia);
-
-																	// Si c'est une vidéo, générer thumbnail automatiquement
-																	if (mediaType === "VIDEO") {
-																		generateThumbnail(serverData.url)
-																			.then((result) => {
-																				if (result.mediumUrl) {
-																					field.replaceValue(newMediaIndex, {
-																						...newMedia,
-																						thumbnailUrl: result.mediumUrl,
-																						thumbnailSmallUrl: result.smallUrl,
-																						blurDataUrl: result.blurDataUrl ?? undefined,
-																					});
-																				} else {
-																					toast.error("Impossible de générer la miniature vidéo");
-																				}
-																			})
-																			.catch(() => toast.error("Erreur lors de la génération de la miniature vidéo"));
-																	}
+																	});
 																}
 															});
 														} catch {
@@ -833,8 +818,7 @@ export function CreateProductVariantForm({
 												!canSubmit ||
 												form.state.isSubmitting ||
 												isPrimaryImageUploading ||
-												isGalleryUploading ||
-												generatingCount > 0
+												isGalleryUploading
 											}
 											className="min-w-[160px]"
 										>
@@ -844,9 +828,7 @@ export function CreateProductVariantForm({
 													? "Upload image..."
 													: isGalleryUploading
 														? "Upload galerie..."
-														: generatingCount > 0
-															? "Génération miniatures..."
-															: "Créer la variante"}
+														: "Créer la variante"}
 										</Button>
 									)}
 								</form.Subscribe>

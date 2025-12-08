@@ -2,7 +2,7 @@
 
 import type { Slide } from "yet-another-react-lightbox";
 import { useState, type ReactNode } from "react";
-import ProductLightbox from "./product-lightbox";
+import MediaLightbox from "./media-lightbox";
 
 interface OpenLightboxButtonProps {
 	slides: Slide[];
@@ -38,7 +38,7 @@ export function OpenLightboxButton({
 			{children({ openLightbox })}
 
 			{slides.length > 0 && (
-				<ProductLightbox
+				<MediaLightbox
 					open={lightboxOpen}
 					close={closeLightbox}
 					slides={slides}

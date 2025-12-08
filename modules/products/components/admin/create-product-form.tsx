@@ -10,9 +10,8 @@ import {
 	createTanStackFormAdapter,
 	type WizardStep,
 } from "@/shared/features/form-wizard";
-import { ImageCounterBadge } from "@/modules/media/components/image-counter-badge";
-import { UnifiedMediaUpload } from "@/modules/media/components/admin/unified-media-upload";
-import { useAutoVideoThumbnail } from "@/modules/media/hooks/use-auto-video-thumbnail";
+import { MediaCounterBadge } from "@/modules/media/components/media-counter-badge";
+import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
 import { useUnsavedChanges } from "@/shared/features/form-wizard";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
@@ -95,7 +94,6 @@ function CreateProductFormContent({
 	materials,
 }: CreateProductFormProps) {
 	const router = useRouter();
-	const { generateThumbnail, generatingCount, isGenerating } = useAutoVideoThumbnail();
 	const { startUpload, isUploading: isMediaUploading } = useUploadThing("catalogMedia");
 
 	// Get resetWizard and isMobile from context first (needed for onSuccess)
@@ -121,7 +119,7 @@ function CreateProductFormContent({
 		form: createTanStackFormAdapter(form),
 	});
 
-	const isUploading = isMediaUploading || generatingCount > 0;
+	const isUploading = isMediaUploading;
 
 	// Warn user about unsaved changes before leaving the page
 	useUnsavedChanges(form.state.isDirty && !isPending);
@@ -495,35 +493,22 @@ function CreateProductFormContent({
 									try {
 										const res = await startUpload(filesToUpload);
 										res?.forEach((uploadResult, index) => {
-											const imageUrl = uploadResult?.serverData?.url;
+											const serverData = uploadResult?.serverData;
+											const imageUrl = serverData?.url;
 											if (imageUrl) {
 												const originalFile = filesToUpload[index];
 												const mediaType = fileTypeMap.get(originalFile.name) || "IMAGE";
+
+												// Les thumbnails vidéo sont générées côté serveur dans onUploadComplete
 												field.pushValue({
 													url: imageUrl,
 													altText: form.state.values.title || undefined,
 													mediaType,
+													// Récupérer les thumbnails générées par le serveur (vidéos)
+													thumbnailUrl: serverData.thumbnailUrl ?? undefined,
+													thumbnailSmallUrl: serverData.thumbnailSmallUrl ?? undefined,
+													blurDataUrl: serverData.blurDataUrl ?? undefined,
 												});
-
-												if (mediaType === "VIDEO") {
-													generateThumbnail(imageUrl)
-														.then((result) => {
-															if (result.mediumUrl) {
-																const idx = field.state.value.findIndex((m) => m.url === imageUrl);
-																if (idx !== -1) {
-																	field.replaceValue(idx, {
-																		...field.state.value[idx],
-																		thumbnailUrl: result.mediumUrl,
-																		thumbnailSmallUrl: result.smallUrl,
-																		blurDataUrl: result.blurDataUrl ?? undefined,
-																	});
-																}
-															} else {
-																toast.error("Impossible de générer la miniature vidéo");
-															}
-														})
-														.catch(() => toast.error("Erreur lors de la génération de la miniature vidéo"));
-												}
 											}
 										});
 									} catch {
@@ -542,7 +527,7 @@ function CreateProductFormContent({
 													La première image sera l'image principale. Glissez pour réordonner.
 												</p>
 											</div>
-											<ImageCounterBadge count={currentCount} max={maxCount} />
+											<MediaCounterBadge count={currentCount} max={maxCount} />
 										</div>
 
 										{isAtLimit && (
@@ -623,8 +608,15 @@ function CreateProductFormContent({
 												)}
 											</div>
 										) : (
-											<UnifiedMediaUpload
-												media={field.state.value}
+											<MediaUploadGrid
+												media={field.state.value.map(m => ({
+													url: m.url,
+													mediaType: m.mediaType,
+													altText: m.altText ?? undefined,
+													thumbnailUrl: m.thumbnailUrl ?? undefined,
+													thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
+													blurDataUrl: m.blurDataUrl ?? undefined,
+												}))}
 												onChange={(newMedia) => {
 													// Replace all values atomically
 													const currentLength = field.state.value.length;
@@ -638,10 +630,10 @@ function CreateProductFormContent({
 															altText: m.altText ?? undefined,
 															thumbnailUrl: m.thumbnailUrl ?? undefined,
 															thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
+															blurDataUrl: m.blurDataUrl ?? undefined,
 														})
 													);
 												}}
-												isGeneratingThumbnail={isGenerating}
 												maxItems={maxCount}
 												renderUploadZone={
 													isAtLimit
@@ -730,9 +722,7 @@ function CreateProductFormContent({
 									? "Enregistrement..."
 									: isMediaUploading
 										? "Upload médias..."
-										: generatingCount > 0
-											? "Génération miniatures..."
-											: "Publier le bijou"}
+										: "Publier le bijou"}
 							</Button>
 						</>
 					)}
@@ -793,11 +783,7 @@ function CreateProductFormContent({
 					isValidating={wizard.isValidating}
 					isBlocked={isUploading}
 					blockedMessage={
-						isMediaUploading
-							? "Upload..."
-							: generatingCount > 0
-								? "Miniatures..."
-								: undefined
+						isMediaUploading ? "Upload..." : undefined
 					}
 					getStepErrors={wizard.getStepErrors}
 					renderLastStepFooter={() => (

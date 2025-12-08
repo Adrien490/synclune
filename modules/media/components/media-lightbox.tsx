@@ -9,7 +9,7 @@ import "yet-another-react-lightbox/plugins/counter.css";
 
 import type { Slide } from "yet-another-react-lightbox";
 
-interface ProductLightboxProps {
+interface MediaLightboxProps {
 	open: boolean;
 	close: () => void;
 	slides: Slide[];
@@ -19,20 +19,20 @@ interface ProductLightboxProps {
 }
 
 /**
- * Lightbox premium pour images produits
+ * Lightbox générique pour médias (images/vidéos)
  * - Zoom plugin (pinch, double-tap, scroll)
  * - Counter plugin pour afficher la position
  * - Style premium personnalisé
  * - Navigation clavier (flèches, Esc)
  * - Synchronisation d'index avec le parent via onIndexChange
  */
-export default function ProductLightbox({
+export default function MediaLightbox({
 	open,
 	close,
 	slides,
 	index,
 	onIndexChange,
-}: ProductLightboxProps) {
+}: MediaLightboxProps) {
 	return (
 		<Lightbox
 			open={open}

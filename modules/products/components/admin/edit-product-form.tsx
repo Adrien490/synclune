@@ -1,9 +1,7 @@
 "use client";
 
 import { FieldLabel, FormLayout, FormSection } from "@/shared/components/tanstack-form";
-import { UnifiedMediaUpload } from "@/modules/media/components/admin/unified-media-upload";
-import { useAutoVideoThumbnail } from "@/modules/media/hooks/use-auto-video-thumbnail";
-import { useRegenerateThumbnail } from "@/modules/media/hooks/use-regenerate-thumbnail";
+import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
@@ -34,9 +32,6 @@ export function EditProductForm({
 }: EditProductFormProps) {
 	const router = useRouter();
 
-	// Hook pour génération automatique de thumbnail vidéo
-	const { generateThumbnail, isGenerating } = useAutoVideoThumbnail();
-
 	const { startUpload: startMediaUpload, isUploading: isMediaUploading } =
 		useUploadThing("catalogMedia");
 
@@ -55,37 +50,6 @@ export function EditProductForm({
 		},
 	});
 
-	// Hook pour régénération manuelle de thumbnail avec callback
-	const { regenerate: regenerateThumbnail, regeneratingUrl } = useRegenerateThumbnail({
-		onSuccess: (result, videoUrl) => {
-			type MediaItem = {
-				url: string;
-				mediaType: "IMAGE" | "VIDEO";
-				thumbnailUrl: string | undefined;
-				thumbnailSmallUrl: string | undefined;
-				blurDataUrl: string | undefined;
-				altText: string | undefined;
-			};
-			const mediaList = form.getFieldValue("defaultSku.media") as MediaItem[];
-			const index = mediaList.findIndex((m) => m.url === videoUrl);
-			if (index === -1) return;
-
-			const updatedMedia = mediaList.map((m, i): MediaItem => {
-				if (i === index) {
-					return {
-						...m,
-						thumbnailUrl: result.mediumUrl ?? undefined,
-						thumbnailSmallUrl: result.smallUrl ?? undefined,
-						blurDataUrl: result.blurDataUrl ?? undefined,
-					};
-				}
-				return m;
-			});
-
-			form.setFieldValue("defaultSku.media", updatedMedia);
-		},
-	});
-
 	const originalImageUrls = (() => {
 		const urls: string[] = [];
 		const defaultSku = product.skus[0];
@@ -96,9 +60,6 @@ export function EditProductForm({
 		}
 		return urls;
 	})();
-
-	// Combiner les vérifications de génération (auto + manuelle)
-	const combinedIsGenerating = (url: string) => isGenerating(url) || regeneratingUrl === url;
 
 	return (
 		<>
@@ -515,6 +476,9 @@ export function EditProductForm({
 									url: string;
 									name: string;
 									type: string;
+									thumbnailUrl?: string;
+									thumbnailSmallUrl?: string;
+									blurDataUrl?: string | null;
 								}>
 							) => {
 								const remaining = maxCount - field.state.value.length;
@@ -526,46 +490,34 @@ export function EditProductForm({
 									);
 								}
 
-								filesToAdd.forEach((file, index) => {
+								filesToAdd.forEach((file) => {
 									const mediaType = file.type.startsWith("video/")
 										? "VIDEO"
 										: "IMAGE";
-									const newMedia = {
+
+									// Les thumbnails vidéo sont générées côté serveur dans onUploadComplete
+									field.pushValue({
 										url: file.url,
-										thumbnailUrl: undefined as string | undefined,
-										thumbnailSmallUrl: undefined as string | undefined,
-										blurDataUrl: undefined as string | undefined,
+										thumbnailUrl: file.thumbnailUrl ?? undefined,
+										thumbnailSmallUrl: file.thumbnailSmallUrl ?? undefined,
+										blurDataUrl: file.blurDataUrl ?? undefined,
 										altText: form.state.values.title || undefined,
 										mediaType: mediaType as "IMAGE" | "VIDEO",
-									};
-
-									const newMediaIndex = field.state.value.length + index;
-									field.pushValue(newMedia);
-
-									// Si c'est une vidéo, générer thumbnail automatiquement
-									if (mediaType === "VIDEO") {
-										generateThumbnail(file.url)
-											.then((result) => {
-												if (result.mediumUrl) {
-													field.replaceValue(newMediaIndex, {
-														...newMedia,
-														thumbnailUrl: result.mediumUrl ?? undefined,
-														thumbnailSmallUrl: result.smallUrl ?? undefined,
-														blurDataUrl: result.blurDataUrl ?? undefined,
-													});
-												} else {
-													toast.error("Impossible de générer la miniature vidéo");
-												}
-											})
-											.catch(() => toast.error("Erreur lors de la génération de la miniature vidéo"));
-									}
+									});
 								});
 							};
 
 							return (
 								<div className="space-y-4">
-									<UnifiedMediaUpload
-										media={field.state.value}
+									<MediaUploadGrid
+										media={field.state.value.map(m => ({
+											url: m.url,
+											mediaType: m.mediaType,
+											altText: m.altText ?? undefined,
+											thumbnailUrl: m.thumbnailUrl ?? undefined,
+											thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
+											blurDataUrl: m.blurDataUrl ?? undefined,
+										}))}
 										onChange={(newMedia) => {
 											// Clear and repopulate the field
 											while (field.state.value.length > 0) {
@@ -583,13 +535,7 @@ export function EditProductForm({
 											);
 										}}
 										skipUtapiDelete={true}
-										isGeneratingThumbnail={combinedIsGenerating}
 										maxItems={maxCount}
-										onRegenerateThumbnail={(index) => {
-											const media = field.state.value[index];
-											if (!media || media.mediaType !== "VIDEO") return;
-											regenerateThumbnail(media.url);
-										}}
 										renderUploadZone={() => (
 											<UploadDropzone
 												endpoint="catalogMedia"
@@ -639,6 +585,9 @@ export function EditProductForm({
 																	url: r.serverData?.url || "",
 																	name: filesToUpload[i].name,
 																	type: filesToUpload[i].type,
+																	thumbnailUrl: r.serverData?.thumbnailUrl,
+																	thumbnailSmallUrl: r.serverData?.thumbnailSmallUrl,
+																	blurDataUrl: r.serverData?.blurDataUrl,
 																}))
 															);
 														}
@@ -816,8 +765,7 @@ export function EditProductForm({
 										disabled={
 											!canSubmit ||
 											isPending ||
-											isMediaUploading ||
-											regeneratingUrl !== null
+											isMediaUploading
 										}
 										className="min-w-[160px]"
 									>
@@ -825,9 +773,7 @@ export function EditProductForm({
 											? "Enregistrement..."
 											: isMediaUploading
 												? "Upload en cours..."
-												: regeneratingUrl !== null
-													? "Génération miniatures..."
-													: "Enregistrer les modifications"}
+												: "Enregistrer les modifications"}
 									</Button>
 								)}
 							</form.Subscribe>

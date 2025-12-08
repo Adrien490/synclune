@@ -5,15 +5,15 @@ import { Button } from "@/shared/components/ui/button";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
-	Sheet,
-	SheetClose,
-	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "@/shared/components/ui/sheet";
+	ResponsiveSheet,
+	ResponsiveSheetClose,
+	ResponsiveSheetContent,
+	ResponsiveSheetDescription,
+	ResponsiveSheetFooter,
+	ResponsiveSheetHeader,
+	ResponsiveSheetTitle,
+	ResponsiveSheetTrigger,
+} from "@/shared/components/ui/responsive-sheet";
 import { cn } from "@/shared/utils/cn";
 import { Filter, Loader2, X } from "lucide-react";
 import { ReactNode } from "react";
@@ -60,8 +60,8 @@ export function FilterSheetWrapper({
 	showCancelButton = true,
 }: FilterSheetWrapperProps) {
 	return (
-		<Sheet>
-			<SheetTrigger asChild>
+		<ResponsiveSheet side="right">
+			<ResponsiveSheetTrigger asChild>
 				<Button
 					variant="outline"
 					className={cn(
@@ -93,23 +93,22 @@ export function FilterSheetWrapper({
 						</>
 					)}
 				</Button>
-			</SheetTrigger>
+			</ResponsiveSheetTrigger>
 
-			<SheetContent
-				side="right"
+			<ResponsiveSheetContent
 				className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full"
 				aria-describedby="filter-sheet-description"
 			>
-				<SheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
+				<ResponsiveSheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
 					<div className="flex items-center justify-between gap-4">
 						<div className="min-w-0 flex-1">
-							<SheetTitle className="text-lg font-semibold">{title}</SheetTitle>
-							<SheetDescription
+							<ResponsiveSheetTitle className="text-lg font-semibold">{title}</ResponsiveSheetTitle>
+							<ResponsiveSheetDescription
 								id="filter-sheet-description"
 								className="text-sm text-muted-foreground"
 							>
 								{description}
-							</SheetDescription>
+							</ResponsiveSheetDescription>
 						</div>
 						{hasActiveFilters && onClearAll && (
 							<Button
@@ -125,21 +124,21 @@ export function FilterSheetWrapper({
 							</Button>
 						)}
 					</div>
-				</SheetHeader>
+				</ResponsiveSheetHeader>
 
 				<ScrollArea className="flex-1 min-h-0">
 					<div className="px-6 py-4">{children}</div>
 				</ScrollArea>
 
-				<SheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
+				<ResponsiveSheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
 					{showCancelButton ? (
 						<ButtonGroup className="w-full" aria-label="Actions de filtrage">
-							<SheetClose asChild className="flex-1">
+							<ResponsiveSheetClose asChild className="flex-1">
 								<Button variant="outline" disabled={isPending}>
 									{cancelButtonText}
 								</Button>
-							</SheetClose>
-							<SheetClose asChild className="flex-1">
+							</ResponsiveSheetClose>
+							<ResponsiveSheetClose asChild className="flex-1">
 								<Button type="button" onClick={onApply} disabled={isPending}>
 									{isPending && (
 										<Loader2
@@ -149,10 +148,10 @@ export function FilterSheetWrapper({
 									)}
 									{applyButtonText}
 								</Button>
-							</SheetClose>
+							</ResponsiveSheetClose>
 						</ButtonGroup>
 					) : (
-						<SheetClose asChild className="w-full">
+						<ResponsiveSheetClose asChild className="w-full">
 							<Button
 								type="button"
 								onClick={onApply}
@@ -167,15 +166,15 @@ export function FilterSheetWrapper({
 								)}
 								{applyButtonText}
 							</Button>
-						</SheetClose>
+						</ResponsiveSheetClose>
 					)}
-				</SheetFooter>
+				</ResponsiveSheetFooter>
 
 				{/* Live region for screen readers */}
 				<div role="status" aria-live="polite" className="sr-only">
 					{isPending && "Mise à jour des filtres en cours..."}
 				</div>
-			</SheetContent>
-		</Sheet>
+			</ResponsiveSheetContent>
+		</ResponsiveSheet>
 	);
 }

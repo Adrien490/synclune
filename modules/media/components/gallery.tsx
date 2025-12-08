@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useRef } from "react";
 import { buildGallery } from "@/modules/media/utils/build-gallery";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
-import { MediaRenderer } from "@/modules/media/components/media-renderer";
+import { GalleryMediaRenderer } from "@/modules/media/components/gallery-media-renderer";
 import { useGalleryKeyboard } from "@/modules/media/hooks/use-gallery-keyboard";
 import { useGalleryNavigation } from "@/modules/media/hooks/use-gallery-navigation";
 import { useGallerySwipe } from "@/modules/media/hooks/use-gallery-swipe";
@@ -25,10 +25,10 @@ import {
 } from "@/modules/media/constants/image-config.constants";
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
-import { ThumbnailsGrid, ThumbnailsCarousel } from "@/modules/media/components/thumbnails-list";
+import { GalleryThumbnailsGrid, GalleryThumbnailsCarousel } from "@/modules/media/components/gallery-thumbnails";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 
-interface ProductGalleryProps {
+interface GalleryProps {
 	product: GetProductReturn;
 	title: string;
 }
@@ -48,11 +48,11 @@ function GalleryLoadingSkeleton() {
  * Galerie produit avec Error Boundary et Suspense
  * Wrapper qui capture les erreurs et affiche un fallback gracieux
  */
-export function ProductGallery(props: ProductGalleryProps) {
+export function Gallery(props: GalleryProps) {
 	return (
 		<GalleryErrorBoundary>
 			<Suspense fallback={<GalleryLoadingSkeleton />}>
-				<ProductGalleryContent {...props} />
+				<GalleryContent {...props} />
 			</Suspense>
 		</GalleryErrorBoundary>
 	);
@@ -64,7 +64,7 @@ export function ProductGallery(props: ProductGalleryProps) {
  * - Navigation clavier, swipe mobile, lightbox
  * - Synchronisation URL
  */
-function ProductGalleryContent({ product, title }: ProductGalleryProps) {
+function GalleryContent({ product, title }: GalleryProps) {
 	const galleryRef = useRef<HTMLDivElement>(null);
 	const searchParams = useSearchParams();
 	const prefersReducedMotion = useReducedMotion();
@@ -215,7 +215,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 						{/* Thumbnails verticales - Desktop uniquement */}
 						{safeImages.length > 1 && (
 							<div className="hidden lg:flex flex-col gap-2 order-1 max-h-[min(500px,60vh)] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent pr-1">
-								<ThumbnailsGrid
+								<GalleryThumbnailsGrid
 									medias={safeImages}
 									currentIndex={optimisticIndex}
 									title={title}
@@ -296,7 +296,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 									className="absolute inset-0"
 									style={{ willChange: isSwiping ? "transform" : "auto" }}
 								>
-									<MediaRenderer
+									<GalleryMediaRenderer
 										media={current}
 										productSlug={product.slug}
 										title={title}
@@ -354,7 +354,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 						<div className="lg:hidden mt-4 sm:mt-6">
 							{safeImages.length > 6 ? (
 								/* Carousel horizontal si plus de 6 images */
-								<ThumbnailsCarousel
+								<GalleryThumbnailsCarousel
 									medias={safeImages}
 									currentIndex={optimisticIndex}
 									title={title}
@@ -367,7 +367,7 @@ function ProductGalleryContent({ product, title }: ProductGalleryProps) {
 								/* Grille standard si 6 images ou moins */
 								<div className="gallery-thumbnails w-full">
 									<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3">
-										<ThumbnailsGrid
+										<GalleryThumbnailsGrid
 											medias={safeImages}
 											currentIndex={optimisticIndex}
 											title={title}

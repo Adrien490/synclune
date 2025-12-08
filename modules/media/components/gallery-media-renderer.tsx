@@ -11,7 +11,7 @@ import { memo } from "react";
 // Constantes - quality 85 offre un bon compromis taille/qualité (-50% vs 95)
 const MAIN_IMAGE_QUALITY = 85;
 
-interface MediaRendererProps {
+interface GalleryMediaRendererProps {
 	media: ProductMedia;
 	productSlug: string;
 	title: string;
@@ -26,12 +26,12 @@ interface MediaRendererProps {
 
 /**
  * Composant responsable du rendu des médias (images/vidéos) dans la galerie principale
- * Extrait la logique complexe de rendu conditionnel hors de ProductGallery
+ * Extrait la logique complexe de rendu conditionnel hors de Gallery
  * - Gère les images
  * - Gère les vidéos avec contrôles natifs
  * - Gère les erreurs avec fallback et retry
  */
-function MediaRendererComponent({
+function GalleryMediaRendererComponent({
 	media,
 	productSlug,
 	title,
@@ -41,7 +41,7 @@ function MediaRendererComponent({
 	onError,
 	onRetry,
 	priority = false,
-}: MediaRendererProps) {
+}: GalleryMediaRendererProps) {
 	// Vidéo
 	if (media.mediaType === "VIDEO") {
 		if (hasError) {
@@ -102,4 +102,4 @@ function MediaRendererComponent({
 }
 
 // Export mémorisé pour éviter re-renders inutiles
-export const MediaRenderer = memo(MediaRendererComponent);
+export const GalleryMediaRenderer = memo(GalleryMediaRendererComponent);

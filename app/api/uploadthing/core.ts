@@ -4,6 +4,10 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
 import { getPlaiceholder } from "plaiceholder";
+import {
+	generateVideoThumbnail,
+	isFFmpegAvailable,
+} from "@/modules/media/services/generate-video-thumbnail";
 
 // Vérifier que le token UploadThing est configuré au démarrage
 if (!process.env.UPLOADTHING_TOKEN) {
@@ -197,13 +201,47 @@ export const ourFileRouter = {
 			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
-			// Générer le blur placeholder uniquement pour les images
 			const isImage = file.type.startsWith("image/");
-			const blurDataUrl = isImage ? await generateBlurDataUrl(file.ufsUrl) : undefined;
+			const isVideo = file.type.startsWith("video/");
 
+			// Pour les images: générer le blur placeholder
+			if (isImage) {
+				const blurDataUrl = await generateBlurDataUrl(file.ufsUrl);
+				return {
+					url: file.ufsUrl,
+					blurDataUrl,
+					uploadedBy: metadata.userId,
+				};
+			}
+
+			// Pour les vidéos: générer les thumbnails côté serveur
+			if (isVideo && isFFmpegAvailable()) {
+				try {
+					const thumbnailResult = await generateVideoThumbnail(file.ufsUrl);
+					return {
+						url: file.ufsUrl,
+						thumbnailUrl: thumbnailResult.thumbnailUrl,
+						thumbnailSmallUrl: thumbnailResult.thumbnailSmallUrl,
+						blurDataUrl: thumbnailResult.blurDataUrl,
+						uploadedBy: metadata.userId,
+					};
+				} catch (error) {
+					// Log l'erreur mais ne pas bloquer l'upload
+					console.error(
+						"[UploadThing] Échec génération thumbnail vidéo:",
+						error instanceof Error ? error.message : error
+					);
+					// Retourner sans thumbnail - le client pourra régénérer
+					return {
+						url: file.ufsUrl,
+						uploadedBy: metadata.userId,
+					};
+				}
+			}
+
+			// Fallback: retourner juste l'URL
 			return {
 				url: file.ufsUrl,
-				blurDataUrl,
 				uploadedBy: metadata.userId,
 			};
 		}),

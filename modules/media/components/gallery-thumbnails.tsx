@@ -54,7 +54,7 @@ function ThumbnailsGridComponent({
 	);
 }
 
-export const ThumbnailsGrid = memo(ThumbnailsGridComponent);
+export const GalleryThumbnailsGrid = memo(ThumbnailsGridComponent);
 
 interface ThumbnailsCarouselProps extends ThumbnailsListProps {
 	/** Classe CSS pour le container du carousel */
@@ -103,4 +103,4 @@ function ThumbnailsCarouselComponent({
 	);
 }
 
-export const ThumbnailsCarousel = memo(ThumbnailsCarouselComponent);
+export const GalleryThumbnailsCarousel = memo(ThumbnailsCarouselComponent);

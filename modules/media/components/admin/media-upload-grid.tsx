@@ -36,40 +36,36 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "framer-motion";
-import { Check, Expand, GripVertical, Loader2, MoreVertical, Play, RefreshCw, Star, Trash2, AlertTriangle } from "lucide-react";
+import { Check, Expand, GripVertical, MoreVertical, Play, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "sonner";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
-import ProductLightbox from "@/modules/media/components/product-lightbox";
+import MediaLightbox from "@/modules/media/components/media-lightbox";
 import { DELETE_GALLERY_MEDIA_DIALOG_ID } from "./delete-gallery-media-alert-dialog";
 import type { Slide } from "yet-another-react-lightbox";
 
 export interface MediaItem {
 	url: string;
-	altText?: string;
+	altText: string | undefined;
 	mediaType: "IMAGE" | "VIDEO";
-	thumbnailUrl?: string | null;
-	thumbnailSmallUrl?: string | null;
-	blurDataUrl?: string;
+	thumbnailUrl: string | undefined;
+	thumbnailSmallUrl: string | undefined;
+	blurDataUrl: string | undefined;
 }
 
-interface UnifiedMediaUploadProps {
+interface MediaUploadGridProps {
 	/** Liste des médias */
 	media: MediaItem[];
 	/** Callback appelé quand la liste change (réordonnement ou suppression) */
 	onChange: (media: MediaItem[]) => void;
 	/** Si true, ne supprime pas via UTAPI immédiatement (mode édition) */
 	skipUtapiDelete?: boolean;
-	/** Fonction pour vérifier si une vidéo est en cours de génération de thumbnail */
-	isGeneratingThumbnail?: (url: string) => boolean;
 	/** Nombre maximum de médias autorisés */
 	maxItems?: number;
 	/** Zone d'upload (rendu par le parent) */
 	renderUploadZone?: () => React.ReactNode;
-	/** Callback pour régénérer la miniature d'une vidéo */
-	onRegenerateThumbnail?: (index: number) => void;
 }
 
 interface SortableMediaItemProps {
@@ -77,14 +73,12 @@ interface SortableMediaItemProps {
 	index: number;
 	isPrimary: boolean;
 	isImageLoaded: boolean;
-	isGeneratingThumbnail: boolean;
 	shouldReduceMotion: boolean | null;
 	isDraggingAny: boolean;
 	showLongPressHint: boolean;
 	onImageLoaded: (url: string) => void;
 	onOpenLightbox: (index: number) => void;
 	onOpenDeleteDialog: () => void;
-	onRegenerateThumbnail?: () => void;
 }
 
 function SortableMediaItem({
@@ -92,14 +86,12 @@ function SortableMediaItem({
 	index,
 	isPrimary,
 	isImageLoaded,
-	isGeneratingThumbnail,
 	shouldReduceMotion,
 	isDraggingAny,
 	showLongPressHint,
 	onImageLoaded,
 	onOpenLightbox,
 	onOpenDeleteDialog,
-	onRegenerateThumbnail,
 }: SortableMediaItemProps) {
 	const {
 		attributes,
@@ -214,34 +206,13 @@ function SortableMediaItem({
 								<Play className="w-6 h-6 text-white" fill="white" />
 							</div>
 						</div>
-						{isGeneratingThumbnail && (
-							<div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2 z-20">
-								<Loader2 className="h-8 w-8 text-white motion-safe:animate-spin" aria-hidden="true" />
-								<span className="text-white text-xs font-medium">Génération...</span>
-							</div>
-						)}
-						{/* P2 - Badge état miniature vidéo */}
-						{!isGeneratingThumbnail && (
+						{/* Badge état miniature vidéo */}
+						{media.thumbnailUrl && (
 							<div className="absolute bottom-2 right-2 z-10 pointer-events-none">
-								{media.thumbnailUrl ? (
-									<div className="flex items-center gap-0.5 bg-emerald-600 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded shadow-md">
-										<Check className="w-2.5 h-2.5" aria-hidden="true" />
-										<span className="hidden sm:inline">Miniature</span>
-									</div>
-								) : (
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<div className="flex items-center gap-0.5 bg-amber-500 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded shadow-md cursor-help pointer-events-auto">
-												<AlertTriangle className="w-2.5 h-2.5" aria-hidden="true" />
-												<span className="hidden sm:inline">Fallback</span>
-											</div>
-										</TooltipTrigger>
-										<TooltipContent side="top">
-											<p className="text-xs">Pas de miniature générée.</p>
-											<p className="text-xs text-muted-foreground">Cliquez sur "Régénérer" pour créer une miniature.</p>
-										</TooltipContent>
-									</Tooltip>
-								)}
+								<div className="flex items-center gap-0.5 bg-emerald-600 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded shadow-md">
+									<Check className="w-2.5 h-2.5" aria-hidden="true" />
+									<span className="hidden sm:inline">Miniature</span>
+								</div>
 							</div>
 						)}
 					</div>
@@ -348,28 +319,6 @@ function SortableMediaItem({
 					</TooltipTrigger>
 					<TooltipContent>Agrandir</TooltipContent>
 				</Tooltip>
-				{isVideo && onRegenerateThumbnail && (
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								type="button"
-								variant="secondary"
-								size="icon"
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									onRegenerateThumbnail();
-								}}
-								disabled={isGeneratingThumbnail}
-								className="h-10 w-10 rounded-full"
-								aria-label={`Régénérer la miniature de la vidéo ${index + 1}`}
-							>
-								<RefreshCw className={cn("h-4 w-4", isGeneratingThumbnail && "animate-spin")} aria-hidden="true" />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Régénérer miniature</TooltipContent>
-					</Tooltip>
-				)}
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<Button
@@ -413,19 +362,6 @@ function SortableMediaItem({
 							<Expand className="h-4 w-4" />
 							Agrandir
 						</DropdownMenuItem>
-						{isVideo && onRegenerateThumbnail && (
-							<>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem
-									onClick={onRegenerateThumbnail}
-									disabled={isGeneratingThumbnail}
-									className="gap-2 py-2.5"
-								>
-									<RefreshCw className={cn("h-4 w-4", isGeneratingThumbnail && "animate-spin")} />
-									Régénérer miniature
-								</DropdownMenuItem>
-							</>
-						)}
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
 							variant="destructive"
@@ -442,15 +378,13 @@ function SortableMediaItem({
 	);
 }
 
-export function UnifiedMediaUpload({
+export function MediaUploadGrid({
 	media,
 	onChange,
 	skipUtapiDelete,
-	isGeneratingThumbnail,
 	maxItems = 11,
 	renderUploadZone,
-	onRegenerateThumbnail,
-}: UnifiedMediaUploadProps) {
+}: MediaUploadGridProps) {
 	const deleteDialog = useAlertDialog(DELETE_GALLERY_MEDIA_DIALOG_ID);
 	const shouldReduceMotion = useReducedMotion();
 
@@ -632,9 +566,6 @@ export function UnifiedMediaUpload({
 						aria-label="Médias du produit"
 					>
 						{media.map((m, index) => {
-							const isVideo = m.mediaType === "VIDEO";
-							const isGenerating =
-								isVideo && (isGeneratingThumbnail?.(m.url) ?? false);
 							const isImageLoaded = loadedImages.has(m.url);
 
 							return (
@@ -644,18 +575,12 @@ export function UnifiedMediaUpload({
 									index={index}
 									isPrimary={index === 0}
 									isImageLoaded={isImageLoaded}
-									isGeneratingThumbnail={isGenerating}
 									shouldReduceMotion={shouldReduceMotion}
 									isDraggingAny={!!activeId}
 									showLongPressHint={showLongPressHint && index === 1}
 									onImageLoaded={handleImageLoaded}
 									onOpenLightbox={openLightbox}
 									onOpenDeleteDialog={() => handleOpenDeleteDialog(index)}
-									onRegenerateThumbnail={
-										isVideo && onRegenerateThumbnail
-											? () => onRegenerateThumbnail(index)
-											: undefined
-									}
 								/>
 							);
 						})}
@@ -709,7 +634,7 @@ export function UnifiedMediaUpload({
 			</DndContext>
 
 			{/* Lightbox */}
-			<ProductLightbox
+			<MediaLightbox
 				open={lightboxOpen}
 				close={() => setLightboxOpen(false)}
 				slides={slides}
@@ -721,12 +646,12 @@ export function UnifiedMediaUpload({
 }
 
 // Wrapper avec ErrorBoundary
-export function UnifiedMediaUploadWithErrorBoundary(
-	props: UnifiedMediaUploadProps
+export function MediaUploadGridWithErrorBoundary(
+	props: MediaUploadGridProps
 ) {
 	return (
 		<GalleryErrorBoundary>
-			<UnifiedMediaUpload {...props} />
+			<MediaUploadGrid {...props} />
 		</GalleryErrorBoundary>
 	);
 }

@@ -2,17 +2,17 @@ import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
 import { Images } from "lucide-react";
 
-interface ImageCounterBadgeProps {
+interface MediaCounterBadgeProps {
 	count: number;
 	max: number;
 	className?: string;
 }
 
-export function ImageCounterBadge({
+export function MediaCounterBadge({
 	count,
 	max,
 	className,
-}: ImageCounterBadgeProps) {
+}: MediaCounterBadgeProps) {
 	const percentage = (count / max) * 100;
 
 	const getColorClasses = () => {

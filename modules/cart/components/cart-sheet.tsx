@@ -2,13 +2,13 @@
 
 import { use } from "react";
 import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle,
-} from "@/shared/components/ui/sheet";
+	ResponsiveSheet,
+	ResponsiveSheetContent,
+	ResponsiveSheetDescription,
+	ResponsiveSheetFooter,
+	ResponsiveSheetHeader,
+	ResponsiveSheetTitle,
+} from "@/shared/components/ui/responsive-sheet";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Button } from "@/shared/components/ui/button";
 import { ShoppingBag } from "lucide-react";
@@ -31,17 +31,17 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 
 	return (
 		<>
-			<Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
-				<SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0">
-					<SheetHeader className="px-6 py-4 border-b shrink-0">
-						<SheetTitle className="flex items-center gap-2 text-lg">
+			<ResponsiveSheet side="right" open={isOpen} onOpenChange={(open) => !open && close()}>
+				<ResponsiveSheetContent className="w-full sm:max-w-md flex flex-col p-0">
+					<ResponsiveSheetHeader className="px-6 py-4 border-b shrink-0">
+						<ResponsiveSheetTitle className="flex items-center gap-2 text-lg">
 							<ShoppingBag className="w-5 h-5" />
 							Mon panier
-						</SheetTitle>
-						<SheetDescription className="sr-only">
+						</ResponsiveSheetTitle>
+						<ResponsiveSheetDescription className="sr-only">
 							Contenu de ton panier - Gere tes articles et passe commande
-						</SheetDescription>
-					</SheetHeader>
+						</ResponsiveSheetDescription>
+					</ResponsiveSheetHeader>
 
 					{!hasItems ? (
 						<div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
@@ -66,13 +66,13 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 								</div>
 							</ScrollArea>
 
-							<SheetFooter className="px-6 py-4 border-t mt-auto shrink-0">
+							<ResponsiveSheetFooter className="px-6 py-4 border-t mt-auto shrink-0">
 								<CartSheetSummary cart={cart} onClose={close} />
-							</SheetFooter>
+							</ResponsiveSheetFooter>
 						</>
 					)}
-				</SheetContent>
-			</Sheet>
+				</ResponsiveSheetContent>
+			</ResponsiveSheet>
 
 			<RemoveCartItemAlertDialog />
 		</>
