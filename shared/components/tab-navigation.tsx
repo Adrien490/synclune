@@ -42,7 +42,7 @@ export function TabNavigation({
 	activeValue,
 	ariaLabel = "Navigation par onglets",
 	prefetch = false,
-	mobileVisibleCount = 3,
+	mobileVisibleCount = 2,
 }: TabNavigationProps) {
 	// Séparer les items visibles et ceux dans le drawer mobile
 	const visibleItems = items.slice(0, mobileVisibleCount);
@@ -58,7 +58,7 @@ export function TabNavigation({
 		const isActive = value === activeValue;
 
 		return cn(
-			"inline-flex h-11 md:h-9 items-center justify-center gap-1.5",
+			"inline-flex h-11 md:h-9 items-center justify-center gap-1.5 flex-shrink-0",
 			"rounded-md px-3 py-1.5",
 			"text-sm font-medium whitespace-nowrap",
 			"transition-all duration-200",
@@ -97,7 +97,7 @@ export function TabNavigation({
 	};
 
 	const triggerClasses = cn(
-		"md:hidden inline-flex h-11 items-center justify-center gap-1.5",
+		"md:hidden inline-flex h-11 items-center justify-center gap-1.5 flex-shrink-0",
 		"rounded-md px-3 py-1.5",
 		"text-sm font-medium whitespace-nowrap",
 		"transition-all duration-200",
@@ -170,7 +170,7 @@ export function TabNavigation({
 
 	return (
 		<nav aria-label={ariaLabel} className="w-full">
-			<div className="bg-muted rounded-lg p-1 flex flex-wrap gap-1 md:gap-1.5">
+			<div className="bg-muted rounded-lg p-1 flex gap-1 md:gap-1.5 overflow-x-auto scrollbar-none">
 				{/* Items toujours visibles (mobile + desktop) */}
 				{visibleItems.map((item) => (
 					<Link
