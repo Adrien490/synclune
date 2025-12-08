@@ -1,5 +1,6 @@
 import { Button } from "@/shared/components/ui/button";
 import { PageHeader } from "@/shared/components/page-header";
+import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 import {
 	OrderStatusTimeline,
 	OrderItemsList,
@@ -65,7 +66,7 @@ export default async function OrderDetailPage({
 				}
 			/>
 
-			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
+			<section className={`bg-background ${ACCOUNT_SECTION_PADDING}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="grid lg:grid-cols-3 gap-6">
 						{/* Main content - 2/3 */}

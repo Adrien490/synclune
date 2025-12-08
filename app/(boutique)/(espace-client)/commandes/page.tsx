@@ -1,5 +1,6 @@
 import { SortSelect } from "@/shared/components/sort-select";
 import { PageHeader } from "@/shared/components/page-header";
+import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 import { AccountNav } from "@/modules/users/components/account-nav";
 import {
 	CustomerOrdersTable,
@@ -90,7 +91,7 @@ export default async function CustomerOrdersPage({
 				}
 			/>
 
-			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
+			<section className={`bg-background ${ACCOUNT_SECTION_PADDING}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="flex gap-8">
 						{/* Sidebar desktop */}

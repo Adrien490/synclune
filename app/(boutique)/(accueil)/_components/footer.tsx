@@ -3,6 +3,7 @@ import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
 import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
+import { FOOTER_PADDING } from "@/shared/constants/spacing";
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -49,7 +50,7 @@ export async function Footer() {
 				aria-hidden="true"
 			/>
 
-			<div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+			<div className={`relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${FOOTER_PADDING}`}>
 				{/* Navigation principale */}
 				<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-8">
 					{/* Colonne 1: Logo + phrase perso */}

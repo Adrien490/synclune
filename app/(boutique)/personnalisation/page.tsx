@@ -1,4 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
@@ -68,7 +69,7 @@ export default async function CustomizationPage() {
 			/>
 
 			{/* Section principale avec formulaire */}
-			<section className="bg-background py-8 sm:py-10 lg:py-12 relative z-10">
+			<section className={`bg-background ${SECTION_SPACING.compact} relative z-10`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					{/* Formulaire de personnalisation */}
 					<CustomizationForm productTypes={productTypes} />

@@ -1,4 +1,5 @@
 import { Fade, Reveal } from "@/shared/components/animations";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { PageHeader } from "@/shared/components/page-header";
@@ -53,7 +54,7 @@ export default function AProposPage() {
 				/>
 
 				{/* Contenu principal */}
-				<section className="bg-background py-8 sm:py-10 lg:py-12">
+				<section className={`bg-background ${SECTION_SPACING.compact}`}>
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 						{/* Qui je suis - Layout avec image */}
 						<Reveal y={20} duration={0.6} once>
