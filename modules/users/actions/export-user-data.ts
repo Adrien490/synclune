@@ -9,67 +9,13 @@ import {
 	notFound,
 	handleActionError,
 } from "@/shared/lib/actions";
+import type { UserDataExport } from "../types/rgpd.types";
+
+// Re-export pour retrocompatibilite
+export type { UserDataExport } from "../types/rgpd.types";
 
 // Rate limit: 5 requêtes par heure (action intensive)
 const EXPORT_DATA_RATE_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
-
-/**
- * Données exportées pour l'utilisateur (droit à la portabilité RGPD - Article 20)
- */
-export interface UserDataExport {
-	exportedAt: string;
-	profile: {
-		name: string | null;
-		email: string;
-		createdAt: string;
-	};
-	addresses: Array<{
-		firstName: string;
-		lastName: string;
-		address1: string;
-		address2: string | null;
-		postalCode: string;
-		city: string;
-		country: string;
-		phone: string;
-		isDefault: boolean;
-	}>;
-	orders: Array<{
-		orderNumber: string;
-		date: string;
-		status: string;
-		paymentStatus: string;
-		total: number;
-		currency: string;
-		items: Array<{
-			productTitle: string;
-			skuColor: string | null;
-			skuMaterial: string | null;
-			skuSize: string | null;
-			price: number;
-			quantity: number;
-		}>;
-		shippingAddress: {
-			firstName: string;
-			lastName: string;
-			address1: string;
-			city: string;
-			postalCode: string;
-			country: string;
-		};
-	}>;
-	wishlist: Array<{
-		productTitle: string;
-		skuColor: string | null;
-		price: number;
-		addedAt: string;
-	}>;
-	discountUsages: Array<{
-		code: string;
-		amountApplied: number;
-		usedAt: string;
-	}>;
-}
 
 /**
  * Server Action pour exporter les données utilisateur (droit à la portabilité RGPD)

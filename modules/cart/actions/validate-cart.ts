@@ -7,20 +7,10 @@ import { headers } from "next/headers";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
+import type { CartValidationIssue, ValidateCartResult } from "../types/cart.types";
 
-export interface CartValidationIssue {
-	cartItemId: string;
-	skuId: string;
-	productTitle: string;
-	issueType: "OUT_OF_STOCK" | "INSUFFICIENT_STOCK" | "INACTIVE" | "NOT_PUBLIC" | "DELETED";
-	message: string;
-	availableStock?: number;
-}
-
-export interface ValidateCartResult {
-	isValid: boolean;
-	issues: CartValidationIssue[];
-}
+// Re-export pour retrocompatibilite
+export type { CartValidationIssue, ValidateCartResult } from "../types/cart.types";
 
 /**
  * Valide l'intégralité du panier avant la commande

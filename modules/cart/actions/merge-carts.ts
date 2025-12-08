@@ -9,20 +9,10 @@ import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/li
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import type { MergeCartsResult } from "../types/cart.types";
 
-export type MergeCartsResult =
-	| {
-			status: typeof ActionStatus.SUCCESS;
-			message: string;
-			data: {
-				mergedItems: number;
-				conflicts: number;
-			};
-	  }
-	| {
-			status: typeof ActionStatus.ERROR;
-			message: string;
-	  };
+// Re-export pour retrocompatibilite
+export type { MergeCartsResult } from "../types/cart.types";
 
 /**
  * Fusionne le panier visiteur avec le panier utilisateur après connexion

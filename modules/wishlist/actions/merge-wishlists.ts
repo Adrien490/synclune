@@ -7,20 +7,10 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
+import type { MergeWishlistsResult } from "../types/wishlist.types";
 
-export type MergeWishlistsResult =
-	| {
-			status: typeof ActionStatus.SUCCESS;
-			message: string;
-			data: {
-				addedItems: number;
-				skippedItems: number;
-			};
-	  }
-	| {
-			status: typeof ActionStatus.ERROR;
-			message: string;
-	  };
+// Re-export pour retrocompatibilite
+export type { MergeWishlistsResult } from "../types/wishlist.types";
 
 /**
  * Fusionne la wishlist visiteur avec la wishlist utilisateur après connexion

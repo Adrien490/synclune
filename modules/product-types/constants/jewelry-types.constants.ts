@@ -1,20 +1,9 @@
 // Plus besoin d'importer ProductType - maintenant un modèle dynamique
 
-export interface JewelryTypeConfig {
-	key: string;
-	label: string;
-	description: string;
-	image: string;
-	icon: string;
-	href: string;
-	subTypes?: JewelrySubType[];
-}
+import type { JewelryTypeConfig, JewelrySubType } from "../types/jewelry.types";
 
-export interface JewelrySubType {
-	key: string;
-	label: string;
-	href: string;
-}
+// Re-export pour retrocompatibilite
+export type { JewelryTypeConfig, JewelrySubType } from "../types/jewelry.types";
 
 // Nouveaux types de bijoux Synclune
 export const SYNCLUNE_JEWELRY_TYPES: JewelryTypeConfig[] = [
@@ -135,42 +124,11 @@ export const JEWELRY_TYPES: Record<string, JewelryTypeConfig> = {
 
 export const JEWELRY_TYPES_ARRAY = Object.values(JEWELRY_TYPES);
 
-/**
- * Récupère la configuration d'un type de bijou (ancienne API pour compatibilité)
- */
-export const getJewelryTypeConfig = (
-	typeSlug: string
-): JewelryTypeConfig | undefined => {
-	return JEWELRY_TYPES[typeSlug];
-};
-
-/**
- * Récupère le label français d'un type de bijou (ancienne API pour compatibilité)
- */
-export const getJewelryTypeLabel = (typeSlug: string): string => {
-	return JEWELRY_TYPES[typeSlug]?.label || "Type inconnu";
-};
-
-/**
- * Récupère tous les types de bijoux sous forme de tableau (utilise la nouvelle liste Synclune)
- */
-export const getAllJewelryTypes = (): JewelryTypeConfig[] => {
-	return SYNCLUNE_JEWELRY_TYPES;
-};
-
-/**
- * Récupère un type de bijou par sa clé (nouvelle API)
- */
-export const getJewelryTypeByKey = (
-	key: string
-): JewelryTypeConfig | undefined => {
-	return SYNCLUNE_JEWELRY_TYPES.find((type) => type.key === key);
-};
-
-/**
- * Récupère tous les sous-types d'un type de bijou
- */
-export const getJewelrySubTypes = (typeKey: string): JewelrySubType[] => {
-	const type = getJewelryTypeByKey(typeKey);
-	return type?.subTypes || [];
-};
+// Re-export fonctions pour retrocompatibilite (voir utils/jewelry.utils.ts)
+export {
+	getJewelryTypeConfig,
+	getJewelryTypeLabel,
+	getAllJewelryTypes,
+	getJewelryTypeByKey,
+	getJewelrySubTypes,
+} from "../utils/jewelry.utils";

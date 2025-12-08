@@ -11,6 +11,8 @@
  *
  * L'AggregateRating ne doit PAS être utilisé avec des données fictives
  * car cela peut entraîner des pénalités SEO de Google.
+ *
+ * Fonctions: voir utils/seo.ts
  */
 
 /**
@@ -21,30 +23,8 @@ export const REVIEW_CONFIG = {
 	worstRating: 1,
 } as const;
 
-/**
- * Génère le Schema.org AggregateRating pour un produit
- * À utiliser UNIQUEMENT avec de vrais avis depuis la base de données
- *
- * @param ratingValue - Note moyenne réelle
- * @param reviewCount - Nombre réel d'avis
- */
-export function getProductAggregateRating(
-	ratingValue: number,
-	reviewCount: number
-) {
-	// Ne pas générer si pas d'avis réels
-	if (reviewCount === 0) {
-		return null;
-	}
-
-	return {
-		"@type": "AggregateRating",
-		ratingValue: ratingValue.toString(),
-		reviewCount: reviewCount.toString(),
-		bestRating: REVIEW_CONFIG.bestRating.toString(),
-		worstRating: REVIEW_CONFIG.worstRating.toString(),
-	};
-}
+// Re-export pour retrocompatibilite
+export { getProductAggregateRating } from "../utils/seo";
 
 /**
  * TODO: Implémenter un vrai système d'avis
