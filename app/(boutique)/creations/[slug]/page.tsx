@@ -121,7 +121,11 @@ export default async function ProductPage({
 			<ParticleSystem count={8} size={[12, 80]} className="fixed inset-0 z-0" />
 
 			<div className="relative z-10">
-				<PageHeader title={product.title} breadcrumbs={breadcrumbs} />
+				<PageHeader
+					title={product.title}
+					breadcrumbs={breadcrumbs}
+					className="hidden sm:block"
+				/>
 
 				{/* Contenu principal */}
 				<div className={`bg-background ${SECTION_SPACING.default}`}>
