@@ -257,8 +257,6 @@ export default async function BijouxHubPage({
 								label: SORT_LABELS[option as keyof typeof SORT_LABELS],
 							}))}
 							placeholder="Plus récents"
-							compactMobile
-							compactAriaLabel="Trier les produits"
 						/>
 						<ProductFilterSheet
 							colors={colors}

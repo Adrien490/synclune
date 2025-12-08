@@ -20,7 +20,7 @@ import { ReactNode } from "react";
  * @example Compact variant (horizontal on all screen sizes)
  * ```tsx
  * <Toolbar variant="compact" search={<SearchForm />}>
- *   <SelectFilter compactMobile />
+ *   <SelectFilter filterKey="sortBy" label="Trier" options={[...]} />
  *   <ProductFilterSheet />
  * </Toolbar>
  * ```

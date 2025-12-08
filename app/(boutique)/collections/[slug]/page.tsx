@@ -143,8 +143,6 @@ export default async function CollectionPage({
 								label: SORT_LABELS[option as keyof typeof SORT_LABELS],
 							}))}
 							placeholder="Meilleures ventes"
-							compactMobile
-							compactAriaLabel="Trier les produits"
 						/>
 					</Toolbar>
 
