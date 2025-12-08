@@ -175,6 +175,8 @@ export function SortableMediaItem({
 						quality={80}
 						loading={index > 0 ? "lazy" : undefined}
 						decoding="async"
+						placeholder={media.blurDataUrl ? "blur" : "empty"}
+						blurDataURL={media.blurDataUrl}
 						onLoad={() => onImageLoaded(media.url)}
 					/>
 				)}

@@ -2,7 +2,6 @@
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { MediaErrorFallback } from "@/modules/media/components/media-error-fallback";
-import { MediaTypeBadge } from "@/modules/media/components/media-type-badge";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import Image from "next/image";
@@ -65,9 +64,6 @@ function GalleryMediaRendererComponent({
 				>
 					<source src={media.url} type={getVideoMimeType(media.url)} />
 				</video>
-				<div className="absolute top-4 right-4 pointer-events-none z-10">
-					<MediaTypeBadge type="VIDEO" size="lg" />
-				</div>
 			</div>
 		);
 	}

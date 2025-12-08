@@ -24,8 +24,8 @@ export default function ProductDetailLoading() {
 			/>
 
 			<div className="relative z-10">
-				{/* PageHeader Skeleton - Utilise le composant existant */}
-				<PageHeaderSkeleton hasDescription={false} />
+				{/* PageHeader Skeleton - Caché sur mobile comme le vrai PageHeader */}
+				<PageHeaderSkeleton hasDescription={false} className="hidden sm:block" />
 
 				{/* Main Content */}
 				<div className={`bg-background ${SECTION_SPACING.default}`}>

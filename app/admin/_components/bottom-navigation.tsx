@@ -46,7 +46,7 @@ const panelItemStyles = {
 		sharedItemStyles.layout,
 		sharedItemStyles.transition,
 		sharedItemStyles.focusRing,
-		"gap-1 py-3 px-2 min-h-[72px] rounded-xl",
+		"gap-0.5 py-2 px-1.5 min-h-[60px] rounded-xl",
 		// Reset pour que les boutons s'alignent comme les liens
 		"border-0 bg-transparent appearance-none cursor-pointer"
 	),
@@ -179,7 +179,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 							variants={shouldReduceMotion ? undefined : containerVariants}
 							initial="hidden"
 							animate="visible"
-							className="grid grid-cols-4 gap-2 p-4 pb-2"
+							className="grid grid-cols-4 gap-1 p-3 pb-1.5"
 						>
 							{secondaryItems.map((item) => (
 								<PanelNavItem
@@ -202,8 +202,8 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 											"w-full"
 										)}
 									>
-										<LogOut className="h-6 w-6 shrink-0" aria-hidden="true" />
-										<span className="text-xs text-center leading-tight">
+										<LogOut className="size-5 shrink-0" aria-hidden="true" />
+										<span className="text-[10px] text-center leading-tight tracking-tight">
 											Déconnexion
 										</span>
 									</button>
@@ -212,14 +212,14 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 						</motion.div>
 
 						{/* Voir le site - pleine largeur en bas */}
-						<div className="px-4 pb-4">
+						<div className="px-3 pb-3">
 							<Link
 								href="/"
 								target="_blank"
 								rel="noopener noreferrer"
 								onClick={closePanel}
 								className={cn(
-									"flex items-center justify-between w-full py-3 px-4 rounded-xl",
+									"flex items-center justify-between w-full py-2.5 px-3 rounded-xl",
 									sharedItemStyles.transition,
 									sharedItemStyles.focusRing,
 									"text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30"
@@ -227,10 +227,10 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 								aria-label="Voir le site (s'ouvre dans un nouvel onglet)"
 							>
 								<span className="flex items-center gap-2">
-									<ExternalLink className="h-5 w-5 shrink-0" aria-hidden="true" />
-									<span className="text-sm font-medium">Voir le site</span>
+									<ExternalLink className="size-4 shrink-0" aria-hidden="true" />
+									<span className="text-xs font-medium">Voir le site</span>
 								</span>
-								<ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+								<ChevronRight className="size-3.5 shrink-0" aria-hidden="true" />
 							</Link>
 						</div>
 					</motion.div>
@@ -344,8 +344,8 @@ const PanelNavItem = memo(function PanelNavItem({
 				aria-current={isActive ? "page" : undefined}
 			>
 				{isActive && <ActiveIndicator />}
-				<Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
-				<span className="text-xs text-center leading-tight line-clamp-2">
+				<Icon className="size-5 shrink-0" aria-hidden="true" />
+				<span className="text-[10px] text-center leading-tight tracking-tight line-clamp-2">
 					{item.shortTitle || item.title}
 				</span>
 			</Link>

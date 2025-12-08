@@ -315,6 +315,8 @@ interface PageHeaderSkeletonProps {
 	hasActions?: boolean;
 	/** Afficher le placeholder de description */
 	hasDescription?: boolean;
+	/** Classes CSS additionnelles */
+	className?: string;
 }
 
 /**
@@ -324,10 +326,11 @@ export function PageHeaderSkeleton({
 	variant = "default",
 	hasActions = false,
 	hasDescription = true,
+	className,
 }: PageHeaderSkeletonProps) {
 	if (variant === "compact") {
 		return (
-			<div className="space-y-6 mb-4 md:mb-6 animate-pulse">
+			<div className={cn("space-y-6 mb-4 md:mb-6 animate-pulse", className)}>
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
 					<div className="min-w-0 flex-1 space-y-3">
 						<div className="h-9 w-48 bg-muted rounded" />
@@ -344,7 +347,7 @@ export function PageHeaderSkeleton({
 	}
 
 	return (
-		<header className="relative overflow-hidden bg-background border-b border-border">
+		<header className={cn("relative overflow-hidden bg-background border-b border-border", className)}>
 			<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-32 pb-6 animate-pulse">
 				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6">
 					<div className="min-w-0 flex-1 space-y-2">
