@@ -151,7 +151,7 @@ export function SortableMediaItem({
 							}}
 							className={cn(
 								"absolute inset-0 flex items-center justify-center cursor-pointer",
-								"opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+								"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
 								"motion-safe:transition-opacity"
 							)}
 							aria-label={`Lire la vidéo ${index + 1}`}

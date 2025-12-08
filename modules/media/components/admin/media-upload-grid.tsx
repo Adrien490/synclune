@@ -67,9 +67,8 @@ export function MediaUploadGrid({
 	// État de chargement des images
 	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
-	// État du lightbox
-	const [lightboxOpen, setLightboxOpen] = useState(false);
-	const [lightboxIndex, setLightboxIndex] = useState(0);
+	// État du lightbox (null = fermé, number = index ouvert)
+	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
 	// État du drag actif pour DragOverlay (index pour O(1) lookup)
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -140,7 +139,6 @@ export function MediaUploadGrid({
 	// Ouvrir le lightbox
 	const openLightbox = (index: number) => {
 		setLightboxIndex(index);
-		setLightboxOpen(true);
 	};
 
 	// Gestion du drag start
@@ -312,10 +310,10 @@ export function MediaUploadGrid({
 
 			{/* Lightbox */}
 			<MediaLightbox
-				open={lightboxOpen}
-				close={() => setLightboxOpen(false)}
+				open={lightboxIndex !== null}
+				close={() => setLightboxIndex(null)}
 				slides={slides}
-				index={lightboxIndex}
+				index={lightboxIndex ?? 0}
 				onIndexChange={setLightboxIndex}
 			/>
 		</>
