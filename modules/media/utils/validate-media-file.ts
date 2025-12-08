@@ -156,3 +156,35 @@ export function validateMediaFiles(
 
 	return { validFiles, errors, skipped };
 }
+
+// ============================================================================
+// VALIDATION HELPERS (utilisés par les scripts de migration)
+// ============================================================================
+
+/** Pattern CUID (25 caractères alphanumériques commençant par 'c') */
+const CUID_PATTERN = /^c[a-z0-9]{24}$/;
+
+/** Domaines UploadThing autorisés */
+const UPLOADTHING_DOMAINS = ["utfs.io", "uploadthing.com", "ufs.sh"] as const;
+
+/**
+ * Valide qu'un ID est un CUID valide
+ * Empêche l'injection de commandes via des IDs malveillants
+ */
+export function isValidCuid(id: string): boolean {
+	return CUID_PATTERN.test(id);
+}
+
+/**
+ * Valide qu'une URL provient d'un domaine UploadThing autorisé
+ */
+export function isValidUploadThingUrl(url: string): boolean {
+	try {
+		const parsed = new URL(url);
+		return UPLOADTHING_DOMAINS.some(
+			(domain) => parsed.hostname === domain || parsed.hostname.endsWith(`.${domain}`)
+		);
+	} catch {
+		return false;
+	}
+}

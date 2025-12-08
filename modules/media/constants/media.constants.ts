@@ -34,41 +34,6 @@ export const IMAGE_MIME_TYPES = [
 ] as const;
 
 // ============================================================================
-// HELPERS
-// ============================================================================
-
-/**
- * Vérifie si une URL pointe vers une vidéo basée sur son extension
- */
-export function isVideoUrl(url: string): boolean {
-	const lowercaseUrl = url.toLowerCase();
-	return VIDEO_EXTENSIONS.some((ext) => lowercaseUrl.endsWith(ext));
-}
-
-/**
- * Vérifie si une URL pointe vers une image basée sur son extension
- */
-export function isImageUrl(url: string): boolean {
-	const lowercaseUrl = url.toLowerCase();
-	return IMAGE_EXTENSIONS.some((ext) => lowercaseUrl.endsWith(ext));
-}
-
-/**
- * Détecte le type de média (IMAGE ou VIDEO) basé sur l'URL
- */
-export function detectMediaType(url: string): "IMAGE" | "VIDEO" {
-	return isVideoUrl(url) ? "VIDEO" : "IMAGE";
-}
-
-/**
- * Obtient l'extension d'un fichier depuis son URL
- */
-export function getFileExtension(url: string): string | null {
-	const match = url.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
-	return match ? `.${match[1].toLowerCase()}` : null;
-}
-
-// ============================================================================
 // CONFIGURATION THUMBNAILS
 // ============================================================================
 
@@ -100,5 +65,52 @@ export const THUMBNAIL_CONFIG = {
 	retryBaseDelay: 1000,
 } as const;
 
+// ============================================================================
+// CONFIGURATION SCRIPT MIGRATION THUMBNAILS
+// ============================================================================
+
+/** Domaines UploadThing autorises pour le telechargement */
+export const ALLOWED_UPLOADTHING_DOMAINS = [
+	"utfs.io",
+	"uploadthing.com",
+	"ufs.sh",
+] as const;
+
+/** Configuration pour le script de migration generate-video-thumbnails.ts */
+export const VIDEO_MIGRATION_CONFIG = {
+	/** Timeout pour le téléchargement de vidéo (ms) */
+	downloadTimeout: 60000,
+	/** Timeout pour les commandes FFmpeg (ms) */
+	ffmpegTimeout: 30000,
+	/** Taille max des vidéos en octets (512 MB - aligné sur UploadThing) */
+	maxVideoSize: 512 * 1024 * 1024,
+	/** Durée max recommandée pour vidéos produit (secondes) */
+	maxVideoDuration: 120,
+	/** Domaines UploadThing autorisés pour le téléchargement */
+	allowedDomains: ALLOWED_UPLOADTHING_DOMAINS,
+} as const;
+
 /** Type pour les tailles de thumbnails */
 export type ThumbnailSize = "SMALL" | "MEDIUM";
+
+// ============================================================================
+// CONFIGURATION BLUR PLACEHOLDERS
+// ============================================================================
+
+/** Configuration pour la génération de blur placeholders (images) */
+export const BLUR_PLACEHOLDER_CONFIG = {
+	/** Timeout pour le téléchargement d'image (ms) */
+	downloadTimeout: 30000,
+	/** Taille max des images en octets (20 MB) */
+	maxImageSize: 20 * 1024 * 1024,
+	/** Taille du placeholder blur (en pixels, plaiceholder size) */
+	plaiceholderSize: 10,
+	/** Nombre de tentatives avant échec */
+	maxRetries: 3,
+	/** Délai de base pour backoff exponentiel (ms) */
+	retryBaseDelay: 1000,
+	/** Pause entre batches (ms) */
+	batchDelay: 500,
+	/** Domaines autorisés pour le téléchargement */
+	allowedDomains: ALLOWED_UPLOADTHING_DOMAINS,
+} as const;

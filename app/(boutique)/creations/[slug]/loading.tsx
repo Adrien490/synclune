@@ -1,7 +1,6 @@
 import { PageHeaderSkeleton } from "@/shared/components/page-header";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { SECTION_SPACING } from "@/shared/constants/spacing";
 
 /**
  * Loading state for product detail page
@@ -27,8 +26,8 @@ export default function ProductDetailLoading() {
 				{/* PageHeader Skeleton - Caché sur mobile comme le vrai PageHeader */}
 				<PageHeaderSkeleton hasDescription={false} className="hidden sm:block" />
 
-				{/* Main Content */}
-				<div className={`bg-background ${SECTION_SPACING.default}`}>
+				{/* Main Content - pt-20 sur mobile pour compenser l'absence de PageHeader */}
+				<div className="bg-background pt-20 pb-12 sm:py-12 lg:py-16">
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article className="space-y-12">
 							{/* Product Content Grid - Gallery sticky on desktop */}

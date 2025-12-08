@@ -3,11 +3,11 @@ import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
-import { getPlaiceholder } from "plaiceholder";
 import {
 	generateVideoThumbnail,
 	isFFmpegAvailable,
 } from "@/modules/media/services/generate-video-thumbnail";
+import { generateBlurDataUrl } from "@/modules/media/services/generate-blur-data-url";
 
 // Vérifier que le token UploadThing est configuré au démarrage
 if (!process.env.UPLOADTHING_TOKEN) {
@@ -36,10 +36,6 @@ const ALLOWED_DOCUMENT_TYPES = [
 	"application/pdf",
 	"text/plain",
 ] as const;
-
-// Configuration pour la génération de blur placeholders
-const BLUR_GENERATION_TIMEOUT = 15_000; // 15 secondes
-const MAX_BLUR_IMAGE_SIZE = 20 * 1024 * 1024; // 20MB
 
 /**
  * Valide le type MIME d'un fichier côté serveur
@@ -70,50 +66,6 @@ function validateFileSize(
 		throw new UploadThingError(
 			`Fichier trop volumineux: ${file.name} (${sizeMB}MB). Taille max: ${maxSizeMB}MB`
 		);
-	}
-}
-
-/**
- * Génère un blurDataURL (base64) pour une image uploadée
- * Utilisé pour le placeholder blur lors du chargement progressif
- * @returns base64 string ou undefined si échec (timeout, erreur réseau, image trop grande)
- */
-async function generateBlurDataUrl(imageUrl: string): Promise<string | undefined> {
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), BLUR_GENERATION_TIMEOUT);
-
-	try {
-		const response = await fetch(imageUrl, { signal: controller.signal });
-		clearTimeout(timeoutId);
-
-		if (!response.ok) {
-			console.warn(`[BlurDataUrl] Fetch failed: ${response.status} for ${imageUrl}`);
-			return undefined;
-		}
-
-		const buffer = Buffer.from(await response.arrayBuffer());
-
-		// Validation taille avant traitement plaiceholder
-		if (buffer.length > MAX_BLUR_IMAGE_SIZE) {
-			console.warn(
-				`[BlurDataUrl] Image too large: ${(buffer.length / 1024 / 1024).toFixed(2)}MB (max: ${MAX_BLUR_IMAGE_SIZE / 1024 / 1024}MB)`
-			);
-			return undefined;
-		}
-
-		const { base64 } = await getPlaiceholder(buffer, { size: 10 });
-		return base64;
-	} catch (error) {
-		if (error instanceof Error && error.name === "AbortError") {
-			console.warn(
-				`[BlurDataUrl] Timeout after ${BLUR_GENERATION_TIMEOUT}ms for ${imageUrl}`
-			);
-		} else {
-			console.warn("[BlurDataUrl] Generation failed:", error);
-		}
-		return undefined;
-	} finally {
-		clearTimeout(timeoutId);
 	}
 }
 

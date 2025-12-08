@@ -6,10 +6,11 @@
  *
  * Etapes:
  * 1. Recupere les SkuMedia de type VIDEO sans thumbnailSmallUrl
- * 2. Telecharge chaque video temporairement
- * 3. Extrait une frame a 10% de la duree (max 1s) avec FFmpeg
- * 4. Genere 2 thumbnails WebP (small + medium)
- * 5. Upload sur UploadThing et met a jour la base de donnees
+ * 2. Telecharge chaque video temporairement (streaming)
+ * 3. Valide le format video avec FFprobe
+ * 4. Extrait une frame a 10% de la duree (max 1s) avec FFmpeg
+ * 5. Genere 2 thumbnails WebP (small + medium)
+ * 6. Upload sur UploadThing et met a jour la base de donnees
  *
  * ============================================================================
  * PREREQUIS: FFmpeg doit etre installe sur le systeme
@@ -50,13 +51,34 @@
  */
 
 import { exec } from "child_process";
-import { existsSync, mkdirSync, rmSync, unlinkSync, readFileSync, statSync } from "fs";
+import { createWriteStream, existsSync, mkdirSync, rmSync, unlinkSync, readFileSync, statSync } from "fs";
+import { pipeline } from "stream/promises";
+import { Readable } from "stream";
 import { join } from "path";
 import { promisify } from "util";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../app/generated/prisma/client";
 import { UTApi } from "uploadthing/server";
-import { THUMBNAIL_CONFIG } from "../modules/media/constants/media.constants";
+import {
+	THUMBNAIL_CONFIG,
+	VIDEO_MIGRATION_CONFIG,
+} from "../modules/media/constants/media.constants";
+import {
+	isValidCuid,
+	isValidUploadThingUrl,
+} from "../modules/media/utils/validate-media-file";
+
+/**
+ * Helper pour valider les variables d'environnement requises par le script
+ * (ne charge pas le module env.ts qui valide TOUTES les variables Next.js)
+ */
+function getScriptEnv(key: string): string {
+	const value = process.env[key];
+	if (!value) {
+		throw new Error(`Variable d'environnement manquante: ${key}. Vérifiez votre fichier .env`);
+	}
+	return value;
+}
 
 const execAsync = promisify(exec);
 
@@ -74,19 +96,18 @@ const THUMBNAIL_SIZES = {
 const CAPTURE_POSITION = THUMBNAIL_CONFIG.capturePosition;
 const MAX_CAPTURE_TIME = THUMBNAIL_CONFIG.maxCaptureTime;
 
-const TEMP_DIR = join(process.cwd(), ".tmp-thumbnails");
+// Timeouts et limites (centralisés depuis VIDEO_MIGRATION_CONFIG)
+const DOWNLOAD_TIMEOUT = VIDEO_MIGRATION_CONFIG.downloadTimeout;
+const FFMPEG_TIMEOUT = VIDEO_MIGRATION_CONFIG.ffmpegTimeout;
+const MAX_VIDEO_SIZE = VIDEO_MIGRATION_CONFIG.maxVideoSize;
+const MAX_VIDEO_DURATION = VIDEO_MIGRATION_CONFIG.maxVideoDuration;
 
-// Timeouts et limites
-const DOWNLOAD_TIMEOUT = 60000; // 60 secondes pour télécharger
-const FFMPEG_TIMEOUT = 30000; // 30 secondes pour FFmpeg
-const MAX_VIDEO_SIZE = 512 * 1024 * 1024; // 512 MB max (aligné sur UploadThing)
+// Retry configuration (centralisée depuis THUMBNAIL_CONFIG)
+const MAX_RETRIES = THUMBNAIL_CONFIG.maxRetries;
+const RETRY_BASE_DELAY = THUMBNAIL_CONFIG.retryBaseDelay;
 
-// Retry configuration
-const MAX_RETRIES = 3;
-const RETRY_BASE_DELAY = 1000; // 1 seconde, puis backoff exponentiel
-
-// P13 - Validation durée vidéo (optionnel, pour bijouterie)
-const MAX_VIDEO_DURATION = 120; // 2 minutes max recommandé pour les vidéos produit
+// Dossier temporaire avec PID pour éviter les race conditions entre instances
+const TEMP_DIR = join(process.cwd(), `.tmp-thumbnails-${process.pid}`);
 
 // Arguments CLI
 const DRY_RUN = process.argv.includes("--dry-run");
@@ -95,7 +116,7 @@ const PARALLEL_COUNT = PARALLEL_ARG ? parseInt(PARALLEL_ARG.split("=")[1], 10) :
 const JSON_LOGS = process.argv.includes("--json");
 
 // ============================================================================
-// P14 - LOGS STRUCTURÉS (Sentry-ready)
+// LOGS STRUCTURÉS (Sentry-ready)
 // ============================================================================
 
 interface StructuredLog {
@@ -127,6 +148,10 @@ function logWarning(event: string, data?: Record<string, unknown>): void {
 		event,
 		data,
 	});
+	// Aussi afficher en console pour visibilité
+	if (!JSON_LOGS && data) {
+		console.warn(`    [WARN] ${event}:`, JSON.stringify(data));
+	}
 }
 
 function logError(event: string, data?: Record<string, unknown>): void {
@@ -138,11 +163,12 @@ function logError(event: string, data?: Record<string, unknown>): void {
 	});
 }
 
-// Initialisation Prisma
-const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+// Initialisation Prisma avec validation env
+const databaseUrl = getScriptEnv("DATABASE_URL");
+const adapter = new PrismaNeon({ connectionString: databaseUrl });
 const prisma = new PrismaClient({ adapter });
 
-// Initialisation UTApi
+// Initialisation UTApi (UPLOADTHING_TOKEN est validé par le module)
 const utapi = new UTApi();
 
 // ============================================================================
@@ -159,6 +185,15 @@ interface ProcessResult {
 	id: string;
 	success: boolean;
 	error?: string;
+}
+
+interface FFmpegOptions {
+	inputPath: string;
+	outputPath: string;
+	timeInSeconds: number;
+	width: number;
+	quality: number;
+	format: "webp" | "jpeg";
 }
 
 // ============================================================================
@@ -237,9 +272,40 @@ async function checkFFmpegInstalled(): Promise<boolean> {
 }
 
 /**
- * Télécharge une vidéo depuis une URL avec validation de taille
+ * Construit une commande FFmpeg pour l'extraction de frame
+ */
+function buildFFmpegCommand(options: FFmpegOptions): string {
+	const { inputPath, outputPath, timeInSeconds, width, quality, format } = options;
+
+	const baseArgs = [
+		"ffmpeg",
+		"-y", // Écraser le fichier si existant
+		"-ss", timeInSeconds.toString(), // Position temporelle
+		`-i "${inputPath}"`, // Fichier d'entrée (quoted pour sécurité)
+		"-vframes 1", // Une seule frame
+		`-vf "scale=${width}:-1"`, // Redimensionner en gardant le ratio
+	];
+
+	if (format === "webp") {
+		baseArgs.push("-c:v libwebp", `-quality ${quality}`);
+	} else {
+		baseArgs.push("-q:v 2"); // Qualité JPEG
+	}
+
+	baseArgs.push(`"${outputPath}"`);
+
+	return baseArgs.join(" ");
+}
+
+/**
+ * Télécharge une vidéo depuis une URL avec streaming (économie mémoire)
  */
 async function downloadVideo(url: string, outputPath: string): Promise<void> {
+	// Validation de l'URL avant téléchargement
+	if (!isValidUploadThingUrl(url)) {
+		throw new Error(`URL non autorisée: le domaine doit être UploadThing (${url.substring(0, 50)}...)`);
+	}
+
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT);
 
@@ -261,32 +327,51 @@ async function downloadVideo(url: string, outputPath: string): Promise<void> {
 			);
 		}
 
-		// Télécharger le fichier
+		// Télécharger le fichier avec streaming
 		const response = await fetch(url, { signal: controller.signal });
 		if (!response.ok) {
 			throw new Error(`Échec du téléchargement: ${response.status} ${response.statusText}`);
 		}
 
-		const arrayBuffer = await response.arrayBuffer();
-
-		// Vérifier la taille après téléchargement
-		if (arrayBuffer.byteLength > MAX_VIDEO_SIZE) {
-			throw new Error(
-				`Vidéo trop volumineuse: ${Math.round(arrayBuffer.byteLength / 1024 / 1024)}MB (max: ${MAX_VIDEO_SIZE / 1024 / 1024}MB)`
-			);
+		if (!response.body) {
+			throw new Error("Pas de body dans la réponse");
 		}
 
-		const buffer = Buffer.from(arrayBuffer);
-		const { writeFileSync } = await import("fs");
-		writeFileSync(outputPath, buffer);
+		// Streaming vers le fichier (économie mémoire)
+		const writeStream = createWriteStream(outputPath);
+		const readable = Readable.fromWeb(response.body as never);
+		await pipeline(readable, writeStream);
+
+		// Vérifier la taille après téléchargement
+		const stats = statSync(outputPath);
+		if (stats.size > MAX_VIDEO_SIZE) {
+			unlinkSync(outputPath);
+			throw new Error(
+				`Vidéo trop volumineuse: ${Math.round(stats.size / 1024 / 1024)}MB (max: ${MAX_VIDEO_SIZE / 1024 / 1024}MB)`
+			);
+		}
 	} finally {
 		clearTimeout(timeoutId);
 	}
 }
 
 /**
+ * Valide qu'un fichier est une vidéo valide avec FFprobe
+ */
+async function validateVideoFormat(videoPath: string): Promise<boolean> {
+	const command = `ffprobe -v error -select_streams v:0 -show_entries stream=codec_type -of default=noprint_wrappers=1:nokey=1 "${videoPath}"`;
+
+	try {
+		const { stdout } = await execWithTimeout(command, 10000);
+		return stdout.trim() === "video";
+	} catch {
+		return false;
+	}
+}
+
+/**
  * Obtient la durée d'une vidéo avec FFprobe
- * P13 - Ajoute un warning si durée > MAX_VIDEO_DURATION
+ * Ajoute un warning si durée > MAX_VIDEO_DURATION
  */
 async function getVideoDuration(videoPath: string, mediaId?: string): Promise<number> {
 	const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${videoPath}"`;
@@ -299,7 +384,7 @@ async function getVideoDuration(videoPath: string, mediaId?: string): Promise<nu
 			return 10; // Fallback pour calculer 10% = 1s
 		}
 
-		// P13 - Avertissement si vidéo trop longue
+		// Avertissement si vidéo trop longue
 		if (duration > MAX_VIDEO_DURATION) {
 			const durationMin = Math.floor(duration / 60);
 			const durationSec = Math.round(duration % 60);
@@ -329,35 +414,30 @@ async function extractFrameAtSize(
 	width: number,
 	quality: number
 ): Promise<void> {
-	// Commande FFmpeg pour extraire une frame au format WebP
-	const command = [
-		"ffmpeg",
-		"-y", // Écraser le fichier si existant
-		"-ss", timeInSeconds.toString(), // Position temporelle
-		"-i", `"${videoPath}"`, // Fichier d'entrée
-		"-vframes", "1", // Une seule frame
-		"-vf", `scale=${width}:-1`, // Redimensionner en gardant le ratio
-		"-c:v", "libwebp", // Codec WebP
-		"-quality", quality.toString(), // Qualité
-		`"${outputPath}"`,
-	].join(" ");
+	// Commande WebP
+	const webpCommand = buildFFmpegCommand({
+		inputPath: videoPath,
+		outputPath,
+		timeInSeconds,
+		width,
+		quality,
+		format: "webp",
+	});
 
 	try {
-		await execWithTimeout(command, FFMPEG_TIMEOUT);
+		await execWithTimeout(webpCommand, FFMPEG_TIMEOUT);
 	} catch {
 		console.log(`    WebP échoué pour ${width}px, fallback vers JPEG...`);
 		// Si WebP échoue, essayer avec JPEG
 		const jpegOutputPath = outputPath.replace(".webp", ".jpg");
-		const jpegCommand = [
-			"ffmpeg",
-			"-y",
-			"-ss", timeInSeconds.toString(),
-			"-i", `"${videoPath}"`,
-			"-vframes", "1",
-			"-vf", `scale=${width}:-1`,
-			"-q:v", "2",
-			`"${jpegOutputPath}"`,
-		].join(" ");
+		const jpegCommand = buildFFmpegCommand({
+			inputPath: videoPath,
+			outputPath: jpegOutputPath,
+			timeInSeconds,
+			width,
+			quality: 2, // Qualité JPEG
+			format: "jpeg",
+		});
 
 		await execWithTimeout(jpegCommand, FFMPEG_TIMEOUT);
 
@@ -401,17 +481,19 @@ async function generateBlurDataUrl(thumbnailPath: string): Promise<string | null
 	try {
 		// Générer une version 10x10 de la thumbnail small
 		const blurPath = thumbnailPath.replace(".webp", "-blur.webp");
-		const command = [
-			"ffmpeg",
-			"-y",
-			"-i", `"${thumbnailPath}"`,
-			"-vf", "scale=10:10",
-			"-c:v", "libwebp",
-			"-quality", "50",
-			`"${blurPath}"`,
-		].join(" ");
+		const command = buildFFmpegCommand({
+			inputPath: thumbnailPath,
+			outputPath: blurPath,
+			timeInSeconds: 0,
+			width: 10,
+			quality: 50,
+			format: "webp",
+		}).replace("-ss 0", "").replace("-vframes 1", ""); // Pas besoin pour une image
 
-		await execWithTimeout(command, 5000);
+		// Commande simplifiée pour image
+		const imageCommand = `ffmpeg -y -i "${thumbnailPath}" -vf "scale=10:10" -c:v libwebp -quality 50 "${blurPath}"`;
+
+		await execWithTimeout(imageCommand, 5000);
 
 		if (!existsSync(blurPath)) {
 			return null;
@@ -424,8 +506,8 @@ async function generateBlurDataUrl(thumbnailPath: string): Promise<string | null
 		// Nettoyer le fichier blur temporaire
 		try {
 			unlinkSync(blurPath);
-		} catch {
-			// Ignorer
+		} catch (cleanupError) {
+			logWarning("blur_cleanup_failed", { error: String(cleanupError), path: blurPath });
 		}
 
 		return blurDataUrl;
@@ -456,6 +538,14 @@ async function uploadThumbnail(filePath: string, mediaId: string): Promise<strin
  * Traite une vidéo : télécharge, extrait frames, upload, met à jour DB
  */
 async function processVideo(media: VideoMedia, index: number, total: number): Promise<ProcessResult> {
+	// Validation CUID de l'ID avant utilisation dans les chemins de fichiers
+	if (!isValidCuid(media.id)) {
+		const errorMsg = `ID invalide (doit être un CUID): ${media.id}`;
+		console.error(`  ❌ ${errorMsg}`);
+		logError("invalid_media_id", { mediaId: media.id, reason: "not_a_cuid" });
+		return { id: media.id, success: false, error: errorMsg };
+	}
+
 	const videoPath = join(TEMP_DIR, `video-${media.id}.mp4`);
 	const smallThumbnailPath = join(TEMP_DIR, `thumbnail-small-${media.id}.webp`);
 	const mediumThumbnailPath = join(TEMP_DIR, `thumbnail-medium-${media.id}.webp`);
@@ -469,20 +559,27 @@ async function processVideo(media: VideoMedia, index: number, total: number): Pr
 	}
 
 	try {
-		// 1. Télécharger la vidéo avec retry
-		console.log("  Téléchargement de la vidéo...");
+		// 1. Télécharger la vidéo avec retry (streaming)
+		console.log("  Téléchargement de la vidéo (streaming)...");
 		await withRetry(() => downloadVideo(media.url, videoPath));
 
-		// 2. Obtenir la durée et calculer la position de capture (P13 vérifie durée max)
+		// 2. Valider que c'est bien une vidéo
+		console.log("  Validation du format vidéo...");
+		const isValidVideo = await validateVideoFormat(videoPath);
+		if (!isValidVideo) {
+			throw new Error("Le fichier téléchargé n'est pas une vidéo valide");
+		}
+
+		// 3. Obtenir la durée et calculer la position de capture
 		const duration = await getVideoDuration(videoPath, media.id);
 		const captureTime = Math.min(MAX_CAPTURE_TIME, duration * CAPTURE_POSITION);
 		console.log(`  Durée: ${duration.toFixed(1)}s, capture à ${captureTime.toFixed(2)}s`);
 
-		// 3. Extraire les deux tailles de miniatures
+		// 4. Extraire les deux tailles de miniatures
 		console.log("  Extraction des miniatures (small + medium)...");
 		await extractFrames(videoPath, smallThumbnailPath, mediumThumbnailPath, captureTime);
 
-		// 4. Générer le blur placeholder depuis la thumbnail small
+		// 5. Générer le blur placeholder depuis la thumbnail small
 		console.log("  Génération du blur placeholder...");
 		const blurDataUrl = await generateBlurDataUrl(smallThumbnailPath);
 		if (blurDataUrl) {
@@ -491,7 +588,7 @@ async function processVideo(media: VideoMedia, index: number, total: number): Pr
 			console.log("  Blur: non généré (optionnel)");
 		}
 
-		// 5. Upload les deux miniatures sur UploadThing
+		// 6. Upload les deux miniatures sur UploadThing
 		console.log("  Upload des miniatures...");
 		const [thumbnailSmallUrl, thumbnailUrl] = await Promise.all([
 			withRetry(() => uploadThumbnail(smallThumbnailPath, `${media.id}-small`)),
@@ -500,7 +597,7 @@ async function processVideo(media: VideoMedia, index: number, total: number): Pr
 		console.log(`  Small: ${thumbnailSmallUrl.substring(0, 50)}...`);
 		console.log(`  Medium: ${thumbnailUrl.substring(0, 50)}...`);
 
-		// 6. Mettre à jour la base de données avec les URLs et le blur
+		// 7. Mettre à jour la base de données avec les URLs et le blur
 		console.log("  Mise à jour de la base de données...");
 		await prisma.skuMedia.update({
 			where: { id: media.id },
@@ -519,12 +616,13 @@ async function processVideo(media: VideoMedia, index: number, total: number): Pr
 		return { id: media.id, success: false, error: errorMsg };
 	} finally {
 		// Nettoyer les fichiers temporaires
-		try {
-			if (existsSync(videoPath)) unlinkSync(videoPath);
-			if (existsSync(smallThumbnailPath)) unlinkSync(smallThumbnailPath);
-			if (existsSync(mediumThumbnailPath)) unlinkSync(mediumThumbnailPath);
-		} catch {
-			// Ignorer les erreurs de nettoyage
+		const filesToClean = [videoPath, smallThumbnailPath, mediumThumbnailPath];
+		for (const file of filesToClean) {
+			try {
+				if (existsSync(file)) unlinkSync(file);
+			} catch (cleanupError) {
+				logWarning("file_cleanup_failed", { error: String(cleanupError), path: file });
+			}
 		}
 	}
 }
@@ -573,6 +671,7 @@ async function main(): Promise<void> {
 	console.log(`  - Timeout téléchargement: ${DOWNLOAD_TIMEOUT / 1000}s`);
 	console.log(`  - Timeout FFmpeg: ${FFMPEG_TIMEOUT / 1000}s`);
 	console.log(`  - Retries: ${MAX_RETRIES}`);
+	console.log(`  - Dossier temp: ${TEMP_DIR}`);
 
 	if (DRY_RUN) {
 		console.log("\n⚠️  Mode DRY-RUN activé - aucune modification ne sera effectuée");
@@ -594,10 +693,18 @@ async function main(): Promise<void> {
 	}
 	console.log("✅ FFmpeg est installe");
 
-	// Créer le dossier temporaire
-	if (!existsSync(TEMP_DIR)) {
-		mkdirSync(TEMP_DIR, { recursive: true });
+	// Nettoyer le dossier temporaire s'il existe (reste d'une exécution précédente)
+	if (existsSync(TEMP_DIR)) {
+		try {
+			rmSync(TEMP_DIR, { recursive: true });
+			console.log("✅ Ancien dossier temporaire nettoyé");
+		} catch (cleanupError) {
+			logWarning("temp_dir_cleanup_failed", { error: String(cleanupError), path: TEMP_DIR });
+		}
 	}
+
+	// Créer le dossier temporaire
+	mkdirSync(TEMP_DIR, { recursive: true });
 
 	try {
 		// Récupérer les vidéos sans miniature small (nouveau système à 2 tailles)
@@ -638,7 +745,7 @@ async function main(): Promise<void> {
 		console.log(`  ❌ Erreurs: ${errorCount}`);
 		console.log(`  📹 Total: ${videosWithoutThumbnail.length}`);
 
-		// P14 - Log structuré du résumé (Sentry-ready)
+		// Log structuré du résumé (Sentry-ready)
 		logSuccess("batch_completed", {
 			successCount,
 			errorCount,
@@ -652,7 +759,7 @@ async function main(): Promise<void> {
 			console.log("\n📋 Erreurs détaillées:");
 			for (const error of errors) {
 				console.log(`  - ${error.id}: ${error.error}`);
-				// P14 - Log structuré par erreur
+				// Log structuré par erreur
 				logError("video_processing_failed", {
 					mediaId: error.id,
 					error: error.error,
@@ -669,8 +776,8 @@ async function main(): Promise<void> {
 			if (existsSync(TEMP_DIR)) {
 				rmSync(TEMP_DIR, { recursive: true });
 			}
-		} catch {
-			// Ignorer les erreurs de nettoyage
+		} catch (cleanupError) {
+			logWarning("final_cleanup_failed", { error: String(cleanupError), path: TEMP_DIR });
 		}
 	}
 }

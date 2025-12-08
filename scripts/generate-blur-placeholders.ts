@@ -7,32 +7,91 @@
  * 3. Génère un placeholder blur avec plaiceholder
  * 4. Met à jour la base de données
  *
+ * ============================================================================
+ * Variables d'environnement requises:
+ * - DATABASE_URL: Connection string PostgreSQL
+ * ============================================================================
+ *
  * Usage :
  * pnpm exec tsx scripts/generate-blur-placeholders.ts
  * pnpm exec tsx scripts/generate-blur-placeholders.ts --dry-run       # Pour voir ce qui serait fait
  * pnpm exec tsx scripts/generate-blur-placeholders.ts --parallel=10   # Traiter 10 images en parallèle
+ * pnpm exec tsx scripts/generate-blur-placeholders.ts --json          # Logs JSON pour monitoring
  */
 
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../app/generated/prisma/client";
-import { getPlaiceholder } from "plaiceholder";
+import { generateBlurDataUrlWithRetry } from "../modules/media/services/generate-blur-data-url";
+import {
+	BLUR_PLACEHOLDER_CONFIG,
+	isValidUploadThingUrl,
+} from "../modules/media/constants/media.constants";
 
 // ============================================================================
-// CONFIGURATION
+// VALIDATION ENVIRONNEMENT
 // ============================================================================
 
-const DOWNLOAD_TIMEOUT = 30000; // 30 secondes pour télécharger
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB max
-const MAX_RETRIES = 3;
-const RETRY_BASE_DELAY = 1000;
+if (!process.env.DATABASE_URL) {
+	console.error("❌ DATABASE_URL n'est pas défini dans les variables d'environnement.");
+	console.error("   Vérifiez votre fichier .env ou vos variables d'environnement.");
+	process.exit(1);
+}
 
-// Arguments CLI
+// ============================================================================
+// ARGUMENTS CLI
+// ============================================================================
+
 const DRY_RUN = process.argv.includes("--dry-run");
+const JSON_LOGS = process.argv.includes("--json");
 const PARALLEL_ARG = process.argv.find((arg) => arg.startsWith("--parallel="));
 const PARALLEL_COUNT = PARALLEL_ARG ? parseInt(PARALLEL_ARG.split("=")[1], 10) : 5;
 
-// Initialisation Prisma
-const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+// ============================================================================
+// LOGS STRUCTURÉS (Sentry-ready)
+// ============================================================================
+
+interface StructuredLog {
+	timestamp: string;
+	level: "info" | "warn" | "error";
+	event: string;
+	data?: Record<string, unknown>;
+}
+
+function logStructured(log: StructuredLog): void {
+	if (JSON_LOGS) {
+		console.log(JSON.stringify(log));
+	}
+}
+
+function logInfo(message: string, data?: Record<string, unknown>): void {
+	if (JSON_LOGS) {
+		logStructured({ timestamp: new Date().toISOString(), level: "info", event: message, data });
+	} else {
+		console.log(message);
+	}
+}
+
+function logWarn(message: string, data?: Record<string, unknown>): void {
+	if (JSON_LOGS) {
+		logStructured({ timestamp: new Date().toISOString(), level: "warn", event: message, data });
+	} else {
+		console.warn(message);
+	}
+}
+
+function logError(message: string, data?: Record<string, unknown>): void {
+	if (JSON_LOGS) {
+		logStructured({ timestamp: new Date().toISOString(), level: "error", event: message, data });
+	} else {
+		console.error(message);
+	}
+}
+
+// ============================================================================
+// INITIALISATION PRISMA
+// ============================================================================
+
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 // ============================================================================
@@ -60,74 +119,23 @@ function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function withRetry<T>(
-	fn: () => Promise<T>,
-	maxRetries: number = MAX_RETRIES,
-	baseDelay: number = RETRY_BASE_DELAY
-): Promise<T> {
-	let lastError: Error | null = null;
-
-	for (let attempt = 0; attempt < maxRetries; attempt++) {
-		try {
-			return await fn();
-		} catch (error) {
-			lastError = error instanceof Error ? error : new Error(String(error));
-			if (attempt < maxRetries - 1) {
-				const delayMs = baseDelay * Math.pow(2, attempt);
-				await delay(delayMs);
-			}
-		}
-	}
-
-	throw lastError;
-}
-
-/**
- * Télécharge une image et retourne le buffer
- */
-async function downloadImage(url: string): Promise<Buffer> {
-	const controller = new AbortController();
-	const timeout = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT);
-
-	try {
-		const response = await fetch(url, {
-			signal: controller.signal,
-			headers: {
-				"User-Agent": "Synclune-BlurGenerator/1.0",
-			},
-		});
-
-		if (!response.ok) {
-			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-		}
-
-		const contentLength = response.headers.get("content-length");
-		if (contentLength && parseInt(contentLength, 10) > MAX_IMAGE_SIZE) {
-			throw new Error(`Image trop volumineuse (${contentLength} bytes)`);
-		}
-
-		const arrayBuffer = await response.arrayBuffer();
-		return Buffer.from(arrayBuffer);
-	} finally {
-		clearTimeout(timeout);
-	}
-}
-
-/**
- * Génère un blurDataURL pour une image
- */
-async function generateBlurDataUrl(imageUrl: string): Promise<string> {
-	const buffer = await downloadImage(imageUrl);
-	const { base64 } = await getPlaiceholder(buffer, { size: 10 });
-	return base64;
-}
-
 /**
  * Traite une image et génère son blurDataUrl
  */
 async function processImage(image: ImageMedia): Promise<ProcessResult> {
+	// Validation du domaine source
+	if (!isValidUploadThingUrl(image.url)) {
+		return {
+			id: image.id,
+			success: false,
+			error: `Domaine non autorisé: ${new URL(image.url).hostname}`,
+		};
+	}
+
 	try {
-		const blurDataUrl = await withRetry(() => generateBlurDataUrl(image.url));
+		const blurDataUrl = await generateBlurDataUrlWithRetry(image.url, {
+			validateDomain: false, // Déjà validé ci-dessus
+		});
 
 		if (!DRY_RUN) {
 			await prisma.skuMedia.update({
@@ -162,9 +170,10 @@ async function processBatch(images: ImageMedia[]): Promise<ProcessResult[]> {
 // ============================================================================
 
 async function main() {
-	console.log("🖼️  Génération des blurDataURL pour les images existantes\n");
-	console.log(`Mode: ${DRY_RUN ? "DRY RUN (simulation)" : "PRODUCTION"}`);
-	console.log(`Parallélisation: ${PARALLEL_COUNT} images simultanées\n`);
+	logInfo("🖼️  Génération des blurDataURL pour les images existantes\n");
+	logInfo(`Mode: ${DRY_RUN ? "DRY RUN (simulation)" : "PRODUCTION"}`);
+	logInfo(`Parallélisation: ${PARALLEL_COUNT} images simultanées`);
+	logInfo(`Logs JSON: ${JSON_LOGS ? "activés" : "désactivés"}\n`);
 
 	// Récupérer les images sans blurDataUrl
 	const images = await prisma.skuMedia.findMany({
@@ -179,11 +188,10 @@ async function main() {
 		},
 	});
 
-	console.log(`📊 ${images.length} images trouvées sans blurDataUrl\n`);
+	logInfo(`📊 ${images.length} images trouvées sans blurDataUrl\n`);
 
 	if (images.length === 0) {
-		console.log("✅ Toutes les images ont déjà un blurDataUrl !");
-		await prisma.$disconnect();
+		logInfo("✅ Toutes les images ont déjà un blurDataUrl !");
 		return;
 	}
 
@@ -200,32 +208,38 @@ async function main() {
 			processed++;
 			if (result.success) {
 				success++;
-				console.log(`✅ [${processed}/${images.length}] ${result.id}`);
+				logInfo(`✅ [${processed}/${images.length}] ${result.id}`, {
+					id: result.id,
+					success: true,
+				});
 			} else {
 				errors++;
-				console.log(`❌ [${processed}/${images.length}] ${result.id}: ${result.error}`);
+				logError(`❌ [${processed}/${images.length}] ${result.id}: ${result.error}`, {
+					id: result.id,
+					error: result.error,
+				});
 			}
 		}
 
-		// Petite pause entre les batches pour ne pas surcharger
+		// Pause entre les batches pour ne pas surcharger
 		if (i + PARALLEL_COUNT < images.length) {
-			await delay(500);
+			await delay(BLUR_PLACEHOLDER_CONFIG.batchDelay);
 		}
 	}
 
-	console.log("\n📊 Résumé:");
-	console.log(`   Total traité: ${processed}`);
-	console.log(`   ✅ Succès: ${success}`);
-	console.log(`   ❌ Erreurs: ${errors}`);
+	logInfo("\n📊 Résumé:");
+	logInfo(`   Total traité: ${processed}`);
+	logInfo(`   ✅ Succès: ${success}`);
+	logInfo(`   ❌ Erreurs: ${errors}`);
 
 	if (DRY_RUN) {
-		console.log("\n⚠️  Mode DRY RUN - Aucune modification effectuée");
+		logWarn("\n⚠️  Mode DRY RUN - Aucune modification effectuée");
 	}
-
-	await prisma.$disconnect();
 }
 
-main().catch((error) => {
-	console.error("❌ Erreur fatale:", error);
-	process.exit(1);
-});
+main()
+	.catch((error) => {
+		logError("❌ Erreur fatale:", { error: String(error) });
+		process.exit(1);
+	})
+	.finally(() => prisma.$disconnect());
