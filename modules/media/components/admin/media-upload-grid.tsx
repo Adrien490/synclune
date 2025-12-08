@@ -20,6 +20,7 @@ import {
 	rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
@@ -127,7 +128,7 @@ function SortableMediaItem({
 					? ""
 					: "motion-safe:transition-all motion-safe:duration-200",
 				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-				isDragging && "opacity-50 scale-105 shadow-xl",
+				isDragging && "opacity-30",
 				isPrimary
 					? "ring-2 ring-amber-500/50 border-amber-500"
 					: "border-border hover:border-primary/50"
@@ -593,7 +594,7 @@ export function MediaUploadGrid({
 				</SortableContext>
 
 				{/* DragOverlay pour un meilleur feedback visuel pendant le drag */}
-				<DragOverlay adjustScale={!shouldReduceMotion}>
+				<DragOverlay adjustScale={!shouldReduceMotion} modifiers={[snapCenterToCursor]}>
 					{activeMedia ? (
 						<div className="aspect-square rounded-lg overflow-hidden border-2 border-primary shadow-2xl bg-muted">
 							{activeMedia.mediaType === "VIDEO" ? (
