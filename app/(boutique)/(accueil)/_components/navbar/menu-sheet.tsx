@@ -84,8 +84,8 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 			<SheetTrigger asChild>
 				<Button
 					variant="ghost"
-					size="lg"
-					className="relative bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-all duration-300 ease-out hover:scale-105 active:scale-95 cursor-pointer p-3 group -ml-3 rounded-xl lg:hidden"
+					size="icon"
+					className="relative bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-all duration-300 ease-out hover:scale-105 active:scale-95 cursor-pointer group -ml-3 rounded-xl lg:hidden"
 					aria-label="Ouvrir le menu de navigation"
 					aria-controls="mobile-menu-synclune"
 				>
