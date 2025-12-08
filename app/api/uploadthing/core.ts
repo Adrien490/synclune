@@ -37,6 +37,10 @@ const ALLOWED_DOCUMENT_TYPES = [
 	"text/plain",
 ] as const;
 
+// Configuration pour la génération de blur placeholders
+const BLUR_GENERATION_TIMEOUT = 15_000; // 15 secondes
+const MAX_BLUR_IMAGE_SIZE = 20 * 1024 * 1024; // 20MB
+
 /**
  * Valide le type MIME d'un fichier côté serveur
  * Protection contre les fichiers malveillants renommés
@@ -72,19 +76,44 @@ function validateFileSize(
 /**
  * Génère un blurDataURL (base64) pour une image uploadée
  * Utilisé pour le placeholder blur lors du chargement progressif
- * @returns base64 string ou undefined si échec
+ * @returns base64 string ou undefined si échec (timeout, erreur réseau, image trop grande)
  */
 async function generateBlurDataUrl(imageUrl: string): Promise<string | undefined> {
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), BLUR_GENERATION_TIMEOUT);
+
 	try {
-		const response = await fetch(imageUrl);
-		if (!response.ok) return undefined;
+		const response = await fetch(imageUrl, { signal: controller.signal });
+		clearTimeout(timeoutId);
+
+		if (!response.ok) {
+			console.warn(`[BlurDataUrl] Fetch failed: ${response.status} for ${imageUrl}`);
+			return undefined;
+		}
 
 		const buffer = Buffer.from(await response.arrayBuffer());
+
+		// Validation taille avant traitement plaiceholder
+		if (buffer.length > MAX_BLUR_IMAGE_SIZE) {
+			console.warn(
+				`[BlurDataUrl] Image too large: ${(buffer.length / 1024 / 1024).toFixed(2)}MB (max: ${MAX_BLUR_IMAGE_SIZE / 1024 / 1024}MB)`
+			);
+			return undefined;
+		}
+
 		const { base64 } = await getPlaiceholder(buffer, { size: 10 });
 		return base64;
 	} catch (error) {
-		console.warn("Failed to generate blur placeholder:", error);
+		if (error instanceof Error && error.name === "AbortError") {
+			console.warn(
+				`[BlurDataUrl] Timeout after ${BLUR_GENERATION_TIMEOUT}ms for ${imageUrl}`
+			);
+		} else {
+			console.warn("[BlurDataUrl] Generation failed:", error);
+		}
 		return undefined;
+	} finally {
+		clearTimeout(timeoutId);
 	}
 }
 

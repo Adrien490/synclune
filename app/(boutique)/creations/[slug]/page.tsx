@@ -20,7 +20,6 @@ import { RelatedProducts } from "@/modules/products/components/related-products"
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
 import { generateProductMetadata } from "@/modules/products/utils/seo/generate-metadata";
 import { generateStructuredData } from "@/modules/products/utils/seo/generate-structured-data";
-import { SECTION_SPACING } from "@/shared/constants/spacing";
 
 type ProductPageParams = Promise<{ slug: string }>;
 type ProductSearchParams = Promise<{
@@ -127,8 +126,8 @@ export default async function ProductPage({
 					className="hidden sm:block"
 				/>
 
-				{/* Contenu principal */}
-				<div className={`bg-background ${SECTION_SPACING.default}`}>
+				{/* Contenu principal - pt-20 sur mobile pour compenser l'absence de PageHeader, sm:pt-12 lg:pt-16 reprend le spacing normal */}
+				<div className="bg-background pt-20 pb-12 sm:py-12 lg:py-16">
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article
 							itemScope
