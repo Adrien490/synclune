@@ -20,7 +20,7 @@ import {
 	rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { snapCenterToCursor } from "@dnd-kit/modifiers";
+import { snapCenterToCursor, restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
