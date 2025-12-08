@@ -4,11 +4,11 @@ import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
 
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+	ResponsiveDropdownMenu,
+	ResponsiveDropdownMenuContent,
+	ResponsiveDropdownMenuItem,
+	ResponsiveDropdownMenuTrigger,
+} from "@/shared/components/ui/responsive-dropdown-menu";
 import { cn } from "@/shared/utils/cn";
 
 export interface TabNavigationItem {
@@ -125,10 +125,10 @@ export function TabNavigation({
 					</Link>
 				))}
 
-				{/* Bouton "Plus" avec dropdown - visible uniquement sur mobile (<640px) */}
+				{/* Bouton "Plus" avec dropdown/drawer - visible uniquement sur mobile (<640px) */}
 				{hasOverflow && (
-					<DropdownMenu>
-						<DropdownMenuTrigger
+					<ResponsiveDropdownMenu>
+						<ResponsiveDropdownMenuTrigger
 							className={cn(
 								"sm:hidden inline-flex h-11 items-center justify-center gap-1.5",
 								"rounded-md px-3 py-1.5",
@@ -151,20 +151,24 @@ export function TabNavigation({
 						>
 							{activeOverflowItem?.label || "Plus"}
 							<ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="start" className="min-w-[180px]">
+						</ResponsiveDropdownMenuTrigger>
+						<ResponsiveDropdownMenuContent
+							align="start"
+							className="min-w-[180px]"
+							title="Navigation"
+						>
 							{overflowItems.map((item) => (
-								<DropdownMenuItem key={item.value} asChild>
-									<Link
-										href={item.href}
-										prefetch={prefetch}
+								<Link
+									key={item.value}
+									href={item.href}
+									prefetch={prefetch}
+									className="contents"
+								>
+									<ResponsiveDropdownMenuItem
 										className={cn(
 											"w-full cursor-pointer",
 											item.value === activeValue && "font-medium bg-accent"
 										)}
-										aria-current={
-											item.value === activeValue ? "page" : undefined
-										}
 									>
 										{item.label}
 										{item.count !== undefined && (
@@ -172,11 +176,11 @@ export function TabNavigation({
 												{item.count}
 											</span>
 										)}
-									</Link>
-								</DropdownMenuItem>
+									</ResponsiveDropdownMenuItem>
+								</Link>
 							))}
-						</DropdownMenuContent>
-					</DropdownMenu>
+						</ResponsiveDropdownMenuContent>
+					</ResponsiveDropdownMenu>
 				)}
 			</div>
 		</nav>
