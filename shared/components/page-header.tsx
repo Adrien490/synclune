@@ -151,7 +151,7 @@ export function PageHeader({
 				<div
 					className={cn(
 						"relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-						navigation ? "pt-24 sm:pt-28 pb-3" : "pt-24 sm:pt-32 pb-6"
+						navigation ? "pt-20 sm:pt-28 pb-3" : "pt-20 sm:pt-32 pb-6"
 					)}
 				>
 					{/* Breadcrumb et titre principal */}
@@ -341,7 +341,7 @@ export function PageHeaderSkeleton({
 
 	return (
 		<header className="relative overflow-hidden bg-background border-b border-border">
-			<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-6 animate-pulse">
+			<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-32 pb-6 animate-pulse">
 				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6">
 					<div className="min-w-0 flex-1 space-y-2">
 						{/* Breadcrumb mobile */}

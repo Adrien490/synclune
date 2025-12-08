@@ -59,7 +59,7 @@ export function DashboardTabs({
 			items={items}
 			activeValue={activeTab}
 			ariaLabel="Navigation du tableau de bord"
-			scrollOnMobile
+			mobileVisibleCount={4}
 		/>
 	);
 }
