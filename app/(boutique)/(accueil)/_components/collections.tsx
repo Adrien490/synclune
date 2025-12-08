@@ -41,7 +41,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
 			aria-labelledby="collections-title"
 			aria-describedby="collections-subtitle"
 		>

@@ -100,7 +100,7 @@ export async function CreativeProcess() {
 
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
 			aria-labelledby="creative-process-title"
 		>
 			{/* Skip link pour accessibilité */}

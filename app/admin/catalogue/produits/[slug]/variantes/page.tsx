@@ -13,7 +13,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -199,7 +199,7 @@ export default async function ProductVariantsPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar
+				<Toolbar
 					ariaLabel="Barre d'outils de gestion des variantes"
 					search={
 						<SearchForm
@@ -225,7 +225,7 @@ export default async function ProductVariantsPage({
 						className="w-full sm:min-w-[180px]"
 					/>
 					<RefreshSkusButton productId={product.id} />
-				</DataTableToolbar>
+				</Toolbar>
 
 				<SkusFilterBadges colors={colorOptions} materials={materialOptions} />
 

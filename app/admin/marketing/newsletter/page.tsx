@@ -1,5 +1,5 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -175,7 +175,7 @@ export default async function NewsletterPage({
 				</TabsContent>
 
 				<TabsContent value="subscribers" className="space-y-6">
-					<DataTableToolbar
+					<Toolbar
 						ariaLabel="Barre d'outils de gestion des abonnés"
 						search={
 							<SearchForm
@@ -195,7 +195,7 @@ export default async function NewsletterPage({
 						/>
 						<ExportSubscribersButton />
 						<RefreshNewsletterButton />
-					</DataTableToolbar>
+					</Toolbar>
 
 					<Suspense fallback={<div>Chargement...</div>}>
 						<SubscribersDataTable subscribersPromise={subscribersPromise} />

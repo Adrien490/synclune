@@ -1,4 +1,4 @@
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -89,7 +89,7 @@ export default async function PaymentsAdminPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar
+				<Toolbar
 					ariaLabel="Barre d'outils de consultation des paiements"
 					search={
 						<SearchForm
@@ -123,7 +123,7 @@ export default async function PaymentsAdminPage({
 						className="w-full sm:min-w-[180px]"
 					/>
 					<RefreshPaymentsButton />
-				</DataTableToolbar>
+				</Toolbar>
 
 				<Suspense fallback={<StripePaymentsDataTableSkeleton />}>
 					<StripePaymentsDataTable paymentsPromise={paymentsPromise} />

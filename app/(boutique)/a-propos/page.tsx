@@ -54,7 +54,7 @@ export default function AProposPage() {
 
 				{/* Contenu principal */}
 				<section className="bg-background py-8 sm:py-10 lg:py-12">
-					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 						{/* Qui je suis - Layout avec image */}
 						<Reveal y={20} duration={0.6} once>
 							<div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 lg:gap-12 items-start">

@@ -69,7 +69,7 @@ export default async function CustomizationPage() {
 
 			{/* Section principale avec formulaire */}
 			<section className="bg-background py-8 sm:py-10 lg:py-12 relative z-10">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					{/* Formulaire de personnalisation */}
 					<CustomizationForm productTypes={productTypes} />
 				</div>

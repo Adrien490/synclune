@@ -97,7 +97,7 @@ export default async function LegalPage() {
 				]}
 			/>
 
-			<div className="from-ivory via-rose-50/30 to-gold-50/20 py-12 lg:py-16">
+			<section className="bg-background py-12 lg:py-16">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					{/* Introduction */}
 					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg mb-8">
@@ -235,7 +235,7 @@ export default async function LegalPage() {
 						</p>
 					</div>
 				</div>
-			</div>
+			</section>
 		</div>
 	);
 }

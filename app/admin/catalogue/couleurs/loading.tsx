@@ -6,7 +6,7 @@ import { ColorsDataTableSkeleton } from "@/modules/colors/components/admin/color
  * Loading state for colors management page
  * Structure alignee avec la vraie page:
  * - PageHeader avec bouton create
- * - DataTableToolbar
+ * - Toolbar
  * - ColorsDataTable
  */
 export default function ColorsLoading() {

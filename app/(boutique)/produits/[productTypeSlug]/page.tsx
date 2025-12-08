@@ -194,7 +194,7 @@ export default async function BijouxPage({
 			/>
 
 			{/* Section principale avec catalogue */}
-			<section className="bg-background py-8 relative z-10">
+			<section className="bg-background py-12 lg:py-16 relative z-10">
 				<div className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 					<Toolbar
 						search={

@@ -1,4 +1,4 @@
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -67,7 +67,7 @@ export default async function RefundsAdminPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar
+				<Toolbar
 					ariaLabel="Barre d'outils de gestion des remboursements"
 					search={
 						<SearchForm
@@ -89,7 +89,7 @@ export default async function RefundsAdminPage({
 						className="w-full sm:min-w-[180px]"
 					/>
 					<RefreshRefundsButton />
-				</DataTableToolbar>
+				</Toolbar>
 
 				<Suspense fallback={<RefundsDataTableSkeleton />}>
 					<RefundsDataTable refundsPromise={refundsPromise} />

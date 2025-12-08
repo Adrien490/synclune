@@ -7,7 +7,7 @@ import { UsersDataTableSkeleton } from "@/modules/users/components/admin/users-d
  * Structure alignee avec la vraie page:
  * - PageHeader avec bouton create
  * - TabNavigation
- * - DataTableToolbar
+ * - Toolbar
  * - UsersDataTable
  */
 export default function UsersLoading() {

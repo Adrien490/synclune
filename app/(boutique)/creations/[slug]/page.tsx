@@ -123,7 +123,7 @@ export default async function ProductPage({
 				<PageHeader title={product.title} breadcrumbs={breadcrumbs} />
 
 				{/* Contenu principal */}
-				<div className="bg-background py-8">
+				<div className="bg-background py-12 lg:py-16">
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article
 							itemScope

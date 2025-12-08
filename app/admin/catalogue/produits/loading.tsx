@@ -1,6 +1,6 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 /**
  * Loading skeleton pour la page de liste des produits
@@ -27,7 +27,7 @@ export default function ProductsListLoading() {
 			</div>
 
 			{/* Toolbar with Search, Sort, and Filters */}
-			<DataTableToolbar ariaLabel="Barre d'outils de gestion des produits">
+			<Toolbar ariaLabel="Barre d'outils de gestion des produits">
 				<div className="flex flex-1 flex-wrap items-center gap-2">
 					{/* Search */}
 					<Skeleton className="h-10 w-full sm:max-w-md" />
@@ -38,7 +38,7 @@ export default function ProductsListLoading() {
 					{/* Filter button */}
 					<Skeleton className="h-10 w-[100px]" />
 				</div>
-			</DataTableToolbar>
+			</Toolbar>
 
 			{/* Active Filter Badges Area */}
 			<div className="flex flex-wrap gap-2">

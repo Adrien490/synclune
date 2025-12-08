@@ -2,7 +2,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 
 /**
  * Loading skeleton pour la page Newsletter
@@ -105,7 +105,7 @@ export default function NewsletterLoading() {
 				{/* Tab 2: Subscribers List */}
 				<TabsContent value="subscribers" className="space-y-6">
 					{/* Toolbar */}
-					<DataTableToolbar ariaLabel="Barre d'outils de gestion des abonnés">
+					<Toolbar ariaLabel="Barre d'outils de gestion des abonnés">
 						<div className="flex flex-1 flex-wrap items-center gap-2">
 							{/* Search */}
 							<Skeleton className="h-10 w-full sm:max-w-md" />
@@ -116,7 +116,7 @@ export default function NewsletterLoading() {
 							{/* Export button */}
 							<Skeleton className="h-10 w-[120px]" />
 						</div>
-					</DataTableToolbar>
+					</Toolbar>
 
 					{/* Data Table */}
 					<div className="rounded-md border">

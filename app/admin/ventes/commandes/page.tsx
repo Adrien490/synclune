@@ -1,4 +1,4 @@
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -85,7 +85,7 @@ export default async function OrdersAdminPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar
+				<Toolbar
 					ariaLabel="Barre d'outils de gestion des commandes"
 					search={
 						<SearchForm
@@ -109,7 +109,7 @@ export default async function OrdersAdminPage({
 					<OrdersFilterSheet />
 					{/* TODO: Implémenter ExportInvoicesButton */}
 					<RefreshOrdersButton />
-				</DataTableToolbar>
+				</Toolbar>
 
 				{/* Badges de filtres actifs */}
 				<OrdersFilterBadges />

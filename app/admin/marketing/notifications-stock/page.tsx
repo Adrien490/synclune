@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { Metadata } from "next";
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -98,7 +98,7 @@ export default async function NotificationsStockPage({
 			<StockNotificationsStatsCards stats={stats} />
 
 			{/* Toolbar */}
-			<DataTableToolbar
+			<Toolbar
 				ariaLabel="Barre d'outils des alertes stock"
 				search={
 					<SearchForm
@@ -123,7 +123,7 @@ export default async function NotificationsStockPage({
 					placeholder="Date (recent)"
 					className="w-full sm:min-w-[160px]"
 				/>
-			</DataTableToolbar>
+			</Toolbar>
 
 			{/* Badges de filtres actifs */}
 			<StockNotificationsFilterBadges />

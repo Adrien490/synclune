@@ -5,7 +5,7 @@ export function ProductListSkeleton() {
 	return (
 		<div className="space-y-8">
 			{/* Grille des produits */}
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
 				{Array.from({ length: 8 }).map((_, i) => (
 					<div key={i} className="product-item">
 						<article className="product-card grid relative overflow-hidden bg-white rounded-lg shadow-sm">
@@ -15,7 +15,7 @@ export function ProductListSkeleton() {
 							</div>
 
 							{/* Contenu */}
-							<div className="flex flex-col gap-2 relative p-4">
+							<div className="flex flex-col gap-2 sm:gap-3 relative p-4 sm:p-5">
 								{/* Titre - 2 lignes (line-clamp-2) */}
 								<div className="space-y-2">
 									<Skeleton className="h-5 w-full" />
@@ -31,7 +31,7 @@ export function ProductListSkeleton() {
 			</div>
 
 			{/* Pagination */}
-			<div className="flex justify-end mt-12">
+			<div className="flex justify-end mt-8 lg:mt-12">
 				<CursorPaginationSkeleton />
 			</div>
 		</div>

@@ -1,6 +1,6 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { StripePaymentsDataTableSkeleton } from "@/modules/payments/components/admin/stripe-payments-data-table-skeleton";
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export default function PaymentsLoading() {
@@ -13,7 +13,7 @@ export default function PaymentsLoading() {
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar ariaLabel="Barre d'outils de consultation des paiements">
+				<Toolbar ariaLabel="Barre d'outils de consultation des paiements">
 					<div className="flex-1 w-full sm:max-w-md min-w-0">
 						<Skeleton className="h-10 w-full" />
 					</div>
@@ -23,7 +23,7 @@ export default function PaymentsLoading() {
 						<Skeleton className="h-10 w-full sm:w-[180px]" />
 						<Skeleton className="h-10 w-10" />
 					</div>
-				</DataTableToolbar>
+				</Toolbar>
 
 				<StripePaymentsDataTableSkeleton />
 			</div>

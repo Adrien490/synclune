@@ -736,7 +736,7 @@ const { cursor, hasMore, loadMore } = useCursorPagination()
 ### Custom Components
 
 **Data Tables**:
-- `DataTableToolbar` - Filters, search, column visibility
+- `Toolbar` - Filters, search, column visibility
 - `SelectionToolbar` - Bulk actions for selected items
 - `TableScrollContainer` - Horizontal scrolling
 
@@ -755,7 +755,7 @@ Framer Motion components: Fade, Slide, Stagger, Reveal, Pulse, Hover, Tap, Prese
 
 | Component | Purpose |
 |-----------|---------|
-| `DataTableToolbar` | Container for search, filters, actions (responsive, collapsible on mobile) |
+| `Toolbar` | Container for search, filters, actions (responsive, collapsible on mobile) |
 | `SelectionToolbar` | Bulk actions bar when items selected (animated counter) |
 | `FilterSheetWrapper` | Mobile-friendly side panel for filters |
 | `TableEmptyState` | Empty state with icon, title, description, optional action |

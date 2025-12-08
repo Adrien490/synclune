@@ -1,5 +1,5 @@
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -65,7 +65,7 @@ export default async function ColorsAdminPage({
 			/>
 
 			<div className="space-y-6">
-				<DataTableToolbar
+				<Toolbar
 					ariaLabel="Barre d'outils de gestion des couleurs"
 					search={
 						<SearchForm
@@ -88,7 +88,7 @@ export default async function ColorsAdminPage({
 					/>
 					<ColorsFilterSheet />
 					<RefreshColorsButton />
-				</DataTableToolbar>
+				</Toolbar>
 
 				{/* Badges de filtres actifs */}
 				<ColorsFilterBadges />

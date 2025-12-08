@@ -38,7 +38,7 @@ export async function AtelierStory() {
 
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
 			aria-labelledby="atelier-story-title"
 			itemScope
 			itemType="https://schema.org/Article"
@@ -72,7 +72,7 @@ export async function AtelierStory() {
 				/>
 			</div>
 
-			<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Photo ambiance principale - hauteur reduite sur mobile pour meilleur flow */}
 				<Reveal y={20} duration={0.6} once>
 					<div className="mb-8 sm:mb-12">

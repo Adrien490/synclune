@@ -1,4 +1,4 @@
-import { DataTableToolbar } from "@/shared/components/toolbar";
+import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -151,7 +151,7 @@ export default async function ProductsAdminPage({
 					counts={productCounts}
 				/>
 
-				<DataTableToolbar
+				<Toolbar
 					ariaLabel="Barre d'outils de gestion des produits"
 					search={
 						<SearchForm
@@ -178,7 +178,7 @@ export default async function ProductsAdminPage({
 						collections={collections}
 					/>
 					<RefreshProductsButton />
-				</DataTableToolbar>
+				</Toolbar>
 
 				{/* Badges de filtres actifs */}
 				<ProductsFilterBadges
