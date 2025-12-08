@@ -1,6 +1,6 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
-import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
+import { DataTableToolbar } from "@/shared/components/toolbar";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 /**
  * Loading skeleton pour la page de liste des produits

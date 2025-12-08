@@ -1,6 +1,6 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { InventoryDataTableSkeleton } from "@/modules/skus/components/admin/inventory-data-table-skeleton";
-import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
+import { DataTableToolbar } from "@/shared/components/toolbar";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export default function InventoryLoading() {

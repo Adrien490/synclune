@@ -2,7 +2,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
-import { DataTableToolbar } from "@/shared/components/data-table-toolbar";
+import { DataTableToolbar } from "@/shared/components/toolbar";
 
 /**
  * Loading skeleton pour la page Newsletter
