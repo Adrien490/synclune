@@ -1,17 +1,16 @@
 // ============================================================================
 // KPI DRILLDOWN ROUTES CONFIGURATION
+//
+// Types: voir types/dashboard.types.ts
 // ============================================================================
 
-export interface KpiDrilldownConfig {
-	href: string
-	label: string
-}
+import type { KpiDrilldownConfig } from "../types/dashboard.types";
 
 /**
  * Mapping des KPIs vers leurs pages de detail
  * Utilise pour rendre les KPI cards cliquables avec navigation vers la liste filtree
  */
-export const KPI_DRILLDOWN = {
+export const KPI_DRILLDOWN: Record<string, KpiDrilldownConfig> = {
 	// Performance KPIs
 	todayRevenue: {
 		href: "/admin/ventes/commandes?filter_paymentStatus=PAID",
@@ -63,6 +62,9 @@ export const KPI_DRILLDOWN = {
 		href: "/admin/utilisateurs?filter_new=true",
 		label: "Voir les nouveaux clients",
 	},
-} as const
+} as const;
 
-export type KpiDrilldownKey = keyof typeof KPI_DRILLDOWN
+export type KpiDrilldownKey = keyof typeof KPI_DRILLDOWN;
+
+// Re-exports pour retrocompatibilite
+export type { KpiDrilldownConfig } from "../types/dashboard.types";

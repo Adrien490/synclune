@@ -7,7 +7,7 @@
  * @module modules/media/services/generate-video-thumbnail
  */
 
-import { exec, execSync } from "child_process";
+import { execFile, execSync, type ChildProcess } from "child_process";
 import { promisify } from "util";
 import {
 	existsSync,
@@ -17,10 +17,15 @@ import {
 	writeFileSync,
 	statSync,
 } from "fs";
-import { join } from "path";
+import { join, extname } from "path";
 import { tmpdir } from "os";
 import { UTApi } from "uploadthing/server";
-import { THUMBNAIL_CONFIG } from "../constants/media.constants";
+import {
+	THUMBNAIL_CONFIG,
+	VIDEO_EXTENSIONS,
+} from "../constants/media.constants";
+
+const execFileAsync = promisify(execFile);
 
 // Importer ffmpeg-static si disponible, sinon utiliser le système
 let ffmpegStaticPath: string | null = null;
@@ -69,8 +74,6 @@ function findFFmpegPath(): string | null {
 
 const ffmpegPath = findFFmpegPath();
 
-const execAsync = promisify(exec);
-
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -90,24 +93,6 @@ export interface GenerateVideoThumbnailOptions {
 	/** Identifiant unique pour les fichiers temporaires */
 	fileId?: string;
 }
-
-// ============================================================================
-// CONFIGURATION
-// ============================================================================
-
-const TIMEOUTS = {
-	/** Timeout pour le téléchargement de la vidéo (ms) */
-	download: 60_000,
-	/** Timeout pour les commandes FFmpeg (ms) */
-	ffmpeg: 30_000,
-	/** Timeout pour FFprobe (ms) */
-	ffprobe: 10_000,
-} as const;
-
-const LIMITS = {
-	/** Taille max vidéo à télécharger (50MB pour traitement synchrone) */
-	maxVideoSize: 50 * 1024 * 1024,
-} as const;
 
 // ============================================================================
 // HELPERS
@@ -132,36 +117,65 @@ function generateFileId(): string {
 }
 
 /**
- * Exécute une commande avec timeout
+ * Exécute une commande avec timeout de manière sécurisée (via execFile)
+ * Évite les risques d'injection de commande en utilisant un tableau d'arguments
  */
-async function execWithTimeout(
+async function execFileWithTimeout(
 	command: string,
+	args: string[],
 	timeout: number
 ): Promise<{ stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
-		const child = exec(command, (error, stdout, stderr) => {
+		let child: ChildProcess | null = null;
+
+		const timer = setTimeout(() => {
+			if (child) {
+				child.kill("SIGKILL");
+			}
+			reject(new Error(`Commande timeout après ${timeout}ms`));
+		}, timeout);
+
+		child = execFile(command, args, (error, stdout, stderr) => {
+			clearTimeout(timer);
 			if (error) {
 				reject(error);
 			} else {
 				resolve({ stdout, stderr });
 			}
 		});
-
-		const timer = setTimeout(() => {
-			child.kill("SIGKILL");
-			reject(new Error(`Commande timeout après ${timeout}ms`));
-		}, timeout);
-
-		child.on("exit", () => clearTimeout(timer));
 	});
+}
+
+/**
+ * Valide que l'URL pointe vers un format vidéo supporté
+ */
+function isValidVideoFormat(url: string): boolean {
+	try {
+		const urlObj = new URL(url);
+		const ext = extname(urlObj.pathname).toLowerCase();
+		return VIDEO_EXTENSIONS.includes(ext as (typeof VIDEO_EXTENSIONS)[number]);
+	} catch {
+		return false;
+	}
 }
 
 /**
  * Télécharge une vidéo depuis une URL avec validation de taille
  */
 async function downloadVideo(url: string, outputPath: string): Promise<void> {
+	// Valider le format vidéo
+	if (!isValidVideoFormat(url)) {
+		const ext = extname(new URL(url).pathname) || "(inconnu)";
+		console.warn(
+			`[VideoThumbnail] Format vidéo potentiellement non supporté: ${ext}`
+		);
+	}
+
 	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), TIMEOUTS.download);
+	const timeoutId = setTimeout(
+		() => controller.abort(),
+		THUMBNAIL_CONFIG.downloadTimeout
+	);
 
 	try {
 		// Vérifier la taille avec HEAD request
@@ -175,10 +189,11 @@ async function downloadVideo(url: string, outputPath: string): Promise<void> {
 		}
 
 		const contentLength = headResponse.headers.get("content-length");
-		if (contentLength && parseInt(contentLength, 10) > LIMITS.maxVideoSize) {
+		const maxSize = THUMBNAIL_CONFIG.maxSyncVideoSize;
+		if (contentLength && parseInt(contentLength, 10) > maxSize) {
 			const sizeMB = Math.round(parseInt(contentLength, 10) / 1024 / 1024);
 			throw new Error(
-				`Vidéo trop volumineuse pour traitement synchrone: ${sizeMB}MB (max: ${LIMITS.maxVideoSize / 1024 / 1024}MB)`
+				`Vidéo trop volumineuse pour traitement synchrone: ${sizeMB}MB (max: ${maxSize / 1024 / 1024}MB)`
 			);
 		}
 
@@ -226,21 +241,45 @@ function findFFprobePath(): string | null {
  */
 async function getVideoDuration(videoPath: string): Promise<number> {
 	const ffprobePath = findFFprobePath();
+	const fallbackDuration = THUMBNAIL_CONFIG.fallbackDuration;
+
 	if (!ffprobePath) {
-		return 10; // Fallback: suppose 10s
+		console.warn(
+			`[VideoThumbnail] FFprobe non disponible, utilisation durée fallback: ${fallbackDuration}s`
+		);
+		return fallbackDuration;
 	}
 
-	const command = `"${ffprobePath}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${videoPath}"`;
+	const args = [
+		"-v",
+		"error",
+		"-show_entries",
+		"format=duration",
+		"-of",
+		"default=noprint_wrappers=1:nokey=1",
+		videoPath,
+	];
 
 	try {
-		const { stdout } = await execWithTimeout(command, TIMEOUTS.ffprobe);
+		const { stdout } = await execFileWithTimeout(
+			ffprobePath,
+			args,
+			THUMBNAIL_CONFIG.ffprobeTimeout
+		);
 		const duration = parseFloat(stdout.trim());
 		if (isNaN(duration) || duration <= 0) {
-			return 10; // Fallback: suppose 10s pour calculer 10% = 1s
+			console.warn(
+				`[VideoThumbnail] Durée vidéo invalide (${stdout.trim()}), utilisation fallback: ${fallbackDuration}s`
+			);
+			return fallbackDuration;
 		}
 		return duration;
-	} catch {
-		return 10; // Fallback
+	} catch (error) {
+		console.warn(
+			`[VideoThumbnail] Erreur FFprobe, utilisation durée fallback: ${fallbackDuration}s`,
+			error instanceof Error ? error.message : error
+		);
+		return fallbackDuration;
 	}
 }
 
@@ -258,44 +297,66 @@ async function extractFrame(
 		throw new Error("FFmpeg n'est pas disponible");
 	}
 
-	// Commande FFmpeg pour extraire une frame au format WebP
-	const command = [
-		`"${ffmpegPath}"`,
+	// Arguments FFmpeg pour extraire une frame au format WebP
+	const webpArgs = [
 		"-y", // Écraser si existant
-		"-ss", timeInSeconds.toString(),
-		"-i", `"${videoPath}"`,
-		"-vframes", "1",
-		"-vf", `scale=${width}:-1`,
-		"-c:v", "libwebp",
-		"-quality", quality.toString(),
-		`"${outputPath}"`,
-	].join(" ");
+		"-ss",
+		timeInSeconds.toString(),
+		"-i",
+		videoPath,
+		"-vframes",
+		"1",
+		"-vf",
+		`scale=${width}:-1`,
+		"-c:v",
+		"libwebp",
+		"-quality",
+		quality.toString(),
+		outputPath,
+	];
 
 	try {
-		await execWithTimeout(command, TIMEOUTS.ffmpeg);
-	} catch {
-		// Fallback vers JPEG si WebP échoue
+		await execFileWithTimeout(
+			ffmpegPath,
+			webpArgs,
+			THUMBNAIL_CONFIG.ffmpegTimeout
+		);
+	} catch (webpError) {
+		// Fallback vers JPEG si WebP échoue (libwebp non disponible)
+		console.warn(
+			`[VideoThumbnail] WebP échoué, fallback vers JPEG:`,
+			webpError instanceof Error ? webpError.message : webpError
+		);
+
 		const jpegPath = outputPath.replace(".webp", ".jpg");
-		const jpegCommand = [
-			`"${ffmpegPath}"`,
+		const jpegArgs = [
 			"-y",
-			"-ss", timeInSeconds.toString(),
-			"-i", `"${videoPath}"`,
-			"-vframes", "1",
-			"-vf", `scale=${width}:-1`,
-			"-q:v", "2",
-			`"${jpegPath}"`,
-		].join(" ");
+			"-ss",
+			timeInSeconds.toString(),
+			"-i",
+			videoPath,
+			"-vframes",
+			"1",
+			"-vf",
+			`scale=${width}:-1`,
+			"-q:v",
+			"2",
+			jpegPath,
+		];
 
-		await execWithTimeout(jpegCommand, TIMEOUTS.ffmpeg);
+		await execFileWithTimeout(
+			ffmpegPath,
+			jpegArgs,
+			THUMBNAIL_CONFIG.ffmpegTimeout
+		);
 
-		// Lire et réécrire avec extension .webp
+		// Lire et réécrire avec extension .webp (pour cohérence du nommage)
 		const jpegBuffer = readFileSync(jpegPath);
 		writeFileSync(outputPath, jpegBuffer);
 		try {
 			unlinkSync(jpegPath);
 		} catch {
-			// Ignorer
+			// Ignorer erreur de cleanup
 		}
 	}
 
@@ -321,19 +382,31 @@ async function generateBlurDataUrl(
 	const blurPath = thumbnailPath.replace(".webp", "-blur.webp");
 
 	try {
-		const command = [
-			`"${ffmpegPath}"`,
+		const args = [
 			"-y",
-			"-i", `"${thumbnailPath}"`,
-			"-vf", "scale=10:10",
-			"-c:v", "libwebp",
-			"-quality", "50",
-			`"${blurPath}"`,
-		].join(" ");
+			"-i",
+			thumbnailPath,
+			"-vf",
+			"scale=10:10",
+			"-c:v",
+			"libwebp",
+			"-quality",
+			"50",
+			blurPath,
+		];
 
-		await execWithTimeout(command, 5000);
+		await execFileWithTimeout(
+			ffmpegPath,
+			args,
+			THUMBNAIL_CONFIG.blurTimeout
+		);
 
-		if (!existsSync(blurPath)) return null;
+		if (!existsSync(blurPath)) {
+			console.warn(
+				"[VideoThumbnail] Blur placeholder non créé (fichier manquant)"
+			);
+			return null;
+		}
 
 		const blurBuffer = readFileSync(blurPath);
 		const base64 = blurBuffer.toString("base64");
@@ -343,11 +416,15 @@ async function generateBlurDataUrl(
 		try {
 			unlinkSync(blurPath);
 		} catch {
-			// Ignorer
+			// Ignorer erreur de cleanup
 		}
 
 		return blurDataUrl;
-	} catch {
+	} catch (error) {
+		console.warn(
+			"[VideoThumbnail] Échec génération blur placeholder:",
+			error instanceof Error ? error.message : error
+		);
 		return null;
 	}
 }
@@ -457,8 +534,25 @@ export async function generateVideoThumbnail(
 		const smallResult = uploadResults[0];
 		const mediumResult = uploadResults[1];
 
+		// Vérifier les résultats d'upload et logger les états partiels
 		if (!smallResult?.data?.ufsUrl || !mediumResult?.data?.ufsUrl) {
-			throw new Error("Échec upload thumbnails sur UploadThing");
+			// Logger les URLs partielles pour cleanup manuel si nécessaire
+			const partialUrls = [
+				smallResult?.data?.ufsUrl,
+				mediumResult?.data?.ufsUrl,
+			].filter(Boolean);
+
+			if (partialUrls.length > 0) {
+				console.error(
+					"[VideoThumbnail] Upload partiel - fichiers orphelins potentiels:",
+					partialUrls
+				);
+			}
+
+			const errors = [smallResult?.error, mediumResult?.error].filter(Boolean);
+			throw new Error(
+				`Échec upload thumbnails sur UploadThing: ${errors.map((e) => e?.message).join(", ") || "raison inconnue"}`
+			);
 		}
 
 		return {
@@ -468,6 +562,8 @@ export async function generateVideoThumbnail(
 		};
 	} finally {
 		// Toujours nettoyer les fichiers temporaires
+		// Note: Les buffers sont déjà lus en mémoire avant l'upload,
+		// donc le cleanup est safe même si l'upload est en cours
 		cleanupTempFiles(tempFiles);
 	}
 }

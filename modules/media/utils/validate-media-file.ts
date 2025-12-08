@@ -164,8 +164,22 @@ export function validateMediaFiles(
 /** Pattern CUID (25 caractères alphanumériques commençant par 'c') */
 const CUID_PATTERN = /^c[a-z0-9]{24}$/;
 
-/** Domaines UploadThing autorisés */
-const UPLOADTHING_DOMAINS = ["utfs.io", "uploadthing.com", "ufs.sh"] as const;
+/**
+ * Domaines UploadThing autorisés (liste stricte)
+ * Contrairement à endsWith(), cette liste n'accepte que les domaines exacts
+ * pour éviter les attaques de subdomain takeover
+ */
+const UPLOADTHING_ALLOWED_HOSTS: Set<string> = new Set([
+	// Domaines principaux
+	"utfs.io",
+	"uploadthing.com",
+	"ufs.sh",
+	// CDN et sous-domaines officiels connus
+	"cdn.uploadthing.com",
+	"api.uploadthing.com",
+	"sea1.ingest.uploadthing.com",
+	"fra1.ingest.uploadthing.com",
+]);
 
 /**
  * Valide qu'un ID est un CUID valide
@@ -177,13 +191,12 @@ export function isValidCuid(id: string): boolean {
 
 /**
  * Valide qu'une URL provient d'un domaine UploadThing autorisé
+ * Utilise une liste blanche stricte (pas de wildcard subdomain)
  */
 export function isValidUploadThingUrl(url: string): boolean {
 	try {
 		const parsed = new URL(url);
-		return UPLOADTHING_DOMAINS.some(
-			(domain) => parsed.hostname === domain || parsed.hostname.endsWith(`.${domain}`)
-		);
+		return UPLOADTHING_ALLOWED_HOSTS.has(parsed.hostname);
 	} catch {
 		return false;
 	}

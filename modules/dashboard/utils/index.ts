@@ -28,3 +28,12 @@ export {
 } from "./period-resolver";
 
 export { truncateText } from "./truncate-text";
+
+export { isValidTab, getTabConfig } from "./tabs.utils";
+
+export { getComparisonLabel } from "./periods.utils";
+
+export {
+	buildChartDrilldownUrl,
+	type ChartDrilldownKey,
+} from "./drilldown.utils";

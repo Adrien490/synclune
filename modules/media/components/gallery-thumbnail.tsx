@@ -48,7 +48,7 @@ function GalleryThumbnailComponent({
 			onClick={onClick}
 			className={cn(
 				"group relative aspect-square overflow-hidden rounded-xl w-full",
-				"border-2 transition-all duration-200",
+				"border-2 transition-all duration-200 active:scale-95",
 				isActive
 					? "border-primary shadow-md ring-2 ring-primary/20"
 					: "border-border hover:border-primary/50",

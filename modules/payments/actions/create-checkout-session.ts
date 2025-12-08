@@ -11,7 +11,7 @@ import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/
 import {
 	getFinalShippingCost,
 	calculateTaxAmount,
-} from "@/modules/orders/constants/shipping.constants";
+} from "@/modules/orders/utils/shipping.utils";
 import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import Stripe from "stripe";

@@ -7,7 +7,6 @@ import {
 	CarouselContent,
 	CarouselItem,
 } from "@/shared/components/ui/carousel";
-import { memo } from "react";
 
 interface ThumbnailsListProps {
 	medias: ProductMedia[];
@@ -18,13 +17,15 @@ interface ThumbnailsListProps {
 	hasError: (mediaId: string) => boolean;
 	/** Classe CSS additionnelle pour chaque thumbnail */
 	thumbnailClassName?: string;
+	/** Classe CSS pour le container */
+	className?: string;
 }
 
 /**
  * Liste de thumbnails pour la galerie produit
  * Rendu en grille simple, réutilisable pour desktop et mobile
  */
-function ThumbnailsGridComponent({
+export function GalleryThumbnailsGrid({
 	medias,
 	currentIndex,
 	title,
@@ -46,7 +47,6 @@ function ThumbnailsGridComponent({
 					onClick={() => onNavigate(index)}
 					onError={() => onError(media.id)}
 					className={thumbnailClassName}
-					// R1/R2 - Premier élément = candidat LCP potentiel
 					isLCPCandidate={index === 0}
 				/>
 			))}
@@ -54,26 +54,20 @@ function ThumbnailsGridComponent({
 	);
 }
 
-export const GalleryThumbnailsGrid = memo(ThumbnailsGridComponent);
-
-interface ThumbnailsCarouselProps extends ThumbnailsListProps {
-	/** Classe CSS pour le container du carousel */
-	className?: string;
-}
-
 /**
  * Liste de thumbnails en carousel horizontal
  * Utilisé pour mobile quand il y a plus de 6 images
  */
-function ThumbnailsCarouselComponent({
+export function GalleryThumbnailsCarousel({
 	medias,
 	currentIndex,
 	title,
 	onNavigate,
 	onError,
 	hasError,
+	thumbnailClassName,
 	className,
-}: ThumbnailsCarouselProps) {
+}: ThumbnailsListProps) {
 	return (
 		<Carousel
 			opts={{
@@ -84,7 +78,10 @@ function ThumbnailsCarouselComponent({
 		>
 			<CarouselContent className="-ml-2">
 				{medias.map((media, index) => (
-					<CarouselItem key={media.id} className="pl-2 basis-1/4 sm:basis-1/5 md:basis-1/6">
+					<CarouselItem
+						key={media.id}
+						className="pl-2 basis-1/4 sm:basis-1/5 md:basis-1/6"
+					>
 						<GalleryThumbnail
 							media={media}
 							index={index}
@@ -93,7 +90,7 @@ function ThumbnailsCarouselComponent({
 							title={title}
 							onClick={() => onNavigate(index)}
 							onError={() => onError(media.id)}
-							// R1/R2 - Premier élément = candidat LCP potentiel
+							className={thumbnailClassName}
 							isLCPCandidate={index === 0}
 						/>
 					</CarouselItem>
@@ -102,5 +99,3 @@ function ThumbnailsCarouselComponent({
 		</Carousel>
 	);
 }
-
-export const GalleryThumbnailsCarousel = memo(ThumbnailsCarouselComponent);

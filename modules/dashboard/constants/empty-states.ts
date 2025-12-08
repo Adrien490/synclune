@@ -1,24 +1,23 @@
+/**
+ * Configurations des états vides pour les composants du dashboard
+ * Garantit des messages cohérents et localisés
+ *
+ * Types: voir types/dashboard.types.ts
+ */
+
 import {
 	CheckCircle,
 	Package,
 	ShoppingCart,
 	TrendingUp,
 	Users,
-	type LucideIcon,
-} from "lucide-react"
-
-export interface EmptyStateConfig {
-	icon: LucideIcon
-	title: string
-	description: string
-	variant?: "default" | "success"
-}
+} from "lucide-react";
+import type { EmptyStateConfig } from "../types/dashboard.types";
 
 /**
- * Configurations des états vides pour les composants du dashboard
- * Garantit des messages cohérents et localisés
+ * Configurations des états vides
  */
-export const EMPTY_STATES = {
+export const EMPTY_STATES: Record<string, EmptyStateConfig> = {
 	// Generic
 	noData: {
 		icon: Package,
@@ -87,6 +86,9 @@ export const EMPTY_STATES = {
 		title: "Aucun nouveau client",
 		description: "Aucun nouveau client sur la période sélectionnée.",
 	},
-} as const satisfies Record<string, EmptyStateConfig>
+} as const;
 
-export type EmptyStateType = keyof typeof EMPTY_STATES
+export type EmptyStateType = keyof typeof EMPTY_STATES;
+
+// Re-exports pour retrocompatibilite
+export type { EmptyStateConfig } from "../types/dashboard.types";

@@ -103,4 +103,4 @@ export const CHART_STYLES = {
 } as const
 
 /** Type pour les cles de hauteur */
-export type ChartHeightKey = keyof typeof CHART_STYLES.height
+export type ChartHeightKey = keyof typeof CHART_STYLES.height;

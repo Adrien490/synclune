@@ -119,7 +119,7 @@ export function SizeSelector({
 							disabled={!isAvailable || isPending}
 							className={cn(
 								"p-2 text-center rounded-lg border transition-all",
-								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
+								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",

@@ -9,7 +9,7 @@ import {
 import { Separator } from "@/shared/components/ui/separator";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
-import { getFinalShippingCost } from "@/modules/orders/constants/shipping.constants";
+import { getFinalShippingCost } from "@/modules/orders/utils/shipping.utils";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import {

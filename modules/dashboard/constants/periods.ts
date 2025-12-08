@@ -1,16 +1,12 @@
-import type { DashboardPeriod } from "../utils/period-resolver";
-
 /**
  * Configuration des périodes disponibles pour le dashboard
+ *
+ * Types: voir types/dashboard.types.ts
+ * Fonctions: voir utils/periods.utils.ts
  */
 
-export interface PeriodOption {
-	value: DashboardPeriod;
-	label: string;
-	shortLabel: string;
-	/** Label explicite de la periode de comparaison (ex: "vs hier") */
-	comparisonLabel: string;
-}
+import type { PeriodOption } from "../types/dashboard.types";
+import type { DashboardPeriod } from "../utils/period-resolver";
 
 /**
  * Périodes prédéfinies disponibles dans le sélecteur
@@ -53,10 +49,6 @@ export const PERIOD_URL_KEY = "period";
 export const FROM_DATE_URL_KEY = "from";
 export const TO_DATE_URL_KEY = "to";
 
-/**
- * Recupere le label de comparaison pour une periode donnee
- */
-export function getComparisonLabel(period: DashboardPeriod): string {
-	const option = PERIOD_OPTIONS.find((p) => p.value === period);
-	return option?.comparisonLabel || "vs periode precedente";
-}
+// Re-exports pour retrocompatibilite
+export type { PeriodOption } from "../types/dashboard.types";
+export { getComparisonLabel } from "../utils/periods.utils";

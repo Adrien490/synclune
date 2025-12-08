@@ -106,7 +106,7 @@ export function MaterialSelector({
 							disabled={!isAvailable || isPending}
 							className={cn(
 								"flex items-center justify-between p-3 rounded-lg border text-left transition-all",
-								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
+								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",

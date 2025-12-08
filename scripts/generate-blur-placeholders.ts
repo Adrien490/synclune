@@ -22,20 +22,17 @@
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../app/generated/prisma/client";
 import { generateBlurDataUrlWithRetry } from "../modules/media/services/generate-blur-data-url";
-import {
-	BLUR_PLACEHOLDER_CONFIG,
-	isValidUploadThingUrl,
-} from "../modules/media/constants/media.constants";
+import { BLUR_PLACEHOLDER_CONFIG } from "../modules/media/constants/media.constants";
+import { isValidUploadThingUrl } from "../modules/media/utils/validate-media-file";
+import type { MediaItem, ProcessResult as BaseProcessResult, StructuredLog } from "../modules/media/types/script.types";
+import { requireScriptEnvVars } from "../shared/utils/script-env";
 
 // ============================================================================
 // VALIDATION ENVIRONNEMENT
 // ============================================================================
 
-if (!process.env.DATABASE_URL) {
-	console.error("❌ DATABASE_URL n'est pas défini dans les variables d'environnement.");
-	console.error("   Vérifiez votre fichier .env ou vos variables d'environnement.");
-	process.exit(1);
-}
+const SCRIPT_NAME = "generate-blur-placeholders";
+const env = requireScriptEnvVars(["DATABASE_URL"] as const, SCRIPT_NAME);
 
 // ============================================================================
 // ARGUMENTS CLI
@@ -47,15 +44,32 @@ const PARALLEL_ARG = process.argv.find((arg) => arg.startsWith("--parallel="));
 const PARALLEL_COUNT = PARALLEL_ARG ? parseInt(PARALLEL_ARG.split("=")[1], 10) : 5;
 
 // ============================================================================
-// LOGS STRUCTURÉS (Sentry-ready)
+// GESTION ARRÊT GRACIEUX
 // ============================================================================
 
-interface StructuredLog {
-	timestamp: string;
-	level: "info" | "warn" | "error";
-	event: string;
-	data?: Record<string, unknown>;
-}
+let isShuttingDown = false;
+
+process.on("SIGTERM", () => {
+	isShuttingDown = true;
+	if (JSON_LOGS) {
+		console.log(JSON.stringify({ timestamp: new Date().toISOString(), level: "warn", event: "SIGTERM reçu, arrêt gracieux..." }));
+	} else {
+		console.warn("\n⚠️  SIGTERM reçu, arrêt gracieux après le batch en cours...");
+	}
+});
+
+process.on("SIGINT", () => {
+	isShuttingDown = true;
+	if (JSON_LOGS) {
+		console.log(JSON.stringify({ timestamp: new Date().toISOString(), level: "warn", event: "SIGINT reçu, arrêt gracieux..." }));
+	} else {
+		console.warn("\n⚠️  SIGINT reçu, arrêt gracieux après le batch en cours...");
+	}
+});
+
+// ============================================================================
+// LOGS STRUCTURÉS (Sentry-ready)
+// ============================================================================
 
 function logStructured(log: StructuredLog): void {
 	if (JSON_LOGS) {
@@ -91,23 +105,15 @@ function logError(message: string, data?: Record<string, unknown>): void {
 // INITIALISATION PRISMA
 // ============================================================================
 
-const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaNeon({ connectionString: env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-interface ImageMedia {
-	id: string;
-	url: string;
-	skuId: string;
-}
-
-interface ProcessResult {
-	id: string;
-	success: boolean;
-	error?: string;
+/** Résultat étendu avec le blur data URL */
+interface BlurProcessResult extends BaseProcessResult {
 	blurDataUrl?: string;
 }
 
@@ -122,7 +128,7 @@ function delay(ms: number): Promise<void> {
 /**
  * Traite une image et génère son blurDataUrl
  */
-async function processImage(image: ImageMedia): Promise<ProcessResult> {
+async function processImage(image: MediaItem): Promise<BlurProcessResult> {
 	// Validation du domaine source
 	if (!isValidUploadThingUrl(image.url)) {
 		return {
@@ -161,7 +167,7 @@ async function processImage(image: ImageMedia): Promise<ProcessResult> {
 /**
  * Traite un batch d'images en parallèle
  */
-async function processBatch(images: ImageMedia[]): Promise<ProcessResult[]> {
+async function processBatch(images: MediaItem[]): Promise<BlurProcessResult[]> {
 	return Promise.all(images.map((image) => processImage(image)));
 }
 
@@ -201,6 +207,12 @@ async function main() {
 	let errors = 0;
 
 	for (let i = 0; i < images.length; i += PARALLEL_COUNT) {
+		// Vérifier si arrêt demandé
+		if (isShuttingDown) {
+			logWarn("Arrêt demandé, sortie après ce batch...");
+			break;
+		}
+
 		const batch = images.slice(i, i + PARALLEL_COUNT);
 		const results = await processBatch(batch);
 
@@ -228,9 +240,13 @@ async function main() {
 	}
 
 	logInfo("\n📊 Résumé:");
-	logInfo(`   Total traité: ${processed}`);
+	logInfo(`   Total traité: ${processed}/${images.length}`);
 	logInfo(`   ✅ Succès: ${success}`);
 	logInfo(`   ❌ Erreurs: ${errors}`);
+
+	if (isShuttingDown) {
+		logWarn(`\n⚠️  Script interrompu - ${images.length - processed} images non traitées`);
+	}
 
 	if (DRY_RUN) {
 		logWarn("\n⚠️  Mode DRY RUN - Aucune modification effectuée");

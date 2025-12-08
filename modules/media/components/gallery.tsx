@@ -298,7 +298,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 								>
 									<GalleryMediaRenderer
 										media={current}
-										productSlug={product.slug}
 										title={title}
 										index={optimisticIndex}
 										isFirst={optimisticIndex === 0}
@@ -378,6 +377,25 @@ function GalleryContent({ product, title }: GalleryProps) {
 									</div>
 								</div>
 							)}
+
+							{/* Dots indicator - Navigation rapide visuelle */}
+							<div className="flex justify-center gap-1.5 mt-3" role="tablist" aria-label="Navigation galerie">
+								{safeImages.map((_, i) => (
+									<button
+										key={i}
+										onClick={() => navigateToIndex(i)}
+										role="tab"
+										aria-selected={i === optimisticIndex}
+										aria-label={`Image ${i + 1}`}
+										className={cn(
+											"h-2 rounded-full transition-all duration-200",
+											i === optimisticIndex
+												? "bg-primary w-4"
+												: "bg-muted-foreground/30 w-2 hover:bg-muted-foreground/50"
+										)}
+									/>
+								))}
+							</div>
 						</div>
 					)}
 

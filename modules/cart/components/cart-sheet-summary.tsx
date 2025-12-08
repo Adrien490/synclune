@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
-import { calculateShipping } from "@/modules/orders/constants/shipping.constants";
+import { calculateShipping } from "@/modules/orders/utils/shipping.utils";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag, TruckIcon } from "lucide-react";
 import Link from "next/link";

@@ -20,6 +20,9 @@ export interface BlurDataUrlResult {
 	base64: string;
 }
 
+/** Fonction de log pour les avertissements */
+export type BlurLogFn = (message: string, data?: Record<string, unknown>) => void;
+
 export interface GenerateBlurOptions {
 	/** Timeout pour le telechargement (ms) */
 	downloadTimeout?: number;
@@ -29,6 +32,8 @@ export interface GenerateBlurOptions {
 	plaiceholderSize?: number;
 	/** Valider que l'URL est un domaine UploadThing */
 	validateDomain?: boolean;
+	/** Fonction de log personnalisée (defaut: console.warn) */
+	logWarning?: BlurLogFn;
 }
 
 // ============================================================================
@@ -43,7 +48,71 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
+ * Valide qu'un blur data URL est au format attendu
+ */
+function isValidBlurDataUrl(base64: string): boolean {
+	return base64.startsWith("data:image/");
+}
+
+/**
+ * Tronque une URL pour les logs (evite d'exposer trop d'info)
+ */
+function truncateUrl(url: string, maxLength: number = 50): string {
+	if (url.length <= maxLength) return url;
+	return url.substring(0, maxLength) + "...";
+}
+
+/**
+ * Logger par defaut (console.warn)
+ */
+const defaultLogger: BlurLogFn = (message) => console.warn(message);
+
+/**
+ * Determine si une erreur est temporaire et merite un retry
+ * - Erreurs 5xx (serveur) -> retry
+ * - Timeout/AbortError -> retry
+ * - Erreurs reseau -> retry
+ * - Erreurs 4xx (client) -> pas de retry (erreur permanente)
+ */
+function isRetryableError(error: unknown): boolean {
+	if (!(error instanceof Error)) return true; // Erreur inconnue, on retry
+
+	const message = error.message.toLowerCase();
+
+	// Timeout ou abort -> retry
+	if (error.name === "AbortError" || message.includes("timeout")) {
+		return true;
+	}
+
+	// Erreurs HTTP: extraire le code
+	const httpMatch = message.match(/http\s*(\d{3})/i);
+	if (httpMatch) {
+		const statusCode = parseInt(httpMatch[1], 10);
+		// 4xx = erreur client permanente (sauf 408 Request Timeout, 429 Too Many Requests)
+		if (statusCode >= 400 && statusCode < 500 && statusCode !== 408 && statusCode !== 429) {
+			return false;
+		}
+		// 5xx = erreur serveur temporaire
+		return true;
+	}
+
+	// Erreurs reseau -> retry
+	if (
+		message.includes("network") ||
+		message.includes("econnrefused") ||
+		message.includes("econnreset") ||
+		message.includes("etimedout")
+	) {
+		return true;
+	}
+
+	// Par defaut, on retry (prudence)
+	return true;
+}
+
+/**
  * Executer une fonction avec retry et backoff exponentiel
+ * Ne retry que les erreurs temporaires (5xx, timeout, reseau)
  */
 async function withRetry<T>(
 	fn: () => Promise<T>,
@@ -57,6 +126,11 @@ async function withRetry<T>(
 			return await fn();
 		} catch (error) {
 			lastError = error instanceof Error ? error : new Error(String(error));
+
+			// Verifier si l'erreur merite un retry
+			if (!isRetryableError(error)) {
+				throw lastError; // Erreur permanente, pas de retry
+			}
 
 			if (attempt < maxRetries - 1) {
 				const waitTime = baseDelay * Math.pow(2, attempt);
@@ -144,26 +218,34 @@ export async function generateBlurDataUrl(
 ): Promise<string | undefined> {
 	const validateDomain = options.validateDomain ?? true;
 	const plaiceholderSize = options.plaiceholderSize ?? BLUR_PLACEHOLDER_CONFIG.plaiceholderSize;
+	const log = options.logWarning ?? defaultLogger;
 
 	// Validation du domaine source (protection SSRF)
 	if (validateDomain && !isValidUploadThingUrl(imageUrl)) {
-		console.warn(
-			`[BlurDataUrl] Domaine non autorise: ${new URL(imageUrl).hostname}`
-		);
+		log("[BlurDataUrl] Domaine non autorise", { url: truncateUrl(imageUrl) });
 		return undefined;
 	}
 
 	try {
 		const buffer = await downloadImage(imageUrl, options);
 		const { base64 } = await getPlaiceholder(buffer, { size: plaiceholderSize });
+
+		// Validation du résultat
+		if (!isValidBlurDataUrl(base64)) {
+			log("[BlurDataUrl] Format invalide genere", { expected: "data:image/..." });
+			return undefined;
+		}
+
 		return base64;
 	} catch (error) {
+		const timeout = options.downloadTimeout ?? BLUR_PLACEHOLDER_CONFIG.downloadTimeout;
 		if (error instanceof Error && error.name === "AbortError") {
-			console.warn(
-				`[BlurDataUrl] Timeout apres ${options.downloadTimeout ?? BLUR_PLACEHOLDER_CONFIG.downloadTimeout}ms pour ${imageUrl}`
-			);
+			log("[BlurDataUrl] Timeout", { timeoutMs: timeout, url: truncateUrl(imageUrl) });
 		} else {
-			console.warn("[BlurDataUrl] Generation echouee:", error);
+			log("[BlurDataUrl] Generation echouee", {
+				error: error instanceof Error ? error.message : String(error),
+				url: truncateUrl(imageUrl),
+			});
 		}
 		return undefined;
 	}
@@ -197,6 +279,12 @@ export async function generateBlurDataUrlWithRetry(
 	return withRetry(async () => {
 		const buffer = await downloadImage(imageUrl, options);
 		const { base64 } = await getPlaiceholder(buffer, { size: plaiceholderSize });
+
+		// Validation du résultat
+		if (!isValidBlurDataUrl(base64)) {
+			throw new Error("Format de blur invalide généré (attendu: data:image/...)");
+		}
+
 		return base64;
 	});
 }
@@ -222,5 +310,11 @@ export async function generateBlurDataUrlFromBuffer(
 	}
 
 	const { base64 } = await getPlaiceholder(buffer, { size: plaiceholderSize });
+
+	// Validation du résultat
+	if (!isValidBlurDataUrl(base64)) {
+		throw new Error("Format de blur invalide généré (attendu: data:image/...)");
+	}
+
 	return base64;
 }

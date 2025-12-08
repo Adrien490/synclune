@@ -1,14 +1,11 @@
 /**
  * Configuration des onglets du dashboard admin
+ *
+ * Types: voir types/dashboard.types.ts
+ * Fonctions: voir utils/tabs.utils.ts
  */
 
-export type DashboardTab = "overview" | "sales" | "inventory" | "customers";
-
-export interface DashboardTabConfig {
-	value: DashboardTab;
-	label: string;
-	description: string;
-}
+import type { DashboardTab, DashboardTabConfig } from "../types/dashboard.types";
 
 /**
  * Configuration des onglets du dashboard
@@ -46,21 +43,6 @@ export const DEFAULT_TAB: DashboardTab = "overview";
  */
 export const TAB_URL_KEY = "tab";
 
-/**
- * Verifie si une valeur est un onglet valide
- */
-export function isValidTab(value: string | null | undefined): value is DashboardTab {
-	if (!value) return false;
-	return DASHBOARD_TABS.some((tab) => tab.value === value);
-}
-
-/**
- * Recupere la configuration d'un onglet
- */
-export function getTabConfig(tab: DashboardTab): DashboardTabConfig {
-	const config = DASHBOARD_TABS.find((t) => t.value === tab);
-	if (!config) {
-		return DASHBOARD_TABS[0];
-	}
-	return config;
-}
+// Re-exports pour retrocompatibilite
+export type { DashboardTab, DashboardTabConfig } from "../types/dashboard.types";
+export { isValidTab, getTabConfig } from "../utils/tabs.utils";

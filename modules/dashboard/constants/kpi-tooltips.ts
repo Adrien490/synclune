@@ -6,7 +6,7 @@
  * Textes explicatifs pour les KPIs du dashboard
  * Affiches au survol de l'icone info
  */
-export const KPI_TOOLTIPS = {
+export const KPI_TOOLTIPS: Record<string, string> = {
 	// Performance KPIs
 	todayRevenue:
 		"Chiffre d'affaires total des commandes payees aujourd'hui. Compare a la meme heure hier.",
@@ -50,6 +50,6 @@ export const KPI_TOOLTIPS = {
 		"Taux de conversion visiteurs -> acheteurs sur la periode.",
 	cancelledOrders:
 		"Commandes annulees. Un taux eleve peut indiquer un probleme.",
-} as const
+} as const;
 
-export type KpiTooltipKey = keyof typeof KPI_TOOLTIPS
+export type KpiTooltipKey = keyof typeof KPI_TOOLTIPS;

@@ -14,6 +14,7 @@ import { ShoppingCart, Truck, ShieldCheck, RotateCcw, CreditCard } from "lucide-
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart.constants";
+import { formatEuro } from "@/shared/utils/format-euro";
 
 interface AddToCartButtonProps {
 	product: GetProductReturn;
@@ -172,7 +173,20 @@ export function AddToCartButton({
 			)}
 
 			{/* Bouton ajout au panier - Sticky simplifié sur mobile */}
-			<div className="sticky bottom-0 left-0 right-0 z-20 lg:static bg-background/95 backdrop-blur lg:bg-transparent lg:backdrop-blur-none p-4 lg:p-0 -mx-4 lg:mx-0 shadow-lg lg:shadow-none border-t lg:border-t-0">
+			<div className="sticky bottom-0 left-0 right-0 z-20 lg:static bg-background/95 backdrop-blur lg:bg-transparent lg:backdrop-blur-none p-3 lg:p-0 -mx-4 lg:mx-0 shadow-lg lg:shadow-none border-t lg:border-t-0">
+				{/* Prix inline sur mobile - évite de scroller pour voir le prix */}
+				{selectedSku && (
+					<div className="lg:hidden flex items-baseline justify-between mb-2">
+						<span className="text-lg font-bold text-foreground">
+							{formatEuro(selectedSku.priceInclTax)}
+						</span>
+						{selectedSku.compareAtPrice && selectedSku.compareAtPrice > selectedSku.priceInclTax && (
+							<span className="text-sm line-through text-muted-foreground">
+								{formatEuro(selectedSku.compareAtPrice)}
+							</span>
+						)}
+					</div>
+				)}
 				<Button
 					type="submit"
 					className="w-full shadow-md"

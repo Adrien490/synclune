@@ -1,3 +1,9 @@
+/**
+ * Configuration du tutoriel du dashboard
+ *
+ * Types: voir types/dashboard.types.ts
+ */
+
 import {
 	AlertTriangle,
 	BarChart3,
@@ -8,23 +14,16 @@ import {
 	Sparkles,
 	TrendingUp,
 } from "lucide-react";
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export interface TutorialStep {
-	title: string;
-	description: string;
-	icon: React.ReactNode;
-	tips?: string[];
-}
+import type { TutorialStep } from "../types/dashboard.types";
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
 export const TUTORIAL_STORAGE_KEY = "dashboard-tutorial-completed";
+
+// Re-export pour retrocompatibilite
+export type { TutorialStep } from "../types/dashboard.types";
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
 	{

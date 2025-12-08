@@ -5,41 +5,34 @@ import { MediaErrorFallback } from "@/modules/media/components/media-error-fallb
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import Image from "next/image";
-import { memo } from "react";
 
 // Constantes - quality 85 offre un bon compromis taille/qualité (-50% vs 95)
 const MAIN_IMAGE_QUALITY = 85;
 
 interface GalleryMediaRendererProps {
 	media: ProductMedia;
-	productSlug: string;
 	title: string;
 	index: number;
 	isFirst: boolean;
 	hasError: boolean;
 	onError: () => void;
 	onRetry: () => void;
-	/** Indique si c'est une image above-fold (hero, première image galerie) */
-	priority?: boolean;
 }
 
 /**
  * Composant responsable du rendu des médias (images/vidéos) dans la galerie principale
- * Extrait la logique complexe de rendu conditionnel hors de Gallery
- * - Gère les images
+ * - Gère les images avec priorité pour la première
  * - Gère les vidéos avec contrôles natifs
  * - Gère les erreurs avec fallback et retry
  */
-function GalleryMediaRendererComponent({
+export function GalleryMediaRenderer({
 	media,
-	productSlug,
 	title,
 	index,
 	isFirst,
 	hasError,
 	onError,
 	onRetry,
-	priority = false,
 }: GalleryMediaRendererProps) {
 	// Vidéo
 	if (media.mediaType === "VIDEO") {
@@ -73,18 +66,15 @@ function GalleryMediaRendererComponent({
 		return <MediaErrorFallback type="image" onRetry={onRetry} />;
 	}
 
-	// Image - composant commun
-	// priority active fetchPriority="high" automatiquement via Next.js Image
-	const shouldPrioritize = priority || isFirst;
-
-	const ImageComponent = (
+	// Image - priority pour la première image (above-fold)
+	return (
 		<Image
 			src={media.url}
 			alt={media.alt || PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1)}
 			fill
 			className="object-cover"
-			priority={shouldPrioritize}
-			fetchPriority={shouldPrioritize ? "high" : "auto"}
+			priority={isFirst}
+			fetchPriority={isFirst ? "high" : "auto"}
 			quality={MAIN_IMAGE_QUALITY}
 			sizes="(max-width: 768px) 100vw, 60vw"
 			placeholder={media.blurDataUrl ? "blur" : "empty"}
@@ -93,9 +83,4 @@ function GalleryMediaRendererComponent({
 			draggable={false}
 		/>
 	);
-
-	return ImageComponent;
 }
-
-// Export mémorisé pour éviter re-renders inutiles
-export const GalleryMediaRenderer = memo(GalleryMediaRendererComponent);

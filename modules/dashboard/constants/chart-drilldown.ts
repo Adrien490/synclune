@@ -1,25 +1,17 @@
 // ============================================================================
 // CHART DRILLDOWN ROUTES CONFIGURATION
+//
+// Types: voir types/dashboard.types.ts
+// Fonctions: voir utils/drilldown.utils.ts
 // ============================================================================
 
-/**
- * Configuration pour le drill-down des graphiques
- * Permet de naviguer vers une page filtree en cliquant sur un segment de graphique
- */
-
-export interface ChartDrilldownConfig {
-	/** URL de base pour la navigation */
-	baseUrl: string
-	/** Nom du parametre de filtre dans l'URL */
-	filterParam: string
-	/** Label accessible pour le screen reader */
-	ariaLabel: string
-}
+import type { ChartDrilldownConfig } from "../types/dashboard.types";
 
 /**
  * Configuration des drill-down pour chaque type de graphique
+ * Permet de naviguer vers une page filtree en cliquant sur un segment de graphique
  */
-export const CHART_DRILLDOWN = {
+export const CHART_DRILLDOWN: Record<string, ChartDrilldownConfig> = {
 	// Graphique des statuts de commandes
 	ordersStatus: {
 		baseUrl: "/admin/ventes/commandes",
@@ -68,18 +60,8 @@ export const CHART_DRILLDOWN = {
 		filterParam: "filter_new",
 		ariaLabel: "Cliquer pour voir ces clients",
 	},
-} as const
+} as const;
 
-export type ChartDrilldownKey = keyof typeof CHART_DRILLDOWN
-
-/**
- * Construit l'URL de drill-down pour un graphique
- */
-export function buildChartDrilldownUrl(
-	chartKey: ChartDrilldownKey,
-	filterValue: string
-): string {
-	const config = CHART_DRILLDOWN[chartKey]
-	const encodedValue = encodeURIComponent(filterValue)
-	return `${config.baseUrl}?${config.filterParam}=${encodedValue}`
-}
+// Re-exports pour retrocompatibilite
+export type { ChartDrilldownConfig } from "../types/dashboard.types";
+export { buildChartDrilldownUrl, type ChartDrilldownKey } from "../utils/drilldown.utils";

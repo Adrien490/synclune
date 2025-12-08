@@ -57,12 +57,26 @@ export const THUMBNAIL_CONFIG = {
 	capturePosition: 0.1,
 	/** Position max en secondes (évite frames noires de fin) */
 	maxCaptureTime: 1,
-	/** Timeout pour le chargement vidéo (ms) */
-	loadTimeout: 30000,
 	/** Nombre de tentatives avant échec */
 	maxRetries: 3,
 	/** Délai de base pour backoff exponentiel (ms) */
 	retryBaseDelay: 1000,
+
+	// Timeouts pour le traitement synchrone (service)
+	/** Timeout pour le téléchargement vidéo (ms) */
+	downloadTimeout: 60_000,
+	/** Timeout pour les commandes FFmpeg (ms) */
+	ffmpegTimeout: 30_000,
+	/** Timeout pour FFprobe (ms) */
+	ffprobeTimeout: 10_000,
+	/** Timeout pour génération blur placeholder (ms) */
+	blurTimeout: 5_000,
+
+	// Limites pour le traitement synchrone (upload temps réel)
+	/** Taille max vidéo pour traitement synchrone (50 MB) */
+	maxSyncVideoSize: 50 * 1024 * 1024,
+	/** Durée fallback si FFprobe échoue (secondes) */
+	fallbackDuration: 10,
 } as const;
 
 // ============================================================================
