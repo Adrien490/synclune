@@ -1,40 +1,30 @@
-"use client";
-
 import { cn } from "@/shared/utils/cn";
-import { ReactNode, useState } from "react";
-import { Button } from "./ui/button";
-import { SlidersHorizontal } from "lucide-react";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { AnimatePresence, motion } from "framer-motion";
+import { ReactNode } from "react";
 
 /**
- * DataTableToolbar - Container for data table controls (search, filters, sort, actions)
+ * Toolbar - Container for page controls (search, filters, sort, actions)
  *
  * Groups logically related controls for data manipulation.
- * On mobile, filters can be collapsed to save space.
+ * Responsive layout: stacked on mobile, horizontal on desktop.
  *
  * @example
  * ```tsx
- * <DataTableToolbar
- *   initialCollapsed={toolbarCollapsed}
+ * <Toolbar
  *   search={<SearchForm placeholder="Rechercher..." />}
  * >
- *   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
- *     <SortSelect />
- *     <FilterSheet />
- *     <RefreshButton />
- *   </div>
- * </DataTableToolbar>
+ *   <SortSelect />
+ *   <FilterSheet />
+ * </Toolbar>
  * ```
  */
-interface DataTableToolbarProps {
+interface ToolbarProps {
 	/**
-	 * Toolbar controls (filters, sort, actions) - collapsible on mobile
+	 * Toolbar controls (filters, sort, actions)
 	 */
 	children: ReactNode;
 
 	/**
-	 * Search component - always visible, even when collapsed
+	 * Search component - displayed on the left side
 	 */
 	search?: ReactNode;
 
@@ -54,31 +44,18 @@ interface DataTableToolbarProps {
 	 * @default false
 	 */
 	isPending?: boolean;
-
-	/**
-	 * Initial collapsed state from server cookie
-	 * @default true (collapsed on mobile by default)
-	 */
-	initialCollapsed?: boolean;
 }
 
-export function DataTableToolbar({
+export function Toolbar({
 	children,
 	search,
 	className,
 	ariaLabel = "Barre d'outils de filtrage et recherche",
 	isPending = false,
-	initialCollapsed = true,
-}: DataTableToolbarProps) {
-	const isMobile = useIsMobile();
-	const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
-
-	// Si search est fourni → nouvelle structure avec collapse mobile
-	// Sinon → ancienne structure (compatibilité)
+}: ToolbarProps) {
 	const hasSearch = !!search;
-	const showCollapsed = isMobile && isCollapsed && hasSearch;
 
-	// Ancienne structure (pas de search prop) - comportement inchangé
+	// Structure simple sans search
 	if (!hasSearch) {
 		return (
 			<div
@@ -89,7 +66,6 @@ export function DataTableToolbar({
 				className={cn(
 					"flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 sm:items-center sm:justify-between",
 					"rounded-lg bg-card border border-border/60",
-					"transition-shadow duration-200 motion-reduce:transition-none",
 					"min-w-0 mb-6 p-4 shadow-sm",
 					isPending && "opacity-60 pointer-events-none",
 					className
@@ -100,7 +76,7 @@ export function DataTableToolbar({
 		);
 	}
 
-	// Nouvelle structure avec search prop et collapse mobile
+	// Structure avec search à gauche et filtres à droite
 	return (
 		<div
 			role="toolbar"
@@ -109,64 +85,17 @@ export function DataTableToolbar({
 			aria-busy={isPending}
 			className={cn(
 				"rounded-lg bg-card border border-border/60",
-				"transition-shadow duration-200 motion-reduce:transition-none",
 				"min-w-0 mb-6 p-4 shadow-sm",
 				isPending && "opacity-60 pointer-events-none",
 				className
 			)}
 		>
-			{/* Desktop: une seule ligne flex-row avec search à gauche et filtres à droite */}
-			{!isMobile && (
-				<div className="flex flex-row items-center justify-between gap-4">
-					{/* Search à gauche, flexible */}
-					<div className="flex-1 min-w-0 max-w-md">{search}</div>
-					{/* Children (filtres/actions) à droite, shrink-0 pour éviter le wrap */}
-					<div className="flex flex-row items-center gap-3 shrink-0">
-						{children}
-					</div>
+			<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
+				<div className="flex-1 min-w-0 sm:max-w-md">{search}</div>
+				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:shrink-0">
+					{children}
 				</div>
-			)}
-
-			{/* Mobile: structure collapsible */}
-			{isMobile && (
-				<>
-					{/* Ligne 1: Search + Toggle */}
-					<div className="flex items-center gap-3">
-						<div className="flex-1 min-w-0">{search}</div>
-						<Button
-							variant="outline"
-							size="icon"
-							onClick={() => setIsCollapsed((prev) => !prev)}
-							className="shrink-0 h-[44px] w-[44px]"
-							aria-expanded={!isCollapsed}
-							aria-label={
-								isCollapsed ? "Afficher les filtres" : "Masquer les filtres"
-							}
-						>
-							<SlidersHorizontal
-								className={cn("h-5 w-5", !isCollapsed && "text-primary")}
-							/>
-						</Button>
-					</div>
-
-					{/* Ligne 2+: Filtres (collapsible) */}
-					<AnimatePresence initial={false}>
-						{!showCollapsed && (
-							<motion.div
-								initial={{ height: 0, opacity: 0 }}
-								animate={{ height: "auto", opacity: 1 }}
-								exit={{ height: 0, opacity: 0 }}
-								transition={{ duration: 0.2 }}
-								className="overflow-hidden mt-3"
-							>
-								<div className="flex flex-col items-stretch gap-3">
-									{children}
-								</div>
-							</motion.div>
-						)}
-					</AnimatePresence>
-				</>
-			)}
+			</div>
 		</div>
 	);
 }

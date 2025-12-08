@@ -1,4 +1,5 @@
 import type { ProductSearchParams } from "../page";
+import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -195,39 +196,31 @@ export default async function BijouxPage({
 			{/* Section principale avec catalogue */}
 			<section className="bg-background py-8 relative z-10">
 				<div className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-					{/* Toolbar élégante avec les styles Synclune */}
-					<div className="bg-card border border-border rounded-lg p-4 shadow-sm transition-all duration-200">
-						<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
-							{/* Section gauche - Search form */}
-							<div className="flex-1 sm:max-w-md">
-								<SearchForm
-									paramName="search"
-									placeholder={`Rechercher des ${productType.label.toLowerCase()}...`}
-									className="w-full focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 border-secondary/40 hover:border-secondary/60 transition-colors duration-200"
-								/>
-							</div>
-
-							{/* Section droite - Tri et Filtres */}
-							<div className="flex flex-row items-center gap-3 sm:gap-3 sm:shrink-0">
-								<SelectFilter
-									filterKey="sortBy"
-									label="Trier par"
-									options={Object.values(SORT_OPTIONS).map((option) => ({
-										value: option,
-										label: SORT_LABELS[option as keyof typeof SORT_LABELS],
-									}))}
-									placeholder="Plus récents"
-									className="min-w-0 flex-1 sm:min-w-[160px] sm:flex-none border-secondary/40 hover:border-secondary/60 focus:border-primary focus:ring-primary/20 transition-all duration-200"
-								/>
-								<ProductFilterSheet
-									className="shrink-0"
-									colors={colors}
-									materials={materials}
-									maxPriceInEuros={maxPriceInEuros}
-								/>
-							</div>
-						</div>
-					</div>
+					<Toolbar
+						search={
+							<SearchForm
+								paramName="search"
+								placeholder={`Rechercher des ${productType.label.toLowerCase()}...`}
+								className="w-full"
+							/>
+						}
+					>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.values(SORT_OPTIONS).map((option) => ({
+								value: option,
+								label: SORT_LABELS[option as keyof typeof SORT_LABELS],
+							}))}
+							placeholder="Plus récents"
+							className="w-full sm:w-auto sm:min-w-[160px]"
+						/>
+						<ProductFilterSheet
+							colors={colors}
+							materials={materials}
+							maxPriceInEuros={maxPriceInEuros}
+						/>
+					</Toolbar>
 
 					{/* Badges des filtres actifs */}
 					{hasActiveFilters && <ProductFilterBadges colors={colors} materials={materials} />}

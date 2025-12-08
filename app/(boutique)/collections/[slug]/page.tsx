@@ -1,15 +1,19 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import type { ProductFiltersSearchParams } from "@/app/(boutique)/produits/page";
 import { PageHeader } from "@/shared/components/page-header";
-import { Button } from "@/shared/components/ui/button";
+import { SearchForm } from "@/shared/components/search-form";
+import { SelectFilter } from "@/shared/components/select-filter";
+import { Toolbar } from "@/shared/components/toolbar";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
-import { GET_PRODUCTS_DEFAULT_PER_PAGE } from "@/modules/products/data/get-products";
+import {
+	GET_PRODUCTS_DEFAULT_PER_PAGE,
+	SORT_LABELS,
+	SORT_OPTIONS,
+} from "@/modules/products/data/get-products";
 import { getProducts } from "@/modules/products/data/get-products";
 import type { SortField } from "@/modules/products/data/get-products";
-import { X } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { parseFilters } from "../_utils/params";
@@ -116,21 +120,32 @@ export default async function CollectionPage({
 				title={searchTerm ? `Recherche "${searchTerm}"` : collection.name}
 				description={collection.description ?? undefined}
 				breadcrumbs={breadcrumbs}
-				action={
-					searchTerm ? (
-						<Button variant="outline" size="sm" asChild className="shrink-0">
-							<Link href={`/collections/${slug}`}>
-								<X className="w-4 h-4 mr-2" />
-								Effacer la recherche
-							</Link>
-						</Button>
-					) : undefined
-				}
 			/>
 
 			{/* Section principale avec catalogue */}
 			<section className="bg-background py-8">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+					<Toolbar
+						search={
+							<SearchForm
+								paramName="search"
+								placeholder={`Rechercher dans ${collection.name}...`}
+								className="w-full"
+							/>
+						}
+					>
+						<SelectFilter
+							filterKey="sortBy"
+							label="Trier par"
+							options={Object.values(SORT_OPTIONS).map((option) => ({
+								value: option,
+								label: SORT_LABELS[option as keyof typeof SORT_LABELS],
+							}))}
+							placeholder="Meilleures ventes"
+							className="w-full sm:w-auto sm:min-w-[160px]"
+						/>
+					</Toolbar>
+
 					<Suspense fallback={<ProductListSkeleton />}>
 						<ProductList productsPromise={productsPromise} perPage={perPage} />
 					</Suspense>

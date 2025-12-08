@@ -58,7 +58,7 @@ export function TabNavigation({
 		const isActive = value === activeValue;
 
 		return cn(
-			"inline-flex h-11 md:h-9 items-center justify-center gap-1.5 flex-shrink-0",
+			"inline-flex h-11 md:h-9 items-center justify-center gap-1.5 md:flex-shrink-0",
 			"rounded-md px-3 py-1.5",
 			"text-sm font-medium whitespace-nowrap",
 			"transition-all duration-200",
@@ -97,7 +97,7 @@ export function TabNavigation({
 	};
 
 	const triggerClasses = cn(
-		"md:hidden inline-flex h-11 items-center justify-center gap-1.5 flex-shrink-0",
+		"md:hidden inline-flex h-11 items-center justify-center gap-1.5 max-w-[140px]",
 		"rounded-md px-3 py-1.5",
 		"text-sm font-medium whitespace-nowrap",
 		"transition-all duration-200",
@@ -124,8 +124,8 @@ export function TabNavigation({
 					className={triggerClasses}
 					aria-label="Plus d'options de navigation"
 				>
-					{activeOverflowItem?.label || "Plus"}
-					<ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
+					<span className="truncate">{activeOverflowItem?.label || "Plus"}</span>
+					<ChevronDownIcon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
 				</DrawerTrigger>
 				<DrawerContent className="data-[vaul-drawer-direction=bottom]:bottom-0 pb-6">
 					<DrawerHeader>
