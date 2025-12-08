@@ -27,7 +27,7 @@ interface TabNavigationProps {
 	ariaLabel?: string;
 	/** Activer le prefetch des liens (défaut: false) */
 	prefetch?: boolean;
-	/** Nombre d'items visibles sur mobile avant le bouton "Plus" (défaut: 3) */
+	/** Nombre d'items visibles sur mobile avant le bouton "Plus" (défaut: 2) */
 	mobileVisibleCount?: number;
 }
 
@@ -170,17 +170,17 @@ export function TabNavigation({
 
 	return (
 		<nav aria-label={ariaLabel} className="w-full">
-			<div className="bg-muted rounded-lg p-1 flex gap-1 md:gap-1.5 overflow-x-auto scrollbar-none">
+			<div className="bg-muted rounded-lg p-1 flex gap-1 md:gap-1.5 min-w-0">
 				{/* Items toujours visibles (mobile + desktop) */}
 				{visibleItems.map((item) => (
 					<Link
 						key={item.value}
 						href={item.href}
 						prefetch={prefetch}
-						className={getTabClasses(item.value)}
+						className={getTabClasses(item.value, "min-w-0")}
 						aria-current={activeValue === item.value ? "page" : undefined}
 					>
-						{item.label}
+						<span className="truncate">{item.label}</span>
 						{renderCount(item.count, activeValue === item.value)}
 					</Link>
 				))}
@@ -191,10 +191,10 @@ export function TabNavigation({
 						key={item.value}
 						href={item.href}
 						prefetch={prefetch}
-						className={getTabClasses(item.value, "hidden md:inline-flex")}
+						className={getTabClasses(item.value, "hidden md:inline-flex min-w-0")}
 						aria-current={activeValue === item.value ? "page" : undefined}
 					>
-						{item.label}
+						<span className="truncate">{item.label}</span>
 						{renderCount(item.count, activeValue === item.value)}
 					</Link>
 				))}
