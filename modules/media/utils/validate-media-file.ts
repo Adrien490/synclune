@@ -166,20 +166,20 @@ const CUID_PATTERN = /^c[a-z0-9]{24}$/;
 
 /**
  * Domaines UploadThing autorisés (liste stricte)
- * Contrairement à endsWith(), cette liste n'accepte que les domaines exacts
- * pour éviter les attaques de subdomain takeover
+ * - Domaines exacts pour les endpoints principaux
+ * - Suffixes autorisés pour les sous-domaines CDN dynamiques
  */
-const UPLOADTHING_ALLOWED_HOSTS: Set<string> = new Set([
-	// Domaines principaux
+const UPLOADTHING_EXACT_HOSTS: Set<string> = new Set([
 	"utfs.io",
 	"uploadthing.com",
 	"ufs.sh",
-	// CDN et sous-domaines officiels connus
-	"cdn.uploadthing.com",
-	"api.uploadthing.com",
-	"sea1.ingest.uploadthing.com",
-	"fra1.ingest.uploadthing.com",
 ]);
+
+/**
+ * Suffixes autorisés pour les sous-domaines UploadThing
+ * Ex: x1ain1wpub.ufs.sh, cdn.uploadthing.com
+ */
+const UPLOADTHING_ALLOWED_SUFFIXES = [".ufs.sh", ".uploadthing.com"] as const;
 
 /**
  * Valide qu'un ID est un CUID valide
@@ -191,12 +191,21 @@ export function isValidCuid(id: string): boolean {
 
 /**
  * Valide qu'une URL provient d'un domaine UploadThing autorisé
- * Utilise une liste blanche stricte (pas de wildcard subdomain)
+ * - Accepte les domaines exacts (utfs.io, uploadthing.com, ufs.sh)
+ * - Accepte les sous-domaines (*.ufs.sh, *.uploadthing.com)
  */
 export function isValidUploadThingUrl(url: string): boolean {
 	try {
 		const parsed = new URL(url);
-		return UPLOADTHING_ALLOWED_HOSTS.has(parsed.hostname);
+		const hostname = parsed.hostname;
+
+		// Vérification exacte
+		if (UPLOADTHING_EXACT_HOSTS.has(hostname)) {
+			return true;
+		}
+
+		// Vérification des sous-domaines autorisés
+		return UPLOADTHING_ALLOWED_SUFFIXES.some((suffix) => hostname.endsWith(suffix));
 	} catch {
 		return false;
 	}
