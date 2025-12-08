@@ -36,7 +36,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "framer-motion";
-import { Check, Expand, GripVertical, MoreVertical, Play, Star, Trash2 } from "lucide-react";
+import { Expand, GripVertical, MoreVertical, Play, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
@@ -202,7 +202,11 @@ function SortableMediaItem({
 								e.stopPropagation();
 								onOpenLightbox(index);
 							}}
-							className="absolute inset-0 flex items-center justify-center cursor-pointer"
+							className={cn(
+								"absolute inset-0 flex items-center justify-center cursor-pointer",
+								"opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+								"motion-safe:transition-opacity"
+							)}
 							aria-label={`Lire la vidéo ${index + 1}`}
 						>
 							<div className="bg-black/70 hover:bg-black/90 rounded-full p-3 shadow-xl transition-colors">
@@ -252,7 +256,7 @@ function SortableMediaItem({
 						aria-describedby="drag-instructions"
 						className={cn(
 							"absolute z-20 cursor-grab active:cursor-grabbing",
-							"top-2 left-2 sm:top-1 sm:left-auto sm:right-10",
+							"top-2 left-2 sm:top-2 sm:left-auto sm:right-2",
 							"flex",
 							"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
 							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full",
