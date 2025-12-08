@@ -142,7 +142,8 @@ export default async function ProductPage({
 								</section>
 
 								{/* Informations et configurateur scrollables */}
-								<section className="space-y-6 lg:min-h-screen">
+							{/* pb-24 sur mobile pour compenser la barre fixe "Ajouter au panier" */}
+								<section className="space-y-6 lg:min-h-screen pb-24 lg:pb-0">
 									{/* 1. ProductInfo - Infos de base avec bouton wishlist dynamique */}
 									<ProductInfo
 										product={product}

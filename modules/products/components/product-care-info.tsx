@@ -4,7 +4,24 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/shared/components/ui/accordion";
-import { Droplets, Package, Sparkles, Truck } from "lucide-react";
+import {
+	SHIPPING_RATES,
+	formatShippingPrice,
+} from "@/modules/orders/constants/colissimo-rates";
+import { FREE_SHIPPING_THRESHOLD } from "@/modules/orders/constants/shipping.constants";
+import { addBusinessDays, format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Droplets, Gift, Package, Truck } from "lucide-react";
+
+/**
+ * Calcule la plage de dates de livraison estimée
+ */
+function getEstimatedDeliveryDate(minDays: number, maxDays: number): string {
+	const today = new Date();
+	const minDate = addBusinessDays(today, minDays);
+	const maxDate = addBusinessDays(today, maxDays);
+	return `${format(minDate, "d", { locale: fr })}-${format(maxDate, "d MMM", { locale: fr })}`;
+}
 
 interface ProductCareInfoProps {
 	primaryMaterial?: string | null;
@@ -60,32 +77,60 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 						<span>Livraison</span>
 					</div>
 				</AccordionTrigger>
-				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">
-					<div className="space-y-2">
-						<div className="flex items-start gap-2">
-							<Package className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-							<div>
-								<p className="font-medium text-foreground">
-									Emballage soigné
-								</p>
-								<p>Chaque bijou arrive dans un joli écrin</p>
-							</div>
+				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-4">
+					{/* Emballage */}
+					<div className="flex items-start gap-3">
+						<Package className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+						<div>
+							<p className="font-medium text-foreground">Emballage soigné</p>
+							<p>Chaque bijou arrive dans un joli écrin</p>
 						</div>
-						<div className="flex items-start gap-2">
-							<Truck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-							<div>
-								<p className="font-medium text-foreground">Délais de livraison</p>
-								<p>2-4 jours ouvrés en France</p>
-								<p>4-7 jours ouvrés en Europe</p>
-							</div>
+					</div>
+
+					{/* France */}
+					<div className="flex items-start gap-3">
+						<Truck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+						<div>
+							<p className="font-medium text-foreground">
+								France métropolitaine
+							</p>
+							<p>
+								{formatShippingPrice(SHIPPING_RATES.FR.amount)} ·{" "}
+								{SHIPPING_RATES.FR.minDays}-{SHIPPING_RATES.FR.maxDays} jours
+								ouvrés
+							</p>
+							<p className="text-primary font-medium">
+								Commande aujourd'hui → Reçois d'ici le{" "}
+								{getEstimatedDeliveryDate(
+									SHIPPING_RATES.FR.minDays,
+									SHIPPING_RATES.FR.maxDays
+								)}
+							</p>
 						</div>
-						<div className="flex items-start gap-2">
-							<Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-							<div>
-								<p className="font-medium text-foreground">Les frais de port</p>
-								<p>Calculés au moment du paiement selon ta destination (France et Union européenne)</p>
-							</div>
+					</div>
+
+					{/* Europe */}
+					<div className="flex items-start gap-3">
+						<Truck className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+						<div>
+							<p className="font-medium text-foreground">Union Européenne</p>
+							<p>
+								{formatShippingPrice(SHIPPING_RATES.EU.amount)} ·{" "}
+								{SHIPPING_RATES.EU.minDays}-{SHIPPING_RATES.EU.maxDays} jours
+								ouvrés
+							</p>
 						</div>
+					</div>
+
+					{/* Livraison gratuite */}
+					<div className="flex items-start gap-3 pt-2 border-t">
+						<Gift className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+						<p>
+							<span className="font-medium text-green-600">
+								Livraison offerte
+							</span>{" "}
+							dès {formatShippingPrice(FREE_SHIPPING_THRESHOLD)} d'achat
+						</p>
 					</div>
 				</AccordionContent>
 			</AccordionItem>
