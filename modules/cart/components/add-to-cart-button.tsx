@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
-import { useIsScrolled } from "@/shared/hooks/use-is-scrolled";
 import { cn } from "@/shared/utils/cn";
 import type {
 	GetProductReturn,
@@ -43,9 +42,6 @@ export function AddToCartButton({
 	// Hook TanStack Form
 	const { action, isPending } = useAddToCart();
 	const searchParams = useSearchParams();
-
-	// Hook pour afficher la barre fixe après scroll (mobile uniquement)
-	const isScrolled = useIsScrolled(100);
 
 	const form = useAppForm({
 		defaultValues: {
@@ -178,18 +174,16 @@ export function AddToCartButton({
 				</Card>
 			)}
 
-			{/* Bouton ajout au panier - Fixed sur mobile avec animation après scroll */}
+			{/* Bouton ajout au panier - Fixed sur mobile */}
 			<div className={cn(
-				// Mobile: fixed avec animation slide-in
+				// Mobile: fixed en bas
 				"fixed bottom-0 inset-x-0 z-30",
-				"pb-[env(safe-area-inset-bottom)]",
-				"transition-transform duration-300 ease-out",
-				isScrolled ? "translate-y-0" : "translate-y-full",
-				// Desktop: comportement normal (static, pas d'animation)
-				"lg:static lg:translate-y-0 lg:pb-0 lg:transition-none",
+				// Desktop: comportement normal (static)
+				"lg:static",
 				// Styles visuels
 				"bg-background/95 backdrop-blur lg:bg-transparent lg:backdrop-blur-none",
-				"p-3 lg:p-0 shadow-lg lg:shadow-none border-t lg:border-t-0"
+				"p-3 lg:p-0 shadow-lg lg:shadow-none border-t lg:border-t-0",
+				"rounded-t-xl lg:rounded-none"
 			)}>
 				{/* Prix inline sur mobile - évite de scroller pour voir le prix */}
 				{selectedSku && (
