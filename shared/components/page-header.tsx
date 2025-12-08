@@ -151,7 +151,7 @@ export function PageHeader({
 				<div
 					className={cn(
 						"relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-						navigation ? "pt-20 sm:pt-28 pb-3" : "pt-20 sm:pt-32 pb-6"
+						navigation ? "pt-20 sm:pt-28 pb-2" : "pt-20 sm:pt-32 pb-6"
 					)}
 				>
 					{/* Breadcrumb et titre principal */}
@@ -295,7 +295,7 @@ export function PageHeader({
 			{/* Contenu de navigation optionnel (ex: tabs, menu, etc.) */}
 			{navigation && (
 				<div className="relative overflow-hidden bg-background border-b border-border">
-					<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+					<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
 						{navigation}
 					</div>
 				</div>

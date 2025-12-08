@@ -58,11 +58,11 @@ export function TabNavigation({
 		const isActive = value === activeValue;
 
 		return cn(
-			"inline-flex h-11 md:h-9 items-center justify-center gap-1.5 md:flex-shrink-0",
+			"inline-flex h-11 md:h-10 items-center justify-center gap-1.5 md:flex-shrink-0",
 			"rounded-md px-3 py-1.5",
 			"text-sm font-medium whitespace-nowrap",
 			"transition-all duration-200",
-			"focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-offset-2",
+			"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 			isActive && [
 				"bg-background text-foreground",
 				"shadow-sm border border-border",
@@ -97,11 +97,11 @@ export function TabNavigation({
 	};
 
 	const triggerClasses = cn(
-		"md:hidden inline-flex h-11 items-center justify-center gap-1.5 max-w-[140px]",
+		"md:hidden inline-flex h-11 md:h-10 items-center justify-center gap-1.5 max-w-[140px]",
 		"rounded-md px-3 py-1.5",
 		"text-sm font-medium whitespace-nowrap",
 		"transition-all duration-200",
-		"focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-offset-2",
+		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 		activeOverflowItem
 			? [
 					"bg-background text-foreground",
@@ -170,7 +170,7 @@ export function TabNavigation({
 
 	return (
 		<nav aria-label={ariaLabel} className="w-full">
-			<div className="bg-muted rounded-lg p-1 flex gap-1 md:gap-1.5 min-w-0">
+			<div className="rounded-lg p-1 flex gap-1.5 md:gap-2 min-w-0">
 				{/* Items toujours visibles (mobile + desktop) */}
 				{visibleItems.map((item) => (
 					<Link

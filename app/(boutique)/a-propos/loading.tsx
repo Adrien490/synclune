@@ -1,4 +1,5 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 
 /**
  * Loading state for À propos page
@@ -26,7 +27,7 @@ export default function AProposLoading() {
 			</div>
 
 			{/* Contenu principal skeleton */}
-			<section className="bg-background py-8 sm:py-10 lg:py-12">
+			<section className={`bg-background ${SECTION_SPACING.compact}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
 					{/* Qui je suis - Layout avec image */}
 					<div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 lg:gap-12 items-start">

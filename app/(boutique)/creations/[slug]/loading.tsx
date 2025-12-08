@@ -1,6 +1,7 @@
 import { PageHeaderSkeleton } from "@/shared/components/page-header";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 
 /**
  * Loading state for product detail page
@@ -26,8 +27,8 @@ export default function ProductDetailLoading() {
 				{/* PageHeader Skeleton - Utilise le composant existant */}
 				<PageHeaderSkeleton hasDescription={false} />
 
-				{/* Main Content - py-12 lg:py-16 comme page.tsx */}
-				<div className="bg-background py-12 lg:py-16">
+				{/* Main Content */}
+				<div className={`bg-background ${SECTION_SPACING.default}`}>
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article className="space-y-12">
 							{/* Product Content Grid - Gallery sticky on desktop */}

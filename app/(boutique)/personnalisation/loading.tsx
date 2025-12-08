@@ -1,4 +1,5 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 
 /**
  * Loading state for contact page
@@ -36,7 +37,7 @@ export default function ContactLoading() {
 			</div>
 
 			{/* Main Content - Contact Form */}
-			<section className="bg-background py-12 lg:py-16">
+			<section className={`bg-background ${SECTION_SPACING.compact}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 					{/* Contact Form Card */}
 					<div className="space-y-8">

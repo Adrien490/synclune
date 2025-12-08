@@ -1,4 +1,5 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 
 /**
  * Loading state for Newsletter Unsubscribe page
@@ -16,7 +17,7 @@ export default function NewsletterUnsubscribeLoading() {
 			</div>
 
 			{/* Content skeleton */}
-			<div className="from-ivory via-rose-50/30 to-gold-50/20 py-12 lg:py-16">
+			<div className={`from-ivory via-rose-50/30 to-gold-50/20 ${SECTION_SPACING.default}`}>
 				<div className="container mx-auto px-4 max-w-2xl">
 					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg space-y-6">
 						{/* Emoji + titre + description */}

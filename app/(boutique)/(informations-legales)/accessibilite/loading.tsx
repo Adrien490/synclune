@@ -1,4 +1,5 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 
 /**
  * Loading state for accessibility page
@@ -41,7 +42,7 @@ export default function AccessibilityLoading() {
 
 			{/* Main Content */}
 			<div className="from-ivory via-rose-50/30 to-gold-50/20">
-				<div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl py-12 lg:py-16">
+				<div className={`container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl ${SECTION_SPACING.default}`}>
 					{/* Conformity status card */}
 					<div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg mb-8 p-6 space-y-4">
 						<Skeleton className="h-6 w-48 bg-muted/50" />

@@ -2,6 +2,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { AccountNav } from "@/modules/users/components/account-nav";
 import { CustomerOrdersTableSkeleton } from "@/modules/orders/components/customer";
+import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 
 export default function CustomerOrdersLoading() {
 	return (
@@ -16,7 +17,7 @@ export default function CustomerOrdersLoading() {
 				action={<Skeleton className="h-10 w-[200px]" />}
 			/>
 
-			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
+			<section className={`bg-background ${ACCOUNT_SECTION_PADDING}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="flex gap-8">
 						{/* Sidebar desktop */}

@@ -5,6 +5,7 @@ import { AccountNav } from "@/modules/users/components/account-nav";
 import { AccountStatsCardsSkeleton } from "@/modules/users/components/account-stats-cards";
 import { AddressInfoCardSkeleton } from "@/modules/addresses/components/address-info-card-skeleton";
 import { RecentOrdersSkeleton } from "@/modules/orders/components/recent-orders-skeleton";
+import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 
 export default function AccountDashboardLoading() {
 	return (
@@ -15,7 +16,7 @@ export default function AccountDashboardLoading() {
 				breadcrumbs={[{ label: "Mon compte", href: "/compte" }]}
 			/>
 
-			<section className="bg-background py-6 sm:py-8 pb-24 lg:pb-8">
+			<section className={`bg-background ${ACCOUNT_SECTION_PADDING}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="flex gap-8">
 						{/* Sidebar desktop */}

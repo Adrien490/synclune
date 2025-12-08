@@ -88,7 +88,9 @@ export function SelectFilter({
 					<SelectTrigger
 						className={cn(
 							"flex-1 h-[44px]!",
-							compactMobile && "w-11 sm:w-auto sm:min-w-[180px]"
+							compactMobile && "w-11 sm:w-auto sm:min-w-[180px]",
+							// Masquer le ChevronDown du SelectTrigger sur mobile en mode compact
+							compactMobile && "[&>[data-slot=select-icon]]:hidden sm:[&>[data-slot=select-icon]]:flex"
 						)}
 						aria-label={compactMobile ? compactAriaLabel : undefined}
 					>

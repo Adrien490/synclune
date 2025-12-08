@@ -1,4 +1,5 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 
 /**
  * Loading state for Cookies Policy page
@@ -26,7 +27,7 @@ export default function CookiesLoading() {
 			</div>
 
 			{/* Content skeleton */}
-			<section className="bg-background py-12 lg:py-16">
+			<section className={`bg-background ${SECTION_SPACING.default}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="prose prose-slate dark:prose-invert max-w-none space-y-6">
 						{/* Date de mise à jour */}
