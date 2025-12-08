@@ -240,7 +240,6 @@ export default async function BijouxHubPage({
 			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
 				<div className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 					<Toolbar
-						variant="compact"
 						search={
 							<SearchForm
 								paramName="search"

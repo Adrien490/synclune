@@ -111,6 +111,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
 				items={usersMenuItems}
 				activeValue="users"
 				ariaLabel="Navigation des utilisateurs"
+				mobileVisibleCount={1}
 			/>
 
 			<div className="space-y-6">

@@ -126,7 +126,6 @@ export default async function CollectionPage({
 			<section className="bg-background pt-6 pb-12 lg:pt-8 lg:pb-16">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 					<Toolbar
-						variant="compact"
 						search={
 							<SearchForm
 								paramName="search"

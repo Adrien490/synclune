@@ -4,24 +4,14 @@ import { ReactNode } from "react";
 /**
  * Toolbar - Container for page controls (search, filters, sort, actions)
  *
- * Groups logically related controls for data manipulation.
- * Responsive layout: stacked on mobile, horizontal on desktop.
+ * Layout horizontal adaptatif sur tous les écrans (ultrathink).
+ * Les éléments s'adaptent automatiquement à l'espace disponible.
  *
  * @example
  * ```tsx
- * <Toolbar
- *   search={<SearchForm placeholder="Rechercher..." />}
- * >
+ * <Toolbar search={<SearchForm placeholder="Rechercher..." />}>
  *   <SortSelect />
  *   <FilterSheet />
- * </Toolbar>
- * ```
- *
- * @example Compact variant (horizontal on all screen sizes)
- * ```tsx
- * <Toolbar variant="compact" search={<SearchForm />}>
- *   <SelectFilter filterKey="sortBy" label="Trier" options={[...]} />
- *   <ProductFilterSheet />
  * </Toolbar>
  * ```
  */
@@ -52,14 +42,6 @@ interface ToolbarProps {
 	 * @default false
 	 */
 	isPending?: boolean;
-
-	/**
-	 * Layout variant
-	 * - "default": Stacked on mobile, horizontal on desktop
-	 * - "compact": Horizontal on all screen sizes (for boutique pages)
-	 * @default "default"
-	 */
-	variant?: "default" | "compact";
 }
 
 export function Toolbar({
@@ -68,10 +50,8 @@ export function Toolbar({
 	className,
 	ariaLabel = "Barre d'outils de filtrage et recherche",
 	isPending = false,
-	variant = "default",
 }: ToolbarProps) {
 	const hasSearch = !!search;
-	const isCompact = variant === "compact";
 
 	// Structure simple sans search
 	if (!hasSearch) {
@@ -82,7 +62,7 @@ export function Toolbar({
 				aria-orientation="horizontal"
 				aria-busy={isPending}
 				className={cn(
-					"flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 sm:items-center sm:justify-between",
+					"flex flex-row flex-wrap gap-2 items-center",
 					"rounded-lg bg-card border border-border/60",
 					"min-w-0 mb-6 p-4 shadow-sm transition-colors duration-200",
 					isPending && "opacity-60 pointer-events-none",
@@ -108,33 +88,9 @@ export function Toolbar({
 				className
 			)}
 		>
-			<div
-				className={cn(
-					// Compact: toujours horizontal avec gap réduit
-					isCompact && "flex flex-row gap-2 items-center",
-					// Default: stacked sur mobile, horizontal sur desktop
-					!isCompact &&
-						"flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between"
-				)}
-			>
-				<div
-					className={cn(
-						"flex-1 min-w-0",
-						// Default: limite la largeur du search sur desktop
-						!isCompact && "sm:max-w-md"
-					)}
-				>
-					{search}
-				</div>
-				<div
-					className={cn(
-						// Compact: toujours horizontal
-						isCompact && "flex flex-row items-center gap-2 shrink-0",
-						// Default: stacked sur mobile, horizontal sur desktop
-						!isCompact &&
-							"flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:shrink-0"
-					)}
-				>
+			<div className="flex flex-row gap-2 items-center">
+				<div className="flex-1 min-w-0">{search}</div>
+				<div className="flex flex-row items-center gap-2 shrink-0">
 					{children}
 				</div>
 			</div>

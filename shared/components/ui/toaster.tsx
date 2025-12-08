@@ -7,10 +7,13 @@ import { useTheme } from "next-themes";
  * Icônes bijoux raffinées pour les toasts Synclune
  * Design ultrathink (stroke 1.5) avec touches rose & doré
  *
+ * Taille 18px (vs 24px standard DS) : optimisée pour le contexte toast compact
+ * tout en maintenant la lisibilité des détails (sparkle, facettes diamant)
+ *
  * Métaphores:
  * - Success: Diamant avec sparkle doré
  * - Error: Coeur brisé
- * - Warning: Étoile/sparkle
+ * - Warning: Étoile/sparkle doré
  * - Loading: Anneau/bague qui tourne
  */
 const icons = {
@@ -67,7 +70,7 @@ const icons = {
 	),
 	warning: (
 		<svg
-			className="size-[18px] text-secondary-foreground"
+			className="size-[18px] text-secondary"
 			viewBox="0 0 24 24"
 			fill="none"
 			strokeWidth="1.5"
@@ -79,7 +82,7 @@ const icons = {
 				strokeLinejoin="round"
 				d="M12 2L14 8.5L21 9L16 14L17.5 21L12 17.5L6.5 21L8 14L3 9L10 8.5L12 2Z"
 			/>
-			<circle cx="12" cy="12" r="1" fill="currentColor" />
+			<circle cx="12" cy="12" r="1.5" fill="none" stroke="currentColor" />
 		</svg>
 	),
 	loading: (
