@@ -8,10 +8,8 @@
  */
 
 import { getPlaiceholder } from "plaiceholder";
-import {
-	BLUR_PLACEHOLDER_CONFIG,
-	isValidUploadThingUrl,
-} from "../constants/media.constants";
+import { BLUR_PLACEHOLDER_CONFIG } from "../constants/media.constants";
+import { isValidUploadThingUrl } from "../utils/validate-media-file";
 
 // ============================================================================
 // TYPES
