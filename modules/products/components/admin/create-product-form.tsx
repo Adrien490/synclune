@@ -706,7 +706,7 @@ function CreateProductFormContent({
 								onClick={() => form.setFieldValue("status", "DRAFT")}
 							>
 								{isPending && form.state.values.status === "DRAFT"
-									? "Enregistrement..."
+									? "Chargement..."
 									: "Enregistrer comme brouillon"}
 							</Button>
 							<Button
@@ -715,9 +715,9 @@ function CreateProductFormContent({
 								onClick={() => form.setFieldValue("status", "PUBLIC")}
 							>
 								{isPending && form.state.values.status === "PUBLIC"
-									? "Enregistrement..."
+									? "Chargement..."
 									: isMediaUploading
-										? "Upload médias..."
+										? "Chargement..."
 										: "Publier le bijou"}
 							</Button>
 						</>
@@ -808,7 +808,7 @@ function CreateProductFormContent({
 												className="flex-1 h-12"
 											>
 												{isPending && form.state.values.status === "DRAFT"
-													? "..."
+													? "Chargement..."
 													: "Brouillon"}
 											</Button>
 											<Button
@@ -818,7 +818,7 @@ function CreateProductFormContent({
 												className="flex-1 h-12"
 											>
 												{isPending && form.state.values.status === "PUBLIC"
-													? "..."
+													? "Chargement..."
 													: "Publier"}
 											</Button>
 										</>

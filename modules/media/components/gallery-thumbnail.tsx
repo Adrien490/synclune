@@ -3,7 +3,6 @@
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { MediaErrorFallback } from "@/modules/media/components/media-error-fallback";
 import { VideoPlayBadge } from "@/modules/media/components/video-play-badge";
-import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import {
 	THUMBNAIL_IMAGE_QUALITY,
 	EAGER_LOAD_THUMBNAILS,
@@ -131,16 +130,11 @@ const ThumbnailVideoContent = memo(function ThumbnailVideoContent({
 					onError={onError}
 				/>
 			) : (
-				<video
-					className="w-full h-full object-cover"
-					muted
-					playsInline
-					preload="none"
-					aria-label={media.alt || `${title} - Miniature vidéo ${index + 1}`}
-					onError={onError}
-				>
-					<source src={media.url} type={getVideoMimeType(media.url)} />
-				</video>
+				// Placeholder quand aucune miniature n'est disponible
+				<div
+					className="w-full h-full flex items-center justify-center bg-muted"
+					aria-label={media.alt || `${title} - Vidéo ${index + 1}`}
+				/>
 			)}
 			<VideoPlayBadge />
 		</div>

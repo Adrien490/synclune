@@ -151,7 +151,11 @@ export function PageHeader({
 				<div
 					className={cn(
 						"relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8",
-						navigation ? "pt-20 sm:pt-28 pb-2" : "pt-20 sm:pt-32 pb-6"
+						navigation
+							? "pt-20 sm:pt-28 pb-2"
+							: description
+								? "pt-20 sm:pt-32 pb-6"
+								: "pt-20 sm:pt-32 pb-3 sm:pb-6"
 					)}
 				>
 					{/* Breadcrumb et titre principal */}

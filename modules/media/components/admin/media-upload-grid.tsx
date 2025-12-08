@@ -164,17 +164,20 @@ export function MediaUploadGrid({
 		if (over && active.id !== over.id) {
 			const oldIndex = media.findIndex((m) => m.url === active.id);
 			const newIndex = media.findIndex((m) => m.url === over.id);
-			const draggedMedia = media[oldIndex];
-			const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
 
-			// Empêcher de mettre une vidéo en première position
-			if (newIndex === 0 && media[oldIndex].mediaType === "VIDEO") {
+			// Calculer le nouveau tableau avant validation
+			const newMedia = arrayMove(media, oldIndex, newIndex);
+
+			// Empêcher qu'une vidéo se retrouve en première position (couvre tous les cas)
+			if (newMedia[0]?.mediaType === "VIDEO") {
 				toast.error("La première position doit être une image, pas une vidéo.");
 				setAnnouncement("Impossible de placer une vidéo en première position.");
 				return;
 			}
 
-			const newMedia = arrayMove(media, oldIndex, newIndex);
+			const draggedMedia = media[oldIndex];
+			const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
+
 			onChange(newMedia);
 
 			// Feedback visuel et sonore

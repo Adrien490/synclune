@@ -16,8 +16,8 @@ import { getProductInvalidationTags } from "../constants/cache";
  * Protection contre XSS pour les champs texte utilisateur
  *
  * IMPORTANT: Cette fonction supprime les balises HTML mais préserve le texte.
- * Les entités HTML sont d'abord décodées AVANT la suppression des balises,
- * puis le résultat est ré-encodé pour garantir la sécurité.
+ * Les entités HTML sont décodées, les balises supprimées, et le texte brut est retourné.
+ * React échappe automatiquement le contenu lors du rendu, donc pas besoin de ré-encoder.
  */
 function sanitizeText(text: string): string {
 	// 1. D'abord décoder les entités HTML pour capturer les tentatives d'évasion
@@ -35,16 +35,8 @@ function sanitizeText(text: string): string {
 		);
 
 	// 2. Supprimer toutes les balises HTML (maintenant visibles après décodage)
-	const stripped = decoded.replace(/<[^>]*>/g, "");
-
-	// 3. Ré-encoder les caractères dangereux pour le stockage sécurisé
-	return stripped
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#x27;")
-		.trim();
+	// React échappe automatiquement le contenu lors du rendu
+	return decoded.replace(/<[^>]*>/g, "").trim();
 }
 
 /**
