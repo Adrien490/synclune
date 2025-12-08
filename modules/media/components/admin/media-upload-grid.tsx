@@ -194,27 +194,21 @@ function SortableMediaItem({
 								Ton navigateur ne supporte pas la lecture de vidéos.
 							</video>
 						)}
-						{/* Icône Play - masquée sur desktop au hover uniquement */}
-						<div
-							className={cn(
-								"absolute inset-0 flex items-center justify-center pointer-events-none",
-								"sm:group-hover:opacity-0",
-								shouldReduceMotion ? "" : "motion-safe:transition-opacity"
-							)}
+						{/* Icône Play - cliquable pour ouvrir le lightbox */}
+						<button
+							type="button"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								onOpenLightbox(index);
+							}}
+							className="absolute inset-0 flex items-center justify-center cursor-pointer"
+							aria-label={`Lire la vidéo ${index + 1}`}
 						>
-							<div className="bg-black/70 rounded-full p-3 shadow-xl">
+							<div className="bg-black/70 hover:bg-black/90 rounded-full p-3 shadow-xl transition-colors">
 								<Play className="w-6 h-6 text-white" fill="white" />
 							</div>
-						</div>
-						{/* Badge état miniature vidéo */}
-						{media.thumbnailUrl && (
-							<div className="absolute bottom-2 right-2 z-10 pointer-events-none">
-								<div className="flex items-center gap-0.5 bg-emerald-600 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded shadow-md">
-									<Check className="w-2.5 h-2.5" aria-hidden="true" />
-									<span className="hidden sm:inline">Miniature</span>
-								</div>
-							</div>
-						)}
+						</button>
 					</div>
 				) : (
 					<Image
@@ -291,10 +285,10 @@ function SortableMediaItem({
 				</div>
 			)}
 
-			{/* Actions Desktop - Overlay au hover */}
+			{/* Actions Desktop - Boutons en bas à droite au hover */}
 			<div
 				className={cn(
-					"absolute inset-0 bg-black/60 items-center justify-center gap-2",
+					"absolute bottom-2 right-2 z-20 flex items-center gap-1.5",
 					"motion-safe:transition-opacity",
 					"hidden sm:flex",
 					"opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
@@ -311,10 +305,10 @@ function SortableMediaItem({
 								e.stopPropagation();
 								onOpenLightbox(index);
 							}}
-							className="h-10 w-10 rounded-full"
+							className="h-9 w-9 rounded-full bg-black/70 hover:bg-black/90 border-0"
 							aria-label={`Agrandir le média ${index + 1}`}
 						>
-							<Expand className="h-4 w-4" aria-hidden="true" />
+							<Expand className="h-4 w-4 text-white" aria-hidden="true" />
 						</Button>
 					</TooltipTrigger>
 					<TooltipContent>Agrandir</TooltipContent>
@@ -323,17 +317,17 @@ function SortableMediaItem({
 					<TooltipTrigger asChild>
 						<Button
 							type="button"
-							variant="destructive"
+							variant="secondary"
 							size="icon"
 							onClick={(e) => {
 								e.preventDefault();
 								e.stopPropagation();
 								onOpenDeleteDialog();
 							}}
-							className="h-10 w-10 rounded-full"
+							className="h-9 w-9 rounded-full bg-black/70 hover:bg-destructive border-0"
 							aria-label={`Supprimer le média ${index + 1}`}
 						>
-							<Trash2 className="h-4 w-4" aria-hidden="true" />
+							<Trash2 className="h-4 w-4 text-white" aria-hidden="true" />
 						</Button>
 					</TooltipTrigger>
 					<TooltipContent>Supprimer</TooltipContent>

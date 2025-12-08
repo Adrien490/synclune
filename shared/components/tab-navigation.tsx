@@ -33,7 +33,7 @@ interface TabNavigationProps {
 
 /** Classes de base partagées pour les onglets */
 const TAB_BASE_CLASSES =
-	"inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+	"inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2";
 
 /**
  * Composant de navigation par onglets avec pattern Priority+
@@ -65,14 +65,14 @@ export function TabNavigation({
 			TAB_BASE_CLASSES,
 			"h-11 md:h-10 md:flex-shrink-0",
 			isActive && [
-				"bg-background text-foreground",
-				"shadow-sm border border-border",
+				"bg-primary/10 text-foreground",
+				"shadow-sm border border-primary/25",
 				"font-semibold",
 			],
 			!isActive && [
 				"text-muted-foreground border border-transparent",
-				"hover:bg-background/60 hover:text-foreground",
-				"hover:border-border/50 hover:shadow-sm",
+				"hover:bg-primary/5 hover:text-foreground",
+				"hover:border-primary/15",
 			],
 			additionalClasses
 		);
@@ -88,8 +88,8 @@ export function TabNavigation({
 					"ml-1.5 inline-flex items-center justify-center",
 					"min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs",
 					isActive
-						? "bg-primary/10 text-primary"
-						: "bg-muted-foreground/20 text-foreground/70"
+						? "bg-primary/15 text-foreground font-medium"
+						: "bg-muted-foreground/15 text-muted-foreground"
 				)}
 			>
 				{count}
@@ -102,14 +102,14 @@ export function TabNavigation({
 		"md:hidden h-11 max-w-[min(140px,40vw)]",
 		activeOverflowItem
 			? [
-					"bg-background text-foreground",
-					"shadow-sm border border-border",
+					"bg-primary/10 text-foreground",
+					"shadow-sm border border-primary/25",
 					"font-semibold",
 				]
 			: [
 					"text-muted-foreground border border-transparent",
-					"hover:bg-background/60 hover:text-foreground",
-					"hover:border-border/50 hover:shadow-sm",
+					"hover:bg-primary/5 hover:text-foreground",
+					"hover:border-primary/15",
 				]
 	);
 
@@ -142,13 +142,13 @@ export function TabNavigation({
 										activeValue === item.value ? "page" : undefined
 									}
 									className={cn(
-										"flex items-center gap-2 px-2 py-3 text-left text-sm w-full",
-										"min-h-[48px] rounded-sm",
-										"transition-colors duration-150",
-										"hover:bg-accent focus:bg-accent",
-										"focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-										"active:bg-accent/80",
-										item.value === activeValue && "font-medium bg-accent"
+										"flex items-center gap-2 px-3 py-3 text-left text-sm w-full",
+										"min-h-[48px] rounded-lg",
+										"transition-all duration-200",
+										"hover:bg-primary/5 focus:bg-primary/5",
+										"focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
+										"active:bg-primary/10",
+										item.value === activeValue && "font-medium bg-primary/10"
 									)}
 								>
 									{item.label}
@@ -168,7 +168,7 @@ export function TabNavigation({
 
 	return (
 		<nav aria-label={ariaLabel} className="w-full">
-			<div className="rounded-lg p-1 flex gap-1.5 md:gap-2 min-w-0">
+			<div className="rounded-xl bg-muted/40 p-1.5 flex gap-1.5 md:gap-2 min-w-0">
 				{/* Items toujours visibles (mobile + desktop) */}
 				{visibleItems.map((item) => (
 					<Link

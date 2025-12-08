@@ -16,7 +16,7 @@ import { useUnsavedChanges } from "@/shared/features/form-wizard";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
-import { TextShimmerWave } from "@/shared/components/ui/text-shimmer-wave";
+import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { MultiSelect } from "@/shared/components/multi-select";
 import { useCreateProductForm } from "@/modules/products/hooks/use-create-product-form";
@@ -581,9 +581,7 @@ function CreateProductFormContent({
 													content={{
 														uploadIcon: ({ isUploading: uploading, uploadProgress }) =>
 															uploading ? (
-																<TextShimmerWave className="text-sm font-medium" duration={1.5}>
-																	{`Upload... ${uploadProgress}%`}
-																</TextShimmerWave>
+																<UploadProgress progress={uploadProgress} />
 															) : (
 																<Upload className="h-12 w-12 text-primary/70" />
 															),
@@ -665,9 +663,7 @@ function CreateProductFormContent({
 																	content={{
 																		uploadIcon: ({ isUploading: uploading, uploadProgress }) =>
 																			uploading ? (
-																				<TextShimmerWave className="text-xs" duration={1.5}>
-																					{`${uploadProgress}%`}
-																				</TextShimmerWave>
+																				<UploadProgress progress={uploadProgress} variant="compact" />
 																			) : (
 																				<Upload className="h-6 w-6 text-muted-foreground/50" />
 																			),

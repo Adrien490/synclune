@@ -7,7 +7,7 @@ import { PrimaryImageUpload } from "@/modules/media/components/admin/primary-ima
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
-import { TextShimmerWave } from "@/shared/components/ui/text-shimmer-wave";
+import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
 import { useUpdateProductSkuForm } from "@/modules/skus/hooks/use-update-sku-form";
 import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
@@ -440,22 +440,8 @@ export function EditProductVariantForm({
 															}) => {
 																if (isUploading) {
 																	return (
-																		<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/90 backdrop-blur-sm rounded-lg z-10">
-																			<div className="text-center">
-																				<TextShimmerWave
-																					className="text-base font-semibold"
-																					duration={1.5}
-																				>
-																					{`Upload en cours... ${uploadProgress}%`}
-																				</TextShimmerWave>
-																			</div>
-																			{/* Barre de progression */}
-																			<div className="w-3/4 h-2 bg-muted rounded-full overflow-hidden">
-																				<div
-																					className="h-full bg-primary transition-all duration-300 ease-out"
-																					style={{ width: `${uploadProgress}%` }}
-																				/>
-																			</div>
+																		<div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm rounded-lg z-10">
+																			<UploadProgress progress={uploadProgress} />
 																		</div>
 																	);
 																}
@@ -697,25 +683,11 @@ export function EditProductVariantForm({
 															if (isUploading) {
 																return (
 																	<div
-																		className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg z-10"
+																		className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg z-10"
 																		role="status"
 																		aria-live="polite"
 																	>
-																		<div className="text-center">
-																			<TextShimmerWave
-																				className="text-sm font-medium"
-																				duration={1.5}
-																			>
-																				{`Ajout en cours... ${uploadProgress}%`}
-																			</TextShimmerWave>
-																		</div>
-																		{/* Barre de progression */}
-																		<div className="w-3/4 h-1.5 bg-muted rounded-full overflow-hidden">
-																			<div
-																				className="h-full bg-primary transition-all duration-300 ease-out"
-																				style={{ width: `${uploadProgress}%` }}
-																			/>
-																		</div>
+																		<UploadProgress progress={uploadProgress} />
 																	</div>
 																);
 															}

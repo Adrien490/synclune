@@ -5,7 +5,7 @@ import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-g
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
-import { TextShimmerWave } from "@/shared/components/ui/text-shimmer-wave";
+import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
 import { MultiSelect } from "@/shared/components/multi-select";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { useUpdateProductForm } from "@/modules/products/hooks/use-update-product-form";
@@ -665,24 +665,11 @@ export function EditProductForm({
 														if (isUploading) {
 															return (
 																<div
-																	className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 backdrop-blur-sm rounded-lg z-10"
+																	className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg z-10"
 																	role="status"
 																	aria-live="polite"
 																>
-																	<div className="text-center">
-																		<TextShimmerWave
-																			className="text-sm font-medium"
-																			duration={1.5}
-																		>
-																			{`Upload en cours... ${uploadProgress}%`}
-																		</TextShimmerWave>
-																	</div>
-																	<div className="w-3/4 h-1.5 bg-muted rounded-full overflow-hidden">
-																		<div
-																			className="h-full bg-primary transition-all duration-300 ease-out"
-																			style={{ width: `${uploadProgress}%` }}
-																		/>
-																	</div>
+																	<UploadProgress progress={uploadProgress} />
 																</div>
 															);
 														}
