@@ -1,20 +1,11 @@
 "use client";
 
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useEffect } from "react";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { cn } from "@/shared/utils/cn";
 import { ChevronRight, ExternalLink, LogOut, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-	Drawer,
-	DrawerContent,
-	DrawerDescription,
-	DrawerFooter,
-	DrawerHeader,
-	DrawerTitle,
-	DrawerTrigger,
-} from "@/shared/components/ui/drawer";
-import { Separator } from "@/shared/components/ui/separator";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import {
 	getBottomNavPrimaryItems,
@@ -23,11 +14,14 @@ import {
 } from "./navigation-config";
 import { isRouteActive } from "@/shared/lib/navigation";
 
-// Récupérer les items depuis la configuration centralisée
+// Recuperer les items depuis la configuration centralisee
 const primaryItems = getBottomNavPrimaryItems();
-const secondaryItems = getBottomNavSecondaryItems();
+// Exclure les alertes stock du menu secondaire
+const secondaryItems = getBottomNavSecondaryItems().filter(
+	(item) => item.id !== "stock-alerts"
+);
 
-// Styles partagés pour les items de navigation
+// Styles partages pour les items de navigation
 const sharedItemStyles = {
 	focusRing:
 		"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
@@ -47,167 +41,251 @@ const navItemStyles = {
 		"text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30 font-medium",
 } as const;
 
-const drawerItemStyles = {
+const panelItemStyles = {
 	base: cn(
 		sharedItemStyles.layout,
 		sharedItemStyles.transition,
 		sharedItemStyles.focusRing,
-		"gap-1 py-3 px-2 min-h-[72px] rounded-xl"
+		"gap-1 py-3 px-2 min-h-[72px] rounded-xl",
+		// Reset pour que les boutons s'alignent comme les liens
+		"border-0 bg-transparent appearance-none cursor-pointer"
 	),
 	active: "bg-accent/50 text-foreground font-semibold",
 	inactive:
 		"text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30 font-medium",
+	destructive:
+		"text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 font-medium",
 } as const;
 
+// Animation variants
+const containerVariants: Variants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.04,
+			delayChildren: 0.1,
+		},
+	},
+};
+
+const itemVariants: Variants = {
+	hidden: { opacity: 0, y: 20 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: { duration: 0.3, ease: [0, 0, 0.2, 1] as const },
+	},
+};
+
 interface BottomNavigationProps {
-	user: {
-		name: string;
-		email: string;
-	};
+	className?: string;
 }
 
 /**
  * Bottom Navigation pour mobile
- * Visible uniquement sur écrans < 768px (md breakpoint)
- * Position fixed en bas de l'écran avec backdrop-blur
+ * Visible uniquement sur ecrans < 768px (md breakpoint)
+ * Position fixed en bas de l'ecran avec backdrop-blur
  */
-export function BottomNavigation({ user }: BottomNavigationProps) {
+export function BottomNavigation({ className }: BottomNavigationProps) {
 	const pathname = usePathname();
-	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
+	const shouldReduceMotion = useReducedMotion();
 
-	// Vérifie si une page du menu "Plus" est active
+	// Verifie si une page du menu "Plus" est active
 	const isMoreItemActive = secondaryItems.some((item) => isRouteActive(pathname, item.url));
 
-	const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
+	const closePanel = useCallback(() => setIsOpen(false), []);
+	const togglePanel = useCallback(() => setIsOpen((prev) => !prev), []);
+
+	// Fermer le panneau quand on change de page (back button navigateur)
+	useEffect(() => {
+		closePanel();
+	}, [pathname, closePanel]);
+
+	// Fermeture avec Escape
+	useEffect(() => {
+		if (!isOpen) return;
+
+		const handleEscape = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				closePanel();
+			}
+		};
+
+		document.addEventListener("keydown", handleEscape);
+		return () => document.removeEventListener("keydown", handleEscape);
+	}, [isOpen, closePanel]);
+
+	// Bloquer le scroll du body quand le panneau est ouvert
+	useEffect(() => {
+		if (isOpen) {
+			document.body.style.overflow = "hidden";
+		} else {
+			document.body.style.overflow = "";
+		}
+		return () => {
+			document.body.style.overflow = "";
+		};
+	}, [isOpen]);
 
 	return (
-		<nav
-			className="md:hidden fixed bottom-0 left-0 right-0 z-[60] border-t bg-background/80 backdrop-blur-lg supports-backdrop-filter:bg-background/60 pointer-events-auto"
-			aria-label="Navigation mobile principale"
-		>
-			<div className="flex items-center justify-around h-16 px-4 pb-[env(safe-area-inset-bottom)]">
-				{/* Items principaux */}
-				{primaryItems.map((item) => (
-					<BottomNavItem
-						key={item.id}
-						item={item}
-						isActive={isRouteActive(pathname, item.url)}
+		<>
+			{/* Backdrop */}
+			<AnimatePresence>
+				{isOpen && (
+					<motion.div
+						initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+						transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+						onClick={closePanel}
+						className="md:hidden fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm"
+						aria-hidden="true"
 					/>
-				))}
+				)}
+			</AnimatePresence>
 
-				{/* Bouton "Plus" */}
-				<Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-					<DrawerTrigger asChild>
-						<button
-							type="button"
-							className={cn(
-								"flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-[64px] relative",
-								"motion-safe:transition-colors motion-safe:transition-transform",
-								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
-								isMoreItemActive
-									? "text-foreground font-semibold"
-									: "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-								"motion-safe:active:scale-95"
-							)}
-							aria-label="Voir plus d'options"
-							aria-expanded={isDrawerOpen}
-							aria-haspopup="dialog"
+			{/* Panneau anime */}
+			<AnimatePresence>
+				{isOpen && (
+					<motion.div
+						initial={
+							shouldReduceMotion
+								? { opacity: 1 }
+								: { y: "100%", opacity: 0.5 }
+						}
+						animate={{ y: 0, opacity: 1 }}
+						exit={
+							shouldReduceMotion
+								? { opacity: 1 }
+								: { y: "100%", opacity: 0 }
+						}
+						transition={
+							shouldReduceMotion
+								? { duration: 0 }
+								: {
+										type: "spring",
+										damping: 28,
+										stiffness: 350,
+									}
+						}
+						className="md:hidden fixed bottom-4 left-4 right-4 z-[71] bg-background rounded-2xl border shadow-2xl max-h-[80vh] overflow-y-auto overscroll-contain"
+						role="dialog"
+						aria-modal="true"
+						aria-label="Menu de navigation"
+					>
+						{/* Grille de navigation avec stagger - 4 colonnes */}
+						<motion.div
+							variants={shouldReduceMotion ? undefined : containerVariants}
+							initial="hidden"
+							animate="visible"
+							className="grid grid-cols-4 gap-2 p-4 pb-2"
 						>
-							{/* Indicateur actif si une page du menu "Plus" est active */}
-							{isMoreItemActive && <ActiveIndicator />}
-							<MoreHorizontal
-								className="h-5 w-5 shrink-0"
-								aria-hidden="true"
-							/>
-							<span className="text-[13px] font-medium leading-none">Plus</span>
-						</button>
-					</DrawerTrigger>
-					<DrawerContent className="max-h-[70vh]">
-						<DrawerHeader className="sr-only">
-							<DrawerTitle>Menu de navigation</DrawerTitle>
-							<DrawerDescription>
-								{secondaryItems.length} options supplémentaires
-							</DrawerDescription>
-						</DrawerHeader>
-
-						{/* User Card cliquable */}
-						<Link
-							href="/admin/compte"
-							onClick={closeDrawer}
-							className="group flex items-center gap-3 mx-4 p-3 rounded-xl bg-accent/30 hover:bg-accent/50 transition-colors"
-						>
-							<div className="flex-1 min-w-0">
-								<p className="text-sm font-medium truncate">{user.name}</p>
-								<p className="text-xs text-muted-foreground truncate">
-									{user.email}
-								</p>
-							</div>
-							<ChevronRight
-								className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5"
-								aria-hidden="true"
-							/>
-						</Link>
-
-						{/* Grille de navigation - liste simple sans groupement */}
-						<div className="grid grid-cols-3 gap-2 p-4">
 							{secondaryItems.map((item) => (
-								<DrawerNavItem
+								<PanelNavItem
 									key={item.id}
 									item={item}
 									isActive={isRouteActive(pathname, item.url)}
-									onClick={closeDrawer}
+									onClick={closePanel}
+									shouldReduceMotion={shouldReduceMotion ?? false}
 								/>
 							))}
-						</div>
 
-						{/* Footer sticky avec actions */}
-						<DrawerFooter className="border-t pt-3 mt-0 mb-4 pb-[env(safe-area-inset-bottom)]">
-							{/* Voir le site */}
+							{/* Deconnexion */}
+							<motion.div variants={shouldReduceMotion ? undefined : itemVariants}>
+								<LogoutAlertDialog>
+									<button
+										type="button"
+										className={cn(
+											panelItemStyles.base,
+											panelItemStyles.destructive,
+											"w-full"
+										)}
+									>
+										<LogOut className="h-6 w-6 shrink-0" aria-hidden="true" />
+										<span className="text-xs text-center leading-tight">
+											Déconnexion
+										</span>
+									</button>
+								</LogoutAlertDialog>
+							</motion.div>
+						</motion.div>
+
+						{/* Voir le site - pleine largeur en bas */}
+						<div className="px-4 pb-4">
 							<Link
 								href="/"
 								target="_blank"
 								rel="noopener noreferrer"
-								onClick={closeDrawer}
+								onClick={closePanel}
 								className={cn(
-									"w-full flex items-center justify-center gap-2 p-3 rounded-lg",
-									"text-muted-foreground hover:text-foreground hover:bg-accent/50",
-									"motion-safe:transition-all motion-safe:active:scale-95",
-									"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+									"flex items-center justify-between w-full py-3 px-4 rounded-xl",
+									sharedItemStyles.transition,
+									sharedItemStyles.focusRing,
+									"text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30"
 								)}
 								aria-label="Voir le site (s'ouvre dans un nouvel onglet)"
 							>
-								<ExternalLink className="h-5 w-5" aria-hidden="true" />
-								<span className="text-sm font-medium">Voir le site</span>
+								<span className="flex items-center gap-2">
+									<ExternalLink className="h-5 w-5 shrink-0" aria-hidden="true" />
+									<span className="text-sm font-medium">Voir le site</span>
+								</span>
+								<ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
 							</Link>
+						</div>
+					</motion.div>
+				)}
+			</AnimatePresence>
 
-							<Separator />
+			{/* Navigation bar */}
+			<nav
+				className="md:hidden fixed bottom-0 left-0 right-0 z-[60] border-t bg-background/80 backdrop-blur-lg supports-backdrop-filter:bg-background/60 pointer-events-auto"
+				aria-label="Navigation mobile principale"
+			>
+				<div className="flex items-center justify-around h-16 px-4 pb-[env(safe-area-inset-bottom)]">
+					{/* Items principaux */}
+					{primaryItems.map((item) => (
+						<BottomNavItem
+							key={item.id}
+							item={item}
+							isActive={isRouteActive(pathname, item.url)}
+						/>
+					))}
 
-							{/* Déconnexion */}
-							<LogoutAlertDialog>
-								<button
-									type="button"
-									className={cn(
-										"w-full flex items-center justify-center gap-2 p-3 rounded-lg",
-										"text-muted-foreground hover:text-destructive hover:bg-destructive/10",
-										"motion-safe:transition-all motion-safe:active:scale-95",
-										"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-									)}
-								>
-									<LogOut className="h-5 w-5" aria-hidden="true" />
-									<span className="text-sm font-medium">Déconnexion</span>
-								</button>
-							</LogoutAlertDialog>
-						</DrawerFooter>
-					</DrawerContent>
-				</Drawer>
-			</div>
-		</nav>
+					{/* Bouton "Plus" */}
+					<button
+						type="button"
+						onClick={togglePanel}
+						className={cn(
+							"flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-[64px] min-h-[48px] relative",
+							"motion-safe:transition-colors motion-safe:transition-transform",
+							"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
+							isMoreItemActive || isOpen
+								? "text-foreground font-semibold"
+								: "text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30",
+							"motion-safe:active:scale-95"
+						)}
+						aria-label="Voir plus d'options"
+						aria-expanded={isOpen}
+						aria-haspopup="dialog"
+					>
+						{/* Indicateur actif si une page du menu "Plus" est active */}
+						{(isMoreItemActive || isOpen) && <ActiveIndicator />}
+						<MoreHorizontal
+							className="h-5 w-5 shrink-0"
+							aria-hidden="true"
+						/>
+						<span className="text-[13px] font-medium leading-none">Plus</span>
+					</button>
+				</div>
+			</nav>
+		</>
 	);
 }
 
 /**
  * Item de navigation principal (barre du bas)
- * Mémoïsé pour éviter les re-renders inutiles
+ * Memoïse pour eviter les re-renders inutiles
  */
 const BottomNavItem = memo(function BottomNavItem({
 	item,
@@ -238,36 +316,40 @@ const BottomNavItem = memo(function BottomNavItem({
 });
 
 /**
- * Item de navigation dans le drawer "Plus"
- * Mémoïsé pour éviter les re-renders inutiles
+ * Item de navigation dans le panneau "Plus"
+ * Memoïse pour eviter les re-renders inutiles
  */
-const DrawerNavItem = memo(function DrawerNavItem({
+const PanelNavItem = memo(function PanelNavItem({
 	item,
 	isActive,
 	onClick,
+	shouldReduceMotion,
 }: {
 	item: NavItem;
 	isActive: boolean;
 	onClick: () => void;
+	shouldReduceMotion: boolean;
 }) {
 	const Icon = item.icon;
 
 	return (
-		<Link
-			href={item.url}
-			onClick={onClick}
-			className={cn(
-				drawerItemStyles.base,
-				isActive ? drawerItemStyles.active : drawerItemStyles.inactive
-			)}
-			aria-current={isActive ? "page" : undefined}
-		>
-			{isActive && <ActiveIndicator />}
-			<Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
-			<span className="text-xs text-center leading-tight line-clamp-2">
-				{item.shortTitle || item.title}
-			</span>
-		</Link>
+		<motion.div variants={shouldReduceMotion ? undefined : itemVariants}>
+			<Link
+				href={item.url}
+				onClick={onClick}
+				className={cn(
+					panelItemStyles.base,
+					isActive ? panelItemStyles.active : panelItemStyles.inactive
+				)}
+				aria-current={isActive ? "page" : undefined}
+			>
+				{isActive && <ActiveIndicator />}
+				<Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+				<span className="text-xs text-center leading-tight line-clamp-2">
+					{item.shortTitle || item.title}
+				</span>
+			</Link>
+		</motion.div>
 	);
 });
 

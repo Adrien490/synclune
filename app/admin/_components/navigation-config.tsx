@@ -10,6 +10,7 @@ import {
 	Bell,
 	Ticket,
 	Users,
+	User,
 	Tag,
 	Palette,
 	Gem,
@@ -182,6 +183,22 @@ export const navigationData: NavigationData = {
 					title: "Matériaux",
 					url: "/admin/catalogue/materiaux",
 					icon: Gem,
+				},
+			],
+		},
+		// ─────────────────────────────────────────────────────────────────────────
+		// MON COMPTE - Paramètres utilisateur
+		// ─────────────────────────────────────────────────────────────────────────
+		{
+			label: "Mon compte",
+			icon: User,
+			items: [
+				{
+					id: "my-account",
+					title: "Mon compte",
+					shortTitle: "Compte",
+					url: "/admin/compte",
+					icon: User,
 				},
 			],
 		},

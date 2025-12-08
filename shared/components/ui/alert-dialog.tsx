@@ -37,7 +37,7 @@ function AlertDialogOverlay({
 		<AlertDialogPrimitive.Overlay
 			data-slot="alert-dialog-overlay"
 			className={cn(
-				"fixed inset-0 z-[70] bg-foreground/50 backdrop-blur-sm",
+				"fixed inset-0 z-[80] bg-foreground/50 backdrop-blur-sm",
 				"data-[state=open]:animate-in data-[state=closed]:animate-out",
 				"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
 				"duration-200",
@@ -59,11 +59,11 @@ function AlertDialogContent({
 				data-slot="alert-dialog-content"
 				className={cn(
 					// Position et taille
-					"fixed top-[50%] left-[50%] z-[70] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] sm:max-w-[420px]",
-					// Apparence - thème Synclune (rose + doré)
-					"bg-primary/[0.02]",
-					"border border-primary/25 rounded-xl",
-					"shadow-lg",
+					"fixed top-[50%] left-[50%] z-[80] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] sm:max-w-[420px]",
+					// Apparence - fond solide avec bordure rose subtile
+					"bg-card",
+					"border border-primary/20 rounded-xl",
+					"shadow-xl",
 					// Padding et espacement
 					"p-6",
 					// Animations fluides

@@ -40,9 +40,13 @@ export function LogoutAlertDialog({ children }: LogoutAlertDialogProps) {
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					<AlertDialogCancel type="button">Annuler</AlertDialogCancel>
+					<AlertDialogCancel type="button" className="w-full sm:w-auto">
+						Annuler
+					</AlertDialogCancel>
 					<LogoutButton>
-						<Button variant="default">Se déconnecter</Button>
+						<Button variant="default" className="w-full sm:w-auto">
+							Se déconnecter
+						</Button>
 					</LogoutButton>
 				</AlertDialogFooter>
 			</AlertDialogContent>
