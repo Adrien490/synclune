@@ -1,5 +1,4 @@
 import { SECTION_SPACING } from "@/shared/constants/spacing";
-import { Sparkles } from "lucide-react";
 
 interface LatestCreationsSkeletonProps {
 	/** Nombre de produits à afficher dans la grille */
@@ -27,30 +26,20 @@ export function LatestCreationsSkeleton({
 }: LatestCreationsSkeletonProps = {}) {
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
 			aria-label="Chargement des dernières créations"
 		>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Header skeleton */}
 				<header className="mb-8 text-center lg:mb-12">
-					<div className="flex items-center justify-center gap-2 mb-2">
-						<Sparkles
-							className="w-6 h-6 text-secondary/30 animate-pulse"
-							aria-hidden="true"
-						/>
-						{/* Titre skeleton - ajusté pour "Mes dernières créations" */}
-						<div className="h-10 w-72 bg-muted animate-pulse rounded" />
-						<Sparkles
-							className="w-6 h-6 text-secondary/30 animate-pulse"
-							aria-hidden="true"
-						/>
-					</div>
+					{/* Titre skeleton - aligné avec SectionTitle */}
+					<div className="h-10 w-72 mx-auto bg-muted animate-pulse rounded" />
 					{/* Sous-titre skeleton */}
 					<div className="mt-4 h-7 w-full max-w-2xl mx-auto bg-muted/50 animate-pulse rounded" />
 				</header>
 
 				{/* Grid skeleton */}
-				<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8 lg:mb-12">
+				<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12">
 					{Array.from({ length: productsCount }).map((_, i) => (
 						<div key={i} className="bg-card rounded-lg border-2 border-transparent shadow-sm overflow-hidden">
 							{/* Image skeleton - aspect-4/5 pour correspondre au ProductCard */}

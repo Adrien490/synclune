@@ -1,8 +1,10 @@
+import { PageHeaderSkeleton } from "@/shared/components/page-header";
+import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
  * Loading state for product detail page
- * Covers: ParticleSystem, PageHeader, Gallery (sticky), ProductInfo, ProductConfigurator
+ * Structure exacte : PageHeader → Gallery + ProductInfo/ProductDetails → RelatedProducts
  */
 export default function ProductDetailLoading() {
 	return (
@@ -21,33 +23,11 @@ export default function ProductDetailLoading() {
 			/>
 
 			<div className="relative z-10">
-				{/* Page Header Skeleton - Uses PageHeader component */}
-				<div className="pt-16 sm:pt-20">
-					<section className="bg-background border-b border-border">
-						<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-							<div className="space-y-2">
-								{/* Breadcrumbs */}
-								<nav className="text-sm">
-									<div className="flex items-center gap-2">
-										<Skeleton className="h-4 w-16 bg-muted/40" />
-										<span className="text-muted-foreground">/</span>
-										<Skeleton className="h-4 w-20 bg-muted/40" />
-										<span className="text-muted-foreground">/</span>
-										<Skeleton className="h-4 w-24 bg-muted/40" />
-										<span className="text-muted-foreground">/</span>
-										<Skeleton className="h-4 w-32 bg-muted/50" />
-									</div>
-								</nav>
+				{/* PageHeader Skeleton - Utilise le composant existant */}
+				<PageHeaderSkeleton hasDescription={false} />
 
-								{/* Title */}
-								<Skeleton className="h-8 sm:h-9 w-64 sm:w-96 bg-muted/50" />
-							</div>
-						</div>
-					</section>
-				</div>
-
-				{/* Main Content */}
-				<div className="bg-background py-8">
+				{/* Main Content - py-12 lg:py-16 comme page.tsx */}
+				<div className="bg-background py-12 lg:py-16">
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article className="space-y-12">
 							{/* Product Content Grid - Gallery sticky on desktop */}
@@ -57,7 +37,7 @@ export default function ProductDetailLoading() {
 									{/* Grid layout matching product-gallery.tsx */}
 									<div className="grid gap-3 lg:gap-4 grid-cols-1 lg:grid-cols-[80px_1fr]">
 										{/* Thumbnails verticales - Desktop uniquement */}
-										<div className="hidden lg:flex flex-col gap-2 order-1">
+										<div className="hidden lg:flex flex-col gap-2 order-1 max-h-[min(500px,60vh)] overflow-y-auto">
 											{Array.from({ length: 4 }).map((_, i) => (
 												<Skeleton
 													key={i}
@@ -76,7 +56,7 @@ export default function ProductDetailLoading() {
 									</div>
 
 									{/* Thumbnails horizontales - Mobile uniquement */}
-									<div className="lg:hidden mt-4">
+									<div className="lg:hidden mt-4 sm:mt-6">
 										<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
 											{Array.from({ length: 4 }).map((_, i) => (
 												<Skeleton
@@ -88,22 +68,42 @@ export default function ProductDetailLoading() {
 									</div>
 								</section>
 
-								{/* Product Info Section - Right (scrollable) */}
+								{/* Product Info + Details Section - Right (scrollable) */}
 								<section className="space-y-6 lg:min-h-screen">
-									{/* Price */}
+									{/* ===== 1. ProductInfo ===== */}
+									{/* Titre avec bouton wishlist */}
+									<div className="space-y-4">
+										<div className="flex items-start justify-between gap-3">
+											<Skeleton className="h-10 sm:h-12 flex-1 bg-muted/50" />
+											<Skeleton className="h-10 w-10 rounded-full bg-muted/30 shrink-0" />
+										</div>
+
+										{/* Badges (type + collections) */}
+										<div className="flex flex-wrap items-center gap-2">
+											<Skeleton className="h-7 w-24 rounded-full bg-muted/30" />
+											<Skeleton className="h-7 w-28 rounded-full bg-muted/30" />
+										</div>
+
+										{/* Description */}
+										<div className="space-y-2">
+											<Skeleton className="h-5 w-full bg-muted/30" />
+											<Skeleton className="h-5 w-full bg-muted/30" />
+											<Skeleton className="h-5 w-3/4 bg-muted/30" />
+										</div>
+									</div>
+
+									{/* Separator (entre ProductInfo et ProductDetails) */}
+									<div className="h-px bg-border" />
+
+									{/* ===== 2. ProductDetails ===== */}
+									{/* Prix */}
 									<div className="space-y-2">
 										<Skeleton className="h-10 w-32 bg-primary/20" />
 										<Skeleton className="h-4 w-48 bg-muted/30" />
 									</div>
 
-									{/* Description */}
-									<div className="space-y-2">
-										<Skeleton className="h-5 w-24 bg-muted/40" />
-										<Skeleton className="h-20 w-full bg-muted/30" />
-									</div>
-
-									{/* Product Details */}
-									<div className="space-y-4 pt-4 border-t border-border">
+									{/* Caractéristiques */}
+									<div className="space-y-3">
 										{Array.from({ length: 3 }).map((_, i) => (
 											<div
 												key={i}
@@ -115,11 +115,12 @@ export default function ProductDetailLoading() {
 										))}
 									</div>
 
-									{/* Customization Options */}
-									<div className="space-y-4 pt-4">
-										<Skeleton className="h-5 w-32 bg-muted/40" />
+									{/* Separator */}
+									<div className="h-px bg-border" />
 
-										{/* Color selector */}
+									{/* Sélecteurs de variantes */}
+									<div className="space-y-4">
+										{/* Couleur */}
 										<div className="space-y-3">
 											<Skeleton className="h-4 w-24 bg-muted/30" />
 											<div className="flex gap-2">
@@ -132,7 +133,7 @@ export default function ProductDetailLoading() {
 											</div>
 										</div>
 
-										{/* Material selector */}
+										{/* Matériau */}
 										<div className="space-y-3">
 											<Skeleton className="h-4 w-28 bg-muted/30" />
 											<div className="flex gap-2 flex-wrap">
@@ -146,17 +147,16 @@ export default function ProductDetailLoading() {
 										</div>
 									</div>
 
-									{/* Quantity & Add to Cart */}
-									<div className="space-y-4 pt-6">
+									{/* CTA Panier */}
+									<div className="space-y-4">
 										<div className="flex items-center gap-4">
 											<Skeleton className="h-12 w-32 bg-muted/40" />
 											<Skeleton className="h-12 flex-1 bg-primary/20" />
 										</div>
-										<Skeleton className="h-12 w-full bg-muted/30" />
 									</div>
 
-									{/* Availability */}
-									<div className="flex items-center gap-2 pt-2">
+									{/* Disponibilité */}
+									<div className="flex items-center gap-2">
 										<Skeleton className="h-5 w-5 rounded-full bg-muted/40" />
 										<Skeleton className="h-4 w-32 bg-muted/30" />
 									</div>
@@ -164,7 +164,7 @@ export default function ProductDetailLoading() {
 									{/* Separator */}
 									<div className="h-px bg-border" />
 
-									{/* Configurator placeholder */}
+									{/* Entretien */}
 									<div className="space-y-4">
 										<Skeleton className="h-6 w-48 bg-muted/40" />
 										<Skeleton className="h-4 w-full bg-muted/30" />
@@ -173,6 +173,11 @@ export default function ProductDetailLoading() {
 								</section>
 							</div>
 
+							{/* Separator avant produits similaires */}
+							<div className="h-px bg-border" />
+
+							{/* RelatedProducts Skeleton */}
+							<RelatedProductsSkeleton limit={8} />
 						</article>
 					</div>
 				</div>

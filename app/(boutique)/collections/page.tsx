@@ -6,6 +6,7 @@ import { CollectionGridSkeleton } from "@/modules/collections/components/collect
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { GET_COLLECTIONS_DEFAULT_PER_PAGE } from "@/modules/collections/data/get-collections";
 import { Suspense } from "react";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -104,7 +105,7 @@ export default async function CollectionsPage({
 			/>
 
 			{/* Section principale avec catalogue */}
-			<section className="bg-background py-12 lg:py-16 relative z-10">
+			<section className={`bg-background ${SECTION_SPACING.default} relative z-10`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 					<Suspense fallback={<CollectionGridSkeleton />}>
 						<CollectionGrid

@@ -1,4 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Card,
@@ -97,7 +98,7 @@ export default async function LegalPage() {
 				]}
 			/>
 
-			<section className="bg-background py-12 lg:py-16">
+			<section className={`bg-background ${SECTION_SPACING.default}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					{/* Introduction */}
 					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg mb-8">

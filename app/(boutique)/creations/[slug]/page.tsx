@@ -20,6 +20,7 @@ import { RelatedProducts } from "@/modules/products/components/related-products"
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
 import { generateProductMetadata } from "@/modules/products/utils/seo/generate-metadata";
 import { generateStructuredData } from "@/modules/products/utils/seo/generate-structured-data";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 
 type ProductPageParams = Promise<{ slug: string }>;
 type ProductSearchParams = Promise<{
@@ -123,7 +124,7 @@ export default async function ProductPage({
 				<PageHeader title={product.title} breadcrumbs={breadcrumbs} />
 
 				{/* Contenu principal */}
-				<div className="bg-background py-12 lg:py-16">
+				<div className={`bg-background ${SECTION_SPACING.default}`}>
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article
 							itemScope

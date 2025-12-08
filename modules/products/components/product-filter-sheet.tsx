@@ -191,13 +191,16 @@ export function ProductFilterSheet({
 				<Button
 					variant="outline"
 					className={cn(
-						"relative gap-2 text-sm font-medium h-[44px] px-3 border-border/60 hover:border-border hover:bg-accent/50 transition-all duration-200",
+						"relative h-11 w-11 p-0",
+						"sm:h-auto sm:w-auto sm:px-3 sm:gap-2 sm:text-sm sm:font-medium",
+						"border-border/60 hover:border-border hover:bg-accent/50 transition-all duration-200",
 						activeFiltersCount > 0 && "border-primary/30 bg-primary/5",
 						className
 					)}
+					aria-label={`Filtres${activeFiltersCount > 0 ? ` (${activeFiltersCount} actifs)` : ""}`}
 				>
 					<Filter className="w-4 h-4" />
-					<span>Filtres</span>
+					<span className="hidden sm:inline">Filtres</span>
 					{activeFiltersCount > 0 && (
 						<Badge
 							variant="secondary"

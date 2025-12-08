@@ -8,7 +8,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 export function CreativeProcessSkeleton() {
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
 			aria-label="Chargement du processus créatif"
 		>
 			<div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -20,7 +20,7 @@ export function CreativeProcessSkeleton() {
 
 				<div className="grid lg:grid-cols-2 gap-12 items-center">
 					{/* Image atelier - order-1 (en premier sur mobile et desktop) */}
-					<div className="relative order-1 h-48 sm:h-80 lg:h-full min-h-[300px]">
+					<div className="relative order-1 h-56 sm:h-80 lg:h-full">
 						<div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-xl">
 							<Skeleton className="absolute inset-0 bg-muted/40" />
 							{/* Badge "Fait main à Nantes" */}

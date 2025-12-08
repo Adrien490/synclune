@@ -1,4 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { Info, Mail } from "lucide-react";
@@ -54,7 +55,7 @@ export default async function RetractationPage() {
         ]}
       />
 
-      <section className="bg-background py-12 lg:py-16">
+      <section className={`bg-background ${SECTION_SPACING.default}`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-slate dark:prose-invert max-w-none space-y-8">
             {/* Composant formulaire de rétractation */}

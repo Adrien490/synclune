@@ -26,7 +26,7 @@ export function CollectionsSectionSkeleton({
 }: CollectionsSectionSkeletonProps = {}) {
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.default}`}
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
 			aria-label="Chargement des collections"
 		>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -44,7 +44,7 @@ export function CollectionsSectionSkeleton({
 						{Array.from({ length: collectionsCount }).map((_, i) => (
 							<div
 								key={i}
-								className="shrink-0 w-[clamp(260px,85vw,320px)]"
+								className="shrink-0 w-[clamp(220px,75vw,280px)] snap-center"
 							>
 								{/* Card skeleton */}
 								<div className="bg-card rounded-xl border shadow-sm overflow-hidden">

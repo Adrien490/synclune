@@ -1,4 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
 import { CookiePreferences } from "./_components/cookie-preferences";
@@ -55,7 +56,7 @@ export default async function CookiesPage() {
         breadcrumbs={[{ label: "Cookies", href: "/cookies" }]}
       />
 
-      <section className="bg-background py-12 lg:py-16">
+      <section className={`bg-background ${SECTION_SPACING.default}`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-slate dark:prose-invert max-w-none space-y-8">
             {/* Introduction */}

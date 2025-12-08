@@ -194,9 +194,10 @@ export default async function BijouxPage({
 			/>
 
 			{/* Section principale avec catalogue */}
-			<section className="bg-background py-12 lg:py-16 relative z-10">
+			<section className="bg-background pt-6 pb-12 lg:pt-8 lg:pb-16 relative z-10">
 				<div className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 					<Toolbar
+						variant="compact"
 						search={
 							<SearchForm
 								paramName="search"
@@ -213,7 +214,8 @@ export default async function BijouxPage({
 								label: SORT_LABELS[option as keyof typeof SORT_LABELS],
 							}))}
 							placeholder="Plus récents"
-							className="w-full sm:w-auto sm:min-w-[160px]"
+							compactMobile
+							compactAriaLabel="Trier les produits"
 						/>
 						<ProductFilterSheet
 							colors={colors}

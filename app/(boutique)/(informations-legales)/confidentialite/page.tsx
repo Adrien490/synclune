@@ -1,4 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
 
@@ -44,7 +45,7 @@ export default async function PrivacyPolicyPage() {
         breadcrumbs={[{ label: "Confidentialité", href: "/confidentialite" }]}
       />
 
-      <section className="bg-background py-12 lg:py-16">
+      <section className={`bg-background ${SECTION_SPACING.default}`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-slate dark:prose-invert max-w-none space-y-6">
             <section className="space-y-4">

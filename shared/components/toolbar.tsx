@@ -16,6 +16,14 @@ import { ReactNode } from "react";
  *   <FilterSheet />
  * </Toolbar>
  * ```
+ *
+ * @example Compact variant (horizontal on all screen sizes)
+ * ```tsx
+ * <Toolbar variant="compact" search={<SearchForm />}>
+ *   <SelectFilter compactMobile />
+ *   <ProductFilterSheet />
+ * </Toolbar>
+ * ```
  */
 interface ToolbarProps {
 	/**
@@ -44,6 +52,14 @@ interface ToolbarProps {
 	 * @default false
 	 */
 	isPending?: boolean;
+
+	/**
+	 * Layout variant
+	 * - "default": Stacked on mobile, horizontal on desktop
+	 * - "compact": Horizontal on all screen sizes (for boutique pages)
+	 * @default "default"
+	 */
+	variant?: "default" | "compact";
 }
 
 export function Toolbar({
@@ -52,8 +68,10 @@ export function Toolbar({
 	className,
 	ariaLabel = "Barre d'outils de filtrage et recherche",
 	isPending = false,
+	variant = "default",
 }: ToolbarProps) {
 	const hasSearch = !!search;
+	const isCompact = variant === "compact";
 
 	// Structure simple sans search
 	if (!hasSearch) {
@@ -90,9 +108,33 @@ export function Toolbar({
 				className
 			)}
 		>
-			<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between">
-				<div className="flex-1 min-w-0 sm:max-w-md">{search}</div>
-				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:shrink-0">
+			<div
+				className={cn(
+					// Compact: toujours horizontal avec gap réduit
+					isCompact && "flex flex-row gap-2 items-center",
+					// Default: stacked sur mobile, horizontal sur desktop
+					!isCompact &&
+						"flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center sm:justify-between"
+				)}
+			>
+				<div
+					className={cn(
+						"flex-1 min-w-0",
+						// Default: limite la largeur du search sur desktop
+						!isCompact && "sm:max-w-md"
+					)}
+				>
+					{search}
+				</div>
+				<div
+					className={cn(
+						// Compact: toujours horizontal
+						isCompact && "flex flex-row items-center gap-2 shrink-0",
+						// Default: stacked sur mobile, horizontal sur desktop
+						!isCompact &&
+							"flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:shrink-0"
+					)}
+				>
 					{children}
 				</div>
 			</div>

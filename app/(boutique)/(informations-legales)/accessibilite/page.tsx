@@ -1,4 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { Check } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
@@ -61,7 +62,7 @@ export default async function AccessibilityPage() {
         breadcrumbs={[{ label: "Accessibilité", href: "/accessibilite" }]}
       />
 
-      <section className="bg-background py-12 lg:py-16 relative z-10">
+      <section className={`bg-background ${SECTION_SPACING.default} relative z-10`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-slate dark:prose-invert max-w-none space-y-6">
             <section className="space-y-4">

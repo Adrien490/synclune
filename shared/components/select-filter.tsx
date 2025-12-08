@@ -9,8 +9,9 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn";
-import { X } from "lucide-react";
+import { ArrowUpDown, X } from "lucide-react";
 import { useSelectFilter } from "@/shared/hooks/use-select-filter";
+import type { ReactNode } from "react";
 
 export type FilterOption = {
 	value: string;
@@ -24,6 +25,20 @@ export interface SelectFilterProps {
 	placeholder?: string;
 	className?: string;
 	maxHeight?: number;
+	/**
+	 * Mode compact sur mobile - affiche uniquement une icône
+	 * Le comportement desktop reste inchangé
+	 * @default false
+	 */
+	compactMobile?: boolean;
+	/**
+	 * Icône à afficher en mode compact (défaut: ArrowUpDown)
+	 */
+	compactIcon?: ReactNode;
+	/**
+	 * Aria-label pour le bouton en mode compact
+	 */
+	compactAriaLabel?: string;
 }
 
 export function SelectFilter({
@@ -33,6 +48,9 @@ export function SelectFilter({
 	placeholder = "Sélectionner...",
 	className,
 	maxHeight = 250,
+	compactMobile = false,
+	compactIcon,
+	compactAriaLabel,
 }: SelectFilterProps) {
 	const { value, setFilter, clearFilter, isPending } =
 		useSelectFilter(filterKey);
@@ -50,7 +68,11 @@ export function SelectFilter({
 	return (
 		<div
 			data-pending={isPending ? "" : undefined}
-			className={cn("min-w-[180px] relative", className)}
+			className={cn(
+				"relative",
+				!compactMobile && "min-w-[180px]",
+				className
+			)}
 			aria-live="polite"
 			aria-busy={isPending}
 		>
@@ -63,11 +85,34 @@ export function SelectFilter({
 					onValueChange={handleSelect}
 					disabled={isPending}
 				>
-					<SelectTrigger className="flex-1 h-[44px]!">
-						<span className="text-muted-foreground text-xs mr-2">{label}</span>
-						<div className="flex-1">
+					<SelectTrigger
+						className={cn(
+							"flex-1 h-[44px]!",
+							compactMobile && "w-11 sm:w-auto sm:min-w-[180px]"
+						)}
+						aria-label={compactMobile ? compactAriaLabel : undefined}
+					>
+						{/* Label - masqué sur mobile en mode compact */}
+						<span
+							className={cn(
+								"text-muted-foreground text-xs mr-2",
+								compactMobile && "hidden sm:inline"
+							)}
+						>
+							{label}
+						</span>
+
+						{/* Value - masqué sur mobile en mode compact */}
+						<div className={cn("flex-1", compactMobile && "hidden sm:block")}>
 							<SelectValue placeholder={placeholder} />
 						</div>
+
+						{/* Icône mobile - visible seulement sur mobile en mode compact */}
+						{compactMobile && (
+							<div className="sm:hidden flex items-center justify-center">
+								{compactIcon || <ArrowUpDown className="h-4 w-4" />}
+							</div>
+						)}
 					</SelectTrigger>
 					<SelectContent>
 						<ScrollArea
@@ -86,7 +131,10 @@ export function SelectFilter({
 					<button
 						type="button"
 						aria-label={`Effacer le filtre ${label}`}
-						className="h-8 w-8 p-0 rounded-full inline-flex items-center justify-center cursor-pointer hover:bg-accent/50 focus-visible:outline-2 focus-visible:outline-ring transition-colors shrink-0"
+						className={cn(
+							"h-8 w-8 p-0 rounded-full inline-flex items-center justify-center cursor-pointer hover:bg-accent/50 focus-visible:outline-2 focus-visible:outline-ring transition-colors shrink-0",
+							compactMobile && "hidden sm:inline-flex"
+						)}
 						onClick={handleClear}
 						disabled={isPending}
 					>
