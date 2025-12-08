@@ -60,9 +60,9 @@ function AlertDialogContent({
 				className={cn(
 					// Position et taille
 					"fixed top-[50%] left-[50%] z-[70] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] sm:max-w-[420px]",
-					// Apparence - style épuré et moderne
-					"bg-background",
-					"border border-border rounded-xl",
+					// Apparence - thème Synclune (rose + doré)
+					"bg-primary/[0.02]",
+					"border border-primary/25 rounded-xl",
 					"shadow-lg",
 					// Padding et espacement
 					"p-6",
@@ -116,7 +116,7 @@ function AlertDialogTitle({
 		<AlertDialogPrimitive.Title
 			data-slot="alert-dialog-title"
 			className={cn(
-				"text-lg font-semibold text-foreground",
+				"text-xl font-semibold text-foreground",
 				crimsonPro.className,
 				className
 			)}
@@ -156,7 +156,7 @@ function AlertDialogCancel({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Cancel>) {
 	return (
 		<AlertDialogPrimitive.Cancel
-			className={cn(buttonVariants({ variant: "outline" }), className)}
+			className={cn(buttonVariants({ variant: "secondary" }), className)}
 			{...props}
 		/>
 	);

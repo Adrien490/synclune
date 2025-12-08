@@ -441,7 +441,7 @@ export function EditProductVariantForm({
 																if (isUploading) {
 																	return (
 																		<div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm rounded-lg z-10">
-																			<UploadProgress progress={uploadProgress} />
+																			<UploadProgress progress={uploadProgress} isProcessing={uploadProgress >= 100} />
 																		</div>
 																	);
 																}
@@ -687,7 +687,7 @@ export function EditProductVariantForm({
 																		role="status"
 																		aria-live="polite"
 																	>
-																		<UploadProgress progress={uploadProgress} />
+																		<UploadProgress progress={uploadProgress} isProcessing={uploadProgress >= 100} />
 																	</div>
 																);
 															}

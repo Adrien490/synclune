@@ -12,6 +12,8 @@ interface UploadProgressProps {
 	variant?: "default" | "compact";
 	/** Classes CSS additionnelles */
 	className?: string;
+	/** Si true, affiche "Traitement..." même à 100% (traitement serveur en cours) */
+	isProcessing?: boolean;
 }
 
 /**
@@ -32,14 +34,19 @@ export function UploadProgress({
 	progress,
 	variant = "default",
 	className,
+	isProcessing = false,
 }: UploadProgressProps) {
 	const shouldReduceMotion = useReducedMotion();
-	const isComplete = progress >= 100;
+	// Trois états: téléversement (0-99%), traitement (100% + isProcessing), terminé (100% + !isProcessing)
+	const isComplete = progress >= 100 && !isProcessing;
+	const isServerProcessing = progress >= 100 && isProcessing;
 
 	// Texte accessible pour les lecteurs d'écran
 	const srText = isComplete
 		? "Téléversement terminé"
-		: `Téléversement en cours, ${progress} pourcent`;
+		: isServerProcessing
+			? "Traitement du fichier en cours"
+			: `Téléversement en cours, ${progress} pourcent`;
 
 	if (variant === "compact") {
 		return (
@@ -73,15 +80,16 @@ export function UploadProgress({
 					/>
 				)}
 
-				{/* Pourcentage */}
+				{/* Pourcentage ou état */}
 				<span
 					className={cn(
-						"text-sm sm:text-xs font-medium tabular-nums",
-						isComplete ? "text-emerald-600" : "text-foreground/70"
+						"text-sm sm:text-xs font-medium",
+						isComplete ? "text-emerald-600" : "text-foreground/70",
+						!isServerProcessing && "tabular-nums"
 					)}
 					aria-hidden="true"
 				>
-					{progress}%
+					{isComplete ? "OK" : isServerProcessing ? "Traitement..." : `${progress}%`}
 				</span>
 			</div>
 		);
@@ -133,12 +141,17 @@ export function UploadProgress({
 				/>
 				<p
 					className={cn(
-						"text-base sm:text-sm font-medium text-center tabular-nums",
-						isComplete ? "text-emerald-600" : "text-foreground"
+						"text-base sm:text-sm font-medium text-center",
+						isComplete ? "text-emerald-600" : "text-foreground",
+						!isServerProcessing && "tabular-nums"
 					)}
 					aria-hidden="true"
 				>
-					{isComplete ? "Terminé" : `Téléversement... ${progress}%`}
+					{isComplete
+						? "Terminé"
+						: isServerProcessing
+							? "Traitement..."
+							: `Téléversement... ${progress}%`}
 				</p>
 			</div>
 		</div>

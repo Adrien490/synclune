@@ -669,7 +669,7 @@ export function EditProductForm({
 																	role="status"
 																	aria-live="polite"
 																>
-																	<UploadProgress progress={uploadProgress} />
+																	<UploadProgress progress={uploadProgress} isProcessing={uploadProgress >= 100} />
 																</div>
 															);
 														}

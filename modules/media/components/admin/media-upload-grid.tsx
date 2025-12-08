@@ -80,6 +80,9 @@ export function MediaUploadGrid({
 	// État pour l'indication long-press mobile (première visite)
 	const [showLongPressHint, setShowLongPressHint] = useState(false);
 
+	// Condition pour afficher le hint (seulement quand on a au moins 2 médias)
+	const hasMultipleMedia = media.length > 1;
+
 	// Afficher le hint long-press pour les nouveaux utilisateurs sur mobile (une seule fois)
 	useEffect(() => {
 		if (typeof window === "undefined") return;
@@ -87,7 +90,7 @@ export function MediaUploadGrid({
 		if (hasSeenHint) return;
 
 		// Afficher le hint seulement s'il y a au moins 2 médias
-		if (media.length > 1) {
+		if (hasMultipleMedia) {
 			setShowLongPressHint(true);
 			const timer = setTimeout(() => {
 				setShowLongPressHint(false);
@@ -95,8 +98,7 @@ export function MediaUploadGrid({
 			}, 4000);
 			return () => clearTimeout(timer);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [media.length > 1]);
+	}, [hasMultipleMedia]);
 
 	// Sensors pour le drag & drop (desktop + mobile)
 	const sensors = useSensors(

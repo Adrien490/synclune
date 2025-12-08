@@ -581,7 +581,7 @@ function CreateProductFormContent({
 													content={{
 														uploadIcon: ({ isUploading: uploading, uploadProgress }) =>
 															uploading ? (
-																<UploadProgress progress={uploadProgress} />
+																<UploadProgress progress={uploadProgress} isProcessing={uploadProgress >= 100} />
 															) : (
 																<Upload className="h-12 w-12 text-primary/70" />
 															),
@@ -663,7 +663,7 @@ function CreateProductFormContent({
 																	content={{
 																		uploadIcon: ({ isUploading: uploading, uploadProgress }) =>
 																			uploading ? (
-																				<UploadProgress progress={uploadProgress} variant="compact" />
+																				<UploadProgress progress={uploadProgress} variant="compact" isProcessing={uploadProgress >= 100} />
 																			) : (
 																				<Upload className="h-6 w-6 text-muted-foreground/50" />
 																			),
