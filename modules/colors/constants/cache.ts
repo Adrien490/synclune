@@ -1,8 +1,8 @@
 /**
- * Cache configuration for Colors module
+ * Tags de cache pour le module Colors
+ *
+ * Fonctions: voir utils/cache.utils.ts
  */
-
-import { cacheLife, cacheTag } from "next/cache"
 
 // ============================================
 // CACHE TAGS
@@ -11,29 +11,10 @@ import { cacheLife, cacheTag } from "next/cache"
 export const COLORS_CACHE_TAGS = {
 	/** Liste des couleurs */
 	LIST: "colors",
-} as const
+} as const;
 
-// ============================================
-// CACHE CONFIGURATION HELPERS
-// ============================================
-
-/**
- * Configure le cache pour les couleurs
- * - Utilisé pour : sélecteurs de filtres, formulaires admin
- * - Durée : 4h fraîche, 1h revalidation, 30j expiration
- */
-export function cacheColors() {
-	cacheLife("reference")
-	cacheTag(COLORS_CACHE_TAGS.LIST)
-}
-
-// ============================================
-// INVALIDATION HELPER
-// ============================================
-
-/**
- * Tags à invalider lors de la modification d'une couleur
- */
-export function getColorInvalidationTags(): string[] {
-	return [COLORS_CACHE_TAGS.LIST]
-}
+// Re-exports pour retrocompatibilite
+export {
+	cacheColors,
+	getColorInvalidationTags,
+} from "../utils/cache.utils";
