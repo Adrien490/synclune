@@ -219,18 +219,16 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 								rel="noopener noreferrer"
 								onClick={closePanel}
 								className={cn(
-									"flex items-center justify-between w-full py-2.5 px-3 rounded-xl",
+									"flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl",
+									"bg-primary text-primary-foreground font-medium",
+									"hover:bg-primary/90 active:bg-primary/80",
 									sharedItemStyles.transition,
-									sharedItemStyles.focusRing,
-									"text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30"
+									sharedItemStyles.focusRing
 								)}
 								aria-label="Voir le site (s'ouvre dans un nouvel onglet)"
 							>
-								<span className="flex items-center gap-2">
-									<ExternalLink className="size-4 shrink-0" aria-hidden="true" />
-									<span className="text-xs font-medium">Voir le site</span>
-								</span>
-								<ChevronRight className="size-3.5 shrink-0" aria-hidden="true" />
+								<ExternalLink className="size-4 shrink-0" aria-hidden="true" />
+								<span className="text-xs">Voir le site</span>
 							</Link>
 						</div>
 					</motion.div>
