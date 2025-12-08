@@ -1,9 +1,8 @@
 /**
- * Cache configuration for Newsletter module
+ * Tags de cache pour le module Newsletter
+ *
+ * Fonctions: voir utils/cache.utils.ts
  */
-
-import { cacheLife, cacheTag } from "next/cache"
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 
 // ============================================
 // CACHE TAGS
@@ -15,35 +14,10 @@ export const NEWSLETTER_CACHE_TAGS = {
 
 	/** Statut d'abonnement d'un utilisateur */
 	USER_STATUS: (userId: string) => `newsletter-user-${userId}`,
-} as const
+} as const;
 
-// ============================================
-// CACHE CONFIGURATION HELPERS
-// ============================================
-
-/**
- * Configure le cache pour la liste des abonnés newsletter
- * - Utilisé pour : /admin/marketing/newsletter
- * - Durée : 1min fraîche, 30s revalidation, 5min expiration
- */
-export function cacheNewsletterSubscribers() {
-	cacheLife("dashboard")
-	cacheTag(NEWSLETTER_CACHE_TAGS.LIST)
-}
-
-// ============================================
-// INVALIDATION HELPERS
-// ============================================
-
-/**
- * Tags à invalider lors de la modification d'un abonnement newsletter
- */
-export function getNewsletterInvalidationTags(userId?: string): string[] {
-	const tags: string[] = [NEWSLETTER_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES]
-
-	if (userId) {
-		tags.push(NEWSLETTER_CACHE_TAGS.USER_STATUS(userId))
-	}
-
-	return tags
-}
+// Re-exports pour retrocompatibilite
+export {
+	cacheNewsletterSubscribers,
+	getNewsletterInvalidationTags,
+} from "../utils/cache.utils";

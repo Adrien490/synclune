@@ -1,4 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
+import { ActionStatus } from "@/shared/types/server-action";
 import { GET_CART_SELECT } from "../constants/cart.constants";
 
 // ============================================================================
@@ -26,3 +27,39 @@ export type CartSummary = {
 };
 
 export type GetCartSummaryReturn = CartSummary;
+
+// ============================================================================
+// TYPES - CART VALIDATION
+// ============================================================================
+
+export interface CartValidationIssue {
+	cartItemId: string;
+	skuId: string;
+	productTitle: string;
+	issueType: "OUT_OF_STOCK" | "INSUFFICIENT_STOCK" | "INACTIVE" | "NOT_PUBLIC" | "DELETED";
+	message: string;
+	availableStock?: number;
+}
+
+export interface ValidateCartResult {
+	isValid: boolean;
+	issues: CartValidationIssue[];
+}
+
+// ============================================================================
+// TYPES - CART MERGE
+// ============================================================================
+
+export type MergeCartsResult =
+	| {
+			status: typeof ActionStatus.SUCCESS;
+			message: string;
+			data: {
+				mergedItems: number;
+				conflicts: number;
+			};
+	  }
+	| {
+			status: typeof ActionStatus.ERROR;
+			message: string;
+	  };
