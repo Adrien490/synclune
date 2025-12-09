@@ -7,6 +7,8 @@ import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note"
 import { ActionStatus } from "@/shared/types/server-action";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useSignUpEmail } from "@/modules/auth/hooks/use-sign-up-email";
+import { PasswordStrengthIndicator } from "./password-strength-indicator";
+import Link from "next/link";
 
 export function SignUpEmailForm() {
 	const { state, action, isPending } = useSignUpEmail({
@@ -22,6 +24,7 @@ export function SignUpEmailForm() {
 			password: "",
 			confirmPassword: "",
 			name: "",
+			termsAccepted: false,
 		},
 	});
 
@@ -36,13 +39,13 @@ export function SignUpEmailForm() {
 			{state?.message && state.status !== ActionStatus.VALIDATION_ERROR && (
 				<>
 					{state.status === ActionStatus.SUCCESS ? (
-						<Alert>
-							<CheckCircle2 />
+						<Alert role="status" aria-live="polite">
+							<CheckCircle2 aria-hidden="true" />
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
 					) : (
-						<Alert variant="destructive">
-							<AlertCircle />
+						<Alert variant="destructive" role="alert" aria-live="assertive">
+							<AlertCircle aria-hidden="true" />
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
 					)}
@@ -82,7 +85,7 @@ export function SignUpEmailForm() {
 						onChange: ({ value }: { value: string }) => {
 							if (!value) return "L'email est requis";
 							if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-								return "Petite erreur de saisie ? Ton email semble invalide 🌸";
+								return "Format d'email invalide";
 							}
 							return undefined;
 						},
@@ -115,13 +118,16 @@ export function SignUpEmailForm() {
 					}}
 				>
 					{(field) => (
-						<field.InputField
-							label="Mot de passe"
-							type="password"
-							autoComplete="new-password"
-							disabled={isPending}
-							required
-						/>
+						<div className="space-y-3">
+							<field.InputField
+								label="Mot de passe"
+								type="password"
+								autoComplete="new-password"
+								disabled={isPending}
+								required
+							/>
+							<PasswordStrengthIndicator password={field.state.value} />
+						</div>
 					)}
 				</form.AppField>
 
@@ -150,6 +156,60 @@ export function SignUpEmailForm() {
 					)}
 				</form.AppField>
 			</div>
+
+			{/* Checkbox consentement RGPD */}
+			<form.AppField
+				name="termsAccepted"
+				validators={{
+					onChange: ({ value }: { value: boolean }) => {
+						if (!value) {
+							return "Tu dois accepter les conditions générales et la politique de confidentialité";
+						}
+						return undefined;
+					},
+				}}
+			>
+				{(field) => (
+					<div className="space-y-2">
+						<field.CheckboxField
+							label={
+								<span>
+									J'accepte les{" "}
+									<Link
+										href="/cgv"
+										className="underline hover:no-underline"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										conditions générales
+									</Link>{" "}
+									et la{" "}
+									<Link
+										href="/confidentialite"
+										className="underline hover:no-underline"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										politique de confidentialité
+									</Link>
+								</span>
+							}
+							required
+						/>
+					</div>
+				)}
+			</form.AppField>
+
+			{/* Hidden field pour le formulaire */}
+			<form.Subscribe selector={(state) => state.values.termsAccepted}>
+				{(termsAccepted) => (
+					<input
+						type="hidden"
+						name="termsAccepted"
+						value={termsAccepted ? "true" : "false"}
+					/>
+				)}
+			</form.Subscribe>
 
 			<form.Subscribe selector={(state) => [state.canSubmit]}>
 				{([canSubmit]) => (

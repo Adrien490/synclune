@@ -62,6 +62,19 @@ export function CartItemQuantitySelector({
 	};
 
 	const isLoading = isPending || isActionPending;
+	const showQuantityControls = maxQuantity > 1;
+
+	// Si un seul article disponible, afficher juste la quantité sans contrôles
+	if (!showQuantityControls) {
+		return (
+			<div
+				aria-label="Quantite"
+				className="flex items-center justify-center h-11 sm:h-9 w-11 sm:w-9 border rounded-md text-base font-medium"
+			>
+				<span aria-label="Quantité: 1">1</span>
+			</div>
+		);
+	}
 
 	return (
 		<div

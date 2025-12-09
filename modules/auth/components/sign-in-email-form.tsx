@@ -40,7 +40,7 @@ export function SignInEmailForm() {
 			{state?.status !== ActionStatus.SUCCESS &&
 				state?.message &&
 				state.message !== "Données invalides" && (
-					<Alert ref={errorRef} variant="destructive" tabIndex={-1}>
+					<Alert ref={errorRef} variant="destructive" tabIndex={-1} role="alert" aria-live="assertive">
 						<AlertDescription>{state.message}</AlertDescription>
 					</Alert>
 				)}
@@ -57,7 +57,7 @@ export function SignInEmailForm() {
 							onChange: ({ value }: { value: string }) => {
 								if (!value) return "L'email est requis";
 								if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-									return "Petite erreur de saisie ? Ton email semble invalide 🌸";
+									return "Format d'email invalide";
 								}
 								return undefined;
 							},

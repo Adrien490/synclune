@@ -49,7 +49,6 @@ export function GalleryMediaRenderer({
 					muted
 					loop
 					playsInline
-					controls
 					preload="metadata"
 					poster={media.thumbnailUrl || media.thumbnailSmallUrl || undefined}
 					aria-label={media.alt || `${title} - Vidéo ${index + 1}`}

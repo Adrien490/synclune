@@ -94,62 +94,73 @@ export function AddToCartButton({
 				<Card>
 					<CardContent className="pt-6">
 						<form.Field name="quantity">
-							{(field) => (
-								<div className="flex items-center justify-between">
-									<span
-										id="quantity-label"
-										className="text-sm/6 font-semibold tracking-tight antialiased"
-									>
-										Quantité
-									</span>
-									<div className="flex items-center gap-2" role="group" aria-labelledby="quantity-label">
-										<Button
-											type="button"
-											variant="outline"
-											size="sm"
-											onClick={() =>
-												field.handleChange(Math.max(1, field.state.value - 1))
-											}
-											disabled={field.state.value <= 1}
-											className="h-8 w-8 p-0"
-											aria-label="Diminuer la quantité"
-											aria-controls="quantity-value"
-										>
-											-
-										</Button>
+							{(field) => {
+								const maxQuantity = Math.min(selectedSku.inventory, MAX_QUANTITY_PER_ORDER);
+								const showQuantityControls = maxQuantity > 1;
+
+								return (
+									<div className="flex items-center justify-between">
 										<span
-											id="quantity-value"
-											className="text-base/6 tracking-normal antialiased font-medium w-8 text-center"
-											role="status"
-											aria-live="polite"
-											aria-label={`Quantité sélectionnée: ${field.state.value}`}
+											id="quantity-label"
+											className="text-sm/6 font-semibold tracking-tight antialiased"
 										>
-											{field.state.value}
+											Quantité
 										</span>
-										<Button
-											type="button"
-											variant="outline"
-											size="sm"
-											onClick={() =>
-												field.handleChange(
-													Math.min(
-														Math.min(selectedSku.inventory, MAX_QUANTITY_PER_ORDER),
-														field.state.value + 1
-													)
-												)
-											}
-											disabled={
-												field.state.value >= Math.min(selectedSku.inventory, MAX_QUANTITY_PER_ORDER)
-											}
-											className="h-8 w-8 p-0"
-											aria-label="Augmenter la quantité"
-											aria-controls="quantity-value"
-										>
-											+
-										</Button>
+										{showQuantityControls ? (
+											<div className="flex items-center gap-2" role="group" aria-labelledby="quantity-label">
+												<Button
+													type="button"
+													variant="outline"
+													size="sm"
+													onClick={() =>
+														field.handleChange(Math.max(1, field.state.value - 1))
+													}
+													disabled={field.state.value <= 1}
+													className="h-8 w-8 p-0"
+													aria-label="Diminuer la quantité"
+													aria-controls="quantity-value"
+												>
+													-
+												</Button>
+												<span
+													id="quantity-value"
+													className="text-base/6 tracking-normal antialiased font-medium w-8 text-center"
+													role="status"
+													aria-live="polite"
+													aria-label={`Quantité sélectionnée: ${field.state.value}`}
+												>
+													{field.state.value}
+												</span>
+												<Button
+													type="button"
+													variant="outline"
+													size="sm"
+													onClick={() =>
+														field.handleChange(
+															Math.min(maxQuantity, field.state.value + 1)
+														)
+													}
+													disabled={field.state.value >= maxQuantity}
+													className="h-8 w-8 p-0"
+													aria-label="Augmenter la quantité"
+													aria-controls="quantity-value"
+												>
+													+
+												</Button>
+											</div>
+										) : (
+											<span
+												id="quantity-value"
+												className="text-base/6 tracking-normal antialiased font-medium"
+												role="status"
+												aria-label="Quantité: 1"
+											>
+												1
+											</span>
+										)}
 									</div>
-								</div>
-							)}
+								);
+							}}
 						</form.Field>
 						{/* Message explicatif sur la limite de quantité */}
 						<form.Subscribe selector={(state) => [state.values.quantity]}>

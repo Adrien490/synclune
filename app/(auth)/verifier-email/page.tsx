@@ -3,6 +3,8 @@ import { Button } from "@/shared/components/ui/button";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
 import { auth } from "@/modules/auth/lib/auth";
 import { ajAuth } from "@/shared/lib/arcjet";
+import { crimsonPro } from "@/shared/styles/fonts";
+import { cn } from "@/shared/utils/cn";
 import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -102,11 +104,12 @@ export default async function VerifyEmailPage({
 			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
 				<Link
 					href="/"
-					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group"
+					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group min-h-[44px] min-w-[44px] -ml-2 pl-2"
 				>
 					<ArrowLeft
 						size={16}
 						className="transition-transform duration-200 group-hover:-translate-x-1"
+						aria-hidden="true"
 					/>
 					<span className="font-medium">Retour au site</span>
 				</Link>
@@ -114,7 +117,7 @@ export default async function VerifyEmailPage({
 
 			{/* Logo en haut à droite */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-				<Logo size={40} priority href="/" />
+				<Logo size={44} priority href="/" />
 			</div>
 
 			{/* Contenu principal */}
@@ -123,7 +126,7 @@ export default async function VerifyEmailPage({
 					{/* Header */}
 					<div className="text-center space-y-7">
 						<div className="space-y-3">
-							<h1 className="text-2xl font-semibold text-foreground">
+							<h1 className={cn("text-3xl font-semibold text-foreground", crimsonPro.className)}>
 								Vérification d'email
 							</h1>
 						</div>
@@ -134,8 +137,8 @@ export default async function VerifyEmailPage({
 						{isSuccess ? (
 							/* Message de succès */
 							<div className="space-y-4">
-								<div className="rounded-md bg-green-500/15 border border-green-500/30 p-6 flex flex-col items-center gap-4">
-									<CheckCircle2 className="h-12 w-12 text-green-500" />
+								<div className="rounded-md bg-green-500/15 border border-green-500/30 p-6 flex flex-col items-center gap-4" role="status" aria-live="polite">
+									<CheckCircle2 className="h-12 w-12 text-green-500" aria-hidden="true" />
 									<div className="text-center space-y-2">
 										<p className="text-lg font-medium text-green-700 dark:text-green-400">
 											Email vérifié avec succès !
@@ -164,8 +167,8 @@ export default async function VerifyEmailPage({
 						) : (
 							/* Message d'erreur */
 							<div className="space-y-4">
-								<div className="rounded-md bg-destructive/15 border border-destructive/30 p-6 flex flex-col items-center gap-4">
-									<AlertCircle className="h-12 w-12 text-destructive" />
+								<div className="rounded-md bg-destructive/15 border border-destructive/30 p-6 flex flex-col items-center gap-4" role="alert" aria-live="assertive">
+									<AlertCircle className="h-12 w-12 text-destructive" aria-hidden="true" />
 									<div className="text-center space-y-2">
 										<p className="text-lg font-medium text-destructive">
 											{!token && !error

@@ -1,7 +1,8 @@
 import { Logo } from "@/shared/components/logo";
 import { Button } from "@/shared/components/ui/button";
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
+import { crimsonPro } from "@/shared/styles/fonts";
+import { cn } from "@/shared/utils/cn";
 import { ArrowLeft, Mail } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -20,19 +21,17 @@ export const metadata: Metadata = {
 
 export default function ResendVerificationPage() {
 	return (
-		<div className="min-h-screen relative overflow-hidden bg-background">
-			{/* Particules en arrière-plan */}
-			<ParticleSystem count={4} className="absolute inset-0 z-0" />
-
+		<div className="relative">
 			{/* Lien retour */}
 			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
 				<Link
 					href="/connexion"
-					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group"
+					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group min-h-[44px] min-w-[44px] -ml-2 pl-2"
 				>
 					<ArrowLeft
 						size={16}
 						className="transition-transform duration-200 group-hover:-translate-x-1"
+						aria-hidden="true"
 					/>
 					<span className="font-medium">Retour à la connexion</span>
 				</Link>
@@ -40,19 +39,19 @@ export default function ResendVerificationPage() {
 
 			{/* Logo en haut à droite */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-				<Logo size={40} priority href="/" />
+				<Logo size={44} priority href="/" />
 			</div>
 
 			{/* Contenu principal */}
-			<div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-				<div className="w-full max-w-md space-y-8">
+			<div className="relative z-10 min-h-screen flex justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
+				<div className="w-full max-w-md space-y-8 my-auto">
 					{/* Header */}
 					<div className="text-center space-y-7">
 						<div className="space-y-3">
-							<h1 className="text-2xl font-semibold text-foreground">
+							<h1 className={cn("text-3xl font-semibold text-foreground", crimsonPro.className)}>
 								Renvoyer l'email de vérification
 							</h1>
-							<p className="text-sm text-muted-foreground">
+							<p className="text-muted-foreground">
 								Entre ton adresse email pour recevoir un nouveau lien de
 								vérification
 							</p>
@@ -63,7 +62,7 @@ export default function ResendVerificationPage() {
 					<div className="space-y-6">
 						<div className="rounded-lg border bg-card p-6 shadow-sm">
 							<div className="flex items-start gap-3 mb-4">
-								<Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+								<Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" aria-hidden="true" />
 								<div className="space-y-1">
 									<p className="text-sm font-medium">Email non reçu ?</p>
 									<p className="text-sm text-muted-foreground">

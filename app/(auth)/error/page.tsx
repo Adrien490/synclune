@@ -1,5 +1,4 @@
 import { Logo } from "@/shared/components/logo";
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { Button } from "@/shared/components/ui/button";
 import { crimsonPro } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
@@ -51,15 +50,12 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
 		ERROR_MESSAGES[errorType] || ERROR_MESSAGES.default;
 
 	return (
-		<div className="min-h-screen relative overflow-hidden bg-background">
-			{/* Particules en arrière-plan */}
-			<ParticleSystem count={4} className="absolute inset-0 z-0" />
-
+		<div className="relative">
 			{/* Lien retour */}
 			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
 				<Link
 					href="/"
-					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group"
+					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group min-h-[44px] min-w-[44px] -ml-2 pl-2"
 				>
 					<ArrowLeft
 						size={16}
@@ -72,14 +68,14 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
 
 			{/* Logo en haut à droite */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-				<Logo size={40} priority href="/" />
+				<Logo size={44} priority href="/" />
 			</div>
 
 			{/* Contenu principal */}
 			<div className="relative z-10 min-h-screen flex justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
 				<div className="w-full max-w-md space-y-8 my-auto">
 					{/* Header avec icône d'erreur */}
-					<div className="text-center space-y-7">
+					<div className="text-center space-y-7" role="alert">
 						<div className="flex justify-center">
 							<div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
 								<AlertCircle

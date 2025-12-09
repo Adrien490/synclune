@@ -27,7 +27,7 @@ export default function SignupPage() {
 			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
 				<Link
 					href="/"
-					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group"
+					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group min-h-[44px] min-w-[44px] -ml-2 pl-2"
 				>
 					<ArrowLeft
 						size={16}
@@ -40,7 +40,7 @@ export default function SignupPage() {
 
 			{/* Logo en haut à droite */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-				<Logo size={40} priority href="/" />
+				<Logo size={44} priority href="/" />
 			</div>
 
 			{/* Contenu principal */}
@@ -87,9 +87,9 @@ export default function SignupPage() {
 						{/* Lien vers la connexion */}
 						<div className="text-center pt-4 border-t">
 							<p className="text-sm text-muted-foreground">
-								Vous avez déjà un compte ?{" "}
+								Tu as déjà un compte ?{" "}
 								<Link href="/connexion" className="font-medium underline">
-									Connectez-vous
+									Connecte-toi
 								</Link>
 							</p>
 						</div>

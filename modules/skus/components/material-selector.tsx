@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import { AlertCircle, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import type { Material } from "@/modules/skus/types/sku-selector.types";
@@ -118,9 +118,6 @@ export function MaterialSelector({
 								{material.name}
 							</span>
 							{isSelected && <Check className="w-4 h-4 text-primary" />}
-							{!isAvailable && (
-								<AlertCircle className="w-4 h-4 text-muted-foreground" />
-							)}
 						</button>
 					);
 				})}
