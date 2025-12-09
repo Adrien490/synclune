@@ -126,7 +126,7 @@ export function Fab({
 					animate={{ opacity: 1, x: 0 }}
 					exit={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
 					transition={transition}
-					className={cn(visibilityClass, "fixed z-40 bottom-6 right-0")}
+					className={cn(visibilityClass, "fixed z-40 bottom-6 right-1")}
 				>
 					<Tooltip>
 						<TooltipTrigger asChild>
@@ -137,7 +137,7 @@ export function Fab({
 								size="sm"
 								className={cn(
 									"rounded-l-full rounded-r-none",
-									"h-10 w-8 p-0",
+									"h-10 w-10 p-0",
 									"bg-background",
 									"border-r-0",
 									"shadow-md",
@@ -183,13 +183,13 @@ export function Fab({
 							size="icon"
 							className={cn(
 								"absolute -top-2 -right-2 z-10",
-								"h-6 w-6 rounded-full",
+								"h-7 w-7 rounded-full",
 								"bg-muted",
 								"border border-border",
 								"shadow-sm",
 								"cursor-pointer",
 								"hover:bg-accent",
-								"opacity-0 group-hover:opacity-100",
+								"opacity-60 hover:opacity-100",
 								"focus-visible:opacity-100",
 								"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
 								"focus-visible:outline-none"
@@ -198,7 +198,7 @@ export function Fab({
 							aria-expanded={true}
 						>
 							<ChevronRight
-								className={cn("h-3 w-3", isPending && "animate-pulse")}
+								className={cn("h-3.5 w-3.5", isPending && "animate-pulse")}
 								aria-hidden="true"
 							/>
 						</Button>
@@ -228,7 +228,7 @@ export function Fab({
 								className
 							)}
 							aria-label={ariaLabel}
-							aria-describedby={ariaDescription ? "fab-description" : undefined}
+							aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
 						>
 							{icon}
 						</Button>
@@ -248,7 +248,7 @@ export function Fab({
 
 				{/* Description cachée pour screen readers */}
 				{ariaDescription && (
-					<span id="fab-description" className="sr-only">
+					<span id={`fab-description-${fabKey}`} className="sr-only">
 						{ariaDescription}
 					</span>
 				)}

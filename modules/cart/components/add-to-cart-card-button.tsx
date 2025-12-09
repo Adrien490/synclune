@@ -52,11 +52,11 @@ export function AddToCartCardButton({
 				aria-disabled={isPending}
 				onClick={(e) => e.stopPropagation()}
 				className={cn(
-					// Mobile: bouton discret sans fond (ghost) avec icône primary
+					// Mobile: bouton discret avec fond translucide et backdrop-blur
 					"size-11 rounded-full flex items-center justify-center",
-					"bg-transparent text-primary",
-					// Desktop: pleine largeur avec fond primary
-					"sm:bg-primary sm:text-primary-foreground",
+					"bg-card/80 backdrop-blur-sm text-primary border border-primary/20 shadow-sm",
+					// Desktop: pleine largeur avec fond primary (reset mobile styles)
+					"sm:bg-primary sm:text-primary-foreground sm:border-0 sm:backdrop-blur-none",
 					"sm:w-full sm:h-auto sm:rounded-none sm:py-2.5 sm:px-4",
 					"sm:shadow-lg sm:shadow-black/20",
 					// Active mobile: feedback tactile

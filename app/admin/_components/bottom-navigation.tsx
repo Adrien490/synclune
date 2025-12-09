@@ -51,7 +51,8 @@ const panelItemStyles = {
 		sharedItemStyles.layout,
 		sharedItemStyles.transition,
 		sharedItemStyles.focusRing,
-		"gap-1 py-3 px-2 min-h-[72px] rounded-xl",
+		// Touch targets ameliores pour WCAG AAA (min 44x44, ici 76x76)
+		"gap-1.5 py-3 px-2 min-h-[76px] min-w-[76px] rounded-xl",
 		// Reset pour que les boutons s'alignent comme les liens
 		"border-0 bg-transparent appearance-none cursor-pointer"
 	),
@@ -122,10 +123,11 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 									panelItemStyles.destructive,
 									"w-full"
 								)}
+								aria-label="Deconnexion de votre compte administrateur"
 							>
 								<LogOut className="size-6 shrink-0" aria-hidden="true" />
-								<span className="text-[11px] text-center leading-tight tracking-tight">
-									Déconnexion
+								<span className="text-xs text-center leading-tight tracking-tight">
+									Deconnexion
 								</span>
 							</button>
 						</LogoutAlertDialog>
@@ -262,7 +264,7 @@ const PanelNavItem = memo(function PanelNavItem({
 			>
 				{isActive && <ActiveIndicator />}
 				<Icon className="size-6 shrink-0" aria-hidden="true" />
-				<span className="text-[11px] text-center leading-tight tracking-tight line-clamp-2">
+				<span className="text-xs text-center leading-tight tracking-tight line-clamp-2">
 					{item.shortTitle || item.title}
 				</span>
 			</Link>

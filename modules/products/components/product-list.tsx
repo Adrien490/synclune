@@ -49,7 +49,7 @@ export function ProductList({
 
 	// Layout Grid par défaut
 	return (
-		<div className="space-y-8 group-has-data-pending/container:animate-pulse">
+		<div className="space-y-8 group-has-[[data-pending]]/container:animate-pulse">
 			{/* Grille des produits */}
 			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
 				{products.map((product) => {

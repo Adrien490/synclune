@@ -52,7 +52,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 			<Link
 				href={`/creations/${item.sku.product.slug}`}
 				onClick={onClose}
-				className="relative size-20 sm:size-24 row-span-2 sm:row-span-1 rounded-md overflow-hidden bg-muted active:opacity-80 transition-opacity"
+				className="relative size-20 sm:size-24 row-span-2 sm:row-span-1 rounded-md overflow-hidden bg-muted active:opacity-80 transition-opacity group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50"
 				aria-label={`Voir ${item.sku.product.title}`}
 			>
 				{primaryImage ? (
@@ -103,7 +103,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				<Link
 					href={`/creations/${item.sku.product.slug}`}
 					onClick={onClose}
-					className="font-medium text-sm hover:text-foreground active:text-muted-foreground transition-colors line-clamp-1 block"
+					className="font-medium text-sm hover:text-foreground active:text-muted-foreground transition-colors line-clamp-1 block group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50"
 					aria-label={`Voir ${item.sku.product.title}`}
 				>
 					{item.sku.product.title}
@@ -223,7 +223,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				<span
 					className={cn(
 						"order-2 sm:order-3 font-mono font-semibold text-sm transition-opacity duration-200",
-						"group-has-data-pending/item:opacity-50 group-has-data-pending/item:animate-pulse"
+						"group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/item:animate-pulse"
 					)}
 				>
 					{formatEuro(subtotal)}

@@ -36,6 +36,7 @@ export function ContactAdrien({ initialHidden = false }: ContactAdrienProps) {
 				ariaLabel="Contacter Adri - Envoyer un message ou signaler un problème"
 				ariaDescription="Ouvre un formulaire pour envoyer un message à Adri, poser une question, faire une suggestion ou signaler un problème."
 				showTooltip="Afficher Contacter Adri"
+				hideTooltip="Masquer Contacter Adri"
 				onClick={() => setDialogOpen(true)}
 			/>
 

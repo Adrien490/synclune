@@ -63,7 +63,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 						<SheetTitle>
 							Mon panier
 							{hasItems && (
-								<span className="transition-opacity duration-200 group-has-[data-pending]/sheet:opacity-50">
+								<span className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50">
 									{" "}({totalItems})
 								</span>
 							)}
@@ -89,7 +89,11 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 							<p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
 								Explore mes creations et trouve la piece parfaite pour toi
 							</p>
-							<Button asChild onClick={close}>
+							<Button
+								asChild
+								onClick={close}
+								className="group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+							>
 								<Link href="/produits">Decouvrir la boutique</Link>
 							</Button>
 						</div>
@@ -115,11 +119,11 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										<div className="flex justify-between items-center">
 											<span className="text-muted-foreground flex items-center gap-1.5">
 												<ShoppingBag className="w-4 h-4" />
-												<span className="transition-opacity duration-200 group-has-[data-pending]/sheet:opacity-50">
+												<span className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50">
 													Articles ({totalItems})
 												</span>
 											</span>
-											<span className="font-mono font-medium transition-opacity duration-200 group-has-[data-pending]/sheet:opacity-50 group-has-[data-pending]/sheet:animate-pulse">
+											<span className="font-mono font-medium transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse">
 												{formatEuro(subtotal)}
 											</span>
 										</div>
@@ -140,7 +144,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 									{/* Total */}
 									<div className="flex justify-between items-center">
 										<span className="font-semibold">Sous-total articles</span>
-										<span className="font-mono font-bold text-lg transition-opacity duration-200 group-has-[data-pending]/sheet:opacity-50 group-has-[data-pending]/sheet:animate-pulse">
+										<span className="font-mono font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse">
 											{formatEuro(subtotal)}
 										</span>
 									</div>
@@ -175,7 +179,12 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 												Passer commande
 											</Button>
 										) : (
-											<Button asChild size="lg" className="w-full" onClick={close}>
+											<Button
+												asChild
+												size="lg"
+												className="w-full group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+												onClick={close}
+											>
 												<Link href="/paiement">Passer commande</Link>
 											</Button>
 										)}
@@ -183,7 +192,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										<Button
 											variant="secondary"
 											size="lg"
-											className="w-full"
+											className="w-full group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 											onClick={close}
 											asChild
 										>

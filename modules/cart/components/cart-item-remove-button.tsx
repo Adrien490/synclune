@@ -35,7 +35,7 @@ export function CartItemRemoveButton({
 			type="button"
 			onClick={handleRemove}
 			disabled={isPending}
-			className="min-h-11 min-w-11 px-2 text-sm text-foreground underline hover:text-destructive active:text-destructive/80 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+			className="min-h-11 min-w-11 px-2 text-sm text-foreground underline hover:text-destructive active:text-destructive/80 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 			aria-label={`Supprimer ${itemName} du panier`}
 		>
 			Supprimer
