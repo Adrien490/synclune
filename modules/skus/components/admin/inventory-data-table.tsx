@@ -32,6 +32,7 @@ import { InventoryRowActions } from "./inventory-row-actions";
 
 interface InventoryDataTableProps {
 	inventoryPromise: Promise<GetProductSkusReturn>;
+	perPage: number;
 }
 
 // Formatter pour les prix (singleton)
@@ -45,6 +46,7 @@ const formatPrice = (priceInCents: number) =>
 
 export async function InventoryDataTable({
 	inventoryPromise,
+	perPage,
 }: InventoryDataTableProps) {
 	const { productSkus, pagination } = await inventoryPromise;
 
@@ -290,7 +292,7 @@ export async function InventoryDataTable({
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={productSkus.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={productSkus.length}

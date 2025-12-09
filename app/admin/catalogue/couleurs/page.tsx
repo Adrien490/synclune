@@ -94,7 +94,7 @@ export default async function ColorsAdminPage({
 				<ColorsFilterBadges />
 
 				<Suspense fallback={<ColorsDataTableSkeleton />}>
-					<ColorsDataTable colorsPromise={colorsPromise} />
+					<ColorsDataTable colorsPromise={colorsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 

@@ -215,7 +215,6 @@ export {
 	DEFAULT_DIRECTION,
 	buildCursorPagination,
 	processCursorResults,
-	withCursorFallback,
 } from "./pagination";
 export type {
 	CursorPaginationParams,

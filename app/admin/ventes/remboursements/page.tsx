@@ -92,7 +92,7 @@ export default async function RefundsAdminPage({
 				</Toolbar>
 
 				<Suspense fallback={<RefundsDataTableSkeleton />}>
-					<RefundsDataTable refundsPromise={refundsPromise} />
+					<RefundsDataTable refundsPromise={refundsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 

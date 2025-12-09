@@ -120,7 +120,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 					className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]"
 				>
 					{/* Zone découverte: Accueil, Collections, Mes créations, Personnaliser */}
-					<Stagger stagger={0.04} delay={0.05} y={10} className="space-y-2">
+					<Stagger stagger={0.025} delay={0.05} y={10} className="space-y-2">
 						{discoveryItems.map((item) => renderNavItem(item))}
 					</Stagger>
 
@@ -132,7 +132,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 					/>
 
 					{/* Zone compte: Mon compte / Se connecter, Tableau de bord (admin), L'atelier */}
-					<Stagger stagger={0.04} delay={0.15} y={10} className="space-y-2">
+					<Stagger stagger={0.025} delay={0.15} y={10} className="space-y-2">
 						{accountItems.map((item) => renderNavItem(item))}
 					</Stagger>
 				</nav>

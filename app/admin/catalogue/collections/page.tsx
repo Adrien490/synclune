@@ -140,7 +140,7 @@ export default async function CollectionsAdminPage({
 				<CollectionsFilterBadges />
 
 				<Suspense fallback={<CollectionsDataTableSkeleton />}>
-					<CollectionsDataTable collectionsPromise={collectionsPromise} />
+					<CollectionsDataTable collectionsPromise={collectionsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 		</>

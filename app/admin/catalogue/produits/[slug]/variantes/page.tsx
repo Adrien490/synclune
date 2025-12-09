@@ -233,6 +233,7 @@ export default async function ProductVariantsPage({
 					<ProductVariantsDataTable
 						skusPromise={skusPromise}
 						productSlug={slug}
+						perPage={perPage}
 					/>
 				</Suspense>
 			</div>

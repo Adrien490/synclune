@@ -22,8 +22,11 @@ function sampleBoolean(probability: number): boolean {
   );
 }
 
+// Préfixe unique pour cette exécution du seed (évite les conflits si relancé)
+const seedTimestamp = Date.now().toString(36).toUpperCase();
+
 function buildOrderNumber(index: number): string {
-  return `SYN-2025-${index.toString().padStart(6, "0")}`;
+  return `SYN-${seedTimestamp}-${index.toString().padStart(4, "0")}`;
 }
 
 function generateShippingAddress() {
@@ -434,7 +437,7 @@ const productsData: ProductSeedData[] = [
       { colorSlug: "or-blanc", materialSlug: "perles-naturelles", price: 7490, inventory: 8 },
     ],
   },
-  // PORTE-CLÉS (2)
+  // PORTE-CLÉS (4)
   {
     slug: "porte-cles-coeur",
     title: "Porte-Clés Cœur",
@@ -458,6 +461,387 @@ const productsData: ProductSeedData[] = [
     skus: [
       { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 2490, inventory: 30, isDefault: true },
       { colorSlug: "argent", materialSlug: "argent-925", price: 2990, inventory: 25 },
+    ],
+  },
+  {
+    slug: "porte-cles-trefle",
+    title: "Porte-Clés Trèfle Chance",
+    description: "Un trèfle à quatre feuilles pour porter chance au quotidien.",
+    typeSlug: "porte-cles",
+    imageCategory: "porteCles",
+    collections: ["nouveautes", "best-sellers"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 2290, inventory: 35, isDefault: true },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", price: 2290, inventory: 28 },
+      { colorSlug: "emeraude", materialSlug: "acier-inoxydable", price: 1990, inventory: 32 },
+    ],
+  },
+  {
+    slug: "porte-cles-initiale",
+    title: "Porte-Clés Initiale",
+    description: "Personnalisez votre quotidien avec ce porte-clés à votre initiale.",
+    typeSlug: "porte-cles",
+    imageCategory: "porteCles",
+    collections: ["nouveautes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "acier-inoxydable", price: 1790, inventory: 50, isDefault: true },
+      { colorSlug: "argent", materialSlug: "acier-inoxydable", price: 1790, inventory: 45 },
+    ],
+  },
+  // COLLIERS SUPPLÉMENTAIRES (6)
+  {
+    slug: "collier-goutte-rosee",
+    title: "Collier Goutte de Rosée",
+    description: "Un pendentif en forme de goutte, symbole de pureté et de renouveau.",
+    typeSlug: "colliers",
+    imageCategory: "colliers",
+    collections: ["nouveautes"],
+    skus: [
+      { colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 5490, inventory: 18, isDefault: true },
+      { colorSlug: "emeraude", materialSlug: "cristal-swarovski", price: 5990, inventory: 12 },
+      { colorSlug: "or-blanc", materialSlug: "argent-925", price: 4990, inventory: 15 },
+    ],
+  },
+  {
+    slug: "collier-infini-amour",
+    title: "Collier Infini Amour",
+    description: "Le symbole de l'infini pour un amour éternel, en plaqué or délicat.",
+    typeSlug: "colliers",
+    imageCategory: "colliers",
+    collections: ["mariage", "best-sellers"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 4490, inventory: 22, isDefault: true },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", price: 4490, inventory: 20 },
+      { colorSlug: "argent", materialSlug: "argent-925", price: 5290, inventory: 16 },
+    ],
+  },
+  {
+    slug: "collier-etoile-polaire",
+    title: "Collier Étoile Polaire",
+    description: "Guidez votre chemin avec cette étoile scintillante au creux de votre cou.",
+    typeSlug: "colliers",
+    imageCategory: "colliers",
+    collections: ["fetes", "nouveautes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 3990, inventory: 25, isDefault: true },
+      { colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 5490, inventory: 14 },
+    ],
+  },
+  {
+    slug: "collier-medaillon-vintage",
+    title: "Collier Médaillon Vintage",
+    description: "Un médaillon au charme rétro pour garder vos souvenirs près du cœur.",
+    typeSlug: "colliers",
+    imageCategory: "colliers",
+    collections: ["best-sellers"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "laiton", price: 5990, inventory: 12, isDefault: true },
+      { colorSlug: "or-rose", materialSlug: "laiton", price: 5990, inventory: 10 },
+    ],
+  },
+  {
+    slug: "collier-plume-legere",
+    title: "Collier Plume Légère",
+    description: "Une plume délicate symbolisant la liberté et la légèreté de l'être.",
+    typeSlug: "colliers",
+    imageCategory: "colliers",
+    collections: ["nouveautes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 3490, inventory: 28, isDefault: true },
+      { colorSlug: "argent", materialSlug: "argent-925", price: 4290, inventory: 22 },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", price: 3490, inventory: 25 },
+    ],
+  },
+  {
+    slug: "collier-papillon-envol",
+    title: "Collier Papillon en Vol",
+    description: "Un papillon prêt à s'envoler, symbole de transformation et de beauté.",
+    typeSlug: "colliers",
+    imageCategory: "colliers",
+    collections: ["fetes", "best-sellers"],
+    skus: [
+      { colorSlug: "or-rose", materialSlug: "plaque-or", price: 4790, inventory: 18, isDefault: true },
+      { colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 6290, inventory: 10 },
+    ],
+  },
+  // BRACELETS SUPPLÉMENTAIRES (6)
+  {
+    slug: "bracelet-charm-coeurs",
+    title: "Bracelet Charm Cœurs",
+    description: "Un bracelet à breloques avec de petits cœurs pour un look romantique.",
+    typeSlug: "bracelets",
+    imageCategory: "bracelets",
+    collections: ["nouveautes", "fetes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 3790, inventory: 20, isDefault: true },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", price: 3790, inventory: 18 },
+      { colorSlug: "argent", materialSlug: "argent-925", price: 4490, inventory: 15 },
+    ],
+  },
+  {
+    slug: "bracelet-tennis-cristal",
+    title: "Bracelet Tennis Cristal",
+    description: "Une ligne de cristaux étincelants pour une élégance intemporelle.",
+    typeSlug: "bracelets",
+    imageCategory: "bracelets",
+    collections: ["mariage", "fetes"],
+    skus: [
+      { colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 7990, inventory: 10, isDefault: true },
+      { colorSlug: "or-blanc", materialSlug: "argent-925", price: 6990, inventory: 12 },
+    ],
+  },
+  {
+    slug: "bracelet-maille-marine",
+    title: "Bracelet Maille Marine",
+    description: "Une maille marine robuste et élégante, inspirée de l'océan.",
+    typeSlug: "bracelets",
+    imageCategory: "bracelets",
+    collections: ["nouveautes"],
+    skus: [
+      { colorSlug: "argent", materialSlug: "acier-inoxydable", price: 2990, inventory: 30, isDefault: true },
+      { colorSlug: "or-jaune", materialSlug: "acier-inoxydable", price: 2990, inventory: 28 },
+    ],
+  },
+  {
+    slug: "bracelet-fil-soie",
+    title: "Bracelet Fil de Soie",
+    description: "Un fil de soie délicat orné d'une perle centrale, légèreté absolue.",
+    typeSlug: "bracelets",
+    imageCategory: "bracelets",
+    collections: ["nouveautes", "best-sellers"],
+    skus: [
+      { colorSlug: "perle", materialSlug: "perles-naturelles", price: 2490, inventory: 35, isDefault: true },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", price: 2290, inventory: 30 },
+    ],
+  },
+  {
+    slug: "bracelet-serpent-or",
+    title: "Bracelet Serpent Doré",
+    description: "Un bracelet serpent enroulé autour du poignet, mystère et séduction.",
+    typeSlug: "bracelets",
+    imageCategory: "bracelets",
+    collections: ["fetes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 5490, inventory: 12, isDefault: true },
+      { colorSlug: "noir", materialSlug: "acier-inoxydable", price: 4990, inventory: 15 },
+    ],
+  },
+  {
+    slug: "bracelet-noeud-infini",
+    title: "Bracelet Nœud Infini",
+    description: "Un nœud symbolisant l'infini, pour une amitié ou un amour éternel.",
+    typeSlug: "bracelets",
+    imageCategory: "bracelets",
+    collections: ["best-sellers", "mariage"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 3290, inventory: 25, isDefault: true },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", price: 3290, inventory: 22 },
+      { colorSlug: "argent", materialSlug: "argent-925", price: 3990, inventory: 18 },
+    ],
+  },
+  // BAGUES SUPPLÉMENTAIRES (6)
+  {
+    slug: "bague-dome-lisse",
+    title: "Bague Dôme Lisse",
+    description: "Une bague dôme épurée au design minimaliste et moderne.",
+    typeSlug: "bagues",
+    imageCategory: "bagues",
+    collections: ["nouveautes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", size: "52", price: 2990, inventory: 20, isDefault: true },
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", size: "54", price: 2990, inventory: 18 },
+      { colorSlug: "argent", materialSlug: "argent-925", size: "52", price: 3490, inventory: 15 },
+      { colorSlug: "argent", materialSlug: "argent-925", size: "54", price: 3490, inventory: 14 },
+    ],
+  },
+  {
+    slug: "bague-torsade-double",
+    title: "Bague Torsade Double",
+    description: "Deux fils torsadés s'entrelacent dans cette bague unique.",
+    typeSlug: "bagues",
+    imageCategory: "bagues",
+    collections: ["nouveautes", "best-sellers"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", size: "52", price: 3490, inventory: 16, isDefault: true },
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", size: "54", price: 3490, inventory: 18 },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", size: "52", price: 3490, inventory: 14 },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", size: "54", price: 3490, inventory: 15 },
+    ],
+  },
+  {
+    slug: "bague-perle-solitaire",
+    title: "Bague Perle Solitaire",
+    description: "Une perle naturelle mise en valeur sur un anneau fin et délicat.",
+    typeSlug: "bagues",
+    imageCategory: "bagues",
+    collections: ["mariage"],
+    skus: [
+      { colorSlug: "perle", materialSlug: "perles-naturelles", size: "52", price: 5990, inventory: 10, isDefault: true },
+      { colorSlug: "perle", materialSlug: "perles-naturelles", size: "54", price: 5990, inventory: 12 },
+      { colorSlug: "or-blanc", materialSlug: "argent-925", size: "54", price: 5490, inventory: 8 },
+    ],
+  },
+  {
+    slug: "bague-triple-anneau",
+    title: "Bague Triple Anneau",
+    description: "Trois anneaux entrelacés pour un effet moderne et graphique.",
+    typeSlug: "bagues",
+    imageCategory: "bagues",
+    collections: ["fetes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "acier-inoxydable", size: "54", price: 2790, inventory: 22, isDefault: true },
+      { colorSlug: "argent", materialSlug: "acier-inoxydable", size: "54", price: 2790, inventory: 20 },
+      { colorSlug: "or-rose", materialSlug: "acier-inoxydable", size: "54", price: 2790, inventory: 18 },
+    ],
+  },
+  {
+    slug: "bague-couronne-princesse",
+    title: "Bague Couronne Princesse",
+    description: "Une bague en forme de couronne pour les reines du quotidien.",
+    typeSlug: "bagues",
+    imageCategory: "bagues",
+    collections: ["fetes", "best-sellers"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", size: "52", price: 4290, inventory: 14, isDefault: true },
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", size: "54", price: 4290, inventory: 16 },
+      { colorSlug: "cristal", materialSlug: "cristal-swarovski", size: "52", price: 5490, inventory: 10 },
+    ],
+  },
+  {
+    slug: "bague-vague-ocean",
+    title: "Bague Vague Océan",
+    description: "La forme d'une vague sculptée sur cet anneau inspiré par la mer.",
+    typeSlug: "bagues",
+    imageCategory: "bagues",
+    collections: ["nouveautes"],
+    skus: [
+      { colorSlug: "argent", materialSlug: "argent-925", size: "52", price: 3990, inventory: 18, isDefault: true },
+      { colorSlug: "argent", materialSlug: "argent-925", size: "54", price: 3990, inventory: 16 },
+      { colorSlug: "or-blanc", materialSlug: "argent-925", size: "54", price: 4290, inventory: 12 },
+    ],
+  },
+  // CHAÎNES DE CORPS SUPPLÉMENTAIRES (3)
+  {
+    slug: "chaine-corps-etoiles",
+    title: "Chaîne de Corps Étoiles",
+    description: "Une constellation d'étoiles qui orne votre corps de lumière.",
+    typeSlug: "chaines-corps",
+    imageCategory: "chainesCorps",
+    collections: ["fetes", "nouveautes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 7490, inventory: 8, isDefault: true },
+      { colorSlug: "argent", materialSlug: "acier-inoxydable", price: 6490, inventory: 10 },
+    ],
+  },
+  {
+    slug: "chaine-corps-taille-fine",
+    title: "Chaîne de Corps Taille Fine",
+    description: "Une chaîne ultra-fine qui épouse délicatement vos courbes.",
+    typeSlug: "chaines-corps",
+    imageCategory: "chainesCorps",
+    collections: ["nouveautes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "acier-inoxydable", price: 4990, inventory: 15, isDefault: true },
+      { colorSlug: "or-rose", materialSlug: "acier-inoxydable", price: 4990, inventory: 12 },
+    ],
+  },
+  {
+    slug: "chaine-corps-cristaux",
+    title: "Chaîne de Corps Cristaux",
+    description: "Des cristaux parsemés le long d'une chaîne pour briller de mille feux.",
+    typeSlug: "chaines-corps",
+    imageCategory: "chainesCorps",
+    collections: ["mariage", "fetes"],
+    skus: [
+      { colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 9990, inventory: 6, isDefault: true },
+      { colorSlug: "or-blanc", materialSlug: "argent-925", price: 8990, inventory: 8 },
+    ],
+  },
+  // PAPILLOUX SUPPLÉMENTAIRES (3)
+  {
+    slug: "papilloux-perle-delicate",
+    title: "Papilloux Perle Délicate",
+    description: "Des perles minuscules ornent ce papillon facial d'une grâce rare.",
+    typeSlug: "papilloux",
+    imageCategory: "papilloux",
+    collections: ["mariage"],
+    skus: [
+      { colorSlug: "perle", materialSlug: "perles-naturelles", price: 4990, inventory: 12, isDefault: true },
+      { colorSlug: "or-blanc", materialSlug: "perles-naturelles", price: 5490, inventory: 8 },
+    ],
+  },
+  {
+    slug: "papilloux-argent-lune",
+    title: "Papilloux Argent de Lune",
+    description: "Un papillon argenté qui capture la lumière de la lune.",
+    typeSlug: "papilloux",
+    imageCategory: "papilloux",
+    collections: ["fetes", "nouveautes"],
+    skus: [
+      { colorSlug: "argent", materialSlug: "argent-925", price: 4290, inventory: 18, isDefault: true },
+      { colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 4990, inventory: 14 },
+    ],
+  },
+  {
+    slug: "papilloux-duo-symetrie",
+    title: "Papilloux Duo Symétrie",
+    description: "Deux papillons symétriques pour un effet miroir captivant.",
+    typeSlug: "papilloux",
+    imageCategory: "papilloux",
+    collections: ["nouveautes", "best-sellers"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 5990, inventory: 10, isDefault: true },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", price: 5990, inventory: 8 },
+    ],
+  },
+  // CHAÎNES DE CHEVEUX SUPPLÉMENTAIRES (4)
+  {
+    slug: "chaine-cheveux-cristaux",
+    title: "Chaîne de Cheveux Cristaux",
+    description: "Des cristaux scintillants tissés dans vos cheveux pour un éclat féerique.",
+    typeSlug: "chaines-cheveux",
+    imageCategory: "chainesCheveux",
+    collections: ["mariage", "fetes"],
+    skus: [
+      { colorSlug: "cristal", materialSlug: "cristal-swarovski", price: 6990, inventory: 10, isDefault: true },
+      { colorSlug: "or-blanc", materialSlug: "argent-925", price: 5990, inventory: 12 },
+    ],
+  },
+  {
+    slug: "chaine-cheveux-feuilles",
+    title: "Chaîne de Cheveux Feuilles",
+    description: "Des feuilles dorées qui s'entrelacent dans votre chevelure.",
+    typeSlug: "chaines-cheveux",
+    imageCategory: "chainesCheveux",
+    collections: ["nouveautes", "mariage"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 5490, inventory: 14, isDefault: true },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", price: 5490, inventory: 12 },
+    ],
+  },
+  {
+    slug: "chaine-cheveux-etoiles",
+    title: "Chaîne de Cheveux Étoiles",
+    description: "Une voie lactée de petites étoiles pour illuminer votre coiffure.",
+    typeSlug: "chaines-cheveux",
+    imageCategory: "chainesCheveux",
+    collections: ["fetes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "acier-inoxydable", price: 3990, inventory: 20, isDefault: true },
+      { colorSlug: "argent", materialSlug: "acier-inoxydable", price: 3990, inventory: 18 },
+    ],
+  },
+  {
+    slug: "chaine-cheveux-lune",
+    title: "Chaîne de Cheveux Lune",
+    description: "Un croissant de lune qui orne délicatement votre chevelure.",
+    typeSlug: "chaines-cheveux",
+    imageCategory: "chainesCheveux",
+    collections: ["nouveautes"],
+    skus: [
+      { colorSlug: "or-jaune", materialSlug: "plaque-or", price: 4290, inventory: 16, isDefault: true },
+      { colorSlug: "argent", materialSlug: "argent-925", price: 4790, inventory: 14 },
+      { colorSlug: "or-rose", materialSlug: "plaque-or", price: 4290, inventory: 15 },
     ],
   },
 ];

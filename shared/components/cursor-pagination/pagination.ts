@@ -1,7 +1,7 @@
 /**
  * Default number of items per page
  */
-export const DEFAULT_PER_PAGE = 25;
+export const DEFAULT_PER_PAGE = 20;
 
 /**
  * Available options for items per page
@@ -152,27 +152,3 @@ export function processCursorResults<T extends { id: string }>(
 	};
 }
 
-/**
- * Wrapper sécurisé pour exécuter une requête de pagination avec gestion d'erreur
- * Si le cursor est invalide, retombe automatiquement sur la première page
- *
- * @example
- * ```typescript
- * const result = await withCursorFallback(
- *   () => getProducts({ cursor, direction, perPage }),
- *   () => getProducts({ cursor: undefined, direction: "forward", perPage })
- * );
- * ```
- */
-export async function withCursorFallback<T>(
-	fetchFn: () => Promise<CursorPaginationResult<T>>,
-	fallbackFn: () => Promise<CursorPaginationResult<T>>
-): Promise<CursorPaginationResult<T>> {
-	try {
-		return await fetchFn();
-	} catch {
-		// Si erreur (cursor invalide, item supprimé, etc.), retourne première page
-		// console.warn("Cursor pagination error, falling back to first page:", error);
-		return await fallbackFn();
-	}
-}

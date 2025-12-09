@@ -27,10 +27,12 @@ import { SubscribersTableSelectionCell } from "./subscribers-table-selection-cel
 
 export interface SubscribersDataTableProps {
 	subscribersPromise: Promise<GetSubscribersReturn>;
+	perPage: number;
 }
 
 export async function SubscribersDataTable({
 	subscribersPromise,
+	perPage,
 }: SubscribersDataTableProps) {
 	const { subscribers, pagination } = await subscribersPromise;
 	const subscriberIds = subscribers.map((s) => s.id);
@@ -120,7 +122,7 @@ export async function SubscribersDataTable({
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={subscribers.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={subscribers.length}

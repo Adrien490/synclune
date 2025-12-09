@@ -198,7 +198,7 @@ export default async function NewsletterPage({
 					</Toolbar>
 
 					<Suspense fallback={<div>Chargement...</div>}>
-						<SubscribersDataTable subscribersPromise={subscribersPromise} />
+						<SubscribersDataTable subscribersPromise={subscribersPromise} perPage={perPage} />
 					</Suspense>
 				</TabsContent>
 			</Tabs>

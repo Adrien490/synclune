@@ -37,11 +37,13 @@ type PaymentsAdminPageProps = {
 	searchParams: Promise<PaymentsSearchParams>;
 };
 
+import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
+
 function parsePaymentsParams(params: PaymentsSearchParams) {
 	return {
 		cursor: params.cursor,
 		direction: params.direction as "forward" | "backward" | undefined,
-		perPage: params.perPage ? parseInt(params.perPage, 10) : undefined,
+		perPage: params.perPage ? parseInt(params.perPage, 10) : DEFAULT_PER_PAGE,
 		sortBy: params.sortBy,
 		search: params.search,
 		filters: {
@@ -126,7 +128,7 @@ export default async function PaymentsAdminPage({
 				</Toolbar>
 
 				<Suspense fallback={<StripePaymentsDataTableSkeleton />}>
-					<StripePaymentsDataTable paymentsPromise={paymentsPromise} />
+					<StripePaymentsDataTable paymentsPromise={paymentsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 		</>

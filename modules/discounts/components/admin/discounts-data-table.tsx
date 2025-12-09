@@ -30,10 +30,12 @@ import { formatEuro } from "@/shared/utils/format-euro";
 
 interface DiscountsDataTableProps {
 	discountsPromise: Promise<GetDiscountsReturn>;
+	perPage: number;
 }
 
 export async function DiscountsDataTable({
 	discountsPromise,
+	perPage,
 }: DiscountsDataTableProps) {
 	const { discounts, pagination } = await discountsPromise;
 	const discountIds = discounts.map((discount) => discount.id);
@@ -171,7 +173,7 @@ export async function DiscountsDataTable({
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={discounts.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={discounts.length}

@@ -3,21 +3,21 @@
 import { memo, useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { cn } from "@/shared/utils/cn";
-import { ChevronRight, ExternalLink, LogOut, MoreHorizontal } from "lucide-react";
+import { ExternalLink, LogOut, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import {
 	getBottomNavPrimaryItems,
-	getBottomNavSecondaryItems,
+	getAllNavItems,
 	type NavItem,
 } from "./navigation-config";
 import { isRouteActive } from "@/shared/lib/navigation";
 
 // Recuperer les items depuis la configuration centralisee
 const primaryItems = getBottomNavPrimaryItems();
-// Exclure les alertes stock du menu secondaire
-const secondaryItems = getBottomNavSecondaryItems().filter(
+// Tous les items pour le menu (exclure alertes stock)
+const allMenuItems = getAllNavItems().filter(
 	(item) => item.id !== "stock-alerts"
 );
 
@@ -91,8 +91,11 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const shouldReduceMotion = useReducedMotion();
 
-	// Verifie si une page du menu "Plus" est active
-	const isMoreItemActive = secondaryItems.some((item) => isRouteActive(pathname, item.url));
+	// Verifie si une page du menu est active (hors items primaires)
+	const primaryIds = new Set(primaryItems.map((item) => item.id));
+	const isMenuItemActive = allMenuItems
+		.filter((item) => !primaryIds.has(item.id))
+		.some((item) => isRouteActive(pathname, item.url));
 
 	const closePanel = useCallback(() => setIsOpen(false), []);
 	const togglePanel = useCallback(() => setIsOpen((prev) => !prev), []);
@@ -174,14 +177,14 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 						aria-modal="true"
 						aria-label="Menu de navigation"
 					>
-						{/* Grille de navigation avec stagger - 4 colonnes */}
+						{/* Grille de navigation avec stagger - 3 colonnes */}
 						<motion.div
 							variants={shouldReduceMotion ? undefined : containerVariants}
 							initial="hidden"
 							animate="visible"
 							className="grid grid-cols-3 gap-2 p-3 pb-2"
 						>
-							{secondaryItems.map((item) => (
+							{allMenuItems.map((item) => (
 								<PanelNavItem
 									key={item.id}
 									item={item}
@@ -250,7 +253,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 						/>
 					))}
 
-					{/* Bouton "Plus" */}
+					{/* Bouton "Menu" */}
 					<button
 						type="button"
 						onClick={togglePanel}
@@ -258,22 +261,22 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 							"flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-[64px] min-h-[48px] relative",
 							"motion-safe:transition-colors motion-safe:transition-transform",
 							"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
-							isMoreItemActive || isOpen
+							isMenuItemActive || isOpen
 								? "text-foreground font-semibold"
 								: "text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30",
 							"motion-safe:active:scale-95"
 						)}
-						aria-label="Voir plus d'options"
+						aria-label="Ouvrir le menu"
 						aria-expanded={isOpen}
 						aria-haspopup="dialog"
 					>
-						{/* Indicateur actif si une page du menu "Plus" est active */}
-						{(isMoreItemActive || isOpen) && <ActiveIndicator />}
-						<MoreHorizontal
+						{/* Indicateur actif si une page du menu est active */}
+						{(isMenuItemActive || isOpen) && <ActiveIndicator />}
+						<Menu
 							className="h-5 w-5 shrink-0"
 							aria-hidden="true"
 						/>
-						<span className="text-[13px] font-medium leading-none">Plus</span>
+						<span className="text-[13px] font-medium leading-none">Menu</span>
 					</button>
 				</div>
 			</nav>

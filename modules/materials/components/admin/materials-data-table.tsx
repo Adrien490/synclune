@@ -26,9 +26,10 @@ import { MaterialsTableSelectionCell } from "@/modules/materials/components/mate
 
 interface MaterialsDataTableProps {
 	materialsPromise: Promise<GetMaterialsReturn>;
+	perPage: number;
 }
 
-export function MaterialsDataTable({ materialsPromise }: MaterialsDataTableProps) {
+export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataTableProps) {
 	const { materials, pagination } = use(materialsPromise);
 	const materialIds = materials.map((material) => material.id);
 
@@ -159,7 +160,7 @@ export function MaterialsDataTable({ materialsPromise }: MaterialsDataTableProps
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={materials.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={materials.length}

@@ -86,7 +86,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
 		sortBy,
 		sortOrder,
 		search,
-		perPage: 50, // Taille de page par défaut
+		perPage: 50,
 		filters: parseFilters(params),
 	});
 
@@ -140,7 +140,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
 				<UsersFilterBadges />
 
 				<Suspense fallback={<UsersDataTableSkeleton />}>
-					<UsersDataTable usersPromise={usersPromise} />
+					<UsersDataTable usersPromise={usersPromise} perPage={50} />
 				</Suspense>
 			</div>
 		</>

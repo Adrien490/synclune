@@ -25,9 +25,10 @@ import { ColorsTableSelectionCell } from "@/modules/colors/components/colors-tab
 
 interface ColorsDataTableProps {
 	colorsPromise: Promise<GetColorsReturn>;
+	perPage: number;
 }
 
-export function ColorsDataTable({ colorsPromise }: ColorsDataTableProps) {
+export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps) {
 	const { colors, pagination } = use(colorsPromise);
 	const colorIds = colors.map((color) => color.id);
 
@@ -141,7 +142,7 @@ export function ColorsDataTable({ colorsPromise }: ColorsDataTableProps) {
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={colors.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={colors.length}

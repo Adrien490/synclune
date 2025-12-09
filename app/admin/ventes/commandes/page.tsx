@@ -115,7 +115,7 @@ export default async function OrdersAdminPage({
 				<OrdersFilterBadges />
 
 				<Suspense fallback={<OrdersDataTableSkeleton />}>
-					<OrdersDataTable ordersPromise={ordersPromise} />
+					<OrdersDataTable ordersPromise={ordersPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 

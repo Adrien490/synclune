@@ -187,7 +187,7 @@ export default async function ProductsAdminPage({
 				/>
 
 				<Suspense fallback={<ProductsDataTableSkeleton />}>
-					<ProductsDataTable productsPromise={productsPromise} />
+					<ProductsDataTable productsPromise={productsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 

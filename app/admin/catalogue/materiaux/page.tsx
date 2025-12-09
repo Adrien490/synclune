@@ -99,7 +99,7 @@ export default async function MaterialsAdminPage({
 				<MaterialsFilterBadges />
 
 				<Suspense fallback={<MaterialsDataTableSkeleton />}>
-					<MaterialsDataTable materialsPromise={materialsPromise} />
+					<MaterialsDataTable materialsPromise={materialsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 

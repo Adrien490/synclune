@@ -34,10 +34,12 @@ import { RefundsTableSelectionCell } from "./refunds-table-selection-cell";
 
 export interface RefundsDataTableProps {
 	refundsPromise: Promise<GetRefundsReturn>;
+	perPage: number;
 }
 
 export async function RefundsDataTable({
 	refundsPromise,
+	perPage,
 }: RefundsDataTableProps) {
 	const { refunds, pagination } = await refundsPromise;
 	const refundIds = refunds.map((refund) => refund.id);
@@ -172,7 +174,7 @@ export async function RefundsDataTable({
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={refunds.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={refunds.length}

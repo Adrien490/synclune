@@ -118,7 +118,7 @@ export default async function DiscountsAdminPage({
 				<DiscountsFilterBadges />
 
 				<Suspense fallback={<DiscountsDataTableSkeleton />}>
-					<DiscountsDataTable discountsPromise={discountsPromise} />
+					<DiscountsDataTable discountsPromise={discountsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 		</>

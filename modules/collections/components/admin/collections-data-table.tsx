@@ -44,10 +44,12 @@ const STATUS_CONFIG: Record<
 
 interface CollectionsDataTableProps {
 	collectionsPromise: Promise<GetCollectionsReturn>;
+	perPage: number;
 }
 
 export async function CollectionsDataTable({
 	collectionsPromise,
+	perPage,
 }: CollectionsDataTableProps) {
 	const { collections, pagination } = await collectionsPromise;
 	const collectionIds = collections.map((collection) => collection.id);
@@ -226,7 +228,7 @@ export async function CollectionsDataTable({
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={collections.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={collections.length}

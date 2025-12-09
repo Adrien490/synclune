@@ -41,6 +41,8 @@ function normalizeArray(value: string | string[] | undefined): string[] {
 	return Array.isArray(value) ? value : [value];
 }
 
+import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
+
 function parseInventoryParams(params: InventorySearchParams) {
 	const stockStatuses = normalizeArray(params.filter_stockStatus).filter(
 		(s) => s !== "all"
@@ -51,7 +53,7 @@ function parseInventoryParams(params: InventorySearchParams) {
 	return {
 		cursor: params.cursor,
 		direction: params.direction as "forward" | "backward" | undefined,
-		perPage: params.perPage ? parseInt(params.perPage, 10) : undefined,
+		perPage: params.perPage ? parseInt(params.perPage, 10) : DEFAULT_PER_PAGE,
 		sortBy: params.sortBy,
 		search: params.search,
 		// Si un seul statut, utiliser comme string pour le schema existant
@@ -127,7 +129,7 @@ export default async function InventoryAdminPage({
 				</Toolbar>
 
 				<Suspense fallback={<InventoryDataTableSkeleton />}>
-					<InventoryDataTable inventoryPromise={inventoryPromise} />
+					<InventoryDataTable inventoryPromise={inventoryPromise} perPage={parsedParams.perPage} />
 				</Suspense>
 			</div>
 

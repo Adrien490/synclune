@@ -32,9 +32,10 @@ import { OrdersTableSelectionCell } from "./orders-table-selection-cell";
 
 export interface OrdersDataTableProps {
 	ordersPromise: Promise<GetOrdersReturn>;
+	perPage: number;
 }
 
-export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
+export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTableProps) {
 	const { orders, pagination } = await ordersPromise;
 	const orderIds = orders.map((order) => order.id);
 
@@ -141,7 +142,7 @@ export async function OrdersDataTable({ ordersPromise }: OrdersDataTableProps) {
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={orders.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={orders.length}

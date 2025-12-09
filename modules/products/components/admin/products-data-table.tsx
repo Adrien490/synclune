@@ -65,10 +65,12 @@ const STATUS_CONFIG: Record<
 
 interface ProductsDataTableProps {
 	productsPromise: Promise<GetProductsReturn>;
+	perPage: number;
 }
 
 export async function ProductsDataTable({
 	productsPromise,
+	perPage,
 }: ProductsDataTableProps) {
 	const { products, pagination } = await productsPromise;
 	const productIds = products.map((product) => product.id);
@@ -339,7 +341,7 @@ export async function ProductsDataTable({
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={products.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={products.length}

@@ -137,7 +137,7 @@ export default async function ProductTypesAdminPage({
 				<ProductTypesFilterBadges />
 
 				<Suspense fallback={<ProductTypesDataTableSkeleton />}>
-					<ProductTypesDataTable productTypesPromise={productTypesPromise} />
+					<ProductTypesDataTable productTypesPromise={productTypesPromise} perPage={perPage} />
 				</Suspense>
 			</div>
 		</>

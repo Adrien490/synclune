@@ -28,10 +28,12 @@ import { ProductTypesTableSelectionCell } from "./product-types-table-selection-
 
 interface ProductTypesDataTableProps {
 	productTypesPromise: Promise<GetProductTypesReturn>;
+	perPage: number;
 }
 
 export async function ProductTypesDataTable({
 	productTypesPromise,
+	perPage,
 }: ProductTypesDataTableProps) {
 	const { productTypes, pagination } = await productTypesPromise;
 	const productTypeIds = productTypes.map((type) => type.id);
@@ -184,7 +186,7 @@ export async function ProductTypesDataTable({
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={productTypes.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={productTypes.length}

@@ -32,10 +32,12 @@ import { StripePaymentsTableSelectionCell } from "./stripe-payments-table-select
 
 interface StripePaymentsDataTableProps {
 	paymentsPromise: Promise<GetStripePaymentsReturn>;
+	perPage: number;
 }
 
 export async function StripePaymentsDataTable({
 	paymentsPromise,
+	perPage,
 }: StripePaymentsDataTableProps) {
 	const { payments, pagination } = await paymentsPromise;
 	const paymentIds = payments.map((payment) => payment.id);
@@ -167,7 +169,7 @@ export async function StripePaymentsDataTable({
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={payments.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={payments.length}

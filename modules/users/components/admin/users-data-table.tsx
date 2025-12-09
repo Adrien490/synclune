@@ -26,6 +26,7 @@ import { UsersTableSelectionCell } from "./users-table-selection-cell";
 
 interface UsersDataTableProps {
 	usersPromise: Promise<GetUsersReturn>;
+	perPage: number;
 }
 
 function formatDate(date: Date | string): string {
@@ -36,7 +37,7 @@ function formatDate(date: Date | string): string {
 	}).format(new Date(date));
 }
 
-export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
+export function UsersDataTable({ usersPromise, perPage }: UsersDataTableProps) {
 	const { users, pagination } = use(usersPromise);
 	const userIds = users.map((user) => user.id);
 
@@ -157,7 +158,7 @@ export function UsersDataTable({ usersPromise }: UsersDataTableProps) {
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={users.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={users.length}

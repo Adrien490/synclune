@@ -37,11 +37,13 @@ import { ProductVariantsTableSelectionCell } from "./skus-table-selection-cell";
 interface ProductVariantsDataTableProps {
 	skusPromise: Promise<GetProductSkusReturn>;
 	productSlug: string;
+	perPage: number;
 }
 
 export async function ProductVariantsDataTable({
 	skusPromise,
 	productSlug,
+	perPage,
 }: ProductVariantsDataTableProps) {
 	const { productSkus, pagination } = await skusPromise;
 	const variantIds = productSkus.map((sku) => sku.id);
@@ -322,7 +324,7 @@ export async function ProductVariantsDataTable({
 
 				<div className="mt-4">
 					<CursorPagination
-						perPage={productSkus.length}
+						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={productSkus.length}
