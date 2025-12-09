@@ -104,6 +104,18 @@ export const VIDEO_MIGRATION_CONFIG = {
 	allowedDomains: ALLOWED_UPLOADTHING_DOMAINS,
 } as const;
 
+// ============================================================================
+// CONFIGURATION TRAITEMENT AUDIO
+// ============================================================================
+
+/** Configuration pour la suppression audio des vidéos */
+export const VIDEO_AUDIO_CONFIG = {
+	/** Supprimer automatiquement l'audio lors de l'upload */
+	stripAudioOnUpload: true,
+	/** Timeout FFmpeg pour suppression audio (ms) - plus long car potentiel re-encoding */
+	stripAudioTimeout: 120_000,
+} as const;
+
 /** Type pour les tailles de thumbnails */
 export type ThumbnailSize = "SMALL" | "MEDIUM";
 

@@ -80,7 +80,7 @@ export const GET_COLLECTIONS_SELECT = {
 					id: true,
 					title: true,
 					skus: {
-						where: { isActive: true, isDefault: true },
+						where: { isActive: true },
 						select: {
 							images: {
 								where: { isPrimary: true },
@@ -88,6 +88,7 @@ export const GET_COLLECTIONS_SELECT = {
 								take: 1,
 							},
 						},
+						orderBy: [{ isDefault: "desc" }, { priceInclTax: "asc" }],
 						take: 1,
 					},
 				},

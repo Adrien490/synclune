@@ -8,6 +8,10 @@ import {
 	isFFmpegAvailable,
 } from "@/modules/media/services/generate-video-thumbnail";
 import { generateBlurDataUrl } from "@/modules/media/services/generate-blur-data-url";
+import {
+	stripVideoAudio,
+	isStripAudioAvailable,
+} from "@/modules/media/services/strip-video-audio";
 
 // Vérifier que le token UploadThing est configuré au démarrage
 if (!process.env.UPLOADTHING_TOKEN) {
@@ -195,26 +199,45 @@ export const ourFileRouter = {
 				};
 			}
 
-			// Pour les vidéos: générer les thumbnails côté serveur
+			// Pour les vidéos: supprimer l'audio et générer les thumbnails
 			if (isVideo && isFFmpegAvailable()) {
+				let videoUrl = file.ufsUrl;
+
+				// 1. Supprimer la piste audio (si disponible)
+				if (isStripAudioAvailable()) {
+					try {
+						const stripResult = await stripVideoAudio(videoUrl);
+						if (stripResult) {
+							videoUrl = stripResult.url;
+							console.log(
+								`[UploadThing] Audio supprimé: -${stripResult.savedPercent}% (${(stripResult.originalSize / 1024 / 1024).toFixed(1)}MB → ${(stripResult.newSize / 1024 / 1024).toFixed(1)}MB)`
+							);
+						}
+					} catch (error) {
+						console.warn(
+							"[UploadThing] Échec suppression audio (vidéo conservée avec audio):",
+							error instanceof Error ? error.message : error
+						);
+					}
+				}
+
+				// 2. Générer les thumbnails
 				try {
-					const thumbnailResult = await generateVideoThumbnail(file.ufsUrl);
+					const thumbnailResult = await generateVideoThumbnail(videoUrl);
 					return {
-						url: file.ufsUrl,
+						url: videoUrl,
 						thumbnailUrl: thumbnailResult.thumbnailUrl,
 						thumbnailSmallUrl: thumbnailResult.thumbnailSmallUrl,
 						blurDataUrl: thumbnailResult.blurDataUrl,
 						uploadedBy: metadata.userId,
 					};
 				} catch (error) {
-					// Log l'erreur mais ne pas bloquer l'upload
 					console.error(
 						"[UploadThing] Échec génération thumbnail vidéo:",
 						error instanceof Error ? error.message : error
 					);
-					// Retourner sans thumbnail - le client pourra régénérer
 					return {
-						url: file.ufsUrl,
+						url: videoUrl,
 						uploadedBy: metadata.userId,
 					};
 				}

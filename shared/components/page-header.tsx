@@ -169,10 +169,10 @@ export function PageHeader({
 							{/* Breadcrumb - Version mobile : Bouton retour compact */}
 							{breadcrumbs.length > 0 && (
 								<>
-									{/* Mobile : Bouton retour simple (<640px) */}
+									{/* Mobile : Bouton retour icône seule (<640px) */}
 									<nav
 										aria-label="Fil d'Ariane"
-										className="sm:hidden text-sm leading-normal"
+										className="sm:hidden"
 									>
 										<Link
 											href={
@@ -180,11 +180,11 @@ export function PageHeader({
 													? breadcrumbs[breadcrumbs.length - 2].href
 													: "/"
 											}
-											aria-label={`Retour vers ${breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2].label : "Accueil"}`}
-											className="inline-flex items-center gap-1.5 py-2.5 -ml-2.5 px-2.5 text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+											className="inline-flex items-center justify-center size-10 -ml-2 text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
 										>
-											<ChevronLeft className="w-4 h-4" />
-											<span>
+											<ChevronLeft className="size-5" />
+											<span className="sr-only">
+												Retour vers{" "}
 												{breadcrumbs.length > 1
 													? breadcrumbs[breadcrumbs.length - 2].label
 													: "Accueil"}

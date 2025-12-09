@@ -4,7 +4,8 @@ import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { getCollectionInvalidationTags } from "@/modules/collections/constants/cache";
 
 /**
  * Server Action ADMIN pour mettre à jour les collections d'un produit
@@ -49,7 +50,20 @@ export async function updateProductCollections(
 			}
 		}
 
-		// 4. Mettre à jour les collections (transaction)
+		// 4. Recuperer les collections ou ce produit etait featured (pour invalidation cache)
+		const featuredInCollections = await prisma.productCollection.findMany({
+			where: {
+				productId,
+				isFeatured: true,
+			},
+			select: {
+				collection: {
+					select: { slug: true },
+				},
+			},
+		});
+
+		// 5. Mettre à jour les collections (transaction)
 		await prisma.$transaction([
 			// Supprimer les associations existantes
 			prisma.productCollection.deleteMany({
@@ -68,7 +82,13 @@ export async function updateProductCollections(
 				: []),
 		]);
 
-		// 5. Revalider les pages
+		// 6. Invalider le cache des collections ou le produit etait featured
+		for (const pc of featuredInCollections) {
+			const tags = getCollectionInvalidationTags(pc.collection.slug);
+			tags.forEach((tag) => updateTag(tag));
+		}
+
+		// 7. Revalider les pages
 		revalidatePath("/admin/catalogue/produits");
 		revalidatePath(`/admin/catalogue/produits/${product.slug}`);
 		revalidatePath("/admin/catalogue/collections");

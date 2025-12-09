@@ -1,6 +1,45 @@
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { CollectionStatus, ProductStatus } from "@/app/generated/prisma/client";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import type { Metadata } from "next";
+
+/**
+ * Extrait l'image du produit vedette (ou le premier produit PUBLIC) pour OpenGraph
+ */
+function getFeaturedProductImage(
+	products: NonNullable<
+		Awaited<ReturnType<typeof getCollectionBySlug>>
+	>["products"]
+): { url: string; alt: string } | null {
+	// Chercher d'abord le produit featured PUBLIC
+	const featuredProduct = products.find(
+		(pc) => pc.isFeatured && pc.product.status === ProductStatus.PUBLIC
+	);
+
+	// Sinon prendre le premier produit PUBLIC
+	const productToUse =
+		featuredProduct ||
+		products.find((pc) => pc.product.status === ProductStatus.PUBLIC);
+
+	if (!productToUse) return null;
+
+	// Trouver le SKU par defaut ou le premier SKU actif
+	const defaultSku =
+		productToUse.product.skus.find((s) => s.isDefault) ||
+		productToUse.product.skus[0];
+
+	if (!defaultSku) return null;
+
+	// Trouver l'image primaire ou la premiere image
+	const primaryImage =
+		defaultSku.images.find((i) => i.isPrimary) || defaultSku.images[0];
+
+	if (!primaryImage) return null;
+
+	return {
+		url: primaryImage.url,
+		alt: primaryImage.altText || productToUse.product.title,
+	};
+}
 
 export async function generateCollectionMetadata({
 	params,
@@ -25,6 +64,9 @@ export async function generateCollectionMetadata({
 	const canonicalUrl = `/collections/${slug}`;
 	const fullUrl = `https://synclune.fr/collections/${slug}`;
 
+	// Extraire l'image du produit vedette pour OpenGraph
+	const featuredImage = getFeaturedProductImage(collection.products);
+
 	return {
 		title,
 		description,
@@ -38,11 +80,24 @@ export async function generateCollectionMetadata({
 			description,
 			url: fullUrl,
 			type: "website",
+			...(featuredImage && {
+				images: [
+					{
+						url: featuredImage.url,
+						alt: featuredImage.alt,
+						width: 1200,
+						height: 630,
+					},
+				],
+			}),
 		},
 		twitter: {
 			card: "summary_large_image",
 			title,
 			description,
+			...(featuredImage && {
+				images: [featuredImage.url],
+			}),
 		},
 	};
 }

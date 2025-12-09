@@ -308,16 +308,13 @@ function GalleryContent({ product, title }: GalleryProps) {
 											"absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10",
 											// Touch targets responsives (WCAG 2.5.5)
 											"size-12 md:size-10",
-											// Forme et fond premium
-											"rounded-full bg-card/95 backdrop-blur-sm",
-											// Bordure subtile avec couleur primaire
-											"border border-primary/20",
+											// Forme et fond primary
+											"rounded-full bg-primary",
 											// Ombres
 											"shadow-lg hover:shadow-xl",
-											// Couleurs et hover
-											"text-foreground/70",
-											"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-											"hover:scale-105 active:scale-95",
+											// Couleurs
+											"text-primary-foreground",
+											"hover:bg-primary/90 hover:scale-105 active:scale-95",
 											// Visibilité mobile-first
 											"opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
 											// Transitions fluides
@@ -337,16 +334,13 @@ function GalleryContent({ product, title }: GalleryProps) {
 											"absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10",
 											// Touch targets responsives (WCAG 2.5.5)
 											"size-12 md:size-10",
-											// Forme et fond premium
-											"rounded-full bg-card/95 backdrop-blur-sm",
-											// Bordure subtile avec couleur primaire
-											"border border-primary/20",
+											// Forme et fond primary
+											"rounded-full bg-primary",
 											// Ombres
 											"shadow-lg hover:shadow-xl",
-											// Couleurs et hover
-											"text-foreground/70",
-											"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-											"hover:scale-105 active:scale-95",
+											// Couleurs
+											"text-primary-foreground",
+											"hover:bg-primary/90 hover:scale-105 active:scale-95",
 											// Visibilité mobile-first
 											"opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
 											// Transitions fluides

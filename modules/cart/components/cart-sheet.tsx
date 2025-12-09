@@ -81,22 +81,28 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 					</div>
 
 					{!hasItems ? (
-						<div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
-							<div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-								<ShoppingBag className="w-8 h-8 text-muted-foreground" />
+						<>
+							<div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
+								<div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+									<ShoppingBag className="w-8 h-8 text-muted-foreground" />
+								</div>
+								<h3 className="text-lg font-medium mb-2">Ton panier est vide !</h3>
+								<p className="text-sm text-muted-foreground max-w-[280px]">
+									Tu peux aller jeter un oeil à mes créations si tu le souhaites 😁
+								</p>
 							</div>
-							<h3 className="text-lg font-medium mb-2">Ton panier est vide</h3>
-							<p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
-								Explore mes creations et trouve la piece parfaite pour toi
-							</p>
-							<Button
-								asChild
-								onClick={close}
-								className="group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
-							>
-								<Link href="/produits">Decouvrir la boutique</Link>
-							</Button>
-						</div>
+
+							<SheetFooter className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t mt-auto shrink-0">
+								<Button
+									asChild
+									size="lg"
+									className="w-full group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+									onClick={close}
+								>
+									<Link href="/produits">Decouvrir la boutique</Link>
+								</Button>
+							</SheetFooter>
+						</>
 					) : (
 						<>
 							<ScrollArea className="flex-1 min-h-0">

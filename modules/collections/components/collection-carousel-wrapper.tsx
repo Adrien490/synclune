@@ -165,9 +165,14 @@ export function CollectionCarouselWrapper({
 							"absolute left-4 top-[40%] -translate-y-1/2 z-20",
 							"hidden md:flex",
 							"opacity-30 group-hover/carousel:opacity-100 group-focus-within/carousel:opacity-100",
-							"rounded-full bg-card/95 backdrop-blur-sm",
-							"border border-primary/20 shadow-lg hover:shadow-xl",
-							"text-foreground/70 hover:bg-primary/10 hover:text-primary hover:border-primary/40 hover:scale-105",
+							// Forme et fond primary
+							"rounded-full bg-primary",
+							// Ombres
+							"shadow-lg hover:shadow-xl",
+							// Couleurs
+							"border-0 text-primary-foreground",
+							"hover:bg-primary/90 hover:scale-105",
+							// États disabled
 							"disabled:opacity-40 disabled:pointer-events-none",
 							"transition-all duration-300"
 						)}
@@ -190,9 +195,14 @@ export function CollectionCarouselWrapper({
 							"absolute right-4 top-[40%] -translate-y-1/2 z-20",
 							"hidden md:flex",
 							"opacity-30 group-hover/carousel:opacity-100 group-focus-within/carousel:opacity-100",
-							"rounded-full bg-card/95 backdrop-blur-sm",
-							"border border-primary/20 shadow-lg hover:shadow-xl",
-							"text-foreground/70 hover:bg-primary/10 hover:text-primary hover:border-primary/40 hover:scale-105",
+							// Forme et fond primary
+							"rounded-full bg-primary",
+							// Ombres
+							"shadow-lg hover:shadow-xl",
+							// Couleurs
+							"border-0 text-primary-foreground",
+							"hover:bg-primary/90 hover:scale-105",
+							// États disabled
 							"disabled:opacity-40 disabled:pointer-events-none",
 							"transition-all duration-300"
 						)}

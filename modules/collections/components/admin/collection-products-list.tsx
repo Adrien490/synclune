@@ -26,7 +26,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Package, Star } from "lucide-react";
+import { AlertTriangle, Package, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { GetCollectionReturn } from "../../types/collection.types";
@@ -193,9 +193,24 @@ export function CollectionProductsList({
 
 									{/* Statut */}
 									<TableCell className="hidden sm:table-cell">
-										<Badge variant={STATUS_CONFIG[product.status].variant}>
-											{STATUS_CONFIG[product.status].label}
-										</Badge>
+										<div className="flex items-center gap-2">
+											<Badge variant={STATUS_CONFIG[product.status].variant}>
+												{STATUS_CONFIG[product.status].label}
+											</Badge>
+											{/* Avertissement si produit featured non-PUBLIC */}
+											{pc.isFeatured && product.status !== ProductStatus.PUBLIC && (
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<span className="text-amber-500">
+															<AlertTriangle className="h-4 w-4" />
+														</span>
+													</TooltipTrigger>
+													<TooltipContent>
+														<p>Ce produit vedette n'est pas visible sur le site</p>
+													</TooltipContent>
+												</Tooltip>
+											)}
+										</div>
 									</TableCell>
 
 									{/* Prix */}

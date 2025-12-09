@@ -189,16 +189,13 @@ function CarouselPrevious({
 					: "-top-12 left-1/2 -translate-x-1/2 rotate-90",
 				// Touch targets responsives (WCAG 2.5.5)
 				"size-12 md:size-10",
-				// Forme et fond premium
-				"rounded-full bg-card/95 backdrop-blur-sm",
-				// Bordure subtile avec couleur primaire
-				"border border-primary/20",
+				// Forme et fond primary
+				"rounded-full bg-primary",
 				// Ombres
 				"shadow-lg hover:shadow-xl",
-				// Couleurs et hover
-				"text-foreground/70",
-				"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-				"hover:scale-105",
+				// Couleurs
+				"text-primary-foreground",
+				"hover:bg-primary/90 hover:scale-105",
 				// États disabled
 				"disabled:opacity-40 disabled:pointer-events-none",
 				// Transitions fluides
@@ -236,16 +233,13 @@ function CarouselNext({
 					: "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
 				// Touch targets responsives (WCAG 2.5.5)
 				"size-12 md:size-10",
-				// Forme et fond premium
-				"rounded-full bg-card/95 backdrop-blur-sm",
-				// Bordure subtile avec couleur primaire
-				"border border-primary/20",
+				// Forme et fond primary
+				"rounded-full bg-primary",
 				// Ombres
 				"shadow-lg hover:shadow-xl",
-				// Couleurs et hover
-				"text-foreground/70",
-				"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-				"hover:scale-105",
+				// Couleurs
+				"text-primary-foreground",
+				"hover:bg-primary/90 hover:scale-105",
 				// États disabled
 				"disabled:opacity-40 disabled:pointer-events-none",
 				// Transitions fluides
