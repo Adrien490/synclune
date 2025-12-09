@@ -1,5 +1,8 @@
-import { Toolbar } from "@/shared/components/toolbar";
-import { PageHeader } from "@/shared/components/page-header";
+import { getProductTypes } from "@/modules/product-types/data/get-product-types";
+import { getFirstParam } from "@/shared/utils/params";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { ProductListing } from "./_components/product-listing";
 
 /**
  * Product filters search params (URL parameters)
@@ -25,29 +28,6 @@ export type ProductSearchParams = {
 	search?: string;
 	filter_sortBy?: string;
 } & ProductFiltersSearchParams;
-import { SearchForm } from "@/shared/components/search-form";
-import { SelectFilter } from "@/shared/components/select-filter";
-import { TabNavigation } from "@/shared/components/tab-navigation";
-import { getColors } from "@/modules/colors/data/get-colors";
-import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
-import { getProductTypes } from "@/modules/product-types/data/get-product-types";
-import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
-import { ProductFilterSheet } from "@/modules/products/components/product-filter-sheet";
-import { ProductList } from "@/modules/products/components/product-list";
-import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
-import { getMaxProductPrice } from "@/modules/products/data/get-max-product-price";
-import { centsToEuros } from "@/shared/utils/format-euro";
-import {
-	GET_PRODUCTS_DEFAULT_PER_PAGE,
-	SORT_LABELS,
-	SORT_OPTIONS,
-} from "@/modules/products/data/get-products";
-import { getProducts } from "@/modules/products/data/get-products";
-import type { SortField } from "@/modules/products/data/get-products";
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
-import { parseFilters } from "./_utils/params";
 
 export const metadata: Metadata = {
 	title: "Tous mes bijoux colorés faits main | Synclune - Nantes",
@@ -91,14 +71,6 @@ export default async function BijouxHubPage({
 }: BijouxHubPageProps) {
 	const searchParamsData = await searchParams;
 
-	// Helper pour extraire les paramètres
-	const getFirstParam = (
-		param: string | string[] | undefined
-	): string | undefined => {
-		if (Array.isArray(param)) return param[0];
-		return param;
-	};
-
 	// SEO: Si un type est passé en search param, rediriger vers la page dédiée
 	// Exemple: /produits?type=bagues → /produits/bagues
 	const typeParam = getFirstParam(searchParamsData.type);
@@ -115,162 +87,10 @@ export default async function BijouxHubPage({
 		},
 	});
 
-	// Extraction du terme de recherche
-	const searchTerm =
-		typeof searchParamsData.search === "string"
-			? searchParamsData.search
-			: undefined;
-
-	// Récupérer les couleurs, matériaux et le prix maximum
-	const [colorsData, materials, maxPriceInCents] = await Promise.all([
-		getColors({
-			perPage: 100,
-			sortBy: "name-ascending",
-		}),
-		getMaterialOptions(),
-		getMaxProductPrice(),
-	]);
-
-	// Conversion en euros côté UI (la DAL retourne des centimes)
-	const maxPriceInEuros = centsToEuros(maxPriceInCents);
-
-	const colors = colorsData.colors;
-
-	// Récupérer les produits avec filtres (TOUS les produits, sans filtre de type)
-	const cursor = getFirstParam(searchParamsData.cursor);
-	const direction = (getFirstParam(searchParamsData.direction) || "forward") as
-		| "forward"
-		| "backward";
-	const perPage =
-		Number(getFirstParam(searchParamsData.perPage)) ||
-		GET_PRODUCTS_DEFAULT_PER_PAGE;
-	const sortByFromFilter = getFirstParam(searchParamsData.filter_sortBy);
-	const sortByFromParam = getFirstParam(searchParamsData.sortBy);
-	const sortBy = sortByFromFilter || sortByFromParam || "created-descending";
-
-	// Parser les filtres (sans filtre de type pour afficher tous les bijoux)
-	const filters = parseFilters(searchParamsData);
-
-	// Récupérer les produits
-	const productsPromise = getProducts({
-		cursor,
-		direction,
-		perPage,
-		sortBy: sortBy as SortField,
-		search: searchTerm,
-		filters,
-	});
-
-	// Vérifier si des filtres sont actifs (hors navigation et type)
-	const hasActiveFilters = Object.keys(searchParamsData).some(
-		(key) =>
-			!["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(
-				key
-			)
-	);
-
-	// JSON-LD structured data pour SEO
-	const jsonLd = {
-		"@context": "https://schema.org",
-		"@type": "CollectionPage",
-		name: "Bijoux artisanaux faits main",
-		description:
-			"Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !",
-		url: "https://synclune.fr/produits",
-		breadcrumb: {
-			"@type": "BreadcrumbList",
-			itemListElement: [
-				{
-					"@type": "ListItem",
-					position: 1,
-					name: "Accueil",
-					item: "https://synclune.fr",
-				},
-				{
-					"@type": "ListItem",
-					position: 2,
-					name: "Bijoux",
-				},
-			],
-		},
-		publisher: {
-			"@type": "Organization",
-			name: "Synclune",
-			url: "https://synclune.fr",
-		},
-	};
-
 	return (
-		<div className="min-h-screen">
-			{/* JSON-LD Structured Data */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-			/>
-
-			<PageHeader
-				title={searchTerm ? `Recherche "${searchTerm}"` : "Mes créations"}
-				description={
-					searchTerm
-						? undefined
-						: "Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !"
-				}
-				breadcrumbs={[{ label: "Bijoux", href: "/produits" }]}
-				navigation={
-					<TabNavigation
-						items={[
-							{
-								label: "Tous les bijoux",
-								value: "tous",
-								href: "/produits",
-							},
-							...productTypesData.productTypes.map((type) => ({
-								label: type.label,
-								value: type.slug,
-								href: `/produits/${type.slug}`,
-							})),
-						]}
-						activeValue="tous"
-						ariaLabel="Navigation par types de bijoux"
-					/>
-				}
-			/>
-
-			{/* Section principale avec catalogue */}
-			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
-				<div className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-					<Toolbar
-						search={
-							<SearchForm
-								paramName="search"
-								placeholder="Rechercher des bijoux..."
-								className="w-full"
-							/>
-						}
-					>
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={Object.values(SORT_OPTIONS).map((option) => ({
-								value: option,
-								label: SORT_LABELS[option as keyof typeof SORT_LABELS],
-							}))}
-							placeholder="Plus récents"
-						/>
-						<ProductFilterSheet
-							colors={colors}
-							materials={materials}
-							maxPriceInEuros={maxPriceInEuros}
-						/>
-					</Toolbar>
-
-					{hasActiveFilters && <ProductFilterBadges colors={colors} materials={materials} />}
-
-					<Suspense fallback={<ProductListSkeleton />}>
-						<ProductList productsPromise={productsPromise} perPage={perPage} />
-					</Suspense>
-				</div>
-			</section>
-		</div>
+		<ProductListing
+			searchParams={searchParamsData}
+			productTypes={productTypesData.productTypes}
+		/>
 	);
 }

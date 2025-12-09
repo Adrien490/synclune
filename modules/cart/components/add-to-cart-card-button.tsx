@@ -14,7 +14,7 @@ interface AddToCartCardButtonProps {
  * Bouton d'ajout au panier pour les cartes produit
  *
  * Comportement responsive:
- * - Mobile: Bouton rond 44px discret (ghost) avec icône "+"
+ * - Mobile: Icône "+" avec drop-shadow (même pattern que WishlistButton)
  * - Desktop: Bouton pleine largeur "Ajouter au panier" avec fond primary
  *
  * - Disabled pendant le pending pour éviter double-click
@@ -52,11 +52,10 @@ export function AddToCartCardButton({
 				aria-disabled={isPending}
 				onClick={(e) => e.stopPropagation()}
 				className={cn(
-					// Mobile: bouton discret avec fond translucide et backdrop-blur
+					// Mobile: bouton sans fond, drop-shadow sur l'icône (pattern WishlistButton)
 					"size-11 rounded-full flex items-center justify-center",
-					"bg-card/80 backdrop-blur-sm text-primary border border-primary/20 shadow-sm",
-					// Desktop: pleine largeur avec fond primary (reset mobile styles)
-					"sm:bg-primary sm:text-primary-foreground sm:border-0 sm:backdrop-blur-none",
+					// Desktop: pleine largeur avec fond primary
+					"sm:bg-primary sm:text-primary-foreground",
 					"sm:w-full sm:h-auto sm:rounded-none sm:py-2.5 sm:px-4",
 					"sm:shadow-lg sm:shadow-black/20",
 					// Active mobile: feedback tactile
@@ -70,8 +69,16 @@ export function AddToCartCardButton({
 				)}
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
-				{/* Mobile: icône + simple */}
-				<Plus size={22} strokeWidth={2.5} className="sm:hidden" aria-hidden="true" />
+				{/* Mobile: icône + avec drop-shadow pour contraste sur toute image */}
+				<Plus
+					size={22}
+					strokeWidth={2.5}
+					className={cn(
+						"sm:hidden text-primary",
+						"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+					)}
+					aria-hidden="true"
+				/>
 				{/* Desktop: texte */}
 				<span className="hidden sm:inline text-sm font-medium">
 					Ajouter au panier
