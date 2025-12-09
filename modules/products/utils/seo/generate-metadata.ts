@@ -1,6 +1,20 @@
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import type { Metadata } from "next";
 
+/**
+ * Tronque une description à une longueur maximale pour le SEO.
+ * Coupe au dernier espace avant la limite et ajoute "..." si nécessaire.
+ */
+function truncateDescription(text: string, maxLength: number = 155): string {
+	if (text.length <= maxLength) return text;
+
+	// Trouver le dernier espace avant la limite pour ne pas couper un mot
+	const truncated = text.slice(0, maxLength - 3);
+	const lastSpace = truncated.lastIndexOf(" ");
+
+	return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + "...";
+}
+
 export async function generateProductMetadata({
 	params,
 }: {
@@ -22,11 +36,16 @@ export async function generateProductMetadata({
 		? `${(primarySku.priceInclTax / 100).toFixed(2)}€`
 		: "";
 
-	// Construire le titre et la description
-	const title = `${product.title} ${price ? `- ${price}` : ""} | Bijoux artisanaux Synclune`;
-	const description =
+	// Construire le titre (avec ou sans prix)
+	const title = price
+		? `${product.title} - ${price} | Bijoux artisanaux Synclune`
+		: `${product.title} | Bijoux artisanaux Synclune`;
+
+	// Construire la description avec limite SEO (155 caractères)
+	const rawDescription =
 		product.description ||
 		`Découvrez ${product.title}, un bijou artisanal fait main avec amour. ${product.type ? `Type: ${product.type.label}.` : ""} Bijoux colorés et originaux, créations uniques Synclune.`;
+	const description = truncateDescription(rawDescription);
 
 	// URL canonique et complète
 	const canonicalUrl = `/creations/${slug}`;

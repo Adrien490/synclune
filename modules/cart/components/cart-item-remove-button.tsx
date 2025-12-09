@@ -35,7 +35,7 @@ export function CartItemRemoveButton({
 			type="button"
 			onClick={handleRemove}
 			disabled={isPending}
-			className="text-sm text-foreground underline hover:text-destructive transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+			className="text-sm text-foreground underline hover:text-destructive transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed py-2 -my-2"
 			aria-label={`Supprimer ${itemName} du panier`}
 		>
 			Supprimer

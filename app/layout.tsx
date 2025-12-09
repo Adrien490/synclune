@@ -2,6 +2,7 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
+import { SkipLink } from "@/shared/components/skip-link";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import { BUSINESS_INFO, SEO_DEFAULTS, SITE_URL } from "@/shared/constants/seo-config";
 import { crimsonPro, inter, jetBrainsMono } from "@/shared/styles/fonts";
@@ -123,6 +124,7 @@ export default async function RootLayout({
 			<body
 				className={`${inter.className} ${crimsonPro.variable} ${jetBrainsMono.variable} antialiased`}
 			>
+				<SkipLink />
 				<IconSprite />
 				<Suspense fallback={null}>
 					<UploadThingSSR />
@@ -139,10 +141,12 @@ export default async function RootLayout({
 							<DialogStoreProvider>
 								<SheetStoreProvider>
 									<AlertDialogStoreProvider>
-										{children}
+										<main id="main-content">
+											{children}
+										</main>
 
 										<Suspense fallback={<CartSheetSkeleton />}>
-										<CartSheet cartPromise={getCart()} />
+											<CartSheet cartPromise={getCart()} />
 										</Suspense>
 									</AlertDialogStoreProvider>
 								</SheetStoreProvider>

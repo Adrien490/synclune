@@ -10,7 +10,7 @@ import {
 	type ShippingRate,
 	type AllowedShippingCountry,
 } from "@/modules/orders/constants/colissimo-rates";
-import { TAX_RATE, FREE_SHIPPING_THRESHOLD } from "@/modules/orders/constants/shipping.constants";
+import { TAX_RATE } from "@/modules/orders/constants/shipping.constants";
 
 /**
  * Calcule les frais de port selon le pays de destination
@@ -135,50 +135,6 @@ export function formatDeliveryTime(
 	} catch {
 		return "Non disponible";
 	}
-}
-
-/**
- * Verifie si la livraison gratuite s'applique
- *
- * Livraison gratuite a partir de 50€
- * Prepare pour offres futures :
- * - Codes promo livraison offerte
- * - Zones avec livraison gratuite
- *
- * @param subtotal - Sous-total de la commande en centimes
- * @param _countryCode - Code pays (non utilise pour l'instant)
- * @returns true si livraison gratuite
- */
-export function isFreeShipping(
-	subtotal: number,
-	_countryCode: AllowedShippingCountry = "FR"
-): boolean {
-	// Livraison gratuite a partir de 50€
-	return subtotal >= FREE_SHIPPING_THRESHOLD;
-}
-
-/**
- * Recupere le cout de livraison en appliquant les regles de gratuite
- *
- * @param subtotal - Sous-total en centimes
- * @param countryCode - Code pays
- * @returns Frais de port finaux en centimes
- *
- * @example
- * ```typescript
- * getFinalShippingCost(3000, "FR"); // 600 (< 50€)
- * getFinalShippingCost(6000, "FR"); // 0 (>= 50€ - livraison offerte)
- * ```
- */
-export function getFinalShippingCost(
-	subtotal: number,
-	countryCode: AllowedShippingCountry = "FR"
-): number {
-	if (isFreeShipping(subtotal, countryCode)) {
-		return 0;
-	}
-
-	return calculateShipping(countryCode);
 }
 
 /**

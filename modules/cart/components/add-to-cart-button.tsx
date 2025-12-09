@@ -6,17 +6,16 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
-import { cn } from "@/shared/utils/cn";
 import type {
 	GetProductReturn,
 	ProductSku,
 } from "@/modules/products/types/product.types";
-import { ShoppingCart, Truck, ShieldCheck, RotateCcw, CreditCard, BadgeCheck, MessageCircleQuestion } from "lucide-react";
+import { ShoppingCart, Truck, ShieldCheck, RotateCcw, CreditCard, MessageCircleQuestion, Heart } from "lucide-react";
 import { BRAND } from "@/shared/constants/brand";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { cn } from "@/shared/utils/cn";
 import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart.constants";
-import { formatEuro } from "@/shared/utils/format-euro";
 
 interface AddToCartButtonProps {
 	product: GetProductReturn;
@@ -70,7 +69,14 @@ export function AddToCartButton({
 	const canAddToCart = selectedSku && isAvailable;
 
 	return (
-		<form action={action} className="space-y-6" data-cart-pending={isPending ? "" : undefined}>
+		<form
+			id="add-to-cart-form"
+			action={action}
+			className="space-y-6"
+			data-cart-pending={isPending ? "" : undefined}
+			aria-busy={isPending}
+			aria-label="Formulaire d'ajout au panier"
+		>
 			{/* Champ caché pour le SKU */}
 			{selectedSku && (
 				<input type="hidden" name="skuId" value={selectedSku.id} />
@@ -174,57 +180,38 @@ export function AddToCartButton({
 				</Card>
 			)}
 
-			{/* Bouton ajout au panier - Fixed sur mobile */}
-			<div className={cn(
-				// Mobile: fixed en bas
-				"fixed bottom-0 inset-x-0 z-30",
-				// Desktop: comportement normal (static)
-				"lg:static",
-				// Styles visuels
-				"bg-background/95 backdrop-blur lg:bg-transparent lg:backdrop-blur-none",
-				"p-3 lg:p-0 shadow-lg lg:shadow-none border-t lg:border-t-0",
-				"rounded-t-xl lg:rounded-none"
-			)}>
-				{/* Prix inline sur mobile - évite de scroller pour voir le prix */}
-				{selectedSku && (
-					<div className="lg:hidden flex items-baseline justify-between mb-2">
-						<span className="text-lg font-bold text-foreground">
-							{formatEuro(selectedSku.priceInclTax)}
-						</span>
-						{selectedSku.compareAtPrice && selectedSku.compareAtPrice > selectedSku.priceInclTax && (
-							<span className="text-sm line-through text-muted-foreground">
-								{formatEuro(selectedSku.compareAtPrice)}
-							</span>
-						)}
+			{/* Bouton ajout au panier */}
+			<Button
+				type="submit"
+				className={cn(
+					"w-full shadow-md",
+					"transition-all duration-200",
+					"hover:scale-[1.02] hover:shadow-lg",
+					"active:scale-[0.98]"
+				)}
+				disabled={!canAddToCart || isPending}
+				size="lg"
+			>
+				{isPending ? (
+					<div className="flex items-center gap-2">
+						<Spinner className="w-4 h-4" />
+						<span>Ajout en cours...</span>
+					</div>
+				) : !isAvailable ? (
+					<span>Indisponible</span>
+				) : !selectedSku ? (
+					<span>
+						{hasOnlyOneSku
+							? "Produit non disponible"
+							: validationErrors[0] || "Sélectionne tes options"}
+					</span>
+				) : (
+					<div className="flex items-center gap-2">
+						<ShoppingCart className="w-4 h-4 transition-transform group-hover:animate-wiggle" aria-hidden="true" />
+						<span>Ajouter au panier</span>
 					</div>
 				)}
-				<Button
-					type="submit"
-					className="w-full shadow-md"
-					disabled={!canAddToCart || isPending}
-					size="lg"
-				>
-					{isPending ? (
-						<div className="flex items-center gap-2">
-							<Spinner className="w-4 h-4" />
-							<span>Ajout en cours...</span>
-						</div>
-					) : !isAvailable ? (
-						<span>Indisponible</span>
-					) : !selectedSku ? (
-						<span>
-							{hasOnlyOneSku
-								? "Produit non disponible"
-								: validationErrors[0] || "Sélectionne tes options"}
-						</span>
-					) : (
-						<div className="flex items-center gap-2">
-							<ShoppingCart className="w-4 h-4" />
-							<span>Ajouter au panier</span>
-						</div>
-					)}
-				</Button>
-			</div>
+			</Button>
 
 			{/* Trust badges, Livraison, Personnalisation - Visible sur tous écrans */}
 			<div className="space-y-3 pt-2">
@@ -236,10 +223,6 @@ export function AddToCartButton({
 					<div className="flex items-center gap-1.5">
 						<RotateCcw className="w-4 h-4 text-blue-600" aria-hidden="true" />
 						<span>Retours 14 jours</span>
-					</div>
-					<div className="flex items-center gap-1.5">
-						<BadgeCheck className="w-4 h-4 text-emerald-600" aria-hidden="true" />
-						<span>Satisfaction garantie</span>
 					</div>
 					<div className="flex items-center gap-1.5">
 						<CreditCard className="w-4 h-4 text-primary" aria-hidden="true" />
@@ -260,7 +243,7 @@ export function AddToCartButton({
 						className="inline-flex items-center gap-2 font-medium text-foreground underline-offset-4 hover:underline text-sm/6 tracking-normal antialiased transition-all duration-200 hover:gap-3"
 						href={`/personnalisation?product=${product.slug}`}
 					>
-						<span className="text-base" aria-hidden="true">✨</span>
+						<Heart className="w-4 h-4" aria-hidden="true" />
 						<span>Parlons-en ensemble</span>
 						<span className="text-xs" aria-hidden="true">→</span>
 					</Link>

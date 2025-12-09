@@ -6,7 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
-import { getFinalShippingCost } from "@/modules/orders/utils/shipping.utils";
+import { calculateShipping } from "@/modules/orders/utils/shipping.utils";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { CreditCard, Info, Mail, MapPin, Receipt, Shield } from "lucide-react";
@@ -154,7 +154,7 @@ function CheckoutFormContent({
 	const subtotal = cart.items.reduce((sum, item) => {
 		return sum + item.priceAtAdd * item.quantity;
 	}, 0);
-	const shipping = getFinalShippingCost(subtotal);
+	const shipping = calculateShipping();
 	const total = subtotal + shipping;
 
 	// Rendu du contenu de chaque étape par index

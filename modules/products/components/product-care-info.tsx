@@ -8,10 +8,9 @@ import {
 	SHIPPING_RATES,
 	formatShippingPrice,
 } from "@/modules/orders/constants/colissimo-rates";
-import { FREE_SHIPPING_THRESHOLD } from "@/modules/orders/constants/shipping.constants";
 import { addBusinessDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Droplets, Gift, Package, Truck } from "lucide-react";
+import { Droplets, Package, Truck } from "lucide-react";
 
 /**
  * Calcule la plage de dates de livraison estimée
@@ -120,17 +119,6 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 								ouvrés
 							</p>
 						</div>
-					</div>
-
-					{/* Livraison gratuite */}
-					<div className="flex items-start gap-3 pt-2 border-t">
-						<Gift className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-						<p>
-							<span className="font-medium text-green-600">
-								Livraison offerte
-							</span>{" "}
-							dès {formatShippingPrice(FREE_SHIPPING_THRESHOLD)} d'achat
-						</p>
 					</div>
 				</AccordionContent>
 			</AccordionItem>

@@ -51,7 +51,7 @@ export function RemoveCartItemAlertDialog() {
 	return (
 		<AlertDialog open={removeDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
-				<form action={action}>
+				<form action={action} aria-label="Supprimer l'article du panier">
 					<input
 						type="hidden"
 						name="cartItemId"
@@ -63,40 +63,26 @@ export function RemoveCartItemAlertDialog() {
 							Retirer ce bijou de ton panier ?
 						</AlertDialogTitle>
 						<AlertDialogDescription>
-							{removeDialog.data?.itemName ? (
-								<>
-									Tu veux vraiment retirer{" "}
-									<span className="font-medium text-foreground">
-										{removeDialog.data.itemName}
-									</span>{" "}
-									de ton panier ?
-								</>
-							) : (
-								"Tu veux vraiment retirer ce bijou de ton panier ?"
-							)}
-							<br />
-							<br />
-							<span className="text-muted-foreground text-sm">
-								Tu pourras toujours le retrouver dans la boutique si tu changes d'avis !
-							</span>
+							{removeDialog.data?.itemName
+								? `Tu veux vraiment retirer ${removeDialog.data.itemName} de ton panier ? Tu pourras toujours le retrouver dans la boutique si tu changes d'avis !`
+								: "Tu veux vraiment retirer ce bijou de ton panier ? Tu pourras toujours le retrouver dans la boutique si tu changes d'avis !"}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<Button
-							type="submit"
-							disabled={isPending}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-						>
+						<Button type="submit" disabled={isPending}>
 							{isPending ? (
 								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Suppression...
+									<Loader2
+										className="mr-2 h-4 w-4 animate-spin"
+										aria-hidden="true"
+									/>
+									Retrait...
 								</>
 							) : (
-								"Supprimer"
+								"Retirer"
 							)}
 						</Button>
 					</AlertDialogFooter>

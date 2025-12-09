@@ -54,11 +54,18 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 			<Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
 				<SheetContent side="right" className="w-full sm:max-w-lg flex flex-col p-0 gap-0">
 					<SheetHeader className="px-6 py-4 border-b shrink-0">
-						<SheetTitle>Mon panier</SheetTitle>
+						<SheetTitle>Mon panier{hasItems && ` (${totalItems})`}</SheetTitle>
 						<SheetDescription className="sr-only">
 							Contenu de ton panier - Gere tes articles et passe commande
 						</SheetDescription>
 					</SheetHeader>
+
+					{/* Live region pour les lecteurs d'écran */}
+					<div aria-live="polite" aria-atomic="true" className="sr-only">
+						{hasItems
+							? `${totalItems} article${totalItems > 1 ? "s" : ""} dans le panier, sous-total ${formatEuro(subtotal)}`
+							: "Panier vide"}
+					</div>
 
 					{!hasItems ? (
 						<div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
@@ -134,20 +141,25 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 
 									{/* CTAs */}
 									<div className="space-y-2 pt-2">
-										<Button
-											asChild
-											size="lg"
-											className="w-full"
-											disabled={hasStockIssues || totalItems === 0}
-											onClick={close}
-										>
-											<Link href="/paiement">Passer commande</Link>
-										</Button>
+										{hasStockIssues ? (
+											<Button
+												size="lg"
+												className="w-full"
+												disabled
+												title="Ajuste ton panier pour continuer"
+											>
+												Passer commande
+											</Button>
+										) : (
+											<Button asChild size="lg" className="w-full" onClick={close}>
+												<Link href="/paiement">Passer commande</Link>
+											</Button>
+										)}
 
 										<Button
-											variant="ghost"
-											size="sm"
-											className="w-full text-sm"
+											variant="secondary"
+											size="lg"
+											className="w-full"
 											onClick={close}
 											asChild
 										>

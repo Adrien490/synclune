@@ -3,12 +3,9 @@
 import { Button } from "@/shared/components/ui/button";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { Input } from "@/shared/components/ui/input";
-import { updateCartItem } from "@/modules/cart/actions/update-cart-item";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { useUpdateCartItem } from "@/modules/cart/hooks/use-update-cart-item";
 import { Minus, Plus } from "lucide-react";
-import { useActionState, useOptimistic, useRef, useTransition } from "react";
-import { useDebouncedCallback } from "use-debounce";
+import { useOptimistic, useTransition } from "react";
 
 interface CartItemQuantitySelectorProps {
 	cartItemId: string;
@@ -20,11 +17,10 @@ interface CartItemQuantitySelectorProps {
 /**
  * Client Component pour le sélecteur de quantité d'un article du panier
  *
- * Fonctionnalités :
- * - Optimistic UI : mise à jour immédiate via useOptimistic
- * - Debounce : évite le spam d'appels serveur (300ms)
- * - ButtonGroup : UI cohérente avec hauteurs uniformes
- * - Pas de loader visible : l'UI optimiste suffit
+ * Pattern inspiré de useAddToCart :
+ * - Optimistic UI via useOptimistic dans startTransition
+ * - Pas de debounce : soumission immédiate pour lier useOptimistic à l'action
+ * - Badge navbar mis à jour via le hook useUpdateCartItem
  */
 export function CartItemQuantitySelector({
 	cartItemId,
@@ -32,36 +28,30 @@ export function CartItemQuantitySelector({
 	maxQuantity,
 	isInactive,
 }: CartItemQuantitySelectorProps) {
-	const formRef = useRef<HTMLFormElement>(null);
-	const [isTransitionPending, startTransition] = useTransition();
-	const [optimisticQuantity, setOptimisticQuantity] = useOptimistic(currentQuantity);
+	const [isPending, startTransition] = useTransition();
+	const [optimisticQuantity, setOptimisticQuantity] =
+		useOptimistic(currentQuantity);
 
-	const [, formAction, isActionPending] = useActionState(
-		withCallbacks(
-			updateCartItem,
-			createToastCallbacks({
-				showSuccessToast: false,
-			})
-		),
-		undefined
-	);
-
-	const debouncedSubmit = useDebouncedCallback(() => {
-		if (formRef.current) {
-			formRef.current.requestSubmit();
-		}
-	}, 300);
+	const { action, isPending: isActionPending } = useUpdateCartItem();
 
 	const handleQuantityChange = (newQuantity: number) => {
 		if (isNaN(newQuantity)) return;
 		const clampedQuantity = Math.max(1, Math.min(newQuantity, maxQuantity));
+		if (clampedQuantity === optimisticQuantity) return;
 
-		// Optimistic update immédiat
+		// Calculer le delta pour le badge navbar
+		const delta = clampedQuantity - optimisticQuantity;
+
+		// Créer le FormData
+		const formData = new FormData();
+		formData.set("cartItemId", cartItemId);
+		formData.set("quantity", String(clampedQuantity));
+
+		// Tout dans la même transition : optimistic UI + action
 		startTransition(() => {
 			setOptimisticQuantity(clampedQuantity);
+			action(formData, delta);
 		});
-
-		debouncedSubmit();
 	};
 
 	const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -71,22 +61,25 @@ export function CartItemQuantitySelector({
 		}
 	};
 
-	return (
-		<form ref={formRef} action={formAction}>
-			<input type="hidden" name="cartItemId" value={cartItemId} />
-			<input type="hidden" name="quantity" value={optimisticQuantity} />
+	const isLoading = isPending || isActionPending;
 
-			<ButtonGroup aria-label="Quantité">
+	return (
+		<div aria-label="Modifier la quantite">
+			<ButtonGroup aria-label="Quantite">
 				<Button
 					type="button"
 					variant="outline"
 					size="icon"
-					className="h-8 w-8"
+					className="size-11 sm:size-9"
 					onClick={() => handleQuantityChange(optimisticQuantity - 1)}
-					disabled={isInactive || optimisticQuantity <= 1}
-					aria-label="Diminuer la quantité"
+					disabled={isInactive || isLoading || optimisticQuantity <= 1}
+					aria-label={
+						optimisticQuantity <= 1
+							? "Quantite minimale atteinte"
+							: "Diminuer la quantite"
+					}
 				>
-					<Minus className="h-3 w-3" />
+					<Minus className="size-4" aria-hidden="true" />
 				</Button>
 
 				<Input
@@ -96,23 +89,30 @@ export function CartItemQuantitySelector({
 					value={optimisticQuantity}
 					onChange={(e) => handleQuantityChange(parseInt(e.target.value, 10))}
 					onBlur={handleBlur}
-					disabled={isInactive}
-					className="min-h-0 h-8 w-10 text-center text-sm px-0 py-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-					aria-label="Quantité"
+					disabled={isInactive || isLoading}
+					className="min-h-0 h-11 sm:h-9 w-12 sm:w-11 text-center text-base px-0 py-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+					aria-label={`Quantite, entre 1 et ${maxQuantity}`}
+					aria-valuemin={1}
+					aria-valuemax={maxQuantity}
+					aria-valuenow={optimisticQuantity}
 				/>
 
 				<Button
 					type="button"
 					variant="outline"
 					size="icon"
-					className="h-8 w-8"
+					className="size-11 sm:size-9"
 					onClick={() => handleQuantityChange(optimisticQuantity + 1)}
-					disabled={isInactive || optimisticQuantity >= maxQuantity}
-					aria-label="Augmenter la quantité"
+					disabled={isInactive || isLoading || optimisticQuantity >= maxQuantity}
+					aria-label={
+						optimisticQuantity >= maxQuantity
+							? "Quantite maximale atteinte"
+							: "Augmenter la quantite"
+					}
 				>
-					<Plus className="h-3 w-3" />
+					<Plus className="size-4" aria-hidden="true" />
 				</Button>
 			</ButtonGroup>
-		</form>
+		</div>
 	);
 }

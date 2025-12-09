@@ -9,7 +9,7 @@ import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useRef } from "react";
+import { Suspense, useRef, useState, useEffect } from "react";
 import { buildGallery } from "@/modules/media/utils/build-gallery";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
 import { GalleryMediaRenderer } from "@/modules/media/components/gallery-media-renderer";
@@ -84,6 +84,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Conversion des médias en slides pour la lightbox (images + vidéos)
 	// Génère les URLs Next.js optimisées pour les images
 	// Utilise le format vidéo natif pour les vidéos
+	// Respecte prefers-reduced-motion pour désactiver l'autoplay
 	const lightboxSlides: Slide[] = safeImages.map((media) => {
 		if (media.mediaType === "VIDEO") {
 			return {
@@ -95,9 +96,10 @@ function GalleryContent({ product, title }: GalleryProps) {
 					},
 				],
 				poster: media.thumbnailUrl || media.thumbnailSmallUrl || undefined,
-				autoPlay: true,
+				// Désactiver autoplay si l'utilisateur préfère réduire les animations
+				autoPlay: !prefersReducedMotion,
 				muted: true,
-				loop: true,
+				loop: !prefersReducedMotion,
 				playsInline: true,
 			};
 		}
@@ -143,6 +145,29 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	// Hook: Gestion erreurs média avec retry
 	const { handleMediaError, hasError, retryMedia } = useMediaErrors();
+
+	// Swipe hint pour mobile - affiché une seule fois
+	const [showSwipeHint, setShowSwipeHint] = useState(false);
+
+	useEffect(() => {
+		// Ne montrer que sur mobile, avec plusieurs images, et si pas déjà vu
+		if (safeImages.length <= 1 || prefersReducedMotion) return;
+
+		const hasSeenHint = localStorage.getItem("gallery-swipe-hint-seen");
+		if (!hasSeenHint) {
+			// Vérifier si on est sur mobile
+			const isMobile = window.matchMedia("(max-width: 1023px)").matches;
+			if (isMobile) {
+				setShowSwipeHint(true);
+				// Masquer après 3 secondes et marquer comme vu
+				const timer = setTimeout(() => {
+					setShowSwipeHint(false);
+					localStorage.setItem("gallery-swipe-hint-seen", "true");
+				}, 3000);
+				return () => clearTimeout(timer);
+			}
+		}
+	}, [safeImages.length, prefersReducedMotion]);
 
 	// Handlers mémorisés pour les boutons navigation (évite re-renders)
 	const handlePrev = (e: React.MouseEvent) => {
@@ -265,6 +290,16 @@ function GalleryContent({ product, title }: GalleryProps) {
 								</div>
 							)}
 
+							{/* Swipe hint - mobile uniquement, affiché une fois */}
+							{showSwipeHint && (
+								<div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 lg:hidden animate-bounce">
+									<div className="bg-black/70 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center gap-2">
+										<span className="animate-[swipe-hint_1.5s_ease-in-out_infinite]">👆</span>
+										<span>Glisse pour voir plus</span>
+									</div>
+								</div>
+							)}
+
 							{/* Badge zoom (images uniquement) */}
 							{current.mediaType === "IMAGE" && (
 								<div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -308,39 +343,41 @@ function GalleryContent({ product, title }: GalleryProps) {
 								</motion.div>
 							</AnimatePresence>
 
-							{/* Contrôles de navigation */}
+							{/* Contrôles de navigation - Touch targets 48px sur mobile (WCAG 2.5.5) */}
 							{safeImages.length > 1 && (
 								<>
 									<Button
 										variant="secondary"
 										size="sm"
 										className={cn(
-											"absolute left-1 sm:left-4 top-1/2 -translate-y-1/2 z-10",
+											"absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10",
 											"opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
 											"transition-all duration-300",
-											"w-11 h-11 sm:w-10 sm:h-10 p-0",
-											"hover:scale-105 active:scale-95"
+											"w-12 h-12 sm:w-10 sm:h-10 p-0", // 48px sur mobile
+											"hover:scale-105 active:scale-95",
+											"shadow-md backdrop-blur-sm" // Meilleure visibilité
 										)}
 										onClick={handlePrev}
 										aria-label="Image précédente"
 									>
-										<ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+										<ChevronLeft className="w-5 h-5" />
 									</Button>
 
 									<Button
 										variant="secondary"
 										size="sm"
 										className={cn(
-											"absolute right-1 sm:right-4 top-1/2 -translate-y-1/2 z-10",
+											"absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10",
 											"opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
 											"transition-all duration-300",
-											"w-11 h-11 sm:w-10 sm:h-10 p-0",
-											"hover:scale-105 active:scale-95"
+											"w-12 h-12 sm:w-10 sm:h-10 p-0", // 48px sur mobile
+											"hover:scale-105 active:scale-95",
+											"shadow-md backdrop-blur-sm" // Meilleure visibilité
 										)}
 										onClick={handleNext}
 										aria-label="Image suivante"
 									>
-										<ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+										<ChevronRight className="w-5 h-5" />
 									</Button>
 								</>
 							)}
@@ -379,14 +416,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 							)}
 
 							{/* Dots indicator - Navigation rapide visuelle */}
-							<div className="flex justify-center gap-1.5 mt-3" role="tablist" aria-label="Navigation galerie">
+							<div className="flex justify-center gap-1.5 mt-3" role="group" aria-label="Navigation galerie">
 								{safeImages.map((_, i) => (
 									<button
 										key={i}
+										type="button"
 										onClick={() => navigateToIndex(i)}
-										role="tab"
-										aria-selected={i === optimisticIndex}
-										aria-label={`Image ${i + 1}`}
+										aria-current={i === optimisticIndex ? "true" : undefined}
+										aria-label={`Aller à l'image ${i + 1} sur ${safeImages.length}`}
 										className={cn(
 											"h-2 rounded-full transition-all duration-200",
 											i === optimisticIndex

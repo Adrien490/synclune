@@ -64,7 +64,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							id="collections-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
-							Je rajoute une petite touche personnelle à chaque création 😊
+							Je rajoute une petite touche personnelle à chaque création
 						</p>
 					</Fade>
 				</header>
@@ -84,7 +84,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 								<div
 									key={collection.id}
 									data-index={index}
-									className="shrink-0 w-[clamp(220px,75vw,280px)] snap-center"
+									className="shrink-0 w-[clamp(200px,72vw,280px)] snap-center"
 									role="listitem"
 								>
 									<CollectionCard

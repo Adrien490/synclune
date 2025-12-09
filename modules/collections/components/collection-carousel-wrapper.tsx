@@ -164,7 +164,7 @@ export function CollectionCarouselWrapper({
 						className={cn(
 							"absolute left-4 top-[40%] -translate-y-1/2 z-20",
 							"hidden md:flex",
-							"opacity-0 group-hover/carousel:opacity-100 group-focus-within/carousel:opacity-100",
+							"opacity-30 group-hover/carousel:opacity-100 group-focus-within/carousel:opacity-100",
 							"rounded-full bg-card/95 backdrop-blur-sm",
 							"border border-primary/20 shadow-lg hover:shadow-xl",
 							"text-foreground/70 hover:bg-primary/10 hover:text-primary hover:border-primary/40 hover:scale-105",
@@ -189,7 +189,7 @@ export function CollectionCarouselWrapper({
 						className={cn(
 							"absolute right-4 top-[40%] -translate-y-1/2 z-20",
 							"hidden md:flex",
-							"opacity-0 group-hover/carousel:opacity-100 group-focus-within/carousel:opacity-100",
+							"opacity-30 group-hover/carousel:opacity-100 group-focus-within/carousel:opacity-100",
 							"rounded-full bg-card/95 backdrop-blur-sm",
 							"border border-primary/20 shadow-lg hover:shadow-xl",
 							"text-foreground/70 hover:bg-primary/10 hover:text-primary hover:border-primary/40 hover:scale-105",

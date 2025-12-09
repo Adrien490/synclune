@@ -3,6 +3,7 @@
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant can-hover (@media (hover: hover) and (pointer: fine));
 
 html {
 	scroll-behavior: smooth;
@@ -326,9 +327,10 @@ textarea {
 		);
 	}
 
-	/* Masque pour carousel avec fondu sur les bords - désactivé sur mobile pour ne pas couper le contenu */
+	/* Masque pour carousel avec fondu sur les bords */
+	/* Mobile: léger fondu à droite pour indiquer qu'il y a plus de contenu */
 	.mask-carousel-edges {
-		mask-image: none;
+		mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
 	}
 
 	@media (min-width: 640px) {

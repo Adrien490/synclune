@@ -110,6 +110,14 @@ export default async function ProductPage({
 
 	return (
 		<div className="min-h-screen relative">
+			{/* Skip link pour accessibilité - permet de passer directement au contenu */}
+			<a
+				href="#product-main"
+				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+			>
+				Aller au contenu principal
+			</a>
+
 			{/* Structured Data JSON-LD pour SEO */}
 			<script
 				type="application/ld+json"
@@ -123,13 +131,13 @@ export default async function ProductPage({
 				<PageHeader
 					title={product.title}
 					breadcrumbs={breadcrumbs}
-					className="hidden sm:block"
 				/>
 
-				{/* Contenu principal - pt-20 sur mobile pour compenser l'absence de PageHeader, sm:pt-12 lg:pt-16 reprend le spacing normal */}
-				<div className="bg-background pt-20 pb-12 sm:py-12 lg:py-16">
+				{/* Contenu principal */}
+				<div className="bg-background py-6 sm:py-12 lg:py-16">
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article
+							id="product-main"
 							itemScope
 							itemType="https://schema.org/Product"
 							className="space-y-12"
@@ -142,8 +150,7 @@ export default async function ProductPage({
 								</section>
 
 								{/* Informations et configurateur scrollables */}
-							{/* pb-24 sur mobile pour compenser la barre fixe "Ajouter au panier" */}
-								<section className="space-y-6 lg:min-h-screen pb-24 lg:pb-0">
+								<section className="space-y-6 lg:min-h-screen">
 									{/* 1. ProductInfo - Infos de base avec bouton wishlist dynamique */}
 									<ProductInfo
 										product={product}

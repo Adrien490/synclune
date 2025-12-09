@@ -43,7 +43,7 @@ export function ProductCharacteristics({
 		: null;
 
 	return (
-		<Card role="region" aria-labelledby="product-characteristics-title">
+		<Card role="region" aria-labelledby="product-characteristics-title" className="bg-muted/30 border-transparent">
 			<CardHeader>
 				<h2
 					id="product-characteristics-title"

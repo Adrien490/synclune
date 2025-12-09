@@ -32,12 +32,6 @@ export const SHIPPING_COST = SHIPPING_RATES.FR.amount; // 6,00 €
  */
 export const TAX_RATE = 0.2;
 
-/**
- * Seuil pour la livraison gratuite en centimes
- * @constant 5000 = 50,00 €
- */
-export const FREE_SHIPPING_THRESHOLD = 5000; // 50€
-
 // Re-exporter les types et constantes de colissimo-rates pour faciliter les imports
 export { SHIPPING_RATES, ALLOWED_SHIPPING_COUNTRIES, type ShippingRate } from "@/modules/orders/constants/colissimo-rates";
 export type { AllowedShippingCountry } from "@/modules/orders/constants/colissimo-rates";

@@ -71,11 +71,17 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 				<CardContent className="pt-6 space-y-4">
 					<div className="flex items-baseline gap-3 flex-wrap">
 						{showFromPrefix && (
-							<span className="text-sm text-muted-foreground" aria-label="Prix minimum">À partir de</span>
+							<Badge
+								variant="secondary"
+								className="text-xs font-medium px-2 py-0.5"
+								aria-label="Prix minimum"
+							>
+								À partir de
+							</Badge>
 						)}
 						<p
 							id="product-price-title"
-							className="h3 text-muted-foreground"
+							className="h3 text-foreground"
 							aria-label={priceInfo.minPrice > 0 ? `Prix à partir de ${formatEuro(priceInfo.minPrice)} TTC` : "Prix non disponible"}
 						>
 							{priceInfo.minPrice > 0 ? formatEuro(priceInfo.minPrice) : "—"}
@@ -107,6 +113,7 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 			itemScope
 			itemType="https://schema.org/Offer"
 			itemProp="offers"
+			className="border-primary/10 shadow-sm"
 		>
 			{/* Microdata Schema.org cachées */}
 			<meta itemProp="priceCurrency" content="EUR" />
@@ -161,12 +168,12 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 					{stockStatus === "low_stock" && (
 						<Badge
 							variant="outline"
-							className="text-xs/5 tracking-normal antialiased gap-1.5 border-amber-500 text-amber-600 bg-amber-50"
+							className="text-xs/5 tracking-normal antialiased gap-1.5 border-orange-500 text-orange-700 bg-orange-50 dark:bg-orange-950/50 dark:text-orange-400 dark:border-orange-600 animate-pulse"
 							role="status"
-							aria-label={`Plus que ${inventory} en stock`}
+							aria-label={`Attention, plus que ${inventory} exemplaires en stock. Dépêchez-vous !`}
 						>
 							<AlertTriangle className="w-3 h-3" aria-hidden="true" />
-							Plus que {inventory} en stock
+							<span className="font-semibold">Plus que {inventory}</span> en stock !
 						</Badge>
 					)}
 					{stockStatus === "out_of_stock" && (

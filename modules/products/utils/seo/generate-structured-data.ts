@@ -87,6 +87,9 @@ export function generateStructuredData(
 		],
 	};
 
+	// MPN (Manufacturer Part Number) - utilise le code SKU comme référence fabricant
+	const skuCode = selectedSku?.sku || product.skus?.[0]?.sku;
+
 	const productData = {
 		"@type": "Product",
 		"@id": `${SITE_URL}/creations/${product.slug}#product`,
@@ -94,7 +97,9 @@ export function generateStructuredData(
 		description:
 			product.description || `${product.title} - Bijou artisanal fait main`,
 		image: allImages.length > 0 ? allImages : [mainImage],
-		sku: selectedSku?.sku || product.skus?.[0]?.sku,
+		sku: skuCode,
+		// MPN = Manufacturer Part Number (code produit du fabricant)
+		...(skuCode && { mpn: skuCode }),
 		brand: {
 			"@type": "Brand",
 			name: "Synclune",

@@ -3,6 +3,7 @@
 import { Badge } from "@/shared/components/ui/badge";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { cn } from "@/shared/utils/cn";
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
 import type { CartItem } from "../types/cart.types";
@@ -39,16 +40,19 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 	const primaryImage = item.sku.images[0];
 
 	return (
-		<div
-			className={`flex gap-3 p-3 border rounded-lg ${
+		<article
+			className={cn(
+				"flex gap-3 p-3 border rounded-lg",
 				hasIssue ? "border-destructive/50 bg-destructive/5" : "border-border"
-			}`}
+			)}
+			aria-label={`${item.sku.product.title}, quantité ${item.quantity}`}
 		>
 			{/* Image */}
 			<Link
 				href={`/creations/${item.sku.product.slug}`}
 				onClick={onClose}
-				className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden bg-muted"
+				className="relative size-24 shrink-0 rounded-md overflow-hidden bg-muted"
+				aria-label={`Voir ${item.sku.product.title}`}
 			>
 				{primaryImage ? (
 					primaryImage.mediaType === "VIDEO" ? (
@@ -58,14 +62,20 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 							loop
 							playsInline
 							preload="none"
+							poster={primaryImage.thumbnailUrl ?? undefined}
 							aria-label={
-								primaryImage.altText || `Video ${item.sku.product.title}`
+								primaryImage.altText || `Video du produit ${item.sku.product.title}`
 							}
+							aria-describedby={`video-desc-${item.id}`}
 						>
 							<source
 								src={primaryImage.url}
 								type={getVideoMimeType(primaryImage.url)}
 							/>
+							<p id={`video-desc-${item.id}`} className="sr-only">
+								Video de presentation du bijou {item.sku.product.title}. La video
+								est en lecture automatique et sans son.
+							</p>
 						</video>
 					) : (
 						<Image
@@ -73,7 +83,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 							alt={primaryImage.altText || item.sku.product.title}
 							fill
 							className="object-cover"
-							sizes="80px"
+							sizes="96px"
 							quality={80}
 							placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={primaryImage.blurDataUrl ?? undefined}
@@ -93,35 +103,49 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					href={`/creations/${item.sku.product.slug}`}
 					onClick={onClose}
 					className="font-medium text-sm hover:text-foreground transition-colors line-clamp-1 block"
+					aria-label={`Voir ${item.sku.product.title}`}
 				>
 					{item.sku.product.title}
 				</Link>
 
 				{/* Attributs */}
-				<div className="text-xs text-muted-foreground">
-					{[
-						item.sku.color && (
-							<span key="color" className="inline-flex items-center gap-1">
+				<dl className="flex flex-wrap gap-x-1 text-xs text-muted-foreground">
+					{item.sku.color && (
+						<div className="inline-flex items-center gap-1">
+							<dt className="sr-only">Couleur</dt>
+							<dd className="inline-flex items-center gap-1">
 								<span
 									className="w-2.5 h-2.5 rounded-full border border-border inline-block"
 									style={{ backgroundColor: item.sku.color.hex }}
+									aria-hidden="true"
 								/>
 								{item.sku.color.name}
-							</span>
-						),
-						item.sku.material && (
-							<span key="material">{item.sku.material.name}</span>
-						),
-						item.sku.size && <span key="size">{item.sku.size}</span>,
-					]
-						.filter(Boolean)
-						.map((el, i, arr) => (
-							<span key={i}>
-								{el}
-								{i < arr.length - 1 && " / "}
-							</span>
-						))}
-				</div>
+							</dd>
+						</div>
+					)}
+					{item.sku.material && (
+						<div className="inline-flex items-center">
+							{item.sku.color && (
+								<span aria-hidden="true" className="mr-1">
+									/
+								</span>
+							)}
+							<dt className="sr-only">Matiere</dt>
+							<dd>{item.sku.material.name}</dd>
+						</div>
+					)}
+					{item.sku.size && (
+						<div className="inline-flex items-center">
+							{(item.sku.color || item.sku.material) && (
+								<span aria-hidden="true" className="mr-1">
+									/
+								</span>
+							)}
+							<dt className="sr-only">Taille</dt>
+							<dd>{item.sku.size}</dd>
+						</div>
+					)}
+				</dl>
 
 				{/* Prix */}
 				<div className="flex items-center gap-2">
@@ -130,15 +154,23 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					</span>
 					{hasDiscount && (
 						<>
-							<span className="text-xs text-muted-foreground line-through font-mono">
+							<span
+								className="text-xs text-muted-foreground line-through font-mono"
+								aria-hidden="true"
+							>
 								{formatEuro(item.sku.compareAtPrice!)}
 							</span>
 							<Badge
 								variant="secondary"
 								className="text-[10px] px-1 py-0 bg-accent/20"
+								aria-label={`Reduction de ${discountPercent} pourcent`}
 							>
 								-{discountPercent}%
 							</Badge>
+							<span className="sr-only">
+								Prix reduit de {formatEuro(item.sku.compareAtPrice!)} a{" "}
+								{formatEuro(item.priceAtAdd)}
+							</span>
 						</>
 					)}
 				</div>
@@ -161,26 +193,24 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 			</div>
 
 			{/* Actions */}
-			<div className="flex flex-col items-end justify-between gap-1">
+			<div className="flex flex-col items-end gap-2">
 				<CartItemRemoveButton
 					cartItemId={item.id}
 					itemName={item.sku.product.title}
 				/>
 
-				<CartItemQuantitySelector
-					cartItemId={item.id}
-					currentQuantity={item.quantity}
-					maxQuantity={item.sku.inventory}
-					isInactive={isInactive}
-				/>
-
-				<div className="text-right">
-					<span className="text-[10px] text-muted-foreground block">Sous-total</span>
+				<div className="mt-auto flex flex-col items-end gap-1.5">
+					<CartItemQuantitySelector
+						cartItemId={item.id}
+						currentQuantity={item.quantity}
+						maxQuantity={item.sku.inventory}
+						isInactive={isInactive}
+					/>
 					<span className="font-mono font-semibold text-sm">
 						{formatEuro(subtotal)}
 					</span>
 				</div>
 			</div>
-		</div>
+		</article>
 	);
 }

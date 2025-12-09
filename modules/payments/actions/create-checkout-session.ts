@@ -9,7 +9,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/cache";
 import {
-	getFinalShippingCost,
+	calculateShipping,
 	calculateTaxAmount,
 } from "@/modules/orders/utils/shipping.utils";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -345,7 +345,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			);
 
 			// 8c. Calculer les frais de livraison
-			const shippingCost = getFinalShippingCost(subtotal);
+			const shippingCost = calculateShipping();
 
 			// 8d. 🔴 DISCOUNT ATOMIQUE : Valider et appliquer le code promo dans la transaction
 			let discountAmount = 0;

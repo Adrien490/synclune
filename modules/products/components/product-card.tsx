@@ -79,9 +79,9 @@ export function ProductCard({
 				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent gap-4",
 				// Transition optimisée avec cubic-bezier pour fluidité
 				"transition-all duration-300 ease-out",
-				// Border, shadow et scale au hover
-				"shadow-sm motion-safe:hover:border-primary/30 motion-safe:hover:shadow-xl motion-safe:hover:shadow-primary/15",
-				"motion-safe:hover:-translate-y-1.5 motion-safe:hover:scale-[1.01] will-change-transform"
+				// Border, shadow et scale au hover (can-hover pour desktop uniquement)
+				"shadow-sm can-hover:hover:border-primary/30 can-hover:hover:shadow-xl can-hover:hover:shadow-primary/15",
+				"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01] will-change-transform"
 			)}
 			itemScope
 			itemType="https://schema.org/Product"
