@@ -45,14 +45,6 @@ export function ProductInfo({
 
 			{/* Labels et badges + bouton wishlist sur desktop */}
 			<div className="flex flex-wrap items-center gap-2">
-				{/* Bouton wishlist visible uniquement sur desktop */}
-				<div className="hidden sm:block">
-					<WishlistButtonDynamic
-						product={product}
-						defaultSku={defaultSku}
-						initialIsInWishlist={isInWishlist ?? false}
-					/>
-				</div>
 				{product.type && (
 					<Badge
 						variant="outline"
@@ -78,6 +70,15 @@ export function ProductInfo({
 						</Badge>
 					</Link>
 				))}
+
+				{/* Bouton wishlist visible uniquement sur desktop - à droite des badges */}
+				<div className="hidden sm:block">
+					<WishlistButtonDynamic
+						product={product}
+						defaultSku={defaultSku}
+						initialIsInWishlist={isInWishlist ?? false}
+					/>
+				</div>
 			</div>
 
 			{/* Description */}

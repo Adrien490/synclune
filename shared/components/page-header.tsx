@@ -165,118 +165,124 @@ export function PageHeader({
 							!navigation && "mb-4 sm:mb-6"
 						)}
 					>
-						<div className="min-w-0 flex-1 space-y-2">
-							{/* Breadcrumb - Version mobile : Bouton retour compact */}
+						<div className="min-w-0 flex-1">
+							{/* Mobile avec breadcrumbs : Bouton retour + Titre inline */}
 							{breadcrumbs.length > 0 && (
-								<>
-									{/* Mobile : Bouton retour icône seule (<640px) */}
-									<nav
-										aria-label="Fil d'Ariane"
-										className="sm:hidden"
+								<div className="flex items-center gap-1 sm:hidden">
+									<Link
+										href={
+											breadcrumbs.length > 1
+												? breadcrumbs[breadcrumbs.length - 2].href
+												: "/"
+										}
+										className="shrink-0 inline-flex items-center justify-center size-9 -ml-2 text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+										aria-label={`Retour vers ${
+											breadcrumbs.length > 1
+												? breadcrumbs[breadcrumbs.length - 2].label
+												: "Accueil"
+										}`}
 									>
-										<Link
-											href={
-												breadcrumbs.length > 1
-													? breadcrumbs[breadcrumbs.length - 2].href
-													: "/"
-											}
-											className="inline-flex items-center justify-center size-10 -ml-2 text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
-										>
-											<ChevronLeft className="size-5" />
-											<span className="sr-only">
-												Retour vers{" "}
-												{breadcrumbs.length > 1
-													? breadcrumbs[breadcrumbs.length - 2].label
-													: "Accueil"}
-											</span>
-										</Link>
-									</nav>
+										<ChevronLeft className="size-5" />
+									</Link>
+									{titleSlot ?? (
+										<h1 className="text-2xl font-display font-semibold text-foreground tracking-normal truncate">
+											{title}
+										</h1>
+									)}
+								</div>
+							)}
 
-									{/* Desktop : Breadcrumb complet avec schema.org (≥640px) */}
-									<nav
-										aria-label="Fil d'Ariane"
-										className="hidden sm:block text-sm leading-normal text-muted-foreground"
-										itemScope
-										itemType="https://schema.org/BreadcrumbList"
-									>
-										<ol className="flex items-center gap-2 list-none p-0 m-0">
-											{/* Accueil (position 1) */}
+							{/* Desktop : Breadcrumb complet avec schema.org (≥640px) */}
+							{breadcrumbs.length > 0 && (
+								<nav
+									aria-label="Fil d'Ariane"
+									className="hidden sm:block text-sm leading-normal text-muted-foreground mb-2"
+									itemScope
+									itemType="https://schema.org/BreadcrumbList"
+								>
+									<ol className="flex items-center gap-2 list-none p-0 m-0">
+										{/* Accueil (position 1) */}
+										<li
+											itemProp="itemListElement"
+											itemScope
+											itemType="https://schema.org/ListItem"
+										>
+											<Link
+												href="/"
+												className="hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+												itemProp="item"
+											>
+												<span itemProp="name">Accueil</span>
+											</Link>
+											<meta itemProp="position" content="1" />
+										</li>
+
+										{/* Breadcrumbs dynamiques (position 2+) */}
+										{breadcrumbs.map((item, index) => (
 											<li
+												key={`${item.href}-${index}`}
+												className="flex items-center gap-2"
 												itemProp="itemListElement"
 												itemScope
 												itemType="https://schema.org/ListItem"
 											>
-												<Link
-													href="/"
-													className="hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
-													itemProp="item"
-												>
-													<span itemProp="name">Accueil</span>
-												</Link>
-												<meta itemProp="position" content="1" />
+												<span aria-hidden="true">/</span>
+												{index === breadcrumbs.length - 1 ? (
+													// Dernier élément = page active (pas de lien, mais schema.org name)
+													<>
+														<span
+															className="text-foreground font-medium"
+															aria-current="page"
+															itemProp="name"
+														>
+															{item.label}
+														</span>
+														<meta
+															itemProp="position"
+															content={String(index + 2)}
+														/>
+													</>
+												) : (
+													// Éléments intermédiaires = liens avec schema.org
+													<>
+														<Link
+															href={item.href}
+															className="hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+															itemProp="item"
+														>
+															<span itemProp="name">{item.label}</span>
+														</Link>
+														<meta
+															itemProp="position"
+															content={String(index + 2)}
+														/>
+													</>
+												)}
 											</li>
-
-											{/* Breadcrumbs dynamiques (position 2+) */}
-											{breadcrumbs.map((item, index) => (
-												<li
-													key={`${item.href}-${index}`}
-													className="flex items-center gap-2"
-													itemProp="itemListElement"
-													itemScope
-													itemType="https://schema.org/ListItem"
-												>
-													<span aria-hidden="true">/</span>
-													{index === breadcrumbs.length - 1 ? (
-														// Dernier élément = page active (pas de lien, mais schema.org name)
-														<>
-															<span
-																className="text-foreground font-medium"
-																aria-current="page"
-																itemProp="name"
-															>
-																{item.label}
-															</span>
-															<meta
-																itemProp="position"
-																content={String(index + 2)}
-															/>
-														</>
-													) : (
-														// Éléments intermédiaires = liens avec schema.org
-														<>
-															<Link
-																href={item.href}
-																className="hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
-																itemProp="item"
-															>
-																<span itemProp="name">{item.label}</span>
-															</Link>
-															<meta
-																itemProp="position"
-																content={String(index + 2)}
-															/>
-														</>
-													)}
-												</li>
-											))}
-										</ol>
-									</nav>
-								</>
+										))}
+									</ol>
+								</nav>
 							)}
 
-							{/* Titre */}
-							{titleSlot ?? (
-								<h1
-									id="page-title"
-									className="text-2xl sm:text-3xl font-display font-semibold text-foreground tracking-normal break-words"
-								>
-									{title}
-								</h1>
-							)}
+							{/* Titre - Desktop ou Mobile sans breadcrumbs */}
+							<div
+								className={cn(
+									breadcrumbs.length > 0 && "hidden sm:block"
+								)}
+							>
+								{titleSlot ?? (
+									<h1
+										id="page-title"
+										className="text-2xl sm:text-3xl font-display font-semibold text-foreground tracking-normal break-words"
+									>
+										{title}
+									</h1>
+								)}
+							</div>
 
-							{/* Description optionnelle */}
+							{/* Description optionnelle - espacement réduit sur mobile */}
 							{description && (
-								<p className="text-base text-muted-foreground max-w-2xl break-words line-clamp-3 sm:line-clamp-none">
+								<p className="mt-1 sm:mt-2 text-base text-muted-foreground max-w-2xl break-words line-clamp-3 sm:line-clamp-none">
 									{description}
 								</p>
 							)}
