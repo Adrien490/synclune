@@ -48,7 +48,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 			<Link
 				href={`/creations/${item.sku.product.slug}`}
 				onClick={onClose}
-				className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden bg-muted"
+				className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden bg-muted"
 			>
 				{primaryImage ? (
 					primaryImage.mediaType === "VIDEO" ? (
@@ -73,7 +73,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 							alt={primaryImage.altText || item.sku.product.title}
 							fill
 							className="object-cover"
-							sizes="64px"
+							sizes="80px"
 							quality={80}
 							placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={primaryImage.blurDataUrl ?? undefined}
@@ -174,9 +174,12 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					isInactive={isInactive}
 				/>
 
-				<span className="font-mono font-semibold text-sm">
-					{formatEuro(subtotal)}
-				</span>
+				<div className="text-right">
+					<span className="text-[10px] text-muted-foreground block">Sous-total</span>
+					<span className="font-mono font-semibold text-sm">
+						{formatEuro(subtotal)}
+					</span>
+				</div>
 			</div>
 		</div>
 	);

@@ -1,13 +1,8 @@
 "use client";
 
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/shared/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Minus, Plus, Loader2 } from "lucide-react";
 import { useCartItemQuantityForm } from "../hooks/use-cart-item-quantity-form";
 
 interface CartItemQuantitySelectorProps {
@@ -24,6 +19,7 @@ interface CartItemQuantitySelectorProps {
  * - Optimistic UI : mise à jour immédiate via TanStack Form
  * - Debounce : évite le spam d'appels serveur (300ms)
  * - Synchronisation : se met à jour quand la prop change (après succès serveur)
+ * - Boutons +/- avec input numérique pour une meilleure UX
  */
 export function CartItemQuantitySelector({
 	cartItemId,
@@ -37,59 +33,78 @@ export function CartItemQuantitySelector({
 			currentQuantity,
 		});
 
-	// Génération directe des options de quantité
-	const quantityOptions = Array.from({ length: Math.min(99, maxQuantity) }, (_, i) => i + 1);
+	const handleQuantityChange = (newQuantity: number) => {
+		if (isNaN(newQuantity)) return;
+		const clampedQuantity = Math.max(1, Math.min(newQuantity, maxQuantity));
+		form.setFieldValue("quantity", clampedQuantity);
+		debouncedSubmit();
+	};
 
 	return (
 		<form ref={formRef} action={action}>
-			{/* Hidden field for cartItemId */}
 			<input type="hidden" name="cartItemId" value={cartItemId} />
 
-			<div className="flex items-center gap-2">
-				<label
-					htmlFor={`qty-${cartItemId}`}
-					className="text-sm text-muted-foreground font-medium"
-				>
-					Qté
-				</label>
+			<form.Subscribe selector={(state) => [state.values.quantity]}>
+				{([quantity]) => (
+					<>
+						<input type="hidden" name="quantity" value={quantity} />
 
-				{/* Subscribe to quantity field to render Select */}
-				<form.Subscribe selector={(state) => [state.values.quantity]}>
-					{([quantity]) => (
-						<Select
-							name="quantity"
-							value={quantity.toString()}
-							onValueChange={(value) => {
-								const newQuantity = parseInt(value, 10);
-								// Update form state (optimistic UI)
-								form.setFieldValue("quantity", newQuantity);
-								// Trigger debounced submit
-								debouncedSubmit();
-							}}
-							disabled={isPending || isInactive}
+						<div
+							className="flex items-center gap-1"
+							role="group"
+							aria-label="Quantité"
 						>
-							<SelectTrigger
-								id={`qty-${cartItemId}`}
-								className="w-24 sm:w-20 h-11"
+							<Button
+								type="button"
+								variant="outline"
+								size="icon"
+								className="h-8 w-8"
+								onClick={() => handleQuantityChange(quantity - 1)}
+								disabled={isPending || isInactive || quantity <= 1}
+								aria-label="Diminuer la quantité"
 							>
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{quantityOptions.map((qty) => (
-									<SelectItem key={qty} value={qty.toString()}>
-										{qty}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					)}
-				</form.Subscribe>
+								<Minus className="h-3 w-3" />
+							</Button>
 
-				{/* Spinner visible pendant le chargement */}
-				{isPending && (
-					<Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+							<Input
+								type="number"
+								min={1}
+								max={maxQuantity}
+								value={quantity}
+								onChange={(e) =>
+									handleQuantityChange(parseInt(e.target.value, 10))
+								}
+								onBlur={(e) => {
+									// Assure une valeur valide au blur
+									const value = parseInt(e.target.value, 10);
+									if (isNaN(value) || value < 1) {
+										form.setFieldValue("quantity", 1);
+									}
+								}}
+								disabled={isPending || isInactive}
+								className="h-8 w-12 text-center text-sm px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								aria-label="Quantité"
+							/>
+
+							<Button
+								type="button"
+								variant="outline"
+								size="icon"
+								className="h-8 w-8"
+								onClick={() => handleQuantityChange(quantity + 1)}
+								disabled={isPending || isInactive || quantity >= maxQuantity}
+								aria-label="Augmenter la quantité"
+							>
+								<Plus className="h-3 w-3" />
+							</Button>
+
+							{isPending && (
+								<Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-1" />
+							)}
+						</div>
+					</>
 				)}
-			</div>
+			</form.Subscribe>
 		</form>
 	);
 }

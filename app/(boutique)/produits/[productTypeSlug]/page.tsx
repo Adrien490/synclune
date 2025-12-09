@@ -127,7 +127,7 @@ export default async function BijouxPage({
 		name: productType.label,
 		description:
 			productType.description ||
-			`Découvrez nos ${productType.label.toLowerCase()} artisanaux faits main à Nantes`,
+			`Découvrez nos ${productType.label.toLowerCase()} faits main à Nantes`,
 		url: `https://synclune.fr/produits/${productTypeSlug}`,
 		breadcrumb: {
 			"@type": "BreadcrumbList",

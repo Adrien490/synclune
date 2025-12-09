@@ -2,7 +2,6 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
-import { calculateShipping } from "@/modules/orders/utils/shipping.utils";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag, TruckIcon } from "lucide-react";
 import Link from "next/link";
@@ -24,8 +23,7 @@ export function CartSheetSummary({ cart, onClose }: CartSheetSummaryProps) {
 		return sum + item.priceAtAdd * item.quantity;
 	}, 0);
 
-	const shipping = calculateShipping();
-	const total = subtotal + shipping;
+	const total = subtotal;
 
 	const itemsWithIssues = cart.items.filter(
 		(item) =>
@@ -52,7 +50,9 @@ export function CartSheetSummary({ cart, onClose }: CartSheetSummaryProps) {
 						<TruckIcon className="w-4 h-4" />
 						Livraison
 					</span>
-					<span className="font-mono font-medium">{formatEuro(shipping)}</span>
+					<span className="text-sm text-muted-foreground">
+						Estimé au paiement
+					</span>
 				</div>
 			</div>
 
@@ -60,7 +60,7 @@ export function CartSheetSummary({ cart, onClose }: CartSheetSummaryProps) {
 
 			{/* Total */}
 			<div className="flex justify-between items-center">
-				<span className="font-semibold">Total</span>
+				<span className="font-semibold">Sous-total articles</span>
 				<span className="font-mono font-bold text-lg">{formatEuro(total)}</span>
 			</div>
 

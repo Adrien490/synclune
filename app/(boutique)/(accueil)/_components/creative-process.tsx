@@ -25,9 +25,9 @@ interface ProcessStep {
 const processSteps: ProcessStep[] = [
 	{
 		icon: <Lightbulb className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
-		title: "L'inspiration",
+		title: "D'abord, une idée",
 		description:
-			"Fan de Pokémon, Van Gogh et Twilight... mes créations s'en inspirent ! L'idée naît souvent devant un film ou une belle couleur.",
+			"L'idée naît souvent de mon quotidien. J'essaye de ne pas me forcer à avoir une idée, mais plutôt laisser l'inspiration venir d'elle même !",
 		color: STEP_COLORS.secondary,
 		iconHoverClass: "group-hover:[&_svg]:text-yellow-500 group-hover:[&_svg]:drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]",
 	},
@@ -51,7 +51,7 @@ const processSteps: ProcessStep[] = [
 		icon: <CheckCircle className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "La touche finale",
 		description:
-			"Je polis, je vérifie chaque détail... Bon, je suis un peu perfectionniste ! Et voilà, ton bijou est prêt.",
+			"Je polis, je vérifie chaque détail... (Bon, je suis un peu perfectionniste !) Et voilà, c'est prêt !",
 		color: STEP_COLORS.accent,
 		iconHoverClass: "group-hover:[&_svg]:scale-110",
 	},
@@ -128,9 +128,9 @@ export async function CreativeProcess() {
 						Comment je crée tes bijoux
 					</SectionTitle>
 					<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto">
-						De l'idée au bijou terminé
+						De l'inspiration à la finition
 						<span className="hidden sm:inline">
-							, je te montre les coulisses de l'atelier
+							, voici quelques étapes explicatives !
 						</span>
 						.
 					</p>

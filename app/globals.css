@@ -452,6 +452,23 @@ textarea {
 	}
 
 	/* ==========================================
+	   ANIMATION BADGE PULSE (Navbar badges)
+	   ========================================== */
+	@keyframes badge-pulse {
+		0%,
+		100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.2);
+		}
+	}
+
+	.animate-badge-pulse {
+		animation: badge-pulse 0.3s ease-out;
+	}
+
+	/* ==========================================
 	   ANIMATIONS MULTISELECT
 	   ========================================== */
 	@keyframes wiggle {
@@ -527,7 +544,8 @@ textarea {
 		.animate-scaleIn,
 		.animate-slideInDown,
 		.animate-fadeIn,
-		.animate-flipIn {
+		.animate-flipIn,
+		.animate-badge-pulse {
 			animation: none;
 		}
 	}

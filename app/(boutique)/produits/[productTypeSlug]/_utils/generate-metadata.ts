@@ -122,7 +122,7 @@ export async function generateProductTypeMetadata({
 						url: "https://synclune.fr/og-image.jpg",
 						width: 1200,
 						height: 630,
-						alt: `${productType.label} artisanaux Synclune`,
+						alt: `${productType.label} Synclune - Créations artisanales`,
 					},
 				],
 			},
@@ -136,9 +136,9 @@ export async function generateProductTypeMetadata({
 
 	// Fallback si le type n'a pas de configuration spécifique
 	return {
-		title: `${productType.label} Artisanaux | Synclune - Bijoux Faits Main Nantes`,
-		description: `Découvrez nos ${productType.label.toLowerCase()} artisanaux faits main à Nantes. Pièces uniques en argent 925 et pierres naturelles. Livraison France.`,
-		keywords: `${productType.label.toLowerCase()} artisanaux, ${productType.label.toLowerCase()} faits main, bijoux Nantes, bijoutier artisan`,
+		title: `${productType.label} Faits Main | Synclune - Créations Artisanales Nantes`,
+		description: `Découvrez nos ${productType.label.toLowerCase()} faits main à Nantes. Pièces uniques en argent 925 et pierres naturelles. Livraison France.`,
+		keywords: `${productType.label.toLowerCase()} faits main, bijoux Nantes, bijoutier artisan, créations artisanales`,
 		alternates: {
 			canonical: `/produits/${productTypeSlug}`,
 		},
@@ -150,8 +150,8 @@ export async function generateProductTypeMetadata({
 				}
 			: undefined,
 		openGraph: {
-			title: `${productType.label} Artisanaux | Synclune`,
-			description: `Découvrez nos ${productType.label.toLowerCase()} artisanaux faits main à Nantes`,
+			title: `${productType.label} Faits Main | Synclune`,
+			description: `Découvrez nos ${productType.label.toLowerCase()} faits main à Nantes`,
 			url: `https://synclune.fr/produits/${productTypeSlug}`,
 			type: "website",
 		},

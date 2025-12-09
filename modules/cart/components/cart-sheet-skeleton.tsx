@@ -10,7 +10,7 @@ export function CartSheetSkeleton() {
 	return (
 		<div className="flex-1 px-6 py-4 space-y-4">
 			{Array.from({ length: 3 }).map((_, i) => (
-				<div key={i} className="flex gap-4 p-4 border rounded-xl">
+				<div key={i} className="flex gap-3 p-3 border rounded-lg">
 					{/* Image placeholder */}
 					<Skeleton className="w-20 h-20 rounded-md shrink-0" />
 

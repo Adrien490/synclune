@@ -32,7 +32,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 	return (
 		<>
 			<Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
-				<SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0 gap-0">
+				<SheetContent side="right" className="w-full sm:max-w-lg flex flex-col p-0 gap-0">
 					<SheetHeader className="px-6 py-4 border-b shrink-0">
 						<SheetTitle className="flex items-center gap-2 text-lg">
 							<ShoppingBag className="w-5 h-5" />
