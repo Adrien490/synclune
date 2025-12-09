@@ -48,42 +48,59 @@ const icons = {
 		</div>
 	),
 	error: (
-		<svg
-			className="size-[18px] text-primary"
-			viewBox="0 0 24 24"
-			fill="none"
-			strokeWidth="1.5"
-			stroke="currentColor"
-			aria-hidden="true"
-		>
-			<path
-				strokeLinecap="round"
-				strokeLinejoin="round"
-				d="M12 21C12 21 4 14 4 8.5C4 5.5 6.5 3 9.5 3C11 3 12 4 12 4C12 4 13 3 14.5 3C17.5 3 20 5.5 20 8.5C20 14 12 21 12 21Z"
-			/>
-			<path
-				strokeLinecap="round"
-				strokeLinejoin="round"
-				d="M12 4L10 10L14 12L12 21"
-			/>
-		</svg>
+		<div className="relative" aria-hidden="true">
+			<svg
+				className="size-[18px] text-primary animate-heart-beat"
+				viewBox="0 0 24 24"
+				fill="none"
+				strokeWidth="1.5"
+				stroke="currentColor"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M12 21C12 21 4 14 4 8.5C4 5.5 6.5 3 9.5 3C11 3 12 4 12 4C12 4 13 3 14.5 3C17.5 3 20 5.5 20 8.5C20 14 12 21 12 21Z"
+				/>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M12 4L10 10L14 12L12 21"
+				/>
+			</svg>
+			<svg
+				className="absolute -bottom-0.5 -right-0.5 size-1.5 text-primary/60 animate-sparkle-pulse"
+				viewBox="0 0 24 24"
+				fill="currentColor"
+			>
+				<path d="M12 0L13.5 9L24 12L13.5 15L12 24L10.5 15L0 12L10.5 9L12 0Z" />
+			</svg>
+		</div>
 	),
 	warning: (
-		<svg
-			className="size-[18px] text-secondary"
-			viewBox="0 0 24 24"
-			fill="none"
-			strokeWidth="1.5"
-			stroke="currentColor"
-			aria-hidden="true"
-		>
-			<path
-				strokeLinecap="round"
-				strokeLinejoin="round"
-				d="M12 2L14 8.5L21 9L16 14L17.5 21L12 17.5L6.5 21L8 14L3 9L10 8.5L12 2Z"
-			/>
-			<circle cx="12" cy="12" r="1.5" fill="none" stroke="currentColor" />
-		</svg>
+		<div className="relative" aria-hidden="true">
+			<svg
+				className="size-[18px] text-secondary"
+				viewBox="0 0 24 24"
+				fill="none"
+				strokeWidth="1.5"
+				stroke="currentColor"
+			>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M12 2L14 8.5L21 9L16 14L17.5 21L12 17.5L6.5 21L8 14L3 9L10 8.5L12 2Z"
+				/>
+				<circle cx="12" cy="12" r="1.5" fill="none" stroke="currentColor" />
+			</svg>
+			<svg
+				className="absolute -top-0.5 -right-0.5 size-1.5 text-secondary animate-sparkle-pulse"
+				style={{ animationDelay: "1s" }}
+				viewBox="0 0 24 24"
+				fill="currentColor"
+			>
+				<path d="M12 0L13.5 9L24 12L13.5 15L12 24L10.5 15L0 12L10.5 9L12 0Z" />
+			</svg>
+		</div>
 	),
 	loading: (
 		<div className="relative size-[18px]" aria-hidden="true">
@@ -104,6 +121,14 @@ const icons = {
 				stroke="currentColor"
 			>
 				<path strokeLinecap="round" d="M12 4a8 8 0 0 1 6.93 4" />
+			</svg>
+			<svg
+				className="absolute -top-0.5 -right-0.5 size-1.5 text-primary/40 animate-sparkle-pulse"
+				style={{ animationDelay: "0.5s" }}
+				viewBox="0 0 24 24"
+				fill="currentColor"
+			>
+				<path d="M12 0L13.5 9L24 12L13.5 15L12 24L10.5 15L0 12L10.5 9L12 0Z" />
 			</svg>
 		</div>
 	),

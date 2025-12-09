@@ -28,10 +28,10 @@ export function ProductInfo({
 }: ProductInfoProps) {
 	return (
 		<div className="space-y-4">
-			{/* Titre avec bouton wishlist */}
-			<div className="flex items-start justify-between gap-3">
+			{/* Titre avec bouton wishlist - titre masqué sur desktop car affiché dans PageHeader */}
+			<div className="flex items-start justify-between gap-3 sm:hidden">
 				<h1
-					className="text-3xl/10 sm:text-4xl/10 font-bold tracking-tight text-foreground flex-1"
+					className="text-3xl/10 font-bold tracking-tight text-foreground flex-1"
 					itemProp="name"
 				>
 					{product.title}
@@ -43,8 +43,16 @@ export function ProductInfo({
 				/>
 			</div>
 
-			{/* Labels et badges */}
+			{/* Labels et badges + bouton wishlist sur desktop */}
 			<div className="flex flex-wrap items-center gap-2">
+				{/* Bouton wishlist visible uniquement sur desktop */}
+				<div className="hidden sm:block">
+					<WishlistButtonDynamic
+						product={product}
+						defaultSku={defaultSku}
+						initialIsInWishlist={isInWishlist ?? false}
+					/>
+				</div>
 				{product.type && (
 					<Badge
 						variant="outline"

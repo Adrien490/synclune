@@ -135,7 +135,7 @@ export default async function ProductPage({
 				/>
 
 				{/* Contenu principal */}
-				<div className="bg-background pt-20 pb-6 sm:py-12 lg:py-16">
+				<div className="bg-background pt-20 pb-6 sm:pt-4 sm:pb-12 lg:pt-6 lg:pb-16">
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article
 							id="product-main"
