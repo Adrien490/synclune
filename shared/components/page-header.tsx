@@ -154,16 +154,13 @@ export function PageHeader({
 						navigation
 							? "pt-20 sm:pt-28 pb-2"
 							: description
-								? "pt-20 sm:pt-32 pb-4 sm:pb-6"
+								? "pt-20 sm:pt-32 pb-2 sm:pb-4"
 								: "pt-20 sm:pt-32 pb-0 sm:pb-4"
 					)}
 				>
 					{/* Breadcrumb et titre principal */}
 					<div
-						className={cn(
-							"flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4",
-							!navigation && description && "mb-4 sm:mb-6"
-						)}
+						className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4"
 					>
 						<div className="min-w-0 flex-1">
 							{/* Mobile avec breadcrumbs : Bouton retour + Titre inline */}
