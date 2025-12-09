@@ -49,7 +49,7 @@ const icons = {
 	),
 	error: (
 		<svg
-			className="size-[18px] text-destructive"
+			className="size-[18px] text-primary"
 			viewBox="0 0 24 24"
 			fill="none"
 			strokeWidth="1.5"

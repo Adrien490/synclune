@@ -758,7 +758,7 @@ textarea {
 }
 
 [data-sonner-toast][data-type="error"] {
-	border-left: 3px solid var(--destructive) !important;
+	border-left: 3px solid var(--primary) !important;
 }
 
 [data-sonner-toast][data-type="warning"] {
