@@ -19,12 +19,11 @@
  * pnpm exec tsx scripts/generate-blur-placeholders.ts --json          # Logs JSON pour monitoring
  */
 
-import { PrismaNeon } from "@prisma/adapter-neon";
-import { PrismaClient } from "../app/generated/prisma/client";
+import { prisma } from "../shared/lib/prisma";
 import { generateBlurDataUrlWithRetry } from "../modules/media/services/generate-blur-data-url";
 import { BLUR_PLACEHOLDER_CONFIG } from "../modules/media/constants/media.constants";
 import { isValidUploadThingUrl } from "../modules/media/utils/validate-media-file";
-import type { MediaItem, ProcessResult as BaseProcessResult, StructuredLog } from "../modules/media/types/script.types";
+import type { MediaItem, ProcessResult as BaseProcessResult, ProcessMetrics, StructuredLog } from "../modules/media/types/script.types";
 import { requireScriptEnvVars } from "../shared/utils/script-env";
 
 // ============================================================================
@@ -102,13 +101,6 @@ function logError(message: string, data?: Record<string, unknown>): void {
 }
 
 // ============================================================================
-// INITIALISATION PRISMA
-// ============================================================================
-
-const adapter = new PrismaNeon({ connectionString: env.DATABASE_URL });
-const prisma = new PrismaClient({ adapter });
-
-// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -126,40 +118,72 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
+ * Crée un objet ProcessMetrics avec les valeurs par défaut
+ */
+function createMetrics(overrides: Partial<ProcessMetrics> = {}): ProcessMetrics {
+	return {
+		totalMs: 0,
+		downloadMs: 0,
+		validationMs: 0,
+		extractionMs: 0,
+		blurMs: 0,
+		uploadMs: 0,
+		dbUpdateMs: 0,
+		...overrides,
+	};
+}
+
+/**
  * Traite une image et génère son blurDataUrl
  */
 async function processImage(image: MediaItem): Promise<BlurProcessResult> {
+	const startTime = performance.now();
+
 	// Validation du domaine source
 	if (!isValidUploadThingUrl(image.url)) {
 		return {
 			id: image.id,
 			success: false,
 			error: `Domaine non autorisé: ${new URL(image.url).hostname}`,
+			metrics: createMetrics({ totalMs: Math.round(performance.now() - startTime) }),
 		};
 	}
 
 	try {
+		// Mesure génération blur (inclut téléchargement)
+		const blurStart = performance.now();
 		const blurDataUrl = await generateBlurDataUrlWithRetry(image.url, {
 			validateDomain: false, // Déjà validé ci-dessus
 		});
+		const blurMs = Math.round(performance.now() - blurStart);
 
+		// Mesure mise à jour DB
+		let dbUpdateMs = 0;
 		if (!DRY_RUN) {
+			const dbStart = performance.now();
 			await prisma.skuMedia.update({
 				where: { id: image.id },
 				data: { blurDataUrl },
 			});
+			dbUpdateMs = Math.round(performance.now() - dbStart);
 		}
 
 		return {
 			id: image.id,
 			success: true,
 			blurDataUrl: blurDataUrl.substring(0, 50) + "...",
+			metrics: createMetrics({
+				blurMs,
+				dbUpdateMs,
+				totalMs: Math.round(performance.now() - startTime),
+			}),
 		};
 	} catch (error) {
 		return {
 			id: image.id,
 			success: false,
 			error: error instanceof Error ? error.message : String(error),
+			metrics: createMetrics({ totalMs: Math.round(performance.now() - startTime) }),
 		};
 	}
 }
@@ -203,8 +227,9 @@ async function main() {
 
 	// Traiter par batch
 	let processed = 0;
-	let success = 0;
-	let errors = 0;
+	let successCount = 0;
+	let errorCount = 0;
+	const allMetrics: ProcessMetrics[] = [];
 
 	for (let i = 0; i < images.length; i += PARALLEL_COUNT) {
 		// Vérifier si arrêt demandé
@@ -218,17 +243,24 @@ async function main() {
 
 		for (const result of results) {
 			processed++;
+			if (result.metrics) {
+				allMetrics.push(result.metrics);
+			}
+
 			if (result.success) {
-				success++;
-				logInfo(`✅ [${processed}/${images.length}] ${result.id}`, {
+				successCount++;
+				const timing = result.metrics ? ` (${result.metrics.totalMs}ms)` : "";
+				logInfo(`✅ [${processed}/${images.length}] ${result.id}${timing}`, {
 					id: result.id,
 					success: true,
+					metrics: result.metrics,
 				});
 			} else {
-				errors++;
+				errorCount++;
 				logError(`❌ [${processed}/${images.length}] ${result.id}: ${result.error}`, {
 					id: result.id,
 					error: result.error,
+					metrics: result.metrics,
 				});
 			}
 		}
@@ -239,10 +271,27 @@ async function main() {
 		}
 	}
 
+	// Calcul des métriques moyennes
+	const avgMetrics =
+		allMetrics.length > 0
+			? {
+					blurMs: Math.round(allMetrics.reduce((sum, m) => sum + m.blurMs, 0) / allMetrics.length),
+					dbUpdateMs: Math.round(allMetrics.reduce((sum, m) => sum + m.dbUpdateMs, 0) / allMetrics.length),
+					totalMs: Math.round(allMetrics.reduce((sum, m) => sum + m.totalMs, 0) / allMetrics.length),
+				}
+			: null;
+
 	logInfo("\n📊 Résumé:");
 	logInfo(`   Total traité: ${processed}/${images.length}`);
-	logInfo(`   ✅ Succès: ${success}`);
-	logInfo(`   ❌ Erreurs: ${errors}`);
+	logInfo(`   ✅ Succès: ${successCount}`);
+	logInfo(`   ❌ Erreurs: ${errorCount}`);
+
+	if (avgMetrics) {
+		logInfo(`\n⏱️  Métriques moyennes:`);
+		logInfo(`   Blur (download + génération): ${avgMetrics.blurMs}ms`);
+		logInfo(`   Mise à jour DB: ${avgMetrics.dbUpdateMs}ms`);
+		logInfo(`   Total: ${avgMetrics.totalMs}ms`);
+	}
 
 	if (isShuttingDown) {
 		logWarn(`\n⚠️  Script interrompu - ${images.length - processed} images non traitées`);

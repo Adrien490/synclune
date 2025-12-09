@@ -55,7 +55,7 @@
 
 import { execFile, type ChildProcess } from "node:child_process";
 import { createWriteStream, existsSync, renameSync } from "node:fs";
-import { mkdir, readFile, rm, stat, unlink } from "node:fs/promises";
+import { mkdir, readFile, rm, stat, statfs, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
@@ -124,10 +124,29 @@ const TEMP_DIR = join(tmpdir(), `synclune-video-thumbnails-${process.pid}`);
 // Arguments CLI
 const DRY_RUN = process.argv.includes("--dry-run");
 const PARALLEL_ARG = process.argv.find((arg) => arg.startsWith("--parallel="));
-const PARALLEL_COUNT = PARALLEL_ARG ? parseInt(PARALLEL_ARG.split("=")[1], 10) : 5;
+const rawParallel = PARALLEL_ARG?.split("=")[1];
+const parsedParallel = rawParallel ? parseInt(rawParallel, 10) : NaN;
+const PARALLEL_COUNT = !isNaN(parsedParallel) && parsedParallel > 0 ? parsedParallel : 5;
 const JSON_LOGS = process.argv.includes("--json");
 const NO_BLUR = process.argv.includes("--no-blur");
 const CHECK_ONLY = process.argv.includes("--check");
+
+// ============================================================================
+// GRACEFUL SHUTDOWN
+// ============================================================================
+
+/** Flag pour interruption gracieuse */
+let shuttingDown = false;
+
+process.on("SIGTERM", () => {
+	console.log("\n⚠️  SIGTERM recu - arret en cours...");
+	shuttingDown = true;
+});
+
+process.on("SIGINT", () => {
+	console.log("\n⚠️  SIGINT recu - arret en cours...");
+	shuttingDown = true;
+});
 
 // ============================================================================
 // LOGS STRUCTURÉS (Sentry-ready)
@@ -277,6 +296,21 @@ function buildBlurArgs(inputPath: string, outputPath: string): string[] {
 }
 
 /**
+ * Verifie l'espace disque disponible dans le dossier temporaire
+ * Retourne false si moins de minBytes disponible (defaut: 1GB)
+ */
+async function checkDiskSpace(minBytes: number = 1024 * 1024 * 1024): Promise<boolean> {
+	try {
+		const stats = await statfs(tmpdir());
+		const availableBytes = stats.bfree * stats.bsize;
+		return availableBytes >= minBytes;
+	} catch {
+		// Si on ne peut pas verifier, on continue
+		return true;
+	}
+}
+
+/**
  * Télécharge une vidéo depuis une URL avec streaming (économie mémoire)
  */
 async function downloadVideo(url: string, outputPath: string): Promise<void> {
@@ -360,8 +394,8 @@ async function getVideoDuration(videoPath: string, mediaId?: string): Promise<nu
 		);
 		const duration = parseFloat(stdout.trim());
 		if (isNaN(duration) || duration <= 0) {
-			console.log("    Durée non détectée, utilisation de 1s par défaut");
-			return 10; // Fallback pour calculer 10% = 1s
+			logWarning("duration_detection_failed", { mediaId, fallback: THUMBNAIL_CONFIG.fallbackDuration });
+			return THUMBNAIL_CONFIG.fallbackDuration;
 		}
 
 		// Avertissement si vidéo trop longue
@@ -379,8 +413,8 @@ async function getVideoDuration(videoPath: string, mediaId?: string): Promise<nu
 
 		return duration;
 	} catch {
-		console.log("    FFprobe échoué, utilisation de 1s par défaut");
-		return 10; // Fallback
+		logWarning("ffprobe_failed", { mediaId, fallback: THUMBNAIL_CONFIG.fallbackDuration });
+		return THUMBNAIL_CONFIG.fallbackDuration;
 	}
 }
 
@@ -507,6 +541,11 @@ async function uploadThumbnail(filePath: string, mediaId: string): Promise<strin
  * Traite une vidéo : télécharge, extrait frames, upload, met à jour DB
  */
 async function processVideo(media: MediaItem, index: number, total: number): Promise<ProcessResult> {
+	// Verifier interruption avant traitement
+	if (shuttingDown) {
+		return { id: media.id, success: false, error: "Script interrompu (graceful shutdown)" };
+	}
+
 	// Validation CUID de l'ID avant utilisation dans les chemins de fichiers
 	if (!isValidCuid(media.id)) {
 		const errorMsg = `ID invalide (doit être un CUID): ${media.id}`;
@@ -723,6 +762,13 @@ async function main(): Promise<void> {
 
 	// Créer le dossier temporaire
 	await mkdir(TEMP_DIR, { recursive: true });
+
+	// Verifier espace disque disponible
+	const hasEnoughSpace = await checkDiskSpace();
+	if (!hasEnoughSpace) {
+		logWarning("low_disk_space", { path: TEMP_DIR, minRequired: "1GB" });
+		console.log("⚠️  Espace disque faible (<1GB) - le script pourrait echouer");
+	}
 
 	try {
 		// Récupérer les vidéos sans miniature small (nouveau système à 2 tailles)
