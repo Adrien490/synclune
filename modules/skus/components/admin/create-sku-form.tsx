@@ -47,9 +47,6 @@ export function CreateProductVariantForm({
 		isUploading: isPrimaryImageUploading,
 	} = useUploadThing("catalogMedia");
 
-	const { startUpload: startGalleryUpload, isUploading: isGalleryUploading } =
-		useUploadThing("catalogMedia");
-
 	const { form, action } = useCreateProductSkuForm({
 		onSuccess: (message) => {
 			toast.success(message || "Variante créée avec succès", {
@@ -76,9 +73,7 @@ export function CreateProductVariantForm({
 	return (
 		<>
 			<fieldset
-				disabled={
-					isPrimaryImageUploading || isGalleryUploading || form.state.isSubmitting
-				}
+				disabled={isPrimaryImageUploading || form.state.isSubmitting}
 				className="space-y-6"
 			>
 				<form
@@ -588,50 +583,33 @@ export function CreateProductVariantForm({
 											{!isAtLimit && (
 												<UploadDropzone
 													endpoint="catalogMedia"
-													onChange={async (files) => {
+													onBeforeUploadBegin={(files) => {
 														const remaining = maxCount - field.state.value.length;
-														let filesToUpload = files.slice(0, remaining);
-
 														if (files.length > remaining) {
 															toast.warning(
-																`Seulement ${remaining} média${remaining > 1 ? "s" : ""} ajouté${remaining > 1 ? "s" : ""}`
+																`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`
 															);
+															return files.slice(0, remaining);
 														}
+														return files;
+													}}
+													onClientUploadComplete={(res) => {
+														res?.forEach((uploadResult) => {
+															const serverData = uploadResult?.serverData;
+															const fileType = uploadResult?.type || "";
+															const isVideo = fileType.startsWith("video/");
 
-														const fileTypeMap = new Map(
-															filesToUpload.map((f) => [
-																f.name,
-																f.type.startsWith("video/") ? "VIDEO" : "IMAGE",
-															])
-														);
-
-														try {
-															const res = await startGalleryUpload(filesToUpload);
-
-															res?.forEach((uploadResult, index) => {
-																const serverData = uploadResult?.serverData;
-																if (serverData?.url) {
-																	const originalFile = filesToUpload[index];
-																	const mediaType =
-																		(fileTypeMap.get(originalFile.name) as
-																			| "IMAGE"
-																			| "VIDEO"
-																			| undefined) || "IMAGE";
-
-																	// Les thumbnails vidéo sont générées côté serveur dans onUploadComplete
-																	field.pushValue({
-																		url: serverData.url,
-																		blurDataUrl: serverData.blurDataUrl ?? undefined,
-																		thumbnailUrl: serverData.thumbnailUrl ?? undefined,
-																		thumbnailSmallUrl: serverData.thumbnailSmallUrl ?? undefined,
-																		altText: product.title,
-																		mediaType,
-																	});
-																}
-															});
-														} catch {
-															toast.error("Échec de l'upload");
-														}
+															if (serverData?.url) {
+																field.pushValue({
+																	url: serverData.url,
+																	blurDataUrl: serverData.blurDataUrl ?? undefined,
+																	thumbnailUrl: serverData.thumbnailUrl ?? undefined,
+																	thumbnailSmallUrl: serverData.thumbnailSmallUrl ?? undefined,
+																	altText: product.title,
+																	mediaType: isVideo ? "VIDEO" : "IMAGE",
+																});
+															}
+														});
 													}}
 													onUploadError={(error) => {
 														toast.error(`Erreur: ${error.message}`);
@@ -789,8 +767,7 @@ export function CreateProductVariantForm({
 											disabled={
 												!canSubmit ||
 												form.state.isSubmitting ||
-												isPrimaryImageUploading ||
-												isGalleryUploading
+												isPrimaryImageUploading
 											}
 											className="min-w-[160px]"
 										>
@@ -798,9 +775,7 @@ export function CreateProductVariantForm({
 												? "Création..."
 												: isPrimaryImageUploading
 													? "Upload image..."
-													: isGalleryUploading
-														? "Upload galerie..."
-														: "Créer la variante"}
+													: "Créer la variante"}
 										</Button>
 									)}
 								</form.Subscribe>
