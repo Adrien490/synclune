@@ -11,11 +11,12 @@ import {
 } from "@/shared/components/ui/sheet";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Button } from "@/shared/components/ui/button";
-import { ShoppingBag } from "lucide-react";
+import { Separator } from "@/shared/components/ui/separator";
+import { formatEuro } from "@/shared/utils/format-euro";
+import { ShoppingBag, TruckIcon } from "lucide-react";
 import Link from "next/link";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { CartSheetItemRow } from "./cart-sheet-item-row";
-import { CartSheetSummary } from "./cart-sheet-summary";
 import { RemoveCartItemAlertDialog } from "./remove-cart-item-alert-dialog";
 import type { GetCartReturn } from "../types/cart.types";
 
@@ -29,15 +30,31 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 
 	const hasItems = cart && cart.items.length > 0;
 
+	// Calculs pour le résumé
+	const totalItems = hasItems
+		? cart.items.reduce((sum, item) => sum + item.quantity, 0)
+		: 0;
+
+	const subtotal = hasItems
+		? cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0)
+		: 0;
+
+	const itemsWithIssues = hasItems
+		? cart.items.filter(
+				(item) =>
+					item.sku.inventory < item.quantity ||
+					!item.sku.isActive ||
+					item.sku.product.status !== "PUBLIC"
+			)
+		: [];
+	const hasStockIssues = itemsWithIssues.length > 0;
+
 	return (
 		<>
 			<Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
 				<SheetContent side="right" className="w-full sm:max-w-lg flex flex-col p-0 gap-0">
 					<SheetHeader className="px-6 py-4 border-b shrink-0">
-						<SheetTitle className="flex items-center gap-2 text-lg">
-							<ShoppingBag className="w-5 h-5" />
-							Mon panier
-						</SheetTitle>
+						<SheetTitle>Mon panier</SheetTitle>
 						<SheetDescription className="sr-only">
 							Contenu de ton panier - Gere tes articles et passe commande
 						</SheetDescription>
@@ -67,7 +84,77 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 							</ScrollArea>
 
 							<SheetFooter className="px-6 py-4 border-t mt-auto shrink-0">
-								<CartSheetSummary cart={cart} onClose={close} />
+								<div className="w-full space-y-4">
+									{/* Details */}
+									<div className="space-y-2 text-sm">
+										<div className="flex justify-between items-center">
+											<span className="text-muted-foreground flex items-center gap-1.5">
+												<ShoppingBag className="w-4 h-4" />
+												Articles ({totalItems})
+											</span>
+											<span className="font-mono font-medium">{formatEuro(subtotal)}</span>
+										</div>
+
+										<div className="flex justify-between items-center">
+											<span className="text-muted-foreground flex items-center gap-1.5">
+												<TruckIcon className="w-4 h-4" />
+												Livraison
+											</span>
+											<span className="text-sm text-muted-foreground">
+												Estimée au paiement
+											</span>
+										</div>
+									</div>
+
+									<Separator />
+
+									{/* Total */}
+									<div className="flex justify-between items-center">
+										<span className="font-semibold">Sous-total articles</span>
+										<span className="font-mono font-bold text-lg">{formatEuro(subtotal)}</span>
+									</div>
+
+									<p className="text-[11px] text-muted-foreground text-right">
+										TVA non applicable, art. 293 B du CGI
+									</p>
+
+									{/* Alerte si problemes */}
+									{hasStockIssues && (
+										<div
+											className="p-2.5 bg-destructive/10 border border-destructive/20 rounded-md text-xs text-destructive"
+											role="alert"
+										>
+											<p className="font-medium">Ajuste ton panier pour continuer</p>
+											<p className="mt-0.5 text-destructive/80">
+												{itemsWithIssues.length} article
+												{itemsWithIssues.length > 1 ? "s" : ""} necessitent ton attention
+											</p>
+										</div>
+									)}
+
+									{/* CTAs */}
+									<div className="space-y-2 pt-2">
+										<Button
+											asChild
+											size="lg"
+											className="w-full"
+											disabled={hasStockIssues || totalItems === 0}
+											onClick={close}
+										>
+											<Link href="/paiement">Passer commande</Link>
+										</Button>
+
+										<Button
+											variant="ghost"
+											size="sm"
+											className="w-full text-sm"
+											onClick={close}
+											asChild
+										>
+											<Link href="/produits">Continuer mes achats</Link>
+										</Button>
+									</div>
+								</div>
 							</SheetFooter>
 						</>
 					)}
