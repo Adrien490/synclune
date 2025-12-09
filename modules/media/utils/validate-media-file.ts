@@ -9,8 +9,8 @@
  * Limites de taille des fichiers par type de média
  */
 export const MEDIA_SIZE_LIMITS = {
-	/** Images: 4MB max */
-	IMAGE: 4 * 1024 * 1024,
+	/** Images: 16MB max (aligné sur UploadThing catalogMedia) */
+	IMAGE: 16 * 1024 * 1024,
 	/** Vidéos: 512MB max */
 	VIDEO: 512 * 1024 * 1024,
 } as const;

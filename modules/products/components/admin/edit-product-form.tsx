@@ -561,7 +561,7 @@ export function EditProductForm({
 													const oversizedFiles = filesToUpload.filter((f) => {
 														const maxFileSize = f.type.startsWith("video/")
 															? 512 * 1024 * 1024
-															: 4 * 1024 * 1024;
+															: 16 * 1024 * 1024;
 														return f.size > maxFileSize;
 													});
 													if (oversizedFiles.length > 0) {
@@ -571,7 +571,7 @@ export function EditProductForm({
 														filesToUpload = filesToUpload.filter((f) => {
 															const maxFileSize = f.type.startsWith("video/")
 																? 512 * 1024 * 1024
-																: 4 * 1024 * 1024;
+																: 16 * 1024 * 1024;
 															return f.size <= maxFileSize;
 														});
 														if (filesToUpload.length === 0) return;
@@ -704,7 +704,7 @@ export function EditProductForm({
 																	Glisse tes médias ici
 																</p>
 																<p className="text-xs text-muted-foreground">
-																	{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 4MB (image) / 512MB (vidéo)
+																	{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 16MB (image) / 512MB (vidéo)
 																</p>
 															</div>
 														);

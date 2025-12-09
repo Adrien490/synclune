@@ -8,9 +8,6 @@
 // Cart & Checkout
 export { getCartAbandonment } from "./get-cart-abandonment";
 
-// Contact Adrien
-export { getContactAdrienVisibility } from "./get-contact-adrien-visibility";
-
 // Customer KPIs
 export { fetchCustomerKpis } from "./get-customer-kpis";
 

@@ -477,7 +477,7 @@ function CreateProductFormContent({
 									const oversizedFiles = filesToUpload.filter(
 										(f) =>
 											f.size >
-											(f.type.startsWith("video/") ? 512 * 1024 * 1024 : 4 * 1024 * 1024)
+											(f.type.startsWith("video/") ? 512 * 1024 * 1024 : 16 * 1024 * 1024)
 									);
 
 									if (oversizedFiles.length > 0) {
@@ -485,7 +485,7 @@ function CreateProductFormContent({
 										filesToUpload = filesToUpload.filter(
 											(f) =>
 												f.size <=
-												(f.type.startsWith("video/") ? 512 * 1024 * 1024 : 4 * 1024 * 1024)
+												(f.type.startsWith("video/") ? 512 * 1024 * 1024 : 16 * 1024 * 1024)
 										);
 										if (filesToUpload.length === 0) return;
 									}
@@ -592,7 +592,7 @@ function CreateProductFormContent({
 																		{isDragActive ? "Relâchez" : "Ajouter des médias"}
 																	</p>
 																	<p className="text-xs text-muted-foreground">
-																		Images (max 4MB) et vidéos (max 512MB)
+																		Images (max 16MB) et vidéos (max 512MB)
 																	</p>
 																</div>
 															),

@@ -341,9 +341,9 @@ export function EditProductVariantForm({
 																return;
 															}
 
-															const maxSize = 4 * 1024 * 1024;
+															const maxSize = 16 * 1024 * 1024;
 															if (file.size > maxSize) {
-																toast.error("L'image dépasse la limite de 4MB");
+																toast.error("L'image dépasse la limite de 16MB");
 																return;
 															}
 
@@ -475,7 +475,7 @@ export function EditProductVariantForm({
 																			ou clique pour sélectionner
 																		</p>
 																		<p className="text-xs text-muted-foreground mt-2">
-																			Image • Max 4MB
+																			Image • Max 16MB
 																		</p>
 																	</div>
 																);
@@ -702,7 +702,7 @@ export function EditProductVariantForm({
 																		Ajouter à la galerie
 																	</p>
 																	<p className="text-xs text-muted-foreground">
-																		{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 4MB (image) / 512MB (vidéo)
+																		{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 16MB (image) / 512MB (vidéo)
 																	</p>
 																</div>
 															);

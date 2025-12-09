@@ -145,7 +145,7 @@ export function PageHeader({
 				aria-labelledby="page-title"
 				className={cn(
 					"relative overflow-hidden bg-background",
-					!navigation && "border-b border-border"
+					!navigation && "sm:border-b sm:border-border"
 				)}
 			>
 				<div

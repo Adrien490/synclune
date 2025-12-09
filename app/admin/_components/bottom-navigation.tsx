@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useState, useCallback, useEffect } from "react";
-import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/shared/utils/cn";
 import { ExternalLink, LogOut, Menu } from "lucide-react";
 import Link from "next/link";
@@ -13,6 +13,11 @@ import {
 	type NavItem,
 } from "./navigation-config";
 import { isRouteActive } from "@/shared/lib/navigation";
+import {
+	MobilePanel,
+	MobilePanelItem,
+	mobilePanelItemVariants,
+} from "@/shared/components/ui/mobile-panel";
 
 // Recuperer les items depuis la configuration centralisee
 const primaryItems = getBottomNavPrimaryItems();
@@ -57,25 +62,6 @@ const panelItemStyles = {
 		"text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 font-medium",
 } as const;
 
-// Animation variants
-const containerVariants: Variants = {
-	hidden: {},
-	visible: {
-		transition: {
-			staggerChildren: 0.04,
-			delayChildren: 0.1,
-		},
-	},
-};
-
-const itemVariants: Variants = {
-	hidden: { opacity: 0, y: 20 },
-	visible: {
-		opacity: 1,
-		y: 0,
-		transition: { duration: 0.3, ease: [0, 0, 0.2, 1] as const },
-	},
-};
 
 interface BottomNavigationProps {
 	className?: string;
@@ -105,138 +91,68 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 		closePanel();
 	}, [pathname, closePanel]);
 
-	// Fermeture avec Escape
-	useEffect(() => {
-		if (!isOpen) return;
-
-		const handleEscape = (e: KeyboardEvent) => {
-			if (e.key === "Escape") {
-				closePanel();
-			}
-		};
-
-		document.addEventListener("keydown", handleEscape);
-		return () => document.removeEventListener("keydown", handleEscape);
-	}, [isOpen, closePanel]);
-
-	// Bloquer le scroll du body quand le panneau est ouvert
-	useEffect(() => {
-		if (isOpen) {
-			document.body.style.overflow = "hidden";
-		} else {
-			document.body.style.overflow = "";
-		}
-		return () => {
-			document.body.style.overflow = "";
-		};
-	}, [isOpen]);
-
 	return (
 		<>
-			{/* Backdrop */}
-			<AnimatePresence>
-				{isOpen && (
-					<motion.div
-						initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-						transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
-						onClick={closePanel}
-						className="md:hidden fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm"
-						aria-hidden="true"
-					/>
-				)}
-			</AnimatePresence>
+			{/* Panneau de navigation mobile */}
+			<MobilePanel
+				isOpen={isOpen}
+				onClose={closePanel}
+				ariaLabel="Menu de navigation"
+				enableStagger
+			>
+				{/* Grille de navigation - 3 colonnes */}
+				<div className="grid grid-cols-3 gap-2 p-3 pb-2">
+					{allMenuItems.map((item) => (
+						<PanelNavItem
+							key={item.id}
+							item={item}
+							isActive={isRouteActive(pathname, item.url)}
+							onClick={closePanel}
+							shouldReduceMotion={shouldReduceMotion ?? false}
+						/>
+					))}
 
-			{/* Panneau anime */}
-			<AnimatePresence>
-				{isOpen && (
-					<motion.div
-						initial={
-							shouldReduceMotion
-								? { opacity: 1 }
-								: { y: "100%", opacity: 0.5 }
-						}
-						animate={{ y: 0, opacity: 1 }}
-						exit={
-							shouldReduceMotion
-								? { opacity: 1 }
-								: { y: "100%", opacity: 0 }
-						}
-						transition={
-							shouldReduceMotion
-								? { duration: 0 }
-								: {
-										type: "spring",
-										damping: 28,
-										stiffness: 350,
-									}
-						}
-						className="md:hidden fixed bottom-4 left-4 right-4 z-[71] bg-background rounded-2xl border shadow-2xl max-h-[80vh] overflow-y-auto overscroll-contain"
-						role="dialog"
-						aria-modal="true"
-						aria-label="Menu de navigation"
-					>
-						{/* Grille de navigation avec stagger - 3 colonnes */}
-						<motion.div
-							variants={shouldReduceMotion ? undefined : containerVariants}
-							initial="hidden"
-							animate="visible"
-							className="grid grid-cols-3 gap-2 p-3 pb-2"
-						>
-							{allMenuItems.map((item) => (
-								<PanelNavItem
-									key={item.id}
-									item={item}
-									isActive={isRouteActive(pathname, item.url)}
-									onClick={closePanel}
-									shouldReduceMotion={shouldReduceMotion ?? false}
-								/>
-							))}
-
-							{/* Deconnexion */}
-							<motion.div variants={shouldReduceMotion ? undefined : itemVariants}>
-								<LogoutAlertDialog>
-									<button
-										type="button"
-										className={cn(
-											panelItemStyles.base,
-											panelItemStyles.destructive,
-											"w-full"
-										)}
-									>
-										<LogOut className="size-6 shrink-0" aria-hidden="true" />
-										<span className="text-[11px] text-center leading-tight tracking-tight">
-											Déconnexion
-										</span>
-									</button>
-								</LogoutAlertDialog>
-							</motion.div>
-						</motion.div>
-
-						{/* Voir le site - pleine largeur en bas */}
-						<div className="px-3 pb-3">
-							<Link
-								href="/"
-								target="_blank"
-								rel="noopener noreferrer"
-								onClick={closePanel}
+					{/* Deconnexion */}
+					<MobilePanelItem>
+						<LogoutAlertDialog>
+							<button
+								type="button"
 								className={cn(
-									"flex items-center justify-center gap-2.5 w-full py-3 px-4 rounded-xl",
-									"bg-primary text-primary-foreground font-medium",
-									"hover:bg-primary/90 active:bg-primary/80",
-									sharedItemStyles.transition,
-									sharedItemStyles.focusRing
+									panelItemStyles.base,
+									panelItemStyles.destructive,
+									"w-full"
 								)}
-								aria-label="Voir le site (s'ouvre dans un nouvel onglet)"
 							>
-								<ExternalLink className="size-5 shrink-0" aria-hidden="true" />
-								<span className="text-sm font-medium">Voir le site</span>
-							</Link>
-						</div>
-					</motion.div>
-				)}
-			</AnimatePresence>
+								<LogOut className="size-6 shrink-0" aria-hidden="true" />
+								<span className="text-[11px] text-center leading-tight tracking-tight">
+									Déconnexion
+								</span>
+							</button>
+						</LogoutAlertDialog>
+					</MobilePanelItem>
+				</div>
+
+				{/* Voir le site - pleine largeur en bas */}
+				<div className="px-3 pb-3">
+					<Link
+						href="/"
+						target="_blank"
+						rel="noopener noreferrer"
+						onClick={closePanel}
+						className={cn(
+							"flex items-center justify-center gap-2.5 w-full py-3 px-4 rounded-xl",
+							"bg-primary text-primary-foreground font-medium",
+							"hover:bg-primary/90 active:bg-primary/80",
+							sharedItemStyles.transition,
+							sharedItemStyles.focusRing
+						)}
+						aria-label="Voir le site (s'ouvre dans un nouvel onglet)"
+					>
+						<ExternalLink className="size-5 shrink-0" aria-hidden="true" />
+						<span className="text-sm font-medium">Voir le site</span>
+					</Link>
+				</div>
+			</MobilePanel>
 
 			{/* Navigation bar */}
 			<nav
@@ -334,7 +250,7 @@ const PanelNavItem = memo(function PanelNavItem({
 	const Icon = item.icon;
 
 	return (
-		<motion.div variants={shouldReduceMotion ? undefined : itemVariants}>
+		<motion.div variants={shouldReduceMotion ? undefined : mobilePanelItemVariants}>
 			<Link
 				href={item.url}
 				onClick={onClick}

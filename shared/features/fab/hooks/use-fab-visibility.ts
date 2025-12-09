@@ -1,23 +1,29 @@
 "use client";
 
 import { useActionState, useOptimistic, useTransition } from "react";
-import { setContactAdrienVisibility } from "@/modules/dashboard/actions/set-contact-adrien-visibility";
+import { setFabVisibility } from "../actions/set-fab-visibility";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { ActionStatus } from "@/shared/types/server-action";
+import type { FabKey } from "../constants";
 
-interface UseToggleContactAdrienVisibilityOptions {
+interface UseFabVisibilityOptions {
+	/** Clé du FAB (type-safe) */
+	key: FabKey;
+	/** Etat initial de visibilité (depuis le cookie serveur) */
 	initialHidden?: boolean;
+	/** Callback appelé après un toggle réussi */
 	onToggle?: (isHidden: boolean) => void;
 }
 
 /**
- * Hook pour basculer la visibilité du bouton Contact Adrien
+ * Hook pour basculer la visibilité d'un FAB
  *
  * Utilise useOptimistic pour une UX réactive avec rollback automatique en cas d'erreur
  *
  * @example
  * ```tsx
- * const { isHidden, toggle, isPending } = useToggleContactAdrienVisibility({
+ * const { isHidden, toggle, isPending } = useFabVisibility({
+ *   key: FAB_KEYS.CONTACT_ADRIEN,
  *   initialHidden: false,
  * });
  *
@@ -26,10 +32,8 @@ interface UseToggleContactAdrienVisibilityOptions {
  * </Button>
  * ```
  */
-export function useToggleContactAdrienVisibility(
-	options?: UseToggleContactAdrienVisibilityOptions
-) {
-	const { initialHidden = false, onToggle } = options ?? {};
+export function useFabVisibility(options: UseFabVisibilityOptions) {
+	const { key, initialHidden = false, onToggle } = options;
 
 	// Transition pour wrapper les appels async
 	const [isTransitionPending, startTransition] = useTransition();
@@ -38,9 +42,13 @@ export function useToggleContactAdrienVisibility(
 	const [optimisticHidden, setOptimisticHidden] = useOptimistic(initialHidden);
 
 	const [state, formAction, isActionPending] = useActionState(
-		withCallbacks(setContactAdrienVisibility, {
+		withCallbacks(setFabVisibility, {
 			onSuccess: (result) => {
-				if (result?.data && typeof result.data === "object" && "isHidden" in result.data) {
+				if (
+					result?.data &&
+					typeof result.data === "object" &&
+					"isHidden" in result.data
+				) {
 					onToggle?.(result.data.isHidden as boolean);
 				}
 			},
@@ -64,6 +72,7 @@ export function useToggleContactAdrienVisibility(
 
 			// Appel de l'action serveur
 			const formData = new FormData();
+			formData.append("key", key);
 			formData.append("isHidden", newHiddenState.toString());
 			formAction(formData);
 		});
@@ -74,7 +83,6 @@ export function useToggleContactAdrienVisibility(
 		isHidden: optimisticHidden,
 		toggle,
 		isPending: isTransitionPending || isActionPending,
-		// Vérifie si la dernière action a réussi
 		isSuccess: state?.status === ActionStatus.SUCCESS,
 		isError: state?.status === ActionStatus.ERROR,
 	};

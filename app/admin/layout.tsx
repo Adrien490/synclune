@@ -5,7 +5,8 @@ import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { SelectionProvider } from "@/shared/contexts/selection-context";
 import { auth } from "@/modules/auth/lib/auth";
 import { ContactAdrien } from "@/modules/dashboard/components/contact-adrien";
-import { getContactAdrienVisibility } from "@/modules/dashboard/data/get-contact-adrien-visibility";
+import { FAB_KEYS } from "@/shared/features/fab";
+import { getFabVisibility } from "@/shared/features/fab/data/get-fab-visibility";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -30,7 +31,7 @@ export default async function AdminLayout({
 		auth.api.getSession({
 			headers: await import("next/headers").then((m) => m.headers()),
 		}),
-		getContactAdrienVisibility(),
+		getFabVisibility(FAB_KEYS.CONTACT_ADRIEN),
 	]);
 
 	// Vérification de sécurité obligatoire

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 // ============================================================================
 
 export interface UseMediaUploadOptions {
-	/** Taille max pour les images en bytes (défaut: 4MB) */
+	/** Taille max pour les images en bytes (défaut: 16MB) */
 	maxSizeImage?: number;
 	/** Taille max pour les vidéos en bytes (défaut: 512MB) */
 	maxSizeVideo?: number;
