@@ -11,9 +11,8 @@ import {
 } from "@/shared/components/ui/sheet";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Button } from "@/shared/components/ui/button";
-import { Separator } from "@/shared/components/ui/separator";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { ShoppingBag, TruckIcon } from "lucide-react";
+import { ShoppingBag, Truck } from "lucide-react";
 import Link from "next/link";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { useSwipeGesture } from "@/shared/hooks/use-swipe-gesture";
@@ -118,46 +117,17 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 								/>
 							</ScrollArea>
 
-							<SheetFooter className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t mt-auto shrink-0">
-								<div className="w-full space-y-4">
-									{/* Details */}
-									<div className="space-y-2 text-sm">
-										<div className="flex justify-between items-center">
-											<span className="text-muted-foreground flex items-center gap-1.5">
-												<ShoppingBag className="w-4 h-4" />
-												<span className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50">
-													Articles ({totalItems})
-												</span>
-											</span>
-											<span className="font-mono font-medium transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse">
-												{formatEuro(subtotal)}
-											</span>
-										</div>
-
-										<div className="flex justify-between items-center">
-											<span className="text-muted-foreground flex items-center gap-1.5">
-												<TruckIcon className="w-4 h-4" />
-												Livraison
-											</span>
-											<span className="text-sm text-muted-foreground">
-												Estimée au paiement
-											</span>
-										</div>
-									</div>
-
-									<Separator />
-
+							<SheetFooter className="px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t mt-auto shrink-0">
+								<div className="w-full space-y-3">
 									{/* Total */}
 									<div className="flex justify-between items-center">
-										<span className="font-semibold">Sous-total articles</span>
+										<span className="font-semibold">
+											Sous-total ({totalItems} article{totalItems > 1 ? "s" : ""})
+										</span>
 										<span className="font-mono font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse">
 											{formatEuro(subtotal)}
 										</span>
 									</div>
-
-									<p className="text-[11px] text-muted-foreground text-right">
-										TVA non applicable, art. 293 B du CGI
-									</p>
 
 									{/* Alerte si problemes */}
 									{hasStockIssues && (
@@ -174,7 +144,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 									)}
 
 									{/* CTAs */}
-									<div className="space-y-2 pt-2">
+									<div className="space-y-2">
 										{hasStockIssues ? (
 											<Button
 												size="lg"
@@ -205,6 +175,14 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 											<Link href="/produits">Continuer mes achats</Link>
 										</Button>
 									</div>
+
+									<p className="text-[11px] text-muted-foreground flex items-center justify-between">
+										<span className="flex items-center gap-1">
+											<Truck className="w-3 h-3" />
+											Livraison estimée au paiement
+										</span>
+										<span>TVA non applicable</span>
+									</p>
 								</div>
 							</SheetFooter>
 						</>

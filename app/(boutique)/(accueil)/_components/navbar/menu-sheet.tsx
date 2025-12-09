@@ -7,7 +7,6 @@ import {
 	Sheet,
 	SheetClose,
 	SheetContent,
-	SheetFooter,
 	SheetHeader,
 	SheetTitle,
 	SheetTrigger,
@@ -15,7 +14,7 @@ import {
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { cn } from "@/shared/utils/cn";
-import { Menu } from "lucide-react";
+import { Heart, Menu } from "lucide-react";
 import Link from "next/link";
 
 /** HREFs de la zone compte (memoisation) */
@@ -62,11 +61,12 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 				<Link
 					href={item.href}
 					className={cn(
-						"flex items-center text-base/6 font-medium tracking-wide antialiased transition-all duration-200 rounded-none px-4 py-3 relative border-b-2",
-						"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+						"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3 rounded-lg",
+						"transition-all duration-300 ease-out",
+						"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
 						isActive
-							? "font-semibold border-primary bg-primary/5"
-							: "border-transparent hover:border-primary/50 hover:bg-accent/50"
+							? "bg-primary/8 text-foreground font-semibold border-l-2 border-primary pl-5"
+							: "text-foreground/80 hover:text-foreground hover:bg-primary/5 hover:pl-5"
 					)}
 					aria-current={isActive ? "page" : undefined}
 				>
@@ -85,13 +85,13 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 				<Button
 					variant="ghost"
 					size="icon"
-					className="relative bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-all duration-300 ease-out hover:scale-105 active:scale-95 cursor-pointer group -ml-3 rounded-xl lg:hidden"
+					className="relative -ml-3 rounded-xl lg:hidden bg-transparent hover:bg-primary/8 text-muted-foreground hover:text-foreground transition-all duration-300 ease-out hover:scale-105 active:scale-95 cursor-pointer group"
 					aria-label="Ouvrir le menu de navigation"
 					aria-controls="mobile-menu-synclune"
 				>
 					<Menu
 						size={20}
-						className="transition-transform duration-300 group-hover:rotate-6"
+						className="transition-all duration-300 group-hover:rotate-6"
 						aria-hidden="true"
 					/>
 				</Button>
@@ -104,71 +104,101 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 
 			<SheetContent
 				side="left"
-				className="w-[min(85vw,320px)] sm:w-80 sm:max-w-md border-r bg-background/95 p-6 flex flex-col"
+				className="w-[min(85vw,320px)] sm:w-80 sm:max-w-md border-r bg-background/95 !p-0 flex flex-col overflow-hidden"
 				id="mobile-menu-synclune"
 				aria-describedby="mobile-menu-synclune-description"
 			>
-				<SheetHeader className="pb-4">
-					<SheetTitle className="sr-only">Menu de navigation</SheetTitle>
-					<p id="mobile-menu-synclune-description" className="sr-only">
+				{/* Halos décoratifs subtils */}
+				<div
+					className="absolute -top-20 -left-20 w-40 h-40 pointer-events-none"
+					aria-hidden="true"
+				>
+					<div className="w-full h-full rounded-full bg-primary/10 blur-3xl" />
+				</div>
+				<div
+					className="absolute -bottom-20 -right-20 w-32 h-32 pointer-events-none"
+					aria-hidden="true"
+				>
+					<div className="w-full h-full rounded-full bg-secondary/15 blur-3xl" />
+				</div>
+
+				{/* Header sr-only */}
+				<SheetHeader className="!p-0 sr-only">
+					<SheetTitle>Menu de navigation</SheetTitle>
+					<p id="mobile-menu-synclune-description">
 						Menu de navigation de Synclune - Découvrez nos bijoux et collections
 					</p>
 				</SheetHeader>
 
 				<nav
 					aria-label="Menu principal"
-					className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]"
+					className="relative z-10 flex-1 overflow-y-auto px-4 pt-14"
 				>
 					{/* Zone découverte: Accueil, Collections, Mes créations, Personnaliser */}
-					<Stagger stagger={0.025} delay={0.05} y={10} className="space-y-2">
+					<Stagger stagger={0.025} delay={0.05} y={10} className="space-y-1">
 						{discoveryItems.map((item) => renderNavItem(item))}
 					</Stagger>
 
-					{/* Séparateur */}
+					{/* Séparateur décoratif */}
 					<div
-						className="my-6 border-t border-border/60"
+						className="relative my-6 flex items-center justify-center"
 						role="separator"
 						aria-hidden="true"
-					/>
+					>
+						<div className="absolute inset-0 flex items-center">
+							<div className="w-full border-t border-border/60" />
+						</div>
+						<div className="relative bg-background/95 px-3 rounded-full">
+							<Heart className="h-4 w-4 text-muted-foreground/40 fill-muted-foreground/10" />
+						</div>
+					</div>
 
 					{/* Zone compte: Mon compte / Se connecter, Tableau de bord (admin), L'atelier */}
-					<Stagger stagger={0.025} delay={0.15} y={10} className="space-y-2">
+					<Stagger stagger={0.025} delay={0.15} y={10} className="space-y-1">
 						{accountItems.map((item) => renderNavItem(item))}
 					</Stagger>
 				</nav>
 
 				{/* Footer avec liens secondaires */}
-				<SheetFooter className="mt-auto pt-6 border-t border-border/40">
-					<div className="w-full space-y-2">
+				<footer
+					className="relative z-10 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/40"
+				>
+					<div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
 						<SheetClose asChild>
 							<Link
 								href="/mentions-legales"
-								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-2.5 rounded-none"
+								className="hover:text-foreground transition-colors duration-200"
 								aria-label="Consulter les mentions légales"
 							>
 								Mentions légales
 							</Link>
 						</SheetClose>
+						<span className="text-border" aria-hidden="true">
+							·
+						</span>
 						<SheetClose asChild>
 							<Link
 								href="/confidentialite"
-								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-2.5 rounded-none"
+								className="hover:text-foreground transition-colors duration-200"
 								aria-label="Consulter la politique de confidentialité"
 							>
 								Confidentialité
 							</Link>
 						</SheetClose>
+						<span className="text-border" aria-hidden="true">
+							·
+						</span>
 						<SheetClose asChild>
 							<Link
 								href="/accessibilite"
-								className="text-sm/6 tracking-normal antialiased text-muted-foreground hover:text-foreground transition-colors duration-200 block px-3 py-2.5 rounded-none"
+								className="hover:text-foreground transition-colors duration-200"
 								aria-label="Consulter la déclaration d'accessibilité"
 							>
 								Accessibilité
 							</Link>
 						</SheetClose>
 					</div>
-				</SheetFooter>
+				</footer>
 			</SheetContent>
 		</Sheet>
 	);
