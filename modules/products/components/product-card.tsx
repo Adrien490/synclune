@@ -81,9 +81,7 @@ export function ProductCard({
 				"transition-all duration-300 ease-out",
 				// Border, shadow et scale au hover
 				"shadow-sm motion-safe:hover:border-primary/30 motion-safe:hover:shadow-xl motion-safe:hover:shadow-primary/15",
-				"motion-safe:hover:-translate-y-1.5 motion-safe:hover:scale-[1.01] will-change-transform",
-				// Active state pour mobile - seulement sur le lien, pas sur les boutons interactifs
-				"has-[a:active]:motion-safe:scale-[0.98]"
+				"motion-safe:hover:-translate-y-1.5 motion-safe:hover:scale-[1.01] will-change-transform"
 			)}
 			itemScope
 			itemType="https://schema.org/Product"
