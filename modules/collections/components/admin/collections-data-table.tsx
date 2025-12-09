@@ -25,7 +25,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import { AlertTriangle, FolderOpen } from "lucide-react";
+import { AlertTriangle, FolderOpen, Star } from "lucide-react";
 import Link from "next/link";
 import { CollectionRowActions } from "./collection-row-actions";
 import { CollectionsSelectionToolbar } from "./collections-selection-toolbar";
@@ -149,6 +149,8 @@ export async function CollectionsDataTable({
 								const truncatedDescription = truncateDescription(
 									collection.description
 								);
+								// Verifier si un produit featured est defini
+								const hasFeaturedProduct = collection.products[0]?.isFeatured === true;
 
 								return (
 									<TableRow key={collection.id}>
@@ -159,13 +161,24 @@ export async function CollectionsDataTable({
 											/>
 										</TableCell>
 										<TableCell role="gridcell">
-										<div className="overflow-hidden">
-											<span
-												className="font-semibold text-foreground truncate block"
+										<div className="flex items-center gap-2 overflow-hidden">
+											<Link
+												href={`/admin/catalogue/collections/${collection.slug}`}
+												className="font-semibold text-foreground truncate hover:underline"
 												title={collection.name}
 											>
 												{collection.name}
-											</span>
+											</Link>
+											{hasFeaturedProduct && (
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<Star className="h-4 w-4 shrink-0 fill-yellow-400 text-yellow-400" />
+													</TooltipTrigger>
+													<TooltipContent>
+														<p>Produit vedette defini</p>
+													</TooltipContent>
+												</Tooltip>
+											)}
 										</div>
 									</TableCell>
 										<TableCell role="gridcell" className="hidden sm:table-cell">

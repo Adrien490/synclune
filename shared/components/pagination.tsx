@@ -101,12 +101,17 @@ export function Pagination({
 						disabled={page <= 1 || pageCount <= 1 || isPending}
 						onClick={() => handlePageChange(1)}
 						className={cn(
-							"h-8 w-8",
+							"h-11 w-11 md:h-8 md:w-8",
+							"backdrop-blur-sm",
+							"border-primary/20",
+							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
+							"hover:scale-[1.02]",
+							"transition-all duration-300",
 							page === 1 && "bg-primary/10 text-primary"
 						)}
 						aria-label="Première page"
 					>
-						<ChevronsLeft className="h-4 w-4" />
+						<ChevronsLeft className="size-5 md:size-4" />
 					</Button>
 
 					{/* Bouton précédent */}
@@ -115,10 +120,17 @@ export function Pagination({
 						size="icon"
 						disabled={page <= 1 || pageCount <= 1 || isPending}
 						onClick={() => handlePageChange(page - 1)}
-						className="h-8 w-8"
+						className={cn(
+							"h-11 w-11 md:h-8 md:w-8",
+							"backdrop-blur-sm",
+							"border-primary/20",
+							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
+							"hover:scale-[1.02]",
+							"transition-all duration-300"
+						)}
 						aria-label="Page précédente"
 					>
-						<ChevronLeft className="h-4 w-4" />
+						<ChevronLeft className="size-5 md:size-4" />
 					</Button>
 
 					{/* Affichage de page X/Y au lieu des numéros sur mobile */}
@@ -148,6 +160,10 @@ export function Pagination({
 									onClick={() => handlePageChange(item.value as number)}
 									className={cn(
 										"h-8 w-8",
+										"backdrop-blur-sm",
+										page !== item.value && "border-primary/20",
+										"hover:scale-[1.02]",
+										"transition-all duration-300",
 										isPending && "text-muted-foreground",
 										page === item.value && "font-semibold"
 									)}
@@ -166,10 +182,17 @@ export function Pagination({
 						size="icon"
 						disabled={page >= pageCount || pageCount <= 1 || isPending}
 						onClick={() => handlePageChange(page + 1)}
-						className="h-8 w-8"
+						className={cn(
+							"h-11 w-11 md:h-8 md:w-8",
+							"backdrop-blur-sm",
+							"border-primary/20",
+							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
+							"hover:scale-[1.02]",
+							"transition-all duration-300"
+						)}
 						aria-label="Page suivante"
 					>
-						<ChevronRight className="h-4 w-4" />
+						<ChevronRight className="size-5 md:size-4" />
 					</Button>
 
 					{/* Bouton dernière page */}
@@ -179,12 +202,17 @@ export function Pagination({
 						disabled={page >= pageCount || pageCount <= 1 || isPending}
 						onClick={() => handlePageChange(pageCount)}
 						className={cn(
-							"h-8 w-8",
+							"h-11 w-11 md:h-8 md:w-8",
+							"backdrop-blur-sm",
+							"border-primary/20",
+							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
+							"hover:scale-[1.02]",
+							"transition-all duration-300",
 							page === pageCount && "bg-primary/10 text-primary"
 						)}
 						aria-label="Dernière page"
 					>
-						<ChevronsRight className="h-4 w-4" />
+						<ChevronsRight className="size-5 md:size-4" />
 					</Button>
 				</ButtonGroup>
 			</nav>

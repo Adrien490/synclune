@@ -70,10 +70,11 @@ export const GET_COLLECTIONS_SELECT = {
 	status: true,
 	createdAt: true,
 	updatedAt: true,
-	// Produit vedette pour l'image de la collection
+	// Produit vedette pour l'image de la collection (avec fallback sur le plus recent)
+	// orderBy: isFeatured desc met le produit featured en premier, sinon le plus recent
 	products: {
-		where: { isFeatured: true },
 		select: {
+			isFeatured: true,
 			product: {
 				select: {
 					id: true,
@@ -83,7 +84,7 @@ export const GET_COLLECTIONS_SELECT = {
 						select: {
 							images: {
 								where: { isPrimary: true },
-								select: { url: true, altText: true },
+								select: { url: true, altText: true, blurDataUrl: true },
 								take: 1,
 							},
 						},
@@ -92,6 +93,7 @@ export const GET_COLLECTIONS_SELECT = {
 				},
 			},
 		},
+		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
 		take: 1,
 	},
 	_count: {

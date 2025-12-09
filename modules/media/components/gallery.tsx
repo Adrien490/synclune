@@ -17,12 +17,6 @@ import { useGalleryKeyboard } from "@/modules/media/hooks/use-gallery-keyboard";
 import { useGalleryNavigation } from "@/modules/media/hooks/use-gallery-navigation";
 import { useGallerySwipe } from "@/modules/media/hooks/use-gallery-swipe";
 import { useMediaErrors } from "@/modules/media/hooks/use-media-errors";
-import {
-	MAX_IMAGE_SIZE,
-	nextImageUrl,
-	IMAGE_SIZES,
-	DEVICE_SIZES,
-} from "@/modules/media/constants/image-config.constants";
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { GalleryThumbnailsGrid, GalleryThumbnailsCarousel } from "@/modules/media/components/gallery-thumbnails";
@@ -105,17 +99,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 		}
 
 		return {
-			src: nextImageUrl(media.url, MAX_IMAGE_SIZE),
+			src: media.url,
 			alt: media.alt,
-			width: MAX_IMAGE_SIZE,
-			height: MAX_IMAGE_SIZE,
-			srcSet: [...IMAGE_SIZES, ...DEVICE_SIZES]
-				.filter((size) => size <= MAX_IMAGE_SIZE)
-				.map((size) => ({
-					src: nextImageUrl(media.url, size),
-					width: size,
-					height: size,
-				})),
 		};
 	});
 
@@ -316,37 +301,61 @@ function GalleryContent({ product, title }: GalleryProps) {
 							{safeImages.length > 1 && (
 								<>
 									<Button
-										variant="secondary"
-										size="sm"
+										variant="ghost"
+										size="icon"
 										className={cn(
+											// Positionnement
 											"absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10",
-											"opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
-											"transition-all duration-300",
-											"w-12 h-12 sm:w-10 sm:h-10 p-0", // 48px sur mobile
+											// Touch targets responsives (WCAG 2.5.5)
+											"size-12 md:size-10",
+											// Forme et fond premium
+											"rounded-full bg-card/95 backdrop-blur-sm",
+											// Bordure subtile avec couleur primaire
+											"border border-primary/20",
+											// Ombres
+											"shadow-lg hover:shadow-xl",
+											// Couleurs et hover
+											"text-foreground/70",
+											"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
 											"hover:scale-105 active:scale-95",
-											"shadow-md backdrop-blur-sm" // Meilleure visibilité
+											// Visibilité mobile-first
+											"opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
+											// Transitions fluides
+											"transition-all duration-300"
 										)}
 										onClick={handlePrev}
 										aria-label="Image précédente"
 									>
-										<ChevronLeft className="w-5 h-5" />
+										<ChevronLeft className="size-5" />
 									</Button>
 
 									<Button
-										variant="secondary"
-										size="sm"
+										variant="ghost"
+										size="icon"
 										className={cn(
+											// Positionnement
 											"absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10",
-											"opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
-											"transition-all duration-300",
-											"w-12 h-12 sm:w-10 sm:h-10 p-0", // 48px sur mobile
+											// Touch targets responsives (WCAG 2.5.5)
+											"size-12 md:size-10",
+											// Forme et fond premium
+											"rounded-full bg-card/95 backdrop-blur-sm",
+											// Bordure subtile avec couleur primaire
+											"border border-primary/20",
+											// Ombres
+											"shadow-lg hover:shadow-xl",
+											// Couleurs et hover
+											"text-foreground/70",
+											"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
 											"hover:scale-105 active:scale-95",
-											"shadow-md backdrop-blur-sm" // Meilleure visibilité
+											// Visibilité mobile-first
+											"opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
+											// Transitions fluides
+											"transition-all duration-300"
 										)}
 										onClick={handleNext}
 										aria-label="Image suivante"
 									>
-										<ChevronRight className="w-5 h-5" />
+										<ChevronRight className="size-5" />
 									</Button>
 								</>
 							)}

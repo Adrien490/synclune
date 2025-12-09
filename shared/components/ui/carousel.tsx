@@ -3,7 +3,7 @@
 import useEmblaCarousel, {
 	type UseEmblaCarouselType,
 } from "embla-carousel-react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/shared/components/ui/button";
@@ -170,7 +170,7 @@ function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
 
 function CarouselPrevious({
 	className,
-	variant = "outline",
+	variant = "ghost",
 	size = "icon",
 	...props
 }: React.ComponentProps<typeof Button>) {
@@ -182,25 +182,42 @@ function CarouselPrevious({
 			variant={variant}
 			size={size}
 			className={cn(
-				"absolute size-8 rounded-full",
+				// Positionnement
+				"absolute z-20",
 				orientation === "horizontal"
 					? "top-1/2 -left-12 -translate-y-1/2"
 					: "-top-12 left-1/2 -translate-x-1/2 rotate-90",
+				// Touch targets responsives (WCAG 2.5.5)
+				"size-12 md:size-10",
+				// Forme et fond premium
+				"rounded-full bg-card/95 backdrop-blur-sm",
+				// Bordure subtile avec couleur primaire
+				"border border-primary/20",
+				// Ombres
+				"shadow-lg hover:shadow-xl",
+				// Couleurs et hover
+				"text-foreground/70",
+				"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
+				"hover:scale-105",
+				// États disabled
+				"disabled:opacity-40 disabled:pointer-events-none",
+				// Transitions fluides
+				"transition-all duration-300",
 				className
 			)}
 			disabled={!canScrollPrev}
 			onClick={scrollPrev}
 			{...props}
 		>
-			<ArrowLeft />
-			<span className="sr-only">Previous slide</span>
+			<ChevronLeft className="size-5" />
+			<span className="sr-only">Diapositive précédente</span>
 		</Button>
 	);
 }
 
 function CarouselNext({
 	className,
-	variant = "outline",
+	variant = "ghost",
 	size = "icon",
 	...props
 }: React.ComponentProps<typeof Button>) {
@@ -212,18 +229,35 @@ function CarouselNext({
 			variant={variant}
 			size={size}
 			className={cn(
-				"absolute size-8 rounded-full",
+				// Positionnement
+				"absolute z-20",
 				orientation === "horizontal"
 					? "top-1/2 -right-12 -translate-y-1/2"
 					: "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
+				// Touch targets responsives (WCAG 2.5.5)
+				"size-12 md:size-10",
+				// Forme et fond premium
+				"rounded-full bg-card/95 backdrop-blur-sm",
+				// Bordure subtile avec couleur primaire
+				"border border-primary/20",
+				// Ombres
+				"shadow-lg hover:shadow-xl",
+				// Couleurs et hover
+				"text-foreground/70",
+				"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
+				"hover:scale-105",
+				// États disabled
+				"disabled:opacity-40 disabled:pointer-events-none",
+				// Transitions fluides
+				"transition-all duration-300",
 				className
 			)}
 			disabled={!canScrollNext}
 			onClick={scrollNext}
 			{...props}
 		>
-			<ArrowRight />
-			<span className="sr-only">Next slide</span>
+			<ChevronRight className="size-5" />
+			<span className="sr-only">Diapositive suivante</span>
 		</Button>
 	);
 }

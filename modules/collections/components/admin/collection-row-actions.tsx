@@ -21,6 +21,7 @@ import {
 	Eye,
 	FileEdit,
 	MoreVertical,
+	Package,
 	Pencil,
 	Trash2,
 } from "lucide-react";
@@ -117,6 +118,14 @@ export function CollectionRowActions({
 				>
 					<Pencil className="h-4 w-4" />
 					Modifier
+				</DropdownMenuItem>
+
+				{/* Gerer les produits */}
+				<DropdownMenuItem asChild>
+					<Link href={`/admin/catalogue/collections/${collectionSlug}`}>
+						<Package className="h-4 w-4" />
+						Gerer les produits
+					</Link>
 				</DropdownMenuItem>
 
 				<DropdownMenuSeparator />

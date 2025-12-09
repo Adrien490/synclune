@@ -80,23 +80,31 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 px-4 sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mask-carousel-edges"
 							data-carousel-scroll
 						>
-							{collections.map((collection, index) => (
-								<div
-									key={collection.id}
-									data-index={index}
-									className="shrink-0 w-[clamp(200px,72vw,280px)] snap-center"
-									role="listitem"
-								>
-									<CollectionCard
-										slug={collection.slug}
-										name={collection.name}
-										description={collection.description}
-										imageUrl={collection.products[0]?.product?.skus[0]?.images[0]?.url || null}
-										showDescription={false}
-										index={index}
-									/>
-								</div>
-							))}
+							{collections.map((collection, index) => {
+								// Le produit featured (ou le plus recent si aucun featured)
+								// est en premier grace a orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }]
+								const featuredProduct = collection.products[0];
+								const featuredImage = featuredProduct?.product?.skus?.[0]?.images?.[0];
+
+								return (
+									<div
+										key={collection.id}
+										data-index={index}
+										className="shrink-0 w-[clamp(200px,72vw,280px)] snap-center"
+										role="listitem"
+									>
+										<CollectionCard
+											slug={collection.slug}
+											name={collection.name}
+											description={collection.description}
+											imageUrl={featuredImage?.url || null}
+											blurDataUrl={featuredImage?.blurDataUrl}
+											showDescription={false}
+											index={index}
+										/>
+									</div>
+								);
+							})}
 						</Reveal>
 					</CollectionCarouselWrapper>
 				</div>

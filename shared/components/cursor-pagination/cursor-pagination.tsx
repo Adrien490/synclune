@@ -151,13 +151,22 @@ export function CursorPagination({
 						size="sm"
 						disabled={isFirstPage || isPending}
 						onClick={handleReset}
-						className="h-9 gap-1 max-sm:h-11 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.98] transition-transform"
+						className={cn(
+							"h-11 md:h-9 gap-1",
+							"backdrop-blur-sm",
+							"border-primary/20",
+							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
+							"hover:scale-[1.02]",
+							"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+							"active:scale-[0.98]",
+							"transition-all duration-300"
+						)}
 						aria-label="Retour au début"
 					>
 						{isPending && !isFirstPage ? (
-							<Loader2 className="h-4 w-4 animate-spin" />
+							<Loader2 className="size-5 md:size-4 animate-spin" />
 						) : (
-							<ChevronsLeft className="h-4 w-4" />
+							<ChevronsLeft className="size-5 md:size-4" />
 						)}
 						<span className="hidden sm:inline">Début</span>
 					</Button>
@@ -169,16 +178,25 @@ export function CursorPagination({
 							size="icon"
 							disabled={!hasPreviousPage || isPending}
 							onClick={handlePrevious}
-							className="h-9 w-9 max-sm:h-11 max-sm:w-11 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.98] transition-transform"
+							className={cn(
+								"h-11 w-11 md:h-9 md:w-9",
+								"backdrop-blur-sm",
+								"border-primary/20",
+								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
+								"hover:scale-[1.02]",
+								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+								"active:scale-[0.98]",
+								"transition-all duration-300"
+							)}
 							aria-label="Page précédente"
 						>
-							<ChevronLeft className="h-4 w-4" />
+							<ChevronLeft className="size-5 md:size-4" />
 						</Button>
 
 						<div
 							role="status"
 							aria-current="page"
-							className="px-3 text-xs sm:text-sm bg-muted/50 min-w-[80px] sm:min-w-[100px] text-center flex items-center justify-center h-9 max-sm:h-11"
+							className="px-3 text-xs sm:text-sm bg-muted/50 min-w-[80px] sm:min-w-[100px] text-center flex items-center justify-center h-11 md:h-9"
 						>
 							<span className="font-medium text-foreground">
 								{!hasPreviousPage && !hasNextPage
@@ -197,10 +215,19 @@ export function CursorPagination({
 							size="icon"
 							disabled={!hasNextPage || isPending}
 							onClick={handleNext}
-							className="h-9 w-9 max-sm:h-11 max-sm:w-11 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.98] transition-transform"
+							className={cn(
+								"h-11 w-11 md:h-9 md:w-9",
+								"backdrop-blur-sm",
+								"border-primary/20",
+								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
+								"hover:scale-[1.02]",
+								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+								"active:scale-[0.98]",
+								"transition-all duration-300"
+							)}
 							aria-label="Page suivante"
 						>
-							<ChevronRight className="h-4 w-4" />
+							<ChevronRight className="size-5 md:size-4" />
 						</Button>
 					</ButtonGroup>
 				</nav>

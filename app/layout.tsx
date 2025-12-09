@@ -2,9 +2,11 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
+import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import { BUSINESS_INFO, SEO_DEFAULTS, SITE_URL } from "@/shared/constants/seo-config";
+import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
 import { crimsonPro, inter, jetBrainsMono } from "@/shared/styles/fonts";
 import { UploadThingSSR } from "@/modules/media/lib/uploadthing/uploadthing-ssr";
 import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
@@ -138,19 +140,22 @@ export default async function RootLayout({
 					<Suspense fallback={null}>
 						<CookieConsentStoreProvider>
 							<ConditionalAnalytics />
-							<DialogStoreProvider>
-								<SheetStoreProvider>
-									<AlertDialogStoreProvider>
-										<main id="main-content">
-											{children}
-										</main>
+							<NavigationGuardProvider>
+								<DialogStoreProvider>
+									<SheetStoreProvider>
+										<AlertDialogStoreProvider>
+											<main id="main-content">
+												{children}
+											</main>
 
-										<Suspense fallback={<CartSheetSkeleton />}>
-											<CartSheet cartPromise={getCart()} />
-										</Suspense>
-									</AlertDialogStoreProvider>
-								</SheetStoreProvider>
-							</DialogStoreProvider>
+											<Suspense fallback={<CartSheetSkeleton />}>
+												<CartSheet cartPromise={getCart()} />
+											</Suspense>
+										</AlertDialogStoreProvider>
+									</SheetStoreProvider>
+								</DialogStoreProvider>
+								<UnsavedChangesDialog />
+							</NavigationGuardProvider>
 							<CookieBanner />
 						</CookieConsentStoreProvider>
 					</Suspense>
