@@ -49,8 +49,8 @@ const emptyMediaVariants = cva(
 		variants: {
 			variant: {
 				default:
-					"text-muted-foreground [&_svg:not([class*='size-'])]:size-8",
-				icon: "bg-muted/50 text-muted-foreground flex size-12 shrink-0 items-center justify-center rounded-xl border border-border/50 [&_svg:not([class*='size-'])]:size-6",
+					"text-primary [&_svg:not([class*='size-'])]:size-8 animate-sparkle-pulse",
+				icon: "bg-primary/10 text-primary flex size-12 shrink-0 items-center justify-center rounded-xl border border-primary/20 [&_svg:not([class*='size-'])]:size-6 animate-sparkle-pulse",
 				jewelry:
 					"bg-primary/10 text-primary flex size-14 shrink-0 items-center justify-center rounded-full ring-1 ring-primary/20 [&_svg:not([class*='size-'])]:size-7 animate-sparkle-pulse",
 				luxury:
