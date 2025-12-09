@@ -56,7 +56,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
 						<SectionTitle id="collections-title">
-							Collections
+							Les dernières collections
 						</SectionTitle>
 					</Fade>
 					<Fade y={10} delay={0.1} duration={0.6}>
@@ -64,7 +64,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							id="collections-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
-							Je rajoute une petite touche personnelle à chaque création
+							Je rajoute une petite touche personnelle à chaque création !
 						</p>
 					</Fade>
 				</header>

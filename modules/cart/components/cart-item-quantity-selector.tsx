@@ -64,7 +64,10 @@ export function CartItemQuantitySelector({
 	const isLoading = isPending || isActionPending;
 
 	return (
-		<div aria-label="Modifier la quantite">
+		<div
+			aria-label="Modifier la quantite"
+			data-pending={isLoading ? "" : undefined}
+		>
 			<ButtonGroup aria-label="Quantite">
 				<Button
 					type="button"
@@ -83,14 +86,16 @@ export function CartItemQuantitySelector({
 				</Button>
 
 				<Input
-					type="number"
+					type="text"
+					inputMode="numeric"
+					pattern="[0-9]*"
 					min={1}
 					max={maxQuantity}
 					value={optimisticQuantity}
 					onChange={(e) => handleQuantityChange(parseInt(e.target.value, 10))}
 					onBlur={handleBlur}
 					disabled={isInactive || isLoading}
-					className="min-h-0 h-11 sm:h-9 w-12 sm:w-11 text-center text-base px-0 py-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+					className="min-h-0 h-11 sm:h-9 w-12 sm:w-11 text-center text-base px-0 py-0"
 					aria-label={`Quantite, entre 1 et ${maxQuantity}`}
 					aria-valuemin={1}
 					aria-valuemax={maxQuantity}

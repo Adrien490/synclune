@@ -16,6 +16,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag, TruckIcon } from "lucide-react";
 import Link from "next/link";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
+import { useSwipeGesture } from "@/shared/hooks/use-swipe-gesture";
 import { CartSheetItemRow } from "./cart-sheet-item-row";
 import { RemoveCartItemAlertDialog } from "./remove-cart-item-alert-dialog";
 import type { GetCartReturn } from "../types/cart.types";
@@ -27,6 +28,7 @@ interface CartSheetProps {
 export function CartSheet({ cartPromise }: CartSheetProps) {
 	const { isOpen, close } = useSheet("cart");
 	const cart = use(cartPromise);
+	const swipeHandlers = useSwipeGesture({ onSwipe: close, direction: "right" });
 
 	const hasItems = cart && cart.items.length > 0;
 
@@ -52,9 +54,20 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 	return (
 		<>
 			<Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
-				<SheetContent side="right" className="w-full sm:max-w-lg flex flex-col p-0 gap-0">
+				<SheetContent
+					side="right"
+					className="w-full sm:max-w-lg flex flex-col p-0 gap-0"
+					{...swipeHandlers}
+				>
 					<SheetHeader className="px-6 py-4 border-b shrink-0">
-						<SheetTitle>Mon panier{hasItems && ` (${totalItems})`}</SheetTitle>
+						<SheetTitle>
+							Mon panier
+							{hasItems && (
+								<span className="transition-opacity duration-200 group-has-data-pending/sheet:opacity-50">
+									{" "}({totalItems})
+								</span>
+							)}
+						</SheetTitle>
 						<SheetDescription className="sr-only">
 							Contenu de ton panier - Gere tes articles et passe commande
 						</SheetDescription>
@@ -88,18 +101,27 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										<CartSheetItemRow key={item.id} item={item} onClose={close} />
 									))}
 								</div>
+								{/* Indicateur de scroll - fade gradient */}
+								<div
+									className="pointer-events-none sticky bottom-0 h-8 bg-gradient-to-t from-background to-transparent"
+									aria-hidden="true"
+								/>
 							</ScrollArea>
 
-							<SheetFooter className="px-6 py-4 border-t mt-auto shrink-0">
+							<SheetFooter className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t mt-auto shrink-0">
 								<div className="w-full space-y-4">
 									{/* Details */}
 									<div className="space-y-2 text-sm">
 										<div className="flex justify-between items-center">
 											<span className="text-muted-foreground flex items-center gap-1.5">
 												<ShoppingBag className="w-4 h-4" />
-												Articles ({totalItems})
+												<span className="transition-opacity duration-200 group-has-data-pending/sheet:opacity-50">
+													Articles ({totalItems})
+												</span>
 											</span>
-											<span className="font-mono font-medium">{formatEuro(subtotal)}</span>
+											<span className="font-mono font-medium transition-opacity duration-200 group-has-data-pending/sheet:opacity-50 group-has-data-pending/sheet:animate-pulse">
+												{formatEuro(subtotal)}
+											</span>
 										</div>
 
 										<div className="flex justify-between items-center">
@@ -118,7 +140,9 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 									{/* Total */}
 									<div className="flex justify-between items-center">
 										<span className="font-semibold">Sous-total articles</span>
-										<span className="font-mono font-bold text-lg">{formatEuro(subtotal)}</span>
+										<span className="font-mono font-bold text-lg transition-opacity duration-200 group-has-data-pending/sheet:opacity-50 group-has-data-pending/sheet:animate-pulse">
+											{formatEuro(subtotal)}
+										</span>
 									</div>
 
 									<p className="text-[11px] text-muted-foreground text-right">

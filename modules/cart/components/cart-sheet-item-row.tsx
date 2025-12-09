@@ -42,16 +42,17 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 	return (
 		<article
 			className={cn(
-				"flex gap-3 p-3 border rounded-lg",
+				"group/item border rounded-lg p-3",
+				"grid grid-cols-[5rem_1fr] sm:grid-cols-[6rem_1fr_auto] gap-3",
 				hasIssue ? "border-destructive/50 bg-destructive/5" : "border-border"
 			)}
 			aria-label={`${item.sku.product.title}, quantité ${item.quantity}`}
 		>
-			{/* Image */}
+			{/* Image - row-span-2 sur mobile pour occuper les 2 lignes */}
 			<Link
 				href={`/creations/${item.sku.product.slug}`}
 				onClick={onClose}
-				className="relative size-24 shrink-0 rounded-md overflow-hidden bg-muted"
+				className="relative size-20 sm:size-24 row-span-2 sm:row-span-1 rounded-md overflow-hidden bg-muted active:opacity-80 transition-opacity"
 				aria-label={`Voir ${item.sku.product.title}`}
 			>
 				{primaryImage ? (
@@ -83,7 +84,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 							alt={primaryImage.altText || item.sku.product.title}
 							fill
 							className="object-cover"
-							sizes="96px"
+							sizes="(min-width: 640px) 96px, 80px"
 							quality={80}
 							placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={primaryImage.blurDataUrl ?? undefined}
@@ -102,7 +103,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				<Link
 					href={`/creations/${item.sku.product.slug}`}
 					onClick={onClose}
-					className="font-medium text-sm hover:text-foreground transition-colors line-clamp-1 block"
+					className="font-medium text-sm hover:text-foreground active:text-muted-foreground transition-colors line-clamp-1 block"
 					aria-label={`Voir ${item.sku.product.title}`}
 				>
 					{item.sku.product.title}
@@ -192,24 +193,41 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				)}
 			</div>
 
-			{/* Actions */}
-			<div className="flex flex-col items-end gap-2">
-				<CartItemRemoveButton
-					cartItemId={item.id}
-					itemName={item.sku.product.title}
-				/>
+			{/* Actions - pleine largeur sur mobile (ligne 2), colonne droite sur desktop */}
+			<div
+				className={cn(
+					"col-span-2 sm:col-span-1",
+					"flex items-center justify-between gap-2",
+					"sm:flex-col sm:items-end sm:gap-2"
+				)}
+			>
+				{/* Supprimer - à droite sur mobile, en haut sur desktop */}
+				<div className="order-3 sm:order-1">
+					<CartItemRemoveButton
+						cartItemId={item.id}
+						itemName={item.sku.product.title}
+					/>
+				</div>
 
-				<div className="mt-auto flex flex-col items-end gap-1.5">
+				{/* Quantité - à gauche sur mobile, au milieu sur desktop */}
+				<div className="order-1 sm:order-2 sm:mt-auto">
 					<CartItemQuantitySelector
 						cartItemId={item.id}
 						currentQuantity={item.quantity}
 						maxQuantity={item.sku.inventory}
 						isInactive={isInactive}
 					/>
-					<span className="font-mono font-semibold text-sm">
-						{formatEuro(subtotal)}
-					</span>
 				</div>
+
+				{/* Sous-total - au milieu sur mobile, en bas sur desktop */}
+				<span
+					className={cn(
+						"order-2 sm:order-3 font-mono font-semibold text-sm transition-opacity duration-200",
+						"group-has-data-pending/item:opacity-50 group-has-data-pending/item:animate-pulse"
+					)}
+				>
+					{formatEuro(subtotal)}
+				</span>
 			</div>
 		</article>
 	);
