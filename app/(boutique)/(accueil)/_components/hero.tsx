@@ -89,7 +89,7 @@ export async function Hero() {
                     aria-label="Créer un bijou personnalisé sur-mesure - Contact gratuit"
                     className="flex items-center justify-center"
                   >
-                    Commander un bijou personnalisé
+                    Je veux un bijou personnalisé
                   </Link>
                 </Button>
               </div>

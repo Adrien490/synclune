@@ -61,14 +61,14 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 				<header className="mb-8 text-center lg:mb-12">
 					<div className="flex items-center justify-center gap-2 mb-2">
 						<SectionTitle id="latest-creations-title">
-							Nouveautés de l'atelier
+							Les dernières créations
 						</SectionTitle>
 					</div>
 					<p
 						id="latest-creations-subtitle"
 						className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto"
 					>
-						Mes tout nouveaux bijoux, juste sortis de l'atelier !
+						Créées avec amour et tout juste sorties de l'atelier 😄
 					</p>
 				</header>
 
