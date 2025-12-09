@@ -52,7 +52,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 						Guide des tailles
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Trouve la taille parfaite pour ton bijou
+						Trouve la taille parfaite pour ton produit
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 

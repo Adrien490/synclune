@@ -9,7 +9,7 @@ import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useRef, useState, useEffect } from "react";
+import { Suspense, useRef } from "react";
 import { buildGallery } from "@/modules/media/utils/build-gallery";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
 import { GalleryMediaRenderer } from "@/modules/media/components/gallery-media-renderer";
@@ -146,28 +146,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Hook: Gestion erreurs média avec retry
 	const { handleMediaError, hasError, retryMedia } = useMediaErrors();
 
-	// Swipe hint pour mobile - affiché une seule fois
-	const [showSwipeHint, setShowSwipeHint] = useState(false);
-
-	useEffect(() => {
-		// Ne montrer que sur mobile, avec plusieurs images, et si pas déjà vu
-		if (safeImages.length <= 1 || prefersReducedMotion) return;
-
-		const hasSeenHint = localStorage.getItem("gallery-swipe-hint-seen");
-		if (!hasSeenHint) {
-			// Vérifier si on est sur mobile
-			const isMobile = window.matchMedia("(max-width: 1023px)").matches;
-			if (isMobile) {
-				setShowSwipeHint(true);
-				// Masquer après 3 secondes et marquer comme vu
-				const timer = setTimeout(() => {
-					setShowSwipeHint(false);
-					localStorage.setItem("gallery-swipe-hint-seen", "true");
-				}, 3000);
-				return () => clearTimeout(timer);
-			}
-		}
-	}, [safeImages.length, prefersReducedMotion]);
 
 	// Handlers mémorisés pour les boutons navigation (évite re-renders)
 	const handlePrev = (e: React.MouseEvent) => {
@@ -290,15 +268,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 								</div>
 							)}
 
-							{/* Swipe hint - mobile uniquement, affiché une fois */}
-							{showSwipeHint && (
-								<div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 lg:hidden animate-bounce">
-									<div className="bg-black/70 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center gap-2">
-										<span className="animate-[swipe-hint_1.5s_ease-in-out_infinite]">👆</span>
-										<span>Glisse pour voir plus</span>
-									</div>
-								</div>
-							)}
 
 							{/* Badge zoom (images uniquement) */}
 							{current.mediaType === "IMAGE" && (

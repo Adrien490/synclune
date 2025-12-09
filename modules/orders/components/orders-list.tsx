@@ -32,7 +32,7 @@ export function OrdersList({ ordersPromise }: OrdersListProps) {
 					<EmptyTitle>Aucune commande pour le moment</EmptyTitle>
 					<EmptyDescription>
 						Tu n'as pas encore passé de commande. Découvre nos créations
-						uniques et laisse-toi tenter par nos bijoux faits main avec amour.
+						uniques et laisse-toi tenter par nos produits faits main avec amour.
 					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>

@@ -10,7 +10,7 @@ import type {
 	GetProductReturn,
 	ProductSku,
 } from "@/modules/products/types/product.types";
-import { ShoppingCart, Truck, ShieldCheck, RotateCcw, CreditCard, MessageCircleQuestion, Heart } from "lucide-react";
+import { Truck, ShieldCheck, RotateCcw, CreditCard, MessageCircleQuestion, Heart } from "lucide-react";
 import { BRAND } from "@/shared/constants/brand";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -206,10 +206,7 @@ export function AddToCartButton({
 							: validationErrors[0] || "Sélectionne tes options"}
 					</span>
 				) : (
-					<div className="flex items-center gap-2">
-						<ShoppingCart className="w-4 h-4 transition-transform group-hover:animate-wiggle" aria-hidden="true" />
-						<span>Ajouter au panier</span>
-					</div>
+					<span>Ajouter au panier</span>
 				)}
 			</Button>
 

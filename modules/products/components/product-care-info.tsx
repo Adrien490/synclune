@@ -43,12 +43,12 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold">
 					<div className="flex items-center gap-2">
 						<Droplets className="w-4 h-4 text-primary" aria-hidden="true" />
-						<span>Entretien de ton bijou</span>
+						<span>Entretien de ton produit</span>
 					</div>
 				</AccordionTrigger>
 				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">
 					<p>
-						J'ai passé des heures à créer ton bijou (parfois avec quelques galères), alors voici mes conseils pour qu'il dure longtemps :
+						J'ai passé des heures à créer ton produit (parfois avec quelques galères), alors voici mes conseils pour qu'il dure longtemps :
 					</p>
 					<ul className="space-y-2 list-disc list-inside">
 						<li>Évite l'eau, les parfums et les produits cosmétiques (ça n'aime pas trop)</li>
@@ -62,7 +62,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 						)}
 					</ul>
 					<p className="text-xs italic">
-						Ton bijou a été créé avec passion, prends-en soin et il te le rendra !{" "}
+						Ton produit a été créé avec passion, prends-en soin et il te le rendra !{" "}
 						<span aria-hidden="true">✨</span>
 					</p>
 				</AccordionContent>
@@ -82,7 +82,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 						<Package className="w-4 h-4 text-primary shrink-0 mt-0.5" />
 						<div>
 							<p className="font-medium text-foreground">Emballage soigné</p>
-							<p>Chaque bijou arrive dans un joli écrin</p>
+							<p>Chaque produit arrive dans un joli écrin</p>
 						</div>
 					</div>
 

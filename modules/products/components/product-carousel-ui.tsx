@@ -83,7 +83,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 					</span>
 				</div>
 				<p className="text-muted-foreground text-center px-4">
-					Aucun bijou disponible pour le moment
+					Aucun produit disponible pour le moment
 				</p>
 			</div>
 		);
@@ -93,12 +93,12 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 		<div className="max-w-7xl mx-auto">
 			<div
 				role="region"
-				aria-label="Carrousel de bijoux vedettes"
+				aria-label="Carrousel de produits vedettes"
 				aria-roledescription="carrousel"
 			>
 				{/* Annonce pour lecteurs d'écran */}
 				<div className="sr-only" aria-live="polite" aria-atomic="true">
-					Bijou {current + 1} sur {products.length}
+					Produit {current + 1} sur {products.length}
 					{products[current] ? `: ${products[current].title}` : ""}
 				</div>
 
@@ -153,7 +153,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 					{/* Navigation - Masquée sur mobile, visible au hover sur desktop */}
 					<CarouselPrevious
 						variant="ghost"
-						aria-label="Bijou précédent"
+						aria-label="Produit précédent"
 						className={cn(
 							// Masqué sur mobile, flex sur desktop
 							"hidden sm:flex",
@@ -183,7 +183,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 					/>
 					<CarouselNext
 						variant="ghost"
-						aria-label="Bijou suivant"
+						aria-label="Produit suivant"
 						className={cn(
 							// Masqué sur mobile, flex sur desktop
 							"hidden sm:flex",
@@ -229,7 +229,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 									// Hover subtil sur toute la zone
 									"hover:bg-white/10"
 								)}
-								aria-label={`Aller au bijou ${index + 1}`}
+								aria-label={`Aller au produit ${index + 1}`}
 								aria-current={current === index ? "true" : undefined}
 							>
 								<span

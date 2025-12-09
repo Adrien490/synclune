@@ -96,7 +96,7 @@ export const FALLBACK_IMAGE_URL = `data:image/svg+xml;base64,${Buffer.from(
     text-anchor="middle"
     opacity="0.7"
   >
-    ✨ Bijou en préparation ✨
+    ✨ Produit en préparation ✨
   </text>
 </svg>
 `,
@@ -106,7 +106,7 @@ export const FALLBACK_IMAGE_URL = `data:image/svg+xml;base64,${Buffer.from(
 /**
  * Alt text par défaut pour l'image de fallback
  */
-export const FALLBACK_IMAGE_ALT = "Photo du bijou à venir - En préparation";
+export const FALLBACK_IMAGE_ALT = "Photo du produit à venir - En préparation";
 
 /**
  * Objet complet pour l'image de fallback

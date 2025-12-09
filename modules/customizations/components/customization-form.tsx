@@ -56,7 +56,7 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 				tabIndex={-1}
 			/>
 
-			{/* Champ caché pour le type de bijou */}
+			{/* Champ caché pour le type de produit */}
 			<form.Subscribe selector={(state) => [state.values.jewelryType]}>
 				{([jewelryType]) =>
 					jewelryType ? (
@@ -161,26 +161,26 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 
 				{/* SECTION 2 : Détails de personnalisation */}
 				<FormSection
-					title="Ton projet de bijou"
+					title="Ton projet de produit"
 					description="Raconte-moi tout ! Même si l'idée n'est pas encore claire, on affinera ensemble"
 					icon={<Sparkles className="w-5 h-5" />}
 				>
-					{/* Type de bijou */}
+					{/* Type de produit */}
 					<form.AppField
 						name="jewelryType"
 						validators={{
 							onChange: ({ value }: { value: string }) => {
 								if (!value) {
-									return "Sélectionne un type de bijou";
+									return "Sélectionne un type de produit";
 								}
 							},
 						}}
 					>
 						{(field) => (
 							<field.SelectField
-								label="Type de bijou"
+								label="Type de produit"
 								required
-								placeholder="Sélectionnez un type de bijou"
+								placeholder="Sélectionnez un type de produit"
 								options={[
 									...productTypes.map((type) => ({
 										value: type.label,

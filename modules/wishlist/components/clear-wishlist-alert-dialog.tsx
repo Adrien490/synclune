@@ -72,7 +72,7 @@ export function ClearWishlistAlertDialog() {
 							<br />
 							<br />
 							<span className="text-muted-foreground text-sm">
-								Bon, pas de panique ! Tu pourras toujours retrouver ces bijoux dans la boutique<span aria-hidden="true"> 💕</span>
+								Bon, pas de panique ! Tu pourras toujours retrouver ces produits dans la boutique<span aria-hidden="true"> 💕</span>
 							</span>
 						</AlertDialogDescription>
 					</AlertDialogHeader>

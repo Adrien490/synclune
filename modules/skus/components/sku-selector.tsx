@@ -62,7 +62,7 @@ export function VariantSelector({ product }: VariantSelectorProps) {
 					<span className="text-primary" aria-hidden="true">
 						✨
 					</span>
-					Personnalise ton bijou
+					Personnalise ton produit
 				</CardTitle>
 				<CardDescription className="text-sm/6 tracking-normal antialiased">
 					Chaque détail compte pour créer TA pièce unique

@@ -53,7 +53,7 @@ export function ProductCharacteristics({
 					Caractéristiques
 				</h2>
 				<CardDescription className="text-sm/6 tracking-normal antialiased">
-					Détails de ce bijou
+					Détails de ce produit
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">

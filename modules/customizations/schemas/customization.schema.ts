@@ -45,8 +45,8 @@ export const customizationSchema = z
 
 		// Détails de la personnalisation
 		jewelryType: z
-			.string({ message: "Le type de bijou est requis" })
-			.min(1, { message: "Veuillez sélectionner un type de bijou" }),
+			.string({ message: "Le type de produit est requis" })
+			.min(1, { message: "Veuillez sélectionner un type de produit" }),
 
 		customizationDetails: z
 			.string({ message: "Les détails de votre projet sont requis" })

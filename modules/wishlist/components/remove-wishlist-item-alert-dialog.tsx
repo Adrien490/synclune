@@ -80,7 +80,7 @@ export function RemoveWishlistItemAlertDialog() {
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							Retirer ce bijou de ta wishlist ?
+							Retirer ce produit de ta wishlist ?
 						</AlertDialogTitle>
 						<AlertDialogDescription>
 							{removeDialog.data?.itemName ? (
@@ -92,7 +92,7 @@ export function RemoveWishlistItemAlertDialog() {
 									de ta wishlist ?
 								</>
 							) : (
-								"Tu veux vraiment retirer ce bijou de ta wishlist ?"
+								"Tu veux vraiment retirer ce produit de ta wishlist ?"
 							)}
 							<br />
 							<br />
