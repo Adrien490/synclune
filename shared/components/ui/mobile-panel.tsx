@@ -2,9 +2,19 @@
 
 import { useEffect, useId } from "react";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
+import { FocusScope } from "@radix-ui/react-focus-scope";
 import { X } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { useSwipeGesture } from "@/shared/hooks/use-swipe-gesture";
+
+/**
+ * Déclenche un retour haptique léger sur les appareils supportés
+ */
+function triggerHaptic(intensity: "light" | "medium" = "light") {
+	if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+		navigator.vibrate(intensity === "light" ? 5 : 10);
+	}
+}
 
 // Variants pour l'animation staggered des items
 export const mobilePanelItemVariants: Variants = {
@@ -69,7 +79,7 @@ export function MobilePanel({
 	panelZIndex = 71,
 	enableSwipeToClose = true,
 	swipeThreshold = 100,
-	showCloseButton = false,
+	showCloseButton = true,
 	showDragHandle = true,
 	enableStagger = false,
 }: MobilePanelProps) {
@@ -77,7 +87,10 @@ export function MobilePanel({
 	const descriptionId = useId();
 
 	const swipeHandlers = useSwipeGesture({
-		onSwipe: onClose,
+		onSwipe: () => {
+			triggerHaptic("medium");
+			onClose();
+		},
 		direction: "down",
 		threshold: swipeThreshold,
 		disabled: !enableSwipeToClose || (shouldReduceMotion ?? false),
@@ -95,10 +108,11 @@ export function MobilePanel({
 		return () => document.removeEventListener("keydown", handleEscape);
 	}, [isOpen, onClose]);
 
-	// Bloquer le scroll du body
+	// Bloquer le scroll du body + haptic feedback à l'ouverture
 	useEffect(() => {
 		if (isOpen) {
 			document.body.style.overflow = "hidden";
+			triggerHaptic("light");
 		} else {
 			document.body.style.overflow = "";
 		}
@@ -124,7 +138,7 @@ export function MobilePanel({
 						transition={{ duration: noMotion ? 0 : 0.2 }}
 						style={{ zIndex: backdropZIndex }}
 						onClick={onClose}
-						className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm"
+						className="fixed inset-0 bg-black/40 backdrop-blur-sm"
 						aria-hidden="true"
 					/>
 				)}
@@ -132,69 +146,72 @@ export function MobilePanel({
 
 			<AnimatePresence>
 				{isOpen && (
-					<motion.div
-						initial={noMotion ? { opacity: 1 } : { y: "100%", opacity: 0.5 }}
-						animate={{ y: 0, opacity: 1 }}
-						exit={noMotion ? { opacity: 1 } : { y: "100%", opacity: 0 }}
-						transition={
-							noMotion
-								? { duration: 0 }
-								: { type: "spring", damping: 28, stiffness: 350 }
-						}
-						style={{ zIndex: panelZIndex }}
-						className={cn(
-							"md:hidden fixed bottom-4 left-4 right-4 bg-background rounded-2xl border shadow-2xl max-h-[80vh] overflow-y-auto overscroll-contain",
-							"pb-[max(1rem,env(safe-area-inset-bottom))]",
-							className
-						)}
-						role="dialog"
-						aria-modal="true"
-						aria-label={ariaLabel}
-						aria-describedby={descriptionId}
-						{...swipeHandlers}
-					>
-						<span id={descriptionId} className="sr-only">
-							Panneau de navigation. Swipez vers le bas ou appuyez sur Echap
-							pour fermer.
-						</span>
+					<FocusScope trapped loop>
+						<motion.div
+							initial={noMotion ? { opacity: 1 } : { y: "100%", opacity: 0.5 }}
+							animate={{ y: 0, opacity: 1 }}
+							exit={noMotion ? { opacity: 1 } : { y: "100%", opacity: 0 }}
+							transition={
+								noMotion
+									? { duration: 0 }
+									: { type: "spring", damping: 28, stiffness: 350 }
+							}
+							style={{ zIndex: panelZIndex }}
+							className={cn(
+								"md:hidden fixed bottom-4 left-4 right-4 bg-background rounded-2xl border shadow-2xl max-h-[80vh] overflow-y-auto overscroll-contain",
+								"pb-[max(1rem,env(safe-area-inset-bottom))]",
+								className
+							)}
+							role="dialog"
+							aria-modal="true"
+							aria-label={ariaLabel}
+							aria-describedby={descriptionId}
+							{...swipeHandlers}
+						>
+							<span id={descriptionId} className="sr-only">
+								Panneau de navigation. Swipez vers le bas ou appuyez sur Echap
+								pour fermer.
+							</span>
 
-						{showDragHandle && (
-							<div
-								className="flex justify-center pt-3 pb-2 touch-none"
-								aria-hidden="true"
-							>
-								<div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
-							</div>
-						)}
+							{showDragHandle && (
+								<div
+									className="flex justify-center pt-3 pb-2"
+									style={{ touchAction: "none" }}
+									aria-hidden="true"
+								>
+									<div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+								</div>
+							)}
 
-						{showCloseButton && (
-							<button
-								type="button"
-								onClick={onClose}
-								className={cn(
-									"absolute top-3 right-3 p-2 rounded-full",
-									"text-muted-foreground hover:text-foreground hover:bg-accent",
-									"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-									"transition-colors"
-								)}
-								aria-label="Fermer"
-							>
-								<X className="size-5" aria-hidden="true" />
-							</button>
-						)}
+							{showCloseButton && (
+								<button
+									type="button"
+									onClick={onClose}
+									className={cn(
+										"absolute top-3 right-3 p-2 rounded-full",
+										"text-muted-foreground hover:text-foreground hover:bg-accent",
+										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+										"transition-colors"
+									)}
+									aria-label="Fermer"
+								>
+									<X className="size-5" aria-hidden="true" />
+								</button>
+							)}
 
-						{enableStagger && !noMotion ? (
-							<motion.div
-								variants={containerVariants}
-								initial="hidden"
-								animate="visible"
-							>
-								{children}
-							</motion.div>
-						) : (
-							children
-						)}
-					</motion.div>
+							{enableStagger && !noMotion ? (
+								<motion.div
+									variants={containerVariants}
+									initial="hidden"
+									animate="visible"
+								>
+									{children}
+								</motion.div>
+							) : (
+								children
+							)}
+						</motion.div>
+					</FocusScope>
 				)}
 			</AnimatePresence>
 		</>

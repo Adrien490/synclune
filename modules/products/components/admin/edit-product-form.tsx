@@ -1,6 +1,6 @@
 "use client";
 
-import { FieldLabel, FormLayout, FormSection } from "@/shared/components/tanstack-form";
+import { FieldLabel, FormLayout, FormSection } from "@/shared/components/forms";
 import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";

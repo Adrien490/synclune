@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppForm } from "@/shared/components/tanstack-form";
+import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Spinner } from "@/shared/components/ui/spinner";

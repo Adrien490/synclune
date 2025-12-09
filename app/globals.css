@@ -628,6 +628,32 @@ textarea {
 	.h-lvh {
 		height: 100lvh;
 	}
+
+	/* ==========================================
+	   SCROLL SNAP NAVIGATION (Carousel mobile)
+	   ========================================== */
+	.scroll-snap-x {
+		scroll-snap-type: x mandatory;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.snap-start {
+		scroll-snap-align: start;
+	}
+
+	.snap-center {
+		scroll-snap-align: center;
+	}
+
+	/* Masquer scrollbar mais garder fonctionnalité */
+	.scrollbar-none {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+
+	.scrollbar-none::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 .dark {

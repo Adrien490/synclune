@@ -1,4 +1,4 @@
-import { FormLayout, FormSection } from "@/shared/components/tanstack-form";
+import { FormLayout, FormSection } from "@/shared/components/forms";
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 

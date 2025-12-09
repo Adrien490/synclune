@@ -3,26 +3,26 @@
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
-import { Checkbox } from "@/shared/components/ui/checkbox";
-import { Label } from "@/shared/components/ui/label";
+import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
+import {
+	ResponsiveSheet,
+	ResponsiveSheetClose,
+	ResponsiveSheetContent,
+	ResponsiveSheetDescription,
+	ResponsiveSheetFooter,
+	ResponsiveSheetHeader,
+	ResponsiveSheetTitle,
+	ResponsiveSheetTrigger,
+} from "@/shared/components/ui/responsive-sheet";
+import { Input } from "@/shared/components/ui/input";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Separator } from "@/shared/components/ui/separator";
-import {
-	Sheet,
-	SheetClose,
-	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "@/shared/components/ui/sheet";
 import { Slider } from "@/shared/components/ui/slider";
 import { cn } from "@/shared/utils/cn";
 import { useForm } from "@tanstack/react-form";
 import { Filter, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
@@ -39,6 +39,132 @@ interface FilterFormData {
 	colors: string[];
 	materials: string[];
 	priceRange: [number, number];
+}
+
+/**
+ * Composant interne pour gerer les inputs de prix avec etat local
+ * Resout les problemes de synchronisation avec les boutons +/-
+ */
+function PriceRangeInputs({
+	value,
+	onChange,
+	maxPrice,
+}: {
+	value: [number, number];
+	onChange: (value: [number, number]) => void;
+	maxPrice: number;
+}) {
+	// Etat local pour permettre l'edition libre
+	const [minInput, setMinInput] = useState(String(value[0]));
+	const [maxInput, setMaxInput] = useState(String(value[1]));
+
+	// Synchroniser l'etat local quand la valeur externe change (ex: slider)
+	useEffect(() => {
+		setMinInput(String(value[0]));
+	}, [value[0]]);
+
+	useEffect(() => {
+		setMaxInput(String(value[1]));
+	}, [value[1]]);
+
+	const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const inputValue = e.target.value;
+		setMinInput(inputValue);
+
+		const numValue = Number(inputValue);
+		if (!isNaN(numValue) && inputValue !== "") {
+			// Appliquer les contraintes et mettre a jour le form
+			const constrainedValue = Math.min(Math.max(0, numValue), value[1]);
+			onChange([constrainedValue, value[1]]);
+		}
+	};
+
+	const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const inputValue = e.target.value;
+		setMaxInput(inputValue);
+
+		const numValue = Number(inputValue);
+		if (!isNaN(numValue) && inputValue !== "") {
+			// Appliquer les contraintes et mettre a jour le form
+			const constrainedValue = Math.max(Math.min(maxPrice, numValue), value[0]);
+			onChange([value[0], constrainedValue]);
+		}
+	};
+
+	const handleMinBlur = () => {
+		// Sur blur, s'assurer que la valeur est valide et synchronisee
+		const numValue = Number(minInput);
+		if (isNaN(numValue) || minInput === "") {
+			setMinInput(String(value[0]));
+		} else {
+			const constrainedValue = Math.min(Math.max(0, numValue), value[1]);
+			setMinInput(String(constrainedValue));
+			if (constrainedValue !== value[0]) {
+				onChange([constrainedValue, value[1]]);
+			}
+		}
+	};
+
+	const handleMaxBlur = () => {
+		// Sur blur, s'assurer que la valeur est valide et synchronisee
+		const numValue = Number(maxInput);
+		if (isNaN(numValue) || maxInput === "") {
+			setMaxInput(String(value[1]));
+		} else {
+			const constrainedValue = Math.max(Math.min(maxPrice, numValue), value[0]);
+			setMaxInput(String(constrainedValue));
+			if (constrainedValue !== value[1]) {
+				onChange([value[0], constrainedValue]);
+			}
+		}
+	};
+
+	return (
+		<div className="space-y-3">
+			<h4 className="font-medium text-sm text-foreground">Prix (€)</h4>
+			<div className="space-y-4">
+				{/* data-vaul-no-drag empeche le drawer de capturer le drag du slider */}
+				<div data-vaul-no-drag>
+					<Slider
+						value={value}
+						onValueChange={(newValue) => onChange([newValue[0], newValue[1]])}
+						max={maxPrice}
+						min={0}
+						step={5}
+						className="w-full"
+					/>
+				</div>
+				<div className="flex items-center gap-3">
+					<div className="flex-1">
+						<Input
+							type="number"
+							min={0}
+							max={value[1]}
+							value={minInput}
+							onChange={handleMinChange}
+							onBlur={handleMinBlur}
+							className="h-10 text-sm"
+							aria-label="Prix minimum"
+						/>
+					</div>
+					<span className="text-muted-foreground shrink-0">—</span>
+					<div className="flex-1">
+						<Input
+							type="number"
+							min={value[0]}
+							max={maxPrice}
+							value={maxInput}
+							onChange={handleMaxChange}
+							onBlur={handleMaxBlur}
+							className="h-10 text-sm"
+							aria-label="Prix maximum"
+						/>
+					</div>
+					<span className="text-muted-foreground text-sm shrink-0">€</span>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 export function ProductFilterSheet({
@@ -186,8 +312,8 @@ export function ProductFilterSheet({
 	})();
 
 	return (
-		<Sheet>
-			<SheetTrigger asChild>
+		<ResponsiveSheet side="right">
+			<ResponsiveSheetTrigger asChild>
 				<Button
 					variant="outline"
 					className={cn(
@@ -210,19 +336,16 @@ export function ProductFilterSheet({
 						</Badge>
 					)}
 				</Button>
-			</SheetTrigger>
+			</ResponsiveSheetTrigger>
 
-			<SheetContent
-				side="right"
-				className="w-80 sm:w-96 p-0 flex flex-col h-full"
-			>
-				<SheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
+			<ResponsiveSheetContent className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full">
+				<ResponsiveSheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
 					<div className="flex items-center justify-between">
 						<div>
-							<SheetTitle className="text-lg font-semibold">Filtres</SheetTitle>
-							<SheetDescription className="text-sm text-muted-foreground">
+							<ResponsiveSheetTitle className="text-lg font-semibold">Filtres</ResponsiveSheetTitle>
+							<ResponsiveSheetDescription className="text-sm text-muted-foreground">
 								Affine ta recherche
-							</SheetDescription>
+							</ResponsiveSheetDescription>
 						</div>
 						{hasActiveFilters && (
 							<Button
@@ -236,7 +359,7 @@ export function ProductFilterSheet({
 							</Button>
 						)}
 					</div>
-				</SheetHeader>
+				</ResponsiveSheetHeader>
 
 				<ScrollArea className="flex-1 min-h-0">
 					<form
@@ -251,55 +374,37 @@ export function ProductFilterSheet({
 							{/* Couleurs - dynamiques depuis la base */}
 							<form.Field name="colors" mode="array">
 								{(field) => (
-									<div className="space-y-3">
-										<h4 className="font-medium text-sm text-foreground">
+									<div className="space-y-1">
+										<h4 className="font-medium text-sm text-foreground mb-2">
 											Couleurs
 										</h4>
-										<div className="space-y-2">
-											{colors.map((color) => {
-												const isSelected = field.state.value.includes(
-													color.slug
-												);
-												return (
-													<div
-														key={color.slug}
-														className="flex items-center space-x-2"
-													>
-														<Checkbox
-															id={`color-${color.slug}`}
-															checked={isSelected}
-															onCheckedChange={(checked) => {
-																if (checked && !isSelected) {
-																	field.pushValue(color.slug);
-																} else if (!checked && isSelected) {
-																	const index = field.state.value.indexOf(
-																		color.slug
-																	);
-																	field.removeValue(index);
-																}
-															}}
-															className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+										{colors.map((color) => {
+											const isSelected = field.state.value.includes(color.slug);
+											return (
+												<CheckboxFilterItem
+													key={color.slug}
+													id={`color-${color.slug}`}
+													checked={isSelected}
+													onCheckedChange={(checked) => {
+														if (checked && !isSelected) {
+															field.pushValue(color.slug);
+														} else if (!checked && isSelected) {
+															const index = field.state.value.indexOf(color.slug);
+															field.removeValue(index);
+														}
+													}}
+													indicator={
+														<span
+															className="w-4 h-4 rounded-full border-2 border-border"
+															style={{ backgroundColor: color.hex }}
 														/>
-														<Label
-															htmlFor={`color-${color.slug}`}
-															className="text-sm font-normal cursor-pointer flex-1 flex items-center gap-2"
-														>
-															<span
-																className="w-4 h-4 rounded-full border-2 border-border shrink-0"
-																style={{ backgroundColor: color.hex }}
-																aria-hidden="true"
-															/>
-															<span className="flex-1">{color.name}</span>
-															{color._count?.skus && (
-																<span className="text-xs text-muted-foreground">
-																	({color._count.skus})
-																</span>
-															)}
-														</Label>
-													</div>
-												);
-											})}
-										</div>
+													}
+													count={color._count?.skus}
+												>
+													{color.name}
+												</CheckboxFilterItem>
+											);
+										})}
 									</div>
 								)}
 							</form.Field>
@@ -310,45 +415,30 @@ export function ProductFilterSheet({
 									<Separator />
 									<form.Field name="materials" mode="array">
 										{(field) => (
-											<div className="space-y-3">
-												<h4 className="font-medium text-sm text-foreground">
+											<div className="space-y-1">
+												<h4 className="font-medium text-sm text-foreground mb-2">
 													Matériaux
 												</h4>
-												<div className="space-y-2">
-													{materials.map((material) => {
-														const isSelected = field.state.value.includes(
-															material.id
-														);
-														return (
-															<div
-																key={material.id}
-																className="flex items-center space-x-2"
-															>
-																<Checkbox
-																	id={`material-${material.id}`}
-																	checked={isSelected}
-																	onCheckedChange={(checked) => {
-																		if (checked && !isSelected) {
-																			field.pushValue(material.id);
-																		} else if (!checked && isSelected) {
-																			const index = field.state.value.indexOf(
-																				material.id
-																			);
-																			field.removeValue(index);
-																		}
-																	}}
-																	className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-																/>
-																<Label
-																	htmlFor={`material-${material.id}`}
-																	className="text-sm font-normal cursor-pointer flex-1"
-																>
-																	{material.name}
-																</Label>
-															</div>
-														);
-													})}
-												</div>
+												{materials.map((material) => {
+													const isSelected = field.state.value.includes(material.id);
+													return (
+														<CheckboxFilterItem
+															key={material.id}
+															id={`material-${material.id}`}
+															checked={isSelected}
+															onCheckedChange={(checked) => {
+																if (checked && !isSelected) {
+																	field.pushValue(material.id);
+																} else if (!checked && isSelected) {
+																	const index = field.state.value.indexOf(material.id);
+																	field.removeValue(index);
+																}
+															}}
+														>
+															{material.name}
+														</CheckboxFilterItem>
+													);
+												})}
 											</div>
 										)}
 									</form.Field>
@@ -360,46 +450,30 @@ export function ProductFilterSheet({
 							{/* Prix */}
 							<form.Field name="priceRange">
 								{(field) => (
-									<div className="space-y-3">
-										<h4 className="font-medium text-sm text-foreground">
-											Prix (€)
-										</h4>
-										<div className="space-y-3">
-											<Slider
-												value={field.state.value}
-												onValueChange={(value) =>
-													field.handleChange([value[0], value[1]])
-												}
-												max={maxPriceInEuros}
-												min={0}
-												step={5}
-												className="w-full"
-											/>
-											<div className="flex items-center justify-between text-sm text-muted-foreground">
-												<span>{field.state.value[0]}€</span>
-												<span>{field.state.value[1]}€</span>
-											</div>
-										</div>
-									</div>
+									<PriceRangeInputs
+										value={field.state.value}
+										onChange={field.handleChange}
+										maxPrice={maxPriceInEuros}
+									/>
 								)}
 							</form.Field>
 						</div>
 					</form>
 				</ScrollArea>
 
-				<SheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
+				<ResponsiveSheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
 					<ButtonGroup className="w-full" aria-label="Filter actions">
-						<SheetClose asChild className="flex-1">
+						<ResponsiveSheetClose asChild className="flex-1">
 							<Button variant="outline">Annuler</Button>
-						</SheetClose>
-						<SheetClose asChild className="flex-1">
+						</ResponsiveSheetClose>
+						<ResponsiveSheetClose asChild className="flex-1">
 							<Button type="submit" onClick={() => form.handleSubmit()}>
 								Appliquer
 							</Button>
-						</SheetClose>
+						</ResponsiveSheetClose>
 					</ButtonGroup>
-				</SheetFooter>
-			</SheetContent>
-		</Sheet>
+				</ResponsiveSheetFooter>
+			</ResponsiveSheetContent>
+		</ResponsiveSheet>
 	);
 }

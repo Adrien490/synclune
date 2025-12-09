@@ -17,7 +17,7 @@ import {
 } from "@/shared/components/ui/responsive-dialog";
 import { Label } from "@/shared/components/ui/label";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
-import { useAppForm } from "@/shared/components/tanstack-form";
+import { useAppForm } from "@/shared/components/forms";
 import { createColor } from "@/modules/colors/actions/create-color";
 import { updateColor } from "@/modules/colors/actions/update-color";
 import { useDialog } from "@/shared/providers/dialog-store-provider";

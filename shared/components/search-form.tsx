@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppForm } from "@/shared/components/tanstack-form";
+import { useAppForm } from "@/shared/components/forms";
 import { MiniDotsLoader } from "@/shared/components/loaders/mini-dots-loader";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";

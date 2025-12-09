@@ -20,6 +20,9 @@ export { FormFooter } from "./form-footer";
 export { FormLayout } from "./form-layout";
 export { FormSection } from "./form-section";
 
+// Export filter components
+export { CheckboxFilterItem } from "./checkbox-filter-item";
+
 // Create the main form hook with all field and form components
 export const { useAppForm } = createFormHook({
 	fieldContext,

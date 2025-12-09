@@ -4,7 +4,7 @@ import { RefundReason } from "@/app/generated/prisma/enums";
 import { createRefund } from "@/modules/refunds/actions/create-refund";
 import type { OrderItemForRefund } from "@/modules/refunds/data/get-order-for-refund";
 import { shouldRestockByDefault } from "@/modules/refunds/utils/refund-utils.browser";
-import { useAppForm } from "@/shared/components/tanstack-form";
+import { useAppForm } from "@/shared/components/forms";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";

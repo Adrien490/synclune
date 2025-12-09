@@ -3,7 +3,7 @@
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 import { Button } from "@/shared/components/ui/button";
-import { useAppForm } from "@/shared/components/tanstack-form";
+import { useAppForm } from "@/shared/components/forms";
 import { createCollection } from "@/modules/collections/actions/create-collection";
 import { cn } from "@/shared/utils/cn";
 import { useRouter } from "next/navigation";

@@ -26,8 +26,8 @@ export default function ProductDetailLoading() {
 				{/* PageHeader Skeleton - Caché sur mobile comme le vrai PageHeader */}
 				<PageHeaderSkeleton hasDescription={false} className="hidden sm:block" />
 
-				{/* Main Content - pt-20 sur mobile pour compenser l'absence de PageHeader */}
-				<div className="bg-background pt-20 pb-12 sm:py-12 lg:py-16">
+				{/* Main Content - Paddings alignés sur page.tsx */}
+				<div className="bg-background pt-20 pb-6 sm:pt-4 sm:pb-12 lg:pt-6 lg:pb-16">
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article className="space-y-12">
 							{/* Product Content Grid - Gallery sticky on desktop */}
@@ -71,15 +71,17 @@ export default function ProductDetailLoading() {
 								{/* Product Info + Details Section - Right (scrollable) */}
 								<section className="space-y-6 lg:min-h-screen">
 									{/* ===== 1. ProductInfo ===== */}
-									{/* Titre avec bouton wishlist */}
 									<div className="space-y-4">
-										<div className="flex items-start justify-between gap-3">
-											<Skeleton className="h-10 sm:h-12 flex-1 bg-muted/50" />
+										{/* Titre avec bouton wishlist - Mobile uniquement (sm:hidden) */}
+										<div className="flex items-start justify-between gap-3 sm:hidden">
+											<Skeleton className="h-10 flex-1 bg-muted/50" />
 											<Skeleton className="h-10 w-10 rounded-full bg-muted/30 shrink-0" />
 										</div>
 
-										{/* Badges (type + collections) */}
+										{/* Badges (wishlist desktop + type + collections) */}
 										<div className="flex flex-wrap items-center gap-2">
+											{/* Bouton wishlist - Desktop uniquement */}
+											<Skeleton className="hidden sm:block h-10 w-10 rounded-full bg-muted/30" />
 											<Skeleton className="h-7 w-24 rounded-full bg-muted/30" />
 											<Skeleton className="h-7 w-28 rounded-full bg-muted/30" />
 										</div>
@@ -95,80 +97,150 @@ export default function ProductDetailLoading() {
 									{/* Separator (entre ProductInfo et ProductDetails) */}
 									<div className="h-px bg-border" />
 
-									{/* ===== 2. ProductDetails ===== */}
-									{/* Prix */}
-									<div className="space-y-2">
-										<Skeleton className="h-10 w-32 bg-primary/20" />
-										<Skeleton className="h-4 w-48 bg-muted/30" />
-									</div>
-
-									{/* Caractéristiques */}
-									<div className="space-y-3">
-										{Array.from({ length: 3 }).map((_, i) => (
-											<div
-												key={i}
-												className="flex justify-between items-center"
-											>
-												<Skeleton className="h-4 w-24 bg-muted/40" />
-												<Skeleton className="h-4 w-32 bg-muted/50" />
+									{/* ===== 2. ProductPriceDisplay - Card ===== */}
+									<div className="rounded-xl border border-primary/10 shadow-sm">
+										<div className="p-6 space-y-3">
+											{/* Prix avec TTC */}
+											<div className="flex items-baseline gap-3">
+												<Skeleton className="h-10 w-28 bg-primary/20" />
+												<Skeleton className="h-4 w-8 bg-muted/30" />
 											</div>
-										))}
-									</div>
-
-									{/* Separator */}
-									<div className="h-px bg-border" />
-
-									{/* Sélecteurs de variantes */}
-									<div className="space-y-4">
-										{/* Couleur */}
-										<div className="space-y-3">
-											<Skeleton className="h-4 w-24 bg-muted/30" />
-											<div className="flex gap-2">
-												{Array.from({ length: 5 }).map((_, i) => (
-													<Skeleton
-														key={i}
-														className="h-10 w-10 rounded-full bg-muted/40"
-													/>
-												))}
-											</div>
+											{/* Badge disponibilité */}
+											<Skeleton className="h-6 w-24 rounded-full bg-muted/30" />
 										</div>
+									</div>
 
-										{/* Matériau */}
-										<div className="space-y-3">
-											<Skeleton className="h-4 w-28 bg-muted/30" />
-											<div className="flex gap-2 flex-wrap">
+									{/* ===== 3. ProductCharacteristics - Card ===== */}
+									<div className="rounded-xl border-transparent bg-muted/30">
+										{/* CardHeader */}
+										<div className="p-6 pb-0 space-y-2">
+											<div className="flex items-center gap-2">
+												<Skeleton className="h-4 w-4 rounded-full bg-primary/30" />
+												<Skeleton className="h-4 w-32 bg-muted/40" />
+											</div>
+											<Skeleton className="h-4 w-40 bg-muted/30" />
+										</div>
+										{/* CardContent - Grille 2 colonnes */}
+										<div className="p-6 pt-4">
+											<div className="grid gap-4 sm:grid-cols-2">
 												{Array.from({ length: 3 }).map((_, i) => (
-													<Skeleton
-														key={i}
-														className="h-10 w-24 rounded-lg bg-muted/40"
-													/>
+													<div key={i} className="flex items-center gap-3">
+														<Skeleton className="shrink-0 w-8 h-8 rounded-full bg-primary/10" />
+														<div className="space-y-1.5 flex-1">
+															<Skeleton className="h-4 w-24 bg-muted/40" />
+															<Skeleton className="h-3 w-20 bg-muted/30" />
+														</div>
+													</div>
 												))}
 											</div>
 										</div>
 									</div>
 
-									{/* CTA Panier */}
-									<div className="space-y-4">
-										<div className="flex items-center gap-4">
-											<Skeleton className="h-12 w-32 bg-muted/40" />
-											<Skeleton className="h-12 flex-1 bg-primary/20" />
+									{/* Separator */}
+									<div className="h-px bg-border" />
+
+									{/* ===== 4. VariantSelector - Card ===== */}
+									<div className="rounded-xl border-2 border-primary/20 shadow-sm">
+										{/* CardHeader */}
+										<div className="p-6 pb-0 space-y-2">
+											<div className="flex items-center gap-2">
+												<Skeleton className="h-4 w-4 bg-primary/30" />
+												<Skeleton className="h-5 w-44 bg-muted/40" />
+											</div>
+											<Skeleton className="h-4 w-64 bg-muted/30" />
+										</div>
+										{/* CardContent */}
+										<div className="p-6 space-y-6">
+											{/* Couleurs */}
+											<div className="space-y-3">
+												<Skeleton className="h-4 w-20 bg-muted/30" />
+												<div className="flex gap-2">
+													{Array.from({ length: 5 }).map((_, i) => (
+														<Skeleton
+															key={i}
+															className="h-10 w-10 rounded-full bg-muted/40"
+														/>
+													))}
+												</div>
+											</div>
+
+											<div className="h-px bg-border" />
+
+											{/* Matériaux */}
+											<div className="space-y-3">
+												<Skeleton className="h-4 w-24 bg-muted/30" />
+												<div className="flex gap-2 flex-wrap">
+													{Array.from({ length: 3 }).map((_, i) => (
+														<Skeleton
+															key={i}
+															className="h-10 w-24 rounded-lg bg-muted/40"
+														/>
+													))}
+												</div>
+											</div>
 										</div>
 									</div>
 
-									{/* Disponibilité */}
-									<div className="flex items-center gap-2">
-										<Skeleton className="h-5 w-5 rounded-full bg-muted/40" />
-										<Skeleton className="h-4 w-32 bg-muted/30" />
+									{/* ===== 5. AddToCartButton ===== */}
+									{/* Card Quantité */}
+									<div className="rounded-xl border">
+										<div className="p-6">
+											<div className="flex items-center justify-between">
+												<Skeleton className="h-4 w-16 bg-muted/40" />
+												<div className="flex items-center gap-2">
+													<Skeleton className="h-8 w-8 rounded-md bg-muted/30" />
+													<Skeleton className="h-5 w-8 bg-muted/40" />
+													<Skeleton className="h-8 w-8 rounded-md bg-muted/30" />
+												</div>
+											</div>
+										</div>
+									</div>
+
+									{/* Bouton Ajouter au panier */}
+									<Skeleton className="h-12 w-full rounded-lg bg-primary/30" />
+
+									{/* Trust badges */}
+									<div className="space-y-3 pt-2">
+										<div className="flex flex-wrap items-center justify-center gap-4 py-2">
+											{Array.from({ length: 3 }).map((_, i) => (
+												<div key={i} className="flex items-center gap-1.5">
+													<Skeleton className="h-4 w-4 rounded-full bg-muted/30" />
+													<Skeleton className="h-3 w-24 bg-muted/30" />
+												</div>
+											))}
+										</div>
+										<div className="flex items-center justify-center gap-2">
+											<Skeleton className="h-3.5 w-3.5 bg-muted/30" />
+											<Skeleton className="h-3 w-32 bg-muted/30" />
+										</div>
+										{/* Bloc personnalisation */}
+										<div className="p-4 bg-muted/10 rounded-lg border border-primary/10 space-y-2">
+											<Skeleton className="h-4 w-48 mx-auto bg-muted/30" />
+											<Skeleton className="h-4 w-36 mx-auto bg-muted/40" />
+										</div>
+										{/* Lien contact */}
+										<Skeleton className="h-10 w-full rounded-lg bg-muted/20" />
 									</div>
 
 									{/* Separator */}
 									<div className="h-px bg-border" />
 
-									{/* Entretien */}
-									<div className="space-y-4">
-										<Skeleton className="h-6 w-48 bg-muted/40" />
-										<Skeleton className="h-4 w-full bg-muted/30" />
-										<Skeleton className="h-4 w-3/4 bg-muted/30" />
+									{/* ===== 6. ProductCareInfo - Accordion fermé ===== */}
+									<div className="space-y-0">
+										{/* Accordion Item 1 - Entretien */}
+										<div className="border-b py-4">
+											<div className="flex items-center gap-2">
+												<Skeleton className="h-4 w-4 bg-primary/30" />
+												<Skeleton className="h-5 w-40 bg-muted/40" />
+											</div>
+										</div>
+										{/* Accordion Item 2 - Livraison */}
+										<div className="border-b py-4">
+											<div className="flex items-center gap-2">
+												<Skeleton className="h-4 w-4 bg-primary/30" />
+												<Skeleton className="h-5 w-24 bg-muted/40" />
+											</div>
+										</div>
 									</div>
 								</section>
 							</div>

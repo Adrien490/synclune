@@ -1,6 +1,6 @@
 "use client";
 
-import { FieldLabel, FormLayout, FormSection } from "@/shared/components/tanstack-form";
+import { FieldLabel, FormLayout, FormSection } from "@/shared/components/forms";
 import {
 	WizardProvider,
 	useWizardContext,

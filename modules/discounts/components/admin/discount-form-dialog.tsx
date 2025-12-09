@@ -7,7 +7,7 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/ui/responsive-dialog";
-import { FieldLabel, FormLayout, useAppForm } from "@/shared/components/tanstack-form";
+import { FieldLabel, FormLayout, useAppForm } from "@/shared/components/forms";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { createDiscount } from "@/modules/discounts/actions/create-discount";
 import { updateDiscount } from "@/modules/discounts/actions/update-discount";

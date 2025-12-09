@@ -1,7 +1,7 @@
 "use client";
 
 import { updateTracking } from "@/modules/orders/actions/update-tracking";
-import { useAppForm } from "@/shared/components/tanstack-form";
+import { useAppForm } from "@/shared/components/forms";
 import type { Carrier } from "@/modules/orders/utils/carrier-detection";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";

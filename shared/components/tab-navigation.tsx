@@ -1,16 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
 
 import {
-	Drawer,
-	DrawerClose,
-	DrawerContent,
-	DrawerHeader,
-	DrawerTitle,
-	DrawerTrigger,
-} from "@/shared/components/ui/drawer";
+	MobilePanel,
+	MobilePanelItem,
+} from "@/shared/components/ui/mobile-panel";
 import { cn } from "@/shared/utils/cn";
 
 export interface TabNavigationItem {
@@ -31,15 +28,15 @@ interface TabNavigationProps {
 	mobileVisibleCount?: number;
 }
 
-/** Classes de base partagées pour les onglets */
-const TAB_BASE_CLASSES =
-	"inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2";
+/** Classes de base pour les pills */
+const PILL_BASE =
+	"inline-flex items-center justify-center gap-1.5 h-11 md:h-10 px-4 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-200";
 
 /**
- * Composant de navigation par onglets avec pattern Priority+
+ * Composant de navigation par onglets
  *
- * - Desktop (>=768px) : tous les onglets visibles en ligne
- * - Mobile (<768px) : N premiers onglets + drawer "Plus" pour le reste
+ * - Desktop : tous les onglets en ligne
+ * - Mobile : N premiers onglets + bouton "Plus" ouvrant un panel
  */
 export function TabNavigation({
 	items,
@@ -48,7 +45,9 @@ export function TabNavigation({
 	prefetch = false,
 	mobileVisibleCount = 2,
 }: TabNavigationProps) {
-	// Séparer les items visibles et ceux dans le drawer mobile
+	const [isPanelOpen, setIsPanelOpen] = useState(false);
+
+	// Séparer les items visibles et ceux dans le panel mobile
 	const visibleItems = items.slice(0, mobileVisibleCount);
 	const overflowItems = items.slice(mobileVisibleCount);
 	const hasOverflow = overflowItems.length > 0;
@@ -58,26 +57,6 @@ export function TabNavigation({
 		(item) => item.value === activeValue
 	);
 
-	const getTabClasses = (value: string, additionalClasses?: string) => {
-		const isActive = value === activeValue;
-
-		return cn(
-			TAB_BASE_CLASSES,
-			"h-11 md:h-10 md:flex-shrink-0",
-			isActive && [
-				"bg-primary/10 text-foreground",
-				"shadow-sm border border-primary/25",
-				"font-semibold",
-			],
-			!isActive && [
-				"text-muted-foreground border border-transparent",
-				"hover:bg-primary/5 hover:text-foreground",
-				"hover:border-primary/15",
-			],
-			additionalClasses
-		);
-	};
-
 	const renderCount = (count: number | undefined, isActive: boolean) => {
 		if (count === undefined) return null;
 
@@ -86,10 +65,10 @@ export function TabNavigation({
 				title={`${count} élément${count > 1 ? "s" : ""}`}
 				className={cn(
 					"ml-1.5 inline-flex items-center justify-center",
-					"min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs",
+					"min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-medium",
 					isActive
-						? "bg-primary/15 text-foreground font-medium"
-						: "bg-muted-foreground/15 text-muted-foreground"
+						? "bg-primary-foreground/20 text-primary-foreground"
+						: "bg-muted-foreground/20 text-muted-foreground"
 				)}
 			>
 				{count}
@@ -97,108 +76,129 @@ export function TabNavigation({
 		);
 	};
 
-	const triggerClasses = cn(
-		TAB_BASE_CLASSES,
-		"md:hidden h-11 max-w-[min(140px,40vw)]",
-		activeOverflowItem
-			? [
-					"bg-primary/10 text-foreground",
-					"shadow-sm border border-primary/25",
-					"font-semibold",
-				]
-			: [
-					"text-muted-foreground border border-transparent",
-					"hover:bg-primary/5 hover:text-foreground",
-					"hover:border-primary/15",
-				]
-	);
-
-	const renderOverflowMenu = () => {
-		if (!hasOverflow) return null;
-
-		return (
-			<Drawer>
-				<DrawerTrigger
-					className={triggerClasses}
-					aria-label="Plus d'options de navigation"
-				>
-					<span className="truncate">{activeOverflowItem?.label || "Plus"}</span>
-					<ChevronDownIcon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-				</DrawerTrigger>
-				<DrawerContent className="data-[vaul-drawer-direction=bottom]:bottom-0 pb-6">
-					<DrawerHeader>
-						<DrawerTitle>Navigation</DrawerTitle>
-					</DrawerHeader>
-					<nav
-						aria-label="Options de navigation supplémentaires"
-						className="flex flex-col overflow-y-auto max-h-[60vh] px-2"
-					>
-						{overflowItems.map((item) => (
-							<DrawerClose key={item.value} asChild>
-								<Link
-									href={item.href}
-									prefetch={prefetch}
-									aria-current={
-										activeValue === item.value ? "page" : undefined
-									}
-									className={cn(
-										"flex items-center gap-2 px-3 py-3 text-left text-sm w-full",
-										"min-h-[48px] rounded-lg",
-										"transition-all duration-200",
-										"hover:bg-primary/5 focus:bg-primary/5",
-										"focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
-										"active:bg-primary/10",
-										item.value === activeValue && "font-medium bg-primary/10"
-									)}
-								>
-									{item.label}
-									{item.count !== undefined && (
-										<span className="ml-auto text-xs text-muted-foreground">
-											{item.count}
-										</span>
-									)}
-								</Link>
-							</DrawerClose>
-						))}
-					</nav>
-				</DrawerContent>
-			</Drawer>
+	const getPillClasses = (isActive: boolean) =>
+		cn(
+			PILL_BASE,
+			isActive
+				? "bg-primary text-primary-foreground shadow-sm"
+				: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
 		);
-	};
 
 	return (
 		<nav aria-label={ariaLabel} className="w-full">
-			<div className="rounded-xl bg-muted/40 p-1.5 flex gap-1.5 md:gap-2 min-w-0">
+			<div className="flex gap-2">
 				{/* Items toujours visibles (mobile + desktop) */}
-				{visibleItems.map((item) => (
-					<Link
-						key={item.value}
-						href={item.href}
-						prefetch={prefetch}
-						className={getTabClasses(item.value, "min-w-0")}
-						aria-current={activeValue === item.value ? "page" : undefined}
-					>
-						<span className="truncate">{item.label}</span>
-						{renderCount(item.count, activeValue === item.value)}
-					</Link>
-				))}
+				{visibleItems.map((item) => {
+					const isActive = item.value === activeValue;
+					return (
+						<Link
+							key={item.value}
+							href={item.href}
+							prefetch={prefetch}
+							aria-current={isActive ? "page" : undefined}
+							className={getPillClasses(isActive)}
+						>
+							<span className="truncate">{item.label}</span>
+							{renderCount(item.count, isActive)}
+						</Link>
+					);
+				})}
 
-				{/* Items overflow - visibles uniquement sur desktop (>=768px) */}
-				{overflowItems.map((item) => (
-					<Link
-						key={item.value}
-						href={item.href}
-						prefetch={prefetch}
-						className={getTabClasses(item.value, "hidden md:inline-flex min-w-0")}
-						aria-current={activeValue === item.value ? "page" : undefined}
-					>
-						<span className="truncate">{item.label}</span>
-						{renderCount(item.count, activeValue === item.value)}
-					</Link>
-				))}
+				{/* Items overflow - visibles uniquement sur desktop */}
+				{overflowItems.map((item) => {
+					const isActive = item.value === activeValue;
+					return (
+						<Link
+							key={item.value}
+							href={item.href}
+							prefetch={prefetch}
+							aria-current={isActive ? "page" : undefined}
+							className={cn(getPillClasses(isActive), "hidden md:inline-flex")}
+						>
+							<span className="truncate">{item.label}</span>
+							{renderCount(item.count, isActive)}
+						</Link>
+					);
+				})}
 
-				{/* Bouton "Plus" avec drawer - visible uniquement sur mobile (<768px) */}
-				{renderOverflowMenu()}
+				{/* Bouton "Plus" - visible uniquement sur mobile */}
+				{hasOverflow && (
+					<>
+						<button
+							type="button"
+							onClick={() => setIsPanelOpen(true)}
+							className={cn(
+								PILL_BASE,
+								"md:hidden",
+								activeOverflowItem
+									? "bg-primary text-primary-foreground shadow-sm"
+									: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+							)}
+							aria-label="Plus d'options de navigation"
+							aria-expanded={isPanelOpen}
+							aria-haspopup="dialog"
+						>
+							<span className="truncate">
+								{activeOverflowItem?.label || "Plus"}
+							</span>
+							<ChevronDownIcon
+								className={cn(
+									"h-4 w-4 shrink-0 transition-transform duration-200",
+									isPanelOpen && "rotate-180"
+								)}
+								aria-hidden="true"
+							/>
+						</button>
+
+						<MobilePanel
+							isOpen={isPanelOpen}
+							onClose={() => setIsPanelOpen(false)}
+							ariaLabel="Options de navigation"
+							enableStagger
+							showCloseButton={false}
+							className="p-3"
+						>
+							<nav aria-label="Options de navigation supplémentaires">
+								{overflowItems.map((item) => {
+									const isActive = item.value === activeValue;
+									return (
+										<MobilePanelItem key={item.value}>
+											<Link
+												href={item.href}
+												prefetch={prefetch}
+												onClick={() => setIsPanelOpen(false)}
+												aria-current={isActive ? "page" : undefined}
+												className={cn(
+													"flex items-center justify-between w-full",
+													"px-4 py-3 rounded-xl",
+													"text-sm font-medium",
+													"transition-colors duration-200",
+													isActive
+														? "bg-primary text-primary-foreground"
+														: "text-foreground hover:bg-muted"
+												)}
+											>
+												{item.label}
+												{item.count !== undefined && (
+													<span
+														className={cn(
+															"text-xs",
+															isActive
+																? "text-primary-foreground/70"
+																: "text-muted-foreground"
+														)}
+													>
+														{item.count}
+													</span>
+												)}
+											</Link>
+										</MobilePanelItem>
+									);
+								})}
+							</nav>
+						</MobilePanel>
+					</>
+				)}
 			</div>
 		</nav>
 	);

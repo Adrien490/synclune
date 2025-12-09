@@ -67,12 +67,12 @@ export function FilterBadge({
 			animate={{ opacity: 1, scale: 1, y: 0 }}
 			exit={{ opacity: 0, scale: 0.85, x: -20 }}
 			transition={{
-				duration: 0.25,
+				duration: 0.15,
 				ease: [0.4, 0, 0.2, 1],
 				layout: {
 					type: "spring",
-					stiffness: 300,
-					damping: 30,
+					stiffness: 400,
+					damping: 35,
 				},
 			}}
 		>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppForm } from "@/shared/components/tanstack-form";
+import { useAppForm } from "@/shared/components/forms";
 import type { Session } from "@/modules/auth/lib/auth";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import { createCheckoutSession } from "@/modules/payments/actions/create-checkout-session";

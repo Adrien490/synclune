@@ -16,7 +16,7 @@ import {
 } from "@/shared/components/ui/responsive-sheet";
 import { cn } from "@/shared/utils/cn";
 import { Filter, Loader2, X } from "lucide-react";
-import { ReactNode } from "react";
+import { ReactNode, useCallback, useRef, useState } from "react";
 
 export interface FilterSheetWrapperProps {
 	/** Number of active filters to display in badge */
@@ -59,8 +59,26 @@ export function FilterSheetWrapper({
 	cancelButtonText = "Annuler",
 	showCancelButton = true,
 }: FilterSheetWrapperProps) {
+	const [open, setOpen] = useState(false);
+
+	const handleApply = useCallback(() => {
+		onApply?.();
+		setOpen(false);
+	}, [onApply]);
+
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent) => {
+			// Cmd+Enter (Mac) ou Ctrl+Enter (Windows) pour appliquer
+			if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+				e.preventDefault();
+				handleApply();
+			}
+		},
+		[handleApply]
+	);
+
 	return (
-		<ResponsiveSheet side="right">
+		<ResponsiveSheet side="right" open={open} onOpenChange={setOpen}>
 			<ResponsiveSheetTrigger asChild>
 				<Button
 					variant="outline"
@@ -98,6 +116,7 @@ export function FilterSheetWrapper({
 			<ResponsiveSheetContent
 				className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full"
 				aria-describedby="filter-sheet-description"
+				onKeyDown={handleKeyDown}
 			>
 				<ResponsiveSheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
 					<div className="flex items-center justify-between gap-4">
@@ -127,7 +146,15 @@ export function FilterSheetWrapper({
 				</ResponsiveSheetHeader>
 
 				<ScrollArea className="flex-1 min-h-0">
-					<div className="px-6 py-4">{children}</div>
+					<div
+						className={cn(
+							"px-6 py-4 transition-opacity duration-200",
+							isPending && "opacity-50 pointer-events-none"
+						)}
+						aria-busy={isPending}
+					>
+						{children}
+					</div>
 				</ScrollArea>
 
 				<ResponsiveSheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
@@ -139,7 +166,7 @@ export function FilterSheetWrapper({
 								</Button>
 							</ResponsiveSheetClose>
 							<ResponsiveSheetClose asChild className="flex-1">
-								<Button type="button" onClick={onApply} disabled={isPending}>
+								<Button type="button" onClick={handleApply} disabled={isPending}>
 									{isPending && (
 										<Loader2
 											className="h-4 w-4 animate-spin"
@@ -154,7 +181,7 @@ export function FilterSheetWrapper({
 						<ResponsiveSheetClose asChild className="w-full">
 							<Button
 								type="button"
-								onClick={onApply}
+								onClick={handleApply}
 								disabled={isPending}
 								className="w-full"
 							>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppForm } from "@/shared/components/tanstack-form";
+import { useAppForm } from "@/shared/components/forms";
 import { ActionStatus } from "@/shared/types/server-action";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";

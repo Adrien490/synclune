@@ -8,7 +8,7 @@ import {
 	ResponsiveDialogTitle,
 } from "@/shared/components/ui/responsive-dialog";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
-import { useAppForm } from "@/shared/components/tanstack-form";
+import { useAppForm } from "@/shared/components/forms";
 import { createMaterial } from "@/modules/materials/actions/create-material";
 import { updateMaterial } from "@/modules/materials/actions/update-material";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
