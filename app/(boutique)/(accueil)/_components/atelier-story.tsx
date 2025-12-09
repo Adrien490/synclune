@@ -1,9 +1,7 @@
 import { Fade, Reveal, Stagger } from "@/shared/components/animations";
-import { Button } from "@/shared/components/ui/button";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
 import { Heart, ImageIcon, Sparkles } from "lucide-react";
-import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
 
 /**
@@ -43,13 +41,6 @@ export async function AtelierStory() {
 			itemScope
 			itemType="https://schema.org/Article"
 		>
-			{/* Skip link pour accessibilite clavier */}
-			<a
-				href="#atelier-cta"
-				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-			>
-				Passer au bouton En savoir plus
-			</a>
 
 			{/* Titre descriptif pour SEO et lecteurs d'ecran */}
 			<h2 id="atelier-story-title" className="sr-only">
@@ -165,28 +156,6 @@ export async function AtelierStory() {
 							/>
 						</div>
 
-						{/* CTA centre en dessous */}
-						<div
-							id="atelier-cta"
-							className="flex flex-col items-center gap-4 text-center"
-						>
-							<p className="text-sm text-muted-foreground max-w-md">
-								Envie d'en savoir plus sur mon parcours et mes inspirations ?
-							</p>
-							<Button
-								asChild
-								variant="default"
-								size="lg"
-								className="shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-							>
-								<Link
-									href="/a-propos"
-									aria-label="En savoir plus sur l'histoire de Léane et son atelier artisanal"
-								>
-									En savoir plus 
-								</Link>
-							</Button>
-						</div>
 					</div>
 				</Reveal>
 			</div>

@@ -19,7 +19,7 @@ import { Menu } from "lucide-react";
 import Link from "next/link";
 
 /** HREFs de la zone compte (memoisation) */
-const ACCOUNT_HREFS = ["/compte", "/connexion", "/admin", "/a-propos"] as const;
+const ACCOUNT_HREFS = ["/compte", "/connexion", "/admin"] as const;
 /** HREFs de la zone decouverte (memoisation) */
 const DISCOVERY_HREFS = ["/", "/collections", "/produits", "/personnalisation"] as const;
 

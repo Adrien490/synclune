@@ -90,8 +90,7 @@ export const desktopNavItems = [
 		hasDropdown: false,
 	},
 	{ href: "/produits", label: "Mes créations", icon: "gem" },
-	{ href: "/personnalisation", label: "Personnaliser", icon: "sparkles" },
-	{ href: "/a-propos", label: "L'atelier", icon: "info" },
+	{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
 ] as const;
 
 /**
@@ -176,7 +175,7 @@ export function getMobileNavItems(
 		bijouxItem,
 
 		// ✨ PERSONNALISER - Service différenciateur
-		{ href: "/personnalisation", label: "Personnaliser", icon: "sparkles" },
+		{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
 
 		// 👤 COMPTE - Gestion utilisateur
 		session
@@ -188,9 +187,6 @@ export function getMobileNavItems(
 	if (isAdmin) {
 		items.push({ href: "/admin", label: "Tableau de bord", icon: "layout-dashboard" });
 	}
-
-	// 📖 EN SAVOIR PLUS - Découverte de l'atelier
-	items.push({ href: "/a-propos", label: "L'atelier", icon: "info" });
 
 	return items;
 }
@@ -208,8 +204,7 @@ export function getDesktopNavItems(): NavItemWithChildren[] {
 export const footerNavItems = [
 	{ href: "/collections", label: "Collections" },
 	{ href: "/produits", label: "Mes créations" },
-	{ href: "/personnalisation", label: "Personnaliser" },
-	{ href: "/a-propos", label: "L'atelier" },
+	{ href: "/personnalisation", label: "Personnalisation" },
 	{ href: "/compte", label: "Mon compte" },
 	{ href: "/panier", label: "Panier" },
 ] as const;
