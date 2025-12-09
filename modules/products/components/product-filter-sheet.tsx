@@ -191,8 +191,8 @@ export function ProductFilterSheet({
 				<Button
 					variant="outline"
 					className={cn(
-						"relative h-11 w-11 p-0",
-						"sm:h-auto sm:w-auto sm:px-3 sm:gap-2 sm:text-sm sm:font-medium",
+						"relative h-[44px] w-11 p-0",
+						"sm:w-auto sm:px-3 sm:gap-2",
 						"border-border/60 hover:border-border hover:bg-accent/50 transition-all duration-200",
 						activeFiltersCount > 0 && "border-primary/30 bg-primary/5",
 						className
