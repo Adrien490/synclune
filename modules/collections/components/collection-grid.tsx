@@ -36,13 +36,12 @@ export function CollectionGrid({
 					</EmptyMedia>
 					<EmptyTitle>Aucune collection disponible</EmptyTitle>
 					<EmptyDescription>
-						Nos collections arrivent bientôt. Découvrez dès maintenant nos
-						créations uniques.
+						... Pour le moment ! Les collections arrivent bientôt.
 					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
 					<Button asChild variant="primary" size="lg">
-						<Link href="/produits">Découvrir nos bijoux</Link>
+						<Link href="/produits">Découvrir la boutique</Link>
 					</Button>
 				</EmptyContent>
 			</Empty>
