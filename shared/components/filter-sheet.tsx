@@ -5,18 +5,18 @@ import { Button } from "@/shared/components/ui/button";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
-	ResponsiveSheet,
-	ResponsiveSheetClose,
-	ResponsiveSheetContent,
-	ResponsiveSheetDescription,
-	ResponsiveSheetFooter,
-	ResponsiveSheetHeader,
-	ResponsiveSheetTitle,
-	ResponsiveSheetTrigger,
-} from "@/shared/components/ui/responsive-sheet";
+	Sheet,
+	SheetClose,
+	SheetContent,
+	SheetDescription,
+	SheetFooter,
+	SheetHeader,
+	SheetTitle,
+	SheetTrigger,
+} from "@/shared/components/ui/sheet";
 import { cn } from "@/shared/utils/cn";
 import { Filter, Loader2, X } from "lucide-react";
-import { ReactNode, useCallback, useRef, useState } from "react";
+import { ReactNode, useState } from "react";
 
 export interface FilterSheetWrapperProps {
 	/** Number of active filters to display in badge */
@@ -61,25 +61,22 @@ export function FilterSheetWrapper({
 }: FilterSheetWrapperProps) {
 	const [open, setOpen] = useState(false);
 
-	const handleApply = useCallback(() => {
+	const handleApply = () => {
 		onApply?.();
 		setOpen(false);
-	}, [onApply]);
+	};
 
-	const handleKeyDown = useCallback(
-		(e: React.KeyboardEvent) => {
-			// Cmd+Enter (Mac) ou Ctrl+Enter (Windows) pour appliquer
-			if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-				e.preventDefault();
-				handleApply();
-			}
-		},
-		[handleApply]
-	);
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		// Cmd+Enter (Mac) ou Ctrl+Enter (Windows) pour appliquer
+		if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+			e.preventDefault();
+			handleApply();
+		}
+	};
 
 	return (
-		<ResponsiveSheet side="right" open={open} onOpenChange={setOpen}>
-			<ResponsiveSheetTrigger asChild>
+		<Sheet open={open} onOpenChange={setOpen}>
+			<SheetTrigger asChild>
 				<Button
 					variant="outline"
 					className={cn(
@@ -111,23 +108,24 @@ export function FilterSheetWrapper({
 						</>
 					)}
 				</Button>
-			</ResponsiveSheetTrigger>
+			</SheetTrigger>
 
-			<ResponsiveSheetContent
+			<SheetContent
+				side="right"
 				className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full"
 				aria-describedby="filter-sheet-description"
 				onKeyDown={handleKeyDown}
 			>
-				<ResponsiveSheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
+				<SheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
 					<div className="flex items-center justify-between gap-4">
 						<div className="min-w-0 flex-1">
-							<ResponsiveSheetTitle className="text-lg font-semibold">{title}</ResponsiveSheetTitle>
-							<ResponsiveSheetDescription
+							<SheetTitle className="text-lg font-semibold">{title}</SheetTitle>
+							<SheetDescription
 								id="filter-sheet-description"
 								className="text-sm text-muted-foreground"
 							>
 								{description}
-							</ResponsiveSheetDescription>
+							</SheetDescription>
 						</div>
 						{hasActiveFilters && onClearAll && (
 							<Button
@@ -143,7 +141,7 @@ export function FilterSheetWrapper({
 							</Button>
 						)}
 					</div>
-				</ResponsiveSheetHeader>
+				</SheetHeader>
 
 				<ScrollArea className="flex-1 min-h-0">
 					<div
@@ -157,15 +155,15 @@ export function FilterSheetWrapper({
 					</div>
 				</ScrollArea>
 
-				<ResponsiveSheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
+				<SheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
 					{showCancelButton ? (
 						<ButtonGroup className="w-full" aria-label="Actions de filtrage">
-							<ResponsiveSheetClose asChild className="flex-1">
+							<SheetClose asChild className="flex-1">
 								<Button variant="outline" disabled={isPending}>
 									{cancelButtonText}
 								</Button>
-							</ResponsiveSheetClose>
-							<ResponsiveSheetClose asChild className="flex-1">
+							</SheetClose>
+							<SheetClose asChild className="flex-1">
 								<Button type="button" onClick={handleApply} disabled={isPending}>
 									{isPending && (
 										<Loader2
@@ -175,10 +173,10 @@ export function FilterSheetWrapper({
 									)}
 									{applyButtonText}
 								</Button>
-							</ResponsiveSheetClose>
+							</SheetClose>
 						</ButtonGroup>
 					) : (
-						<ResponsiveSheetClose asChild className="w-full">
+						<SheetClose asChild className="w-full">
 							<Button
 								type="button"
 								onClick={handleApply}
@@ -193,15 +191,15 @@ export function FilterSheetWrapper({
 								)}
 								{applyButtonText}
 							</Button>
-						</ResponsiveSheetClose>
+						</SheetClose>
 					)}
-				</ResponsiveSheetFooter>
+				</SheetFooter>
 
 				{/* Live region for screen readers */}
 				<div role="status" aria-live="polite" className="sr-only">
 					{isPending && "Mise à jour des filtres en cours..."}
 				</div>
-			</ResponsiveSheetContent>
-		</ResponsiveSheet>
+			</SheetContent>
+		</Sheet>
 	);
 }

@@ -199,6 +199,7 @@ export async function ProductListing({
 						]}
 						activeValue={activeTab}
 						ariaLabel="Navigation par types de bijoux"
+						mobileVisibleCount={1}
 					/>
 				}
 			/>

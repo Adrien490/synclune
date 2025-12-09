@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useCallback, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/shared/utils/cn";
 import { ExternalLink, LogOut, Menu } from "lucide-react";
@@ -84,13 +84,13 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 		.filter((item) => !primaryIds.has(item.id))
 		.some((item) => isRouteActive(pathname, item.url));
 
-	const closePanel = useCallback(() => setIsOpen(false), []);
-	const togglePanel = useCallback(() => setIsOpen((prev) => !prev), []);
+	const closePanel = () => setIsOpen(false);
+	const togglePanel = () => setIsOpen((prev) => !prev);
 
 	// Fermer le panneau quand on change de page (back button navigateur)
 	useEffect(() => {
 		closePanel();
-	}, [pathname, closePanel]);
+	}, [pathname]);
 
 	return (
 		<>

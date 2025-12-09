@@ -30,7 +30,7 @@ interface TabNavigationProps {
 
 /** Classes de base pour les pills */
 const PILL_BASE =
-	"inline-flex items-center justify-center gap-1.5 h-11 md:h-10 px-4 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-200";
+	"inline-flex items-center justify-center gap-1.5 h-11 md:h-10 px-4 rounded-full text-sm font-medium transition-colors duration-200";
 
 /**
  * Composant de navigation par onglets
@@ -96,7 +96,7 @@ export function TabNavigation({
 							href={item.href}
 							prefetch={prefetch}
 							aria-current={isActive ? "page" : undefined}
-							className={getPillClasses(isActive)}
+							className={cn(getPillClasses(isActive), "max-w-40 md:max-w-none")}
 						>
 							<span className="truncate">{item.label}</span>
 							{renderCount(item.count, isActive)}
@@ -129,7 +129,7 @@ export function TabNavigation({
 							onClick={() => setIsPanelOpen(true)}
 							className={cn(
 								PILL_BASE,
-								"md:hidden",
+								"md:hidden max-w-36",
 								activeOverflowItem
 									? "bg-primary text-primary-foreground shadow-sm"
 									: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -143,7 +143,7 @@ export function TabNavigation({
 							</span>
 							<ChevronDownIcon
 								className={cn(
-									"h-4 w-4 shrink-0 transition-transform duration-200",
+									"size-4 shrink-0 transition-transform duration-200",
 									isPanelOpen && "rotate-180"
 								)}
 								aria-hidden="true"

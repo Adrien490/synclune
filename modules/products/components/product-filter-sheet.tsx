@@ -5,15 +5,15 @@ import { Button } from "@/shared/components/ui/button";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import {
-	ResponsiveSheet,
-	ResponsiveSheetClose,
-	ResponsiveSheetContent,
-	ResponsiveSheetDescription,
-	ResponsiveSheetFooter,
-	ResponsiveSheetHeader,
-	ResponsiveSheetTitle,
-	ResponsiveSheetTrigger,
-} from "@/shared/components/ui/responsive-sheet";
+	Sheet,
+	SheetClose,
+	SheetContent,
+	SheetDescription,
+	SheetFooter,
+	SheetHeader,
+	SheetTitle,
+	SheetTrigger,
+} from "@/shared/components/ui/sheet";
 import { Input } from "@/shared/components/ui/input";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Separator } from "@/shared/components/ui/separator";
@@ -312,8 +312,8 @@ export function ProductFilterSheet({
 	})();
 
 	return (
-		<ResponsiveSheet side="right">
-			<ResponsiveSheetTrigger asChild>
+		<Sheet>
+			<SheetTrigger asChild>
 				<Button
 					variant="outline"
 					className={cn(
@@ -336,16 +336,16 @@ export function ProductFilterSheet({
 						</Badge>
 					)}
 				</Button>
-			</ResponsiveSheetTrigger>
+			</SheetTrigger>
 
-			<ResponsiveSheetContent className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full">
-				<ResponsiveSheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
+			<SheetContent side="right" className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full">
+				<SheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
 					<div className="flex items-center justify-between">
 						<div>
-							<ResponsiveSheetTitle className="text-lg font-semibold">Filtres</ResponsiveSheetTitle>
-							<ResponsiveSheetDescription className="text-sm text-muted-foreground">
+							<SheetTitle className="text-lg font-semibold">Filtres</SheetTitle>
+							<SheetDescription className="text-sm text-muted-foreground">
 								Affine ta recherche
-							</ResponsiveSheetDescription>
+							</SheetDescription>
 						</div>
 						{hasActiveFilters && (
 							<Button
@@ -359,7 +359,7 @@ export function ProductFilterSheet({
 							</Button>
 						)}
 					</div>
-				</ResponsiveSheetHeader>
+				</SheetHeader>
 
 				<ScrollArea className="flex-1 min-h-0">
 					<form
@@ -461,19 +461,19 @@ export function ProductFilterSheet({
 					</form>
 				</ScrollArea>
 
-				<ResponsiveSheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
+				<SheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
 					<ButtonGroup className="w-full" aria-label="Filter actions">
-						<ResponsiveSheetClose asChild className="flex-1">
+						<SheetClose asChild className="flex-1">
 							<Button variant="outline">Annuler</Button>
-						</ResponsiveSheetClose>
-						<ResponsiveSheetClose asChild className="flex-1">
+						</SheetClose>
+						<SheetClose asChild className="flex-1">
 							<Button type="submit" onClick={() => form.handleSubmit()}>
 								Appliquer
 							</Button>
-						</ResponsiveSheetClose>
+						</SheetClose>
 					</ButtonGroup>
-				</ResponsiveSheetFooter>
-			</ResponsiveSheetContent>
-		</ResponsiveSheet>
+				</SheetFooter>
+			</SheetContent>
+		</Sheet>
 	);
 }
