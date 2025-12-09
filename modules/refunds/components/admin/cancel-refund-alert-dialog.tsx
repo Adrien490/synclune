@@ -72,7 +72,7 @@ export function CancelRefundAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Fermer
 						</AlertDialogCancel>
-						<Button type="submit" variant="destructive" disabled={isPending}>
+						<Button type="submit" disabled={isPending}>
 							{isPending ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />

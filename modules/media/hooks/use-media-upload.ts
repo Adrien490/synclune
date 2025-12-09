@@ -24,6 +24,9 @@ export interface MediaUploadResult {
 	url: string;
 	mediaType: "IMAGE" | "VIDEO";
 	fileName: string;
+	blurDataUrl?: string;
+	thumbnailUrl?: string;
+	thumbnailSmallUrl?: string;
 }
 
 // ============================================================================
@@ -134,12 +137,15 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
 			const uploadResults: MediaUploadResult[] = [];
 
 			results?.forEach((result, index) => {
-				const url = result.serverData?.url;
-				if (url) {
+				const serverData = result.serverData;
+				if (serverData?.url) {
 					uploadResults.push({
-						url,
+						url: serverData.url,
 						mediaType: getMediaType(validFiles[index]),
 						fileName: validFiles[index].name,
+						blurDataUrl: serverData.blurDataUrl ?? undefined,
+						thumbnailUrl: serverData.thumbnailUrl ?? undefined,
+						thumbnailSmallUrl: serverData.thumbnailSmallUrl ?? undefined,
 					});
 				}
 			});

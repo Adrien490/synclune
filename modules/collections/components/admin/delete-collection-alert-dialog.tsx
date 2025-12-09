@@ -83,7 +83,6 @@ export function DeleteCollectionAlertDialog() {
 						</AlertDialogCancel>
 						<Button
 							type="submit"
-							variant="destructive"
 							disabled={isPending}
 						>
 							{isPending ? (

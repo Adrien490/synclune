@@ -89,7 +89,6 @@ export function BulkDeleteCollectionsAlertDialog() {
 						</AlertDialogCancel>
 						<Button
 							type="submit"
-							variant="destructive"
 							disabled={isPending}
 						>
 							{isPending ? (

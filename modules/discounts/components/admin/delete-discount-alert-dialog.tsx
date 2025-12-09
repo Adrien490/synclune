@@ -84,7 +84,6 @@ export function DeleteDiscountAlertDialog() {
 						</AlertDialogCancel>
 						<Button
 							type="submit"
-							variant="destructive"
 							disabled={isPending || usageCount > 0}
 						>
 							{isPending ? (

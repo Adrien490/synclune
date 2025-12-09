@@ -84,7 +84,6 @@ export function DeleteGalleryMediaAlertDialog() {
 					</AlertDialogCancel>
 					<Button
 						type="button"
-						variant="destructive"
 						onClick={handleDelete}
 						disabled={isPending}
 						className="w-full sm:w-auto"

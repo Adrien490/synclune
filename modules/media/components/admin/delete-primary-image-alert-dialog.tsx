@@ -77,7 +77,6 @@ export function DeletePrimaryImageAlertDialog() {
 					</AlertDialogCancel>
 					<Button
 						type="button"
-						variant="destructive"
 						onClick={handleDelete}
 						disabled={isPending}
 					>

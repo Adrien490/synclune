@@ -141,7 +141,6 @@ export function RefundSelectionActions() {
 							</AlertDialogCancel>
 							<Button
 								type="submit"
-								variant="destructive"
 								disabled={isPending}
 							>
 								{isRejectPending ? (

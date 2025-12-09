@@ -186,7 +186,6 @@ export function ProductVariantSelectionActions() {
 						</AlertDialogCancel>
 						<Button
 							onClick={() => deleteSkus(selectedItems)}
-							variant="destructive"
 							disabled={isDeleting}
 						>
 							{isDeleting ? (

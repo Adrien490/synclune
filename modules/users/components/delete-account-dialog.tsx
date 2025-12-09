@@ -83,7 +83,6 @@ export function DeleteAccountDialog() {
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
 						<Button
 							type="submit"
-							variant="destructive"
 							disabled={!isConfirmed || isPending}
 						>
 							{isPending ? "Suppression..." : "Supprimer définitivement"}

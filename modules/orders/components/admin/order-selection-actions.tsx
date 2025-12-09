@@ -156,7 +156,6 @@ export function OrderSelectionActions() {
 							</AlertDialogCancel>
 							<Button
 								type="submit"
-								variant="destructive"
 								disabled={isPending}
 							>
 								{isCancelPending ? (

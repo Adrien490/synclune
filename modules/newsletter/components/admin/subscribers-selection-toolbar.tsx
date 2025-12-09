@@ -212,7 +212,6 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 							</AlertDialogCancel>
 							<Button
 								type="submit"
-								variant="destructive"
 								disabled={isPending}
 							>
 								{isDeletePending ? (

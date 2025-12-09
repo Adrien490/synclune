@@ -122,7 +122,6 @@ export function StockNotificationsRowActions({
 						<AlertDialogCancel disabled={isLoading}>Annuler</AlertDialogCancel>
 						<Button
 							onClick={handleCancel}
-							variant="destructive"
 							disabled={isLoading}
 						>
 							{isLoading ? (

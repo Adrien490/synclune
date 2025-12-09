@@ -157,7 +157,6 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							</AlertDialogCancel>
 							<Button
 								type="submit"
-								variant="destructive"
 								disabled={isPending}
 							>
 								{isDeletePending ? (

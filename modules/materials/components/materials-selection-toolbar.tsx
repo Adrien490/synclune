@@ -131,7 +131,6 @@ export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
 							</AlertDialogCancel>
 							<Button
 								type="submit"
-								variant="destructive"
 								disabled={isPending}
 							>
 								{isDeletePending ? (

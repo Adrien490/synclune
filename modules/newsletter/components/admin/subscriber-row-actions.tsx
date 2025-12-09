@@ -202,7 +202,6 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
 						<Button
 							onClick={() => deleteSubscriber(subscriber.id)}
-							variant="destructive"
 							disabled={isPending}
 						>
 							{isPending ? (

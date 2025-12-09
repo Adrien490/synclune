@@ -76,6 +76,7 @@ export async function createProductSku(
 		const allMedia: Array<{
 			url: string;
 			thumbnailUrl?: string | null;
+			thumbnailSmallUrl?: string | null;
 			blurDataUrl?: string | null;
 			altText?: string | null;
 			mediaType?: "IMAGE" | "VIDEO";
@@ -226,6 +227,7 @@ export async function createProductSku(
 							skuId: createdSku.id,
 							url: media.url,
 							thumbnailUrl: media.thumbnailUrl || null,
+							thumbnailSmallUrl: media.thumbnailSmallUrl || null,
 							blurDataUrl: media.blurDataUrl || null,
 							altText: media.altText || null,
 							mediaType: media.mediaType || detectMediaType(media.url),

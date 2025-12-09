@@ -80,7 +80,6 @@ export function BulkDeleteOrdersAlertDialog() {
 						Annuler
 					</AlertDialogCancel>
 					<Button
-						variant="destructive"
 						onClick={handleDelete}
 						disabled={isPending}
 					>
