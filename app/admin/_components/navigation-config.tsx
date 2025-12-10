@@ -7,13 +7,11 @@ import {
 	Package,
 	Layers,
 	Boxes,
-	Ticket,
 	Users,
 	User,
 	Tag,
 	Palette,
 	Gem,
-	Megaphone,
 	Settings,
 } from "lucide-react";
 import type { NavBadgeKey } from "./nav-badges-data";
@@ -116,21 +114,6 @@ export const navigationData: NavigationData = {
 					title: "Inventaire",
 					url: "/admin/catalogue/inventaire",
 					icon: Boxes,
-				},
-			],
-		},
-		// ─────────────────────────────────────────────────────────────────────────
-		// MARKETING - Promotions et alertes stock
-		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Marketing",
-			icon: Megaphone,
-			items: [
-				{
-					id: "promo-codes",
-					title: "Codes promo",
-					url: "/admin/marketing/codes-promo",
-					icon: Ticket,
 				},
 			],
 		},

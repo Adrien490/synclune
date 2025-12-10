@@ -17,6 +17,7 @@ import {
 	getPrimaryImageForList,
 	getAvailableColorsForList,
 	getSkuByColorForList,
+	getPrimarySkuForList,
 } from "@/modules/products/services/product-list-helpers";
 
 interface ProductCardProps {
@@ -83,8 +84,12 @@ export function ProductCard({
 		return primaryImage;
 	})();
 
-	// SKU dynamique selon la couleur sélectionnée (pour wishlist et panier)
+	// SKU dynamique selon la couleur sélectionnée (pour panier)
 	const currentSku = getSkuByColorForList(product, selectedColorSlug);
+
+	// SKU par défaut pour la wishlist (unicité par produit)
+	// Utilise getPrimarySkuForList qui respecte isDefault + fallbacks intelligents
+	const defaultSku = getPrimarySkuForList(product);
 
 	// Génération ID unique pour aria-labelledby
 	// Sanitise le slug pour éviter les ID HTML invalides (accents, apostrophes, etc.)
@@ -156,11 +161,11 @@ export function ProductCard({
 				)}
 
 				{/* Bouton wishlist - EN DEHORS du Link */}
-				{/* État dynamique selon le SKU sélectionné (couleur) */}
-				{currentSku && (
+				{/* Utilise toujours le SKU par défaut (unicité par produit, pas par variante) */}
+				{defaultSku && (
 					<WishlistButton
-						skuId={currentSku.id}
-						isInWishlist={wishlistSkuIds?.has(currentSku.id) ?? false}
+						skuId={defaultSku.id}
+						isInWishlist={wishlistSkuIds?.has(defaultSku.id) ?? false}
 						productTitle={title}
 						className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity duration-200"
 					/>

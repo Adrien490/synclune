@@ -135,11 +135,7 @@ export default async function CheckoutPage() {
 
 						{/* Récapitulatif - 1/3 de la largeur */}
 						<div className="lg:col-span-1">
-							<CheckoutSummary
-								cart={cart}
-								userId={session?.user?.id}
-								customerEmail={session?.user?.email || undefined}
-							/>
+							<CheckoutSummary cart={cart} />
 						</div>
 					</div>
 				</div>

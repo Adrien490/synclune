@@ -157,6 +157,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Hook: Gestion erreurs média avec retry
 	const { handleMediaError, hasError, retryMedia } = useMediaErrors();
 
+	// Ref pour distinguer tap vs swipe sur mobile
+	const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+
 	// Gestion vidéos: pause/play selon la slide active
 	const emblaContainerRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
@@ -331,7 +334,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 							)}
 
 							{/* Embla Carousel - Glissement fluide natif */}
-							<div className="absolute inset-0 overflow-hidden" ref={emblaRef}>
+							<div className="absolute inset-0 overflow-hidden touch-pan-x" ref={emblaRef}>
 								<div className="flex h-full" ref={emblaContainerRef}>
 									{safeImages.map((media, index) => (
 										<div
@@ -340,7 +343,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 											className="flex-[0_0_100%] h-full min-w-0 relative"
 											aria-hidden={index !== optimisticIndex}
 										>
-											{/* Wrapper cliquable interne pour ne pas interférer avec Embla drag */}
+											{/* Wrapper avec détection tap vs swipe pour ne pas interférer avec Embla */}
 											<div
 												className={cn(
 													"absolute inset-0",
@@ -350,7 +353,22 @@ function GalleryContent({ product, title }: GalleryProps) {
 													role: "button",
 													tabIndex: index === optimisticIndex ? 0 : -1,
 													"aria-label": `Agrandir l'image ${index + 1} : ${media.alt || title}`,
-													onClick: () => openLightbox(),
+													onPointerDown: (e: React.PointerEvent) => {
+														pointerStartRef.current = { x: e.clientX, y: e.clientY };
+													},
+													onPointerUp: (e: React.PointerEvent) => {
+														if (!pointerStartRef.current) return;
+														const deltaX = Math.abs(e.clientX - pointerStartRef.current.x);
+														const deltaY = Math.abs(e.clientY - pointerStartRef.current.y);
+														// Ouvrir lightbox seulement si c'est un tap (pas un swipe)
+														if (deltaX < 10 && deltaY < 10) {
+															openLightbox();
+														}
+														pointerStartRef.current = null;
+													},
+													onPointerCancel: () => {
+														pointerStartRef.current = null;
+													},
 													onKeyDown: (e: React.KeyboardEvent) => {
 														if (e.key === "Enter" || e.key === " ") {
 															e.preventDefault();

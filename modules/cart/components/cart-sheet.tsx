@@ -13,6 +13,13 @@ import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag, Truck } from "lucide-react";
+import {
+	Empty,
+	EmptyContent,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/shared/components/ui/empty";
 import Link from "next/link";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { useSwipeGesture } from "@/shared/hooks/use-swipe-gesture";
@@ -79,28 +86,29 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 					</div>
 
 					{!hasItems ? (
-						<>
-							<div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-12 text-center">
-								<div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-									<ShoppingBag className="w-8 h-8 text-muted-foreground" />
-								</div>
-								<h3 className="text-lg font-medium mb-2">Ton panier est vide !</h3>
-								<p className="text-sm text-muted-foreground max-w-[280px]">
-									Tu peux aller jeter un oeil à mes créations si tu le souhaites 😁
-								</p>
-							</div>
-
-							<SheetFooter className="px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t mt-auto shrink-0">
-								<Button
-									asChild
-									size="lg"
-									className="w-full group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
-									onClick={close}
-								>
-									<Link href="/produits">Decouvrir la boutique</Link>
-								</Button>
-							</SheetFooter>
-						</>
+						<div className="flex-1 min-h-0 flex flex-col px-6 py-8">
+							<Empty className="flex-1 border-0">
+								<EmptyHeader>
+									<EmptyMedia variant="icon">
+										<ShoppingBag className="size-6" />
+									</EmptyMedia>
+									<EmptyTitle>Ton panier est vide !</EmptyTitle>
+								</EmptyHeader>
+								<EmptyContent>
+									<p className="text-muted-foreground max-w-[280px]">
+										Tu peux aller jeter un oeil à mes créations si tu le souhaites 😁
+									</p>
+									<Button
+										asChild
+										size="lg"
+										className="w-full max-w-xs group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+										onClick={close}
+									>
+										<Link href="/produits">Découvrir la boutique</Link>
+									</Button>
+								</EmptyContent>
+							</Empty>
+						</div>
 					) : (
 						<>
 							<ScrollArea className="flex-1 min-h-0">

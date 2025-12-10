@@ -7,66 +7,21 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
-import { Input } from "@/shared/components/ui/input";
-import { Button } from "@/shared/components/ui/button";
 import { calculateShipping } from "@/modules/orders/utils/shipping.utils";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import {
-	CheckCircle2,
-	Gift,
-	Loader2,
-	Pencil,
-	ShoppingBag,
-	Tag,
-	TruckIcon,
-	X,
-} from "lucide-react";
+import { Pencil, ShoppingBag, TruckIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { useApplyDiscountCode } from "@/modules/discounts/hooks/use-apply-discount-code";
-
-interface AppliedDiscount {
-	id: string;
-	code: string;
-	type: "PERCENTAGE" | "FIXED_AMOUNT";
-	value: number;
-	discountAmount: number;
-}
 
 interface CheckoutSummaryProps {
 	cart: NonNullable<GetCartReturn>;
-	userId?: string;
-	customerEmail?: string;
-	onDiscountChange?: (discount: AppliedDiscount | null) => void;
 }
 
 /**
  * Composant résumé de la commande pour la page checkout
- * Affiche le récapitulatif des articles, frais de port, code promo et total
+ * Affiche le récapitulatif des articles, frais de port et total
  */
-export function CheckoutSummary({
-	cart,
-	userId,
-	customerEmail,
-	onDiscountChange,
-}: CheckoutSummaryProps) {
-	// États pour le code promo
-	const [discountCode, setDiscountCode] = useState("");
-	const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
-
-	// Hook pour appliquer le code promo (pattern établi avec toast automatique)
-	const { applyCode, isPending } = useApplyDiscountCode({
-		onSuccess: (discount) => {
-			setAppliedDiscount(discount);
-			onDiscountChange?.(discount);
-		},
-		onError: () => {
-			setAppliedDiscount(null);
-			onDiscountChange?.(null);
-		},
-	});
-
+export function CheckoutSummary({ cart }: CheckoutSummaryProps) {
 	// Calculer le nombre total d'articles
 	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -78,32 +33,8 @@ export function CheckoutSummary({
 	// Frais de port
 	const shipping = calculateShipping();
 
-	// Montant de la réduction
-	const discountAmount = appliedDiscount?.discountAmount || 0;
-
-	// Total avec réduction
-	const total = Math.max(0, subtotal - discountAmount + shipping);
-
-	// Appliquer un code promo
-	const handleApplyDiscount = () => {
-		if (!discountCode.trim()) return;
-		applyCode(discountCode, subtotal, userId, customerEmail);
-	};
-
-	// Retirer le code promo
-	const handleRemoveDiscount = () => {
-		setAppliedDiscount(null);
-		setDiscountCode("");
-		onDiscountChange?.(null);
-	};
-
-	// Formater la valeur du discount pour affichage
-	const formatDiscountLabel = (discount: AppliedDiscount) => {
-		if (discount.type === "PERCENTAGE") {
-			return `-${discount.value}%`;
-		}
-		return `-${formatEuro(discount.value)}`;
-	};
+	// Total
+	const total = subtotal + shipping;
 
 	return (
 		<Card className="rounded-xl shadow-sm border-2 sticky top-24">
@@ -190,92 +121,6 @@ export function CheckoutSummary({
 
 				<Separator />
 
-				{/* Section Code Promo */}
-				<div className="space-y-3">
-					<div className="flex items-center gap-2 text-sm font-medium">
-						<Gift className="w-4 h-4 text-primary" />
-						<span>Code promo</span>
-					</div>
-
-					{appliedDiscount ? (
-						// Code promo appliqué
-						<div className="p-3 bg-muted/50 border border-border rounded-lg">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<CheckCircle2 className="w-4 h-4 text-foreground" />
-									<span className="font-mono text-sm font-medium">
-										{appliedDiscount.code}
-									</span>
-									<span className="text-xs text-muted-foreground font-medium">
-										({formatDiscountLabel(appliedDiscount)})
-									</span>
-								</div>
-								<Button
-									type="button"
-									variant="ghost"
-									size="sm"
-									className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-									onClick={handleRemoveDiscount}
-								>
-									<X className="w-4 h-4" />
-									<span className="sr-only">Retirer le code promo</span>
-								</Button>
-							</div>
-						</div>
-					) : (
-						// Champ de saisie
-						<div className="space-y-2">
-							<div className="flex gap-2">
-								<div className="relative flex-1">
-									<Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-									<Input
-										type="text"
-										placeholder="Entrer un code"
-										value={discountCode}
-										onChange={(e) => {
-											setDiscountCode(e.target.value.toUpperCase());
-										}}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") {
-												e.preventDefault();
-												handleApplyDiscount();
-											}
-										}}
-										className="pl-9 h-10 font-mono uppercase"
-										disabled={isPending}
-										maxLength={30}
-									/>
-								</div>
-								<Button
-									type="button"
-									variant="secondary"
-									size="sm"
-									className="h-10 px-4"
-									onClick={handleApplyDiscount}
-									disabled={isPending || !discountCode.trim()}
-								>
-									{isPending ? (
-										<Loader2 className="w-4 h-4 animate-spin" />
-									) : (
-										"Appliquer"
-									)}
-								</Button>
-							</div>
-						</div>
-					)}
-
-					{/* Input caché pour envoyer le code au formulaire */}
-					{appliedDiscount && (
-						<input
-							type="hidden"
-							name="discountCode"
-							value={appliedDiscount.code}
-						/>
-					)}
-				</div>
-
-				<Separator />
-
 				{/* Détails du panier */}
 				<div className="space-y-3 text-sm/6 tracking-normal antialiased">
 					<div className="flex justify-between items-center">
@@ -286,19 +131,6 @@ export function CheckoutSummary({
 							{formatEuro(subtotal)}
 						</span>
 					</div>
-
-					{/* Réduction (si appliquée) */}
-					{discountAmount > 0 && (
-						<div className="flex justify-between items-center text-foreground">
-							<span className="flex items-center gap-1.5">
-								<Tag className="w-4 h-4" />
-								Réduction
-							</span>
-							<span className="font-mono font-medium text-base/6">
-								-{formatEuro(discountAmount)}
-							</span>
-						</div>
-					)}
 
 					{/* Frais de port */}
 					<div className="flex justify-between items-center">
