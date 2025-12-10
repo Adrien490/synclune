@@ -43,7 +43,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold">
 					<div className="flex items-center gap-2">
 						<Droplets className="w-4 h-4 text-primary" aria-hidden="true" />
-						<span>Entretien de ton produit</span>
+						<span>Entretien</span>
 					</div>
 				</AccordionTrigger>
 				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">

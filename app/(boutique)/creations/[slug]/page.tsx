@@ -15,6 +15,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { ProductDetails } from "@/modules/products/components/product-details";
 import { Gallery } from "@/modules/media/components/gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
+import { ProductReassurance } from "@/modules/products/components/product-reassurance";
 
 import { RelatedProducts } from "@/modules/products/components/related-products";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
@@ -164,6 +165,9 @@ export default async function ProductPage({
 									{/* 2-6. ProductDetails - Prix, Caractéristiques, Variantes, Panier, Entretien */}
 									{/* Composant client qui synchronise le SKU avec les paramètres URL */}
 									<ProductDetails product={product} defaultSku={selectedSku} />
+
+									{/* 7. ProductReassurance - Badges et liens (RSC) */}
+									<ProductReassurance productSlug={product.slug} />
 								</section>
 							</div>
 

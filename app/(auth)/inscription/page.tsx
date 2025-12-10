@@ -55,10 +55,10 @@ export default function SignupPage() {
 									crimsonPro.className
 								)}
 							>
-								Rejoignez Synclune
+								Inscription
 							</h1>
 							<p className="text-muted-foreground">
-								Crée ton compte pour découvrir nos créations uniques
+								Tu peux créer ton compte pour simplifier tes prochaines commandes 😊
 							</p>
 						</div>
 					</div>

@@ -215,13 +215,7 @@ export function MediaUploadGrid({
 			<DndContext
 				sensors={sensors}
 				collisionDetection={closestCenter}
-				onDragStart={(event) => {
-					handleDragStart(event);
-					// Feedback haptique sur mobile si supporté
-					if (typeof navigator !== "undefined" && navigator.vibrate) {
-						navigator.vibrate(50);
-					}
-				}}
+				onDragStart={handleDragStart}
 				onDragEnd={handleDragEnd}
 				onDragCancel={handleDragCancel}
 			>

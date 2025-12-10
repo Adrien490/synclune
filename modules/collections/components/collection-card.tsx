@@ -14,20 +14,23 @@ interface CollectionCardProps {
 	blurDataUrl?: string | null;
 	showDescription?: boolean;
 	index?: number;
+	/** Custom sizes pour contextes differents (grid vs carousel) */
+	sizes?: string;
 }
 
 /**
  * Card de collection avec image, titre et description optionnelle
  *
- * ✅ OPTIMISATIONS APPLIQUÉES:
- * - Composant Card shadcn/ui pour cohérence design system
- * - Animations subtiles (différenciation avec ProductCard)
+ * OPTIMISATIONS APPLIQUEES:
+ * - Composant Card shadcn/ui pour coherence design system
+ * - can-hover: pour hover desktop uniquement (evite etats coinces sur mobile)
  * - motion-safe: pour respect prefers-reduced-motion (WCAG 2.3.3)
- * - Blur placeholder pour CLS optimisé
+ * - Blur placeholder pour CLS optimise
  * - Preload above-fold (index < 4)
- * - Schema.org Collection avec url
- * - Typography Crimson Pro uniformisée
+ * - Schema.org Collection avec wrapper article
+ * - Typography Crimson Pro uniformisee
  * - Quality 85 pour images premium
+ * - Hover effects harmonises avec ProductCard
  */
 export function CollectionCard({
 	slug,
@@ -37,104 +40,108 @@ export function CollectionCard({
 	blurDataUrl,
 	showDescription = false,
 	index,
+	sizes = COLLECTION_IMAGE_SIZES.COLLECTION_CARD,
 }: CollectionCardProps) {
-	// Génération ID unique pour aria-labelledby (RSC compatible)
+	// Generation ID unique pour aria-labelledby (RSC compatible)
 	const titleId = `collection-title-${slug}`;
 
-	// Preload above-fold images (4 premières)
+	// Preload above-fold images (4 premieres)
 	const isAboveFold = index !== undefined && index < 4;
 
 	return (
-		<Link
-			href={`/collections/${slug}`}
-			className={cn(
-				"group block min-w-0",
-				"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-lg",
-				"transition-all duration-300 ease-out",
-			)}
-			aria-labelledby={titleId}
-		>
-			<Card
+		<article itemScope itemType="https://schema.org/Collection">
+			<Link
+				href={`/collections/${slug}`}
 				className={cn(
-					"collection-card overflow-hidden gap-4",
-					// Supprimer le padding par défaut de Card (py-6)
-					"p-0",
-					// Border et shadow (plus subtiles que ProductCard)
-					"border-transparent motion-safe:hover:border-primary/20",
-					"shadow-sm motion-safe:hover:shadow-lg motion-safe:hover:shadow-primary/10",
-					// Animations hover avec motion-safe (WCAG 2.3.3)
+					"group block min-w-0",
+					"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-lg",
 					"transition-all duration-300 ease-out",
-					"motion-safe:hover:-translate-y-1 motion-safe:hover:will-change-transform",
-					// État active pour feedback tactile
-					"motion-safe:active:scale-[0.98] motion-safe:active:translate-y-0",
 				)}
-				itemScope
-				itemType="https://schema.org/Collection"
+				aria-labelledby={titleId}
 			>
-				{/* SEO: URL de la collection */}
-				<meta itemProp="url" content={`/collections/${slug}`} />
+				<Card
+					className={cn(
+						"collection-card overflow-hidden gap-4",
+						// Supprimer le padding par defaut de Card (py-6)
+						"p-0",
+						// Border renforcee (2px comme ProductCard)
+						"border-2 border-transparent",
+						"motion-safe:can-hover:hover:border-primary/30",
+						// Shadow harmonisee avec ProductCard
+						"shadow-sm",
+						"motion-safe:can-hover:hover:shadow-xl motion-safe:can-hover:hover:shadow-primary/15",
+						// Animations hover avec can-hover (desktop uniquement) + motion-safe (WCAG 2.3.3)
+						"transition-all duration-300 ease-out",
+						"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01]",
+						// Etat active pour feedback tactile
+						"motion-safe:active:scale-[0.98] motion-safe:active:translate-y-0",
+					)}
+				>
+					{/* SEO: URL de la collection */}
+					<meta itemProp="url" content={`/collections/${slug}`} />
 
-				{/* Image */}
-				<div className="collection-card-media relative aspect-square overflow-hidden bg-muted">
-					{imageUrl ? (
-						<Image
-							src={imageUrl}
-							alt={`Collection ${name} - Synclune bijoux artisanaux`}
-							fill
-							className="object-cover rounded-t-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-105"
-							loading={isAboveFold ? undefined : "lazy"}
-							priority={isAboveFold}
-							placeholder={blurDataUrl ? "blur" : "empty"}
-							blurDataURL={blurDataUrl || undefined}
-							quality={85}
-							sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CARD}
-							itemProp="image"
-						/>
-					) : (
-						<div
-							className="flex h-full items-center justify-center bg-muted"
-							role="img"
-							aria-label={`Image non disponible pour la collection ${name}`}
-						>
-							<div className="text-center space-y-3">
-								<Gem className="w-12 h-12 text-primary/40 mx-auto" />
-								<span
-									className="text-sm/6 tracking-normal text-muted-foreground"
-									aria-hidden="true"
-								>
-									{name}
-								</span>
+					{/* Image */}
+					<div className="collection-card-media relative aspect-square overflow-hidden bg-muted">
+						{imageUrl ? (
+							<Image
+								src={imageUrl}
+								alt={`Collection ${name} - Synclune bijoux artisanaux`}
+								fill
+								className="object-cover rounded-t-lg transition-transform duration-500 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
+								loading={isAboveFold ? undefined : "lazy"}
+								priority={isAboveFold}
+								placeholder={blurDataUrl ? "blur" : "empty"}
+								blurDataURL={blurDataUrl || undefined}
+								quality={85}
+								sizes={sizes}
+								itemProp="image"
+							/>
+						) : (
+							<div
+								className="flex h-full items-center justify-center bg-muted"
+								role="img"
+								aria-label={`Image non disponible pour la collection ${name}`}
+							>
+								<div className="text-center space-y-3">
+									<Gem className="w-12 h-12 text-primary/40 mx-auto" />
+									<span
+										className="text-sm/6 tracking-normal text-muted-foreground"
+										aria-hidden="true"
+									>
+										{name}
+									</span>
+								</div>
 							</div>
-						</div>
-					)}
-				</div>
-
-				{/* Contenu */}
-				<div className="space-y-2 p-4">
-					{/* Titre avec Crimson Pro uniformisé */}
-					<h3
-						id={titleId}
-						className={cn(
-							crimsonPro.className,
-							"line-clamp-2 overflow-hidden text-foreground",
-							"text-lg/7 sm:text-xl/7 tracking-tight break-words",
 						)}
-						itemProp="name"
-					>
-						{name}
-					</h3>
+					</div>
 
-					{/* Description optionnelle */}
-					{showDescription && description && (
-						<p
-							className="text-sm/6 tracking-normal line-clamp-3 break-words text-foreground/70 transition-colors duration-300 ease-out motion-safe:group-hover:text-foreground/90"
-							itemProp="description"
+					{/* Contenu avec padding responsive */}
+					<div className="space-y-2 p-4 sm:p-5">
+						{/* Titre avec Crimson Pro uniformise */}
+						<h3
+							id={titleId}
+							className={cn(
+								crimsonPro.className,
+								"line-clamp-2 overflow-hidden text-foreground",
+								"text-lg/7 sm:text-xl/7 tracking-tight break-words",
+							)}
+							itemProp="name"
 						>
-							{description}
-						</p>
-					)}
-				</div>
-			</Card>
-		</Link>
+							{name}
+						</h3>
+
+						{/* Description optionnelle */}
+						{showDescription && description && (
+							<p
+								className="text-sm/6 tracking-normal line-clamp-3 break-words text-foreground/70 transition-colors duration-300 ease-out motion-safe:can-hover:group-hover:text-foreground/90"
+								itemProp="description"
+							>
+								{description}
+							</p>
+						)}
+					</div>
+				</Card>
+			</Link>
+		</article>
 	);
 }

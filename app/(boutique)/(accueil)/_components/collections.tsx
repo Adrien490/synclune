@@ -3,6 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
+import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
 import Link from "next/link";
 import { use } from "react";
 import { CollectionCard } from "../../../../modules/collections/components/collection-card";
@@ -101,6 +102,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 											blurDataUrl={featuredImage?.blurDataUrl}
 											showDescription={false}
 											index={index}
+											sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CAROUSEL}
 										/>
 									</div>
 								);

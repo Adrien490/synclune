@@ -7,15 +7,6 @@ import { X } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { useSwipeGesture } from "@/shared/hooks/use-swipe-gesture";
 
-/**
- * Déclenche un retour haptique léger sur les appareils supportés
- */
-function triggerHaptic(intensity: "light" | "medium" = "light") {
-	if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-		navigator.vibrate(intensity === "light" ? 5 : 10);
-	}
-}
-
 // Variants pour l'animation staggered des items
 export const mobilePanelItemVariants: Variants = {
 	hidden: { opacity: 0, y: 10 },
@@ -87,10 +78,7 @@ export function MobilePanel({
 	const descriptionId = useId();
 
 	const swipeHandlers = useSwipeGesture({
-		onSwipe: () => {
-			triggerHaptic("medium");
-			onClose();
-		},
+		onSwipe: onClose,
 		direction: "down",
 		threshold: swipeThreshold,
 		disabled: !enableSwipeToClose || (shouldReduceMotion ?? false),
@@ -108,11 +96,10 @@ export function MobilePanel({
 		return () => document.removeEventListener("keydown", handleEscape);
 	}, [isOpen, onClose]);
 
-	// Bloquer le scroll du body + haptic feedback à l'ouverture
+	// Bloquer le scroll du body
 	useEffect(() => {
 		if (isOpen) {
 			document.body.style.overflow = "hidden";
-			triggerHaptic("light");
 		} else {
 			document.body.style.overflow = "";
 		}

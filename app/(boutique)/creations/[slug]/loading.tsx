@@ -181,7 +181,7 @@ export default function ProductDetailLoading() {
 										</div>
 									</div>
 
-									{/* ===== 5. AddToCartButton ===== */}
+									{/* ===== 5. AddToCartForm ===== */}
 									{/* Card Quantité */}
 									<div className="rounded-xl border">
 										<div className="p-6">

@@ -3,7 +3,7 @@
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { ProductPriceDisplay } from "./product-price-display";
 import { ProductCharacteristics } from "./product-characteristics";
-import { AddToCartButton } from "@/modules/cart/components/add-to-cart-button";
+import { AddToCartForm } from "@/modules/cart/components/add-to-cart-form";
 import { ProductCareInfo } from "./product-care-info";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";
 import { Separator } from "@/shared/components/ui/separator";
@@ -77,7 +77,7 @@ export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 			<VariantSelector product={product} />
 
 			{/* CTA principal */}
-			<AddToCartButton product={product} selectedSku={currentSku} />
+			<AddToCartForm product={product} selectedSku={currentSku} />
 
 			<Separator className="bg-border" />
 

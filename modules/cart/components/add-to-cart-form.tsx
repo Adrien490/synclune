@@ -10,34 +10,29 @@ import type {
 	GetProductReturn,
 	ProductSku,
 } from "@/modules/products/types/product.types";
-import { Truck, ShieldCheck, RotateCcw, CreditCard, MessageCircleQuestion, Heart } from "lucide-react";
-import { BRAND } from "@/shared/constants/brand";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
 import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart.constants";
 
-interface AddToCartButtonProps {
+interface AddToCartFormProps {
 	product: GetProductReturn;
 	selectedSku: ProductSku | null;
 }
 
 /**
- * AddToCartButton - Action d'ajout au panier
+ * AddToCartForm - Formulaire d'ajout au panier
+ *
+ * Composant client minimal pour l'ajout au panier.
+ * Les badges de réassurance sont dans ProductReassurance (RSC).
  *
  * Responsabilités :
- * - Prend le skuId et quantity
- * - Appelle l'API /api/cart/add via Server Action
- * - Affiche un feedback (toast)
- * - Gère l'état loading
  * - Sélecteur de quantité
- * - Badges de réassurance
- * - Lien contact pour personnalisation
+ * - Bouton submit avec états (loading, disabled, validation)
  */
-export function AddToCartButton({
+export function AddToCartForm({
 	product,
 	selectedSku,
-}: AddToCartButtonProps) {
+}: AddToCartFormProps) {
 	// Hook TanStack Form
 	const { action, isPending } = useAddToCart();
 	const searchParams = useSearchParams();
@@ -116,7 +111,7 @@ export function AddToCartButton({
 														field.handleChange(Math.max(1, field.state.value - 1))
 													}
 													disabled={field.state.value <= 1}
-													className="h-8 w-8 p-0"
+													className="h-11 w-11 p-0"
 													aria-label="Diminuer la quantité"
 													aria-controls="quantity-value"
 												>
@@ -141,7 +136,7 @@ export function AddToCartButton({
 														)
 													}
 													disabled={field.state.value >= maxQuantity}
-													className="h-8 w-8 p-0"
+													className="h-11 w-11 p-0"
 													aria-label="Augmenter la quantité"
 													aria-controls="quantity-value"
 												>
@@ -162,29 +157,26 @@ export function AddToCartButton({
 								);
 							}}
 						</form.Field>
-						{/* Message explicatif sur la limite de quantité */}
+						{/* Message explicatif sur la limite de quantité - min-h pour éviter layout shift */}
 						<form.Subscribe selector={(state) => [state.values.quantity]}>
 							{([quantity]) => {
-								const maxAvailable = Math.min(selectedSku.inventory, MAX_QUANTITY_PER_ORDER);
+								let message: string | null = null;
 
-								// Afficher quand on atteint la limite ou quand le stock est limité
 								if (selectedSku.inventory <= MAX_QUANTITY_PER_ORDER) {
-									return (
-										<p className="text-xs/5 tracking-normal antialiased text-muted-foreground mt-2" role="status">
-											Maximum disponible : {selectedSku.inventory}
-										</p>
-									);
+									message = `Maximum disponible : ${selectedSku.inventory}`;
+								} else if (quantity >= MAX_QUANTITY_PER_ORDER) {
+									message = `Limite de ${MAX_QUANTITY_PER_ORDER} par commande`;
 								}
 
-								if (quantity >= MAX_QUANTITY_PER_ORDER) {
-									return (
-										<p className="text-xs/5 tracking-normal antialiased text-muted-foreground mt-2" role="status">
-											Limite de {MAX_QUANTITY_PER_ORDER} par commande
-										</p>
-									);
-								}
-
-								return null;
+								return (
+									<p
+										className="text-xs/5 tracking-normal antialiased text-muted-foreground mt-2 min-h-5"
+										role="status"
+										aria-live="polite"
+									>
+										{message ?? "\u00A0"}
+									</p>
+								);
 							}}
 						</form.Subscribe>
 					</CardContent>
@@ -196,7 +188,7 @@ export function AddToCartButton({
 				type="submit"
 				className={cn(
 					"w-full shadow-md",
-					"transition-all duration-200",
+					"transition-transform duration-200 transform-gpu",
 					"hover:scale-[1.02] hover:shadow-lg",
 					"active:scale-[0.98]"
 				)}
@@ -220,52 +212,6 @@ export function AddToCartButton({
 					<span>Ajouter au panier</span>
 				)}
 			</Button>
-
-			{/* Trust badges, Livraison, Personnalisation - Visible sur tous écrans */}
-			<div className="space-y-3 pt-2">
-				<div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground py-2">
-					<div className="flex items-center gap-1.5">
-						<ShieldCheck className="w-4 h-4 text-green-600" aria-hidden="true" />
-						<span>Paiement sécurisé</span>
-					</div>
-					<div className="flex items-center gap-1.5">
-						<RotateCcw className="w-4 h-4 text-blue-600" aria-hidden="true" />
-						<span>Retours 14 jours</span>
-					</div>
-					<div className="flex items-center gap-1.5">
-						<CreditCard className="w-4 h-4 text-primary" aria-hidden="true" />
-						<span>CB, PayPal, Stripe</span>
-					</div>
-				</div>
-
-				<div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-					<Truck className="w-3.5 h-3.5" aria-hidden="true" />
-					<span>Livraison France et UE</span>
-				</div>
-
-				<div className="text-center space-y-2 p-4 bg-linear-card rounded-lg border border-primary/10">
-					<p className="text-sm/6 tracking-normal antialiased text-muted-foreground">
-						Une envie de personnalisation ?
-					</p>
-					<Link
-						className="inline-flex items-center gap-2 font-medium text-foreground underline-offset-4 hover:underline text-sm/6 tracking-normal antialiased transition-all duration-200 hover:gap-3"
-						href={`/personnalisation?product=${product.slug}`}
-					>
-						<Heart className="w-4 h-4" aria-hidden="true" />
-						<span>Parlons-en ensemble</span>
-						<span className="text-xs" aria-hidden="true">→</span>
-					</Link>
-				</div>
-
-				{/* Bouton contact produit */}
-				<a
-					href={`mailto:${BRAND.contact.email}?subject=${encodeURIComponent(`Question sur : ${product.title}`)}&body=${encodeURIComponent(`Bonjour,\n\nJ'ai une question concernant "${product.title}".\n\n[Ta question ici]\n\nMerci !`)}`}
-					className="flex items-center justify-center gap-2 w-full py-2.5 px-4 text-sm border rounded-lg hover:bg-muted/50 transition-colors"
-				>
-					<MessageCircleQuestion className="w-4 h-4" aria-hidden="true" />
-					<span>Une question sur ce produit ?</span>
-				</a>
-			</div>
 		</form>
 	);
 }

@@ -68,7 +68,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 							)}
 						</SheetTitle>
 						<SheetDescription className="sr-only">
-							Contenu de ton panier - Gere tes articles et passe commande
+							Encore quelques étapes pour passer commande 😊
 						</SheetDescription>
 					</SheetHeader>
 
