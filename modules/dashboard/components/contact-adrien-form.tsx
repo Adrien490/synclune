@@ -155,7 +155,7 @@ export function ContactAdrienForm({
 							onCancel: handleCancel,
 						})
 					) : (
-						<div className="flex flex-col gap-2 pt-4">
+						<div className="pt-4">
 							<Button
 								type="submit"
 								disabled={!canSubmit || isPending || isSuccess}
@@ -164,17 +164,6 @@ export function ContactAdrienForm({
 							>
 								{isPending ? "Envoi..." : isSuccess ? "Envoyé" : "Envoyer"}
 							</Button>
-							{onCancel && (
-								<Button
-									type="button"
-									variant="outline"
-									onClick={handleCancel}
-									disabled={isPending || isSuccess}
-									className="w-full"
-								>
-									Annuler
-								</Button>
-							)}
 						</div>
 					)
 				}

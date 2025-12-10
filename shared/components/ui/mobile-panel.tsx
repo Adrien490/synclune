@@ -125,7 +125,7 @@ export function MobilePanel({
 						transition={{ duration: noMotion ? 0 : 0.2 }}
 						style={{ zIndex: backdropZIndex }}
 						onClick={onClose}
-						className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+						className="fixed inset-0 bg-black/30 backdrop-blur-sm"
 						aria-hidden="true"
 					/>
 				)}

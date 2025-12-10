@@ -9,19 +9,14 @@ import {
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
+import { toast } from "sonner";
+import {
+	MOTION_CONFIG,
+	maybeReduceMotion,
+} from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "../hooks/use-fab-visibility";
 import type { FabKey } from "../constants";
-
-/** Transition spring par défaut */
-const SPRING_TRANSITION = {
-	type: "spring" as const,
-	stiffness: 400,
-	damping: 25,
-};
-
-/** Transition réduite pour prefers-reduced-motion */
-const REDUCED_TRANSITION = { duration: 0 };
 
 interface FabTooltipContent {
 	/** Titre du tooltip (gras) */
@@ -94,16 +89,31 @@ export function Fab({
 }: FabProps) {
 	const toggleButtonRef = useRef<HTMLButtonElement>(null);
 	const mainButtonRef = useRef<HTMLButtonElement>(null);
+	const statusRef = useRef<HTMLDivElement>(null);
 
-	// Respecter prefers-reduced-motion
+	// Respecter prefers-reduced-motion avec config globale
 	const prefersReducedMotion = useReducedMotion();
-	const transition = prefersReducedMotion ? REDUCED_TRANSITION : SPRING_TRANSITION;
+	const transition = maybeReduceMotion(
+		MOTION_CONFIG.easing.spring,
+		prefersReducedMotion ?? false
+	);
 
 	// Hook pour toggle la visibilité
-	const { isHidden, toggle, isPending } = useFabVisibility({
+	const { isHidden, toggle, isPending, isError } = useFabVisibility({
 		key: fabKey,
 		initialHidden,
 		onToggle: (newHiddenState) => {
+			// Annonce pour les lecteurs d'écran avec contexte (via ref, pas de re-render)
+			if (statusRef.current) {
+				statusRef.current.textContent = newHiddenState
+					? `${tooltip.title} masqué`
+					: `${tooltip.title} affiché`;
+				// Nettoyer après l'annonce
+				setTimeout(() => {
+					if (statusRef.current) statusRef.current.textContent = "";
+				}, 1000);
+			}
+
 			requestAnimationFrame(() => {
 				if (newHiddenState) {
 					toggleButtonRef.current?.focus();
@@ -114,145 +124,166 @@ export function Fab({
 		},
 	});
 
+	// Feedback utilisateur en cas d'erreur
+	useEffect(() => {
+		if (isError) {
+			toast.error("Erreur lors de la modification");
+		}
+	}, [isError]);
+
 	// Classes de base pour la visibilité mobile
 	const visibilityClass = hideOnMobile ? "hidden md:block" : "block";
 
 	// Mode caché : affiche juste une flèche pour réouvrir
 	if (isHidden) {
 		return (
-			<AnimatePresence>
-				<motion.div
-					initial={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
-					animate={{ opacity: 1, x: 0 }}
-					exit={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
-					transition={transition}
-					className={cn(visibilityClass, "fixed z-40 bottom-6 right-1")}
-				>
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								ref={toggleButtonRef}
-								onClick={toggle}
-								variant="outline"
-								size="sm"
-								className={cn(
-									"rounded-l-full rounded-r-none",
-									"h-10 w-10 p-0",
-									"bg-background",
-									"border-r-0",
-									"shadow-md",
-									"cursor-pointer",
-									"hover:bg-accent",
-									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-									"focus-visible:outline-none"
-								)}
-								aria-label={showTooltip}
-								aria-expanded={false}
-							>
-								<ChevronLeft
-									className={cn("h-4 w-4", isPending && "animate-pulse")}
-									aria-hidden="true"
-								/>
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent side="left" sideOffset={4}>
-							<p className="text-sm">{showTooltip}</p>
-						</TooltipContent>
-					</Tooltip>
-				</motion.div>
-			</AnimatePresence>
+			<>
+				{/* Région aria-live pour annonces screen reader */}
+				<div ref={statusRef} role="status" aria-live="polite" className="sr-only" />
+
+				<AnimatePresence mode="wait">
+					<motion.div
+						key="fab-hidden"
+						initial={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
+						animate={{ opacity: 1, x: 0 }}
+						exit={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
+						transition={transition}
+						className={cn(visibilityClass, "fixed z-40 bottom-6 right-1")}
+					>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									ref={toggleButtonRef}
+									onClick={toggle}
+									disabled={isPending}
+									variant="outline"
+									size="sm"
+									className={cn(
+										"rounded-l-full rounded-r-none",
+										"h-12 w-12 p-0",
+										"bg-background",
+										"border-r-0",
+										"shadow-md",
+										"hover:bg-accent",
+										"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+										"focus-visible:outline-none",
+										isPending && "cursor-wait opacity-70"
+									)}
+									aria-label={showTooltip}
+									aria-expanded={false}
+								>
+									<ChevronLeft
+										className={cn("h-5 w-5", isPending && "animate-pulse")}
+										aria-hidden="true"
+									/>
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent side="left" sideOffset={4}>
+								<p className="text-sm">{showTooltip}</p>
+							</TooltipContent>
+						</Tooltip>
+					</motion.div>
+				</AnimatePresence>
+			</>
 		);
 	}
 
 	return (
-		<AnimatePresence>
-			<motion.div
-				initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
-				animate={{ opacity: 1, scale: 1 }}
-				exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
-				transition={transition}
-				className={cn(visibilityClass, "group fixed z-40 bottom-6 right-6")}
-			>
-				{/* Bouton pour cacher le FAB */}
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button
-							onClick={toggle}
-							disabled={isPending}
-							variant="ghost"
-							size="icon"
-							className={cn(
-								"absolute -top-2 -right-2 z-10",
-								"h-7 w-7 rounded-full",
-								"bg-muted",
-								"border border-border",
-								"shadow-sm",
-								"cursor-pointer",
-								"hover:bg-accent",
-								"opacity-60 hover:opacity-100",
-								"focus-visible:opacity-100",
-								"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-								"focus-visible:outline-none"
+		<>
+			{/* Région aria-live pour annonces screen reader */}
+			<div ref={statusRef} role="status" aria-live="polite" className="sr-only" />
+
+			<AnimatePresence mode="wait">
+				<motion.div
+					key="fab-visible"
+					initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
+					animate={{ opacity: 1, scale: 1 }}
+					exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
+					transition={transition}
+					className={cn(visibilityClass, "group fixed z-40 bottom-6 right-6")}
+				>
+					{/* Bouton pour cacher le FAB */}
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								onClick={toggle}
+								disabled={isPending}
+								variant="ghost"
+								size="icon"
+								className={cn(
+									"absolute -top-2 -right-2 z-10",
+									"h-7 w-7 rounded-full",
+									"bg-muted",
+									"border border-border",
+									"shadow-sm",
+									"hover:bg-accent",
+									"opacity-80 hover:opacity-100",
+									"focus-visible:opacity-100",
+									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+									"focus-visible:outline-none",
+									isPending && "cursor-wait"
+								)}
+								aria-label={hideTooltip}
+								aria-expanded={true}
+							>
+								<ChevronRight
+									className={cn("h-3.5 w-3.5", isPending && "animate-pulse")}
+									aria-hidden="true"
+								/>
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent side="top" sideOffset={4}>
+							<p className="text-xs">{hideTooltip}</p>
+						</TooltipContent>
+					</Tooltip>
+
+					{/* Bouton principal avec tooltip */}
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								ref={mainButtonRef}
+								onClick={onClick}
+								size="lg"
+								className={cn(
+									"relative rounded-full shadow-lg cursor-pointer",
+									"bg-primary hover:bg-primary/90",
+									"flex items-center justify-center",
+									"h-14 w-14 p-0",
+									"hover:shadow-xl hover:shadow-primary/25",
+									"transition-transform duration-200 hover:scale-105",
+									"active:scale-95",
+									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+									"focus-visible:outline-none",
+									className
+								)}
+								aria-label={ariaLabel}
+								aria-haspopup="dialog"
+								aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
+							>
+								{icon}
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent side="left" sideOffset={12}>
+							<p className="font-medium">{tooltip.title}</p>
+							{tooltip.description && (
+								<p className="text-xs text-muted-foreground">
+									{tooltip.description}
+								</p>
 							)}
-							aria-label={hideTooltip}
-							aria-expanded={true}
-						>
-							<ChevronRight
-								className={cn("h-3.5 w-3.5", isPending && "animate-pulse")}
-								aria-hidden="true"
-							/>
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent side="top" sideOffset={4}>
-						<p className="text-xs">{hideTooltip}</p>
-					</TooltipContent>
-				</Tooltip>
+						</TooltipContent>
+					</Tooltip>
 
-				{/* Bouton principal avec tooltip */}
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button
-							ref={mainButtonRef}
-							onClick={onClick}
-							size="lg"
-							className={cn(
-								"relative rounded-full shadow-lg cursor-pointer",
-								"bg-primary hover:bg-primary/90",
-								"flex items-center justify-center",
-								"h-14 w-14 p-0",
-								"hover:shadow-xl hover:shadow-primary/25",
-								"transition-transform duration-200 hover:scale-105",
-								"active:scale-95",
-								"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-								"focus-visible:outline-none",
-								className
-							)}
-							aria-label={ariaLabel}
-							aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
-						>
-							{icon}
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent side="left" sideOffset={12}>
-						<p className="font-medium">{tooltip.title}</p>
-						{tooltip.description && (
-							<p className="text-xs text-muted-foreground">
-								{tooltip.description}
-							</p>
-						)}
-					</TooltipContent>
-				</Tooltip>
+					{/* Contenu (dialog, popover, etc.) */}
+					{children}
 
-				{/* Contenu (dialog, popover, etc.) */}
-				{children}
-
-				{/* Description cachée pour screen readers */}
-				{ariaDescription && (
-					<span id={`fab-description-${fabKey}`} className="sr-only">
-						{ariaDescription}
-					</span>
-				)}
-			</motion.div>
-		</AnimatePresence>
+					{/* Description cachée pour screen readers */}
+					{ariaDescription && (
+						<span id={`fab-description-${fabKey}`} className="sr-only">
+							{ariaDescription}
+						</span>
+					)}
+				</motion.div>
+			</AnimatePresence>
+		</>
 	);
 }

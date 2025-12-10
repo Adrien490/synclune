@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDownIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
 
 import {
@@ -26,6 +26,8 @@ interface TabNavigationProps {
 	prefetch?: boolean;
 	/** Nombre d'items visibles sur mobile avant le bouton "Plus" (défaut: 2) */
 	mobileVisibleCount?: number;
+	/** Titre affiché dans le panel mobile */
+	panelTitle?: string;
 }
 
 /** Classes de base pour les pills */
@@ -44,6 +46,7 @@ export function TabNavigation({
 	ariaLabel = "Navigation principale",
 	prefetch = false,
 	mobileVisibleCount = 2,
+	panelTitle,
 }: TabNavigationProps) {
 	const [isPanelOpen, setIsPanelOpen] = useState(false);
 
@@ -153,13 +156,21 @@ export function TabNavigation({
 						<MobilePanel
 							isOpen={isPanelOpen}
 							onClose={() => setIsPanelOpen(false)}
-							ariaLabel="Options de navigation"
+							ariaLabel={panelTitle || "Sélection de catégorie"}
 							enableStagger
 							showCloseButton
-							className="p-3"
+							className="p-4"
 						>
-							<div role="menu" aria-label="Options de navigation supplémentaires">
-								{overflowItems.map((item) => {
+							{/* Header */}
+							<div className="mb-4">
+								<h2 className="text-base font-semibold text-foreground">
+									{panelTitle || "Parcourir par type"}
+								</h2>
+							</div>
+
+							{/* Grid de catégories - TOUS les items */}
+							<div role="menu" className="grid grid-cols-2 gap-2">
+								{items.map((item) => {
 									const isActive = item.value === activeValue;
 									return (
 										<MobilePanelItem key={item.value}>
@@ -169,28 +180,24 @@ export function TabNavigation({
 												onClick={() => setIsPanelOpen(false)}
 												aria-current={isActive ? "page" : undefined}
 												className={cn(
-													"flex items-center justify-between w-full",
-													"px-4 py-3 rounded-xl",
-													"text-sm font-medium",
-													"transition-colors duration-200",
+													"flex items-center justify-center gap-2",
+													"px-4 py-3.5 rounded-2xl",
+													"text-sm font-medium text-center",
+													"border-2 transition-all duration-150",
+													"active:scale-[0.98]",
+													"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
 													isActive
-														? "bg-primary text-primary-foreground"
-														: "text-foreground hover:bg-muted"
+														? "bg-primary text-primary-foreground border-primary shadow-md"
+														: "bg-background border-border hover:border-primary/50"
 												)}
 											>
-												{item.label}
-												{item.count !== undefined && (
-													<span
-														className={cn(
-															"text-xs",
-															isActive
-																? "text-primary-foreground/70"
-																: "text-muted-foreground"
-														)}
-													>
-														{item.count}
-													</span>
+												{isActive && (
+													<CheckIcon
+														className="size-4 shrink-0"
+														aria-hidden="true"
+													/>
 												)}
+												<span className="leading-tight">{item.label}</span>
 											</Link>
 										</MobilePanelItem>
 									);

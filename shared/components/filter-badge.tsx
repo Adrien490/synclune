@@ -3,6 +3,7 @@
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { motion } from "framer-motion";
 import { Loader2, X } from "lucide-react";
@@ -27,6 +28,7 @@ export function FilterBadge({
 }: FilterBadgeProps) {
 	const { removeFilter, isPending } = useFilter(filterOptions);
 	const buttonRef = useRef<HTMLButtonElement>(null);
+	const isMobile = useIsMobile();
 
 	// Formater le filtre si une fonction est fournie
 	const formatted = formatFilter?.(filter);
@@ -46,9 +48,9 @@ export function FilterBadge({
 		const allButtons = parent?.querySelectorAll(
 			"button:not([disabled])"
 		) as NodeListOf<HTMLButtonElement>;
-		const currentIndex = Array.from(allButtons || []).indexOf(
-			buttonRef.current!
-		);
+		const currentIndex = buttonRef.current
+			? Array.from(allButtons || []).indexOf(buttonRef.current)
+			: -1;
 		const nextButton =
 			allButtons?.[currentIndex + 1] || allButtons?.[currentIndex - 1];
 
@@ -56,7 +58,14 @@ export function FilterBadge({
 
 		// Focus sur le prochain badge ou le bouton "Tout effacer"
 		if (nextButton) {
-			setTimeout(() => nextButton.focus(), 150);
+			setTimeout(() => nextButton.focus(), 200);
+		}
+	};
+
+	// Handler pour le clic sur le badge (mobile uniquement)
+	const handleBadgeClick = () => {
+		if (isMobile && !isPending) {
+			handleRemove();
 		}
 	};
 
@@ -65,7 +74,7 @@ export function FilterBadge({
 			layoutId={filter.id}
 			initial={{ opacity: 0, scale: 0.85, y: -8 }}
 			animate={{ opacity: 1, scale: 1, y: 0 }}
-			exit={{ opacity: 0, scale: 0.85, x: -20 }}
+			exit={{ opacity: 0, scale: 0.85 }}
 			transition={{
 				duration: 0.15,
 				ease: [0.4, 0, 0.2, 1],
@@ -80,15 +89,18 @@ export function FilterBadge({
 				variant="outline"
 				className={cn(
 					"flex items-center gap-1 pr-0.5 sm:pr-1 text-sm/5 tracking-normal antialiased relative font-medium",
+					"max-w-[200px] sm:max-w-[300px]",
 					"transition-all duration-200",
 					"hover:bg-accent/50 hover:border-primary/30",
-					isPending && "opacity-60"
+					isPending && "opacity-60",
+					isMobile && "cursor-pointer active:scale-95"
 				)}
+				onClick={handleBadgeClick}
 			>
-				<span className="pl-2.5">
+				<span className="pl-2.5 truncate">
 					{displayLabel}
 					{displayValue && displayValue.length > 0 && (
-						<span className="font-normal text-muted-foreground ml-1">
+						<span className="font-normal text-foreground/70 ml-1">
 							: {displayValue}
 						</span>
 					)}

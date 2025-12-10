@@ -2,6 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -54,27 +55,34 @@ export function FilterBadges({
 	const { activeFilters, clearAllFilters, isPending, hasActiveFilters } =
 		useFilter(filterOptions);
 	const [showAll, setShowAll] = useState(false);
+	const isMobile = useIsMobile();
 
 	// Ne rien afficher s'il n'y a pas de filtres actifs
 	if (!hasActiveFilters || activeFilters.length === 0) {
 		return null;
 	}
 
+	// Layout hybride : 2 lignes max sur mobile (~6 badges), plus sur desktop
+	const mobileMaxFilters = 6;
+	const effectiveMaxFilters = isMobile
+		? Math.min(mobileMaxFilters, maxVisibleFilters)
+		: maxVisibleFilters;
+
 	// Filtres à afficher (limités ou tous)
 	const displayedFilters =
-		showAll || activeFilters.length <= maxVisibleFilters
+		showAll || activeFilters.length <= effectiveMaxFilters
 			? activeFilters
-			: activeFilters.slice(0, maxVisibleFilters);
-	const hasMoreFilters = activeFilters.length > maxVisibleFilters;
+			: activeFilters.slice(0, effectiveMaxFilters);
+	const hasMoreFilters = activeFilters.length > effectiveMaxFilters;
 
 	return (
 		<div
 			role="region"
 			aria-label="Filtres actifs"
 			aria-live="polite"
-			aria-atomic="false"
+			aria-atomic="true"
 			className={cn(
-				"flex flex-wrap items-start sm:items-center gap-1.5 sm:gap-2 mb-4",
+				"flex flex-wrap items-start sm:items-center gap-2.5 sm:gap-2 mb-4",
 				className
 			)}
 		>
@@ -83,14 +91,6 @@ export function FilterBadges({
 				{activeFilters.length} filtre{activeFilters.length > 1 ? "s" : ""} actif
 				{activeFilters.length > 1 ? "s" : ""}
 			</span>
-
-			{/* Indicateur mobile du nombre de filtres */}
-			<div className="sm:hidden w-full mb-1">
-				<span className="text-xs text-muted-foreground font-medium">
-					{activeFilters.length}{" "}
-					{activeFilters.length > 1 ? "filtres actifs" : "filtre actif"}
-				</span>
-			</div>
 
 			<span className="text-sm leading-normal text-muted-foreground mr-2 hidden sm:inline">
 				{label}
@@ -123,7 +123,7 @@ export function FilterBadges({
 							aria-label={
 								showAll
 									? "Afficher moins de filtres"
-									: `Afficher ${activeFilters.length - maxVisibleFilters} filtres supplémentaires`
+									: `Afficher ${activeFilters.length - effectiveMaxFilters} filtres supplémentaires`
 							}
 						>
 							{showAll ? (
@@ -133,7 +133,7 @@ export function FilterBadges({
 								</>
 							) : (
 								<>
-									+{activeFilters.length - maxVisibleFilters} autres
+									+{activeFilters.length - effectiveMaxFilters} autres
 									<ChevronDown className="w-3 h-3" />
 								</>
 							)}

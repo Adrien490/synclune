@@ -53,7 +53,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
+			className={`relative overflow-hidden ${SECTION_SPACING.section}`}
 			aria-labelledby="latest-creations-title"
 			aria-describedby="latest-creations-subtitle"
 		>
