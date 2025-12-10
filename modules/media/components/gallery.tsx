@@ -337,34 +337,39 @@ function GalleryContent({ product, title }: GalleryProps) {
 										<div
 											key={media.id}
 											data-slide-index={index}
-											className={cn(
-												"flex-[0_0_100%] h-full min-w-0 relative",
-												media.mediaType === "IMAGE" && "cursor-zoom-in"
-											)}
+											className="flex-[0_0_100%] h-full min-w-0 relative"
 											aria-hidden={index !== optimisticIndex}
-											{...(media.mediaType === "IMAGE" && {
-												role: "button",
-												tabIndex: index === optimisticIndex ? 0 : -1,
-												"aria-label": `Agrandir l'image ${index + 1} : ${media.alt || title}`,
-												onClick: () => openLightbox(),
-												onKeyDown: (e: React.KeyboardEvent) => {
-													if (e.key === "Enter" || e.key === " ") {
-														e.preventDefault();
-														openLightbox();
-													}
-												},
-											})}
 										>
-											<GalleryMediaRenderer
-												media={media}
-												title={title}
-												index={index}
-												isFirst={index === 0}
-												isActive={index === optimisticIndex}
-												hasError={hasError(media.id)}
-												onError={() => handleMediaError(media.id)}
-												onRetry={() => retryMedia(media.id)}
-											/>
+											{/* Wrapper cliquable interne pour ne pas interférer avec Embla drag */}
+											<div
+												className={cn(
+													"absolute inset-0",
+													media.mediaType === "IMAGE" && "cursor-zoom-in"
+												)}
+												{...(media.mediaType === "IMAGE" && {
+													role: "button",
+													tabIndex: index === optimisticIndex ? 0 : -1,
+													"aria-label": `Agrandir l'image ${index + 1} : ${media.alt || title}`,
+													onClick: () => openLightbox(),
+													onKeyDown: (e: React.KeyboardEvent) => {
+														if (e.key === "Enter" || e.key === " ") {
+															e.preventDefault();
+															openLightbox();
+														}
+													},
+												})}
+											>
+												<GalleryMediaRenderer
+													media={media}
+													title={title}
+													index={index}
+													isFirst={index === 0}
+													isActive={index === optimisticIndex}
+													hasError={hasError(media.id)}
+													onError={() => handleMediaError(media.id)}
+													onRetry={() => retryMedia(media.id)}
+												/>
+											</div>
 										</div>
 									))}
 								</div>
