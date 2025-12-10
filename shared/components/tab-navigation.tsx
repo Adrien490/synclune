@@ -30,7 +30,7 @@ interface TabNavigationProps {
 
 /** Classes de base pour les pills */
 const PILL_BASE =
-	"inline-flex items-center justify-center gap-1.5 h-11 md:h-10 px-4 rounded-full text-sm font-medium transition-colors duration-200";
+	"inline-flex items-center justify-center gap-1.5 h-12 md:h-10 px-4 rounded-full text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 /**
  * Composant de navigation par onglets
@@ -67,8 +67,8 @@ export function TabNavigation({
 					"ml-1.5 inline-flex items-center justify-center",
 					"min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-medium",
 					isActive
-						? "bg-primary-foreground/20 text-primary-foreground"
-						: "bg-muted-foreground/20 text-muted-foreground"
+						? "bg-primary-foreground/30 text-primary-foreground"
+						: "bg-muted text-muted-foreground"
 				)}
 			>
 				{count}
@@ -86,7 +86,7 @@ export function TabNavigation({
 
 	return (
 		<nav aria-label={ariaLabel} className="w-full">
-			<div className="flex gap-2">
+			<div className="flex flex-wrap gap-2">
 				{/* Items toujours visibles (mobile + desktop) */}
 				{visibleItems.map((item) => {
 					const isActive = item.value === activeValue;
@@ -96,7 +96,7 @@ export function TabNavigation({
 							href={item.href}
 							prefetch={prefetch}
 							aria-current={isActive ? "page" : undefined}
-							className={cn(getPillClasses(isActive), "max-w-40 md:max-w-none")}
+							className={getPillClasses(isActive)}
 						>
 							<span className="truncate">{item.label}</span>
 							{renderCount(item.count, isActive)}
@@ -155,10 +155,10 @@ export function TabNavigation({
 							onClose={() => setIsPanelOpen(false)}
 							ariaLabel="Options de navigation"
 							enableStagger
-							showCloseButton={false}
+							showCloseButton
 							className="p-3"
 						>
-							<nav aria-label="Options de navigation supplémentaires">
+							<div role="menu" aria-label="Options de navigation supplémentaires">
 								{overflowItems.map((item) => {
 									const isActive = item.value === activeValue;
 									return (
@@ -195,7 +195,7 @@ export function TabNavigation({
 										</MobilePanelItem>
 									);
 								})}
-							</nav>
+							</div>
 						</MobilePanel>
 					</>
 				)}
