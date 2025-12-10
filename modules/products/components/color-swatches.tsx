@@ -32,8 +32,8 @@ interface ColorSwatchesProps {
 const sizeClasses = {
 	xs: "size-4", // 16px - décoratif uniquement
 	sm: "size-5", // 20px - compact pour cards
-	md: "size-6", // 24px - WCAG 2.5.8 (AA) avec espacement ≥12px
-	lg: "size-8", // 32px - confortable mobile
+	md: "size-7", // 28px - WCAG 2.5.5 avec espacement ≥16px = 44px total
+	lg: "size-9", // 36px - confortable mobile avec touch target généreux
 };
 
 /**
@@ -172,7 +172,8 @@ export function ColorSwatches({
 					role="radio"
 					aria-checked={isSelected}
 					aria-label={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
-					tabIndex={shouldBeTabbable ? 0 : -1}
+					// tabIndex -1 quand disabled pour éviter le focus sur éléments non-interactifs
+					tabIndex={isDisabled ? -1 : shouldBeTabbable ? 0 : -1}
 					onClick={(e) => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -183,12 +184,12 @@ export function ColorSwatches({
 					onKeyDown={(e) => handleKeyDown(e, index, inPopover)}
 					disabled={isDisabled}
 					className={cn(
-						"rounded-full border-2 transition-all active:scale-95",
+						"rounded-full border-2 motion-safe:transition-all motion-safe:active:scale-95",
 						sizeClasses[swatchSize],
 						"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 						isSelected
-							? "border-primary ring-2 ring-primary/40 scale-110"
-							: "border-border/50 shadow-sm hover:border-primary/50 hover:scale-105",
+							? "border-primary ring-2 ring-primary/40 motion-safe:scale-110"
+							: "border-border/50 shadow-sm can-hover:hover:border-primary/50 motion-safe:can-hover:hover:scale-105",
 						!color.inStock && "opacity-40 cursor-not-allowed"
 					)}
 					style={{ backgroundColor: color.hex }}
@@ -196,18 +197,22 @@ export function ColorSwatches({
 			);
 		}
 
-		// Mode décoratif
+		// Mode décoratif - span avec sr-only pour accessibilité
 		return (
 			<span
 				key={color.slug}
 				className={cn(
-					"rounded-full border border-border/50 shadow-sm transition-opacity",
+					"rounded-full border border-border/50 shadow-sm motion-safe:transition-opacity relative",
 					sizeClasses[swatchSize],
 					!color.inStock && "opacity-40"
 				)}
 				style={{ backgroundColor: color.hex }}
-				aria-label={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
-			/>
+			>
+				<span className="sr-only">
+					{color.name}
+					{!color.inStock && " (rupture)"}
+				</span>
+			</span>
 		);
 	};
 
@@ -215,8 +220,8 @@ export function ColorSwatches({
 		<div
 			className={cn(
 				"flex items-center flex-wrap",
-				// Espacement adaptatif : plus grand en mode interactif pour touch targets
-				interactive ? "gap-3" : "gap-1.5",
+				// Espacement adaptatif : plus grand en mode interactif pour touch targets WCAG 2.5.5
+				interactive ? "gap-4" : "gap-1.5",
 				className
 			)}
 			aria-label={interactive ? `Sélectionner une couleur parmi ${colors.length} disponible${colors.length > 1 ? "s" : ""}` : `${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}

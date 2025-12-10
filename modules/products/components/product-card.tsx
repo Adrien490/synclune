@@ -89,6 +89,11 @@ export function ProductCard({
 	const sanitizedSlug = slug.replace(/[^a-z0-9-]/gi, "");
 	const titleId = `product-title-${sanitizedSlug}`;
 
+	// Nom de la couleur sélectionnée pour l'aria-live (feedback screen readers)
+	const selectedColorName = selectedColorSlug
+		? colors.find((c) => c.slug === selectedColorSlug)?.name
+		: null;
+
 	// Déterminer si on affiche le badge urgency (stock bas mais pas rupture)
 	const showUrgencyBadge =
 		stockStatus === "in_stock" &&
@@ -108,6 +113,8 @@ export function ProductCard({
 				"transition-all duration-300 ease-out",
 				// Border, shadow et scale au hover (can-hover pour desktop uniquement)
 				"shadow-sm can-hover:hover:border-primary/30 can-hover:hover:shadow-xl can-hover:hover:shadow-primary/15",
+				// Focus-within pour indiquer le focus sur les liens enfants (a11y)
+				"focus-within:border-primary/30 focus-within:shadow-lg focus-within:shadow-primary/10",
 				"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01] will-change-transform"
 			)}
 			itemScope
@@ -119,7 +126,7 @@ export function ProductCard({
 				<Link
 					href={productUrl}
 					className="absolute inset-0 z-10 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-lg"
-					aria-labelledby={titleId}
+					aria-label={`Voir ${title}`}
 					tabIndex={-1}
 				>
 					<span className="sr-only">Voir {title}</span>
@@ -157,11 +164,10 @@ export function ProductCard({
 				)}
 
 				<Image
-					key={currentImage.url}
 					src={currentImage.url}
 					alt={currentImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
 					fill
-					className="object-cover rounded-lg transition-transform duration-300 ease-out motion-safe:group-hover:scale-[1.08] motion-safe:animate-fadeIn"
+					className="object-cover rounded-lg transition-all duration-300 ease-out motion-safe:group-hover:scale-[1.08]"
 					placeholder={currentImage.blurDataUrl ? "blur" : "empty"}
 					blurDataURL={currentImage.blurDataUrl ?? undefined}
 					// Preload pour les 4 premières images (above-fold) - Next.js 16
@@ -182,8 +188,15 @@ export function ProductCard({
 				)}
 			</div>
 
+			{/* Region aria-live pour annoncer les changements de couleur aux screen readers */}
+			{selectedColorName && (
+				<div aria-live="polite" aria-atomic="true" className="sr-only">
+					Variante sélectionnée : {selectedColorName}
+				</div>
+			)}
+
 			{/* Contenu de la card */}
-			<div className="flex flex-col gap-2 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
+			<div className="flex flex-col gap-2 sm:gap-3 relative p-2.5 sm:p-4 lg:p-5">
 				{/* Titre cliquable */}
 				<Link
 					href={productUrl}

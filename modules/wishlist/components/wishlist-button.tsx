@@ -56,10 +56,11 @@ export function WishlistButton({
 				className={cn(
 					// Taille 44px conforme WCAG 2.5.5 (cible tactile minimum)
 					"h-11 w-11 rounded-full",
-					"hover:scale-110 hover:bg-transparent active:scale-95",
-					"motion-safe:transition-all motion-safe:duration-300",
+					"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
+					"motion-safe:transition-all motion-safe:duration-200",
 					// Animation pulse pendant le chargement pour feedback visuel
-					isPending && "motion-safe:animate-pulse"
+					isPending && "motion-safe:animate-pulse",
+					"disabled:cursor-not-allowed"
 				)}
 				aria-label={ariaLabel}
 				aria-pressed={isInWishlist}
@@ -70,9 +71,9 @@ export function WishlistButton({
 					size={20}
 					decorative
 					className={cn(
-						"motion-safe:transition-all motion-safe:duration-300",
+						"motion-safe:transition-all motion-safe:duration-200",
 						"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
-						isInWishlist && "scale-110 drop-shadow-[0_0_6px_rgba(215,168,178,0.7)]",
+						isInWishlist && "motion-safe:scale-110 drop-shadow-[0_0_6px_rgba(215,168,178,0.7)]",
 						// Opacité réduite pendant le chargement
 						isPending && "opacity-60"
 					)}

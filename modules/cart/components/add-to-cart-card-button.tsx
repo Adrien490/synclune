@@ -78,7 +78,7 @@ export function AddToCartCardButton({
 			<Button
 				type="submit"
 				disabled={isPending}
-				aria-disabled={isPending}
+				aria-busy={isPending}
 				onClick={handleClick}
 				size="icon"
 				className={cn(
@@ -94,7 +94,7 @@ export function AddToCartCardButton({
 					"sm:hover:bg-primary/90 sm:hover:tracking-widest",
 					// Transitions
 					"motion-safe:transition-all motion-safe:duration-200",
-					"disabled:hover:tracking-normal disabled:hover:scale-100"
+					"disabled:hover:tracking-normal disabled:hover:scale-100 disabled:cursor-not-allowed"
 				)}
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
