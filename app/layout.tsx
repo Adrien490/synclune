@@ -14,6 +14,7 @@ import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-st
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
 import { CartSheet } from "@/modules/cart/components/cart-sheet";
+import { SkuSelectorDialog } from "@/modules/cart/components/sku-selector-dialog";
 import { MotionConfig } from "framer-motion";
 import type { Metadata } from "next";
 import { Suspense } from "react";
@@ -151,6 +152,7 @@ export default async function RootLayout({
 											<Suspense fallback={<CartSheetSkeleton />}>
 												<CartSheet cartPromise={getCart()} />
 											</Suspense>
+											<SkuSelectorDialog />
 										</AlertDialogStoreProvider>
 									</SheetStoreProvider>
 								</DialogStoreProvider>

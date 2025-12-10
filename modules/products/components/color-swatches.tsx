@@ -1,59 +1,193 @@
 "use client";
 
+import { useRef } from "react";
 import { cn } from "@/shared/utils/cn";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/shared/components/ui/popover";
 import type { ColorSwatch } from "@/modules/products/services/product-list-helpers";
 
 interface ColorSwatchesProps {
 	colors: ColorSwatch[];
 	maxVisible?: number;
-	size?: "xs" | "sm" | "md";
+	size?: "xs" | "sm" | "md" | "lg";
 	className?: string;
+	/** Mode interactif : les pastilles deviennent cliquables */
+	interactive?: boolean;
+	/** Couleur actuellement sélectionnée (slug) */
+	selectedColor?: string | null;
+	/** Callback quand une couleur est sélectionnée */
+	onColorSelect?: (colorSlug: string) => void;
 }
 
 const sizeClasses = {
-	xs: "size-4", // 16px - decorative only (non-interactive)
-	sm: "size-5", // 20px - compact for cards
-	md: "size-6", // 24px - WCAG touch target
+	xs: "size-4", // 16px - décoratif uniquement
+	sm: "size-5", // 20px - compact pour cards
+	md: "size-6", // 24px - minimum interactif (WCAG AA)
+	lg: "size-8", // 32px - confortable mobile
 };
 
 /**
  * Pastilles couleur pour ProductCard
- * Affiche les couleurs disponibles sous forme de petits cercles colorés
- * avec un badge +N si plus de maxVisible couleurs
+ *
+ * Deux modes :
+ * - Décoratif (défaut) : affichage simple des couleurs disponibles
+ * - Interactif : pastilles cliquables pour changer la variante affichée
+ *
+ * Accessibilité :
+ * - Role radiogroup avec navigation clavier (flèches, Home/End)
+ * - Indication de sélection subtile (ring + scale)
  */
 export function ColorSwatches({
 	colors,
 	maxVisible = 4,
 	size = "sm",
 	className,
+	interactive = false,
+	selectedColor,
+	onColorSelect,
 }: ColorSwatchesProps) {
+	const buttonsRef = useRef<(HTMLButtonElement | null)[]>([]);
+
 	if (colors.length === 0) return null;
 
 	const visibleColors = colors.slice(0, maxVisible);
-	const remainingCount = colors.length - maxVisible;
+	const hiddenColors = colors.slice(maxVisible);
+	const remainingCount = hiddenColors.length;
+
+	// Navigation clavier WAI-ARIA Radio Group
+	const handleKeyDown = (
+		e: React.KeyboardEvent<HTMLButtonElement>,
+		index: number
+	) => {
+		if (!interactive) return;
+
+		const enabledIndices = visibleColors
+			.map((c, i) => (c.inStock ? i : -1))
+			.filter((i) => i !== -1);
+
+		if (enabledIndices.length === 0) return;
+
+		const currentEnabledIndex = enabledIndices.indexOf(index);
+		let nextIndex: number | null = null;
+
+		switch (e.key) {
+			case "ArrowRight":
+			case "ArrowDown":
+				e.preventDefault();
+				if (currentEnabledIndex < enabledIndices.length - 1) {
+					nextIndex = enabledIndices[currentEnabledIndex + 1];
+				} else {
+					nextIndex = enabledIndices[0]; // Loop to start
+				}
+				break;
+			case "ArrowLeft":
+			case "ArrowUp":
+				e.preventDefault();
+				if (currentEnabledIndex > 0) {
+					nextIndex = enabledIndices[currentEnabledIndex - 1];
+				} else {
+					nextIndex = enabledIndices[enabledIndices.length - 1]; // Loop to end
+				}
+				break;
+			case "Home":
+				e.preventDefault();
+				nextIndex = enabledIndices[0];
+				break;
+			case "End":
+				e.preventDefault();
+				nextIndex = enabledIndices[enabledIndices.length - 1];
+				break;
+		}
+
+		if (nextIndex !== null) {
+			buttonsRef.current[nextIndex]?.focus();
+		}
+	};
+
+	// Rendu d'une pastille couleur (réutilisé dans popover)
+	const renderSwatch = (
+		color: ColorSwatch,
+		index: number,
+		inPopover = false
+	) => {
+		const isSelected = selectedColor === color.slug;
+		const swatchSize = inPopover ? "md" : size;
+
+		if (interactive) {
+			return (
+				<button
+					key={color.slug}
+					ref={(el) => {
+						if (!inPopover) {
+							buttonsRef.current[index] = el;
+						}
+					}}
+					type="button"
+					role="radio"
+					aria-checked={isSelected}
+					aria-label={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
+					tabIndex={isSelected || (!selectedColor && index === 0) ? 0 : -1}
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						if (color.inStock && onColorSelect) {
+							onColorSelect(color.slug);
+						}
+					}}
+					onKeyDown={(e) => handleKeyDown(e, index)}
+					disabled={!color.inStock}
+					className={cn(
+						"rounded-full border-2 transition-all",
+						sizeClasses[swatchSize],
+						"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+						isSelected
+							? "border-primary ring-2 ring-primary/40 scale-110"
+							: "border-border/50 shadow-sm hover:border-primary/50 hover:scale-105",
+						!color.inStock && "opacity-40 cursor-not-allowed"
+					)}
+					style={{ backgroundColor: color.hex }}
+				/>
+			);
+		}
+
+		// Mode décoratif
+		return (
+			<span
+				key={color.slug}
+				className={cn(
+					"rounded-full border border-border/50 shadow-sm transition-opacity",
+					sizeClasses[swatchSize],
+					!color.inStock && "opacity-40"
+				)}
+				style={{ backgroundColor: color.hex }}
+				aria-label={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
+			/>
+		);
+	};
 
 	return (
 		<div
-			className={cn("flex items-center gap-1.5", className)}
+			className={cn(
+				"flex items-center flex-wrap",
+				// Espacement adaptatif : plus grand en mode interactif pour touch targets
+				interactive ? "gap-2 sm:gap-2.5" : "gap-1.5",
+				className
+			)}
 			aria-label={`${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}
+			role={interactive ? "radiogroup" : undefined}
 		>
-			{visibleColors.map((color) => (
+			{visibleColors.map((color, index) => (
 				<Tooltip key={color.slug}>
 					<TooltipTrigger asChild>
-						<span
-							className={cn(
-								"rounded-full border border-border/50 shadow-sm transition-opacity",
-								sizeClasses[size],
-								!color.inStock && "opacity-40"
-							)}
-							style={{ backgroundColor: color.hex }}
-							aria-label={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
-						/>
+						{renderSwatch(color, index)}
 					</TooltipTrigger>
 					<TooltipContent side="top" className="text-xs">
 						{color.name}
@@ -61,16 +195,49 @@ export function ColorSwatches({
 					</TooltipContent>
 				</Tooltip>
 			))}
+
+			{/* Badge +N avec Popover pour voir/sélectionner les couleurs masquées */}
 			{remainingCount > 0 && (
-				<span
-					className={cn(
-						"flex items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium",
-						sizeClasses[size]
-					)}
-					aria-label={`${remainingCount} autres couleurs`}
-				>
-					+{remainingCount}
-				</span>
+				<Popover>
+					<PopoverTrigger asChild>
+						<button
+							type="button"
+							onClick={(e) => e.stopPropagation()}
+							className={cn(
+								"flex items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium transition-colors",
+								"hover:bg-muted/80 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+								sizeClasses[size]
+							)}
+							aria-label={`Voir ${remainingCount} autre${remainingCount > 1 ? "s" : ""} couleur${remainingCount > 1 ? "s" : ""}`}
+						>
+							+{remainingCount}
+						</button>
+					</PopoverTrigger>
+					<PopoverContent
+						side="top"
+						align="start"
+						className="w-auto p-3"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<p className="text-xs text-muted-foreground mb-2">
+							{remainingCount} autre{remainingCount > 1 ? "s" : ""} couleur
+							{remainingCount > 1 ? "s" : ""}
+						</p>
+						<div className="flex flex-wrap gap-2">
+							{hiddenColors.map((color, index) => (
+								<Tooltip key={color.slug}>
+									<TooltipTrigger asChild>
+										{renderSwatch(color, maxVisible + index, true)}
+									</TooltipTrigger>
+									<TooltipContent side="top" className="text-xs">
+										{color.name}
+										{!color.inStock && " (rupture)"}
+									</TooltipContent>
+								</Tooltip>
+							))}
+						</div>
+					</PopoverContent>
+				</Popover>
 			)}
 		</div>
 	);

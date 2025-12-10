@@ -5,11 +5,16 @@ import { Prisma } from "@/app/generated/prisma/client";
 // ============================================================================
 
 /**
- * Select minimal pour les listings produits (grids, carousels)
- * Optimisé pour réduire la taille des payloads
- * - 1 SKU par défaut uniquement
- * - 1 image primaire uniquement
- * - Pas de collections
+ * Select pour les listings produits (grids, carousels)
+ * Optimisé pour:
+ * - Affichage des swatches couleur interactifs
+ * - Changement d'image dynamique sur sélection couleur
+ * - Support du dialog de sélection SKU
+ *
+ * Inclut tous les SKUs actifs pour:
+ * - Calcul des couleurs disponibles
+ * - Récupération des images par variante
+ * - Vérification du stock
  */
 export const PRODUCT_LIST_SELECT = {
 	id: true,
@@ -24,13 +29,29 @@ export const PRODUCT_LIST_SELECT = {
 		},
 	},
 	skus: {
-		where: { isActive: true, isDefault: true },
-		take: 1,
+		where: { isActive: true },
 		select: {
 			id: true,
 			priceInclTax: true,
 			compareAtPrice: true,
 			inventory: true,
+			isActive: true,
+			isDefault: true,
+			color: {
+				select: {
+					id: true,
+					slug: true,
+					name: true,
+					hex: true,
+				},
+			},
+			material: {
+				select: {
+					id: true,
+					name: true,
+				},
+			},
+			size: true,
 			images: {
 				where: { isPrimary: true },
 				take: 1,
@@ -39,9 +60,14 @@ export const PRODUCT_LIST_SELECT = {
 					blurDataUrl: true,
 					altText: true,
 					mediaType: true,
+					isPrimary: true,
 				},
 			},
 		},
+		orderBy: [
+			{ isDefault: "desc" as const },
+			{ priceInclTax: "asc" as const },
+		],
 	},
 } as const satisfies Prisma.ProductSelect;
 

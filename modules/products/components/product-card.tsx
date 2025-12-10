@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,7 +36,7 @@ interface ProductCardProps {
  * - Schema.org Product/Offer complet
  * - Support responsive
  * - Animations respectant prefers-reduced-motion (WCAG 2.3.3)
- * - Internationalisation via PRODUCT_TEXTS
+ * - Swatches couleur interactifs (changent l'image au clic)
  *
  * @example
  * ```tsx
@@ -47,6 +50,9 @@ export function ProductCard({
 	index,
 	isInWishlist,
 }: ProductCardProps) {
+	// État local pour la couleur sélectionnée
+	const [selectedColorSlug, setSelectedColorSlug] = useState<string | null>(null);
+
 	// Déstructuration des données du produit
 	const { slug, title } = product;
 	const primarySku = getPrimarySkuForList(product);
@@ -57,7 +63,28 @@ export function ProductCard({
 
 	const { status: stockStatus, message: stockMessage, totalInventory: inventory } = stockInfo;
 
-	// Génération ID unique pour aria-labelledby (RSC compatible)
+	// Nombre de couleurs pour déterminer l'interactivité
+	const hasMultipleColors = colors.length > 1;
+
+	// Image dynamique selon la couleur sélectionnée
+	const currentImage = (() => {
+		if (selectedColorSlug && product.skus) {
+			const skuWithColor = product.skus.find(
+				(sku) => sku.color?.slug === selectedColorSlug && sku.images && sku.images.length > 0
+			);
+			if (skuWithColor?.images?.length) {
+				const img = skuWithColor.images.find((i) => i.isPrimary) || skuWithColor.images[0];
+				return {
+					url: img.url,
+					alt: img.altText || `${title} - ${skuWithColor.color?.name || selectedColorSlug}`,
+					blurDataUrl: img.blurDataUrl,
+				};
+			}
+		}
+		return primaryImage;
+	})();
+
+	// Génération ID unique pour aria-labelledby
 	// Sanitise le slug pour éviter les ID HTML invalides (accents, apostrophes, etc.)
 	const sanitizedSlug = slug.replace(/[^a-z0-9-]/gi, "");
 	const titleId = `product-title-${sanitizedSlug}`;
@@ -129,13 +156,13 @@ export function ProductCard({
 					/>
 				)}
 
-					<Image
-					src={primaryImage.url}
-					alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
+				<Image
+					src={currentImage.url}
+					alt={currentImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
 					fill
-					className="object-cover rounded-lg transition-transform duration-500 ease-out motion-safe:group-hover:scale-[1.08]"
-					placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
-					blurDataURL={primaryImage.blurDataUrl}
+					className="object-cover rounded-lg transition-all duration-300 ease-out motion-safe:group-hover:scale-[1.08]"
+					placeholder={currentImage.blurDataUrl ? "blur" : "empty"}
+					blurDataURL={currentImage.blurDataUrl ?? undefined}
 					// Preload pour les 4 premières images (above-fold) - Next.js 16
 					preload={index !== undefined && index < 4}
 					loading={index !== undefined && index < 4 ? undefined : "lazy"}
@@ -143,24 +170,25 @@ export function ProductCard({
 					itemProp="image"
 				/>
 
-				{/* Bouton d'ajout au panier - EN DEHORS du Link */}
+					{/* Bouton d'ajout au panier - EN DEHORS du Link */}
 				{primarySku && stockStatus === "in_stock" && (
 					<AddToCartCardButton
 						skuId={primarySku.id}
 						productTitle={title}
+						product={product}
+						preselectedColor={selectedColorSlug}
 					/>
 				)}
 			</div>
 
-			{/* Link pour le contenu texte */}
-			<Link
-				href={productUrl}
-				className="block focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm"
-				aria-labelledby={titleId}
-			>
-				{/* Contenu */}
-				<div className="flex flex-col gap-2 sm:gap-3 relative p-4 sm:p-5">
-					{/* Titre avec hiérarchie tokenisée responsive */}
+			{/* Contenu de la card */}
+			<div className="flex flex-col gap-2 sm:gap-3 relative p-4 sm:p-5">
+				{/* Titre cliquable */}
+				<Link
+					href={productUrl}
+					className="focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm"
+					aria-labelledby={titleId}
+				>
 					<h3
 						id={titleId}
 						className="line-clamp-2 font-sans text-foreground text-base sm:text-lg break-words"
@@ -168,45 +196,52 @@ export function ProductCard({
 					>
 						{title}
 					</h3>
+				</Link>
 
-					{/* Pastilles couleur pour les produits multi-variantes */}
-					{colors && colors.length > 1 && (
-						<ColorSwatches colors={colors} maxVisible={4} size="xs" />
-					)}
+				{/* Information de rupture de stock pour les technologies d'assistance */}
+				{stockStatus === "out_of_stock" && (
+					<span className="sr-only">{stockMessage}</span>
+				)}
 
-					{/* Information de rupture de stock pour les technologies d'assistance */}
-					{stockStatus === "out_of_stock" && (
-						<span className="sr-only">{stockMessage}</span>
-					)}
+				{/* Pastilles couleur interactives - Entre titre et prix */}
+				{hasMultipleColors && (
+					<ColorSwatches
+						colors={colors}
+						interactive
+						selectedColor={selectedColorSlug}
+						onColorSelect={setSelectedColorSlug}
+						size="sm"
+						maxVisible={5}
+					/>
+				)}
 
-					{/* Brand Schema.org (Synclune) */}
-					<div
-						itemProp="brand"
-						itemScope
-						itemType="https://schema.org/Brand"
-						className="hidden"
-					>
-						<meta itemProp="name" content="Synclune" />
-					</div>
-
-					{/* Prix avec composant extrait et données structurées */}
-					<div itemProp="offers" itemScope itemType="https://schema.org/Offer">
-						<meta itemProp="priceCurrency" content="EUR" />
-						<meta itemProp="price" content={(price / 100).toString()} />
-						<meta
-							itemProp="availability"
-							content={
-								stockStatus === "out_of_stock"
-									? "https://schema.org/OutOfStock"
-									: "https://schema.org/InStock"
-							}
-						/>
-						<meta itemProp="url" content={productUrl} />
-						{/* ProductPriceCompact avec disableSchemaOrg par défaut (évite duplication) */}
-						<ProductPriceCompact price={price} />
-					</div>
+				{/* Brand Schema.org (Synclune) */}
+				<div
+					itemProp="brand"
+					itemScope
+					itemType="https://schema.org/Brand"
+					className="hidden"
+				>
+					<meta itemProp="name" content="Synclune" />
 				</div>
-			</Link>
+
+				{/* Prix avec composant extrait et données structurées */}
+				<div itemProp="offers" itemScope itemType="https://schema.org/Offer">
+					<meta itemProp="priceCurrency" content="EUR" />
+					<meta itemProp="price" content={(price / 100).toString()} />
+					<meta
+						itemProp="availability"
+						content={
+							stockStatus === "out_of_stock"
+								? "https://schema.org/OutOfStock"
+								: "https://schema.org/InStock"
+						}
+					/>
+					<meta itemProp="url" content={productUrl} />
+					{/* ProductPriceCompact avec disableSchemaOrg par défaut (évite duplication) */}
+					<ProductPriceCompact price={price} />
+				</div>
+			</div>
 		</article>
 	);
 }

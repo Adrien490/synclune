@@ -1,12 +1,19 @@
 "use client";
 
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+import type { Product } from "@/modules/products/types/product.types";
+import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-dialog";
 import { cn } from "@/shared/utils/cn";
 import { Plus } from "lucide-react";
 
 interface AddToCartCardButtonProps {
 	skuId: string;
 	productTitle?: string;
+	/** Produit complet pour déterminer si une sélection de variante est nécessaire */
+	product?: Product;
+	/** Couleur pré-sélectionnée depuis les swatches de la ProductCard */
+	preselectedColor?: string | null;
 	className?: string;
 }
 
@@ -19,14 +26,26 @@ interface AddToCartCardButtonProps {
  *
  * - Disabled pendant le pending pour éviter double-click
  * - Toujours visible sur mobile, apparaît au hover sur desktop
- * - Ajoute directement le SKU primaire au panier
+ * - Ouvre toujours le dialog de sélection SKU avec la couleur pré-sélectionnée
  */
 export function AddToCartCardButton({
 	skuId,
 	productTitle,
+	product,
+	preselectedColor,
 	className,
 }: AddToCartCardButtonProps) {
 	const { action, isPending } = useAddToCart();
+	const { open: openSkuSelector } = useDialog(SKU_SELECTOR_DIALOG_ID);
+
+	// Handler de clic qui ouvre toujours le dialog
+	const handleClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		e.preventDefault();
+		if (product) {
+			openSkuSelector({ product, preselectedColor });
+		}
+	};
 
 	return (
 		<form
@@ -50,7 +69,7 @@ export function AddToCartCardButton({
 				type="submit"
 				disabled={isPending}
 				aria-disabled={isPending}
-				onClick={(e) => e.stopPropagation()}
+				onClick={handleClick}
 				className={cn(
 					// Mobile: bouton sans fond, drop-shadow sur l'icône (pattern WishlistButton)
 					"size-11 rounded-full flex items-center justify-center",
