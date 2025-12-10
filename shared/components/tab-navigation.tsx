@@ -6,9 +6,12 @@ import Link from "next/link";
 
 import { Button } from "@/shared/components/ui/button";
 import {
-	MobilePanel,
-	MobilePanelItem,
-} from "@/shared/components/ui/mobile-panel";
+	Drawer,
+	DrawerContent,
+	DrawerHeader,
+	DrawerTitle,
+	DrawerBody,
+} from "@/shared/components/ui/drawer";
 import { cn } from "@/shared/utils/cn";
 
 export interface TabNavigationItem {
@@ -39,7 +42,7 @@ const PILL_BASE =
  * Composant de navigation par onglets
  *
  * - Desktop : tous les onglets en ligne
- * - Mobile : N premiers onglets + bouton "Plus" ouvrant un panel
+ * - Mobile : N premiers onglets + bouton "Plus" ouvrant un drawer
  */
 export function TabNavigation({
 	items,
@@ -49,7 +52,7 @@ export function TabNavigation({
 	mobileVisibleCount = 2,
 	panelTitle,
 }: TabNavigationProps) {
-	const [isPanelOpen, setIsPanelOpen] = useState(false);
+	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
 	// Séparer les items visibles et ceux dans le panel mobile
 	const visibleItems = items.slice(0, mobileVisibleCount);
@@ -131,7 +134,7 @@ export function TabNavigation({
 						<Button
 							type="button"
 							variant="ghost"
-							onClick={() => setIsPanelOpen(true)}
+							onClick={() => setIsDrawerOpen(true)}
 							className={cn(
 								PILL_BASE,
 								"md:hidden max-w-36",
@@ -141,7 +144,7 @@ export function TabNavigation({
 							)}
 							title={activeOverflowItem?.label}
 							aria-label="Plus d'options de navigation"
-							aria-expanded={isPanelOpen}
+							aria-expanded={isDrawerOpen}
 							aria-haspopup="dialog"
 						>
 							<span className="truncate">
@@ -150,64 +153,58 @@ export function TabNavigation({
 							<ChevronDownIcon
 								className={cn(
 									"size-4 shrink-0 transition-transform duration-200",
-									isPanelOpen && "rotate-180"
+									isDrawerOpen && "rotate-180"
 								)}
 								aria-hidden="true"
 							/>
 						</Button>
 
-						<MobilePanel
-							isOpen={isPanelOpen}
-							onClose={() => setIsPanelOpen(false)}
-							ariaLabel={panelTitle || "Sélection de catégorie"}
-							enableStagger
-							showCloseButton
-							className="p-4"
-						>
-							{/* Header */}
-							<div className="mb-4">
-								<h2 className="text-base font-semibold text-foreground">
-									{panelTitle || "Parcourir par type"}
-								</h2>
-							</div>
-
-							{/* Grid de catégories - TOUS les items */}
-							<div role="menu" className="grid grid-cols-2 gap-2">
-								{items.map((item) => {
-									const isActive = item.value === activeValue;
-									return (
-										<MobilePanelItem key={item.value}>
-											<Link
-												href={item.href}
-												prefetch={prefetch}
-												onClick={() => setIsPanelOpen(false)}
-												role="menuitem"
-												aria-current={isActive ? "page" : undefined}
-												className={cn(
-													"flex items-center justify-center gap-2",
-													"px-4 py-3.5 rounded-2xl",
-													"text-sm font-medium text-center",
-													"border-2 transition-all duration-150",
-													"active:scale-[0.98]",
-													"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-													isActive
-														? "bg-primary text-primary-foreground border-primary shadow-md"
-														: "bg-background border-border hover:border-primary/50"
-												)}
-											>
-												{isActive && (
-													<CheckIcon
-														className="size-4 shrink-0"
-														aria-hidden="true"
-													/>
-												)}
-												<span className="leading-tight">{item.label}</span>
-											</Link>
-										</MobilePanelItem>
-									);
-								})}
-							</div>
-						</MobilePanel>
+						<Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+							<DrawerContent>
+								<DrawerHeader>
+									<DrawerTitle>
+										{panelTitle || "Parcourir par type"}
+									</DrawerTitle>
+								</DrawerHeader>
+								<DrawerBody className="pb-6">
+									{/* Grid de catégories - TOUS les items */}
+									<div role="menu" className="grid grid-cols-2 gap-2">
+										{items.map((item) => {
+											const isActive = item.value === activeValue;
+											return (
+												<Link
+													key={item.value}
+													href={item.href}
+													prefetch={prefetch}
+													onClick={() => setIsDrawerOpen(false)}
+													role="menuitem"
+													aria-current={isActive ? "page" : undefined}
+													className={cn(
+														"flex items-center justify-center gap-2",
+														"px-4 py-3.5 rounded-2xl",
+														"text-sm font-medium text-center",
+														"border-2 transition-all duration-150",
+														"active:scale-[0.98]",
+														"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+														isActive
+															? "bg-primary text-primary-foreground border-primary shadow-md"
+															: "bg-background border-border hover:border-primary/50"
+													)}
+												>
+													{isActive && (
+														<CheckIcon
+															className="size-4 shrink-0"
+															aria-hidden="true"
+														/>
+													)}
+													<span className="leading-tight">{item.label}</span>
+												</Link>
+											);
+										})}
+									</div>
+								</DrawerBody>
+							</DrawerContent>
+						</Drawer>
 					</>
 				)}
 			</div>

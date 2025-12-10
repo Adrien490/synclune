@@ -5,12 +5,22 @@ import { useWishlistToggle } from "@/modules/wishlist/hooks/use-wishlist-toggle"
 import { cn } from "@/shared/utils/cn";
 import { Button } from "@/shared/components/ui/button";
 
+type WishlistButtonSize = "sm" | "md" | "lg";
+
 interface WishlistButtonProps {
 	skuId: string;
 	isInWishlist: boolean;
 	productTitle?: string;
 	className?: string;
+	/** Taille du bouton: sm (36px), md (44px - défaut), lg (52px) */
+	size?: WishlistButtonSize;
 }
+
+const sizeConfig: Record<WishlistButtonSize, { button: string; icon: number }> = {
+	sm: { button: "size-9", icon: 16 },
+	md: { button: "size-11", icon: 20 },
+	lg: { button: "size-13", icon: 24 },
+};
 
 /**
  * Bouton Wishlist - Client Component
@@ -31,10 +41,13 @@ export function WishlistButton({
 	isInWishlist: initialIsInWishlist,
 	productTitle,
 	className,
+	size = "md",
 }: WishlistButtonProps) {
 	const { isInWishlist, action, isPending } = useWishlistToggle({
 		initialIsInWishlist,
 	});
+
+	const { button: buttonSize, icon: iconSize } = sizeConfig[size];
 
 	const ariaLabel = isInWishlist
 		? productTitle
@@ -54,8 +67,9 @@ export function WishlistButton({
 				disabled={isPending}
 				onClick={(e) => e.stopPropagation()}
 				className={cn(
-					// Taille 44px conforme WCAG 2.5.5 (cible tactile minimum)
-					"h-11 w-11 rounded-full",
+					// Taille configurable (md = 44px conforme WCAG 2.5.5)
+					buttonSize,
+					"rounded-full",
 					"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
 					"motion-safe:transition-all motion-safe:duration-200",
 					// Animation pulse pendant le chargement pour feedback visuel
@@ -68,7 +82,7 @@ export function WishlistButton({
 			>
 				<HeartIcon
 					variant={isInWishlist ? "filled" : "outline"}
-					size={20}
+					size={iconSize}
 					decorative
 					className={cn(
 						"motion-safe:transition-all motion-safe:duration-200",
