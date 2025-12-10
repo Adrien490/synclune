@@ -52,9 +52,8 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 
 	return (
 		<>
-			<Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
+			<Sheet direction="right" open={isOpen} onOpenChange={(open) => !open && close()}>
 				<SheetContent
-					side="right"
 					className="w-full sm:max-w-lg flex flex-col p-0 gap-0"
 					{...swipeHandlers}
 				>

@@ -79,7 +79,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
-		<Sheet onOpenChange={setIsOpen}>
+		<Sheet direction="left" onOpenChange={setIsOpen}>
 			<SheetTrigger asChild>
 				<button
 					type="button"
@@ -101,7 +101,6 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 			</div>
 
 			<SheetContent
-				side="left"
 				className="w-[min(85vw,320px)] sm:w-80 sm:max-w-md border-r bg-background/95 !p-0 flex flex-col overflow-hidden"
 				id="mobile-menu-synclune"
 				aria-describedby="mobile-menu-synclune-description"

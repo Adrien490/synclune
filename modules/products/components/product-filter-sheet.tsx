@@ -312,7 +312,7 @@ export function ProductFilterSheet({
 	})();
 
 	return (
-		<Sheet>
+		<Sheet direction="right">
 			<SheetTrigger asChild>
 				<Button
 					variant="outline"
@@ -338,7 +338,7 @@ export function ProductFilterSheet({
 				</Button>
 			</SheetTrigger>
 
-			<SheetContent side="right" className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full">
+			<SheetContent className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full">
 				<SheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
 					<div className="flex items-center justify-between">
 						<div>

@@ -75,7 +75,7 @@ export function FilterSheetWrapper({
 	};
 
 	return (
-		<Sheet open={open} onOpenChange={setOpen}>
+		<Sheet direction="right" open={open} onOpenChange={setOpen}>
 			<SheetTrigger asChild>
 				<Button
 					variant="outline"
@@ -111,7 +111,6 @@ export function FilterSheetWrapper({
 			</SheetTrigger>
 
 			<SheetContent
-				side="right"
 				className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full"
 				aria-describedby="filter-sheet-description"
 				onKeyDown={handleKeyDown}

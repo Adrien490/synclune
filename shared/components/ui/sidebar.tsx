@@ -180,7 +180,7 @@ function Sidebar({
 
 	if (isMobile) {
 		return (
-			<Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+			<Sheet direction={side} open={openMobile} onOpenChange={setOpenMobile}>
 				<SheetContent
 					data-sidebar="sidebar"
 					data-slot="sidebar"
@@ -191,7 +191,6 @@ function Sidebar({
 							"--sidebar-width": SIDEBAR_WIDTH_MOBILE,
 						} as React.CSSProperties
 					}
-					side={side}
 				>
 					<SheetHeader className="sr-only">
 						<SheetTitle>Menu de navigation</SheetTitle>

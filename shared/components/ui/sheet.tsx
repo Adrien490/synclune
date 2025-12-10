@@ -1,13 +1,28 @@
 "use client";
 
-import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 import * as React from "react";
+import { Drawer as SheetPrimitive } from "vaul";
 
 import { cn } from "@/shared/utils/cn";
 
-function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
-	return <SheetPrimitive.Root data-slot="sheet" {...props} />;
+type SheetDirection = "top" | "right" | "bottom" | "left";
+
+const SheetContext = React.createContext<{ direction: SheetDirection }>({
+	direction: "right",
+});
+
+function Sheet({
+	direction = "right",
+	...props
+}: React.ComponentProps<typeof SheetPrimitive.Root> & {
+	direction?: SheetDirection;
+}) {
+	return (
+		<SheetContext.Provider value={{ direction }}>
+			<SheetPrimitive.Root data-slot="sheet" direction={direction} {...props} />
+		</SheetContext.Provider>
+	);
 }
 
 function SheetTrigger({
@@ -47,11 +62,10 @@ function SheetOverlay({
 function SheetContent({
 	className,
 	children,
-	side = "right",
 	...props
-}: React.ComponentProps<typeof SheetPrimitive.Content> & {
-	side?: "top" | "right" | "bottom" | "left";
-}) {
+}: React.ComponentProps<typeof SheetPrimitive.Content>) {
+	const { direction } = React.useContext(SheetContext);
+
 	return (
 		<SheetPortal>
 			<SheetOverlay />
@@ -59,15 +73,15 @@ function SheetContent({
 				data-slot="sheet-content"
 				className={cn(
 					// Base + group pour permettre group-has-[[data-pending]]/sheet sur les descendants
-					"group/sheet bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-200 data-[state=open]:duration-300",
-					side === "right" &&
-						"data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-full border-l sm:max-w-sm",
-					side === "left" &&
-						"data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-full border-r sm:max-w-sm",
-					side === "top" &&
-						"data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b",
-					side === "bottom" &&
-						"data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
+					"group/sheet bg-background fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out",
+					direction === "right" &&
+						"inset-y-0 right-0 h-full w-full border-l sm:max-w-sm",
+					direction === "left" &&
+						"inset-y-0 left-0 h-full w-full border-r sm:max-w-sm",
+					direction === "top" &&
+						"inset-x-0 top-0 h-auto border-b",
+					direction === "bottom" &&
+						"inset-x-0 bottom-0 h-auto border-t",
 					className
 				)}
 				{...props}
