@@ -279,7 +279,7 @@ export function Autocomplete<T>({
 											className={cn(
 												"cursor-pointer select-none py-1.5 px-3 transition-colors duration-150",
 												isActive
-													? "bg-gradient-to-r from-primary/10 to-transparent"
+													? "bg-linear-to-r from-primary/10 to-transparent"
 													: "bg-card hover:bg-muted"
 											)}
 											onClick={() => handleItemSelect(item, onSelect)}

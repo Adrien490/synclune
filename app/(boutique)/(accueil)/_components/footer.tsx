@@ -88,7 +88,7 @@ export async function Footer() {
 								target="_blank"
 								rel="noopener noreferrer"
 								prefetch={false}
-								className="inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-colors duration-200 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+								className="inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-colors duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
 								aria-label="Suivre Synclune sur Instagram (ouvre dans un nouvel onglet)"
 							>
 								<InstagramIcon
@@ -108,7 +108,7 @@ export async function Footer() {
 								target="_blank"
 								rel="noopener noreferrer"
 								prefetch={false}
-								className="inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-colors duration-200 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+								className="inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-colors duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
 								aria-label="Suivre Synclune sur TikTok (ouvre dans un nouvel onglet)"
 							>
 								<TikTokIcon
@@ -136,7 +136,7 @@ export async function Footer() {
 								<li key={index} role="listitem">
 									<Link
 										href={item.href}
-										className="text-sm/6 antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg inline-flex items-center px-3 py-2 min-h-11"
+										className="text-sm/6 antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 rounded-lg inline-flex items-center px-3 py-2 min-h-11"
 									>
 										{item.label}
 									</Link>
@@ -160,7 +160,7 @@ export async function Footer() {
 							<a
 								href={`mailto:${BRAND.contact.email}`}
 								itemProp="email"
-								className="inline-flex items-center px-3 py-2 min-h-11 text-sm/6 antialiased font-medium text-foreground hover:bg-accent rounded-lg transition-colors duration-200 break-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+								className="inline-flex items-center px-3 py-2 min-h-11 text-sm/6 antialiased font-medium text-foreground hover:bg-accent rounded-lg transition-colors duration-200 break-all focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
 								aria-label="Envoyer un email à Synclune"
 							>
 								{BRAND.contact.email}
@@ -202,7 +202,7 @@ export async function Footer() {
 							<span key={index} className="inline-flex items-center">
 								<Link
 									href={link.href}
-									className="text-sm antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg px-3 py-2 min-h-11 inline-flex items-center"
+									className="text-sm antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 rounded-lg px-3 py-2 min-h-11 inline-flex items-center"
 								>
 									{link.label}
 								</Link>

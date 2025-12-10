@@ -20,7 +20,7 @@ import { KpiValue } from "./kpi-value";
  * CVA variants pour la hierarchie visuelle des KPIs
  */
 const kpiCardVariants = cva(
-	"relative overflow-hidden border-l-4 bg-gradient-to-br via-background to-transparent hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col",
+	"relative overflow-hidden border-l-4 bg-linear-to-br via-background to-transparent hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col",
 	{
 		variants: {
 			size: {

@@ -12,7 +12,7 @@ import Link from "next/link";
 export function Hero() {
   return (
     <section
-      id="hero"
+      id="main-content"
       aria-labelledby="hero-title"
       className="relative min-h-[85vh] sm:min-h-screen flex items-center overflow-hidden pt-20 sm:pt-24 md:pt-32 pb-12 sm:pb-20 md:pb-28"
       itemScope
@@ -101,7 +101,7 @@ export function Hero() {
                     href={BRAND.social.instagram.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg bg-card/50 hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border border-transparent hover:border-primary/20"
+                    className="inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg bg-card/50 hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 border border-transparent hover:border-primary/20"
                     aria-label="Suivre Synclune sur Instagram"
                   >
                     <InstagramIcon
@@ -117,7 +117,7 @@ export function Hero() {
                     href={BRAND.social.tiktok.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg bg-card/50 hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border border-transparent hover:border-primary/20"
+                    className="inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg bg-card/50 hover:bg-primary/10 hover:scale-105 active:scale-95 transition-all duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 border border-transparent hover:border-primary/20"
                     aria-label="Suivre Synclune sur TikTok"
                   >
                     <TikTokIcon
@@ -138,7 +138,7 @@ export function Hero() {
           <Fade y={20} delay={0.3} duration={0.7}>
             <div className="relative aspect-square max-w-md mx-auto lg:max-w-none">
               {/* Placeholder - Remplacer par une vraie image avec next/image */}
-              <div className="w-full h-full rounded-3xl bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20 border border-primary/10 shadow-2xl flex items-center justify-center overflow-hidden">
+              <div className="w-full h-full rounded-3xl bg-linear-to-br from-primary/20 via-primary/10 to-secondary/20 border border-primary/10 shadow-2xl flex items-center justify-center overflow-hidden">
                 <div className="text-center space-y-4 p-8">
                   <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
                     <ImageIcon className="w-10 h-10 text-primary/50" />
@@ -149,7 +149,7 @@ export function Hero() {
                 </div>
               </div>
               {/* Effet décoratif */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-3xl blur-2xl -z-10 opacity-50" />
+              <div className="absolute -inset-1 bg-linear-to-r from-primary/20 to-secondary/20 rounded-3xl blur-2xl -z-10 opacity-50" />
             </div>
           </Fade>
         </div>

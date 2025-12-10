@@ -112,7 +112,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 								</div>
 								{/* Indicateur de scroll - fade gradient */}
 								<div
-									className="pointer-events-none sticky bottom-0 h-8 bg-gradient-to-t from-background to-transparent"
+									className="pointer-events-none sticky bottom-0 h-8 bg-linear-to-t from-background to-transparent"
 									aria-hidden="true"
 								/>
 							</ScrollArea>

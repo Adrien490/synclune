@@ -5,12 +5,16 @@ import { WishlistButton } from "./wishlist-button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 
+type WishlistButtonSize = "sm" | "md" | "lg";
+
 interface WishlistButtonDynamicProps {
 	product: GetProductReturn;
 	defaultSku: ProductSku;
 	initialIsInWishlist: boolean;
 	/** Map optionnelle SKU ID -> état wishlist (pour précharger plusieurs états) */
 	wishlistStates?: Record<string, boolean>;
+	/** Taille du bouton: sm (36px), md (44px - défaut), lg (52px) */
+	size?: WishlistButtonSize;
 }
 
 /**
@@ -35,6 +39,7 @@ export function WishlistButtonDynamic({
 	defaultSku,
 	initialIsInWishlist,
 	wishlistStates,
+	size,
 }: WishlistButtonDynamicProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 	const currentSku = selectedSku ?? defaultSku;
@@ -60,6 +65,7 @@ export function WishlistButtonDynamic({
 			key={currentSku.id}
 			skuId={currentSku.id}
 			isInWishlist={currentIsInWishlist}
+			size={size}
 		/>
 	);
 }

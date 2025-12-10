@@ -176,7 +176,7 @@ export function Fab({
 									size="sm"
 									className={cn(
 										"rounded-l-full rounded-r-none",
-										"h-14 w-14 p-0",
+										"size-14 p-0",
 										"bg-background",
 										"border-r-0",
 										"shadow-md",
@@ -189,7 +189,7 @@ export function Fab({
 									aria-expanded={false}
 								>
 									<ChevronLeft
-										className={cn("h-6 w-6", isPending && "animate-pulse")}
+										className={cn("size-6", isPending && "animate-pulse")}
 										aria-hidden="true"
 									/>
 								</Button>
@@ -229,7 +229,7 @@ export function Fab({
 								size="icon"
 								className={cn(
 									"absolute -top-2 -right-2 z-10",
-									"h-8 w-8 rounded-full",
+									"size-8 rounded-full",
 									"bg-muted",
 									"border border-border",
 									"shadow-sm",
@@ -245,7 +245,7 @@ export function Fab({
 								aria-expanded={true}
 							>
 								<X
-									className={cn("h-4 w-4", isPending && "animate-pulse")}
+									className={cn("size-4", isPending && "animate-pulse")}
 									aria-hidden="true"
 								/>
 							</Button>
@@ -267,7 +267,7 @@ export function Fab({
 									"relative rounded-full shadow-lg cursor-pointer",
 									"bg-primary hover:bg-primary/90",
 									"flex items-center justify-center",
-									"h-14 w-14 p-0",
+									"size-14 p-0",
 									"hover:shadow-xl hover:shadow-primary/25",
 									"transition-transform duration-200 hover:scale-105",
 									"active:scale-95",

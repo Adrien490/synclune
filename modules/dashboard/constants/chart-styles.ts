@@ -8,10 +8,10 @@ export const CHART_STYLES = {
   border: "border-l-4 border-primary/30",
 
   /** Gradient de fond standardise */
-  gradient: "bg-gradient-to-br from-primary/5 to-transparent",
+  gradient: "bg-linear-to-br from-primary/5 to-transparent",
 
   /** Combinaison complete pour les cartes de chart */
-  card: "border-l-4 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent",
+  card: "border-l-4 border-primary/30 bg-linear-to-br from-primary/5 to-transparent",
 
   /** Hauteurs standardisees pour les charts */
   height: {

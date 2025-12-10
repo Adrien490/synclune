@@ -101,7 +101,7 @@ export function GalleryThumbnailsCarousel({
 			</Carousel>
 			{/* Gradients indiquant qu'on peut scroller horizontalement */}
 			<div
-				className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none"
+				className="absolute top-0 right-0 bottom-0 w-8 bg-linear-to-l from-background to-transparent pointer-events-none"
 				aria-hidden="true"
 			/>
 		</div>

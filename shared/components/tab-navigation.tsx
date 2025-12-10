@@ -185,7 +185,7 @@ export function TabNavigation({
 														"text-sm font-medium text-center",
 														"border-2 transition-all duration-150",
 														"active:scale-[0.98]",
-														"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+														"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 														isActive
 															? "bg-primary text-primary-foreground border-primary shadow-md"
 															: "bg-background border-border hover:border-primary/50"

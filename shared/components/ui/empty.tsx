@@ -52,7 +52,7 @@ const emptyMediaVariants = cva(
 					"bg-primary/10 text-primary flex size-14 shrink-0 items-center justify-center rounded-full ring-1 ring-primary/20 [&_svg:not([class*='size-'])]:size-7 animate-sparkle-pulse",
 				icon: "bg-primary/10 text-primary flex size-12 shrink-0 items-center justify-center rounded-xl border border-primary/20 [&_svg:not([class*='size-'])]:size-6 animate-sparkle-pulse",
 				luxury:
-					"bg-gradient-to-br from-primary/15 via-secondary/10 to-primary/15 text-primary flex size-16 shrink-0 items-center justify-center rounded-2xl ring-1 ring-primary/20 shadow-lg shadow-primary/10 [&_svg:not([class*='size-'])]:size-8 hover:shadow-xl hover:shadow-primary/15 hover:scale-[1.02]",
+					"bg-linear-to-br from-primary/15 via-secondary/10 to-primary/15 text-primary flex size-16 shrink-0 items-center justify-center rounded-2xl ring-1 ring-primary/20 shadow-lg shadow-primary/10 [&_svg:not([class*='size-'])]:size-8 hover:shadow-xl hover:shadow-primary/15 hover:scale-[1.02]",
 			},
 		},
 		defaultVariants: {

@@ -11,7 +11,7 @@ export default function ProductTypesLoading() {
 			{/* Page Header */}
 			<div className="mb-8 flex items-center justify-between">
 				<div className="space-y-3">
-					<Skeleton className="h-10 w-56 bg-gradient-to-r from-primary/20 to-primary/10" />
+					<Skeleton className="h-10 w-56 bg-linear-to-r from-primary/20 to-primary/10" />
 					<Skeleton className="h-6 w-96 bg-muted/30" />
 				</div>
 				<Skeleton className="h-10 w-48 bg-primary/30 rounded-md shadow-md" />
@@ -25,9 +25,9 @@ export default function ProductTypesLoading() {
 				</div>
 
 				{/* Data Table */}
-				<div className="rounded-lg border-2 border-primary/15 bg-gradient-to-br from-primary/3 to-transparent overflow-hidden">
+				<div className="rounded-lg border-2 border-primary/15 bg-linear-to-br from-primary/3 to-transparent overflow-hidden">
 					{/* Table Header */}
-					<div className="border-b-2 border-primary/10 p-4 bg-gradient-to-r from-primary/5 to-transparent">
+					<div className="border-b-2 border-primary/10 p-4 bg-linear-to-r from-primary/5 to-transparent">
 						<div className="grid grid-cols-12 gap-4 items-center">
 							<Skeleton className="h-5 w-5 bg-muted/40" />
 							<Skeleton className="h-5 w-12 col-span-2 bg-muted/50" />

@@ -11,7 +11,7 @@ export default function MaterialsManagementLoading() {
 			{/* Page Header */}
 			<div className="mb-8 flex items-center justify-between">
 				<div className="space-y-3">
-					<Skeleton className="h-10 w-48 bg-gradient-to-r from-primary/20 to-primary/10" />
+					<Skeleton className="h-10 w-48 bg-linear-to-r from-primary/20 to-primary/10" />
 					<Skeleton className="h-6 w-96 bg-muted/30" />
 				</div>
 				<Skeleton className="h-10 w-40 bg-primary/30 rounded-md shadow-md" />

@@ -120,8 +120,8 @@ function PriceRangeInputs({
 	};
 
 	return (
-		<div className="space-y-3">
-			<h4 className="font-medium text-sm text-foreground">Prix (€)</h4>
+		<fieldset className="space-y-3 border-0 p-0 m-0" role="group" aria-labelledby="price-filter-label">
+			<legend id="price-filter-label" className="font-medium text-sm text-foreground">Prix (€)</legend>
 			<div className="space-y-4">
 				{/* data-vaul-no-drag empeche le drawer de capturer le drag du slider */}
 				<div data-vaul-no-drag>
@@ -163,7 +163,7 @@ function PriceRangeInputs({
 					<span className="text-muted-foreground text-sm shrink-0">€</span>
 				</div>
 			</div>
-		</div>
+		</fieldset>
 	);
 }
 
@@ -374,10 +374,10 @@ export function ProductFilterSheet({
 							{/* Couleurs - dynamiques depuis la base */}
 							<form.Field name="colors" mode="array">
 								{(field) => (
-									<div className="space-y-1">
-										<h4 className="font-medium text-sm text-foreground mb-2">
+									<fieldset className="space-y-1 border-0 p-0 m-0">
+										<legend className="font-medium text-sm text-foreground mb-2">
 											Couleurs
-										</h4>
+										</legend>
 										{colors.map((color) => {
 											const isSelected = field.state.value.includes(color.slug);
 											return (
@@ -405,7 +405,7 @@ export function ProductFilterSheet({
 												</CheckboxFilterItem>
 											);
 										})}
-									</div>
+									</fieldset>
 								)}
 							</form.Field>
 
@@ -415,10 +415,10 @@ export function ProductFilterSheet({
 									<Separator />
 									<form.Field name="materials" mode="array">
 										{(field) => (
-											<div className="space-y-1">
-												<h4 className="font-medium text-sm text-foreground mb-2">
+											<fieldset className="space-y-1 border-0 p-0 m-0">
+												<legend className="font-medium text-sm text-foreground mb-2">
 													Matériaux
-												</h4>
+												</legend>
 												{materials.map((material) => {
 													const isSelected = field.state.value.includes(material.id);
 													return (
@@ -439,7 +439,7 @@ export function ProductFilterSheet({
 														</CheckboxFilterItem>
 													);
 												})}
-											</div>
+											</fieldset>
 										)}
 									</form.Field>
 								</>

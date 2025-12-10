@@ -56,7 +56,7 @@ export function TableScrollContainer({
 			<div
 				className={cn(
 					"absolute left-0 top-0 bottom-0 w-4 pointer-events-none z-10",
-					"bg-gradient-to-r from-background to-transparent",
+					"bg-linear-to-r from-background to-transparent",
 					"transition-opacity duration-200",
 					"lg:hidden", // Visible uniquement sur mobile/tablet
 					canScrollLeft ? "opacity-100" : "opacity-0"
@@ -79,7 +79,7 @@ export function TableScrollContainer({
 			<div
 				className={cn(
 					"absolute right-0 top-0 bottom-0 w-4 pointer-events-none z-10",
-					"bg-gradient-to-l from-background to-transparent",
+					"bg-linear-to-l from-background to-transparent",
 					"transition-opacity duration-200",
 					"lg:hidden", // Visible uniquement sur mobile/tablet
 					canScrollRight ? "opacity-100" : "opacity-0"

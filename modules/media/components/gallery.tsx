@@ -232,7 +232,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 								{/* Gradient indiquant plus de contenu en bas (visible si > 5 images) */}
 								{safeImages.length > 5 && (
 									<div
-										className="absolute bottom-0 left-0 right-1 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none"
+										className="absolute bottom-0 left-0 right-1 h-8 bg-linear-to-t from-background to-transparent pointer-events-none"
 										aria-hidden="true"
 									/>
 								)}

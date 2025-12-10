@@ -157,7 +157,7 @@ export function CursorPagination({
 							"border-primary/20",
 							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
 							"hover:scale-[1.02]",
-							"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+							"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 							"active:scale-[0.98]",
 							"transition-all duration-300"
 						)}
@@ -184,7 +184,7 @@ export function CursorPagination({
 								"border-primary/20",
 								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
 								"hover:scale-[1.02]",
-								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+								"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 								"active:scale-[0.98]",
 								"transition-all duration-300"
 							)}
@@ -221,7 +221,7 @@ export function CursorPagination({
 								"border-primary/20",
 								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
 								"hover:scale-[1.02]",
-								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+								"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 								"active:scale-[0.98]",
 								"transition-all duration-300"
 							)}

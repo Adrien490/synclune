@@ -68,7 +68,7 @@ export function AddToCartCardButton({
 				// Desktop: pleine largeur en bas
 				"sm:bottom-0 sm:right-0 sm:inset-x-0",
 				// Visibilité
-				"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100",
+				"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100",
 				"transition-opacity duration-300",
 				className
 			)}

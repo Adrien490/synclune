@@ -19,7 +19,7 @@ function PlaceholderImage({
 }) {
 	return (
 		<div
-			className={`relative rounded-xl overflow-hidden bg-gradient-to-br from-secondary/40 via-muted/50 to-primary/30 border border-border/30 flex items-center justify-center transition-opacity duration-500 ${className ?? ""}`}
+			className={`relative rounded-xl overflow-hidden bg-linear-to-br from-secondary/40 via-muted/50 to-primary/30 border border-border/30 flex items-center justify-center transition-opacity duration-500 ${className ?? ""}`}
 			role={label ? "img" : undefined}
 			aria-label={label}
 			aria-hidden={label ? undefined : true}

@@ -153,11 +153,8 @@ export function ColorSwatches({
 		const isDisabled = !color.inStock || disabled;
 
 		if (interactive) {
-			// Détermine le tabIndex : 0 si sélectionné, ou si aucune sélection et c'est le premier
-			// Dans le popover, on utilise un tabIndex séparé pour la navigation
-			const isFirstInContext = inPopover ? index === maxVisible : index === 0;
-			const shouldBeTabbable = isSelected || (!selectedColor && isFirstInContext);
-
+			// Chaque couleur est tabbable individuellement (sauf si disabled)
+			// Plus intuitif pour les utilisateurs e-commerce
 			return (
 				<button
 					key={color.slug}
@@ -169,11 +166,10 @@ export function ColorSwatches({
 						}
 					}}
 					type="button"
-					role="radio"
-					aria-checked={isSelected}
-					aria-label={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
-					// tabIndex -1 quand disabled pour éviter le focus sur éléments non-interactifs
-					tabIndex={isDisabled ? -1 : shouldBeTabbable ? 0 : -1}
+					aria-pressed={isSelected}
+					aria-label={`${color.name}${isSelected ? " (sélectionnée)" : ""}${!color.inStock ? " (rupture)" : ""}`}
+					// Chaque couleur est tabbable sauf si rupture de stock
+					tabIndex={isDisabled ? -1 : 0}
 					onClick={(e) => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -224,8 +220,7 @@ export function ColorSwatches({
 				interactive ? "gap-4" : "gap-1.5",
 				className
 			)}
-			aria-label={interactive ? `Sélectionner une couleur parmi ${colors.length} disponible${colors.length > 1 ? "s" : ""}` : `${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}
-			role={interactive ? "radiogroup" : undefined}
+			aria-label={`${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}
 		>
 			{visibleColors.map((color, index) => (
 				<Tooltip key={color.slug}>
@@ -268,11 +263,7 @@ export function ColorSwatches({
 							{remainingCount} autre{remainingCount > 1 ? "s" : ""} couleur
 							{remainingCount > 1 ? "s" : ""}
 						</p>
-						<div
-							className="flex flex-wrap gap-2"
-							role={interactive ? "radiogroup" : undefined}
-							aria-label={interactive ? `Couleurs supplémentaires` : undefined}
-						>
+						<div className="flex flex-wrap gap-2">
 							{hiddenColors.map((color, index) => (
 								<Tooltip key={color.slug}>
 									<TooltipTrigger asChild>

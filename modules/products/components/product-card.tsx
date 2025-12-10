@@ -159,7 +159,7 @@ export function ProductCard({
 						skuId={primarySku.id}
 						isInWishlist={isInWishlist ?? false}
 						productTitle={title}
-						className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200"
+						className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity duration-200"
 					/>
 				)}
 
@@ -200,8 +200,9 @@ export function ProductCard({
 				{/* Titre cliquable */}
 				<Link
 					href={productUrl}
-					className="focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm"
-					aria-labelledby={titleId}
+					tabIndex={0}
+					className="block focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm"
+					aria-label={`Voir ${title}`}
 				>
 					<h3
 						id={titleId}

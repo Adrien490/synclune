@@ -87,7 +87,7 @@ export function ChartScrollContainer({
 			{/* Indicateur de scroll - gradient sur le bord droit */}
 			{showScrollHint && canScroll && !isScrolledToEnd && (
 				<div
-					className="absolute right-0 top-0 h-full w-8 pointer-events-none bg-gradient-to-l from-background to-transparent md:hidden"
+					className="absolute right-0 top-0 h-full w-8 pointer-events-none bg-linear-to-l from-background to-transparent md:hidden"
 					aria-hidden="true"
 				/>
 			)}
