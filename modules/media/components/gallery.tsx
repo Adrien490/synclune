@@ -157,6 +157,34 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Hook: Gestion erreurs média avec retry
 	const { handleMediaError, hasError, retryMedia } = useMediaErrors();
 
+	// Ref pour stocker openLightbox
+	const openLightboxRef = useRef<(() => void) | null>(null);
+
+	// Détection clic vs drag : on compare la position du pointeur
+	const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+	const DRAG_THRESHOLD = 5; // pixels
+
+	const handlePointerDown = (e: React.PointerEvent) => {
+		pointerStartRef.current = { x: e.clientX, y: e.clientY };
+	};
+
+	const handleSlideClick = (e: React.MouseEvent, index: number) => {
+		// Si pas de position de départ, ignorer
+		if (!pointerStartRef.current) return;
+
+		const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+		const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+		pointerStartRef.current = null;
+
+		// Si le déplacement est trop grand, c'était un drag
+		if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) return;
+
+		// Ouvrir la lightbox uniquement pour les images
+		if (safeImages[index]?.mediaType === "IMAGE") {
+			openLightboxRef.current?.();
+		}
+	};
+
 	// Gestion vidéos: pause/play selon la slide active
 	const emblaContainerRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
@@ -248,7 +276,11 @@ function GalleryContent({ product, title }: GalleryProps) {
 			index={optimisticIndex}
 			onIndexChange={handleLightboxIndexChange}
 		>
-			{({ openLightbox }) => (
+			{({ openLightbox }) => {
+				// Stocker openLightbox dans le ref pour le hook useEmblaClick
+				openLightboxRef.current = openLightbox;
+
+				return (
 				<div
 					className="product-gallery w-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
 					ref={galleryRef}
@@ -318,21 +350,26 @@ function GalleryContent({ product, title }: GalleryProps) {
 								</div>
 							)}
 
-							{/* Bouton zoom (images uniquement) - ouvre la lightbox */}
+							{/* Indicateur zoom (images uniquement) */}
 							{current.mediaType === "IMAGE" && (
-								<button
-									type="button"
-									onClick={openLightbox}
-									className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-black/60 backdrop-blur-sm text-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-lg flex items-center gap-1.5 transition-all duration-300 hover:bg-black/80 hover:scale-105 active:scale-95"
-									aria-label={`Agrandir l'image : ${current.alt || title}`}
+								<div
+									className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-black/60 backdrop-blur-sm text-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-lg flex items-center gap-1.5 pointer-events-none"
+									aria-hidden="true"
 								>
 									<ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 									<span className="hidden sm:inline">Zoomer</span>
-								</button>
+								</div>
 							)}
 
 							{/* Embla Carousel - Glissement fluide natif */}
-							<div className="absolute inset-0 overflow-hidden touch-pan-x" ref={emblaRef}>
+							{/* cursor-zoom-in sur images pour indiquer qu'elles sont cliquables */}
+							<div
+								className={cn(
+									"absolute inset-0 overflow-hidden touch-pan-x",
+									current.mediaType === "IMAGE" && "cursor-zoom-in"
+								)}
+								ref={emblaRef}
+							>
 								<div className="flex h-full" ref={emblaContainerRef}>
 									{safeImages.map((media, index) => (
 										<div
@@ -340,6 +377,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 											data-slide-index={index}
 											className="flex-[0_0_100%] h-full min-w-0 relative"
 											aria-hidden={index !== optimisticIndex}
+											onPointerDown={handlePointerDown}
+											onClick={(e) => handleSlideClick(e, index)}
 										>
 											<GalleryMediaRenderer
 												media={media}
@@ -482,7 +521,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 						</div>
 					)}
 				</div>
-			)}
+				);
+			}}
 		</OpenLightboxButton>
 	);
 }
