@@ -1,23 +1,25 @@
 "use client";
 
-import type { Slide } from "yet-another-react-lightbox";
 import { OpenLightboxButton } from "@/modules/media/components/open-lightbox-button";
 import { Button } from "@/shared/components/ui/button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { cn } from "@/shared/utils/cn";
-import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useRef } from "react";
 import { buildGallery } from "@/modules/media/utils/build-gallery";
+import { buildEmblaOptions } from "@/modules/media/utils/build-embla-options";
+import { buildLightboxSlides } from "@/modules/media/utils/build-lightbox-slides";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
 import { GalleryMediaRenderer } from "@/modules/media/components/gallery-media-renderer";
 import { useGalleryKeyboard } from "@/modules/media/hooks/use-gallery-keyboard";
 import { useGalleryNavigation } from "@/modules/media/hooks/use-gallery-navigation";
 import { useMediaErrors } from "@/modules/media/hooks/use-media-errors";
+import { useEmblaSync } from "@/modules/media/hooks/use-embla-sync";
+import { useVideoAutoplay } from "@/modules/media/hooks/use-video-autoplay";
+import { usePreloadNextImage } from "@/modules/media/hooks/use-preload-next-image";
 import useEmblaCarousel from "embla-carousel-react";
-import type { EmblaOptionsType, EmblaCarouselType } from "embla-carousel";
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { GalleryThumbnailsGrid, GalleryThumbnailsCarousel } from "@/modules/media/components/gallery-thumbnails";
@@ -75,34 +77,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 		selectedVariants: { colorSlug, materialSlug, size },
 	});
 
-	// Conversion des médias en slides pour la lightbox (images + vidéos)
-	// Génère les URLs Next.js optimisées pour les images
-	// Utilise le format vidéo natif pour les vidéos
-	// Respecte prefers-reduced-motion pour désactiver l'autoplay
-	const lightboxSlides: Slide[] = safeImages.map((media) => {
-		if (media.mediaType === "VIDEO") {
-			return {
-				type: "video" as const,
-				sources: [
-					{
-						src: media.url,
-						type: getVideoMimeType(media.url),
-					},
-				],
-				poster: media.thumbnailUrl || media.thumbnailSmallUrl || undefined,
-				// Désactiver autoplay si l'utilisateur préfère réduire les animations
-				autoPlay: !prefersReducedMotion,
-				muted: true,
-				loop: !prefersReducedMotion,
-				playsInline: true,
-			};
-		}
-
-		return {
-			src: media.url,
-			alt: media.alt,
-		};
-	});
+	// Conversion des médias en slides pour la lightbox
+	const lightboxSlides = buildLightboxSlides(safeImages, prefersReducedMotion);
 
 	// Hook: Navigation avec URL sync (optimiste = instantané, pas de loading)
 	const {
@@ -113,38 +89,11 @@ function GalleryContent({ product, title }: GalleryProps) {
 	} = useGalleryNavigation({ totalImages: safeImages.length });
 
 	// Hook: Embla Carousel pour le swipe fluide natif
-	const emblaOptions: EmblaOptionsType = {
-		loop: safeImages.length > 1,
-		align: "center",
-		duration: prefersReducedMotion ? 0 : 25,
-	};
-
+	const emblaOptions = buildEmblaOptions(safeImages.length, prefersReducedMotion);
 	const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions);
 
-	// Sync: Embla → URL (quand l'utilisateur swipe)
-	useEffect(() => {
-		if (!emblaApi) return;
-
-		const onSelect = (api: EmblaCarouselType) => {
-			const index = api.selectedScrollSnap();
-			if (index !== optimisticIndex) {
-				navigateToIndex(index);
-			}
-		};
-
-		emblaApi.on("select", onSelect);
-		return () => {
-			emblaApi.off("select", onSelect);
-		};
-	}, [emblaApi, optimisticIndex, navigateToIndex]);
-
-	// Sync: URL/Thumbnails/Keyboard → Embla
-	useEffect(() => {
-		if (!emblaApi) return;
-		if (emblaApi.selectedScrollSnap() !== optimisticIndex) {
-			emblaApi.scrollTo(optimisticIndex);
-		}
-	}, [emblaApi, optimisticIndex]);
+	// Sync bidirectionnelle Embla ↔ URL
+	useEmblaSync(emblaApi, optimisticIndex, navigateToIndex);
 
 	// Hook: Navigation clavier
 	useGalleryKeyboard({
@@ -159,48 +108,10 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	// Gestion vidéos: pause/play selon la slide active
 	const emblaContainerRef = useRef<HTMLDivElement>(null);
-	useEffect(() => {
-		const container = emblaContainerRef.current;
-		if (!container) return;
+	useVideoAutoplay(emblaContainerRef, optimisticIndex);
 
-		const videos = container.querySelectorAll("video");
-		videos.forEach((video) => {
-			// Récupérer l'index de la slide depuis le data-attribute du parent
-			const slideIndex = Number(
-				video.closest("[data-slide-index]")?.getAttribute("data-slide-index")
-			);
-
-			if (slideIndex === optimisticIndex) {
-				// Si la vidéo n'est pas chargée, la charger puis jouer
-				if (video.readyState >= 2) {
-					video.play().catch(() => {});
-				} else {
-					video.load();
-					const handleCanPlay = () => {
-						video.play().catch(() => {});
-					};
-					video.addEventListener("canplay", handleCanPlay, { once: true });
-				}
-			} else {
-				video.pause();
-				video.currentTime = 0;
-			}
-		});
-	}, [optimisticIndex]);
-
-	// Preload de l'image suivante pour améliorer la latence perçue
-	useEffect(() => {
-		if (safeImages.length <= 1) return;
-
-		const nextIndex = (optimisticIndex + 1) % safeImages.length;
-		const nextMedia = safeImages[nextIndex];
-
-		// Ne preload que les images (pas les vidéos)
-		if (nextMedia?.mediaType === "IMAGE" && nextMedia.url) {
-			const img = new Image();
-			img.src = nextMedia.url;
-		}
-	}, [optimisticIndex, safeImages]);
+	// Preload de l'image suivante
+	usePreloadNextImage(safeImages, optimisticIndex);
 
 	// Handlers mémorisés pour les boutons navigation (évite re-renders)
 	const handlePrev = (e: React.MouseEvent) => {
