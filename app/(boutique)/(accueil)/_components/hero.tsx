@@ -20,17 +20,17 @@ export function Hero() {
       itemProp="mainContentOfPage"
     >
 
-      {/* Couche 1: Particules décoratives */}
+      {/* Couche 1: Particules décoratives - Preset jewelry (diamants dorés) */}
       <ParticleSystem
         count={8}
-        shape="circle"
+        shape="diamond"
         colors={[
-          "var(--primary)",
           "var(--secondary)",
-          "oklch(0.92 0.08 350)", // Blush pastel
+          "oklch(0.9 0.1 80)", // Or chaud
+          "oklch(0.92 0.08 60)", // Champagne
         ]}
-        opacity={[0.15, 0.35]}
-        blur={[15, 40]}
+        opacity={[0.12, 0.35]}
+        blur={[15, 45]}
         size={[30, 100]}
       />
 

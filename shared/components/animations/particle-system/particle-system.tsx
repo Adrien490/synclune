@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/utils/cn";
 import { useInView, useReducedMotion } from "framer-motion";
-import { memo, useRef } from "react";
+import { useRef } from "react";
 import { DEFAULT_COLORS } from "./constants";
 import { ParticleSet } from "./particle-set";
 import type { ParticleSystemProps } from "./types";
@@ -128,5 +128,4 @@ const ParticleSystemBase = ({
  *   rotation
  * />
  */
-export const ParticleSystem = memo(ParticleSystemBase);
-ParticleSystem.displayName = "ParticleSystem";
+export { ParticleSystemBase as ParticleSystem };

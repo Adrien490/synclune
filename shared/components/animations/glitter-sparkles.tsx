@@ -1,8 +1,9 @@
 "use client";
 
-import { memo, useRef } from "react";
+import { useRef } from "react";
 import { motion, useReducedMotion, useInView } from "framer-motion";
 import { cn } from "@/shared/utils/cn";
+import { seededRandom } from "./particle-system/utils";
 
 // ============================================================================
 // TYPES
@@ -88,13 +89,15 @@ const REDUCED_MOTION_ANIMATION = {
 // ============================================================================
 
 /**
- * Génère un nombre aléatoire entre min et max
+ * Génère un nombre entre min et max avec un seed déterministe
+ * Évite les flashs d'hydratation SSR/CSR
  */
-const random = (min: number, max: number): number =>
-	Math.random() * (max - min) + min;
+const randomBetween = (min: number, max: number, seed: number): number =>
+	min + seededRandom(seed) * (max - min);
 
 /**
- * Génère les données des paillettes
+ * Génère les données des paillettes de manière déterministe
+ * Utilise seededRandom pour cohérence SSR/CSR
  */
 const generateSparkles = (
 	count: number,
@@ -102,15 +105,16 @@ const generateSparkles = (
 	glowIntensity: number
 ): Sparkle[] => {
 	return Array.from({ length: count }, (_, i) => {
-		const size = random(sizeRange[0], sizeRange[1]);
+		const seed = i * 1000; // Base seed unique par particule
+		const size = randomBetween(sizeRange[0], sizeRange[1], seed + 1);
 		return {
 			id: i,
 			size,
-			left: random(0, 100),
-			top: random(0, 100),
-			delay: random(0, DEFAULT_CONFIG.DELAY_MAX),
-			duration: random(DEFAULT_CONFIG.DURATION_MIN, DEFAULT_CONFIG.DURATION_MAX),
-			color: SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)],
+			left: randomBetween(0, 100, seed + 2),
+			top: randomBetween(0, 100, seed + 3),
+			delay: randomBetween(0, DEFAULT_CONFIG.DELAY_MAX, seed + 4),
+			duration: randomBetween(DEFAULT_CONFIG.DURATION_MIN, DEFAULT_CONFIG.DURATION_MAX, seed + 5),
+			color: SPARKLE_COLORS[i % SPARKLE_COLORS.length], // Déterministe via index
 			glowSize: size * DEFAULT_CONFIG.GLOW_MULTIPLIER * glowIntensity,
 		};
 	});
@@ -224,5 +228,4 @@ const GlitterSparklesBase = ({
  * <GlitterSparkles count={30} sizeRange={[3, 8]} glowIntensity={1} />
  * ```
  */
-export const GlitterSparkles = memo(GlitterSparklesBase);
-GlitterSparkles.displayName = "GlitterSparkles";
+export { GlitterSparklesBase as GlitterSparkles };
