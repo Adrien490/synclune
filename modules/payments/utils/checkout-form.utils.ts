@@ -97,7 +97,6 @@ export function getCheckoutFormOptions(
 
 			// Consentements
 			termsAccepted: false,
-			newsletter: false,
 
 			// Enregistrer l'adresse (coché par défaut si l'utilisateur n'a pas d'adresse)
 			saveAddress: !isGuest && (!addresses || addresses.length === 0),

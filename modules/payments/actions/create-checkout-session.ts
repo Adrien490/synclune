@@ -16,8 +16,6 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import Stripe from "stripe";
 import { createCheckoutSessionSchema, type CreateCheckoutSessionData } from "@/modules/payments/schemas/create-checkout-session-schema";
-import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
-import { randomUUID } from "crypto";
 import { ALLOWED_SHIPPING_COUNTRIES } from "@/modules/orders/constants/colissimo-rates";
 import { getStripeShippingOptions } from "@/modules/orders/constants/stripe-shipping-rates";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
@@ -107,7 +105,6 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 		const billingAddressRaw = formData.get("billingAddress") as string;
 		const email = (formData.get("email") as string) || undefined;
 		const saveAddress = formData.get("saveAddress") === "true" || formData.get("saveAddress") === "on";
-		const newsletter = formData.get("newsletter") === "true";
 		const discountCode = (formData.get("discountCode") as string) || undefined;
 
 		let cartItems, shippingAddress, billingAddress;
@@ -128,7 +125,6 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			shippingAddress,
 			billingAddress,
 			email,
-			newsletter,
 			discountCode,
 		};
 
@@ -550,67 +546,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			return newOrder;
 		});
 
-		// 8h. Inscrire à la newsletter si demandé
-		if (newsletter && finalEmail) {
-			try {
-				// Vérifier si déjà inscrit
-				const existingSubscriber = await prisma.newsletterSubscriber.findUnique({
-					where: { email: finalEmail },
-				});
-
-				if (!existingSubscriber || existingSubscriber.status !== "CONFIRMED") {
-					// Créer ou réactiver l'inscription avec double opt-in
-					const confirmationToken = randomUUID();
-
-					if (existingSubscriber) {
-						// Réactiver
-						await prisma.newsletterSubscriber.update({
-							where: { email: finalEmail },
-							data: {
-								confirmationToken,
-								confirmationSentAt: new Date(),
-								status: "PENDING",
-								emailVerified: false,
-								consentSource: "checkout_form",
-								consentTimestamp: new Date(),
-							},
-						});
-					} else {
-						// Créer nouvel abonné
-						const headersList = await headers();
-						const ipAddress = (await getClientIp(headersList)) || "unknown";
-						const userAgent = headersList.get("user-agent") || "unknown";
-
-						await prisma.newsletterSubscriber.create({
-							data: {
-								email: finalEmail,
-								ipAddress,
-								userAgent,
-								consentSource: "checkout_form",
-								consentTimestamp: new Date(),
-								confirmationToken,
-								confirmationSentAt: new Date(),
-								status: "PENDING",
-								emailVerified: false,
-							},
-						});
-					}
-
-					// Envoyer email de confirmation
-					const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
-					const confirmationUrl = `${baseUrl}/newsletter/confirm?token=${confirmationToken}`;
-					await sendNewsletterConfirmationEmail({
-						to: finalEmail,
-						confirmationUrl,
-					});
-				}
-			} catch (newsletterError) {
-				// Ne pas bloquer le checkout si l'inscription newsletter échoue
-				// console.error("[NEWSLETTER_ERROR]", newsletterError);
-			}
-		}
-
-		// 8i. Enregistrer l'adresse si demandé par l'utilisateur connecté
+		// 8h. Enregistrer l'adresse si demandé par l'utilisateur connecté
 		const userIdForAddress = userId;
 		if (userIdForAddress && saveAddress) {
 			try {

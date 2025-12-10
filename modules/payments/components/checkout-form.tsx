@@ -691,13 +691,6 @@ function CheckoutFormContent({
 							)}
 						</form.AppField>
 
-						{/* Newsletter */}
-						<form.AppField name="newsletter">
-							{(field) => (
-								<field.CheckboxField label="Je souhaite recevoir les actualités et offres spéciales par email" />
-							)}
-						</form.AppField>
-
 						{/* Message sécurité */}
 						<div className="p-4 bg-muted/50 rounded-lg border space-y-3 mt-6">
 							<div className="flex items-center gap-2 text-sm font-medium">
@@ -768,7 +761,6 @@ function CheckoutFormContent({
 								/>
 							)}
 							{isGuest && <input type="hidden" name="email" value={v?.email || ""} />}
-							<input type="hidden" name="newsletter" value={v?.newsletter ? "true" : "false"} />
 							{!isGuest && <input type="hidden" name="saveAddress" value={v?.saveAddress ? "true" : "false"} />}
 						</>
 					);

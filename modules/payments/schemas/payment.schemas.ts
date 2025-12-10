@@ -148,8 +148,6 @@ export const checkoutSchema = z
 				"Tu dois accepter les conditions générales de vente pour continuer",
 		}),
 
-		newsletter: z.boolean().default(false),
-
 		// Enregistrer l'adresse (utilisateurs connectés uniquement)
 		saveAddress: z.boolean().default(false),
 	});

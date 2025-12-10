@@ -221,6 +221,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 
 				{/* Sous-total - au milieu sur mobile, en bas sur desktop */}
 				<span
+					aria-label={`Sous-total: ${formatEuro(subtotal)}`}
 					className={cn(
 						"order-2 sm:order-3 font-mono font-semibold text-sm transition-opacity duration-200",
 						"group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/item:animate-pulse"

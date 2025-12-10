@@ -1,7 +1,6 @@
 import { SortSelect } from "@/shared/components/sort-select";
 import { PageHeader } from "@/shared/components/page-header";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
-import { AccountNav } from "@/modules/users/components/account-nav";
 import {
 	CustomerOrdersTable,
 	CustomerOrdersTableSkeleton,
@@ -93,17 +92,9 @@ export default async function CustomerOrdersPage({
 
 			<section className={`bg-background ${ACCOUNT_SECTION_PADDING}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="flex gap-8">
-						{/* Sidebar desktop */}
-						<AccountNav variant="desktop-only" />
-
-						{/* Contenu principal */}
-						<div className="flex-1 min-w-0">
-							<Suspense fallback={<CustomerOrdersTableSkeleton />}>
-								<CustomerOrdersTable ordersPromise={ordersPromise} />
-							</Suspense>
-						</div>
-					</div>
+					<Suspense fallback={<CustomerOrdersTableSkeleton />}>
+						<CustomerOrdersTable ordersPromise={ordersPromise} />
+					</Suspense>
 				</div>
 			</section>
 		</div>

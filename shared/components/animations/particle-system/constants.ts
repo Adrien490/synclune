@@ -83,9 +83,42 @@ export const SHAPE_CONFIGS: Record<ParticleShape, ShapeConfig> = {
 			"polygon(50% 15%, 61% 0%, 80% 0%, 100% 20%, 100% 45%, 50% 100%, 0% 45%, 0% 20%, 20% 0%, 39% 0%)",
 	},
 	crescent: {
+		type: "svg",
+		viewBox: "0 0 100 100",
+		path: "M 50 5 C 20 5, 5 25, 5 50 C 5 75, 20 95, 50 95 C 35 80, 30 65, 30 50 C 30 35, 35 20, 50 5 Z",
+	},
+	// Nouvelles formes bijouterie
+	pearl: {
+		type: "css",
+		styles: {
+			borderRadius: "50%",
+			// Le gradient sera appliqué dynamiquement dans getShapeStyles
+		},
+	},
+	drop: {
 		type: "clipPath",
 		clipPath:
-			"polygon(40% 0%, 100% 0%, 100% 100%, 40% 100%, 20% 85%, 10% 50%, 20% 15%)",
+			"polygon(50% 0%, 75% 25%, 85% 55%, 75% 80%, 50% 100%, 25% 80%, 15% 55%, 25% 25%)",
+	},
+	"sparkle-4": {
+		type: "clipPath",
+		clipPath:
+			"polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%)",
+	},
+	"butterfly-wing": {
+		type: "svg",
+		viewBox: "0 0 100 100",
+		path: "M50 10 C70 10 90 30 90 50 C90 70 70 90 50 90 C40 75 30 60 50 50 C30 40 40 25 50 10 Z",
+	},
+	"flower-petal": {
+		type: "clipPath",
+		clipPath:
+			"ellipse(35% 50% at 50% 50%)",
+	},
+	leaf: {
+		type: "clipPath",
+		clipPath:
+			"polygon(50% 0%, 85% 20%, 100% 50%, 85% 80%, 50% 100%, 15% 80%, 0% 50%, 15% 20%)",
 	},
 };
 
@@ -113,5 +146,40 @@ export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {
 		scale: [1, 1.35 * intensity, 1],
 		opacity: [p.opacity, p.opacity * 1.5, p.opacity],
 		...(rotation && { rotate: [0, 180, 360] }),
+	}),
+	// Nouveaux styles d'animation
+	shimmer: (p, intensity, rotation) => ({
+		opacity: [p.opacity * 0.4, p.opacity * 1.3, p.opacity * 0.4],
+		scale: [0.95, 1.05 * intensity, 0.95],
+		...(rotation && { rotate: [0, 15, 0] }),
+	}),
+	cascade: (p, intensity, rotation) => ({
+		y: ["0%", `${25 * intensity}%`, `${50 * intensity}%`],
+		x: [
+			`${-5 * intensity}%`,
+			`${5 * intensity}%`,
+			`${-3 * intensity}%`,
+		],
+		opacity: [p.opacity, p.opacity * 0.8, p.opacity * 0.3],
+		...(rotation && { rotate: [0, 30, 60] }),
+	}),
+	orbit: (p, intensity, rotation) => ({
+		x: [
+			`${-12 * intensity}%`,
+			`${12 * intensity}%`,
+			`${-12 * intensity}%`,
+		],
+		y: [
+			`${-6 * intensity}%`,
+			`${6 * intensity}%`,
+			`${-6 * intensity}%`,
+		],
+		scale: [1, 1.1, 1],
+		...(rotation && { rotate: [0, 360] }),
+	}),
+	sway: (p, intensity, rotation) => ({
+		rotate: [-12 * intensity, 12 * intensity, -12 * intensity],
+		y: ["0%", `${4 * intensity}%`, "0%"],
+		opacity: [p.opacity, p.opacity * 0.9, p.opacity],
 	}),
 };

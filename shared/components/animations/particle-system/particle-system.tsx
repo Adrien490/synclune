@@ -24,9 +24,14 @@ const ParticleSystemBase = ({
 	glowIntensity = 0.5,
 	springPhysics = false,
 	depthParallax = true,
+	disabled = false,
+	gradient = false,
 }: ParticleSystemProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
+
+	// Skip rendering si désactivé
+	if (disabled) return null;
 
 	// Lazy rendering : n'anime que si visible
 	const isInView = useInView(containerRef, { once: true, margin: "-100px" });
@@ -65,6 +70,7 @@ const ParticleSystemBase = ({
 		rotation,
 		intensity,
 		springPhysics,
+		gradient,
 	};
 
 	return (
@@ -72,6 +78,7 @@ const ParticleSystemBase = ({
 			ref={containerRef}
 			aria-hidden="true"
 			className={cn("absolute inset-0 pointer-events-none overflow-hidden", className)}
+			style={{ contain: "layout paint" }}
 		>
 			{/* Desktop : visible uniquement sur md+ (768px+) - glow activé si demandé */}
 			<div className="hidden md:contents">
@@ -101,9 +108,11 @@ const ParticleSystemBase = ({
  * Utilise CSS media queries pour la détection mobile (pas de flash d'hydratation).
  * Desktop: count particules, Mobile: count/2 particules.
  * Glow désactivé automatiquement sur mobile pour performance.
+ * CSS containment pour isoler les repaints.
  *
- * **Formes** : circle, diamond, soft-square, star, hexagon, ring, heart, crescent
- * **Animations** : float, twinkle, drift, pulse
+ * **Formes** : circle, diamond, soft-square, star, hexagon, ring, heart, crescent,
+ *             pearl, drop, sparkle-4, butterfly-wing, flower-petal, leaf
+ * **Animations** : float, twinkle, drift, pulse, shimmer, cascade, orbit, sway
  *
  * @example
  * // Défaut (couleurs primary/secondary/pastel)
@@ -127,12 +136,25 @@ const ParticleSystemBase = ({
  * />
  *
  * @example
- * // Coeurs roses avec rotation
+ * // Perles avec effet shimmer
  * <ParticleSystem
- *   shape="heart"
- *   colors={["var(--primary)", "oklch(0.92 0.08 350)"]}
- *   animationStyle="drift"
+ *   shape="pearl"
+ *   colors={["var(--secondary)", "oklch(0.95 0.04 80)"]}
+ *   animationStyle="shimmer"
+ *   gradient
+ * />
+ *
+ * @example
+ * // Pétales en cascade
+ * <ParticleSystem
+ *   shape={["flower-petal", "leaf"]}
+ *   colors={["var(--primary)", "oklch(0.90 0.10 140)"]}
+ *   animationStyle="cascade"
  *   rotation
  * />
+ *
+ * @example
+ * // Désactiver complètement les particules
+ * <ParticleSystem disabled />
  */
 export { ParticleSystemBase as ParticleSystem };

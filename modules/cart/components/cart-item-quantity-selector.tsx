@@ -109,7 +109,7 @@ export function CartItemQuantitySelector({
 					onChange={(e) => handleQuantityChange(parseInt(e.target.value, 10))}
 					onBlur={handleBlur}
 					disabled={isInactive || isLoading}
-					className="min-h-0 h-11 sm:h-9 w-12 sm:w-11 text-center text-base px-0 py-0"
+					className="min-h-0 h-11 sm:h-9 w-14 sm:w-12 text-center text-base px-0 py-0"
 					aria-label={`Quantite, entre 1 et ${maxQuantity}`}
 					aria-valuemin={1}
 					aria-valuemax={maxQuantity}

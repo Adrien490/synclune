@@ -19,7 +19,11 @@ export function randomBetween(min: number, max: number, seed: number): number {
 	return min + seededRandom(seed) * (max - min);
 }
 
-/** Génère un tableau de particules avec des propriétés déterministes */
+/** Cache pour la memoization des particules générées */
+const particleCache = new Map<string, Particle[]>();
+const MAX_CACHE_SIZE = 50;
+
+/** Génère un tableau de particules avec des propriétés déterministes (memoizé) */
 export function generateParticles(
 	count: number,
 	size: [number, number],
@@ -30,9 +34,14 @@ export function generateParticles(
 	depthParallax: boolean,
 	shapes: ParticleShape[] = ["circle"]
 ): Particle[] {
+	// Clé de cache basée sur les paramètres
+	const cacheKey = JSON.stringify({ count, size, opacity, colors, duration, blur, depthParallax, shapes });
+	const cached = particleCache.get(cacheKey);
+	if (cached) return cached;
+
 	const maxBlur = Array.isArray(blur) ? blur[1] : blur;
 
-	return Array.from({ length: count }, (_, i) => {
+	const particles = Array.from({ length: count }, (_, i) => {
 		const seed = i * 1000;
 		const particleSize = randomBetween(size[0], size[1], seed + 1);
 		const particleOpacity = randomBetween(opacity[0], opacity[1], seed + 2);
@@ -72,27 +81,69 @@ export function generateParticles(
 			shape,
 		};
 	});
+
+	// Stocker dans le cache avec limite de taille
+	if (particleCache.size >= MAX_CACHE_SIZE) {
+		const firstKey = particleCache.keys().next().value;
+		if (firstKey) particleCache.delete(firstKey);
+	}
+	particleCache.set(cacheKey, particles);
+
+	return particles;
 }
 
 /** Retourne les styles CSS pour une forme de particule */
 export function getShapeStyles(
 	shape: ParticleShape,
 	size: number,
-	color: string
+	color: string,
+	useGradient: boolean = false
 ): React.CSSProperties {
 	const config = SHAPE_CONFIGS[shape];
 
-	if (config.type === "css") {
+	// Styles de base avec gradient optionnel
+	const getBackground = (baseColor: string, applyGradient: boolean) => {
+		if (!applyGradient) return { backgroundColor: baseColor };
 		return {
-			backgroundColor: color,
+			background: `radial-gradient(circle at 30% 30%,
+				color-mix(in oklch, ${baseColor}, white 30%) 0%,
+				${baseColor} 50%,
+				color-mix(in oklch, ${baseColor}, black 15%) 100%)`,
+		};
+	};
+
+	if (config.type === "css") {
+		// Traitement spécial pour pearl avec reflet réaliste
+		if (shape === "pearl") {
+			return {
+				borderRadius: "50%",
+				background: `
+					radial-gradient(ellipse 50% 40% at 30% 25%, rgba(255,255,255,0.7) 0%, transparent 60%),
+					radial-gradient(circle at 50% 50%,
+						color-mix(in oklch, ${color}, white 20%) 0%,
+						${color} 40%,
+						color-mix(in oklch, ${color}, black 10%) 100%)
+				`,
+			};
+		}
+
+		return {
+			...getBackground(color, useGradient),
 			...config.styles,
 		};
 	}
 
 	if (config.type === "clipPath") {
 		return {
-			backgroundColor: color,
+			...getBackground(color, useGradient),
 			clipPath: config.clipPath,
+		};
+	}
+
+	if (config.type === "svg") {
+		// Le SVG sera rendu dans le composant ParticleSet
+		return {
+			backgroundColor: "transparent",
 		};
 	}
 
@@ -101,6 +152,37 @@ export function getShapeStyles(
 		backgroundColor: "transparent",
 		borderRadius: "9999px",
 		border: `${Math.max(2, size * 0.15)}px solid ${color}`,
+	};
+}
+
+/** Vérifie si une forme utilise le rendu SVG */
+export function isSvgShape(shape: ParticleShape): boolean {
+	const config = SHAPE_CONFIGS[shape];
+	return config.type === "svg";
+}
+
+/** Retourne la configuration SVG pour une forme */
+export function getSvgConfig(shape: ParticleShape) {
+	const config = SHAPE_CONFIGS[shape];
+	if (config.type === "svg") {
+		return { viewBox: config.viewBox, path: config.path, fillRule: config.fillRule };
+	}
+	return null;
+}
+
+/** Génère le style de glow multi-couches optimisé */
+export function getMultiLayerGlow(
+	color: string,
+	size: number,
+	intensity: number
+): React.CSSProperties {
+	const glowSize = size * intensity;
+	return {
+		boxShadow: `
+			0 0 ${glowSize * 0.5}px ${color},
+			0 0 ${glowSize}px color-mix(in oklch, ${color}, transparent 50%),
+			0 0 ${glowSize * 1.5}px color-mix(in oklch, ${color}, transparent 75%)
+		`,
 	};
 }
 

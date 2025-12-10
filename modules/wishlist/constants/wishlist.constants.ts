@@ -4,6 +4,14 @@ import { Prisma } from "@/app/generated/prisma/client";
 // SELECT DEFINITIONS
 // ============================================================================
 
+/**
+ * Select pour les items de wishlist avec produit complet
+ * Compatible avec ProductCard pour réutilisation directe
+ *
+ * Inclut :
+ * - skuId : ID du SKU ajouté en wishlist (pour WishlistButton)
+ * - product : Produit complet avec tous ses SKUs actifs (pour ProductCard)
+ */
 export const GET_WISHLIST_SELECT = {
 	id: true,
 	userId: true,
@@ -12,54 +20,70 @@ export const GET_WISHLIST_SELECT = {
 	items: {
 		select: {
 			id: true,
+			skuId: true,
 			priceAtAdd: true,
 			createdAt: true,
 			updatedAt: true,
 			sku: {
 				select: {
 					id: true,
-					sku: true,
 					priceInclTax: true,
-					compareAtPrice: true,
-					inventory: true,
-					isActive: true,
 					product: {
 						select: {
 							id: true,
-							title: true,
 							slug: true,
+							title: true,
 							status: true,
+							type: {
+								select: {
+									id: true,
+									slug: true,
+									label: true,
+								},
+							},
+							skus: {
+								where: { isActive: true },
+								select: {
+									id: true,
+									priceInclTax: true,
+									compareAtPrice: true,
+									inventory: true,
+									isActive: true,
+									isDefault: true,
+									color: {
+										select: {
+											id: true,
+											slug: true,
+											name: true,
+											hex: true,
+										},
+									},
+									material: {
+										select: {
+											id: true,
+											name: true,
+										},
+									},
+									size: true,
+									images: {
+										where: { isPrimary: true },
+										take: 1,
+										select: {
+											url: true,
+											blurDataUrl: true,
+											altText: true,
+											mediaType: true,
+											isPrimary: true,
+										},
+									},
+								},
+								orderBy: [
+									{ isDefault: "desc" as const },
+									{ priceInclTax: "asc" as const },
+								],
+							},
 						},
 					},
-					images: {
-						where: { isPrimary: true },
-						take: 1,
-						orderBy: { createdAt: "asc" as const },
-						select: {
-							id: true,
-							url: true,
-							blurDataUrl: true,
-							thumbnailUrl: true,
-							thumbnailSmallUrl: true,
-							altText: true,
-							mediaType: true,
-							isPrimary: true,
-						},
-					},
-					color: {
-						select: {
-							id: true,
-							name: true,
-							hex: true,
-						},
-					},
-					material: {
-						select: {
-							id: true,
-							name: true,
-						},
-					},
-					size: true,
 				},
 			},
 		},

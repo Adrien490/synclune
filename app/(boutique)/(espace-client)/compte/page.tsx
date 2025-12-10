@@ -6,7 +6,6 @@ import {
 } from "@/shared/components/ui/card";
 import { PageHeader } from "@/shared/components/page-header";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
-import { AccountNav } from "@/modules/users/components/account-nav";
 import {
 	AccountStatsCards,
 	AccountStatsCardsSkeleton,
@@ -56,60 +55,54 @@ export default async function AccountPage() {
 
 			<section className={`bg-background ${ACCOUNT_SECTION_PADDING}`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="flex gap-8">
-						{/* Sidebar desktop */}
-						<AccountNav variant="desktop-only" />
+					<div className="space-y-6">
+						{/* Stats */}
+						<Suspense fallback={<AccountStatsCardsSkeleton />}>
+							<AccountStatsCards userPromise={getCurrentUser()} />
+						</Suspense>
 
-						{/* Contenu principal */}
-						<div className="flex-1 min-w-0 space-y-6">
-							{/* Stats */}
-							<Suspense fallback={<AccountStatsCardsSkeleton />}>
-								<AccountStatsCards userPromise={getCurrentUser()} />
-							</Suspense>
+						{/* Grille principale */}
+						<div className="grid gap-6 lg:grid-cols-3">
+							{/* Commandes récentes - 2/3 */}
+							<div className="lg:col-span-2">
+								<Suspense fallback={<RecentOrdersSkeleton />}>
+									<RecentOrders
+										ordersPromise={ordersPromise}
+										limit={3}
+										showViewAll
+									/>
+								</Suspense>
+							</div>
 
-							{/* Grille principale */}
-							<div className="grid gap-6 lg:grid-cols-3">
-								{/* Commandes récentes - 2/3 */}
-								<div className="lg:col-span-2">
-									<Suspense fallback={<RecentOrdersSkeleton />}>
-										<RecentOrders
-											ordersPromise={ordersPromise}
-											limit={3}
-											showViewAll
-										/>
-									</Suspense>
-								</div>
+							{/* Sidebar contenu - 1/3 */}
+							<div className="space-y-6">
+								{/* Profil */}
+								<Card>
+									<CardHeader>
+										<CardTitle className="text-lg">Profil</CardTitle>
+									</CardHeader>
+									<CardContent>
+										<div className="space-y-1">
+											<p className="font-medium truncate">
+												{user?.name || "Non défini"}
+											</p>
+											<p className="text-sm text-muted-foreground truncate">
+												{user?.email || "Non défini"}
+											</p>
+										</div>
+										<Link
+											href="/parametres"
+											className="text-sm text-foreground underline hover:text-foreground/80 mt-2 inline-block"
+										>
+											Modifier mes informations
+										</Link>
+									</CardContent>
+								</Card>
 
-								{/* Sidebar contenu - 1/3 */}
-								<div className="space-y-6">
-									{/* Profil */}
-									<Card>
-										<CardHeader>
-											<CardTitle className="text-lg">Profil</CardTitle>
-										</CardHeader>
-										<CardContent>
-											<div className="space-y-1">
-												<p className="font-medium truncate">
-													{user?.name || "Non défini"}
-												</p>
-												<p className="text-sm text-muted-foreground truncate">
-													{user?.email || "Non défini"}
-												</p>
-											</div>
-											<Link
-												href="/parametres"
-												className="text-sm text-foreground underline hover:text-foreground/80 mt-2 inline-block"
-											>
-												Modifier mes informations
-											</Link>
-										</CardContent>
-									</Card>
-
-									{/* Adresse par défaut */}
-									<Suspense fallback={<AddressInfoCardSkeleton />}>
-										<AddressInfoCard addressesPromise={addressesPromise} />
-									</Suspense>
-								</div>
+								{/* Adresse par défaut */}
+								<Suspense fallback={<AddressInfoCardSkeleton />}>
+									<AddressInfoCard addressesPromise={addressesPromise} />
+								</Suspense>
 							</div>
 						</div>
 					</div>

@@ -25,6 +25,7 @@ import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { useSwipeGesture } from "@/shared/hooks/use-swipe-gesture";
 import { CartSheetItemRow } from "./cart-sheet-item-row";
 import { RemoveCartItemAlertDialog } from "./remove-cart-item-alert-dialog";
+import { CartPriceChangeAlert } from "./cart-price-change-alert";
 import type { GetCartReturn } from "../types/cart.types";
 
 interface CartSheetProps {
@@ -116,6 +117,9 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 									{cart.items.map((item) => (
 										<CartSheetItemRow key={item.id} item={item} onClose={close} />
 									))}
+
+									{/* Alerte changement de prix */}
+									<CartPriceChangeAlert items={cart.items} />
 								</div>
 								{/* Indicateur de scroll - fade gradient */}
 								<div
@@ -143,10 +147,20 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 											role="alert"
 										>
 											<p className="font-medium">Ajuste ton panier pour continuer</p>
-											<p className="mt-0.5 text-destructive/80">
-												{itemsWithIssues.length} article
-												{itemsWithIssues.length > 1 ? "s" : ""} necessitent ton attention
-											</p>
+											<ul className="mt-1 space-y-0.5 text-destructive/80">
+												{itemsWithIssues.map((item) => (
+													<li key={item.id} className="flex items-center gap-1">
+														<span aria-hidden="true">•</span>
+														<span className="line-clamp-1">
+															{item.sku.product.title}
+															{item.sku.inventory < item.quantity && " (rupture)"}
+															{(!item.sku.isActive ||
+																item.sku.product.status !== "PUBLIC") &&
+																" (indisponible)"}
+														</span>
+													</li>
+												))}
+											</ul>
 										</div>
 									)}
 

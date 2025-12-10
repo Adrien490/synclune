@@ -9,10 +9,26 @@ export type ParticleShape =
 	| "hexagon"
 	| "ring"
 	| "heart"
-	| "crescent";
+	| "crescent"
+	// Nouvelles formes bijouterie
+	| "pearl"
+	| "drop"
+	| "sparkle-4"
+	| "butterfly-wing"
+	| "flower-petal"
+	| "leaf";
 
 /** Styles d'animation */
-export type AnimationStyle = "float" | "twinkle" | "drift" | "pulse";
+export type AnimationStyle =
+	| "float"
+	| "twinkle"
+	| "drift"
+	| "pulse"
+	// Nouveaux styles
+	| "shimmer"
+	| "cascade"
+	| "orbit"
+	| "sway";
 
 /** Props du composant ParticleSystem */
 export interface ParticleSystemProps {
@@ -46,6 +62,10 @@ export interface ParticleSystemProps {
 	springPhysics?: boolean;
 	/** Activer le parallax (particules floues bougent plus lentement) (défaut: true) */
 	depthParallax?: boolean;
+	/** Désactiver complètement le rendu des particules (défaut: false) */
+	disabled?: boolean;
+	/** Activer les gradients radiaux sur les particules (défaut: false) */
+	gradient?: boolean;
 }
 
 /** Données d'une particule générée */
@@ -69,7 +89,8 @@ export interface Particle {
 export type ShapeConfig =
 	| { type: "css"; styles: React.CSSProperties }
 	| { type: "clipPath"; clipPath: string }
-	| { type: "ring" };
+	| { type: "ring" }
+	| { type: "svg"; viewBox: string; path: string; fillRule?: "evenodd" | "nonzero" };
 
 /** Props du sous-composant ParticleSet */
 export interface ParticleSetProps {
@@ -82,6 +103,7 @@ export interface ParticleSetProps {
 	glow: boolean;
 	glowIntensity: number;
 	springPhysics: boolean;
+	gradient: boolean;
 }
 
 /** Type pour les presets d'animation */

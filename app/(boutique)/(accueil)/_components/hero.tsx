@@ -23,7 +23,7 @@ export function Hero() {
       {/* Couche 1: Particules décoratives - Multi-formes bijoux */}
       <ParticleSystem
         count={12}
-        shape={["diamond", "star", "circle", "heart"]}
+        shape={["diamond", "crescent", "circle", "heart"]}
         colors={[
           "var(--secondary)",
           "oklch(0.9 0.1 80)", // Or chaud

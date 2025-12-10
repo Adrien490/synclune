@@ -3,6 +3,7 @@
 import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider";
 import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 interface CartItemRemoveButtonProps {
 	cartItemId: string;
@@ -40,6 +41,7 @@ export function CartItemRemoveButton({
 			className="min-h-11 min-w-11 px-2 text-sm text-foreground hover:text-destructive active:text-destructive/80 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 			aria-label={`Supprimer ${itemName} du panier`}
 		>
+			<Trash2 className="size-4 mr-1" aria-hidden="true" />
 			Supprimer
 		</Button>
 	);

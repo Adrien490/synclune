@@ -32,7 +32,6 @@ export const createCheckoutSessionSchema = z.object({
 	// Adresse de facturation optionnelle (si différente de livraison)
 	billingAddress: addressSchema.optional(),
 	email: z.email().optional(), // Requis si guest
-	newsletter: z.boolean().optional().default(false), // Inscription à la newsletter
 	discountCode: z.string().max(30).optional(), // Code promo optionnel
 });
 

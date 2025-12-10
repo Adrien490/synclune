@@ -1,26 +1,24 @@
 "use client";
 
-import { Stagger } from "@/shared/components/animations"
-import { CursorPagination } from "@/shared/components/cursor-pagination"
-import type { GetWishlistReturn } from '@/modules/wishlist/data/get-wishlist'
-import { ClearWishlistButton } from '@/modules/wishlist/components/clear-wishlist-button'
-import { WishlistProductCard } from './wishlist-product-card'
+import { Stagger } from "@/shared/components/animations";
+import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { ProductCard } from "@/modules/products/components/product-card";
+import { ClearWishlistButton } from "@/modules/wishlist/components/clear-wishlist-button";
+import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";
+import type { Product } from "@/modules/products/types/product.types";
 
 interface WishlistListContentProps {
-	items: GetWishlistReturn['items']
-	pagination: GetWishlistReturn['pagination']
-	totalCount: number
-	perPage: number
+	items: GetWishlistReturn["items"];
+	pagination: GetWishlistReturn["pagination"];
+	totalCount: number;
+	perPage: number;
 }
 
 /**
  * Contenu de la liste wishlist - Client Component
  *
- * Pattern :
- * - Source de vérité unique (DB) pour éviter désynchronisations
- * - Affiche le count total et bouton "Vider"
- * - Affiche la grid des items avec animations
- * - Affiche la pagination cursor-based
+ * Réutilise ProductCard pour uniformité visuelle avec le reste du site.
+ * Les items sont tous marqués comme "en wishlist" via wishlistSkuIds.
  */
 export function WishlistListContent({
 	items,
@@ -28,14 +26,28 @@ export function WishlistListContent({
 	totalCount,
 	perPage,
 }: WishlistListContentProps) {
-	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination
+	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
+
+	// Set des SKU IDs en wishlist (tous les items affichés)
+	const wishlistSkuIds = new Set(items.map((item) => item.skuId));
+
+	// Dédupliquer par productId pour éviter doublons si plusieurs SKUs du même produit
+	const uniqueProducts = (() => {
+		const seen = new Set<string>();
+		return items.filter((item) => {
+			const productId = item.sku.product.id;
+			if (seen.has(productId)) return false;
+			seen.add(productId);
+			return true;
+		});
+	})();
 
 	return (
 		<div className="space-y-8">
 			{/* Header avec count et bouton vider */}
 			<div className="flex justify-between items-center">
 				<p className="text-sm text-muted-foreground">
-					{totalCount} création{totalCount > 1 ? 's' : ''} dans ta wishlist
+					{totalCount} création{totalCount > 1 ? "s" : ""} dans ta wishlist
 				</p>
 				<ClearWishlistButton itemCount={totalCount} />
 			</div>
@@ -46,10 +58,12 @@ export function WishlistListContent({
 				stagger={0.05}
 				delay={0.1}
 			>
-				{items.map((item) => (
-					<WishlistProductCard
+				{uniqueProducts.map((item, index) => (
+					<ProductCard
 						key={item.id}
-						item={item}
+						product={item.sku.product as Product}
+						index={index}
+						wishlistSkuIds={wishlistSkuIds}
 					/>
 				))}
 			</Stagger>
@@ -66,5 +80,5 @@ export function WishlistListContent({
 				/>
 			</div>
 		</div>
-	)
+	);
 }
