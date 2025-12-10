@@ -152,7 +152,9 @@ export default async function RootLayout({
 											<Suspense fallback={<CartSheetSkeleton />}>
 												<CartSheet cartPromise={getCart()} />
 											</Suspense>
-											<SkuSelectorDialog />
+											<Suspense fallback={null}>
+												<SkuSelectorDialog cartPromise={getCart()} />
+											</Suspense>
 										</AlertDialogStoreProvider>
 									</SheetStoreProvider>
 								</DialogStoreProvider>

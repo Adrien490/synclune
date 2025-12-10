@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, use } from "react";
+import type { GetCartReturn } from "@/modules/cart/types/cart.types";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2, Minus, Plus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
@@ -35,6 +36,11 @@ export type SkuSelectorDialogData = {
 	[key: string]: unknown;
 };
 
+interface SkuSelectorDialogProps {
+	/** Promise du panier pour vérifier les quantités disponibles */
+	cartPromise: Promise<GetCartReturn>;
+}
+
 /**
  * Dialog de sélection de variante pour ajout rapide au panier
  *
@@ -43,7 +49,12 @@ export type SkuSelectorDialogData = {
  *
  * Utilise TanStack Form (useAppForm) pour la gestion du formulaire
  */
-export function SkuSelectorDialog() {
+export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
+	const cart = use(cartPromise);
+	const cartItems = cart?.items?.map((item) => ({
+		skuId: item.sku.id,
+		quantity: item.quantity,
+	})) ?? [];
 	const { isOpen, data, close } = useDialog<SkuSelectorDialogData>(
 		SKU_SELECTOR_DIALOG_ID
 	);
@@ -334,13 +345,22 @@ export function SkuSelectorDialog() {
 								validationErrors.push("Veuillez sélectionner une taille");
 							}
 
+							// Calcul de la quantité déjà dans le panier pour ce SKU
+							const quantityInCart = selectedSku
+								? cartItems.find((item) => item.skuId === selectedSku.id)?.quantity ?? 0
+								: 0;
+							const availableToAdd = selectedSku
+								? Math.max(0, selectedSku.inventory - quantityInCart)
+								: 0;
+
 							const canAddToCart =
-								selectedSku && validationErrors.length === 0;
+								selectedSku && validationErrors.length === 0 && availableToAdd > 0;
 							const displayPrice = selectedSku
 								? selectedSku.priceInclTax
 								: activeSkus[0]?.priceInclTax || 0;
+
 							const maxQuantity = selectedSku
-								? Math.min(selectedSku.inventory, 10)
+								? Math.min(availableToAdd, 10)
 								: 10;
 
 							return (
@@ -389,9 +409,19 @@ export function SkuSelectorDialog() {
 													<span className="sr-only"> - Prix du produit</span>
 												</motion.span>
 											</AnimatePresence>
-											{selectedSku && selectedSku.inventory <= 5 && (
+											{selectedSku && selectedSku.inventory <= 5 && availableToAdd > 0 && (
 												<span className="text-xs text-amber-600 mt-1">
 													Plus que {selectedSku.inventory} en stock
+												</span>
+											)}
+											{quantityInCart > 0 && (
+												<span className="text-xs text-muted-foreground mt-1">
+													{quantityInCart} déjà dans le panier
+												</span>
+											)}
+											{selectedSku && availableToAdd === 0 && (
+												<span className="text-xs text-destructive mt-1">
+													Stock maximum atteint
 												</span>
 											)}
 										</div>
@@ -683,3 +713,4 @@ export function SkuSelectorDialog() {
 		</ResponsiveDialog>
 	);
 }
+
