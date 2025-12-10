@@ -6,7 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { cn } from "@/shared/utils/cn";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef } from "react";
@@ -15,12 +15,13 @@ import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-b
 import { GalleryMediaRenderer } from "@/modules/media/components/gallery-media-renderer";
 import { useGalleryKeyboard } from "@/modules/media/hooks/use-gallery-keyboard";
 import { useGalleryNavigation } from "@/modules/media/hooks/use-gallery-navigation";
-import { useGallerySwipe } from "@/modules/media/hooks/use-gallery-swipe";
 import { useMediaErrors } from "@/modules/media/hooks/use-media-errors";
+import useEmblaCarousel from "embla-carousel-react";
+
+type EmblaOptionsType = Parameters<typeof useEmblaCarousel>[0];
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { GalleryThumbnailsGrid, GalleryThumbnailsCarousel } from "@/modules/media/components/gallery-thumbnails";
-import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 
 interface GalleryProps {
 	product: GetProductReturn;
@@ -112,13 +113,43 @@ function GalleryContent({ product, title }: GalleryProps) {
 		navigatePrev,
 	} = useGalleryNavigation({ totalImages: safeImages.length });
 
-	// Hook: Swipe mobile avec feedback visuel
-	const { onTouchStart, onTouchMove, onTouchEnd, swipeOffset, isSwiping } = useGallerySwipe({
-		onSwipeLeft: navigateNext,
-		onSwipeRight: navigatePrev,
-		totalImages: safeImages.length,
-		currentIndex: optimisticIndex,
-	});
+	// Hook: Embla Carousel pour le swipe fluide natif
+	const emblaOptions: EmblaOptionsType = {
+		loop: safeImages.length > 1,
+		align: "center",
+		containScroll: false,
+		duration: prefersReducedMotion ? 0 : 25,
+		dragFree: false,
+		watchSlides: true,
+		watchResize: true,
+	};
+
+	const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions);
+
+	// Sync: Embla → URL (quand l'utilisateur swipe)
+	useEffect(() => {
+		if (!emblaApi) return;
+
+		const onSelect = () => {
+			const index = emblaApi.selectedScrollSnap();
+			if (index !== optimisticIndex) {
+				navigateToIndex(index);
+			}
+		};
+
+		emblaApi.on("select", onSelect);
+		return () => {
+			emblaApi.off("select", onSelect);
+		};
+	}, [emblaApi, optimisticIndex, navigateToIndex]);
+
+	// Sync: URL/Thumbnails/Keyboard → Embla
+	useEffect(() => {
+		if (!emblaApi) return;
+		if (emblaApi.selectedScrollSnap() !== optimisticIndex) {
+			emblaApi.scrollTo(optimisticIndex);
+		}
+	}, [emblaApi, optimisticIndex]);
 
 	// Hook: Navigation clavier
 	useGalleryKeyboard({
@@ -130,6 +161,23 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	// Hook: Gestion erreurs média avec retry
 	const { handleMediaError, hasError, retryMedia } = useMediaErrors();
+
+	// Gestion vidéos: pause/play selon la slide active
+	const emblaContainerRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		const container = emblaContainerRef.current;
+		if (!container) return;
+
+		const videos = container.querySelectorAll("video");
+		videos.forEach((video, index) => {
+			if (index === optimisticIndex) {
+				video.play().catch(() => {}); // Autoplay peut être bloqué
+			} else {
+				video.pause();
+				video.currentTime = 0;
+			}
+		});
+	}, [optimisticIndex]);
 
 	// Preload de l'image suivante pour améliorer la latence perçue
 	useEffect(() => {
@@ -239,34 +287,18 @@ function GalleryContent({ product, title }: GalleryProps) {
 							</div>
 						)}
 
-						{/* Image principale */}
+						{/* Image principale avec Embla Carousel */}
 						<div className="gallery-main relative group order-2 lg:order-2">
 						<div
 							className={cn(
 								"relative aspect-square overflow-hidden rounded-2xl sm:rounded-3xl",
 								"bg-linear-organic border border-border sm:border-2",
 								"shadow-md sm:shadow-lg hover:shadow-lg transition-all duration-300",
-								"w-full md:max-w-none",
-								current.mediaType === "IMAGE" && "cursor-zoom-in"
+								"w-full md:max-w-none"
 							)}
-							{...(current.mediaType === "IMAGE" && {
-								role: "button",
-								tabIndex: 0,
-								"aria-label": `Agrandir l'image ${optimisticIndex + 1} : ${current.alt || title}`,
-								onClick: () => openLightbox(),
-								onKeyDown: (e: React.KeyboardEvent) => {
-									if (e.key === "Enter" || e.key === " ") {
-										e.preventDefault();
-										openLightbox();
-									}
-								},
-							})}
-							onTouchStart={onTouchStart}
-							onTouchMove={onTouchMove}
-							onTouchEnd={onTouchEnd}
 						>
 							{/* Effet hover subtil */}
-							<div className="absolute inset-0 ring-1 ring-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl sm:rounded-3xl" />
+							<div className="absolute inset-0 ring-1 ring-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl sm:rounded-3xl z-10" />
 
 							{/* Compteur d'images */}
 							{safeImages.length > 1 && (
@@ -276,7 +308,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 									</div>
 								</div>
 							)}
-
 
 							{/* Badge zoom (images uniquement) - visible sur mobile, étendu au hover sur desktop */}
 							{current.mediaType === "IMAGE" && (
@@ -290,41 +321,44 @@ function GalleryContent({ product, title }: GalleryProps) {
 								</div>
 							)}
 
-							{/* Média (Video ou Image) avec transitions fluides et feedback swipe */}
-							<AnimatePresence mode="wait">
-								<motion.div
-									key={current.id}
-									initial={prefersReducedMotion ? false : { opacity: 0, scale: MOTION_CONFIG.transform.scaleFrom }}
-									animate={{
-										opacity: 1,
-										scale: 1,
-										x: swipeOffset,
-									}}
-									exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 1.02 }}
-									transition={{
-										duration: prefersReducedMotion ? 0 : (isSwiping ? 0 : MOTION_CONFIG.duration.collapse),
-										ease: MOTION_CONFIG.easing.easeOut,
-										// Spring animation pour le snap-back (retour élastique quand on relâche)
-										x: prefersReducedMotion
-											? { duration: 0 }
-											: isSwiping
-												? { duration: 0 } // Instant pendant le swipe
-												: { type: "spring", stiffness: 300, damping: 30 } // Spring au relâchement
-									}}
-									className="absolute inset-0"
-									style={{ willChange: isSwiping ? "transform" : "auto" }}
-								>
-									<GalleryMediaRenderer
-										media={current}
-										title={title}
-										index={optimisticIndex}
-										isFirst={optimisticIndex === 0}
-										hasError={hasError(current.id)}
-										onError={() => handleMediaError(current.id)}
-										onRetry={() => retryMedia(current.id)}
-									/>
-								</motion.div>
-							</AnimatePresence>
+							{/* Embla Carousel - Glissement fluide natif */}
+							<div className="absolute inset-0 overflow-hidden" ref={emblaRef}>
+								<div className="flex h-full touch-pan-y" ref={emblaContainerRef}>
+									{safeImages.map((media, index) => (
+										<div
+											key={media.id}
+											className={cn(
+												"flex-none w-full h-full min-w-0 relative",
+												media.mediaType === "IMAGE" && "cursor-zoom-in"
+											)}
+											aria-hidden={index !== optimisticIndex}
+											{...(media.mediaType === "IMAGE" && {
+												role: "button",
+												tabIndex: index === optimisticIndex ? 0 : -1,
+												"aria-label": `Agrandir l'image ${index + 1} : ${media.alt || title}`,
+												onClick: () => openLightbox(),
+												onKeyDown: (e: React.KeyboardEvent) => {
+													if (e.key === "Enter" || e.key === " ") {
+														e.preventDefault();
+														openLightbox();
+													}
+												},
+											})}
+										>
+											<GalleryMediaRenderer
+												media={media}
+												title={title}
+												index={index}
+												isFirst={index === 0}
+												isActive={index === optimisticIndex}
+												hasError={hasError(media.id)}
+												onError={() => handleMediaError(media.id)}
+												onRetry={() => retryMedia(media.id)}
+											/>
+										</div>
+									))}
+								</div>
+							</div>
 
 							{/* Contrôles de navigation - Touch targets 48px sur mobile (WCAG 2.5.5) */}
 							{safeImages.length > 1 && (

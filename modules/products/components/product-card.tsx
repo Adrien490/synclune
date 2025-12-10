@@ -12,11 +12,11 @@ import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-
 import { ColorSwatches } from "./color-swatches";
 import type { Product } from "@/modules/products/types/product.types";
 import {
-	getPrimarySkuForList,
 	getPrimaryPriceForList,
 	getStockInfoForList,
 	getPrimaryImageForList,
 	getAvailableColorsForList,
+	getSkuByColorForList,
 } from "@/modules/products/services/product-list-helpers";
 
 interface ProductCardProps {
@@ -55,7 +55,6 @@ export function ProductCard({
 
 	// Déstructuration des données du produit
 	const { slug, title } = product;
-	const primarySku = getPrimarySkuForList(product);
 	const { price, compareAtPrice } = getPrimaryPriceForList(product);
 	const stockInfo = getStockInfoForList(product);
 	const primaryImage = getPrimaryImageForList(product);
@@ -83,6 +82,9 @@ export function ProductCard({
 		}
 		return primaryImage;
 	})();
+
+	// SKU dynamique selon la couleur sélectionnée (pour wishlist et panier)
+	const currentSku = getSkuByColorForList(product, selectedColorSlug);
 
 	// Génération ID unique pour aria-labelledby
 	// Sanitise le slug pour éviter les ID HTML invalides (accents, apostrophes, etc.)
@@ -154,9 +156,9 @@ export function ProductCard({
 				)}
 
 				{/* Bouton wishlist - EN DEHORS du Link */}
-				{primarySku && (
+				{currentSku && (
 					<WishlistButton
-						skuId={primarySku.id}
+						skuId={currentSku.id}
 						isInWishlist={isInWishlist ?? false}
 						productTitle={title}
 						className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity duration-200"
@@ -178,9 +180,9 @@ export function ProductCard({
 				/>
 
 					{/* Bouton d'ajout au panier - EN DEHORS du Link */}
-				{primarySku && stockStatus === "in_stock" && (
+				{currentSku && stockStatus === "in_stock" && (
 					<AddToCartCardButton
-						skuId={primarySku.id}
+						skuId={currentSku.id}
 						productTitle={title}
 						product={product}
 						preselectedColor={selectedColorSlug}

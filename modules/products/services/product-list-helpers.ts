@@ -98,6 +98,29 @@ export function getPrimarySkuForList(
 }
 
 /**
+ * Récupère le SKU correspondant à une couleur sélectionnée
+ * Fallback sur le SKU principal si la couleur n'existe pas ou n'est pas active
+ *
+ * @param product - Produit avec ses SKUs
+ * @param colorSlug - Slug de la couleur sélectionnée (ou null)
+ * @returns SKU correspondant ou SKU principal en fallback
+ */
+export function getSkuByColorForList(
+	product: ProductFromList,
+	colorSlug: string | null
+): SkuFromList | null {
+	if (!colorSlug || !product.skus) {
+		return getPrimarySkuForList(product);
+	}
+
+	const skuWithColor = product.skus.find(
+		(sku) => sku.color?.slug === colorSlug && sku.isActive
+	);
+
+	return skuWithColor ?? getPrimarySkuForList(product);
+}
+
+/**
  * Récupère le prix principal (priceInclTax pour affichage client)
  * Inclut compareAtPrice pour affichage des promotions
  *

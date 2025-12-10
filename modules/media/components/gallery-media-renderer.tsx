@@ -17,6 +17,7 @@ interface GalleryMediaRendererProps {
 	title: string;
 	index: number;
 	isFirst: boolean;
+	isActive?: boolean;
 	hasError: boolean;
 	onError: () => void;
 	onRetry: () => void;
@@ -33,6 +34,7 @@ export function GalleryMediaRenderer({
 	title,
 	index,
 	isFirst,
+	isActive = true,
 	hasError,
 	onError,
 	onRetry,
@@ -67,11 +69,11 @@ export function GalleryMediaRenderer({
 				<video
 					key={media.id}
 					className="w-full h-full object-cover"
-					autoPlay
+					autoPlay={isActive}
 					muted
 					loop
 					playsInline
-					preload="metadata"
+					preload={isActive ? "metadata" : "none"}
 					poster={media.thumbnailUrl || media.thumbnailSmallUrl || undefined}
 					aria-label={media.alt || `${title} - Vidéo ${index + 1}`}
 					onError={onError}
@@ -88,15 +90,17 @@ export function GalleryMediaRenderer({
 		return <MediaErrorFallback type="image" onRetry={onRetry} />;
 	}
 
-	// Image - priority pour la première image (above-fold)
+	// Image - priority pour la première image active (above-fold)
+	// Lazy loading pour les images non actives (Embla rend toutes les slides)
 	return (
 		<Image
 			src={media.url}
 			alt={media.alt || PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1)}
 			fill
 			className="object-cover"
-			priority={isFirst}
-			fetchPriority={isFirst ? "high" : "auto"}
+			priority={isFirst && isActive}
+			fetchPriority={isFirst && isActive ? "high" : "auto"}
+			loading={isActive ? "eager" : "lazy"}
 			quality={MAIN_IMAGE_QUALITY}
 			sizes="(max-width: 768px) 100vw, 60vw"
 			placeholder={media.blurDataUrl ? "blur" : "empty"}
