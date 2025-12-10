@@ -101,9 +101,7 @@ export const signUpEmailSchema = z
 			.min(2, { message: "Le prénom doit contenir au moins 2 caractères" })
 			.max(100, { message: "Le prénom ne doit pas dépasser 100 caractères" }),
 		termsAccepted: z.literal(true, {
-			errorMap: () => ({
-				message: "Tu dois accepter les conditions générales et la politique de confidentialité",
-			}),
+			message: "Tu dois accepter les conditions générales et la politique de confidentialité",
 		}),
 		callbackURL: callbackURLSchema.optional(),
 	})
