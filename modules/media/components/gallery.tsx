@@ -9,7 +9,7 @@ import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { buildGallery } from "@/modules/media/utils/build-gallery";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
 import { GalleryMediaRenderer } from "@/modules/media/components/gallery-media-renderer";
@@ -131,6 +131,19 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Hook: Gestion erreurs média avec retry
 	const { handleMediaError, hasError, retryMedia } = useMediaErrors();
 
+	// Preload de l'image suivante pour améliorer la latence perçue
+	useEffect(() => {
+		if (safeImages.length <= 1) return;
+
+		const nextIndex = (optimisticIndex + 1) % safeImages.length;
+		const nextMedia = safeImages[nextIndex];
+
+		// Ne preload que les images (pas les vidéos)
+		if (nextMedia?.mediaType === "IMAGE" && nextMedia.url) {
+			const img = new Image();
+			img.src = nextMedia.url;
+		}
+	}, [optimisticIndex, safeImages]);
 
 	// Handlers mémorisés pour les boutons navigation (évite re-renders)
 	const handlePrev = (e: React.MouseEvent) => {
@@ -201,17 +214,28 @@ function GalleryContent({ product, title }: GalleryProps) {
 							: "grid-cols-1"
 					)}>
 						{/* Thumbnails verticales - Desktop uniquement */}
+						{/* Indicateur de scroll avec gradient en bas quand scrollable */}
 						{safeImages.length > 1 && (
-							<div className="hidden lg:flex flex-col gap-2 order-1 max-h-[min(500px,60vh)] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent pr-1">
-								<GalleryThumbnailsGrid
-									medias={safeImages}
-									currentIndex={optimisticIndex}
-									title={title}
-									onNavigate={navigateToIndex}
-									onError={handleMediaError}
-									hasError={hasError}
-									thumbnailClassName="shrink-0 h-auto hover:shadow-sm"
-								/>
+							<div className="hidden lg:block relative order-1">
+								{/* Container scrollable */}
+								<div className="flex flex-col gap-2 max-h-[min(500px,60vh)] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent pr-1 scroll-fade-y">
+									<GalleryThumbnailsGrid
+										medias={safeImages}
+										currentIndex={optimisticIndex}
+										title={title}
+										onNavigate={navigateToIndex}
+										onError={handleMediaError}
+										hasError={hasError}
+										thumbnailClassName="shrink-0 h-auto hover:shadow-sm"
+									/>
+								</div>
+								{/* Gradient indiquant plus de contenu en bas (visible si > 5 images) */}
+								{safeImages.length > 5 && (
+									<div
+										className="absolute bottom-0 left-0 right-1 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none"
+										aria-hidden="true"
+									/>
+								)}
 							</div>
 						)}
 
@@ -254,13 +278,13 @@ function GalleryContent({ product, title }: GalleryProps) {
 							)}
 
 
-							{/* Badge zoom (images uniquement) */}
+							{/* Badge zoom (images uniquement) - visible sur mobile, étendu au hover sur desktop */}
 							{current.mediaType === "IMAGE" && (
-								<div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-									<div className="bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-lg flex items-center gap-1.5">
-										<ZoomIn className="w-3 h-3 sm:w-4 sm:h-4" />
-										<span className="hidden sm:inline">
-											Cliquer pour zoomer
+								<div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 transition-opacity duration-300">
+									<div className="bg-black/60 backdrop-blur-sm text-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-lg flex items-center gap-1.5 group/zoom">
+										<ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+										<span className="hidden sm:max-w-0 sm:group-hover:max-w-[120px] sm:overflow-hidden sm:transition-all sm:duration-300 sm:group-hover/zoom:inline">
+											Zoomer
 										</span>
 									</div>
 								</div>
@@ -280,7 +304,12 @@ function GalleryContent({ product, title }: GalleryProps) {
 									transition={{
 										duration: prefersReducedMotion ? 0 : (isSwiping ? 0 : MOTION_CONFIG.duration.collapse),
 										ease: MOTION_CONFIG.easing.easeOut,
-										x: { duration: prefersReducedMotion ? 0 : (isSwiping ? 0 : MOTION_CONFIG.duration.collapse), ease: MOTION_CONFIG.easing.easeOut }
+										// Spring animation pour le snap-back (retour élastique quand on relâche)
+										x: prefersReducedMotion
+											? { duration: 0 }
+											: isSwiping
+												? { duration: 0 } // Instant pendant le swipe
+												: { type: "spring", stiffness: 300, damping: 30 } // Spring au relâchement
 									}}
 									className="absolute inset-0"
 									style={{ willChange: isSwiping ? "transform" : "auto" }}
@@ -307,7 +336,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 											// Positionnement
 											"absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10",
 											// Touch targets responsives (WCAG 2.5.5)
-											"size-12 md:size-10",
+											"size-12 md:size-11",
 											// Forme et fond primary
 											"rounded-full bg-primary",
 											// Ombres
@@ -333,7 +362,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 											// Positionnement
 											"absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10",
 											// Touch targets responsives (WCAG 2.5.5)
-											"size-12 md:size-10",
+											"size-12 md:size-11",
 											// Forme et fond primary
 											"rounded-full bg-primary",
 											// Ombres
@@ -388,7 +417,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 							)}
 
 							{/* Dots indicator - Navigation rapide visuelle */}
-							<div className="flex justify-center gap-1.5 mt-3" role="group" aria-label="Navigation galerie">
+							{/* Touch targets 44×44px minimum (WCAG 2.5.5) avec dots visuels 8×8px */}
+							<div className="flex justify-center gap-0.5 mt-3" role="group" aria-label="Navigation galerie">
 								{safeImages.map((_, i) => (
 									<button
 										key={i}
@@ -396,13 +426,17 @@ function GalleryContent({ product, title }: GalleryProps) {
 										onClick={() => navigateToIndex(i)}
 										aria-current={i === optimisticIndex ? "true" : undefined}
 										aria-label={`Aller à l'image ${i + 1} sur ${safeImages.length}`}
-										className={cn(
-											"h-2 rounded-full transition-all duration-200",
-											i === optimisticIndex
-												? "bg-primary w-4"
-												: "bg-muted-foreground/30 w-2 hover:bg-muted-foreground/50"
-										)}
-									/>
+										className="relative size-11 flex items-center justify-center touch-manipulation"
+									>
+										<span
+											className={cn(
+												"h-2 rounded-full transition-all duration-200",
+												i === optimisticIndex
+													? "bg-primary w-4"
+													: "bg-muted-foreground/30 w-2 group-hover:bg-muted-foreground/50"
+											)}
+										/>
+									</button>
 								))}
 							</div>
 						</div>

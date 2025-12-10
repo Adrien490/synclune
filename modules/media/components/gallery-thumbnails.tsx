@@ -57,6 +57,7 @@ export function GalleryThumbnailsGrid({
 /**
  * Liste de thumbnails en carousel horizontal
  * Utilisé pour mobile quand il y a plus de 6 images
+ * Inclut des indicateurs de scroll (gradients) aux bords
  */
 export function GalleryThumbnailsCarousel({
 	medias,
@@ -69,33 +70,40 @@ export function GalleryThumbnailsCarousel({
 	className,
 }: ThumbnailsListProps) {
 	return (
-		<Carousel
-			opts={{
-				align: "start",
-				dragFree: true,
-			}}
-			className={className}
-		>
-			<CarouselContent className="-ml-2">
-				{medias.map((media, index) => (
-					<CarouselItem
-						key={media.id}
-						className="pl-2 basis-1/4 sm:basis-1/5 md:basis-1/6"
-					>
-						<GalleryThumbnail
-							media={media}
-							index={index}
-							isActive={index === currentIndex}
-							hasError={hasError(media.id)}
-							title={title}
-							onClick={() => onNavigate(index)}
-							onError={() => onError(media.id)}
-							className={thumbnailClassName}
-							isLCPCandidate={index === 0}
-						/>
-					</CarouselItem>
-				))}
-			</CarouselContent>
-		</Carousel>
+		<div className="relative">
+			<Carousel
+				opts={{
+					align: "start",
+					dragFree: true,
+				}}
+				className={className}
+			>
+				<CarouselContent className="-ml-2">
+					{medias.map((media, index) => (
+						<CarouselItem
+							key={media.id}
+							className="pl-2 basis-1/4 sm:basis-1/5 md:basis-1/6"
+						>
+							<GalleryThumbnail
+								media={media}
+								index={index}
+								isActive={index === currentIndex}
+								hasError={hasError(media.id)}
+								title={title}
+								onClick={() => onNavigate(index)}
+								onError={() => onError(media.id)}
+								className={thumbnailClassName}
+								isLCPCandidate={index === 0}
+							/>
+						</CarouselItem>
+					))}
+				</CarouselContent>
+			</Carousel>
+			{/* Gradients indiquant qu'on peut scroller horizontalement */}
+			<div
+				className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none"
+				aria-hidden="true"
+			/>
+		</div>
 	);
 }
