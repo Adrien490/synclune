@@ -11,10 +11,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef, useEffect } from "react";
 import { toast } from "sonner";
-import {
-	MOTION_CONFIG,
-	maybeReduceMotion,
-} from "@/shared/components/animations/motion.config";
+import { maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "../hooks/use-fab-visibility";
 import type { FabKey } from "../constants";
 
@@ -94,7 +91,12 @@ export function Fab({
 	// Respecter prefers-reduced-motion avec config globale
 	const prefersReducedMotion = useReducedMotion();
 	const transition = maybeReduceMotion(
-		MOTION_CONFIG.easing.spring,
+		{
+			type: "spring",
+			stiffness: 400,
+			damping: 30,
+			mass: 0.5,
+		},
 		prefersReducedMotion ?? false
 	);
 
