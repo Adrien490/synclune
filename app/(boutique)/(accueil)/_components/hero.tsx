@@ -6,13 +6,10 @@ import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { BRAND } from "@/shared/constants/brand";
-import { Heart } from "lucide-react";
+import { Heart, ImageIcon } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
-import { ProductCarousel } from "@/modules/products/components/product-carousel";
-import { ProductCarouselSkeleton } from "@/modules/products/components/product-carousel-skeleton";
 
-export async function Hero() {
+export function Hero() {
   return (
     <section
       id="hero"
@@ -137,11 +134,23 @@ export async function Hero() {
             </Fade>
           </div>
 
-          {/* Carousel de bijoux à droite */}
+          {/* Image statique à droite */}
           <Fade y={20} delay={0.3} duration={0.7}>
-            <Suspense fallback={<ProductCarouselSkeleton />}>
-              <ProductCarousel />
-            </Suspense>
+            <div className="relative aspect-square max-w-md mx-auto lg:max-w-none">
+              {/* Placeholder - Remplacer par une vraie image avec next/image */}
+              <div className="w-full h-full rounded-3xl bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20 border border-primary/10 shadow-2xl flex items-center justify-center overflow-hidden">
+                <div className="text-center space-y-4 p-8">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                    <ImageIcon className="w-10 h-10 text-primary/50" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Image à venir
+                  </p>
+                </div>
+              </div>
+              {/* Effet décoratif */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-3xl blur-2xl -z-10 opacity-50" />
+            </div>
           </Fade>
         </div>
       </div>

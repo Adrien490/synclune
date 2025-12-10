@@ -72,7 +72,7 @@ export default async function Page() {
 				}}
 			/>
 
-			{/* 1. Hero - Capture d'attention + Positionnement de marque + Carousel bijoux */}
+			{/* 1. Hero - Capture d'attention + Positionnement de marque */}
 			<Hero />
 
 			{/* 2. Latest Creations - Product-first approach: 12 nouveautés pour engagement maximal */}
