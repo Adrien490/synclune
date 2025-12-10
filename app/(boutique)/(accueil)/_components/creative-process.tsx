@@ -114,7 +114,11 @@ export async function CreativeProcess() {
 			<div className="absolute inset-0" aria-hidden="true">
 				<ParticleSystem
 					count={6}
-					colorPreset="dore"
+					colors={[
+						"var(--secondary)",
+						"oklch(0.95 0.06 70)", // Peach pastel
+						"oklch(0.97 0.03 80)", // Cream pastel
+					]}
 					blur={[15, 45]}
 					shape="diamond"
 					opacity={[0.12, 0.35]}

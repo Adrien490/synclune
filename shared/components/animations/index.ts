@@ -22,7 +22,7 @@ export { Presence } from "./presence";
 // Background Animations (effets décoratifs)
 export { LiquidGradient } from "./liquid-gradient";
 export { GlitterSparkles } from "./glitter-sparkles";
-export { ParticleSystem } from "./particle-system";
+export { ParticleSystem, PARTICLE_PRESETS } from "./particle-system/index";
 export { DecorativeHalo, DecorativeHaloGroup } from "./decorative-halo";
 export { BubbleDream } from "./bubble-dream";
 
@@ -47,9 +47,9 @@ export type { LiquidGradientProps } from "./liquid-gradient";
 export type { GlitterSparklesProps } from "./glitter-sparkles";
 export type {
 	ParticleSystemProps,
-	ColorPreset,
 	ParticleShape,
-} from "./particle-system";
+	AnimationStyle,
+} from "./particle-system/index";
 export type { BubbleDreamProps } from "./bubble-dream";
 export type { HeroBackgroundGlitterProps } from "./hero-background-glitter";
 
