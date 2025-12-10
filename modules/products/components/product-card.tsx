@@ -23,8 +23,8 @@ interface ProductCardProps {
 	product: Product;
 	/** Index dans la liste (pour priority images above-fold) */
 	index?: number;
-	/** Indique si le SKU est dans la wishlist (optionnel, défaut false) */
-	isInWishlist?: boolean;
+	/** Set des SKU IDs présents dans la wishlist (pour état dynamique selon couleur sélectionnée) */
+	wishlistSkuIds?: Set<string>;
 }
 
 /**
@@ -48,7 +48,7 @@ interface ProductCardProps {
 export function ProductCard({
 	product,
 	index,
-	isInWishlist,
+	wishlistSkuIds,
 }: ProductCardProps) {
 	// État local pour la couleur sélectionnée
 	const [selectedColorSlug, setSelectedColorSlug] = useState<string | null>(null);
@@ -156,10 +156,11 @@ export function ProductCard({
 				)}
 
 				{/* Bouton wishlist - EN DEHORS du Link */}
+				{/* État dynamique selon le SKU sélectionné (couleur) */}
 				{currentSku && (
 					<WishlistButton
 						skuId={currentSku.id}
-						isInWishlist={isInWishlist ?? false}
+						isInWishlist={wishlistSkuIds?.has(currentSku.id) ?? false}
 						productTitle={title}
 						className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity duration-200"
 					/>

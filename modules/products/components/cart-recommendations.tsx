@@ -66,17 +66,14 @@ export async function CartRecommendations({
 				y={30}
 				amount={0.1}
 			>
-				{recommendations.map((product, index) => {
-					const primarySku = getPrimarySkuForList(product);
-					return (
-						<ProductCard
-							key={product.id}
-							product={product}
-							index={index}
-							isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
-						/>
-					);
-				})}
+				{recommendations.map((product, index) => (
+					<ProductCard
+						key={product.id}
+						product={product}
+						index={index}
+						wishlistSkuIds={wishlistSkuIds}
+					/>
+				))}
 			</Stagger>
 		</aside>
 	);

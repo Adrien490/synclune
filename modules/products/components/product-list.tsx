@@ -9,7 +9,6 @@ import {
 } from "@/shared/components/ui/empty";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import { getPrimarySkuForList } from "@/modules/products/services/product-list-helpers";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { SearchX } from "lucide-react";
 import { use } from "react";
@@ -52,17 +51,14 @@ export function ProductList({
 		<div className="space-y-8 group-has-[[data-pending]]/container:animate-pulse">
 			{/* Grille des produits */}
 			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-				{products.map((product) => {
-					const primarySku = getPrimarySkuForList(product);
-					return (
-						<div key={product.id} className="product-item">
-							<ProductCard
-								product={product}
-								isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
-							/>
-						</div>
-					);
-				})}
+				{products.map((product) => (
+					<div key={product.id} className="product-item">
+						<ProductCard
+							product={product}
+							wishlistSkuIds={wishlistSkuIds}
+						/>
+					</div>
+				))}
 			</div>
 			<div className="flex justify-end mt-8 lg:mt-12">
 				<CursorPagination

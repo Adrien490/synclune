@@ -6,7 +6,7 @@ import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { BRAND } from "@/shared/constants/brand";
-import { Heart, ImageIcon } from "lucide-react";
+import { Heart } from "lucide-react";
 import Link from "next/link";
 
 export function Hero() {
@@ -26,11 +26,11 @@ export function Hero() {
       <GlitterSparkles sizeRange={[2, 5]} glowIntensity={0.6} />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
-        <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-center">
-          {/* Contenu à gauche */}
-          <div className="space-y-6 sm:space-y-8 md:space-y-10 flex flex-col items-center lg:items-start">
+        <div className="flex flex-col items-center">
+          {/* Contenu centré */}
+          <div className="space-y-6 sm:space-y-8 md:space-y-10 flex flex-col items-center">
             {/* Titre principal */}
-            <div className="space-y-4 sm:space-y-6 text-center lg:text-left w-full">
+            <div className="space-y-4 sm:space-y-6 text-center w-full">
               <Fade y={12} duration={0.6}>
                 <SectionTitle
                   as="h1"
@@ -38,14 +38,14 @@ export function Hero() {
                   align="center"
                   weight="light"
                   id="hero-title"
-                  className="text-foreground lg:text-left"
+                  className="text-foreground"
                   itemProp="headline"
                 >
                   Des bijoux colorés
                 </SectionTitle>
               </Fade>
               <Fade y={8} delay={0.2} duration={0.6}>
-                <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 text-foreground font-light tracking-tight antialiased max-w-2xl mx-auto lg:mx-0">
+                <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 text-foreground font-light tracking-tight antialiased max-w-2xl mx-auto">
                   Crées à la main pour des occasions particulières, ou pour sublimer votre quotidien{" "}
                   <span role="img" aria-label="coeur">
                     <Heart
@@ -94,7 +94,7 @@ export function Hero() {
 
             {/* Réseaux sociaux - Hover plus visible */}
             <Fade y={8} delay={0.6} duration={0.5}>
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 w-full">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full">
                 <p className="text-sm text-muted-foreground">Mes réseaux :</p>
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                   <Link
@@ -133,25 +133,6 @@ export function Hero() {
               </div>
             </Fade>
           </div>
-
-          {/* Image statique à droite */}
-          <Fade y={20} delay={0.3} duration={0.7}>
-            <div className="relative aspect-square max-w-md mx-auto lg:max-w-none">
-              {/* Placeholder - Remplacer par une vraie image avec next/image */}
-              <div className="w-full h-full rounded-3xl bg-linear-to-br from-primary/20 via-primary/10 to-secondary/20 border border-primary/10 shadow-2xl flex items-center justify-center overflow-hidden">
-                <div className="text-center space-y-4 p-8">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-                    <ImageIcon className="w-10 h-10 text-primary/50" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Image à venir
-                  </p>
-                </div>
-              </div>
-              {/* Effet décoratif */}
-              <div className="absolute -inset-1 bg-linear-to-r from-primary/20 to-secondary/20 rounded-3xl blur-2xl -z-10 opacity-50" />
-            </div>
-          </Fade>
         </div>
       </div>
 

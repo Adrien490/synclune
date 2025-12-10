@@ -93,7 +93,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 								<ProductCard
 									product={product}
 									index={index}
-									isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
+									wishlistSkuIds={wishlistSkuIds}
 								/>
 							</div>
 						);

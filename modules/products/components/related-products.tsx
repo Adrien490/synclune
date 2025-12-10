@@ -67,17 +67,14 @@ export async function RelatedProducts({
 				y={30}
 				amount={0.1}
 			>
-				{relatedProducts.map((product, index) => {
-					const primarySku = getPrimarySkuForList(product);
-					return (
-						<ProductCard
-							key={product.id}
-							product={product}
-							index={index}
-							isInWishlist={!!primarySku?.id && wishlistSkuIds.has(primarySku.id)}
-						/>
-					);
-				})}
+				{relatedProducts.map((product, index) => (
+					<ProductCard
+						key={product.id}
+						product={product}
+						index={index}
+						wishlistSkuIds={wishlistSkuIds}
+					/>
+				))}
 			</Stagger>
 
 			{/* CTA pour voir plus de produits */}
