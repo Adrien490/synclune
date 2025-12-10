@@ -170,9 +170,8 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 											size="lg"
 											className="w-full group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 											onClick={close}
-											asChild
 										>
-											<Link href="/produits">Continuer mes achats</Link>
+											Continuer mes achats
 										</Button>
 									</div>
 
