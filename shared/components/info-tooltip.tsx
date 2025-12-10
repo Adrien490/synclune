@@ -3,6 +3,7 @@
 import { HelpCircle } from "lucide-react";
 import * as React from "react";
 
+import { Button } from "@/shared/components/ui/button";
 import {
 	Tooltip,
 	TooltipContent,
@@ -34,13 +35,15 @@ export function InfoTooltip({
 	return (
 		<Tooltip>
 			<TooltipTrigger asChild>
-				<button
+				<Button
 					type="button"
-					className="inline-flex items-center justify-center ml-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full"
+					variant="ghost"
+					size="icon"
+					className="h-auto w-auto p-0 ml-1.5 rounded-full hover:bg-transparent"
 					aria-label="Aide contextuelle"
 				>
 					<HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-				</button>
+				</Button>
 			</TooltipTrigger>
 			<TooltipContent side={side} className={className}>
 				<div className="max-w-xs text-sm">{children}</div>

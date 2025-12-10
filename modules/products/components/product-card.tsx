@@ -142,7 +142,7 @@ export function ProductCard({
 						aria-label={`Stock limité : plus que ${inventory} exemplaire${inventory && inventory > 1 ? "s" : ""} disponible${inventory && inventory > 1 ? "s" : ""}`}
 						className="absolute top-2.5 left-2.5 bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md"
 					>
-						Plus que {inventory} en stock !
+						Plus que {inventory} !
 					</div>
 				)}
 

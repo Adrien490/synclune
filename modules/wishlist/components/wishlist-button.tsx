@@ -3,6 +3,7 @@
 import { HeartIcon } from "@/shared/components/icons/heart-icon";
 import { useWishlistToggle } from "@/modules/wishlist/hooks/use-wishlist-toggle";
 import { cn } from "@/shared/utils/cn";
+import { Button } from "@/shared/components/ui/button";
 
 interface WishlistButtonProps {
 	skuId: string;
@@ -46,21 +47,23 @@ export function WishlistButton({
 	return (
 		<form action={action} className={className}>
 			<input type="hidden" name="skuId" value={skuId} />
-			<button
+			<Button
 				type="submit"
+				variant="ghost"
+				size="icon"
 				disabled={isPending}
 				onClick={(e) => e.stopPropagation()}
 				className={cn(
 					// Taille 44px conforme WCAG 2.5.5 (cible tactile minimum)
 					"h-11 w-11 rounded-full",
-					"flex items-center justify-center",
-					"hover:scale-110 active:scale-95",
+					"hover:scale-110 hover:bg-transparent active:scale-95",
 					"motion-safe:transition-all motion-safe:duration-300",
-					"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-					"disabled:opacity-50 disabled:cursor-not-allowed"
+					// Animation pulse pendant le chargement pour feedback visuel
+					isPending && "motion-safe:animate-pulse"
 				)}
 				aria-label={ariaLabel}
 				aria-pressed={isInWishlist}
+				aria-busy={isPending}
 			>
 				<HeartIcon
 					variant={isInWishlist ? "filled" : "outline"}
@@ -69,10 +72,12 @@ export function WishlistButton({
 					className={cn(
 						"motion-safe:transition-all motion-safe:duration-300",
 						"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
-						isInWishlist && "scale-110 drop-shadow-[0_0_6px_rgba(215,168,178,0.7)]"
+						isInWishlist && "scale-110 drop-shadow-[0_0_6px_rgba(215,168,178,0.7)]",
+						// Opacité réduite pendant le chargement
+						isPending && "opacity-60"
 					)}
 				/>
-			</button>
+			</Button>
 		</form>
 	);
 }

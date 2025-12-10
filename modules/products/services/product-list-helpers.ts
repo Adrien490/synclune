@@ -100,6 +100,9 @@ export function getPrimarySkuForList(
 /**
  * Récupère le prix principal (priceInclTax pour affichage client)
  * Inclut compareAtPrice pour affichage des promotions
+ *
+ * @warning Retourne price: 0 si aucun SKU actif n'existe.
+ * Cela peut indiquer un problème de données (produit sans variantes).
  */
 export function getPrimaryPriceForList(product: ProductFromList): {
 	price: number;
@@ -114,7 +117,13 @@ export function getPrimaryPriceForList(product: ProductFromList): {
 		};
 	}
 
-	// Pas de SKU actif, retourner 0
+	// Pas de SKU actif - log warning en dev pour détecter les données manquantes
+	if (process.env.NODE_ENV === "development") {
+		console.warn(
+			`[getPrimaryPriceForList] Produit "${product.slug}" n'a aucun SKU actif. Prix retourné: 0`
+		);
+	}
+
 	return {
 		price: 0,
 		compareAtPrice: null,
@@ -371,6 +380,18 @@ export function hasMultipleVariants(product: ProductFromList): boolean {
 /**
  * Extrait les couleurs disponibles pour les pastilles sur ProductCard
  * Retourne un tableau de ColorSwatch avec info stock
+ *
+ * @description
+ * **Comportement intentionnel du stock par couleur :**
+ * Une couleur est marquée `inStock: true` si AU MOINS UNE variante de cette couleur
+ * a du stock (ex: "Rouge taille 52" en stock même si "Rouge taille 54" est épuisé).
+ *
+ * Cela permet à l'utilisateur de voir que la couleur existe et est potentiellement disponible,
+ * même si certaines tailles/matériaux sont épuisés. Le SkuSelectorDialog affichera ensuite
+ * les variantes exactes disponibles.
+ *
+ * **Alternative non retenue :** Marquer la couleur en rupture si TOUTES les variantes sont épuisées.
+ * Rejeté car cela masquerait des couleurs partiellement disponibles.
  */
 export function getAvailableColorsForList(product: ProductFromList): ColorSwatch[] {
 	const activeSkus = product.skus?.filter((sku) => sku.isActive && sku.color) || [];
@@ -380,8 +401,8 @@ export function getAvailableColorsForList(product: ProductFromList): ColorSwatch
 		if (!sku.color?.slug || !sku.color?.hex) continue;
 
 		const existing = colorMap.get(sku.color.slug);
-		// Si la couleur existe déjà et était en stock, on garde cet état
-		// Sinon on met à jour avec le stock du SKU actuel
+		// Logique permissive : inStock = true si au moins une variante de cette couleur a du stock
+		// Voir JSDoc ci-dessus pour la justification de ce comportement
 		const inStock = existing?.inStock || sku.inventory > 0;
 
 		colorMap.set(sku.color.slug, {

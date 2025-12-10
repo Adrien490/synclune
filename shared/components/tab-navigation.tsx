@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
 
+import { Button } from "@/shared/components/ui/button";
 import {
 	MobilePanel,
 	MobilePanelItem,
@@ -127,14 +128,15 @@ export function TabNavigation({
 				{/* Bouton "Plus" - visible uniquement sur mobile */}
 				{hasOverflow && (
 					<>
-						<button
+						<Button
 							type="button"
+							variant="ghost"
 							onClick={() => setIsPanelOpen(true)}
 							className={cn(
 								PILL_BASE,
 								"md:hidden max-w-36",
 								activeOverflowItem
-									? "bg-primary text-primary-foreground shadow-sm"
+									? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
 									: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
 							)}
 							aria-label="Plus d'options de navigation"
@@ -151,7 +153,7 @@ export function TabNavigation({
 								)}
 								aria-hidden="true"
 							/>
-						</button>
+						</Button>
 
 						<MobilePanel
 							isOpen={isPanelOpen}

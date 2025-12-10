@@ -23,9 +23,18 @@ export function ProductPriceCompact({
 				{formatEuro(price)}
 			</span>
 			{hasDiscount && (
-				<span className="font-mono text-muted-foreground line-through text-xs">
-					{formatEuro(compareAtPrice)}
-				</span>
+				<>
+					{/* Texte pour lecteurs d'écran expliquant le prix barré */}
+					<span className="sr-only">
+						Prix original : {formatEuro(compareAtPrice)}
+					</span>
+					<span
+						className="font-mono text-muted-foreground line-through text-xs"
+						aria-hidden="true"
+					>
+						{formatEuro(compareAtPrice)}
+					</span>
+				</>
 			)}
 		</div>
 	);

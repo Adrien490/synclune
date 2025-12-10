@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/shared/components/ui/button";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
 	Select,
@@ -100,15 +101,17 @@ export function SelectFilter({
 					</SelectContent>
 				</Select>
 				{value && (
-					<button
+					<Button
 						type="button"
+						variant="ghost"
+						size="icon"
 						aria-label={`Effacer le filtre ${label}`}
-						className="h-8 w-8 p-0 rounded-full items-center justify-center cursor-pointer hover:bg-accent/50 focus-visible:outline-2 focus-visible:outline-ring transition-colors shrink-0 hidden sm:inline-flex"
+						className="h-8 w-8 rounded-full shrink-0 hidden sm:inline-flex"
 						onClick={handleClear}
 						disabled={isPending}
 					>
 						<X className="h-4 w-4" />
-					</button>
+					</Button>
 				)}
 			</div>
 		</div>

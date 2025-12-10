@@ -232,9 +232,9 @@ function CreateProductFormContent({
 									</h4>
 									<Tooltip>
 										<TooltipTrigger asChild>
-											<button type="button" className="inline-flex">
+											<Button type="button" variant="ghost" size="icon" className="h-auto w-auto p-0 hover:bg-transparent">
 												<Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
-											</button>
+											</Button>
 										</TooltipTrigger>
 										<TooltipContent side="right" className="max-w-[250px]">
 											<p>

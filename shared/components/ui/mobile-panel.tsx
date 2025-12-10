@@ -4,6 +4,7 @@ import { useEffect, useId } from "react";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { FocusScope } from "@radix-ui/react-focus-scope";
 import { X } from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { useSwipeGesture } from "@/shared/hooks/use-swipe-gesture";
 
@@ -171,19 +172,16 @@ export function MobilePanel({
 							)}
 
 							{showCloseButton && (
-								<button
+								<Button
 									type="button"
+									variant="ghost"
+									size="icon"
 									onClick={onClose}
-									className={cn(
-										"absolute top-3 right-3 p-2 rounded-full",
-										"text-muted-foreground hover:text-foreground hover:bg-accent",
-										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-										"transition-colors"
-									)}
+									className="absolute top-3 right-3 rounded-full text-muted-foreground hover:text-foreground"
 									aria-label="Fermer"
 								>
 									<X className="size-5" aria-hidden="true" />
-								</button>
+								</Button>
 							)}
 
 							{enableStagger && !noMotion ? (

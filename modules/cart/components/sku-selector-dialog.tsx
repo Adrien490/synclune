@@ -212,7 +212,7 @@ export function SkuSelectorDialog() {
 		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
 			<ResponsiveDialogContent className="sm:max-w-[520px] max-h-[85vh] flex flex-col">
 				<ResponsiveDialogHeader>
-					<ResponsiveDialogTitle>Choisir une variante</ResponsiveDialogTitle>
+					<ResponsiveDialogTitle>Ce produit est disponible dans plusieurs variantes 🎨</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
 						{product.title}
 					</ResponsiveDialogDescription>

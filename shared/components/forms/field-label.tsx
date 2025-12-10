@@ -1,3 +1,4 @@
+import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import {
 	Tooltip,
@@ -40,13 +41,15 @@ export function FieldLabel({
 				<TooltipProvider delayDuration={200}>
 					<Tooltip>
 						<TooltipTrigger asChild>
-							<button
+							<Button
 								type="button"
-								className="text-muted-foreground hover:text-foreground transition-colors"
+								variant="ghost"
+								size="icon"
+								className="h-auto w-auto p-0 text-muted-foreground hover:text-foreground hover:bg-transparent"
 								aria-label="Plus d'informations"
 							>
 								<HelpCircle className="h-3.5 w-3.5" />
-							</button>
+							</Button>
 						</TooltipTrigger>
 						<TooltipContent side="right" className="max-w-xs">
 							{tooltip}

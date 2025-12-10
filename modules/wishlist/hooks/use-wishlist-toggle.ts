@@ -59,6 +59,10 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	// Ref pour tracker l'état actuel sans re-render (évite closure stale)
 	const isInWishlistRef = useRef(initialIsInWishlist);
 
+	// Ref pour protéger contre les clics rapides (race condition)
+	// Empêche un nouveau toggle tant que le précédent n'est pas terminé
+	const isProcessingRef = useRef(false);
+
 	// Mise à jour de la ref dans useEffect pour éviter setState pendant le render
 	useEffect(() => {
 		isInWishlistRef.current = optimisticIsInWishlist;
@@ -110,7 +114,21 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		undefined
 	);
 
+	// Reset du flag de processing quand l'action est terminée
+	useEffect(() => {
+		if (!isTransitionPending && !isActionPending) {
+			isProcessingRef.current = false;
+		}
+	}, [isTransitionPending, isActionPending]);
+
 	const action = (formData: FormData) => {
+		// Protection contre les clics rapides (race condition)
+		// Si une action est déjà en cours, on ignore le nouveau clic
+		if (isProcessingRef.current) {
+			return;
+		}
+		isProcessingRef.current = true;
+
 		startTransition(() => {
 			// Utilise la ref pour lire l'état actuel (évite closure stale)
 			const currentState = isInWishlistRef.current;

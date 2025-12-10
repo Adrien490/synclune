@@ -2,6 +2,7 @@
 
 import { ArrowUp } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/shared/components/ui/button";
 
 /**
  * Scroll to top button with conditional visibility
@@ -35,9 +36,10 @@ export function ScrollToTopButton() {
 	if (!isVisible) return null;
 
 	return (
-		<button
+		<Button
+			variant="ghost"
 			onClick={handleScrollToTop}
-			className="inline-flex items-center gap-2 text-sm leading-normal text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-3 py-2 group animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer"
+			className="inline-flex items-center gap-2 text-sm leading-normal text-muted-foreground hover:text-accent-foreground animate-in fade-in slide-in-from-bottom-2 duration-300 group"
 			aria-label="Retour en haut de la page"
 		>
 			<ArrowUp
@@ -45,6 +47,6 @@ export function ScrollToTopButton() {
 				aria-hidden="true"
 			/>
 			Retour en haut
-		</button>
+		</Button>
 	);
 }

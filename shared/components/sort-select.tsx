@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import {
 	Select,
@@ -117,8 +118,10 @@ export function SortSelect({
 
 					{/* Clear button - positioned outside to avoid conflicts with Radix icon */}
 					{value && (
-						<button
+						<Button
 							type="button"
+							variant="ghost"
+							size="icon"
 							onClick={handleClear}
 							onKeyDown={handleClearKeyDown}
 							disabled={isPending}
@@ -128,21 +131,15 @@ export function SortSelect({
 								// Sizing (WCAG compliant but more compact on mobile)
 								"h-[36px] w-[36px] sm:h-[40px] sm:w-[40px]",
 								// Styling
-								"inline-flex items-center justify-center rounded-md",
 								"text-muted-foreground hover:text-foreground",
-								"hover:bg-accent/50 active:bg-accent/70",
-								"transition-colors duration-150",
-								// Focus
-								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-								// Disabled
-								"disabled:opacity-50 disabled:cursor-not-allowed"
+								"hover:bg-accent/50 active:bg-accent/70"
 							)}
 							aria-label={`Effacer le tri ${selectedOption?.label || "actuel"}`}
 							title={`Effacer le tri ${selectedOption?.label || "actuel"}`}
 							tabIndex={0}
 						>
 							<X className="h-4 w-4" />
-						</button>
+						</Button>
 					)}
 				</div>
 

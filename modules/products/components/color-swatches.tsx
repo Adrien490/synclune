@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import {
 	Tooltip,
@@ -57,7 +57,10 @@ export function ColorSwatches({
 	onColorSelect,
 	disabled = false,
 }: ColorSwatchesProps) {
-	const buttonsRef = useRef<(HTMLButtonElement | null)[]>([]);
+	// Refs pour les boutons principaux et popover (navigation clavier)
+	const mainButtonsRef = useRef<Map<number, HTMLButtonElement>>(new Map());
+	const popoverButtonsRef = useRef<Map<number, HTMLButtonElement>>(new Map());
+	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
 	if (colors.length === 0) return null;
 
@@ -65,15 +68,39 @@ export function ColorSwatches({
 	const hiddenColors = colors.slice(maxVisible);
 	const remainingCount = hiddenColors.length;
 
-	// Navigation clavier WAI-ARIA Radio Group
+	// Fonction utilitaire pour assigner les refs sans sparse array
+	const setMainButtonRef = (index: number, el: HTMLButtonElement | null) => {
+		if (el) {
+			mainButtonsRef.current.set(index, el);
+		} else {
+			mainButtonsRef.current.delete(index);
+		}
+	};
+
+	const setPopoverButtonRef = (index: number, el: HTMLButtonElement | null) => {
+		if (el) {
+			popoverButtonsRef.current.set(index, el);
+		} else {
+			popoverButtonsRef.current.delete(index);
+		}
+	};
+
+	// Navigation clavier WAI-ARIA Radio Group (fonctionne dans main ET popover)
 	const handleKeyDown = (
 		e: React.KeyboardEvent<HTMLButtonElement>,
-		index: number
+		index: number,
+		inPopover: boolean
 	) => {
 		if (!interactive) return;
 
-		const enabledIndices = visibleColors
-			.map((c, i) => (c.inStock ? i : -1))
+		// Détermine la liste de couleurs et les refs selon le contexte
+		const colorList = inPopover ? hiddenColors : visibleColors;
+		const buttonsMap = inPopover ? popoverButtonsRef.current : mainButtonsRef.current;
+		const baseIndex = inPopover ? maxVisible : 0;
+
+		// Indices des couleurs activées (en stock)
+		const enabledIndices = colorList
+			.map((c, i) => (c.inStock ? baseIndex + i : -1))
 			.filter((i) => i !== -1);
 
 		if (enabledIndices.length === 0) return;
@@ -111,7 +138,7 @@ export function ColorSwatches({
 		}
 
 		if (nextIndex !== null) {
-			buttonsRef.current[nextIndex]?.focus();
+			buttonsMap.get(nextIndex)?.focus();
 		}
 	};
 
@@ -126,19 +153,26 @@ export function ColorSwatches({
 		const isDisabled = !color.inStock || disabled;
 
 		if (interactive) {
+			// Détermine le tabIndex : 0 si sélectionné, ou si aucune sélection et c'est le premier
+			// Dans le popover, on utilise un tabIndex séparé pour la navigation
+			const isFirstInContext = inPopover ? index === maxVisible : index === 0;
+			const shouldBeTabbable = isSelected || (!selectedColor && isFirstInContext);
+
 			return (
 				<button
 					key={color.slug}
 					ref={(el) => {
-						if (!inPopover) {
-							buttonsRef.current[index] = el;
+						if (inPopover) {
+							setPopoverButtonRef(index, el);
+						} else {
+							setMainButtonRef(index, el);
 						}
 					}}
 					type="button"
 					role="radio"
 					aria-checked={isSelected}
 					aria-label={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
-					tabIndex={isSelected || (!selectedColor && index === 0) ? 0 : -1}
+					tabIndex={shouldBeTabbable ? 0 : -1}
 					onClick={(e) => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -146,7 +180,7 @@ export function ColorSwatches({
 							onColorSelect(color.slug);
 						}
 					}}
-					onKeyDown={(e) => handleKeyDown(e, index)}
+					onKeyDown={(e) => handleKeyDown(e, index, inPopover)}
 					disabled={isDisabled}
 					className={cn(
 						"rounded-full border-2 transition-all active:scale-95",
@@ -202,7 +236,7 @@ export function ColorSwatches({
 
 			{/* Badge +N avec Popover pour voir/sélectionner les couleurs masquées */}
 			{remainingCount > 0 && (
-				<Popover>
+				<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
 					<PopoverTrigger asChild>
 						<button
 							type="button"
@@ -213,6 +247,8 @@ export function ColorSwatches({
 								sizeClasses[size]
 							)}
 							aria-label={`Voir ${remainingCount} autre${remainingCount > 1 ? "s" : ""} couleur${remainingCount > 1 ? "s" : ""}`}
+							aria-expanded={isPopoverOpen}
+							aria-haspopup="dialog"
 						>
 							+{remainingCount}
 						</button>
@@ -227,7 +263,11 @@ export function ColorSwatches({
 							{remainingCount} autre{remainingCount > 1 ? "s" : ""} couleur
 							{remainingCount > 1 ? "s" : ""}
 						</p>
-						<div className="flex flex-wrap gap-2">
+						<div
+							className="flex flex-wrap gap-2"
+							role={interactive ? "radiogroup" : undefined}
+							aria-label={interactive ? `Couleurs supplémentaires` : undefined}
+						>
 							{hiddenColors.map((color, index) => (
 								<Tooltip key={color.slug}>
 									<TooltipTrigger asChild>

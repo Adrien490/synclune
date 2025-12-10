@@ -5,7 +5,8 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import type { Product } from "@/modules/products/types/product.types";
 import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-dialog";
 import { cn } from "@/shared/utils/cn";
-import { Plus } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
 
 interface AddToCartCardButtonProps {
 	skuId: string;
@@ -21,7 +22,7 @@ interface AddToCartCardButtonProps {
  * Bouton d'ajout au panier pour les cartes produit
  *
  * Comportement responsive:
- * - Mobile: Icône "+" avec drop-shadow (même pattern que WishlistButton)
+ * - Mobile: Icône ShoppingBag rose avec drop-shadow renforcé (sans fond)
  * - Desktop: Bouton pleine largeur "Ajouter au panier" avec fond primary
  *
  * - Disabled pendant le pending pour éviter double-click
@@ -39,8 +40,10 @@ export function AddToCartCardButton({
 	const { action, isPending } = useAddToCart();
 	const { open: openSkuSelector } = useDialog(SKU_SELECTOR_DIALOG_ID);
 
-	// Détermine si le produit a plusieurs variantes (SKUs)
-	const hasMultipleVariants = product?.skus && product.skus.length > 1;
+	// Détermine si le produit a plusieurs variantes actives (SKUs)
+	// Note: On filtre par isActive car le dialog ne montre que les SKUs actifs
+	const activeSkusCount = product?.skus?.filter((s) => s.isActive).length ?? 0;
+	const hasMultipleVariants = activeSkusCount > 1;
 
 	// Handler de clic : ouvre le dialog si plusieurs variantes, sinon soumet le formulaire
 	const handleClick = (e: React.MouseEvent) => {
@@ -72,14 +75,15 @@ export function AddToCartCardButton({
 		>
 			<input type="hidden" name="skuId" value={skuId} />
 			<input type="hidden" name="quantity" value="1" />
-			<button
+			<Button
 				type="submit"
 				disabled={isPending}
 				aria-disabled={isPending}
 				onClick={handleClick}
+				size="icon"
 				className={cn(
-					// Mobile: bouton sans fond, drop-shadow sur l'icône (pattern WishlistButton)
-					"size-11 rounded-full flex items-center justify-center",
+					// Mobile: bouton transparent, contraste géré par drop-shadow sur l'icône
+					"size-11 rounded-full bg-transparent hover:bg-transparent",
 					// Desktop: pleine largeur avec fond primary
 					"sm:bg-primary sm:text-primary-foreground",
 					"sm:w-full sm:h-auto sm:rounded-none sm:py-2.5 sm:px-4",
@@ -90,18 +94,17 @@ export function AddToCartCardButton({
 					"sm:hover:bg-primary/90 sm:hover:tracking-widest",
 					// Transitions
 					"motion-safe:transition-all motion-safe:duration-200",
-					"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-					"disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:tracking-normal disabled:hover:scale-100"
+					"disabled:hover:tracking-normal disabled:hover:scale-100"
 				)}
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
-				{/* Mobile: icône + avec drop-shadow pour contraste sur toute image */}
-				<Plus
-					size={22}
-					strokeWidth={2.5}
+				{/* Mobile: icône shopping bag avec drop-shadow renforcé pour contraste */}
+				<ShoppingBag
+					size={20}
+					strokeWidth={2}
 					className={cn(
 						"sm:hidden text-primary",
-						"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+						"drop-shadow-[0_0_4px_rgba(255,255,255,1)] drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
 					)}
 					aria-hidden="true"
 				/>
@@ -109,7 +112,7 @@ export function AddToCartCardButton({
 				<span className="hidden sm:inline text-sm font-medium">
 					Ajouter au panier
 				</span>
-			</button>
+			</Button>
 		</form>
 	);
 }
