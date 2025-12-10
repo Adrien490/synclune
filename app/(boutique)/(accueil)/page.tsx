@@ -92,7 +92,7 @@ export default async function Page() {
 			<Suspense fallback={<CollectionsSectionSkeleton />}>
 				<Collections
 					collectionsPromise={getCollections({
-						perPage: 20,
+						perPage: 6,
 						sortBy: "name-ascending",
 						filters: {
 							hasProducts: true,

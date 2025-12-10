@@ -322,7 +322,7 @@ export function Autocomplete<T>({
 								<li className="w-full">
 									<Empty>
 										<EmptyHeader>
-											<EmptyMedia variant="jewelry">
+											<EmptyMedia>
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													fill="none"

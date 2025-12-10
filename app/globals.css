@@ -10,6 +10,9 @@ html {
 }
 
 @theme inline {
+	/* Breakpoint personnalisé pour très petits écrans (iPhone SE, etc.) */
+	--breakpoint-xs: 375px;
+
 	--font-sans: ui-sans-serif, system-ui, sans-serif;
 	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
 	--font-display: "Crimson Pro", serif;

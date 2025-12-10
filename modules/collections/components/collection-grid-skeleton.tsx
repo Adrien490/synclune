@@ -4,8 +4,11 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export function CollectionGridSkeleton() {
 	return (
 		<div className="space-y-8">
+			{/* Compteur placeholder */}
+			<Skeleton className="h-5 w-24" />
+
 			{/* Grille des collections - structure alignée avec CollectionGrid */}
-			<div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+			<div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
 				{Array.from({ length: 8 }).map((_, i) => (
 					<div key={i} className="grid gap-4">
 						{/* Image skeleton - aspect-square comme dans CollectionCard */}
@@ -31,7 +34,7 @@ export function CollectionGridSkeleton() {
 			</div>
 
 			{/* Pagination */}
-			<div className="flex justify-end mt-12">
+			<div className="flex justify-end">
 				<CursorPaginationSkeleton />
 			</div>
 		</div>

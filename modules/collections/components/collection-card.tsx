@@ -116,7 +116,7 @@ export function CollectionCard({
 					</div>
 
 					{/* Contenu avec padding responsive */}
-					<div className="space-y-2 p-4 sm:p-5">
+					<div className="space-y-2 p-4 sm:p-5 lg:p-6">
 						{/* Titre avec Crimson Pro uniformise */}
 						<h3
 							id={titleId}

@@ -37,9 +37,12 @@ export default function CollectionsLoading() {
 
 			{/* Main Content */}
 			<section className="bg-background py-8">
-				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+					{/* Compteur placeholder */}
+					<Skeleton className="h-5 w-24 bg-muted/40" />
+
 					{/* Collections Grid Skeleton */}
-					<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+					<div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
 						{Array.from({ length: 8 }).map((_, i) => (
 							<div key={i} className="space-y-4">
 								{/* Collection image */}
@@ -61,7 +64,7 @@ export default function CollectionsLoading() {
 					</div>
 
 					{/* Pagination Skeleton */}
-					<div className="flex justify-end mt-12">
+					<div className="flex justify-end">
 						<div className="flex items-center gap-2">
 							<Skeleton className="h-10 w-24 bg-muted/30" />
 							<Skeleton className="h-10 w-24 bg-muted/30" />

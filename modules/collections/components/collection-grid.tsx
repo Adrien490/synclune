@@ -29,14 +29,14 @@ export function CollectionGrid({
 	// Afficher le composant Empty si aucune collection
 	if (!collections || collections.length === 0) {
 		return (
-			<Empty>
+			<Empty role="status" aria-live="polite">
 				<EmptyHeader>
-					<EmptyMedia variant="icon">
+					<EmptyMedia>
 						<Gem className="size-6" />
 					</EmptyMedia>
 					<EmptyTitle>Aucune collection disponible</EmptyTitle>
 					<EmptyDescription>
-						... Pour le moment ! Les collections arrivent bientôt.
+						Les collections arrivent bientôt !
 					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
@@ -52,10 +52,16 @@ export function CollectionGrid({
 
 	return (
 		<div className="space-y-8">
+			{/* Compteur de résultats */}
+			<p className="text-sm text-muted-foreground">
+				{collections.length} collection{collections.length > 1 ? "s" : ""}
+			</p>
+
 			{/* Grille des collections */}
 			<Stagger
 				role="list"
-				className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6"
+				aria-label="Liste des collections"
+				className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 lg:gap-8"
 				stagger={0.05}
 				delay={0.1}
 			>
@@ -74,7 +80,7 @@ export function CollectionGrid({
 			</Stagger>
 
 			{/* Pagination */}
-			<div className="flex justify-center">
+			<div className="flex justify-end">
 				<CursorPagination
 					perPage={perPage}
 					hasNextPage={hasNextPage}

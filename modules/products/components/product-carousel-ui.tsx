@@ -9,12 +9,18 @@ import {
 	CarouselNext,
 	CarouselPrevious,
 } from "@/shared/components/ui/carousel";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import Autoplay from "embla-carousel-autoplay";
 import { useReducedMotion } from "framer-motion";
+import { Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
 
 interface ProductCarouselItem {
@@ -32,6 +38,7 @@ interface ProductCarouselUIProps {
 /**
  * Hero Carousel - Pattern officiel shadcn/ui
  * Auto-play 5s avec pause au hover (plugin Embla)
+ * Accessible: WCAG 2.5.5 (touch targets), 2.3.2 (reduced motion), 2.5.1 (pointer gestures)
  */
 export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 	const [api, setApi] = useState<CarouselApi>();
@@ -39,19 +46,16 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 	const prefersReducedMotion = useReducedMotion();
 
 	// Plugin Autoplay - désactivé si l'utilisateur préfère les mouvements réduits (a11y WCAG 2.3.2)
-	const plugins = (() => {
-		if (prefersReducedMotion) {
-			return [];
-		}
-		return [
-			Autoplay({
-				delay: PRODUCT_CAROUSEL_CONFIG.AUTOPLAY_DELAY,
-				stopOnInteraction: false, // Continue après interaction
-				stopOnMouseEnter: true, // Pause au survol
-				stopOnFocusIn: true, // Pause au focus (a11y)
-			}),
-		];
-	})();
+	const autoplayPlugin = useRef(
+		Autoplay({
+			delay: PRODUCT_CAROUSEL_CONFIG.AUTOPLAY_DELAY,
+			stopOnInteraction: false,
+			stopOnMouseEnter: true,
+			stopOnFocusIn: true,
+		})
+	);
+
+	const plugins = prefersReducedMotion ? [] : [autoplayPlugin.current];
 
 	// Tracking du slide actif
 	useEffect(() => {
@@ -77,10 +81,12 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 	if (products.length === 0) {
 		return (
 			<div className="relative h-full min-h-[320px] sm:min-h-[400px] lg:min-h-[480px] rounded-2xl bg-muted flex flex-col items-center justify-center gap-3">
+				{/* R7: Icône SVG au lieu d'emoji */}
 				<div className="size-12 rounded-full bg-muted-foreground/10 flex items-center justify-center">
-					<span className="text-2xl" role="img" aria-hidden="true">
-						✨
-					</span>
+					<Sparkles
+						className="size-6 text-muted-foreground"
+						aria-hidden="true"
+					/>
 				</div>
 				<p className="text-muted-foreground text-center px-4">
 					Aucun produit disponible pour le moment
@@ -91,10 +97,13 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 
 	return (
 		<div className="max-w-7xl mx-auto">
+			{/* R9: tabIndex pour focus clavier explicite */}
 			<div
 				role="region"
 				aria-label="Carrousel de produits vedettes"
 				aria-roledescription="carrousel"
+				tabIndex={0}
+				className="outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-2xl"
 			>
 				{/* Annonce pour lecteurs d'écran */}
 				<div className="sr-only" aria-live="polite" aria-atomic="true">
@@ -102,6 +111,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 					{products[current] ? `: ${products[current].title}` : ""}
 				</div>
 
+				{/* R8: group/carousel pour éviter conflit avec group du Link */}
 				<Carousel
 					setApi={setApi}
 					plugins={plugins}
@@ -109,7 +119,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 						align: "start",
 						loop: true,
 					}}
-					className="w-full h-full group"
+					className="w-full h-full group/carousel"
 				>
 					<CarouselContent className="h-full">
 						{products.map((product, index) => (
@@ -133,8 +143,8 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 									{/* Overlay gradient */}
 									<div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
-									{/* Info produit */}
-									<div className="absolute bottom-0 left-0 right-0 p-4 pb-12 sm:p-6 sm:pb-6 text-white z-10">
+									{/* R3: spacing bottom augmenté (pb-20 mobile) pour éviter chevauchement avec contrôles */}
+									<div className="absolute bottom-0 left-0 right-0 p-4 pb-20 sm:p-6 sm:pb-8 text-white z-10">
 										<h2 className="text-xl sm:text-2xl font-semibold mb-1 sm:mb-2 tracking-tight drop-shadow-lg line-clamp-2">
 											{product.title}
 										</h2>
@@ -150,97 +160,98 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 						))}
 					</CarouselContent>
 
-					{/* Navigation - Masquée sur mobile, visible au hover sur desktop */}
+					{/* Navigation - utilise les variables thème */}
 					<CarouselPrevious
 						variant="ghost"
 						aria-label="Produit précédent"
 						className={cn(
-							// Masqué sur mobile, flex sur desktop
-							"hidden sm:flex",
-							// Position
-							"left-4 top-1/2 -translate-y-1/2",
-							// Fond blanc semi-transparent avec effet verre dépoli
-							"bg-white/80 backdrop-blur-sm",
-							// Bordure subtile pour définir les contours
-							"border border-white/40",
-							// Forme ronde
-							"rounded-full",
-							// Shadow pour profondeur et lisibilité
-							"shadow-lg hover:shadow-xl ring-1 ring-black/5",
-							// Icône sombre pour contraste sur fond blanc
-							"text-foreground/80",
-							// Hover state - fond plus opaque et icône plus sombre
-							"hover:bg-white/90 hover:text-foreground hover:scale-105",
-							// Cursor pointer
-							"cursor-pointer",
-							// Caché par défaut, visible au survol du carousel
-							"opacity-0 group-hover:opacity-100 focus-within:opacity-100",
-							// Disabled state - reste caché
-							"disabled:opacity-0 disabled:cursor-not-allowed disabled:hover:scale-100",
-							// Transition fluide
-							"transition-all duration-300 ease-out"
+							"flex",
+							// Position responsive
+							"bottom-4 left-4",
+							"sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2",
+							// Touch targets (WCAG 2.5.5)
+							"size-10 sm:size-12 md:size-10",
+							// Thème: primary avec opacité
+							"rounded-full bg-primary/80 border-0",
+							"shadow-lg hover:shadow-xl",
+							"text-primary-foreground",
+							"hover:bg-primary hover:scale-105",
+							// Desktop: apparaît au survol
+							"sm:opacity-0 sm:group-hover/carousel:opacity-100 sm:focus-visible:opacity-100",
+							"disabled:opacity-40 disabled:pointer-events-none disabled:hover:scale-100",
+							"transition-all duration-300"
 						)}
 					/>
 					<CarouselNext
 						variant="ghost"
 						aria-label="Produit suivant"
 						className={cn(
-							// Masqué sur mobile, flex sur desktop
-							"hidden sm:flex",
-							// Position
-							"right-4 top-1/2 -translate-y-1/2",
-							// Fond blanc semi-transparent avec effet verre dépoli
-							"bg-white/80 backdrop-blur-sm",
-							// Bordure subtile pour définir les contours
-							"border border-white/40",
-							// Forme ronde
-							"rounded-full",
-							// Shadow pour profondeur et lisibilité
-							"shadow-lg hover:shadow-xl ring-1 ring-black/5",
-							// Icône sombre pour contraste sur fond blanc
-							"text-foreground/80",
-							// Hover state - fond plus opaque et icône plus sombre
-							"hover:bg-white/90 hover:text-foreground hover:scale-105",
-							// Cursor pointer
-							"cursor-pointer",
-							// Caché par défaut, visible au survol du carousel
-							"opacity-0 group-hover:opacity-100 focus-within:opacity-100",
-							// Disabled state - reste caché
-							"disabled:opacity-0 disabled:cursor-not-allowed disabled:hover:scale-100",
-							// Transition fluide
-							"transition-all duration-300 ease-out"
+							"flex",
+							// Position responsive
+							"bottom-4 right-4",
+							"sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2",
+							// Touch targets (WCAG 2.5.5)
+							"size-10 sm:size-12 md:size-10",
+							// Thème: primary avec opacité
+							"rounded-full bg-primary/80 border-0",
+							"shadow-lg hover:shadow-xl",
+							"text-primary-foreground",
+							"hover:bg-primary hover:scale-105",
+							// Desktop: apparaît au survol
+							"sm:opacity-0 sm:group-hover/carousel:opacity-100 sm:focus-visible:opacity-100",
+							"disabled:opacity-40 disabled:pointer-events-none disabled:hover:scale-100",
+							"transition-all duration-300"
 						)}
 					/>
 
-					{/* Dots indicator - Responsive touch targets (32px mobile, 44px desktop) */}
-					<div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-2 z-20">
-						{products.map((_, index) => (
-							<Button
-								key={index}
-								onClick={() => scrollTo(index)}
-								variant="ghost"
-								size="icon"
-								className={cn(
-									// Zone tactile 44px conforme WCAG 2.5.5
-									"h-11 w-11 p-0 cursor-pointer",
-									// Indicateur visuel centré dans la zone tactile
-									"flex items-center justify-center",
-									"transition-all duration-300",
-									// Hover subtil sur toute la zone
-									"hover:bg-white/10"
-								)}
-								aria-label={`Aller au produit ${index + 1}`}
-								aria-current={current === index ? "true" : undefined}
-							>
-								<span
-									className={cn(
-										"block rounded-full transition-all duration-300",
-										current === index
-											? "h-2 w-8 sm:h-2.5 sm:w-10 bg-white shadow-md"
-											: "h-2 w-2 sm:h-2.5 sm:w-2.5 bg-white/60 group-hover:bg-white/80"
-									)}
-								/>
-							</Button>
+					{/* Dots - utilise les variables thème */}
+					<div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 z-20">
+						{products.map((product, index) => (
+							<Tooltip key={index}>
+								<TooltipTrigger asChild>
+									<Button
+										onClick={() => scrollTo(index)}
+										variant="ghost"
+										size="icon"
+										className={cn(
+											// Zone tactile (WCAG 2.5.5)
+											"size-10 sm:size-11 p-0 cursor-pointer",
+											"flex items-center justify-center",
+											"transition-all duration-300",
+											// Thème: hover avec card
+											"hover:bg-card/10 rounded-full"
+										)}
+										aria-label={`Aller au produit ${index + 1}: ${product.title}`}
+										aria-current={current === index ? "true" : undefined}
+									>
+										<span
+											className={cn(
+												"flex items-center justify-center rounded-full transition-all duration-300",
+												current === index
+													? // Actif: thème card/foreground
+														"size-6 sm:size-7 bg-card text-foreground text-xs font-semibold shadow-lg"
+													: // Inactif: thème card avec opacité
+														"size-3 sm:size-3.5 bg-card/70 group-hover/carousel:bg-card/90"
+											)}
+										>
+											{current === index && (
+												<span className="text-[10px] sm:text-xs">
+													{index + 1}
+												</span>
+											)}
+										</span>
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent
+									side="top"
+									className="hidden sm:block max-w-[200px]"
+								>
+									<p className="text-sm font-medium truncate">{product.title}</p>
+									<p className="text-xs text-muted-foreground">
+										{(product.price / 100).toFixed(2)} €
+									</p>
+								</TooltipContent>
+							</Tooltip>
 						))}
 					</div>
 				</Carousel>
