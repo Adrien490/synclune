@@ -1,8 +1,7 @@
 "use client";
 
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
-import { Checkbox } from "@/shared/components/ui/checkbox";
-import { Label } from "@/shared/components/ui/label";
+import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
@@ -107,38 +106,31 @@ export function CollectionsFilterSheet({
 				{/* hasProducts Filter */}
 				<form.Field name="hasProducts">
 					{(field) => (
-						<div className="space-y-3">
-							<h4 className="font-medium text-sm text-foreground">Bijoux</h4>
-							<div className="space-y-2">
-								{[
-									{ value: "all", label: "Tous" },
-									{ value: "with", label: "Avec bijoux" },
-									{ value: "without", label: "Sans bijoux" },
-								].map(({ value, label }) => {
-									const isSelected = field.state.value === value;
-									return (
-										<div key={value} className="flex items-center space-x-2">
-											<Checkbox
-												id={`products-${value}`}
-												checked={isSelected}
-												onCheckedChange={(checked) => {
-													if (checked) {
-														field.handleChange(value);
-													}
-												}}
-												className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-											/>
-											<Label
-												htmlFor={`products-${value}`}
-												className="text-sm font-normal cursor-pointer flex-1"
-											>
-												{label}
-											</Label>
-										</div>
-									);
-								})}
-							</div>
-						</div>
+						<fieldset className="space-y-1">
+							<legend className="font-medium text-sm text-foreground mb-2">
+								Bijoux
+							</legend>
+							{[
+								{ value: "all", label: "Tous" },
+								{ value: "with", label: "Avec bijoux" },
+								{ value: "without", label: "Sans bijoux" },
+							].map(({ value, label }) => (
+								<RadioFilterItem
+									key={value}
+									id={`products-${value}`}
+									name="hasProducts"
+									value={value}
+									checked={field.state.value === value}
+									onCheckedChange={(checked) => {
+										if (checked) {
+											field.handleChange(value);
+										}
+									}}
+								>
+									{label}
+								</RadioFilterItem>
+							))}
+						</fieldset>
 					)}
 				</form.Field>
 			</form>

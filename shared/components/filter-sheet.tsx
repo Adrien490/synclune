@@ -54,7 +54,7 @@ export function FilterSheetWrapper({
 	isPending = false,
 	triggerClassName,
 	title = "Filtres",
-	description = "Affine ta recherche",
+	description = "Affinez votre recherche",
 	applyButtonText = "Appliquer",
 	cancelButtonText = "Annuler",
 	showCancelButton = true,
@@ -153,9 +153,14 @@ export function FilterSheetWrapper({
 					>
 						{children}
 					</div>
+					{/* Gradient indicateur de scroll */}
+					<div
+						className="pointer-events-none sticky bottom-0 h-8 bg-gradient-to-t from-background to-transparent"
+						aria-hidden="true"
+					/>
 				</ScrollArea>
 
-				<SheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
+				<SheetFooter className="px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t bg-background/95 shrink-0">
 					{showCancelButton ? (
 						<ButtonGroup className="w-full" aria-label="Actions de filtrage">
 							<SheetClose asChild className="flex-1">

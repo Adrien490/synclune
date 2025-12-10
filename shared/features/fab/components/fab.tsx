@@ -7,7 +7,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef, useEffect } from "react";
 import { toast } from "sonner";
@@ -87,6 +87,16 @@ export function Fab({
 	const toggleButtonRef = useRef<HTMLButtonElement>(null);
 	const mainButtonRef = useRef<HTMLButtonElement>(null);
 	const statusRef = useRef<HTMLDivElement>(null);
+	const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	// Cleanup du timeout au démontage
+	useEffect(() => {
+		return () => {
+			if (statusTimeoutRef.current) {
+				clearTimeout(statusTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	// Respecter prefers-reduced-motion avec config globale
 	const prefersReducedMotion = useReducedMotion();
@@ -110,8 +120,12 @@ export function Fab({
 				statusRef.current.textContent = newHiddenState
 					? `${tooltip.title} masqué`
 					: `${tooltip.title} affiché`;
+				// Nettoyer le timeout précédent si existant
+				if (statusTimeoutRef.current) {
+					clearTimeout(statusTimeoutRef.current);
+				}
 				// Nettoyer après l'annonce
-				setTimeout(() => {
+				statusTimeoutRef.current = setTimeout(() => {
 					if (statusRef.current) statusRef.current.textContent = "";
 				}, 1000);
 			}
@@ -150,7 +164,7 @@ export function Fab({
 						animate={{ opacity: 1, x: 0 }}
 						exit={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
 						transition={transition}
-						className={cn(visibilityClass, "fixed z-40 bottom-6 right-1")}
+						className={cn(visibilityClass, "fixed z-40 bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-4")}
 					>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -162,7 +176,7 @@ export function Fab({
 									size="sm"
 									className={cn(
 										"rounded-l-full rounded-r-none",
-										"h-12 w-12 p-0",
+										"h-14 w-14 p-0",
 										"bg-background",
 										"border-r-0",
 										"shadow-md",
@@ -175,7 +189,7 @@ export function Fab({
 									aria-expanded={false}
 								>
 									<ChevronLeft
-										className={cn("h-5 w-5", isPending && "animate-pulse")}
+										className={cn("h-6 w-6", isPending && "animate-pulse")}
 										aria-hidden="true"
 									/>
 								</Button>
@@ -198,11 +212,12 @@ export function Fab({
 			<AnimatePresence mode="wait">
 				<motion.div
 					key="fab-visible"
+					data-fab-container
 					initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
 					animate={{ opacity: 1, scale: 1 }}
 					exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
 					transition={transition}
-					className={cn(visibilityClass, "group fixed z-40 bottom-6 right-6")}
+					className={cn(visibilityClass, "group fixed z-40 bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-6")}
 				>
 					{/* Bouton pour cacher le FAB */}
 					<Tooltip>
@@ -214,28 +229,30 @@ export function Fab({
 								size="icon"
 								className={cn(
 									"absolute -top-2 -right-2 z-10",
-									"h-7 w-7 rounded-full",
+									"h-8 w-8 rounded-full",
 									"bg-muted",
 									"border border-border",
 									"shadow-sm",
 									"hover:bg-accent",
-									"opacity-80 hover:opacity-100",
+									"opacity-0 group-hover:opacity-100",
 									"focus-visible:opacity-100",
 									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
 									"focus-visible:outline-none",
-									isPending && "cursor-wait"
+									"transition-opacity duration-200",
+									isPending && "cursor-wait opacity-100"
 								)}
 								aria-label={hideTooltip}
 								aria-expanded={true}
 							>
-								<ChevronRight
-									className={cn("h-3.5 w-3.5", isPending && "animate-pulse")}
+								<X
+									className={cn("h-4 w-4", isPending && "animate-pulse")}
 									aria-hidden="true"
 								/>
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent side="top" sideOffset={4}>
 							<p className="text-xs">{hideTooltip}</p>
+							<p className="text-xs text-muted-foreground">Échap</p>
 						</TooltipContent>
 					</Tooltip>
 

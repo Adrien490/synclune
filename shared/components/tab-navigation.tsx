@@ -139,6 +139,7 @@ export function TabNavigation({
 									? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
 									: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
 							)}
+							title={activeOverflowItem?.label}
 							aria-label="Plus d'options de navigation"
 							aria-expanded={isPanelOpen}
 							aria-haspopup="dialog"
@@ -180,6 +181,7 @@ export function TabNavigation({
 												href={item.href}
 												prefetch={prefetch}
 												onClick={() => setIsPanelOpen(false)}
+												role="menuitem"
 												aria-current={isActive ? "page" : undefined}
 												className={cn(
 													"flex items-center justify-center gap-2",

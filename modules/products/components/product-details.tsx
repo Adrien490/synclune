@@ -74,7 +74,7 @@ export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 			<Separator className="bg-border" />
 
 			{/* Sélection des variantes - pas d'animation (interaction directe) */}
-			<VariantSelector product={product} />
+			<VariantSelector product={product} defaultSku={defaultSku} />
 
 			{/* CTA principal */}
 			<AddToCartForm product={product} selectedSku={currentSku} />

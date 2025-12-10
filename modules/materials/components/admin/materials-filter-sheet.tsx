@@ -90,10 +90,10 @@ export function MaterialsFilterSheet({ className }: MaterialsFilterSheetProps) {
 			>
 				<form.Field name="isActive">
 					{(field) => (
-						<div className="space-y-3">
-							<Label className="font-medium text-sm text-foreground">
+						<fieldset className="space-y-3">
+							<legend className="font-medium text-sm text-foreground">
 								Statut
-							</Label>
+							</legend>
 							<RadioGroup
 								value={field.state.value}
 								onValueChange={field.handleChange}
@@ -114,7 +114,7 @@ export function MaterialsFilterSheet({ className }: MaterialsFilterSheetProps) {
 									</div>
 								))}
 							</RadioGroup>
-						</div>
+						</fieldset>
 					)}
 				</form.Field>
 			</form>

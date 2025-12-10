@@ -165,10 +165,10 @@ export function InventoryFilterSheet({
 				{/* Statut du stock */}
 				<form.Field name="stockStatuses" mode="array">
 					{(field) => (
-						<div className="space-y-3">
-							<h4 className="font-medium text-sm text-foreground">
+						<fieldset className="space-y-3">
+							<legend className="font-medium text-sm text-foreground">
 								Statut du stock
-							</h4>
+							</legend>
 							<div className="space-y-2">
 								{STOCK_STATUS_OPTIONS.map(({ value, label }) => {
 									const isSelected = field.state.value.includes(value);
@@ -197,7 +197,7 @@ export function InventoryFilterSheet({
 									);
 								})}
 							</div>
-						</div>
+						</fieldset>
 					)}
 				</form.Field>
 
@@ -208,10 +208,10 @@ export function InventoryFilterSheet({
 					<>
 						<form.Field name="colorIds" mode="array">
 							{(field) => (
-								<div className="space-y-3">
-									<h4 className="font-medium text-sm text-foreground">
+								<fieldset className="space-y-3">
+									<legend className="font-medium text-sm text-foreground">
 										Couleur
-									</h4>
+									</legend>
 									<div className="space-y-2 max-h-48 overflow-y-auto">
 										{colorOptions.map((color) => {
 											const isSelected = field.state.value.includes(color.id);
@@ -249,7 +249,7 @@ export function InventoryFilterSheet({
 											);
 										})}
 									</div>
-								</div>
+								</fieldset>
 							)}
 						</form.Field>
 						<Separator />
@@ -260,10 +260,10 @@ export function InventoryFilterSheet({
 				{materialOptions.length > 0 && (
 					<form.Field name="materialIds" mode="array">
 						{(field) => (
-							<div className="space-y-3">
-								<h4 className="font-medium text-sm text-foreground">
+							<fieldset className="space-y-3">
+								<legend className="font-medium text-sm text-foreground">
 									Matériau
-								</h4>
+								</legend>
 								<div className="space-y-2 max-h-48 overflow-y-auto">
 									{materialOptions.map((material) => {
 										const isSelected = field.state.value.includes(material.id);
@@ -297,7 +297,7 @@ export function InventoryFilterSheet({
 										);
 									})}
 								</div>
-							</div>
+							</fieldset>
 						)}
 					</form.Field>
 				)}

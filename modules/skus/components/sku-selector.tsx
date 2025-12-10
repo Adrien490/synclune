@@ -10,6 +10,7 @@ import {
 import { Separator } from "@/shared/components/ui/separator";
 import { extractVariantInfo } from "@/modules/skus/services/extract-sku-info";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
+import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { useSearchParams } from "next/navigation";
 import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
 import { ColorSelector } from "@/modules/colors/components/color-selector";
@@ -18,6 +19,7 @@ import { SizeSelector } from "@/modules/skus/components/size-selector";
 
 interface VariantSelectorProps {
 	product: GetProductReturn;
+	defaultSku?: ProductSku;
 }
 
 /**
@@ -30,7 +32,7 @@ interface VariantSelectorProps {
  *
  * Note : Chaque sélecteur enfant est autonome et gère sa propre navigation URL
  */
-export function VariantSelector({ product }: VariantSelectorProps) {
+export function VariantSelector({ product, defaultSku }: VariantSelectorProps) {
 	const searchParams = useSearchParams();
 
 	// Lire l'état depuis l'URL pour la validation
@@ -74,6 +76,7 @@ export function VariantSelector({ product }: VariantSelectorProps) {
 					colors={variantInfo.availableColors}
 					product={product}
 					showMaterialLabel={variantInfo.availableMaterials.length <= 1}
+					defaultSku={defaultSku}
 				/>
 
 				{/* Sélecteur de matériau autonome */}
@@ -83,6 +86,7 @@ export function VariantSelector({ product }: VariantSelectorProps) {
 						<MaterialSelector
 							materials={variantInfo.availableMaterials}
 							product={product}
+							defaultSku={defaultSku}
 						/>
 					</>
 				)}
@@ -96,6 +100,7 @@ export function VariantSelector({ product }: VariantSelectorProps) {
 							product={product}
 							productTypeSlug={product.type?.slug}
 							shouldShow={requiresSize && variantInfo.availableSizes.length > 0}
+							defaultSku={defaultSku}
 						/>
 					</>
 				)}

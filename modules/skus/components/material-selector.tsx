@@ -4,6 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
+import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
@@ -12,6 +13,7 @@ import type { Material } from "@/modules/skus/types/sku-selector.types";
 interface MaterialSelectorProps {
 	materials: Material[];
 	product: GetProductReturn;
+	defaultSku?: ProductSku;
 }
 
 /**
@@ -28,14 +30,15 @@ interface MaterialSelectorProps {
 export function MaterialSelector({
 	materials,
 	product,
+	defaultSku,
 }: MaterialSelectorProps) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	// Lire l'état depuis l'URL (source de vérité)
-	const selectedMaterial = searchParams.get("material");
+	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
+	const selectedMaterial = searchParams.get("material") ?? defaultSku?.material?.name ?? null;
 	const currentColor = searchParams.get("color");
 	const currentSize = searchParams.get("size");
 

@@ -6,7 +6,8 @@ import { useTransition } from "react";
 
 import { Role } from "@/app/generated/prisma/browser";
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
-import { Checkbox } from "@/shared/components/ui/checkbox";
+import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
+import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { Label } from "@/shared/components/ui/label";
 import { Separator } from "@/shared/components/ui/separator";
 import { Switch } from "@/shared/components/ui/switch";
@@ -163,198 +164,158 @@ export function UsersFilterSheet() {
 				}}
 			>
 				<div className="space-y-6">
-					{/* Rôle */}
-					<div className="space-y-3">
-						<h4 className="text-sm font-medium">Rôle</h4>
-						<form.Field name="role">
-							{(field) => (
-								<div className="space-y-2">
-									<label className="flex items-center gap-2 cursor-pointer">
-										<Checkbox
-											checked={field.state.value.includes(Role.USER)}
-											onCheckedChange={(checked) => {
-												if (checked) {
-													field.handleChange([...field.state.value, Role.USER]);
-												} else {
-													field.handleChange(
-														field.state.value.filter((r) => r !== Role.USER)
-													);
-												}
-											}}
-										/>
-										<span className="text-sm">Utilisateur</span>
-									</label>
-									<label className="flex items-center gap-2 cursor-pointer">
-										<Checkbox
-											checked={field.state.value.includes(Role.ADMIN)}
-											onCheckedChange={(checked) => {
-												if (checked) {
-													field.handleChange([
-														...field.state.value,
-														Role.ADMIN,
-													]);
-												} else {
-													field.handleChange(
-														field.state.value.filter((r) => r !== Role.ADMIN)
-													);
-												}
-											}}
-										/>
-										<span className="text-sm">Administrateur</span>
-									</label>
-								</div>
-							)}
-						</form.Field>
-					</div>
+					{/* Rôle - Multi-select */}
+					<form.Field name="role">
+						{(field) => (
+							<fieldset className="space-y-1">
+								<legend className="text-sm font-medium mb-2">Rôle</legend>
+								<CheckboxFilterItem
+									id="role-user"
+									checked={field.state.value.includes(Role.USER)}
+									onCheckedChange={(checked) => {
+										if (checked) {
+											field.handleChange([...field.state.value, Role.USER]);
+										} else {
+											field.handleChange(
+												field.state.value.filter((r) => r !== Role.USER)
+											);
+										}
+									}}
+								>
+									Utilisateur
+								</CheckboxFilterItem>
+								<CheckboxFilterItem
+									id="role-admin"
+									checked={field.state.value.includes(Role.ADMIN)}
+									onCheckedChange={(checked) => {
+										if (checked) {
+											field.handleChange([...field.state.value, Role.ADMIN]);
+										} else {
+											field.handleChange(
+												field.state.value.filter((r) => r !== Role.ADMIN)
+											);
+										}
+									}}
+								>
+									Administrateur
+								</CheckboxFilterItem>
+							</fieldset>
+						)}
+					</form.Field>
 
 					<Separator />
 
-					{/* Email vérifié */}
-					<div className="space-y-3">
-						<h4 className="text-sm font-medium">Email vérifié</h4>
-						<form.Field name="emailVerified">
-							{(field) => (
-								<div className="space-y-2">
-									{[
-										{ value: undefined, label: "Tous" },
-										{ value: true, label: "Oui" },
-										{ value: false, label: "Non" },
-									].map(({ value, label }) => {
-										const isSelected = field.state.value === value;
-										return (
-											<div
-												key={String(value)}
-												className="flex items-center space-x-2"
-											>
-												<Checkbox
-													id={`emailVerified-${label}`}
-													checked={isSelected}
-													onCheckedChange={(checked) => {
-														if (checked) {
-															field.handleChange(value);
-														}
-													}}
-												/>
-												<Label
-													htmlFor={`emailVerified-${label}`}
-													className="text-sm font-normal cursor-pointer flex-1"
-												>
-													{label}
-												</Label>
-											</div>
-										);
-									})}
-								</div>
-							)}
-						</form.Field>
-					</div>
-
-					<Separator />
-
-					{/* Marketing opt-in */}
-					<div className="space-y-3">
-						<h4 className="text-sm font-medium">Marketing opt-in</h4>
-						<form.Field name="marketingOptIn">
-							{(field) => (
-								<div className="space-y-2">
-									{[
-										{ value: undefined, label: "Tous" },
-										{ value: true, label: "Oui" },
-										{ value: false, label: "Non" },
-									].map(({ value, label }) => {
-										const isSelected = field.state.value === value;
-										return (
-											<div
-												key={String(value)}
-												className="flex items-center space-x-2"
-											>
-												<Checkbox
-													id={`marketingOptIn-${label}`}
-													checked={isSelected}
-													onCheckedChange={(checked) => {
-														if (checked) {
-															field.handleChange(value);
-														}
-													}}
-												/>
-												<Label
-													htmlFor={`marketingOptIn-${label}`}
-													className="text-sm font-normal cursor-pointer flex-1"
-												>
-													{label}
-												</Label>
-											</div>
-										);
-									})}
-								</div>
-							)}
-						</form.Field>
-					</div>
-
-					<Separator />
-
-					{/* A des commandes */}
-					<div className="space-y-3">
-						<h4 className="text-sm font-medium">A des commandes</h4>
-						<form.Field name="hasOrders">
-							{(field) => (
-								<div className="space-y-2">
-									{[
-										{ value: undefined, label: "Tous" },
-										{ value: true, label: "Oui" },
-										{ value: false, label: "Non" },
-									].map(({ value, label }) => {
-										const isSelected = field.state.value === value;
-										return (
-											<div
-												key={String(value)}
-												className="flex items-center space-x-2"
-											>
-												<Checkbox
-													id={`hasOrders-${label}`}
-													checked={isSelected}
-													onCheckedChange={(checked) => {
-														if (checked) {
-															field.handleChange(value);
-														}
-													}}
-												/>
-												<Label
-													htmlFor={`hasOrders-${label}`}
-													className="text-sm font-normal cursor-pointer flex-1"
-												>
-													{label}
-												</Label>
-											</div>
-										);
-									})}
-								</div>
-							)}
-						</form.Field>
-					</div>
-
-					<Separator />
-
-					{/* Inclure supprimés */}
-					<div className="space-y-3">
-						<form.Field name="includeDeleted">
-							{(field) => (
-								<div className="flex items-center justify-between">
-									<Label
-										htmlFor="includeDeleted"
-										className="text-sm font-medium"
+					{/* Email vérifié - Single-select */}
+					<form.Field name="emailVerified">
+						{(field) => (
+							<fieldset className="space-y-1">
+								<legend className="text-sm font-medium mb-2">Email vérifié</legend>
+								{[
+									{ value: undefined, label: "Tous" },
+									{ value: true, label: "Oui" },
+									{ value: false, label: "Non" },
+								].map(({ value, label }) => (
+									<RadioFilterItem
+										key={String(value)}
+										id={`emailVerified-${label}`}
+										name="emailVerified"
+										value={String(value)}
+										checked={field.state.value === value}
+										onCheckedChange={(checked) => {
+											if (checked) {
+												field.handleChange(value);
+											}
+										}}
 									>
-										Inclure les clients supprimés
-									</Label>
-									<Switch
-										id="includeDeleted"
-										checked={field.state.value}
-										onCheckedChange={field.handleChange}
-									/>
-								</div>
-							)}
-						</form.Field>
-					</div>
+										{label}
+									</RadioFilterItem>
+								))}
+							</fieldset>
+						)}
+					</form.Field>
+
+					<Separator />
+
+					{/* Marketing opt-in - Single-select */}
+					<form.Field name="marketingOptIn">
+						{(field) => (
+							<fieldset className="space-y-1">
+								<legend className="text-sm font-medium mb-2">Marketing opt-in</legend>
+								{[
+									{ value: undefined, label: "Tous" },
+									{ value: true, label: "Oui" },
+									{ value: false, label: "Non" },
+								].map(({ value, label }) => (
+									<RadioFilterItem
+										key={String(value)}
+										id={`marketingOptIn-${label}`}
+										name="marketingOptIn"
+										value={String(value)}
+										checked={field.state.value === value}
+										onCheckedChange={(checked) => {
+											if (checked) {
+												field.handleChange(value);
+											}
+										}}
+									>
+										{label}
+									</RadioFilterItem>
+								))}
+							</fieldset>
+						)}
+					</form.Field>
+
+					<Separator />
+
+					{/* A des commandes - Single-select */}
+					<form.Field name="hasOrders">
+						{(field) => (
+							<fieldset className="space-y-1">
+								<legend className="text-sm font-medium mb-2">A des commandes</legend>
+								{[
+									{ value: undefined, label: "Tous" },
+									{ value: true, label: "Oui" },
+									{ value: false, label: "Non" },
+								].map(({ value, label }) => (
+									<RadioFilterItem
+										key={String(value)}
+										id={`hasOrders-${label}`}
+										name="hasOrders"
+										value={String(value)}
+										checked={field.state.value === value}
+										onCheckedChange={(checked) => {
+											if (checked) {
+												field.handleChange(value);
+											}
+										}}
+									>
+										{label}
+									</RadioFilterItem>
+								))}
+							</fieldset>
+						)}
+					</form.Field>
+
+					<Separator />
+
+					{/* Inclure supprimés - Switch toggle */}
+					<form.Field name="includeDeleted">
+						{(field) => (
+							<div className="flex items-center justify-between min-h-[44px]">
+								<Label
+									htmlFor="includeDeleted"
+									className="text-sm font-medium"
+								>
+									Inclure les clients supprimés
+								</Label>
+								<Switch
+									id="includeDeleted"
+									checked={field.state.value}
+									onCheckedChange={field.handleChange}
+								/>
+							</div>
+						)}
+					</form.Field>
 				</div>
 			</form>
 		</FilterSheetWrapper>

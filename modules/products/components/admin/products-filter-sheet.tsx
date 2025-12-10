@@ -156,10 +156,10 @@ export function ProductsFilterSheet({
 				{/* Price Range */}
 				<form.Field name="priceRange">
 					{(field) => (
-						<div className="space-y-3">
-							<h4 className="font-medium text-sm text-foreground">
+						<fieldset className="space-y-3">
+							<legend className="font-medium text-sm text-foreground">
 								Prix final (€)
-							</h4>
+							</legend>
 							<div className="space-y-3">
 								<Slider
 									value={field.state.value}
@@ -176,7 +176,7 @@ export function ProductsFilterSheet({
 									<span>{(field.state.value[1] / 100).toFixed(2)}€</span>
 								</div>
 							</div>
-						</div>
+						</fieldset>
 					)}
 				</form.Field>
 
@@ -187,10 +187,10 @@ export function ProductsFilterSheet({
 					<>
 						<form.Field name="typeIds" mode="array">
 							{(field) => (
-								<div className="space-y-3">
-									<h4 className="font-medium text-sm text-foreground">
+								<fieldset className="space-y-3">
+									<legend className="font-medium text-sm text-foreground">
 										Types de produit
-									</h4>
+									</legend>
 									<div className="space-y-2 max-h-48 overflow-y-auto">
 										{productTypes.map((type) => {
 											const isSelected = field.state.value.includes(type.id);
@@ -224,7 +224,7 @@ export function ProductsFilterSheet({
 											);
 										})}
 									</div>
-								</div>
+								</fieldset>
 							)}
 						</form.Field>
 						<Separator />
@@ -236,10 +236,10 @@ export function ProductsFilterSheet({
 					<>
 						<form.Field name="collectionIds" mode="array">
 							{(field) => (
-								<div className="space-y-3">
-									<h4 className="font-medium text-sm text-foreground">
+								<fieldset className="space-y-3">
+									<legend className="font-medium text-sm text-foreground">
 										Collections
-									</h4>
+									</legend>
 									<div className="space-y-2 max-h-48 overflow-y-auto">
 										{collections.map((collection) => {
 											const isSelected = field.state.value.includes(
@@ -275,7 +275,7 @@ export function ProductsFilterSheet({
 											);
 										})}
 									</div>
-								</div>
+								</fieldset>
 							)}
 						</form.Field>
 						<Separator />

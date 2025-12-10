@@ -32,7 +32,7 @@ interface ColorSwatchesProps {
 const sizeClasses = {
 	xs: "size-4", // 16px - décoratif uniquement
 	sm: "size-5", // 20px - compact pour cards
-	md: "size-6", // 24px - minimum interactif (WCAG AA)
+	md: "size-6", // 24px - WCAG 2.5.8 (AA) avec espacement ≥12px
 	lg: "size-8", // 32px - confortable mobile
 };
 
@@ -216,7 +216,7 @@ export function ColorSwatches({
 			className={cn(
 				"flex items-center flex-wrap",
 				// Espacement adaptatif : plus grand en mode interactif pour touch targets
-				interactive ? "gap-2 sm:gap-2.5" : "gap-1.5",
+				interactive ? "gap-3" : "gap-1.5",
 				className
 			)}
 			aria-label={interactive ? `Sélectionner une couleur parmi ${colors.length} disponible${colors.length > 1 ? "s" : ""}` : `${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}

@@ -2,6 +2,7 @@
 
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
+import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -135,8 +136,8 @@ function AmountRangeInputs({
 	};
 
 	return (
-		<div className="space-y-3">
-			<h4 className="font-medium text-sm text-foreground">Montant (€)</h4>
+		<fieldset className="space-y-3">
+			<legend className="font-medium text-sm text-foreground">Montant (€)</legend>
 			<div className="space-y-4">
 				{/* data-vaul-no-drag empeche le drawer de capturer le drag du slider */}
 				<div data-vaul-no-drag>
@@ -178,7 +179,7 @@ function AmountRangeInputs({
 					<span className="text-muted-foreground text-sm shrink-0">€</span>
 				</div>
 			</div>
-		</div>
+		</fieldset>
 	);
 }
 
@@ -369,10 +370,10 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				{/* Order Status */}
 				<form.Field name="statuses" mode="array">
 					{(field) => (
-						<div className="space-y-1">
-							<h4 className="font-medium text-sm text-foreground mb-2">
+						<fieldset className="space-y-1">
+							<legend className="font-medium text-sm text-foreground mb-2">
 								Statut de commande
-							</h4>
+							</legend>
 							{Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => {
 								const isSelected = field.state.value.includes(value);
 								return (
@@ -393,7 +394,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 									</CheckboxFilterItem>
 								);
 							})}
-						</div>
+						</fieldset>
 					)}
 				</form.Field>
 
@@ -402,10 +403,10 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				{/* Payment Status */}
 				<form.Field name="paymentStatuses" mode="array">
 					{(field) => (
-						<div className="space-y-1">
-							<h4 className="font-medium text-sm text-foreground mb-2">
+						<fieldset className="space-y-1">
+							<legend className="font-medium text-sm text-foreground mb-2">
 								Statut de paiement
-							</h4>
+							</legend>
 							{Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => {
 								const isSelected = field.state.value.includes(value);
 								return (
@@ -426,7 +427,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 									</CheckboxFilterItem>
 								);
 							})}
-						</div>
+						</fieldset>
 					)}
 				</form.Field>
 
@@ -446,10 +447,10 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				<Separator />
 
 				{/* Date Range avec Calendar */}
-				<div className="space-y-3">
-					<h4 className="font-medium text-sm text-foreground">
+				<fieldset className="space-y-3">
+					<legend className="font-medium text-sm text-foreground">
 						Période de commande
-					</h4>
+					</legend>
 					<div className="space-y-3">
 						<form.Field name="dateRange.from">
 							{(field) => (
@@ -540,37 +541,36 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 							)}
 						</form.Field>
 					</div>
-				</div>
+				</fieldset>
 
 				<Separator />
 
 				{/* Show Deleted Filter */}
 				<form.Field name="showDeleted">
 					{(field) => (
-						<div className="space-y-1">
-							<h4 className="font-medium text-sm text-foreground mb-2">Affichage</h4>
+						<fieldset className="space-y-1">
+							<legend className="font-medium text-sm text-foreground mb-2">Affichage</legend>
 							{([
 								{ value: "all" as const, label: "Toutes" },
 								{ value: "active" as const, label: "Non supprimées uniquement" },
 								{ value: "deleted" as const, label: "Supprimées uniquement" },
-							] as const).map(({ value, label }) => {
-								const isSelected = field.state.value === value;
-								return (
-									<CheckboxFilterItem
-										key={value}
-										id={`showDeleted-${value}`}
-										checked={isSelected}
-										onCheckedChange={(checked) => {
-											if (checked) {
-												field.handleChange(value);
-											}
-										}}
-									>
-										{label}
-									</CheckboxFilterItem>
-								);
-							})}
-						</div>
+							] as const).map(({ value, label }) => (
+								<RadioFilterItem
+									key={value}
+									id={`showDeleted-${value}`}
+									name="showDeleted"
+									value={value}
+									checked={field.state.value === value}
+									onCheckedChange={(checked) => {
+										if (checked) {
+											field.handleChange(value);
+										}
+									}}
+								>
+									{label}
+								</RadioFilterItem>
+							))}
+						</fieldset>
 					)}
 				</form.Field>
 			</form>

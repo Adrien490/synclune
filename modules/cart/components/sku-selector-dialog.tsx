@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2, Minus, Plus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
@@ -23,6 +23,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
 import { getPrimaryImageForList } from "@/modules/products/services/product-list-helpers";
+import { filterCompatibleSkus as filterCompatibleSkusService } from "@/modules/skus/services/filter-compatible-skus";
 import { slugify } from "@/shared/utils/generate-slug";
 
 export const SKU_SELECTOR_DIALOG_ID = "sku-selector";
@@ -64,13 +65,49 @@ export function SkuSelectorDialog() {
 	const preselectedColor = data?.preselectedColor;
 
 	// Reset form quand le dialog s'ouvre avec un nouveau produit
-	// Utilise la couleur pré-sélectionnée si disponible
+	// Pré-sélectionne les variantes du SKU par défaut pour une meilleure UX
 	useEffect(() => {
 		if (isOpen && product) {
+			// Trouver le SKU par défaut (isDefault: true ou premier SKU actif)
+			const activeSkus = product.skus?.filter((sku) => sku.isActive) || [];
+			const defaultSku =
+				activeSkus.find((sku) => sku.isDefault) ?? activeSkus[0];
+
+			// Extraire les variantes uniques pour l'auto-sélection
+			const uniqueColors = new Set(
+				activeSkus.map((sku) => sku.color?.slug).filter(Boolean)
+			);
+			const uniqueMaterials = new Set(
+				activeSkus
+					.map((sku) => (sku.material?.name ? slugify(sku.material.name) : null))
+					.filter(Boolean)
+			);
+			const uniqueSizes = new Set(
+				activeSkus.map((sku) => sku.size).filter(Boolean)
+			);
+
+			// Calculer les valeurs initiales avec auto-sélection intelligente
+			// Priorité : preselectedColor > SKU par défaut > auto-sélection si unique
+			const initialColor =
+				preselectedColor ||
+				defaultSku?.color?.slug ||
+				(uniqueColors.size === 1 ? [...uniqueColors][0] : "") ||
+				"";
+
+			const initialMaterial =
+				(defaultSku?.material?.name ? slugify(defaultSku.material.name) : "") ||
+				(uniqueMaterials.size === 1 ? [...uniqueMaterials][0] : "") ||
+				"";
+
+			const initialSize =
+				defaultSku?.size ||
+				(uniqueSizes.size === 1 ? [...uniqueSizes][0] : "") ||
+				"";
+
 			form.reset({
-				color: preselectedColor || "",
-				material: "",
-				size: "",
+				color: initialColor,
+				material: initialMaterial,
+				size: initialSize,
 				quantity: 1,
 			});
 		}
@@ -187,32 +224,18 @@ export function SkuSelectorDialog() {
 			product.type?.slug as (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number]
 		);
 
-	// Filtrer les SKUs compatibles
+	// Filtrer les SKUs compatibles en utilisant le service partagé
 	const filterCompatibleSkus = (selectors: {
 		colorSlug?: string;
 		materialSlug?: string;
 		size?: string;
-	}) => {
-		return activeSkus.filter((sku) => {
-			if (sku.inventory <= 0) return false;
-			if (selectors.colorSlug && sku.color?.slug !== selectors.colorSlug)
-				return false;
-			if (selectors.materialSlug) {
-				const skuMaterialSlug = sku.material?.name
-					? slugify(sku.material.name)
-					: null;
-				if (skuMaterialSlug !== selectors.materialSlug) return false;
-			}
-			if (selectors.size && sku.size !== selectors.size) return false;
-			return true;
-		});
-	};
+	}) => filterCompatibleSkusService(product, selectors);
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
 			<ResponsiveDialogContent className="sm:max-w-[520px] max-h-[85vh] flex flex-col">
 				<ResponsiveDialogHeader>
-					<ResponsiveDialogTitle>Ce produit est disponible dans plusieurs variantes 🎨</ResponsiveDialogTitle>
+					<ResponsiveDialogTitle>Ce produit est disponible dans plusieurs variantes <span aria-hidden="true">🎨</span></ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
 						{product.title}
 					</ResponsiveDialogDescription>
@@ -220,7 +243,7 @@ export function SkuSelectorDialog() {
 
 				{/* Conteneur scrollable avec indicateur de défilement */}
 				<div className="relative flex-1 min-h-0">
-					<form action={action} className="space-y-6 py-4 overflow-y-auto h-full pr-1">
+					<form action={action} className="space-y-6 py-4 overflow-y-auto h-full pr-2 overscroll-contain [-webkit-overflow-scrolling:touch]">
 					{/* Subscribe pour obtenir les valeurs et calculer le SKU */}
 					<form.Subscribe selector={(state) => state.values}>
 						{(values) => {
@@ -377,439 +400,193 @@ export function SkuSelectorDialog() {
 									{/* Sélecteur de couleur */}
 									{colors.length > 1 && (
 										<form.Field name="color">
-											{(field) => {
-												// Navigation clavier pour les sélecteurs radio
-												const handleColorKeyDown = (
-													e: React.KeyboardEvent<HTMLButtonElement>,
-													index: number
-												) => {
-													const availableColors = colors.filter((c) =>
-														isColorAvailable(c.slug)
-													);
-													if (availableColors.length === 0) return;
+											{(field) => (
+												<fieldset className="space-y-2">
+													<Label
+														className="text-sm font-medium"
+														id="color-label"
+													>
+														Couleur
+														<span className="text-destructive ml-0.5" aria-hidden="true">*</span>
+														<span className="sr-only">(obligatoire)</span>
+														{field.state.value && (
+															<span className="font-normal text-muted-foreground ml-1">
+																:{" "}
+																{
+																	colors.find(
+																		(c) => c.slug === field.state.value
+																	)?.name
+																}
+															</span>
+														)}
+													</Label>
+													<div
+														className="flex flex-wrap gap-2"
+														role="group"
+														aria-labelledby="color-label"
+													>
+														{colors.map((color) => {
+															const isSelected =
+																color.slug === field.state.value;
+															const isAvailable = isColorAvailable(color.slug);
 
-													const currentAvailableIndex = availableColors.findIndex(
-														(c) => c.slug === colors[index].slug
-													);
-													let nextIndex: number | null = null;
-
-													switch (e.key) {
-														case "ArrowRight":
-														case "ArrowDown":
-															e.preventDefault();
-															nextIndex =
-																currentAvailableIndex < availableColors.length - 1
-																	? colors.findIndex(
-																			(c) =>
-																				c.slug ===
-																				availableColors[currentAvailableIndex + 1]
-																					.slug
-																		)
-																	: colors.findIndex(
-																			(c) => c.slug === availableColors[0].slug
-																		);
-															break;
-														case "ArrowLeft":
-														case "ArrowUp":
-															e.preventDefault();
-															nextIndex =
-																currentAvailableIndex > 0
-																	? colors.findIndex(
-																			(c) =>
-																				c.slug ===
-																				availableColors[currentAvailableIndex - 1]
-																					.slug
-																		)
-																	: colors.findIndex(
-																			(c) =>
-																				c.slug ===
-																				availableColors[availableColors.length - 1]
-																					.slug
-																		);
-															break;
-														case "Home":
-															e.preventDefault();
-															nextIndex = colors.findIndex(
-																(c) => c.slug === availableColors[0].slug
-															);
-															break;
-														case "End":
-															e.preventDefault();
-															nextIndex = colors.findIndex(
-																(c) =>
-																	c.slug ===
-																	availableColors[availableColors.length - 1].slug
-															);
-															break;
-													}
-
-													if (nextIndex !== null && nextIndex >= 0) {
-														const nextButton = document.querySelector(
-															`[data-color-index="${nextIndex}"]`
-														) as HTMLButtonElement | null;
-														nextButton?.focus();
-														field.handleChange(colors[nextIndex].slug);
-													}
-												};
-
-												return (
-													<fieldset className="space-y-2">
-														<Label
-															className="text-sm font-medium"
-															id="color-label"
-														>
-															Couleur
-															{field.state.value && (
-																<span className="font-normal text-muted-foreground ml-1">
-																	:{" "}
-																	{
-																		colors.find(
-																			(c) => c.slug === field.state.value
-																		)?.name
+															return (
+																<button
+																	key={color.slug}
+																	type="button"
+																	aria-pressed={isSelected}
+																	onClick={() =>
+																		field.handleChange(color.slug)
 																	}
-																</span>
-															)}
-														</Label>
-														<div
-															className="flex flex-wrap gap-2"
-															role="radiogroup"
-															aria-labelledby="color-label"
-														>
-															{colors.map((color, index) => {
-																const isSelected =
-																	color.slug === field.state.value;
-																const isAvailable = isColorAvailable(color.slug);
-
-																return (
-																	<button
-																		key={color.slug}
-																		data-color-index={index}
-																		type="button"
-																		role="radio"
-																		aria-checked={isSelected}
-																		tabIndex={
-																			isSelected ||
-																			(!field.state.value && index === 0)
-																				? 0
-																				: -1
-																		}
-																		onClick={() =>
-																			field.handleChange(color.slug)
-																		}
-																		onKeyDown={(e) =>
-																			handleColorKeyDown(e, index)
-																		}
-																		disabled={!isAvailable || isPending}
-																		className={cn(
-																			"relative flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
-																			"hover:shadow-sm active:scale-[0.98]",
-																			"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-																			"disabled:opacity-50 disabled:cursor-not-allowed",
-																			isSelected
-																				? "border-primary bg-primary/5"
-																				: "border-border hover:border-primary/50"
-																		)}
-																		aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
-																	>
-																		<div
-																			className="w-5 h-5 rounded-full border border-border/50 shadow-sm shrink-0"
-																			style={{ backgroundColor: color.hex }}
-																		/>
-																		<span className="text-sm">{color.name}</span>
-																		{isSelected && (
-																			<Check className="w-4 h-4 text-primary shrink-0" />
-																		)}
-																	</button>
-																);
-															})}
-														</div>
-													</fieldset>
-												);
-											}}
+																	disabled={!isAvailable || isPending}
+																	className={cn(
+																		"relative flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
+																		"hover:shadow-sm active:scale-[0.98]",
+																		"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+																		"disabled:opacity-50 disabled:cursor-not-allowed",
+																		isSelected
+																			? "border-primary bg-primary/5"
+																			: "border-border hover:border-primary/50"
+																	)}
+																	aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
+																>
+																	<div
+																		className="w-5 h-5 rounded-full border border-border/50 shadow-sm shrink-0"
+																		style={{ backgroundColor: color.hex }}
+																	/>
+																	<span className="text-sm">{color.name}</span>
+																	{isSelected && (
+																		<Check className="w-4 h-4 text-primary shrink-0" />
+																	)}
+																</button>
+															);
+														})}
+													</div>
+												</fieldset>
+											)}
 										</form.Field>
 									)}
 
 									{/* Sélecteur de matériau */}
 									{materials.length > 1 && (
 										<form.Field name="material">
-											{(field) => {
-												// Navigation clavier
-												const handleMaterialKeyDown = (
-													e: React.KeyboardEvent<HTMLButtonElement>,
-													index: number
-												) => {
-													const availableMaterials = materials.filter((m) =>
-														isMaterialAvailable(m.slug)
-													);
-													if (availableMaterials.length === 0) return;
-
-													const currentAvailableIndex = availableMaterials.findIndex(
-														(m) => m.slug === materials[index].slug
-													);
-													let nextIndex: number | null = null;
-
-													switch (e.key) {
-														case "ArrowRight":
-														case "ArrowDown":
-															e.preventDefault();
-															nextIndex =
-																currentAvailableIndex < availableMaterials.length - 1
-																	? materials.findIndex(
-																			(m) =>
-																				m.slug ===
-																				availableMaterials[currentAvailableIndex + 1].slug
-																		)
-																	: materials.findIndex(
-																			(m) => m.slug === availableMaterials[0].slug
-																		);
-															break;
-														case "ArrowLeft":
-														case "ArrowUp":
-															e.preventDefault();
-															nextIndex =
-																currentAvailableIndex > 0
-																	? materials.findIndex(
-																			(m) =>
-																				m.slug ===
-																				availableMaterials[currentAvailableIndex - 1].slug
-																		)
-																	: materials.findIndex(
-																			(m) =>
-																				m.slug ===
-																				availableMaterials[availableMaterials.length - 1].slug
-																		);
-															break;
-														case "Home":
-															e.preventDefault();
-															nextIndex = materials.findIndex(
-																(m) => m.slug === availableMaterials[0].slug
+											{(field) => (
+												<fieldset className="space-y-2">
+													<Label
+														className="text-sm font-medium"
+														id="material-label"
+													>
+														Matériau
+														<span className="text-destructive ml-0.5" aria-hidden="true">*</span>
+														<span className="sr-only">(obligatoire)</span>
+													</Label>
+													<div
+														className="grid grid-cols-2 gap-2"
+														role="group"
+														aria-labelledby="material-label"
+													>
+														{materials.map((material) => {
+															const isSelected =
+																material.slug === field.state.value;
+															const isAvailable = isMaterialAvailable(
+																material.slug
 															);
-															break;
-														case "End":
-															e.preventDefault();
-															nextIndex = materials.findIndex(
-																(m) =>
-																	m.slug ===
-																	availableMaterials[availableMaterials.length - 1].slug
+
+															return (
+																<button
+																	key={material.slug}
+																	type="button"
+																	aria-pressed={isSelected}
+																	onClick={() =>
+																		field.handleChange(material.slug)
+																	}
+																	disabled={!isAvailable || isPending}
+																	className={cn(
+																		"flex items-center justify-between px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
+																		"hover:shadow-sm active:scale-[0.98]",
+																		"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+																		"disabled:opacity-50 disabled:cursor-not-allowed",
+																		isSelected
+																			? "border-primary bg-primary/5"
+																			: "border-border hover:border-primary/50"
+																	)}
+																>
+																	<span className="text-sm">
+																		{material.name}
+																	</span>
+																	{isSelected && (
+																		<Check className="w-4 h-4 text-primary shrink-0" />
+																	)}
+																</button>
 															);
-															break;
-													}
-
-													if (nextIndex !== null && nextIndex >= 0) {
-														const nextButton = document.querySelector(
-															`[data-material-index="${nextIndex}"]`
-														) as HTMLButtonElement | null;
-														nextButton?.focus();
-														field.handleChange(materials[nextIndex].slug);
-													}
-												};
-
-												return (
-													<fieldset className="space-y-2">
-														<Label
-															className="text-sm font-medium"
-															id="material-label"
-														>
-															Matériau
-														</Label>
-														<div
-															className="grid grid-cols-2 gap-2"
-															role="radiogroup"
-															aria-labelledby="material-label"
-														>
-															{materials.map((material, index) => {
-																const isSelected =
-																	material.slug === field.state.value;
-																const isAvailable = isMaterialAvailable(
-																	material.slug
-																);
-
-																return (
-																	<button
-																		key={material.slug}
-																		data-material-index={index}
-																		type="button"
-																		role="radio"
-																		aria-checked={isSelected}
-																		tabIndex={
-																			isSelected ||
-																			(!field.state.value && index === 0)
-																				? 0
-																				: -1
-																		}
-																		onClick={() =>
-																			field.handleChange(material.slug)
-																		}
-																		onKeyDown={(e) =>
-																			handleMaterialKeyDown(e, index)
-																		}
-																		disabled={!isAvailable || isPending}
-																		className={cn(
-																			"flex items-center justify-between px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
-																			"hover:shadow-sm active:scale-[0.98]",
-																			"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-																			"disabled:opacity-50 disabled:cursor-not-allowed",
-																			isSelected
-																				? "border-primary bg-primary/5"
-																				: "border-border hover:border-primary/50"
-																		)}
-																	>
-																		<span className="text-sm">
-																			{material.name}
-																		</span>
-																		{isSelected && (
-																			<Check className="w-4 h-4 text-primary shrink-0" />
-																		)}
-																	</button>
-																);
-															})}
-														</div>
-													</fieldset>
-												);
-											}}
+														})}
+													</div>
+												</fieldset>
+											)}
 										</form.Field>
 									)}
 
 									{/* Sélecteur de taille */}
 									{requiresSize && sizes.length > 0 && (
 										<form.Field name="size">
-											{(field) => {
-												// Navigation clavier
-												const handleSizeKeyDown = (
-													e: React.KeyboardEvent<HTMLButtonElement>,
-													index: number
-												) => {
-													const availableSizes = sizes.filter((s) =>
-														isSizeAvailable(s)
-													);
-													if (availableSizes.length === 0) return;
+											{(field) => (
+												<fieldset className="space-y-2">
+													<Label
+														className="text-sm font-medium"
+														id="size-label"
+													>
+														Taille
+														<span className="text-destructive ml-0.5" aria-hidden="true">*</span>
+														<span className="sr-only">(obligatoire)</span>
+														{product.type?.slug === "ring" && (
+															<span className="font-normal text-muted-foreground ml-1">
+																(Diamètre)
+															</span>
+														)}
+														{product.type?.slug === "bracelet" && (
+															<span className="font-normal text-muted-foreground ml-1">
+																(Tour de poignet)
+															</span>
+														)}
+													</Label>
+													<div
+														className="grid grid-cols-3 sm:grid-cols-4 gap-2"
+														role="group"
+														aria-labelledby="size-label"
+													>
+														{sizes.map((size) => {
+															const isSelected = size === field.state.value;
+															const isAvailable = isSizeAvailable(size);
 
-													const currentAvailableIndex = availableSizes.findIndex(
-														(s) => s === sizes[index]
-													);
-													let nextIndex: number | null = null;
-
-													switch (e.key) {
-														case "ArrowRight":
-														case "ArrowDown":
-															e.preventDefault();
-															nextIndex =
-																currentAvailableIndex < availableSizes.length - 1
-																	? sizes.findIndex(
-																			(s) =>
-																				s === availableSizes[currentAvailableIndex + 1]
-																		)
-																	: sizes.findIndex(
-																			(s) => s === availableSizes[0]
-																		);
-															break;
-														case "ArrowLeft":
-														case "ArrowUp":
-															e.preventDefault();
-															nextIndex =
-																currentAvailableIndex > 0
-																	? sizes.findIndex(
-																			(s) =>
-																				s === availableSizes[currentAvailableIndex - 1]
-																		)
-																	: sizes.findIndex(
-																			(s) =>
-																				s ===
-																				availableSizes[availableSizes.length - 1]
-																		);
-															break;
-														case "Home":
-															e.preventDefault();
-															nextIndex = sizes.findIndex(
-																(s) => s === availableSizes[0]
+															return (
+																<button
+																	key={size}
+																	type="button"
+																	aria-pressed={isSelected}
+																	onClick={() => field.handleChange(size)}
+																	disabled={!isAvailable || isPending}
+																	className={cn(
+																		"relative flex items-center justify-center px-2 py-3 min-h-[44px] rounded-lg border-2 transition-all",
+																		"hover:shadow-sm active:scale-[0.98]",
+																		"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+																		"disabled:opacity-50 disabled:cursor-not-allowed",
+																		isSelected
+																			? "border-primary bg-primary/5"
+																			: "border-border hover:border-primary/50"
+																	)}
+																>
+																	<span className="text-sm font-medium truncate">
+																		{size}
+																	</span>
+																	{isSelected && (
+																		<Check className="w-3.5 h-3.5 text-primary absolute top-1.5 right-1.5" />
+																	)}
+																</button>
 															);
-															break;
-														case "End":
-															e.preventDefault();
-															nextIndex = sizes.findIndex(
-																(s) =>
-																	s === availableSizes[availableSizes.length - 1]
-															);
-															break;
-													}
-
-													if (nextIndex !== null && nextIndex >= 0) {
-														const nextButton = document.querySelector(
-															`[data-size-index="${nextIndex}"]`
-														) as HTMLButtonElement | null;
-														nextButton?.focus();
-														field.handleChange(sizes[nextIndex]);
-													}
-												};
-
-												return (
-													<fieldset className="space-y-2">
-														<Label
-															className="text-sm font-medium"
-															id="size-label"
-														>
-															Taille
-															{product.type?.slug === "ring" && (
-																<span className="font-normal text-muted-foreground ml-1">
-																	(Diamètre)
-																</span>
-															)}
-															{product.type?.slug === "bracelet" && (
-																<span className="font-normal text-muted-foreground ml-1">
-																	(Tour de poignet)
-																</span>
-															)}
-														</Label>
-														<div
-															className="grid grid-cols-3 sm:grid-cols-4 gap-2"
-															role="radiogroup"
-															aria-labelledby="size-label"
-														>
-															{sizes.map((size, index) => {
-																const isSelected = size === field.state.value;
-																const isAvailable = isSizeAvailable(size);
-
-																return (
-																	<button
-																		key={size}
-																		data-size-index={index}
-																		type="button"
-																		role="radio"
-																		aria-checked={isSelected}
-																		tabIndex={
-																			isSelected ||
-																			(!field.state.value && index === 0)
-																				? 0
-																				: -1
-																		}
-																		onClick={() => field.handleChange(size)}
-																		onKeyDown={(e) =>
-																			handleSizeKeyDown(e, index)
-																		}
-																		disabled={!isAvailable || isPending}
-																		className={cn(
-																			"relative flex items-center justify-center px-2 py-3 min-h-[44px] rounded-lg border-2 transition-all",
-																			"hover:shadow-sm active:scale-[0.98]",
-																			"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-																			"disabled:opacity-50 disabled:cursor-not-allowed",
-																			isSelected
-																				? "border-primary bg-primary/5"
-																				: "border-border hover:border-primary/50"
-																		)}
-																	>
-																		<span className="text-sm font-medium truncate">
-																			{size}
-																		</span>
-																		{isSelected && (
-																			<Check className="w-3.5 h-3.5 text-primary absolute top-1.5 right-1.5" />
-																		)}
-																	</button>
-																);
-															})}
-														</div>
-													</fieldset>
-												);
-											}}
+														})}
+													</div>
+												</fieldset>
+											)}
 										</form.Field>
 									)}
 
@@ -868,12 +645,14 @@ export function SkuSelectorDialog() {
 												className="text-sm text-amber-600 overflow-hidden"
 												role="alert"
 											>
-												{validationErrors[0]}
+												{validationErrors.length === 1
+													? validationErrors[0]
+													: `${validationErrors.length} sélections requises`}
 											</motion.p>
 										)}
 									</AnimatePresence>
 
-									<ResponsiveDialogFooter className="pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+									<ResponsiveDialogFooter className="pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
 										<Button
 											type="submit"
 											disabled={!canAddToCart || isPending}
@@ -896,7 +675,7 @@ export function SkuSelectorDialog() {
 				</form>
 					{/* Gradient indicateur de scroll en bas */}
 					<div
-						className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent z-10"
+						className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent z-10"
 						aria-hidden="true"
 					/>
 				</div>

@@ -4,6 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
+import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
@@ -13,6 +14,7 @@ interface ColorSelectorProps {
 	colors: Color[];
 	product: GetProductReturn;
 	showMaterialLabel?: boolean;
+	defaultSku?: ProductSku;
 }
 
 /**
@@ -29,14 +31,15 @@ export function ColorSelector({
 	colors,
 	product,
 	showMaterialLabel = false,
+	defaultSku,
 }: ColorSelectorProps) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	// Lire l'état depuis l'URL (source de vérité)
-	const selectedColor = searchParams.get("color");
+	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
+	const selectedColor = searchParams.get("color") ?? defaultSku?.color?.slug ?? null;
 	const currentMaterial = searchParams.get("material");
 	const currentSize = searchParams.get("size");
 

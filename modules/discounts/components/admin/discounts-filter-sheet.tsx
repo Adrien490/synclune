@@ -1,13 +1,13 @@
 "use client";
 
+import { DiscountType } from "@/app/generated/prisma/browser";
+import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.constants";
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
-import { Checkbox } from "@/shared/components/ui/checkbox";
-import { Label } from "@/shared/components/ui/label";
+import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
+import { Separator } from "@/shared/components/ui/separator";
 import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { DiscountType } from "@/app/generated/prisma/browser";
-import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.constants";
 
 interface DiscountsFilterSheetProps {
 	className?: string;
@@ -130,114 +130,97 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 				{/* Type Filter */}
 				<form.Field name="type">
 					{(field) => (
-						<div className="space-y-3">
-							<h4 className="font-medium text-sm text-foreground">Type</h4>
-							<div className="space-y-2">
-								{[
-									{ value: "all", label: "Tous" },
-									{ value: DiscountType.PERCENTAGE, label: DISCOUNT_TYPE_LABELS[DiscountType.PERCENTAGE] },
-									{ value: DiscountType.FIXED_AMOUNT, label: DISCOUNT_TYPE_LABELS[DiscountType.FIXED_AMOUNT] },
-								].map(({ value, label }) => {
-									const isSelected = field.state.value === value;
-									return (
-										<div key={value} className="flex items-center space-x-2">
-											<Checkbox
-												id={`type-${value}`}
-												checked={isSelected}
-												onCheckedChange={(checked) => {
-													if (checked) {
-														field.handleChange(value);
-													}
-												}}
-												className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-											/>
-											<Label
-												htmlFor={`type-${value}`}
-												className="text-sm font-normal cursor-pointer flex-1"
-											>
-												{label}
-											</Label>
-										</div>
-									);
-								})}
-							</div>
-						</div>
+						<fieldset className="space-y-1">
+							<legend className="font-medium text-sm text-foreground mb-2">
+								Type
+							</legend>
+							{[
+								{ value: "all", label: "Tous" },
+								{ value: DiscountType.PERCENTAGE, label: DISCOUNT_TYPE_LABELS[DiscountType.PERCENTAGE] },
+								{ value: DiscountType.FIXED_AMOUNT, label: DISCOUNT_TYPE_LABELS[DiscountType.FIXED_AMOUNT] },
+							].map(({ value, label }) => (
+								<RadioFilterItem
+									key={value}
+									id={`type-${value}`}
+									name="type"
+									value={value}
+									checked={field.state.value === value}
+									onCheckedChange={(checked) => {
+										if (checked) {
+											field.handleChange(value);
+										}
+									}}
+								>
+									{label}
+								</RadioFilterItem>
+							))}
+						</fieldset>
 					)}
 				</form.Field>
+
+				<Separator />
 
 				{/* Status Filter */}
 				<form.Field name="isActive">
 					{(field) => (
-						<div className="space-y-3">
-							<h4 className="font-medium text-sm text-foreground">Statut</h4>
-							<div className="space-y-2">
-								{[
-									{ value: "all", label: "Tous" },
-									{ value: "active", label: "Actifs" },
-									{ value: "inactive", label: "Inactifs" },
-								].map(({ value, label }) => {
-									const isSelected = field.state.value === value;
-									return (
-										<div key={value} className="flex items-center space-x-2">
-											<Checkbox
-												id={`status-${value}`}
-												checked={isSelected}
-												onCheckedChange={(checked) => {
-													if (checked) {
-														field.handleChange(value);
-													}
-												}}
-												className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-											/>
-											<Label
-												htmlFor={`status-${value}`}
-												className="text-sm font-normal cursor-pointer flex-1"
-											>
-												{label}
-											</Label>
-										</div>
-									);
-								})}
-							</div>
-						</div>
+						<fieldset className="space-y-1">
+							<legend className="font-medium text-sm text-foreground mb-2">
+								Statut
+							</legend>
+							{[
+								{ value: "all", label: "Tous" },
+								{ value: "active", label: "Actifs" },
+								{ value: "inactive", label: "Inactifs" },
+							].map(({ value, label }) => (
+								<RadioFilterItem
+									key={value}
+									id={`status-${value}`}
+									name="isActive"
+									value={value}
+									checked={field.state.value === value}
+									onCheckedChange={(checked) => {
+										if (checked) {
+											field.handleChange(value);
+										}
+									}}
+								>
+									{label}
+								</RadioFilterItem>
+							))}
+						</fieldset>
 					)}
 				</form.Field>
+
+				<Separator />
 
 				{/* Usage Filter */}
 				<form.Field name="hasUsages">
 					{(field) => (
-						<div className="space-y-3">
-							<h4 className="font-medium text-sm text-foreground">Utilisations</h4>
-							<div className="space-y-2">
-								{[
-									{ value: "all", label: "Tous" },
-									{ value: "with", label: "Avec utilisations" },
-									{ value: "without", label: "Sans utilisation" },
-								].map(({ value, label }) => {
-									const isSelected = field.state.value === value;
-									return (
-										<div key={value} className="flex items-center space-x-2">
-											<Checkbox
-												id={`usage-${value}`}
-												checked={isSelected}
-												onCheckedChange={(checked) => {
-													if (checked) {
-														field.handleChange(value);
-													}
-												}}
-												className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-											/>
-											<Label
-												htmlFor={`usage-${value}`}
-												className="text-sm font-normal cursor-pointer flex-1"
-											>
-												{label}
-											</Label>
-										</div>
-									);
-								})}
-							</div>
-						</div>
+						<fieldset className="space-y-1">
+							<legend className="font-medium text-sm text-foreground mb-2">
+								Utilisations
+							</legend>
+							{[
+								{ value: "all", label: "Tous" },
+								{ value: "with", label: "Avec utilisations" },
+								{ value: "without", label: "Sans utilisation" },
+							].map(({ value, label }) => (
+								<RadioFilterItem
+									key={value}
+									id={`usage-${value}`}
+									name="hasUsages"
+									value={value}
+									checked={field.state.value === value}
+									onCheckedChange={(checked) => {
+										if (checked) {
+											field.handleChange(value);
+										}
+									}}
+								>
+									{label}
+								</RadioFilterItem>
+							))}
+						</fieldset>
 					)}
 				</form.Field>
 			</form>
