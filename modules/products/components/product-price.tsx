@@ -29,7 +29,7 @@ export function ProductPriceCompact({
 						Prix original : {formatEuro(compareAtPrice)}
 					</span>
 					<span
-						className="font-mono text-muted-foreground line-through text-xs"
+						className="font-mono text-foreground/50 line-through text-xs"
 						aria-hidden="true"
 					>
 						{formatEuro(compareAtPrice)}
