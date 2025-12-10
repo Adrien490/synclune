@@ -56,7 +56,7 @@ export function ProductCard({
 	// Déstructuration des données du produit
 	const { slug, title } = product;
 	const primarySku = getPrimarySkuForList(product);
-	const { price } = getPrimaryPriceForList(product);
+	const { price, compareAtPrice } = getPrimaryPriceForList(product);
 	const stockInfo = getStockInfoForList(product);
 	const primaryImage = getPrimaryImageForList(product);
 	const colors = getAvailableColorsForList(product);
@@ -142,7 +142,7 @@ export function ProductCard({
 						aria-label={`Stock limité : plus que ${inventory} exemplaire${inventory && inventory > 1 ? "s" : ""} disponible${inventory && inventory > 1 ? "s" : ""}`}
 						className="absolute top-2.5 left-2.5 bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md"
 					>
-						Plus que {inventory} !
+						Plus que {inventory} en stock !
 					</div>
 				)}
 
@@ -157,10 +157,11 @@ export function ProductCard({
 				)}
 
 				<Image
+					key={currentImage.url}
 					src={currentImage.url}
 					alt={currentImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
 					fill
-					className="object-cover rounded-lg transition-all duration-300 ease-out motion-safe:group-hover:scale-[1.08]"
+					className="object-cover rounded-lg transition-transform duration-300 ease-out motion-safe:group-hover:scale-[1.08] motion-safe:animate-fadeIn"
 					placeholder={currentImage.blurDataUrl ? "blur" : "empty"}
 					blurDataURL={currentImage.blurDataUrl ?? undefined}
 					// Preload pour les 4 premières images (above-fold) - Next.js 16
@@ -182,7 +183,7 @@ export function ProductCard({
 			</div>
 
 			{/* Contenu de la card */}
-			<div className="flex flex-col gap-2 sm:gap-3 relative p-4 sm:p-5">
+			<div className="flex flex-col gap-2 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
 				{/* Titre cliquable */}
 				<Link
 					href={productUrl}
@@ -210,8 +211,8 @@ export function ProductCard({
 						interactive
 						selectedColor={selectedColorSlug}
 						onColorSelect={setSelectedColorSlug}
-						size="sm"
-						maxVisible={5}
+						size="md"
+						maxVisible={4}
 					/>
 				)}
 
@@ -239,7 +240,7 @@ export function ProductCard({
 					/>
 					<meta itemProp="url" content={productUrl} />
 					{/* ProductPriceCompact avec disableSchemaOrg par défaut (évite duplication) */}
-					<ProductPriceCompact price={price} />
+					<ProductPriceCompact price={price} compareAtPrice={compareAtPrice} />
 				</div>
 			</div>
 		</article>

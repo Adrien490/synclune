@@ -1,8 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, Loader2, Minus, Plus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
@@ -17,12 +21,9 @@ import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import type { Product } from "@/modules/products/types/product.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
-import { Check, Loader2, Minus, Plus, ShoppingCart } from "lucide-react";
 import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
 import { getPrimaryImageForList } from "@/modules/products/services/product-list-helpers";
 import { slugify } from "@/shared/utils/generate-slug";
-import { useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 
 export const SKU_SELECTOR_DIALOG_ID = "sku-selector";
 
@@ -90,7 +91,42 @@ export function SkuSelectorDialog() {
 	if (!product) {
 		return (
 			<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-				<ResponsiveDialogContent className="sm:max-w-[480px]" />
+				<ResponsiveDialogContent className="sm:max-w-[520px]">
+					<ResponsiveDialogHeader>
+						<Skeleton className="h-6 w-40" />
+						<Skeleton className="h-4 w-32 mt-1" />
+					</ResponsiveDialogHeader>
+					<div className="space-y-6 py-4">
+						{/* Image + Prix skeleton */}
+						<div className="flex gap-4">
+							<Skeleton className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg shrink-0" />
+							<div className="flex flex-col justify-center gap-2">
+								<Skeleton className="h-8 w-20" />
+							</div>
+						</div>
+						{/* Sélecteurs skeleton */}
+						<div className="space-y-2">
+							<Skeleton className="h-4 w-16" />
+							<div className="flex flex-wrap gap-2">
+								<Skeleton className="h-11 w-24 rounded-lg" />
+								<Skeleton className="h-11 w-28 rounded-lg" />
+								<Skeleton className="h-11 w-20 rounded-lg" />
+							</div>
+						</div>
+						{/* Quantité skeleton */}
+						<div className="space-y-2">
+							<Skeleton className="h-4 w-16" />
+							<div className="flex items-center gap-3">
+								<Skeleton className="h-11 w-11 rounded-md" />
+								<Skeleton className="h-6 w-8" />
+								<Skeleton className="h-11 w-11 rounded-md" />
+							</div>
+						</div>
+					</div>
+					<ResponsiveDialogFooter>
+						<Skeleton className="h-11 w-full rounded-md" />
+					</ResponsiveDialogFooter>
+				</ResponsiveDialogContent>
 			</ResponsiveDialog>
 		);
 	}
@@ -174,7 +210,7 @@ export function SkuSelectorDialog() {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-			<ResponsiveDialogContent className="sm:max-w-[480px] max-h-[85vh] flex flex-col">
+			<ResponsiveDialogContent className="sm:max-w-[520px] max-h-[85vh] flex flex-col">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>Choisir une variante</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
@@ -182,7 +218,9 @@ export function SkuSelectorDialog() {
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				<form action={action} className="space-y-6 py-4 overflow-y-auto flex-1">
+				{/* Conteneur scrollable avec indicateur de défilement */}
+				<div className="relative flex-1 min-h-0">
+					<form action={action} className="space-y-6 py-4 overflow-y-auto h-full pr-1">
 					{/* Subscribe pour obtenir les valeurs et calculer le SKU */}
 					<form.Subscribe selector={(state) => state.values}>
 						{(values) => {
@@ -313,14 +351,21 @@ export function SkuSelectorDialog() {
 											/>
 										</div>
 										<div className="flex flex-col justify-center">
-											<span
-												className="font-mono text-2xl font-bold text-foreground"
-												role="status"
-												aria-live="polite"
-											>
-												{formatEuro(displayPrice)}
-												<span className="sr-only"> - Prix du produit</span>
-											</span>
+											<AnimatePresence mode="wait">
+												<motion.span
+													key={displayPrice}
+													initial={{ opacity: 0, y: -10 }}
+													animate={{ opacity: 1, y: 0 }}
+													exit={{ opacity: 0, y: 10 }}
+													transition={{ duration: 0.2 }}
+													className="font-mono text-2xl font-bold text-foreground"
+													role="status"
+													aria-live="polite"
+												>
+													{formatEuro(displayPrice)}
+													<span className="sr-only"> - Prix du produit</span>
+												</motion.span>
+											</AnimatePresence>
 											{selectedSku && selectedSku.inventory <= 5 && (
 												<span className="text-xs text-amber-600 mt-1">
 													Plus que {selectedSku.inventory} en stock
@@ -332,157 +377,439 @@ export function SkuSelectorDialog() {
 									{/* Sélecteur de couleur */}
 									{colors.length > 1 && (
 										<form.Field name="color">
-											{(field) => (
-												<fieldset className="space-y-2">
-													<Label className="text-sm font-medium">
-														Couleur
-														{field.state.value && (
-															<span className="font-normal text-muted-foreground ml-1">
-																:{" "}
-																{
-																	colors.find(
-																		(c) => c.slug === field.state.value
-																	)?.name
-																}
-															</span>
-														)}
-													</Label>
-													<div className="flex flex-wrap gap-2">
-														{colors.map((color) => {
-															const isSelected =
-																color.slug === field.state.value;
-															const isAvailable = isColorAvailable(color.slug);
+											{(field) => {
+												// Navigation clavier pour les sélecteurs radio
+												const handleColorKeyDown = (
+													e: React.KeyboardEvent<HTMLButtonElement>,
+													index: number
+												) => {
+													const availableColors = colors.filter((c) =>
+														isColorAvailable(c.slug)
+													);
+													if (availableColors.length === 0) return;
 
-															return (
-																<button
-																	key={color.slug}
-																	type="button"
-																	onClick={() =>
-																		field.handleChange(color.slug)
-																	}
-																	disabled={!isAvailable || isPending}
-																	className={cn(
-																		"relative flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
-																		"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
-																		isSelected
-																			? "border-primary bg-primary/5"
-																			: "border-border hover:border-primary/50"
-																	)}
-																	aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
-																>
-																	<div
-																		className="w-5 h-5 rounded-full border border-border/50 shadow-sm"
-																		style={{ backgroundColor: color.hex }}
-																	/>
-																	<span className="text-sm">{color.name}</span>
-																	{isSelected && (
-																		<Check className="w-4 h-4 text-primary" />
-																	)}
-																</button>
+													const currentAvailableIndex = availableColors.findIndex(
+														(c) => c.slug === colors[index].slug
+													);
+													let nextIndex: number | null = null;
+
+													switch (e.key) {
+														case "ArrowRight":
+														case "ArrowDown":
+															e.preventDefault();
+															nextIndex =
+																currentAvailableIndex < availableColors.length - 1
+																	? colors.findIndex(
+																			(c) =>
+																				c.slug ===
+																				availableColors[currentAvailableIndex + 1]
+																					.slug
+																		)
+																	: colors.findIndex(
+																			(c) => c.slug === availableColors[0].slug
+																		);
+															break;
+														case "ArrowLeft":
+														case "ArrowUp":
+															e.preventDefault();
+															nextIndex =
+																currentAvailableIndex > 0
+																	? colors.findIndex(
+																			(c) =>
+																				c.slug ===
+																				availableColors[currentAvailableIndex - 1]
+																					.slug
+																		)
+																	: colors.findIndex(
+																			(c) =>
+																				c.slug ===
+																				availableColors[availableColors.length - 1]
+																					.slug
+																		);
+															break;
+														case "Home":
+															e.preventDefault();
+															nextIndex = colors.findIndex(
+																(c) => c.slug === availableColors[0].slug
 															);
-														})}
-													</div>
-												</fieldset>
-											)}
+															break;
+														case "End":
+															e.preventDefault();
+															nextIndex = colors.findIndex(
+																(c) =>
+																	c.slug ===
+																	availableColors[availableColors.length - 1].slug
+															);
+															break;
+													}
+
+													if (nextIndex !== null && nextIndex >= 0) {
+														const nextButton = document.querySelector(
+															`[data-color-index="${nextIndex}"]`
+														) as HTMLButtonElement | null;
+														nextButton?.focus();
+														field.handleChange(colors[nextIndex].slug);
+													}
+												};
+
+												return (
+													<fieldset className="space-y-2">
+														<Label
+															className="text-sm font-medium"
+															id="color-label"
+														>
+															Couleur
+															{field.state.value && (
+																<span className="font-normal text-muted-foreground ml-1">
+																	:{" "}
+																	{
+																		colors.find(
+																			(c) => c.slug === field.state.value
+																		)?.name
+																	}
+																</span>
+															)}
+														</Label>
+														<div
+															className="flex flex-wrap gap-2"
+															role="radiogroup"
+															aria-labelledby="color-label"
+														>
+															{colors.map((color, index) => {
+																const isSelected =
+																	color.slug === field.state.value;
+																const isAvailable = isColorAvailable(color.slug);
+
+																return (
+																	<button
+																		key={color.slug}
+																		data-color-index={index}
+																		type="button"
+																		role="radio"
+																		aria-checked={isSelected}
+																		tabIndex={
+																			isSelected ||
+																			(!field.state.value && index === 0)
+																				? 0
+																				: -1
+																		}
+																		onClick={() =>
+																			field.handleChange(color.slug)
+																		}
+																		onKeyDown={(e) =>
+																			handleColorKeyDown(e, index)
+																		}
+																		disabled={!isAvailable || isPending}
+																		className={cn(
+																			"relative flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
+																			"hover:shadow-sm active:scale-[0.98]",
+																			"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+																			"disabled:opacity-50 disabled:cursor-not-allowed",
+																			isSelected
+																				? "border-primary bg-primary/5"
+																				: "border-border hover:border-primary/50"
+																		)}
+																		aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
+																	>
+																		<div
+																			className="w-5 h-5 rounded-full border border-border/50 shadow-sm shrink-0"
+																			style={{ backgroundColor: color.hex }}
+																		/>
+																		<span className="text-sm">{color.name}</span>
+																		{isSelected && (
+																			<Check className="w-4 h-4 text-primary shrink-0" />
+																		)}
+																	</button>
+																);
+															})}
+														</div>
+													</fieldset>
+												);
+											}}
 										</form.Field>
 									)}
 
 									{/* Sélecteur de matériau */}
 									{materials.length > 1 && (
 										<form.Field name="material">
-											{(field) => (
-												<fieldset className="space-y-2">
-													<Label className="text-sm font-medium">
-														Matériau
-													</Label>
-													<div className="grid grid-cols-2 gap-2">
-														{materials.map((material) => {
-															const isSelected =
-																material.slug === field.state.value;
-															const isAvailable = isMaterialAvailable(
-																material.slug
-															);
+											{(field) => {
+												// Navigation clavier
+												const handleMaterialKeyDown = (
+													e: React.KeyboardEvent<HTMLButtonElement>,
+													index: number
+												) => {
+													const availableMaterials = materials.filter((m) =>
+														isMaterialAvailable(m.slug)
+													);
+													if (availableMaterials.length === 0) return;
 
-															return (
-																<button
-																	key={material.slug}
-																	type="button"
-																	onClick={() =>
-																		field.handleChange(material.slug)
-																	}
-																	disabled={!isAvailable || isPending}
-																	className={cn(
-																		"flex items-center justify-between px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
-																		"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
-																		isSelected
-																			? "border-primary bg-primary/5"
-																			: "border-border hover:border-primary/50"
-																	)}
-																>
-																	<span className="text-sm">
-																		{material.name}
-																	</span>
-																	{isSelected && (
-																		<Check className="w-4 h-4 text-primary" />
-																	)}
-																</button>
+													const currentAvailableIndex = availableMaterials.findIndex(
+														(m) => m.slug === materials[index].slug
+													);
+													let nextIndex: number | null = null;
+
+													switch (e.key) {
+														case "ArrowRight":
+														case "ArrowDown":
+															e.preventDefault();
+															nextIndex =
+																currentAvailableIndex < availableMaterials.length - 1
+																	? materials.findIndex(
+																			(m) =>
+																				m.slug ===
+																				availableMaterials[currentAvailableIndex + 1].slug
+																		)
+																	: materials.findIndex(
+																			(m) => m.slug === availableMaterials[0].slug
+																		);
+															break;
+														case "ArrowLeft":
+														case "ArrowUp":
+															e.preventDefault();
+															nextIndex =
+																currentAvailableIndex > 0
+																	? materials.findIndex(
+																			(m) =>
+																				m.slug ===
+																				availableMaterials[currentAvailableIndex - 1].slug
+																		)
+																	: materials.findIndex(
+																			(m) =>
+																				m.slug ===
+																				availableMaterials[availableMaterials.length - 1].slug
+																		);
+															break;
+														case "Home":
+															e.preventDefault();
+															nextIndex = materials.findIndex(
+																(m) => m.slug === availableMaterials[0].slug
 															);
-														})}
-													</div>
-												</fieldset>
-											)}
+															break;
+														case "End":
+															e.preventDefault();
+															nextIndex = materials.findIndex(
+																(m) =>
+																	m.slug ===
+																	availableMaterials[availableMaterials.length - 1].slug
+															);
+															break;
+													}
+
+													if (nextIndex !== null && nextIndex >= 0) {
+														const nextButton = document.querySelector(
+															`[data-material-index="${nextIndex}"]`
+														) as HTMLButtonElement | null;
+														nextButton?.focus();
+														field.handleChange(materials[nextIndex].slug);
+													}
+												};
+
+												return (
+													<fieldset className="space-y-2">
+														<Label
+															className="text-sm font-medium"
+															id="material-label"
+														>
+															Matériau
+														</Label>
+														<div
+															className="grid grid-cols-2 gap-2"
+															role="radiogroup"
+															aria-labelledby="material-label"
+														>
+															{materials.map((material, index) => {
+																const isSelected =
+																	material.slug === field.state.value;
+																const isAvailable = isMaterialAvailable(
+																	material.slug
+																);
+
+																return (
+																	<button
+																		key={material.slug}
+																		data-material-index={index}
+																		type="button"
+																		role="radio"
+																		aria-checked={isSelected}
+																		tabIndex={
+																			isSelected ||
+																			(!field.state.value && index === 0)
+																				? 0
+																				: -1
+																		}
+																		onClick={() =>
+																			field.handleChange(material.slug)
+																		}
+																		onKeyDown={(e) =>
+																			handleMaterialKeyDown(e, index)
+																		}
+																		disabled={!isAvailable || isPending}
+																		className={cn(
+																			"flex items-center justify-between px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
+																			"hover:shadow-sm active:scale-[0.98]",
+																			"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+																			"disabled:opacity-50 disabled:cursor-not-allowed",
+																			isSelected
+																				? "border-primary bg-primary/5"
+																				: "border-border hover:border-primary/50"
+																		)}
+																	>
+																		<span className="text-sm">
+																			{material.name}
+																		</span>
+																		{isSelected && (
+																			<Check className="w-4 h-4 text-primary shrink-0" />
+																		)}
+																	</button>
+																);
+															})}
+														</div>
+													</fieldset>
+												);
+											}}
 										</form.Field>
 									)}
 
 									{/* Sélecteur de taille */}
 									{requiresSize && sizes.length > 0 && (
 										<form.Field name="size">
-											{(field) => (
-												<fieldset className="space-y-2">
-													<Label className="text-sm font-medium">
-														Taille
-														{product.type?.slug === "ring" && (
-															<span className="font-normal text-muted-foreground ml-1">
-																(Diamètre)
-															</span>
-														)}
-														{product.type?.slug === "bracelet" && (
-															<span className="font-normal text-muted-foreground ml-1">
-																(Tour de poignet)
-															</span>
-														)}
-													</Label>
-													<div className="grid grid-cols-4 gap-2">
-														{sizes.map((size) => {
-															const isSelected = size === field.state.value;
-															const isAvailable = isSizeAvailable(size);
+											{(field) => {
+												// Navigation clavier
+												const handleSizeKeyDown = (
+													e: React.KeyboardEvent<HTMLButtonElement>,
+													index: number
+												) => {
+													const availableSizes = sizes.filter((s) =>
+														isSizeAvailable(s)
+													);
+													if (availableSizes.length === 0) return;
 
-															return (
-																<button
-																	key={size}
-																	type="button"
-																	onClick={() => field.handleChange(size)}
-																	disabled={!isAvailable || isPending}
-																	className={cn(
-																		"relative flex items-center justify-center px-3 py-3 min-h-[44px] rounded-lg border-2 transition-all",
-																		"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed",
-																		isSelected
-																			? "border-primary bg-primary/5"
-																			: "border-border hover:border-primary/50"
-																	)}
-																>
-																	<span className="text-sm font-medium">
-																		{size}
-																	</span>
-																	{isSelected && (
-																		<Check className="w-3.5 h-3.5 text-primary absolute top-1.5 right-1.5" />
-																	)}
-																</button>
+													const currentAvailableIndex = availableSizes.findIndex(
+														(s) => s === sizes[index]
+													);
+													let nextIndex: number | null = null;
+
+													switch (e.key) {
+														case "ArrowRight":
+														case "ArrowDown":
+															e.preventDefault();
+															nextIndex =
+																currentAvailableIndex < availableSizes.length - 1
+																	? sizes.findIndex(
+																			(s) =>
+																				s === availableSizes[currentAvailableIndex + 1]
+																		)
+																	: sizes.findIndex(
+																			(s) => s === availableSizes[0]
+																		);
+															break;
+														case "ArrowLeft":
+														case "ArrowUp":
+															e.preventDefault();
+															nextIndex =
+																currentAvailableIndex > 0
+																	? sizes.findIndex(
+																			(s) =>
+																				s === availableSizes[currentAvailableIndex - 1]
+																		)
+																	: sizes.findIndex(
+																			(s) =>
+																				s ===
+																				availableSizes[availableSizes.length - 1]
+																		);
+															break;
+														case "Home":
+															e.preventDefault();
+															nextIndex = sizes.findIndex(
+																(s) => s === availableSizes[0]
 															);
-														})}
-													</div>
-												</fieldset>
-											)}
+															break;
+														case "End":
+															e.preventDefault();
+															nextIndex = sizes.findIndex(
+																(s) =>
+																	s === availableSizes[availableSizes.length - 1]
+															);
+															break;
+													}
+
+													if (nextIndex !== null && nextIndex >= 0) {
+														const nextButton = document.querySelector(
+															`[data-size-index="${nextIndex}"]`
+														) as HTMLButtonElement | null;
+														nextButton?.focus();
+														field.handleChange(sizes[nextIndex]);
+													}
+												};
+
+												return (
+													<fieldset className="space-y-2">
+														<Label
+															className="text-sm font-medium"
+															id="size-label"
+														>
+															Taille
+															{product.type?.slug === "ring" && (
+																<span className="font-normal text-muted-foreground ml-1">
+																	(Diamètre)
+																</span>
+															)}
+															{product.type?.slug === "bracelet" && (
+																<span className="font-normal text-muted-foreground ml-1">
+																	(Tour de poignet)
+																</span>
+															)}
+														</Label>
+														<div
+															className="grid grid-cols-3 sm:grid-cols-4 gap-2"
+															role="radiogroup"
+															aria-labelledby="size-label"
+														>
+															{sizes.map((size, index) => {
+																const isSelected = size === field.state.value;
+																const isAvailable = isSizeAvailable(size);
+
+																return (
+																	<button
+																		key={size}
+																		data-size-index={index}
+																		type="button"
+																		role="radio"
+																		aria-checked={isSelected}
+																		tabIndex={
+																			isSelected ||
+																			(!field.state.value && index === 0)
+																				? 0
+																				: -1
+																		}
+																		onClick={() => field.handleChange(size)}
+																		onKeyDown={(e) =>
+																			handleSizeKeyDown(e, index)
+																		}
+																		disabled={!isAvailable || isPending}
+																		className={cn(
+																			"relative flex items-center justify-center px-2 py-3 min-h-[44px] rounded-lg border-2 transition-all",
+																			"hover:shadow-sm active:scale-[0.98]",
+																			"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+																			"disabled:opacity-50 disabled:cursor-not-allowed",
+																			isSelected
+																				? "border-primary bg-primary/5"
+																				: "border-border hover:border-primary/50"
+																		)}
+																	>
+																		<span className="text-sm font-medium truncate">
+																			{size}
+																		</span>
+																		{isSelected && (
+																			<Check className="w-3.5 h-3.5 text-primary absolute top-1.5 right-1.5" />
+																		)}
+																	</button>
+																);
+															})}
+														</div>
+													</fieldset>
+												);
+											}}
 										</form.Field>
 									)}
 
@@ -546,21 +873,19 @@ export function SkuSelectorDialog() {
 										)}
 									</AnimatePresence>
 
-									<ResponsiveDialogFooter className="pt-2">
+									<ResponsiveDialogFooter className="pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
 										<Button
 											type="submit"
 											disabled={!canAddToCart || isPending}
+											className="w-full"
 										>
 											{isPending ? (
 												<>
 													<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-													Ajout...
+													Ajout en cours...
 												</>
 											) : (
-												<>
-													<ShoppingCart className="mr-2 h-4 w-4" />
-													Ajouter au panier
-												</>
+												"Ajouter au panier"
 											)}
 										</Button>
 									</ResponsiveDialogFooter>
@@ -569,6 +894,12 @@ export function SkuSelectorDialog() {
 						}}
 					</form.Subscribe>
 				</form>
+					{/* Gradient indicateur de scroll en bas */}
+					<div
+						className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent z-10"
+						aria-hidden="true"
+					/>
+				</div>
 			</ResponsiveDialogContent>
 		</ResponsiveDialog>
 	);

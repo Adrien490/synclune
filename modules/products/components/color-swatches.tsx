@@ -25,6 +25,8 @@ interface ColorSwatchesProps {
 	selectedColor?: string | null;
 	/** Callback quand une couleur est sélectionnée */
 	onColorSelect?: (colorSlug: string) => void;
+	/** Désactive le composant pendant un chargement */
+	disabled?: boolean;
 }
 
 const sizeClasses = {
@@ -53,6 +55,7 @@ export function ColorSwatches({
 	interactive = false,
 	selectedColor,
 	onColorSelect,
+	disabled = false,
 }: ColorSwatchesProps) {
 	const buttonsRef = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -120,6 +123,7 @@ export function ColorSwatches({
 	) => {
 		const isSelected = selectedColor === color.slug;
 		const swatchSize = inPopover ? "md" : size;
+		const isDisabled = !color.inStock || disabled;
 
 		if (interactive) {
 			return (
@@ -143,9 +147,9 @@ export function ColorSwatches({
 						}
 					}}
 					onKeyDown={(e) => handleKeyDown(e, index)}
-					disabled={!color.inStock}
+					disabled={isDisabled}
 					className={cn(
-						"rounded-full border-2 transition-all",
+						"rounded-full border-2 transition-all active:scale-95",
 						sizeClasses[swatchSize],
 						"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 						isSelected
@@ -181,7 +185,7 @@ export function ColorSwatches({
 				interactive ? "gap-2 sm:gap-2.5" : "gap-1.5",
 				className
 			)}
-			aria-label={`${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}
+			aria-label={interactive ? `Sélectionner une couleur parmi ${colors.length} disponible${colors.length > 1 ? "s" : ""}` : `${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}
 			role={interactive ? "radiogroup" : undefined}
 		>
 			{visibleColors.map((color, index) => (

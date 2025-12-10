@@ -183,6 +183,7 @@ export const GET_PRODUCTS_SELECT = {
 			id: true,
 			sku: true,
 			priceInclTax: true,
+			compareAtPrice: true,
 			inventory: true,
 			isActive: true,
 			isDefault: true,

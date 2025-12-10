@@ -26,7 +26,8 @@ interface AddToCartCardButtonProps {
  *
  * - Disabled pendant le pending pour éviter double-click
  * - Toujours visible sur mobile, apparaît au hover sur desktop
- * - Ouvre toujours le dialog de sélection SKU avec la couleur pré-sélectionnée
+ * - Ouvre le dialog de sélection SKU uniquement si le produit a plusieurs variantes
+ * - Ajoute directement au panier si le produit n'a qu'un seul SKU
  */
 export function AddToCartCardButton({
 	skuId,
@@ -38,13 +39,19 @@ export function AddToCartCardButton({
 	const { action, isPending } = useAddToCart();
 	const { open: openSkuSelector } = useDialog(SKU_SELECTOR_DIALOG_ID);
 
-	// Handler de clic qui ouvre toujours le dialog
+	// Détermine si le produit a plusieurs variantes (SKUs)
+	const hasMultipleVariants = product?.skus && product.skus.length > 1;
+
+	// Handler de clic : ouvre le dialog si plusieurs variantes, sinon soumet le formulaire
 	const handleClick = (e: React.MouseEvent) => {
 		e.stopPropagation();
-		e.preventDefault();
-		if (product) {
+
+		if (hasMultipleVariants && product) {
+			// Plusieurs variantes : ouvrir le dialog de sélection
+			e.preventDefault();
 			openSkuSelector({ product, preselectedColor });
 		}
+		// Un seul SKU : laisser le formulaire se soumettre normalement
 	};
 
 	return (

@@ -99,21 +99,25 @@ export function getPrimarySkuForList(
 
 /**
  * Récupère le prix principal (priceInclTax pour affichage client)
+ * Inclut compareAtPrice pour affichage des promotions
  */
 export function getPrimaryPriceForList(product: ProductFromList): {
 	price: number;
+	compareAtPrice: number | null;
 } {
 	// SKU principal depuis la liste
 	const primarySku = getPrimarySkuForList(product);
 	if (primarySku) {
 		return {
 			price: primarySku.priceInclTax,
+			compareAtPrice: primarySku.compareAtPrice ?? null,
 		};
 	}
 
 	// Pas de SKU actif, retourner 0
 	return {
 		price: 0,
+		compareAtPrice: null,
 	};
 }
 
