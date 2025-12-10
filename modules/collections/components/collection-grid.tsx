@@ -52,11 +52,6 @@ export function CollectionGrid({
 
 	return (
 		<div className="space-y-8">
-			{/* Compteur de résultats - masqué sur mobile */}
-			<p className="hidden sm:block text-sm text-muted-foreground">
-				{collections.length} collection{collections.length > 1 ? "s" : ""}
-			</p>
-
 			{/* Grille des collections */}
 			<Stagger
 				role="list"

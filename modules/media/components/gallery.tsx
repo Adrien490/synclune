@@ -17,8 +17,7 @@ import { useGalleryKeyboard } from "@/modules/media/hooks/use-gallery-keyboard";
 import { useGalleryNavigation } from "@/modules/media/hooks/use-gallery-navigation";
 import { useMediaErrors } from "@/modules/media/hooks/use-media-errors";
 import useEmblaCarousel from "embla-carousel-react";
-
-type EmblaOptionsType = Parameters<typeof useEmblaCarousel>[0];
+import type { EmblaOptionsType, EmblaCarouselType } from "embla-carousel";
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { GalleryThumbnailsGrid, GalleryThumbnailsCarousel } from "@/modules/media/components/gallery-thumbnails";
@@ -117,11 +116,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const emblaOptions: EmblaOptionsType = {
 		loop: safeImages.length > 1,
 		align: "center",
-		containScroll: false,
 		duration: prefersReducedMotion ? 0 : 25,
-		dragFree: false,
-		watchSlides: true,
-		watchResize: true,
 	};
 
 	const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions);
@@ -130,8 +125,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 	useEffect(() => {
 		if (!emblaApi) return;
 
-		const onSelect = () => {
-			const index = emblaApi.selectedScrollSnap();
+		const onSelect = (api: EmblaCarouselType) => {
+			const index = api.selectedScrollSnap();
 			if (index !== optimisticIndex) {
 				navigateToIndex(index);
 			}
@@ -169,8 +164,13 @@ function GalleryContent({ product, title }: GalleryProps) {
 		if (!container) return;
 
 		const videos = container.querySelectorAll("video");
-		videos.forEach((video, index) => {
-			if (index === optimisticIndex) {
+		videos.forEach((video) => {
+			// Récupérer l'index de la slide depuis le data-attribute du parent
+			const slideIndex = Number(
+				video.closest("[data-slide-index]")?.getAttribute("data-slide-index")
+			);
+
+			if (slideIndex === optimisticIndex) {
 				// Si la vidéo n'est pas chargée, la charger puis jouer
 				if (video.readyState >= 2) {
 					video.play().catch(() => {});
@@ -336,8 +336,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 									{safeImages.map((media, index) => (
 										<div
 											key={media.id}
+											data-slide-index={index}
 											className={cn(
-												"flex-none w-full h-full min-w-0 relative",
+												"flex-[0_0_100%] h-full min-w-0 relative",
 												media.mediaType === "IMAGE" && "cursor-zoom-in"
 											)}
 											aria-hidden={index !== optimisticIndex}
