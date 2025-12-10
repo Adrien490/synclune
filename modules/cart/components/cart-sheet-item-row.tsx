@@ -7,6 +7,15 @@ import { cn } from "@/shared/utils/cn";
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
 import type { CartItem } from "../types/cart.types";
+import {
+	getCartItemSubtotal,
+	isCartItemOutOfStock,
+	isCartItemInactive,
+	hasCartItemIssue,
+	hasCartItemDiscount,
+	getCartItemDiscountPercent,
+	getCartItemPrimaryImage,
+} from "../utils/cart-item.utils";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -20,24 +29,13 @@ interface CartSheetItemRowProps {
  * Layout vertical optimise pour la largeur du sheet
  */
 export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
-	const subtotal = item.priceAtAdd * item.quantity;
-
-	const isOutOfStock = item.sku.inventory < item.quantity;
-	const isInactive = !item.sku.isActive || item.sku.product.status !== "PUBLIC";
-	const hasIssue = isOutOfStock || isInactive;
-
-	const hasDiscount =
-		item.sku.compareAtPrice && item.sku.compareAtPrice > item.priceAtAdd;
-
-	const discountPercent = hasDiscount
-		? Math.round(
-				((item.sku.compareAtPrice! - item.priceAtAdd) /
-					item.sku.compareAtPrice!) *
-					100
-			)
-		: 0;
-
-	const primaryImage = item.sku.images[0];
+	const subtotal = getCartItemSubtotal(item);
+	const isOutOfStock = isCartItemOutOfStock(item);
+	const isInactive = isCartItemInactive(item);
+	const hasIssue = hasCartItemIssue(item);
+	const hasDiscount = hasCartItemDiscount(item);
+	const discountPercent = getCartItemDiscountPercent(item);
+	const primaryImage = getCartItemPrimaryImage(item);
 
 	return (
 		<article

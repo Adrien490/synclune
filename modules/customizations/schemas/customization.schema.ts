@@ -61,8 +61,6 @@ export const customizationSchema = z
 				message: "Vous devez accepter la politique de confidentialité pour continuer",
 			}),
 
-		newsletter: z.boolean().default(false),
-
 		// Anti-spam (honeypot)
 		website: z.string().optional().or(z.literal("")),
 	})

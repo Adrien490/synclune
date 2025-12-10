@@ -1,6 +1,7 @@
 "use client";
 
 import { use } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
 	Sheet,
 	SheetContent,
@@ -36,6 +37,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 	const { isOpen, close } = useSheet("cart");
 	const cart = use(cartPromise);
 	const swipeHandlers = useSwipeGesture({ onSwipe: close, direction: "right" });
+	const shouldReduceMotion = useReducedMotion();
 
 	const hasItems = cart && cart.items.length > 0;
 
@@ -114,9 +116,23 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 						<>
 							<ScrollArea className="flex-1 min-h-0">
 								<div className="px-6 py-4 space-y-3">
-									{cart.items.map((item) => (
-										<CartSheetItemRow key={item.id} item={item} onClose={close} />
-									))}
+									<AnimatePresence mode="popLayout" initial={false}>
+										{cart.items.map((item) => (
+											<motion.div
+												key={item.id}
+												layout
+												initial={{ opacity: 0, height: 0 }}
+												animate={{ opacity: 1, height: "auto" }}
+												exit={{ opacity: 0, height: 0 }}
+												transition={{
+													duration: shouldReduceMotion ? 0 : 0.2,
+													ease: [0, 0, 0.2, 1],
+												}}
+											>
+												<CartSheetItemRow item={item} onClose={close} />
+											</motion.div>
+										))}
+									</AnimatePresence>
 
 									{/* Alerte changement de prix */}
 									<CartPriceChangeAlert items={cart.items} />

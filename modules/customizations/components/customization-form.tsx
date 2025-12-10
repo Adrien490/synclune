@@ -2,9 +2,9 @@
 
 import { FormLayout, FormSection } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
+import { Separator } from "@/shared/components/ui/separator";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import {
-	Shield,
 	Sparkles,
 	UserCircle,
 } from "lucide-react";
@@ -220,12 +220,10 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 				</FormSection>
 			</FormLayout>
 
-			{/* SECTION 3 : Consentements */}
-			<FormSection
-				title="Consentements"
-				description="Informations légales et newsletter"
-				icon={<Shield className="w-5 h-5" />}
-			>
+			{/* Consentements - intégrés sans section */}
+			<Separator className="my-2" />
+
+			<div className="space-y-4">
 				{/* RGPD */}
 				<form.AppField
 					name="rgpdConsent"
@@ -238,12 +236,12 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 					}}
 				>
 					{(field) => (
-						<div className="space-y-2">
+						<div className="space-y-1">
 							<field.CheckboxField
 								label="J'accepte la politique de confidentialité"
 								required
 							/>
-							<p className="text-xs/5 tracking-normal antialiased text-muted-foreground ml-8">
+							<p className="text-xs/5 tracking-normal antialiased text-muted-foreground ml-7">
 								Consultez notre{" "}
 								<a
 									href="/confidentialite"
@@ -258,15 +256,7 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 					)}
 				</form.AppField>
 
-				{/* Newsletter */}
-				<form.AppField name="newsletter">
-					{(field) => (
-						<div className="space-y-2">
-							<field.CheckboxField label="Je souhaite m'inscrire à la newsletter" />
-						</div>
-					)}
-				</form.AppField>
-			</FormSection>
+			</div>
 
 			{/* Footer avec bouton d'action */}
 			<div className="mt-6">

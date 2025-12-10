@@ -1,6 +1,5 @@
 "use server";
 
-import { subscribeToNewsletterInternal } from "@/modules/newsletter/utils/subscribe-to-newsletter-internal";
 import { sendCustomizationRequestEmail } from "@/shared/lib/email";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { COMMUNICATION_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -47,7 +46,6 @@ export async function sendCustomizationRequest(
 			jewelryType: (formData.get("jewelryType") as string) || "",
 			customizationDetails: (formData.get("customizationDetails") as string) || "",
 			rgpdConsent: formData.get("rgpdConsent") === "true",
-			newsletter: formData.get("newsletter") === "true",
 			website: (formData.get("website") as string) || "",
 		};
 
@@ -81,7 +79,6 @@ export async function sendCustomizationRequest(
 			phone: validatedData.phone || undefined,
 			jewelryType: validatedData.jewelryType,
 			customizationDetails: validatedData.customizationDetails,
-			newsletter: validatedData.newsletter,
 		});
 
 		if (!emailResult.success) {
@@ -92,29 +89,10 @@ export async function sendCustomizationRequest(
 			};
 		}
 
-		// 6. Si newsletter = true, ajouter à la liste de newsletter avec double opt-in
-		let newsletterMessage = "";
-		if (validatedData.newsletter) {
-			const userAgent = headersList.get("user-agent") || "unknown";
-			const newsletterResult = await subscribeToNewsletterInternal({
-				email: validatedData.email,
-				ipAddress: ipAddress || "unknown",
-				userAgent,
-				consentSource: "contact_form",
-			});
-
-			if (newsletterResult.success) {
-				// Si c'est déjà inscrit, on ne l'indique pas dans le message
-				if (!newsletterResult.alreadySubscribed) {
-					newsletterMessage = ` ${newsletterResult.message}`;
-				}
-			}
-		}
-
-		// 7. Success
+		// 6. Success
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Votre demande de personnalisation a bien été envoyée. Nous vous répondrons dans les plus brefs délais.${newsletterMessage}`,
+			message: "Votre demande de personnalisation a bien été envoyée. Nous vous répondrons dans les plus brefs délais.",
 		};
 	} catch (e) {
 		return {

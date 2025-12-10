@@ -88,8 +88,8 @@ export function AddToCartCardButton({
 					"sm:bg-primary sm:text-primary-foreground",
 					"sm:w-full sm:h-auto sm:rounded-none sm:py-3 sm:px-4",
 					"sm:shadow-lg sm:shadow-black/20",
-					// Active mobile: feedback tactile
-					"active:scale-95",
+					// Active mobile uniquement: feedback tactile (pas de scale sur desktop)
+					"active:scale-95 sm:active:scale-100",
 					// Hover desktop uniquement
 					"sm:hover:bg-primary/90 sm:hover:tracking-widest",
 					// Transitions

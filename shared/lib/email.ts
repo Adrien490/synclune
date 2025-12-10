@@ -641,7 +641,6 @@ export async function sendCustomizationRequestEmail({
 	phone,
 	jewelryType,
 	customizationDetails,
-	newsletter,
 }: {
 	firstName: string;
 	lastName: string;
@@ -649,7 +648,6 @@ export async function sendCustomizationRequestEmail({
 	phone?: string;
 	jewelryType: string;
 	customizationDetails: string;
-	newsletter: boolean;
 }) {
 	try {
 		const emailHtml = await render(
@@ -660,7 +658,6 @@ export async function sendCustomizationRequestEmail({
 				phone,
 				jewelryType,
 				customizationDetails,
-				newsletter,
 			})
 		);
 

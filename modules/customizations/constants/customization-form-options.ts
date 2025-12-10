@@ -15,7 +15,6 @@ export const customizationFormOpts = {
 
 		// Consentements
 		rgpdConsent: false,
-		newsletter: false,
 
 		// Anti-spam (honeypot)
 		website: "",

@@ -19,7 +19,6 @@ interface CustomizationRequestEmailProps {
 	phone?: string;
 	jewelryType: string;
 	customizationDetails: string;
-	newsletter: boolean;
 }
 
 export const CustomizationRequestEmail = ({
@@ -29,7 +28,6 @@ export const CustomizationRequestEmail = ({
 	phone,
 	jewelryType,
 	customizationDetails,
-	newsletter,
 }: CustomizationRequestEmailProps) => {
 	const fullName = `${firstName} ${lastName}`;
 
@@ -140,20 +138,6 @@ export const CustomizationRequestEmail = ({
 												{jewelryType}
 											</td>
 										</tr>
-										<tr>
-											<td
-												style={{
-													padding: "8px 0",
-													color: "#858585",
-													fontSize: "14px",
-												}}
-											>
-												<strong>Newsletter :</strong>
-											</td>
-											<td style={{ padding: "8px 0", fontSize: "14px" }}>
-												{newsletter ? "Oui" : "Non"}
-											</td>
-										</tr>
 									</tbody>
 								</table>
 							</div>
@@ -209,7 +193,6 @@ CustomizationRequestEmail.PreviewProps = {
 	jewelryType: "Collier",
 	customizationDetails:
 		"Bonjour,\n\nJe souhaiterais un collier personnalisé avec les initiales de ma fille gravées sur un pendentif rond en argent. Les initiales seraient 'ML' en écriture cursive. J'aimerais que le pendentif fasse environ 2cm de diamètre.\n\nPouvez-vous me faire un devis et m'indiquer les délais de réalisation ?\n\nMerci d'avance !",
-	newsletter: true,
 } as CustomizationRequestEmailProps;
 
 export default CustomizationRequestEmail;
