@@ -1,0 +1,87 @@
+"use client";
+
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { ChevronDown } from "lucide-react";
+
+import { cn } from "@/shared/utils/cn";
+
+export interface ScrollIndicatorProps {
+	/** ID de l'élément cible vers lequel scroller */
+	targetId: string;
+	/** Label accessible pour le bouton */
+	ariaLabel?: string;
+	/** Classe CSS additionnelle */
+	className?: string;
+}
+
+/**
+ * Indicateur de scroll animé pour les hero sections
+ *
+ * Best practices UX 2025 :
+ * - Zone tactile 48x48px minimum (Material Design)
+ * - Positionné à 18% du bas pour éviter les zones mask
+ * - Contraste suffisant (WCAG AA)
+ * - Animation bounce subtile pour attirer l'attention
+ * - Fade out progressif au scroll (évite la distraction)
+ * - Support prefers-reduced-motion
+ * - Masqué sur mobile (scroll natif suffisant)
+ *
+ * @example
+ * ```tsx
+ * <section className="relative min-h-screen">
+ *   <ScrollIndicator targetId="next-section" className="hidden sm:block" />
+ * </section>
+ * ```
+ */
+export function ScrollIndicator({
+	targetId,
+	ariaLabel = "Voir la suite",
+	className,
+}: ScrollIndicatorProps) {
+	const shouldReduceMotion = useReducedMotion();
+	const { scrollY } = useScroll();
+
+	// Optimisation : useTransform évite les re-renders React (calcul côté Framer Motion)
+	const opacity = useTransform(scrollY, [0, 100], [1, 0]);
+
+	const handleClick = () => {
+		const target = document.getElementById(targetId);
+		if (target) {
+			target.scrollIntoView({ behavior: "smooth" });
+		}
+	};
+
+	return (
+		<motion.button
+			type="button"
+			onClick={handleClick}
+			aria-label={ariaLabel}
+			className={cn(
+				// Position au-dessus des zones mask (typiquement 85%+)
+				"absolute left-1/2 -translate-x-1/2 z-20",
+				"bottom-[18%]",
+				// Zone tactile 48x48px minimum (p-2.5 + icône 28px = 48px)
+				"p-2.5 rounded-full",
+				// Couleurs avec contraste suffisant
+				"text-muted-foreground hover:text-foreground",
+				"transition-colors duration-200",
+				// Focus accessible
+				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+				className
+			)}
+			style={{ opacity }}
+			animate={shouldReduceMotion ? undefined : { y: [0, 8, 0] }}
+			transition={
+				shouldReduceMotion
+					? undefined
+					: {
+							duration: 1.5,
+							repeat: Infinity,
+							ease: "easeInOut",
+						}
+			}
+		>
+			<ChevronDown size={28} strokeWidth={1.5} />
+		</motion.button>
+	);
+}

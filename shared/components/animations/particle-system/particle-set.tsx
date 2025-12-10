@@ -8,10 +8,10 @@ import { getShapeStyles, getTransition } from "./utils";
 /**
  * Composant interne pour rendre un ensemble de particules
  * Gère à la fois le rendu statique (reduced motion) et animé
+ * Chaque particule peut avoir sa propre forme (support multi-formes)
  */
 export const ParticleSet = ({
 	particles,
-	shape,
 	isInView,
 	reducedMotion,
 	animationStyle,
@@ -27,7 +27,7 @@ export const ParticleSet = ({
 		return (
 			<>
 				{particles.map((p) => {
-					const shapeStyles = getShapeStyles(shape, p.size, p.color);
+					const shapeStyles = getShapeStyles(p.shape, p.size, p.color);
 					return (
 						<span
 							key={p.id}
@@ -51,7 +51,7 @@ export const ParticleSet = ({
 	return (
 		<>
 			{particles.map((p) => {
-				const shapeStyles = getShapeStyles(shape, p.size, p.color);
+				const shapeStyles = getShapeStyles(p.shape, p.size, p.color);
 				const animation = ANIMATION_PRESETS[animationStyle](p, intensity, rotation);
 				const transition = getTransition(p, springPhysics);
 

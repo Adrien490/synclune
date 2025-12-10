@@ -3,6 +3,11 @@ import { MOTION_CONFIG } from "../motion.config";
 import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
 
+/** Normalise shape en tableau */
+export function normalizeShapes(shape: ParticleShape | ParticleShape[]): ParticleShape[] {
+	return Array.isArray(shape) ? shape : [shape];
+}
+
 /** Générateur pseudo-aléatoire déterministe (seeded) */
 export function seededRandom(seed: number): number {
 	const x = Math.sin(seed) * 10000;
@@ -22,7 +27,8 @@ export function generateParticles(
 	colors: string[],
 	duration: number,
 	blur: number | [number, number],
-	depthParallax: boolean
+	depthParallax: boolean,
+	shapes: ParticleShape[] = ["circle"]
 ): Particle[] {
 	const maxBlur = Array.isArray(blur) ? blur[1] : blur;
 
@@ -49,6 +55,9 @@ export function generateParticles(
 		);
 		const delay = randomBetween(0, duration * 0.5, seed + 6);
 
+		// Forme : rotation déterministe parmi les formes disponibles
+		const shape = shapes[i % shapes.length];
+
 		return {
 			id: i,
 			size: particleSize,
@@ -60,6 +69,7 @@ export function generateParticles(
 			delay,
 			blur: particleBlur,
 			depthFactor,
+			shape,
 		};
 	});
 }

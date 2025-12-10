@@ -28,8 +28,8 @@ export interface ParticleSystemProps {
 	blur?: number | [number, number];
 	/** Durée de l'animation en secondes (défaut: 20) */
 	duration?: number;
-	/** Forme des particules (défaut: "circle") */
-	shape?: ParticleShape;
+	/** Forme(s) des particules - une forme ou un tableau pour mixer (défaut: "circle") */
+	shape?: ParticleShape | ParticleShape[];
 	/** Classes additionnelles */
 	className?: string;
 	/** Style d'animation (défaut: "float") */
@@ -61,6 +61,8 @@ export interface Particle {
 	blur: number;
 	/** Facteur de profondeur 0-1 (0=proche, 1=loin) pour parallax */
 	depthFactor: number;
+	/** Forme de cette particule (pour support multi-formes) */
+	shape: ParticleShape;
 }
 
 /** Type de configuration de forme */
@@ -72,7 +74,6 @@ export type ShapeConfig =
 /** Props du sous-composant ParticleSet */
 export interface ParticleSetProps {
 	particles: Particle[];
-	shape: ParticleShape;
 	isInView: boolean;
 	reducedMotion: boolean | null;
 	animationStyle: AnimationStyle;

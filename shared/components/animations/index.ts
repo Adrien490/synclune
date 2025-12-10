@@ -19,6 +19,9 @@ export { Pulse } from "./pulse";
 // AnimatePresence amélioré
 export { Presence } from "./presence";
 
+// Scroll indicator
+export { ScrollIndicator } from "./scroll-indicator";
+
 // Background Animations (effets décoratifs)
 export { LiquidGradient } from "./liquid-gradient";
 export { GlitterSparkles } from "./glitter-sparkles";
@@ -27,10 +30,6 @@ export { DecorativeHalo, DecorativeHaloGroup } from "./decorative-halo";
 export { BubbleDream } from "./bubble-dream";
 
 
-
-// Hero Backgrounds (compositions)
-export { HeroBackgroundGlitter } from "./hero-background-glitter";
-export * from "./hero-backgrounds";
 
 // Types
 export type { FadeProps } from "./fade";
@@ -41,6 +40,7 @@ export type { HoverProps } from "./hover";
 export type { TapProps } from "./tap";
 export type { PulseProps } from "./pulse";
 export type { PresenceProps } from "./presence";
+export type { ScrollIndicatorProps } from "./scroll-indicator";
 
 // Background Animation Types
 export type { LiquidGradientProps } from "./liquid-gradient";
@@ -51,5 +51,4 @@ export type {
 	AnimationStyle,
 } from "./particle-system/index";
 export type { BubbleDreamProps } from "./bubble-dream";
-export type { HeroBackgroundGlitterProps } from "./hero-background-glitter";
 

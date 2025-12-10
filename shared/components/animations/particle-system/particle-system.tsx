@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { DEFAULT_COLORS } from "./constants";
 import { ParticleSet } from "./particle-set";
 import type { ParticleSystemProps } from "./types";
-import { generateParticles } from "./utils";
+import { generateParticles, normalizeShapes } from "./utils";
 
 const ParticleSystemBase = ({
 	count = 6,
@@ -31,6 +31,9 @@ const ParticleSystemBase = ({
 	// Lazy rendering : n'anime que si visible
 	const isInView = useInView(containerRef, { once: true, margin: "-100px" });
 
+	// Normalise shape en tableau (support multi-formes)
+	const shapes = normalizeShapes(shape);
+
 	// Génération des deux sets de particules
 	// CSS media queries gèrent l'affichage → pas de flash d'hydratation
 	const desktopParticles = generateParticles(
@@ -40,7 +43,8 @@ const ParticleSystemBase = ({
 		colors,
 		duration,
 		blur,
-		depthParallax
+		depthParallax,
+		shapes
 	);
 	const mobileParticles = generateParticles(
 		Math.ceil(count / 2),
@@ -49,12 +53,12 @@ const ParticleSystemBase = ({
 		colors,
 		duration,
 		blur,
-		depthParallax
+		depthParallax,
+		shapes
 	);
 
 	// Props partagées pour ParticleSet
 	const sharedProps = {
-		shape,
 		isInView,
 		reducedMotion,
 		animationStyle,
@@ -106,9 +110,12 @@ const ParticleSystemBase = ({
  * <ParticleSystem />
  *
  * @example
- * // Avec preset
- * import { PARTICLE_PRESETS } from "./particle-system"
- * <ParticleSystem {...PARTICLE_PRESETS.hero} />
+ * // Multi-formes : mix diamants, étoiles et cercles
+ * <ParticleSystem
+ *   shape={["diamond", "star", "circle"]}
+ *   colors={["var(--secondary)", "oklch(0.9 0.1 80)"]}
+ *   blur={[4, 15]}
+ * />
  *
  * @example
  * // Scintillement étoilé doré

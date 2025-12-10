@@ -1,4 +1,4 @@
-import { Fade, Slide } from "@/shared/components/animations";
+import { Fade, ScrollIndicator, Slide } from "@/shared/components/animations";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
@@ -20,18 +20,18 @@ export function Hero() {
       itemProp="mainContentOfPage"
     >
 
-      {/* Couche 1: Particules décoratives - Preset jewelry (diamants dorés) */}
+      {/* Couche 1: Particules décoratives - Multi-formes bijoux */}
       <ParticleSystem
-        count={8}
-        shape="diamond"
+        count={12}
+        shape={["diamond", "star", "circle", "heart"]}
         colors={[
           "var(--secondary)",
           "oklch(0.9 0.1 80)", // Or chaud
-          "oklch(0.92 0.08 60)", // Champagne
+          "var(--primary)", // Rose
         ]}
-        opacity={[0.12, 0.35]}
-        blur={[15, 45]}
-        size={[30, 100]}
+        opacity={[0.2, 0.45]}
+        blur={[6, 24]}
+        size={[25, 70]}
       />
 
       {/* Couche 2: Glitter Sparkles (overlay scintillant) - Allégé pour performance mobile */}
@@ -141,6 +141,13 @@ export function Hero() {
           </div>
         </div>
       </div>
+
+      {/* Indicateur de scroll - Best practice UX 2025 (masqué sur mobile) */}
+      <ScrollIndicator
+        targetId="latest-creations"
+        ariaLabel="Voir les dernières créations"
+        className="hidden sm:block"
+      />
     </section>
   );
 }
