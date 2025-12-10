@@ -171,7 +171,16 @@ function GalleryContent({ product, title }: GalleryProps) {
 		const videos = container.querySelectorAll("video");
 		videos.forEach((video, index) => {
 			if (index === optimisticIndex) {
-				video.play().catch(() => {}); // Autoplay peut être bloqué
+				// Si la vidéo n'est pas chargée, la charger puis jouer
+				if (video.readyState >= 2) {
+					video.play().catch(() => {});
+				} else {
+					video.load();
+					const handleCanPlay = () => {
+						video.play().catch(() => {});
+					};
+					video.addEventListener("canplay", handleCanPlay, { once: true });
+				}
 			} else {
 				video.pause();
 				video.currentTime = 0;

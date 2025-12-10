@@ -73,7 +73,7 @@ export function GalleryMediaRenderer({
 					muted
 					loop
 					playsInline
-					preload={isActive ? "metadata" : "none"}
+					preload={isActive ? "auto" : "none"}
 					poster={media.thumbnailUrl || media.thumbnailSmallUrl || undefined}
 					aria-label={media.alt || `${title} - Vidéo ${index + 1}`}
 					onError={onError}
