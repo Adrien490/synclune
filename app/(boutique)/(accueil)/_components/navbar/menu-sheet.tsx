@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Stagger } from "@/shared/components/animations/stagger";
-import { Button } from "@/shared/components/ui/button";
 import {
 	Sheet,
 	SheetClose,
@@ -82,10 +81,9 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 	return (
 		<Sheet onOpenChange={setIsOpen}>
 			<SheetTrigger asChild>
-				<Button
-					variant="ghost"
-					size="icon"
-					className="relative -ml-3 rounded-xl lg:hidden bg-transparent hover:bg-primary/8 text-muted-foreground hover:text-foreground transition-all duration-300 ease-out hover:scale-105 active:scale-95 cursor-pointer group"
+				<button
+					type="button"
+					className="relative -ml-3 inline-flex items-center justify-center size-11 rounded-xl lg:hidden bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-all duration-300 ease-out hover:scale-105 active:scale-95 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
 					aria-label="Ouvrir le menu de navigation"
 					aria-controls="mobile-menu-synclune"
 				>
@@ -94,7 +92,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 						className="transition-all duration-300 group-hover:rotate-6"
 						aria-hidden="true"
 					/>
-				</Button>
+				</button>
 			</SheetTrigger>
 
 			{/* Aria-live region pour annoncer l'état du menu aux lecteurs d'écran */}

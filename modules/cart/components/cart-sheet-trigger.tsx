@@ -4,7 +4,6 @@ import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { CartBadge } from "./cart-badge";
 import { ShoppingCart } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { Button } from "@/shared/components/ui/button";
 
 interface CartSheetTriggerProps {
 	className?: string;
@@ -18,15 +17,10 @@ export function CartSheetTrigger({ className }: CartSheetTriggerProps) {
 	const { open } = useSheet("cart");
 
 	return (
-		<Button
+		<button
 			type="button"
-			variant="ghost"
-			size="icon"
 			onClick={open}
-			className={cn(
-				"relative group",
-				className
-			)}
+			className={cn("relative group", className)}
 			aria-label="Ouvrir mon panier"
 		>
 			<ShoppingCart
@@ -35,6 +29,6 @@ export function CartSheetTrigger({ className }: CartSheetTriggerProps) {
 				aria-hidden="true"
 			/>
 			<CartBadge />
-		</Button>
+		</button>
 	);
 }

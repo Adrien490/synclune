@@ -12,8 +12,8 @@ import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarWrapper } from "./navbar-wrapper";
 
-/** Classes communes pour les liens icônes de la navbar (sans display pour permettre hidden/inline-flex conditionnel) */
-const iconLinkClassName = "relative items-center justify-center p-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group";
+/** Classes communes pour les boutons icônes de la navbar (dimensions fixes pour uniformité) */
+const iconButtonClassName = "relative items-center justify-center size-11 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group";
 
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
@@ -99,7 +99,7 @@ export async function Navbar() {
 								{userIsAdmin && (
 									<Link
 										href="/admin"
-										className={`hidden sm:inline-flex ${iconLinkClassName}`}
+										className={`hidden sm:inline-flex ${iconButtonClassName}`}
 										aria-label="Accéder au tableau de bord"
 									>
 										<LayoutDashboard
@@ -113,7 +113,7 @@ export async function Navbar() {
 								{/* Icône compte / Se connecter (visible sur desktop seulement) */}
 								<Link
 									href={session ? "/compte" : "/connexion"}
-									className={`hidden sm:inline-flex ${iconLinkClassName}`}
+									className={`hidden sm:inline-flex ${iconButtonClassName}`}
 									aria-label={
 										session ? "Accéder à mon compte personnel" : "Se connecter"
 									}
@@ -128,7 +128,7 @@ export async function Navbar() {
 								{/* Icône favoris */}
 								<Link
 									href="/favoris"
-									className={`inline-flex ${iconLinkClassName}`}
+									className={`inline-flex ${iconButtonClassName}`}
 									aria-label="Ouvrir mes favoris"
 								>
 									<Heart
@@ -140,7 +140,7 @@ export async function Navbar() {
 								</Link>
 
 								{/* Icône panier - Ouvre le cart sheet */}
-								<CartSheetTrigger className={`inline-flex ${iconLinkClassName}`} />
+								<CartSheetTrigger className={`inline-flex ${iconButtonClassName}`} />
 							</div>
 						</div>
 					</div>
