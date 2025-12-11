@@ -157,7 +157,7 @@ export function EditProductForm({
 					{/* ═══════════════════════════════════════════════════════════════════════
 					    SECTION 1 : Le bijou + SECTION 2 : Prix et stock
 					    ═══════════════════════════════════════════════════════════════════════ */}
-					<FormLayout cols={2}>
+					<FormLayout>
 					{/* SECTION 1 : Le bijou */}
 					<FormSection
 						title="Le bijou"
@@ -219,7 +219,7 @@ export function EditProductForm({
 						</form.AppField>
 
 						{/* Type de bijou + Collection */}
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div className="space-y-4">
 							<form.AppField name="typeId">
 								{(field) => (
 									<div className="space-y-2">
@@ -311,7 +311,7 @@ export function EditProductForm({
 						</form.AppField>
 
 						{/* Matériau + Taille */}
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div className="space-y-4">
 							<form.AppField name="defaultSku.materialId">
 								{(field) => (
 									<div className="space-y-2">

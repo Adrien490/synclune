@@ -184,7 +184,7 @@ function CreateProductFormContent({
 								)}
 							</form.AppField>
 
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div className="space-y-4">
 								<form.AppField name="typeId">
 									{(field) => (
 										<div className="space-y-2">
@@ -297,7 +297,7 @@ function CreateProductFormContent({
 								)}
 							</form.AppField>
 
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div className="space-y-4">
 								<form.AppField name="initialSku.materialId">
 									{(field) => (
 										<div className="space-y-2">
@@ -882,7 +882,7 @@ function CreateProductFormContent({
 
 				{renderStepContent(0)}
 
-				<FormLayout cols={2}>
+				<FormLayout>
 					{renderStepContent(1)}
 					{renderStepContent(2)}
 				</FormLayout>

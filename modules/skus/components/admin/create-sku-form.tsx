@@ -121,8 +121,8 @@ export function CreateProductVariantForm({
 						description="Caractéristiques, prix et disponibilité"
 						icon={<Palette />}
 					>
-						<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-							{/* Colonne gauche : Caractéristiques */}
+						<div className="space-y-6">
+							{/* Caractéristiques */}
 							<div className="space-y-4">
 								{/* Couleur */}
 								<form.AppField name="colorId">
@@ -173,7 +173,7 @@ export function CreateProductVariantForm({
 								</form.AppField>
 
 								{/* Matériau + Taille */}
-								<div className="grid grid-cols-2 gap-4">
+								<div className="space-y-4">
 									<form.AppField name="materialId">
 										{(field) => (
 											<div className="space-y-2">
@@ -202,7 +202,7 @@ export function CreateProductVariantForm({
 								</div>
 
 								{/* Statut + Par défaut */}
-								<div className="grid grid-cols-2 gap-4">
+								<div className="space-y-4">
 									<form.AppField name="isActive">
 										{(field) => (
 											<div className="space-y-2">
@@ -232,8 +232,8 @@ export function CreateProductVariantForm({
 								</div>
 							</div>
 
-							{/* Colonne droite : Prix et stock */}
-							<div className="space-y-4">
+							{/* Prix et stock */}
+							<div className="space-y-4 border-t pt-6">
 								{/* Prix final */}
 								<form.AppField
 									name="priceInclTaxEuros"
@@ -327,7 +327,7 @@ export function CreateProductVariantForm({
 						description="Image principale et galerie"
 						icon={<ImageIcon />}
 					>
-						<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+						<div className="space-y-6">
 							{/* Image principale */}
 							<form.Field name="primaryImage">
 								{(field) => (

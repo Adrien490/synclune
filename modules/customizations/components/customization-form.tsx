@@ -2,14 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormLayout, FormSection, FieldLabel } from "@/shared/components/forms";
+import { FormSection, FieldLabel } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
-import { Separator } from "@/shared/components/ui/separator";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { Badge } from "@/shared/components/ui/badge";
 import { Autocomplete } from "@/shared/components/autocomplete";
 import { MultiSelect, type MultiSelectOption } from "@/shared/components/multi-select";
-import { Sparkles, UserCircle, Palette, X } from "lucide-react";
+import { Sparkles, UserCircle, Palette, Shield, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCustomizationForm } from "../hooks/use-customization-form";
@@ -174,206 +173,138 @@ export function CustomizationForm({
 
 			<RequiredFieldsNote />
 
-			{/* SECTIONS en 2 colonnes */}
-			<FormLayout cols={2}>
-				{/* SECTION 1 : Informations personnelles */}
-				<FormSection
-					title="Tes coordonnées"
-					description="Pour que je puisse te recontacter et discuter de ton projet"
-					icon={<UserCircle className="w-5 h-5" />}
-				>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-						{/* Prénom */}
-						<form.AppField
-							name="firstName"
-							validators={{
-								onChange: ({ value }: { value: string }) => {
-									if (!value || value.trim().length < 2) {
-										return "Le prénom doit contenir au moins 2 caractères";
-									}
-								},
-							}}
-						>
-							{(field) => <field.InputField label="Prénom" required autoFocus />}
-						</form.AppField>
-
-						{/* Nom */}
-						<form.AppField
-							name="lastName"
-							validators={{
-								onChange: ({ value }: { value: string }) => {
-									if (!value || value.trim().length < 2) {
-										return "Le nom doit contenir au moins 2 caractères";
-									}
-								},
-							}}
-						>
-							{(field) => <field.InputField label="Nom" required />}
-						</form.AppField>
-					</div>
-
-					{/* Email */}
-					<form.AppField
-						name="email"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value) {
-									return "L'adresse email est requise";
-								}
-								if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-									return "Entre une adresse email valide";
-								}
-							},
-						}}
-					>
-						{(field) => <field.InputField label="Adresse email" type="email" required />}
-					</form.AppField>
-
-					{/* Téléphone (optionnel) */}
-					<form.AppField name="phone">
-						{(field) => (
-							<div className="space-y-2">
-								<field.InputField label="Téléphone" type="tel" placeholder="06 12 34 56 78" />
-								<p className="text-xs text-muted-foreground">
-									Format français (ex: 06 12 34 56 78 ou +33 6 12 34 56 78)
-								</p>
-							</div>
-						)}
-					</form.AppField>
-				</FormSection>
-
-				{/* SECTION 2 : Détails de personnalisation */}
-				<FormSection
-					title="Ton projet de produit"
-					description="Raconte-moi tout ! Même si l'idée n'est pas encore claire, on affinera ensemble"
-					icon={<Sparkles className="w-5 h-5" />}
-				>
-					{/* Type de produit */}
-					<form.AppField
-						name="productTypeLabel"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value) {
-									return "Sélectionne un type de produit";
-								}
-							},
-						}}
-					>
-						{(field) => (
-							<field.SelectField
-								label="Type de produit"
-								required
-								placeholder="Sélectionnez un type de produit"
-								options={[
-									...productTypes.map((type) => ({
-										value: type.label,
-										label: type.label,
-									})),
-									{ value: "Autre", label: "Autre" },
-								]}
-							/>
-						)}
-					</form.AppField>
-
-					{/* Détails de personnalisation */}
-					<form.AppField
-						name="details"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value || value.trim().length < 20) {
-									return "Les détails doivent contenir au moins 20 caractères";
-								}
-							},
-						}}
-					>
-						{(field) => (
-							<div className="space-y-2">
-								<field.TextareaField
-									label="Détails de ton projet"
-									required
-									rows={6}
-									placeholder="Décris ton idée : style souhaité, occasion spéciale, détails particuliers..."
-								/>
-								<p className="text-xs text-muted-foreground text-right">
-									{field.state.value?.length || 0} / 2000 caractères
-								</p>
-							</div>
-						)}
-					</form.AppField>
-				</FormSection>
-			</FormLayout>
-
-			{/* SECTION 3 : Inspirations et préférences */}
+			{/* SECTION 1 : Projet de bijou (en premier - raison de la visite) */}
 			<FormSection
-				title="Inspirations et préférences"
-				description="Aide-moi à comprendre tes goûts en sélectionnant des créations, couleurs ou matériaux qui t'inspirent"
+				title="Ton projet de bijou"
+				description="Raconte-moi tout ! Meme si l'idee n'est pas encore claire, on affinera ensemble"
+				icon={<Sparkles className="w-5 h-5" />}
+			>
+				{/* Type de bijou */}
+				<form.AppField
+					name="productTypeLabel"
+					validators={{
+						onChange: ({ value }: { value: string }) => {
+							if (!value) {
+								return "Selectionne un type de bijou";
+							}
+						},
+					}}
+				>
+					{(field) => (
+						<field.SelectField
+							label="Type de bijou"
+							required
+							placeholder="Quel type de bijou souhaites-tu ?"
+							options={[
+								...productTypes.map((type) => ({
+									value: type.label,
+									label: type.label,
+								})),
+								{ value: "Autre", label: "Autre" },
+							]}
+						/>
+					)}
+				</form.AppField>
+
+				{/* Details de personnalisation */}
+				<form.AppField
+					name="details"
+					validators={{
+						onChange: ({ value }: { value: string }) => {
+							if (!value || value.trim().length < 20) {
+								return "Les details doivent contenir au moins 20 caracteres";
+							}
+						},
+					}}
+				>
+					{(field) => (
+						<div className="space-y-2">
+							<field.TextareaField
+								label="Decris ton projet"
+								required
+								rows={6}
+								placeholder="Par exemple : 'Je cherche un bracelet pour un anniversaire de mariage, dans des tons dores avec des perles...' Quelques phrases suffisent, mais n'hesite pas a detailler !"
+							/>
+							<p className="text-xs text-muted-foreground text-right">
+								{field.state.value?.length || 0} / 2000 caracteres
+							</p>
+						</div>
+					)}
+				</form.AppField>
+			</FormSection>
+
+			{/* SECTION 2 : Inspirations et preferences */}
+			<FormSection
+				title="Inspirations et preferences"
+				description="Aide-moi a comprendre tes gouts (facultatif)"
 				icon={<Palette className="w-5 h-5" />}
 			>
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-					{/* Produits inspirants - Autocomplete */}
-					<div className="space-y-2">
-						<FieldLabel
-							optional
-							tooltip="Sélectionnez jusqu'à 5 créations existantes qui vous inspirent"
-						>
-							Inspirations
-						</FieldLabel>
-						<Autocomplete
-							name="productSearch"
-							value={localSearchValue}
-							onChange={updateProductSearch}
-							onSelect={handleProductSelect}
-							items={productSearchResults}
-							getItemLabel={(p) => p.title}
-							getItemImage={(p) =>
-								p.imageUrl
-									? { src: p.imageUrl, alt: p.title, blurDataUrl: p.blurDataUrl }
-									: null
-							}
-							placeholder="Rechercher une création..."
-							isLoading={isSearchPending}
-							minQueryLength={3}
-							disabled={isPending || selectedProducts.length >= 5}
-							noResultsMessage="Aucune création trouvée"
-							showSearchIcon
-							showClearButton
-						/>
-						{/* Produits sélectionnés */}
-						{selectedProducts.length > 0 && (
-							<div className="flex flex-wrap gap-1.5 mt-2">
-								{selectedProducts.map((product) => (
-									<Badge
-										key={product.id}
-										variant="secondary"
-										className="pr-1 gap-1"
+				{/* Produits inspirants - Autocomplete (pleine largeur) */}
+				<div className="space-y-2">
+					<FieldLabel
+						optional
+						tooltip="Selectionne jusqu'a 5 creations existantes qui t'inspirent"
+					>
+						Creations qui t'inspirent
+					</FieldLabel>
+					<Autocomplete
+						name="productSearch"
+						value={localSearchValue}
+						onChange={updateProductSearch}
+						onSelect={handleProductSelect}
+						items={productSearchResults}
+						getItemLabel={(p) => p.title}
+						getItemImage={(p) =>
+							p.imageUrl
+								? { src: p.imageUrl, alt: p.title, blurDataUrl: p.blurDataUrl }
+								: null
+						}
+						placeholder="Rechercher une creation..."
+						isLoading={isSearchPending}
+						minQueryLength={3}
+						disabled={isPending || selectedProducts.length >= 5}
+						noResultsMessage="Aucune creation trouvee"
+						showSearchIcon
+						showClearButton
+					/>
+					{/* Produits selectionnes */}
+					{selectedProducts.length > 0 && (
+						<div className="flex flex-wrap gap-1.5 mt-2">
+							{selectedProducts.map((product) => (
+								<Badge
+									key={product.id}
+									variant="secondary"
+									className="pr-1 gap-1"
+								>
+									{product.title}
+									<button
+										type="button"
+										onClick={() => handleProductRemove(product.id)}
+										className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors"
+										aria-label={`Retirer ${product.title}`}
 									>
-										{product.title}
-										<button
-											type="button"
-											onClick={() => handleProductRemove(product.id)}
-											className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors"
-											aria-label={`Retirer ${product.title}`}
-										>
-											<X className="size-3" />
-										</button>
-									</Badge>
-								))}
-							</div>
-						)}
-						<p className="text-xs text-muted-foreground">
-							{selectedProducts.length}/5 créations sélectionnées
-						</p>
-					</div>
+										<X className="size-3" />
+									</button>
+								</Badge>
+							))}
+						</div>
+					)}
+					<p className="text-xs text-muted-foreground">
+						{selectedProducts.length}/5 creations selectionnees
+					</p>
+				</div>
 
-					{/* Couleurs préférées - MultiSelect inline */}
+				{/* Couleurs et Materiaux - 2 colonnes */}
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+					{/* Couleurs preferees */}
 					<form.AppField name="preferredColorIds">
 						{(field) => (
 							<div className="space-y-2">
 								<FieldLabel
 									optional
-									tooltip="Sélectionnez les couleurs que vous aimeriez voir dans votre création"
+									tooltip="Selectionne les couleurs que tu aimerais voir dans ta creation"
 								>
-									Couleurs préférées
+									Couleurs preferees
 								</FieldLabel>
 								<MultiSelect
 									options={colorOptions}
@@ -388,21 +319,21 @@ export function CustomizationForm({
 						)}
 					</form.AppField>
 
-					{/* Matériaux souhaités - MultiSelect inline */}
+					{/* Materiaux souhaites */}
 					<form.AppField name="preferredMaterialIds">
 						{(field) => (
 							<div className="space-y-2">
 								<FieldLabel
 									optional
-									tooltip="Sélectionnez les matériaux que vous préférez"
+									tooltip="Selectionne les materiaux que tu preferes"
 								>
-									Matériaux souhaités
+									Materiaux souhaites
 								</FieldLabel>
 								<MultiSelect
 									options={materialOptions}
 									defaultValue={field.state.value || []}
 									onValueChange={(value) => field.handleChange(value)}
-									placeholder="Choisir des matériaux..."
+									placeholder="Choisir des materiaux..."
 									maxCount={3}
 									disabled={isPending}
 									searchable={false}
@@ -413,16 +344,84 @@ export function CustomizationForm({
 				</div>
 			</FormSection>
 
-			{/* Consentements */}
-			<Separator className="my-2" />
+			{/* SECTION 3 : Coordonnees (en dernier - finalisation) */}
+			<FormSection
+				title="Tes coordonnees"
+				description="Pour que je puisse te recontacter et discuter de ton projet"
+				icon={<UserCircle className="w-5 h-5" />}
+			>
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+					{/* Prenom */}
+					<form.AppField
+						name="firstName"
+						validators={{
+							onChange: ({ value }: { value: string }) => {
+								if (!value || value.trim().length < 2) {
+									return "Le prenom doit contenir au moins 2 caracteres";
+								}
+							},
+						}}
+					>
+						{(field) => <field.InputField label="Prenom" required />}
+					</form.AppField>
 
-			<div className="space-y-4">
+					{/* Nom */}
+					<form.AppField
+						name="lastName"
+						validators={{
+							onChange: ({ value }: { value: string }) => {
+								if (!value || value.trim().length < 2) {
+									return "Le nom doit contenir au moins 2 caracteres";
+								}
+							},
+						}}
+					>
+						{(field) => <field.InputField label="Nom" required />}
+					</form.AppField>
+				</div>
+
+				{/* Email */}
+				<form.AppField
+					name="email"
+					validators={{
+						onChange: ({ value }: { value: string }) => {
+							if (!value) {
+								return "L'adresse email est requise";
+							}
+							if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+								return "Entre une adresse email valide";
+							}
+						},
+					}}
+				>
+					{(field) => <field.InputField label="Adresse email" type="email" required />}
+				</form.AppField>
+
+				{/* Telephone (optionnel) */}
+				<form.AppField name="phone">
+					{(field) => (
+						<div className="space-y-2">
+							<field.InputField label="Telephone" type="tel" placeholder="06 12 34 56 78" />
+							<p className="text-xs text-muted-foreground">
+								Facultatif - Format francais (ex: 06 12 34 56 78)
+							</p>
+						</div>
+					)}
+				</form.AppField>
+			</FormSection>
+
+			{/* SECTION 4 : Consentements */}
+			<FormSection
+				title="Confidentialite"
+				description="Tes donnees sont protegees"
+				icon={<Shield className="w-5 h-5" />}
+			>
 				<form.AppField
 					name="rgpdConsent"
 					validators={{
 						onChange: ({ value }: { value: boolean }) => {
 							if (!value) {
-								return "Tu dois accepter la politique de confidentialité pour continuer";
+								return "Tu dois accepter la politique de confidentialite pour continuer";
 							}
 						},
 					}}
@@ -430,24 +429,24 @@ export function CustomizationForm({
 					{(field) => (
 						<div className="space-y-1">
 							<field.CheckboxField
-								label="J'accepte la politique de confidentialité"
+								label="J'accepte la politique de confidentialite"
 								required
 							/>
 							<p className="text-xs/5 tracking-normal antialiased text-muted-foreground ml-7">
-								Consultez notre{" "}
+								Consulte notre{" "}
 								<a
 									href="/confidentialite"
 									className="text-foreground underline hover:no-underline"
 									target="_blank"
 									rel="noopener noreferrer"
 								>
-									Politique de confidentialité
+									Politique de confidentialite
 								</a>
 							</p>
 						</div>
 					)}
 				</form.AppField>
-			</div>
+			</FormSection>
 
 			{/* Footer avec bouton d'action */}
 			<div className="mt-6">

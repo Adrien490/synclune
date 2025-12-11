@@ -18,7 +18,7 @@ const colsMap = {
  * Simple grid layout for forms
  * Responsive: 1 column on mobile, configurable columns on desktop
  */
-export function FormLayout({ children, className, cols = 2 }: FormLayoutProps) {
+export function FormLayout({ children, className, cols = 1 }: FormLayoutProps) {
 	return (
 		<div className={cn("grid grid-cols-1 gap-4 md:gap-6", colsMap[cols], className)}>
 			{children}
