@@ -1,63 +1,4 @@
 import { z } from "zod";
-import { PaymentStatus } from "@/app/generated/prisma/client";
-import {
-	GET_STRIPE_PAYMENTS_DEFAULT_PER_PAGE,
-	GET_STRIPE_PAYMENTS_MAX_RESULTS_PER_PAGE,
-	SORT_OPTIONS,
-} from "../constants/payment.constants";
-
-// ============================================================================
-// FILTERS SCHEMA
-// ============================================================================
-
-export const stripePaymentFiltersSchema = z.object({
-	paymentStatus: z.enum(PaymentStatus).optional(),
-	dateFrom: z.coerce.date().optional(),
-	dateTo: z.coerce.date().optional(),
-	hasStripePaymentIntent: z.boolean().optional(),
-});
-
-// ============================================================================
-// SORT SCHEMA
-// ============================================================================
-
-const VALID_SORT_OPTIONS = [
-	SORT_OPTIONS.PAID_AT_DESC,
-	SORT_OPTIONS.PAID_AT_ASC,
-	SORT_OPTIONS.TOTAL_DESC,
-	SORT_OPTIONS.TOTAL_ASC,
-	SORT_OPTIONS.PAYMENT_STATUS_ASC,
-	SORT_OPTIONS.PAYMENT_STATUS_DESC,
-] as const;
-
-export const stripePaymentSortBySchema = z.preprocess((value) => {
-	return typeof value === "string" &&
-		VALID_SORT_OPTIONS.includes(value as (typeof VALID_SORT_OPTIONS)[number])
-		? value
-		: SORT_OPTIONS.PAID_AT_DESC;
-}, z.enum(VALID_SORT_OPTIONS));
-
-// ============================================================================
-// MAIN SCHEMA
-// ============================================================================
-
-export const getStripePaymentsSchema = z.object({
-	cursor: z.cuid2().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int({ message: "PerPage must be an integer" })
-		.min(1, { message: "PerPage must be at least 1" })
-		.max(
-			GET_STRIPE_PAYMENTS_MAX_RESULTS_PER_PAGE,
-			`PerPage cannot exceed ${GET_STRIPE_PAYMENTS_MAX_RESULTS_PER_PAGE}`
-		)
-		.default(GET_STRIPE_PAYMENTS_DEFAULT_PER_PAGE),
-	sortBy: stripePaymentSortBySchema,
-	sortOrder: z.enum(["asc", "desc"]).default("desc"),
-	search: z.string().max(255).optional(),
-	filters: stripePaymentFiltersSchema.optional(),
-});
 
 // ============================================================================
 // CHECKOUT SCHEMA
@@ -153,16 +94,3 @@ export const checkoutSchema = z
 	});
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;
-
-// ============================================================================
-// BULK ADMIN SCHEMAS
-// ============================================================================
-
-/**
- * Schema pour exporter plusieurs paiements en CSV
- */
-export const bulkExportPaymentsSchema = z.object({
-	ids: z.array(z.cuid()).min(1, "Au moins un paiement doit être sélectionné"),
-});
-
-export type BulkExportPaymentsInput = z.infer<typeof bulkExportPaymentsSchema>;

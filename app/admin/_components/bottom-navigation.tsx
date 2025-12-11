@@ -16,6 +16,7 @@ import {
 	Drawer,
 	DrawerContent,
 	DrawerBody,
+	DrawerTitle,
 } from "@/shared/components/ui/drawer";
 
 // Recuperer les items depuis la configuration centralisee
@@ -95,6 +96,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 			{/* Drawer de navigation mobile */}
 			<Drawer open={isOpen} onOpenChange={setIsOpen}>
 				<DrawerContent>
+					<DrawerTitle className="sr-only">Menu de navigation</DrawerTitle>
 					<DrawerBody className="pt-2">
 						{/* Grille de navigation - 3 colonnes */}
 						<div className="grid grid-cols-3 gap-2 p-3 pb-2">

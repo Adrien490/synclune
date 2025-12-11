@@ -252,10 +252,12 @@ function ResponsiveSelectContent({
 	// Mode drawer: juste DrawerContent (le Drawer est au niveau root)
 	return (
 		<DrawerContent className="pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-			{title && (
+			{title ? (
 				<DrawerHeader>
 					<DrawerTitle>{title}</DrawerTitle>
 				</DrawerHeader>
+			) : (
+				<DrawerTitle className="sr-only">Sélection</DrawerTitle>
 			)}
 			<div
 				role="listbox"

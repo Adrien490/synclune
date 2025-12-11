@@ -2,13 +2,10 @@ import type { LucideIcon } from "lucide-react";
 import {
 	LayoutDashboard,
 	ShoppingBag,
-	CreditCard,
 	ReceiptText,
 	Package,
 	Layers,
-	Boxes,
 	Users,
-	User,
 	Tag,
 	Palette,
 	Gem,
@@ -63,7 +60,7 @@ export const navigationData: NavigationData = {
 			],
 		},
 		// ─────────────────────────────────────────────────────────────────────────
-		// VENTES - Cycle commande → paiement → remboursement
+		// VENTES - Commandes et remboursements
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Ventes",
@@ -76,12 +73,6 @@ export const navigationData: NavigationData = {
 					icon: ShoppingBag,
 				},
 				{
-					id: "payments",
-					title: "Paiements",
-					url: "/admin/ventes/paiements",
-					icon: CreditCard,
-				},
-				{
 					id: "refunds",
 					title: "Remboursements",
 					url: "/admin/ventes/remboursements",
@@ -91,7 +82,7 @@ export const navigationData: NavigationData = {
 			],
 		},
 		// ─────────────────────────────────────────────────────────────────────────
-		// CATALOGUE - Produits + Inventaire
+		// CATALOGUE - Produits + Collections
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Catalogue",
@@ -108,12 +99,6 @@ export const navigationData: NavigationData = {
 					title: "Collections",
 					url: "/admin/catalogue/collections",
 					icon: Layers,
-				},
-				{
-					id: "inventory",
-					title: "Inventaire",
-					url: "/admin/catalogue/inventaire",
-					icon: Boxes,
 				},
 			],
 		},
@@ -157,22 +142,6 @@ export const navigationData: NavigationData = {
 					title: "Matériaux",
 					url: "/admin/catalogue/materiaux",
 					icon: Gem,
-				},
-			],
-		},
-		// ─────────────────────────────────────────────────────────────────────────
-		// MON COMPTE - Paramètres utilisateur
-		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Mon compte",
-			icon: User,
-			items: [
-				{
-					id: "my-account",
-					title: "Mon compte",
-					shortTitle: "Compte",
-					url: "/admin/compte",
-					icon: User,
 				},
 			],
 		},

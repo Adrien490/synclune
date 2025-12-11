@@ -164,7 +164,7 @@ export function Fab({
 						animate={{ opacity: 1, x: 0 }}
 						exit={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
 						transition={transition}
-						className={cn(visibilityClass, "fixed z-40 bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-4")}
+						className={cn(visibilityClass, "fixed z-40 bottom-6 right-0")}
 					>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -176,7 +176,7 @@ export function Fab({
 									size="sm"
 									className={cn(
 										"rounded-l-full rounded-r-none",
-										"size-14 p-0",
+										"size-12 p-0",
 										"bg-background",
 										"border-r-0",
 										"shadow-md",
@@ -189,7 +189,7 @@ export function Fab({
 									aria-expanded={false}
 								>
 									<ChevronLeft
-										className={cn("size-6", isPending && "animate-pulse")}
+										className={cn("size-5", isPending && "animate-pulse")}
 										aria-hidden="true"
 									/>
 								</Button>
@@ -217,7 +217,7 @@ export function Fab({
 					animate={{ opacity: 1, scale: 1 }}
 					exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
 					transition={transition}
-					className={cn(visibilityClass, "group fixed z-40 bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-6")}
+					className={cn(visibilityClass, "group fixed z-40 bottom-6 right-6")}
 				>
 					{/* Bouton pour cacher le FAB */}
 					<Tooltip>
@@ -229,7 +229,7 @@ export function Fab({
 								size="icon"
 								className={cn(
 									"absolute -top-2 -right-2 z-10",
-									"size-8 rounded-full",
+									"size-7 rounded-full",
 									"bg-muted",
 									"border border-border",
 									"shadow-sm",
