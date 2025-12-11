@@ -68,6 +68,7 @@ html {
 	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
 	--color-sidebar-primary: var(--sidebar-primary);
 	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
 	--color-sidebar: var(--sidebar);
 	--tracking-normal: 0em;
 	--tracking-tighter: calc(var(--tracking-normal) - 0.05em);
