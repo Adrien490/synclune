@@ -245,16 +245,15 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
 			<ResponsiveDialogContent className="sm:max-w-[520px] max-h-[85vh] flex flex-col">
-				<ResponsiveDialogHeader>
+				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle>Ce produit est disponible dans plusieurs variantes <span aria-hidden="true">🎨</span></ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
 						{product.title}
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				{/* Conteneur scrollable avec indicateur de défilement */}
-				<div className="relative flex-1 min-h-0">
-					<form action={action} className="space-y-6 py-4 overflow-y-auto h-full pr-2 overscroll-contain [-webkit-overflow-scrolling:touch]">
+				{/* Form avec layout flex pour scroll + footer fixe */}
+				<form action={action} className="flex flex-col flex-1 min-h-0">
 					{/* Subscribe pour obtenir les valeurs et calculer le SKU */}
 					<form.Subscribe selector={(state) => state.values}>
 						{(values) => {
@@ -377,6 +376,8 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 										</>
 									)}
 
+									{/* Contenu scrollable */}
+									<div className="relative flex-1 overflow-y-auto space-y-6 py-4 pr-2 overscroll-contain [-webkit-overflow-scrolling:touch]">
 									{/* Image + Prix */}
 									<div className="flex gap-4">
 										<div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden bg-muted shrink-0">
@@ -681,8 +682,11 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 											</motion.p>
 										)}
 									</AnimatePresence>
+									</div>
+									{/* Fin du contenu scrollable */}
 
-									<ResponsiveDialogFooter className="pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+									{/* Footer fixe - hors du scroll */}
+									<ResponsiveDialogFooter className="shrink-0 pt-4 border-t mt-auto">
 										<Button
 											type="submit"
 											disabled={!canAddToCart || isPending}
@@ -703,12 +707,6 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 						}}
 					</form.Subscribe>
 				</form>
-					{/* Gradient indicateur de scroll en bas */}
-					<div
-						className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-linear-to-t from-background to-transparent z-10"
-						aria-hidden="true"
-					/>
-				</div>
 			</ResponsiveDialogContent>
 		</ResponsiveDialog>
 	);

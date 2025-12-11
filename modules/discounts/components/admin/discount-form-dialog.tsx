@@ -114,8 +114,8 @@ export function DiscountFormDialog() {
 				}
 			}}
 		>
-			<ResponsiveDialogContent className="max-w-2xl">
-				<ResponsiveDialogHeader>
+			<ResponsiveDialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle>
 						{isUpdateMode ? "Modifier le code promo" : "Créer un code promo"}
 					</ResponsiveDialogTitle>
@@ -123,9 +123,11 @@ export function DiscountFormDialog() {
 
 				<form
 					action={action}
-					className="space-y-6"
+					className="flex flex-col flex-1 min-h-0"
 					onSubmit={() => form.handleSubmit()}
 				>
+					{/* Contenu scrollable */}
+					<div className="flex-1 overflow-y-auto space-y-6 pr-2">
 					{/* Hidden field for ID in update mode */}
 					{isUpdateMode && discount && (
 						<input type="hidden" name="id" value={discount.id} />
@@ -277,8 +279,11 @@ export function DiscountFormDialog() {
 						</FormLayout>
 					</div>
 
-					{/* Submit button */}
-					<div className="flex justify-end pt-4">
+					</div>
+					{/* Fin du contenu scrollable */}
+
+					{/* Footer fixe */}
+					<div className="shrink-0 flex justify-end pt-4 border-t mt-4">
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button disabled={!canSubmit || isPending} type="submit">

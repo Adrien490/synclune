@@ -5,6 +5,7 @@ import { MiniDotsLoader } from "@/shared/components/loaders/mini-dots-loader";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/shared/utils/cn";
+import { AnimatePresence, motion } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useTransition } from "react";
@@ -49,6 +50,11 @@ export function SearchForm({
 		startTransition(() => {
 			router.replace(`?${newSearchParams.toString()}`, { scroll: false });
 		});
+
+		// Fermer le clavier sur mobile apres la recherche
+		if (typeof window !== "undefined" && window.innerWidth < 768) {
+			inputRef.current?.blur();
+		}
 	};
 
 	// Créer le formulaire avec TanStack Form
@@ -69,9 +75,9 @@ export function SearchForm({
 				"group rounded-md overflow-hidden",
 				"bg-background border border-input",
 				"hover:border-muted-foreground/25",
-				"focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20",
+				"focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/30",
 				"transition-all duration-200 ease-in-out",
-				isPending && "opacity-90",
+				isPending && "opacity-70",
 				className
 			)}
 			data-pending={isPending ? "" : undefined}
@@ -107,8 +113,18 @@ export function SearchForm({
 							autoComplete="off"
 							autoFocus={false}
 							type="search"
+							inputMode="search"
+							enterKeyHint="search"
 							value={field.state.value}
 							onChange={(e) => field.handleChange(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === "Escape" && field.state.value) {
+									e.preventDefault();
+									field.handleChange("");
+									updateSearchParams("");
+									inputRef.current?.focus();
+								}
+							}}
 							className={cn(
 								"pl-10 pr-10",
 								"h-[44px]",
@@ -124,26 +140,36 @@ export function SearchForm({
 							aria-describedby="search-status"
 						/>
 
-						{field.state.value && (
-							<Button
-								type="button"
-								variant="ghost"
-								size="icon"
-								onClick={() => {
-									field.handleChange("");
-									updateSearchParams("");
-									inputRef.current?.focus();
-								}}
-								className={cn(
-									"absolute right-1 size-8",
-									"text-muted-foreground hover:text-foreground",
-									"active:scale-95 transition-all"
-								)}
-								aria-label="Effacer la recherche"
-							>
-								<X className="size-4" />
-							</Button>
-						)}
+						<AnimatePresence mode="wait">
+							{field.state.value && (
+								<motion.div
+									initial={{ opacity: 0, scale: 0.8 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={{ opacity: 0, scale: 0.8 }}
+									transition={{ duration: 0.15 }}
+									className="absolute right-0"
+								>
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon"
+										onClick={() => {
+											field.handleChange("");
+											updateSearchParams("");
+											inputRef.current?.focus();
+										}}
+										className={cn(
+											"size-11",
+											"text-muted-foreground hover:text-foreground",
+											"active:scale-95 transition-all"
+										)}
+										aria-label="Effacer la recherche"
+									>
+										<X className="size-4" />
+									</Button>
+								</motion.div>
+							)}
+						</AnimatePresence>
 					</>
 				)}
 			</form.AppField>

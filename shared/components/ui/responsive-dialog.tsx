@@ -104,11 +104,18 @@ function ResponsiveDialogContent({
 			onInteractOutside,
 			...drawerProps
 		} = props;
-		// Note: On n'applique pas className au DrawerContent car il contient
-		// souvent des max-width (sm:max-w-[500px]) destinées au Dialog desktop.
-		// Le drawer doit toujours être pleine largeur sur mobile.
+		// Filtrer uniquement les classes max-w-* (tailles desktop)
+		// Garder les classes de layout: flex, flex-col, h-*, max-h-*, overflow-*
+		const filteredClassName = className
+			?.split(" ")
+			.filter((cls) => !cls.match(/^(sm:)?max-w-/))
+			.join(" ");
+
 		return (
-			<DrawerContent className="px-4 pb-6" {...drawerProps}>
+			<DrawerContent
+				className={cn("flex flex-col", filteredClassName)}
+				{...drawerProps}
+			>
 				{children}
 			</DrawerContent>
 		);

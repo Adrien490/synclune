@@ -75,8 +75,8 @@ export function OrderNotesDialog() {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<ResponsiveDialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
-				<ResponsiveDialogHeader>
+			<ResponsiveDialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle>Notes internes</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
 						Commande: <span className="font-semibold font-mono">{data?.orderNumber}</span>
@@ -84,7 +84,7 @@ export function OrderNotesDialog() {
 				</ResponsiveDialogHeader>
 
 				{/* Formulaire d'ajout */}
-				<div className="space-y-2 pb-4 border-b">
+				<div className="shrink-0 space-y-2 pb-4 border-b">
 					<Textarea
 						placeholder="Ajouter une note..."
 						value={newNote}
@@ -160,7 +160,7 @@ export function OrderNotesDialog() {
 					)}
 				</div>
 
-				<div className="flex justify-end pt-4 border-t">
+				<div className="shrink-0 flex justify-end pt-4 border-t">
 					<Button variant="outline" onClick={close}>
 						Fermer
 					</Button>

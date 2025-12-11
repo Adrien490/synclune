@@ -123,8 +123,8 @@ export function AddressFormDialog({
 				}
 			}}
 		>
-			<ResponsiveDialogContent className="max-w-2xl">
-				<ResponsiveDialogHeader>
+			<ResponsiveDialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle>
 						{mode === "create" ? "Ajouter une adresse" : "Modifier l'adresse"}
 					</ResponsiveDialogTitle>
@@ -132,9 +132,11 @@ export function AddressFormDialog({
 
 				<form
 					action={action}
-					className="space-y-6"
+					className="flex flex-col flex-1 min-h-0"
 					onSubmit={() => form.handleSubmit()}
 				>
+					{/* Contenu scrollable */}
+					<div className="flex-1 overflow-y-auto space-y-6 pr-2">
 					{/* Success message */}
 					{state?.status === ActionStatus.SUCCESS && state.message && (
 						<Alert className="bg-primary/10 border-primary/20">
@@ -440,8 +442,11 @@ export function AddressFormDialog({
 						</form.AppField>
 					</div>
 
-					{/* Submit button */}
-					<div className="flex justify-end pt-4">
+					</div>
+					{/* Fin du contenu scrollable */}
+
+					{/* Footer fixe */}
+					<div className="shrink-0 flex justify-end pt-4 border-t mt-4">
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button disabled={!canSubmit || isPending} type="submit">

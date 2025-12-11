@@ -45,8 +45,8 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 					</Button>
 				)}
 			</ResponsiveDialogTrigger>
-			<ResponsiveDialogContent className="sm:max-w-lg">
-				<ResponsiveDialogHeader>
+			<ResponsiveDialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle className="flex items-center gap-2">
 						<Ruler className="w-5 h-5 text-primary" aria-hidden="true" />
 						Guide des tailles
@@ -56,14 +56,14 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				<Tabs defaultValue={defaultTab} className="mt-4">
-					<TabsList className="grid w-full grid-cols-2">
+				<Tabs defaultValue={defaultTab} className="mt-4 flex flex-col flex-1 min-h-0">
+					<TabsList className="shrink-0 grid w-full grid-cols-2">
 						<TabsTrigger value="rings">Bagues</TabsTrigger>
 						<TabsTrigger value="bracelets">Bracelets</TabsTrigger>
 					</TabsList>
 
 					{/* Guide Bagues */}
-					<TabsContent value="rings" className="space-y-4 mt-4">
+					<TabsContent value="rings" className="flex-1 overflow-y-auto space-y-4 mt-4">
 						<div className="space-y-3">
 							<h3 className="text-sm font-semibold">Comment mesurer ?</h3>
 							<ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
@@ -107,7 +107,7 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 					</TabsContent>
 
 					{/* Guide Bracelets */}
-					<TabsContent value="bracelets" className="space-y-4 mt-4">
+					<TabsContent value="bracelets" className="flex-1 overflow-y-auto space-y-4 mt-4">
 						<div className="space-y-3">
 							<h3 className="text-sm font-semibold">Comment mesurer ?</h3>
 							<ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
