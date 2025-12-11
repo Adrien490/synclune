@@ -8,7 +8,13 @@ import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note"
 import { Badge } from "@/shared/components/ui/badge";
 import { Autocomplete } from "@/shared/components/autocomplete";
 import { MultiSelect, type MultiSelectOption } from "@/shared/components/multi-select";
-import { Sparkles, UserCircle, Palette, Shield, X } from "lucide-react";
+import { Sparkles, UserCircle, Palette, Shield, X, Plus } from "lucide-react";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/shared/components/ui/collapsible";
+import { cn } from "@/shared/utils/cn";
 import { toast } from "sonner";
 
 import { useCustomizationForm } from "../hooks/use-customization-form";
@@ -46,6 +52,7 @@ export function CustomizationForm({
 	// État local pour les produits sélectionnés
 	const [selectedProducts, setSelectedProducts] = useState<ProductSearchResult[]>([]);
 	const [localSearchValue, setLocalSearchValue] = useState(productSearchQuery);
+	const [showInspirations, setShowInspirations] = useState(false);
 
 	const { form, action, isPending } = useCustomizationForm({
 		onSuccess: () => {
@@ -191,18 +198,23 @@ export function CustomizationForm({
 					}}
 				>
 					{(field) => (
-						<field.SelectField
-							label="Type de bijou"
-							required
-							placeholder="Quel type de bijou souhaites-tu ?"
-							options={[
-								...productTypes.map((type) => ({
-									value: type.label,
-									label: type.label,
-								})),
-								{ value: "Autre", label: "Autre" },
-							]}
-						/>
+						<div className="space-y-2">
+							<field.SelectField
+								label="Type de bijou"
+								required
+								placeholder="Quel type de bijou souhaites-tu ?"
+								options={[
+									...productTypes.map((type) => ({
+										value: type.label,
+										label: type.label,
+									})),
+									{ value: "Autre", label: "Autre (precise dans la description)" },
+								]}
+							/>
+							<p className="text-xs text-muted-foreground">
+								Pas sur(e) ? Choisis "Autre" et decris ton idee
+							</p>
+						</div>
 					)}
 				</form.AppField>
 
@@ -233,116 +245,137 @@ export function CustomizationForm({
 				</form.AppField>
 			</FormSection>
 
-			{/* SECTION 2 : Inspirations et preferences */}
-			<FormSection
-				title="Inspirations et preferences"
-				description="Aide-moi a comprendre tes gouts (facultatif)"
-				icon={<Palette className="w-5 h-5" />}
-			>
-				{/* Produits inspirants - Autocomplete (pleine largeur) */}
-				<div className="space-y-2">
-					<FieldLabel
-						optional
-						tooltip="Selectionne jusqu'a 5 creations existantes qui t'inspirent"
+			{/* SECTION 2 : Inspirations et preferences (optionnelle, collapsible) */}
+			<Collapsible open={showInspirations} onOpenChange={setShowInspirations}>
+				<CollapsibleTrigger asChild>
+					<button
+						type="button"
+						className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
 					>
-						Creations qui t'inspirent
-					</FieldLabel>
-					<Autocomplete
-						name="productSearch"
-						value={localSearchValue}
-						onChange={updateProductSearch}
-						onSelect={handleProductSelect}
-						items={productSearchResults}
-						getItemLabel={(p) => p.title}
-						getItemImage={(p) =>
-							p.imageUrl
-								? { src: p.imageUrl, alt: p.title, blurDataUrl: p.blurDataUrl }
-								: null
-						}
-						placeholder="Rechercher une creation..."
-						isLoading={isSearchPending}
-						minQueryLength={3}
-						disabled={isPending || selectedProducts.length >= 5}
-						noResultsMessage="Aucune creation trouvee"
-						showSearchIcon
-						showClearButton
-					/>
-					{/* Produits selectionnes */}
-					{selectedProducts.length > 0 && (
-						<div className="flex flex-wrap gap-1.5 mt-2">
-							{selectedProducts.map((product) => (
-								<Badge
-									key={product.id}
-									variant="secondary"
-									className="pr-1 gap-1"
-								>
-									{product.title}
-									<button
-										type="button"
-										onClick={() => handleProductRemove(product.id)}
-										className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors"
-										aria-label={`Retirer ${product.title}`}
-									>
-										<X className="size-3" />
-									</button>
-								</Badge>
-							))}
+						<Plus
+							className={cn(
+								"size-4 transition-transform duration-200",
+								showInspirations && "rotate-45"
+							)}
+						/>
+						<span className="group-hover:underline">
+							Ajouter des inspirations et preferences (optionnel)
+						</span>
+					</button>
+				</CollapsibleTrigger>
+				<CollapsibleContent>
+					<FormSection
+						title="Inspirations et preferences"
+						description="Aide-moi a comprendre tes gouts (facultatif)"
+						icon={<Palette className="w-5 h-5" />}
+						className="mt-4"
+					>
+						{/* Produits inspirants - Autocomplete (pleine largeur) */}
+						<div className="space-y-2">
+							<FieldLabel
+								optional
+								tooltip="Selectionne jusqu'a 5 creations existantes qui t'inspirent"
+							>
+								Creations qui t'inspirent
+							</FieldLabel>
+							<Autocomplete
+								name="productSearch"
+								value={localSearchValue}
+								onChange={updateProductSearch}
+								onSelect={handleProductSelect}
+								items={productSearchResults}
+								getItemLabel={(p) => p.title}
+								getItemImage={(p) =>
+									p.imageUrl
+										? { src: p.imageUrl, alt: p.title, blurDataUrl: p.blurDataUrl }
+										: null
+								}
+								placeholder="Rechercher une creation..."
+								isLoading={isSearchPending}
+								minQueryLength={3}
+								disabled={isPending || selectedProducts.length >= 5}
+								noResultsMessage="Aucune creation trouvee"
+								showSearchIcon
+								showClearButton
+							/>
+							{/* Produits selectionnes */}
+							{selectedProducts.length > 0 && (
+								<div className="flex flex-wrap gap-1.5 mt-2">
+									{selectedProducts.map((product) => (
+										<Badge
+											key={product.id}
+											variant="secondary"
+											className="pr-1 gap-1"
+										>
+											{product.title}
+											<button
+												type="button"
+												onClick={() => handleProductRemove(product.id)}
+												className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors"
+												aria-label={`Retirer ${product.title}`}
+											>
+												<X className="size-3" />
+											</button>
+										</Badge>
+									))}
+								</div>
+							)}
+							<p className="text-xs text-muted-foreground">
+								{selectedProducts.length}/5 creations selectionnees
+							</p>
 						</div>
-					)}
-					<p className="text-xs text-muted-foreground">
-						{selectedProducts.length}/5 creations selectionnees
-					</p>
-				</div>
 
-				{/* Couleurs et Materiaux */}
-				<div className="space-y-6">
-					{/* Couleurs preferees */}
-					<form.AppField name="preferredColorIds">
-						{(field) => (
-							<div className="space-y-2">
-								<FieldLabel
-									optional
-									tooltip="Selectionne les couleurs que tu aimerais voir dans ta creation"
-								>
-									Couleurs preferees
-								</FieldLabel>
-								<MultiSelect
-									options={colorOptions}
-									defaultValue={field.state.value || []}
-									onValueChange={(value) => field.handleChange(value)}
-									placeholder="Choisir des couleurs..."
-									maxCount={5}
-									disabled={isPending}
-									searchable={false}
-								/>
-							</div>
-						)}
-					</form.AppField>
+						{/* Couleurs et Materiaux */}
+						<div className="space-y-6">
+							{/* Couleurs preferees */}
+							<form.AppField name="preferredColorIds">
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel
+											optional
+											tooltip="Selectionne les couleurs que tu aimerais voir dans ta creation"
+										>
+											Couleurs preferees
+										</FieldLabel>
+										<MultiSelect
+											options={colorOptions}
+											defaultValue={field.state.value || []}
+											onValueChange={(value) => field.handleChange(value)}
+											placeholder="Choisir des couleurs..."
+											maxCount={5}
+											disabled={isPending}
+											searchable={false}
+										/>
+									</div>
+								)}
+							</form.AppField>
 
-					{/* Materiaux souhaites */}
-					<form.AppField name="preferredMaterialIds">
-						{(field) => (
-							<div className="space-y-2">
-								<FieldLabel
-									optional
-									tooltip="Selectionne les materiaux que tu preferes"
-								>
-									Materiaux souhaites
-								</FieldLabel>
-								<MultiSelect
-									options={materialOptions}
-									defaultValue={field.state.value || []}
-									onValueChange={(value) => field.handleChange(value)}
-									placeholder="Choisir des materiaux..."
-									maxCount={3}
-									disabled={isPending}
-									searchable={false}
-								/>
-							</div>
-						)}
-					</form.AppField>
-				</div>
-			</FormSection>
+							{/* Materiaux souhaites */}
+							<form.AppField name="preferredMaterialIds">
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel
+											optional
+											tooltip="Selectionne les materiaux que tu preferes"
+										>
+											Materiaux souhaites
+										</FieldLabel>
+										<MultiSelect
+											options={materialOptions}
+											defaultValue={field.state.value || []}
+											onValueChange={(value) => field.handleChange(value)}
+											placeholder="Choisir des materiaux..."
+											maxCount={3}
+											disabled={isPending}
+											searchable={false}
+										/>
+									</div>
+								)}
+							</form.AppField>
+						</div>
+					</FormSection>
+				</CollapsibleContent>
+			</Collapsible>
 
 			{/* SECTION 3 : Coordonnees (en dernier - finalisation) */}
 			<FormSection

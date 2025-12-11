@@ -92,13 +92,18 @@ export function SignUpEmailForm() {
 					}}
 				>
 					{(field) => (
-						<field.InputField
-							label="Email"
-							type="email"
-							autoComplete="email"
-							disabled={isPending}
-							required
-						/>
+						<div className="space-y-2">
+							<field.InputField
+								label="Email"
+								type="email"
+								autoComplete="email"
+								disabled={isPending}
+								required
+							/>
+							<p className="text-xs text-muted-foreground">
+								Utilise uniquement pour la confirmation de compte et les notifications de commande
+							</p>
+						</div>
 					)}
 				</form.AppField>
 
