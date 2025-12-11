@@ -691,6 +691,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 											type="submit"
 											disabled={!canAddToCart || isPending}
 											className="w-full"
+											size="lg"
 										>
 											{isPending ? (
 												<>
