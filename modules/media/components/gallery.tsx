@@ -240,7 +240,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 								<button
 									type="button"
 									onClick={openLightbox}
-									className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-black/60 backdrop-blur-sm text-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-lg flex items-center gap-1.5 hover:bg-black/80 active:scale-95 transition-all"
+									className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-black/60 backdrop-blur-sm text-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-lg flex items-center gap-1.5 hover:bg-black/80 active:scale-95 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
 									aria-label="Zoomer l'image en plein ecran"
 								>
 									<ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -255,11 +255,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 							>
 								<div className="flex h-full" ref={emblaContainerRef}>
 									{safeImages.map((media, index) => (
-										<div
+										<button
+											type="button"
 											key={media.id}
 											data-slide-index={index}
-											className="flex-[0_0_100%] h-full min-w-0 relative"
+											className="flex-[0_0_100%] h-full min-w-0 relative cursor-zoom-in"
 											aria-hidden={index !== optimisticIndex}
+											aria-label={`Zoomer ${media.alt || title}`}
+											onClick={openLightbox}
 										>
 											<GalleryMediaRenderer
 												media={media}
@@ -271,7 +274,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 												onError={() => handleMediaError(media.id)}
 												onRetry={() => retryMedia(media.id)}
 											/>
-										</div>
+										</button>
 									))}
 								</div>
 							</div>
