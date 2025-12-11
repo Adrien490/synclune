@@ -13,8 +13,8 @@ export default function EditVariantLoading() {
 			<PageHeaderSkeleton variant="compact" />
 
 			<div className="space-y-6">
-				{/* Form Sections - 2 columns on desktop */}
-				<FormLayout cols={2}>
+				{/* Form Sections */}
+				<FormLayout>
 					{/* Section 1: Média Principal */}
 					<FormSection
 						title="Média principal"
@@ -49,7 +49,7 @@ export default function EditVariantLoading() {
 							</div>
 
 							{/* Material + Size */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div className="space-y-4">
 								<div className="space-y-2">
 									<Skeleton className="h-4 w-20" />
 									<Skeleton className="h-10 w-full" />
@@ -64,7 +64,7 @@ export default function EditVariantLoading() {
 				</FormLayout>
 
 				{/* Prix et Disponibilité */}
-				<FormLayout cols={2}>
+				<FormLayout>
 					<FormSection title="Prix" description="Configuration des prix">
 						<div className="space-y-4">
 							{/* Prix TTC */}

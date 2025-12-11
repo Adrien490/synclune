@@ -121,8 +121,8 @@ export function ColorFormDialog() {
 
 					<RequiredFieldsNote />
 
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-						{/* Gauche : ColorPicker */}
+					<div className="space-y-6">
+						{/* ColorPicker */}
 						<form.AppField
 							name="hex"
 							validators={{
@@ -166,33 +166,31 @@ export function ColorFormDialog() {
 							)}
 						</form.AppField>
 
-						{/* Droite : Champs */}
-						<div className="space-y-4">
-							<form.AppField
-								name="name"
-								validators={{
-									onChange: ({ value }: { value: string }) => {
-										if (!value || value.length < 1) {
-											return "Le nom est requis";
-										}
-										if (value.length > 50) {
-											return "Le nom ne peut pas dépasser 50 caractères";
-										}
-										return undefined;
-									},
-								}}
-							>
-								{(field) => (
-									<field.InputField
-										label="Nom"
-										type="text"
-										placeholder="ex: Rouge, Bleu Marine"
-										disabled={isPending}
-										required
-									/>
-								)}
-							</form.AppField>
-						</div>
+						{/* Nom */}
+						<form.AppField
+							name="name"
+							validators={{
+								onChange: ({ value }: { value: string }) => {
+									if (!value || value.length < 1) {
+										return "Le nom est requis";
+									}
+									if (value.length > 50) {
+										return "Le nom ne peut pas dépasser 50 caractères";
+									}
+									return undefined;
+								},
+							}}
+						>
+							{(field) => (
+								<field.InputField
+									label="Nom"
+									type="text"
+									placeholder="ex: Rouge, Bleu Marine"
+									disabled={isPending}
+									required
+								/>
+							)}
+						</form.AppField>
 					</div>
 
 					{/* Submit button */}

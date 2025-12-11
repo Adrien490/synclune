@@ -294,8 +294,8 @@ export function CustomizationForm({
 					</p>
 				</div>
 
-				{/* Couleurs et Materiaux - 2 colonnes */}
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+				{/* Couleurs et Materiaux */}
+				<div className="space-y-6">
 					{/* Couleurs preferees */}
 					<form.AppField name="preferredColorIds">
 						{(field) => (

@@ -14,8 +14,8 @@ export default function CreateVariantLoading() {
 				<Skeleton className="h-5 w-96" />
 			</div>
 
-			{/* Form Sections - 2 columns on desktop */}
-			<FormLayout cols={2}>
+			{/* Form Sections */}
+			<FormLayout>
 				{/* Section 1: Média Principal */}
 				<FormSection
 					title="Média principal"

@@ -95,8 +95,8 @@ function DesktopFormSkeleton() {
 				</div>
 			</FormSection>
 
-			{/* Sections 2 & 3 en grille */}
-			<FormLayout cols={2}>
+			{/* Sections 2 & 3 */}
+			<FormLayout>
 				{/* Section 2: Le bijou */}
 				<FormSection
 					title="Le bijou"
@@ -117,7 +117,7 @@ function DesktopFormSkeleton() {
 						</div>
 
 						{/* Type + Collections */}
-						<div className="grid grid-cols-2 gap-4">
+						<div className="space-y-4">
 							<div className="space-y-2">
 								<Skeleton className="h-4 w-28" />
 								<Skeleton className="h-10 w-full" />
@@ -144,7 +144,7 @@ function DesktopFormSkeleton() {
 						</div>
 
 						{/* Matériau + Taille */}
-						<div className="grid grid-cols-2 gap-4">
+						<div className="space-y-4">
 							<div className="space-y-2">
 								<Skeleton className="h-4 w-20" />
 								<Skeleton className="h-10 w-full" />

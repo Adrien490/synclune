@@ -16,7 +16,7 @@ export default function EditProductLoadingPage() {
 			<section className="bg-background py-8">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pb-32">
 					{/* SECTIONS 1 & 2 : Image principale + Informations générales */}
-					<FormLayout cols={2}>
+					<FormLayout>
 						{/* Image principale */}
 						<FormSection
 							title="Média principal"
@@ -39,7 +39,7 @@ export default function EditProductLoadingPage() {
 									<Skeleton className="h-4 w-20" />
 									<Skeleton className="h-24 w-full" />
 								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								<div className="space-y-4">
 									<div className="space-y-2">
 										<Skeleton className="h-4 w-28" />
 										<Skeleton className="h-10 w-full" />
@@ -48,17 +48,17 @@ export default function EditProductLoadingPage() {
 										<Skeleton className="h-4 w-20" />
 										<Skeleton className="h-10 w-full" />
 									</div>
-								</div>
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-32" />
-									<Skeleton className="h-10 w-full" />
+									<div className="space-y-2">
+										<Skeleton className="h-4 w-32" />
+										<Skeleton className="h-10 w-full" />
+									</div>
 								</div>
 							</div>
 						</FormSection>
 					</FormLayout>
 
 					{/* SECTIONS 3 & 4 : Prix et galerie */}
-					<FormLayout cols={2}>
+					<FormLayout>
 						{/* Prix et disponibilité */}
 						<FormSection
 							title="Prix et disponibilité"
@@ -73,7 +73,7 @@ export default function EditProductLoadingPage() {
 									<Skeleton className="h-4 w-32" />
 									<Skeleton className="h-10 w-full" />
 								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								<div className="space-y-4">
 									<div className="space-y-2">
 										<Skeleton className="h-4 w-20" />
 										<Skeleton className="h-10 w-full" />

@@ -172,8 +172,8 @@ export function DiscountFormDialog() {
 							)}
 						</form.AppField>
 
-						{/* Type and Value in 2 columns */}
-						<FormLayout cols={2}>
+						{/* Type and Value */}
+						<FormLayout>
 							{/* Type Field */}
 							<form.AppField name="type">
 								{(field) => (
@@ -243,8 +243,8 @@ export function DiscountFormDialog() {
 							)}
 						</form.AppField>
 
-						{/* Max Usage Fields in 2 columns */}
-						<FormLayout cols={2}>
+						{/* Max Usage Fields */}
+						<FormLayout>
 							{/* Max Usage Count Field */}
 							<form.AppField name="maxUsageCount">
 								{(field) => (
