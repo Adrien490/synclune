@@ -3,19 +3,13 @@
 import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import {
-	Field,
-	FieldError,
-	FieldGroup,
-	FieldLabel,
-	FieldSet,
-} from "@/shared/components/ui/field";
-import { Input } from "@/shared/components/ui/input";
+import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useResetPassword } from "@/modules/auth/hooks/use-reset-password";
+import { useEffect, useRef } from "react";
 
 interface ResetPasswordFormProps {
 	token: string;
@@ -23,6 +17,14 @@ interface ResetPasswordFormProps {
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 	const { action, isPending, state } = useResetPassword();
+	const errorRef = useRef<HTMLDivElement>(null);
+
+	// Focus sur l'erreur quand elle apparaît
+	useEffect(() => {
+		if (state?.message && state.status !== ActionStatus.SUCCESS) {
+			errorRef.current?.focus();
+		}
+	}, [state?.message, state?.status]);
 
 	// TanStack Form setup
 	const form = useAppForm({
@@ -62,7 +64,13 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
 			{/* Message d'erreur */}
 			{state?.status !== ActionStatus.SUCCESS && state?.message && (
-				<Alert variant="destructive" role="alert" aria-live="assertive">
+				<Alert
+					ref={errorRef}
+					variant="destructive"
+					tabIndex={-1}
+					role="alert"
+					aria-live="assertive"
+				>
 					<XCircle aria-hidden="true" />
 					<AlertDescription>{state.message}</AlertDescription>
 				</Alert>
@@ -89,33 +97,12 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 						}}
 					>
 						{(field) => (
-							<Field data-invalid={field.state.meta.errors.length > 0}>
-								<FieldLabel htmlFor={field.name}>
-									Nouveau mot de passe
-									<span className="text-destructive ml-1">*</span>
-								</FieldLabel>
-								<Input
-									id={field.name}
-									name={field.name}
-									type="password"
-									autoComplete="new-password"
-									disabled={isPending}
-									value={field.state.value}
-									onChange={(e) => field.handleChange(e.target.value)}
-									onBlur={field.handleBlur}
-									aria-invalid={field.state.meta.errors.length > 0}
-									aria-describedby={
-										field.state.meta.errors.length > 0
-											? `${field.name}-error`
-											: undefined
-									}
-									aria-required="true"
-								/>
-								<FieldError
-									id={`${field.name}-error`}
-									errors={field.state.meta.errors}
-								/>
-							</Field>
+							<field.PasswordInputField
+								label="Nouveau mot de passe"
+								autoComplete="new-password"
+								disabled={isPending}
+								required
+							/>
 						)}
 					</form.AppField>
 
@@ -140,33 +127,12 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 						}}
 					>
 						{(field) => (
-							<Field data-invalid={field.state.meta.errors.length > 0}>
-								<FieldLabel htmlFor={field.name}>
-									Confirmer le mot de passe
-									<span className="text-destructive ml-1">*</span>
-								</FieldLabel>
-								<Input
-									id={field.name}
-									name={field.name}
-									type="password"
-									autoComplete="new-password"
-									disabled={isPending}
-									value={field.state.value}
-									onChange={(e) => field.handleChange(e.target.value)}
-									onBlur={field.handleBlur}
-									aria-invalid={field.state.meta.errors.length > 0}
-									aria-describedby={
-										field.state.meta.errors.length > 0
-											? `${field.name}-error`
-											: undefined
-									}
-									aria-required="true"
-								/>
-								<FieldError
-									id={`${field.name}-error`}
-									errors={field.state.meta.errors}
-								/>
-							</Field>
+							<field.PasswordInputField
+								label="Confirmer le mot de passe"
+								autoComplete="new-password"
+								disabled={isPending}
+								required
+							/>
 						)}
 					</form.AppField>
 				</FieldGroup>

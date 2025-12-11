@@ -80,16 +80,16 @@ export const COLLECTIONS_MENU_ITEMS: NavItemChild[] = [
  * Navigation desktop - Toujours visible sur écran ≥1024px
  *
  * Structure optimisée pour bijouterie artisanale:
- * Niveau 1: Collections (storytelling first), Mes créations, Personnaliser, L'atelier
+ * Niveau 1: Les créations, Les collections, Personnalisation
  */
 export const desktopNavItems = [
+	{ href: "/produits", label: "Les créations", icon: "gem" },
 	{
 		href: "/collections",
-		label: "Collections",
+		label: "Les collections",
 		icon: "folder-open",
 		hasDropdown: false,
 	},
-	{ href: "/produits", label: "Mes créations", icon: "gem" },
 	{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
 ] as const;
 
@@ -98,9 +98,9 @@ export const desktopNavItems = [
  *
  * Flow optimisé selon les bonnes pratiques bijouterie artisanale:
  *
- * 💎 DÉCOUVRIR (storytelling first - 80% des sessions)
- *    → Collections (collapsible avec collections: Mariage, Été 2025, etc.)
- *    → Mes créations (collapsible avec types: Bagues, Colliers, etc.)
+ * 💎 DÉCOUVRIR (80% des sessions)
+ *    → Les créations (collapsible avec types: Bagues, Colliers, etc.)
+ *    → Les collections (collapsible avec collections: Mariage, Été 2025, etc.)
  *    → Personnaliser (service différenciateur)
  *
  * ─────────────
@@ -125,15 +125,15 @@ export function getMobileNavItems(
 	collections?: Array<{ slug: string; label: string; description?: string | null; imageUrl?: string | null }>,
 	isAdmin?: boolean
 ): NavItemWithChildren[] {
-	// Item "Mes créations" avec collapsible des types
+	// Item "Les créations" avec collapsible des types
 	const bijouxItem: NavItemWithChildren = {
 		href: "/produits",
-		label: "Mes créations",
+		label: "Les créations",
 		icon: "gem",
 		hasDropdown: true,
 		children: productTypes
 			? [
-					{ href: "/produits", label: "Mes créations", icon: "gem" },
+					{ href: "/produits", label: "Les créations", icon: "gem" },
 					...productTypes.map((type) => ({
 						href: `/produits/${type.slug}`,
 						label: type.label,
@@ -145,7 +145,7 @@ export function getMobileNavItems(
 	// Item "Collections" avec collapsible des collections (limité aux 3 dernières)
 	const collectionsItem: NavItemWithChildren = {
 		href: "/collections",
-		label: "Collections",
+		label: "Les collections",
 		icon: "folder-open",
 		hasDropdown: true,
 		children: collections
@@ -165,14 +165,14 @@ export function getMobileNavItems(
 			: COLLECTIONS_MENU_ITEMS, // Fallback sur les collections statiques
 	};
 
-	// Flow optimisé: Accueil → Collections → Bijoux → Personnaliser → Compte → Tableau de bord (admin) → L'atelier
+	// Flow optimisé: Accueil → Créations → Collections → Personnaliser → Compte → Tableau de bord (admin)
 	const items: NavItemWithChildren[] = [
 		// 🏠 ACCUEIL - Retour à la page d'accueil
 		{ href: "/", label: "Accueil", icon: "home" },
 
-		// 💎 DÉCOUVRIR - Storytelling first (Collections avant Bijoux)
-		collectionsItem,
+		// 💎 DÉCOUVRIR - Créations en premier
 		bijouxItem,
+		collectionsItem,
 
 		// ✨ PERSONNALISER - Service différenciateur
 		{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
@@ -202,8 +202,8 @@ export function getDesktopNavItems(): NavItemWithChildren[] {
 
 // Footer - Navigation simple (labels harmonisés avec le header)
 export const footerNavItems = [
-	{ href: "/collections", label: "Collections" },
-	{ href: "/produits", label: "Mes créations" },
+	{ href: "/produits", label: "Les créations" },
+	{ href: "/collections", label: "Les collections" },
 	{ href: "/personnalisation", label: "Personnalisation" },
 	{ href: "/compte", label: "Mon compte" },
 	{ href: "/panier", label: "Panier" },

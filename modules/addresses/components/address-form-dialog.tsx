@@ -301,6 +301,7 @@ export function AddressFormDialog({
 										disabled={isPending}
 										noResultsMessage="Aucune adresse trouvée"
 										minQueryLength={3}
+										debounceMs={0}
 									/>
 									{field.state.meta.errors.length > 0 && (
 										<p

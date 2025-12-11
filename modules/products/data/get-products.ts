@@ -99,24 +99,8 @@ async function fetchProducts(
 			take,
 		});
 
-		// Filtrage par prix via WHERE clause (utilise minPriceInclTax dénormalisé)
-		const priceWhere =
-			params.filters?.priceMin !== undefined ||
-			params.filters?.priceMax !== undefined
-				? {
-						minPriceInclTax: {
-							...(params.filters?.priceMin !== undefined && {
-								gte: params.filters.priceMin,
-							}),
-							...(params.filters?.priceMax !== undefined && {
-								lte: params.filters.priceMax,
-							}),
-						},
-					}
-				: {};
-
 		const products = await prisma.product.findMany({
-			where: { ...where, ...priceWhere },
+			where,
 			select: GET_PRODUCTS_SELECT,
 			orderBy,
 			...cursorConfig,

@@ -69,7 +69,7 @@ export default async function ResetPasswordPage({
 								Réinitialiser le mot de passe
 							</h1>
 							<p className="text-muted-foreground">
-								Entre ton nouveau mot de passe ci-dessous
+								Entre ton nouveau mot de passe ci-dessous.
 							</p>
 						</div>
 					</div>

@@ -6,6 +6,7 @@ import { CheckboxField } from "./checkbox-field";
 import { FormErrorDisplay } from "./form-error-display";
 import { InputField } from "./input-field";
 import { InputGroupField } from "./input-group-field";
+import { PasswordInputField } from "./password-input-field";
 import { RadioGroupField } from "./radio-group-field";
 import { SelectField } from "./select-field";
 import { TextareaField } from "./textarea-field";
@@ -30,6 +31,7 @@ export const { useAppForm } = createFormHook({
 	fieldComponents: {
 		InputField,
 		InputGroupField,
+		PasswordInputField,
 		SelectField,
 		CheckboxField,
 		TextareaField,

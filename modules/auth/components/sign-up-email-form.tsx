@@ -7,7 +7,9 @@ import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note"
 import { ActionStatus } from "@/shared/types/server-action";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useSignUpEmail } from "@/modules/auth/hooks/use-sign-up-email";
+import { PasswordStrengthIndicator } from "./password-strength-indicator";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 
 export function SignUpEmailForm() {
 	const { state, action, isPending } = useSignUpEmail({
@@ -15,6 +17,18 @@ export function SignUpEmailForm() {
 			form.reset();
 		},
 	});
+	const errorRef = useRef<HTMLDivElement>(null);
+
+	// Focus sur l'erreur quand elle apparaît
+	useEffect(() => {
+		if (
+			state?.message &&
+			state.status !== ActionStatus.SUCCESS &&
+			state.status !== ActionStatus.VALIDATION_ERROR
+		) {
+			errorRef.current?.focus();
+		}
+	}, [state?.message, state?.status]);
 
 	// TanStack Form setup
 	const form = useAppForm({
@@ -43,7 +57,13 @@ export function SignUpEmailForm() {
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
 					) : (
-						<Alert variant="destructive" role="alert" aria-live="assertive">
+						<Alert
+							ref={errorRef}
+							variant="destructive"
+							tabIndex={-1}
+							role="alert"
+							aria-live="assertive"
+						>
 							<AlertCircle aria-hidden="true" />
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
@@ -122,13 +142,17 @@ export function SignUpEmailForm() {
 					}}
 				>
 					{(field) => (
-						<field.InputField
-							label="Mot de passe"
-							type="password"
-							autoComplete="new-password"
-							disabled={isPending}
-							required
-						/>
+						<div className="space-y-2">
+							<field.PasswordInputField
+								label="Mot de passe"
+								autoComplete="new-password"
+								disabled={isPending}
+								required
+							/>
+							<form.Subscribe selector={(state) => state.values.password}>
+								{(password) => <PasswordStrengthIndicator password={password} />}
+							</form.Subscribe>
+						</div>
 					)}
 				</form.AppField>
 
@@ -147,9 +171,8 @@ export function SignUpEmailForm() {
 					}}
 				>
 					{(field) => (
-						<field.InputField
+						<field.PasswordInputField
 							label="Confirmer le mot de passe"
-							type="password"
 							autoComplete="new-password"
 							disabled={isPending}
 							required
@@ -219,7 +242,7 @@ export function SignUpEmailForm() {
 						className="w-full"
 						type="submit"
 					>
-						S&apos;inscrire
+						S'inscrire
 					</Button>
 				)}
 			</form.Subscribe>

@@ -99,7 +99,7 @@ export async function ProductListing({
 		? `Recherche "${searchTerm}"`
 		: isTypePage
 			? productType.label
-			: "Mes créations";
+			: "Les créations";
 	const pageDescription = isTypePage
 		? productType.description || undefined
 		: "Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !";

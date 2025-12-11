@@ -8,7 +8,7 @@ import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note"
 import { ActionStatus } from "@/shared/types/server-action";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useSignInEmail } from "@/modules/auth/hooks/use-sign-in-email";
 
 export function SignInEmailForm() {
@@ -17,6 +17,17 @@ export function SignInEmailForm() {
 
 	const { action, isPending, state } = useSignInEmail();
 	const errorRef = useRef<HTMLDivElement>(null);
+
+	// Focus sur l'erreur quand elle apparaît
+	useEffect(() => {
+		if (
+			state?.message &&
+			state.status !== ActionStatus.SUCCESS &&
+			state.message !== "Données invalides"
+		) {
+			errorRef.current?.focus();
+		}
+	}, [state?.message, state?.status]);
 
 	// TanStack Form setup
 	const form = useAppForm({
@@ -74,7 +85,7 @@ export function SignInEmailForm() {
 						)}
 					</form.AppField>
 
-					{/* Password field - Using pre-bound InputField component */}
+					{/* Password field - Using pre-bound PasswordInputField component */}
 					<form.AppField
 						name="password"
 						validators={{
@@ -85,9 +96,8 @@ export function SignInEmailForm() {
 						}}
 					>
 						{(field) => (
-							<field.InputField
+							<field.PasswordInputField
 								label="Mot de passe"
-								type="password"
 								autoComplete="current-password"
 								disabled={isPending}
 								required
@@ -115,7 +125,7 @@ export function SignInEmailForm() {
 					href="/mot-de-passe-oublie"
 					className="text-sm text-muted-foreground hover:text-foreground transition-colors"
 				>
-					Mot de passe oublié ? Pas de panique !
+					Mot de passe oublié ?
 				</Link>
 			</div>
 		</form>

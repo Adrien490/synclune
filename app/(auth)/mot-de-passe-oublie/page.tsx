@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
 								Mot de passe oublié ?
 							</h1>
 							<p className="text-muted-foreground">
-								Entre ton adresse email et nous t'enverrons un lien pour réinitialiser ton mot de passe
+								Entre ton adresse email et nous t'enverrons un lien pour réinitialiser ton mot de passe.
 							</p>
 						</div>
 					</div>

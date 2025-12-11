@@ -55,10 +55,10 @@ export default function LoginPage() {
 									crimsonPro.className
 								)}
 							>
-								Bienvenue chez Synclune
+								Connexion
 							</h1>
 							<p className="text-muted-foreground">
-								Connecte-toi pour accéder à ton espace personnel
+								Pour accéder à ton espace personnel
 							</p>
 						</div>
 					</div>

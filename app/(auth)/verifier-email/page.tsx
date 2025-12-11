@@ -9,6 +9,7 @@ import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getSession } from "@/modules/auth";
 
 export const metadata: Metadata = {
 	title: "Vérification de l'email | Synclune",
@@ -68,9 +69,7 @@ export default async function VerifyEmailPage({
 	let isSuccess = false;
 
 	// Vérifier si l'utilisateur est connecté
-	const session = await auth.api.getSession({
-		headers: await headers(),
-	});
+	const session = await getSession();
 	const isConnected = !!session?.user;
 
 	// Si l'utilisateur est connecté et n'a pas de token/error, c'est qu'il vient d'être vérifié
@@ -141,7 +140,7 @@ export default async function VerifyEmailPage({
 									<CheckCircle2 className="h-12 w-12 text-green-500" aria-hidden="true" />
 									<div className="text-center space-y-2">
 										<p className="text-lg font-medium text-green-700 dark:text-green-400">
-											Email vérifié avec succès !
+											Email vérifié
 										</p>
 										<p className="text-sm text-green-600/90 dark:text-green-400/90">
 											{isConnected
@@ -157,11 +156,6 @@ export default async function VerifyEmailPage({
 											{isConnected ? "Retour au site" : "Se connecter"}
 										</Link>
 									</Button>
-									<p className="text-xs text-muted-foreground">
-										{isConnected
-											? "Clique sur le bouton ci-dessus pour accéder à ton compte."
-											: "Clique sur le bouton ci-dessus pour te connecter."}
-									</p>
 								</div>
 							</div>
 						) : (

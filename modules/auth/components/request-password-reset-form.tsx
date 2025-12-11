@@ -3,21 +3,27 @@
 import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import {
-	Field,
-	FieldError,
-	FieldGroup,
-	FieldLabel,
-	FieldSet,
-} from "@/shared/components/ui/field";
-import { Input } from "@/shared/components/ui/input";
+import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useRequestPasswordReset } from "@/modules/auth/hooks/use-request-password-reset";
+import { useEffect, useRef } from "react";
 
 export function RequestPasswordResetForm() {
 	const { action, isPending, state } = useRequestPasswordReset();
+	const errorRef = useRef<HTMLDivElement>(null);
+
+	// Focus sur l'erreur quand elle apparaît
+	useEffect(() => {
+		if (
+			state?.message &&
+			state.status !== ActionStatus.SUCCESS &&
+			state.status !== ActionStatus.INITIAL
+		) {
+			errorRef.current?.focus();
+		}
+	}, [state?.message, state?.status]);
 
 	// TanStack Form setup
 	const form = useAppForm({
@@ -37,8 +43,8 @@ export function RequestPasswordResetForm() {
 
 			{/* Message de succès */}
 			{state?.status === ActionStatus.SUCCESS && state?.message && (
-				<Alert>
-					<CheckCircle2 />
+				<Alert role="status" aria-live="polite">
+					<CheckCircle2 aria-hidden="true" />
 					<AlertDescription>{state.message}</AlertDescription>
 				</Alert>
 			)}
@@ -47,8 +53,14 @@ export function RequestPasswordResetForm() {
 			{state?.status !== ActionStatus.SUCCESS &&
 				state?.status !== ActionStatus.INITIAL &&
 				state?.message && (
-					<Alert variant="destructive">
-						<XCircle />
+					<Alert
+						ref={errorRef}
+						variant="destructive"
+						tabIndex={-1}
+						role="alert"
+						aria-live="assertive"
+					>
+						<XCircle aria-hidden="true" />
 						<AlertDescription>{state.message}</AlertDescription>
 					</Alert>
 				)}
@@ -61,40 +73,20 @@ export function RequestPasswordResetForm() {
 							onChange: ({ value }: { value: string }) => {
 								if (!value) return "L'email est requis";
 								if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-									return "Petite erreur de saisie ? Ton email semble invalide 🌸";
+									return "Format d'email invalide";
 								}
 								return undefined;
 							},
 						}}
 					>
 						{(field) => (
-							<Field data-invalid={field.state.meta.errors.length > 0}>
-								<FieldLabel htmlFor={field.name}>
-									Email
-									<span className="text-destructive ml-1">*</span>
-								</FieldLabel>
-								<Input
-									id={field.name}
-									name={field.name}
-									type="email"
-									autoComplete="email"
-									disabled={isPending || state?.status === ActionStatus.SUCCESS}
-									value={field.state.value}
-									onChange={(e) => field.handleChange(e.target.value)}
-									onBlur={field.handleBlur}
-									aria-invalid={field.state.meta.errors.length > 0}
-									aria-describedby={
-										field.state.meta.errors.length > 0
-											? `${field.name}-error`
-											: undefined
-									}
-									aria-required="true"
-								/>
-								<FieldError
-									id={`${field.name}-error`}
-									errors={field.state.meta.errors}
-								/>
-							</Field>
+							<field.InputField
+								label="Email"
+								type="email"
+								autoComplete="email"
+								disabled={isPending || state?.status === ActionStatus.SUCCESS}
+								required
+							/>
 						)}
 					</form.AppField>
 				</FieldGroup>

@@ -14,6 +14,13 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/shared/components/ui/popover";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/shared/components/ui/dialog";
 import { Separator } from "@/shared/components/ui/separator";
 import { Spinner } from "@/shared/components/ui/spinner";
 import {
@@ -199,8 +206,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 				: [...selectedValues, optionValue];
 			setSelectedValues(newSelectedValues);
 			onValueChange(newSelectedValues);
-			// Close on explicit closeOnSelect prop OR automatically on mobile
-			if (closeOnSelect || screenSize === "mobile") {
+			// Close only on explicit closeOnSelect prop (mobile uses batch mode with "Terminer" button)
+			if (closeOnSelect) {
 				setIsPopoverOpen(false);
 			}
 		};
@@ -348,7 +355,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 					data-slot="multi-select"
 					open={isPopoverOpen}
 					onOpenChange={setIsPopoverOpen}
-					modal={modalPopover}
+					modal={modalPopover || screenSize === "mobile"}
 				>
 					<div id={triggerDescriptionId} className="sr-only">
 						Sélection multiple. Utilisez les flèches pour naviguer, Entrée pour
@@ -490,7 +497,10 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																}
 															}}
 															aria-label={`Retirer ${option.label} de la sélection`}
-															className="ml-1 -mr-1 h-6 w-6 cursor-pointer hover:bg-white/20 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-white/50 flex items-center justify-center"
+															className={cn(
+																"ml-1 -mr-1 cursor-pointer hover:bg-white/20 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-white/50 flex items-center justify-center",
+																screenSize === "mobile" ? "h-10 w-10" : "h-6 w-6"
+															)}
 														>
 															<XCircle
 																className={cn(
@@ -505,8 +515,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											})
 											.filter(Boolean)}
 										{selectedValues.length > responsiveSettings.maxCount && (
-											<Tooltip>
-												<TooltipTrigger asChild>
+											(() => {
+												const overflowCount = selectedValues.length - responsiveSettings.maxCount;
+												const overflowItems = selectedValues
+													.slice(responsiveSettings.maxCount)
+													.map((value) => allOptions.find((o) => o.value === value))
+													.filter(Boolean);
+
+												const badgeContent = (
 													<Badge
 														className={cn(
 															"bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
@@ -524,9 +540,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 															animationDelay: `${animationConfig?.delay || 0}s`,
 														}}
 													>
-														{`+ ${
-															selectedValues.length - responsiveSettings.maxCount
-														} de plus`}
+														{`+ ${overflowCount} de plus`}
 														<XCircle
 															className={cn(
 																"ml-2 h-4 w-4 cursor-pointer",
@@ -538,22 +552,50 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 															}}
 														/>
 													</Badge>
-												</TooltipTrigger>
-												<TooltipContent side="bottom" className="max-w-[200px]">
-													<ul className="text-xs space-y-0.5">
-														{selectedValues
-															.slice(responsiveSettings.maxCount)
-															.map((value) => {
-																const opt = allOptions.find(
-																	(o) => o.value === value
-																);
-																return opt ? (
-																	<li key={value}>{opt.label}</li>
-																) : null;
-															})}
-													</ul>
-												</TooltipContent>
-											</Tooltip>
+												);
+
+												// Mobile: Dialog au tap
+												if (screenSize === "mobile") {
+													return (
+														<Dialog>
+															<DialogTrigger asChild>
+																{badgeContent}
+															</DialogTrigger>
+															<DialogContent className="max-w-[280px]">
+																<DialogHeader>
+																	<DialogTitle className="text-base">
+																		{overflowCount} option{overflowCount > 1 ? "s" : ""} supplémentaire{overflowCount > 1 ? "s" : ""}
+																	</DialogTitle>
+																</DialogHeader>
+																<ul className="text-sm space-y-1.5 mt-2">
+																	{overflowItems.map((opt) => (
+																		<li key={opt!.value} className="flex items-center gap-2">
+																			<span className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
+																			{opt!.label}
+																		</li>
+																	))}
+																</ul>
+															</DialogContent>
+														</Dialog>
+													);
+												}
+
+												// Desktop: Tooltip au hover
+												return (
+													<Tooltip>
+														<TooltipTrigger asChild>
+															{badgeContent}
+														</TooltipTrigger>
+														<TooltipContent side="bottom" className="max-w-[200px]">
+															<ul className="text-xs space-y-0.5">
+																{overflowItems.map((opt) => (
+																	<li key={opt!.value}>{opt!.label}</li>
+																))}
+															</ul>
+														</TooltipContent>
+													</Tooltip>
+												);
+											})()
 										)}
 									</div>
 									<div className="flex items-center justify-between">
@@ -572,7 +614,10 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 												}
 											}}
 											aria-label={`Effacer les ${selectedValues.length} options sélectionnées`}
-											className="flex items-center justify-center h-6 w-6 mx-2 cursor-pointer text-muted-foreground hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-sm"
+											className={cn(
+												"flex items-center justify-center mx-2 cursor-pointer text-muted-foreground hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-sm",
+												screenSize === "mobile" ? "h-10 w-10" : "h-6 w-6"
+											)}
 										>
 											<XIcon className="h-4 w-4" />
 										</div>
@@ -659,7 +704,11 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 									</div>
 								) : (
 									<CommandEmpty>
-										{emptyIndicator || "Aucun résultat."}
+										{emptyIndicator || (
+											searchValue
+												? `Aucun résultat pour "${searchValue}"`
+												: "Aucune option disponible"
+										)}
 									</CommandEmpty>
 								)}{" "}
 								{!isLoading && !hideSelectAll && !searchValue && (
@@ -808,7 +857,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											onSelect={() => setIsPopoverOpen(false)}
 											className="flex-1 justify-center cursor-pointer max-w-full"
 										>
-											Fermer
+											{screenSize === "mobile" && selectedValues.length > 0
+												? "Terminer la sélection"
+												: "Fermer"}
 										</CommandItem>
 									</div>
 								</CommandGroup>

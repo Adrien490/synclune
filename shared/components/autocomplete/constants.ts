@@ -12,14 +12,20 @@ export const AUTOCOMPLETE_DEFAULTS = {
 	noResultsMessage: "Aucun résultat trouvé",
 	/** Nombre minimum de caracteres pour lancer la recherche */
 	minQueryLength: 3,
-	/** Delai avant fermeture sur blur (ms) */
+	/** Delai avant fermeture sur blur desktop (ms) */
 	blurDelay: 150,
+	/** Delai avant fermeture sur blur mobile (ms) - plus long pour les interactions tactiles */
+	blurDelayMobile: 300,
 	/** Nombre de skeletons pendant le chargement */
 	loadingSkeletonCount: 3,
 	/** Afficher l'icone de recherche */
 	showSearchIcon: true,
 	/** Afficher le bouton clear */
 	showClearButton: true,
+	/** Delai de debounce par defaut (ms) */
+	debounceMs: 300,
+	/** Afficher le compteur de resultats */
+	showResultsCount: false,
 } as const;
 
 /**

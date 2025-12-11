@@ -3,17 +3,11 @@
 import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import {
-	Field,
-	FieldError,
-	FieldGroup,
-	FieldLabel,
-	FieldSet,
-} from "@/shared/components/ui/field";
-import { Input } from "@/shared/components/ui/input";
+import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { ActionStatus } from "@/shared/types/server-action";
-import { Mail, XCircle, CheckCircle2 } from "lucide-react";
+import { XCircle, CheckCircle2, Mail } from "lucide-react";
 import { useResendVerificationEmail } from "@/modules/auth/hooks/use-resend-verification-email";
+import { useEffect, useRef } from "react";
 
 interface ResendVerificationEmailFormProps {
 	defaultEmail?: string;
@@ -23,6 +17,18 @@ export function ResendVerificationEmailForm({
 	defaultEmail,
 }: ResendVerificationEmailFormProps) {
 	const { action, isPending, state } = useResendVerificationEmail();
+	const errorRef = useRef<HTMLDivElement>(null);
+
+	// Focus sur l'erreur quand elle apparaît
+	useEffect(() => {
+		if (
+			state?.message &&
+			state.status !== ActionStatus.SUCCESS &&
+			state.status !== ActionStatus.INITIAL
+		) {
+			errorRef.current?.focus();
+		}
+	}, [state?.message, state?.status]);
 
 	// TanStack Form setup
 	const form = useAppForm({
@@ -39,23 +45,25 @@ export function ResendVerificationEmailForm({
 		>
 			{/* Message de succès */}
 			{state?.status === ActionStatus.SUCCESS && state?.message && (
-				<Alert>
-				<CheckCircle2 />
-				<AlertDescription>
-					{state.message}
-				</AlertDescription>
-			</Alert>
+				<Alert role="status" aria-live="polite">
+					<CheckCircle2 aria-hidden="true" />
+					<AlertDescription>{state.message}</AlertDescription>
+				</Alert>
 			)}
 
 			{/* Message d'erreur */}
 			{state?.status !== ActionStatus.SUCCESS &&
 				state?.status !== ActionStatus.INITIAL &&
 				state?.message && (
-					<Alert variant="destructive">
-						<XCircle />
-						<AlertDescription>
-							{state.message}
-						</AlertDescription>
+					<Alert
+						ref={errorRef}
+						variant="destructive"
+						tabIndex={-1}
+						role="alert"
+						aria-live="assertive"
+					>
+						<XCircle aria-hidden="true" />
+						<AlertDescription>{state.message}</AlertDescription>
 					</Alert>
 				)}
 
@@ -74,32 +82,13 @@ export function ResendVerificationEmailForm({
 						}}
 					>
 						{(field) => (
-							<Field data-invalid={field.state.meta.errors.length > 0}>
-								<FieldLabel htmlFor={field.name}>
-									Adresse email
-									<span className="text-destructive ml-1">*</span>
-								</FieldLabel>
-								<Input
-									id={field.name}
-									name={field.name}
-									type="email"
-									disabled={isPending || state?.status === ActionStatus.SUCCESS}
-									value={field.state.value}
-									onChange={(e) => field.handleChange(e.target.value)}
-									aria-invalid={field.state.meta.errors.length > 0}
-									aria-describedby={
-										field.state.meta.errors.length > 0
-											? `${field.name}-error`
-											: undefined
-									}
-									aria-required="true"
-									autoComplete="email"
-								/>
-								<FieldError
-									id={`${field.name}-error`}
-									errors={field.state.meta.errors}
-								/>
-							</Field>
+							<field.InputField
+								label="Adresse email"
+								type="email"
+								autoComplete="email"
+								disabled={isPending || state?.status === ActionStatus.SUCCESS}
+								required
+							/>
 						)}
 					</form.AppField>
 				</FieldGroup>

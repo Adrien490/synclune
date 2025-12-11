@@ -58,7 +58,7 @@ export default function SignupPage() {
 								Inscription
 							</h1>
 							<p className="text-muted-foreground">
-								Tu peux créer ton compte pour simplifier tes prochaines commandes 😊
+								Avoir un compte te permettra de simplifier tes prochaines commandes.
 							</p>
 						</div>
 					</div>

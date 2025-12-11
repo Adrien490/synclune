@@ -46,7 +46,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 
 	// Séparer les items en deux zones
-	// Zone découverte: Accueil, Collections, Mes créations, Personnaliser
+	// Zone découverte: Accueil, Les créations, Les collections, Personnalisation
 	const discoveryItems = navItems.filter((item) => DISCOVERY_HREFS.includes(item.href as typeof DISCOVERY_HREFS[number]));
 	// Zone compte: Mon compte / Se connecter, Tableau de bord (admin), L'atelier
 	const accountItems = navItems.filter((item) => ACCOUNT_HREFS.includes(item.href as typeof ACCOUNT_HREFS[number]));
@@ -131,7 +131,7 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 					aria-label="Menu principal"
 					className="relative z-10 flex-1 overflow-y-auto px-4 pt-14"
 				>
-					{/* Zone découverte: Accueil, Collections, Mes créations, Personnaliser */}
+					{/* Zone découverte: Accueil, Les créations, Les collections, Personnalisation */}
 					<Stagger stagger={0.025} delay={0.05} y={10} className="space-y-1">
 						{discoveryItems.map((item) => renderNavItem(item))}
 					</Stagger>

@@ -20,7 +20,11 @@ export interface AutocompleteProps<T> {
 	/** Fonction pour obtenir la description d'un item */
 	getItemDescription?: (item: T) => string | null;
 	/** Fonction pour obtenir l'image d'un item */
-	getItemImage?: (item: T) => { src: string; alt: string } | null;
+	getItemImage?: (item: T) => {
+		src: string;
+		alt: string;
+		blurDataUrl?: string | null;
+	} | null;
 	/** Taille de l'image en pixels (defaut: 32) */
 	imageSize?: number;
 	/** Placeholder du champ de recherche (defaut: "Rechercher...") */
@@ -43,4 +47,8 @@ export interface AutocompleteProps<T> {
 	showSearchIcon?: boolean;
 	/** Afficher le bouton pour vider le champ (defaut: true) */
 	showClearButton?: boolean;
+	/** Delai de debounce en ms pour onChange (defaut: 300, 0 = desactive) */
+	debounceMs?: number;
+	/** Afficher le nombre de resultats (defaut: false) */
+	showResultsCount?: boolean;
 }

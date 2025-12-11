@@ -41,14 +41,9 @@ export default function AuthLoading() {
 
 					{/* Formulaires */}
 					<div className="space-y-6">
-						{/* Social buttons (login/signup) */}
+						{/* Social button (Google only) */}
 						<div className="space-y-3">
-							{Array.from({ length: 2 }).map((_, i) => (
-								<Skeleton
-									key={i}
-									className="h-11 w-full bg-muted/30 rounded-md"
-								/>
-							))}
+							<Skeleton className="h-11 w-full bg-muted/30 rounded-md" />
 						</div>
 
 						{/* Divider */}

@@ -49,11 +49,11 @@ export default function ResendVerificationPage() {
 					<div className="text-center space-y-7">
 						<div className="space-y-3">
 							<h1 className={cn("text-3xl font-semibold text-foreground", crimsonPro.className)}>
-								Renvoyer l'email de vérification
+								Renvoyer l'email de vérification 
 							</h1>
 							<p className="text-muted-foreground">
-								Entre ton adresse email pour recevoir un nouveau lien de
-								vérification
+								Tu peux rentrer ton email pour recevoir un nouveau lien de
+								vérification.
 							</p>
 						</div>
 					</div>
@@ -67,7 +67,7 @@ export default function ResendVerificationPage() {
 									<p className="text-sm font-medium">Email non reçu ?</p>
 									<p className="text-sm text-muted-foreground">
 										Vérifie tes spams ou demande un nouveau lien de
-										vérification. Le lien est valable 24 heures.
+										vérification !
 									</p>
 								</div>
 							</div>
