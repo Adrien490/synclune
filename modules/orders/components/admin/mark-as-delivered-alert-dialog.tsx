@@ -12,7 +12,6 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsDelivered } from "@/modules/orders/hooks/use-mark-as-delivered";
-import { Loader2 } from "lucide-react";
 
 export const MARK_AS_DELIVERED_DIALOG_ID = "mark-as-delivered";
 
@@ -63,14 +62,7 @@ export function MarkAsDeliveredAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<Button type="submit" disabled={isPending}>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Mise à jour...
-								</>
-							) : (
-								"Marquer comme livrée"
-							)}
+							{isPending ? "Mise à jour..." : "Marquer comme livrée"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

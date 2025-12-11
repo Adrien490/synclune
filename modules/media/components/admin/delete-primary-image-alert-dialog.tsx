@@ -12,7 +12,6 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteUploadThingFiles } from "@/modules/media/lib/uploadthing";
-import { Loader2 } from "lucide-react";
 import { startTransition } from "react";
 
 export const DELETE_PRIMARY_IMAGE_DIALOG_ID = "delete-primary-image";
@@ -80,14 +79,7 @@ export function DeletePrimaryImageAlertDialog() {
 						onClick={handleDelete}
 						disabled={isPending}
 					>
-						{isPending ? (
-							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Suppression...
-							</>
-						) : (
-							"Supprimer"
-						)}
+						{isPending ? "Suppression..." : "Supprimer"}
 					</Button>
 				</AlertDialogFooter>
 			</AlertDialogContent>

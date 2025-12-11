@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
 
 export const ARCHIVE_PRODUCT_DIALOG_ID = "archive-product";
@@ -111,14 +110,7 @@ export function ArchiveProductAlertDialog() {
 									: undefined
 							}
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									{isArchiving ? "Archivage..." : "Restauration..."}
-								</>
-							) : (
-								isArchiving ? "Archiver" : "Désarchiver"
-							)}
+							{isPending ? (isArchiving ? "Archivage..." : "Restauration...") : (isArchiving ? "Archiver" : "Désarchiver")}
 						</Button>
 					</AlertDialogFooter>
 				</form>

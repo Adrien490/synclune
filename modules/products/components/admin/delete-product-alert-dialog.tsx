@@ -12,7 +12,6 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteProduct } from "@/modules/products/hooks/use-delete-product";
-import { Loader2 } from "lucide-react";
 
 export const DELETE_PRODUCT_DIALOG_ID = "delete-product";
 
@@ -69,14 +68,7 @@ export function DeleteProductAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<Button type="submit" disabled={isPending}>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Suppression...
-								</>
-							) : (
-								"Supprimer"
-							)}
+							{isPending ? "Suppression..." : "Supprimer"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

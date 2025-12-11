@@ -12,7 +12,6 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useDeleteColor } from "@/modules/colors/hooks/use-delete-color";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
 
 export const DELETE_COLOR_DIALOG_ID = "delete-color";
 
@@ -66,14 +65,7 @@ export function DeleteColorAlertDialog() {
 							type="submit"
 							disabled={isPending}
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Suppression...
-								</>
-							) : (
-								"Supprimer"
-							)}
+							{isPending ? "Suppression..." : "Supprimer"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

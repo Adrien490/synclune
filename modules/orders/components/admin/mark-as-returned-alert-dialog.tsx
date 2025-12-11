@@ -12,7 +12,6 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsReturned } from "@/modules/orders/hooks/use-mark-as-returned";
-import { Loader2 } from "lucide-react";
 
 export const MARK_AS_RETURNED_DIALOG_ID = "mark-as-returned";
 
@@ -63,14 +62,7 @@ export function MarkAsReturnedAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<Button type="submit" disabled={isPending}>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Marquage...
-								</>
-							) : (
-								"Marquer comme retourné"
-							)}
+							{isPending ? "Marquage..." : "Marquer comme retourné"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

@@ -12,7 +12,6 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
-import { Loader2 } from "lucide-react";
 
 export const CANCEL_ORDER_DIALOG_ID = "cancel-order";
 
@@ -70,14 +69,7 @@ export function CancelOrderAlertDialog() {
 							Fermer
 						</AlertDialogCancel>
 						<Button type="submit" disabled={isPending}>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Annulation...
-								</>
-							) : (
-								"Annuler la commande"
-							)}
+							{isPending ? "Annulation..." : "Annuler la commande"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

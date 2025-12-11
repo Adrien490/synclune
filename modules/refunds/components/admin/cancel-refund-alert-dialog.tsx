@@ -13,7 +13,6 @@ import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelRefund } from "@/modules/refunds/hooks/use-cancel-refund";
 import { ActionStatus } from "@/shared/types/server-action";
-import { Loader2 } from "lucide-react";
 
 export const CANCEL_REFUND_DIALOG_ID = "cancel-refund";
 
@@ -73,14 +72,7 @@ export function CancelRefundAlertDialog() {
 							Fermer
 						</AlertDialogCancel>
 						<Button type="submit" disabled={isPending}>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Annulation...
-								</>
-							) : (
-								"Annuler la demande"
-							)}
+							{isPending ? "Annulation..." : "Annuler la demande"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

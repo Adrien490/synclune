@@ -13,7 +13,6 @@ import { Button } from "@/shared/components/ui/button";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkDeleteProducts } from "@/modules/products/hooks/use-bulk-delete-products";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
 
 export const BULK_DELETE_PRODUCTS_DIALOG_ID = "bulk-delete-products";
 
@@ -83,14 +82,7 @@ export function BulkDeleteProductsAlertDialog() {
 							type="submit"
 							disabled={isPending}
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Suppression...
-								</>
-							) : (
-								"Supprimer"
-							)}
+							{isPending ? "Suppression..." : "Supprimer"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

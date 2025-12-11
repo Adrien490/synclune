@@ -11,7 +11,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { useSetFeaturedProduct } from "../../hooks/use-set-featured-product";
 
 export const SET_FEATURED_PRODUCT_DIALOG_ID = "set-featured-product";
@@ -101,16 +101,7 @@ export function SetFeaturedProductAlertDialog() {
 						disabled={isPending}
 						variant={isFeatured ? "outline" : "default"}
 					>
-						{isPending ? (
-							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								{isFeatured ? "Retrait..." : "Definition..."}
-							</>
-						) : isFeatured ? (
-							"Retirer"
-						) : (
-							"Definir comme vedette"
-						)}
+						{isPending ? (isFeatured ? "Retrait..." : "Definition...") : isFeatured ? "Retirer" : "Definir comme vedette"}
 					</Button>
 				</AlertDialogFooter>
 			</AlertDialogContent>

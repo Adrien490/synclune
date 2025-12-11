@@ -12,7 +12,6 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useDeleteDiscount } from "@/modules/discounts/hooks/use-delete-discount";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
 
 export const DELETE_DISCOUNT_DIALOG_ID = "delete-discount";
 
@@ -86,14 +85,7 @@ export function DeleteDiscountAlertDialog() {
 							type="submit"
 							disabled={isPending || usageCount > 0}
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Suppression...
-								</>
-							) : (
-								"Supprimer"
-							)}
+							{isPending ? "Suppression..." : "Supprimer"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

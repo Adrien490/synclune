@@ -12,7 +12,6 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
 
 export const ARCHIVE_COLLECTION_DIALOG_ID = "archive-collection";
@@ -107,14 +106,7 @@ export function ArchiveCollectionAlertDialog() {
 									: undefined
 							}
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									{isArchiving ? "Archivage..." : "Restauration..."}
-								</>
-							) : (
-								isArchiving ? "Archiver" : "Restaurer"
-							)}
+							{isPending ? (isArchiving ? "Archivage..." : "Restauration...") : (isArchiving ? "Archiver" : "Restaurer")}
 						</Button>
 					</AlertDialogFooter>
 				</form>

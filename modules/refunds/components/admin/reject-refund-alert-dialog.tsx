@@ -13,7 +13,6 @@ import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useRejectRefund } from "@/modules/refunds/hooks/use-reject-refund";
 import { ActionStatus } from "@/shared/types/server-action";
-import { Loader2 } from "lucide-react";
 
 export const REJECT_REFUND_DIALOG_ID = "reject-refund";
 
@@ -73,14 +72,7 @@ export function RejectRefundAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<Button type="submit" disabled={isPending}>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Refus...
-								</>
-							) : (
-								"Refuser"
-							)}
+							{isPending ? "Refus..." : "Refuser"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

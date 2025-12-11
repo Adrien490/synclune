@@ -13,7 +13,6 @@ import { Button } from "@/shared/components/ui/button";
 import { useClearWishlist } from "@/modules/wishlist/hooks/use-clear-wishlist";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface ClearWishlistData {
@@ -85,14 +84,7 @@ export function ClearWishlistAlertDialog() {
 							disabled={isPending}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Suppression...
-								</>
-							) : (
-								"Vider la wishlist"
-							)}
+							{isPending ? "Suppression..." : "Vider la wishlist"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

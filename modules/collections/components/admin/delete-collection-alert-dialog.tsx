@@ -12,7 +12,6 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useDeleteCollection } from "@/modules/collections/hooks/use-delete-collection";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
 
 export const DELETE_COLLECTION_DIALOG_ID = "delete-collection";
 
@@ -85,14 +84,7 @@ export function DeleteCollectionAlertDialog() {
 							type="submit"
 							disabled={isPending}
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Suppression...
-								</>
-							) : (
-								"Supprimer"
-							)}
+							{isPending ? "Suppression..." : "Supprimer"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

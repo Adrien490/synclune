@@ -1,4 +1,10 @@
-import { Separator } from "@/shared/components/ui/separator";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
 
 interface FormSectionProps {
@@ -20,30 +26,23 @@ export function FormSection({
 	hideHeader = false,
 }: FormSectionProps) {
 	return (
-		<div className={cn("space-y-4", className)}>
+		<Card className={cn("shadow-sm", className)}>
 			{!hideHeader && (
-				<>
-					<div className="space-y-1.5">
-						<div className="flex items-center gap-2">
-							{icon && (
-								<div className="shrink-0 text-primary size-5">
-									{icon}
-								</div>
-							)}
-							<h3 className="text-base md:text-lg font-display font-semibold">
-								{title}
-							</h3>
-						</div>
-						{description && (
-							<p className="text-sm text-muted-foreground">
-								{description}
-							</p>
+				<CardHeader className="border-b">
+					<div className="flex items-center gap-2">
+						{icon && (
+							<div className="shrink-0 text-primary size-5">{icon}</div>
 						)}
+						<CardTitle className="text-base md:text-lg font-display">
+							{title}
+						</CardTitle>
 					</div>
-					<Separator />
-				</>
+					{description && <CardDescription>{description}</CardDescription>}
+				</CardHeader>
 			)}
-			<div className="space-y-4">{children}</div>
-		</div>
+			<CardContent className={cn(hideHeader && "pt-0")}>
+				<div className="space-y-4">{children}</div>
+			</CardContent>
+		</Card>
 	);
 }

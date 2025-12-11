@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
 import { useToggleDiscountStatus } from "@/modules/discounts/hooks/use-toggle-discount-status";
 import { cn } from "@/shared/utils/cn";
 
@@ -89,16 +88,7 @@ export function ToggleDiscountStatusAlertDialog() {
 									: "bg-green-600 hover:bg-green-700"
 							)}
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									En cours...
-								</>
-							) : isActive ? (
-								"Désactiver"
-							) : (
-								"Activer"
-							)}
+							{isPending ? "En cours..." : isActive ? "Désactiver" : "Activer"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

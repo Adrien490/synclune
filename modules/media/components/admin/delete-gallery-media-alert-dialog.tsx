@@ -12,7 +12,6 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteUploadThingFile } from "@/modules/media/lib/uploadthing";
-import { Loader2 } from "lucide-react";
 import { startTransition } from "react";
 
 export const DELETE_GALLERY_MEDIA_DIALOG_ID = "delete-gallery-media";
@@ -88,14 +87,7 @@ export function DeleteGalleryMediaAlertDialog() {
 						disabled={isPending}
 						className="w-full sm:w-auto"
 					>
-						{isPending ? (
-							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Suppression...
-							</>
-						) : (
-							"Supprimer"
-						)}
+						{isPending ? "Suppression..." : "Supprimer"}
 					</Button>
 				</AlertDialogFooter>
 			</AlertDialogContent>

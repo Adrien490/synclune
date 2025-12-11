@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
 import { cn } from "@/shared/utils/cn";
 
@@ -125,14 +124,7 @@ export function ChangeProductStatusAlertDialog() {
 							disabled={isPending}
 							className={cn("text-white", config.color)}
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Changement en cours...
-								</>
-							) : (
-								`Changer en ${config.label}`
-							)}
+							{isPending ? "Changement en cours..." : `Changer en ${config.label}`}
 						</Button>
 					</AlertDialogFooter>
 				</form>

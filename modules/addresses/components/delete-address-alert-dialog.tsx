@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
 import { useDeleteAddress } from "../hooks/use-delete-address";
 
 export const DELETE_ADDRESS_DIALOG_ID = "delete-address";
@@ -81,14 +80,7 @@ export function DeleteAddressAlertDialog() {
 							type="submit"
 							disabled={isPending}
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Suppression...
-								</>
-							) : (
-								"Supprimer"
-							)}
+							{isPending ? "Suppression..." : "Supprimer"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

@@ -120,7 +120,7 @@ export const InputField = ({
 				spellCheck={spellCheck}
 				autoCapitalize={autoCapitalize}
 				maxLength={maxLength}
-				className={cn("border-input focus:ring-1 focus:ring-primary", className)}
+				className={className}
 				{...rest}
 			/>
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />

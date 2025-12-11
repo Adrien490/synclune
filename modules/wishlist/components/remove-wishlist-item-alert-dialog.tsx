@@ -14,7 +14,6 @@ import { useRemoveFromWishlist } from "@/modules/wishlist/hooks/use-remove-from-
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { AlertDialogData } from "@/shared/stores/alert-dialog-store";
 import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type RemoveWishlistItemData = AlertDialogData & {
@@ -110,14 +109,7 @@ export function RemoveWishlistItemAlertDialog() {
 							disabled={isPending}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Suppression...
-								</>
-							) : (
-								"Supprimer"
-							)}
+							{isPending ? "Suppression..." : "Supprimer"}
 						</Button>
 					</AlertDialogFooter>
 				</form>
