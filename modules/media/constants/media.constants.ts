@@ -123,7 +123,7 @@ export type ThumbnailSize = "SMALL" | "MEDIUM";
 // CONFIGURATION BLUR PLACEHOLDERS
 // ============================================================================
 
-/** Configuration pour la génération de blur placeholders (images) */
+/** Configuration pour la génération de blur placeholders (images) - LEGACY */
 export const BLUR_PLACEHOLDER_CONFIG = {
 	/** Timeout pour le téléchargement d'image (ms) */
 	downloadTimeout: 30000,
@@ -131,6 +131,37 @@ export const BLUR_PLACEHOLDER_CONFIG = {
 	maxImageSize: 20 * 1024 * 1024,
 	/** Taille du placeholder blur (en pixels, plaiceholder size) */
 	plaiceholderSize: 10,
+	/** Nombre de tentatives avant échec */
+	maxRetries: 3,
+	/** Délai de base pour backoff exponentiel (ms) */
+	retryBaseDelay: 1000,
+	/** Pause entre batches (ms) */
+	batchDelay: 500,
+	/** Domaines autorisés pour le téléchargement */
+	allowedDomains: ALLOWED_UPLOADTHING_DOMAINS,
+} as const;
+
+// ============================================================================
+// CONFIGURATION PLACEHOLDERS COULEUR OPTIMISES (RECOMMANDE)
+// ============================================================================
+
+/**
+ * Configuration pour la génération de placeholders couleur optimisés
+ *
+ * Avantages vs blur base64:
+ * - Taille: ~50 bytes (SVG) vs ~200-300 bytes (base64 JPEG)
+ * - Performance: analyse sur 8x8px vs 10x10px avec encoding
+ * - Qualité visuelle: gradient subtil au lieu de blur pixelisé
+ */
+export const COLOR_PLACEHOLDER_CONFIG = {
+	/** Timeout pour le téléchargement d'image (ms) */
+	downloadTimeout: 30000,
+	/** Taille max des images en octets (20 MB) */
+	maxImageSize: 20 * 1024 * 1024,
+	/** Taille de resize pour l'analyse couleur (pixels) - 8x8 suffit pour la dominante */
+	analysisSize: 8,
+	/** Pourcentage d'assombrissement pour le gradient (0.15 = 15% plus sombre) */
+	darkenPercent: 0.15,
 	/** Nombre de tentatives avant échec */
 	maxRetries: 3,
 	/** Délai de base pour backoff exponentiel (ms) */

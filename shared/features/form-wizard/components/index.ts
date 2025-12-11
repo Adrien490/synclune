@@ -1,5 +1,5 @@
 export { WizardProvider, useWizardContext } from "./wizard-context"
-export type { WizardProviderProps } from "./wizard-context"
+export type { WizardProviderProps, WizardDesktopMode } from "./wizard-context"
 export { WizardProgress } from "./wizard-progress"
 export { WizardNavigation } from "./wizard-navigation"
 export { WizardStepContainer } from "./wizard-step"

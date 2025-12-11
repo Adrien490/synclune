@@ -225,7 +225,8 @@ model ProductType {
   isActive    Boolean @default(true)
   isSystem    Boolean @default(false) // Types système non modifiables/supprimables
 
-  products Product[]
+  products              Product[]
+  customizationRequests CustomizationRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -242,6 +243,8 @@ model Color {
   isActive  Boolean      @default(true) // Cohérence avec Material
   skus      ProductSku[]
 
+  customizationRequests CustomizationRequest[] @relation("CustomizationColors")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -256,6 +259,8 @@ model Material {
   description String?      @db.Text
   isActive    Boolean      @default(true)
   skus        ProductSku[]
+
+  customizationRequests CustomizationRequest[] @relation("CustomizationMaterials")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -338,6 +343,8 @@ model Product {
 
   skus       ProductSku[]
   orderItems OrderItem[]
+
+  customizationInspirations CustomizationRequest[] @relation("CustomizationInspirations")
 
   @@index([title, id])
   @@index([typeId])
@@ -1200,5 +1207,57 @@ model WebhookEvent {
   @@index([source, receivedAt(sort: Desc)])
   @@index([status, receivedAt])
   @@index([processedAt])
+}
+
+// ============================================================================
+// DEMANDES DE PERSONNALISATION
+// ============================================================================
+
+enum CustomizationRequestStatus {
+  PENDING     // Nouvelle demande
+  IN_PROGRESS // En cours de traitement
+  COMPLETED   // Réalisé
+  CANCELLED   // Annulé
+}
+
+/// Demande de personnalisation de bijou
+/// Stocke les demandes clients pour créations sur mesure
+model CustomizationRequest {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete (RGPD - Art. L123-22 Code de Commerce : 10 ans)
+
+  // === INFORMATIONS CONTACT ===
+  firstName String  @db.VarChar(50)
+  lastName  String  @db.VarChar(50)
+  email     String  @db.VarChar(255)
+  phone     String? @db.VarChar(20)
+
+  // === TYPE DE PRODUIT ===
+  productTypeLabel String       @db.VarChar(100) // Label du type sélectionné (snapshot)
+  productType      ProductType? @relation(fields: [productTypeId], references: [id], onDelete: SetNull)
+  productTypeId    String?
+
+  // === INSPIRATIONS (produits existants comme référence) ===
+  inspirationProducts Product[] @relation("CustomizationInspirations")
+
+  // === PRÉFÉRENCES ===
+  preferredColors    Color[]    @relation("CustomizationColors")
+  preferredMaterials Material[] @relation("CustomizationMaterials")
+
+  // === DESCRIPTION ===
+  details String @db.Text // Description détaillée de la demande
+
+  // === STATUT ET SUIVI ===
+  status      CustomizationRequestStatus @default(PENDING)
+  adminNotes  String?                    @db.Text // Notes internes admin
+  respondedAt DateTime?                          // Date de première réponse
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([email])
+  @@index([createdAt(sort: Desc)])
+  @@index([deletedAt])
+  @@index([deletedAt, status])
 }
 

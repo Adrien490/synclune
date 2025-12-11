@@ -20,7 +20,7 @@ export const NewsletterWelcomeEmail = ({
 	return (
 		<Html>
 			<Head />
-			<Preview>Bienvenue !</Preview>
+			<Preview>Bienvenue</Preview>
 			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
 				<Container style={EMAIL_STYLES.container}>
 					{/* Header */}
@@ -28,29 +28,20 @@ export const NewsletterWelcomeEmail = ({
 						<Text
 							style={{
 								margin: 0,
-								fontSize: "28px",
+								fontSize: "24px",
 								fontWeight: "bold",
 								color: EMAIL_COLORS.primary,
 							}}
 						>
 							Synclune
 						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
-							Créations artisanales
-						</Text>
 					</Section>
 
 					{/* Titre */}
-					<Section style={{ marginBottom: "24px", textAlign: "center" }}>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "24px",
-								fontWeight: "600",
-								color: EMAIL_COLORS.text.primary,
-							}}
-						>
-							Bienvenue !
+					<Section style={{ marginBottom: "24px" }}>
+						<Text style={EMAIL_STYLES.heading.h2}>Bienvenue</Text>
+						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+							Tu es inscrit à la newsletter avec {email}.
 						</Text>
 					</Section>
 
@@ -60,31 +51,8 @@ export const NewsletterWelcomeEmail = ({
 							href="https://synclune.fr/produits"
 							style={EMAIL_STYLES.button.primary}
 						>
-							Voir les bijoux
+							Voir les créations
 						</Button>
-					</Section>
-
-					{/* Réassurance */}
-					<Section
-						style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}
-					>
-						<Text
-							style={{
-								...EMAIL_STYLES.text.small,
-								textAlign: "center",
-							}}
-						>
-							Vous recevrez la newsletter 1 à 2 fois par mois.
-						</Text>
-						<Text
-							style={{
-								...EMAIL_STYLES.text.small,
-								marginTop: "8px",
-								textAlign: "center",
-							}}
-						>
-							Vos données sont protégées et ne seront jamais partagées.
-						</Text>
 					</Section>
 
 					{/* Footer */}
@@ -95,12 +63,8 @@ export const NewsletterWelcomeEmail = ({
 							textAlign: "center",
 						}}
 					>
-						<Text style={EMAIL_STYLES.text.small}>Synclune</Text>
-						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "8px" }}>
-							© {new Date().getFullYear()} Synclune - Tous droits réservés
-						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "16px" }}>
-							Inscrit depuis {email}
+						<Text style={EMAIL_STYLES.text.tiny}>
+							© {new Date().getFullYear()} Synclune
 						</Text>
 					</Section>
 				</Container>

@@ -16,6 +16,10 @@ interface WizardStepContainerProps {
 	onRegisterRef?: (stepIndex: number, element: HTMLElement | null) => void
 }
 
+/**
+ * Container pour une étape du wizard (mobile-only).
+ * Garde toujours le contenu dans le DOM pour préserver l'état du formulaire.
+ */
 export const WizardStepContainer = memo(function WizardStepContainer({
 	step,
 	stepIndex,
@@ -23,32 +27,18 @@ export const WizardStepContainer = memo(function WizardStepContainer({
 	className,
 	onRegisterRef,
 }: WizardStepContainerProps) {
-	const { currentStep, isMobile, desktopMode } = useWizardContext()
+	const { currentStep } = useWizardContext()
 	const shouldReduceMotion = useReducedMotion()
 
 	const isActive = currentStep === stepIndex
-	const effectiveMode = isMobile ? "wizard" : desktopMode
 
 	// Callback pour enregistrer la ref
 	const refCallback = (element: HTMLDivElement | null) => {
 		onRegisterRef?.(stepIndex, element)
 	}
 
-	// In "all" mode on desktop, always show all steps
-	if (effectiveMode === "all") {
-		return (
-			<div ref={refCallback} className={className} data-step={step.id}>
-				{children}
-			</div>
-		)
-	}
-
-	// In wizard mode, ALWAYS keep content in DOM for form state preservation
-	// Hidden steps remain in DOM so inputs preserve their values for FormData
-	// This is crucial for multi-step forms to work correctly
-
-	// Inactive steps: hidden but in DOM
-	// Using inert instead of aria-hidden to preserve form data while making content inaccessible
+	// Étape inactive : cachée mais dans le DOM pour préserver les valeurs FormData
+	// Utilise inert pour rendre le contenu inaccessible tout en préservant les données
 	if (!isActive) {
 		return (
 			<div
@@ -62,7 +52,7 @@ export const WizardStepContainer = memo(function WizardStepContainer({
 		)
 	}
 
-	// Active step: visible with entrance animation
+	// Étape active : visible avec animation d'entrée
 	return (
 		<motion.div
 			ref={refCallback}

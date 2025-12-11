@@ -6,10 +6,9 @@ import {
 	Html,
 	Preview,
 	Section,
-	Tailwind,
 	Text,
 } from "@react-email/components";
-import { emailTailwindConfig } from "./email-tailwind-config";
+import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 
 interface RevertShippingNotificationEmailProps {
 	orderNumber: string;
@@ -28,95 +27,82 @@ export const RevertShippingNotificationEmail = ({
 		<Html>
 			<Head />
 			<Preview>
-				Mise à jour de l'expédition de votre commande {orderNumber}
+				Mise à jour de l'expédition - {orderNumber}
 			</Preview>
-			<Tailwind config={emailTailwindConfig}>
-				<Body className="bg-background font-sans">
-					<Container className="mx-auto my-8 max-w-[600px] rounded-lg border border-border bg-card px-8 py-10">
-						{/* Header */}
-						<Section className="mb-8 text-center">
-							<Text className="m-0 text-2xl font-bold text-foreground">
-								Expédition mise à jour
-							</Text>
-							<Text className="m-0 mt-2 text-sm text-muted-foreground">
-								Commande {orderNumber}
-							</Text>
-						</Section>
+			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
+				<Container style={EMAIL_STYLES.container}>
+					{/* Header */}
+					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+						<Text
+							style={{
+								margin: 0,
+								fontSize: "24px",
+								fontWeight: "bold",
+								color: EMAIL_COLORS.primary,
+							}}
+						>
+							Synclune
+						</Text>
+					</Section>
 
-						{/* Message principal */}
-						<Section className="mb-8">
-							<Text className="m-0 text-base text-foreground">
-								Bonjour {customerName},
-							</Text>
-							<Text className="m-0 mt-4 text-base text-foreground">
-								Nous vous informons d'un changement concernant l'expédition de votre commande{" "}
-								<strong>{orderNumber}</strong>.
-							</Text>
-							<Text className="m-0 mt-4 text-base text-foreground">
-								Le précédent numéro de suivi n'est plus valide. Votre commande est de nouveau
-								en cours de préparation et vous recevrez un nouvel email avec les informations
-								de suivi mises à jour dès que le colis sera réexpédié.
-							</Text>
-						</Section>
+					{/* Titre */}
+					<Section style={{ marginBottom: "24px" }}>
+						<Text style={EMAIL_STYLES.heading.h2}>Expédition mise à jour</Text>
+						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+							Bonjour {customerName}, le précédent numéro de suivi de ta commande{" "}
+							{orderNumber} n'est plus valide. Ta commande est de nouveau en
+							préparation.
+						</Text>
+					</Section>
 
-						{/* Raison */}
-						<Section className="mb-8">
-							<Text className="m-0 mb-3 text-lg font-semibold text-foreground">
-								Motif du changement
+					{/* Raison */}
+					<Section style={{ marginBottom: "24px" }}>
+						<div style={EMAIL_STYLES.section.card}>
+							<Text style={{ ...EMAIL_STYLES.text.small, fontWeight: "600" }}>
+								Motif
 							</Text>
-							<div className="rounded-md bg-muted p-4">
-								<Text className="m-0 text-sm text-foreground">
-									{reason}
-								</Text>
-							</div>
-						</Section>
-
-						{/* Statut */}
-						<Section className="mb-8 rounded-md border border-border bg-muted/50 p-4">
-							<Text className="m-0 text-sm font-bold text-foreground">
-								Nouveau statut
-							</Text>
-							<Text className="m-0 mt-2 text-sm text-muted-foreground">
-								Votre commande est actuellement <strong>en préparation</strong>.
-								Nous mettons tout en œuvre pour vous l'expédier dans les meilleurs délais.
-							</Text>
-						</Section>
-
-						{/* Bouton */}
-						<Section className="mb-8 text-center">
-							<Button
-								href={orderDetailsUrl}
-								style={{ backgroundColor: "#D4A574" }}
-								className="inline-block rounded-md px-8 py-4 text-base font-semibold text-white no-underline"
+							<Text
+								style={{
+									margin: 0,
+									marginTop: "4px",
+									fontSize: "14px",
+									color: EMAIL_COLORS.text.primary,
+								}}
 							>
-								Suivre ma commande
-							</Button>
-						</Section>
-
-						{/* Contact */}
-						<Section className="mb-6 rounded-md border border-border bg-muted/30 p-4">
-							<Text className="m-0 text-sm text-foreground">
-								Une question ? Notre équipe est à votre disposition à{" "}
-								<a
-									href="mailto:contact@synclune.fr"
-									className="text-primary underline"
-								>
-									contact@synclune.fr
-								</a>
+								{reason}
 							</Text>
-						</Section>
+						</div>
+					</Section>
 
-						{/* Footer */}
-						<Section className="border-t pt-6" style={{ borderColor: "#E8E8E8" }}>
-							<Text className="m-0 text-center text-xs text-muted-foreground">
-								Nous vous prions de nous excuser pour ce désagrément.
-								<br />
-								L'équipe Synclune
-							</Text>
-						</Section>
-					</Container>
-				</Body>
-			</Tailwind>
+					{/* Info */}
+					<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
+						<Text style={EMAIL_STYLES.text.small}>
+							Tu recevras un nouvel email avec les informations de suivi dès que
+							le colis sera réexpédié.
+						</Text>
+					</Section>
+
+					{/* CTA */}
+					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+						<Button href={orderDetailsUrl} style={EMAIL_STYLES.button.primary}>
+							Suivre ma commande
+						</Button>
+					</Section>
+
+					{/* Footer */}
+					<Section
+						style={{
+							paddingTop: "24px",
+							borderTop: `1px solid ${EMAIL_COLORS.border}`,
+							textAlign: "center",
+						}}
+					>
+						<Text style={EMAIL_STYLES.text.tiny}>
+							© {new Date().getFullYear()} Synclune
+						</Text>
+					</Section>
+				</Container>
+			</Body>
 		</Html>
 	);
 };

@@ -1,25 +1,22 @@
 /**
- * Palette de couleurs standard pour tous les emails Synclune
- * Toutes les couleurs respectent WCAG AA pour l'accessibilité
+ * Palette de couleurs pour les emails Synclune
+ * Alignée sur le thème principal (globals.css)
+ * Couleurs HEX pour compatibilité email
  */
 
 export const EMAIL_COLORS = {
-	// === COULEURS PRINCIPALES ===
-	/** Rose principal - Boutons, liens, accents clients (ratio 4.5:1 avec blanc) */
-	primary: "#C73767",
+	/** Rose primary - Boutons, liens, accents */
+	primary: "#E8A4B8",
 
-	/** Beige doré - Accents admin uniquement */
-	admin: "#D4A574",
-
-	// === TEXTE ===
-	/** Texte principal - Noir doux (ratio 16:1) */
+	/** Texte */
 	text: {
+		/** Texte principal - Noir doux */
 		primary: "#212121",
-		/** Texte secondaire/labels (ratio 4.5:1) */
+		/** Texte secondaire/labels */
 		secondary: "#858585",
 	},
 
-	// === BACKGROUNDS ===
+	/** Backgrounds */
 	background: {
 		/** Fond principal des emails */
 		main: "#FCFCFC",
@@ -29,33 +26,14 @@ export const EMAIL_COLORS = {
 		white: "#ffffff",
 	},
 
-	// === BORDURES ===
-	/** Bordures standard */
+	/** Bordures */
 	border: "#E8E8E8",
 
-	// === ÉTATS & ALERTES ===
-	states: {
-		/** Vert pour succès/paiement confirmé */
-		success: "#16a34a",
-		/** Rouge pour erreurs/alertes */
-		error: "#dc2626",
-		/** Bleu Stripe (pour liens dashboard Stripe) */
-		stripe: "#635bff",
-	},
-
-	// === TRANSPARENCES ===
-	/** Pour backgrounds subtils avec primary */
+	/** Primary avec transparence */
 	primaryAlpha: {
-		5: "rgba(199, 55, 103, 0.05)",
-		10: "rgba(199, 55, 103, 0.1)",
-		20: "rgba(199, 55, 103, 0.2)",
-	},
-
-	/** Pour backgrounds subtils avec admin */
-	adminAlpha: {
-		5: "rgba(212, 165, 116, 0.05)",
-		10: "rgba(212, 165, 116, 0.1)",
-		20: "rgba(212, 165, 116, 0.2)",
+		5: "rgba(232, 164, 184, 0.05)",
+		10: "rgba(232, 164, 184, 0.1)",
+		20: "rgba(232, 164, 184, 0.2)",
 	},
 } as const;
 
@@ -63,7 +41,6 @@ export const EMAIL_COLORS = {
  * Styles inline réutilisables pour les composants d'email
  */
 export const EMAIL_STYLES = {
-	// === CONTENEURS ===
 	container: {
 		maxWidth: "600px",
 		margin: "32px auto",
@@ -73,24 +50,23 @@ export const EMAIL_STYLES = {
 		borderRadius: "8px",
 	},
 
-	// === TYPOGRAPHIE ===
 	heading: {
 		h1: {
 			margin: 0,
 			fontSize: "28px",
-			fontWeight: "bold",
+			fontWeight: "bold" as const,
 			color: EMAIL_COLORS.text.primary,
 		},
 		h2: {
 			margin: 0,
 			fontSize: "24px",
-			fontWeight: "bold",
+			fontWeight: "bold" as const,
 			color: EMAIL_COLORS.text.primary,
 		},
 		h3: {
 			margin: 0,
 			fontSize: "18px",
-			fontWeight: "600",
+			fontWeight: "600" as const,
 			color: EMAIL_COLORS.text.primary,
 		},
 	},
@@ -113,25 +89,14 @@ export const EMAIL_STYLES = {
 		},
 	},
 
-	// === BOUTONS ===
 	button: {
 		primary: {
 			display: "inline-block",
 			padding: "16px 32px",
 			backgroundColor: EMAIL_COLORS.primary,
-			color: EMAIL_COLORS.background.white,
+			color: EMAIL_COLORS.text.primary,
 			fontSize: "16px",
-			fontWeight: "600",
-			textDecoration: "none",
-			borderRadius: "8px",
-		},
-		admin: {
-			display: "inline-block",
-			padding: "16px 32px",
-			backgroundColor: EMAIL_COLORS.admin,
-			color: EMAIL_COLORS.background.white,
-			fontSize: "16px",
-			fontWeight: "600",
+			fontWeight: "600" as const,
 			textDecoration: "none",
 			borderRadius: "8px",
 		},
@@ -141,35 +106,26 @@ export const EMAIL_STYLES = {
 			backgroundColor: EMAIL_COLORS.background.white,
 			color: EMAIL_COLORS.primary,
 			fontSize: "14px",
-			fontWeight: "600",
+			fontWeight: "600" as const,
 			textDecoration: "none",
 			borderRadius: "8px",
 			border: `2px solid ${EMAIL_COLORS.primary}`,
 		},
 	},
 
-	// === SECTIONS ===
 	section: {
 		card: {
 			padding: "16px",
 			backgroundColor: EMAIL_COLORS.background.card,
 			borderRadius: "8px",
 		},
-		highlighted: {
-			padding: "16px",
-			border: `1px solid ${EMAIL_COLORS.primaryAlpha[20]}`,
-			backgroundColor: EMAIL_COLORS.primaryAlpha[5],
-			borderRadius: "8px",
-		},
 	},
 
-	// === LIENS ===
 	link: {
 		color: EMAIL_COLORS.primary,
 		textDecoration: "none",
 	},
 
-	// === SÉPARATEURS ===
 	hr: {
 		borderColor: EMAIL_COLORS.border,
 		margin: "24px 0",

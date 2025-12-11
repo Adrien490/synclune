@@ -28,88 +28,36 @@ export const NewsletterConfirmationEmail = ({
 						<Text
 							style={{
 								margin: 0,
-								fontSize: "28px",
+								fontSize: "24px",
 								fontWeight: "bold",
 								color: EMAIL_COLORS.primary,
 							}}
 						>
 							Synclune
 						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
-							Créations artisanales
-						</Text>
 					</Section>
 
 					{/* Titre */}
 					<Section style={{ marginBottom: "24px" }}>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "20px",
-								fontWeight: "600",
-								color: EMAIL_COLORS.text.primary,
-							}}
-						>
-							Confirme ton inscription
-						</Text>
-					</Section>
-
-					{/* Message */}
-					<Section style={{ marginBottom: "32px" }}>
-						<Text style={EMAIL_STYLES.text.body}>
-							Merci pour ton inscription !
-						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "16px" }}>
-							Pour recevoir les créations en avant-première et les offres
-							exclusives, confirme ton adresse email en cliquant sur le
-							bouton ci-dessous.
+						<Text style={EMAIL_STYLES.heading.h2}>Confirmation</Text>
+						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+							Clique sur le bouton pour confirmer ton inscription à la
+							newsletter.
 						</Text>
 					</Section>
 
 					{/* CTA */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<Button
-							href={confirmationUrl}
-							style={EMAIL_STYLES.button.primary}
-						>
-							Confirmer mon inscription
+					<Section style={{ marginBottom: "24px", textAlign: "center" }}>
+						<Button href={confirmationUrl} style={EMAIL_STYLES.button.primary}>
+							Confirmer
 						</Button>
 					</Section>
 
 					{/* Info */}
-					<Section style={{ marginBottom: "24px" }}>
-						<Text style={{ ...EMAIL_STYLES.text.small, lineHeight: "1.6" }}>
-							Ce lien est valable pendant 7 jours. Si tu n'as pas demandé
-							cette inscription, tu peux ignorer cet email.
+					<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "32px" }}>
+						<Text style={EMAIL_STYLES.text.small}>
+							Ce lien expire dans 7 jours.
 						</Text>
-					</Section>
-
-					{/* Avantages */}
-					<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
-						<Text
-							style={{
-								margin: 0,
-								marginBottom: "12px",
-								fontSize: "14px",
-								fontWeight: "500",
-								color: EMAIL_COLORS.text.primary,
-							}}
-						>
-							Ce que tu recevras :
-						</Text>
-						<ul
-							style={{
-								color: EMAIL_COLORS.text.primary,
-								fontSize: "14px",
-								lineHeight: "1.8",
-								margin: 0,
-								paddingLeft: "20px",
-							}}
-						>
-							<li>Les nouvelles créations en avant-première</li>
-							<li>Des offres exclusives</li>
-							<li>Les coulisses de l'atelier</li>
-						</ul>
 					</Section>
 
 					{/* Footer */}
@@ -120,11 +68,8 @@ export const NewsletterConfirmationEmail = ({
 							textAlign: "center",
 						}}
 					>
-						<Text style={EMAIL_STYLES.text.small}>
-							Synclune
-						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "8px" }}>
-							© {new Date().getFullYear()} Synclune - Tous droits réservés
+						<Text style={EMAIL_STYLES.text.tiny}>
+							© {new Date().getFullYear()} Synclune
 						</Text>
 					</Section>
 				</Container>

@@ -3,7 +3,6 @@ import {
 	Button,
 	Container,
 	Head,
-	Hr,
 	Html,
 	Preview,
 	Section,
@@ -41,7 +40,7 @@ export const ShippingConfirmationEmail = ({
 	return (
 		<Html>
 			<Head />
-			<Preview>Ta commande {orderNumber} est en route !</Preview>
+			<Preview>Commande {orderNumber} expédiée</Preview>
 			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
 				<Container style={EMAIL_STYLES.container}>
 					{/* Header */}
@@ -49,99 +48,34 @@ export const ShippingConfirmationEmail = ({
 						<Text
 							style={{
 								margin: 0,
-								fontSize: "28px",
+								fontSize: "24px",
 								fontWeight: "bold",
 								color: EMAIL_COLORS.primary,
 							}}
 						>
 							Synclune
 						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
-							Créations artisanales
+					</Section>
+
+					{/* Titre */}
+					<Section style={{ marginBottom: "24px" }}>
+						<Text style={EMAIL_STYLES.heading.h2}>Commande expédiée</Text>
+						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+							Bonjour {customerName}, ta commande {orderNumber} est en route.
 						</Text>
 					</Section>
 
-					{/* Titre avec icône */}
-					<Section style={{ marginBottom: "24px", textAlign: "center" }}>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "48px",
-							}}
-						>
-							📦
-						</Text>
-						<Text
-							style={{
-								...EMAIL_STYLES.heading.h2,
-								marginTop: "16px",
-							}}
-						>
-							Ta commande est en route !
-						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "16px" }}>
-							Bonjour {customerName},
-						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
-							Bonne nouvelle ! Ta commande vient d'être expédiée et est en
-							chemin vers toi.
-						</Text>
-					</Section>
-
-					{/* Numéro de commande */}
-					<Section
-						style={{
-							...EMAIL_STYLES.section.card,
-							marginBottom: "24px",
-							textAlign: "center",
-						}}
-					>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "14px",
-								fontWeight: "500",
-								color: EMAIL_COLORS.text.secondary,
-							}}
-						>
-							Numéro de commande
-						</Text>
-						<Text
-							style={{
-								margin: "4px 0 0 0",
-								fontFamily: "monospace",
-								fontSize: "20px",
-								fontWeight: "bold",
-								color: EMAIL_COLORS.primary,
-							}}
-						>
-							{orderNumber}
-						</Text>
-					</Section>
-
-					{/* Informations de suivi */}
-					<Section style={{ marginBottom: "32px" }}>
-						<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "16px" }}>
-							Informations de suivi
-						</Text>
-
+					{/* Suivi */}
+					<Section style={{ marginBottom: "24px" }}>
 						<div style={EMAIL_STYLES.section.card}>
 							<div
 								style={{
 									display: "flex",
 									justifyContent: "space-between",
-									marginBottom: "12px",
+									marginBottom: "8px",
 								}}
 							>
-								<Text
-									style={{
-										margin: 0,
-										fontSize: "14px",
-										color: EMAIL_COLORS.text.secondary,
-									}}
-								>
-									Transporteur
-								</Text>
+								<Text style={EMAIL_STYLES.text.small}>Transporteur</Text>
 								<Text
 									style={{
 										margin: 0,
@@ -153,23 +87,14 @@ export const ShippingConfirmationEmail = ({
 									{carrierLabel}
 								</Text>
 							</div>
-
 							<div
 								style={{
 									display: "flex",
 									justifyContent: "space-between",
-									marginBottom: estimatedDelivery ? "12px" : "0",
+									marginBottom: estimatedDelivery ? "8px" : "0",
 								}}
 							>
-								<Text
-									style={{
-										margin: 0,
-										fontSize: "14px",
-										color: EMAIL_COLORS.text.secondary,
-									}}
-								>
-									Numéro de suivi
-								</Text>
+								<Text style={EMAIL_STYLES.text.small}>Numéro de suivi</Text>
 								<Text
 									style={{
 										margin: 0,
@@ -182,7 +107,6 @@ export const ShippingConfirmationEmail = ({
 									{trackingNumber}
 								</Text>
 							</div>
-
 							{estimatedDelivery && (
 								<div
 									style={{
@@ -190,21 +114,13 @@ export const ShippingConfirmationEmail = ({
 										justifyContent: "space-between",
 									}}
 								>
-									<Text
-										style={{
-											margin: 0,
-											fontSize: "14px",
-											color: EMAIL_COLORS.text.secondary,
-										}}
-									>
-										Livraison estimée
-									</Text>
+									<Text style={EMAIL_STYLES.text.small}>Livraison estimée</Text>
 									<Text
 										style={{
 											margin: 0,
 											fontSize: "14px",
 											fontWeight: "600",
-											color: EMAIL_COLORS.states.success,
+											color: EMAIL_COLORS.primary,
 										}}
 									>
 										{estimatedDelivery}
@@ -214,26 +130,9 @@ export const ShippingConfirmationEmail = ({
 						</div>
 					</Section>
 
-					{/* CTA Suivi */}
-					{trackingUrl && (
-						<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-							<Button href={trackingUrl} style={EMAIL_STYLES.button.primary}>
-								Suivre mon colis
-							</Button>
-							<Text
-								style={{
-									...EMAIL_STYLES.text.tiny,
-									marginTop: "12px",
-								}}
-							>
-								Clique sur le bouton pour voir où en est ton colis en temps réel
-							</Text>
-						</Section>
-					)}
-
-					{/* Adresse de livraison */}
-					<Section style={{ marginBottom: "32px" }}>
-						<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+					{/* Adresse */}
+					<Section style={{ marginBottom: "24px" }}>
+						<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
 							Adresse de livraison
 						</Text>
 						<div style={EMAIL_STYLES.section.card}>
@@ -242,109 +141,34 @@ export const ShippingConfirmationEmail = ({
 							</Text>
 							<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
 								{shippingAddress.address1}
-							</Text>
-							{shippingAddress.address2 && (
-								<Text style={EMAIL_STYLES.text.small}>
-									{shippingAddress.address2}
-								</Text>
-							)}
-							<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
-								{shippingAddress.postalCode} {shippingAddress.city}
+								{shippingAddress.address2 && `, ${shippingAddress.address2}`}
 							</Text>
 							<Text style={EMAIL_STYLES.text.small}>
+								{shippingAddress.postalCode} {shippingAddress.city},{" "}
 								{shippingAddress.country}
 							</Text>
 						</div>
 					</Section>
 
-					<Hr style={EMAIL_STYLES.hr} />
-
-					{/* Conseils */}
-					<Section
-						style={{
-							...EMAIL_STYLES.section.highlighted,
-							marginBottom: "24px",
-						}}
-					>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "14px",
-								fontWeight: "600",
-								color: EMAIL_COLORS.text.primary,
-							}}
-						>
-							💡 Bon à savoir
-						</Text>
-						<Text
-							style={{
-								...EMAIL_STYLES.text.small,
-								marginTop: "8px",
-							}}
-						>
-							• Le suivi peut mettre quelques heures à s'activer après
-							l'expédition.
-						</Text>
-						<Text style={EMAIL_STYLES.text.small}>
-							• En cas d'absence, le colis sera déposé en point relais ou un
-							avis de passage sera laissé.
-						</Text>
-						<Text style={EMAIL_STYLES.text.small}>
-							• Si tu ne reçois pas ton colis sous 10 jours, contacte-moi.
-						</Text>
-					</Section>
-
-					{/* Message personnel */}
-					<Section style={{ marginBottom: "24px", textAlign: "center" }}>
-						<Text style={EMAIL_STYLES.text.body}>
-							Merci pour ta confiance et à très vite !
-						</Text>
-						<Text
-							style={{
-								...EMAIL_STYLES.text.body,
-								marginTop: "8px",
-								fontStyle: "italic",
-							}}
-						>
-							— Synclune
-						</Text>
-					</Section>
+					{/* CTA */}
+					{trackingUrl && (
+						<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+							<Button href={trackingUrl} style={EMAIL_STYLES.button.primary}>
+								Suivre mon colis
+							</Button>
+						</Section>
+					)}
 
 					{/* Footer */}
 					<Section
 						style={{
 							paddingTop: "24px",
 							borderTop: `1px solid ${EMAIL_COLORS.border}`,
+							textAlign: "center",
 						}}
 					>
-						<Text
-							style={{
-								...EMAIL_STYLES.text.small,
-								textAlign: "center",
-							}}
-						>
-							Des questions ? Réponds à cet email ou contacte-moi à{" "}
-							<a href="mailto:contact@synclune.fr" style={EMAIL_STYLES.link}>
-								contact@synclune.fr
-							</a>
-						</Text>
-						<Text
-							style={{
-								...EMAIL_STYLES.text.small,
-								marginTop: "16px",
-								textAlign: "center",
-							}}
-						>
-							Synclune
-						</Text>
-						<Text
-							style={{
-								...EMAIL_STYLES.text.tiny,
-								marginTop: "8px",
-								textAlign: "center",
-							}}
-						>
-							© {new Date().getFullYear()} Synclune - Tous droits réservés
+						<Text style={EMAIL_STYLES.text.tiny}>
+							© {new Date().getFullYear()} Synclune
 						</Text>
 					</Section>
 				</Container>
@@ -357,7 +181,8 @@ ShippingConfirmationEmail.PreviewProps = {
 	orderNumber: "CMD-1730000000-ABCD",
 	customerName: "Marie",
 	trackingNumber: "8N00234567890",
-	trackingUrl: "https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890",
+	trackingUrl:
+		"https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890",
 	carrierLabel: "Colissimo",
 	shippingAddress: {
 		firstName: "Marie",

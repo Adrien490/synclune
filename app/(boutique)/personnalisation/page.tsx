@@ -1,10 +1,14 @@
+import { ProductStatus } from "@/app/generated/prisma/client";
 import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
-import { cacheLife, cacheTag } from "next/cache";
+import { getColors } from "@/modules/colors/data/get-colors";
+import { getMaterials } from "@/modules/materials/data/get-materials";
+import { getProducts } from "@/modules/products/data/get-products";
 import { CustomizationForm } from "@/modules/customizations/components/customization-form";
+import type { ProductSearchResult } from "@/modules/customizations/types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -23,20 +27,48 @@ export const metadata: Metadata = {
 	},
 };
 
+interface PageProps {
+	searchParams: Promise<{ productSearch?: string }>;
+}
+
 /**
- * Page de personnalisation publique avec cache
+ * Page de personnalisation publique
  * Affiche le formulaire de demande de personnalisation
  *
- * Utilise "use cache" car le contenu est identique pour tous les visiteurs.
- * Le formulaire ContactForm (client component) gère l'interactivité côté client.
+ * La recherche de produits est gérée via les searchParams de l'URL.
+ * Les données statiques (couleurs, matériaux, types) sont mises en cache.
  */
-export default async function CustomizationPage() {
-	"use cache";
-	cacheLife("reference");
-	cacheTag("customization-page");
+export default async function CustomizationPage({ searchParams }: PageProps) {
+	const params = await searchParams;
+	const productSearch = params.productSearch || "";
 
-	// Récupérer les types de bijoux pour le formulaire
-	const { productTypes } = await getProductTypes({ perPage: 100 });
+	// Récupérer les données pour le formulaire en parallèle
+	const [{ productTypes }, { colors }, { materials }, productsResult] = await Promise.all([
+		getProductTypes({ perPage: 100 }),
+		getColors({ perPage: 100 }),
+		getMaterials({ perPage: 100 }),
+		productSearch.length >= 3
+			? getProducts({
+					search: productSearch,
+					status: ProductStatus.PUBLIC,
+					perPage: 10,
+					sortBy: "title-ascending",
+					filters: {},
+				})
+			: Promise.resolve({ products: [], pagination: null }),
+	]);
+
+	// Transformer les produits en ProductSearchResult
+	const productSearchResults: ProductSearchResult[] = productsResult.products.map((product) => {
+		const primaryImage = product.skus[0]?.images[0];
+		return {
+			id: product.id,
+			title: product.title,
+			slug: product.slug,
+			imageUrl: primaryImage?.url ?? null,
+			blurDataUrl: primaryImage?.blurDataUrl ?? null,
+		};
+	});
 
 	return (
 		<div className="relative min-h-screen">
@@ -72,7 +104,13 @@ export default async function CustomizationPage() {
 			<section className={`bg-background ${SECTION_SPACING.compact} relative z-10`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					{/* Formulaire de personnalisation */}
-					<CustomizationForm productTypes={productTypes} />
+					<CustomizationForm
+						productTypes={productTypes}
+						productSearchQuery={productSearch}
+						productSearchResults={productSearchResults}
+						colors={colors}
+						materials={materials}
+					/>
 				</div>
 			</section>
 		</div>

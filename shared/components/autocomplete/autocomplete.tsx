@@ -8,31 +8,15 @@ import {
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
 import { Input } from "@/shared/components/ui/input";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { SearchIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
-import { Skeleton } from "@/shared/components/ui/skeleton";
-
-export interface AutocompleteProps<T> {
-	name: string;
-	value: string;
-	disabled?: boolean;
-	onChange: (value: string) => void;
-	onSelect: (item: T) => void;
-	items: T[];
-	getItemLabel: (item: T) => string;
-	getItemDescription?: (item: T) => string | null;
-	getItemImage?: (item: T) => { src: string; alt: string } | null;
-	imageSize?: number;
-	placeholder?: string;
-	isLoading?: boolean;
-	className?: string;
-	inputClassName?: string;
-	noResultsMessage?: string;
-	minQueryLength?: number;
-	blurDelay?: number;
-}
+import { AUTOCOMPLETE_ANIMATIONS, AUTOCOMPLETE_DEFAULTS } from "./constants";
+import type { AutocompleteProps } from "./types";
 
 export function Autocomplete<T>({
 	name,
@@ -44,31 +28,36 @@ export function Autocomplete<T>({
 	getItemLabel,
 	getItemDescription,
 	getItemImage,
-	imageSize = 32,
-	placeholder = "Rechercher...",
+	imageSize = AUTOCOMPLETE_DEFAULTS.imageSize,
+	placeholder = AUTOCOMPLETE_DEFAULTS.placeholder,
 	isLoading = false,
 	className,
 	inputClassName,
-	noResultsMessage = "Aucun résultat trouvé",
-	minQueryLength = 3,
-	blurDelay = 150,
+	noResultsMessage = AUTOCOMPLETE_DEFAULTS.noResultsMessage,
+	minQueryLength = AUTOCOMPLETE_DEFAULTS.minQueryLength,
+	blurDelay = AUTOCOMPLETE_DEFAULTS.blurDelay,
+	loadingSkeletonCount = AUTOCOMPLETE_DEFAULTS.loadingSkeletonCount,
+	showSearchIcon = AUTOCOMPLETE_DEFAULTS.showSearchIcon,
+	showClearButton = AUTOCOMPLETE_DEFAULTS.showClearButton,
 }: AutocompleteProps<T>) {
-	// IDs uniques pour éviter les collisions
+	// IDs uniques pour eviter les collisions
 	const id = useId();
 	const listboxId = `${id}-listbox`;
 	const getItemId = (index: number) => `${id}-item-${index}`;
 
-	// États
+	// Etats
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(-1);
 
-	// Ref pour cleanup timeout blur
+	// Ref pour cleanup timeout
 	const blurTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-	// Calculs dérivés
+	// Calculs derives
 	const hasValidQuery = value.length >= minQueryLength;
 	const hasResults = items.length > 0;
 	const showResults = isOpen && hasValidQuery;
+	const showMinQueryHint = value.length > 0 && value.length < minQueryLength;
+	const remainingChars = minQueryLength - value.length;
 
 	// Reset activeIndex quand les items changent
 	useEffect(() => {
@@ -78,12 +67,12 @@ export function Autocomplete<T>({
 	// Scroll automatique vers l'item actif
 	useEffect(() => {
 		if (activeIndex >= 0 && showResults) {
-			const activeElement = document.getElementById(getItemId(activeIndex));
+			const activeElement = document.getElementById(`${id}-item-${activeIndex}`);
 			activeElement?.scrollIntoView({ block: "nearest", behavior: "smooth" });
 		}
-	}, [activeIndex, getItemId, showResults]);
+	}, [activeIndex, id, showResults]);
 
-	// Cleanup timeout blur on unmount
+	// Cleanup timeout on unmount
 	useEffect(() => {
 		return () => {
 			if (blurTimeoutRef.current) {
@@ -92,7 +81,7 @@ export function Autocomplete<T>({
 		};
 	}, []);
 
-	// Gestionnaires d'événements
+	// Gestionnaires d'evenements
 	const handleFocus = () => {
 		if (value.length >= minQueryLength) {
 			setIsOpen(true);
@@ -100,16 +89,13 @@ export function Autocomplete<T>({
 	};
 
 	const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-		// Vérifier si le focus reste dans le composant
 		const currentTarget = e.currentTarget;
 
-		// Clear previous timeout si existe (évite multiples timeouts)
 		if (blurTimeoutRef.current) {
 			clearTimeout(blurTimeoutRef.current);
 		}
 
 		blurTimeoutRef.current = setTimeout(() => {
-			// Si le focus n'est pas dans le composant parent, fermer
 			if (!currentTarget.parentElement?.contains(document.activeElement)) {
 				setIsOpen(false);
 				setActiveIndex(-1);
@@ -117,25 +103,31 @@ export function Autocomplete<T>({
 		}, blurDelay);
 	};
 
-	const handleInputChange = (
-		e: React.ChangeEvent<HTMLInputElement>,
-		inputOnChange: (value: string) => void
-	) => {
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const newValue = e.target.value;
-		inputOnChange(newValue);
+
+		// Toujours appeler onChange immediatement pour mettre a jour l'affichage
+		// Le debounce est gere par le parent si necessaire
+		onChange(newValue);
+
 		setIsOpen(newValue.length >= minQueryLength);
-		setActiveIndex(-1); // Reset l'index actif lors de la saisie
+		setActiveIndex(-1);
 	};
 
-	const handleItemSelect = (item: T, itemOnSelect: (item: T) => void) => {
-		itemOnSelect(item);
+	const handleClear = () => {
+		onChange("");
+		setIsOpen(false);
+		setActiveIndex(-1);
+	};
+
+	const handleItemSelect = (item: T) => {
+		onSelect(item);
 		setIsOpen(false);
 		setActiveIndex(-1);
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent) => {
 		if (!isOpen) {
-			// Ouvrir avec ArrowDown si fermé et query valide
 			if (e.key === "ArrowDown" && hasValidQuery && hasResults) {
 				e.preventDefault();
 				setIsOpen(true);
@@ -181,7 +173,6 @@ export function Autocomplete<T>({
 				break;
 
 			case "Tab":
-				// Ferme le menu lors de la navigation par tabulation
 				setIsOpen(false);
 				setActiveIndex(-1);
 				break;
@@ -194,25 +185,56 @@ export function Autocomplete<T>({
 	return (
 		<MotionConfig reducedMotion="user">
 			<div className={cn("relative w-full", className)}>
-				<Input
-					name={name}
-					type="text"
-					disabled={disabled}
-					value={value}
-					onChange={(e) => handleInputChange(e, onChange)}
-					onFocus={handleFocus}
-					onBlur={handleBlur}
-					onKeyDown={handleKeyDown}
-					placeholder={placeholder}
-					className={cn(isLoading && "pr-10", inputClassName)}
-					aria-autocomplete="list"
-					aria-controls={showResults ? listboxId : undefined}
-					aria-expanded={showResults}
-					aria-activedescendant={
-						showResults && activeIndex >= 0 ? getItemId(activeIndex) : undefined
-					}
-					autoComplete="off"
-				/>
+				<div className="relative">
+					<Input
+						name={name}
+						type="text"
+						disabled={disabled}
+						value={value}
+						onChange={handleInputChange}
+						onFocus={handleFocus}
+						onBlur={handleBlur}
+						onKeyDown={handleKeyDown}
+						placeholder={placeholder}
+						startIcon={
+							showSearchIcon ? (
+								<SearchIcon className="size-4 text-muted-foreground" />
+							) : undefined
+						}
+						clearable={showClearButton && value.length > 0}
+						onClear={handleClear}
+						className={cn(isLoading && !showClearButton && "pr-10", inputClassName)}
+						aria-autocomplete="list"
+						aria-controls={showResults ? listboxId : undefined}
+						aria-expanded={showResults}
+						aria-activedescendant={
+							showResults && activeIndex >= 0 ? getItemId(activeIndex) : undefined
+						}
+						autoComplete="off"
+					/>
+
+					{/* Loading spinner dans l'input (si pas de clear button) */}
+					{isLoading && !showClearButton && (
+						<div className="absolute right-3 top-1/2 -translate-y-1/2">
+							<Spinner className="size-4 text-muted-foreground" />
+						</div>
+					)}
+				</div>
+
+				{/* Hint pour minQueryLength */}
+				<AnimatePresence>
+					{showMinQueryHint && (
+						<motion.p
+							className="text-xs text-muted-foreground mt-1.5 ml-0.5"
+							initial={AUTOCOMPLETE_ANIMATIONS.hint.initial}
+							animate={AUTOCOMPLETE_ANIMATIONS.hint.animate}
+							exit={AUTOCOMPLETE_ANIMATIONS.hint.exit}
+							transition={AUTOCOMPLETE_ANIMATIONS.hint.transition}
+						>
+							Tapez encore {remainingChars} caractère{remainingChars > 1 ? "s" : ""}
+						</motion.p>
+					)}
+				</AnimatePresence>
 
 				{/* Live region pour les annonces accessibles */}
 				<span className="sr-only" aria-live="polite" aria-atomic="true">
@@ -232,14 +254,14 @@ export function Autocomplete<T>({
 							role="listbox"
 							aria-label="Résultats de recherche"
 							className="absolute z-10 w-full mt-1 max-h-60 md:max-h-80 overflow-auto rounded-md border shadow-lg py-1 text-base md:text-sm focus:outline-hidden bg-background"
-							initial={{ opacity: 0, y: -10 }}
-							animate={{ opacity: 1, y: 0 }}
-							exit={{ opacity: 0, y: -10 }}
-							transition={{ duration: 0.15 }}
+							initial={AUTOCOMPLETE_ANIMATIONS.dropdown.initial}
+							animate={AUTOCOMPLETE_ANIMATIONS.dropdown.animate}
+							exit={AUTOCOMPLETE_ANIMATIONS.dropdown.exit}
+							transition={AUTOCOMPLETE_ANIMATIONS.dropdown.transition}
 						>
 							{isLoading ? (
 								<>
-									{[...Array(3)].map((_, i) => (
+									{[...Array(loadingSkeletonCount)].map((_, i) => (
 										<li key={i} className="py-1.5 px-3" aria-hidden="true">
 											<div className="flex items-center gap-3">
 												{getItemImage && (
@@ -282,12 +304,17 @@ export function Autocomplete<T>({
 													? "bg-linear-to-r from-primary/10 to-transparent"
 													: "bg-card hover:bg-muted"
 											)}
-											onClick={() => handleItemSelect(item, onSelect)}
+											onClick={() => handleItemSelect(item)}
 											onMouseEnter={() => setActiveIndex(index)}
 											tabIndex={-1}
-											initial={{ opacity: 0 }}
-											animate={{ opacity: 1 }}
-											transition={{ delay: Math.min(index * 0.03, 1.5) }}
+											initial={AUTOCOMPLETE_ANIMATIONS.item.initial}
+											animate={AUTOCOMPLETE_ANIMATIONS.item.animate}
+											transition={{
+												delay: Math.min(
+													index * AUTOCOMPLETE_ANIMATIONS.item.delayMultiplier,
+													AUTOCOMPLETE_ANIMATIONS.item.maxDelay
+												),
+											}}
 										>
 											<div className="flex items-center gap-3">
 												{getItemImage && getItemImage(item) && (
@@ -323,19 +350,7 @@ export function Autocomplete<T>({
 									<Empty>
 										<EmptyHeader>
 											<EmptyMedia>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={1.5}
-														d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-													/>
-												</svg>
+												<SearchIcon className="size-6" strokeWidth={1.5} />
 											</EmptyMedia>
 											<EmptyTitle>{noResultsMessage}</EmptyTitle>
 											<EmptyDescription>

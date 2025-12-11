@@ -9,9 +9,16 @@ export const customizationFormOpts = {
 		email: "",
 		phone: "",
 
+		// Type de produit
+		productTypeLabel: "",
+
+		// Inspirations et préférences
+		inspirationProductIds: [] as string[],
+		preferredColorIds: [] as string[],
+		preferredMaterialIds: [] as string[],
+
 		// Détails de personnalisation
-		jewelryType: "",
-		customizationDetails: "",
+		details: "",
 
 		// Consentements
 		rgpdConsent: false,

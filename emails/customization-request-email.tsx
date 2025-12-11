@@ -7,18 +7,20 @@ import {
 	Link,
 	Preview,
 	Section,
-	Tailwind,
 	Text,
 } from "@react-email/components";
-import { emailTailwindConfig } from "./email-tailwind-config";
+import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 
 interface CustomizationRequestEmailProps {
 	firstName: string;
 	lastName: string;
 	email: string;
 	phone?: string;
-	jewelryType: string;
-	customizationDetails: string;
+	productTypeLabel: string;
+	details: string;
+	inspirationProducts?: Array<{ title: string }>;
+	preferredColors?: Array<{ name: string; hex: string }>;
+	preferredMaterials?: Array<{ name: string }>;
 }
 
 export const CustomizationRequestEmail = ({
@@ -26,161 +28,230 @@ export const CustomizationRequestEmail = ({
 	lastName,
 	email,
 	phone,
-	jewelryType,
-	customizationDetails,
+	productTypeLabel,
+	details,
+	inspirationProducts,
+	preferredColors,
+	preferredMaterials,
 }: CustomizationRequestEmailProps) => {
 	const fullName = `${firstName} ${lastName}`;
 
 	return (
 		<Html>
 			<Head />
-			<Preview>Nouvelle demande de personnalisation de {fullName}</Preview>
-			<Tailwind config={emailTailwindConfig}>
-				<Body className="bg-background font-sans">
-					<Container className="mx-auto my-8 max-w-[600px] rounded-lg border border-border bg-card px-8 py-10">
-						{/* Header */}
-						<Section className="mb-8 text-center">
-							<Text className="m-0 text-2xl font-bold" style={{ color: "#D4A574" }}>
-								Nouvelle Demande de Personnalisation
-							</Text>
-							<Text className="m-0 mt-2 text-sm text-muted-foreground">
-								Synclune - Admin
-							</Text>
-						</Section>
+			<Preview>Demande de personnalisation de {fullName}</Preview>
+			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
+				<Container style={EMAIL_STYLES.container}>
+					{/* Header */}
+					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+						<Text
+							style={{
+								margin: 0,
+								fontSize: "24px",
+								fontWeight: "bold",
+								color: EMAIL_COLORS.primary,
+							}}
+						>
+							Nouvelle demande
+						</Text>
+					</Section>
 
-						{/* Message d'alerte */}
-						<Section className="mb-6">
-							<div className="rounded-md border-l-4 border-secondary bg-secondary/10 p-4">
-								<Text className="m-0 text-sm font-semibold text-foreground">
-									Action requise
-								</Text>
-								<Text className="m-0 mt-1 text-sm text-muted-foreground">
-									Un client souhaite une commande personnalisée. Répondez
-									rapidement !
-								</Text>
-							</div>
-						</Section>
-
-						{/* Informations client */}
-						<Section className="mb-6">
-							<Text className="m-0 mb-4 text-xl font-semibold text-foreground">
-								Informations du client
-							</Text>
-							<div className="rounded-md bg-muted p-4">
-								<table style={{ width: "100%", borderCollapse: "collapse" }}>
-									<tbody>
-										<tr>
-											<td
-												style={{
-													padding: "8px 0",
-													color: "#858585",
-													fontSize: "14px",
-													width: "140px",
-												}}
-											>
-												<strong>Nom complet :</strong>
-											</td>
-											<td style={{ padding: "8px 0", fontSize: "14px" }}>
-												{fullName}
-											</td>
-										</tr>
-										<tr>
-											<td
-												style={{
-													padding: "8px 0",
-													color: "#858585",
-													fontSize: "14px",
-												}}
-											>
-												<strong>Email :</strong>
-											</td>
-											<td style={{ padding: "8px 0", fontSize: "14px" }}>
-												<Link
-													href={`mailto:${email}`}
-													style={{ color: "#C73767" }} className=" no-underline"
-												>
-													{email}
-												</Link>
-											</td>
-										</tr>
-										{phone && (
-											<tr>
-												<td
-													style={{
-														padding: "8px 0",
-														color: "#858585",
-														fontSize: "14px",
-													}}
-												>
-													<strong>Téléphone :</strong>
-												</td>
-												<td style={{ padding: "8px 0", fontSize: "14px" }}>
-													<Link
-														href={`tel:${phone}`}
-														style={{ color: "#C73767" }} className=" no-underline"
-													>
-														{phone}
-													</Link>
-												</td>
-											</tr>
-										)}
-										<tr>
-											<td
-												style={{
-													padding: "8px 0",
-													color: "#858585",
-													fontSize: "14px",
-												}}
-											>
-												<strong>Type de bijou :</strong>
-											</td>
-											<td style={{ padding: "8px 0", fontSize: "14px" }}>
-												{jewelryType}
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</Section>
-
-						{/* Détails de la personnalisation */}
-						<Section className="mb-6">
-							<Text className="m-0 mb-4 text-xl font-semibold text-foreground">
-								Détails du projet
-							</Text>
-							<div className="rounded-md border border-secondary/20 bg-secondary/5 p-4">
-								<Text className="m-0 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-									{customizationDetails}
-								</Text>
-							</div>
-						</Section>
-
-
-						{/* CTA */}
-						<Section className="mb-6 text-center">
-							<Text className="m-0 mb-4 text-base text-foreground">
-								Répondez rapidement pour ne pas perdre un client potentiel.
-							</Text>
-							<Button
-								href={`mailto:${email}?subject=RE: Demande de personnalisation - Synclune`}
-								style={{ backgroundColor: "#C73767" }} className="inline-block rounded-md px-8 py-4 text-base font-semibold text-white no-underline"
+					{/* Client */}
+					<Section style={{ marginBottom: "24px" }}>
+						<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+							Client
+						</Text>
+						<div style={EMAIL_STYLES.section.card}>
+							<div
+								style={{
+									display: "flex",
+									justifyContent: "space-between",
+									marginBottom: "8px",
+								}}
 							>
-								Répondre au client
-							</Button>
-						</Section>
+								<Text style={EMAIL_STYLES.text.small}>Nom</Text>
+								<Text
+									style={{
+										margin: 0,
+										fontSize: "14px",
+										color: EMAIL_COLORS.text.primary,
+									}}
+								>
+									{fullName}
+								</Text>
+							</div>
+							<div
+								style={{
+									display: "flex",
+									justifyContent: "space-between",
+									marginBottom: "8px",
+								}}
+							>
+								<Text style={EMAIL_STYLES.text.small}>Email</Text>
+								<Link
+									href={`mailto:${email}`}
+									style={{
+										margin: 0,
+										fontSize: "14px",
+										color: EMAIL_COLORS.primary,
+										textDecoration: "none",
+									}}
+								>
+									{email}
+								</Link>
+							</div>
+							{phone && (
+								<div
+									style={{
+										display: "flex",
+										justifyContent: "space-between",
+										marginBottom: "8px",
+									}}
+								>
+									<Text style={EMAIL_STYLES.text.small}>Téléphone</Text>
+									<Link
+										href={`tel:${phone}`}
+										style={{
+											margin: 0,
+											fontSize: "14px",
+											color: EMAIL_COLORS.primary,
+											textDecoration: "none",
+										}}
+									>
+										{phone}
+									</Link>
+								</div>
+							)}
+							<div style={{ display: "flex", justifyContent: "space-between" }}>
+								<Text style={EMAIL_STYLES.text.small}>Type</Text>
+								<Text
+									style={{
+										margin: 0,
+										fontSize: "14px",
+										fontWeight: "600",
+										color: EMAIL_COLORS.primary,
+									}}
+								>
+									{productTypeLabel}
+								</Text>
+							</div>
+						</div>
+					</Section>
 
-						{/* Footer */}
-						<Section className="border-t pt-6" style={{ borderColor: "#E8E8E8" }}>
-							<Text className="m-0 text-center text-sm text-muted-foreground">
-								Notification automatique - Synclune
+					{/* Inspirations */}
+					{inspirationProducts && inspirationProducts.length > 0 && (
+						<Section style={{ marginBottom: "24px" }}>
+							<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+								Inspirations
 							</Text>
-							<Text className="m-0 mt-2 text-center text-xs text-muted-foreground">
-								© {new Date().getFullYear()} Synclune - Tous droits réservés
-							</Text>
+							<div style={EMAIL_STYLES.section.card}>
+								{inspirationProducts.map((product, index) => (
+									<Text key={index} style={EMAIL_STYLES.text.small}>
+										• {product.title}
+									</Text>
+								))}
+							</div>
 						</Section>
-					</Container>
-				</Body>
-			</Tailwind>
+					)}
+
+					{/* Couleurs */}
+					{preferredColors && preferredColors.length > 0 && (
+						<Section style={{ marginBottom: "24px" }}>
+							<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+								Couleurs
+							</Text>
+							<div style={EMAIL_STYLES.section.card}>
+								<div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+									{preferredColors.map((color, index) => (
+										<span
+											key={index}
+											style={{
+												display: "inline-flex",
+												alignItems: "center",
+												gap: "6px",
+												padding: "4px 10px",
+												backgroundColor: EMAIL_COLORS.background.white,
+												borderRadius: "4px",
+												fontSize: "13px",
+											}}
+										>
+											<span
+												style={{
+													width: "14px",
+													height: "14px",
+													borderRadius: "3px",
+													backgroundColor: color.hex,
+													border: `1px solid ${EMAIL_COLORS.border}`,
+												}}
+											/>
+											{color.name}
+										</span>
+									))}
+								</div>
+							</div>
+						</Section>
+					)}
+
+					{/* Matériaux */}
+					{preferredMaterials && preferredMaterials.length > 0 && (
+						<Section style={{ marginBottom: "24px" }}>
+							<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+								Matériaux
+							</Text>
+							<div style={EMAIL_STYLES.section.card}>
+								{preferredMaterials.map((material, index) => (
+									<Text key={index} style={EMAIL_STYLES.text.small}>
+										• {material.name}
+									</Text>
+								))}
+							</div>
+						</Section>
+					)}
+
+					{/* Détails */}
+					<Section style={{ marginBottom: "24px" }}>
+						<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
+							Description
+						</Text>
+						<div style={EMAIL_STYLES.section.card}>
+							<Text
+								style={{
+									margin: 0,
+									fontSize: "14px",
+									color: EMAIL_COLORS.text.primary,
+									whiteSpace: "pre-wrap",
+									lineHeight: "1.6",
+								}}
+							>
+								{details}
+							</Text>
+						</div>
+					</Section>
+
+					{/* CTA */}
+					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+						<Button
+							href={`mailto:${email}?subject=RE: Demande de personnalisation - Synclune`}
+							style={EMAIL_STYLES.button.primary}
+						>
+							Répondre au client
+						</Button>
+					</Section>
+
+					{/* Footer */}
+					<Section
+						style={{
+							paddingTop: "24px",
+							borderTop: `1px solid ${EMAIL_COLORS.border}`,
+							textAlign: "center",
+						}}
+					>
+						<Text style={EMAIL_STYLES.text.tiny}>
+							© {new Date().getFullYear()} Synclune
+						</Text>
+					</Section>
+				</Container>
+			</Body>
 		</Html>
 	);
 };
@@ -190,9 +261,18 @@ CustomizationRequestEmail.PreviewProps = {
 	lastName: "Dupont",
 	email: "marie.dupont@example.com",
 	phone: "+33612345678",
-	jewelryType: "Collier",
-	customizationDetails:
+	productTypeLabel: "Collier",
+	details:
 		"Bonjour,\n\nJe souhaiterais un collier personnalisé avec les initiales de ma fille gravées sur un pendentif rond en argent. Les initiales seraient 'ML' en écriture cursive. J'aimerais que le pendentif fasse environ 2cm de diamètre.\n\nPouvez-vous me faire un devis et m'indiquer les délais de réalisation ?\n\nMerci d'avance !",
+	inspirationProducts: [
+		{ title: "Collier Lune Céleste" },
+		{ title: "Pendentif Étoile Filante" },
+	],
+	preferredColors: [
+		{ name: "Argent", hex: "#C0C0C0" },
+		{ name: "Or rose", hex: "#B76E79" },
+	],
+	preferredMaterials: [{ name: "Argent 925" }, { name: "Cristal" }],
 } as CustomizationRequestEmailProps;
 
 export default CustomizationRequestEmail;

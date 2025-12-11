@@ -164,7 +164,7 @@ export function Fab({
 						animate={{ opacity: 1, x: 0 }}
 						exit={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
 						transition={transition}
-						className={cn(visibilityClass, "fixed z-40 bottom-6 right-0")}
+						className={cn(visibilityClass, "fixed z-45 bottom-6 right-0")}
 					>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -217,7 +217,7 @@ export function Fab({
 					animate={{ opacity: 1, scale: 1 }}
 					exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
 					transition={transition}
-					className={cn(visibilityClass, "group fixed z-40 bottom-6 right-6")}
+					className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6")}
 				>
 					{/* Bouton pour cacher le FAB */}
 					<Tooltip>

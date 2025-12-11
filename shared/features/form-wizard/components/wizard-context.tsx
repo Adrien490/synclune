@@ -7,7 +7,9 @@ import {
 	type ReactNode,
 } from "react"
 import { useIsMobile } from "@/shared/hooks/use-mobile"
-import type { WizardMode } from "../types"
+
+/** Mode d'affichage du wizard sur desktop */
+export type WizardDesktopMode = "wizard" | "all"
 
 interface WizardContextValue {
 	currentStep: number
@@ -17,8 +19,12 @@ interface WizardContextValue {
 	markStepCompleted: (step: number) => void
 	markStepIncomplete: (step: number) => void
 	resetWizard: () => void
+	/** Mode configuré pour desktop */
+	desktopMode: WizardDesktopMode
+	/** Détection mobile via media query */
 	isMobile: boolean
-	desktopMode: WizardMode
+	/** Mode effectif: "wizard" sur mobile, ou selon desktopMode sur desktop */
+	effectiveMode: WizardDesktopMode
 }
 
 const WizardContext = createContext<WizardContextValue | null>(null)
@@ -34,19 +40,23 @@ export function useWizardContext() {
 export interface WizardProviderProps {
 	children: ReactNode
 	totalSteps: number
-	desktopMode?: WizardMode
 	initialStep?: number
+	/** Mode d'affichage sur desktop: "wizard" (étapes) ou "all" (toutes les sections visibles) */
+	desktopMode?: WizardDesktopMode
 }
 
 export function WizardProvider({
 	children,
 	totalSteps,
-	desktopMode = "all",
 	initialStep = 0,
+	desktopMode = "all",
 }: WizardProviderProps) {
 	const [currentStep, setCurrentStep] = useState(initialStep)
 	const [completedSteps, setCompletedSteps] = useState<Set<number>>(() => new Set())
 	const isMobile = useIsMobile()
+
+	// Mode effectif: wizard sur mobile, sinon selon la configuration desktop
+	const effectiveMode: WizardDesktopMode = isMobile ? "wizard" : desktopMode
 
 	// Optimisation: évite de créer un nouveau Set si l'étape est déjà complétée
 	const markStepCompleted = (step: number) => {
@@ -81,8 +91,9 @@ export function WizardProvider({
 		markStepCompleted,
 		markStepIncomplete,
 		resetWizard,
-		isMobile,
 		desktopMode,
+		isMobile,
+		effectiveMode,
 	}
 
 	return (

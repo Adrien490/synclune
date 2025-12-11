@@ -63,16 +63,11 @@ export interface WizardMessages {
 export type WizardDirection = "forward" | "backward"
 
 /**
- * Mode d'affichage du wizard
- * - "wizard": Une étape à la fois (mobile)
- * - "all": Toutes les étapes visibles (desktop)
+ * Variante d'affichage du progress (mobile-only)
+ * - "progress-bar": Barre de progression linéaire
+ * - "dots": Points cliquables compacts
  */
-export type WizardMode = "wizard" | "all"
-
-/**
- * Variante d'affichage du progress
- */
-export type WizardProgressVariant = "progress-bar" | "dots" | "stepper"
+export type WizardProgressVariant = "progress-bar" | "dots"
 
 /**
  * État d'une étape

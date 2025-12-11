@@ -9,6 +9,8 @@ import {
 	Palette,
 	Gem,
 	Settings,
+	Sparkles,
+	Mail,
 } from "lucide-react";
 import type { NavBadgeKey } from "./nav-badges-data";
 
@@ -98,6 +100,29 @@ export const navigationData: NavigationData = {
 					title: "Collections",
 					url: "/admin/catalogue/collections",
 					icon: Layers,
+				},
+			],
+		},
+		// ─────────────────────────────────────────────────────────────────────────
+		// MARKETING - Newsletter et personnalisations
+		// ─────────────────────────────────────────────────────────────────────────
+		{
+			label: "Marketing",
+			icon: Mail,
+			items: [
+				{
+					id: "customizations",
+					title: "Personnalisations",
+					shortTitle: "Persos",
+					url: "/admin/marketing/personnalisations",
+					icon: Sparkles,
+					badge: "pendingCustomizations",
+				},
+				{
+					id: "newsletter",
+					title: "Newsletter",
+					url: "/admin/marketing/newsletter",
+					icon: Mail,
 				},
 			],
 		},

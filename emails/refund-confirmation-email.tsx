@@ -7,10 +7,9 @@ import {
 	Html,
 	Preview,
 	Section,
-	Tailwind,
 	Text,
 } from "@react-email/components";
-import { emailTailwindConfig } from "./email-tailwind-config";
+import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 
 interface RefundConfirmationEmailProps {
 	orderNumber: string;
@@ -23,7 +22,7 @@ interface RefundConfirmationEmailProps {
 }
 
 const reasonLabels: Record<string, string> = {
-	CUSTOMER_REQUEST: "Demande client (droit de rétractation)",
+	CUSTOMER_REQUEST: "Demande client",
 	DEFECTIVE: "Produit défectueux",
 	WRONG_ITEM: "Erreur de commande",
 	LOST_IN_TRANSIT: "Colis perdu",
@@ -45,40 +44,77 @@ export const RefundConfirmationEmail = ({
 	return (
 		<Html>
 			<Head />
-			<Preview>
-				Votre remboursement de {formatEuro(refundAmount)} a été effectué - Commande {orderNumber}
-			</Preview>
-			<Tailwind config={emailTailwindConfig}>
-				<Body className="bg-background font-sans">
-					<Container className="mx-auto my-8 max-w-[600px] rounded-lg border border-border bg-card px-8 py-10">
-						{/* Header */}
-						<Section className="mb-8 text-center">
-							<Text className="m-0 text-2xl font-bold text-foreground">
-								Remboursement confirmé
-							</Text>
-							<Text className="m-0 mt-2 text-sm text-muted-foreground">
-								Commande {orderNumber}
-							</Text>
-						</Section>
+			<Preview>Remboursement {formatEuro(refundAmount)} effectué</Preview>
+			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
+				<Container style={EMAIL_STYLES.container}>
+					{/* Header */}
+					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+						<Text
+							style={{
+								margin: 0,
+								fontSize: "24px",
+								fontWeight: "bold",
+								color: EMAIL_COLORS.primary,
+							}}
+						>
+							Synclune
+						</Text>
+					</Section>
 
-						{/* Message principal */}
-						<Section className="mb-8">
-							<Text className="m-0 text-base text-foreground">
-								Bonjour {customerName},
-							</Text>
-							<Text className="m-0 mt-4 text-base text-foreground">
-								Nous vous confirmons que votre remboursement a bien été effectué.
-								Le montant sera crédité sur votre compte dans un délai de{" "}
-								<strong>3 à 10 jours ouvrés</strong>, selon votre établissement bancaire.
-							</Text>
-						</Section>
+					{/* Titre */}
+					<Section style={{ marginBottom: "24px" }}>
+						<Text style={EMAIL_STYLES.heading.h2}>Remboursement effectué</Text>
+						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+							Bonjour {customerName}, ton remboursement de{" "}
+							{formatEuro(refundAmount)} a été effectué. Le montant sera crédité
+							sous 3 à 10 jours ouvrés.
+						</Text>
+					</Section>
 
-						{/* Détails du remboursement */}
-						<Section className="mb-8">
-							<Text className="m-0 mb-3 text-lg font-semibold text-foreground">
-								Détails du remboursement
-							</Text>
-							<div className="rounded-md bg-muted p-4">
+					{/* Détails */}
+					<Section style={{ marginBottom: "24px" }}>
+						<div style={EMAIL_STYLES.section.card}>
+							<div
+								style={{
+									display: "flex",
+									justifyContent: "space-between",
+									marginBottom: "8px",
+								}}
+							>
+								<Text style={EMAIL_STYLES.text.small}>Commande</Text>
+								<Text
+									style={{
+										margin: 0,
+										fontFamily: "monospace",
+										fontSize: "14px",
+										fontWeight: "600",
+										color: EMAIL_COLORS.text.primary,
+									}}
+								>
+									{orderNumber}
+								</Text>
+							</div>
+							<div
+								style={{
+									display: "flex",
+									justifyContent: "space-between",
+									marginBottom: "8px",
+								}}
+							>
+								<Text style={EMAIL_STYLES.text.small}>Montant remboursé</Text>
+								<Text
+									style={{
+										margin: 0,
+										fontFamily: "monospace",
+										fontSize: "14px",
+										fontWeight: "bold",
+										color: EMAIL_COLORS.primary,
+									}}
+								>
+									{formatEuro(refundAmount)}
+								</Text>
+							</div>
+							{isPartialRefund && (
 								<div
 									style={{
 										display: "flex",
@@ -86,101 +122,60 @@ export const RefundConfirmationEmail = ({
 										marginBottom: "8px",
 									}}
 								>
-									<Text className="m-0 text-sm font-medium text-muted-foreground">
-										Numéro de commande
-									</Text>
-									<Text className="m-0 font-mono text-sm font-bold text-foreground">
-										{orderNumber}
-									</Text>
-								</div>
-								<div
-									style={{
-										display: "flex",
-										justifyContent: "space-between",
-										marginBottom: "8px",
-									}}
-								>
-									<Text className="m-0 text-sm font-medium text-muted-foreground">
-										Montant remboursé
-									</Text>
-									<Text className="m-0 font-mono text-sm font-bold" style={{ color: "#22c55e" }}>
-										{formatEuro(refundAmount)}
-									</Text>
-								</div>
-								{isPartialRefund && (
-									<div
+									<Text style={EMAIL_STYLES.text.small}>Montant initial</Text>
+									<Text
 										style={{
-											display: "flex",
-											justifyContent: "space-between",
-											marginBottom: "8px",
+											margin: 0,
+											fontFamily: "monospace",
+											fontSize: "14px",
+											color: EMAIL_COLORS.text.primary,
 										}}
 									>
-										<Text className="m-0 text-sm font-medium text-muted-foreground">
-											Montant initial
-										</Text>
-										<Text className="m-0 font-mono text-sm text-foreground">
-											{formatEuro(originalOrderTotal)}
-										</Text>
-									</div>
-								)}
-								<div style={{ display: "flex", justifyContent: "space-between" }}>
-									<Text className="m-0 text-sm font-medium text-muted-foreground">
-										Raison
-									</Text>
-									<Text className="m-0 text-sm text-foreground">
-										{reasonLabel}
+										{formatEuro(originalOrderTotal)}
 									</Text>
 								</div>
-							</div>
-						</Section>
-
-						{/* Information sur le délai */}
-						<Section className="mb-8 rounded-md border border-border bg-muted/50 p-4">
-							<Text className="m-0 text-sm font-bold text-foreground">
-								Délai de traitement
-							</Text>
-							<Text className="m-0 mt-2 text-sm text-muted-foreground">
-								Le remboursement a été initié auprès de votre banque. Le crédit
-								apparaîtra sur votre relevé bancaire sous <strong>3 à 10 jours ouvrés</strong>.
-								Ce délai peut varier selon votre établissement bancaire.
-							</Text>
-						</Section>
-
-						{/* Bouton */}
-						<Section className="mb-8 text-center">
-							<Button
-								href={orderDetailsUrl}
-								style={{ backgroundColor: "#D4A574" }}
-								className="inline-block rounded-md px-8 py-4 text-base font-semibold text-white no-underline"
+							)}
+							<div
+								style={{
+									display: "flex",
+									justifyContent: "space-between",
+								}}
 							>
-								Voir ma commande
-							</Button>
-						</Section>
-
-						{/* Contact */}
-						<Section className="mb-6 rounded-md border border-border bg-muted/30 p-4">
-							<Text className="m-0 text-sm text-foreground">
-								Une question ? Notre équipe est à votre disposition à{" "}
-								<a
-									href="mailto:contact@synclune.fr"
-									className="text-primary underline"
+								<Text style={EMAIL_STYLES.text.small}>Raison</Text>
+								<Text
+									style={{
+										margin: 0,
+										fontSize: "14px",
+										color: EMAIL_COLORS.text.primary,
+									}}
 								>
-									contact@synclune.fr
-								</a>
-							</Text>
-						</Section>
+									{reasonLabel}
+								</Text>
+							</div>
+						</div>
+					</Section>
 
-						{/* Footer */}
-						<Section className="border-t pt-6" style={{ borderColor: "#E8E8E8" }}>
-							<Text className="m-0 text-center text-xs text-muted-foreground">
-								Merci de votre confiance.
-								<br />
-								L'équipe Synclune
-							</Text>
-						</Section>
-					</Container>
-				</Body>
-			</Tailwind>
+					{/* CTA */}
+					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+						<Button href={orderDetailsUrl} style={EMAIL_STYLES.button.primary}>
+							Voir ma commande
+						</Button>
+					</Section>
+
+					{/* Footer */}
+					<Section
+						style={{
+							paddingTop: "24px",
+							borderTop: `1px solid ${EMAIL_COLORS.border}`,
+							textAlign: "center",
+						}}
+					>
+						<Text style={EMAIL_STYLES.text.tiny}>
+							© {new Date().getFullYear()} Synclune
+						</Text>
+					</Section>
+				</Container>
+			</Body>
 		</Html>
 	);
 };
@@ -192,7 +187,7 @@ RefundConfirmationEmail.PreviewProps = {
 	originalOrderTotal: 8990,
 	reason: "CUSTOMER_REQUEST",
 	isPartialRefund: false,
-	orderDetailsUrl: "https://synclune.fr/mon-compte/commandes/CMD-2024-ABCD1234",
+	orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-2024-ABCD1234",
 } as RefundConfirmationEmailProps;
 
 export default RefundConfirmationEmail;

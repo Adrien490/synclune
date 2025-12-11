@@ -1,9 +1,9 @@
 "use client";
 
+import * as React from "react";
 import { FieldLabel, FormLayout, FormSection } from "@/shared/components/forms";
 import {
 	WizardProvider,
-	useWizardContext,
 	useFormWizard,
 	WizardStepContainer,
 	WizardMobileShell,
@@ -76,7 +76,7 @@ export function CreateProductForm({
 	materials,
 }: CreateProductFormProps) {
 	return (
-		<WizardProvider totalSteps={PRODUCT_STEPS.length} desktopMode="all">
+		<WizardProvider totalSteps={PRODUCT_STEPS.length}>
 			<CreateProductFormContent
 				productTypes={productTypes}
 				collections={collections}
@@ -96,8 +96,8 @@ function CreateProductFormContent({
 	const router = useRouter();
 	const { startUpload, isUploading: isMediaUploading } = useUploadThing("catalogMedia");
 
-	// Get resetWizard and isMobile from context first (needed for onSuccess)
-	const { resetWizard, isMobile } = useWizardContext();
+	// Ref to store resetWizard function (assigned after wizard creation)
+	const resetWizardRef = React.useRef<(() => void) | null>(null);
 
 	// Create form with onSuccess that resets wizard on mobile
 	const { form, action, isPending } = useCreateProductForm({
@@ -107,17 +107,18 @@ function CreateProductFormContent({
 			});
 			form.reset();
 			// Reset wizard to step 1 on mobile
-			if (isMobile) {
-				resetWizard();
-			}
+			resetWizardRef.current?.();
 		},
 	});
 
-	// Now create wizard with form (using adapter for type safety)
+	// Create wizard with form (using adapter for type safety)
 	const wizard = useFormWizard({
 		steps: PRODUCT_STEPS,
 		form: createTanStackFormAdapter(form),
 	});
+
+	// Store resetWizard reference for onSuccess callback (only on mobile)
+	resetWizardRef.current = wizard.isMobile ? wizard.resetWizard : null;
 
 	const isUploading = isMediaUploading;
 

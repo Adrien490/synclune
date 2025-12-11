@@ -1,6 +1,6 @@
 "use client"
 
-import { useWizardContext } from "../components/wizard-context"
+import { useWizardContext, type WizardDesktopMode } from "../components/wizard-context"
 import { useWizardNavigation } from "./use-wizard-navigation"
 import { useWizardValidation } from "./use-wizard-validation"
 import { useWizardAccessibility } from "./use-wizard-accessibility"
@@ -48,10 +48,6 @@ export interface UseFormWizardReturn {
 	completedSteps: Set<number>
 	progress: number
 
-	// Mode
-	isMobile: boolean
-	effectiveMode: "wizard" | "all"
-
 	// Accessibilité
 	registerStepRef: (stepIndex: number, element: HTMLElement | null) => void
 	announcement: string
@@ -61,6 +57,12 @@ export interface UseFormWizardReturn {
 
 	// Persistence
 	clearPersistence: () => void
+
+	// Mode responsive
+	/** Détection mobile via media query */
+	isMobile: boolean
+	/** Mode effectif: "wizard" sur mobile, ou selon desktopMode sur desktop */
+	effectiveMode: WizardDesktopMode
 }
 
 export function useFormWizard({
@@ -79,7 +81,7 @@ export function useFormWizard({
 		markStepIncomplete,
 		resetWizard,
 		isMobile,
-		desktopMode,
+		effectiveMode,
 	} = useWizardContext()
 
 	// Merge messages
@@ -133,9 +135,6 @@ export function useFormWizard({
 	// Progress percentage
 	const progress = Math.round((completedSteps.size / totalSteps) * 100)
 
-	// Mode effectif basé sur le device
-	const effectiveMode = isMobile ? "wizard" : desktopMode
-
 	return {
 		// État
 		currentStep,
@@ -163,10 +162,6 @@ export function useFormWizard({
 		completedSteps,
 		progress,
 
-		// Mode
-		isMobile,
-		effectiveMode,
-
 		// Accessibilité
 		registerStepRef: accessibility.registerStepRef,
 		announcement: accessibility.announcement,
@@ -176,5 +171,9 @@ export function useFormWizard({
 
 		// Persistence
 		clearPersistence: persistence.clearPersistence,
+
+		// Mode responsive
+		isMobile,
+		effectiveMode,
 	}
 }

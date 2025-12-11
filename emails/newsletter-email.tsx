@@ -32,34 +32,22 @@ export const NewsletterEmail = ({
 						<Text
 							style={{
 								margin: 0,
-								fontSize: "28px",
+								fontSize: "24px",
 								fontWeight: "bold",
 								color: EMAIL_COLORS.primary,
 							}}
 						>
 							Synclune
 						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
-							Créations artisanales
-						</Text>
 					</Section>
 
 					{/* Titre */}
 					<Section style={{ marginBottom: "24px" }}>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "20px",
-								fontWeight: "600",
-								color: EMAIL_COLORS.text.primary,
-							}}
-						>
-							{subject}
-						</Text>
+						<Text style={EMAIL_STYLES.heading.h2}>{subject}</Text>
 					</Section>
 
 					{/* Contenu */}
-					<Section style={{ marginBottom: "32px" }}>
+					<Section style={{ marginBottom: "24px" }}>
 						<Text
 							style={{
 								margin: 0,
@@ -79,7 +67,7 @@ export const NewsletterEmail = ({
 							href="https://synclune.fr/produits"
 							style={EMAIL_STYLES.button.primary}
 						>
-							Découvrir les créations
+							Voir les créations
 						</Button>
 					</Section>
 
@@ -88,12 +76,10 @@ export const NewsletterEmail = ({
 						style={{
 							paddingTop: "24px",
 							borderTop: `1px solid ${EMAIL_COLORS.border}`,
+							textAlign: "center",
 						}}
 					>
-						<Text style={EMAIL_STYLES.text.small}>
-							Vous recevez cet email car vous êtes inscrit à la newsletter.
-						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "16px", textAlign: "center" }}>
+						<Text style={EMAIL_STYLES.text.tiny}>
 							<a
 								href={unsubscribeUrl}
 								style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}
@@ -101,11 +87,8 @@ export const NewsletterEmail = ({
 								Se désinscrire
 							</a>
 						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "16px", textAlign: "center" }}>
-							Synclune
-						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "8px", textAlign: "center" }}>
-							© {new Date().getFullYear()} Synclune - Tous droits réservés
+						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "12px" }}>
+							© {new Date().getFullYear()} Synclune
 						</Text>
 					</Section>
 				</Container>
@@ -115,9 +98,9 @@ export const NewsletterEmail = ({
 };
 
 NewsletterEmail.PreviewProps = {
-	subject: "Nouvelles créations disponibles",
+	subject: "Nouvelles créations",
 	content:
-		"Bonjour,\n\nJ'ai le plaisir de vous présenter mes dernières créations. Chaque pièce est faite à la main avec soin.\n\nN'hésitez pas à jeter un œil !",
+		"Bonjour,\n\nJ'ai le plaisir de vous présenter mes dernières créations.",
 	unsubscribeUrl: "https://synclune.fr/newsletter/unsubscribe",
 } as NewsletterEmailProps;
 

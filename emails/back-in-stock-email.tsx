@@ -24,12 +24,6 @@ interface BackInStockEmailProps {
 	unsubscribeUrl: string;
 }
 
-/**
- * Email de notification de retour en stock
- *
- * Envoyé aux clients qui ont demandé à être notifiés
- * quand un produit en rupture de stock revient disponible.
- */
 export const BackInStockEmail = ({
 	productTitle,
 	productUrl,
@@ -41,26 +35,22 @@ export const BackInStockEmail = ({
 	availableQuantity,
 	unsubscribeUrl,
 }: BackInStockEmailProps) => {
-	// Formater le prix en euros
 	const formattedPrice = new Intl.NumberFormat("fr-FR", {
 		style: "currency",
 		currency: "EUR",
 	}).format(price / 100);
 
-	// Construire la description des variantes
 	const variantParts: string[] = [];
 	if (skuColor) variantParts.push(skuColor);
 	if (skuMaterial) variantParts.push(skuMaterial);
 	if (skuSize) variantParts.push(`Taille ${skuSize}`);
 	const variantDescription =
-		variantParts.length > 0 ? variantParts.join(" - ") : null;
+		variantParts.length > 0 ? variantParts.join(" · ") : null;
 
 	return (
 		<Html>
 			<Head />
-			<Preview>
-				Bonne nouvelle ! "{productTitle}" est de retour en stock
-			</Preview>
+			<Preview>{productTitle} est de retour en stock</Preview>
 			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
 				<Container style={EMAIL_STYLES.container}>
 					{/* Header */}
@@ -68,53 +58,34 @@ export const BackInStockEmail = ({
 						<Text
 							style={{
 								margin: 0,
-								fontSize: "28px",
+								fontSize: "24px",
 								fontWeight: "bold",
 								color: EMAIL_COLORS.primary,
 							}}
 						>
 							Synclune
 						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
-							Creations artisanales
-						</Text>
 					</Section>
 
 					{/* Titre */}
-					<Section style={{ marginBottom: "24px", textAlign: "center" }}>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "20px",
-								fontWeight: "600",
-								color: EMAIL_COLORS.text.primary,
-							}}
-						>
-							Bonne nouvelle !
-						</Text>
-						<Text
-							style={{
-								...EMAIL_STYLES.text.body,
-								marginTop: "8px",
-							}}
-						>
-							Un produit que tu attendais est de retour en stock
-						</Text>
+					<Section style={{ marginBottom: "24px" }}>
+						<Text style={EMAIL_STYLES.heading.h2}>Retour en stock</Text>
 					</Section>
 
 					{/* Produit */}
 					<Section
 						style={{
-							...EMAIL_STYLES.section.highlighted,
+							...EMAIL_STYLES.section.card,
 							marginBottom: "24px",
+							textAlign: "center",
 						}}
 					>
 						{skuImageUrl && (
 							<Img
 								src={skuImageUrl}
 								alt={productTitle}
-								width="200"
-								height="200"
+								width="180"
+								height="180"
 								style={{
 									display: "block",
 									margin: "0 auto 16px",
@@ -130,46 +101,32 @@ export const BackInStockEmail = ({
 								fontSize: "18px",
 								fontWeight: "600",
 								color: EMAIL_COLORS.text.primary,
-								textAlign: "center",
 							}}
 						>
 							{productTitle}
 						</Text>
 
 						{variantDescription && (
-							<Text
-								style={{
-									...EMAIL_STYLES.text.small,
-									marginTop: "8px",
-									textAlign: "center",
-								}}
-							>
+							<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
 								{variantDescription}
 							</Text>
 						)}
 
 						<Text
 							style={{
-								margin: "16px 0 0",
-								fontSize: "20px",
+								margin: "12px 0 0",
+								fontSize: "18px",
 								fontWeight: "bold",
 								color: EMAIL_COLORS.primary,
-								textAlign: "center",
 							}}
 						>
 							{formattedPrice}
 						</Text>
 
-						<Text
-							style={{
-								...EMAIL_STYLES.text.small,
-								marginTop: "8px",
-								textAlign: "center",
-							}}
-						>
+						<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
 							{availableQuantity === 1
-								? "Dernier exemplaire disponible !"
-								: `${availableQuantity} exemplaires disponibles`}
+								? "Dernier exemplaire"
+								: `${availableQuantity} disponibles`}
 						</Text>
 					</Section>
 
@@ -180,20 +137,6 @@ export const BackInStockEmail = ({
 						</Button>
 					</Section>
 
-					{/* Info stock limité */}
-					<Section style={{ marginBottom: "24px" }}>
-						<Text
-							style={{
-								...EMAIL_STYLES.text.small,
-								textAlign: "center",
-								lineHeight: "1.6",
-							}}
-						>
-							Les stocks de nos creations artisanales sont limites.
-							N'attends pas trop longtemps pour te faire plaisir !
-						</Text>
-					</Section>
-
 					{/* Footer */}
 					<Section
 						style={{
@@ -202,18 +145,13 @@ export const BackInStockEmail = ({
 							textAlign: "center",
 						}}
 					>
-						<Text style={EMAIL_STYLES.text.small}>Synclune</Text>
-						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "8px" }}>
-							Tu recois cet email car tu as demande a etre prevenu(e) du retour
-							en stock de ce produit.
-						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "8px" }}>
+						<Text style={EMAIL_STYLES.text.tiny}>
 							<Link href={unsubscribeUrl} style={EMAIL_STYLES.link}>
-								Ne plus recevoir ces notifications
+								Se désabonner
 							</Link>
 						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "16px" }}>
-							© {new Date().getFullYear()} Synclune - Tous droits reserves
+						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "12px" }}>
+							© {new Date().getFullYear()} Synclune
 						</Text>
 					</Section>
 				</Container>
@@ -228,8 +166,7 @@ BackInStockEmail.PreviewProps = {
 	skuColor: "Rose",
 	skuMaterial: "Argent 925",
 	skuSize: "52",
-	skuImageUrl:
-		"https://utfs.io/f/example-image.jpg",
+	skuImageUrl: "https://utfs.io/f/example-image.jpg",
 	price: 4500,
 	availableQuantity: 3,
 	unsubscribeUrl:

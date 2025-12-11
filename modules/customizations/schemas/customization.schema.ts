@@ -10,6 +10,11 @@ import { z } from "zod";
 const FRENCH_PHONE_REGEX = /^(\+33|0)[1-9](\d{2}){4}$/;
 
 /**
+ * Regex pour validation CUID
+ */
+const CUID_REGEX = /^c[a-z0-9]{24}$/;
+
+/**
  * Schema du formulaire de personnalisation
  * Formulaire dédié aux demandes de personnalisation et gravure uniquement
  */
@@ -38,20 +43,43 @@ export const customizationSchema = z
 		phone: z
 			.string()
 			.regex(FRENCH_PHONE_REGEX, {
-				message: "Le numéro de téléphone doit être au format français valide (ex: 06 12 34 56 78 ou +33 6 12 34 56 78)",
+				message:
+					"Le numéro de téléphone doit être au format français valide (ex: 06 12 34 56 78 ou +33 6 12 34 56 78)",
 			})
 			.optional()
 			.or(z.literal("")),
 
-		// Détails de la personnalisation
-		jewelryType: z
+		// Type de produit
+		productTypeLabel: z
 			.string({ message: "Le type de produit est requis" })
 			.min(1, { message: "Veuillez sélectionner un type de produit" }),
 
-		customizationDetails: z
+		// Inspirations (produits existants comme référence)
+		inspirationProductIds: z
+			.array(z.string().regex(CUID_REGEX, { message: "ID de produit invalide" }))
+			.max(5, { message: "Vous pouvez sélectionner au maximum 5 produits" })
+			.optional()
+			.default([]),
+
+		// Préférences de couleurs
+		preferredColorIds: z
+			.array(z.string().regex(CUID_REGEX, { message: "ID de couleur invalide" }))
+			.max(10, { message: "Vous pouvez sélectionner au maximum 10 couleurs" })
+			.optional()
+			.default([]),
+
+		// Préférences de matériaux
+		preferredMaterialIds: z
+			.array(z.string().regex(CUID_REGEX, { message: "ID de matériau invalide" }))
+			.max(5, { message: "Vous pouvez sélectionner au maximum 5 matériaux" })
+			.optional()
+			.default([]),
+
+		// Détails de la personnalisation
+		details: z
 			.string({ message: "Les détails de votre projet sont requis" })
 			.min(20, { message: "Les détails doivent contenir au moins 20 caractères" })
-			.max(1000, { message: "Les détails ne peuvent pas dépasser 1000 caractères" })
+			.max(2000, { message: "Les détails ne peuvent pas dépasser 2000 caractères" })
 			.trim(),
 
 		// Consentements

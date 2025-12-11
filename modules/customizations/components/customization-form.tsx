@@ -1,15 +1,21 @@
 "use client";
 
-import { FormLayout, FormSection } from "@/shared/components/forms";
+import { useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormLayout, FormSection, FieldLabel } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
-import {
-	Sparkles,
-	UserCircle,
-} from "lucide-react";
+import { Badge } from "@/shared/components/ui/badge";
+import { Autocomplete } from "@/shared/components/autocomplete";
+import { MultiSelect, type MultiSelectOption } from "@/shared/components/multi-select";
+import { Sparkles, UserCircle, Palette, X } from "lucide-react";
 import { toast } from "sonner";
+
 import { useCustomizationForm } from "../hooks/use-customization-form";
+import type { ProductSearchResult } from "../types";
+import type { Color } from "@/modules/colors/types/color.types";
+import type { Material } from "@/modules/materials/types/materials.types";
 
 type ProductType = {
 	id: string;
@@ -19,25 +25,103 @@ type ProductType = {
 
 interface CustomizationFormProps {
 	productTypes: ProductType[];
+	productSearchQuery: string;
+	productSearchResults: ProductSearchResult[];
+	colors: Color[];
+	materials: Material[];
 	onSuccess?: () => void;
 }
 
-export function CustomizationForm({ productTypes, onSuccess }: CustomizationFormProps) {
+export function CustomizationForm({
+	productTypes,
+	productSearchQuery,
+	productSearchResults,
+	colors,
+	materials,
+	onSuccess,
+}: CustomizationFormProps) {
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const [isSearchPending, startSearchTransition] = useTransition();
+
+	// État local pour les produits sélectionnés
+	const [selectedProducts, setSelectedProducts] = useState<ProductSearchResult[]>([]);
+	const [localSearchValue, setLocalSearchValue] = useState(productSearchQuery);
+
 	const { form, action, isPending } = useCustomizationForm({
 		onSuccess: () => {
-			// Reset le formulaire
 			form.reset();
-
-			// Call custom success callback
+			setSelectedProducts([]);
+			setLocalSearchValue("");
+			// Nettoyer l'URL
+			const params = new URLSearchParams(searchParams.toString());
+			params.delete("productSearch");
+			router.replace(`?${params.toString()}`, { scroll: false });
 			onSuccess?.();
-
-			// Afficher toast de succès
 			toast.success("Message envoyé !", {
 				description: "Je te réponds sous 24-48h avec un devis personnalisé",
 				duration: 8000,
 			});
 		},
 	});
+
+	// Mise à jour de l'URL pour la recherche de produits (le debounce est géré par Autocomplete)
+	const updateProductSearch = (value: string) => {
+		setLocalSearchValue(value);
+		// Mettre à jour l'URL pour déclencher la recherche côté serveur
+		startSearchTransition(() => {
+			const params = new URLSearchParams(searchParams.toString());
+			if (value.length >= 3) {
+				params.set("productSearch", value);
+			} else {
+				params.delete("productSearch");
+			}
+			router.replace(`?${params.toString()}`, { scroll: false });
+		});
+	};
+
+	// Sélection d'un produit depuis l'autocomplete
+	const handleProductSelect = (product: ProductSearchResult) => {
+		if (selectedProducts.length >= 5) {
+			toast.error("Maximum 5 produits", {
+				description: "Tu peux sélectionner jusqu'à 5 créations pour t'inspirer",
+			});
+			return;
+		}
+		if (selectedProducts.find((p) => p.id === product.id)) {
+			return; // Déjà sélectionné
+		}
+		const newSelected = [...selectedProducts, product];
+		setSelectedProducts(newSelected);
+		form.setFieldValue("inspirationProductIds", newSelected.map((p) => p.id));
+		// Vider la recherche
+		setLocalSearchValue("");
+		const params = new URLSearchParams(searchParams.toString());
+		params.delete("productSearch");
+		router.replace(`?${params.toString()}`, { scroll: false });
+	};
+
+	// Suppression d'un produit sélectionné
+	const handleProductRemove = (productId: string) => {
+		const newSelected = selectedProducts.filter((p) => p.id !== productId);
+		setSelectedProducts(newSelected);
+		form.setFieldValue("inspirationProductIds", newSelected.map((p) => p.id));
+	};
+
+	// Convertir les couleurs en options pour MultiSelect
+	const colorOptions: MultiSelectOption[] = colors.map((color) => ({
+		label: color.name,
+		value: color.id,
+		style: {
+			badgeColor: color.hex,
+		},
+	}));
+
+	// Convertir les matériaux en options pour MultiSelect
+	const materialOptions: MultiSelectOption[] = materials.map((material) => ({
+		label: material.name,
+		value: material.id,
+	}));
 
 	return (
 		<form
@@ -56,13 +140,31 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 				tabIndex={-1}
 			/>
 
-			{/* Champ caché pour le type de produit */}
-			<form.Subscribe selector={(state) => [state.values.jewelryType]}>
-				{([jewelryType]) =>
-					jewelryType ? (
-						<input type="hidden" name="jewelryType" value={jewelryType} />
-					) : null
-				}
+			{/* Champs cachés pour les multi-selects */}
+			<form.Subscribe
+				selector={(state) => [
+					state.values.productTypeLabel,
+					state.values.inspirationProductIds,
+					state.values.preferredColorIds,
+					state.values.preferredMaterialIds,
+				]}
+			>
+				{([productTypeLabel, inspirationProductIds, preferredColorIds, preferredMaterialIds]) => (
+					<>
+						{productTypeLabel && (
+							<input type="hidden" name="productTypeLabel" value={productTypeLabel} />
+						)}
+						{(inspirationProductIds as string[])?.map((id) => (
+							<input key={id} type="hidden" name="inspirationProductIds" value={id} />
+						))}
+						{(preferredColorIds as string[])?.map((id) => (
+							<input key={id} type="hidden" name="preferredColorIds" value={id} />
+						))}
+						{(preferredMaterialIds as string[])?.map((id) => (
+							<input key={id} type="hidden" name="preferredMaterialIds" value={id} />
+						))}
+					</>
+				)}
 			</form.Subscribe>
 
 			{/* Erreurs globales du formulaire */}
@@ -72,7 +174,7 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 
 			<RequiredFieldsNote />
 
-			{/* SECTIONS 1 & 2 : Coordonnées + Personnalisation en 2 colonnes */}
+			{/* SECTIONS en 2 colonnes */}
 			<FormLayout cols={2}>
 				{/* SECTION 1 : Informations personnelles */}
 				<FormSection
@@ -92,13 +194,7 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 								},
 							}}
 						>
-							{(field) => (
-								<field.InputField
-									label="Prénom"
-									required
-									autoFocus
-								/>
-							)}
+							{(field) => <field.InputField label="Prénom" required autoFocus />}
 						</form.AppField>
 
 						{/* Nom */}
@@ -112,9 +208,7 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 								},
 							}}
 						>
-							{(field) => (
-								<field.InputField label="Nom" required />
-							)}
+							{(field) => <field.InputField label="Nom" required />}
 						</form.AppField>
 					</div>
 
@@ -126,31 +220,20 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 								if (!value) {
 									return "L'adresse email est requise";
 								}
-								// Simple email validation
 								if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
 									return "Entre une adresse email valide";
 								}
 							},
 						}}
 					>
-						{(field) => (
-							<field.InputField
-								label="Adresse email"
-								type="email"
-								required
-							/>
-						)}
+						{(field) => <field.InputField label="Adresse email" type="email" required />}
 					</form.AppField>
 
 					{/* Téléphone (optionnel) */}
 					<form.AppField name="phone">
 						{(field) => (
 							<div className="space-y-2">
-								<field.InputField
-									label="Téléphone"
-									type="tel"
-									placeholder="06 12 34 56 78"
-								/>
+								<field.InputField label="Téléphone" type="tel" placeholder="06 12 34 56 78" />
 								<p className="text-xs text-muted-foreground">
 									Format français (ex: 06 12 34 56 78 ou +33 6 12 34 56 78)
 								</p>
@@ -167,7 +250,7 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 				>
 					{/* Type de produit */}
 					<form.AppField
-						name="jewelryType"
+						name="productTypeLabel"
 						validators={{
 							onChange: ({ value }: { value: string }) => {
 								if (!value) {
@@ -194,7 +277,7 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 
 					{/* Détails de personnalisation */}
 					<form.AppField
-						name="customizationDetails"
+						name="details"
 						validators={{
 							onChange: ({ value }: { value: string }) => {
 								if (!value || value.trim().length < 20) {
@@ -208,11 +291,11 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 								<field.TextareaField
 									label="Détails de ton projet"
 									required
-									rows={8}
-									placeholder="N'hésite pas à me donner tous les détails : couleurs préférées, inspirations (Pokémon, Van Gogh, autre ?), occasion spéciale, matériaux souhaités... Plus j'en sais, mieux c'est !"
+									rows={6}
+									placeholder="Décris ton idée : style souhaité, occasion spéciale, détails particuliers..."
 								/>
 								<p className="text-xs text-muted-foreground text-right">
-									{field.state.value?.length || 0} / 1000 caractères
+									{field.state.value?.length || 0} / 2000 caractères
 								</p>
 							</div>
 						)}
@@ -220,11 +303,120 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 				</FormSection>
 			</FormLayout>
 
-			{/* Consentements - intégrés sans section */}
+			{/* SECTION 3 : Inspirations et préférences */}
+			<FormSection
+				title="Inspirations et préférences"
+				description="Aide-moi à comprendre tes goûts en sélectionnant des créations, couleurs ou matériaux qui t'inspirent"
+				icon={<Palette className="w-5 h-5" />}
+			>
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+					{/* Produits inspirants - Autocomplete */}
+					<div className="space-y-2">
+						<FieldLabel
+							optional
+							tooltip="Sélectionnez jusqu'à 5 créations existantes qui vous inspirent"
+						>
+							Inspirations
+						</FieldLabel>
+						<Autocomplete
+							name="productSearch"
+							value={localSearchValue}
+							onChange={updateProductSearch}
+							onSelect={handleProductSelect}
+							items={productSearchResults}
+							getItemLabel={(p) => p.title}
+							getItemImage={(p) =>
+								p.imageUrl
+									? { src: p.imageUrl, alt: p.title, blurDataUrl: p.blurDataUrl }
+									: null
+							}
+							placeholder="Rechercher une création..."
+							isLoading={isSearchPending}
+							minQueryLength={3}
+							disabled={isPending || selectedProducts.length >= 5}
+							noResultsMessage="Aucune création trouvée"
+							showSearchIcon
+							showClearButton
+						/>
+						{/* Produits sélectionnés */}
+						{selectedProducts.length > 0 && (
+							<div className="flex flex-wrap gap-1.5 mt-2">
+								{selectedProducts.map((product) => (
+									<Badge
+										key={product.id}
+										variant="secondary"
+										className="pr-1 gap-1"
+									>
+										{product.title}
+										<button
+											type="button"
+											onClick={() => handleProductRemove(product.id)}
+											className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors"
+											aria-label={`Retirer ${product.title}`}
+										>
+											<X className="size-3" />
+										</button>
+									</Badge>
+								))}
+							</div>
+						)}
+						<p className="text-xs text-muted-foreground">
+							{selectedProducts.length}/5 créations sélectionnées
+						</p>
+					</div>
+
+					{/* Couleurs préférées - MultiSelect inline */}
+					<form.AppField name="preferredColorIds">
+						{(field) => (
+							<div className="space-y-2">
+								<FieldLabel
+									optional
+									tooltip="Sélectionnez les couleurs que vous aimeriez voir dans votre création"
+								>
+									Couleurs préférées
+								</FieldLabel>
+								<MultiSelect
+									options={colorOptions}
+									defaultValue={field.state.value || []}
+									onValueChange={(value) => field.handleChange(value)}
+									placeholder="Choisir des couleurs..."
+									maxCount={5}
+									disabled={isPending}
+									searchable={false}
+								/>
+							</div>
+						)}
+					</form.AppField>
+
+					{/* Matériaux souhaités - MultiSelect inline */}
+					<form.AppField name="preferredMaterialIds">
+						{(field) => (
+							<div className="space-y-2">
+								<FieldLabel
+									optional
+									tooltip="Sélectionnez les matériaux que vous préférez"
+								>
+									Matériaux souhaités
+								</FieldLabel>
+								<MultiSelect
+									options={materialOptions}
+									defaultValue={field.state.value || []}
+									onValueChange={(value) => field.handleChange(value)}
+									placeholder="Choisir des matériaux..."
+									maxCount={3}
+									disabled={isPending}
+									searchable={false}
+								/>
+							</div>
+						)}
+					</form.AppField>
+				</div>
+			</FormSection>
+
+			{/* Consentements */}
 			<Separator className="my-2" />
 
 			<div className="space-y-4">
-				{/* RGPD */}
 				<form.AppField
 					name="rgpdConsent"
 					validators={{
@@ -255,15 +447,12 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 						</div>
 					)}
 				</form.AppField>
-
 			</div>
 
 			{/* Footer avec bouton d'action */}
 			<div className="mt-6">
 				<div className="flex flex-col sm:flex-row justify-end gap-3">
-					<form.Subscribe
-						selector={(state) => [state.canSubmit]}
-					>
+					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button
 								type="submit"
@@ -276,7 +465,6 @@ export function CustomizationForm({ productTypes, onSuccess }: CustomizationForm
 								) : (
 									<>
 										Envoyer mon message
-										{/* Halo doré au survol */}
 										<span className="absolute inset-0 bg-linear-to-r from-accent/0 via-accent/20 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 									</>
 								)}

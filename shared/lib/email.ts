@@ -15,6 +15,7 @@ import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email";
 import { RefundConfirmationEmail } from "@/emails/refund-confirmation-email";
 import { RefundApprovedEmail } from "@/emails/refund-approved-email";
 import { CustomizationRequestEmail } from "@/emails/customization-request-email";
+import { CustomizationConfirmationEmail } from "@/emails/customization-confirmation-email";
 import { PaymentFailedEmail } from "@/emails/payment-failed-email";
 import { CancelOrderConfirmationEmail } from "@/emails/cancel-order-confirmation-email";
 import { ReturnConfirmationEmail } from "@/emails/return-confirmation-email";
@@ -107,7 +108,6 @@ export async function sendPasswordChangedEmail({
 			PasswordChangedEmail({
 				userName,
 				changeDate,
-				ipAddress,
 				resetUrl,
 			})
 		);
@@ -289,7 +289,6 @@ export async function sendOrderConfirmationEmail({
 				total,
 				shippingAddress,
 				trackingUrl,
-				orderId,
 			})
 		);
 
@@ -414,7 +413,6 @@ export async function sendTrackingUpdateEmail({
 				trackingNumber,
 				trackingUrl,
 				carrierLabel,
-				shippingAddress,
 				estimatedDelivery,
 			})
 		);
@@ -537,18 +535,15 @@ export async function sendAdminNewOrderEmail({
 		const emailHtml = await render(
 			AdminNewOrderEmail({
 				orderNumber,
-				orderId,
 				customerName,
 				customerEmail,
 				items,
 				subtotal,
 				discount,
 				shipping,
-				tax,
 				total,
 				shippingAddress,
 				dashboardUrl,
-				stripePaymentIntentId,
 			})
 		);
 
@@ -600,7 +595,6 @@ export async function sendAdminRefundFailedAlert({
 		const emailHtml = await render(
 			AdminRefundFailedEmail({
 				orderNumber,
-				orderId,
 				customerEmail,
 				amount,
 				reason,
@@ -639,15 +633,21 @@ export async function sendCustomizationRequestEmail({
 	lastName,
 	email,
 	phone,
-	jewelryType,
-	customizationDetails,
+	productTypeLabel,
+	details,
+	inspirationProducts,
+	preferredColors,
+	preferredMaterials,
 }: {
 	firstName: string;
 	lastName: string;
 	email: string;
 	phone?: string;
-	jewelryType: string;
-	customizationDetails: string;
+	productTypeLabel: string;
+	details: string;
+	inspirationProducts?: Array<{ title: string }>;
+	preferredColors?: Array<{ name: string; hex: string }>;
+	preferredMaterials?: Array<{ name: string }>;
 }) {
 	try {
 		const emailHtml = await render(
@@ -656,8 +656,11 @@ export async function sendCustomizationRequestEmail({
 				lastName,
 				email,
 				phone,
-				jewelryType,
-				customizationDetails,
+				productTypeLabel,
+				details,
+				inspirationProducts,
+				preferredColors,
+				preferredMaterials,
 			})
 		);
 
@@ -678,6 +681,55 @@ export async function sendCustomizationRequestEmail({
 		return { success: true, data };
 	} catch (error) {
 // console.error("[EMAIL] Exception sending customization request:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email de confirmation au client pour sa demande de personnalisation
+ */
+export async function sendCustomizationConfirmationEmail({
+	firstName,
+	email,
+	productTypeLabel,
+	details,
+	inspirationProducts,
+	preferredColors,
+	preferredMaterials,
+}: {
+	firstName: string;
+	email: string;
+	productTypeLabel: string;
+	details: string;
+	inspirationProducts?: Array<{ title: string }>;
+	preferredColors?: Array<{ name: string; hex: string }>;
+	preferredMaterials?: Array<{ name: string }>;
+}) {
+	try {
+		const emailHtml = await render(
+			CustomizationConfirmationEmail({
+				firstName,
+				productTypeLabel,
+				details,
+				inspirationProducts,
+				preferredColors,
+				preferredMaterials,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to: email,
+			subject: EMAIL_SUBJECTS.CUSTOMIZATION_CONFIRMATION,
+			html: emailHtml,
+		});
+
+		if (error) {
+			return { success: false, error };
+		}
+
+		return { success: true, data };
+	} catch (error) {
 		return { success: false, error };
 	}
 }

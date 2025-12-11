@@ -1,9 +1,8 @@
 "use client";
 
-import { FormLayout, FormSection } from "@/shared/components/forms";
+import { FormSection } from "@/shared/components/forms";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping } from "@/modules/orders/utils/shipping.utils";
@@ -17,7 +16,6 @@ import {
 } from "@/shared/constants/countries";
 import {
 	WizardProvider,
-	useWizardContext,
 	useFormWizard,
 	useUnsavedChanges,
 	WizardStepContainer,
@@ -92,9 +90,8 @@ interface CheckoutFormProps {
 }
 
 /**
- * Formulaire de checkout avec wizard multi-étapes
- * - Mobile : navigation étape par étape avec swipe
- * - Desktop : toutes les sections visibles en 2 colonnes
+ * Formulaire de checkout avec wizard multi-étapes (mobile-only)
+ * Navigation étape par étape avec support swipe et haptic feedback
  */
 export function CheckoutForm({
 	cart,
@@ -105,7 +102,7 @@ export function CheckoutForm({
 	const steps = getCheckoutSteps(isGuest);
 
 	return (
-		<WizardProvider totalSteps={steps.length} desktopMode="all">
+		<WizardProvider totalSteps={steps.length}>
 			<CheckoutFormContent
 				cart={cart}
 				session={session}
@@ -129,9 +126,6 @@ function CheckoutFormContent({
 	isGuest,
 	steps,
 }: CheckoutFormContentProps) {
-	// Get context first (needed for conditional logic)
-	const { isMobile } = useWizardContext();
-
 	// Form hook
 	const { form, action, isPending } = useCheckoutForm({ session, addresses });
 
@@ -169,7 +163,7 @@ function CheckoutFormContent({
 						title="Ton email"
 						description="Pour recevoir la confirmation"
 						icon={<Mail />}
-						hideHeader={wizard.effectiveMode === "wizard"}
+						hideHeader
 					>
 						<div className="space-y-4">
 							<form.AppField
@@ -239,7 +233,7 @@ function CheckoutFormContent({
 						title="Adresse de livraison"
 						description="Où souhaites-tu recevoir ta commande ?"
 						icon={<MapPin />}
-						hideHeader={wizard.effectiveMode === "wizard"}
+						hideHeader
 					>
 						{/* Email affiché pour utilisateurs connectés */}
 						{!isGuest && session?.user?.email && (
@@ -435,7 +429,7 @@ function CheckoutFormContent({
 						title="Adresse de facturation"
 						description="Par défaut, identique à l'adresse de livraison"
 						icon={<Receipt />}
-						hideHeader={wizard.effectiveMode === "wizard"}
+						hideHeader
 					>
 						<form.AppField name="billingDifferent">
 							{(field) => (
@@ -638,7 +632,7 @@ function CheckoutFormContent({
 						title="Conditions et paiement"
 						description="Finaliser ta commande"
 						icon={<Shield />}
-						hideHeader={wizard.effectiveMode === "wizard"}
+						hideHeader
 					>
 						{/* Droit de rétractation */}
 						<Alert className="mb-6">
@@ -783,92 +777,11 @@ function CheckoutFormContent({
 		</Button>
 	);
 
-	// Footer desktop
-	const renderFooter = () => (
-		<div className="space-y-4">
-			{renderPaymentButton()}
-			<p className="text-xs text-center text-muted-foreground">
-				Tu seras redirigé vers Stripe pour finaliser le paiement
-			</p>
-			<div className="p-4 bg-muted/30 rounded-lg border text-center space-y-2">
-				<p className="text-sm font-medium">Besoin d'aide ?</p>
-				<div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-sm text-muted-foreground">
-					<a
-						href="mailto:contact@synclune.fr"
-						className="flex items-center gap-2 hover:text-foreground transition-colors"
-					>
-						<Mail className="w-4 h-4" />
-						<span>contact@synclune.fr</span>
-					</a>
-					<span className="hidden sm:inline">•</span>
-					<span className="text-xs">Réponse sous 24h</span>
-				</div>
-			</div>
-		</div>
-	);
-
-	// Mode mobile : wizard avec navigation
-	if (wizard.effectiveMode === "wizard") {
-		return (
-			<form
-				action={action}
-				className="space-y-6"
-				onSubmit={() => void form.handleSubmit()}
-			>
-				{renderHiddenFields()}
-
-				<form.AppForm>
-					<form.FormErrorDisplay />
-				</form.AppForm>
-
-				<WizardMobileShell
-					steps={wizard.visibleSteps}
-					currentStep={wizard.currentStep}
-					completedSteps={wizard.completedSteps}
-					onStepClick={wizard.goToStep}
-					isFirstStep={wizard.isFirstStep}
-					isLastStep={wizard.isLastStep}
-					onPrevious={wizard.goPrevious}
-					onNext={wizard.goNext}
-					isSubmitting={isPending}
-					isValidating={wizard.isValidating}
-					getStepErrors={wizard.getStepErrors}
-					title="Paiement"
-					renderLastStepFooter={() => (
-						<div className="space-y-3">
-							<div className="flex items-center gap-3">
-								<Button
-									type="button"
-									variant="outline"
-									onClick={wizard.goPrevious}
-									disabled={isPending}
-									className="flex-1 h-12"
-								>
-									Précédent
-								</Button>
-								{renderPaymentButton("flex-1 h-12 text-sm")}
-							</div>
-							<p className="text-xs text-center text-muted-foreground">
-								Tu seras redirigé vers Stripe
-							</p>
-						</div>
-					)}
-				>
-					{wizard.visibleSteps.map((step, index) => (
-						<WizardStepContainer key={step.id} step={step} stepIndex={index}>
-							{renderStepContent(index)}
-						</WizardStepContainer>
-					))}
-				</WizardMobileShell>
-			</form>
-		);
-	}
-
-	// Mode desktop : layout 2 colonnes pour livraison + facturation
+	// Rendu wizard mobile
 	return (
 		<form
 			action={action}
-			className="space-y-6 pb-32"
+			className="space-y-6"
 			onSubmit={() => void form.handleSubmit()}
 		>
 			{renderHiddenFields()}
@@ -877,21 +790,45 @@ function CheckoutFormContent({
 				<form.FormErrorDisplay />
 			</form.AppForm>
 
-			<RequiredFieldsNote />
-
-			{/* Email (guests only) */}
-			{isGuest && renderStepContent(0)}
-
-			{/* Livraison + Facturation en 2 colonnes */}
-			<FormLayout cols={2}>
-				{renderStepContent(isGuest ? 1 : 0)}
-				{renderStepContent(isGuest ? 2 : 1)}
-			</FormLayout>
-
-			{/* Paiement */}
-			{renderStepContent(isGuest ? 3 : 2)}
-
-			{renderFooter()}
+			<WizardMobileShell
+				steps={wizard.visibleSteps}
+				currentStep={wizard.currentStep}
+				completedSteps={wizard.completedSteps}
+				onStepClick={wizard.goToStep}
+				isFirstStep={wizard.isFirstStep}
+				isLastStep={wizard.isLastStep}
+				onPrevious={wizard.goPrevious}
+				onNext={wizard.goNext}
+				isSubmitting={isPending}
+				isValidating={wizard.isValidating}
+				getStepErrors={wizard.getStepErrors}
+				title="Paiement"
+				renderLastStepFooter={() => (
+					<div className="space-y-3">
+						<div className="flex items-center gap-3">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={wizard.goPrevious}
+								disabled={isPending}
+								className="flex-1 h-12"
+							>
+								Précédent
+							</Button>
+							{renderPaymentButton("flex-1 h-12 text-sm")}
+						</div>
+						<p className="text-xs text-center text-muted-foreground">
+							Tu seras redirigé vers Stripe
+						</p>
+					</div>
+				)}
+			>
+				{wizard.visibleSteps.map((step, index) => (
+					<WizardStepContainer key={step.id} step={step} stepIndex={index}>
+						{renderStepContent(index)}
+					</WizardStepContainer>
+				))}
+			</WizardMobileShell>
 		</form>
 	);
 }

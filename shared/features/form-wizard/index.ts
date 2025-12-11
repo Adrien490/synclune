@@ -27,7 +27,6 @@ export type {
 	FormLike,
 	WizardMessages,
 	WizardDirection,
-	WizardMode,
 	WizardProgressVariant,
 	StepStatus,
 } from "./types"
