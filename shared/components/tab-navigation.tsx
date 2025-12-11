@@ -143,7 +143,7 @@ export function TabNavigation({
 										{panelTitle || "Parcourir par type"}
 									</DrawerTitle>
 								</DrawerHeader>
-								<DrawerBody className="pb-6">
+								<DrawerBody>
 									{/* Grid de catégories - TOUS les items */}
 									<div role="menu" className="grid grid-cols-2 gap-2">
 										{items.map((item) => {
