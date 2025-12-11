@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 
+import { Logo } from "@/shared/components/logo";
 import {
 	Sidebar,
 	SidebarContent,
@@ -9,8 +9,6 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/shared/components/ui/sidebar";
-import { cn } from "@/shared/utils/cn";
-import { dancingScript } from "@/shared/styles/fonts";
 import { NavMain } from "./nav-main";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -21,26 +19,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					<SidebarMenuItem>
 						<SidebarMenuButton size="lg" asChild>
 							<Link href="/admin">
-								<div className="relative flex aspect-square items-center justify-center rounded-lg overflow-hidden size-10 bg-sidebar-primary text-sidebar-primary-foreground">
-									<Image
-										src="https://x1ain1wpub.ufs.sh/f/nyHesfTydKuS7ITGCqR4OX2w0CSRulvbQWiftspFAahYELrj"
-										alt="Logo Synclune"
-										fill
-										className="object-cover"
-										sizes="40px"
-										quality={80}
-									/>
-								</div>
-								<div className="flex flex-col gap-0.5 leading-none">
-									<span
-										className={cn(
-											dancingScript.className,
-											"font-semibold text-2xl"
-										)}
-									>
-										Synclune
-									</span>
-								</div>
+								<Logo
+									size={40}
+									showText
+									className="gap-2"
+									imageClassName="rounded-lg"
+									textClassName="text-2xl"
+								/>
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>

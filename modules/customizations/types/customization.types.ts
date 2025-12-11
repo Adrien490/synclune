@@ -127,6 +127,7 @@ export interface ProductSearchResult {
 	id: string;
 	title: string;
 	slug: string;
+	description: string | null;
 	imageUrl: string | null;
 	blurDataUrl: string | null;
 }

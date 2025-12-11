@@ -286,11 +286,13 @@ function CustomizationFormContent({
 								onSelect={handleProductSelect}
 								items={productSearchResults}
 								getItemLabel={(p) => p.title}
+								getItemDescription={(p) => p.description}
 								getItemImage={(p) =>
 									p.imageUrl
 										? { src: p.imageUrl, alt: p.title, blurDataUrl: p.blurDataUrl }
 										: null
 								}
+								imageSize={48}
 								placeholder="Rechercher une creation..."
 								isLoading={isSearchPending}
 								minQueryLength={0}

@@ -38,7 +38,9 @@ export function Logo({
 	const linkClassName = cn(
 		"inline-flex items-center",
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-		"rounded-full transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+		"rounded-full transition-transform duration-200",
+		"hover:scale-[1.02] active:scale-95",
+		"motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
 	);
 
 	const logoContent = (

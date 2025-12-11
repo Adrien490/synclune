@@ -10,17 +10,16 @@ import {
 	CommandSeparator,
 } from "@/shared/components/ui/command";
 import {
+	Drawer,
+	DrawerClose,
+	DrawerContent,
+	DrawerTitle,
+} from "@/shared/components/ui/drawer";
+import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from "@/shared/components/ui/popover";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/shared/components/ui/dialog";
 import { Separator } from "@/shared/components/ui/separator";
 import { Spinner } from "@/shared/components/ui/spinner";
 import {
@@ -28,10 +27,11 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
-import { CheckIcon, ChevronDown, XCircle, XIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, ChevronDown, XCircle, XIcon } from "lucide-react";
 import * as React from "react";
-import { getScreenSize, multiSelectVariants } from "./constants";
+import { multiSelectVariants } from "./constants";
 import type {
 	MultiSelectOption,
 	MultiSelectProps,
@@ -90,6 +90,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 		const prevSelectedCount = React.useRef(selectedValues.length);
 		const prevIsOpen = React.useRef(isPopoverOpen);
 		const prevSearchValue = React.useRef(searchValue);
+
+		const isMobile = useIsMobile();
 
 		const announce = (
 			message: string,
@@ -155,20 +157,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			[resetToDefault, selectedValues, onValueChange]
 		);
 
-		const [screenSize, setScreenSize] = React.useState<ScreenSize>("desktop");
-
-		// Only add resize listener when responsive mode is enabled
-		React.useEffect(() => {
-			if (!responsive || typeof window === "undefined") return;
-
-			const handleResize = () => {
-				setScreenSize(getScreenSize(window.innerWidth));
-			};
-
-			handleResize();
-			window.addEventListener("resize", handleResize);
-			return () => window.removeEventListener("resize", handleResize);
-		}, [responsive]);
+		// Pour tablet/desktop responsive settings uniquement
+		const screenSize: ScreenSize = isMobile ? "mobile" : "desktop";
 
 		const responsiveSettings = getResponsiveSettings(
 			responsive,
@@ -340,6 +330,484 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			prevSearchValue.current = searchValue;
 		}, [searchValue, isPopoverOpen, allOptions]);
 
+		// Composant de rendu des options (réutilisé mobile/desktop)
+		const renderCommandContent = () => (
+			<>
+				{searchable && (
+					<div id={`${multiSelectId}-search-help`} className="sr-only">
+						Tapez pour filtrer. Flèches pour naviguer.
+					</div>
+				)}
+				<CommandList
+					className={cn(
+						"max-h-none overflow-y-auto multiselect-scrollbar flex-1",
+						"overscroll-behavior-y-contain"
+					)}
+				>
+					{isLoading ? (
+						<div className="flex items-center justify-center py-6">
+							<Spinner className="h-4 w-4" />
+							<span className="ml-2 text-sm text-muted-foreground">
+								Chargement...
+							</span>
+						</div>
+					) : (
+						<CommandEmpty>
+							{emptyIndicator ||
+								(searchValue
+									? `Aucun résultat pour "${searchValue}"`
+									: "Aucune option disponible")}
+						</CommandEmpty>
+					)}
+					{!isLoading && !hideSelectAll && !searchValue && (
+						<CommandGroup>
+							<CommandItem
+								key="all"
+								onSelect={toggleAll}
+								role="option"
+								aria-selected={
+									selectedValues.length ===
+									allOptions.filter((opt) => !opt.disabled).length
+								}
+								aria-label={`Sélectionner les ${allOptions.length} options`}
+								className="cursor-pointer py-3"
+							>
+								<div
+									className={cn(
+										"mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+										selectedValues.length ===
+											allOptions.filter((opt) => !opt.disabled).length
+											? "bg-primary text-primary-foreground"
+											: "opacity-50 [&_svg]:invisible"
+									)}
+									aria-hidden="true"
+								>
+									<CheckIcon className="h-4 w-4" />
+								</div>
+								<span>
+									(Tout sélectionner
+									{allOptions.length > 20
+										? ` - ${allOptions.length} éléments`
+										: ""}
+									)
+								</span>
+							</CommandItem>
+						</CommandGroup>
+					)}
+					{!isLoading &&
+						(isGroupedOptions(filteredOptions) ? (
+							filteredOptions.map((group) => (
+								<CommandGroup key={group.heading} heading={group.heading}>
+									{group.options.map((option) => {
+										const isSelected = selectedValues.includes(option.value);
+										return (
+											<CommandItem
+												key={option.value}
+												onSelect={() => toggleOption(option.value)}
+												role="option"
+												aria-selected={isSelected}
+												aria-disabled={option.disabled}
+												aria-label={`${option.label}${
+													isSelected ? ", sélectionné" : ", non sélectionné"
+												}${option.disabled ? ", désactivé" : ""}`}
+												className={cn(
+													"cursor-pointer py-3",
+													option.disabled && "opacity-50 cursor-not-allowed"
+												)}
+												disabled={option.disabled}
+											>
+												<div
+													className={cn(
+														"mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+														isSelected
+															? "bg-primary text-primary-foreground"
+															: "opacity-50 [&_svg]:invisible"
+													)}
+													aria-hidden="true"
+												>
+													<CheckIcon className="h-4 w-4" />
+												</div>
+												{option.icon && (
+													<option.icon
+														className="mr-2 h-4 w-4 text-muted-foreground"
+														aria-hidden="true"
+													/>
+												)}
+												<span>{option.label}</span>
+											</CommandItem>
+										);
+									})}
+								</CommandGroup>
+							))
+						) : (
+							<CommandGroup>
+								{filteredOptions.map((option) => {
+									const isSelected = selectedValues.includes(option.value);
+									return (
+										<CommandItem
+											key={option.value}
+											onSelect={() => toggleOption(option.value)}
+											role="option"
+											aria-selected={isSelected}
+											aria-disabled={option.disabled}
+											aria-label={`${option.label}${
+												isSelected ? ", sélectionné" : ", non sélectionné"
+											}${option.disabled ? ", désactivé" : ""}`}
+											className={cn(
+												"cursor-pointer py-3",
+												option.disabled && "opacity-50 cursor-not-allowed"
+											)}
+											disabled={option.disabled}
+										>
+											<div
+												className={cn(
+													"mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+													isSelected
+														? "bg-primary text-primary-foreground"
+														: "opacity-50 [&_svg]:invisible"
+												)}
+												aria-hidden="true"
+											>
+												<CheckIcon className="h-4 w-4" />
+											</div>
+											{option.icon && (
+												<option.icon
+													className="mr-2 h-4 w-4 text-muted-foreground"
+													aria-hidden="true"
+												/>
+											)}
+											<span>{option.label}</span>
+										</CommandItem>
+									);
+								})}
+							</CommandGroup>
+						))}
+				</CommandList>
+			</>
+		);
+
+		// Composant pour afficher les badges sélectionnés dans le trigger
+		const renderTriggerContent = () => {
+			if (selectedValues.length === 0) {
+				return (
+					<div className="flex items-center justify-between w-full mx-auto">
+						<span className="text-sm text-muted-foreground mx-3">
+							{placeholder}
+						</span>
+						<ChevronDown
+							className={cn(
+								"h-4 cursor-pointer text-muted-foreground mx-2 transition-transform duration-200",
+								isPopoverOpen && "rotate-180"
+							)}
+						/>
+					</div>
+				);
+			}
+
+			return (
+				<div className="flex justify-between items-center w-full">
+					<div
+						className={cn(
+							"flex items-center gap-1",
+							singleLine
+								? "overflow-x-auto multiselect-singleline-scroll"
+								: "flex-wrap",
+							responsiveSettings.compactMode && "gap-0.5"
+						)}
+						style={singleLine ? { paddingBottom: "4px" } : {}}
+					>
+						{selectedValues
+							.slice(0, responsiveSettings.maxCount)
+							.map((value) => {
+								const option = getOptionByValue(value);
+								const IconComponent = option?.icon;
+								const customStyle = option?.style;
+								if (!option) return null;
+
+								const badgeStyle: React.CSSProperties = {
+									animationDuration: `${animation}s`,
+									...(customStyle?.badgeColor && {
+										backgroundColor: customStyle.badgeColor,
+									}),
+									...(customStyle?.gradient && {
+										background: customStyle.gradient,
+										color: "white",
+									}),
+								};
+
+								return (
+									<Badge
+										key={value}
+										className={cn(
+											badgeAnimationClass,
+											multiSelectVariants({ variant }),
+											customStyle?.gradient && "text-white border-transparent",
+											responsiveSettings.compactMode && "text-xs px-1.5 py-0.5",
+											isMobile && "max-w-[120px] truncate",
+											singleLine && "shrink-0 whitespace-nowrap",
+											"[&>svg]:pointer-events-auto"
+										)}
+										style={{
+											...badgeStyle,
+											animationDuration: `${animationConfig?.duration || animation}s`,
+											animationDelay: `${animationConfig?.delay || 0}s`,
+										}}
+									>
+										{IconComponent && !responsiveSettings.hideIcons && (
+											<IconComponent
+												className={cn(
+													"h-4 w-4 mr-2",
+													responsiveSettings.compactMode && "h-3 w-3 mr-1",
+													customStyle?.iconColor && "text-current"
+												)}
+												{...(customStyle?.iconColor && {
+													style: { color: customStyle.iconColor },
+												})}
+											/>
+										)}
+										<span className={cn(isMobile && "truncate")}>
+											{option.label}
+										</span>
+										<div
+											role="button"
+											tabIndex={0}
+											onClick={(event) => {
+												event.stopPropagation();
+												toggleOption(value);
+											}}
+											onKeyDown={(event) => {
+												if (event.key === "Enter" || event.key === " ") {
+													event.preventDefault();
+													event.stopPropagation();
+													toggleOption(value);
+												}
+											}}
+											aria-label={`Retirer ${option.label} de la sélection`}
+											className={cn(
+												"ml-1 -mr-1 cursor-pointer hover:bg-white/20 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-white/50 flex items-center justify-center",
+												isMobile ? "h-10 w-10" : "h-6 w-6"
+											)}
+										>
+											<XCircle
+												className={cn(
+													"h-3 w-3",
+													responsiveSettings.compactMode && "h-2.5 w-2.5"
+												)}
+											/>
+										</div>
+									</Badge>
+								);
+							})
+							.filter(Boolean)}
+						{selectedValues.length > responsiveSettings.maxCount && (
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Badge
+										className={cn(
+											"bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
+											badgeAnimationClass,
+											multiSelectVariants({ variant }),
+											responsiveSettings.compactMode && "text-xs px-1.5 py-0.5",
+											singleLine && "shrink-0 whitespace-nowrap",
+											"[&>svg]:pointer-events-auto"
+										)}
+										style={{
+											animationDuration: `${animationConfig?.duration || animation}s`,
+											animationDelay: `${animationConfig?.delay || 0}s`,
+										}}
+									>
+										{`+ ${selectedValues.length - responsiveSettings.maxCount} de plus`}
+										<XCircle
+											className={cn(
+												"ml-2 h-4 w-4 cursor-pointer",
+												responsiveSettings.compactMode && "ml-1 h-3 w-3"
+											)}
+											onClick={(event) => {
+												event.stopPropagation();
+												clearExtraOptions();
+											}}
+										/>
+									</Badge>
+								</TooltipTrigger>
+								<TooltipContent side="bottom" className="max-w-[200px]">
+									<ul className="text-xs space-y-0.5">
+										{selectedValues
+											.slice(responsiveSettings.maxCount)
+											.map((value) => allOptions.find((o) => o.value === value))
+											.filter(Boolean)
+											.map((opt) => (
+												<li key={opt!.value}>{opt!.label}</li>
+											))}
+									</ul>
+								</TooltipContent>
+							</Tooltip>
+						)}
+					</div>
+					<div className="flex items-center justify-between">
+						<div
+							role="button"
+							tabIndex={0}
+							onClick={(event) => {
+								event.stopPropagation();
+								handleClear();
+							}}
+							onKeyDown={(event) => {
+								if (event.key === "Enter" || event.key === " ") {
+									event.preventDefault();
+									event.stopPropagation();
+									handleClear();
+								}
+							}}
+							aria-label={`Effacer les ${selectedValues.length} options sélectionnées`}
+							className={cn(
+								"flex items-center justify-center mx-2 cursor-pointer text-muted-foreground hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-sm",
+								isMobile ? "h-10 w-10" : "h-6 w-6"
+							)}
+						>
+							<XIcon className="h-4 w-4" />
+						</div>
+						<Separator orientation="vertical" className="flex min-h-6 h-full" />
+						<ChevronDown
+							className={cn(
+								"h-4 mx-2 cursor-pointer text-muted-foreground transition-transform duration-200",
+								isPopoverOpen && "rotate-180"
+							)}
+							aria-hidden="true"
+						/>
+					</div>
+				</div>
+			);
+		};
+
+		// ========================================
+		// VERSION MOBILE - Drawer fullscreen
+		// ========================================
+		if (isMobile) {
+			return (
+				<>
+					{/* Live regions pour accessibilité */}
+					<div className="sr-only">
+						<div aria-live="polite" aria-atomic="true" role="status">
+							{politeMessage}
+						</div>
+						<div aria-live="assertive" aria-atomic="true" role="alert">
+							{assertiveMessage}
+						</div>
+					</div>
+
+					<div id={triggerDescriptionId} className="sr-only">
+						Sélection multiple. Utilisez les flèches pour naviguer, Entrée pour
+						sélectionner, Échap pour fermer.
+					</div>
+					<div id={selectedCountId} className="sr-only" aria-live="polite">
+						{selectedValues.length === 0
+							? "Aucune option sélectionnée"
+							: `${selectedValues.length} option${
+									selectedValues.length === 1 ? "" : "s"
+								} sélectionnée${
+									selectedValues.length === 1 ? "" : "s"
+								} : ${selectedValues
+									.map((value) => getOptionByValue(value)?.label)
+									.filter(Boolean)
+									.join(", ")}`}
+					</div>
+
+					{/* Trigger button */}
+					<Button
+						ref={buttonRef}
+						{...props}
+						onClick={() => !disabled && setIsPopoverOpen(true)}
+						disabled={disabled}
+						role="combobox"
+						aria-expanded={isPopoverOpen}
+						aria-haspopup="listbox"
+						aria-controls={isPopoverOpen ? listboxId : undefined}
+						aria-describedby={`${triggerDescriptionId} ${selectedCountId}`}
+						aria-label={`Sélection multiple : ${selectedValues.length} sur ${allOptions.length} options sélectionnées. ${placeholder}`}
+						className={cn(
+							"flex p-1 rounded-md border min-h-11 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
+							autoSize ? "w-auto" : "w-full",
+							disabled && "opacity-50 cursor-not-allowed",
+							className
+						)}
+						style={{
+							...widthConstraints,
+							maxWidth: `min(${widthConstraints.maxWidth}, 100%)`,
+						}}
+					>
+						{renderTriggerContent()}
+					</Button>
+
+					{/* Drawer fullscreen */}
+					<Drawer
+						open={isPopoverOpen}
+						onOpenChange={setIsPopoverOpen}
+						direction="bottom"
+					>
+						<DrawerContent className="h-[100dvh] max-h-[100dvh] flex flex-col rounded-none">
+							<DrawerTitle className="sr-only">Sélection</DrawerTitle>
+
+							{/* Header sticky avec retour + recherche */}
+							<div className="sticky top-0 bg-background border-b px-3 py-3 flex items-center gap-2">
+								<DrawerClose asChild>
+									<button
+										type="button"
+										className="shrink-0 p-2 -ml-2 rounded-full hover:bg-muted transition-colors"
+										aria-label="Fermer"
+									>
+										<ArrowLeftIcon className="size-5" />
+									</button>
+								</DrawerClose>
+								{searchable && (
+									<div className="flex-1">
+										<Command className="rounded-none border-none">
+											<CommandInput
+												placeholder="Rechercher..."
+												onKeyDown={handleInputKeyDown}
+												value={searchValue}
+												onValueChange={setSearchValue}
+												aria-label="Rechercher parmi les options"
+												aria-describedby={`${multiSelectId}-search-help`}
+												autoFocus
+												className="h-10"
+											/>
+										</Command>
+									</div>
+								)}
+							</div>
+
+							{/* Liste scrollable */}
+							<Command className="flex-1 overflow-hidden flex flex-col">
+								{renderCommandContent()}
+							</Command>
+
+							{/* Footer sticky avec actions */}
+							<div className="sticky bottom-0 border-t bg-background p-3 flex gap-2">
+								{selectedValues.length > 0 && (
+									<Button
+										variant="outline"
+										onClick={handleClear}
+										className="flex-1"
+									>
+										Effacer
+									</Button>
+								)}
+								<Button
+									onClick={() => setIsPopoverOpen(false)}
+									className="flex-1"
+								>
+									Terminer la sélection
+								</Button>
+							</div>
+						</DrawerContent>
+					</Drawer>
+				</>
+			);
+		}
+
+		// ========================================
+		// VERSION DESKTOP - Popover classique
+		// ========================================
 		return (
 			<>
 				<div className="sr-only">
@@ -355,7 +823,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 					data-slot="multi-select"
 					open={isPopoverOpen}
 					onOpenChange={setIsPopoverOpen}
-					modal={modalPopover || screenSize === "mobile"}
+					modal={modalPopover}
 				>
 					<div id={triggerDescriptionId} className="sr-only">
 						Sélection multiple. Utilisez les flèches pour naviguer, Entrée pour
@@ -390,7 +858,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 								"flex p-1 rounded-md border min-h-11 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
 								autoSize ? "w-auto" : "w-full",
 								responsiveSettings.compactMode && "min-h-9 text-sm",
-								screenSize === "mobile" && "min-h-11 text-base",
 								disabled && "opacity-50 cursor-not-allowed",
 								className
 							)}
@@ -446,8 +913,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																"text-white border-transparent",
 															responsiveSettings.compactMode &&
 																"text-xs px-1.5 py-0.5",
-															screenSize === "mobile" &&
-																"max-w-[120px] truncate",
 															singleLine && "shrink-0 whitespace-nowrap",
 															"[&>svg]:pointer-events-auto"
 														)}
@@ -472,13 +937,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																})}
 															/>
 														)}
-														<span
-															className={cn(
-																screenSize === "mobile" && "truncate"
-															)}
-														>
-															{option.label}
-														</span>
+														<span>{option.label}</span>
 														<div
 															role="button"
 															tabIndex={0}
@@ -497,10 +956,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																}
 															}}
 															aria-label={`Retirer ${option.label} de la sélection`}
-															className={cn(
-																"ml-1 -mr-1 cursor-pointer hover:bg-white/20 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-white/50 flex items-center justify-center",
-																screenSize === "mobile" ? "h-10 w-10" : "h-6 w-6"
-															)}
+															className="ml-1 -mr-1 cursor-pointer hover:bg-white/20 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-white/50 flex items-center justify-center h-6 w-6"
 														>
 															<XCircle
 																className={cn(
@@ -522,69 +978,38 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 													.map((value) => allOptions.find((o) => o.value === value))
 													.filter(Boolean);
 
-												const badgeContent = (
-													<Badge
-														className={cn(
-															"bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
-															badgeAnimationClass,
-															multiSelectVariants({ variant }),
-															responsiveSettings.compactMode &&
-																"text-xs px-1.5 py-0.5",
-															singleLine && "shrink-0 whitespace-nowrap",
-															"[&>svg]:pointer-events-auto"
-														)}
-														style={{
-															animationDuration: `${
-																animationConfig?.duration || animation
-															}s`,
-															animationDelay: `${animationConfig?.delay || 0}s`,
-														}}
-													>
-														{`+ ${overflowCount} de plus`}
-														<XCircle
-															className={cn(
-																"ml-2 h-4 w-4 cursor-pointer",
-																responsiveSettings.compactMode && "ml-1 h-3 w-3"
-															)}
-															onClick={(event) => {
-																event.stopPropagation();
-																clearExtraOptions();
-															}}
-														/>
-													</Badge>
-												);
-
-												// Mobile: Dialog au tap
-												if (screenSize === "mobile") {
-													return (
-														<Dialog>
-															<DialogTrigger asChild>
-																{badgeContent}
-															</DialogTrigger>
-															<DialogContent className="max-w-[280px]">
-																<DialogHeader>
-																	<DialogTitle className="text-base">
-																		{overflowCount} option{overflowCount > 1 ? "s" : ""} supplémentaire{overflowCount > 1 ? "s" : ""}
-																	</DialogTitle>
-																</DialogHeader>
-																<ul className="text-sm space-y-1.5 mt-2">
-																	{overflowItems.map((opt) => (
-																		<li key={opt!.value} className="flex items-center gap-2">
-																			<span className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-																			{opt!.label}
-																		</li>
-																	))}
-																</ul>
-															</DialogContent>
-														</Dialog>
-													);
-												}
-
-												// Desktop: Tooltip au hover
 												return (
 													<Tooltip>
 														<TooltipTrigger asChild>
-															{badgeContent}
+															<Badge
+																className={cn(
+																	"bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
+																	badgeAnimationClass,
+																	multiSelectVariants({ variant }),
+																	responsiveSettings.compactMode &&
+																		"text-xs px-1.5 py-0.5",
+																	singleLine && "shrink-0 whitespace-nowrap",
+																	"[&>svg]:pointer-events-auto"
+																)}
+																style={{
+																	animationDuration: `${
+																		animationConfig?.duration || animation
+																	}s`,
+																	animationDelay: `${animationConfig?.delay || 0}s`,
+																}}
+															>
+																{`+ ${overflowCount} de plus`}
+																<XCircle
+																	className={cn(
+																		"ml-2 h-4 w-4 cursor-pointer",
+																		responsiveSettings.compactMode && "ml-1 h-3 w-3"
+																	)}
+																	onClick={(event) => {
+																		event.stopPropagation();
+																		clearExtraOptions();
+																	}}
+																/>
+															</Badge>
 														</TooltipTrigger>
 														<TooltipContent side="bottom" className="max-w-[200px]">
 															<ul className="text-xs space-y-0.5">
@@ -614,10 +1039,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 												}
 											}}
 											aria-label={`Effacer les ${selectedValues.length} options sélectionnées`}
-											className={cn(
-												"flex items-center justify-center mx-2 cursor-pointer text-muted-foreground hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-sm",
-												screenSize === "mobile" ? "h-10 w-10" : "h-6 w-6"
-											)}
+											className="flex items-center justify-center mx-2 cursor-pointer text-muted-foreground hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-sm h-6 w-6"
 										>
 											<XIcon className="h-4 w-4" />
 										</div>
@@ -655,19 +1077,15 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						aria-multiselectable="true"
 						aria-label="Options disponibles"
 						className={cn(
-							"w-auto p-0",
+							"w-auto p-0 min-w-[300px]",
 							popoverAnimationClass,
-							screenSize === "mobile" && "w-[85vw] max-w-[280px]",
-							screenSize === "tablet" && "w-[70vw] max-w-md",
-							screenSize === "desktop" && "min-w-[300px]",
 							popoverClassName
 						)}
 						style={{
 							animationDuration: `${animationConfig?.duration || animation}s`,
 							animationDelay: `${animationConfig?.delay || 0}s`,
 							maxWidth: `min(${widthConstraints.maxWidth}, 85vw)`,
-							maxHeight: screenSize === "mobile" ? "70vh" : "60vh",
-							touchAction: "manipulation",
+							maxHeight: "60vh",
 						}}
 						align="start"
 						onEscapeKeyDown={() => setIsPopoverOpen(false)}
@@ -689,11 +1107,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 								</div>
 							)}
 							<CommandList
-								className={cn(
-									"max-h-[40vh] overflow-y-auto multiselect-scrollbar",
-									screenSize === "mobile" && "max-h-[50vh]",
-									"overscroll-behavior-y-contain"
-								)}
+								className="max-h-[40vh] overflow-y-auto multiselect-scrollbar overscroll-behavior-y-contain"
 							>
 								{isLoading ? (
 									<div className="flex items-center justify-center py-6">
@@ -857,9 +1271,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											onSelect={() => setIsPopoverOpen(false)}
 											className="flex-1 justify-center cursor-pointer max-w-full"
 										>
-											{screenSize === "mobile" && selectedValues.length > 0
-												? "Terminer la sélection"
-												: "Fermer"}
+											Fermer
 										</CommandItem>
 									</div>
 								</CommandGroup>

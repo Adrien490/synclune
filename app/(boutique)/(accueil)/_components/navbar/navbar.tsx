@@ -67,7 +67,7 @@ export async function Navbar() {
 								href="/"
 								size={48}
 								className="hidden lg:flex min-w-0 max-w-full"
-								imageClassName="shadow-md hover:shadow-lg transition-all duration-300 ease-out hover:scale-105"
+								imageClassName="shadow-md hover:shadow-lg transition-shadow duration-300 ease-out"
 								priority
 								sizes="64px"
 								showText
@@ -82,7 +82,7 @@ export async function Navbar() {
 								href="/"
 								size={48}
 								className="lg:hidden"
-								imageClassName="shadow-md hover:shadow-lg transition-all duration-300 ease-out hover:scale-105"
+								imageClassName="shadow-md hover:shadow-lg transition-shadow duration-300 ease-out"
 								priority
 								sizes="(max-width: 640px) 48px, 56px"
 								showText={false}

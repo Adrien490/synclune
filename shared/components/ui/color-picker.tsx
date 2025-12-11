@@ -173,19 +173,25 @@ export const ColorPickerSelection = memo(
 			setLightness(newLightness);
 		};
 
-		const handlePointerMove = (event: PointerEvent) => {
+		// Support touch et pointer events
+		const getEventCoordinates = (event: PointerEvent | TouchEvent) => {
+			if ("touches" in event && event.touches.length > 0) {
+				return { x: event.touches[0].clientX, y: event.touches[0].clientY };
+			}
+			if ("clientX" in event) {
+				return { x: event.clientX, y: event.clientY };
+			}
+			return { x: 0, y: 0 };
+		};
+
+		const handlePointerMove = (event: PointerEvent | TouchEvent) => {
 			if (!(isDragging && containerRef.current)) {
 				return;
 			}
 			const rect = containerRef.current.getBoundingClientRect();
-			const x = Math.max(
-				0,
-				Math.min(1, (event.clientX - rect.left) / rect.width)
-			);
-			const y = Math.max(
-				0,
-				Math.min(1, (event.clientY - rect.top) / rect.height)
-			);
+			const { x: clientX, y: clientY } = getEventCoordinates(event);
+			const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+			const y = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
 			updateFromPosition(x, y);
 		};
 
@@ -222,18 +228,23 @@ export const ColorPickerSelection = memo(
 			if (isDragging) {
 				window.addEventListener("pointermove", handlePointerMove);
 				window.addEventListener("pointerup", handlePointerUp);
+				window.addEventListener("touchmove", handlePointerMove, { passive: false });
+				window.addEventListener("touchend", handlePointerUp);
 			}
 
 			return () => {
 				window.removeEventListener("pointermove", handlePointerMove);
 				window.removeEventListener("pointerup", handlePointerUp);
+				window.removeEventListener("touchmove", handlePointerMove);
+				window.removeEventListener("touchend", handlePointerUp);
 			};
 		}, [isDragging, handlePointerMove]);
 
 		return (
 			<div
 				role="slider"
-				aria-label="Sélection de saturation et luminosité"
+				aria-label="Sélecteur de couleur"
+				aria-description="Utilisez les flèches pour ajuster. Gauche/Droite: saturation. Haut/Bas: luminosité."
 				aria-valuemin={0}
 				aria-valuemax={100}
 				aria-valuenow={Math.round(saturation)}
@@ -241,10 +252,15 @@ export const ColorPickerSelection = memo(
 				tabIndex={0}
 				data-slot="color-picker-selection"
 				className={cn(
-					"relative size-full cursor-crosshair rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+					"relative size-full cursor-crosshair rounded touch-none select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 					className
 				)}
 				onPointerDown={(e) => {
+					e.preventDefault();
+					setIsDragging(true);
+					handlePointerMove(e.nativeEvent);
+				}}
+				onTouchStart={(e) => {
 					e.preventDefault();
 					setIsDragging(true);
 					handlePointerMove(e.nativeEvent);
@@ -257,11 +273,14 @@ export const ColorPickerSelection = memo(
 				{...props}
 			>
 				<div
-					className="-translate-x-1/2 -translate-y-1/2 pointer-events-none absolute h-4 w-4 rounded-full border-2 border-white"
+					className={cn(
+						"-translate-x-1/2 -translate-y-1/2 pointer-events-none absolute rounded-full border-2 border-white/90 transition-transform motion-reduce:transition-none",
+						isDragging ? "h-5 w-5 scale-110" : "h-4 w-4"
+					)}
 					style={{
 						left: `${positionX * 100}%`,
 						top: `${positionY * 100}%`,
-						boxShadow: "0 0 0 1px rgba(0,0,0,0.5)",
+						boxShadow: "0 0 0 1.5px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.2)",
 					}}
 				/>
 			</div>
@@ -282,17 +301,18 @@ export const ColorPickerHue = ({
 	return (
 		<SliderPrimitive.Root
 			data-slot="color-picker-hue"
-			className={cn("relative flex h-4 w-full touch-none", className)}
+			aria-label="Teinte"
+			className={cn("relative flex h-6 w-full touch-none select-none", className)}
 			max={360}
 			onValueChange={([hue]) => setHue(hue)}
 			step={1}
 			value={[hue]}
 			{...props}
 		>
-			<SliderPrimitive.Track className="relative my-0.5 h-3 w-full grow rounded-full bg-[linear-gradient(90deg,#FF0000,#FFFF00,#00FF00,#00FFFF,#0000FF,#FF00FF,#FF0000)]">
+			<SliderPrimitive.Track className="relative my-0.5 h-5 md:h-4 w-full grow rounded-full bg-[linear-gradient(90deg,#FF0000,#FFFF00,#00FF00,#00FFFF,#0000FF,#FF00FF,#FF0000)]">
 				<SliderPrimitive.Range className="absolute h-full" />
 			</SliderPrimitive.Track>
-			<SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50" />
+			<SliderPrimitive.Thumb className="relative block h-6 w-6 rounded-full border-2 border-primary/50 bg-background shadow-md transition-transform motion-reduce:transition-none hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 before:absolute before:-inset-2 before:content-['']" />
 		</SliderPrimitive.Root>
 	);
 };
@@ -310,7 +330,8 @@ export const ColorPickerAlpha = ({
 	return (
 		<SliderPrimitive.Root
 			data-slot="color-picker-alpha"
-			className={cn("relative flex h-4 w-full touch-none", className)}
+			aria-label="Opacité"
+			className={cn("relative flex h-6 w-full touch-none select-none", className)}
 			max={100}
 			onValueChange={([alpha]) => setAlpha(alpha)}
 			step={1}
@@ -318,7 +339,7 @@ export const ColorPickerAlpha = ({
 			{...props}
 		>
 			<SliderPrimitive.Track
-				className="relative my-0.5 h-3 w-full grow rounded-full"
+				className="relative my-0.5 h-5 md:h-4 w-full grow rounded-full"
 				style={{
 					background:
 						'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==") left center',
@@ -327,7 +348,7 @@ export const ColorPickerAlpha = ({
 				<div className="absolute inset-0 rounded-full bg-linear-to-r from-transparent to-black/50" />
 				<SliderPrimitive.Range className="absolute h-full rounded-full bg-transparent" />
 			</SliderPrimitive.Track>
-			<SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50" />
+			<SliderPrimitive.Thumb className="relative block h-6 w-6 rounded-full border-2 border-primary/50 bg-background shadow-md transition-transform motion-reduce:transition-none hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 before:absolute before:-inset-2 before:content-['']" />
 		</SliderPrimitive.Root>
 	);
 };
@@ -342,7 +363,14 @@ export const ColorPickerEyeDropper = ({
 }: ColorPickerEyeDropperProps) => {
 	const { setHue, setSaturation, setLightness, setAlpha } = useColorPicker();
 
+	// Vérifier si l'API EyeDropper est supportée
+	const isSupported = typeof window !== "undefined" && "EyeDropper" in window;
+
 	const handleEyeDropper = async (): Promise<void> => {
+		if (!isSupported) {
+			return;
+		}
+
 		try {
 			// @ts-expect-error - EyeDropper API is experimental
 			const eyeDropper = new EyeDropper();
@@ -355,9 +383,14 @@ export const ColorPickerEyeDropper = ({
 			setLightness(l);
 			setAlpha(100);
 		} catch {
-			// EyeDropper API peut échouer si l'utilisateur annule ou si l'API n'est pas supportée
+			// L'utilisateur a annulé la sélection
 		}
 	};
+
+	// Ne pas afficher le bouton si l'API n'est pas supportée
+	if (!isSupported) {
+		return null;
+	}
 
 	return (
 		<Button
@@ -367,9 +400,10 @@ export const ColorPickerEyeDropper = ({
 			size="icon"
 			variant="outline"
 			type="button"
+			aria-label="Pipette - sélectionner une couleur à l'écran"
 			{...props}
 		>
-			<PipetteIcon size={16} />
+			<PipetteIcon size={16} aria-hidden="true" />
 		</Button>
 	);
 };
@@ -390,14 +424,14 @@ export const ColorPickerOutput = ({
 		<Select onValueChange={setMode} value={mode}>
 			<SelectTrigger
 				data-slot="color-picker-output"
-				className="h-8 w-20 shrink-0 text-xs"
+				className="min-h-11 md:h-8 w-auto min-w-20 shrink-0 text-sm md:text-xs"
 				{...props}
 			>
 				<SelectValue placeholder="Mode" />
 			</SelectTrigger>
 			<SelectContent>
 				{formats.map((format) => (
-					<SelectItem className="text-xs" key={format} value={format}>
+					<SelectItem className="text-sm md:text-xs" key={format} value={format}>
 						{format.toUpperCase()}
 					</SelectItem>
 				))}
@@ -416,15 +450,16 @@ const PercentageInput = ({ className, ...props }: PercentageInputProps) => {
 			<Input
 				readOnly
 				aria-readonly="true"
+				aria-label="Opacité en pourcentage"
 				type="text"
 				{...props}
 				value={props.value ?? ""}
 				className={cn(
-					"h-8 w-[3.25rem] rounded-l-none bg-secondary px-2 text-xs shadow-none",
+					"min-h-11 md:h-8 w-[3.5rem] md:w-[3.25rem] rounded-l-none bg-secondary px-2 text-sm md:text-xs shadow-none",
 					className
 				)}
 			/>
-			<span className="-translate-y-1/2 absolute top-1/2 right-2 text-muted-foreground text-xs">
+			<span className="-translate-y-1/2 absolute top-1/2 right-2 text-muted-foreground text-sm md:text-xs">
 				%
 			</span>
 		</div>
@@ -451,7 +486,7 @@ export const ColorPickerFormat = memo(
 					{...props}
 				>
 					<Input
-						className="h-8 rounded-r-none bg-secondary px-2 text-xs shadow-none"
+						className="min-h-11 md:h-8 rounded-r-none bg-secondary px-2 text-sm md:text-xs shadow-none"
 						readOnly
 						aria-readonly="true"
 						aria-label="Code hexadécimal"
@@ -482,7 +517,7 @@ export const ColorPickerFormat = memo(
 					{rgb.map((value, index) => (
 						<Input
 							className={cn(
-								"h-8 rounded-r-none bg-secondary px-2 text-xs shadow-none",
+								"min-h-11 md:h-8 rounded-r-none bg-secondary px-2 text-sm md:text-xs shadow-none",
 								index && "rounded-l-none"
 							)}
 							key={index}
@@ -511,7 +546,7 @@ export const ColorPickerFormat = memo(
 					{...props}
 				>
 					<Input
-						className="h-8 w-full bg-secondary px-2 text-xs shadow-none"
+						className="min-h-11 md:h-8 w-full bg-secondary px-2 text-sm md:text-xs shadow-none"
 						readOnly
 						aria-readonly="true"
 						aria-label="Code CSS RGBA"
@@ -541,7 +576,7 @@ export const ColorPickerFormat = memo(
 					{hsl.map((value, index) => (
 						<Input
 							className={cn(
-								"h-8 rounded-r-none bg-secondary px-2 text-xs shadow-none",
+								"min-h-11 md:h-8 rounded-r-none bg-secondary px-2 text-sm md:text-xs shadow-none",
 								index && "rounded-l-none"
 							)}
 							key={index}

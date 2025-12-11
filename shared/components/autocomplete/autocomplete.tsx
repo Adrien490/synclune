@@ -261,16 +261,18 @@ export function Autocomplete<T>({
 			>
 				<div className="flex items-center gap-3">
 					{imageData && (
-						<div className="shrink-0">
+						<div
+							className="shrink-0 relative overflow-hidden rounded-sm"
+							style={{ width: imageSize, height: imageSize }}
+						>
 							<Image
 								src={imageData.src}
 								alt=""
 								aria-hidden="true"
-								width={imageSize}
-								height={imageSize}
+								fill
 								sizes={`${imageSize}px`}
 								quality={80}
-								className="object-cover rounded-sm"
+								className="object-cover"
 								placeholder={imageData.blurDataUrl ? "blur" : "empty"}
 								blurDataURL={imageData.blurDataUrl ?? undefined}
 							/>
@@ -281,7 +283,7 @@ export function Autocomplete<T>({
 							{getItemLabel(item)}
 						</span>
 						{getItemDescription && getItemDescription(item) && (
-							<span className="text-xs text-muted-foreground truncate">
+							<span className="text-xs text-muted-foreground line-clamp-2">
 								{getItemDescription(item)}
 							</span>
 						)}
@@ -299,8 +301,12 @@ export function Autocomplete<T>({
 					<div className="flex items-center gap-3">
 						{getItemImage && (
 							<Skeleton
-								className="size-10 rounded-sm shrink-0"
-								style={{ animationDelay: `${i * 100}ms` }}
+								className="rounded-sm shrink-0"
+								style={{
+									width: imageSize,
+									height: imageSize,
+									animationDelay: `${i * 100}ms`,
+								}}
 							/>
 						)}
 						<div className="flex flex-col flex-1 gap-1.5">

@@ -65,6 +65,7 @@ export default async function CustomizationPage({ searchParams }: PageProps) {
 			id: product.id,
 			title: product.title,
 			slug: product.slug,
+			description: product.description,
 			imageUrl: primaryImage?.url ?? null,
 			blurDataUrl: primaryImage?.blurDataUrl ?? null,
 		};
