@@ -1,8 +1,8 @@
 // Main component
 export { ParticleSystem } from "./particle-system";
 
-// Presets (deprecated - à utiliser directement via les props)
-export { PARTICLE_PRESETS, SHAPE_CONFIGS, ANIMATION_PRESETS } from "./constants";
+// Constants (pour usage avance)
+export { SHAPE_CONFIGS, ANIMATION_PRESETS } from "./constants";
 
 // Types
 export type {

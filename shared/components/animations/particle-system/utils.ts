@@ -20,8 +20,40 @@ export function randomBetween(min: number, max: number, seed: number): number {
 }
 
 /** Cache pour la memoization des particules générées */
-const particleCache = new Map<string, Particle[]>();
+const particleCache = new Map<number, Particle[]>();
 const MAX_CACHE_SIZE = 50;
+
+/** Hash numerique simple pour cle de cache (plus performant que JSON.stringify) */
+function hashParams(
+	count: number,
+	size: [number, number],
+	opacity: [number, number],
+	colors: string[],
+	duration: number,
+	blur: number | [number, number],
+	depthParallax: boolean,
+	shapes: ParticleShape[]
+): number {
+	let hash = count * 1000000;
+	hash += size[0] * 10000 + size[1] * 100;
+	hash += Math.floor(opacity[0] * 10) + Math.floor(opacity[1] * 10) * 10;
+	hash += duration * 100;
+	hash += (Array.isArray(blur) ? blur[0] + blur[1] * 100 : blur * 100);
+	hash += depthParallax ? 1 : 0;
+	hash += shapes.length * 10000;
+	// Hash des strings (colors + shapes)
+	for (const c of colors) {
+		for (let i = 0; i < c.length; i++) {
+			hash = (hash * 31 + c.charCodeAt(i)) | 0;
+		}
+	}
+	for (const s of shapes) {
+		for (let i = 0; i < s.length; i++) {
+			hash = (hash * 31 + s.charCodeAt(i)) | 0;
+		}
+	}
+	return hash;
+}
 
 /** Génère un tableau de particules avec des propriétés déterministes (memoizé) */
 export function generateParticles(
@@ -34,8 +66,8 @@ export function generateParticles(
 	depthParallax: boolean,
 	shapes: ParticleShape[] = ["circle"]
 ): Particle[] {
-	// Clé de cache basée sur les paramètres
-	const cacheKey = JSON.stringify({ count, size, opacity, colors, duration, blur, depthParallax, shapes });
+	// Clé de cache basée sur un hash numerique (plus rapide que JSON.stringify)
+	const cacheKey = hashParams(count, size, opacity, colors, duration, blur, depthParallax, shapes);
 	const cached = particleCache.get(cacheKey);
 	if (cached) return cached;
 

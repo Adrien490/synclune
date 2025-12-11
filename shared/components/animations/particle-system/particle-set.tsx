@@ -102,7 +102,7 @@ export const ParticleSet = ({
 					return (
 						<motion.span
 							key={p.id}
-							className="absolute will-change-transform"
+							className="absolute will-change-[transform,opacity]"
 							style={{
 								width: p.size,
 								height: p.size,
@@ -130,7 +130,7 @@ export const ParticleSet = ({
 				return (
 					<motion.span
 						key={p.id}
-						className="absolute will-change-transform"
+						className="absolute will-change-[transform,opacity]"
 						style={{
 							width: p.size,
 							height: p.size,

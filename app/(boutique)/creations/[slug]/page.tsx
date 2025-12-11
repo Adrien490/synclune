@@ -125,7 +125,7 @@ export default async function ProductPage({
 				dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
 			/>
 
-			{/* Particules précieuses pour pages produits - variant jewelry */}
+			{/* Particules précieuses pour pages produits */}
 			<ParticleSystem count={8} size={[12, 80]} className="fixed inset-0 z-0" />
 
 			<div className="relative z-10">

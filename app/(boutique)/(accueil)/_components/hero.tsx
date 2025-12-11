@@ -24,11 +24,7 @@ export function Hero() {
       <ParticleSystem
         count={12}
         shape={["diamond", "crescent", "circle", "heart"]}
-        colors={[
-          "var(--secondary)",
-          "oklch(0.9 0.1 80)", // Or chaud
-          "var(--primary)", // Rose
-        ]}
+        colors={["var(--secondary)", "oklch(0.9 0.1 80)", "var(--primary)"]}
         opacity={[0.2, 0.45]}
         blur={[6, 24]}
         size={[25, 70]}

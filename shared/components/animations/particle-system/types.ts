@@ -19,16 +19,7 @@ export type ParticleShape =
 	| "leaf";
 
 /** Styles d'animation */
-export type AnimationStyle =
-	| "float"
-	| "twinkle"
-	| "drift"
-	| "pulse"
-	// Nouveaux styles
-	| "shimmer"
-	| "cascade"
-	| "orbit"
-	| "sway";
+export type AnimationStyle = "float" | "drift";
 
 /** Props du composant ParticleSystem */
 export interface ParticleSystemProps {

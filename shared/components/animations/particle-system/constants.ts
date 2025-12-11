@@ -7,50 +7,6 @@ export const DEFAULT_COLORS = [
 	"oklch(0.92 0.08 350)", // Blush pastel
 ];
 
-/** Presets prédéfinis pour les cas d'usage courants */
-export const PARTICLE_PRESETS = {
-	/** Hero section - particules subtiles avec profondeur */
-	hero: {
-		count: 8,
-		blur: [20, 50] as [number, number],
-		opacity: [0.08, 0.25] as [number, number],
-		size: [20, 80] as [number, number],
-	},
-	/** Arrière-plan minimal (auth, modals) */
-	subtle: {
-		count: 4,
-		opacity: [0.05, 0.15] as [number, number],
-		blur: [15, 40] as [number, number],
-	},
-	/** Ambiance bijoux (diamants dorés) */
-	jewelry: {
-		shape: "diamond" as const,
-		colors: ["var(--secondary)", "oklch(0.9 0.1 80)", "oklch(0.92 0.08 60)"],
-		opacity: [0.12, 0.35] as [number, number],
-		blur: [15, 45] as [number, number],
-	},
-	/** Célébration (étoiles scintillantes) */
-	celebration: {
-		shape: "star" as const,
-		animationStyle: "twinkle" as const,
-		glow: true,
-		colors: ["var(--secondary)", "oklch(0.95 0.05 80)"],
-	},
-	/** Romantique (coeurs flottants) */
-	romantic: {
-		shape: "heart" as const,
-		animationStyle: "drift" as const,
-		rotation: true,
-		colors: ["var(--primary)", "oklch(0.92 0.08 350)"],
-	},
-	/** Cristaux (hexagones avec glow) */
-	crystal: {
-		shape: "hexagon" as const,
-		glow: true,
-		springPhysics: true,
-	},
-} as const;
-
 /** Configuration des formes de particules */
 export const SHAPE_CONFIGS: Record<ParticleShape, ShapeConfig> = {
 	circle: {
@@ -122,64 +78,21 @@ export const SHAPE_CONFIGS: Record<ParticleShape, ShapeConfig> = {
 	},
 };
 
-/** Presets d'animation par style */
+/** Presets d'animation par style (optimises pour GPU) */
 export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {
 	float: (p, intensity, rotation) => ({
 		scale: [1, 1.4 * intensity, 0.8, 1],
-		opacity: [p.opacity, p.opacity * 1.5, p.opacity * 0.6, p.opacity],
+		// Opacity avec amplitude reduite pour minimiser les repaints
+		opacity: [p.opacity, p.opacity * 1.2, p.opacity * 0.8, p.opacity],
 		x: ["0%", `${8 * intensity}%`, `${-8 * intensity}%`, "0%"],
 		y: ["0%", `${-6 * intensity}%`, `${6 * intensity}%`, "0%"],
 		...(rotation && { rotate: [0, 180, 360] }),
 	}),
-	twinkle: (p, intensity, rotation) => ({
-		opacity: [p.opacity * 0.3, p.opacity * 1.4, p.opacity * 0.3],
-		scale: [0.7, 1.2 * intensity, 0.7],
-		...(rotation && { rotate: [0, 90, 180] }),
-	}),
 	drift: (p, intensity, rotation) => ({
 		x: ["0%", `${15 * intensity}%`, `${-5 * intensity}%`, "0%"],
 		y: ["0%", `${-10 * intensity}%`, `${5 * intensity}%`, "0%"],
-		opacity: [p.opacity, p.opacity * 0.85, p.opacity],
-		...(rotation && { rotate: [0, 45, 0] }),
-	}),
-	pulse: (p, intensity, rotation) => ({
-		scale: [1, 1.35 * intensity, 1],
-		opacity: [p.opacity, p.opacity * 1.5, p.opacity],
-		...(rotation && { rotate: [0, 180, 360] }),
-	}),
-	// Nouveaux styles d'animation
-	shimmer: (p, intensity, rotation) => ({
-		opacity: [p.opacity * 0.4, p.opacity * 1.3, p.opacity * 0.4],
-		scale: [0.95, 1.05 * intensity, 0.95],
-		...(rotation && { rotate: [0, 15, 0] }),
-	}),
-	cascade: (p, intensity, rotation) => ({
-		y: ["0%", `${25 * intensity}%`, `${50 * intensity}%`],
-		x: [
-			`${-5 * intensity}%`,
-			`${5 * intensity}%`,
-			`${-3 * intensity}%`,
-		],
-		opacity: [p.opacity, p.opacity * 0.8, p.opacity * 0.3],
-		...(rotation && { rotate: [0, 30, 60] }),
-	}),
-	orbit: (p, intensity, rotation) => ({
-		x: [
-			`${-12 * intensity}%`,
-			`${12 * intensity}%`,
-			`${-12 * intensity}%`,
-		],
-		y: [
-			`${-6 * intensity}%`,
-			`${6 * intensity}%`,
-			`${-6 * intensity}%`,
-		],
-		scale: [1, 1.1, 1],
-		...(rotation && { rotate: [0, 360] }),
-	}),
-	sway: (p, intensity, rotation) => ({
-		rotate: [-12 * intensity, 12 * intensity, -12 * intensity],
-		y: ["0%", `${4 * intensity}%`, "0%"],
+		// Opacity stable pour drift - effet de derive naturel
 		opacity: [p.opacity, p.opacity * 0.9, p.opacity],
+		...(rotation && { rotate: [0, 45, 0] }),
 	}),
 };

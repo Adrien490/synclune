@@ -52,7 +52,7 @@ const ParticleSystemBase = ({
 		shapes
 	);
 	const mobileParticles = generateParticles(
-		Math.ceil(count / 2),
+		Math.max(3, Math.ceil(count / 2)), // Minimum 3 particules sur mobile
 		size,
 		opacity,
 		colors,

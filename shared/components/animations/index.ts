@@ -25,7 +25,7 @@ export { ScrollIndicator } from "./scroll-indicator";
 // Background Animations (effets décoratifs)
 export { LiquidGradient } from "./liquid-gradient";
 export { GlitterSparkles } from "./glitter-sparkles";
-export { ParticleSystem, PARTICLE_PRESETS } from "./particle-system/index";
+export { ParticleSystem } from "./particle-system/index";
 export { DecorativeHalo, DecorativeHaloGroup } from "./decorative-halo";
 export { BubbleDream } from "./bubble-dream";
 
