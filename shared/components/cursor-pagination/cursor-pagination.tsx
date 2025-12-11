@@ -152,7 +152,7 @@ export function CursorPagination({
 						disabled={isFirstPage || isPending}
 						onClick={handleReset}
 						className={cn(
-							"h-11 md:h-9 gap-1",
+							"h-11 md:h-9 gap-1 cursor-pointer",
 							"backdrop-blur-sm",
 							"border-primary/20",
 							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
@@ -179,7 +179,7 @@ export function CursorPagination({
 							disabled={!hasPreviousPage || isPending}
 							onClick={handlePrevious}
 							className={cn(
-								"h-11 w-11 md:h-9 md:w-9",
+								"h-11 w-11 md:h-9 md:w-9 cursor-pointer",
 								"backdrop-blur-sm",
 								"border-primary/20",
 								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
@@ -216,7 +216,7 @@ export function CursorPagination({
 							disabled={!hasNextPage || isPending}
 							onClick={handleNext}
 							className={cn(
-								"h-11 w-11 md:h-9 md:w-9",
+								"h-11 w-11 md:h-9 md:w-9 cursor-pointer",
 								"backdrop-blur-sm",
 								"border-primary/20",
 								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",

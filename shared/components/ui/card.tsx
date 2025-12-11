@@ -1,12 +1,18 @@
 import { cn } from "@/shared/utils/cn";
 import * as React from "react";
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+function Card({
+	className,
+	interactive = false,
+	...props
+}: React.ComponentProps<"div"> & { interactive?: boolean }) {
 	return (
 		<div
 			data-slot="card"
 			className={cn(
-				"bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+				"bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-md",
+				interactive &&
+					"cursor-pointer transition-shadow hover:shadow-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 				className
 			)}
 			{...props}
@@ -31,7 +37,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-title"
-			className={cn("leading-none font-semibold", className)}
+			className={cn("leading-none font-semibold font-display", className)}
 			{...props}
 		/>
 	);
@@ -74,7 +80,10 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-footer"
-			className={cn("flex items-center px-4 sm:px-6 [.border-t]:pt-6", className)}
+			className={cn(
+				"flex items-center gap-3 px-4 sm:px-6 [.border-t]:pt-6",
+				className
+			)}
 			{...props}
 		/>
 	);

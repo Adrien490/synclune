@@ -180,9 +180,6 @@ export async function ProductsDataTable({
 								<TableHead className="hidden sm:table-cell w-[12%] lg:w-[10%]">
 									Statut
 								</TableHead>
-								<TableHead className="hidden lg:table-cell w-[10%]">
-									Type
-								</TableHead>
 								<TableHead className="hidden sm:table-cell text-center w-[10%] lg:w-[8%]">
 									Variantes
 								</TableHead>
@@ -255,23 +252,6 @@ export async function ProductsDataTable({
 											<Badge variant={STATUS_CONFIG[product.status].variant}>
 												{STATUS_CONFIG[product.status].label}
 											</Badge>
-										</TableCell>
-										<TableCell role="gridcell" className="hidden lg:table-cell">
-											<div className="overflow-hidden">
-												{product.type ? (
-													<Badge
-														variant="outline"
-														className="truncate block"
-														title={product.type.label}
-													>
-														{product.type.label}
-													</Badge>
-												) : (
-													<span className="text-sm text-muted-foreground" aria-label="Type non défini">
-														—
-													</span>
-												)}
-											</div>
 										</TableCell>
 										<TableCell
 											role="gridcell"
