@@ -277,9 +277,9 @@ export function PageHeader({
 								)}
 							</div>
 
-							{/* Description optionnelle - espacement réduit sur mobile */}
+							{/* Description optionnelle - masquée sur mobile pour économiser l'espace */}
 							{description && (
-								<p className="mt-1 sm:mt-2 text-base text-muted-foreground max-w-2xl break-words line-clamp-3 sm:line-clamp-none">
+								<p className="hidden sm:block mt-1 sm:mt-2 text-base text-muted-foreground max-w-2xl break-words">
 									{description}
 								</p>
 							)}
