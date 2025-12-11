@@ -54,12 +54,6 @@ export const CHART_DRILLDOWN: Record<string, ChartDrilldownConfig> = {
 		ariaLabel: "Cliquer pour voir l'inventaire de ce materiau",
 	},
 
-	// Graphique clients nouveaux vs recurrents
-	customerType: {
-		baseUrl: "/admin/utilisateurs",
-		filterParam: "filter_new",
-		ariaLabel: "Cliquer pour voir ces clients",
-	},
 } as const;
 
 // Re-exports pour retrocompatibilite

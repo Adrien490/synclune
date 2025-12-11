@@ -7,7 +7,6 @@ import {
 	getCollections,
 	SORT_LABELS,
 } from "@/modules/collections/data/get-collections";
-import { getCollectionCountsByStatus } from "@/modules/collections/data/get-collection-counts-by-status";
 import { getFirstParam } from "@/shared/utils/params";
 import { Metadata } from "next";
 import { connection } from "next/server";
@@ -76,8 +75,6 @@ export default async function CollectionsAdminPage({
 	const search = getFirstParam(params.search);
 	const status = parseStatus(params);
 
-	const collectionCounts = await getCollectionCountsByStatus();
-
 	// La promise de collections n'est PAS awaitée pour permettre le streaming
 	const collectionsPromise = getCollections({
 		cursor,
@@ -108,7 +105,6 @@ export default async function CollectionsAdminPage({
 				<CollectionStatusNavigation
 					currentStatus={status}
 					searchParams={params}
-					counts={collectionCounts}
 				/>
 
 				<Toolbar

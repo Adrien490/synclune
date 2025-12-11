@@ -1,12 +1,10 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { TabNavigation } from "@/shared/components/tab-navigation";
-import type { CollectionCountsByStatus } from "@/modules/collections/types/collection-counts.types";
 
 interface CollectionStatusNavigationProps {
 	currentStatus: CollectionStatus | undefined;
 	pathname?: string;
 	searchParams?: Record<string, string | string[] | undefined>;
-	counts?: CollectionCountsByStatus;
 }
 
 const STATUS_LABELS: Record<CollectionStatus, string> = {
@@ -23,7 +21,6 @@ export function CollectionStatusNavigation({
 	currentStatus,
 	pathname = "/admin/catalogue/collections",
 	searchParams = {},
-	counts,
 }: CollectionStatusNavigationProps) {
 	// Construire les URLs avec les query params existants
 	const buildHref = (status: CollectionStatus | "all") => {
@@ -49,24 +46,17 @@ export function CollectionStatusNavigation({
 		return queryString ? `${pathname}?${queryString}` : pathname;
 	};
 
-	// Calculer le total pour l'onglet "Toutes"
-	const totalCount = counts
-		? Object.values(counts).reduce((sum, count) => sum + count, 0)
-		: undefined;
-
 	// Onglet "Toutes" en premier, puis les statuts individuels
 	const items = [
 		{
 			label: "Toutes",
 			value: "all" as const,
 			href: buildHref("all"),
-			count: totalCount,
 		},
 		...Object.values(CollectionStatus).map((status) => ({
 			label: STATUS_LABELS[status],
 			value: status,
 			href: buildHref(status),
-			count: counts?.[status],
 		})),
 	];
 

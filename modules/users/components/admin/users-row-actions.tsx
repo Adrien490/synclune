@@ -24,14 +24,11 @@ import {
 	CheckCircle2,
 	Download,
 	Eye,
-	Heart,
 	KeyRound,
 	Loader2,
 	LogOut,
 	MoreVertical,
-	Pencil,
 	RotateCcw,
-	ShoppingCart,
 	Trash2,
 	XCircle,
 } from "lucide-react";
@@ -111,25 +108,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							Voir commandes
 						</Link>
 					</DropdownMenuItem>
-					<DropdownMenuItem asChild>
-						<Link
-							href={`/admin/utilisateurs/${user.id}/panier`}
-							className="flex items-center cursor-pointer"
-						>
-							<ShoppingCart className="mr-2 h-4 w-4" />
-							Voir le panier
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem asChild>
-						<Link
-							href={`/admin/utilisateurs/${user.id}/wishlist`}
-							className="flex items-center cursor-pointer"
-						>
-							<Heart className="mr-2 h-4 w-4" />
-							Voir la wishlist
-						</Link>
-					</DropdownMenuItem>
-
+	
 					<DropdownMenuSeparator />
 
 					{/* Export RGPD */}

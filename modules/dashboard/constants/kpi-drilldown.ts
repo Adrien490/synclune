@@ -53,15 +53,6 @@ export const KPI_DRILLDOWN: Record<string, KpiDrilldownConfig> = {
 		label: "Voir les demandes de retour en stock",
 	},
 
-	// Customer KPIs
-	totalCustomers: {
-		href: "/admin/utilisateurs",
-		label: "Voir tous les clients",
-	},
-	newCustomers: {
-		href: "/admin/utilisateurs?filter_new=true",
-		label: "Voir les nouveaux clients",
-	},
 } as const;
 
 export type KpiDrilldownKey = keyof typeof KPI_DRILLDOWN;

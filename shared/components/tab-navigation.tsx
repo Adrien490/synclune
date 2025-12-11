@@ -18,8 +18,6 @@ export interface TabNavigationItem {
 	label: string;
 	value: string;
 	href: string;
-	/** Nombre d'éléments (optionnel) */
-	count?: number;
 }
 
 interface TabNavigationProps {
@@ -64,25 +62,6 @@ export function TabNavigation({
 		(item) => item.value === activeValue
 	);
 
-	const renderCount = (count: number | undefined, isActive: boolean) => {
-		if (count === undefined) return null;
-
-		return (
-			<span
-				title={`${count} élément${count > 1 ? "s" : ""}`}
-				className={cn(
-					"ml-1.5 inline-flex items-center justify-center",
-					"min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-medium",
-					isActive
-						? "bg-primary-foreground/30 text-primary-foreground"
-						: "bg-muted text-muted-foreground"
-				)}
-			>
-				{count}
-			</span>
-		);
-	};
-
 	const getPillClasses = (isActive: boolean) =>
 		cn(
 			PILL_BASE,
@@ -106,7 +85,6 @@ export function TabNavigation({
 							className={getPillClasses(isActive)}
 						>
 							<span className="truncate">{item.label}</span>
-							{renderCount(item.count, isActive)}
 						</Link>
 					);
 				})}
@@ -123,7 +101,6 @@ export function TabNavigation({
 							className={cn(getPillClasses(isActive), "hidden md:inline-flex")}
 						>
 							<span className="truncate">{item.label}</span>
-							{renderCount(item.count, isActive)}
 						</Link>
 					);
 				})}

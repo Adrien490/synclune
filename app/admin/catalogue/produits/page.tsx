@@ -7,7 +7,6 @@ import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { getProducts } from "@/modules/products/data/get-products";
 import { GET_PRODUCTS_SORT_FIELDS } from "@/modules/products/data/get-products";
-import { getProductCountsByStatus } from "@/modules/products/data/get-product-counts-by-status";
 import { parseProductParams } from "@/modules/products/utils/parse-product-params";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -101,8 +100,8 @@ export default async function ProductsAdminPage({
 		status,
 	});
 
-	// Load filter options data and counts in parallel
-	const [productTypesData, collectionsData, productCounts] = await Promise.all([
+	// Load filter options data in parallel
+	const [productTypesData, collectionsData] = await Promise.all([
 		getProductTypes({
 			perPage: 100,
 			sortBy: "label-ascending",
@@ -115,7 +114,6 @@ export default async function ProductsAdminPage({
 				hasProducts: undefined,
 			},
 		}),
-		getProductCountsByStatus(),
 	]);
 
 	const productTypes = productTypesData.productTypes.map((t) => ({
@@ -148,7 +146,6 @@ export default async function ProductsAdminPage({
 				<ProductStatusNavigation
 					currentStatus={status}
 					searchParams={params}
-					counts={productCounts}
 				/>
 
 				<Toolbar

@@ -1,5 +1,4 @@
-import { ExternalLink, Phone, User } from "lucide-react";
-import Link from "next/link";
+import { Phone, User } from "lucide-react";
 import {
 	Card,
 	CardContent,
@@ -19,20 +18,9 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 			</CardHeader>
 			<CardContent className="space-y-3">
 				<div>
-					{order.userId ? (
-						<Link
-							href={`/admin/utilisateurs/${order.userId}`}
-							className="font-medium text-primary hover:underline inline-flex items-center gap-1"
-						>
-							{order.customerName}
-							<ExternalLink className="h-3 w-3" aria-hidden="true" />
-							<span className="sr-only"> (voir le profil)</span>
-						</Link>
-					) : (
-						<>
-							<p className="font-medium">{order.customerName}</p>
-							<p className="text-xs text-muted-foreground">Client non enregistré</p>
-						</>
+					<p className="font-medium">{order.customerName}</p>
+					{!order.userId && (
+						<p className="text-xs text-muted-foreground">Client non enregistré</p>
 					)}
 					<p className="text-sm text-muted-foreground">
 						{order.customerEmail}

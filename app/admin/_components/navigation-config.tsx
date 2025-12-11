@@ -5,7 +5,6 @@ import {
 	ReceiptText,
 	Package,
 	Layers,
-	Users,
 	Tag,
 	Palette,
 	Gem,
@@ -99,21 +98,6 @@ export const navigationData: NavigationData = {
 					title: "Collections",
 					url: "/admin/catalogue/collections",
 					icon: Layers,
-				},
-			],
-		},
-		// ─────────────────────────────────────────────────────────────────────────
-		// CLIENTS - Gestion des clients (ex: Administration > Utilisateurs)
-		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Clients",
-			icon: Users,
-			items: [
-				{
-					id: "customers",
-					title: "Clients",
-					url: "/admin/utilisateurs",
-					icon: Users,
 				},
 			],
 		},

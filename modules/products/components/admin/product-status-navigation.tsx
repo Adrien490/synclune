@@ -1,13 +1,10 @@
 import { ProductStatus } from "@/app/generated/prisma/client";
 import { TabNavigation } from "@/shared/components/tab-navigation";
-import type { ProductCountsByStatus } from "@/modules/products/types/product-counts.types";
 
 interface ProductStatusNavigationProps {
     currentStatus: ProductStatus | undefined;
     pathname?: string;
     searchParams?: Record<string, string | string[] | undefined>;
-    /** Compteurs par statut (optionnel) */
-    counts?: ProductCountsByStatus;
 }
 
 const STATUS_LABELS: Record<ProductStatus, string> = {
@@ -24,7 +21,6 @@ export function ProductStatusNavigation({
     currentStatus,
     pathname = "/admin/catalogue/produits",
     searchParams = {},
-    counts,
 }: ProductStatusNavigationProps) {
     // Construire les URLs avec les query params existants
     const buildHref = (status: ProductStatus | "all") => {
@@ -48,24 +44,17 @@ export function ProductStatusNavigation({
         return queryString ? `${pathname}?${queryString}` : pathname;
     };
 
-    // Calculer le total pour l'onglet "Tous"
-    const totalCount = counts
-        ? Object.values(counts).reduce((sum, count) => sum + count, 0)
-        : undefined;
-
     // Onglet "Tous" en premier, puis les statuts individuels
     const items = [
         {
             label: "Tous",
             value: "all" as const,
             href: buildHref("all"),
-            count: totalCount,
         },
         ...Object.values(ProductStatus).map((status) => ({
             label: STATUS_LABELS[status],
             value: status,
             href: buildHref(status),
-            count: counts?.[status],
         })),
     ];
 
