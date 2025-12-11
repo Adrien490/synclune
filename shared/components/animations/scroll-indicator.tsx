@@ -1,7 +1,14 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import {
+	motion,
+	useMotionValueEvent,
+	useReducedMotion,
+	useScroll,
+	useTransform,
+} from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 import { cn } from "@/shared/utils/cn";
 
@@ -40,9 +47,15 @@ export function ScrollIndicator({
 }: ScrollIndicatorProps) {
 	const shouldReduceMotion = useReducedMotion();
 	const { scrollY } = useScroll();
+	const [isVisible, setIsVisible] = useState(true);
 
 	// Optimisation : useTransform évite les re-renders React (calcul côté Framer Motion)
 	const opacity = useTransform(scrollY, [0, 100], [1, 0]);
+
+	// Retirer du focus quand invisible (accessibilité clavier)
+	useMotionValueEvent(scrollY, "change", (latest) => {
+		setIsVisible(latest < 100);
+	});
 
 	const handleClick = () => {
 		const target = document.getElementById(targetId);
@@ -56,6 +69,7 @@ export function ScrollIndicator({
 			type="button"
 			onClick={handleClick}
 			aria-label={ariaLabel}
+			tabIndex={isVisible ? 0 : -1}
 			className={cn(
 				// Position au-dessus des zones mask (typiquement 85%+)
 				"absolute left-1/2 -translate-x-1/2 z-20",
