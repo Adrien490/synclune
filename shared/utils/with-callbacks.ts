@@ -1,4 +1,5 @@
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 /**
  * Fonction d'ordre supérieur qui enveloppe une server action avec des callbacks lifecycle
@@ -79,6 +80,11 @@ export const withCallbacks = <
 
 			return result;
 		} catch (error) {
+			// Propager les erreurs de redirection Next.js (redirect() lance une exception)
+			if (isRedirectError(error)) {
+				throw error;
+			}
+
 			// Garantir que le callback de fin est appelé même en cas d'exception
 			// (important pour dismisser les toasts loading)
 			if (reference) {

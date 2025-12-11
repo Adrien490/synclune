@@ -168,7 +168,7 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 					{stockStatus === "low_stock" && (
 						<Badge
 							variant="outline"
-							className="text-xs/5 tracking-normal antialiased gap-1.5 border-orange-500 text-orange-700 bg-orange-50 dark:bg-orange-950/50 dark:text-orange-400 dark:border-orange-600 animate-pulse"
+							className="text-xs/5 tracking-normal antialiased gap-1.5 border-orange-500 text-orange-700 bg-orange-50 dark:bg-orange-950/50 dark:text-orange-400 dark:border-orange-600 motion-safe:animate-pulse"
 							role="status"
 							aria-label={`Attention, plus que ${inventory} exemplaires en stock. Dépêchez-vous !`}
 						>

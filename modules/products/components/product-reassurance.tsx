@@ -37,9 +37,9 @@ export function ProductReassurance({ productSlug }: ProductReassuranceProps) {
 					<RotateCcw className="w-4 h-4 text-blue-600" aria-hidden="true" />
 					<span>Retours 14 jours</span>
 				</div>
-				<div className="hidden sm:flex items-center gap-1.5">
+				<div className="flex items-center gap-1.5">
 					<CreditCard className="w-4 h-4 text-primary" aria-hidden="true" />
-					<span>CB, PayPal, Stripe</span>
+					<span>CB, PayPal</span>
 				</div>
 			</div>
 

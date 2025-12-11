@@ -121,7 +121,7 @@ export function SizeSelector({
 							onClick={() => updateSize(sizeOption.size)}
 							disabled={!isAvailable || isPending}
 							className={cn(
-								"p-2 text-center rounded-lg border transition-all",
+								"p-2.5 sm:p-2 min-h-[44px] flex items-center justify-center text-center rounded-lg border transition-all",
 								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95",
 								isSelected
 									? "border-primary bg-primary/5"

@@ -7,7 +7,6 @@ import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note"
 import { ActionStatus } from "@/shared/types/server-action";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useSignUpEmail } from "@/modules/auth/hooks/use-sign-up-email";
-import { PasswordStrengthIndicator } from "./password-strength-indicator";
 import Link from "next/link";
 
 export function SignUpEmailForm() {
@@ -123,16 +122,13 @@ export function SignUpEmailForm() {
 					}}
 				>
 					{(field) => (
-						<div className="space-y-3">
-							<field.InputField
-								label="Mot de passe"
-								type="password"
-								autoComplete="new-password"
-								disabled={isPending}
-								required
-							/>
-							<PasswordStrengthIndicator password={field.state.value} />
-						</div>
+						<field.InputField
+							label="Mot de passe"
+							type="password"
+							autoComplete="new-password"
+							disabled={isPending}
+							required
+						/>
 					)}
 				</form.AppField>
 

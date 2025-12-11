@@ -16,7 +16,6 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useResetPassword } from "@/modules/auth/hooks/use-reset-password";
-import { PasswordStrengthIndicator } from "./password-strength-indicator";
 
 interface ResetPasswordFormProps {
 	token: string;
@@ -116,7 +115,6 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 									id={`${field.name}-error`}
 									errors={field.state.meta.errors}
 								/>
-								<PasswordStrengthIndicator password={field.state.value} />
 							</Field>
 						)}
 					</form.AppField>

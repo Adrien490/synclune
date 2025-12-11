@@ -225,7 +225,7 @@ export function Autocomplete<T>({
 				<AnimatePresence>
 					{showMinQueryHint && (
 						<motion.p
-							className="text-xs text-muted-foreground mt-1.5 ml-0.5"
+							className="text-sm md:text-xs text-muted-foreground mt-1.5 ml-0.5"
 							initial={AUTOCOMPLETE_ANIMATIONS.hint.initial}
 							animate={AUTOCOMPLETE_ANIMATIONS.hint.animate}
 							exit={AUTOCOMPLETE_ANIMATIONS.hint.exit}
@@ -253,7 +253,7 @@ export function Autocomplete<T>({
 							id={listboxId}
 							role="listbox"
 							aria-label="Résultats de recherche"
-							className="absolute z-10 w-full mt-1 max-h-60 md:max-h-80 overflow-auto rounded-md border shadow-lg py-1 text-base md:text-sm focus:outline-hidden bg-background"
+							className="absolute z-10 w-full mt-1 max-h-[50dvh] md:max-h-80 overflow-auto rounded-md border shadow-lg py-1 text-base md:text-sm focus:outline-hidden bg-background"
 							initial={AUTOCOMPLETE_ANIMATIONS.dropdown.initial}
 							animate={AUTOCOMPLETE_ANIMATIONS.dropdown.animate}
 							exit={AUTOCOMPLETE_ANIMATIONS.dropdown.exit}
@@ -262,11 +262,11 @@ export function Autocomplete<T>({
 							{isLoading ? (
 								<>
 									{[...Array(loadingSkeletonCount)].map((_, i) => (
-										<li key={i} className="py-1.5 px-3" aria-hidden="true">
+										<li key={i} className="py-3 px-3 md:py-2" aria-hidden="true">
 											<div className="flex items-center gap-3">
 												{getItemImage && (
 													<Skeleton
-														className="size-8 rounded-sm shrink-0"
+														className="size-10 rounded-sm shrink-0"
 														style={{ animationDelay: `${i * 100}ms` }}
 													/>
 												)}
@@ -299,7 +299,8 @@ export function Autocomplete<T>({
 											aria-posinset={index + 1}
 											aria-setsize={items.length}
 											className={cn(
-												"cursor-pointer select-none py-1.5 px-3 transition-colors duration-150",
+												// Touch target min 44px sur mobile (WCAG)
+												"cursor-pointer select-none py-3 px-3 md:py-2 transition-colors duration-150",
 												isActive
 													? "bg-linear-to-r from-primary/10 to-transparent"
 													: "bg-card hover:bg-muted"

@@ -84,7 +84,6 @@ export function ResendVerificationEmailForm({
 									name={field.name}
 									type="email"
 									disabled={isPending || state?.status === ActionStatus.SUCCESS}
-									placeholder="exemple@email.com"
 									value={field.state.value}
 									onChange={(e) => field.handleChange(e.target.value)}
 									aria-invalid={field.state.meta.errors.length > 0}

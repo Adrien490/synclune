@@ -155,8 +155,8 @@ export function WizardMobileShell({
 				{announcement}
 			</div>
 
-			{/* Sticky progress bar at top - using dots variant for compact mobile display */}
-			<div className="sticky top-0 z-10 -mx-4 px-4 py-3 border-b bg-background/95 backdrop-blur-sm">
+			{/* Progress bar at top - using dots variant for compact mobile display */}
+			<div className="-mx-4 px-4 py-3 border-b bg-background">
 				{title && (
 					<h2 className="text-lg font-semibold font-display mb-3">{title}</h2>
 				)}
@@ -206,8 +206,8 @@ export function WizardMobileShell({
 				)}
 			</div>
 
-			{/* Sticky footer with navigation - positioned above bottom-nav (h-16 = 64px) */}
-			<div className="sticky bottom-16 z-10 -mx-4 px-4 py-3 border-t bg-background/95 backdrop-blur-sm mt-auto">
+			{/* Footer with navigation */}
+			<div className="-mx-4 px-4 py-3 border-t bg-background mt-auto">
 				{isLastStep && renderLastStepFooter ? (
 					renderLastStepFooter()
 				) : (

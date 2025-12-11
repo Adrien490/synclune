@@ -124,7 +124,7 @@ export function ColorSelector({
 						>
 							{color.hex && (
 								<div
-									className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+									className="w-7 h-7 sm:w-6 sm:h-6 rounded-full border-2 border-white shadow-sm"
 									style={{ backgroundColor: color.hex }}
 								/>
 							)}

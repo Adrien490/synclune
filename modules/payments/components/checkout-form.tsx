@@ -183,7 +183,6 @@ function CheckoutFormContent({
 											label="Adresse email"
 											type="email"
 											required
-											placeholder="sophie.martin@exemple.fr"
 											autoComplete="email"
 											autoFocus
 										/>
@@ -306,11 +305,15 @@ function CheckoutFormContent({
 
 						<form.AppField name="shipping.addressLine2">
 							{(field) => (
-								<field.InputField
-									label="Complément d'adresse"
-									placeholder="Appartement, bâtiment, etc."
-									autoComplete="address-line2"
-								/>
+								<div className="space-y-2">
+									<field.InputField
+										label="Complément d'adresse"
+										autoComplete="address-line2"
+									/>
+									<p className="text-xs text-muted-foreground">
+										Appartement, bâtiment, etc.
+									</p>
+								</div>
 							)}
 						</form.AppField>
 
@@ -521,11 +524,15 @@ function CheckoutFormContent({
 
 														<form.AppField name="billing.addressLine2">
 															{(billingField) => (
-																<billingField.InputField
-																	label="Complément d'adresse"
-																	placeholder="Appartement, bâtiment, etc."
-																	autoComplete="billing address-line2"
-																/>
+																<div className="space-y-2">
+																	<billingField.InputField
+																		label="Complément d'adresse"
+																		autoComplete="billing address-line2"
+																	/>
+																	<p className="text-xs text-muted-foreground">
+																		Appartement, bâtiment, etc.
+																	</p>
+																</div>
 															)}
 														</form.AppField>
 
@@ -610,7 +617,6 @@ function CheckoutFormContent({
 																<billingField.InputField
 																	label="Téléphone (optionnel)"
 																	type="tel"
-																	placeholder="06 12 34 56 78"
 																	autoComplete="billing tel"
 																/>
 															)}

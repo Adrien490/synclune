@@ -31,7 +31,7 @@ export function ProductInfo({
 			{/* Titre avec bouton wishlist - titre masqué sur desktop car affiché dans PageHeader */}
 			<div className="flex items-start justify-between gap-3 sm:hidden">
 				<h1
-					className="text-3xl/10 font-bold tracking-tight text-foreground flex-1"
+					className="text-3xl/10 font-bold tracking-tight text-foreground flex-1 line-clamp-2"
 					itemProp="name"
 				>
 					{product.title}

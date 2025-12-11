@@ -62,8 +62,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 						)}
 					</ul>
 					<p className="text-xs italic">
-						Ton produit a été créé avec passion, prends-en soin et il te le rendra !{" "}
-						<span aria-hidden="true">✨</span>
+						Ton produit a été créé avec passion, prends-en soin et il te le rendra !
 					</p>
 				</AccordionContent>
 			</AccordionItem>

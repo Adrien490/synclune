@@ -61,7 +61,6 @@ export function StockNotificationForm({ skuId }: StockNotificationFormProps) {
 			<Input
 				type="email"
 				name="email"
-				placeholder="mon@email.fr"
 				required
 				className="h-9 text-sm"
 				aria-label="Adresse email"

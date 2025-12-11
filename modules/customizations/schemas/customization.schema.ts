@@ -49,10 +49,8 @@ export const customizationSchema = z
 			.optional()
 			.or(z.literal("")),
 
-		// Type de produit
-		productTypeLabel: z
-			.string({ message: "Le type de produit est requis" })
-			.min(1, { message: "Veuillez sélectionner un type de produit" }),
+		// Type de produit (optionnel)
+		productTypeLabel: z.string().optional().default(""),
 
 		// Inspirations (produits existants comme référence)
 		inspirationProductIds: z

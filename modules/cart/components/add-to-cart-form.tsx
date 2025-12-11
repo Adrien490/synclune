@@ -203,11 +203,16 @@ export function AddToCartForm({
 				) : !isAvailable ? (
 					<span>Indisponible</span>
 				) : !selectedSku ? (
-					<span>
-						{hasOnlyOneSku
-							? "Produit non disponible"
-							: validationErrors[0] || "Sélectionne tes options"}
-					</span>
+					<>
+						{hasOnlyOneSku ? (
+							<span>Produit non disponible</span>
+						) : (
+							<>
+								<span className="sm:hidden">{validationErrors[0] || "Choisis tes options"}</span>
+								<span className="hidden sm:inline">{validationErrors[0] || "Sélectionne tes options"}</span>
+							</>
+						)}
+					</>
 				) : (
 					<span>Ajouter au panier</span>
 				)}

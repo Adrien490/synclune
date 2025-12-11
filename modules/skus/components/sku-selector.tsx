@@ -8,6 +8,7 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
+import { Sparkles } from "lucide-react";
 import { extractVariantInfo } from "@/modules/skus/services/extract-sku-info";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
@@ -61,9 +62,7 @@ export function VariantSelector({ product, defaultSku }: VariantSelectorProps) {
 					id="variant-selector-title"
 					className="text-base/6 tracking-tight antialiased flex items-center gap-2"
 				>
-					<span className="text-primary" aria-hidden="true">
-						✨
-					</span>
+					<Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
 					Personnalise ton produit
 				</CardTitle>
 				<CardDescription className="text-sm/6 tracking-normal antialiased">

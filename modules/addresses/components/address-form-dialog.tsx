@@ -317,14 +317,18 @@ export function AddressFormDialog({
 						{/* Complément d'adresse */}
 						<form.AppField name="address2">
 							{(field) => (
-								<field.InputField
-									label="Complément d'adresse (optionnel)"
-									type="text"
-									autoComplete="address-line2"
-									enterKeyHint="next"
-									placeholder="Appartement, bâtiment, etc."
-									disabled={isPending}
-								/>
+								<div className="space-y-2">
+									<field.InputField
+										label="Complément d'adresse (optionnel)"
+										type="text"
+										autoComplete="address-line2"
+										enterKeyHint="next"
+										disabled={isPending}
+									/>
+									<p className="text-xs text-muted-foreground">
+										Appartement, bâtiment, etc.
+									</p>
+								</div>
 							)}
 						</form.AppField>
 

@@ -88,7 +88,6 @@ export function UnsubscribeForm({
 								<field.InputField
 									type="email"
 									label="Adresse email"
-									placeholder="mon.email@exemple.fr"
 									disabled={isPending}
 									required
 								/>
