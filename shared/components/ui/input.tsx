@@ -88,10 +88,7 @@ function Input({
 							<X className="size-4" />
 						</button>
 					) : hasEndIcon ? (
-						<div
-							className="text-muted-foreground pointer-events-none [&>svg]:size-4"
-							aria-hidden="true"
-						>
+						<div className="[&>svg]:size-4">
 							{endIcon}
 						</div>
 					) : null}
