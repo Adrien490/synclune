@@ -140,7 +140,7 @@ function CreateProductFormContent({
 							<form.AppField
 								name="title"
 								validators={{
-									onBlur: ({ value }) =>
+									onChange: ({ value }) =>
 										!value || value.trim().length < 2
 											? "Le titre doit contenir au moins 2 caractères"
 											: undefined,
@@ -438,6 +438,8 @@ function CreateProductFormContent({
 							mode="array"
 							validators={{
 								onChange: ({ value }) =>
+									value.length === 0 ? "Au moins une image est requise" : undefined,
+								onSubmit: ({ value }) =>
 									value.length === 0 ? "Au moins une image est requise" : undefined,
 							}}
 						>

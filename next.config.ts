@@ -35,6 +35,8 @@ const nextConfig: NextConfig = {
     useCache: true,
   },
 
+  cacheComponents: true,
+
   cacheLife: {
     products: { stale: 900, revalidate: 300, expire: 21600 },
     collections: { stale: 3600, revalidate: 900, expire: 86400 },
