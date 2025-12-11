@@ -4,10 +4,7 @@
  */
 export const FAB_KEYS = {
 	CONTACT_ADRIEN: "contact-adrien",
-	// Futurs FABs à ajouter ici
-	// HELP: "help",
-	// BACK_TO_TOP: "back-to-top",
-	// CHAT: "chat",
+	ADMIN_SPEED_DIAL: "admin-speed-dial",
 } as const;
 
 export type FabKey = (typeof FAB_KEYS)[keyof typeof FAB_KEYS];

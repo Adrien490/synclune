@@ -4,7 +4,7 @@ import { DashboardHeader } from "@/app/admin/_components/dashboard-header";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { SelectionProvider } from "@/shared/contexts/selection-context";
 import { auth } from "@/modules/auth/lib/auth";
-import { ContactAdrien } from "@/modules/dashboard/components/contact-adrien";
+import { AdminSpeedDial } from "@/modules/dashboard/components/admin-speed-dial";
 import { FAB_KEYS } from "@/shared/features/fab";
 import { getFabVisibility } from "@/shared/features/fab/data/get-fab-visibility";
 import type { Metadata } from "next";
@@ -27,11 +27,11 @@ export default async function AdminLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	const [session, isContactAdrienHidden] = await Promise.all([
+	const [session, isSpeedDialHidden] = await Promise.all([
 		auth.api.getSession({
 			headers: await import("next/headers").then((m) => m.headers()),
 		}),
-		getFabVisibility(FAB_KEYS.CONTACT_ADRIEN),
+		getFabVisibility(FAB_KEYS.ADMIN_SPEED_DIAL),
 	]);
 
 	// Vérification de sécurité obligatoire
@@ -77,7 +77,7 @@ export default async function AdminLayout({
 					</SelectionProvider>
 				</main>
 			</SidebarInset>
-			<ContactAdrien initialHidden={isContactAdrienHidden} />
+			<AdminSpeedDial initialHidden={isSpeedDialHidden} />
 			<BottomNavigation />
 		</SidebarProvider>
 	);
