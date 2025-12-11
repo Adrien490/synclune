@@ -8,7 +8,7 @@ import {
 	CarouselItem,
 } from "@/shared/components/ui/carousel";
 
-interface ThumbnailsListProps {
+interface GalleryThumbnailsCarouselProps {
 	medias: ProductMedia[];
 	currentIndex: number;
 	title: string;
@@ -19,39 +19,6 @@ interface ThumbnailsListProps {
 	thumbnailClassName?: string;
 	/** Classe CSS pour le container */
 	className?: string;
-}
-
-/**
- * Liste de thumbnails pour la galerie produit
- * Rendu en grille simple, réutilisable pour desktop et mobile
- */
-export function GalleryThumbnailsGrid({
-	medias,
-	currentIndex,
-	title,
-	onNavigate,
-	onError,
-	hasError,
-	thumbnailClassName,
-}: ThumbnailsListProps) {
-	return (
-		<>
-			{medias.map((media, index) => (
-				<GalleryThumbnail
-					key={media.id}
-					media={media}
-					index={index}
-					isActive={index === currentIndex}
-					hasError={hasError(media.id)}
-					title={title}
-					onClick={() => onNavigate(index)}
-					onError={() => onError(media.id)}
-					className={thumbnailClassName}
-					isLCPCandidate={index === 0}
-				/>
-			))}
-		</>
-	);
 }
 
 /**
@@ -68,7 +35,7 @@ export function GalleryThumbnailsCarousel({
 	hasError,
 	thumbnailClassName,
 	className,
-}: ThumbnailsListProps) {
+}: GalleryThumbnailsCarouselProps) {
 	return (
 		<div className="relative">
 			<Carousel

@@ -22,7 +22,8 @@ import { usePreloadNextImage } from "@/modules/media/hooks/use-preload-next-imag
 import useEmblaCarousel from "embla-carousel-react";
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
-import { GalleryThumbnailsGrid, GalleryThumbnailsCarousel } from "@/modules/media/components/gallery-thumbnails";
+import { GalleryThumbnail } from "@/modules/media/components/gallery-thumbnail";
+import { GalleryThumbnailsCarousel } from "@/modules/media/components/gallery-thumbnails";
 
 interface GalleryProps {
 	product: GetProductReturn;
@@ -187,15 +188,20 @@ function GalleryContent({ product, title }: GalleryProps) {
 							<div className="hidden lg:block relative order-1">
 								{/* Container scrollable */}
 								<div className="flex flex-col gap-2 max-h-[min(500px,60vh)] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent pr-1 scroll-fade-y">
-									<GalleryThumbnailsGrid
-										medias={safeImages}
-										currentIndex={optimisticIndex}
-										title={title}
-										onNavigate={navigateToIndex}
-										onError={handleMediaError}
-										hasError={hasError}
-										thumbnailClassName="shrink-0 h-auto hover:shadow-sm"
-									/>
+									{safeImages.map((media, index) => (
+										<GalleryThumbnail
+											key={media.id}
+											media={media}
+											index={index}
+											isActive={index === optimisticIndex}
+											hasError={hasError(media.id)}
+											title={title}
+											onClick={() => navigateToIndex(index)}
+											onError={() => handleMediaError(media.id)}
+											className="shrink-0 h-auto hover:shadow-sm"
+											isLCPCandidate={index === 0}
+										/>
+									))}
 								</div>
 								{/* Gradient indiquant plus de contenu en bas (visible si > 5 images) */}
 								{safeImages.length > 5 && (
@@ -348,14 +354,19 @@ function GalleryContent({ product, title }: GalleryProps) {
 								/* Grille standard si 6 images ou moins */
 								<div className="gallery-thumbnails w-full">
 									<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3">
-										<GalleryThumbnailsGrid
-											medias={safeImages}
-											currentIndex={optimisticIndex}
-											title={title}
-											onNavigate={navigateToIndex}
-											onError={handleMediaError}
-											hasError={hasError}
-										/>
+										{safeImages.map((media, index) => (
+											<GalleryThumbnail
+												key={media.id}
+												media={media}
+												index={index}
+												isActive={index === optimisticIndex}
+												hasError={hasError(media.id)}
+												title={title}
+												onClick={() => navigateToIndex(index)}
+												onError={() => handleMediaError(media.id)}
+												isLCPCandidate={index === 0}
+											/>
+										))}
 									</div>
 								</div>
 							)}
