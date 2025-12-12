@@ -268,7 +268,7 @@ export function SkusFilterSheet({
 									<legend className="font-medium text-sm text-foreground">
 										Couleur
 									</legend>
-									<div className="space-y-2 max-h-48 overflow-y-auto" data-vaul-no-drag>
+									<div className="space-y-2 max-h-48 overflow-y-auto">
 										{colorOptions.map((color) => {
 											const isSelected = field.state.value.includes(color.id);
 											return (
@@ -320,7 +320,7 @@ export function SkusFilterSheet({
 								<legend className="font-medium text-sm text-foreground">
 									Matériau
 								</legend>
-								<div className="space-y-2 max-h-48 overflow-y-auto" data-vaul-no-drag>
+								<div className="space-y-2 max-h-48 overflow-y-auto">
 									{materialOptions.map((material) => {
 										const isSelected = field.state.value.includes(material.id);
 										return (
