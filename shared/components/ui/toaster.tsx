@@ -135,6 +135,16 @@ const icons = {
 	),
 };
 
+/**
+ * Toaster responsive avec position adaptée mobile/desktop
+ *
+ * - Desktop (>768px): top-center avec safe-area-inset-top
+ * - Mobile (≤768px): bottom-center avec safe-area-inset-bottom
+ *
+ * Note: On utilise useIsMobile (768px) au lieu de mobileOffset Sonner (600px)
+ * pour cohérence avec le breakpoint du reste de l'app et contrôle simultané
+ * de la position ET de l'offset.
+ */
 export function AppToaster() {
 	const { resolvedTheme } = useTheme();
 	const isMobile = useIsMobile();
@@ -147,8 +157,6 @@ export function AppToaster() {
 			visibleToasts={3}
 			icons={icons}
 			closeButton
-			pauseWhenPageIsHidden
-			// Safe-area pour iPhone notch/Dynamic Island (bottom sur mobile)
 			offset={
 				isMobile
 					? "max(1rem, env(safe-area-inset-bottom))"

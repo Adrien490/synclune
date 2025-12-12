@@ -836,7 +836,10 @@ textarea {
 /* Touch targets iOS (min 44px) */
 [data-sonner-toast] [data-button] {
 	min-height: 44px;
-	padding-inline: 1rem;
+	min-width: 44px;
+	padding: 0.75rem 1rem;
+	font-weight: 500;
+	border-radius: var(--radius);
 }
 
 /* Bouton close discret */
