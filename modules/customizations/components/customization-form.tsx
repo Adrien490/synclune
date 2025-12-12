@@ -22,7 +22,7 @@ import { cn } from "@/shared/utils/cn";
 import { toast } from "sonner";
 
 import { useCustomizationForm } from "../hooks/use-customization-form";
-import type { ProductSearchResult, ProductType } from "../types";
+import type { ProductSearchResult, ProductType } from "../types/customization.types";
 import type { Color } from "@/modules/colors/types/color.types";
 import type { Material } from "@/modules/materials/types/materials.types";
 

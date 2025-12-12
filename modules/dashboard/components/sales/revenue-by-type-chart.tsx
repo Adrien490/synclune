@@ -19,7 +19,7 @@ import {
 import { PieChart, Pie, Cell } from "recharts";
 import type { GetRevenueByTypeReturn } from "../../types/dashboard.types";
 import { CHART_STYLES } from "../../constants/chart-styles";
-import { useChartDrilldown, type ChartDrilldownProps } from "../../hooks";
+import { useChartDrilldown, type ChartDrilldownProps } from "../../hooks/use-chart-drilldown";
 
 interface RevenueByTypeChartProps extends ChartDrilldownProps {
 	chartDataPromise: Promise<GetRevenueByTypeReturn>;

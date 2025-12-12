@@ -9,7 +9,7 @@ import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getSession } from "@/modules/auth";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 
 export const metadata: Metadata = {
 	title: "Vérification de l'email | Synclune",

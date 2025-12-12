@@ -1,7 +1,7 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { AccountNav } from "@/modules/users/components/account-nav";
-import { WishlistGridSkeleton } from "@/modules/wishlist/components";
+import { WishlistGridSkeleton } from "@/modules/wishlist/components/wishlist-grid-skeleton";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 
 export default function WishlistLoading() {

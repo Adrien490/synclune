@@ -9,7 +9,7 @@ import {
 	XCircle,
 } from "lucide-react";
 
-import type { CustomizationRequestStatus } from "../../types";
+import type { CustomizationRequestStatus } from "../../types/customization.types";
 import {
 	AlertDialog,
 	AlertDialogCancel,

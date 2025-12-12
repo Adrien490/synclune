@@ -1,12 +1,10 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
-import {
-	WishlistList,
-	WishlistGridSkeleton,
-	ClearWishlistButton,
-	ClearWishlistAlertDialog,
-	RemoveWishlistItemAlertDialog,
-} from "@/modules/wishlist/components";
+import { WishlistList } from "@/modules/wishlist/components/wishlist-list";
+import { WishlistGridSkeleton } from "@/modules/wishlist/components/wishlist-grid-skeleton";
+import { ClearWishlistButton } from "@/modules/wishlist/components/clear-wishlist-button";
+import { ClearWishlistAlertDialog } from "@/modules/wishlist/components/clear-wishlist-alert-dialog";
+import { RemoveWishlistItemAlertDialog } from "@/modules/wishlist/components/remove-wishlist-item-alert-dialog";
 import { getWishlist } from "@/modules/wishlist/data/get-wishlist";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { Suspense } from "react";

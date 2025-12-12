@@ -12,7 +12,7 @@ import {
 import type { GetDashboardOrdersStatusReturn, OrderStatusItem } from "@/modules/dashboard/data/get-orders-status";
 import { use } from "react";
 import { Cell, Pie, PieChart } from "recharts";
-import { useChartDrilldown, type ChartDrilldownProps } from "../hooks";
+import { useChartDrilldown, type ChartDrilldownProps } from "../hooks/use-chart-drilldown";
 import { CHART_STYLES } from "../constants/chart-styles";
 
 interface OrdersStatusChartProps extends ChartDrilldownProps {

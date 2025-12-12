@@ -8,7 +8,7 @@ import { getColors } from "@/modules/colors/data/get-colors";
 import { getMaterials } from "@/modules/materials/data/get-materials";
 import { getProducts } from "@/modules/products/data/get-products";
 import { CustomizationForm } from "@/modules/customizations/components/customization-form";
-import type { ProductSearchResult } from "@/modules/customizations/types";
+import type { ProductSearchResult } from "@/modules/customizations/types/customization.types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

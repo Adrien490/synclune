@@ -1,4 +1,4 @@
-import type { CustomizationRequestStatus } from "../types";
+import type { CustomizationRequestStatus } from "../types/customization.types";
 
 // ============================================================================
 // STATUS LABELS - Demandes de personnalisation

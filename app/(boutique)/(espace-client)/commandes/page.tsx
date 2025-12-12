@@ -1,10 +1,8 @@
 import { SortSelect } from "@/shared/components/sort-select";
 import { PageHeader } from "@/shared/components/page-header";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
-import {
-	CustomerOrdersTable,
-	CustomerOrdersTableSkeleton,
-} from "@/modules/orders/components/customer";
+import { CustomerOrdersTable } from "@/modules/orders/components/customer/customer-orders-table";
+import { CustomerOrdersTableSkeleton } from "@/modules/orders/components/customer/customer-orders-table-skeleton";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
 import { USER_ORDERS_SORT_LABELS } from "@/modules/orders/constants/user-orders.constants";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";

@@ -7,7 +7,7 @@ import {
 	GET_PRODUCT_SKUS_DEFAULT_SORT_BY,
 	GET_PRODUCT_SKUS_DEFAULT_PER_PAGE,
 } from "../constants/sku.constants";
-import { getProductSkusSchema } from "../schemas";
+import { getProductSkusSchema } from "../schemas/get-skus.schemas";
 import type { GetProductSkusReturn } from "../types/skus.types";
 import { fetchProductSkus } from "../utils/fetch-skus";
 import type { ProductSkuFilters } from "../schemas/sku-filters-schema";

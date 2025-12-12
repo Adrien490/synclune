@@ -2,7 +2,7 @@
 
 import { startTransition } from "react";
 import { Button } from "@/shared/components/ui/button";
-import { useRemoveUnavailableItems } from "@/modules/cart/lib";
+import { useRemoveUnavailableItems } from "@/modules/cart/hooks/use-remove-unavailable-items";
 import { Loader2 } from "lucide-react";
 
 interface RemoveUnavailableItemsButtonProps {

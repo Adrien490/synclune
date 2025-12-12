@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import { connection } from "next/server";
 
 import { DashboardTabs } from "@/modules/dashboard/components/dashboard-tabs";
-import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
+import { PeriodSelector } from "@/modules/dashboard/components/period-selector/period-selector";
 import { RefreshButton } from "@/modules/dashboard/components/refresh-button";
 import { OverviewSection } from "@/modules/dashboard/components/overview/overview-section";
 import { SalesSection } from "@/modules/dashboard/components/sales/sales-section";

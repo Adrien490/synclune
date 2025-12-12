@@ -4,7 +4,7 @@ import { cacheCustomizationList } from "../constants/cache";
 import type {
 	GetCustomizationRequestsParams,
 	GetCustomizationRequestsResult,
-} from "../types";
+} from "../types/customization.types";
 
 // Re-export types for consumers
 export type { GetCustomizationRequestsResult };

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CustomizationRequestStatus } from "../../types";
+import type { CustomizationRequestStatus } from "../../types/customization.types";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,

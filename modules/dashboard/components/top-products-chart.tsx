@@ -19,7 +19,8 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { truncateText, TRUNCATE_PRESETS } from "../utils/truncate-text";
 import { CHART_STYLES } from "../constants/chart-styles";
 import { ChartEmpty } from "./chart-empty";
-import { useChartDrilldown, useYAxisWidth, type ChartDrilldownProps } from "../hooks";
+import { useChartDrilldown, type ChartDrilldownProps } from "../hooks/use-chart-drilldown";
+import { useYAxisWidth } from "../hooks/use-y-axis-width";
 
 interface TopProductsChartProps extends ChartDrilldownProps {
 	chartDataPromise: Promise<GetDashboardTopProductsReturn>;

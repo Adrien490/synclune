@@ -1,7 +1,7 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { AccountNav } from "@/modules/users/components/account-nav";
-import { CustomerOrdersTableSkeleton } from "@/modules/orders/components/customer";
+import { CustomerOrdersTableSkeleton } from "@/modules/orders/components/customer/customer-orders-table-skeleton";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 
 export default function CustomerOrdersLoading() {

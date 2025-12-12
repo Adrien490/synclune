@@ -1,7 +1,7 @@
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { cacheCustomizationDetail } from "../constants/cache";
-import type { CustomizationRequestDetail } from "../types";
+import type { CustomizationRequestDetail } from "../types/customization.types";
 
 // ============================================================================
 // DATA FUNCTION

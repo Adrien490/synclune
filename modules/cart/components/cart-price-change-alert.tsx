@@ -3,7 +3,7 @@
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { Button } from "@/shared/components/ui/button";
-import { useUpdateCartPrices } from "@/modules/cart/lib";
+import { useUpdateCartPrices } from "@/modules/cart/hooks/use-update-cart-prices";
 import { RefreshCw } from "lucide-react";
 
 interface CartPriceChangeAlertProps {

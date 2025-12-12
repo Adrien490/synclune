@@ -11,7 +11,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useDeleteUploadThingFile } from "@/modules/media/lib/uploadthing";
+import { useDeleteUploadThingFile } from "@/modules/media/lib/uploadthing/use-delete-uploadthing-file";
 import { startTransition } from "react";
 
 export const DELETE_GALLERY_MEDIA_DIALOG_ID = "delete-gallery-media";

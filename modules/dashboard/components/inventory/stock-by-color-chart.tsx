@@ -19,7 +19,8 @@ import type { GetStockByColorReturn } from "../../types/dashboard.types";
 import { truncateText, TRUNCATE_PRESETS } from "../../utils/truncate-text";
 import { CHART_STYLES } from "../../constants/chart-styles";
 import { ChartScrollContainer } from "../chart-scroll-container";
-import { useChartDrilldown, useYAxisWidth, type ChartDrilldownProps } from "../../hooks";
+import { useChartDrilldown, type ChartDrilldownProps } from "../../hooks/use-chart-drilldown";
+import { useYAxisWidth } from "../../hooks/use-y-axis-width";
 
 interface StockByColorChartProps extends ChartDrilldownProps {
 	chartDataPromise: Promise<GetStockByColorReturn>;

@@ -2,7 +2,7 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { cacheCustomizationStats } from "../constants/cache";
 import { OPEN_STATUSES, CLOSED_STATUSES } from "../constants/status.constants";
-import type { CustomizationStats } from "../types";
+import type { CustomizationStats } from "../types/customization.types";
 
 // ============================================================================
 // DATA FUNCTION
