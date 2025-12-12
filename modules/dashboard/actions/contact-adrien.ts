@@ -1,6 +1,5 @@
 "use server";
 
-import { Resend } from "resend";
 import {
 	requireAuth,
 	validateFormData,
@@ -8,17 +7,13 @@ import {
 	handleActionError,
 } from "@/shared/lib/actions";
 import { forbidden, success } from "@/shared/lib/actions/responses";
-import { sanitizeForEmail, newlinesToBr } from "@/shared/lib/sanitize";
-import { EMAIL_FROM, EMAIL_ADMIN } from "@/shared/lib/email-config";
+import { sendAdminContactEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { contactAdrienSchema } from "../schemas/dashboard.schemas";
 
-// Initialiser le client Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 /**
  * Server Action pour envoyer un email à Adrien (créateur du site)
- * Utilise le SDK Resend natif
+ * Utilise React Email pour le template
  *
  * Protection:
  * - Nécessite un compte authentifié avec rôle ADMIN
@@ -62,117 +57,22 @@ export async function contactAdrien(
 
 		const { message } = validated.data;
 
-		// 5. Sanitizer le message pour l'HTML
-		const sanitizedMessage = newlinesToBr(sanitizeForEmail(message));
-		const sanitizedName = sanitizeForEmail(user.name || "Administrateur");
-		const sanitizedEmail = sanitizeForEmail(user.email || "");
-
-		// 6. Envoyer l'email avec SDK Resend
-		const { data, error } = await resend.emails.send({
-			from: EMAIL_FROM,
-			to: EMAIL_ADMIN,
-			replyTo: user.email || undefined,
-			subject: `[Dashboard Synclune] Message de ${user.name || "Admin"}`,
-			html: `
-				<!DOCTYPE html>
-				<html>
-				<head>
-					<meta charset="utf-8">
-					<style>
-						body {
-							font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-							line-height: 1.6;
-							color: #333;
-							max-width: 600px;
-							margin: 0 auto;
-							padding: 20px;
-						}
-						.header {
-							background: linear-gradient(135deg, #ec4899 0%, #f59e0b 100%);
-							color: white;
-							padding: 20px;
-							border-radius: 8px 8px 0 0;
-						}
-						.content {
-							background: #f9fafb;
-							padding: 30px;
-							border: 1px solid #e5e7eb;
-							border-top: none;
-							border-radius: 0 0 8px 8px;
-						}
-						.label {
-							font-weight: 600;
-							color: #6b7280;
-							text-transform: uppercase;
-							font-size: 12px;
-							margin-bottom: 8px;
-						}
-						.value {
-							background: white;
-							padding: 12px;
-							border-radius: 6px;
-							margin-bottom: 20px;
-							border: 1px solid #e5e7eb;
-						}
-						.message {
-							white-space: pre-wrap;
-							word-wrap: break-word;
-						}
-						.footer {
-							margin-top: 30px;
-							padding-top: 20px;
-							border-top: 1px solid #e5e7eb;
-							font-size: 12px;
-							color: #6b7280;
-							text-align: center;
-						}
-					</style>
-				</head>
-				<body>
-					<div class="header">
-						<h1 style="margin: 0; font-size: 24px;">Nouveau message du dashboard</h1>
-					</div>
-					<div class="content">
-						<div>
-							<div class="label">De</div>
-							<div class="value">
-								${sanitizedName}<br>
-								<a href="mailto:${sanitizedEmail}" style="color: #ec4899;">${sanitizedEmail}</a>
-							</div>
-						</div>
-
-						<div>
-							<div class="label">Message</div>
-							<div class="value message">${sanitizedMessage}</div>
-						</div>
-
-						<div class="footer">
-							<p>Ce message a été envoyé depuis le dashboard Synclune Bijoux</p>
-						</div>
-					</div>
-				</body>
-				</html>
-			`,
-			text: `
-De: ${user.name || "Admin"} (${user.email || ""})
-
-Message:
-${message}
-
----
-Ce message a été envoyé depuis le dashboard Synclune Bijoux
-			`.trim(),
+		// 5. Envoyer l'email avec React Email
+		const result = await sendAdminContactEmail({
+			senderName: user.name || "Administrateur",
+			senderEmail: user.email || "",
+			message,
 		});
 
-		if (error) {
+		if (!result.success) {
 			return handleActionError(
-				error,
+				result.error,
 				"Une erreur est survenue lors de l'envoi du message"
 			);
 		}
 
 		return success("Message envoyé avec succès", {
-			messageId: data?.id,
+			messageId: result.data?.id,
 		});
 	} catch (error) {
 		return handleActionError(

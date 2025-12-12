@@ -21,6 +21,7 @@ import { CancelOrderConfirmationEmail } from "@/emails/cancel-order-confirmation
 import { ReturnConfirmationEmail } from "@/emails/return-confirmation-email";
 import { RevertShippingNotificationEmail } from "@/emails/revert-shipping-notification-email";
 import { BackInStockEmail } from "@/emails/back-in-stock-email";
+import { AdminContactEmail } from "@/emails/admin-contact-email";
 import { EMAIL_FROM, EMAIL_SUBJECTS, EMAIL_ADMIN } from "@/shared/lib/email-config";
 
 // Initialiser le client Resend
@@ -1162,6 +1163,45 @@ export async function sendBackInStockEmail({
 		return { success: true, data };
 	} catch (error) {
 		console.error("[EMAIL] Exception sending back in stock notification:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email de contact depuis le dashboard admin
+ */
+export async function sendAdminContactEmail({
+	senderName,
+	senderEmail,
+	message,
+}: {
+	senderName: string;
+	senderEmail: string;
+	message: string;
+}) {
+	try {
+		const emailHtml = await render(
+			AdminContactEmail({
+				senderName,
+				senderEmail,
+				message,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to: EMAIL_ADMIN,
+			replyTo: senderEmail,
+			subject: `[Dashboard Synclune] Message de ${senderName}`,
+			html: emailHtml,
+		});
+
+		if (error) {
+			return { success: false, error };
+		}
+
+		return { success: true, data };
+	} catch (error) {
 		return { success: false, error };
 	}
 }
