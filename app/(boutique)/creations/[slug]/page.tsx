@@ -92,14 +92,6 @@ export default async function ProductPage({
 	// Construction des breadcrumbs
 	const breadcrumbs = [
 		{ label: "Créations", href: "/produits" },
-		...(product.type
-			? [
-					{
-						label: product.type.label,
-						href: `/produits/${product.type.slug}`,
-					},
-				]
-			: []),
 		{ label: product.title, href: `/creations/${product.slug}` },
 	];
 
