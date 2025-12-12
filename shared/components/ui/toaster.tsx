@@ -2,6 +2,7 @@
 
 import { Toaster as SonnerToaster } from "sonner";
 import { useTheme } from "next-themes";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 
 /**
  * Icônes bijoux raffinées pour les toasts Synclune
