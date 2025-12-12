@@ -1,10 +1,12 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { toast } from "sonner";
 import {
 	generateVideoThumbnail,
 	isThumbnailGenerationSupported,
+	type VideoThumbnailResult,
 } from "./use-video-thumbnail";
 
 // ============================================================================
@@ -18,18 +20,57 @@ export interface UseMediaUploadOptions {
 	maxSizeVideo?: number;
 	/** Nombre max de fichiers (defaut: 10) */
 	maxFiles?: number;
+	/** Concurrence max pour les uploads de videos (defaut: 2) */
+	videoConcurrency?: number;
 	/** Callback appele apres un upload reussi */
-	onSuccess?: (urls: string[]) => void;
+	onSuccess?: (results: MediaUploadResult[]) => void;
 	/** Callback appele en cas d'erreur */
 	onError?: (error: Error) => void;
+	/** Callback appele avec la progression */
+	onProgress?: (progress: UploadProgress) => void;
 }
 
 export interface MediaUploadResult {
+	/** URL du fichier uploade */
 	url: string;
+	/** Type de media */
 	mediaType: "IMAGE" | "VIDEO";
+	/** Nom original du fichier */
 	fileName: string;
+	/** Blur placeholder en base64 (images et videos) */
 	blurDataUrl?: string;
+	/** URL du thumbnail (videos uniquement) */
 	thumbnailUrl?: string;
+}
+
+export interface UploadProgress {
+	/** Nombre total de fichiers */
+	total: number;
+	/** Nombre de fichiers uploades */
+	completed: number;
+	/** Fichier en cours d'upload */
+	current?: string;
+	/** Phase actuelle */
+	phase: "validating" | "generating-thumbnails" | "uploading" | "done";
+}
+
+export interface UseMediaUploadReturn {
+	/** Upload plusieurs fichiers avec validation */
+	upload: (files: File[]) => Promise<MediaUploadResult[]>;
+	/** Upload un seul fichier */
+	uploadSingle: (file: File) => Promise<MediaUploadResult | null>;
+	/** Valider des fichiers sans les uploader */
+	validateFiles: (files: File[]) => File[];
+	/** Annuler l'upload en cours */
+	cancel: () => void;
+	/** Indique si un upload est en cours */
+	isUploading: boolean;
+	/** Progression actuelle */
+	progress: UploadProgress | null;
+	/** Utilitaire pour determiner le type de media */
+	getMediaType: (file: File) => "IMAGE" | "VIDEO";
+	/** Utilitaire pour verifier si un fichier est trop gros */
+	isOversized: (file: File) => boolean;
 }
 
 // ============================================================================
@@ -39,90 +80,162 @@ export interface MediaUploadResult {
 const DEFAULT_MAX_SIZE_IMAGE = 16 * 1024 * 1024; // 16MB
 const DEFAULT_MAX_SIZE_VIDEO = 512 * 1024 * 1024; // 512MB
 const DEFAULT_MAX_FILES = 10;
+const DEFAULT_VIDEO_CONCURRENCY = 2;
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Formate une taille en bytes en string lisible
+ */
+function formatFileSize(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`;
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/**
+ * Determine le type de media a partir du type MIME
+ */
+function getMediaTypeFromFile(file: File): "IMAGE" | "VIDEO" {
+	return file.type.startsWith("video/") ? "VIDEO" : "IMAGE";
+}
+
+/**
+ * Retry avec backoff exponentiel
+ */
+async function retryWithBackoff<T>(
+	fn: () => Promise<T>,
+	maxRetries: number = 3,
+	baseDelay: number = 1000,
+	signal?: AbortSignal
+): Promise<T> {
+	let lastError: Error | undefined;
+
+	for (let attempt = 0; attempt <= maxRetries; attempt++) {
+		if (signal?.aborted) {
+			throw new DOMException("Operation annulee", "AbortError");
+		}
+
+		try {
+			return await fn();
+		} catch (error) {
+			lastError = error instanceof Error ? error : new Error(String(error));
+
+			// Ne pas retry si c'est une erreur d'abort
+			if (error instanceof DOMException && error.name === "AbortError") {
+				throw error;
+			}
+
+			// Derniere tentative, on throw
+			if (attempt === maxRetries) {
+				throw lastError;
+			}
+
+			// Attendre avec backoff exponentiel
+			const delay = baseDelay * Math.pow(2, attempt);
+			await new Promise(resolve => setTimeout(resolve, delay));
+		}
+	}
+
+	throw lastError;
+}
 
 // ============================================================================
 // HOOK
 // ============================================================================
 
 /**
- * Hook pour gerer l'upload de medias (images et videos) avec validation
- * Centralise la logique d'upload pour eviter la duplication dans les formulaires
+ * Hook production-ready pour l'upload de medias (images et videos)
  *
- * Pour les videos:
- * - Genere automatiquement un thumbnail cote client (Canvas API)
- * - Upload le thumbnail puis la video
- * - Retourne les deux URLs liees
+ * Fonctionnalites:
+ * - Upload parallele des images en batch
+ * - Generation de thumbnails client-side pour les videos (Canvas API)
+ * - Retry avec backoff exponentiel
+ * - Annulation via AbortController
+ * - Progression en temps reel
+ * - Validation des fichiers (taille, type, nombre)
  *
  * @example
- * const { upload, isUploading, validateFiles } = useMediaUpload({
+ * ```tsx
+ * const { upload, isUploading, progress, cancel } = useMediaUpload({
  *   maxFiles: 5,
- *   onSuccess: (urls) => console.log('Uploaded:', urls),
+ *   onProgress: (p) => console.log(`${p.completed}/${p.total}`),
+ *   onSuccess: (results) => console.log('Uploaded:', results),
  * });
  *
- * const handleFiles = async (files: File[]) => {
+ * const handleDrop = async (files: File[]) => {
  *   const results = await upload(files);
  *   // results contient les URLs des fichiers uploades
  * };
+ * ```
  */
-export function useMediaUpload(options: UseMediaUploadOptions = {}) {
+export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUploadReturn {
 	const {
 		maxSizeImage = DEFAULT_MAX_SIZE_IMAGE,
 		maxSizeVideo = DEFAULT_MAX_SIZE_VIDEO,
 		maxFiles = DEFAULT_MAX_FILES,
+		videoConcurrency = DEFAULT_VIDEO_CONCURRENCY,
+		onSuccess,
+		onError,
+		onProgress,
 	} = options;
 
-	const { startUpload, isUploading } = useUploadThing("catalogMedia");
+	const [progress, setProgress] = useState<UploadProgress | null>(null);
+	const abortControllerRef = useRef<AbortController | null>(null);
 
-	/**
-	 * Determine le type de media a partir du type MIME du fichier
-	 */
-	const getMediaType = (file: File): "IMAGE" | "VIDEO" => {
-		return file.type.startsWith("video/") ? "VIDEO" : "IMAGE";
-	};
+	const { startUpload, isUploading: isUploadThingUploading } = useUploadThing("catalogMedia");
 
-	/**
-	 * Verifie si un fichier depasse la limite de taille
-	 */
+	// ========================================================================
+	// UTILITIES
+	// ========================================================================
+
+	const getMediaType = (file: File): "IMAGE" | "VIDEO" => getMediaTypeFromFile(file);
+
 	const isOversized = (file: File): boolean => {
 		const maxSize = getMediaType(file) === "VIDEO" ? maxSizeVideo : maxSizeImage;
 		return file.size > maxSize;
 	};
 
-	/**
-	 * Formate la taille d'un fichier en MB
-	 */
-	const formatSize = (bytes: number): string => {
-		return (bytes / 1024 / 1024).toFixed(2);
+	const updateProgress = (update: Partial<UploadProgress>) => {
+		setProgress(prev => {
+			const newProgress = prev ? { ...prev, ...update } : {
+				total: 0,
+				completed: 0,
+				phase: "validating" as const,
+				...update,
+			};
+			onProgress?.(newProgress);
+			return newProgress;
+		});
 	};
 
-	/**
-	 * Valide et filtre les fichiers avant upload
-	 * Affiche des toasts d'erreur pour les fichiers invalides
-	 *
-	 * @returns Liste des fichiers valides
-	 */
+	// ========================================================================
+	// VALIDATION
+	// ========================================================================
+
 	const validateFiles = (files: File[]): File[] => {
-		// Verifier les fichiers trop gros
 		const oversized = files.filter(isOversized);
-		const validSizeFiles = files.filter((f) => !isOversized(f));
+		const validSizeFiles = files.filter(f => !isOversized(f));
 
 		if (oversized.length > 0) {
 			const details = oversized
-				.map((f) => `${f.name}: ${formatSize(f.size)}MB`)
+				.slice(0, 3)
+				.map(f => `${f.name} (${formatFileSize(f.size)})`)
 				.join(", ");
+			const suffix = oversized.length > 3 ? ` et ${oversized.length - 3} autre(s)` : "";
+
 			toast.error(
-				`${oversized.length} fichier(s) depassent la limite de taille`,
-				{ description: details }
+				`${oversized.length} fichier(s) trop volumineux`,
+				{ description: details + suffix }
 			);
 		}
 
-		// Verifier le nombre de fichiers
 		if (validSizeFiles.length > maxFiles) {
 			toast.warning(
-				`Maximum ${maxFiles} fichiers autorises`,
-				{
-					description: `${validSizeFiles.length - maxFiles} fichier(s) ignore(s)`,
-				}
+				`Maximum ${maxFiles} fichiers`,
+				{ description: `${validSizeFiles.length - maxFiles} fichier(s) ignore(s)` }
 			);
 			return validSizeFiles.slice(0, maxFiles);
 		}
@@ -130,73 +243,69 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
 		return validSizeFiles;
 	};
 
+	// ========================================================================
+	// UPLOAD FUNCTIONS
+	// ========================================================================
+
 	/**
-	 * Upload une video avec generation de thumbnail cote client
+	 * Upload une video avec generation de thumbnail
 	 */
-	const uploadVideo = async (videoFile: File): Promise<MediaUploadResult | null> => {
+	const uploadVideo = async (
+		videoFile: File,
+		signal: AbortSignal
+	): Promise<MediaUploadResult | null> => {
 		let thumbnailUrl: string | undefined;
 		let blurDataUrl: string | undefined;
-		let previewUrlToRevoke: string | undefined;
+		let thumbnailResult: VideoThumbnailResult | null = null;
 
-		// 1. Generer le thumbnail cote client si supporte
+		// 1. Generer le thumbnail si supporte
 		if (isThumbnailGenerationSupported()) {
 			try {
-				const thumbnailResult = await generateVideoThumbnail(videoFile);
-				previewUrlToRevoke = thumbnailResult.previewUrl;
+				thumbnailResult = await generateVideoThumbnail(videoFile, { signal });
 				blurDataUrl = thumbnailResult.blurDataUrl;
 
-				// 2. Upload le thumbnail
-				const thumbUploadResult = await startUpload([thumbnailResult.thumbnailFile]);
+				// 2. Upload le thumbnail avec retry
+				const thumbUploadResult = await retryWithBackoff(
+					() => startUpload([thumbnailResult!.thumbnailFile]),
+					2,
+					500,
+					signal
+				);
+
 				if (thumbUploadResult?.[0]?.serverData?.url) {
 					thumbnailUrl = thumbUploadResult[0].serverData.url;
 				}
 			} catch (error) {
-				console.warn(
-					"[useMediaUpload] Echec generation thumbnail, upload video sans thumbnail:",
-					error instanceof Error ? error.message : error
-				);
+				// Log mais continue sans thumbnail
+				if (!(error instanceof DOMException && error.name === "AbortError")) {
+					console.warn("[useMediaUpload] Echec generation/upload thumbnail:", error);
+				} else {
+					throw error; // Re-throw abort errors
+				}
 			} finally {
 				// Cleanup preview URL
-				if (previewUrlToRevoke) {
-					URL.revokeObjectURL(previewUrlToRevoke);
+				if (thumbnailResult?.previewUrl) {
+					URL.revokeObjectURL(thumbnailResult.previewUrl);
 				}
 			}
 		}
 
-		// 3. Upload la video
-		try {
-			const videoUploadResult = await startUpload([videoFile]);
-			const serverData = videoUploadResult?.[0]?.serverData;
+		// 3. Upload la video avec retry
+		const videoUploadResult = await retryWithBackoff(
+			() => startUpload([videoFile]),
+			2,
+			1000,
+			signal
+		);
 
-			if (serverData?.url) {
-				return {
-					url: serverData.url,
-					mediaType: "VIDEO",
-					fileName: videoFile.name,
-					thumbnailUrl,
-					blurDataUrl,
-				};
-			}
-		} catch (error) {
-			throw error;
-		}
-
-		return null;
-	};
-
-	/**
-	 * Upload une image (le serveur genere le blur)
-	 */
-	const uploadImage = async (imageFile: File): Promise<MediaUploadResult | null> => {
-		const results = await startUpload([imageFile]);
-		const serverData = results?.[0]?.serverData;
-
+		const serverData = videoUploadResult?.[0]?.serverData;
 		if (serverData?.url) {
 			return {
 				url: serverData.url,
-				mediaType: "IMAGE",
-				fileName: imageFile.name,
-				blurDataUrl: serverData.blurDataUrl ?? undefined,
+				mediaType: "VIDEO",
+				fileName: videoFile.name,
+				thumbnailUrl,
+				blurDataUrl,
 			};
 		}
 
@@ -204,83 +313,176 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
 	};
 
 	/**
-	 * Upload les fichiers vers UploadThing
-	 * Valide automatiquement les fichiers avant upload
-	 * Pour les videos, genere un thumbnail cote client avant upload
-	 *
-	 * @returns Liste des resultats d'upload avec URLs et types
+	 * Upload des images en batch
 	 */
+	const uploadImages = async (
+		imageFiles: File[],
+		signal: AbortSignal
+	): Promise<MediaUploadResult[]> => {
+		if (imageFiles.length === 0) return [];
+
+		if (signal.aborted) {
+			throw new DOMException("Operation annulee", "AbortError");
+		}
+
+		const results = await retryWithBackoff(
+			() => startUpload(imageFiles),
+			2,
+			1000,
+			signal
+		);
+
+		const uploadResults: MediaUploadResult[] = [];
+
+		for (let i = 0; i < (results || []).length; i++) {
+			const result = results![i];
+			const serverData = result.serverData;
+			if (serverData?.url) {
+				uploadResults.push({
+					url: serverData.url,
+					mediaType: "IMAGE",
+					fileName: imageFiles[i].name,
+					blurDataUrl: serverData.blurDataUrl ?? undefined,
+				});
+			}
+		}
+
+		return uploadResults;
+	};
+
+	/**
+	 * Upload des videos en parallele avec limite de concurrence
+	 */
+	const uploadVideos = async (
+		videoFiles: File[],
+		signal: AbortSignal
+	): Promise<MediaUploadResult[]> => {
+		if (videoFiles.length === 0) return [];
+
+		const results: MediaUploadResult[] = [];
+
+		// Traiter par lots pour limiter la concurrence
+		for (let i = 0; i < videoFiles.length; i += videoConcurrency) {
+			if (signal.aborted) {
+				throw new DOMException("Operation annulee", "AbortError");
+			}
+
+			const batch = videoFiles.slice(i, i + videoConcurrency);
+			updateProgress({ current: batch.map(f => f.name).join(", ") });
+
+			const batchResults = await Promise.allSettled(
+				batch.map(file => uploadVideo(file, signal))
+			);
+
+			for (const result of batchResults) {
+				if (result.status === "fulfilled" && result.value) {
+					results.push(result.value);
+				} else if (result.status === "rejected") {
+					// Check for abort
+					if (result.reason instanceof DOMException && result.reason.name === "AbortError") {
+						throw result.reason;
+					}
+					console.warn("[useMediaUpload] Echec upload video:", result.reason);
+				}
+			}
+		}
+
+		return results;
+	};
+
+	// ========================================================================
+	// MAIN UPLOAD FUNCTION
+	// ========================================================================
+
 	const upload = async (files: File[]): Promise<MediaUploadResult[]> => {
+		// Creer un nouveau AbortController
+		abortControllerRef.current?.abort();
+		abortControllerRef.current = new AbortController();
+		const signal = abortControllerRef.current.signal;
+
+		// Valider les fichiers
+		updateProgress({ phase: "validating", total: files.length, completed: 0 });
 		const validFiles = validateFiles(files);
-		if (validFiles.length === 0) return [];
+
+		if (validFiles.length === 0) {
+			setProgress(null);
+			return [];
+		}
+
+		// Separer images et videos
+		const images = validFiles.filter(f => getMediaType(f) === "IMAGE");
+		const videos = validFiles.filter(f => getMediaType(f) === "VIDEO");
+		const totalFiles = images.length + videos.length;
+
+		updateProgress({ total: totalFiles, completed: 0, phase: "uploading" });
 
 		const uploadResults: MediaUploadResult[] = [];
 
 		try {
-			// Separer images et videos pour traitement different
-			const images = validFiles.filter((f) => getMediaType(f) === "IMAGE");
-			const videos = validFiles.filter((f) => getMediaType(f) === "VIDEO");
-
-			// Upload des images en batch (plus rapide)
+			// Upload des images en batch
 			if (images.length > 0) {
-				const imageResults = await startUpload(images);
-				imageResults?.forEach((result, index) => {
-					const serverData = result.serverData;
-					if (serverData?.url) {
-						uploadResults.push({
-							url: serverData.url,
-							mediaType: "IMAGE",
-							fileName: images[index].name,
-							blurDataUrl: serverData.blurDataUrl ?? undefined,
-						});
-					}
-				});
+				updateProgress({ current: `${images.length} image(s)`, phase: "uploading" });
+				const imageResults = await uploadImages(images, signal);
+				uploadResults.push(...imageResults);
+				updateProgress({ completed: imageResults.length });
 			}
 
-			// Upload des videos une par une (generation thumbnail)
-			for (const videoFile of videos) {
-				const result = await uploadVideo(videoFile);
-				if (result) {
-					uploadResults.push(result);
-				}
+			// Upload des videos
+			if (videos.length > 0) {
+				updateProgress({ phase: "generating-thumbnails" });
+				const videoResults = await uploadVideos(videos, signal);
+				uploadResults.push(...videoResults);
+				updateProgress({ completed: uploadResults.length });
 			}
 
-			options.onSuccess?.(uploadResults.map((r) => r.url));
+			updateProgress({ phase: "done", completed: uploadResults.length });
+			onSuccess?.(uploadResults);
+
 			return uploadResults;
 		} catch (error) {
-			const err = error as Error;
-			options.onError?.(err);
+			// Gerer l'annulation silencieusement
+			if (error instanceof DOMException && error.name === "AbortError") {
+				setProgress(null);
+				return uploadResults; // Retourner ce qui a ete uploade
+			}
+
+			const err = error instanceof Error ? error : new Error(String(error));
+			onError?.(err);
+
 			toast.error("Echec de l'upload", {
 				description: err.message,
-				action: {
-					label: "Reessayer",
-					onClick: () => upload(validFiles),
-				},
 			});
-			return [];
+
+			return uploadResults; // Retourner ce qui a ete uploade malgre l'erreur
+		} finally {
+			// Reset progress apres un delai
+			setTimeout(() => setProgress(null), 1000);
 		}
 	};
 
-	/**
-	 * Upload un seul fichier (convenience method)
-	 */
 	const uploadSingle = async (file: File): Promise<MediaUploadResult | null> => {
 		const results = await upload([file]);
 		return results[0] || null;
 	};
 
+	const cancel = () => {
+		abortControllerRef.current?.abort();
+		abortControllerRef.current = null;
+		setProgress(null);
+	};
+
+	// ========================================================================
+	// RETURN
+	// ========================================================================
+
 	return {
-		/** Upload plusieurs fichiers avec validation */
 		upload,
-		/** Upload un seul fichier */
 		uploadSingle,
-		/** Valider des fichiers sans les uploader */
 		validateFiles,
-		/** Indique si un upload est en cours */
-		isUploading,
-		/** Utilitaire pour determiner le type de media */
+		cancel,
+		isUploading: isUploadThingUploading || progress !== null,
+		progress,
 		getMediaType,
-		/** Utilitaire pour verifier si un fichier est trop gros */
 		isOversized,
 	};
 }

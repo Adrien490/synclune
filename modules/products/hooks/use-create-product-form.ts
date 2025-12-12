@@ -21,7 +21,8 @@ export const useCreateProductForm = (options?: UseCreateProductFormOptions) => {
 		withCallbacks(
 			createProduct,
 			createToastCallbacks({
-				showSuccessToast: false, // Désactiver le toast automatique
+				showSuccessToast: false,
+				showErrorToast: false,
 				onSuccess: (result: unknown) => {
 					// Call the custom success callback if provided
 					if (

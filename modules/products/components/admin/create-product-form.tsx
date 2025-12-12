@@ -6,7 +6,6 @@ import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-g
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
-import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { MultiSelect } from "@/shared/components/multi-select";
 import { useCreateProductForm } from "@/modules/products/hooks/use-create-product-form";
@@ -31,7 +30,7 @@ export function CreateProductForm({
 	materials,
 }: CreateProductFormProps) {
 	const router = useRouter();
-	const { upload: uploadMedia, isUploading: isMediaUploading } = useMediaUpload();
+	const { upload: uploadMedia, isUploading: isMediaUploading, progress: uploadProgress } = useMediaUpload();
 
 	const { form, action, isPending } = useCreateProductForm({
 		onSuccess: (message) => {
@@ -169,64 +168,84 @@ export function CreateProductForm({
 
 									{field.state.value.length === 0 ? (
 										<div className="space-y-3">
-											<div className="flex items-center gap-3 py-3 px-3 bg-muted/20 rounded-lg border border-dashed border-border">
-												<ImagePlus className="h-5 w-5 text-muted-foreground/50" />
-												<p className="text-sm text-muted-foreground">
-													Ajoutez jusqu'à {maxMediaCount} images et vidéos
-												</p>
-											</div>
-											<UploadDropzone
-												endpoint="catalogMedia"
-												onChange={(files) => handleUpload(files, field)}
-												onUploadError={(error) => { toast.error(`Erreur: ${error.message}`); }}
-												className="w-full"
-												appearance={{
-													container: ({ isDragActive, isUploading: uploading }) => ({
-														border: "2px dashed",
-														borderColor: isDragActive
-															? "hsl(var(--primary))"
-															: "hsl(var(--muted-foreground) / 0.25)",
-														borderRadius: "0.75rem",
-														backgroundColor: isDragActive
-															? "hsl(var(--primary) / 0.05)"
-															: "hsl(var(--muted) / 0.3)",
-														padding: "1.5rem",
-														height: "min(200px, 25vh)",
-														minHeight: "160px",
-														display: "flex",
-														flexDirection: "column",
-														alignItems: "center",
-														justifyContent: "center",
-														gap: "0.5rem",
-														cursor: uploading ? "not-allowed" : "pointer",
-														opacity: uploading ? 0.7 : 1,
-													}),
-													uploadIcon: () => ({ display: "none" }),
-													label: () => ({ display: "none" }),
-													allowedContent: () => ({ display: "none" }),
-													button: () => ({ display: "none" }),
-												}}
-												content={{
-													uploadIcon: ({ isUploading: uploading, uploadProgress }) =>
-														uploading ? (
-															<UploadProgress progress={uploadProgress} isProcessing={uploadProgress >= 100} />
-														) : (
-															<Upload className="h-12 w-12 text-primary/70" />
-														),
-													label: ({ isDragActive, isUploading: uploading }) =>
-														uploading ? null : (
-															<div className="text-center space-y-1">
-																<p className="font-medium">
-																	{isDragActive ? "Relâchez" : "Ajouter des médias"}
-																</p>
-																<p className="text-xs text-muted-foreground">
-																	Images (max 16MB) et vidéos (max 512MB)
-																</p>
-															</div>
-														),
-												}}
-												config={{ mode: "auto" }}
-											/>
+											{/* Feedback d'upload en cours */}
+											{isMediaUploading && uploadProgress ? (
+												<div className="flex flex-col items-center justify-center gap-4 py-8 px-4 bg-primary/5 rounded-xl border-2 border-primary/20">
+													<div className="relative">
+														<div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+														<Upload className="absolute inset-0 m-auto h-6 w-6 text-primary" />
+													</div>
+													<div className="text-center space-y-1">
+														<p className="font-medium text-foreground">
+															{uploadProgress.phase === "validating" && "Validation des fichiers..."}
+															{uploadProgress.phase === "generating-thumbnails" && "Génération des miniatures..."}
+															{uploadProgress.phase === "uploading" && "Upload en cours..."}
+															{uploadProgress.phase === "done" && "Terminé !"}
+														</p>
+														<p className="text-sm text-muted-foreground">
+															{uploadProgress.completed} / {uploadProgress.total} fichier(s)
+														</p>
+														{uploadProgress.current && (
+															<p className="text-xs text-muted-foreground/70 truncate max-w-[200px]">
+																{uploadProgress.current}
+															</p>
+														)}
+													</div>
+												</div>
+											) : (
+												<>
+													<div className="flex items-center gap-3 py-3 px-3 bg-muted/20 rounded-lg border border-dashed border-border">
+														<ImagePlus className="h-5 w-5 text-muted-foreground/50" />
+														<p className="text-sm text-muted-foreground">
+															Ajoutez jusqu'à {maxMediaCount} images et vidéos
+														</p>
+													</div>
+													<UploadDropzone
+														endpoint="catalogMedia"
+														onChange={(files) => handleUpload(files, field)}
+														onUploadError={(error) => { toast.error(`Erreur: ${error.message}`); }}
+														className="w-full"
+														appearance={{
+															container: ({ isDragActive }) => ({
+																border: "2px dashed",
+																borderColor: isDragActive
+																	? "hsl(var(--primary))"
+																	: "hsl(var(--muted-foreground) / 0.25)",
+																borderRadius: "0.75rem",
+																backgroundColor: isDragActive
+																	? "hsl(var(--primary) / 0.05)"
+																	: "hsl(var(--muted) / 0.3)",
+																padding: "1.5rem",
+																height: "min(200px, 25vh)",
+																minHeight: "160px",
+																display: "flex",
+																flexDirection: "column",
+																alignItems: "center",
+																justifyContent: "center",
+																gap: "0.5rem",
+																cursor: "pointer",
+															}),
+															uploadIcon: () => ({ display: "none" }),
+															label: () => ({ display: "none" }),
+															allowedContent: () => ({ display: "none" }),
+															button: () => ({ display: "none" }),
+														}}
+														content={{
+															uploadIcon: () => <Upload className="h-12 w-12 text-primary/70" />,
+															label: ({ isDragActive }) => (
+																<div className="text-center space-y-1">
+																	<p className="font-medium">
+																		{isDragActive ? "Relâchez" : "Ajouter des médias"}
+																	</p>
+																	<p className="text-xs text-muted-foreground">
+																		Images (max 16MB) et vidéos (max 512MB)
+																	</p>
+																</div>
+															),
+														}}
+													/>
+												</>
+											)}
 											{field.state.meta.errors.length > 0 && (
 												<p className="text-sm text-destructive text-center">
 													{field.state.meta.errors[0]}
@@ -262,45 +281,46 @@ export function CreateProductForm({
 												isAtLimit
 													? undefined
 													: () => (
-															<UploadDropzone
-																endpoint="catalogMedia"
-																onChange={(files) => handleUpload(files, field)}
-																onUploadError={(error) => { toast.error(`Erreur: ${error.message}`); }}
-																className="w-full h-full min-h-0"
-																appearance={{
-																	container: ({ isDragActive, isUploading: uploading }) => ({
-																		height: "100%",
-																		display: "flex",
-																		flexDirection: "column",
-																		alignItems: "center",
-																		justifyContent: "center",
-																		cursor: uploading ? "not-allowed" : "pointer",
-																		opacity: uploading ? 0.7 : 1,
-																		backgroundColor: isDragActive
-																			? "hsl(var(--primary) / 0.05)"
-																			: "transparent",
-																	}),
-																	uploadIcon: () => ({ display: "none" }),
-																	label: () => ({ display: "none" }),
-																	allowedContent: () => ({ display: "none" }),
-																	button: () => ({ display: "none" }),
-																}}
-																content={{
-																	uploadIcon: ({ isUploading: uploading, uploadProgress }) =>
-																		uploading ? (
-																			<UploadProgress progress={uploadProgress} variant="compact" isProcessing={uploadProgress >= 100} />
-																		) : (
-																			<Upload className="h-6 w-6 text-muted-foreground/50" />
-																		),
-																	label: ({ isUploading: uploading }) =>
-																		uploading ? null : (
+															isMediaUploading ? (
+																<div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-primary/5 rounded-lg">
+																	<div className="w-8 h-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+																	<p className="text-xs text-muted-foreground">
+																		{uploadProgress?.completed ?? 0}/{uploadProgress?.total ?? 0}
+																	</p>
+																</div>
+															) : (
+																<UploadDropzone
+																	endpoint="catalogMedia"
+																	onChange={(files) => handleUpload(files, field)}
+																	onUploadError={(error) => { toast.error(`Erreur: ${error.message}`); }}
+																	className="w-full h-full min-h-0"
+																	appearance={{
+																		container: ({ isDragActive }) => ({
+																			height: "100%",
+																			display: "flex",
+																			flexDirection: "column",
+																			alignItems: "center",
+																			justifyContent: "center",
+																			cursor: "pointer",
+																			backgroundColor: isDragActive
+																				? "hsl(var(--primary) / 0.05)"
+																				: "transparent",
+																		}),
+																		uploadIcon: () => ({ display: "none" }),
+																		label: () => ({ display: "none" }),
+																		allowedContent: () => ({ display: "none" }),
+																		button: () => ({ display: "none" }),
+																	}}
+																	content={{
+																		uploadIcon: () => <Upload className="h-6 w-6 text-muted-foreground/50" />,
+																		label: () => (
 																			<p className="text-xs text-muted-foreground text-center mt-1">
 																				Ajouter
 																			</p>
 																		),
-																}}
-																config={{ mode: "auto" }}
-															/>
+																	}}
+																/>
+															)
 														)
 											}
 										/>
