@@ -27,9 +27,15 @@ import { useEffect, useState, useTransition } from "react";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 
+interface ProductTypeOption {
+	slug: string;
+	label: string;
+}
+
 interface FilterSheetProps {
 	colors: GetColorsReturn["colors"];
 	materials: MaterialOption[];
+	productTypes?: ProductTypeOption[];
 	maxPriceInEuros: number;
 	className?: string;
 }
@@ -38,6 +44,7 @@ interface FilterSheetProps {
 interface FilterFormData {
 	colors: string[];
 	materials: string[];
+	productTypes: string[];
 	priceRange: [number, number];
 }
 
@@ -170,6 +177,7 @@ function PriceRangeInputs({
 export function ProductFilterSheet({
 	colors = [],
 	materials = [],
+	productTypes = [],
 	maxPriceInEuros,
 	className,
 }: FilterSheetProps) {
@@ -184,6 +192,7 @@ export function ProductFilterSheet({
 	const initialValues = ((): FilterFormData => {
 		const colors: string[] = [];
 		const materials: string[] = [];
+		const types: string[] = [];
 		let priceMin = DEFAULT_PRICE_RANGE[0];
 		let priceMax = DEFAULT_PRICE_RANGE[1];
 
@@ -193,6 +202,8 @@ export function ProductFilterSheet({
 				colors.push(value);
 			} else if (key === "material") {
 				materials.push(value);
+			} else if (key === "type") {
+				types.push(value);
 			} else if (key === "priceMin") {
 				priceMin = Number(value) || DEFAULT_PRICE_RANGE[0];
 			} else if (key === "priceMax") {
@@ -203,6 +214,7 @@ export function ProductFilterSheet({
 		return {
 			colors: [...new Set(colors)], // Dédoublonner
 			materials: [...new Set(materials)], // Dédoublonner
+			productTypes: [...new Set(types)], // Dédoublonner
 			priceRange: [priceMin, priceMax],
 		};
 	})();
@@ -220,13 +232,22 @@ export function ProductFilterSheet({
 		const params = new URLSearchParams(searchParams.toString());
 
 		// Nettoyer tous les anciens filtres (directement par nom)
-		const filterKeys = ["color", "material", "priceMin", "priceMax"];
+		const filterKeys = ["color", "material", "type", "priceMin", "priceMax"];
 		filterKeys.forEach((key) => {
 			params.delete(key);
 		});
 
 		// Reset page to 1 when applying filters
 		params.set("page", "1");
+
+		// Types de produits (schéma: type - peut être string ou array)
+		if (formData.productTypes.length > 0) {
+			if (formData.productTypes.length === 1) {
+				params.set("type", formData.productTypes[0]);
+			} else {
+				formData.productTypes.forEach((type) => params.append("type", type));
+			}
+		}
 
 		// Couleurs (schéma: color - peut être string ou array)
 		if (formData.colors.length > 0) {
@@ -265,6 +286,7 @@ export function ProductFilterSheet({
 		const defaultValues: FilterFormData = {
 			colors: [],
 			materials: [],
+			productTypes: [],
 			priceRange: [DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]],
 		};
 
@@ -272,7 +294,7 @@ export function ProductFilterSheet({
 
 		const params = new URLSearchParams(searchParams.toString());
 		// Supprimer tous les paramètres de filtres
-		const filterKeys = ["color", "material", "priceMin", "priceMax"];
+		const filterKeys = ["color", "material", "type", "priceMin", "priceMax"];
 		filterKeys.forEach((key) => {
 			params.delete(key);
 		});
@@ -295,7 +317,9 @@ export function ProductFilterSheet({
 			}
 
 			// Compter les filtres actifs
-			if (key === "color") {
+			if (key === "type") {
+				count += 1; // Chaque type compte pour 1
+			} else if (key === "color") {
 				count += 1; // Chaque couleur compte pour 1
 			} else if (key === "material") {
 				count += 1; // Chaque matériau compte pour 1
@@ -371,7 +395,41 @@ export function ProductFilterSheet({
 						data-pending={isPending ? "" : undefined}
 					>
 						<div className="px-6 py-4 space-y-6">
+							{/* Types de produits */}
+							{productTypes.length > 0 && (
+								<form.Field name="productTypes" mode="array">
+									{(field) => (
+										<fieldset className="space-y-1 border-0 p-0 m-0">
+											<legend className="font-medium text-sm text-foreground mb-2">
+												Types de bijoux
+											</legend>
+											{productTypes.map((type) => {
+												const isSelected = field.state.value.includes(type.slug);
+												return (
+													<CheckboxFilterItem
+														key={type.slug}
+														id={`type-${type.slug}`}
+														checked={isSelected}
+														onCheckedChange={(checked) => {
+															if (checked && !isSelected) {
+																field.pushValue(type.slug);
+															} else if (!checked && isSelected) {
+																const index = field.state.value.indexOf(type.slug);
+																field.removeValue(index);
+															}
+														}}
+													>
+														{type.label}
+													</CheckboxFilterItem>
+												);
+											})}
+										</fieldset>
+									)}
+								</form.Field>
+							)}
+
 							{/* Couleurs - dynamiques depuis la base */}
+							{productTypes.length > 0 && colors.length > 0 && <Separator />}
 							<form.Field name="colors" mode="array">
 								{(field) => (
 									<fieldset className="space-y-1 border-0 p-0 m-0">

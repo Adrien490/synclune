@@ -6,9 +6,15 @@ import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import { useSearchParams } from "next/navigation";
 
+interface ProductTypeOption {
+	slug: string;
+	label: string;
+}
+
 interface ProductFilterBadgesProps {
 	colors: GetColorsReturn["colors"];
 	materials: MaterialOption[];
+	productTypes?: ProductTypeOption[];
 	className?: string;
 }
 
@@ -19,12 +25,14 @@ interface ProductFilterBadgesProps {
 export function ProductFilterBadges({
 	colors,
 	materials,
+	productTypes = [],
 	className,
 }: ProductFilterBadgesProps) {
 	const searchParams = useSearchParams();
 	const formatFilter = createProductFilterFormatter(
 		colors,
 		materials,
+		productTypes,
 		searchParams
 	);
 

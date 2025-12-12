@@ -4,6 +4,11 @@ import type { FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ReadonlyURLSearchParams } from "next/navigation";
 
+interface ProductTypeOption {
+	slug: string;
+	label: string;
+}
+
 // Filtres statiques
 const STATIC_FILTERS = {
 	inStock: {
@@ -18,11 +23,13 @@ const STATIC_FILTERS = {
  * Crée une fonction de formatage pour les filtres de produits
  * @param colors - Liste des couleurs depuis la base
  * @param materials - Liste des matériaux depuis la base
+ * @param productTypes - Liste des types de produits depuis la base
  * @param searchParams - Paramètres de recherche URL (pour gérer le prix)
  */
 export function createProductFilterFormatter(
 	colors: GetColorsReturn["colors"],
 	materials: MaterialOption[],
+	productTypes: ProductTypeOption[],
 	searchParams: ReadonlyURLSearchParams
 ) {
 	// Créer le mapping dynamique des couleurs
@@ -37,8 +44,19 @@ export function createProductFilterFormatter(
 		materialMapping[material.id] = material.name;
 	});
 
+	// Créer le mapping dynamique des types de produits
+	const productTypeMapping: Record<string, string> = {};
+	productTypes.forEach((type) => {
+		productTypeMapping[type.slug] = type.label;
+	});
+
 	// Configuration des filtres avec mapping dynamique
 	const FILTER_CONFIG = {
+		// Types de produits (dynamique depuis la base)
+		type: {
+			name: "Type",
+			values: productTypeMapping,
+		},
 		// Couleurs (dynamique depuis la base)
 		color: {
 			name: "Couleur",
