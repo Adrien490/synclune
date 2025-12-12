@@ -181,6 +181,9 @@ export function getMobileNavItems(
 		session
 			? { href: "/compte", label: "Mon compte", icon: "user" }
 			: { href: "/connexion", label: "Se connecter", icon: "log-in" },
+
+		// ❤️ FAVORIS - Accessible à tous
+		{ href: "/favoris", label: "Favoris", icon: "heart" },
 	];
 
 	// 🛠️ ADMIN - Tableau de bord (uniquement pour les administrateurs)

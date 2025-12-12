@@ -218,7 +218,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 						<div
 							className={cn(
 								"relative aspect-square overflow-hidden rounded-2xl sm:rounded-3xl",
-								"bg-linear-organic border border-border sm:border-2",
+								"bg-linear-organic border-0 sm:border-2 sm:border-border",
 								"shadow-md sm:shadow-lg hover:shadow-lg transition-all duration-300",
 								"w-full md:max-w-none"
 							)}
@@ -226,26 +226,58 @@ function GalleryContent({ product, title }: GalleryProps) {
 							{/* Effet hover subtil */}
 							<div className="absolute inset-0 ring-1 ring-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl sm:rounded-3xl z-10" />
 
-							{/* Compteur d'images */}
+							{/* Compteur d'images - Desktop uniquement */}
 							{safeImages.length > 1 && (
-								<div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20">
-									<div className="bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-lg">
+								<div className="hidden sm:block absolute top-4 left-4 z-20">
+									<div className="bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
 										{optimisticIndex + 1} / {safeImages.length}
 									</div>
 								</div>
 							)}
 
-							{/* Bouton zoom (images uniquement) */}
+							{/* Bouton zoom (images uniquement) - Desktop uniquement */}
 							{current.mediaType === "IMAGE" && (
 								<button
 									type="button"
 									onClick={openLightbox}
-									className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-black/60 backdrop-blur-sm text-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-lg flex items-center gap-1.5 hover:bg-black/80 active:scale-95 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+									className="hidden sm:flex absolute top-4 right-4 z-20 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1.5 rounded-full text-sm font-medium shadow-lg items-center gap-1.5 hover:bg-black/80 active:scale-95 transition-all sm:opacity-0 sm:group-hover:opacity-100"
 									aria-label="Zoomer l'image en plein ecran"
 								>
-									<ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-									<span className="hidden sm:inline">Zoomer</span>
+									<ZoomIn className="w-4 h-4" />
+									<span>Zoomer</span>
 								</button>
+							)}
+
+							{/* Dots indicator - Mobile uniquement, positionné dans l'image */}
+							{safeImages.length > 1 && (
+								<div
+									className="sm:hidden absolute bottom-3 right-3 z-20 flex gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5"
+									role="group"
+									aria-label="Navigation galerie"
+								>
+									{safeImages.map((_, i) => (
+										<button
+											key={i}
+											type="button"
+											onClick={(e) => {
+												e.stopPropagation();
+												navigateToIndex(i);
+											}}
+											aria-current={i === optimisticIndex ? "true" : undefined}
+											aria-label={`Image ${i + 1} sur ${safeImages.length}`}
+											className="size-6 flex items-center justify-center touch-manipulation"
+										>
+											<span
+												className={cn(
+													"rounded-full transition-all duration-200",
+													i === optimisticIndex
+														? "bg-white w-3 h-2"
+														: "bg-white/50 w-2 h-2"
+												)}
+											/>
+										</button>
+									))}
+								</div>
 							)}
 
 							{/* Embla Carousel - Glissement fluide natif */}
@@ -297,8 +329,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 											// Couleurs
 											"text-primary-foreground",
 											"hover:bg-primary/90 hover:scale-105 active:scale-95",
-											// Visibilité mobile-first
-											"opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
+											// Visibilité : caché mobile, visible desktop au hover
+											"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
 											// Transitions fluides
 											"transition-all duration-300"
 										)}
@@ -323,8 +355,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 											// Couleurs
 											"text-primary-foreground",
 											"hover:bg-primary/90 hover:scale-105 active:scale-95",
-											// Visibilité mobile-first
-											"opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
+											// Visibilité : caché mobile, visible desktop au hover
+											"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
 											// Transitions fluides
 											"transition-all duration-300"
 										)}
@@ -373,30 +405,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 									</div>
 								</div>
 							)}
-
-							{/* Dots indicator - Navigation rapide visuelle */}
-							{/* Touch targets 44×44px minimum (WCAG 2.5.5) avec dots visuels 8×8px */}
-							<div className="flex justify-center gap-0.5 mt-3" role="group" aria-label="Navigation galerie">
-								{safeImages.map((_, i) => (
-									<button
-										key={i}
-										type="button"
-										onClick={() => navigateToIndex(i)}
-										aria-current={i === optimisticIndex ? "true" : undefined}
-										aria-label={`Aller à l'image ${i + 1} sur ${safeImages.length}`}
-										className="relative size-11 flex items-center justify-center touch-manipulation"
-									>
-										<span
-											className={cn(
-												"h-2 rounded-full transition-all duration-200",
-												i === optimisticIndex
-													? "bg-primary w-4"
-													: "bg-muted-foreground/30 w-2 group-hover:bg-muted-foreground/50"
-											)}
-										/>
-									</button>
-								))}
-							</div>
 						</div>
 					)}
 
