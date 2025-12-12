@@ -4,7 +4,7 @@ import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-it
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
 import { Separator } from "@/shared/components/ui/separator";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/shared/components/forms";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "./product-filter-fab";
@@ -75,9 +75,9 @@ export function ProductFilterSheet({
 		};
 	})();
 
-	const form = useForm({
+	const form = useAppForm({
 		defaultValues: initialValues,
-		onSubmit: async ({ value }) => {
+		onSubmit: async ({ value }: { value: FilterFormData }) => {
 			applyFilters(value);
 		},
 	});
@@ -202,6 +202,7 @@ export function ProductFilterSheet({
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
+					e.stopPropagation();
 					form.handleSubmit();
 				}}
 				className="space-y-6"

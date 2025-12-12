@@ -7,7 +7,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import {
 	AnimatePresence,
 	motion,
@@ -23,6 +23,9 @@ import type { FabKey } from "../constants";
 // Seuils pour le swipe-to-hide (optimisés pour mobile)
 const SWIPE_THRESHOLD = 35; // pixels minimum pour déclencher le hide
 const VELOCITY_THRESHOLD = 250; // px/s pour swipe rapide
+
+// Clé localStorage pour le hint de swipe (affiché une seule fois)
+const FAB_SWIPE_HINT_KEY = "fab-swipe-hint-seen";
 
 interface FabTooltipContent {
 	/** Titre du tooltip (gras) */
@@ -129,6 +132,28 @@ export function Fab({
 		},
 		prefersReducedMotion ?? false
 	);
+
+	// État pour l'animation de hint du swipe (mobile uniquement, une seule fois)
+	const [showSwipeHint, setShowSwipeHint] = useState(false);
+	useEffect(() => {
+		if (!isTouchDevice || prefersReducedMotion) return;
+
+		const hasSeenHint = localStorage.getItem(FAB_SWIPE_HINT_KEY);
+		if (hasSeenHint) return;
+
+		// Délai avant de montrer l'animation
+		const timer = setTimeout(() => {
+			setShowSwipeHint(true);
+		}, 1000);
+
+		return () => clearTimeout(timer);
+	}, [isTouchDevice, prefersReducedMotion]);
+
+	// Marquer le hint comme vu après l'animation
+	const handleSwipeHintComplete = () => {
+		setShowSwipeHint(false);
+		localStorage.setItem(FAB_SWIPE_HINT_KEY, "true");
+	};
 
 	// Hook pour toggle la visibilité
 	const { isHidden, toggle, isPending, isError } = useFabVisibility({
@@ -253,9 +278,20 @@ export function Fab({
 					onDragEnd={handleDragEnd}
 					whileDrag={{ opacity: 0.8 }}
 					initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
-					animate={{ opacity: 1, scale: 1, x: 0 }}
+					animate={
+						showSwipeHint
+							? { opacity: 1, scale: 1, x: [0, 24, 0] }
+							: { opacity: 1, scale: 1, x: 0 }
+					}
 					exit={prefersReducedMotion ? undefined : { opacity: 0, x: 100 }}
-					transition={transition}
+					transition={
+						showSwipeHint
+							? { x: { duration: 0.8, ease: "easeInOut", times: [0, 0.5, 1] } }
+							: transition
+					}
+					onAnimationComplete={() => {
+						if (showSwipeHint) handleSwipeHintComplete();
+					}}
 					className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6 touch-pan-y")}
 					style={{ touchAction: "pan-y" }}
 				>
@@ -296,18 +332,6 @@ export function Fab({
 							<p className="text-xs text-muted-foreground">Échap</p>
 						</TooltipContent>
 					</Tooltip>
-
-					{/* Hint swipe sur mobile - s'efface après 1.5s */}
-					{isTouchDevice && !prefersReducedMotion && (
-						<motion.div
-							className="absolute -right-1 top-1/2 -translate-y-1/2 pointer-events-none md:hidden"
-							initial={{ opacity: 0.8, x: 0 }}
-							animate={{ opacity: 0, x: 12 }}
-							transition={{ duration: 1.5, delay: 0.8, ease: "easeOut" }}
-						>
-							<ChevronRight className="size-5 text-primary-foreground/60" />
-						</motion.div>
-					)}
 
 					{/* Bouton principal avec tooltip */}
 					<Tooltip>

@@ -168,7 +168,7 @@ export async function addToCart(
 				// Vérification du stock (message générique pour ne pas révéler le stock exact)
 				if (sku.inventory < newQuantity) {
 					throw new Error(
-						"Stock insuffisant pour cette quantité. Veuillez réduire la quantité demandée."
+						"Stock insuffisant 😲"
 					);
 				}
 
@@ -191,7 +191,7 @@ export async function addToCart(
 
 				if (sku.inventory < validatedData.quantity) {
 					throw new Error(
-						"Stock insuffisant pour cette quantité. Veuillez réduire la quantité demandée."
+						"Stock insuffisant 😲"
 					);
 				}
 

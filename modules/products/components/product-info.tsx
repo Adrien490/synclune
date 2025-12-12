@@ -72,7 +72,7 @@ export function ProductInfo({
 				))}
 
 				{/* Bouton wishlist visible uniquement sur desktop - à droite des badges */}
-				<div className="hidden sm:block">
+				<div className="hidden sm:block ml-auto">
 					<WishlistButtonDynamic
 						product={product}
 						defaultSku={defaultSku}
