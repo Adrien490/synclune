@@ -197,6 +197,7 @@ export function MenuSheet({ navItems, session }: MenuSheetProps) {
 
 				<nav
 					aria-label="Menu principal"
+					data-vaul-no-drag
 					className={cn(
 						"relative z-10 flex-1 overflow-y-auto px-4",
 						"transition-opacity duration-200",

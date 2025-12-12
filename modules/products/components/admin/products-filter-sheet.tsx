@@ -191,7 +191,7 @@ export function ProductsFilterSheet({
 									<legend className="font-medium text-sm text-foreground">
 										Types de produit
 									</legend>
-									<div className="space-y-2 max-h-48 overflow-y-auto">
+									<div className="space-y-2 max-h-48 overflow-y-auto" data-vaul-no-drag>
 										{productTypes.map((type) => {
 											const isSelected = field.state.value.includes(type.id);
 											return (
@@ -240,7 +240,7 @@ export function ProductsFilterSheet({
 									<legend className="font-medium text-sm text-foreground">
 										Collections
 									</legend>
-									<div className="space-y-2 max-h-48 overflow-y-auto">
+									<div className="space-y-2 max-h-48 overflow-y-auto" data-vaul-no-drag>
 										{collections.map((collection) => {
 											const isSelected = field.state.value.includes(
 												collection.id
