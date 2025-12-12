@@ -11,5 +11,7 @@ export function buildEmblaOptions(
 		loop: imageCount > 1,
 		align: "center",
 		duration: prefersReducedMotion ? 0 : 25,
+		watchDrag: true,
+		dragThreshold: 10,
 	};
 }

@@ -287,14 +287,21 @@ function GalleryContent({ product, title }: GalleryProps) {
 							>
 								<div className="flex h-full" ref={emblaContainerRef}>
 									{safeImages.map((media, index) => (
-										<button
-											type="button"
+										<div
 											key={media.id}
+											role="button"
+											tabIndex={index === optimisticIndex ? 0 : -1}
 											data-slide-index={index}
-											className="flex-[0_0_100%] h-full min-w-0 relative cursor-zoom-in"
+											className="flex-[0_0_100%] h-full min-w-0 relative cursor-zoom-in touch-pan-y"
 											aria-hidden={index !== optimisticIndex}
 											aria-label={`Zoomer ${media.alt || title}`}
 											onClick={openLightbox}
+											onKeyDown={(e) => {
+												if (e.key === "Enter" || e.key === " ") {
+													e.preventDefault();
+													openLightbox();
+												}
+											}}
 										>
 											<GalleryMediaRenderer
 												media={media}
@@ -306,7 +313,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 												onError={() => handleMediaError(media.id)}
 												onRetry={() => retryMedia(media.id)}
 											/>
-										</button>
+										</div>
 									))}
 								</div>
 							</div>

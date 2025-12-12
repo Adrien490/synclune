@@ -318,6 +318,22 @@ textarea {
 }
 
 /* ========================================================================
+   VAUL DRAWER - Optimisation des gestes tactiles
+   ======================================================================== */
+
+/* Permettre les gestes Vaul dans les drawers (override du overscroll-behavior global) */
+[data-vaul-drawer] {
+	overscroll-behavior: auto;
+	touch-action: pan-y pinch-zoom;
+}
+
+/* Permettre le swipe horizontal pour fermer dans les ScrollArea des sheets latéraux */
+[data-vaul-drawer-direction="right"] [data-slot="scroll-area-viewport"],
+[data-vaul-drawer-direction="left"] [data-slot="scroll-area-viewport"] {
+	touch-action: pan-y pan-x;
+}
+
+/* ========================================================================
    UTILITIES - Accents avec couleurs logo
    ======================================================================== */
 @layer utilities {
