@@ -7,4 +7,5 @@ export type {
 	GetCustomizationRequestsParams,
 	GetCustomizationRequestsResult,
 	ProductSearchResult,
+	ProductType,
 } from "./customization.types";

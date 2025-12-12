@@ -3,17 +3,10 @@
  * basé sur le format du numéro de suivi
  */
 
-export type Carrier =
-	| "colissimo"
-	| "lettre_suivie"
-	| "mondial_relay"
-	| "chronopost"
-	| "autre";
+import type { Carrier, CarrierInfo, DetectionResult } from "../types/carrier.types";
 
-export interface CarrierInfo {
-	value: Carrier;
-	label: string;
-}
+// Re-export des types pour compatibilité
+export type { Carrier, CarrierInfo, DetectionResult } from "../types/carrier.types";
 
 export const CARRIERS: CarrierInfo[] = [
 	{ value: "colissimo", label: "Colissimo" },
@@ -22,12 +15,6 @@ export const CARRIERS: CarrierInfo[] = [
 	{ value: "chronopost", label: "Chronopost" },
 	{ value: "autre", label: "Autre transporteur" },
 ];
-
-export interface DetectionResult {
-	carrier: Carrier;
-	url: string | null;
-	label: string;
-}
 
 /**
  * Génère l'URL de suivi pour un transporteur donné

@@ -35,10 +35,3 @@ export const createCheckoutSessionSchema = z.object({
 	discountCode: z.string().max(30).optional(), // Code promo optionnel
 });
 
-export type CreateCheckoutSessionData = z.infer<typeof createCheckoutSessionSchema>;
-
-export type CreateCheckoutSessionResult = {
-	url: string;
-	orderId: string;
-	orderNumber: string;
-};

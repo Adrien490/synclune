@@ -3,7 +3,7 @@ import type {
 	CompletionApiResponse,
 	ValidatedSearchAddressParams,
 	SearchAddressReturn,
-} from "../data/types";
+} from "../types/search-address.types";
 import { buildApiUrl } from "./build-api-url";
 import { transformCompletionResult } from "./transform-completion-result";
 

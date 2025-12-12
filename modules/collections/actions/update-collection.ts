@@ -9,7 +9,7 @@ import { generateSlug } from "@/shared/utils/generate-slug";
 import { revalidatePath } from "next/cache";
 import { ZodError } from "zod";
 
-import { getCollectionInvalidationTags } from "../constants/cache";
+import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { updateCollectionSchema } from "../schemas/collection.schemas";
 
 export async function updateCollection(

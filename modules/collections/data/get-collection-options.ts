@@ -1,14 +1,8 @@
 import { prisma } from "@/shared/lib/prisma";
-import { cacheCollections } from "../constants/cache";
+import { cacheCollections } from "../utils/cache.utils";
+import type { CollectionOption } from "../types/collection.types";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export type CollectionOption = {
-	id: string;
-	name: string;
-};
+export type { CollectionOption };
 
 // ============================================================================
 // MAIN FUNCTION

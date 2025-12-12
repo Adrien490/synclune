@@ -6,16 +6,10 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { updateProductType } from "@/modules/product-types/actions/update-product-type";
-
-interface ProductType {
-	id: string;
-	label: string;
-	description?: string | null;
-	slug: string; // Utilisé uniquement pour passer aux actions (edit dialog)
-}
+import type { ProductTypeFormData } from "../types/product-type.types";
 
 interface UseUpdateProductTypeFormOptions {
-	productType: ProductType;
+	productType: ProductTypeFormData;
 	onSuccess?: (message: string) => void;
 }
 

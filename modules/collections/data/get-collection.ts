@@ -1,6 +1,6 @@
 import { prisma } from "@/shared/lib/prisma";
 
-import { cacheCollectionDetail } from "../constants/cache";
+import { cacheCollectionDetail } from "../utils/cache.utils";
 
 import { GET_COLLECTION_SELECT } from "../constants/collection.constants";
 import { getCollectionSchema } from "../schemas/collection.schemas";

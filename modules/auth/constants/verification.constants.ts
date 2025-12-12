@@ -12,3 +12,36 @@ export const GET_VERIFICATION_SELECT = {
 	createdAt: true,
 	updatedAt: true,
 } as const satisfies Prisma.VerificationSelect;
+
+export const GET_VERIFICATIONS_DEFAULT_SELECT = {
+	id: true,
+	identifier: true,
+	expiresAt: true,
+	createdAt: true,
+	updatedAt: true,
+} as const satisfies Prisma.VerificationSelect;
+
+// ============================================================================
+// PAGINATION & SORTING
+// ============================================================================
+
+export const GET_VERIFICATIONS_DEFAULT_PER_PAGE = 50;
+export const GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE = 200;
+export const GET_VERIFICATIONS_DEFAULT_SORT_BY = "createdAt";
+export const GET_VERIFICATIONS_DEFAULT_SORT_ORDER = "desc";
+
+export const GET_VERIFICATIONS_SORT_FIELDS = [
+	"createdAt",
+	"updatedAt",
+	"expiresAt",
+] as const;
+
+// ============================================================================
+// CACHE
+// ============================================================================
+
+export const GET_VERIFICATIONS_DEFAULT_CACHE = {
+	revalidate: 60 * 2,
+	stale: 60 * 5,
+	expire: 60 * 10,
+} as const;

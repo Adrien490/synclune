@@ -1,6 +1,6 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
-import { searchAddress } from "@/modules/addresses/data/autocomplete-address-api";
+import { searchAddress } from "@/modules/addresses/actions/search-address";
 import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
 import { AddressFormDialog } from "@/modules/addresses/components/address-form-dialog";
 import { AddressList } from "@/modules/addresses/components/address-list";

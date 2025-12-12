@@ -2,7 +2,6 @@
 
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
-import { Separator } from "@/shared/components/ui/separator";
 import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
@@ -13,7 +12,6 @@ interface ProductTypesFilterSheetProps {
 
 interface FilterFormData {
 	isActive: string;
-	hasSize: string;
 }
 
 export function ProductTypesFilterSheet({
@@ -25,19 +23,15 @@ export function ProductTypesFilterSheet({
 
 	const initialValues = ((): FilterFormData => {
 		let isActive = "all";
-		let hasSize = "all";
 
 		searchParams.forEach((value, key) => {
 			if (key === "filter_isActive") {
 				isActive = value === "true" ? "active" : "inactive";
-			} else if (key === "filter_hasSize") {
-				hasSize = value === "true" ? "with" : "without";
 			}
 		});
 
 		return {
 			isActive,
-			hasSize,
 		};
 	})();
 
@@ -51,8 +45,7 @@ export function ProductTypesFilterSheet({
 	const applyFilters = (formData: FilterFormData) => {
 		const params = new URLSearchParams(searchParams.toString());
 
-		const filterKeys = ["filter_isActive", "filter_hasSize"];
-		filterKeys.forEach((key) => params.delete(key));
+		params.delete("filter_isActive");
 		params.set("page", "1");
 
 		// Add isActive filter
@@ -60,14 +53,6 @@ export function ProductTypesFilterSheet({
 			params.set(
 				"filter_isActive",
 				formData.isActive === "active" ? "true" : "false"
-			);
-		}
-
-		// Add hasSize filter
-		if (formData.hasSize !== "all") {
-			params.set(
-				"filter_hasSize",
-				formData.hasSize === "with" ? "true" : "false"
 			);
 		}
 
@@ -79,12 +64,10 @@ export function ProductTypesFilterSheet({
 	const clearAllFilters = () => {
 		form.reset({
 			isActive: "all",
-			hasSize: "all",
 		});
 
 		const params = new URLSearchParams(searchParams.toString());
-		const filterKeys = ["filter_isActive", "filter_hasSize"];
-		filterKeys.forEach((key) => params.delete(key));
+		params.delete("filter_isActive");
 		params.set("page", "1");
 
 		startTransition(() => {
@@ -134,39 +117,6 @@ export function ProductTypesFilterSheet({
 									key={value}
 									id={`active-${value}`}
 									name="isActive"
-									value={value}
-									checked={field.state.value === value}
-									onCheckedChange={(checked) => {
-										if (checked) {
-											field.handleChange(value);
-										}
-									}}
-								>
-									{label}
-								</RadioFilterItem>
-							))}
-						</fieldset>
-					)}
-				</form.Field>
-
-				<Separator />
-
-				{/* hasSize Filter */}
-				<form.Field name="hasSize">
-					{(field) => (
-						<fieldset className="space-y-1">
-							<legend className="font-medium text-sm text-foreground mb-2">
-								Configuration des tailles
-							</legend>
-							{[
-								{ value: "all", label: "Tous" },
-								{ value: "with", label: "Avec configuration" },
-								{ value: "without", label: "Sans configuration" },
-							].map(({ value, label }) => (
-								<RadioFilterItem
-									key={value}
-									id={`size-${value}`}
-									name="hasSize"
 									value={value}
 									checked={field.state.value === value}
 									onCheckedChange={(checked) => {

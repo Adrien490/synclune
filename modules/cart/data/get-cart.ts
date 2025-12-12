@@ -3,11 +3,11 @@ import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 
-import { GET_CART_SELECT } from "../constants/cart.constants";
+import { GET_CART_SELECT } from "../constants/cart";
 import type { GetCartReturn, Cart, CartItem } from "../types/cart.types";
 
 // Re-export pour compatibilité
-export { GET_CART_SELECT } from "../constants/cart.constants";
+export { GET_CART_SELECT } from "../constants/cart";
 export type { GetCartReturn, Cart, CartItem } from "../types/cart.types";
 
 // ============================================================================

@@ -1,6 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { ActionStatus } from "@/shared/types/server-action";
-import { GET_CART_SELECT } from "../constants/cart.constants";
+import { GET_CART_SELECT } from "../constants/cart";
 
 // ============================================================================
 // TYPES - CART

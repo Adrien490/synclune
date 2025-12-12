@@ -1,4 +1,9 @@
 /**
+ * Constantes pour l'API d'autocomplétion BAN (Base Adresse Nationale)
+ * API: https://data.geopf.fr/geocodage/completion
+ */
+
+/**
  * URL de base de l'API d'autocomplétion de l'IGN
  */
 export const BAN_API_BASE_URL = "https://data.geopf.fr/geocodage/completion";

@@ -27,7 +27,12 @@ export function cacheColors() {
 
 /**
  * Tags à invalider lors de la modification d'une couleur
+ * @param slug - Slug de la couleur modifiee (optionnel)
  */
-export function getColorInvalidationTags(): string[] {
-	return [COLORS_CACHE_TAGS.LIST];
+export function getColorInvalidationTags(slug?: string): string[] {
+	const tags: string[] = [COLORS_CACHE_TAGS.LIST, COLORS_CACHE_TAGS.OPTIONS];
+	if (slug) {
+		tags.push(COLORS_CACHE_TAGS.DETAIL(slug));
+	}
+	return tags;
 }

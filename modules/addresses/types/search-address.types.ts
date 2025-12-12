@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { searchAddressSchema } from "../schemas/search-address.schema";
 
+// ============================================================================
+// TYPES - BAN API (Base Adresse Nationale)
+// ============================================================================
+
 /**
  * Type représentant un résultat StreetAddress de l'API d'autocomplétion
  */

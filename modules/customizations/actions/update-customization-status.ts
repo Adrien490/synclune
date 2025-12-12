@@ -1,7 +1,6 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { z } from "zod";
 
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
@@ -9,15 +8,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { requireAdmin, validateInput, handleActionError } from "@/shared/lib/actions";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
-
-// ============================================================================
-// SCHEMA
-// ============================================================================
-
-const updateStatusSchema = z.object({
-	requestId: z.string().cuid(),
-	status: z.nativeEnum(CustomizationRequestStatus),
-});
+import { updateStatusSchema } from "../schemas/update-status.schema";
 
 // ============================================================================
 // ACTION

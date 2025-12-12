@@ -3,7 +3,7 @@
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
-import { removeUnavailableItems } from "./remove-unavailable-items";
+import { removeUnavailableItems } from "../actions/remove-unavailable-items";
 
 interface UseRemoveUnavailableItemsOptions {
 	onSuccess?: (message: string) => void;

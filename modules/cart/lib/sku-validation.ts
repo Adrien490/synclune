@@ -3,51 +3,15 @@
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
+import type {
+	SkuData,
+	SkuValidationResult,
+	SkuDetailsResult,
+	BatchSkuValidationResult,
+} from "@/modules/cart/types/sku-validation.types";
 
-// Types pour la validation SKU
-export interface SkuData {
-	id: string;
-	sku: string;
-	priceInclTax: number;
-	compareAtPrice: number | null; // Prix barré (null si pas en solde)
-	inventory: number;
-	isActive: boolean;
-	material?: string;
-	colorId?: string;
-	color?: {
-		id: string;
-		name: string;
-		hex: string;
-	};
-	size?: string;
-	product: {
-		id: string;
-		title: string;
-		slug: string;
-		description?: string | null;
-	};
-	images: Array<{
-		url: string;
-		altText?: string;
-		isPrimary: boolean;
-	}>;
-}
-
-export interface SkuValidationResult {
-	success: boolean;
-	error?: string;
-	data?: {
-		sku: SkuData;
-	};
-}
-
-export interface SkuDetailsResult {
-	success: boolean;
-	error?: string;
-	data?: {
-		sku: SkuData;
-	};
-}
+// Re-export des types pour compatibilite
+export type { SkuData, SkuValidationResult, SkuDetailsResult, BatchSkuValidationResult };
 
 // Schéma de validation
 const validateSkuSchema = z.object({
@@ -376,15 +340,6 @@ export async function validateCartItems(input: {
 			error: CART_ERROR_MESSAGES.GENERAL_ERROR,
 		};
 	}
-}
-
-// Type pour le résultat de validation batch
-export interface BatchSkuValidationResult {
-	skuId: string;
-	isValid: boolean;
-	inventory: number;
-	isActive: boolean;
-	productStatus: string;
 }
 
 /**

@@ -3,7 +3,7 @@ import {
 	SEARCH_ADDRESS_DEFAULT_LIMIT,
 	SEARCH_ADDRESS_DEFAULT_TYPE,
 	SEARCH_ADDRESS_MAX_LIMIT,
-} from "../data/constants";
+} from "../constants/ban-api.constants";
 
 /**
  * Schéma de validation pour les paramètres de l'API d'autocomplétion

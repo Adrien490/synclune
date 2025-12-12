@@ -6,16 +6,10 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { updateCollection } from "@/modules/collections/actions/update-collection";
-
-interface Collection {
-	id: string;
-	name: string;
-	slug: string;
-	description: string | null;
-}
+import type { CollectionFormData } from "../types/collection.types";
 
 interface UseUpdateCollectionFormOptions {
-	collection: Collection;
+	collection: CollectionFormData;
 	onSuccess?: (message: string) => void;
 }
 

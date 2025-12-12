@@ -4,9 +4,9 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/components/cursor-pagination/pagination";
-import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
+import { cacheOrdersDashboard } from "../constants/cache";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 
 import {
@@ -86,7 +86,7 @@ export async function fetchOrders(
 	params: GetOrdersParams
 ): Promise<GetOrdersReturn> {
 	"use cache";
-	cacheDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+	cacheOrdersDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 
 	try {
 		const where = buildOrderWhereClause(params);

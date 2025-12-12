@@ -1,7 +1,7 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
+import { cacheOrdersDashboard } from "../constants/cache";
 import { z } from "zod";
 
 import { GET_ORDER_SELECT } from "../constants/order.constants";
@@ -49,7 +49,7 @@ export async function getOrderById(
 
 async function fetchOrderById(id: string): Promise<GetOrderReturn | null> {
 	"use cache";
-	cacheDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+	cacheOrdersDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 
 	try {
 		const order = await prisma.order.findUnique({

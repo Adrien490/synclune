@@ -1,7 +1,7 @@
 /**
  * Tags de cache pour le module Collections
  *
- * Fonctions: voir utils/cache.utils.ts
+ * Fonctions de cache: voir utils/cache.utils.ts
  */
 
 // ============================================
@@ -21,10 +21,3 @@ export const COLLECTIONS_CACHE_TAGS = {
 	/** Produits d'une collection */
 	PRODUCTS: (slug: string) => `collection-${slug}-products`,
 } as const;
-
-// Re-exports pour retrocompatibilite
-export {
-	cacheCollections,
-	cacheCollectionDetail,
-	getCollectionInvalidationTags,
-} from "../utils/cache.utils";

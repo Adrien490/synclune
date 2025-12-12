@@ -12,7 +12,7 @@ import type {
 } from "@/modules/products/types/product.types";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
-import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart.constants";
+import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart";
 
 interface AddToCartFormProps {
 	product: GetProductReturn;

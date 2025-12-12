@@ -7,7 +7,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { z } from "zod";
 
-import { cacheCollections } from "../constants/cache";
+import { cacheCollections } from "../utils/cache.utils";
 
 import {
 	GET_COLLECTIONS_DEFAULT_PER_PAGE,

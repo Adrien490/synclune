@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { updateCartPrices } from "./update-cart-prices";
+import { updateCartPrices } from "../actions/update-cart-prices";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 

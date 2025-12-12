@@ -3,149 +3,21 @@ import { Prisma } from "@/app/generated/prisma/client";
 import {
 	buildCursorPagination,
 	processCursorResults,
-	PaginationInfo,
 } from "@/shared/components/cursor-pagination/pagination";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const GET_VERIFICATIONS_DEFAULT_SELECT = {
-	id: true,
-	identifier: true,
-	expiresAt: true,
-	createdAt: true,
-	updatedAt: true,
-} as const satisfies Prisma.VerificationSelect;
-
-const GET_VERIFICATIONS_DEFAULT_PER_PAGE = 50;
-const GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE = 200;
-const GET_VERIFICATIONS_DEFAULT_SORT_BY = "createdAt";
-const GET_VERIFICATIONS_DEFAULT_SORT_ORDER = "desc";
-
-export const GET_VERIFICATIONS_SORT_FIELDS = [
-	"createdAt",
-	"updatedAt",
-	"expiresAt",
-] as const;
-
-const GET_VERIFICATIONS_DEFAULT_CACHE = {
-	revalidate: 60 * 2,
-	stale: 60 * 5,
-	expire: 60 * 10,
-} as const;
-
-// ============================================================================
-// SCHEMAS
-// ============================================================================
-
-const stringOrStringArray = z
-	.union([
-		z.string().min(1).max(100),
-		z.array(z.string().min(1).max(100)).max(50),
-	])
-	.optional();
-
-export const verificationFiltersSchema = z
-	.object({
-		identifier: stringOrStringArray,
-		expiresBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
-		expiresAfter: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
-		isExpired: z.boolean().optional(),
-		isActive: z.boolean().optional(),
-		createdAfter: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.max(new Date(), "Date cannot be in the future")
-			.optional(),
-		createdBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
-		updatedAfter: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.max(new Date(), "Date cannot be in the future")
-			.optional(),
-		updatedBefore: z.coerce
-			.date()
-			.min(new Date("2020-01-01"), "Date too old")
-			.optional(),
-	})
-	.refine((data) => {
-		if (data.expiresAfter && data.expiresBefore) {
-			return data.expiresAfter <= data.expiresBefore;
-		}
-		return true;
-	}, "expiresAfter must be before or equal to expiresBefore")
-	.refine((data) => {
-		if (data.createdAfter && data.createdBefore) {
-			return data.createdAfter <= data.createdBefore;
-		}
-		return true;
-	}, "createdAfter must be before or equal to createdBefore")
-	.refine((data) => {
-		if (data.updatedAfter && data.updatedBefore) {
-			return data.updatedAfter <= data.updatedBefore;
-		}
-		return true;
-	}, "updatedAfter must be before or equal to updatedBefore");
-
-export const verificationSortBySchema = z.preprocess((value) => {
-	return typeof value === "string" &&
-		GET_VERIFICATIONS_SORT_FIELDS.includes(
-			value as (typeof GET_VERIFICATIONS_SORT_FIELDS)[number]
-		)
-		? value
-		: GET_VERIFICATIONS_DEFAULT_SORT_BY;
-}, z.enum(GET_VERIFICATIONS_SORT_FIELDS));
-
-export const getVerificationsSchema = z.object({
-	cursor: z.cuid2().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int({ message: "PerPage must be an integer" })
-		.min(1, { message: "PerPage must be at least 1" })
-		.max(
-			GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE,
-			`PerPage cannot exceed ${GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE}`
-		)
-		.default(GET_VERIFICATIONS_DEFAULT_PER_PAGE),
-	sortBy: verificationSortBySchema.default(GET_VERIFICATIONS_DEFAULT_SORT_BY),
-	sortOrder: z
-		.enum(["asc", "desc"])
-		.default(GET_VERIFICATIONS_DEFAULT_SORT_ORDER),
-	filters: verificationFiltersSchema.default({}),
-});
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export type GetVerificationsReturn = {
-	verifications: Array<
-		Prisma.VerificationGetPayload<{
-			select: typeof GET_VERIFICATIONS_DEFAULT_SELECT;
-		}> & {
-			valuePreview: string;
-			isExpired: boolean;
-		}
-	>;
-	pagination: PaginationInfo;
-};
-
-export type GetVerificationsParams = z.infer<typeof getVerificationsSchema>;
-
+import {
+	GET_VERIFICATIONS_DEFAULT_SELECT,
+	GET_VERIFICATIONS_DEFAULT_PER_PAGE,
+	GET_VERIFICATIONS_MAX_RESULTS_PER_PAGE,
+	GET_VERIFICATIONS_DEFAULT_SORT_ORDER,
+} from "../constants/verification.constants";
+import { getVerificationsSchema } from "../schemas/verification.schemas";
+import type {
+	GetVerificationsParams,
+	GetVerificationsReturn,
+} from "../types/verification.types";
 import { buildVerificationWhereClause } from "../utils/verification-query-builder";
 
 // ============================================================================

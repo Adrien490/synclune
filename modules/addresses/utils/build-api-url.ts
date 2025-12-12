@@ -1,5 +1,5 @@
-import { BAN_API_BASE_URL } from "../data/constants";
-import type { ValidatedSearchAddressParams } from "../data/types";
+import { BAN_API_BASE_URL } from "../constants/ban-api.constants";
+import type { ValidatedSearchAddressParams } from "../types/search-address.types";
 
 /**
  * Construit l'URL de l'API avec les paramètres de recherche

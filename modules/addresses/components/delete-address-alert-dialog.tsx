@@ -13,7 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteAddress } from "../hooks/use-delete-address";
 
-export const DELETE_ADDRESS_DIALOG_ID = "delete-address";
+import { DELETE_ADDRESS_DIALOG_ID } from "../constants/dialog.constants";
 
 interface DeleteAddressData {
 	addressId: string;

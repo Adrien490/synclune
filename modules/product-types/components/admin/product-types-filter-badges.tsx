@@ -15,15 +15,6 @@ function formatProductTypeFilter(filter: FilterDefinition) {
 		};
 	}
 
-	// Gestion de la configuration hasSize
-	if (filterKey === "hasSize") {
-		return {
-			label: "Configuration",
-			displayValue:
-				value === "true" ? "Avec configuration" : "Sans configuration",
-		};
-	}
-
 	// Cas par défaut
 	return {
 		label: filterKey,

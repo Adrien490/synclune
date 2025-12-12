@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { getCollectionInvalidationTags } from "@/modules/collections/constants/cache";
+import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
 import { prisma } from "@/shared/lib/prisma";

@@ -66,3 +66,25 @@ export type DeleteProductTypeInput = z.infer<typeof deleteProductTypeSchema>;
 export type ToggleProductTypeStatusInput = z.infer<typeof toggleProductTypeStatusSchema>;
 export type BulkActivateProductTypesInput = z.infer<typeof bulkActivateProductTypesSchema>;
 export type BulkDeactivateProductTypesInput = z.infer<typeof bulkDeactivateProductTypesSchema>;
+
+// ============================================================================
+// UI/FORM TYPES
+// ============================================================================
+
+/**
+ * Type simplifié pour les selects et filtres
+ */
+export type ProductTypeOption = {
+	id: string;
+	label: string;
+};
+
+/**
+ * Type pour les hooks de formulaire d'édition
+ */
+export type ProductTypeFormData = {
+	id: string;
+	label: string;
+	description?: string | null;
+	slug: string;
+};

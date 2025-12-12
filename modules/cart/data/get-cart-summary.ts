@@ -2,7 +2,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { prisma } from "@/shared/lib/prisma";
 
-import { GET_CART_SUMMARY_SELECT } from "../constants/cart.constants";
+import { GET_CART_SUMMARY_SELECT } from "../constants/cart";
 import { cacheCartSummary } from "../constants/cache";
 import type { CartSummary, GetCartSummaryReturn } from "../types/cart.types";
 

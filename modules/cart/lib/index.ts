@@ -8,10 +8,8 @@
 // SKU Validation (server-only - "use server")
 export * from "./sku-validation";
 
-// Cart Price Updates
-export * from "./update-cart-prices";
-export * from "./use-update-cart-prices";
-
-// Remove Unavailable Items
-export * from "./remove-unavailable-items";
-export * from "./use-remove-unavailable-items";
+// Re-exports depuis actions/ et hooks/ pour compatibilité
+export { updateCartPrices } from "../actions/update-cart-prices";
+export { removeUnavailableItems } from "../actions/remove-unavailable-items";
+export { useUpdateCartPrices } from "../hooks/use-update-cart-prices";
+export { useRemoveUnavailableItems } from "../hooks/use-remove-unavailable-items";

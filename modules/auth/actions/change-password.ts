@@ -6,7 +6,7 @@ import { sendPasswordChangedEmail } from "@/shared/lib/email";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
-import { changePasswordSchema } from "../schemas/change-password-schema";
+import { changePasswordSchema } from "../schemas/auth.schemas";
 
 export const changePassword = async (
 	_: ActionState | undefined,

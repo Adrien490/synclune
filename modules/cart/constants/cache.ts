@@ -28,4 +28,4 @@ export {
 	cacheCartCount,
 	cacheCartSummary,
 	getCartInvalidationTags,
-} from "../utils/cache.utils";
+} from "../utils/cache";

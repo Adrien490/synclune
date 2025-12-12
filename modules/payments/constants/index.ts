@@ -1,1 +1,1 @@
-export * from "./checkout-form-options"
+// Exports des constantes du module payments

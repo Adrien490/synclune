@@ -1,7 +1,7 @@
 "use server";
 
 import { searchAddressSchema } from "../schemas/search-address.schema";
-import type { SearchAddressParams, SearchAddressReturn } from "./types";
+import type { SearchAddressParams, SearchAddressReturn } from "../types/search-address.types";
 import { fetchAddresses } from "../utils/fetch-addresses";
 
 /**

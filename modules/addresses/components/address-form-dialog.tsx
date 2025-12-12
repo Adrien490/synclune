@@ -14,7 +14,7 @@ import { Label } from "@/shared/components/ui/label";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { useCreateAddress } from "@/modules/addresses/hooks/use-create-address";
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
-import type { SearchAddressResult } from "@/modules/addresses/data/types";
+import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 import { useUpdateAddress } from "@/modules/addresses/hooks/use-update-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -23,7 +23,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useTransition } from "react";
 import { toast } from "sonner";
 
-export const ADDRESS_DIALOG_ID = "address-form";
+import { ADDRESS_DIALOG_ID } from "../constants/dialog.constants";
+import {
+	addressFormSchema,
+	addressFormDefaultValues,
+} from "../schemas/address-form.schema";
 
 interface AddressDialogData extends Record<string, unknown> {
 	address?: UserAddress;
@@ -49,17 +53,11 @@ export function AddressFormDialog({
 	// Transition pour la navigation
 	const [isPendingAddress, startAddressTransition] = useTransition();
 
-	// TanStack Form setup
+	// TanStack Form setup avec validation Zod
 	const form = useAppForm({
-		defaultValues: {
-			firstName: "",
-			lastName: "",
-			address1: "",
-			address2: "",
-			postalCode: "",
-			city: "",
-			country: "FR",
-			phone: "",
+		defaultValues: addressFormDefaultValues,
+		validators: {
+			onChange: addressFormSchema,
 		},
 	});
 
@@ -164,20 +162,7 @@ export function AddressFormDialog({
 					<div className="space-y-4">
 						{/* Nom et Prénom */}
 						<div className="grid gap-4 sm:grid-cols-2">
-							<form.AppField
-								name="firstName"
-								validators={{
-									onChange: ({ value }: { value: string }) => {
-										if (!value || value.length < 2) {
-											return "Le prénom doit contenir au moins 2 caractères";
-										}
-										if (value.length > 50) {
-											return "Le prénom ne peut pas dépasser 50 caractères";
-										}
-										return undefined;
-									},
-								}}
-							>
+							<form.AppField name="firstName">
 								{(field) => (
 									<field.InputField
 										label="Prénom"
@@ -191,20 +176,7 @@ export function AddressFormDialog({
 								)}
 							</form.AppField>
 
-							<form.AppField
-								name="lastName"
-								validators={{
-									onChange: ({ value }: { value: string }) => {
-										if (!value || value.length < 2) {
-											return "Le nom doit contenir au moins 2 caractères";
-										}
-										if (value.length > 50) {
-											return "Le nom ne peut pas dépasser 50 caractères";
-										}
-										return undefined;
-									},
-								}}
-							>
+							<form.AppField name="lastName">
 								{(field) => (
 									<field.InputField
 										label="Nom"
@@ -224,29 +196,18 @@ export function AddressFormDialog({
 							name="address1"
 							asyncDebounceMs={300}
 							validators={{
-								onChange: ({ value }: { value: string }) => {
-									if (!value || value.length < 5) {
-										return "L'adresse doit contenir au moins 5 caractères";
-									}
-									if (value.length > 100) {
-										return "L'adresse ne peut pas dépasser 100 caractères";
-									}
-									return undefined;
-								},
 								onChangeAsync: async ({ value }) => {
-									// Mise à jour de l'URL avec debounce de 300ms
+									// Mise à jour de l'URL avec debounce de 300ms pour l'autocomplétion
 									if (value.length >= 3) {
 										const params = new URLSearchParams(searchParams.toString());
 										params.set("q", value);
 
 										startAddressTransition(() => {
-											// Navigation avec transition - la page serveur fetche les suggestions
 											router.replace(`${pathname}?${params.toString()}`, {
 												scroll: false,
 											});
 										});
 									} else {
-										// Nettoyer l'URL si moins de 3 caractères
 										const params = new URLSearchParams(searchParams.toString());
 										params.delete("q");
 
@@ -335,20 +296,7 @@ export function AddressFormDialog({
 
 						{/* Code postal et Ville */}
 						<div className="grid gap-4 sm:grid-cols-2">
-							<form.AppField
-								name="postalCode"
-								validators={{
-									onChange: ({ value }: { value: string }) => {
-										if (!value) {
-											return "Le code postal est requis";
-										}
-										if (!/^[0-9]{5}$/.test(value)) {
-											return "Le code postal doit contenir 5 chiffres";
-										}
-										return undefined;
-									},
-								}}
-							>
+							<form.AppField name="postalCode">
 								{(field) => (
 									<field.InputField
 										label="Code postal"
@@ -364,20 +312,7 @@ export function AddressFormDialog({
 								)}
 							</form.AppField>
 
-							<form.AppField
-								name="city"
-								validators={{
-									onChange: ({ value }: { value: string }) => {
-										if (!value || value.length < 2) {
-											return "La ville doit contenir au moins 2 caractères";
-										}
-										if (value.length > 50) {
-											return "La ville ne peut pas dépasser 50 caractères";
-										}
-										return undefined;
-									},
-								}}
-							>
+							<form.AppField name="city">
 								{(field) => (
 									<field.InputField
 										label="Ville"
@@ -411,22 +346,7 @@ export function AddressFormDialog({
 						</form.AppField>
 
 						{/* Téléphone */}
-						<form.AppField
-							name="phone"
-							validators={{
-								onChange: ({ value }: { value: string }) => {
-									if (!value) {
-										return "Le téléphone est requis";
-									}
-									// Normalize: remove all spaces before validation
-									const normalized = value.replace(/\s/g, "");
-									if (!/^(\+33|0)[1-9](\d{2}){4}$/.test(normalized)) {
-										return "Format invalide (ex: 0612345678 ou +33612345678)";
-									}
-									return undefined;
-								},
-							}}
-						>
+						<form.AppField name="phone">
 							{(field) => (
 								<div className="space-y-2">
 									<field.InputField

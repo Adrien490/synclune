@@ -9,7 +9,7 @@ interface UseBulkDeleteProductTypesOptions {
 	onSuccess?: (message: string) => void;
 }
 
-export function useBulkDeleteProductTypes(options?: UseBulkDeleteProductTypesOptions) {
+export const useBulkDeleteProductTypes = (options?: UseBulkDeleteProductTypesOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -44,4 +44,4 @@ export function useBulkDeleteProductTypes(options?: UseBulkDeleteProductTypesOpt
 		isPending: isPending || isTransitionPending,
 		deleteProductTypes,
 	};
-}
+};

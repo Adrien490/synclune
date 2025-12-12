@@ -1,7 +1,6 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { z } from "zod";
 
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -15,18 +14,7 @@ import {
 	getCustomizationInvalidationTags,
 	CUSTOMIZATION_CACHE_TAGS,
 } from "../constants/cache";
-
-// ============================================================================
-// SCHEMA
-// ============================================================================
-
-const updateNotesSchema = z.object({
-	requestId: z.string().cuid(),
-	notes: z
-		.string()
-		.max(2000, "Les notes ne peuvent pas dépasser 2000 caractères")
-		.transform((val) => (val.trim() === "" ? null : val.trim())),
-});
+import { updateNotesSchema } from "../schemas/update-notes.schema";
 
 // ============================================================================
 // ACTION

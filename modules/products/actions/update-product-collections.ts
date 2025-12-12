@@ -5,7 +5,7 @@ import { requireAdmin } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath, updateTag } from "next/cache";
-import { getCollectionInvalidationTags } from "@/modules/collections/constants/cache";
+import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 
 /**
  * Server Action ADMIN pour mettre à jour les collections d'un produit

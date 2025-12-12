@@ -1,10 +1,7 @@
-import {
-	OrderStatus,
-	PaymentStatus,
-} from "@/app/generated/prisma/browser";
 import { getOrderNotes } from "@/modules/orders/actions/get-order-notes";
 import { getOrderRefunds } from "@/modules/orders/actions/get-order-refunds";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
+import { getOrderPermissions } from "@/modules/orders/utils/order-permissions";
 
 import { OrderHeader } from "./order-header";
 import { OrderProgressStepper } from "../order-progress-stepper";
@@ -32,14 +29,9 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 	const notesCount = "notes" in notesResult ? notesResult.notes.length : 0;
 	const refunds = "refunds" in refundsResult ? refundsResult.refunds : [];
 
-	// State machine conditions (calculées une fois côté serveur)
-	const isProcessing = order.status === OrderStatus.PROCESSING;
-	const isShipped = order.status === OrderStatus.SHIPPED;
-	const isDelivered = order.status === OrderStatus.DELIVERED;
-	const isPaid = order.paymentStatus === PaymentStatus.PAID;
-
-	const canRefund = (isProcessing || isShipped || isDelivered) && isPaid;
-	const canUpdateTracking = (isShipped || isDelivered) && !!order.trackingNumber;
+	// Permissions calculées via state machine centralisée
+	const permissions = getOrderPermissions(order);
+	const { canRefund, canUpdateTracking } = permissions;
 
 	return (
 		<div className="space-y-6">

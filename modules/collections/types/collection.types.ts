@@ -58,6 +58,15 @@ export type Collection = Prisma.CollectionGetPayload<{
 	select: typeof GET_COLLECTIONS_SELECT;
 }>;
 
+/** Type simplifié pour les selects/dropdowns */
+export type CollectionOption = {
+	id: string;
+	name: string;
+};
+
+/** Type minimal pour les formulaires d'édition */
+export type CollectionFormData = Pick<Collection, "id" | "name" | "slug" | "description">;
+
 // ============================================================================
 // MUTATION TYPES
 // ============================================================================

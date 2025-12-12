@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { ADDRESS_DIALOG_ID } from "./address-form-dialog";
+import { ADDRESS_DIALOG_ID } from "../constants/dialog.constants";
 import { Plus } from "lucide-react";
 import type { ComponentProps } from "react";
 

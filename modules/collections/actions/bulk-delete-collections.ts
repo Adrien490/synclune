@@ -7,7 +7,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
 
-import { getCollectionInvalidationTags } from "../constants/cache";
+import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { bulkDeleteCollectionsSchema } from "../schemas/collection.schemas";
 
 export async function bulkDeleteCollections(

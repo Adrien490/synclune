@@ -1,4 +1,4 @@
-import type { CompletionResult, SearchAddressResult } from "../data/types";
+import type { CompletionResult, SearchAddressResult } from "../types/search-address.types";
 
 /**
  * Transforme un résultat de l'API Completion en résultat simplifié

@@ -25,6 +25,19 @@ export const ORDERS_CACHE_TAGS = {
 // ============================================
 
 /**
+ * Configure le cache pour les données admin du dashboard commandes
+ * - Utilisé pour : liste admin, détails commande
+ * - Durée : 1min fraîche, 30s revalidation, 5min expiration
+ * @param tag - Tag de cache optionnel (utiliser ORDERS_CACHE_TAGS ou SHARED_CACHE_TAGS)
+ */
+export function cacheOrdersDashboard(tag?: string) {
+	cacheLife("dashboard")
+	if (tag) {
+		cacheTag(tag)
+	}
+}
+
+/**
  * Configure le cache pour les commandes d'un utilisateur
  * - Utilisé pour : /orders, historique commandes client
  * - Durée : 2min fraîche, 1min revalidation, 5min expiration

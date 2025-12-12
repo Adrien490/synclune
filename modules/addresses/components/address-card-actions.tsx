@@ -11,8 +11,7 @@ import { Star, Pencil, Trash2, Loader2, MoreVertical } from "lucide-react";
 import { useSetDefaultAddress } from "../hooks/use-set-default-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { DELETE_ADDRESS_DIALOG_ID } from "./delete-address-alert-dialog";
-import { ADDRESS_DIALOG_ID } from "./address-form-dialog";
+import { ADDRESS_DIALOG_ID, DELETE_ADDRESS_DIALOG_ID } from "../constants/dialog.constants";
 import type { UserAddress } from "../types/user-addresses.types";
 
 interface AddressCardActionsProps {

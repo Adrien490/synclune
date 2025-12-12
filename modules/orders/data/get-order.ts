@@ -1,8 +1,8 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
+import { cacheOrdersDashboard } from "../constants/cache";
 import { Prisma } from "@/app/generated/prisma/client";
 
 import { GET_ORDER_SELECT } from "../constants/order.constants";
@@ -55,7 +55,7 @@ export async function fetchOrder(
 	context: FetchOrderContext
 ): Promise<GetOrderReturn | null> {
 	"use cache";
-	cacheDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+	cacheOrdersDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 
 	const where: Prisma.OrderWhereInput = {
 		orderNumber: params.orderNumber,

@@ -6,7 +6,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { bulkArchiveCollectionsSchema } from "../schemas/collection.schemas";
-import { getCollectionInvalidationTags } from "../constants/cache";
+import { getCollectionInvalidationTags } from "../utils/cache.utils";
 
 /**
  * Server Action pour archiver ou desarchiver plusieurs collections en masse

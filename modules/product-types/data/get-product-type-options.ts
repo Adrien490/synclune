@@ -1,14 +1,6 @@
 import { prisma } from "@/shared/lib/prisma";
 import { cacheProductTypes } from "../constants/cache";
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export type ProductTypeOption = {
-	id: string;
-	label: string;
-};
+import type { ProductTypeOption } from "../types/product-type.types";
 
 // ============================================================================
 // MAIN FUNCTION

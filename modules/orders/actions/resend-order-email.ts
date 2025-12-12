@@ -11,8 +11,10 @@ import {
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier-detection";
+import type { ResendEmailType } from "../types/email.types";
 
-export type ResendEmailType = "confirmation" | "shipping" | "delivery";
+// Re-export du type pour compatibilité
+export type { ResendEmailType } from "../types/email.types";
 
 /**
  * Server Action ADMIN pour renvoyer un email de commande

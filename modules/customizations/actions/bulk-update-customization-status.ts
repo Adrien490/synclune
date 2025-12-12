@@ -1,7 +1,6 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { z } from "zod";
 
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
@@ -13,15 +12,7 @@ import {
 	handleActionError,
 } from "@/shared/lib/actions";
 import { getCustomizationInvalidationTags } from "../constants/cache";
-
-// ============================================================================
-// SCHEMA
-// ============================================================================
-
-const bulkUpdateStatusSchema = z.object({
-	requestIds: z.array(z.string().cuid()).min(1, "Au moins une demande requise"),
-	status: z.nativeEnum(CustomizationRequestStatus),
-});
+import { bulkUpdateStatusSchema } from "../schemas/bulk-update-status.schema";
 
 // ============================================================================
 // ACTION

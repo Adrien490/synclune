@@ -8,7 +8,7 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
-import { getCheckoutFormOptions } from "../constants/checkout-form-options";
+import { getCheckoutFormOptions } from "../utils/checkout-form.utils";
 
 interface UseCheckoutFormOptions {
 	session: Session | null;

@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { CART_EXPIRATION_DAYS, CART_EXPIRATION_MS } from "@/modules/cart/constants/expiration.constants";
+import { CART_EXPIRATION_DAYS, CART_EXPIRATION_MS } from "@/modules/cart/constants/expiration";
 
 /**
  * Nom du cookie pour l'identifiant de session du panier

@@ -2,14 +2,10 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
+import type { OrderRefundItem } from "../types/order-refunds.types";
 
-export interface OrderRefundItem {
-	id: string;
-	amount: number;
-	status: string;
-	reason: string;
-	createdAt: Date;
-}
+// Re-export du type pour compatibilité
+export type { OrderRefundItem } from "../types/order-refunds.types";
 
 /**
  * Server Action ADMIN pour récupérer les remboursements d'une commande
