@@ -20,11 +20,12 @@ import { ProductListSkeleton } from "@/modules/products/components/product-list-
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
-import { SearchDrawer } from "@/shared/components/search-drawer";
+import { SearchOverlay } from "@/shared/components/search-overlay";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { SortDrawerTrigger } from "@/shared/components/sort-drawer";
 import { FAB_KEYS } from "@/shared/features/fab";
 import { getFabVisibility } from "@/shared/features/fab/data/get-fab-visibility";
+import { getRecentSearches } from "@/shared/features/recent-searches/data/get-recent-searches";
 import { centsToEuros } from "@/shared/utils/format-euro";
 import { getFirstParam } from "@/shared/utils/params";
 import { parseFilters } from "./_utils/params";
@@ -218,8 +219,8 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 			? searchParamsData.search
 			: undefined;
 
-	// Récupérer les couleurs, matériaux, prix maximum et visibilité FAB en parallèle
-	const [colorsData, materials, maxPriceInCents, isFilterFabHidden] =
+	// Récupérer les couleurs, matériaux, prix maximum, visibilité FAB et recherches récentes en parallèle
+	const [colorsData, materials, maxPriceInCents, isFilterFabHidden, recentSearches] =
 		await Promise.all([
 			getColors({
 				perPage: 100,
@@ -228,6 +229,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 			getMaterialOptions(),
 			getMaxProductPrice(),
 			getFabVisibility(FAB_KEYS.STOREFRONT),
+			getRecentSearches(),
 		]);
 
 	const maxPriceInEuros = centsToEuros(maxPriceInCents);
@@ -371,7 +373,14 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 				actions={
 					<div className="flex items-center gap-2 md:hidden">
 						<SortDrawerTrigger options={sortOptions} />
-						<SearchDrawer placeholder={searchPlaceholder} />
+						<SearchOverlay
+							placeholder={searchPlaceholder}
+							productTypes={productTypes.map((t) => ({
+								slug: t.slug,
+								label: t.label,
+							}))}
+							recentSearches={recentSearches}
+						/>
 					</div>
 				}
 			/>

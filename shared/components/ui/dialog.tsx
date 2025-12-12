@@ -5,11 +5,28 @@ import { XIcon } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
+import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 
 function Dialog({
+	open,
+	onOpenChange,
 	...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-	return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+	// Gère le bouton retour du navigateur (mobile)
+	useBackButtonClose({
+		isOpen: open ?? false,
+		onClose: () => onOpenChange?.(false),
+		id: "dialog",
+	});
+
+	return (
+		<DialogPrimitive.Root
+			data-slot="dialog"
+			open={open}
+			onOpenChange={onOpenChange}
+			{...props}
+		/>
+	);
 }
 
 function DialogTrigger({

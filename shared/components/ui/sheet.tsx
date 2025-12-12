@@ -21,19 +21,13 @@ function Sheet({
 }: React.ComponentProps<typeof SheetPrimitive.Root> & {
 	direction?: SheetDirection;
 }) {
-	const { handleClose } = useBackButtonClose({
+	// Gère uniquement le bouton retour du navigateur (mobile)
+	// Les autres fermetures (X, overlay, etc.) passent directement par onOpenChange
+	useBackButtonClose({
 		isOpen: open ?? false,
 		onClose: () => onOpenChange?.(false),
 		id: "sheet",
 	});
-
-	const wrappedOnOpenChange = (newOpen: boolean) => {
-		if (!newOpen) {
-			handleClose();
-		} else {
-			onOpenChange?.(true);
-		}
-	};
 
 	return (
 		<SheetContext.Provider value={{ direction }}>
@@ -41,7 +35,7 @@ function Sheet({
 				data-slot="sheet"
 				direction={direction}
 				open={open}
-				onOpenChange={wrappedOnOpenChange}
+				onOpenChange={onOpenChange}
 				{...props}
 			/>
 		</SheetContext.Provider>

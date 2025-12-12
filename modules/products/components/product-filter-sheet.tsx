@@ -5,7 +5,6 @@ import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import {
 	Sheet,
-	SheetClose,
 	SheetContent,
 	SheetDescription,
 	SheetFooter,
@@ -151,6 +150,7 @@ export function ProductFilterSheet({
 
 		startTransition(() => {
 			router.push(`${pathname}?${params.toString()}`);
+			close();
 		});
 	};
 
@@ -175,6 +175,7 @@ export function ProductFilterSheet({
 
 		startTransition(() => {
 			router.push(`${pathname}?${params.toString()}`);
+			close();
 		});
 	};
 
@@ -213,7 +214,7 @@ export function ProductFilterSheet({
 
 			<SheetContent className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full">
 				<SheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
-					<div className="flex items-center justify-between">
+					<div className="flex items-center justify-between pr-10">
 						<div>
 							<SheetTitle className="text-lg font-semibold">Filtres</SheetTitle>
 							<SheetDescription className="text-sm text-muted-foreground">
@@ -369,14 +370,12 @@ export function ProductFilterSheet({
 
 				<SheetFooter className="px-6 py-4 border-t bg-background/95 shrink-0">
 					<ButtonGroup className="w-full" aria-label="Filter actions">
-						<SheetClose asChild className="flex-1">
-							<Button variant="outline">Annuler</Button>
-						</SheetClose>
-						<SheetClose asChild className="flex-1">
-							<Button type="submit" onClick={() => form.handleSubmit()}>
-								Appliquer
-							</Button>
-						</SheetClose>
+						<Button variant="outline" className="flex-1" onClick={close}>
+							Annuler
+						</Button>
+						<Button className="flex-1" onClick={() => form.handleSubmit()}>
+							Appliquer
+						</Button>
 					</ButtonGroup>
 				</SheetFooter>
 			</SheetContent>

@@ -7,7 +7,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { ChevronLeft, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
 	AnimatePresence,
 	motion,
@@ -20,9 +20,9 @@ import { maybeReduceMotion } from "@/shared/components/animations/motion.config"
 import { useFabVisibility } from "../hooks/use-fab-visibility";
 import type { FabKey } from "../constants";
 
-// Seuils pour le swipe-to-hide
-const SWIPE_THRESHOLD = 50; // pixels minimum pour déclencher le hide
-const VELOCITY_THRESHOLD = 300; // px/s pour swipe rapide
+// Seuils pour le swipe-to-hide (optimisés pour mobile)
+const SWIPE_THRESHOLD = 35; // pixels minimum pour déclencher le hide
+const VELOCITY_THRESHOLD = 250; // px/s pour swipe rapide
 
 interface FabTooltipContent {
 	/** Titre du tooltip (gras) */
@@ -247,8 +247,9 @@ export function Fab({
 					key="fab-visible"
 					data-fab-container
 					drag={prefersReducedMotion || !isTouchDevice ? false : "x"}
-					dragConstraints={{ left: 0, right: 0 }}
-					dragElastic={{ left: 0, right: 0.5 }}
+					dragConstraints={{ left: 0, right: 80 }}
+					dragElastic={{ left: 0.1, right: 0.3 }}
+					dragMomentum={false}
 					onDragEnd={handleDragEnd}
 					whileDrag={{ opacity: 0.8 }}
 					initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
@@ -267,18 +268,19 @@ export function Fab({
 								variant="ghost"
 								size="icon"
 								className={cn(
-									"absolute -top-3 -right-3 z-10",
-									"size-9 rounded-full",
+									"absolute -top-2 -right-2 z-10",
+									"size-7 rounded-full",
 									"bg-muted",
 									"border border-border",
 									"shadow-sm",
 									"hover:bg-accent",
-									"opacity-100 md:opacity-0 md:group-hover:opacity-100",
+									"hidden md:flex",
+									"md:opacity-0 md:group-hover:opacity-100",
 									"focus-visible:opacity-100",
 									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
 									"focus-visible:outline-none",
 									"transition-opacity duration-200",
-									isPending && "cursor-wait opacity-100"
+									isPending && "cursor-wait md:opacity-100"
 								)}
 								aria-label={hideTooltip}
 								aria-expanded={true}
@@ -294,6 +296,18 @@ export function Fab({
 							<p className="text-xs text-muted-foreground">Échap</p>
 						</TooltipContent>
 					</Tooltip>
+
+					{/* Hint swipe sur mobile - s'efface après 1.5s */}
+					{isTouchDevice && !prefersReducedMotion && (
+						<motion.div
+							className="absolute -right-1 top-1/2 -translate-y-1/2 pointer-events-none md:hidden"
+							initial={{ opacity: 0.8, x: 0 }}
+							animate={{ opacity: 0, x: 12 }}
+							transition={{ duration: 1.5, delay: 0.8, ease: "easeOut" }}
+						>
+							<ChevronRight className="size-5 text-primary-foreground/60" />
+						</motion.div>
+					)}
 
 					{/* Bouton principal avec tooltip */}
 					<Tooltip>

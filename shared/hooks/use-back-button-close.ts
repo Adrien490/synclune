@@ -19,7 +19,7 @@ interface UseBackButtonCloseOptions {
  *
  * @example
  * ```tsx
- * const { handleClose } = useBackButtonClose({
+ * useBackButtonClose({
  *   isOpen: open,
  *   onClose: () => setOpen(false),
  *   id: "my-modal",
@@ -41,7 +41,15 @@ export function useBackButtonClose({
 		}
 	}, [isOpen, id]);
 
-	// Écouter le bouton retour (popstate)
+	// Nettoyer l'historique quand le modal se ferme (par n'importe quel moyen)
+	useEffect(() => {
+		if (!isOpen && historyPushedRef.current) {
+			historyPushedRef.current = false;
+			history.back();
+		}
+	}, [isOpen]);
+
+	// Écouter le bouton retour (popstate) pour fermer le modal
 	useEffect(() => {
 		const handlePopState = () => {
 			if (isOpen && historyPushedRef.current) {
@@ -54,14 +62,13 @@ export function useBackButtonClose({
 		return () => window.removeEventListener("popstate", handlePopState);
 	}, [isOpen, onClose]);
 
-	// Fonction à appeler lors de la fermeture programmatique
+	// Fonction pour fermer proprement (évite double navigation)
 	const handleClose = () => {
 		if (historyPushedRef.current) {
 			historyPushedRef.current = false;
 			history.back();
-		} else {
-			onClose();
 		}
+		onClose();
 	};
 
 	return { handleClose };

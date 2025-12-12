@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/shared/utils/cn"
+import { useBackButtonClose } from "@/shared/hooks/use-back-button-close"
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
@@ -16,11 +17,32 @@ export function useIsInsideDrawer() {
 }
 
 function Drawer({
+  open,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
+  const { handleClose } = useBackButtonClose({
+    isOpen: open ?? false,
+    onClose: () => onOpenChange?.(false),
+    id: "drawer",
+  })
+
+  const wrappedOnOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      handleClose()
+    } else {
+      onOpenChange?.(true)
+    }
+  }
+
   return (
     <DrawerContext.Provider value={true}>
-      <DrawerPrimitive.Root data-slot="drawer" {...props} />
+      <DrawerPrimitive.Root
+        data-slot="drawer"
+        open={open}
+        onOpenChange={wrappedOnOpenChange}
+        {...props}
+      />
     </DrawerContext.Provider>
   )
 }
