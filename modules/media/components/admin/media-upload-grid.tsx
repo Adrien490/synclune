@@ -179,8 +179,7 @@ export function MediaUploadGrid({
 
 			onChange(newMedia);
 
-			// Feedback visuel et sonore
-			toast.success("Ordre des médias mis à jour", { duration: 2000 });
+			// Feedback pour lecteur d'écran
 			setAnnouncement(`${mediaType} déplacée en position ${newIndex + 1}.`);
 		} else {
 			// Pas de changement
