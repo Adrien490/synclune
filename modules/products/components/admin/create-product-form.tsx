@@ -505,7 +505,6 @@ function CreateProductFormContent({
 													mediaType,
 													// Récupérer les thumbnails générées par le serveur (vidéos)
 													thumbnailUrl: serverData.thumbnailUrl ?? undefined,
-													thumbnailSmallUrl: serverData.thumbnailSmallUrl ?? undefined,
 													blurDataUrl: serverData.blurDataUrl ?? undefined,
 												});
 											}
@@ -611,7 +610,6 @@ function CreateProductFormContent({
 													mediaType: m.mediaType,
 													altText: m.altText ?? undefined,
 													thumbnailUrl: m.thumbnailUrl ?? undefined,
-													thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
 													blurDataUrl: m.blurDataUrl ?? undefined,
 												}))}
 												onChange={(newMedia) => {
@@ -626,7 +624,6 @@ function CreateProductFormContent({
 															mediaType: m.mediaType,
 															altText: m.altText ?? undefined,
 															thumbnailUrl: m.thumbnailUrl ?? undefined,
-															thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
 															blurDataUrl: m.blurDataUrl ?? undefined,
 														})
 													);

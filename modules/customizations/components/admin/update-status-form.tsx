@@ -15,7 +15,6 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { updateCustomizationStatus } from "@/modules/customizations/actions/update-customization-status";
 import { CUSTOMIZATION_STATUS_LABELS } from "@/modules/customizations/constants/status.constants";
-import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 interface UpdateStatusFormProps {
@@ -81,14 +80,7 @@ export function UpdateStatusForm({
 				disabled={isPending || selectedStatus === currentStatus}
 				className="w-full"
 			>
-				{isPending ? (
-					<>
-						<Loader2 className="h-4 w-4 mr-2 animate-spin" />
-						Mise à jour...
-					</>
-				) : (
-					"Mettre à jour"
-				)}
+				{isPending ? "Mise à jour..." : "Mettre à jour"}
 			</Button>
 		</div>
 	);

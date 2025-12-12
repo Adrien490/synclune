@@ -282,7 +282,6 @@ export async function createProduct(
 						skuId: createdSku.id,
 						url: image.url,
 						thumbnailUrl: image.thumbnailUrl || null,
-						thumbnailSmallUrl: image.thumbnailSmallUrl || null,
 						blurDataUrl: image.blurDataUrl || null,
 						altText: image.altText || null,
 						mediaType: image.mediaType || detectMediaType(image.url),

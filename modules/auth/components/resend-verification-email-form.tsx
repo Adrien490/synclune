@@ -101,19 +101,12 @@ export function ResendVerificationEmailForm({
 						className="w-full"
 						type="submit"
 					>
-						{isPending ? (
-							<>
-								<Mail className="h-4 w-4 animate-spin" />
-								Envoi en cours...
-							</>
-						) : state?.status === ActionStatus.SUCCESS ? (
-							"Email envoyé"
-						) : (
-							<>
-								<Mail className="h-4 w-4" />
-								Renvoyer l'email de vérification
-							</>
-						)}
+						<Mail className="h-4 w-4" />
+						{isPending
+							? "Envoi en cours..."
+							: state?.status === ActionStatus.SUCCESS
+								? "Email envoyé"
+								: "Renvoyer l'email de vérification"}
 					</Button>
 				)}
 			</form.Subscribe>

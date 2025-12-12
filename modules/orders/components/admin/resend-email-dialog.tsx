@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useResendOrderEmail } from "@/modules/orders/hooks/use-resend-order-email";
 import type { ResendEmailType } from "@/modules/orders/actions/resend-order-email";
-import { Loader2, Mail, Truck, PackageCheck } from "lucide-react";
+import { Mail, Truck, PackageCheck } from "lucide-react";
 
 export const RESEND_EMAIL_DIALOG_ID = "resend-email";
 
@@ -153,17 +153,8 @@ export function ResendEmailDialog() {
 						Annuler
 					</Button>
 					<Button onClick={handleSubmit} disabled={isPending}>
-						{isPending ? (
-							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-								Envoi...
-							</>
-						) : (
-							<>
-								<Mail className="mr-2 h-4 w-4" aria-hidden="true" />
-								Envoyer
-							</>
-						)}
+						<Mail className="mr-2 h-4 w-4" aria-hidden="true" />
+						{isPending ? "Envoi..." : "Envoyer"}
 					</Button>
 				</ResponsiveDialogFooter>
 			</ResponsiveDialogContent>

@@ -17,7 +17,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkUpdatePrice } from "@/modules/skus/hooks/use-bulk-update-price";
-import { Loader2, DollarSign } from "lucide-react";
+import { DollarSign } from "lucide-react";
 
 export const BULK_UPDATE_PRICE_DIALOG_ID = "bulk-update-sku-price";
 
@@ -177,14 +177,7 @@ export function BulkUpdatePriceDialog() {
 							Annuler
 						</Button>
 						<Button type="submit" disabled={!isValid || isPending}>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Modification...
-								</>
-							) : (
-								<>Appliquer</>
-							)}
+							{isPending ? "Modification..." : "Appliquer"}
 						</Button>
 					</ResponsiveDialogFooter>
 				</form>

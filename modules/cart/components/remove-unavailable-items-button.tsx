@@ -3,7 +3,6 @@
 import { startTransition } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { useRemoveUnavailableItems } from "@/modules/cart/hooks/use-remove-unavailable-items";
-import { Loader2 } from "lucide-react";
 
 interface RemoveUnavailableItemsButtonProps {
 	itemsCount: number;
@@ -33,14 +32,9 @@ export function RemoveUnavailableItemsButton({
 			variant="destructive"
 			className="w-full text-xs h-9"
 		>
-			{isRemovingUnavailable ? (
-				<>
-					<Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-					Suppression en cours...
-				</>
-			) : (
-				<>Retirer les articles indisponibles ({itemsCount})</>
-			)}
+			{isRemovingUnavailable
+				? "Suppression en cours..."
+				: `Retirer les articles indisponibles (${itemsCount})`}
 		</Button>
 	);
 }

@@ -37,9 +37,7 @@ export function GalleryThumbnail({
 	isLCPCandidate = false,
 }: GalleryThumbnailProps) {
 	const isVideo = media.mediaType === "VIDEO";
-	const thumbnailSrc = isVideo
-		? media.thumbnailSmallUrl || media.thumbnailUrl
-		: media.url;
+	const thumbnailSrc = isVideo ? media.thumbnailUrl : media.url;
 	const alt = media.alt || `${title} - ${isVideo ? "Vidéo" : "Photo"} ${index + 1}`;
 
 	return (

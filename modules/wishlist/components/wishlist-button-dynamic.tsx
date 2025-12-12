@@ -13,7 +13,7 @@ interface WishlistButtonDynamicProps {
 	initialIsInWishlist: boolean;
 	/** Map optionnelle SKU ID -> état wishlist (pour précharger plusieurs états) */
 	wishlistStates?: Record<string, boolean>;
-	/** Taille du bouton: sm (36px), md (44px - défaut), lg (52px) */
+	/** Taille du bouton: sm (36px), md (44px - défaut), lg (56px) */
 	size?: WishlistButtonSize;
 }
 

@@ -5,7 +5,6 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
-import { Spinner } from "@/shared/components/ui/spinner";
 import { subscribeToStockNotification } from "../actions/subscribe-to-stock-notification";
 import { Bell, CheckCircle } from "lucide-react";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -99,17 +98,8 @@ export function StockNotificationForm({ skuId }: StockNotificationFormProps) {
 				className="w-full"
 				disabled={isPending || !consent}
 			>
-				{isPending ? (
-					<>
-						<Spinner className="w-3 h-3 mr-1.5" />
-						<span>Inscription...</span>
-					</>
-				) : (
-					<>
-						<Bell className="w-3 h-3 mr-1.5" aria-hidden="true" />
-						<span>M'alerter</span>
-					</>
-				)}
+				<Bell className="w-3 h-3 mr-1.5" aria-hidden="true" />
+				<span>{isPending ? "Inscription..." : "M'alerter"}</span>
 			</Button>
 		</form>
 	);

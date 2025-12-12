@@ -74,7 +74,6 @@ export interface CustomizationRequestDetail {
 			id: string;
 			images: {
 				url: string;
-				thumbnailSmallUrl: string | null;
 			}[];
 		}[];
 	}[];

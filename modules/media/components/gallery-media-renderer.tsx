@@ -8,9 +8,7 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import { useState } from "react";
-
-// Constantes - quality 85 offre un bon compromis taille/qualité (-50% vs 95)
-const MAIN_IMAGE_QUALITY = 85;
+import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface GalleryMediaRendererProps {
 	media: ProductMedia;
@@ -74,7 +72,7 @@ export function GalleryMediaRenderer({
 					loop
 					playsInline
 					preload={isActive ? "auto" : "none"}
-					poster={media.thumbnailUrl || media.thumbnailSmallUrl || undefined}
+					poster={media.thumbnailUrl || undefined}
 					aria-label={media.alt || `${title} - Vidéo ${index + 1}`}
 					onError={onError}
 					onCanPlay={() => setIsVideoLoading(false)}
@@ -102,7 +100,7 @@ export function GalleryMediaRenderer({
 			fetchPriority={isFirst && isActive ? "high" : "auto"}
 			loading={isActive ? "eager" : "lazy"}
 			quality={MAIN_IMAGE_QUALITY}
-			sizes="(max-width: 768px) 100vw, 60vw"
+			sizes="(max-width: 768px) 100vw, 50vw"
 			placeholder={media.blurDataUrl ? "blur" : "empty"}
 			blurDataURL={media.blurDataUrl}
 			onError={onError}

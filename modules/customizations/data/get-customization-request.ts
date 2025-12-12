@@ -53,7 +53,6 @@ export async function getCustomizationRequest(
 								take: 1,
 								select: {
 									url: true,
-									thumbnailSmallUrl: true,
 								},
 							},
 						},

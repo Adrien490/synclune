@@ -313,7 +313,6 @@ export async function updateProduct(
 							skuId: validatedData.defaultSku.skuId,
 							url: image.url,
 							thumbnailUrl: image.thumbnailUrl || null,
-							thumbnailSmallUrl: image.thumbnailSmallUrl || null,
 							blurDataUrl: image.blurDataUrl || null,
 							altText: image.altText || null,
 							mediaType:

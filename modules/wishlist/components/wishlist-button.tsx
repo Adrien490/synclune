@@ -12,14 +12,14 @@ interface WishlistButtonProps {
 	isInWishlist: boolean;
 	productTitle?: string;
 	className?: string;
-	/** Taille du bouton: sm (36px), md (44px - défaut), lg (52px) */
+	/** Taille du bouton: sm (36px), md (44px - défaut), lg (56px) */
 	size?: WishlistButtonSize;
 }
 
 const sizeConfig: Record<WishlistButtonSize, { button: string; icon: number }> = {
 	sm: { button: "size-9", icon: 16 },
 	md: { button: "size-11", icon: 20 },
-	lg: { button: "size-13", icon: 24 },
+	lg: { button: "size-14", icon: 26 },
 };
 
 /**

@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkAdjustStock } from "@/modules/skus/hooks/use-bulk-adjust-stock";
-import { Loader2, Minus, Plus, Package } from "lucide-react";
+import { Minus, Plus, Package } from "lucide-react";
 
 export const BULK_ADJUST_STOCK_DIALOG_ID = "bulk-adjust-sku-stock";
 
@@ -169,14 +169,7 @@ export function BulkAdjustStockDialog() {
 							Annuler
 						</Button>
 						<Button type="submit" disabled={!isValid || isPending}>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Ajustement...
-								</>
-							) : (
-								<>Appliquer</>
-							)}
+							{isPending ? "Ajustement..." : "Appliquer"}
 						</Button>
 					</ResponsiveDialogFooter>
 				</form>

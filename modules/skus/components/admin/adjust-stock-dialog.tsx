@@ -14,7 +14,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAdjustStockForm } from "@/modules/skus/hooks/use-adjust-stock-form";
-import { ArrowRight, Loader2, Minus, Package, Plus } from "lucide-react";
+import { ArrowRight, Minus, Package, Plus } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
 export const ADJUST_STOCK_DIALOG_ID = "adjust-sku-stock";
@@ -178,14 +178,7 @@ function AdjustStockFormContent({
 						Annuler
 					</Button>
 					<Button type="submit" disabled={!isValid || isPending}>
-						{isPending ? (
-							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Ajustement...
-							</>
-						) : (
-							<>Confirmer</>
-						)}
+						{isPending ? "Ajustement..." : "Confirmer"}
 					</Button>
 				</ResponsiveDialogFooter>
 			</form>

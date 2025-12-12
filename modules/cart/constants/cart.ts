@@ -53,7 +53,6 @@ export const GET_CART_SELECT = {
 							url: true,
 							blurDataUrl: true,
 							thumbnailUrl: true,
-							thumbnailSmallUrl: true,
 							altText: true,
 							mediaType: true,
 							isPrimary: true,

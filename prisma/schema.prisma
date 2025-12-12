@@ -410,10 +410,9 @@ model SkuMedia {
   skuId String
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
 
-  url               String  @db.VarChar(2048)
-  thumbnailUrl      String? @db.VarChar(2048) // MEDIUM (480px) - poster vidéo
-  thumbnailSmallUrl String? @db.VarChar(2048) // SMALL (160px) - miniatures galerie
-  blurDataUrl       String? @db.Text          // Base64 blur placeholder (~200 bytes)
+  url          String  @db.VarChar(2048)
+  thumbnailUrl String? @db.VarChar(2048) // Thumbnail pour vidéos (poster)
+  blurDataUrl  String? @db.Text          // Base64 blur placeholder (~200 bytes)
   altText      String?
   mediaType    MediaType @default(IMAGE)
   isPrimary    Boolean   @default(false)

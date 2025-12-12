@@ -477,7 +477,6 @@ export function EditProductForm({
 									name: string;
 									type: string;
 									thumbnailUrl?: string;
-									thumbnailSmallUrl?: string;
 									blurDataUrl?: string | null;
 								}>
 							) => {
@@ -499,7 +498,6 @@ export function EditProductForm({
 									field.pushValue({
 										url: file.url,
 										thumbnailUrl: file.thumbnailUrl ?? undefined,
-										thumbnailSmallUrl: file.thumbnailSmallUrl ?? undefined,
 										blurDataUrl: file.blurDataUrl ?? undefined,
 										altText: form.state.values.title || undefined,
 										mediaType: mediaType as "IMAGE" | "VIDEO",
@@ -515,7 +513,6 @@ export function EditProductForm({
 											mediaType: m.mediaType,
 											altText: m.altText ?? undefined,
 											thumbnailUrl: m.thumbnailUrl ?? undefined,
-											thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
 											blurDataUrl: m.blurDataUrl ?? undefined,
 										}))}
 										onChange={(newMedia) => {
@@ -529,7 +526,6 @@ export function EditProductForm({
 													mediaType: m.mediaType,
 													altText: m.altText ?? undefined,
 													thumbnailUrl: m.thumbnailUrl ?? undefined,
-													thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
 													blurDataUrl: m.blurDataUrl ?? undefined,
 												})
 											);
@@ -586,7 +582,6 @@ export function EditProductForm({
 																	name: filesToUpload[i].name,
 																	type: filesToUpload[i].type,
 																	thumbnailUrl: r.serverData?.thumbnailUrl ?? undefined,
-																	thumbnailSmallUrl: r.serverData?.thumbnailSmallUrl ?? undefined,
 																	blurDataUrl: r.serverData?.blurDataUrl,
 																}))
 															);

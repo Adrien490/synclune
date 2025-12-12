@@ -28,10 +28,10 @@ export async function addToCart(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Extraction des données du FormData
+		// 1. Extraction des données du FormData (quantité fixe à 1)
 		const rawData = {
 			skuId: formData.get("skuId") as string,
-			quantity: Number(formData.get("quantity")) || 1,
+			quantity: 1 as const,
 		};
 
 		// 2. Validation avec Zod

@@ -2,7 +2,7 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState, useRef, useTransition } from "react";
+import { useActionState, useTransition } from "react";
 import { addToCart } from "@/modules/cart/actions/add-to-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
@@ -28,9 +28,6 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 	const openSheet = useSheetStore((state) => state.open);
 	const shouldOpenSheet = options?.openSheetOnSuccess ?? true;
 
-	// Ref pour stocker la quantité pending (pour rollback)
-	const pendingQuantityRef = useRef<number>(0);
-
 	const [isTransitionPending, startTransition] = useTransition();
 
 	const [state, formAction, isActionPending] = useActionState(
@@ -54,8 +51,8 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 					}
 				},
 				onError: () => {
-					// Rollback du badge navbar
-					adjustCart(-pendingQuantityRef.current);
+					// Rollback du badge navbar (quantité fixe à 1)
+					adjustCart(-1);
 				},
 			})
 		),
@@ -64,13 +61,8 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 
 	const action = (formData: FormData) => {
 		startTransition(() => {
-			// Extraire la quantité pour l'optimistic update
-			const quantity = Number(formData.get("quantity")) || 1;
-			pendingQuantityRef.current = quantity;
-
-			// Mise à jour optimistic du badge navbar
-			adjustCart(quantity);
-
+			// Mise à jour optimistic du badge navbar (quantité fixe à 1)
+			adjustCart(1);
 			formAction(formData);
 		});
 	};

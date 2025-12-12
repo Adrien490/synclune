@@ -22,7 +22,6 @@ export const editProductFormOpts = {
 			media: [] as Array<{
 				url: string;
 				thumbnailUrl?: string | null;
-				thumbnailSmallUrl?: string | null;
 				blurDataUrl?: string;
 				altText?: string;
 				mediaType: "IMAGE" | "VIDEO";

@@ -157,14 +157,6 @@ const imageSchema = z.object({
 		})
 		.optional()
 		.nullable(),
-	thumbnailSmallUrl: z
-		.string()
-		.url()
-		.refine(isAllowedMediaDomain, {
-			message: "L'URL de la miniature doit provenir d'un domaine autorisé",
-		})
-		.optional()
-		.nullable(),
 	blurDataUrl: z.string().optional(),
 	altText: z.string().max(200).optional(),
 	mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),

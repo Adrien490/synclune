@@ -355,7 +355,6 @@ export function EditProductVariantForm({
 																		url: serverData.url,
 																		blurDataUrl: serverData.blurDataUrl ?? undefined,
 																		thumbnailUrl: undefined,
-																		thumbnailSmallUrl: undefined,
 																		altText: product.title,
 																		mediaType: "IMAGE",
 																	});
@@ -537,7 +536,6 @@ export function EditProductVariantForm({
 																mediaType: m.mediaType,
 																altText: m.altText ?? undefined,
 																thumbnailUrl: m.thumbnailUrl ?? undefined,
-																thumbnailSmallUrl: m.thumbnailSmallUrl ?? undefined,
 																blurDataUrl: m.blurDataUrl ?? undefined,
 															}))}
 															onChange={(newMedia) => field.setValue(newMedia)}
@@ -585,7 +583,6 @@ export function EditProductVariantForm({
 																	url: serverData.url,
 																	blurDataUrl: serverData.blurDataUrl ?? undefined,
 																	thumbnailUrl: serverData.thumbnailUrl ?? undefined,
-																	thumbnailSmallUrl: serverData.thumbnailSmallUrl ?? undefined,
 																	altText: product.title,
 																	mediaType: isVideo ? "VIDEO" : "IMAGE",
 																});

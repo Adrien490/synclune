@@ -23,7 +23,6 @@ import useEmblaCarousel from "embla-carousel-react";
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { GalleryThumbnail } from "@/modules/media/components/gallery-thumbnail";
-import { GalleryThumbnailsCarousel } from "@/modules/media/components/gallery-thumbnails";
 
 interface GalleryProps {
 	product: GetProductReturn;
@@ -36,7 +35,7 @@ interface GalleryProps {
 function GalleryLoadingSkeleton() {
 	return (
 		<div className="w-full">
-			<div className="aspect-square rounded-3xl bg-muted animate-pulse" />
+			<div className="aspect-square sm:aspect-[4/5] rounded-3xl bg-muted animate-pulse" />
 		</div>
 	);
 }
@@ -134,7 +133,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 	if (!safeImages.length) {
 		return (
 			<div className="gallery-empty">
-				<div className="relative aspect-square rounded-3xl bg-linear-card p-8 flex items-center justify-center overflow-hidden">
+				<div className="relative aspect-square sm:aspect-[4/5] rounded-3xl bg-linear-card p-8 flex items-center justify-center overflow-hidden">
 					<div className="absolute inset-0 bg-linear-organic opacity-10 animate-pulse rounded-3xl" />
 					<div className="text-center space-y-3 z-10 relative">
 						<span className="text-4xl animate-bounce">✨</span>
@@ -217,7 +216,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 						<div className="gallery-main relative group order-2 lg:order-2">
 						<div
 							className={cn(
-								"relative aspect-square overflow-hidden rounded-2xl sm:rounded-3xl",
+								"relative aspect-square sm:aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl",
 								"bg-linear-organic border-0 sm:border-2 sm:border-border",
 								"shadow-md sm:shadow-lg hover:shadow-lg transition-all duration-300",
 								"w-full md:max-w-none"
@@ -248,10 +247,10 @@ function GalleryContent({ product, title }: GalleryProps) {
 								</button>
 							)}
 
-							{/* Dots indicator - Mobile uniquement, positionné dans l'image */}
+							{/* Dots indicator - Mobile uniquement, en bas à droite */}
 							{safeImages.length > 1 && (
 								<div
-									className="sm:hidden absolute bottom-3 right-3 z-20 flex gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5"
+									className="sm:hidden absolute bottom-3 right-3 z-20 flex gap-2"
 									role="group"
 									aria-label="Navigation galerie"
 								>
@@ -265,14 +264,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 											}}
 											aria-current={i === optimisticIndex ? "true" : undefined}
 											aria-label={`Image ${i + 1} sur ${safeImages.length}`}
-											className="size-6 flex items-center justify-center touch-manipulation"
+											className="size-7 flex items-center justify-center touch-manipulation"
 										>
 											<span
 												className={cn(
-													"rounded-full transition-all duration-200",
+													"rounded-full transition-all duration-300",
 													i === optimisticIndex
-														? "bg-white w-3 h-2"
-														: "bg-white/50 w-2 h-2"
+														? "bg-primary w-3 h-3 shadow-[0_0_8px_2px] shadow-primary/40 scale-110"
+														: "bg-primary/30 w-2 h-2 hover:bg-primary/50"
 												)}
 											/>
 										</button>
@@ -296,9 +295,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 											aria-hidden={index !== optimisticIndex}
 											aria-label={`Zoomer ${media.alt || title}`}
 											onClick={() => {
-												if (emblaApi?.clickAllowed()) {
-													openLightbox();
-												}
+												openLightbox();
 											}}
 											onKeyDown={(e) => {
 												if (e.key === "Enter" || e.key === " ") {
@@ -381,43 +378,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 						</div>
 					</div>
 					</div>{/* Fin du grid principal */}
-
-					{/* Miniatures - Mobile uniquement */}
-					{safeImages.length > 1 && (
-						<div className="lg:hidden mt-4 sm:mt-6">
-							{safeImages.length > 6 ? (
-								/* Carousel horizontal si plus de 6 images */
-								<GalleryThumbnailsCarousel
-									medias={safeImages}
-									currentIndex={optimisticIndex}
-									title={title}
-									onNavigate={navigateToIndex}
-									onError={handleMediaError}
-									hasError={hasError}
-									className="w-full"
-								/>
-							) : (
-								/* Grille standard si 6 images ou moins */
-								<div className="gallery-thumbnails w-full">
-									<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3">
-										{safeImages.map((media, index) => (
-											<GalleryThumbnail
-												key={media.id}
-												media={media}
-												index={index}
-												isActive={index === optimisticIndex}
-												hasError={hasError(media.id)}
-												title={title}
-												onClick={() => navigateToIndex(index)}
-												onError={() => handleMediaError(media.id)}
-												isLCPCandidate={index === 0}
-											/>
-										))}
-									</div>
-								</div>
-							)}
-						</div>
-					)}
 
 					{/* Instructions pour la navigation (masquées visuellement) */}
 					{safeImages.length > 1 && (

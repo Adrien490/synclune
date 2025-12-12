@@ -59,30 +59,16 @@ export function ConfirmSubscriptionForm({
 					)}
 
 				{/* Afficher le bouton si token valide */}
-				{defaultToken &&
-					!isPending &&
-					state?.status !== ActionStatus.SUCCESS && (
-						<div className="text-center space-y-4">
-							<Button type="submit" size="lg" className="w-full sm:w-auto px-8">
-								{isPending ? (
-									<>
-										<div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-										Confirmation en cours...
-									</>
-								) : (
-									"Confirmer mon inscription"
-								)}
-							</Button>
-						</div>
-					)}
-
-				{/* Message de chargement pendant la soumission */}
-				{isPending && (
+				{defaultToken && state?.status !== ActionStatus.SUCCESS && (
 					<div className="text-center space-y-4">
-						<div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" />
-						<p className="text-sm text-muted-foreground">
-							Confirmation en cours...
-						</p>
+						<Button
+							type="submit"
+							size="lg"
+							className="w-full sm:w-auto px-8"
+							disabled={isPending}
+						>
+							{isPending ? "Confirmation en cours..." : "Confirmer mon inscription"}
+						</Button>
 					</div>
 				)}
 

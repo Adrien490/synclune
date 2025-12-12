@@ -149,7 +149,7 @@ export default async function CustomizationDetailPage({
 												<div className="aspect-square relative bg-muted">
 													{primaryImage ? (
 														<Image
-															src={primaryImage.thumbnailSmallUrl || primaryImage.url}
+															src={primaryImage.url}
 															alt={product.title}
 															fill
 															className="object-cover"

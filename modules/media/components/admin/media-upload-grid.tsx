@@ -37,7 +37,6 @@ export interface MediaItem {
 	altText: string | undefined;
 	mediaType: "IMAGE" | "VIDEO";
 	thumbnailUrl: string | undefined;
-	thumbnailSmallUrl: string | undefined;
 	blurDataUrl: string | undefined;
 }
 

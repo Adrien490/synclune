@@ -39,14 +39,7 @@ export const IMAGE_MIME_TYPES = [
 
 /** Configuration pour la génération de miniatures vidéo */
 export const THUMBNAIL_CONFIG = {
-	/** Petite taille pour miniatures galerie (80px * 2 pour Retina) */
-	SMALL: {
-		width: 160,
-		height: 160,
-		quality: 0.8,
-		format: "webp" as const,
-	},
-	/** Taille moyenne pour poster vidéo (~500px affichage) */
+	/** Taille pour poster vidéo (~500px affichage) */
 	MEDIUM: {
 		width: 480,
 		height: 480,
@@ -69,8 +62,6 @@ export const THUMBNAIL_CONFIG = {
 	ffmpegTimeout: 30_000,
 	/** Timeout pour FFprobe (ms) */
 	ffprobeTimeout: 10_000,
-	/** Timeout pour génération blur placeholder (ms) */
-	blurTimeout: 5_000,
 
 	// Limites pour le traitement synchrone (upload temps réel)
 	/** Taille max vidéo pour traitement synchrone (50 MB) */
@@ -117,7 +108,30 @@ export const VIDEO_AUDIO_CONFIG = {
 } as const;
 
 /** Type pour les tailles de thumbnails */
-export type ThumbnailSize = "SMALL" | "MEDIUM";
+export type ThumbnailSize = "MEDIUM";
+
+// ============================================================================
+// CONFIGURATION THUMBNAILS CLIENT-SIDE (Canvas API)
+// ============================================================================
+
+/**
+ * Configuration pour la generation de thumbnails cote client
+ * Utilise l'API Canvas HTML5, compatible avec Vercel serverless
+ */
+export const CLIENT_THUMBNAIL_CONFIG = {
+	/** Largeur du thumbnail en pixels */
+	width: 480,
+	/** Qualite JPEG (0-1) */
+	quality: 0.8,
+	/** Position de capture en ratio de la duree (0.1 = 10%) */
+	capturePosition: 0.1,
+	/** Temps max de capture en secondes */
+	maxCaptureTime: 1,
+	/** Format de sortie */
+	format: "image/jpeg" as const,
+	/** Taille du blur placeholder en pixels */
+	blurSize: 8,
+} as const;
 
 // ============================================================================
 // CONFIGURATION BLUR PLACEHOLDERS

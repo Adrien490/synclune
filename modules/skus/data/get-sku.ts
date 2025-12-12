@@ -22,7 +22,6 @@ export type SkuWithImages = GetProductSkuReturn & {
 		id: string;
 		url: string;
 		thumbnailUrl: string | null;
-		thumbnailSmallUrl: string | null;
 		blurDataUrl: string | null;
 		altText: string | null;
 		mediaType: MediaType;
@@ -115,7 +114,6 @@ async function fetchSkuById(skuId: string): Promise<SkuWithImages | null> {
 						id: true,
 						url: true,
 						thumbnailUrl: true,
-						thumbnailSmallUrl: true,
 						blurDataUrl: true,
 						altText: true,
 						mediaType: true,

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, use } from "react";
 import type { GetCartReturn } from "@/modules/cart/types/cart.types";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Loader2, Minus, Plus } from "lucide-react";
+import { Check, Minus, Plus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -693,14 +693,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 											className="w-full"
 											size="lg"
 										>
-											{isPending ? (
-												<>
-													<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-													Ajout en cours...
-												</>
-											) : (
-												"Ajouter au panier"
-											)}
+											{isPending ? "Ajout en cours..." : "Ajouter au panier"}
 										</Button>
 									</ResponsiveDialogFooter>
 								</>

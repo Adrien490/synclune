@@ -40,6 +40,7 @@ export function ProductInfo({
 					product={product}
 					defaultSku={defaultSku}
 					initialIsInWishlist={isInWishlist ?? false}
+					size="lg"
 				/>
 			</div>
 
@@ -77,6 +78,7 @@ export function ProductInfo({
 						product={product}
 						defaultSku={defaultSku}
 						initialIsInWishlist={isInWishlist ?? false}
+						size="lg"
 					/>
 				</div>
 			</div>

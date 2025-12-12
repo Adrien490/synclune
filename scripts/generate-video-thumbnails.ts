@@ -1,15 +1,15 @@
 /**
  * Script de migration pour generer les miniatures des videos existantes
  *
- * Ce script genere deux tailles de thumbnails (SMALL 160px, MEDIUM 480px) pour
- * toutes les videos SkuMedia qui n'ont pas encore de thumbnailSmallUrl.
+ * Ce script genere les thumbnails (480px) pour toutes les videos SkuMedia
+ * qui n'ont pas encore de thumbnailUrl.
  *
  * Etapes:
- * 1. Recupere les SkuMedia de type VIDEO sans thumbnailSmallUrl
+ * 1. Recupere les SkuMedia de type VIDEO sans thumbnailUrl
  * 2. Telecharge chaque video temporairement (streaming)
  * 3. Valide le format video avec FFmpeg
  * 4. Extrait une frame a 10% de la duree (max 1s) avec FFmpeg
- * 5. Genere 2 thumbnails WebP (small + medium)
+ * 5. Genere la thumbnail WebP
  * 6. Upload sur UploadThing et met a jour la base de donnees
  *
  * ============================================================================
@@ -125,17 +125,11 @@ const env = requireScriptEnvVars(["DATABASE_URL", "UPLOADTHING_TOKEN"] as const,
 // CONFIGURATION
 // ============================================================================
 
-// Tailles des thumbnails (centralisées depuis THUMBNAIL_CONFIG)
-const THUMBNAIL_SIZES = {
-	small: THUMBNAIL_CONFIG.SMALL.width,
-	medium: THUMBNAIL_CONFIG.MEDIUM.width,
-} as const;
+// Taille de la thumbnail (centralisée depuis THUMBNAIL_CONFIG)
+const THUMBNAIL_SIZE = THUMBNAIL_CONFIG.MEDIUM.width;
 
-// Qualités des thumbnails (centralisées depuis THUMBNAIL_CONFIG, converties 0-1 → 0-100)
-const THUMBNAIL_QUALITIES = {
-	small: Math.round(THUMBNAIL_CONFIG.SMALL.quality * 100),
-	medium: Math.round(THUMBNAIL_CONFIG.MEDIUM.quality * 100),
-} as const;
+// Qualité de la thumbnail (centralisée depuis THUMBNAIL_CONFIG, convertie 0-1 → 0-100)
+const THUMBNAIL_QUALITY = Math.round(THUMBNAIL_CONFIG.MEDIUM.quality * 100);
 
 // Position de capture (centralisée depuis THUMBNAIL_CONFIG)
 const CAPTURE_POSITION = THUMBNAIL_CONFIG.capturePosition;
@@ -546,19 +540,14 @@ async function extractFrameAtSize(
 }
 
 /**
- * Extrait les deux tailles de thumbnails (small et medium)
+ * Extrait la thumbnail
  */
-async function extractFrames(
+async function extractThumbnail(
 	videoPath: string,
-	smallOutputPath: string,
-	mediumOutputPath: string,
+	outputPath: string,
 	timeInSeconds: number
 ): Promise<void> {
-	// Générer les deux tailles en parallèle (qualités depuis config centralisée)
-	await Promise.all([
-		extractFrameAtSize(videoPath, smallOutputPath, timeInSeconds, THUMBNAIL_SIZES.small, THUMBNAIL_QUALITIES.small),
-		extractFrameAtSize(videoPath, mediumOutputPath, timeInSeconds, THUMBNAIL_SIZES.medium, THUMBNAIL_QUALITIES.medium),
-	]);
+	await extractFrameAtSize(videoPath, outputPath, timeInSeconds, THUMBNAIL_SIZE, THUMBNAIL_QUALITY);
 }
 
 /**
@@ -632,8 +621,7 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 	}
 
 	const videoPath = join(TEMP_DIR, `video-${media.id}.mp4`);
-	const smallThumbnailPath = join(TEMP_DIR, `thumbnail-small-${media.id}.webp`);
-	const mediumThumbnailPath = join(TEMP_DIR, `thumbnail-medium-${media.id}.webp`);
+	const thumbnailPath = join(TEMP_DIR, `thumbnail-${media.id}.webp`);
 
 	console.log(`\n[${index + 1}/${total}] Traitement de ${media.id}...`);
 	console.log(`  URL: ${media.url.substring(0, 80)}...`);
@@ -675,20 +663,20 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 		const captureTime = Number.isFinite(rawCaptureTime) ? rawCaptureTime : 0;
 		console.log(`  Durée: ${duration.toFixed(1)}s, capture à ${captureTime.toFixed(2)}s`);
 
-		// 4. Extraire les deux tailles de miniatures
-		console.log("  Extraction des miniatures (small + medium)...");
+		// 4. Extraire la miniature
+		console.log("  Extraction de la miniature...");
 		const startExtraction = Date.now();
-		await extractFrames(videoPath, smallThumbnailPath, mediumThumbnailPath, captureTime);
+		await extractThumbnail(videoPath, thumbnailPath, captureTime);
 		extractionMs = Date.now() - startExtraction;
 
-		// 5. Générer le blur placeholder depuis la thumbnail small (optionnel)
+		// 5. Générer le blur placeholder depuis la thumbnail (optionnel)
 		let blurDataUrl: string | null = null;
 		if (NO_BLUR) {
 			console.log("  Blur: skipped (--no-blur)");
 		} else {
 			console.log("  Génération du blur placeholder...");
 			const startBlur = Date.now();
-			blurDataUrl = await generateBlurDataUrl(smallThumbnailPath);
+			blurDataUrl = await generateBlurDataUrl(thumbnailPath);
 			blurMs = Date.now() - startBlur;
 			if (blurDataUrl) {
 				console.log(`  Blur: ${blurDataUrl.length} caractères base64`);
@@ -697,25 +685,20 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 			}
 		}
 
-		// 6. Upload les deux miniatures sur UploadThing
-		console.log("  Upload des miniatures...");
+		// 6. Upload la miniature sur UploadThing
+		console.log("  Upload de la miniature...");
 		const startUpload = Date.now();
-		const [thumbnailSmallUrl, thumbnailUrl] = await Promise.all([
-			withRetry(() => uploadThumbnail(smallThumbnailPath, `${media.id}-small`), RETRY_OPTIONS),
-			withRetry(() => uploadThumbnail(mediumThumbnailPath, `${media.id}-medium`), RETRY_OPTIONS),
-		]);
+		const thumbnailUrl = await withRetry(() => uploadThumbnail(thumbnailPath, media.id), RETRY_OPTIONS);
 		uploadMs = Date.now() - startUpload;
-		console.log(`  Small: ${thumbnailSmallUrl.substring(0, 50)}...`);
-		console.log(`  Medium: ${thumbnailUrl.substring(0, 50)}...`);
+		console.log(`  Thumbnail: ${thumbnailUrl.substring(0, 50)}...`);
 
-		// 7. Mettre à jour la base de données avec les URLs et le blur
+		// 7. Mettre à jour la base de données avec l'URL et le blur
 		console.log("  Mise à jour de la base de données...");
 		const startDbUpdate = Date.now();
 		await prisma.skuMedia.update({
 			where: { id: media.id },
 			data: {
 				thumbnailUrl,
-				thumbnailSmallUrl,
 				...(blurDataUrl && { blurDataUrl }),
 			},
 		});
@@ -736,7 +719,7 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 		return { id: media.id, success: false, error: errorMsg };
 	} finally {
 		// Nettoyer les fichiers temporaires (async)
-		const filesToClean = [videoPath, smallThumbnailPath, mediumThumbnailPath];
+		const filesToClean = [videoPath, thumbnailPath];
 		await Promise.all(
 			filesToClean.map(async (file) => {
 				try {
@@ -820,7 +803,7 @@ async function main(): Promise<void> {
 		console.log("\nVerification de la connexion base de données...");
 		try {
 			const count = await prisma.skuMedia.count({
-				where: { mediaType: "VIDEO", thumbnailSmallUrl: null },
+				where: { mediaType: "VIDEO", thumbnailUrl: null },
 			});
 			console.log(`✅ Connexion DB OK - ${count} vidéo(s) à traiter`);
 			console.log("\n✅ Health check terminé avec succès");
@@ -854,14 +837,12 @@ async function main(): Promise<void> {
 	}
 
 	try {
-		// Récupérer les vidéos sans miniature small (nouveau système à 2 tailles)
-		console.log("\nRecherche des vidéos sans miniature small...");
+		// Récupérer les vidéos sans miniature
+		console.log("\nRecherche des vidéos sans miniature...");
 		const videosWithoutThumbnail = await prisma.skuMedia.findMany({
 			where: {
 				mediaType: "VIDEO",
-				// Chercher les vidéos sans thumbnailSmallUrl (nouveau champ)
-				// Cela inclut les vidéos qui ont un ancien thumbnailUrl mais pas le nouveau format
-				thumbnailSmallUrl: null,
+				thumbnailUrl: null,
 			},
 			select: {
 				id: true,

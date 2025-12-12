@@ -3,10 +3,9 @@ import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/naviga
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
-import { Heart, LayoutDashboard, User } from "lucide-react";
+import { LayoutDashboard, User } from "lucide-react";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
-import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { BadgeCountsStoreProvider } from "@/shared/stores/badge-counts-store-provider";
 import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
@@ -123,20 +122,6 @@ export async function Navbar() {
 										className="transition-transform duration-300 ease-out group-hover:scale-105"
 										aria-hidden="true"
 									/>
-								</Link>
-
-								{/* Icône favoris */}
-								<Link
-									href="/favoris"
-									className={`inline-flex ${iconButtonClassName}`}
-									aria-label="Ouvrir mes favoris"
-								>
-									<Heart
-										size={20}
-										className="transition-transform duration-300 ease-out group-hover:scale-105"
-										aria-hidden="true"
-									/>
-									<WishlistBadge />
 								</Link>
 
 								{/* Icône panier - Ouvre le cart sheet */}

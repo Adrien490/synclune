@@ -3,15 +3,10 @@ import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
-import {
-	generateVideoThumbnail,
-	isFFmpegAvailable,
-} from "@/modules/media/services/generate-video-thumbnail";
 import { generateBlurDataUrl } from "@/modules/media/services/generate-blur-data-url";
-import {
-	stripVideoAudio,
-	isStripAudioAvailable,
-} from "@/modules/media/services/strip-video-audio";
+
+// Note: La generation de thumbnails video est maintenant faite cote client
+// via useMediaUpload hook (Canvas API) pour compatibilite Vercel serverless
 
 // Vérifier que le token UploadThing est configuré au démarrage
 if (!process.env.UPLOADTHING_TOKEN) {
@@ -187,72 +182,24 @@ export const ourFileRouter = {
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
 			const isImage = file.type.startsWith("image/");
-			const isVideo = file.type.startsWith("video/");
 
-			// Pour les images: générer le blur placeholder
+			// Pour les images: generer le blur placeholder
 			if (isImage) {
 				const blurDataUrl = await generateBlurDataUrl(file.ufsUrl);
 				return {
 					url: file.ufsUrl,
 					thumbnailUrl: null,
-					thumbnailSmallUrl: null,
 					blurDataUrl,
 					uploadedBy: metadata.userId,
 				};
 			}
 
-			// Pour les vidéos: supprimer l'audio et générer les thumbnails
-			if (isVideo && isFFmpegAvailable()) {
-				let videoUrl = file.ufsUrl;
-
-				// 1. Supprimer la piste audio (si disponible)
-				if (isStripAudioAvailable()) {
-					try {
-						const stripResult = await stripVideoAudio(videoUrl);
-						if (stripResult) {
-							videoUrl = stripResult.url;
-							console.log(
-								`[UploadThing] Audio supprimé: -${stripResult.savedPercent}% (${(stripResult.originalSize / 1024 / 1024).toFixed(1)}MB → ${(stripResult.newSize / 1024 / 1024).toFixed(1)}MB)`
-							);
-						}
-					} catch (error) {
-						console.warn(
-							"[UploadThing] Échec suppression audio (vidéo conservée avec audio):",
-							error instanceof Error ? error.message : error
-						);
-					}
-				}
-
-				// 2. Générer les thumbnails
-				try {
-					const thumbnailResult = await generateVideoThumbnail(videoUrl);
-					return {
-						url: videoUrl,
-						thumbnailUrl: thumbnailResult.thumbnailUrl,
-						thumbnailSmallUrl: thumbnailResult.thumbnailSmallUrl,
-						blurDataUrl: thumbnailResult.blurDataUrl,
-						uploadedBy: metadata.userId,
-					};
-				} catch (error) {
-					console.error(
-						"[UploadThing] Échec génération thumbnail vidéo:",
-						error instanceof Error ? error.message : error
-					);
-					return {
-						url: videoUrl,
-						thumbnailUrl: null,
-						thumbnailSmallUrl: null,
-						blurDataUrl: null,
-						uploadedBy: metadata.userId,
-					};
-				}
-			}
-
-			// Fallback: retourner juste l'URL
+			// Pour les videos: pas de traitement serveur
+			// Le thumbnail est genere cote client via Canvas API (useMediaUpload hook)
+			// et uploade separement avant la video
 			return {
 				url: file.ufsUrl,
 				thumbnailUrl: null,
-				thumbnailSmallUrl: null,
 				blurDataUrl: null,
 				uploadedBy: metadata.userId,
 			};

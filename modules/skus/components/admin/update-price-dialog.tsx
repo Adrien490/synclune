@@ -14,7 +14,6 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useUpdateSkuPrice } from "@/modules/skus/hooks/use-update-sku-price";
-import { Loader2 } from "lucide-react";
 
 export const UPDATE_PRICE_DIALOG_ID = "update-sku-price";
 
@@ -136,14 +135,7 @@ export function UpdatePriceDialog() {
 							Annuler
 						</Button>
 						<Button type="submit" disabled={!isValid || isPending}>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Enregistrement...
-								</>
-							) : (
-								<>Enregistrer</>
-							)}
+							{isPending ? "Enregistrement..." : "Enregistrer"}
 						</Button>
 					</ResponsiveDialogFooter>
 				</form>

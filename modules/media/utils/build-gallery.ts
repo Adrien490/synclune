@@ -78,7 +78,6 @@ export function buildGallery({
 		id: string;
 		url: string;
 		thumbnailUrl?: string | null;
-		thumbnailSmallUrl?: string | null;
 		blurDataUrl?: string | null;
 		alt: string;
 		mediaType: "IMAGE" | "VIDEO";
@@ -95,7 +94,6 @@ export function buildGallery({
 			id: string;
 			url: string;
 			thumbnailUrl?: string | null;
-			thumbnailSmallUrl?: string | null;
 			blurDataUrl?: string | null;
 			altText?: string | null;
 			mediaType: "IMAGE" | "VIDEO";
@@ -110,7 +108,6 @@ export function buildGallery({
 			id: skuImage.id,
 			url: skuImage.url,
 			thumbnailUrl: skuImage.thumbnailUrl,
-			thumbnailSmallUrl: skuImage.thumbnailSmallUrl,
 			blurDataUrl: skuImage.blurDataUrl,
 			alt: skuImage.altText || alt,
 			mediaType: skuImage.mediaType,
@@ -195,7 +192,6 @@ export function buildGallery({
 			id: img.id,
 			url: img.url,
 			thumbnailUrl: img.thumbnailUrl,
-			thumbnailSmallUrl: img.thumbnailSmallUrl,
 			blurDataUrl: img.blurDataUrl || undefined,
 			alt: img.alt,
 			mediaType: img.mediaType,

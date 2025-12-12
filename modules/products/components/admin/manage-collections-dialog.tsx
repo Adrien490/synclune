@@ -137,14 +137,7 @@ export function ManageCollectionsDialog() {
 							Annuler
 						</Button>
 						<Button type="submit" disabled={isPending || isLoading}>
-							{isPending ? (
-								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Enregistrement...
-								</>
-							) : (
-								<>Enregistrer</>
-							)}
+							{isPending ? "Enregistrement..." : "Enregistrer"}
 						</Button>
 					</ResponsiveDialogFooter>
 				</form>

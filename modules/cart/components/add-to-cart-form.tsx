@@ -1,9 +1,6 @@
 "use client";
 
-import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent } from "@/shared/components/ui/card";
-import { Spinner } from "@/shared/components/ui/spinner";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
 import type {
@@ -12,7 +9,6 @@ import type {
 } from "@/modules/products/types/product.types";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
-import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart";
 
 interface AddToCartFormProps {
 	product: GetProductReturn;
@@ -24,24 +20,14 @@ interface AddToCartFormProps {
  *
  * Composant client minimal pour l'ajout au panier.
  * Les badges de réassurance sont dans ProductReassurance (RSC).
- *
- * Responsabilités :
- * - Sélecteur de quantité
- * - Bouton submit avec états (loading, disabled, validation)
+ * La quantité est toujours 1, modifiable ensuite dans le panier.
  */
 export function AddToCartForm({
 	product,
 	selectedSku,
 }: AddToCartFormProps) {
-	// Hook TanStack Form
 	const { action, isPending } = useAddToCart();
 	const searchParams = useSearchParams();
-
-	const form = useAppForm({
-		defaultValues: {
-			quantity: 1,
-		},
-	});
 
 	// Validation des variantes pour message explicite
 	const { validationErrors } = useVariantValidation({
@@ -72,112 +58,12 @@ export function AddToCartForm({
 			aria-busy={isPending}
 			aria-label="Formulaire d'ajout au panier"
 		>
-			{/* Champ caché pour le SKU */}
+			{/* Champs cachés */}
 			{selectedSku && (
-				<input type="hidden" name="skuId" value={selectedSku.id} />
-			)}
-
-			{/* Champ caché pour la quantité */}
-			<form.Subscribe selector={(state) => [state.values.quantity]}>
-				{([quantity]) => (
-					<input type="hidden" name="quantity" value={quantity} />
-				)}
-			</form.Subscribe>
-
-			{/* Sélecteur de quantité */}
-			{selectedSku && (
-				<Card>
-					<CardContent className="pt-6">
-						<form.Field name="quantity">
-							{(field) => {
-								const maxQuantity = Math.min(selectedSku.inventory, MAX_QUANTITY_PER_ORDER);
-								const showQuantityControls = maxQuantity > 1;
-
-								return (
-									<div className="flex items-center justify-between">
-										<span
-											id="quantity-label"
-											className="text-sm/6 font-semibold tracking-tight antialiased"
-										>
-											Quantité
-										</span>
-										{showQuantityControls ? (
-											<div className="flex items-center gap-2" role="group" aria-labelledby="quantity-label">
-												<Button
-													type="button"
-													variant="outline"
-													size="sm"
-													onClick={() =>
-														field.handleChange(Math.max(1, field.state.value - 1))
-													}
-													disabled={field.state.value <= 1}
-													className="h-11 w-11 p-0"
-													aria-label="Diminuer la quantité"
-													aria-controls="quantity-value"
-												>
-													-
-												</Button>
-												<span
-													id="quantity-value"
-													className="text-base/6 tracking-normal antialiased font-medium w-8 text-center"
-													role="status"
-													aria-live="polite"
-													aria-label={`Quantité sélectionnée: ${field.state.value}`}
-												>
-													{field.state.value}
-												</span>
-												<Button
-													type="button"
-													variant="outline"
-													size="sm"
-													onClick={() =>
-														field.handleChange(
-															Math.min(maxQuantity, field.state.value + 1)
-														)
-													}
-													disabled={field.state.value >= maxQuantity}
-													className="h-11 w-11 p-0"
-													aria-label="Augmenter la quantité"
-													aria-controls="quantity-value"
-												>
-													+
-												</Button>
-											</div>
-										) : (
-											<span
-												id="quantity-value"
-												className="text-base/6 tracking-normal antialiased font-medium"
-												role="status"
-												aria-label="Quantité: 1"
-											>
-												1
-											</span>
-										)}
-									</div>
-								);
-							}}
-						</form.Field>
-						{/* Message explicatif sur la limite de quantité - min-h pour éviter layout shift */}
-						<form.Subscribe selector={(state) => [state.values.quantity]}>
-							{([quantity]) => {
-								const message =
-									quantity >= MAX_QUANTITY_PER_ORDER
-										? `Limite de ${MAX_QUANTITY_PER_ORDER} par commande`
-										: null;
-
-								return (
-									<p
-										className="text-xs/5 tracking-normal antialiased text-muted-foreground mt-2 min-h-5"
-										role="status"
-										aria-live="polite"
-									>
-										{message ?? "\u00A0"}
-									</p>
-								);
-							}}
-						</form.Subscribe>
-					</CardContent>
-				</Card>
+				<>
+					<input type="hidden" name="skuId" value={selectedSku.id} />
+					<input type="hidden" name="quantity" value="1" />
+				</>
 			)}
 
 			{/* Bouton ajout au panier */}
@@ -193,10 +79,7 @@ export function AddToCartForm({
 				size="lg"
 			>
 				{isPending ? (
-					<div className="flex items-center gap-2">
-						<Spinner className="w-4 h-4" />
-						<span>Ajout en cours...</span>
-					</div>
+					<span>Ajout en cours...</span>
 				) : !isAvailable ? (
 					<span>Indisponible</span>
 				) : !selectedSku ? (

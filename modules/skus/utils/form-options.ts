@@ -18,7 +18,6 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 		.map((img) => ({
 			url: img.url,
 			thumbnailUrl: img.thumbnailUrl || undefined,
-			thumbnailSmallUrl: img.thumbnailSmallUrl || undefined,
 			blurDataUrl: img.blurDataUrl || undefined,
 			altText: img.altText || undefined,
 			mediaType: img.mediaType,
@@ -41,7 +40,6 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 				? {
 						url: primaryImage.url,
 						thumbnailUrl: primaryImage.thumbnailUrl || undefined,
-						thumbnailSmallUrl: primaryImage.thumbnailSmallUrl || undefined,
 						blurDataUrl: primaryImage.blurDataUrl || undefined,
 						altText: primaryImage.altText || undefined,
 						mediaType: primaryImage.mediaType,

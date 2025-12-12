@@ -29,7 +29,7 @@ export function CollectionGrid({
 	// Afficher le composant Empty si aucune collection
 	if (!collections || collections.length === 0) {
 		return (
-			<Empty role="status" aria-live="polite">
+			<Empty role="status" aria-live="polite" className="mt-4 mb-12 sm:my-12">
 				<EmptyHeader>
 					<EmptyMedia>
 						<Gem className="size-6" />
