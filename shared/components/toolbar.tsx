@@ -88,7 +88,7 @@ export function Toolbar({
 				className
 			)}
 		>
-			<div className="flex flex-row gap-2 items-center">
+			<div className="flex flex-row gap-2 items-center w-full">
 				<div className="flex-1 min-w-0">{search}</div>
 				<div className="flex flex-row items-center gap-2 shrink-0">
 					{children}
