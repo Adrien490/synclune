@@ -5,6 +5,7 @@ import * as React from "react";
 import { Drawer as SheetPrimitive } from "vaul";
 
 import { cn } from "@/shared/utils/cn";
+import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 
 type SheetDirection = "top" | "right" | "bottom" | "left";
 
@@ -14,13 +15,35 @@ const SheetContext = React.createContext<{ direction: SheetDirection }>({
 
 function Sheet({
 	direction = "right",
+	open,
+	onOpenChange,
 	...props
 }: React.ComponentProps<typeof SheetPrimitive.Root> & {
 	direction?: SheetDirection;
 }) {
+	const { handleClose } = useBackButtonClose({
+		isOpen: open ?? false,
+		onClose: () => onOpenChange?.(false),
+		id: "sheet",
+	});
+
+	const wrappedOnOpenChange = (newOpen: boolean) => {
+		if (!newOpen) {
+			handleClose();
+		} else {
+			onOpenChange?.(true);
+		}
+	};
+
 	return (
 		<SheetContext.Provider value={{ direction }}>
-			<SheetPrimitive.Root data-slot="sheet" direction={direction} {...props} />
+			<SheetPrimitive.Root
+				data-slot="sheet"
+				direction={direction}
+				open={open}
+				onOpenChange={wrappedOnOpenChange}
+				{...props}
+			/>
 		</SheetContext.Provider>
 	);
 }

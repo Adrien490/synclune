@@ -14,15 +14,15 @@ import {
 	useReducedMotion,
 	type PanInfo,
 } from "framer-motion";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "../hooks/use-fab-visibility";
 import type { FabKey } from "../constants";
 
 // Seuils pour le swipe-to-hide
-const SWIPE_THRESHOLD = 80; // pixels minimum pour déclencher le hide
-const VELOCITY_THRESHOLD = 500; // px/s pour swipe rapide
+const SWIPE_THRESHOLD = 50; // pixels minimum pour déclencher le hide
+const VELOCITY_THRESHOLD = 300; // px/s pour swipe rapide
 
 interface FabTooltipContent {
 	/** Titre du tooltip (gras) */
@@ -105,6 +105,17 @@ export function Fab({
 				clearTimeout(statusTimeoutRef.current);
 			}
 		};
+	}, []);
+
+	// Détecter si l'appareil est tactile (pour activer le swipe uniquement sur mobile)
+	const [isTouchDevice, setIsTouchDevice] = useState(false);
+	useEffect(() => {
+		const mediaQuery = window.matchMedia("(hover: none)");
+		setIsTouchDevice(mediaQuery.matches);
+
+		const handler = (e: MediaQueryListEvent) => setIsTouchDevice(e.matches);
+		mediaQuery.addEventListener("change", handler);
+		return () => mediaQuery.removeEventListener("change", handler);
 	}, []);
 
 	// Respecter prefers-reduced-motion avec config globale
@@ -235,9 +246,9 @@ export function Fab({
 				<motion.div
 					key="fab-visible"
 					data-fab-container
-					drag={prefersReducedMotion ? false : "x"}
+					drag={prefersReducedMotion || !isTouchDevice ? false : "x"}
 					dragConstraints={{ left: 0, right: 0 }}
-					dragElastic={{ left: 0, right: 0.3 }}
+					dragElastic={{ left: 0, right: 0.5 }}
 					onDragEnd={handleDragEnd}
 					whileDrag={{ opacity: 0.8 }}
 					initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
