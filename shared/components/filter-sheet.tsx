@@ -191,25 +191,11 @@ export function FilterSheetWrapper({
 									{cancelButtonText}
 								</Button>
 							</SheetClose>
-							<SheetClose asChild className="flex-1">
-								<Button type="button" onClick={handleApply} disabled={isPending}>
-									{isPending && (
-										<Loader2
-											className="h-4 w-4 animate-spin"
-											aria-hidden="true"
-										/>
-									)}
-									{applyButtonText}
-								</Button>
-							</SheetClose>
-						</ButtonGroup>
-					) : (
-						<SheetClose asChild className="w-full">
 							<Button
 								type="button"
 								onClick={handleApply}
 								disabled={isPending}
-								className="w-full"
+								className="flex-1"
 							>
 								{isPending && (
 									<Loader2
@@ -219,7 +205,22 @@ export function FilterSheetWrapper({
 								)}
 								{applyButtonText}
 							</Button>
-						</SheetClose>
+						</ButtonGroup>
+					) : (
+						<Button
+							type="button"
+							onClick={handleApply}
+							disabled={isPending}
+							className="w-full"
+						>
+							{isPending && (
+								<Loader2
+									className="h-4 w-4 animate-spin"
+									aria-hidden="true"
+								/>
+							)}
+							{applyButtonText}
+						</Button>
 					)}
 				</SheetFooter>
 
