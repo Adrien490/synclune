@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowUpDown, Check, X } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
@@ -75,6 +75,7 @@ export function SortDrawer({
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 	const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+	const shouldReduceMotion = useReducedMotion();
 
 	// URL parameter key with filter prefix
 	const paramKey = `filter_${filterKey}`;
@@ -122,9 +123,11 @@ export function SortDrawer({
 
 		if (autoCloseOnSelect) {
 			// Délai pour voir la confirmation visuelle avant fermeture
+			// Pas de délai si reduced motion est activé
+			const delay = shouldReduceMotion ? 0 : 250;
 			setTimeout(() => {
 				onOpenChange(false);
-			}, 250);
+			}, delay);
 		}
 	};
 
@@ -178,7 +181,7 @@ export function SortDrawer({
 						variant="ghost"
 						size="icon"
 						onClick={() => onOpenChange(false)}
-						className="absolute right-4 top-4 size-8"
+						className="absolute right-4 top-4 size-11"
 						aria-label="Fermer"
 					>
 						<X className="size-4" />
@@ -218,7 +221,7 @@ export function SortDrawer({
 										"transition-colors duration-150",
 										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:rounded-lg",
 										isSelected && !isResetOption
-											? "bg-primary/10 text-primary font-medium -mx-1 px-5 rounded-lg"
+											? "bg-primary/5 font-medium -mx-1 px-5 rounded-lg"
 											: isSelected && isResetOption
 												? "bg-muted/30 text-muted-foreground font-medium -mx-1 px-5 rounded-lg"
 												: "hover:bg-muted/50 text-foreground",
@@ -235,10 +238,16 @@ export function SortDrawer({
 									<AnimatePresence mode="wait">
 										{isSelected && !isResetOption && (
 											<motion.div
-												initial={{ opacity: 0, scale: 0.8 }}
+												initial={
+													shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }
+												}
 												animate={{ opacity: 1, scale: 1 }}
-												exit={{ opacity: 0, scale: 0.8 }}
-												transition={{ duration: 0.15 }}
+												exit={
+													shouldReduceMotion
+														? undefined
+														: { opacity: 0, scale: 0.8 }
+												}
+												transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
 											>
 												<Check
 													className="size-5 text-primary shrink-0"

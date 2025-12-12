@@ -43,6 +43,14 @@ export interface FilterSheetWrapperProps {
 	cancelButtonText?: string;
 	/** Show cancel button */
 	showCancelButton?: boolean;
+	/** Controlled open state */
+	open?: boolean;
+	/** Callback when open state changes (for controlled mode) */
+	onOpenChange?: (open: boolean) => void;
+	/** Custom trigger element (if not provided, uses default button) */
+	trigger?: ReactNode;
+	/** Hide the default trigger button entirely (for external triggers) */
+	hideTrigger?: boolean;
 }
 
 export function FilterSheetWrapper({
@@ -58,8 +66,19 @@ export function FilterSheetWrapper({
 	applyButtonText = "Appliquer",
 	cancelButtonText = "Annuler",
 	showCancelButton = true,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+	trigger,
+	hideTrigger = false,
 }: FilterSheetWrapperProps) {
-	const [open, setOpen] = useState(false);
+	const [internalOpen, setInternalOpen] = useState(false);
+
+	// Support controlled and uncontrolled modes
+	const isControlled = controlledOpen !== undefined;
+	const open = isControlled ? controlledOpen : internalOpen;
+	const setOpen = isControlled
+		? (newOpen: boolean) => controlledOnOpenChange?.(newOpen)
+		: setInternalOpen;
 
 	const handleApply = () => {
 		onApply?.();
@@ -74,41 +93,46 @@ export function FilterSheetWrapper({
 		}
 	};
 
+	// Default trigger button
+	const defaultTrigger = (
+		<Button
+			variant="outline"
+			className={cn(
+				"relative gap-2 text-sm font-medium min-h-[44px] px-4 border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 transition-all duration-200",
+				activeFiltersCount > 0 && "border-primary/40 bg-primary/5",
+				triggerClassName
+			)}
+			aria-label={
+				activeFiltersCount > 0
+					? `Filtres - ${activeFiltersCount} actif${activeFiltersCount > 1 ? "s" : ""}`
+					: "Filtres"
+			}
+		>
+			<Filter className="w-4 h-4" aria-hidden="true" />
+			<span>Filtres</span>
+			{activeFiltersCount > 0 && (
+				<>
+					<Badge
+						variant="default"
+						className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold animate-in zoom-in-50 duration-300"
+						aria-hidden="true"
+					>
+						{activeFiltersCount}
+					</Badge>
+					<span className="sr-only" aria-live="polite">
+						{activeFiltersCount} filtre{activeFiltersCount > 1 ? "s" : ""} actif
+						{activeFiltersCount > 1 ? "s" : ""}
+					</span>
+				</>
+			)}
+		</Button>
+	);
+
 	return (
 		<Sheet direction="right" open={open} onOpenChange={setOpen}>
-			<SheetTrigger asChild>
-				<Button
-					variant="outline"
-					className={cn(
-						"relative gap-2 text-sm font-medium min-h-[44px] px-4 border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 transition-all duration-200",
-						activeFiltersCount > 0 && "border-primary/40 bg-primary/5",
-						triggerClassName
-					)}
-					aria-label={
-						activeFiltersCount > 0
-							? `Filtres - ${activeFiltersCount} actif${activeFiltersCount > 1 ? "s" : ""}`
-							: "Filtres"
-					}
-				>
-					<Filter className="w-4 h-4" aria-hidden="true" />
-					<span>Filtres</span>
-					{activeFiltersCount > 0 && (
-						<>
-							<Badge
-								variant="default"
-								className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold animate-in zoom-in-50 duration-300"
-								aria-hidden="true"
-							>
-								{activeFiltersCount}
-							</Badge>
-							<span className="sr-only" aria-live="polite">
-								{activeFiltersCount} filtre{activeFiltersCount > 1 ? "s" : ""} actif
-								{activeFiltersCount > 1 ? "s" : ""}
-							</span>
-						</>
-					)}
-				</Button>
-			</SheetTrigger>
+			{!hideTrigger && (
+				<SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>
+			)}
 
 			<SheetContent
 				className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full"

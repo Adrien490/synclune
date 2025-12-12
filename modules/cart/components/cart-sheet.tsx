@@ -23,7 +23,6 @@ import {
 } from "@/shared/components/ui/empty";
 import Link from "next/link";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
-import { useSwipeGesture } from "@/shared/hooks/use-swipe-gesture";
 import { CartSheetItemRow } from "./cart-sheet-item-row";
 import { RemoveCartItemAlertDialog } from "./remove-cart-item-alert-dialog";
 import { CartPriceChangeAlert } from "./cart-price-change-alert";
@@ -36,7 +35,6 @@ interface CartSheetProps {
 export function CartSheet({ cartPromise }: CartSheetProps) {
 	const { isOpen, close } = useSheet("cart");
 	const cart = use(cartPromise);
-	const swipeHandlers = useSwipeGesture({ onSwipe: close, direction: "right" });
 	const shouldReduceMotion = useReducedMotion();
 
 	const hasItems = cart && cart.items.length > 0;
@@ -65,7 +63,6 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 			<Sheet direction="right" open={isOpen} onOpenChange={(open) => !open && close()}>
 				<SheetContent
 					className="w-full sm:max-w-lg flex flex-col p-0 gap-0"
-					{...swipeHandlers}
 				>
 					<SheetHeader className="px-6 py-4 border-b shrink-0">
 						<SheetTitle>

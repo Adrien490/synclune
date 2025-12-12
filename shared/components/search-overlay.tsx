@@ -14,12 +14,11 @@ import {
 import { Button } from "@/shared/components/ui/button"
 import {
 	Dialog,
-	DialogClose,
 	DialogContent,
 	DialogTitle,
-	DialogTrigger,
 } from "@/shared/components/ui/dialog"
 import { Input } from "@/shared/components/ui/input"
+import { Spinner } from "@/shared/components/ui/spinner"
 import { cn } from "@/shared/utils/cn"
 
 interface ProductTypeOption {
@@ -57,9 +56,22 @@ export function SearchOverlay({
 	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
 	const inputRef = useRef<HTMLInputElement>(null)
+	const pendingNavigationRef = useRef<string | null>(null)
 
 	// Hooks pour les recherches recentes
-	const { add } = useAddRecentSearch()
+	const { add } = useAddRecentSearch({
+		onSuccess: () => {
+			// Navigation apres ajout aux recentes
+			if (pendingNavigationRef.current) {
+				const url = pendingNavigationRef.current
+				pendingNavigationRef.current = null
+				startTransition(() => {
+					router.replace(url, { scroll: false })
+				})
+				setOpen(false)
+			}
+		},
+	})
 	const { searches, remove } = useRemoveRecentSearch({
 		initialSearches: recentSearches,
 	})
@@ -84,8 +96,6 @@ export function SearchOverlay({
 
 		if (trimmed) {
 			newSearchParams.set("search", trimmed)
-			// Add to recent searches via hook
-			add(trimmed)
 		} else {
 			newSearchParams.delete("search")
 		}
@@ -94,11 +104,20 @@ export function SearchOverlay({
 		newSearchParams.delete("cursor")
 		newSearchParams.delete("direction")
 
-		startTransition(() => {
-			router.replace(`?${newSearchParams.toString()}`, { scroll: false })
-		})
+		const url = `?${newSearchParams.toString()}`
 
-		setOpen(false)
+		if (trimmed) {
+			// Store URL for navigation in onSuccess callback
+			pendingNavigationRef.current = url
+			// Add to recent searches - navigation happens in onSuccess
+			add(trimmed)
+		} else {
+			// No search term, navigate directly
+			startTransition(() => {
+				router.replace(url, { scroll: false })
+			})
+			setOpen(false)
+		}
 	}
 
 	// Handle form submission
@@ -122,8 +141,13 @@ export function SearchOverlay({
 
 	// Navigate to category
 	const navigateToCategory = (slug: string) => {
+		// Navigation FIRST, then close
+		startTransition(() => {
+			router.push(`/produits/${slug}`)
+		})
+
+		// Close after navigation starts
 		setOpen(false)
-		router.push(`/produits/${slug}`)
 	}
 
 	// Reset search value when opening
@@ -137,202 +161,215 @@ export function SearchOverlay({
 	const hasRecentSearches = searches.length > 0
 
 	return (
-		<Dialog open={open} onOpenChange={handleOpenChange}>
-			<DialogTrigger asChild>
-				<Button
-					variant="ghost"
-					size="icon"
-					className={cn("size-11", triggerClassName)}
-					aria-label="Rechercher"
-				>
-					<Search className="size-5" />
-				</Button>
-			</DialogTrigger>
-
-			<DialogContent
-				showCloseButton={false}
-				className="fixed inset-0 h-[100dvh] w-full max-w-none rounded-none border-none p-0 translate-x-0 translate-y-0 top-0 left-0 data-[state=open]:slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2 data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100 flex flex-col"
+		<>
+			{/* Trigger button */}
+			<Button
+				variant="ghost"
+				size="icon"
+				onClick={() => setOpen(true)}
+				className={cn("size-11", triggerClassName)}
+				aria-label="Rechercher"
 			>
-				{/* Header fixe */}
-				<header className="sticky top-0 z-10 bg-background border-b safe-area-top">
-					<div className="flex items-center h-14 px-2">
-						<DialogClose asChild>
+				<Search className="size-5" />
+			</Button>
+
+			<Dialog open={open} onOpenChange={handleOpenChange}>
+				<DialogContent
+					showCloseButton={false}
+					className="fixed inset-0 h-[100dvh] w-full max-w-none rounded-none border-none p-0 translate-x-0 translate-y-0 top-0 left-0 data-[state=open]:slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2 data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100 flex flex-col"
+				>
+					{/* Header fixe */}
+					<header className="sticky top-0 z-10 bg-background border-b pt-[env(safe-area-inset-top,0)]">
+						<div className="grid grid-cols-[auto_1fr_auto] items-center h-14 px-2">
 							<Button
 								variant="ghost"
 								size="icon"
-								className="size-11 shrink-0"
+								onClick={() => setOpen(false)}
+								className="size-11"
 								aria-label="Fermer"
 							>
 								<ArrowLeft className="size-5" />
 							</Button>
-						</DialogClose>
-						<DialogTitle className="flex-1 text-center font-semibold pr-11">
-							Rechercher
-						</DialogTitle>
-					</div>
-				</header>
+							<DialogTitle className="text-center font-semibold">
+								Rechercher
+							</DialogTitle>
+							{/* Spacer pour equilibrer le titre */}
+							<div className="size-11" aria-hidden="true" />
+						</div>
+					</header>
 
-				{/* Search Input */}
-				<div className="px-4 py-3 border-b bg-background">
-					<form role="search" onSubmit={handleSubmit}>
-						<div
-							className={cn(
-								"relative flex w-full items-center h-12",
-								"rounded-xl overflow-hidden",
-								"bg-muted/50 border border-input",
-								"focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/30",
-								"transition-all duration-200",
-								isPending && "opacity-70"
-							)}
-						>
-							<div className="absolute left-4 flex items-center text-muted-foreground pointer-events-none">
-								<Search className="h-4 w-4" />
-							</div>
-
-							<form.AppField name="search">
-								{(field) => (
-									<>
-										<Input
-											ref={inputRef}
-											autoComplete="off"
-											autoFocus
-											type="search"
-											inputMode="search"
-											enterKeyHint="search"
-											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
-											onKeyDown={(e) => {
-												if (e.key === "Escape") {
-													e.preventDefault()
-													if (field.state.value) {
-														clearInput()
-													} else {
-														setOpen(false)
-													}
-												}
-											}}
-											className={cn(
-												"pl-12 pr-12",
-												"h-12",
-												"text-base",
-												"border-none shadow-none focus-visible:ring-0",
-												"bg-transparent",
-												"placeholder:text-muted-foreground/60",
-												"[&::-webkit-search-cancel-button]:appearance-none"
-											)}
-											placeholder={placeholder}
-											aria-label={placeholder}
-										/>
-
-										<AnimatePresence mode="wait">
-											{field.state.value && (
-												<motion.div
-													initial={{ opacity: 0, scale: 0.8 }}
-													animate={{ opacity: 1, scale: 1 }}
-													exit={{ opacity: 0, scale: 0.8 }}
-													transition={{ duration: 0.15 }}
-													className="absolute right-1"
-												>
-													<Button
-														type="button"
-														variant="ghost"
-														size="icon"
-														onClick={clearInput}
-														className="size-10 text-muted-foreground hover:text-foreground"
-														aria-label="Effacer"
-													>
-														<X className="size-5" />
-													</Button>
-												</motion.div>
-											)}
-										</AnimatePresence>
-									</>
+					{/* Search Input */}
+					<div className="px-4 py-3 border-b bg-background shrink-0">
+						<form role="search" onSubmit={handleSubmit} className="flex gap-2">
+							<div
+								className={cn(
+									"relative flex flex-1 items-center h-12",
+									"rounded-xl overflow-hidden",
+									"bg-muted/50 border border-input",
+									"focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30",
+									"transition-all duration-200",
+									isPending && "opacity-70"
 								)}
-							</form.AppField>
-						</div>
+							>
+								<div className="absolute left-4 flex items-center text-muted-foreground pointer-events-none">
+									<Search className="h-4 w-4" />
+								</div>
 
-						{/* Hidden submit button for keyboard */}
-						<button type="submit" className="sr-only">
-							Rechercher
-						</button>
-					</form>
-				</div>
+								<form.AppField name="search">
+									{(field) => (
+										<>
+											<Input
+												ref={inputRef}
+												autoComplete="off"
+												autoFocus
+												type="search"
+												inputMode="search"
+												enterKeyHint="search"
+												value={field.state.value}
+												onChange={(e) => field.handleChange(e.target.value)}
+												onKeyDown={(e) => {
+													if (e.key === "Escape") {
+														e.preventDefault()
+														if (field.state.value) {
+															clearInput()
+														} else {
+															setOpen(false)
+														}
+													}
+												}}
+												className={cn(
+													"pl-12 pr-12",
+													"h-12",
+													"text-base",
+													"border-none shadow-none focus-visible:ring-0",
+													"bg-transparent",
+													"placeholder:text-muted-foreground/60",
+													"[&::-webkit-search-cancel-button]:appearance-none"
+												)}
+												placeholder={placeholder}
+												aria-label={placeholder}
+											/>
 
-				{/* Scrollable content */}
-				<div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 safe-area-bottom">
-					{/* Recent searches */}
-					{hasRecentSearches && (
-						<section>
-							<div className="flex items-center justify-between mb-3">
-								<h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-									<Clock className="size-4" />
-									Recherches recentes
-								</h2>
-								<button
-									type="button"
-									onClick={clear}
-									className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-								>
-									Effacer
-								</button>
+											<AnimatePresence mode="wait">
+												{field.state.value && (
+													<motion.div
+														initial={{ opacity: 0, scale: 0.8 }}
+														animate={{ opacity: 1, scale: 1 }}
+														exit={{ opacity: 0, scale: 0.8 }}
+														transition={{ duration: 0.15 }}
+														className="absolute right-1"
+													>
+														<Button
+															type="button"
+															variant="ghost"
+															size="icon"
+															onClick={clearInput}
+															className="size-10 text-muted-foreground hover:text-foreground"
+															aria-label="Effacer"
+														>
+															<X className="size-5" />
+														</Button>
+													</motion.div>
+												)}
+											</AnimatePresence>
+										</>
+									)}
+								</form.AppField>
 							</div>
-							<ul className="space-y-1">
-								{searches.map((term) => (
-									<li key={term} className="flex items-center gap-1 group">
-										<button
-											type="button"
-											onClick={() => searchFromRecent(term)}
-											className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
-										>
-											<Search className="size-4 text-muted-foreground shrink-0" />
-											<span className="flex-1 truncate">{term}</span>
-										</button>
-										<button
-											type="button"
-											onClick={() => remove(term)}
-											className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-muted rounded transition-all shrink-0"
-											aria-label={`Supprimer "${term}"`}
-										>
-											<X className="size-4 text-muted-foreground" />
-										</button>
-									</li>
-								))}
-							</ul>
-						</section>
-					)}
 
-					{/* Categories */}
-					{productTypes.length > 0 && (
-						<section>
-							<h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2 mb-3">
-								<Sparkles className="size-4" />
-								Categories
-							</h2>
-							<ul className="grid grid-cols-2 gap-2">
-								{productTypes.map((type) => (
-									<li key={type.slug}>
-										<button
-											type="button"
-											onClick={() => navigateToCategory(type.slug)}
-											className="w-full px-4 py-3 rounded-xl bg-muted/30 hover:bg-muted/50 border border-transparent hover:border-primary/20 transition-all text-left font-medium"
-										>
-											{type.label}
-										</button>
-									</li>
-								))}
-							</ul>
-						</section>
-					)}
+							{/* Submit button */}
+							<form.Subscribe
+								selector={(state) => state.values.search}
+								children={(search) => (
+									<Button
+										type="submit"
+										disabled={!search?.trim() || isPending}
+										className="shrink-0 h-12 px-4 rounded-xl font-medium"
+										aria-label="Rechercher"
+									>
+										{isPending ? <Spinner className="size-4" /> : "OK"}
+									</Button>
+								)}
+							/>
+						</form>
+					</div>
 
-					{/* Empty state hint */}
-					{!hasRecentSearches && productTypes.length === 0 && (
-						<div className="text-center py-8 text-muted-foreground">
-							<Search className="size-12 mx-auto mb-3 opacity-30" />
-							<p>Tapez votre recherche puis appuyez sur Entree</p>
-						</div>
-					)}
-				</div>
-			</DialogContent>
-		</Dialog>
+					{/* Scrollable content */}
+					<div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 pb-[env(safe-area-inset-bottom,0)]">
+						{/* Recent searches */}
+						{hasRecentSearches && (
+							<section>
+								<div className="flex items-center justify-between mb-3">
+									<h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+										<Clock className="size-4" />
+										Recherches recentes
+									</h2>
+									<button
+										type="button"
+										onClick={clear}
+										className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+									>
+										Effacer
+									</button>
+								</div>
+								<ul className="space-y-1">
+									{searches.map((term) => (
+										<li key={term} className="flex items-center gap-1 group">
+											<button
+												type="button"
+												onClick={() => searchFromRecent(term)}
+												className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
+											>
+												<Search className="size-4 text-muted-foreground shrink-0" />
+												<span className="flex-1 truncate">{term}</span>
+											</button>
+											<button
+												type="button"
+												onClick={() => remove(term)}
+												className="p-1.5 hover:bg-muted rounded transition-all shrink-0 text-muted-foreground/60 hover:text-muted-foreground"
+												aria-label={`Supprimer "${term}"`}
+											>
+												<X className="size-4" />
+											</button>
+										</li>
+									))}
+								</ul>
+							</section>
+						)}
+
+						{/* Categories */}
+						{productTypes.length > 0 && (
+							<section>
+								<h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2 mb-3">
+									<Sparkles className="size-4" />
+									Categories
+								</h2>
+								<ul className="grid grid-cols-2 gap-2">
+									{productTypes.map((type) => (
+										<li key={type.slug}>
+											<button
+												type="button"
+												onClick={() => navigateToCategory(type.slug)}
+												className="w-full px-4 py-3 min-h-11 rounded-xl bg-muted/30 hover:bg-muted/50 border border-transparent hover:border-ring/20 transition-all text-left font-medium"
+											>
+												{type.label}
+											</button>
+										</li>
+									))}
+								</ul>
+							</section>
+						)}
+
+						{/* Empty state hint */}
+						{!hasRecentSearches && productTypes.length === 0 && (
+							<div className="text-center py-8 text-muted-foreground">
+								<Search className="size-12 mx-auto mb-3 opacity-30" />
+								<p>Tapez votre recherche puis appuyez sur Entree</p>
+							</div>
+						)}
+					</div>
+				</DialogContent>
+			</Dialog>
+		</>
 	)
 }
