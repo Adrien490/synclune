@@ -17,7 +17,7 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 import { createCheckoutSessionSchema } from "@/modules/payments/schemas/create-checkout-session-schema";
 import type { CreateCheckoutSessionData } from "@/modules/payments/types/checkout.types";
-import { ALLOWED_SHIPPING_COUNTRIES } from "@/modules/orders/constants/colissimo-rates";
+// ALLOWED_SHIPPING_COUNTRIES n'est plus utilisé car shipping_address_collection est désactivé (embedded mode)
 import { getStripeShippingOptions } from "@/modules/orders/constants/stripe-shipping-rates";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { checkDiscountEligibility } from "@/modules/discounts/utils/check-discount-eligibility";
@@ -547,9 +547,12 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 		// 🔴 CORRECTION CRITIQUE : Idempotency key pour éviter double facturation
 		const idempotencyKey = `checkout-${order.id}`;
 
+		const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL;
+
 		const checkoutSession = await stripe.checkout.sessions.create(
 			{
 				mode: "payment",
+				ui_mode: "embedded", // ✅ EMBEDDED CHECKOUT - Formulaire intégré sur le site
 				payment_method_types: ["card"],
 				line_items: lineItems,
 
@@ -574,10 +577,8 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				// ℹ️ Micro-entreprise : Prix FINAUX sans TVA
 				shipping_options: getStripeShippingOptions(),
 
-				// ✅ COLLECTE D'ADRESSE (France + 26 pays UE)
-				shipping_address_collection: {
-					allowed_countries: [...ALLOWED_SHIPPING_COUNTRIES] as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
-				},
+				// ❌ DÉSACTIVÉ - Adresse collectée via notre formulaire, pas Stripe
+				// shipping_address_collection: { allowed_countries: [...] },
 
 				// ✅ MISE À JOUR AUTOMATIQUE CLIENT
 				// Met à jour l'adresse du customer Stripe après validation
@@ -590,18 +591,17 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 					orderId: order.id,
 					orderNumber: order.orderNumber,
 					userId: userId || "guest",
+					...(sessionId && { guestSessionId: sessionId }), // Pour vider le panier invite apres paiement
 				},
 				// 🔴 EXPIRATION SESSION : 30 minutes pour libérer rapidement le stock réservé
 				// Stripe recommande entre 30min et 24h pour les produits à stock limité
 				// Pour bijoux haute valeur : 30min = bon équilibre entre UX et gestion stock
 				expires_at: Math.floor(Date.now() / 1000) + (60 * 30), // 30 minutes from now
-				success_url: `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL}/paiement/confirmation?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
-				cancel_url: `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL}/paiement/annulation?order_id=${order.id}`,
+
+				// ✅ EMBEDDED MODE : return_url remplace success_url/cancel_url
+				return_url: `${baseUrl}/paiement/retour?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
+
 				locale: "fr",
-				billing_address_collection: "auto",
-				phone_number_collection: {
-					enabled: true,
-				},
 				// ✅ Stripe génère automatiquement une facture PDF après paiement
 				// Le client reçoit un email avec lien pour télécharger la facture
 				invoice_creation: {
@@ -627,7 +627,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			status: ActionStatus.SUCCESS,
 			message: "Session de paiement créée avec succès.",
 			data: {
-				url: checkoutSession.url!,
+				clientSecret: checkoutSession.client_secret!, // ✅ EMBEDDED MODE : clientSecret pour initialiser le formulaire
 				orderId: order.id,
 				orderNumber: order.orderNumber,
 			},

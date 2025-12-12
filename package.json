@@ -63,6 +63,8 @@
 		"@radix-ui/react-tooltip": "^1.2.8",
 		"@react-email/components": "^1.0.1",
 		"@react-email/tailwind": "2.0.1",
+		"@stripe/react-stripe-js": "^5.4.1",
+		"@stripe/stripe-js": "^8.5.3",
 		"@tanstack/react-form": "^1.27.2",
 		"@tanstack/react-form-nextjs": "^1.27.2",
 		"@types/mdx": "^2.0.13",

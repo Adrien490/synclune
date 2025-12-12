@@ -26,6 +26,7 @@ interface CheckoutFormProps {
 	cart: NonNullable<GetCartReturn>;
 	session: Session | null;
 	addresses: GetUserAddressesReturn | null;
+	onSuccess?: (data: { clientSecret: string; orderId: string; orderNumber: string }) => void;
 }
 
 /**
@@ -36,11 +37,12 @@ export function CheckoutForm({
 	cart,
 	session,
 	addresses,
+	onSuccess,
 }: CheckoutFormProps) {
 	const isGuest = !session;
 
 	// Form hook
-	const { form, action, isPending } = useCheckoutForm({ session, addresses });
+	const { form, action, isPending } = useCheckoutForm({ session, addresses, onSuccess });
 
 	// Calculer le total
 	const subtotal = cart.items.reduce((sum, item) => {
@@ -443,12 +445,9 @@ export function CheckoutForm({
 					disabled={isPending}
 				>
 					<CreditCard className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
-					{isPending ? "Redirection..." : `Commander · ${formatEuro(total)}`}
+					{isPending ? "Validation..." : `Continuer vers le paiement · ${formatEuro(total)}`}
 					<span className="absolute inset-0 bg-linear-to-r from-accent/0 via-accent/20 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 				</Button>
-				<p className="text-xs text-center text-muted-foreground">
-					Tu seras redirigé vers Stripe pour le paiement sécurisé
-				</p>
 			</div>
 		</form>
 	);

@@ -13,13 +13,13 @@ import { getCheckoutFormOptions } from "../utils/checkout-form.utils";
 interface UseCheckoutFormOptions {
 	session: Session | null;
 	addresses: GetUserAddressesReturn | null;
-	onSuccess?: (checkoutUrl: string) => void;
+	onSuccess?: (data: { clientSecret: string; orderId: string; orderNumber: string }) => void;
 }
 
 /**
  * Hook pour le formulaire de checkout
  * Utilise TanStack Form avec Next.js App Router
- * Redirige automatiquement vers la session Stripe Checkout après succès
+ * Affiche le formulaire Stripe Embedded après validation de l'adresse
  *
  * @param options - Options incluant session, addresses et callback onSuccess
  */
@@ -37,20 +37,25 @@ export const useCheckoutForm = (options: UseCheckoutFormOptions) => {
 						"data" in result &&
 						result.data &&
 						typeof result.data === "object" &&
-						"url" in result.data &&
-						typeof result.data.url === "string"
+						"clientSecret" in result.data &&
+						typeof result.data.clientSecret === "string"
 					) {
 						// Nettoyer le draft après succès
 						if (typeof window !== "undefined") {
 							localStorage.removeItem("checkout-form-draft");
 						}
 
-						// Rediriger vers Stripe Checkout
-						const checkoutUrl = result.data.url;
-						onSuccess?.(checkoutUrl);
-
-						// Redirection immédiate vers Stripe
-						window.location.href = checkoutUrl;
+						// Appeler le callback pour afficher le formulaire Stripe Embedded
+						const data = result.data as {
+							clientSecret: string
+							orderId: string
+							orderNumber: string
+						}
+						onSuccess?.({
+							clientSecret: data.clientSecret,
+							orderId: data.orderId,
+							orderNumber: data.orderNumber,
+						});
 					}
 				},
 			})

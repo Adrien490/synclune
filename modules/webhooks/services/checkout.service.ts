@@ -184,12 +184,21 @@ export async function processOrderTransaction(
 			}
 		}
 
-		// 6. Vider le panier de l'utilisateur après paiement réussi
+		// 6. Vider le panier apres paiement reussi (utilisateur connecte OU invite)
 		if (order.userId) {
 			await tx.cartItem.deleteMany({
 				where: { cart: { userId: order.userId } },
 			});
 			console.log(`🧹 [WEBHOOK] Cart cleared for user ${order.userId} after successful payment`);
+		} else {
+			// Invite : recuperer le sessionId depuis les metadata Stripe
+			const guestSessionId = session.metadata?.guestSessionId;
+			if (guestSessionId) {
+				await tx.cartItem.deleteMany({
+					where: { cart: { sessionId: guestSessionId } },
+				});
+				console.log(`🧹 [WEBHOOK] Cart cleared for guest session ${guestSessionId} after successful payment`);
+			}
 		}
 
 		console.log("✅ [WEBHOOK] Order processed successfully:", order.orderNumber);

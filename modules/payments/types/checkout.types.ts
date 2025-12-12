@@ -4,7 +4,7 @@ import type { z } from "zod";
 export type CreateCheckoutSessionData = z.infer<typeof createCheckoutSessionSchema>;
 
 export type CreateCheckoutSessionResult = {
-	url: string;
+	clientSecret: string;
 	orderId: string;
 	orderNumber: string;
 };

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { Session } from "@/modules/auth/lib/auth";
 import { Stagger } from "@/shared/components/animations/stagger";
+import { Tap } from "@/shared/components/animations/tap";
 import {
 	Sheet,
 	SheetClose,
@@ -12,6 +14,7 @@ import {
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
+import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
 import { Heart, Menu } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +23,40 @@ import Link from "next/link";
 const ACCOUNT_HREFS = ["/compte", "/connexion", "/admin", "/favoris"] as const;
 /** HREFs de la zone decouverte (memoisation) */
 const DISCOVERY_HREFS = ["/", "/collections", "/produits", "/personnalisation"] as const;
+
+/**
+ * Section utilisateur - Affiche l'état de connexion en haut du menu
+ */
+function MenuUserSection({ session }: { session: Session | null }) {
+	if (!session?.user) {
+		return (
+			<div className="px-4 py-3 border-b border-border/40">
+				<p className="text-sm text-muted-foreground">
+					Connectez-vous pour accéder à vos favoris et commandes
+				</p>
+				<SheetClose asChild>
+					<Link
+						href="/connexion"
+						className="mt-2 inline-flex text-primary font-medium hover:underline"
+					>
+						Se connecter
+					</Link>
+				</SheetClose>
+			</div>
+		);
+	}
+
+	return (
+		<div className="px-4 py-3 border-b border-border/40">
+			<p className="font-medium truncate">
+				{session.user.name || "Mon compte"}
+			</p>
+			<p className="text-xs text-muted-foreground truncate">
+				{session.user.email}
+			</p>
+		</div>
+	);
+}
 
 /**
  * Composant Menu Sheet pour la navigation mobile
@@ -40,43 +77,56 @@ const DISCOVERY_HREFS = ["/", "/collections", "/produits", "/personnalisation"] 
  */
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
+	session: Session | null;
 }
 
-export function MenuSheet({ navItems }: MenuSheetProps) {
+export function MenuSheet({ navItems, session }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
+	const { wishlistCount } = useBadgeCountsStore();
+
+	// State pour aria-live (annonce ouverture/fermeture)
+	const [isOpen, setIsOpen] = useState(false);
 
 	// Séparer les items en deux zones
 	// Zone découverte: Accueil, Les créations, Les collections, Personnalisation
 	const discoveryItems = navItems.filter((item) => DISCOVERY_HREFS.includes(item.href as typeof DISCOVERY_HREFS[number]));
-	// Zone compte: Mon compte / Se connecter, Tableau de bord (admin), L'atelier
+	// Zone compte: Mon compte / Se connecter, Tableau de bord (admin), Favoris
 	const accountItems = navItems.filter((item) => ACCOUNT_HREFS.includes(item.href as typeof ACCOUNT_HREFS[number]));
 
-	// Composant pour rendre un item de navigation
+	// Composant pour rendre un item de navigation avec Tap animation et badge
 	const renderNavItem = (item: (typeof navItems)[0]) => {
 		const isActive = isMenuItemActive(item.href);
+		const showWishlistBadge = item.href === "/favoris" && wishlistCount > 0;
 
 		return (
-			<SheetClose asChild key={item.href}>
-				<Link
-					href={item.href}
-					className={cn(
-						"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3 rounded-lg",
-						"transition-all duration-300 ease-out",
-						"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-						isActive
-							? "bg-primary/8 text-foreground font-semibold border-l-2 border-primary pl-5"
-							: "text-foreground/80 hover:text-foreground hover:bg-primary/5 hover:pl-5"
-					)}
-					aria-current={isActive ? "page" : undefined}
-				>
-					<span>{item.label}</span>
-				</Link>
-			</SheetClose>
+			<Tap key={item.href}>
+				<SheetClose asChild>
+					<Link
+						href={item.href}
+						className={cn(
+							"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3 rounded-lg",
+							"transition-all duration-300 ease-out",
+							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+							isActive
+								? "bg-primary/8 text-foreground font-semibold border-l-2 border-primary pl-5"
+								: "text-foreground/80 hover:text-foreground hover:bg-primary/5 hover:pl-5"
+						)}
+						aria-current={isActive ? "page" : undefined}
+					>
+						<span className="flex-1">{item.label}</span>
+						{showWishlistBadge && (
+							<span
+								className="ml-2 bg-secondary text-secondary-foreground text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center"
+								aria-label={`${wishlistCount} article${wishlistCount > 1 ? "s" : ""} dans les favoris`}
+							>
+								{wishlistCount > 99 ? "99+" : wishlistCount}
+							</span>
+						)}
+					</Link>
+				</SheetClose>
+			</Tap>
 		);
 	};
-
-	// State pour aria-live (annonce ouverture/fermeture)
-	const [isOpen, setIsOpen] = useState(false);
 
 	return (
 		<Sheet direction="left" onOpenChange={setIsOpen}>
@@ -127,9 +177,31 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 					</p>
 				</SheetHeader>
 
+				{/* Section utilisateur */}
+				<div className="pt-12">
+					<MenuUserSection session={session} />
+				</div>
+
+				{/* Skip link pour accéder directement à la section compte */}
+				<a
+					href="#account-section"
+					className="sr-only focus:not-sr-only focus:absolute focus:top-20 focus:left-4 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:text-sm"
+				>
+					Aller à la section compte
+				</a>
+
+				{/* Annonce SR du contenu */}
+				<div className="sr-only" aria-live="polite">
+					{discoveryItems.length} liens de découverte, {accountItems.length} liens de compte
+				</div>
+
 				<nav
 					aria-label="Menu principal"
-					className="relative z-10 flex-1 overflow-y-auto px-4 pt-14"
+					className={cn(
+						"relative z-10 flex-1 overflow-y-auto px-4",
+						"transition-opacity duration-200",
+						isOpen ? "opacity-100" : "opacity-0"
+					)}
 				>
 					{/* Zone découverte: Accueil, Les créations, Les collections, Personnalisation */}
 					<Stagger stagger={0.025} delay={0.05} y={10} className="space-y-1">
@@ -150,10 +222,12 @@ export function MenuSheet({ navItems }: MenuSheetProps) {
 						</div>
 					</div>
 
-					{/* Zone compte: Mon compte / Se connecter, Tableau de bord (admin), L'atelier */}
-					<Stagger stagger={0.025} delay={0.15} y={10} className="space-y-1">
-						{accountItems.map((item) => renderNavItem(item))}
-					</Stagger>
+					{/* Zone compte: Mon compte / Se connecter, Tableau de bord (admin), Favoris */}
+					<div id="account-section">
+						<Stagger stagger={0.025} delay={0.15} y={10} className="space-y-1">
+							{accountItems.map((item) => renderNavItem(item))}
+						</Stagger>
+					</div>
 				</nav>
 
 				{/* Footer avec liens secondaires */}
