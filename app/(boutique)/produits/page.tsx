@@ -20,7 +20,7 @@ import { ProductListSkeleton } from "@/modules/products/components/product-list-
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
-import { SearchDrawerTrigger } from "@/shared/components/search-drawer";
+import { SearchDrawer } from "@/shared/components/search-drawer";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { SortDrawerTrigger } from "@/shared/components/sort-drawer";
 import { FAB_KEYS } from "@/shared/features/fab";
@@ -371,7 +371,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 				actions={
 					<div className="flex items-center gap-2 md:hidden">
 						<SortDrawerTrigger options={sortOptions} />
-						<SearchDrawerTrigger placeholder={searchPlaceholder} />
+						<SearchDrawer placeholder={searchPlaceholder} />
 					</div>
 				}
 			/>
