@@ -109,7 +109,7 @@ export default function EditVariantLoading() {
 				</FormLayout>
 
 				{/* Galerie */}
-				<FormLayout cols={1}>
+				<FormLayout>
 					<FormSection
 						title="Galerie d'images"
 						description="Images supplémentaires (max 10)"

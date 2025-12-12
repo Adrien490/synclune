@@ -44,14 +44,6 @@ function generateShippingAddress() {
     shippingCity: faker.location.city(),
     shippingCountry: "FR",
     shippingPhone: faker.helpers.replaceSymbols("+33 # ## ## ## ##"),
-    billingFirstName: firstName,
-    billingLastName: lastName,
-    billingAddress1: faker.location.streetAddress(),
-    billingAddress2: sampleBoolean(0.3) ? faker.location.secondaryAddress() : null,
-    billingPostalCode: faker.location.zipCode("#####"),
-    billingCity: faker.location.city(),
-    billingCountry: "FR",
-    billingPhone: faker.helpers.replaceSymbols("+33 # ## ## ## ##"),
   };
 }
 

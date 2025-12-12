@@ -23,6 +23,7 @@ import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.
 import { checkDiscountEligibility } from "@/modules/discounts/utils/check-discount-eligibility";
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/utils/calculate-discount-amount";
 import { getShippingZoneFromPostalCode } from "@/modules/payments/utils/postal-zone.utils";
+import { getInvoiceFooter } from "@/shared/lib/stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -65,16 +66,14 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 		// 3. Parser les données
 		const cartItemsRaw = formData.get("cartItems") as string;
 		const shippingAddressRaw = formData.get("shippingAddress") as string;
-		const billingAddressRaw = formData.get("billingAddress") as string;
 		const email = (formData.get("email") as string) || undefined;
 		const saveAddress = formData.get("saveAddress") === "true" || formData.get("saveAddress") === "on";
 		const discountCode = (formData.get("discountCode") as string) || undefined;
 
-		let cartItems, shippingAddress, billingAddress;
+		let cartItems, shippingAddress;
 		try {
 			cartItems = JSON.parse(cartItemsRaw);
 			shippingAddress = JSON.parse(shippingAddressRaw);
-			billingAddress = billingAddressRaw ? JSON.parse(billingAddressRaw) : undefined;
 		} catch {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
@@ -86,7 +85,6 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 		const rawData: CreateCheckoutSessionData = {
 			cartItems,
 			shippingAddress,
-			billingAddress,
 			email,
 			discountCode,
 		};
@@ -410,8 +408,6 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 
 			// 8e. Créer la commande avec stock déjà réservé
 			// Note: Montants temporaires - seront recalculés par Stripe Tax dans le webhook
-			const billingAddr = validatedData.billingAddress || validatedData.shippingAddress;
-
 			const newOrder = await tx.order.create({
 				data: {
 					orderNumber,
@@ -440,16 +436,6 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 					shippingPhone: validatedData.shippingAddress.phoneNumber || "",
 					shippingMethod:
 						shippingZoneInfo.zone !== "UNKNOWN" ? shippingZoneInfo.zone : null,
-
-					// === ADRESSE DE FACTURATION (SNAPSHOT) ===
-					billingFirstName: billingAddr.firstName,
-					billingLastName: billingAddr.lastName,
-					billingAddress1: billingAddr.addressLine1,
-					billingAddress2: billingAddr.addressLine2 || null,
-					billingPostalCode: billingAddr.postalCode,
-					billingCity: billingAddr.city,
-					billingCountry: billingAddr.country || "FR",
-					billingPhone: billingAddr.phoneNumber || null,
 
 					// === STATUTS ===
 					status: "PENDING",
@@ -626,6 +612,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 							orderId: order.id,
 						},
 						description: `Commande ${order.orderNumber}`,
+						footer: getInvoiceFooter(),
 					},
 				},
 			},

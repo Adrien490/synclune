@@ -143,14 +143,6 @@ export async function ProductVariantsDataTable({
 									Prix final
 								</TableHead>
 								<TableHead
-									key="priceHT"
-									scope="col"
-									role="columnheader"
-									className="hidden xl:table-cell text-sm"
-								>
-									Prix HT
-								</TableHead>
-								<TableHead
 									key="stock"
 									scope="col"
 									role="columnheader"
@@ -273,11 +265,6 @@ export async function ProductVariantsDataTable({
 										<TableCell role="gridcell">
 											<span className="text-sm font-bold">
 												{(sku.priceInclTax / 100).toFixed(2)} €
-											</span>
-										</TableCell>
-										<TableCell role="gridcell" className="hidden xl:table-cell">
-											<span className="text-xs text-muted-foreground">
-												{(sku.priceInclTax / 1.2 / 100).toFixed(2)} € HT
 											</span>
 										</TableCell>
 										<TableCell

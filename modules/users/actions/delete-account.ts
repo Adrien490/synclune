@@ -59,12 +59,6 @@ export async function deleteAccount(): Promise<ActionState> {
 					shippingAddress1: "Adresse supprimée",
 					shippingAddress2: null,
 					shippingPhone: "",
-					// Adresse de facturation
-					billingFirstName: "Anonyme",
-					billingLastName: "Anonyme",
-					billingAddress1: "Adresse supprimée",
-					billingAddress2: null,
-					billingPhone: null,
 				},
 			});
 

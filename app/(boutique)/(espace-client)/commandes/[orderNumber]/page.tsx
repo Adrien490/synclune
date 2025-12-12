@@ -121,13 +121,6 @@ export default async function OrderDetailPage({
 									shippingCity: order.shippingCity,
 									shippingCountry: order.shippingCountry,
 									shippingPhone: order.shippingPhone,
-									billingFirstName: order.billingFirstName,
-									billingLastName: order.billingLastName,
-									billingAddress1: order.billingAddress1,
-									billingAddress2: order.billingAddress2,
-									billingPostalCode: order.billingPostalCode,
-									billingCity: order.billingCity,
-									billingCountry: order.billingCountry,
 								}}
 							/>
 

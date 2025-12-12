@@ -154,7 +154,7 @@ export function AppToaster() {
 			theme={resolvedTheme as "light" | "dark" | "system"}
 			position={isMobile ? "bottom-center" : "top-center"}
 			duration={2500}
-			visibleToasts={3}
+			visibleToasts={1}
 			icons={icons}
 			closeButton
 			offset={

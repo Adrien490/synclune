@@ -308,7 +308,7 @@ OrderConfirmationEmail.PreviewProps = {
 	subtotal: 17900,
 	discount: 0,
 	shipping: 490,
-	tax: 3065,
+	tax: 0,
 	total: 18390,
 	shippingAddress: {
 		firstName: "Marie",

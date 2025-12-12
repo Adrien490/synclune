@@ -614,16 +614,6 @@ model Order {
   shippingCountry    String  @default("FR") @db.VarChar(2)
   shippingPhone      String
 
-  // === ADRESSE DE FACTURATION (DÉNORMALISÉE - SNAPSHOT) ===
-  billingFirstName  String
-  billingLastName   String
-  billingAddress1   String
-  billingAddress2   String?
-  billingPostalCode String  @db.VarChar(10)
-  billingCity       String
-  billingCountry    String  @default("FR") @db.VarChar(2)
-  billingPhone      String?
-
   // === MONTANTS (EN CENTIMES) ===
   subtotal       Int
   discountAmount Int          @default(0) // Montant total des réductions appliquées

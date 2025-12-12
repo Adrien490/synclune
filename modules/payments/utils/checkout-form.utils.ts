@@ -100,19 +100,6 @@ export function getCheckoutFormOptions(
 
 			// Enregistrer l'adresse (coché par défaut si l'utilisateur n'a pas d'adresse)
 			saveAddress: !isGuest && (!addresses || addresses.length === 0),
-
-			// Adresse de facturation (par défaut, identique à livraison)
-			billingDifferent: false,
-			billing: {
-				firstName: "",
-				lastName: "",
-				addressLine1: "",
-				addressLine2: "",
-				city: "",
-				postalCode: "",
-				country: "FR",
-				phoneNumber: "",
-			},
 		},
 	};
 }

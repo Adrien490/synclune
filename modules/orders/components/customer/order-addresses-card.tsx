@@ -11,13 +11,6 @@ interface OrderAddressesCardProps {
 		shippingCity: string;
 		shippingCountry: string;
 		shippingPhone: string;
-		billingFirstName: string;
-		billingLastName: string;
-		billingAddress1: string;
-		billingAddress2: string | null;
-		billingPostalCode: string;
-		billingCity: string;
-		billingCountry: string;
 	};
 }
 
@@ -63,56 +56,16 @@ export function OrderAddressesCard({ order }: OrderAddressesCardProps) {
 		phone: order.shippingPhone,
 	};
 
-	const billingAddress = {
-		firstName: order.billingFirstName,
-		lastName: order.billingLastName,
-		address1: order.billingAddress1,
-		address2: order.billingAddress2,
-		postalCode: order.billingPostalCode,
-		city: order.billingCity,
-		country: order.billingCountry,
-	};
-
-	// Check if billing is same as shipping
-	const sameAddress =
-		shippingAddress.firstName === billingAddress.firstName &&
-		shippingAddress.lastName === billingAddress.lastName &&
-		shippingAddress.address1 === billingAddress.address1 &&
-		shippingAddress.postalCode === billingAddress.postalCode &&
-		shippingAddress.city === billingAddress.city;
-
 	return (
 		<Card>
 			<CardHeader>
 				<CardTitle className="text-lg flex items-center gap-2">
 					<MapPin className="h-5 w-5" />
-					Adresses
+					Adresse de livraison
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="space-y-4">
-				{/* Shipping */}
-				<div>
-					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-						Livraison
-					</h4>
-					{formatAddress(shippingAddress)}
-				</div>
-
-				{/* Billing (if different) */}
-				{!sameAddress && (
-					<div>
-						<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-							Facturation
-						</h4>
-						{formatAddress(billingAddress)}
-					</div>
-				)}
-
-				{sameAddress && (
-					<p className="text-xs text-muted-foreground italic">
-						Adresse de facturation identique
-					</p>
-				)}
+			<CardContent>
+				{formatAddress(shippingAddress)}
 			</CardContent>
 		</Card>
 	);
