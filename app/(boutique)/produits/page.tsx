@@ -55,47 +55,6 @@ export type ProductSearchParams = {
 	filter_sortBy?: string;
 } & ProductFiltersSearchParams;
 
-/**
- * Configuration des metadata SEO par type de bijou
- */
-const PRODUCT_TYPE_METADATA: Record<
-	string,
-	{
-		title: string;
-		description: string;
-		keywords: string;
-	}
-> = {
-	bagues: {
-		title: "Bagues Artisanales Faites Main à Nantes | Synclune",
-		description:
-			"Découvrez nos bagues artisanales uniques en argent 925 et pierres naturelles. Création artisanale à Nantes. Livraison France. Chaque bague est unique.",
-		keywords:
-			"bagues artisanales, bagues faites main, bijoux Nantes, bague argent 925, bague pierres naturelles, bijoutier Nantes, bague unique",
-	},
-	colliers: {
-		title: "Colliers Artisanaux Faits Main à Nantes | Synclune",
-		description:
-			"Colliers colorés et originaux faits main avec amour à Nantes. Argent 925 et pierres naturelles. Pièces uniques artisanales. Livraison France.",
-		keywords:
-			"colliers artisanaux, colliers faits main, bijoux colorés Nantes, collier argent, collier pierres naturelles, bijoutier artisan",
-	},
-	bracelets: {
-		title: "Bracelets Artisanaux Faits Main à Nantes | Synclune",
-		description:
-			"Bracelets artisanaux uniques créés à Nantes. Argent 925 et pierres naturelles colorées. Création artisanale française. Livraison rapide.",
-		keywords:
-			"bracelets artisanaux, bracelets faits main, bijoux Nantes, bracelet argent, bracelet pierres, bijoutier Nantes, bracelet unique",
-	},
-	"boucles-d-oreilles": {
-		title: "Boucles d'Oreilles Artisanales Nantes | Synclune",
-		description:
-			"Boucles d'oreilles artisanales colorées et originales. Créations uniques en argent 925 à Nantes. Bijoux faits main avec pierres naturelles.",
-		keywords:
-			"boucles d'oreilles artisanales, boucles oreilles faites main, bijoux Nantes, boucles argent, bijoutier artisan Nantes",
-	},
-};
-
 const DEFAULT_METADATA = {
 	title: "Tous mes bijoux colorés faits main | Synclune - Nantes",
 	description:
@@ -109,15 +68,14 @@ type BijouxPageProps = {
 };
 
 /**
- * Génère les metadata dynamiques selon le type de produit
+ * Génère les metadata pour la page produits
  */
 export async function generateMetadata({
 	searchParams,
 }: BijouxPageProps): Promise<Metadata> {
 	const searchParamsData = await searchParams;
-	const typeParam = getFirstParam(searchParamsData.type);
 
-	// Vérifier si des filtres sont actifs (hors navigation et type)
+	// Vérifier si des filtres sont actifs (incluant le type)
 	const hasActiveFilters = Object.keys(searchParamsData).some(
 		(key) =>
 			![
@@ -126,39 +84,10 @@ export async function generateMetadata({
 				"perPage",
 				"sortBy",
 				"search",
-				"type",
 				"filter_sortBy",
 			].includes(key)
 	);
 
-	// Si un type est spécifié et a une config SEO
-	if (typeParam && PRODUCT_TYPE_METADATA[typeParam]) {
-		const config = PRODUCT_TYPE_METADATA[typeParam];
-		return {
-			title: config.title,
-			description: config.description,
-			keywords: config.keywords,
-			alternates: {
-				canonical: `/produits?type=${typeParam}`,
-			},
-			robots: hasActiveFilters
-				? { index: false, follow: true }
-				: undefined,
-			openGraph: {
-				title: config.title,
-				description: config.description,
-				url: `https://synclune.fr/produits?type=${typeParam}`,
-				type: "website",
-			},
-			twitter: {
-				card: "summary_large_image",
-				title: config.title,
-				description: config.description,
-			},
-		};
-	}
-
-	// Metadata par défaut pour la page hub
 	return {
 		title: DEFAULT_METADATA.title,
 		description: DEFAULT_METADATA.description,
@@ -166,9 +95,7 @@ export async function generateMetadata({
 		alternates: {
 			canonical: "/produits",
 		},
-		robots: hasActiveFilters
-			? { index: false, follow: true }
-			: undefined,
+		robots: hasActiveFilters ? { index: false, follow: true } : undefined,
 		openGraph: {
 			title: "Tous mes bijoux colorés | Synclune",
 			description:
@@ -207,12 +134,6 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	});
 	const productTypes = productTypesData.productTypes;
 
-	// Identifier le type sélectionné (si présent)
-	const typeParam = getFirstParam(searchParamsData.type);
-	const selectedProductType = typeParam
-		? productTypes.find((t) => t.slug === typeParam)
-		: undefined;
-
 	// Extraction du terme de recherche
 	const searchTerm =
 		typeof searchParamsData.search === "string"
@@ -247,11 +168,8 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const sortByFromParam = getFirstParam(searchParamsData.sortBy);
 	const sortBy = sortByFromFilter || sortByFromParam || "created-descending";
 
-	// Parser les filtres (avec ou sans type forcé)
-	const baseFilters = parseFilters(searchParamsData);
-	const filters = selectedProductType
-		? { ...baseFilters, type: selectedProductType.slug }
-		: baseFilters;
+	// Parser les filtres (le type est déjà géré par parseFilters)
+	const filters = parseFilters(searchParamsData);
 
 	// Récupérer les produits
 	const productsPromise = getProducts({
@@ -271,29 +189,12 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 			)
 	);
 
-	// Configuration dynamique selon le mode (hub ou type)
-	const isTypePage = !!selectedProductType;
-	const pageTitle = searchTerm
-		? `Recherche "${searchTerm}"`
-		: isTypePage
-			? selectedProductType.label
-			: "Les créations";
-	const pageDescription = isTypePage
-		? selectedProductType.description || undefined
-		: "Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !";
-	const searchPlaceholder = isTypePage
-		? `Rechercher des ${selectedProductType.label.toLowerCase()}...`
-		: "Rechercher des bijoux...";
-	// Breadcrumbs
-	const breadcrumbs = isTypePage
-		? [
-				{ label: "Bijoux", href: "/produits" },
-				{
-					label: selectedProductType.label,
-					href: `/produits?type=${selectedProductType.slug}`,
-				},
-			]
-		: [{ label: "Bijoux", href: "/produits" }];
+	// Configuration de la page (valeurs fixes, les types sont des filtres)
+	const pageTitle = searchTerm ? `Recherche "${searchTerm}"` : "Les créations";
+	const pageDescription =
+		"Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !";
+	const searchPlaceholder = "Rechercher des bijoux...";
+	const breadcrumbs = [{ label: "Bijoux", href: "/produits" }];
 
 	// Sort options for mobile drawer
 	const sortOptions = Object.values(SORT_OPTIONS).map((option) => ({
@@ -305,51 +206,24 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const jsonLd = {
 		"@context": "https://schema.org",
 		"@type": "CollectionPage",
-		name: isTypePage
-			? selectedProductType.label
-			: "Bijoux artisanaux faits main",
-		description: isTypePage
-			? selectedProductType.description ||
-				`Découvrez nos ${selectedProductType.label.toLowerCase()} faits main à Nantes`
-			: "Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !",
-		url: isTypePage
-			? `https://synclune.fr/produits?type=${selectedProductType.slug}`
-			: "https://synclune.fr/produits",
+		name: "Bijoux artisanaux faits main",
+		description: pageDescription,
+		url: "https://synclune.fr/produits",
 		breadcrumb: {
 			"@type": "BreadcrumbList",
-			itemListElement: isTypePage
-				? [
-						{
-							"@type": "ListItem",
-							position: 1,
-							name: "Accueil",
-							item: "https://synclune.fr",
-						},
-						{
-							"@type": "ListItem",
-							position: 2,
-							name: "Bijoux",
-							item: "https://synclune.fr/produits",
-						},
-						{
-							"@type": "ListItem",
-							position: 3,
-							name: selectedProductType.label,
-						},
-					]
-				: [
-						{
-							"@type": "ListItem",
-							position: 1,
-							name: "Accueil",
-							item: "https://synclune.fr",
-						},
-						{
-							"@type": "ListItem",
-							position: 2,
-							name: "Bijoux",
-						},
-					],
+			itemListElement: [
+				{
+					"@type": "ListItem",
+					position: 1,
+					name: "Accueil",
+					item: "https://synclune.fr",
+				},
+				{
+					"@type": "ListItem",
+					position: 2,
+					name: "Bijoux",
+				},
+			],
 		},
 		publisher: {
 			"@type": "Organization",
