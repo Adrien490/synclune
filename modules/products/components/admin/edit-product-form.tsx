@@ -585,8 +585,8 @@ export function EditProductForm({
 																	url: r.serverData?.url || "",
 																	name: filesToUpload[i].name,
 																	type: filesToUpload[i].type,
-																	thumbnailUrl: r.serverData?.thumbnailUrl,
-																	thumbnailSmallUrl: r.serverData?.thumbnailSmallUrl,
+																	thumbnailUrl: r.serverData?.thumbnailUrl ?? undefined,
+																	thumbnailSmallUrl: r.serverData?.thumbnailSmallUrl ?? undefined,
 																	blurDataUrl: r.serverData?.blurDataUrl,
 																}))
 															);

@@ -41,11 +41,10 @@ export function useBackButtonClose({
 		}
 	}, [isOpen, id]);
 
-	// Nettoyer l'historique quand le modal se ferme (par n'importe quel moyen)
+	// Réinitialiser le ref quand le modal se ferme (par n'importe quel moyen)
 	useEffect(() => {
-		if (!isOpen && historyPushedRef.current) {
+		if (!isOpen) {
 			historyPushedRef.current = false;
-			history.back();
 		}
 	}, [isOpen]);
 
@@ -62,12 +61,9 @@ export function useBackButtonClose({
 		return () => window.removeEventListener("popstate", handlePopState);
 	}, [isOpen, onClose]);
 
-	// Fonction pour fermer proprement (évite double navigation)
+	// Fonction pour fermer proprement
 	const handleClose = () => {
-		if (historyPushedRef.current) {
-			historyPushedRef.current = false;
-			history.back();
-		}
+		historyPushedRef.current = false;
 		onClose();
 	};
 

@@ -194,6 +194,8 @@ export const ourFileRouter = {
 				const blurDataUrl = await generateBlurDataUrl(file.ufsUrl);
 				return {
 					url: file.ufsUrl,
+					thumbnailUrl: null,
+					thumbnailSmallUrl: null,
 					blurDataUrl,
 					uploadedBy: metadata.userId,
 				};
@@ -238,6 +240,9 @@ export const ourFileRouter = {
 					);
 					return {
 						url: videoUrl,
+						thumbnailUrl: null,
+						thumbnailSmallUrl: null,
+						blurDataUrl: null,
 						uploadedBy: metadata.userId,
 					};
 				}
@@ -246,6 +251,9 @@ export const ourFileRouter = {
 			// Fallback: retourner juste l'URL
 			return {
 				url: file.ufsUrl,
+				thumbnailUrl: null,
+				thumbnailSmallUrl: null,
+				blurDataUrl: null,
 				uploadedBy: metadata.userId,
 			};
 		}),

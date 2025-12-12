@@ -3,7 +3,6 @@
 import { Stagger } from "@/shared/components/animations";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
-import { ClearWishlistButton } from "@/modules/wishlist/components/clear-wishlist-button";
 import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";
 import type { Product } from "@/modules/products/types/product.types";
 
@@ -44,13 +43,10 @@ export function WishlistListContent({
 
 	return (
 		<div className="space-y-8">
-			{/* Header avec count et bouton vider */}
-			<div className="flex justify-between items-center">
-				<p className="text-sm text-muted-foreground">
-					{totalCount} création{totalCount > 1 ? "s" : ""} dans ta wishlist
-				</p>
-				<ClearWishlistButton itemCount={totalCount} />
-			</div>
+			{/* Header avec count */}
+			<p className="text-sm text-muted-foreground">
+				{totalCount} création{totalCount > 1 ? "s" : ""} dans ta wishlist
+			</p>
 
 			{/* Grid des items de wishlist */}
 			<Stagger

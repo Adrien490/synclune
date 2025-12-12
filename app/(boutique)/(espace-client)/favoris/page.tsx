@@ -87,6 +87,8 @@ export default async function WishlistPage({
 
 /**
  * Server Component pour afficher le bouton "Vider" seulement s'il y a des items
+ * - Mobile : icône seule (ghost, 44x44px)
+ * - Desktop : bouton avec texte
  */
 async function WishlistToolbarActions({
 	wishlistPromise,
@@ -99,5 +101,12 @@ async function WishlistToolbarActions({
 		return null;
 	}
 
-	return <ClearWishlistButton itemCount={totalCount} />;
+	return (
+		<>
+			{/* Mobile: icon button */}
+			<ClearWishlistButton itemCount={totalCount} iconOnly className="sm:hidden" />
+			{/* Desktop: bouton avec texte */}
+			<ClearWishlistButton itemCount={totalCount} className="hidden sm:inline-flex" />
+		</>
+	);
 }

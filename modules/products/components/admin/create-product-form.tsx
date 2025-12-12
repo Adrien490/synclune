@@ -12,7 +12,6 @@ import {
 } from "@/shared/features/form-wizard";
 import { MediaCounterBadge } from "@/modules/media/components/media-counter-badge";
 import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
-import { useUnsavedChanges } from "@/shared/features/form-wizard";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Label } from "@/shared/components/ui/label";
@@ -121,9 +120,6 @@ function CreateProductFormContent({
 	resetWizardRef.current = wizard.isMobile ? wizard.resetWizard : null;
 
 	const isUploading = isMediaUploading;
-
-	// Warn user about unsaved changes before leaving the page
-	useUnsavedChanges(form.state.isDirty && !isPending);
 
 	// Render the step sections
 	const renderStepContent = (stepIndex: number) => {

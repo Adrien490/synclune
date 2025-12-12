@@ -295,7 +295,11 @@ function GalleryContent({ product, title }: GalleryProps) {
 											className="flex-[0_0_100%] h-full min-w-0 relative cursor-zoom-in touch-manipulation"
 											aria-hidden={index !== optimisticIndex}
 											aria-label={`Zoomer ${media.alt || title}`}
-											onClick={openLightbox}
+											onClick={() => {
+												if (emblaApi?.clickAllowed()) {
+													openLightbox();
+												}
+											}}
 											onKeyDown={(e) => {
 												if (e.key === "Enter" || e.key === " ") {
 													e.preventDefault();
