@@ -133,8 +133,8 @@ export function ProductFilterSheet({
 
 		startTransition(() => {
 			router.push(`${pathname}?${params.toString()}`);
-			close();
 		});
+		// La fermeture est gérée par FilterSheetWrapper (useEffect sur isPending)
 	};
 
 	const clearAllFilters = () => {
@@ -156,8 +156,8 @@ export function ProductFilterSheet({
 
 		startTransition(() => {
 			router.push(`${pathname}?${params.toString()}`);
-			close();
 		});
+		// La fermeture est gérée par FilterSheetWrapper (useEffect sur isPending)
 	};
 
 	// Calculer les filtres actifs depuis l'URL

@@ -27,11 +27,11 @@ export default async function AdminLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	const [session, isSpeedDialHidden] = await Promise.all([
+	const [session, isContactFabHidden] = await Promise.all([
 		auth.api.getSession({
 			headers: await import("next/headers").then((m) => m.headers()),
 		}),
-		getFabVisibility(FAB_KEYS.ADMIN_SPEED_DIAL),
+		getFabVisibility(FAB_KEYS.CONTACT_ADRIEN),
 	]);
 
 	// Vérification de sécurité obligatoire
@@ -77,7 +77,7 @@ export default async function AdminLayout({
 					</SelectionProvider>
 				</main>
 			</SidebarInset>
-			<AdminSpeedDial initialHidden={isSpeedDialHidden} />
+			<AdminSpeedDial initialHidden={isContactFabHidden} />
 			<BottomNavigation />
 		</SidebarProvider>
 	);

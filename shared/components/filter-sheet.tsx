@@ -82,8 +82,7 @@ export function FilterSheetWrapper({
 
 	const handleApply = () => {
 		onApply?.();
-		// Note: Ne pas appeler setOpen(false) ici car onApply est souvent async
-		// et doit gérer la fermeture après avoir terminé son traitement
+		setOpen(false);
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent) => {

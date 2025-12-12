@@ -1,7 +1,6 @@
 "use client";
 
-import { SpeedDialFab, FAB_KEYS } from "@/shared/features/fab";
-import type { SpeedDialAction } from "@/shared/features/fab/components/speed-dial-fab";
+import { Fab, FAB_KEYS } from "@/shared/features/fab";
 import {
 	Dialog,
 	DialogContent,
@@ -9,7 +8,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/shared/components/ui/dialog";
-import { MessageSquare, PackagePlus } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { ContactAdrienForm } from "./contact-adrien-form";
 
@@ -19,42 +18,25 @@ interface AdminSpeedDialProps {
 }
 
 /**
- * Speed Dial FAB pour l'admin dashboard
- * Actions rapides : Creer un produit, Alertes stock, Contacter Adrien
+ * FAB pour contacter Adrien dans l'admin dashboard
  */
 export function AdminSpeedDial({ initialHidden = false }: AdminSpeedDialProps) {
 	const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
-	const actions: SpeedDialAction[] = [
-		{
-			id: "create-product",
-			icon: <PackagePlus className="size-5" aria-hidden="true" />,
-			label: "Creer un produit",
-			href: "/admin/catalogue/produits/nouveau",
-		},
-		{
-			id: "contact-adrien",
-			icon: <MessageSquare className="size-5" aria-hidden="true" />,
-			label: "Contacter Adri",
-			onClick: () => setContactDialogOpen(true),
-			variant: "secondary",
-		},
-	];
-
 	return (
 		<>
-			<SpeedDialFab
-				fabKey={FAB_KEYS.ADMIN_SPEED_DIAL}
+			<Fab
+				fabKey={FAB_KEYS.CONTACT_ADRIEN}
 				initialHidden={initialHidden}
+				icon={<MessageSquare className="size-6" aria-hidden="true" />}
 				tooltip={{
-					title: "Actions rapides",
-					description: "Acces rapide aux actions frequentes",
+					title: "Contacter Adri",
+					description: "Bug, feature ou question",
 				}}
-				ariaLabel="Ouvrir le menu d'actions rapides"
-				ariaDescription="Menu avec acces rapide a : creer un produit, contacter Adrien"
-				showTooltip="Afficher les actions rapides"
-				hideTooltip="Masquer les actions rapides"
-				actions={actions}
+				ariaLabel="Ouvrir le formulaire de contact"
+				showTooltip="Afficher le bouton contact"
+				hideTooltip="Masquer le bouton contact"
+				onClick={() => setContactDialogOpen(true)}
 			/>
 
 			<Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>

@@ -41,7 +41,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 		<article
 			className={cn(
 				"group/item border rounded-lg p-3",
-				"grid grid-cols-[5rem_1fr] sm:grid-cols-[6rem_1fr_auto] gap-3",
+				"grid grid-cols-[5rem_1fr] sm:grid-cols-[6rem_1fr] gap-3",
 				hasIssue ? "border-destructive/50 bg-destructive/5" : "border-border"
 			)}
 			aria-label={`${item.sku.product.title}, quantité ${item.quantity}`}
@@ -50,7 +50,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 			<Link
 				href={`/creations/${item.sku.product.slug}`}
 				onClick={onClose}
-				className="relative size-20 sm:size-24 row-span-2 sm:row-span-1 rounded-md overflow-hidden bg-muted active:opacity-80 transition-opacity group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50"
+				className="relative size-20 sm:size-24 row-span-2 rounded-md overflow-hidden bg-muted active:opacity-80 transition-opacity group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50"
 				aria-label={`Voir ${item.sku.product.title}`}
 			>
 				{primaryImage ? (
@@ -146,15 +146,27 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					)}
 				</dl>
 
-				{/* Prix */}
-				<div className="flex items-center gap-2">
-					<span className="font-mono font-medium text-sm">
-						{formatEuro(item.priceAtAdd)}
-					</span>
-					{hasDiscount && (
+				{/* Prix final */}
+				<div
+					className={cn(
+						"font-mono font-medium text-sm",
+						"group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/item:animate-pulse"
+					)}
+				>
+					{item.quantity > 1 ? (
 						<>
+							{formatEuro(subtotal)}{" "}
+							<span className="text-muted-foreground font-normal">
+								({item.quantity} x {formatEuro(item.priceAtAdd)})
+							</span>
+						</>
+					) : (
+						formatEuro(item.priceAtAdd)
+					)}
+					{hasDiscount && (
+						<span className="ml-2 inline-flex items-center gap-1">
 							<span
-								className="text-xs text-muted-foreground line-through font-mono"
+								className="text-xs text-muted-foreground line-through"
 								aria-hidden="true"
 							>
 								{formatEuro(item.sku.compareAtPrice!)}
@@ -170,7 +182,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 								Prix reduit de {formatEuro(item.sku.compareAtPrice!)} a{" "}
 								{formatEuro(item.priceAtAdd)}
 							</span>
-						</>
+						</span>
 					)}
 				</div>
 
@@ -191,42 +203,26 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				)}
 			</div>
 
-			{/* Actions - pleine largeur sur mobile (ligne 2), colonne droite sur desktop */}
+			{/* Actions - à droite de l'image, sous le prix */}
 			<div
 				className={cn(
-					"col-span-2 sm:col-span-1",
-					"flex items-center justify-between gap-2",
-					"sm:flex-col sm:items-end sm:gap-2"
+					"flex items-center gap-2",
+					item.sku.inventory > 1 ? "justify-between" : "justify-end"
 				)}
 			>
-				{/* Supprimer - à droite sur mobile, en haut sur desktop */}
-				<div className="order-3 sm:order-1">
-					<CartItemRemoveButton
-						cartItemId={item.id}
-						itemName={item.sku.product.title}
-					/>
-				</div>
+				{/* Quantité - à gauche (rendu uniquement si inventory > 1) */}
+				<CartItemQuantitySelector
+					cartItemId={item.id}
+					currentQuantity={item.quantity}
+					maxQuantity={item.sku.inventory}
+					isInactive={isInactive}
+				/>
 
-				{/* Quantité - à gauche sur mobile, au milieu sur desktop */}
-				<div className="order-1 sm:order-2 sm:mt-auto">
-					<CartItemQuantitySelector
-						cartItemId={item.id}
-						currentQuantity={item.quantity}
-						maxQuantity={item.sku.inventory}
-						isInactive={isInactive}
-					/>
-				</div>
-
-				{/* Sous-total - au milieu sur mobile, en bas sur desktop */}
-				<span
-					aria-label={`Sous-total: ${formatEuro(subtotal)}`}
-					className={cn(
-						"order-2 sm:order-3 font-mono font-semibold text-sm transition-opacity duration-200",
-						"group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/item:animate-pulse"
-					)}
-				>
-					{formatEuro(subtotal)}
-				</span>
+				{/* Supprimer - à droite */}
+				<CartItemRemoveButton
+					cartItemId={item.id}
+					itemName={item.sku.product.title}
+				/>
 			</div>
 		</article>
 	);
