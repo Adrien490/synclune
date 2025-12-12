@@ -137,18 +137,25 @@ const icons = {
 
 export function AppToaster() {
 	const { resolvedTheme } = useTheme();
+	const isMobile = useIsMobile();
 
 	return (
 		<SonnerToaster
 			theme={resolvedTheme as "light" | "dark" | "system"}
-			position="top-center"
+			position={isMobile ? "bottom-center" : "top-center"}
 			duration={2500}
 			visibleToasts={3}
 			icons={icons}
-			// Safe-area pour iPhone notch/Dynamic Island
-			offset="max(1rem, env(safe-area-inset-top))"
+			closeButton
+			pauseWhenPageIsHidden
+			// Safe-area pour iPhone notch/Dynamic Island (bottom sur mobile)
+			offset={
+				isMobile
+					? "max(1rem, env(safe-area-inset-bottom))"
+					: "max(1rem, env(safe-area-inset-top))"
+			}
 			toastOptions={{
-				className: "!mt-safe",
+				className: isMobile ? "!mb-safe" : "!mt-safe",
 			}}
 		/>
 	);
