@@ -8,12 +8,21 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, X } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+	AnimatePresence,
+	motion,
+	useReducedMotion,
+	type PanInfo,
+} from "framer-motion";
 import { useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "../hooks/use-fab-visibility";
 import type { FabKey } from "../constants";
+
+// Seuils pour le swipe-to-hide
+const SWIPE_THRESHOLD = 80; // pixels minimum pour déclencher le hide
+const VELOCITY_THRESHOLD = 500; // px/s pour swipe rapide
 
 interface FabTooltipContent {
 	/** Titre du tooltip (gras) */
@@ -147,6 +156,19 @@ export function Fab({
 		}
 	}, [isError]);
 
+	// Handler pour le swipe-to-hide
+	const handleDragEnd = (
+		_event: MouseEvent | TouchEvent | PointerEvent,
+		info: PanInfo
+	) => {
+		const { offset, velocity } = info;
+
+		// Cacher si : distance suffisante OU vélocité élevée vers la droite
+		if (offset.x > SWIPE_THRESHOLD || velocity.x > VELOCITY_THRESHOLD) {
+			toggle();
+		}
+	};
+
 	// Classes de base pour la visibilité mobile
 	const visibilityClass = hideOnMobile ? "hidden md:block" : "block";
 
@@ -213,11 +235,17 @@ export function Fab({
 				<motion.div
 					key="fab-visible"
 					data-fab-container
+					drag={prefersReducedMotion ? false : "x"}
+					dragConstraints={{ left: 0, right: 0 }}
+					dragElastic={{ left: 0, right: 0.3 }}
+					onDragEnd={handleDragEnd}
+					whileDrag={{ opacity: 0.8 }}
 					initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
-					animate={{ opacity: 1, scale: 1 }}
-					exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
+					animate={{ opacity: 1, scale: 1, x: 0 }}
+					exit={prefersReducedMotion ? undefined : { opacity: 0, x: 100 }}
 					transition={transition}
-					className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6")}
+					className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6 touch-pan-y")}
+					style={{ touchAction: "pan-y" }}
 				>
 					{/* Bouton pour cacher le FAB */}
 					<Tooltip>
@@ -234,7 +262,7 @@ export function Fab({
 									"border border-border",
 									"shadow-sm",
 									"hover:bg-accent",
-									"opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100",
+									"opacity-100 md:opacity-0 md:group-hover:opacity-100",
 									"focus-visible:opacity-100",
 									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
 									"focus-visible:outline-none",

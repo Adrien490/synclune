@@ -182,7 +182,7 @@ export function PageHeader({
 										<ChevronLeft className="size-5" />
 									</Link>
 									{titleSlot ?? (
-										<h1 className="text-2xl font-display font-semibold text-foreground tracking-normal truncate flex-1">
+										<h1 className="text-2xl font-display font-semibold text-foreground tracking-normal truncate flex-1 min-w-0">
 											{title}
 										</h1>
 									)}

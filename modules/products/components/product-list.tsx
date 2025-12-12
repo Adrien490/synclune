@@ -28,16 +28,16 @@ export function ProductList({
 	// Afficher le composant Empty si aucun produit
 	if (!products || products.length === 0) {
 		return (
-			<Empty className="my-12">
+			<Empty className="mt-4 mb-12 sm:my-12">
 				<EmptyHeader>
 					<EmptyMedia variant="icon">
 						<SearchX className="size-6" />
 					</EmptyMedia>
-					<EmptyTitle>Aucun bijou trouvé</EmptyTitle>
+					<EmptyTitle>Aucun produit trouvé</EmptyTitle>
 				</EmptyHeader>
 				<EmptyContent>
 					<Button asChild variant="primary">
-						<a href="/produits">Voir tous les bijoux</a>
+						<a href="/produits">Voir tous les produits</a>
 					</Button>
 				</EmptyContent>
 			</Empty>
