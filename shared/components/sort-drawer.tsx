@@ -115,11 +115,16 @@ export function SortDrawer({
 			router.push(`?${params.toString()}`, { scroll: false });
 		});
 
+		// Vibration feedback pour mobile
+		if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+			navigator.vibrate(10);
+		}
+
 		if (autoCloseOnSelect) {
-			// Small delay for visual feedback before closing
+			// Délai pour voir la confirmation visuelle avant fermeture
 			setTimeout(() => {
 				onOpenChange(false);
-			}, 150);
+			}, 250);
 		}
 	};
 
@@ -160,7 +165,7 @@ export function SortDrawer({
 	return (
 		<Drawer open={open} onOpenChange={onOpenChange}>
 			<DrawerContent>
-				<DrawerHeader className="pb-2">
+				<DrawerHeader className="pb-2 relative">
 					<DrawerTitle className="flex items-center gap-2">
 						{title}
 						{selectedLabel && (
@@ -169,6 +174,15 @@ export function SortDrawer({
 							</span>
 						)}
 					</DrawerTitle>
+					<Button
+						variant="ghost"
+						size="icon"
+						onClick={() => onOpenChange(false)}
+						className="absolute right-4 top-4 size-8"
+						aria-label="Fermer"
+					>
+						<X className="size-4" />
+					</Button>
 				</DrawerHeader>
 				<DrawerBody className="pb-6">
 					<div
@@ -203,11 +217,13 @@ export function SortDrawer({
 										"text-left text-base",
 										"transition-colors duration-150",
 										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:rounded-lg",
-										isSelected
+										isSelected && !isResetOption
 											? "bg-primary/10 text-primary font-medium -mx-1 px-5 rounded-lg"
-											: "hover:bg-muted/50 text-foreground",
+											: isSelected && isResetOption
+												? "bg-muted/30 text-muted-foreground font-medium -mx-1 px-5 rounded-lg"
+												: "hover:bg-muted/50 text-foreground",
 										isPending && "opacity-60 pointer-events-none",
-										isResetOption && "text-muted-foreground"
+										isResetOption && !isSelected && "text-muted-foreground"
 									)}
 								>
 									<span className="flex items-center gap-2">
@@ -292,13 +308,13 @@ export function SortDrawerTrigger({
 				variant="ghost"
 				size="icon"
 				onClick={() => setOpen(true)}
-				className={cn("size-9 relative", className)}
+				className={cn("size-11 relative", className)}
 				aria-label="Trier"
 			>
 				<ArrowUpDown className="size-5" />
 				{hasActiveSort && (
 					<span
-						className="absolute -top-1 -right-1 size-2.5 bg-primary rounded-full"
+						className="absolute -top-0.5 -right-0.5 size-3 bg-primary rounded-full ring-2 ring-background"
 						aria-hidden="true"
 					/>
 				)}

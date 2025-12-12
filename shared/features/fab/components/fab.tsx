@@ -228,13 +228,13 @@ export function Fab({
 								variant="ghost"
 								size="icon"
 								className={cn(
-									"absolute -top-2 -right-2 z-10",
-									"size-7 rounded-full",
+									"absolute -top-3 -right-3 z-10",
+									"size-9 rounded-full",
 									"bg-muted",
 									"border border-border",
 									"shadow-sm",
 									"hover:bg-accent",
-									"opacity-0 group-hover:opacity-100",
+									"opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100",
 									"focus-visible:opacity-100",
 									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
 									"focus-visible:outline-none",

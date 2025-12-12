@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, X } from "lucide-react";
@@ -12,26 +12,22 @@ import {
 	Drawer,
 	DrawerBody,
 	DrawerContent,
-	DrawerFooter,
 	DrawerHeader,
 	DrawerTitle,
+	DrawerTrigger,
 } from "@/shared/components/ui/drawer";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/shared/utils/cn";
 
 interface SearchDrawerProps {
-	/** Controlled open state */
-	open: boolean;
-	/** Callback when open state changes */
-	onOpenChange: (open: boolean) => void;
 	/** URL parameter name for search */
 	paramName?: string;
 	/** Placeholder text for input */
 	placeholder?: string;
-	/** Auto-close drawer after search submission */
-	autoCloseOnSubmit?: boolean;
 	/** Debounce delay in milliseconds */
 	debounceMs?: number;
+	/** Additional classes for the trigger button */
+	triggerClassName?: string;
 }
 
 /**
@@ -40,13 +36,12 @@ interface SearchDrawerProps {
  * Updates URL params with debounced search.
  */
 export function SearchDrawer({
-	open,
-	onOpenChange,
 	paramName = "search",
 	placeholder = "Rechercher...",
-	autoCloseOnSubmit = true,
-	debounceMs = 300,
+	debounceMs = 200,
+	triggerClassName,
 }: SearchDrawerProps) {
+	const [open, setOpen] = useState(false);
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
@@ -63,7 +58,7 @@ export function SearchDrawer({
 	});
 
 	// Update URL with search params
-	const updateSearchParams = (value: string, closeOverlay = false) => {
+	const updateSearchParams = (value: string) => {
 		const newSearchParams = new URLSearchParams(searchParams.toString());
 		if (value.trim()) {
 			newSearchParams.set(paramName, value.trim());
@@ -78,10 +73,6 @@ export function SearchDrawer({
 		startTransition(() => {
 			router.replace(`?${newSearchParams.toString()}`, { scroll: false });
 		});
-
-		if (closeOverlay && autoCloseOnSubmit) {
-			onOpenChange(false);
-		}
 	};
 
 	// Clear search
@@ -95,28 +86,23 @@ export function SearchDrawer({
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		const value = form.getFieldValue("search");
-		updateSearchParams(value, true);
+		updateSearchParams(value);
+		setOpen(false);
 	};
 
-	// Focus input when overlay opens
-	useEffect(() => {
-		if (open) {
-			const timer = setTimeout(() => {
-				inputRef.current?.focus();
-			}, 100);
-			return () => clearTimeout(timer);
-		}
-	}, [open]);
-
-	// Sync form value with URL when overlay opens
-	useEffect(() => {
-		if (open) {
-			form.setFieldValue("search", currentSearchValue);
-		}
-	}, [open, currentSearchValue, form]);
 
 	return (
-		<Drawer open={open} onOpenChange={onOpenChange}>
+		<Drawer open={open} onOpenChange={setOpen}>
+			<DrawerTrigger asChild>
+				<Button
+					variant="ghost"
+					size="icon"
+					className={cn("size-11", triggerClassName)}
+					aria-label="Rechercher"
+				>
+					<Search className="size-5" />
+				</Button>
+			</DrawerTrigger>
 			<DrawerContent>
 				<DrawerHeader>
 					<DrawerTitle>Rechercher</DrawerTitle>
@@ -126,7 +112,7 @@ export function SearchDrawer({
 					<form role="search" onSubmit={handleSubmit} className="flex flex-col gap-4">
 						<div
 							className={cn(
-								"relative flex w-full items-center h-12",
+								"relative flex w-full items-center h-[44px]",
 								"rounded-lg overflow-hidden",
 								"bg-muted/50 border border-input",
 								"focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/30",
@@ -138,7 +124,7 @@ export function SearchDrawer({
 								{isPending ? (
 									<MiniDotsLoader size="sm" color="primary" />
 								) : (
-									<Search className="h-5 w-5" />
+									<Search className="h-4 w-4" />
 								)}
 							</div>
 
@@ -168,13 +154,13 @@ export function SearchDrawer({
 													if (field.state.value) {
 														clearSearch();
 													} else {
-														onOpenChange(false);
+														setOpen(false);
 													}
 												}
 											}}
 											className={cn(
 												"pl-12 pr-12",
-												"h-12",
+												"h-[44px]",
 												"text-base",
 												"border-none shadow-none focus-visible:ring-0",
 												"bg-transparent",
@@ -218,72 +204,7 @@ export function SearchDrawer({
 						</span>
 					</form>
 				</DrawerBody>
-
-				<DrawerFooter>
-					<Button
-						type="submit"
-						disabled={isPending}
-						className="w-full h-12"
-						onClick={handleSubmit}
-					>
-						{isPending ? "Recherche..." : "Rechercher"}
-					</Button>
-				</DrawerFooter>
 			</DrawerContent>
 		</Drawer>
-	);
-}
-
-interface SearchDrawerTriggerProps {
-	/** Placeholder text passed to SearchDrawer */
-	placeholder?: string;
-	/** Additional classes for the trigger button */
-	className?: string;
-	/** URL parameter name for search */
-	paramName?: string;
-}
-
-/**
- * Autonomous trigger component with built-in SearchDrawer.
- * Use this in PageHeader actions for mobile search.
- *
- * @example
- * ```tsx
- * <PageHeader
- *   title="Produits"
- *   action={
- *     <SearchDrawerTrigger
- *       placeholder="Rechercher des bijoux..."
- *       className="md:hidden"
- *     />
- *   }
- * />
- * ```
- */
-export function SearchDrawerTrigger({
-	placeholder = "Rechercher...",
-	className,
-	paramName = "search",
-}: SearchDrawerTriggerProps) {
-	const [open, setOpen] = useState(false);
-
-	return (
-		<>
-			<Button
-				variant="ghost"
-				size="icon"
-				onClick={() => setOpen(true)}
-				className={cn("size-11", className)}
-				aria-label="Rechercher"
-			>
-				<Search className="size-5" />
-			</Button>
-			<SearchDrawer
-				open={open}
-				onOpenChange={setOpen}
-				placeholder={placeholder}
-				paramName={paramName}
-			/>
-		</>
 	);
 }
