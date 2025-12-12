@@ -68,7 +68,7 @@ export function Logo({
 					className={cn(
 						dancingScript.className,
 						textSizeClass,
-						"font-semibold text-primary tracking-wide",
+						"font-semibold text-foreground tracking-wide",
 						textClassName
 					)}
 				>
