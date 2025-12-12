@@ -12,6 +12,7 @@ import { useUpdateProductSkuForm } from "@/modules/skus/hooks/use-update-sku-for
 import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
+import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { AnimatePresence, motion } from "framer-motion";
 import { Euro, ImagePlus, Image as ImageIcon, Info, Palette, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -49,6 +50,8 @@ export function EditProductVariantForm({
 		isUploading: isPrimaryImageUploading,
 	} = useUploadThing("catalogMedia");
 
+	const { upload: uploadGalleryMedia, isUploading: isGalleryUploading } = useMediaUpload();
+
 	const { form, action } = useUpdateProductSkuForm({
 		sku,
 		onSuccess: (message) => {
@@ -68,7 +71,7 @@ export function EditProductVariantForm({
 	return (
 		<>
 			<fieldset
-				disabled={isPrimaryImageUploading || form.state.isSubmitting}
+				disabled={isPrimaryImageUploading || isGalleryUploading || form.state.isSubmitting}
 				className="space-y-6"
 			>
 				<form
@@ -572,21 +575,25 @@ export function EditProductVariantForm({
 														}
 														return files;
 													}}
-													onClientUploadComplete={(res) => {
-														res?.forEach((uploadResult) => {
-															const serverData = uploadResult?.serverData;
-															const fileType = uploadResult?.type || "";
-															const isVideo = fileType.startsWith("video/");
+													onChange={async (files) => {
+														const remaining = maxCount - field.state.value.length;
+														const filesToUpload = files.slice(0, remaining);
+														if (files.length > remaining) {
+															toast.warning(
+																`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`
+															);
+														}
+														if (filesToUpload.length === 0) return;
 
-															if (serverData?.url) {
-																field.pushValue({
-																	url: serverData.url,
-																	blurDataUrl: serverData.blurDataUrl ?? undefined,
-																	thumbnailUrl: serverData.thumbnailUrl ?? undefined,
-																	altText: product.title,
-																	mediaType: isVideo ? "VIDEO" : "IMAGE",
-																});
-															}
+														const results = await uploadGalleryMedia(filesToUpload);
+														results.forEach((result) => {
+															field.pushValue({
+																url: result.url,
+																blurDataUrl: result.blurDataUrl,
+																thumbnailUrl: result.thumbnailUrl,
+																altText: product.title,
+																mediaType: result.mediaType,
+															});
 														});
 													}}
 													onUploadError={(error) => {
@@ -745,14 +752,15 @@ export function EditProductVariantForm({
 											disabled={
 												!canSubmit ||
 												form.state.isSubmitting ||
-												isPrimaryImageUploading
+												isPrimaryImageUploading ||
+												isGalleryUploading
 											}
 											className="min-w-[160px]"
 										>
 											{form.state.isSubmitting
 												? "Mise à jour..."
-												: isPrimaryImageUploading
-													? "Upload image..."
+												: isPrimaryImageUploading || isGalleryUploading
+													? "Upload..."
 													: "Mettre à jour"}
 										</Button>
 									)}

@@ -11,6 +11,7 @@ import { UploadProgress } from "@/modules/media/components/admin/upload-progress
 import { useCreateProductSkuForm } from "@/modules/skus/hooks/use-create-sku-form";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
+import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { AnimatePresence, motion } from "framer-motion";
 import { Euro, ImagePlus, Image as ImageIcon, Info, Package, Palette, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -47,6 +48,8 @@ export function CreateProductVariantForm({
 		isUploading: isPrimaryImageUploading,
 	} = useUploadThing("catalogMedia");
 
+	const { upload: uploadGalleryMedia, isUploading: isGalleryUploading } = useMediaUpload();
+
 	const { form, action } = useCreateProductSkuForm({
 		onSuccess: (message) => {
 			toast.success(message || "Variante créée avec succès", {
@@ -73,7 +76,7 @@ export function CreateProductVariantForm({
 	return (
 		<>
 			<fieldset
-				disabled={isPrimaryImageUploading || form.state.isSubmitting}
+				disabled={isPrimaryImageUploading || isGalleryUploading || form.state.isSubmitting}
 				className="space-y-6"
 			>
 				<form
@@ -592,21 +595,25 @@ export function CreateProductVariantForm({
 														}
 														return files;
 													}}
-													onClientUploadComplete={(res) => {
-														res?.forEach((uploadResult) => {
-															const serverData = uploadResult?.serverData;
-															const fileType = uploadResult?.type || "";
-															const isVideo = fileType.startsWith("video/");
+													onChange={async (files) => {
+														const remaining = maxCount - field.state.value.length;
+														const filesToUpload = files.slice(0, remaining);
+														if (files.length > remaining) {
+															toast.warning(
+																`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`
+															);
+														}
+														if (filesToUpload.length === 0) return;
 
-															if (serverData?.url) {
-																field.pushValue({
-																	url: serverData.url,
-																	blurDataUrl: serverData.blurDataUrl ?? undefined,
-																	thumbnailUrl: serverData.thumbnailUrl ?? undefined,
-																	altText: product.title,
-																	mediaType: isVideo ? "VIDEO" : "IMAGE",
-																});
-															}
+														const results = await uploadGalleryMedia(filesToUpload);
+														results.forEach((result) => {
+															field.pushValue({
+																url: result.url,
+																blurDataUrl: result.blurDataUrl,
+																thumbnailUrl: result.thumbnailUrl,
+																altText: product.title,
+																mediaType: result.mediaType,
+															});
 														});
 													}}
 													onUploadError={(error) => {
@@ -765,14 +772,15 @@ export function CreateProductVariantForm({
 											disabled={
 												!canSubmit ||
 												form.state.isSubmitting ||
-												isPrimaryImageUploading
+												isPrimaryImageUploading ||
+												isGalleryUploading
 											}
 											className="min-w-[160px]"
 										>
 											{form.state.isSubmitting
 												? "Création..."
-												: isPrimaryImageUploading
-													? "Upload image..."
+												: isPrimaryImageUploading || isGalleryUploading
+													? "Upload..."
 													: "Créer la variante"}
 										</Button>
 									)}
