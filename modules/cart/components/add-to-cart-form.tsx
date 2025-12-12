@@ -160,13 +160,10 @@ export function AddToCartForm({
 						{/* Message explicatif sur la limite de quantité - min-h pour éviter layout shift */}
 						<form.Subscribe selector={(state) => [state.values.quantity]}>
 							{([quantity]) => {
-								let message: string | null = null;
-
-								if (selectedSku.inventory <= MAX_QUANTITY_PER_ORDER) {
-									message = `Maximum disponible : ${selectedSku.inventory}`;
-								} else if (quantity >= MAX_QUANTITY_PER_ORDER) {
-									message = `Limite de ${MAX_QUANTITY_PER_ORDER} par commande`;
-								}
+								const message =
+									quantity >= MAX_QUANTITY_PER_ORDER
+										? `Limite de ${MAX_QUANTITY_PER_ORDER} par commande`
+										: null;
 
 								return (
 									<p

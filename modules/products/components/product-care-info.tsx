@@ -97,7 +97,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 								{SHIPPING_RATES.FR.minDays}-{SHIPPING_RATES.FR.maxDays} jours
 								ouvrés
 							</p>
-							<p className="text-primary font-medium">
+							<p className="text-foreground font-medium">
 								Commande aujourd'hui → Reçois d'ici le{" "}
 								{getEstimatedDeliveryDate(
 									SHIPPING_RATES.FR.minDays,
