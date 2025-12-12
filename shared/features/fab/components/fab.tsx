@@ -8,24 +8,13 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, X } from "lucide-react";
-import {
-	AnimatePresence,
-	motion,
-	useReducedMotion,
-	type PanInfo,
-} from "framer-motion";
-import { useRef, useEffect, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "../hooks/use-fab-visibility";
 import type { FabKey } from "../constants";
 
-// Seuils pour le swipe-to-hide (optimisés pour mobile)
-const SWIPE_THRESHOLD = 35; // pixels minimum pour déclencher le hide
-const VELOCITY_THRESHOLD = 250; // px/s pour swipe rapide
-
-// Clé localStorage pour le hint de swipe (affiché une seule fois)
-const FAB_SWIPE_HINT_KEY = "fab-swipe-hint-seen";
 
 interface FabTooltipContent {
 	/** Titre du tooltip (gras) */
@@ -110,17 +99,6 @@ export function Fab({
 		};
 	}, []);
 
-	// Détecter si l'appareil est tactile (pour activer le swipe uniquement sur mobile)
-	const [isTouchDevice, setIsTouchDevice] = useState(false);
-	useEffect(() => {
-		const mediaQuery = window.matchMedia("(hover: none)");
-		setIsTouchDevice(mediaQuery.matches);
-
-		const handler = (e: MediaQueryListEvent) => setIsTouchDevice(e.matches);
-		mediaQuery.addEventListener("change", handler);
-		return () => mediaQuery.removeEventListener("change", handler);
-	}, []);
-
 	// Respecter prefers-reduced-motion avec config globale
 	const prefersReducedMotion = useReducedMotion();
 	const transition = maybeReduceMotion(
@@ -132,28 +110,6 @@ export function Fab({
 		},
 		prefersReducedMotion ?? false
 	);
-
-	// État pour l'animation de hint du swipe (mobile uniquement, une seule fois)
-	const [showSwipeHint, setShowSwipeHint] = useState(false);
-	useEffect(() => {
-		if (!isTouchDevice || prefersReducedMotion) return;
-
-		const hasSeenHint = localStorage.getItem(FAB_SWIPE_HINT_KEY);
-		if (hasSeenHint) return;
-
-		// Délai avant de montrer l'animation
-		const timer = setTimeout(() => {
-			setShowSwipeHint(true);
-		}, 1000);
-
-		return () => clearTimeout(timer);
-	}, [isTouchDevice, prefersReducedMotion]);
-
-	// Marquer le hint comme vu après l'animation
-	const handleSwipeHintComplete = () => {
-		setShowSwipeHint(false);
-		localStorage.setItem(FAB_SWIPE_HINT_KEY, "true");
-	};
 
 	// Hook pour toggle la visibilité
 	const { isHidden, toggle, isPending, isError } = useFabVisibility({
@@ -191,19 +147,6 @@ export function Fab({
 			toast.error("Erreur lors de la modification");
 		}
 	}, [isError]);
-
-	// Handler pour le swipe-to-hide
-	const handleDragEnd = (
-		_event: MouseEvent | TouchEvent | PointerEvent,
-		info: PanInfo
-	) => {
-		const { offset, velocity } = info;
-
-		// Cacher si : distance suffisante OU vélocité élevée vers la droite
-		if (offset.x > SWIPE_THRESHOLD || velocity.x > VELOCITY_THRESHOLD) {
-			toggle();
-		}
-	};
 
 	// Classes de base pour la visibilité mobile
 	const visibilityClass = hideOnMobile ? "hidden md:block" : "block";
@@ -271,29 +214,19 @@ export function Fab({
 				<motion.div
 					key="fab-visible"
 					data-fab-container
-					drag={prefersReducedMotion || !isTouchDevice ? false : "x"}
-					dragConstraints={{ left: 0, right: 80 }}
-					dragElastic={{ left: 0.1, right: 0.3 }}
-					dragMomentum={false}
-					onDragEnd={handleDragEnd}
-					whileDrag={{ opacity: 0.8 }}
 					initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
 					animate={
-						showSwipeHint
-							? { opacity: 1, scale: 1, x: [0, 24, 0] }
-							: { opacity: 1, scale: 1, x: 0 }
+						prefersReducedMotion
+							? { opacity: 1, scale: 1 }
+							: { opacity: 1, scale: 1, x: [0, 0, 24, 0] }
 					}
 					exit={prefersReducedMotion ? undefined : { opacity: 0, x: 100 }}
 					transition={
-						showSwipeHint
-							? { x: { duration: 0.8, ease: "easeInOut", times: [0, 0.5, 1] } }
-							: transition
+						prefersReducedMotion
+							? transition
+							: { ...transition, x: { duration: 1.2, ease: "easeInOut", times: [0, 0.6, 0.8, 1] } }
 					}
-					onAnimationComplete={() => {
-						if (showSwipeHint) handleSwipeHintComplete();
-					}}
-					className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6 touch-pan-y")}
-					style={{ touchAction: "pan-y" }}
+					className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6")}
 				>
 					{/* Bouton pour cacher le FAB */}
 					<Tooltip>

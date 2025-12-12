@@ -287,7 +287,7 @@ export function SearchOverlay({
 										className="shrink-0 h-12 px-4 rounded-xl font-medium"
 										aria-label="Rechercher"
 									>
-										{isPending ? <Spinner className="size-4" /> : "OK"}
+										{isPending ? <Spinner className="size-4" /> : <Search className="size-4" />}
 									</Button>
 								)}
 							/>
