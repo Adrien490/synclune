@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
@@ -12,17 +11,16 @@ import {
 	SheetFooter,
 	SheetHeader,
 	SheetTitle,
-	SheetTrigger,
 } from "@/shared/components/ui/sheet";
-import { Input } from "@/shared/components/ui/input";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Separator } from "@/shared/components/ui/separator";
-import { Slider } from "@/shared/components/ui/slider";
-import { cn } from "@/shared/utils/cn";
 import { useForm } from "@tanstack/react-form";
-import { Filter, X } from "lucide-react";
+import { X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useTransition } from "react";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { PRODUCT_FILTER_DIALOG_ID } from "./product-filter-fab";
+import { PriceRangeInputs } from "./price-range-inputs";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
@@ -37,7 +35,6 @@ interface FilterSheetProps {
 	materials: MaterialOption[];
 	productTypes?: ProductTypeOption[];
 	maxPriceInEuros: number;
-	className?: string;
 }
 
 // Types pour TanStack Form
@@ -48,139 +45,15 @@ interface FilterFormData {
 	priceRange: [number, number];
 }
 
-/**
- * Composant interne pour gerer les inputs de prix avec etat local
- * Resout les problemes de synchronisation avec les boutons +/-
- */
-function PriceRangeInputs({
-	value,
-	onChange,
-	maxPrice,
-}: {
-	value: [number, number];
-	onChange: (value: [number, number]) => void;
-	maxPrice: number;
-}) {
-	// Etat local pour permettre l'edition libre
-	const [minInput, setMinInput] = useState(String(value[0]));
-	const [maxInput, setMaxInput] = useState(String(value[1]));
-
-	// Synchroniser l'etat local quand la valeur externe change (ex: slider)
-	useEffect(() => {
-		setMinInput(String(value[0]));
-	}, [value[0]]);
-
-	useEffect(() => {
-		setMaxInput(String(value[1]));
-	}, [value[1]]);
-
-	const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const inputValue = e.target.value;
-		setMinInput(inputValue);
-
-		const numValue = Number(inputValue);
-		if (!isNaN(numValue) && inputValue !== "") {
-			// Appliquer les contraintes et mettre a jour le form
-			const constrainedValue = Math.min(Math.max(0, numValue), value[1]);
-			onChange([constrainedValue, value[1]]);
-		}
-	};
-
-	const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const inputValue = e.target.value;
-		setMaxInput(inputValue);
-
-		const numValue = Number(inputValue);
-		if (!isNaN(numValue) && inputValue !== "") {
-			// Appliquer les contraintes et mettre a jour le form
-			const constrainedValue = Math.max(Math.min(maxPrice, numValue), value[0]);
-			onChange([value[0], constrainedValue]);
-		}
-	};
-
-	const handleMinBlur = () => {
-		// Sur blur, s'assurer que la valeur est valide et synchronisee
-		const numValue = Number(minInput);
-		if (isNaN(numValue) || minInput === "") {
-			setMinInput(String(value[0]));
-		} else {
-			const constrainedValue = Math.min(Math.max(0, numValue), value[1]);
-			setMinInput(String(constrainedValue));
-			if (constrainedValue !== value[0]) {
-				onChange([constrainedValue, value[1]]);
-			}
-		}
-	};
-
-	const handleMaxBlur = () => {
-		// Sur blur, s'assurer que la valeur est valide et synchronisee
-		const numValue = Number(maxInput);
-		if (isNaN(numValue) || maxInput === "") {
-			setMaxInput(String(value[1]));
-		} else {
-			const constrainedValue = Math.max(Math.min(maxPrice, numValue), value[0]);
-			setMaxInput(String(constrainedValue));
-			if (constrainedValue !== value[1]) {
-				onChange([value[0], constrainedValue]);
-			}
-		}
-	};
-
-	return (
-		<fieldset className="space-y-3 border-0 p-0 m-0" role="group" aria-labelledby="price-filter-label">
-			<legend id="price-filter-label" className="font-medium text-sm text-foreground">Prix (€)</legend>
-			<div className="space-y-4">
-				{/* data-vaul-no-drag empeche le drawer de capturer le drag du slider */}
-				<div data-vaul-no-drag>
-					<Slider
-						value={value}
-						onValueChange={(newValue) => onChange([newValue[0], newValue[1]])}
-						max={maxPrice}
-						min={0}
-						step={5}
-						className="w-full"
-					/>
-				</div>
-				<div className="flex items-center gap-3">
-					<div className="flex-1">
-						<Input
-							type="number"
-							min={0}
-							max={value[1]}
-							value={minInput}
-							onChange={handleMinChange}
-							onBlur={handleMinBlur}
-							className="h-10 text-sm"
-							aria-label="Prix minimum"
-						/>
-					</div>
-					<span className="text-muted-foreground shrink-0">—</span>
-					<div className="flex-1">
-						<Input
-							type="number"
-							min={value[0]}
-							max={maxPrice}
-							value={maxInput}
-							onChange={handleMaxChange}
-							onBlur={handleMaxBlur}
-							className="h-10 text-sm"
-							aria-label="Prix maximum"
-						/>
-					</div>
-					<span className="text-muted-foreground text-sm shrink-0">€</span>
-				</div>
-			</div>
-		</fieldset>
-	);
-}
-
 export function ProductFilterSheet({
 	colors = [],
 	materials = [],
 	productTypes = [],
 	maxPriceInEuros,
-	className,
 }: FilterSheetProps) {
+	// Utilise Zustand pour gerer l'etat d'ouverture
+	const { isOpen, open, close } = useDialog(PRODUCT_FILTER_DIALOG_ID);
+
 	// Range de prix dynamique basé sur les données réelles
 	const DEFAULT_PRICE_RANGE = [0, maxPriceInEuros];
 	const pathname = usePathname();
@@ -336,31 +209,7 @@ export function ProductFilterSheet({
 	})();
 
 	return (
-		<Sheet direction="right">
-			<SheetTrigger asChild>
-				<Button
-					variant="outline"
-					className={cn(
-						"relative h-[44px] w-11 p-0",
-						"sm:w-auto sm:px-3 sm:gap-2",
-						"border-border/60 hover:border-border hover:bg-accent/50 transition-all duration-200",
-						activeFiltersCount > 0 && "border-primary/30 bg-primary/5",
-						className
-					)}
-					aria-label={`Filtres${activeFiltersCount > 0 ? ` (${activeFiltersCount} actifs)` : ""}`}
-				>
-					<Filter className="w-4 h-4" />
-					<span className="hidden sm:inline">Filtres</span>
-					{activeFiltersCount > 0 && (
-						<Badge
-							variant="secondary"
-							className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold bg-primary text-primary-foreground"
-						>
-							{activeFiltersCount}
-						</Badge>
-					)}
-				</Button>
-			</SheetTrigger>
+		<Sheet direction="right" open={isOpen} onOpenChange={(newOpen) => (newOpen ? open() : close())}>
 
 			<SheetContent className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full">
 				<SheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
@@ -453,7 +302,7 @@ export function ProductFilterSheet({
 													}}
 													indicator={
 														<span
-															className="w-4 h-4 rounded-full border-2 border-border"
+															className="w-5 h-5 rounded-full border border-border/50 shadow-sm ring-1 ring-inset ring-black/5"
 															style={{ backgroundColor: color.hex }}
 														/>
 													}

@@ -163,7 +163,7 @@ export function PageHeader({
 						className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4"
 					>
 						<div className="min-w-0 flex-1">
-							{/* Mobile avec breadcrumbs : Bouton retour + Titre inline */}
+							{/* Mobile avec breadcrumbs : Bouton retour + Titre + Actions inline */}
 							{breadcrumbs.length > 0 && (
 								<div className="flex items-center gap-1 sm:hidden">
 									<Link
@@ -182,9 +182,13 @@ export function PageHeader({
 										<ChevronLeft className="size-5" />
 									</Link>
 									{titleSlot ?? (
-										<h1 className="text-2xl font-display font-semibold text-foreground tracking-normal truncate">
+										<h1 className="text-2xl font-display font-semibold text-foreground tracking-normal truncate flex-1">
 											{title}
 										</h1>
+									)}
+									{/* Actions mobile - alignées à droite */}
+									{displayActions && (
+										<div className="shrink-0 ml-auto">{displayActions}</div>
 									)}
 								</div>
 							)}
@@ -285,12 +289,15 @@ export function PageHeader({
 							)}
 						</div>
 
-						{/* Action optionnelle (ex: bouton, recherche) */}
+						{/* Action optionnelle (ex: bouton, recherche) - desktop ou mobile sans breadcrumbs */}
 						{displayActions && (
 							<div
 								role="group"
 								aria-label="Actions de la page"
-								className="shrink-0 w-full sm:w-auto flex flex-wrap items-center justify-start sm:justify-end gap-3"
+								className={cn(
+									"shrink-0 w-full sm:w-auto flex flex-wrap items-center justify-end gap-3",
+									breadcrumbs.length > 0 && "hidden sm:flex"
+								)}
 							>
 								{displayActions}
 							</div>

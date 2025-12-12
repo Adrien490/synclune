@@ -8,18 +8,23 @@ import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
 	SORT_LABELS,
 	SORT_OPTIONS,
-	getProducts,
-} from "@/modules/products/data/get-products";
+} from "@/modules/products/constants/product.constants";
+import { getProducts } from "@/modules/products/data/get-products";
 import type { SortField } from "@/modules/products/data/get-products";
 import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
+import { ProductFilterFab } from "@/modules/products/components/product-filter-fab";
 import { ProductFilterSheet } from "@/modules/products/components/product-filter-sheet";
+import { ProductFilterTrigger } from "@/modules/products/components/product-filter-trigger";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
+import { SearchDrawerTrigger } from "@/shared/components/search-drawer";
 import { SelectFilter } from "@/shared/components/select-filter";
-import { TabNavigation } from "@/shared/components/tab-navigation";
+import { SortDrawerTrigger } from "@/shared/components/sort-drawer";
+import { FAB_KEYS } from "@/shared/features/fab";
+import { getFabVisibility } from "@/shared/features/fab/data/get-fab-visibility";
 import { centsToEuros } from "@/shared/utils/format-euro";
 import { getFirstParam } from "@/shared/utils/params";
 import { parseFilters } from "./_utils/params";
@@ -213,15 +218,17 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 			? searchParamsData.search
 			: undefined;
 
-	// Récupérer les couleurs, matériaux et le prix maximum en parallèle
-	const [colorsData, materials, maxPriceInCents] = await Promise.all([
-		getColors({
-			perPage: 100,
-			sortBy: "name-ascending",
-		}),
-		getMaterialOptions(),
-		getMaxProductPrice(),
-	]);
+	// Récupérer les couleurs, matériaux, prix maximum et visibilité FAB en parallèle
+	const [colorsData, materials, maxPriceInCents, isFilterFabHidden] =
+		await Promise.all([
+			getColors({
+				perPage: 100,
+				sortBy: "name-ascending",
+			}),
+			getMaterialOptions(),
+			getMaxProductPrice(),
+			getFabVisibility(FAB_KEYS.STOREFRONT),
+		]);
 
 	const maxPriceInEuros = centsToEuros(maxPriceInCents);
 	const colors = colorsData.colors;
@@ -275,8 +282,6 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const searchPlaceholder = isTypePage
 		? `Rechercher des ${selectedProductType.label.toLowerCase()}...`
 		: "Rechercher des bijoux...";
-	const activeTab = isTypePage ? selectedProductType.slug : "tous";
-
 	// Breadcrumbs
 	const breadcrumbs = isTypePage
 		? [
@@ -287,6 +292,12 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 				},
 			]
 		: [{ label: "Bijoux", href: "/produits" }];
+
+	// Sort options for mobile drawer
+	const sortOptions = Object.values(SORT_OPTIONS).map((option) => ({
+		value: option,
+		label: SORT_LABELS[option as keyof typeof SORT_LABELS],
+	}));
 
 	// JSON-LD structured data pour SEO
 	const jsonLd = {
@@ -357,31 +368,22 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 				title={pageTitle}
 				description={searchTerm ? undefined : pageDescription}
 				breadcrumbs={breadcrumbs}
-				navigation={
-					<TabNavigation
-						items={[
-							{
-								label: "Tous les bijoux",
-								value: "tous",
-								href: "/produits",
-							},
-							...productTypes.map((type) => ({
-								label: type.label,
-								value: type.slug,
-								href: `/produits?type=${type.slug}`,
-							})),
-						]}
-						activeValue={activeTab}
-						ariaLabel="Navigation par types de bijoux"
-						mobileVisibleCount={1}
-					/>
+				actions={
+					<div className="flex items-center gap-2 md:hidden">
+						<SortDrawerTrigger options={sortOptions} />
+						<SearchDrawerTrigger placeholder={searchPlaceholder} />
+					</div>
 				}
 			/>
+
+		
 
 			{/* Section principale avec catalogue */}
 			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
 				<div className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+					{/* Desktop Toolbar - hidden on mobile */}
 					<Toolbar
+						className="hidden md:flex"
 						search={
 							<SearchForm
 								paramName="search"
@@ -399,11 +401,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 							}))}
 							placeholder="Plus récents"
 						/>
-						<ProductFilterSheet
-							colors={colors}
-							materials={materials}
-							maxPriceInEuros={maxPriceInEuros}
-						/>
+						<ProductFilterTrigger />
 					</Toolbar>
 
 					{hasActiveFilters && (
@@ -415,6 +413,18 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 					</Suspense>
 				</div>
 			</section>
+
+			{/* FAB Filtres - Mobile only */}
+			<ProductFilterFab initialHidden={isFilterFabHidden} />
+			<ProductFilterSheet
+				colors={colors}
+				materials={materials}
+				productTypes={productTypes.map((t) => ({
+					slug: t.slug,
+					label: t.label,
+				}))}
+				maxPriceInEuros={maxPriceInEuros}
+			/>
 		</div>
 	);
 }

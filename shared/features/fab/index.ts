@@ -14,3 +14,6 @@ export {
 
 // Hook
 export { useFabVisibility } from "./hooks/use-fab-visibility";
+
+// Note: getFabVisibility is NOT exported here to avoid Client Component import issues.
+// Import directly from "@/shared/features/fab/data/get-fab-visibility" in Server Components.

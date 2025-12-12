@@ -5,6 +5,8 @@
 export const FAB_KEYS = {
 	CONTACT_ADRIEN: "contact-adrien",
 	ADMIN_SPEED_DIAL: "admin-speed-dial",
+	/** FAB pour la boutique (site public) - partage sur toutes les pages */
+	STOREFRONT: "storefront",
 } as const;
 
 export type FabKey = (typeof FAB_KEYS)[keyof typeof FAB_KEYS];
