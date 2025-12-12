@@ -3,9 +3,10 @@ import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/naviga
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
-import { LayoutDashboard, User } from "lucide-react";
+import { LayoutDashboard, User, Heart } from "lucide-react";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
+import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { BadgeCountsStoreProvider } from "@/shared/stores/badge-counts-store-provider";
 import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
@@ -108,6 +109,20 @@ export async function Navbar() {
 										/>
 									</Link>
 								)}
+
+								{/* Icône favoris (visible sur desktop seulement) */}
+								<Link
+									href="/favoris"
+									className={`hidden sm:inline-flex ${iconButtonClassName}`}
+									aria-label="Accéder à mes favoris"
+								>
+									<Heart
+										size={20}
+										className="transition-transform duration-300 ease-out group-hover:scale-105"
+										aria-hidden="true"
+									/>
+									<WishlistBadge />
+								</Link>
 
 								{/* Icône compte / Se connecter (visible sur desktop seulement) */}
 								<Link
