@@ -1,6 +1,6 @@
 "use client";
 
-import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
+import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { useAppForm } from "@/shared/components/forms";

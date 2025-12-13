@@ -1,9 +1,9 @@
 import { Badge } from "@/shared/components/ui/badge";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
-import { WishlistButtonDynamic } from "@/modules/wishlist/components/wishlist-button-dynamic";
 import { Crown, Heart } from "lucide-react";
 import Link from "next/link";
+import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 
 interface ProductInfoProps {
 	product: GetProductReturn;
@@ -36,10 +36,10 @@ export function ProductInfo({
 				>
 					{product.title}
 				</h1>
-				<WishlistButtonDynamic
-					product={product}
-					defaultSku={defaultSku}
-					initialIsInWishlist={isInWishlist ?? false}
+				<WishlistButton
+					productTitle={product.title}
+					skuId={defaultSku.id}
+					isInWishlist={isInWishlist ?? false}
 					size="lg"
 				/>
 			</div>
@@ -74,10 +74,10 @@ export function ProductInfo({
 
 				{/* Bouton wishlist visible uniquement sur desktop - à droite des badges */}
 				<div className="hidden sm:block ml-auto">
-					<WishlistButtonDynamic
-						product={product}
-						defaultSku={defaultSku}
-						initialIsInWishlist={isInWishlist ?? false}
+					<WishlistButton
+						productTitle={product.title}
+						skuId={defaultSku.id}
+						isInWishlist={isInWishlist ?? false}
 						size="lg"
 					/>
 				</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
+import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { useAppForm } from "@/shared/components/forms";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";

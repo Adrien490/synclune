@@ -26,21 +26,6 @@ interface LatestCreationsProps {
  * - Encourager les visiteurs réguliers à revenir
  *
  * @param productsPromise - Promise contenant les produits récents
- *
- * @example
- * ```tsx
- * // Dans une page Server Component
- * import { getProducts } from "@/modules/products/data/get-products";
- *
- * export default function HomePage() {
- *   const latestProductsPromise = getProducts({
- *     perPage: 4,
- *     sortBy: "created-descending",
- *     filters: { status: "PUBLIC" }
- *   });
- *   return <LatestCreations productsPromise={latestProductsPromise} />;
- * }
- * ```
  */
 export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 	const { products } = use(productsPromise);

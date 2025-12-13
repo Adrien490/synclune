@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
-import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
+import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { Separator } from "@/shared/components/ui/separator";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";

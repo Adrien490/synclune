@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
 import { Role } from "@/app/generated/prisma/browser";
-import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
+import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { Label } from "@/shared/components/ui/label";

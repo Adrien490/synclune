@@ -1,6 +1,6 @@
 "use client";
 
-import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
+import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
 import { Separator } from "@/shared/components/ui/separator";

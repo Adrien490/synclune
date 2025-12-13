@@ -16,25 +16,6 @@ export type {
 	ProductVariantInfo,
 } from "../types/product.types";
 
-// Utility functions re-exported for convenience
-// WARNING: These cause issues when imported in Client Components due to "use cache" above
-// Client Components should import directly from @/modules/skus/services/*
-export { extractVariantInfo } from "@/modules/skus/services/extract-sku-info";
-export { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
-export { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
-
-// ============================================================================
-// MAIN FUNCTIONS
-// ============================================================================
-
-/**
- * Récupère un produit par son slug
- *
- * ✨ SIMPLE : Retourne les données brutes de Prisma
- * - Utilisez product.skus.find(s => s.isDefault) pour le SKU principal
- * - Utilisez product.skus.reduce((sum, s) => sum + s.inventory, 0) pour le stock total
- * - Les SKUs sont déjà triés par isDefault DESC, priceInclTax ASC
- */
 export async function getProductBySlug(
 	params: Partial<GetProductParams>
 ): Promise<GetProductReturn | null> {

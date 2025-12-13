@@ -4,11 +4,9 @@ import { Suspense } from "react";
 
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { Separator } from "@/shared/components/ui/separator";
-import {
-	findSkuByVariants,
-	filterCompatibleSkus,
-	getProductBySlug,
-} from "@/modules/products/data/get-product";
+import { getProductBySlug } from "@/modules/products/data/get-product";
+import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
+import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import { checkIsInWishlist } from "@/modules/wishlist/data/check-is-in-wishlist";
 
 import { PageHeader } from "@/shared/components/page-header";

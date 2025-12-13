@@ -2,7 +2,7 @@
 
 import { DiscountType } from "@/app/generated/prisma/browser";
 import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.constants";
-import { FilterSheetWrapper } from "@/shared/components/filter-sheet";
+import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { Separator } from "@/shared/components/ui/separator";
 import { useForm } from "@tanstack/react-form";

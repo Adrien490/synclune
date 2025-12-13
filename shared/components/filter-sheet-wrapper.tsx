@@ -16,7 +16,7 @@ import {
 } from "@/shared/components/ui/sheet";
 import { cn } from "@/shared/utils/cn";
 import { Filter, Loader2, X } from "lucide-react";
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 
 export interface FilterSheetWrapperProps {
 	/** Number of active filters to display in badge */
@@ -71,14 +71,8 @@ export function FilterSheetWrapper({
 	trigger,
 	hideTrigger = false,
 }: FilterSheetWrapperProps) {
-	const [internalOpen, setInternalOpen] = useState(false);
-
-	// Support controlled and uncontrolled modes
-	const isControlled = controlledOpen !== undefined;
-	const open = isControlled ? controlledOpen : internalOpen;
-	const setOpen = isControlled
-		? (newOpen: boolean) => controlledOnOpenChange?.(newOpen)
-		: setInternalOpen;
+	const open = controlledOpen ?? false;
+	const setOpen = (newOpen: boolean) => controlledOnOpenChange?.(newOpen);
 
 	const handleApply = () => {
 		onApply?.();
