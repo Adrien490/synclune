@@ -104,7 +104,6 @@ export function GalleryMediaRenderer({
 			placeholder={media.blurDataUrl ? "blur" : "empty"}
 			blurDataURL={media.blurDataUrl}
 			onError={onError}
-			draggable={false}
 		/>
 	);
 }
