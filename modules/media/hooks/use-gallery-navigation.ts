@@ -42,11 +42,6 @@ export function useGalleryNavigation({
 	const rawGalleryParam = searchParams.get("gallery");
 	const parsedIndex = rawGalleryParam ? parseInt(rawGalleryParam, 10) : 0;
 
-	// Warning en dev si param invalide (aide au debug)
-	if (process.env.NODE_ENV === "development" && rawGalleryParam && Number.isNaN(parsedIndex)) {
-		console.warn(`[useGalleryNavigation] Paramètre gallery invalide: "${rawGalleryParam}" - utilisation de l'index 0`);
-	}
-
 	const selectedIndex = totalImages > 0
 		? Math.max(0, Math.min(totalImages - 1, Number.isNaN(parsedIndex) ? 0 : parsedIndex))
 		: 0;
