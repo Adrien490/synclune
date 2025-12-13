@@ -9,7 +9,6 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Fragment } from "react";
 import { NavMainClient } from "./nav-main-client";
 import { navigationData } from "./navigation-config";
-import { getNavBadges, type NavBadges } from "./nav-badges-data";
 
 /**
  * Navigation principale du dashboard admin
@@ -17,9 +16,6 @@ import { getNavBadges, type NavBadges } from "./nav-badges-data";
  * - Affiche les badges de notification (commandes, remboursements, alertes)
  */
 export async function NavMain() {
-	// Récupérer les compteurs pour les badges
-	const badges = await getNavBadges();
-
 	return (
 		<>
 			{navigationData.navGroups.map((group, index) => {
@@ -38,7 +34,6 @@ export async function NavMain() {
 							<SidebarMenu className="gap-1" aria-label={group.label}>
 								{group.items.map((item) => {
 									const Icon = item.icon;
-									const badgeCount = item.badge ? badges[item.badge] : 0;
 
 									return (
 										<SidebarMenuItem key={item.id}>
@@ -48,9 +43,6 @@ export async function NavMain() {
 													aria-hidden="true"
 												/>
 												<span className="flex-1">{item.title}</span>
-												{badgeCount > 0 && (
-													<NavBadge count={badgeCount} />
-												)}
 											</NavMainClient>
 										</SidebarMenuItem>
 									);

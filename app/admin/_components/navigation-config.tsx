@@ -12,7 +12,6 @@ import {
 	Sparkles,
 	Mail,
 } from "lucide-react";
-import type { NavBadgeKey } from "./nav-badges-data";
 
 // ============================================================================
 // TYPES
@@ -24,7 +23,6 @@ export interface NavItem {
 	shortTitle?: string; // Pour mobile (optionnel, sinon title)
 	url: string;
 	icon: LucideIcon;
-	badge?: NavBadgeKey;
 	isActive?: boolean;
 }
 
@@ -78,7 +76,6 @@ export const navigationData: NavigationData = {
 					title: "Remboursements",
 					url: "/admin/ventes/remboursements",
 					icon: ReceiptText,
-					badge: "pendingRefunds",
 				},
 			],
 		},
@@ -115,8 +112,7 @@ export const navigationData: NavigationData = {
 					title: "Personnalisations",
 					shortTitle: "Persos",
 					url: "/admin/marketing/personnalisations",
-					icon: Sparkles,
-					badge: "pendingCustomizations",
+					icon: Sparkles,	
 				},
 				{
 					id: "newsletter",

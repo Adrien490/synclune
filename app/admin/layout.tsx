@@ -1,7 +1,6 @@
-import { AppSidebar } from "@/app/admin/_components/app-sidebar";
 import { BottomNav } from "@/app/admin/_components/bottom-nav";
 import { DashboardHeader } from "@/app/admin/_components/dashboard-header";
-import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from "@/shared/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { SelectionProvider } from "@/shared/contexts/selection-context";
 import { auth } from "@/modules/auth/lib/auth";
 import { AdminSpeedDial } from "@/modules/dashboard/components/admin-speed-dial";
@@ -10,8 +9,14 @@ import { getFabVisibility } from "@/shared/features/fab/data/get-fab-visibility"
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Logo } from "@/shared/components/logo";
-import { Link } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { NavMain } from "./_components/nav-main";
+import { Separator } from "@/shared/components/ui/separator";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/components/ui/tooltip";
+import { Button } from "@/shared/components/ui/button";
+import { DashboardBreadcrumb } from "./_components/dashboard-breadcrumb";
+import { UserDropdown } from "./_components/user-dropdown";
 
 /**
  * Metadata pour le dashboard admin
@@ -78,7 +83,60 @@ export default async function AdminLayout({
 			</SidebarContent>
 		</Sidebar>
 			<SidebarInset>
-				<DashboardHeader user={user} />
+			<header
+			className="relative hidden md:flex h-14 md:h-16 shrink-0 items-center gap-2 justify-between transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-border"
+			role="banner"
+			aria-label="En-tête du tableau de bord"
+		>
+			<div className="flex items-center gap-2 px-4 flex-1 min-w-0">
+				{/* Toggle sidebar avec raccourci clavier - caché sur mobile */}
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<SidebarTrigger className="-ml-1 shrink-0 hidden md:flex" />
+					</TooltipTrigger>
+					<TooltipContent side="right" sideOffset={8}>
+						<span>Basculer le menu</span>
+						<kbd className="ml-2 inline-flex items-center gap-0.5 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+							<span className="text-xs">⌘</span>B
+						</kbd>
+					</TooltipContent>
+				</Tooltip>
+				<Separator
+					orientation="vertical"
+					className="mr-2 h-4 data-[orientation=vertical]:h-4 shrink-0 hidden md:block"
+				/>
+				{/* Breadcrumb dynamique - amélioré pour mobile */}
+				<div className="min-w-0 flex-1">
+					<DashboardBreadcrumb />
+				</div>
+			</div>
+
+			<div className="flex items-center gap-2 px-4 shrink-0 justify-end">
+				{/* Bouton Voir le site */}
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="outline"
+							size="sm"
+							className="h-9 gap-2"
+							asChild
+						>
+							<Link href="/" target="_blank" rel="noopener noreferrer">
+								<ExternalLink className="h-4 w-4" aria-hidden="true" />
+								<span className="hidden sm:inline">Voir le site</span>
+								<span className="sr-only sm:hidden">Voir le site</span>
+							</Link>
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom" className="sm:hidden">
+						Voir le site
+					</TooltipContent>
+				</Tooltip>
+
+				{/* User dropdown */}
+				{user && <UserDropdown user={user} />}
+			</div>
+		</header>
 				<main
 					id="main-content"
 					role="main"
