@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/shared/utils/cn";
 import { ExternalLink, LogOut, Menu } from "lucide-react";
 import Link from "next/link";
@@ -9,8 +9,7 @@ import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog
 import {
 	getBottomNavPrimaryItems,
 	getAllNavItems,
-	type NavItem,
-} from "./navigation-config";
+} from "../navigation-config";
 import { isRouteActive } from "@/shared/lib/navigation";
 import {
 	Drawer,
@@ -18,6 +17,10 @@ import {
 	DrawerBody,
 	DrawerTitle,
 } from "@/shared/components/ui/drawer";
+import { BottomNavItem } from "./bottom-nav-item";
+import { PanelNavItem } from "./panel-nav-item";
+import { sharedItemStyles, panelItemStyles } from "./styles";
+import { ActiveIndicator } from "./active-indicator";
 
 // Recuperer les items depuis la configuration centralisee
 const primaryItems = getBottomNavPrimaryItems();
@@ -25,44 +28,6 @@ const primaryItems = getBottomNavPrimaryItems();
 const allMenuItems = getAllNavItems().filter(
 	(item) => item.id !== "stock-alerts"
 );
-
-// Styles partages pour les items de navigation
-const sharedItemStyles = {
-	focusRing:
-		"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
-	transition: "motion-safe:transition-all motion-safe:active:scale-95",
-	layout: "flex flex-col items-center justify-center rounded-lg relative",
-} as const;
-
-const navItemStyles = {
-	base: cn(
-		sharedItemStyles.layout,
-		sharedItemStyles.transition,
-		sharedItemStyles.focusRing,
-		"gap-1 px-3 py-2 min-w-[64px] min-h-[48px]"
-	),
-	active: "text-foreground font-semibold",
-	inactive:
-		"text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30 font-medium",
-} as const;
-
-const panelItemStyles = {
-	base: cn(
-		sharedItemStyles.layout,
-		sharedItemStyles.transition,
-		sharedItemStyles.focusRing,
-		// Touch targets ameliores pour WCAG AAA (min 44x44, ici 76x76)
-		"gap-1.5 py-3 px-2 min-h-[76px] min-w-[76px] rounded-xl",
-		// Reset pour que les boutons s'alignent comme les liens
-		"border-0 bg-transparent appearance-none cursor-pointer"
-	),
-	active: "bg-accent/50 text-foreground font-semibold",
-	inactive:
-		"text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent/30 font-medium",
-	destructive:
-		"text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 font-medium",
-} as const;
-
 
 interface BottomNavigationProps {
 	className?: string;
@@ -73,7 +38,7 @@ interface BottomNavigationProps {
  * Visible uniquement sur ecrans < 768px (md breakpoint)
  * Position fixed en bas de l'ecran avec backdrop-blur
  */
-export function BottomNavigation({ className }: BottomNavigationProps) {
+export function BottomNav({ className }: BottomNavigationProps) {
 	const pathname = usePathname();
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -195,83 +160,5 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
 				</div>
 			</nav>
 		</>
-	);
-}
-
-/**
- * Item de navigation principal (barre du bas)
- * Memoïse pour eviter les re-renders inutiles
- */
-const BottomNavItem = memo(function BottomNavItem({
-	item,
-	isActive,
-}: {
-	item: NavItem;
-	isActive: boolean;
-}) {
-	const Icon = item.icon;
-
-	return (
-		<Link
-			href={item.url}
-			className={cn(
-				navItemStyles.base,
-				isActive ? navItemStyles.active : navItemStyles.inactive
-			)}
-			aria-label={item.title}
-			aria-current={isActive ? "page" : undefined}
-		>
-			{isActive && <ActiveIndicator />}
-			<Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-			<span className="text-[13px] leading-none">
-				{item.shortTitle || item.title}
-			</span>
-		</Link>
-	);
-});
-
-/**
- * Item de navigation dans le drawer
- * Memoïse pour eviter les re-renders inutiles
- */
-const PanelNavItem = memo(function PanelNavItem({
-	item,
-	isActive,
-	onClick,
-}: {
-	item: NavItem;
-	isActive: boolean;
-	onClick: () => void;
-}) {
-	const Icon = item.icon;
-
-	return (
-		<Link
-			href={item.url}
-			onClick={onClick}
-			className={cn(
-				panelItemStyles.base,
-				isActive ? panelItemStyles.active : panelItemStyles.inactive
-			)}
-			aria-current={isActive ? "page" : undefined}
-		>
-			{isActive && <ActiveIndicator />}
-			<Icon className="size-6 shrink-0" aria-hidden="true" />
-			<span className="text-xs text-center leading-tight tracking-tight line-clamp-2">
-				{item.shortTitle || item.title}
-			</span>
-		</Link>
-	);
-});
-
-/**
- * Indicateur visuel pour l'item actif (barre horizontale en haut - style iOS)
- */
-function ActiveIndicator() {
-	return (
-		<span
-			className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-10 bg-primary rounded-full motion-safe:animate-in motion-safe:slide-in-from-top-1 motion-safe:duration-200"
-			aria-hidden="true"
-		/>
 	);
 }

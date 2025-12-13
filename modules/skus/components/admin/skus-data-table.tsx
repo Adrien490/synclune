@@ -139,8 +139,8 @@ export async function ProductVariantsDataTable({
 								>
 									Taille
 								</TableHead>
-								<TableHead key="priceTTC" scope="col" role="columnheader">
-									Prix final
+								<TableHead key="price" scope="col" role="columnheader">
+									Prix
 								</TableHead>
 								<TableHead
 									key="stock"

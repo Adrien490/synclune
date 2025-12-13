@@ -50,8 +50,8 @@ const iconSizes = {
  * @example
  * ```tsx
  * <div className="flex items-center gap-2">
- *   <Label>Prix TTC</Label>
- *   <HelpTooltip content="Le prix incluant la TVA à 20%" />
+ *   <Label>Prix</Label>
+ *   <HelpTooltip content="Prix final" />
  * </div>
  * ```
  */

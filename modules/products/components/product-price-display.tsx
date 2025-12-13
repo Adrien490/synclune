@@ -17,7 +17,7 @@ interface ProductPriceProps {
  * ProductPriceDisplay - Affiche le prix du SKU sélectionné avec sa disponibilité
  *
  * Responsabilités :
- * - Afficher le prix TTC formaté en euros avec "À partir de" si plusieurs prix
+ * - Afficher le prix formaté en euros avec "À partir de" si plusieurs prix
  * - Afficher le prix barré si promotion (compareAtPrice)
  * - Afficher le badge de réduction
  * - Afficher le badge de disponibilité (En stock / Stock limité / Rupture)
@@ -82,11 +82,10 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 						<p
 							id="product-price-title"
 							className="h3 text-foreground"
-							aria-label={priceInfo.minPrice > 0 ? `Prix à partir de ${formatEuro(priceInfo.minPrice)} TTC` : "Prix non disponible"}
+							aria-label={priceInfo.minPrice > 0 ? `Prix à partir de ${formatEuro(priceInfo.minPrice)}` : "Prix non disponible"}
 						>
 							{priceInfo.minPrice > 0 ? formatEuro(priceInfo.minPrice) : "—"}
 						</p>
-						<span className="text-sm text-muted-foreground" aria-hidden="true">TTC</span>
 					</div>
 					{priceInfo.hasMultiplePrices && (
 						<p className="text-xs text-muted-foreground" role="status">
@@ -127,11 +126,10 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 						className="h3 text-foreground"
 						itemProp="price"
 						content={String(selectedSku.priceInclTax / 100)}
-						aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)} TTC${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ''}`}
+						aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ''}`}
 					>
 						{formatEuro(selectedSku.priceInclTax)}
 					</p>
-					<span className="text-sm text-muted-foreground" aria-hidden="true">TTC</span>
 
 					{/* Prix barré si promotion */}
 					{hasDiscount && (

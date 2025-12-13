@@ -43,8 +43,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 			"En haut de votre dashboard, vous trouverez 5 cartes qui résument les chiffres les plus importants de votre activité.",
 		icon: <TrendingUp className="h-10 w-10 text-blue-500" />,
 		tips: [
-			"📊 CA du jour TTC : Le chiffre d'affaires d'aujourd'hui (avec les flèches ↑↓ pour voir si c'est mieux ou moins bien qu'hier)",
-			"🧾 TVA collectée : La TVA que vous avez collectée ce mois-ci (important pour votre comptabilité)",
+			"📊 CA du jour : Le chiffre d'affaires d'aujourd'hui (avec les flèches ↑↓ pour voir si c'est mieux ou moins bien qu'hier)",
 			"🛒 Commandes en attente : Les commandes qui attendent d'être traitées (avec un badge rouge si certaines sont urgentes depuis plus de 48h)",
 			"📦 Bijoux en rupture : Les bijoux qui n'ont plus de stock et qu'il faut réapprovisionner rapidement",
 			"⏱️ Réservations actives : Les produits mis de côté par des clients (dans leur panier en cours)",
@@ -56,9 +55,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 			"Ce graphique avec des courbes colorées vous montre l'évolution de vos ventes sur les 30 derniers jours.",
 		icon: <BarChart3 className="h-10 w-10 text-green-500" />,
 		tips: [
-			"📈 Ligne bleue (TTC) : Le montant total encaissé taxes comprises",
-			"📗 Ligne verte (HT) : Le montant hors taxes (ce qui vous revient vraiment)",
-			"📙 Ligne orange (TVA) : La TVA collectée pour l'État",
+			"📈 La courbe montre l'évolution de vos ventes jour par jour",
 			"💡 Conseil : Si vous voyez des pics certains jours, notez quelles actions marketing vous aviez faites !",
 		],
 	},

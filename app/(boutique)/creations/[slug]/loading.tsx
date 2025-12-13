@@ -100,10 +100,9 @@ export default function ProductDetailLoading() {
 									{/* ===== 2. ProductPriceDisplay - Card ===== */}
 									<div className="rounded-xl border border-primary/10 shadow-sm">
 										<div className="p-6 space-y-3">
-											{/* Prix avec TTC */}
+											{/* Prix */}
 											<div className="flex items-baseline gap-3">
 												<Skeleton className="h-10 w-28 bg-primary/20" />
-												<Skeleton className="h-4 w-8 bg-muted/30" />
 											</div>
 											{/* Badge disponibilité */}
 											<Skeleton className="h-6 w-24 rounded-full bg-muted/30" />

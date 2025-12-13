@@ -100,11 +100,10 @@ export default async function CheckoutSuccessPage({
 										<span>{formatEuro(order.shippingCost)}</span>
 									</div>
 									<div className="border-t pt-2 flex justify-between font-semibold text-base">
-										<span>Total TTC</span>
+										<span>Total</span>
 										<span>{formatEuro(order.total)}</span>
 									</div>
 									<p className="text-xs text-muted-foreground text-right">
-										dont TVA {formatEuro(Math.round(order.total / 1.2 * 0.2))}
 									</p>
 								</div>
 							</div>

@@ -38,7 +38,6 @@ export const PRODUCT_TEXTS = {
 		ORIGINAL_PRICE: "Prix initial",
 		CURRENT_PRICE: "Prix actuel",
 		SAVINGS: (amount: string) => `Économisez ${amount}`,
-		VAT_INCLUDED: "TTC",
 		PRICE_ON_REQUEST: "Prix sur demande",
 	},
 

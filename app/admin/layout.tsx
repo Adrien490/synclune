@@ -1,7 +1,7 @@
 import { AppSidebar } from "@/app/admin/_components/app-sidebar";
-import { BottomNavigation } from "@/app/admin/_components/bottom-navigation";
+import { BottomNav } from "@/app/admin/_components/bottom-nav";
 import { DashboardHeader } from "@/app/admin/_components/dashboard-header";
-import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { SelectionProvider } from "@/shared/contexts/selection-context";
 import { auth } from "@/modules/auth/lib/auth";
 import { AdminSpeedDial } from "@/modules/dashboard/components/admin-speed-dial";
@@ -9,6 +9,9 @@ import { FAB_KEYS } from "@/shared/features/fab";
 import { getFabVisibility } from "@/shared/features/fab/data/get-fab-visibility";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Logo } from "@/shared/components/logo";
+import { Link } from "lucide-react";
+import { NavMain } from "./_components/nav-main";
 
 /**
  * Metadata pour le dashboard admin
@@ -51,20 +54,29 @@ export default async function AdminLayout({
 	};
 
 	return (
-		<SidebarProvider
-			style={
-				{
-					"--sidebar-width": "19rem",
-				} as React.CSSProperties
-			}
-		>
-			<a
-				href="#main-content"
-				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg"
-			>
-				Aller au contenu principal
-			</a>
-			<AppSidebar />
+		<SidebarProvider>
+			<Sidebar variant="floating">
+			<SidebarHeader>
+				<SidebarMenu>
+					<SidebarMenuItem>
+						<SidebarMenuButton size="lg" asChild>
+							<Link href="/admin">
+								<Logo
+									size={40}
+									showText
+									className="gap-2"
+									imageClassName="rounded-lg"
+									textClassName="text-2xl"
+								/>
+							</Link>
+						</SidebarMenuButton>
+					</SidebarMenuItem>
+				</SidebarMenu>
+			</SidebarHeader>
+			<SidebarContent>
+				<NavMain />
+			</SidebarContent>
+		</Sidebar>
 			<SidebarInset>
 				<DashboardHeader user={user} />
 				<main
@@ -78,7 +90,7 @@ export default async function AdminLayout({
 				</main>
 			</SidebarInset>
 			<AdminSpeedDial initialHidden={isContactFabHidden} />
-			<BottomNavigation />
+			<BottomNav />
 		</SidebarProvider>
 	);
 }

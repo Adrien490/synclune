@@ -70,5 +70,4 @@ export const CART_WARNING_MESSAGES = {
 export const CART_INFO_MESSAGES = {
 	NO_GUEST_CART: "Aucun panier visiteur à fusionner",
 	NO_ITEMS_TO_MERGE: "Aucun article à fusionner",
-	PRICE_INCLUDES_TAX: "Prix TTC incluant TVA 20%",
 } as const;

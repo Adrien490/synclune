@@ -67,7 +67,7 @@ export default function EditVariantLoading() {
 				<FormLayout>
 					<FormSection title="Prix" description="Configuration des prix">
 						<div className="space-y-4">
-							{/* Prix TTC */}
+							{/* Prix */}
 							<div className="space-y-2">
 								<Skeleton className="h-4 w-20" />
 								<Skeleton className="h-10 w-full" />
