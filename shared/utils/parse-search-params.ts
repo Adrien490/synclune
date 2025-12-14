@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { CUID_LENGTH } from "@/shared/constants/pagination";
+
 /**
  * Safely parse a search parameter with a Zod schema
  * Returns the parsed value or the default value if validation fails
@@ -25,10 +27,10 @@ export function parseSearchParam<T>(
  */
 export const searchParamParsers = {
 	/**
-	 * Parse cursor parameter (25 character CUID)
+	 * Parse cursor parameter (CUID)
 	 */
 	cursor: (value: string | string[] | undefined): string | undefined => {
-		return parseSearchParam(value, z.string().length(25), undefined);
+		return parseSearchParam(value, z.string().length(CUID_LENGTH), undefined);
 	},
 
 	/**

@@ -1,4 +1,9 @@
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import {
+	buildCursorPagination,
+	processCursorResults,
+	DEFAULT_PER_PAGE,
+} from "@/shared/components/cursor-pagination/pagination";
 
 import { cacheCustomizationList } from "../constants/cache";
 import type {
@@ -8,6 +13,8 @@ import type {
 
 // Re-export types for consumers
 export type { GetCustomizationRequestsResult };
+
+const MAX_RESULTS_PER_PAGE = 200;
 
 // ============================================================================
 // SORT OPTIONS
@@ -26,7 +33,7 @@ export const CUSTOMIZATION_SORT_OPTIONS = {
 export async function getCustomizationRequests({
 	cursor,
 	direction = "forward",
-	perPage = 50,
+	perPage = DEFAULT_PER_PAGE,
 	sortBy = CUSTOMIZATION_SORT_OPTIONS.RECENT,
 	filters,
 }: GetCustomizationRequestsParams = {}): Promise<GetCustomizationRequestsResult> {
@@ -54,61 +61,41 @@ export async function getCustomizationRequests({
 				? [{ status: "asc" as const }, { createdAt: "desc" as const }]
 				: { createdAt: "desc" as const };
 
-	// Cursor pagination
-	const cursorObj = cursor ? { id: cursor } : undefined;
-	const take = direction === "forward" ? perPage + 1 : -(perPage + 1);
-	const skip = cursor ? 1 : 0;
+	// Validate and constrain perPage
+	const take = Math.min(Math.max(1, perPage), MAX_RESULTS_PER_PAGE);
 
-	const [items, total] = await Promise.all([
-		prisma.customizationRequest.findMany({
-			where,
-			orderBy,
-			cursor: cursorObj,
-			take,
-			skip,
-			select: {
-				id: true,
-				createdAt: true,
-				firstName: true,
-				lastName: true,
-				email: true,
-				phone: true,
-				productTypeLabel: true,
-				status: true,
-				adminNotes: true,
-				respondedAt: true,
-				_count: {
-					select: {
-						inspirationProducts: true,
-						preferredColors: true,
-						preferredMaterials: true,
-					},
+	// Build cursor config using shared helper
+	const cursorConfig = buildCursorPagination({
+		cursor,
+		direction,
+		take,
+	});
+
+	const items = await prisma.customizationRequest.findMany({
+		where,
+		orderBy,
+		...cursorConfig,
+		select: {
+			id: true,
+			createdAt: true,
+			firstName: true,
+			lastName: true,
+			email: true,
+			phone: true,
+			productTypeLabel: true,
+			status: true,
+			adminNotes: true,
+			respondedAt: true,
+			_count: {
+				select: {
+					inspirationProducts: true,
+					preferredColors: true,
+					preferredMaterials: true,
 				},
 			},
-		}),
-		prisma.customizationRequest.count({ where }),
-	]);
+		},
+	});
 
-	// Handle pagination
-	const hasMore = items.length > perPage;
-	if (hasMore) {
-		if (direction === "forward") {
-			items.pop();
-		} else {
-			items.shift();
-		}
-	}
-
-	// Reverse if backward
-	if (direction === "backward") {
-		items.reverse();
-	}
-
-	return {
-		items,
-		hasMore,
-		nextCursor: items.length > 0 ? items[items.length - 1].id : null,
-		prevCursor: items.length > 0 ? items[0].id : null,
-		total,
-	};
+	// Process results using shared helper
+	return processCursorResults(items, take, direction, cursor);
 }

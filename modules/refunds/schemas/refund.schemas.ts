@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { RefundReason, RefundStatus } from "@/app/generated/prisma/client";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_REFUNDS_DEFAULT_PER_PAGE,
 	GET_REFUNDS_MAX_RESULTS_PER_PAGE,
 	SORT_OPTIONS,
@@ -70,14 +75,9 @@ export const refundSortBySchema = z
 // ============================================================================
 
 export const getRefundsSchema = z.object({
-	cursor: z.cuid2().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(GET_REFUNDS_MAX_RESULTS_PER_PAGE)
-		.default(GET_REFUNDS_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_REFUNDS_DEFAULT_PER_PAGE, GET_REFUNDS_MAX_RESULTS_PER_PAGE),
 	sortBy: refundSortBySchema,
 	search: z.string().max(255).optional(),
 	filters: refundFiltersSchema.optional(),

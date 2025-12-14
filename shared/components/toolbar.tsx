@@ -64,7 +64,7 @@ export function Toolbar({
 				className={cn(
 					"flex flex-row flex-wrap gap-2 items-center",
 					"md:rounded-lg md:bg-card md:border md:border-border/60",
-					"min-w-0 mb-6 p-0 md:p-4 md:shadow-sm transition-colors duration-200",
+					"min-w-0 p-0 md:p-4 md:shadow-sm transition-colors duration-200",
 					isPending && "opacity-60 pointer-events-none",
 					className
 				)}
@@ -83,7 +83,7 @@ export function Toolbar({
 			aria-busy={isPending}
 			className={cn(
 				"md:rounded-lg md:bg-card md:border md:border-border/60",
-				"min-w-0 mb-6 p-0 md:p-4 md:shadow-sm transition-colors duration-200",
+				"min-w-0 p-0 md:p-4 md:shadow-sm transition-colors duration-200",
 				isPending && "opacity-60 pointer-events-none",
 				className
 			)}

@@ -1,5 +1,10 @@
 import { z } from "zod";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_COLORS_DEFAULT_PER_PAGE,
 	GET_COLORS_DEFAULT_SORT_BY,
 	GET_COLORS_MAX_RESULTS_PER_PAGE,
@@ -26,14 +31,9 @@ export const colorSortBySchema = z
 // ============================================================================
 
 export const getColorsSchema = z.object({
-	cursor: z.string().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(GET_COLORS_MAX_RESULTS_PER_PAGE)
-		.default(GET_COLORS_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_COLORS_DEFAULT_PER_PAGE, GET_COLORS_MAX_RESULTS_PER_PAGE),
 	sortBy: colorSortBySchema.optional().default(GET_COLORS_DEFAULT_SORT_BY),
 	search: z.string().max(100).optional(),
 	filters: colorFiltersSchema.optional().default({}),

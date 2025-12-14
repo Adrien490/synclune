@@ -1,5 +1,10 @@
 import { z } from "zod";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_MATERIALS_DEFAULT_PER_PAGE,
 	GET_MATERIALS_DEFAULT_SORT_BY,
 	GET_MATERIALS_MAX_RESULTS_PER_PAGE,
@@ -27,14 +32,9 @@ export const materialSortBySchema = z
 // ============================================================================
 
 export const getMaterialsSchema = z.object({
-	cursor: z.string().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(GET_MATERIALS_MAX_RESULTS_PER_PAGE)
-		.default(GET_MATERIALS_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_MATERIALS_DEFAULT_PER_PAGE, GET_MATERIALS_MAX_RESULTS_PER_PAGE),
 	sortBy: materialSortBySchema.optional().default(GET_MATERIALS_DEFAULT_SORT_BY),
 	search: z.string().max(100).optional(),
 	filters: materialFiltersSchema.optional().default({}),

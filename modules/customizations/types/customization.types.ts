@@ -122,10 +122,12 @@ export interface GetCustomizationRequestsParams {
 
 export interface GetCustomizationRequestsResult {
 	items: CustomizationRequestListItem[];
-	hasMore: boolean;
-	nextCursor: string | null;
-	prevCursor: string | null;
-	total: number;
+	pagination: {
+		nextCursor: string | null;
+		prevCursor: string | null;
+		hasNextPage: boolean;
+		hasPreviousPage: boolean;
+	};
 }
 
 // ============================================================================

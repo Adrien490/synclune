@@ -5,6 +5,11 @@ import {
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_ORDERS_DEFAULT_PER_PAGE,
 	GET_ORDERS_MAX_RESULTS_PER_PAGE,
 	SORT_OPTIONS,
@@ -117,17 +122,9 @@ export const orderSortBySchema = z
 // ============================================================================
 
 export const getOrdersSchema = z.object({
-	cursor: z.cuid2().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int({ message: "PerPage must be an integer" })
-		.min(1, { message: "PerPage must be at least 1" })
-		.max(
-			GET_ORDERS_MAX_RESULTS_PER_PAGE,
-			`PerPage cannot exceed ${GET_ORDERS_MAX_RESULTS_PER_PAGE}`
-		)
-		.default(GET_ORDERS_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_ORDERS_DEFAULT_PER_PAGE, GET_ORDERS_MAX_RESULTS_PER_PAGE),
 	sortBy: orderSortBySchema,
 	search: z.string().max(255).optional(),
 	filters: orderFiltersSchema.optional(),

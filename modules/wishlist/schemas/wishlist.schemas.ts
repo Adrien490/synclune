@@ -1,5 +1,10 @@
 import { z } from "zod";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_WISHLIST_DEFAULT_PER_PAGE,
 	GET_WISHLIST_MAX_RESULTS_PER_PAGE,
 } from "../constants/wishlist.constants";
@@ -9,17 +14,9 @@ import {
 // ============================================================================
 
 export const getWishlistSchema = z.object({
-	cursor: z.cuid2().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int({ message: "Le nombre par page doit être un entier" })
-		.min(1, { message: "Le nombre par page doit être au minimum 1" })
-		.max(
-			GET_WISHLIST_MAX_RESULTS_PER_PAGE,
-			{ message: `Le nombre par page ne peut pas dépasser ${GET_WISHLIST_MAX_RESULTS_PER_PAGE}` }
-		)
-		.default(GET_WISHLIST_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_WISHLIST_DEFAULT_PER_PAGE, GET_WISHLIST_MAX_RESULTS_PER_PAGE),
 });
 
 // ============================================================================

@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { Role } from "@/app/generated/prisma/client";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_USERS_DEFAULT_PER_PAGE,
 	GET_USERS_DEFAULT_SORT_BY,
 	GET_USERS_DEFAULT_SORT_ORDER,
@@ -101,17 +106,9 @@ export const getUsersSchema = z.object({
 		.trim()
 		.max(255, { message: "Search term too long" })
 		.optional(),
-	cursor: z.cuid2().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int({ message: "PerPage must be an integer" })
-		.min(1, { message: "PerPage must be at least 1" })
-		.max(
-			GET_USERS_MAX_RESULTS_PER_PAGE,
-			`PerPage cannot exceed ${GET_USERS_MAX_RESULTS_PER_PAGE}`
-		)
-		.default(GET_USERS_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_USERS_DEFAULT_PER_PAGE, GET_USERS_MAX_RESULTS_PER_PAGE),
 	sortBy: userSortBySchema.default(GET_USERS_DEFAULT_SORT_BY),
 	sortOrder: z.enum(["asc", "desc"]).default(GET_USERS_DEFAULT_SORT_ORDER),
 	filters: userFiltersSchema.default({}),

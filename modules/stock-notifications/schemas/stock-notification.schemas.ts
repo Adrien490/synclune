@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { cursorSchema } from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
 
 // ============================================================================
 // SUBSCRIBE TO STOCK NOTIFICATION SCHEMA
@@ -77,8 +79,8 @@ export const getPendingNotificationsSchema = z.object({
 	skuId: z.string().optional(),
 
 	/** Pagination */
-	cursor: z.string().optional(),
-	perPage: z.number().int().min(1).max(100).default(50),
+	cursor: cursorSchema,
+	perPage: createPerPageSchema(50, 100),
 });
 
 export type GetPendingNotificationsInput = z.infer<

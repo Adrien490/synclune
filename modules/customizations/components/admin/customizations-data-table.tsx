@@ -43,7 +43,7 @@ export function CustomizationsDataTable({
 	requestsPromise,
 	perPage,
 }: CustomizationsDataTableProps) {
-	const { items: requests, hasMore, nextCursor, prevCursor } = use(requestsPromise);
+	const { items: requests, pagination } = use(requestsPromise);
 	const requestIds = requests.map((r) => r.id);
 
 	if (requests.length === 0) {
@@ -145,11 +145,11 @@ export function CustomizationsDataTable({
 				<div className="mt-4">
 					<CursorPagination
 						perPage={perPage}
-						hasNextPage={hasMore}
-						hasPreviousPage={!!prevCursor}
+						hasNextPage={pagination.hasNextPage}
+						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={requests.length}
-						nextCursor={nextCursor}
-						prevCursor={prevCursor}
+						nextCursor={pagination.nextCursor}
+						prevCursor={pagination.prevCursor}
 					/>
 				</div>
 			</CardContent>

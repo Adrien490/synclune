@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { NewsletterStatus } from "@/app/generated/prisma/client";
+import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
 import { SORT_OPTIONS } from "../constants/subscriber.constants";
 
 // ============================================================================
@@ -62,14 +67,9 @@ export const subscriberSortBySchema = z.enum([
 // ============================================================================
 
 export const getSubscribersSchema = z.object({
-	cursor: z.cuid2().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int({ message: "PerPage must be an integer" })
-		.min(1, { message: "PerPage must be at least 1" })
-		.max(100, "PerPage cannot exceed 100")
-		.default(20),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(20, 100),
 	sortBy: subscriberSortBySchema,
 	search: z.string().max(255).optional(),
 	filters: subscriberFiltersSchema.optional(),

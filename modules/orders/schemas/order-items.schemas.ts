@@ -1,5 +1,10 @@
 import { z } from "zod";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_ORDER_ITEMS_DEFAULT_PER_PAGE,
 	GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE,
 	GET_ORDER_ITEMS_DEFAULT_SORT_BY,
@@ -96,17 +101,9 @@ export const orderItemSortBySchema = z.preprocess((value) => {
 // ============================================================================
 
 export const getOrderItemsSchema = z.object({
-	cursor: z.cuid2().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int({ message: "PerPage must be an integer" })
-		.min(1, { message: "PerPage must be at least 1" })
-		.max(
-			GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE,
-			`PerPage cannot exceed ${GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE}`
-		)
-		.default(GET_ORDER_ITEMS_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_ORDER_ITEMS_DEFAULT_PER_PAGE, GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE),
 	sortBy: orderItemSortBySchema.default(GET_ORDER_ITEMS_DEFAULT_SORT_BY),
 	sortOrder: z.enum(["asc", "desc"]).default(GET_ORDER_ITEMS_DEFAULT_SORT_ORDER),
 	filters: orderItemFiltersSchema.default({}),

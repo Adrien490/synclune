@@ -1,5 +1,10 @@
 import { z } from "zod";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_SESSIONS_DEFAULT_PER_PAGE,
 	GET_SESSIONS_DEFAULT_SORT_BY,
 	GET_SESSIONS_DEFAULT_SORT_ORDER,
@@ -102,17 +107,9 @@ export const sessionSortBySchema = z.preprocess((value) => {
 // ============================================================================
 
 export const getSessionsSchema = z.object({
-	cursor: z.cuid2().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int({ message: "PerPage must be an integer" })
-		.min(1, { message: "PerPage must be at least 1" })
-		.max(
-			GET_SESSIONS_MAX_RESULTS_PER_PAGE,
-			`PerPage cannot exceed ${GET_SESSIONS_MAX_RESULTS_PER_PAGE}`
-		)
-		.default(GET_SESSIONS_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_SESSIONS_DEFAULT_PER_PAGE, GET_SESSIONS_MAX_RESULTS_PER_PAGE),
 	sortBy: sessionSortBySchema.default(GET_SESSIONS_DEFAULT_SORT_BY),
 	sortOrder: z.enum(["asc", "desc"]).default(GET_SESSIONS_DEFAULT_SORT_ORDER),
 	filters: sessionFiltersSchema.default({}),

@@ -1,5 +1,10 @@
 import { z } from "zod";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_PRODUCT_TYPES_DEFAULT_PER_PAGE,
 	GET_PRODUCT_TYPES_DEFAULT_SORT_BY,
 	GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE,
@@ -34,14 +39,9 @@ export const productTypeSortBySchema = z.preprocess((value) => {
 
 export const getProductTypesSchema = z.object({
 	search: z.string().trim().max(255).optional(),
-	cursor: z.string().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE)
-		.default(GET_PRODUCT_TYPES_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_PRODUCT_TYPES_DEFAULT_PER_PAGE, GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE),
 	sortBy: productTypeSortBySchema.default(GET_PRODUCT_TYPES_DEFAULT_SORT_BY),
 	sortOrder: z.enum(["asc", "desc"]).default("asc"),
 	filters: productTypeFiltersSchema.optional(),

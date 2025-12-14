@@ -1,6 +1,11 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_COLLECTIONS_DEFAULT_PER_PAGE,
 	GET_COLLECTIONS_DEFAULT_SORT_BY,
 	GET_COLLECTIONS_MAX_RESULTS_PER_PAGE,
@@ -59,14 +64,9 @@ export const getCollectionSchema = z.object({
 // ============================================================================
 
 export const getCollectionsSchema = z.object({
-	cursor: z.string().optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(GET_COLLECTIONS_MAX_RESULTS_PER_PAGE)
-		.default(GET_COLLECTIONS_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_COLLECTIONS_DEFAULT_PER_PAGE, GET_COLLECTIONS_MAX_RESULTS_PER_PAGE),
 	sortBy: collectionSortBySchema.default(GET_COLLECTIONS_DEFAULT_SORT_BY),
 	search: z.string().max(200).optional(),
 	filters: collectionFiltersSchema.optional(),

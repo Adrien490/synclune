@@ -163,7 +163,7 @@ Each module in `modules/` follows a consistent pattern:
 | `Material` | Material attributes | slug, name, description |
 | `Collection` | Product groupings | slug, name, status |
 | `ProductCollection` | Many-to-many join | isFeatured, addedAt |
-| `Product` | Main products | slug, title, status, minPriceInclTax, maxPriceInclTax, totalInventory |
+| `Product` | Main products | slug, title, status, typeId |
 | `ProductSku` | Variants | sku, priceInclTax, compareAtPrice, inventory, colorId, materialId, size |
 | `SkuMedia` | Images/videos | url, thumbnailUrl, blurDataUrl, mediaType, isPrimary |
 
@@ -225,10 +225,6 @@ Models with `deletedAt`: User, Product, ProductSku, Order, Refund, OrderNote, Di
 - `CartItem.priceAtAdd` / `WishlistItem.priceAtAdd` - Price at add time
 - `OrderItem.productSnapshot` / `skuSnapshot` - Full product state at order
 - `Order.shippingAddress` / `billingAddress` - Address at order time
-
-#### Denormalized Fields
-
-`Product.minPriceInclTax`, `maxPriceInclTax`, `totalInventory` - Computed from active SKUs
 
 #### Custom Constraints
 

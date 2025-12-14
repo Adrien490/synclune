@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { DiscountType } from "@/app/generated/prisma/client";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_DISCOUNTS_DEFAULT_PER_PAGE,
 	GET_DISCOUNTS_MAX_RESULTS_PER_PAGE,
 	DISCOUNTS_SORT_OPTIONS,
@@ -63,14 +68,9 @@ export const getDiscountByCodeSchema = z.object({
 // ============================================================================
 
 export const getDiscountsSchema = z.object({
-	cursor: z.string().optional(),
-	direction: z.enum(["forward", "backward"]).default("forward"),
-	perPage: z.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(GET_DISCOUNTS_MAX_RESULTS_PER_PAGE)
-		.default(GET_DISCOUNTS_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_DISCOUNTS_DEFAULT_PER_PAGE, GET_DISCOUNTS_MAX_RESULTS_PER_PAGE),
 	sortBy: discountSortBySchema,
 	search: z.string().max(100).optional(),
 	filters: discountFiltersSchema.optional(),

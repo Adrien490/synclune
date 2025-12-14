@@ -1,6 +1,11 @@
 import { ProductStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
 import {
+	cursorSchema,
+	directionSchema,
+} from "@/shared/constants/pagination";
+import { createPerPageSchema } from "@/shared/utils/pagination";
+import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
 	GET_PRODUCTS_DEFAULT_SORT_BY,
 	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
@@ -92,14 +97,9 @@ export const productSortBySchema = z.preprocess((value) => {
 // ============================================================================
 
 export const getProductsSchema = z.object({
-	cursor: z.string().length(25).optional(),
-	direction: z.enum(["forward", "backward"]).optional().default("forward"),
-	perPage: z.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(GET_PRODUCTS_MAX_RESULTS_PER_PAGE)
-		.default(GET_PRODUCTS_DEFAULT_PER_PAGE),
+	cursor: cursorSchema,
+	direction: directionSchema,
+	perPage: createPerPageSchema(GET_PRODUCTS_DEFAULT_PER_PAGE, GET_PRODUCTS_MAX_RESULTS_PER_PAGE),
 	sortBy: productSortBySchema.default(GET_PRODUCTS_DEFAULT_SORT_BY),
 	search: z.string().max(200).optional(),
 	filters: productFiltersSchema.default({}),
