@@ -8,7 +8,6 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { UTApi } from "uploadthing/server";
 import { getSkuInvalidationTags } from "../constants/cache";
-import { syncProductPriceAndInventory } from "@/modules/products/services/sync-product-price";
 
 const utapi = new UTApi();
 
@@ -229,15 +228,10 @@ export async function deleteProductSku(
 			}
 		}
 
-		// 11. Supprimer la variante dans une transaction
-		await prisma.$transaction(async (tx) => {
-			// Les entrees SkuMedia seront supprimees automatiquement grace a onDelete: Cascade dans le schema Prisma
-			await tx.productSku.delete({
-				where: { id: validatedSkuId },
-			});
-
-			// Synchroniser les champs dénormalisés du Product (minPriceInclTax, etc.)
-			await syncProductPriceAndInventory(existingSku.productId, tx);
+		// 11. Supprimer la variante
+		// Les entrees SkuMedia seront supprimees automatiquement grace a onDelete: Cascade dans le schema Prisma
+		await prisma.productSku.delete({
+			where: { id: validatedSkuId },
 		});
 
 		// 12. Invalider les cache tags concernes

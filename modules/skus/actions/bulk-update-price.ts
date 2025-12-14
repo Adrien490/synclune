@@ -5,7 +5,6 @@ import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { bulkUpdatePriceSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../constants/cache";
-import { syncMultipleProductsPriceAndInventory } from "@/modules/products/services/sync-product-price";
 
 const MAX_SKUS_PER_OPERATION = 25; // Plus restrictif pour les modifications de prix
 
@@ -131,10 +130,6 @@ export async function bulkUpdatePrice(
 					data,
 				});
 			}
-
-			// Synchroniser les champs denormalises des Products concernes
-			const productIds = [...new Set(skusData.map((s) => s.productId))];
-			await syncMultipleProductsPriceAndInventory(productIds, tx);
 		});
 
 		// Invalider le cache

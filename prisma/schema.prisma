@@ -335,12 +335,6 @@ model Product {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete pour préserver historique commandes
 
-  // === CHAMPS DÉNORMALISÉS (Performance tri/filtrage) ===
-  // Calculés depuis les SKUs actifs, mis à jour via trigger/fonction
-  minPriceInclTax Int? // Prix min des SKUs actifs (centimes)
-  maxPriceInclTax Int? // Prix max des SKUs actifs (centimes)
-  totalInventory  Int  @default(0) // Stock total des SKUs actifs
-
   skus       ProductSku[]
   orderItems OrderItem[]
 
@@ -352,8 +346,6 @@ model Product {
   @@index([deletedAt, status]) // Couvre aussi deletedAt seul
   @@index([status, createdAt(sort: Desc)]) // Nouveautés, couvre aussi status seul
   @@index([typeId, status]) // Filtrage par type
-  @@index([status, minPriceInclTax]) // Tri par prix
-  @@index([deletedAt, status, minPriceInclTax]) // Tri par prix avec soft delete
 }
 
 model ProductSku {

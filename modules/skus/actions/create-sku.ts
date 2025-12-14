@@ -9,7 +9,6 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { createProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../constants/cache";
-import { syncProductPriceAndInventory } from "@/modules/products/services/sync-product-price";
 import {
 	parsePrimaryImageFromForm,
 	parseGalleryMediaFromForm,
@@ -234,9 +233,6 @@ export async function createProductSku(
 					});
 				}
 			}
-
-			// Synchroniser les champs dénormalisés du Product (minPriceInclTax, etc.)
-			await syncProductPriceAndInventory(createdSku.productId, tx);
 
 			return createdSku;
 		});

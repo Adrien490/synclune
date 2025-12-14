@@ -1,8 +1,3 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import {
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/components/cursor-pagination/pagination";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
@@ -14,7 +9,7 @@ import {
 	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
 	GET_PRODUCTS_SELECT,
 } from "../constants/product.constants";
-import type { GetProductsParams, GetProductsReturn } from "../types/product.types";
+import type { GetProductsParams, GetProductsReturn, Product } from "../types/product.types";
 import { buildProductWhereClause } from "../services/product-query-builder";
 import { cacheProducts } from "../constants/cache";
 
@@ -64,7 +59,48 @@ export async function getProducts(
 }
 
 /**
+ * Calcule le prix minimum d'un produit à partir de ses SKUs actifs
+ */
+function getMinPrice(product: Product): number {
+	const activePrices = product.skus
+		.filter((sku) => sku.isActive)
+		.map((sku) => sku.priceInclTax);
+
+	return activePrices.length > 0 ? Math.min(...activePrices) : Infinity;
+}
+
+/**
+ * Trie les produits selon le critère demandé
+ */
+function sortProducts(products: Product[], sortBy: string): Product[] {
+	const direction = getSortDirection(sortBy);
+	const multiplier = direction === "asc" ? 1 : -1;
+
+	return [...products].sort((a, b) => {
+		if (sortBy.startsWith("title-")) {
+			return multiplier * a.title.localeCompare(b.title, "fr");
+		}
+
+		if (sortBy.startsWith("price-")) {
+			const priceA = getMinPrice(a);
+			const priceB = getMinPrice(b);
+			return multiplier * (priceA - priceB);
+		}
+
+		if (sortBy.startsWith("created-") || sortBy.startsWith("best-selling")) {
+			const dateA = new Date(a.createdAt).getTime();
+			const dateB = new Date(b.createdAt).getTime();
+			return multiplier * (dateA - dateB);
+		}
+
+		// Par défaut : plus récents en premier
+		return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+	});
+}
+
+/**
  * Récupère la liste des produits avec pagination, tri et filtrage
+ * Approche simplifiée : tri en JS pour supporter le tri par prix sans champ dénormalisé
  */
 async function fetchProducts(
 	params: GetProductsParams
@@ -74,46 +110,52 @@ async function fetchProducts(
 
 	try {
 		const where = buildProductWhereClause(params);
-		const direction = getSortDirection(params.sortBy);
 
-		// Tri SQL natif - utilise minPriceInclTax dénormalisé pour le tri par prix
-		const orderBy: Prisma.ProductOrderByWithRelationInput[] =
-			params.sortBy.startsWith("best-selling")
-				? [{ createdAt: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("title-")
-					? [{ title: direction }, { id: "asc" }]
-					: params.sortBy.startsWith("price-")
-						? [{ minPriceInclTax: direction }, { id: "asc" }]
-						: params.sortBy.startsWith("created-")
-							? [{ createdAt: direction }, { id: "asc" }]
-							: [{ createdAt: "desc" }, { id: "asc" }];
+		// Récupérer tous les produits correspondant aux filtres
+		// Le tri et la pagination sont faits en JS pour supporter le tri par prix
+		const allProducts = await prisma.product.findMany({
+			where,
+			select: GET_PRODUCTS_SELECT,
+		});
 
-		const take = Math.min(
+		// Trier les produits selon le critère demandé
+		const sortedProducts = sortProducts(allProducts as Product[], params.sortBy);
+
+		// Pagination manuelle
+		const perPage = Math.min(
 			Math.max(1, params.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE),
 			GET_PRODUCTS_MAX_RESULTS_PER_PAGE
 		);
 
-		const cursorConfig = buildCursorPagination({
-			cursor: params.cursor,
-			direction: params.direction,
-			take,
-		});
+		// Trouver l'index de départ basé sur le curseur
+		let startIndex = 0;
+		if (params.cursor) {
+			const cursorIndex = sortedProducts.findIndex((p) => p.id === params.cursor);
+			if (cursorIndex !== -1) {
+				startIndex = params.direction === "backward"
+					? Math.max(0, cursorIndex - perPage)
+					: cursorIndex + 1;
+			}
+		}
 
-		const products = await prisma.product.findMany({
-			where,
-			select: GET_PRODUCTS_SELECT,
-			orderBy,
-			...cursorConfig,
-		});
+		// Extraire la page de résultats
+		const pageProducts = sortedProducts.slice(startIndex, startIndex + perPage);
 
-		const { items, pagination } = processCursorResults(
-			products,
-			take,
-			params.direction,
-			params.cursor
-		);
+		// Calculer la pagination
+		const hasNextPage = startIndex + perPage < sortedProducts.length;
+		const hasPreviousPage = startIndex > 0;
+		const nextCursor = hasNextPage ? pageProducts[pageProducts.length - 1]?.id ?? null : null;
+		const prevCursor = hasPreviousPage ? sortedProducts[startIndex - 1]?.id ?? null : null;
 
-		return { products: items, pagination };
+		return {
+			products: pageProducts,
+			pagination: {
+				nextCursor,
+				prevCursor,
+				hasNextPage,
+				hasPreviousPage,
+			},
+		};
 	} catch (error) {
 		const baseReturn = {
 			products: [],

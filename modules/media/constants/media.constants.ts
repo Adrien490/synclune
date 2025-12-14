@@ -84,15 +84,21 @@ export const ALLOWED_UPLOADTHING_DOMAINS = [
 /** Configuration pour le script de migration generate-video-thumbnails.ts */
 export const VIDEO_MIGRATION_CONFIG = {
 	/** Timeout pour le téléchargement de vidéo (ms) */
-	downloadTimeout: 60000,
+	downloadTimeout: 60_000,
 	/** Timeout pour les commandes FFmpeg (ms) */
-	ffmpegTimeout: 30000,
+	ffmpegTimeout: 30_000,
 	/** Taille max des vidéos en octets (512 MB - aligné sur UploadThing) */
 	maxVideoSize: 512 * 1024 * 1024,
 	/** Durée max recommandée pour vidéos produit (secondes) */
 	maxVideoDuration: 120,
 	/** Domaines UploadThing autorisés pour le téléchargement */
 	allowedDomains: ALLOWED_UPLOADTHING_DOMAINS,
+	/** Timeout pour validation format vidéo avec FFmpeg (ms) */
+	validationTimeout: 10_000,
+	/** Timeout pour extraction infos vidéo / durée (ms) */
+	infoTimeout: 10_000,
+	/** Timeout pour génération blur placeholder (ms) */
+	blurTimeout: 5_000,
 } as const;
 
 // ============================================================================

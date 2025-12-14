@@ -33,6 +33,7 @@
  */
 
 import { execFile, execSync, type ChildProcess } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { createWriteStream, existsSync, renameSync } from "node:fs";
 import { mkdir, readFile, rm, stat, statfs, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -158,6 +159,44 @@ const PARALLEL_COUNT = !isNaN(parsedParallel) && parsedParallel > 0 ? parsedPara
 const JSON_LOGS = process.argv.includes("--json");
 const NO_BLUR = process.argv.includes("--no-blur");
 const CHECK_ONLY = process.argv.includes("--check");
+const SHOW_HELP = process.argv.includes("--help") || process.argv.includes("-h");
+
+// Afficher l'aide si demandé
+if (SHOW_HELP) {
+	console.log(`
+🎬 Script de generation de miniatures video
+
+Usage:
+  pnpm generate:video-thumbnails [options]
+
+Options:
+  --dry-run       Simuler sans modification (aucune ecriture DB/upload)
+  --parallel=N    Nombre de videos en parallele (defaut: 5, max recommande: 10)
+  --no-blur       Ne pas generer les blur placeholders base64
+  --check         Health check uniquement (FFmpeg + connexion DB)
+  --json          Logs JSON structures pour monitoring/Sentry
+  --help, -h      Afficher cette aide
+
+Exemples:
+  pnpm generate:video-thumbnails                  # Traiter toutes les videos
+  pnpm generate:video-thumbnails --dry-run        # Simuler sans modification
+  pnpm generate:video-thumbnails --parallel=3     # Limiter a 3 en parallele
+  pnpm generate:video-thumbnails --check          # Verifier FFmpeg et DB
+
+Configuration:
+  - Taille thumbnail: ${THUMBNAIL_SIZE}px
+  - Qualite: ${THUMBNAIL_QUALITY}%
+  - Capture a: ${Math.round(CAPTURE_POSITION * 100)}% de la duree (max ${MAX_CAPTURE_TIME}s)
+  - Taille max video: ${MAX_VIDEO_SIZE / 1024 / 1024}MB
+  - Timeout download: ${DOWNLOAD_TIMEOUT / 1000}s
+  - Timeout FFmpeg: ${FFMPEG_TIMEOUT / 1000}s
+
+Variables d'environnement requises:
+  DATABASE_URL        Connection string PostgreSQL (Neon)
+  UPLOADTHING_TOKEN   Token API UploadThing
+`);
+	process.exit(0);
+}
 
 // ============================================================================
 // GRACEFUL SHUTDOWN
@@ -165,6 +204,9 @@ const CHECK_ONLY = process.argv.includes("--check");
 
 /** Flag pour interruption gracieuse */
 let shuttingDown = false;
+
+/** ID unique du batch pour traçabilité des logs (set dans main) */
+let currentBatchId: string = "";
 
 process.on("SIGTERM", () => {
 	console.log("\n⚠️  SIGTERM recu - arret en cours...");
@@ -408,7 +450,7 @@ async function validateVideoFormat(videoPath: string): Promise<boolean> {
 		await execFileWithTimeout(
 			FFMPEG_PATH,
 			buildFFmpegValidateArgs(videoPath),
-			10000
+			VIDEO_MIGRATION_CONFIG.validationTimeout
 		);
 		return true;
 	} catch {
@@ -448,7 +490,7 @@ async function getVideoDuration(videoPath: string, mediaId?: string): Promise<nu
 		const { stderr } = await execFileWithTimeout(
 			FFMPEG_PATH,
 			buildFFmpegInfoArgs(videoPath),
-			10000
+			VIDEO_MIGRATION_CONFIG.infoTimeout
 		).catch((error: Error & { stderr?: string }) => {
 			// FFmpeg retourne une erreur mais stderr contient les infos
 			if (error.stderr) {
@@ -562,7 +604,7 @@ async function generateBlurDataUrl(thumbnailPath: string): Promise<string | null
 		const blurPath = thumbnailPath.replace(".webp", "-blur.webp");
 
 		// Arguments sécurisés pour FFmpeg (pas de shell interpretation)
-		await execFileWithTimeout(FFMPEG_PATH, buildBlurArgs(thumbnailPath, blurPath), 5000);
+		await execFileWithTimeout(FFMPEG_PATH, buildBlurArgs(thumbnailPath, blurPath), VIDEO_MIGRATION_CONFIG.blurTimeout);
 
 		if (!existsSync(blurPath)) {
 			return null;
@@ -616,7 +658,7 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 	if (!isValidCuid(media.id)) {
 		const errorMsg = `ID invalide (doit être un CUID): ${media.id}`;
 		console.error(`  ❌ ${errorMsg}`);
-		logError("invalid_media_id", { mediaId: media.id, reason: "not_a_cuid" });
+		logError("invalid_media_id", { batchId: currentBatchId, mediaId: media.id, reason: "not_a_cuid" });
 		return { id: media.id, success: false, error: errorMsg };
 	}
 
@@ -710,7 +752,7 @@ async function processVideo(media: MediaItem, index: number, total: number): Pro
 		console.log(`  ✅ Traitement terminé en ${(totalMs / 1000).toFixed(1)}s`);
 
 		// Log structuré des métriques pour monitoring
-		logSuccess("video_processed", { mediaId: media.id, ...metrics });
+		logSuccess("video_processed", { batchId: currentBatchId, mediaId: media.id, ...metrics });
 
 		return { id: media.id, success: true, metrics };
 	} catch (error) {
@@ -757,9 +799,13 @@ async function processVideosInBatches(
 // ============================================================================
 
 async function main(): Promise<void> {
+	// Générer un ID unique pour ce batch (traçabilité logs)
+	currentBatchId = randomUUID().slice(0, 8);
+
 	console.log("🎬 Script de génération de miniatures vidéo");
 	console.log("=".repeat(50));
 	console.log(`Configuration:`);
+	console.log(`  - Batch ID: ${currentBatchId}`);
 	console.log(`  - Parallélisation: ${PARALLEL_COUNT} vidéos simultanées`);
 	console.log(`  - Taille max vidéo: ${MAX_VIDEO_SIZE / 1024 / 1024}MB`);
 	console.log(`  - Timeout téléchargement: ${DOWNLOAD_TIMEOUT / 1000}s`);
@@ -782,13 +828,36 @@ async function main(): Promise<void> {
 	if (!ffmpegInstalled) {
 		console.error("❌ FFmpeg n'est pas disponible!");
 		console.error("");
-		console.error("Le package ffmpeg-static devrait etre installe automatiquement.");
-		console.error("Si le probleme persiste, installez FFmpeg manuellement:");
-		console.error("  macOS:        brew install ffmpeg");
-		console.error("  Ubuntu:       sudo apt install ffmpeg");
-		console.error("  Windows:      choco install ffmpeg");
+		console.error("Diagnostic:");
+		console.error(`  - ffmpeg-static (npm): ${ffmpegStaticPath ? `trouve (${ffmpegStaticPath})` : "non installe"}`);
+		console.error(`  - Chemin resolu: ${FFMPEG_PATH || "aucun"}`);
+
+		// Verifier les chemins communs
+		const commonPaths = ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/usr/bin/ffmpeg"];
+		const foundPaths = commonPaths.filter((p) => existsSync(p));
+		if (foundPaths.length > 0) {
+			console.error(`  - Chemins systeme trouves: ${foundPaths.join(", ")}`);
+		} else {
+			console.error("  - Aucun FFmpeg systeme trouve");
+		}
+
 		console.error("");
-		console.error("Verification:   ffmpeg -version");
+		console.error("Solutions:");
+		console.error("  1. Installer ffmpeg-static: pnpm add -D ffmpeg-static");
+		console.error("  2. Ou installer FFmpeg systeme:");
+		console.error("     macOS:   brew install ffmpeg");
+		console.error("     Ubuntu:  sudo apt install ffmpeg");
+		console.error("     Windows: choco install ffmpeg");
+		console.error("");
+		console.error("Verification: ffmpeg -version");
+
+		logError("ffmpeg_not_available", {
+			batchId: currentBatchId,
+			ffmpegStaticPath,
+			resolvedPath: FFMPEG_PATH,
+			foundSystemPaths: foundPaths,
+		});
+
 		process.exit(1);
 	}
 	// Indiquer la source de FFmpeg
@@ -807,11 +876,11 @@ async function main(): Promise<void> {
 			});
 			console.log(`✅ Connexion DB OK - ${count} vidéo(s) à traiter`);
 			console.log("\n✅ Health check terminé avec succès");
-			logSuccess("health_check_passed", { ffmpegInstalled: true, dbConnected: true, pendingVideos: count });
+			logSuccess("health_check_passed", { batchId: currentBatchId, ffmpegInstalled: true, dbConnected: true, pendingVideos: count });
 			return;
 		} catch (dbError) {
 			console.error("❌ Connexion DB échouée:", dbError instanceof Error ? dbError.message : String(dbError));
-			logError("health_check_failed", { ffmpegInstalled: true, dbConnected: false, error: String(dbError) });
+			logError("health_check_failed", { batchId: currentBatchId, ffmpegInstalled: true, dbConnected: false, error: String(dbError) });
 			process.exit(1);
 		}
 	}
@@ -875,6 +944,7 @@ async function main(): Promise<void> {
 
 		// Log structuré du résumé (Sentry-ready)
 		logSuccess("batch_completed", {
+			batchId: currentBatchId,
 			successCount,
 			errorCount,
 			totalProcessed: videosWithoutThumbnail.length,
@@ -889,6 +959,7 @@ async function main(): Promise<void> {
 				console.log(`  - ${error.id}: ${error.error}`);
 				// Log structuré par erreur
 				logError("video_processing_failed", {
+					batchId: currentBatchId,
 					mediaId: error.id,
 					error: error.error,
 				});

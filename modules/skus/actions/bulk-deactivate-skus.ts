@@ -5,7 +5,6 @@ import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { bulkDeactivateSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../constants/cache";
-import { syncMultipleProductsPriceAndInventory } from "@/modules/products/services/sync-product-price";
 
 export async function bulkDeactivateSkus(
 	prevState: ActionState | undefined,
@@ -62,10 +61,6 @@ export async function bulkDeactivateSkus(
 					isActive: false,
 				},
 			});
-
-			// Synchroniser les champs dénormalisés des Products concernés
-			const productIds = [...new Set(skusData.map((s) => s.productId))];
-			await syncMultipleProductsPriceAndInventory(productIds, tx);
 		});
 
 		// Invalider le cache (deduplique automatiquement les tags)

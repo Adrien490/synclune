@@ -54,27 +54,6 @@ function randomNovember2025Date(): Date {
   return new Date(2025, 10, day, hour, minute);
 }
 
-async function updateProductDenormalizedFields(productId: string) {
-  const skus = await prisma.productSku.findMany({
-    where: { productId, isActive: true, deletedAt: null },
-    select: { priceInclTax: true, inventory: true },
-  });
-
-  if (skus.length === 0) return;
-
-  const prices = skus.map((s) => s.priceInclTax);
-  const totalInventory = skus.reduce((sum, s) => sum + s.inventory, 0);
-
-  await prisma.product.update({
-    where: { id: productId },
-    data: {
-      minPriceInclTax: Math.min(...prices),
-      maxPriceInclTax: Math.max(...prices),
-      totalInventory,
-    },
-  });
-}
-
 // ============================================
 // DONNÉES DU CATALOGUE
 // ============================================
@@ -975,14 +954,6 @@ async function main(): Promise<void> {
   }
 
   console.log(`✅ ${linksCreated} liens produit-collection créés`);
-
-  // ============================================
-  // MISE À JOUR CHAMPS DÉNORMALISÉS
-  // ============================================
-  for (const productId of createdProductIds) {
-    await updateProductDenormalizedFields(productId);
-  }
-  console.log(`✅ Champs dénormalisés mis à jour pour ${createdProductIds.length} produits`);
 
   // ============================================
   // UTILISATEURS
