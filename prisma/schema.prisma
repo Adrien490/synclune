@@ -446,7 +446,7 @@ model CartItem {
   cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
   skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
 
   quantity Int @default(1)
 
@@ -496,7 +496,7 @@ model WishlistItem {
   wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
   skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
 
   // Prix snapshot au moment de l'ajout (pour notifier si baisse de prix)
   priceAtAdd Int
@@ -1183,7 +1183,6 @@ model WebhookEvent {
   receivedAt    DateTime           @default(now())
   processedAt   DateTime?
 
-  @@index([stripeEventId])
   @@index([eventType, status])
   @@index([source, receivedAt(sort: Desc)])
   @@index([status, receivedAt])
