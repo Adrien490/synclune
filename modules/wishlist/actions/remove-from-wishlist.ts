@@ -15,6 +15,7 @@ import {
 	getWishlistSessionId,
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session"
+import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages"
 
 /**
  * Server Action pour retirer un article de la wishlist
@@ -43,7 +44,7 @@ export async function removeFromWishlist(
 		if (!userId && !sessionId) {
 			return {
 				status: ActionStatus.ERROR,
-				message: 'Aucune wishlist trouvée',
+				message: WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND,
 			}
 		}
 
@@ -58,7 +59,7 @@ export async function removeFromWishlist(
 			const firstError = result.error.issues[0]
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || 'Données invalides',
+				message: firstError?.message || WISHLIST_ERROR_MESSAGES.INVALID_DATA,
 			}
 		}
 
@@ -69,7 +70,7 @@ export async function removeFromWishlist(
 		const ipAddress = await getClientIp(headersList)
 
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress)
-		const rateLimit = checkRateLimit(`wishlist-remove:${rateLimitId}`, WISHLIST_LIMITS.REMOVE)
+		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.REMOVE)
 
 		if (!rateLimit.success) {
 			return {
@@ -91,7 +92,7 @@ export async function removeFromWishlist(
 		if (!sku) {
 			return {
 				status: ActionStatus.NOT_FOUND,
-				message: 'Produit introuvable',
+				message: WISHLIST_ERROR_MESSAGES.SKU_NOT_FOUND,
 			}
 		}
 
@@ -104,7 +105,7 @@ export async function removeFromWishlist(
 		if (!wishlist) {
 			return {
 				status: ActionStatus.NOT_FOUND,
-				message: 'Wishlist introuvable',
+				message: WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND,
 			}
 		}
 
@@ -139,7 +140,7 @@ export async function removeFromWishlist(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: deleteResult.count > 0 ? 'Retiré de votre wishlist' : 'Article déjà absent',
+			message: deleteResult.count > 0 ? 'Retiré de ta wishlist' : WISHLIST_ERROR_MESSAGES.ITEM_NOT_FOUND,
 			data: {
 				wishlistId: wishlist.id,
 				removed: deleteResult.count > 0,
@@ -149,7 +150,7 @@ export async function removeFromWishlist(
 		console.error('[REMOVE_FROM_WISHLIST] Error:', e);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue. Veuillez réessayer.",
+			message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
 		}
 	}
 }

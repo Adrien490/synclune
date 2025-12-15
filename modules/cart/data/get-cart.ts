@@ -59,8 +59,8 @@ export async function fetchCart(
 	});
 
 	// Si le panier est expiré, retourner null
-	// Note: La suppression des paniers expirés doit être gérée par un cron job
-	// ou une action dédiée dans cart/actions/, pas dans une query
+	// Note: La suppression physique est gérée par le cron job quotidien
+	// Voir: scripts/cleanup-expired-carts.ts (configurable via vercel.json)
 	if (cart && cart.expiresAt && cart.expiresAt < new Date()) {
 		return null;
 	}

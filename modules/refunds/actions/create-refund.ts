@@ -65,9 +65,9 @@ export async function createRefund(
 			};
 		}
 
-		// Récupérer la commande avec ses items
+		// Récupérer la commande avec ses items (exclure les commandes soft-deleted)
 		const order = await prisma.order.findUnique({
-			where: { id: orderId },
+			where: { id: orderId, deletedAt: null },
 			select: {
 				id: true,
 				orderNumber: true,

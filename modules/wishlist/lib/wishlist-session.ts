@@ -44,7 +44,7 @@ export async function createWishlistSessionId(): Promise<string> {
 
 	cookieStore.set(WISHLIST_SESSION_COOKIE_NAME, sessionId, {
 		httpOnly: true, // Pas accessible en JavaScript (protection XSS)
-		secure: process.env.NODE_ENV !== "development", // HTTPS en production ET staging
+		secure: process.env.NODE_ENV === "production", // HTTPS en production uniquement
 		sameSite: "lax", // Protection CSRF
 		maxAge: WISHLIST_SESSION_COOKIE_MAX_AGE,
 		path: "/",

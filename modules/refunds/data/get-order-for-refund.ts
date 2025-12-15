@@ -111,8 +111,9 @@ async function fetchOrderForRefund(
 	cacheTag(ORDERS_CACHE_TAGS.LIST);
 
 	try {
+		// Exclure les commandes soft-deleted
 		const order = await prisma.order.findUnique({
-			where: { id: orderId },
+			where: { id: orderId, deletedAt: null },
 			select: GET_ORDER_FOR_REFUND_SELECT,
 		});
 

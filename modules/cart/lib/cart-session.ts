@@ -45,6 +45,11 @@ export async function createCartSessionId(): Promise<string> {
 
 /**
  * Récupère l'identifiant de session existant ou en crée un nouveau
+ *
+ * Note: En cas d'appels concurrents (rare), deux sessions peuvent être créées.
+ * C'est acceptable car chaque UUID est unique et le cookie sera écrasé.
+ * Le panier orphelin sera nettoyé par le cron job d'expiration.
+ *
  * @returns L'identifiant de session
  */
 export async function getOrCreateCartSessionId(): Promise<string> {

@@ -49,12 +49,21 @@ export async function validateCart(): Promise<ValidateCartResult> {
 			return {
 				isValid: false,
 				issues: [],
+				rateLimited: true,
+			};
+		}
+
+		// 0c. Vérifier qu'on a au moins un identifiant (userId ou sessionId)
+		if (!userId && !sessionId) {
+			return {
+				isValid: false,
+				issues: [],
 			};
 		}
 
 		// 1. Recuperer le panier par userId ou sessionId (sécurisé - pas de cartId externe)
 		const cart = await prisma.cart.findFirst({
-			where: userId ? { userId } : sessionId ? { sessionId } : { id: "impossible" },
+			where: userId ? { userId } : { sessionId: sessionId! },
 			select: {
 				id: true,
 				items: {

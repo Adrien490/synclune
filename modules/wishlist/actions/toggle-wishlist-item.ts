@@ -15,6 +15,7 @@ import {
 	getOrCreateWishlistSessionId,
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session"
+import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages"
 
 /**
  * Server Action pour toggle un article dans la wishlist
@@ -43,7 +44,7 @@ export async function toggleWishlistItem(
 		if (!userId && !sessionId) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Impossible de créer une session wishlist",
+				message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
 			}
 		}
 
@@ -58,7 +59,7 @@ export async function toggleWishlistItem(
 			const firstError = result.error.issues[0]
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || 'Données invalides',
+				message: firstError?.message || WISHLIST_ERROR_MESSAGES.INVALID_DATA,
 			}
 		}
 
@@ -69,7 +70,7 @@ export async function toggleWishlistItem(
 		const ipAddress = await getClientIp(headersList)
 
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress)
-		const rateLimit = checkRateLimit(`wishlist-toggle:${rateLimitId}`, WISHLIST_LIMITS.TOGGLE)
+		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.TOGGLE)
 
 		if (!rateLimit.success) {
 			return {
@@ -101,7 +102,7 @@ export async function toggleWishlistItem(
 		if (!sku || !sku.isActive || sku.product.status !== 'PUBLIC') {
 			return {
 				status: ActionStatus.ERROR,
-				message: 'Produit indisponible',
+				message: WISHLIST_ERROR_MESSAGES.SKU_INACTIVE,
 			}
 		}
 
@@ -191,8 +192,8 @@ export async function toggleWishlistItem(
 			status: ActionStatus.SUCCESS,
 			message:
 				transactionResult.action === 'added'
-					? 'Ajouté à votre wishlist'
-					: 'Retiré de votre wishlist',
+					? 'Ajouté à ta wishlist'
+					: 'Retiré de ta wishlist',
 			data: {
 				wishlistId: transactionResult.wishlist.id,
 				action: transactionResult.action,
@@ -203,7 +204,7 @@ export async function toggleWishlistItem(
 		console.error('[TOGGLE_WISHLIST_ITEM] Error:', e);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue. Veuillez réessayer.",
+			message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
 		}
 	}
 }

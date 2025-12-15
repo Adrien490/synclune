@@ -8,6 +8,7 @@ import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/li
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
 import type { MergeWishlistsResult } from "../types/wishlist.types";
+import { WISHLIST_ERROR_MESSAGES, WISHLIST_INFO_MESSAGES } from "@/modules/wishlist/constants/error-messages";
 
 // Re-export pour retrocompatibilite
 export type { MergeWishlistsResult } from "../types/wishlist.types";
@@ -43,7 +44,7 @@ export async function mergeWishlists(
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-		const rateLimit = checkRateLimit(`merge-wishlists:${rateLimitId}`, WISHLIST_LIMITS.MERGE);
+		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.MERGE);
 
 		if (!rateLimit.success) {
 			return {
@@ -61,7 +62,7 @@ export async function mergeWishlists(
 		if (!user || user.deletedAt) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Utilisateur non trouvé",
+				message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
 			};
 		}
 
@@ -107,7 +108,7 @@ export async function mergeWishlists(
 			}
 			return {
 				status: ActionStatus.SUCCESS,
-				message: "Aucun favori à fusionner",
+				message: WISHLIST_INFO_MESSAGES.NO_ITEMS_TO_MERGE,
 				data: { addedItems: 0, skippedItems: 0 },
 			};
 		}
@@ -192,8 +193,8 @@ export async function mergeWishlists(
 		return {
 			status: ActionStatus.SUCCESS,
 			message: addedCount > 0
-				? `${addedCount} favori${addedCount > 1 ? "s" : ""} ajouté${addedCount > 1 ? "s" : ""}`
-				: "Tous les favoris étaient déjà dans votre liste",
+				? `${addedCount} favori${addedCount > 1 ? "s" : ""} ajouté${addedCount > 1 ? "s" : ""} à ta wishlist`
+				: "Tous les favoris étaient déjà dans ta liste",
 			data: {
 				addedItems: addedCount,
 				skippedItems: skippedCount,
@@ -203,7 +204,7 @@ export async function mergeWishlists(
 		console.error('[MERGE_WISHLISTS] Error:', error);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la fusion des favoris",
+			message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
 		};
 	}
 }

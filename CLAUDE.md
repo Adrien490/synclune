@@ -61,8 +61,7 @@ app/
 │   ├── creations/[slug]/ # Product detail pages
 │   ├── produits/     # Product listing with filters
 │   ├── collections/  # Collections pages
-│   ├── panier/       # Shopping cart
-│   └── paiement/     # Checkout flow
+│   └── paiement/     # Checkout flow (panier géré via CartSheet client-side)
 ├── admin/            # Admin dashboard (protected, ADMIN role required)
 │   ├── catalogue/    # Products, colors, materials, collections, types
 │   ├── ventes/       # Orders, refunds
@@ -71,8 +70,7 @@ app/
 └── api/              # API routes
     ├── auth/[...all]/ # Better Auth handler
     ├── webhooks/stripe/ # Stripe webhooks (idempotent)
-    ├── uploadthing/  # File uploads
-    └── invoices/     # PDF invoice download
+    └── uploadthing/  # File uploads
 
 modules/              # Domain-driven business logic (DDD)
 shared/               # Cross-cutting concerns (components, lib, utils, hooks, stores)
@@ -870,9 +868,8 @@ enum FulfillmentStatus { UNFULFILLED, PARTIALLY_FULFILLED, FULFILLED, RETURNED }
 | `/api/auth/[...all]` | Better Auth handler (login, register, OAuth) |
 | `/api/webhooks/stripe` | Stripe webhooks with signature verification + idempotency |
 | `/api/uploadthing` | UploadThing file upload handler |
-| `/api/invoices/[invoiceId]` | Fetch invoice from Stripe |
-| `/api/invoices/[invoiceId]/download` | Download invoice PDF |
-| `/api/cron/*` | Scheduled tasks |
+
+> **Note:** Les invoices Stripe sont téléchargées directement via l'URL Stripe (`invoice.invoice_pdf`).
 
 ### Stripe Webhook Idempotency
 
@@ -883,18 +880,15 @@ Webhooks use `WebhookEvent` model to prevent duplicate processing:
 
 ### Cron Jobs (`vercel.json`)
 
-| Schedule | Endpoint | Purpose |
-|----------|----------|---------|
-| 2:00 AM UTC | `/api/cron/cleanup-carts` | Remove expired guest carts (>30 days) |
-| 3:00 AM UTC | `/api/cron/cleanup-newsletter-tokens` | Remove expired verification tokens |
+Les tâches planifiées sont configurées dans `vercel.json` et exécutent des scripts manuels:
 
-Both routes require `CRON_SECRET` header for verification:
+| Schedule | Script | Purpose |
+|----------|--------|---------|
+| Daily | `scripts/cleanup-expired-carts.ts` | Remove expired guest carts (>30 days) |
 
-```typescript
-// In cron route handler
-if (request.headers.get("Authorization") !== `Bearer ${env.CRON_SECRET}`) {
-  return new Response("Unauthorized", { status: 401 })
-}
+```bash
+# Exécution manuelle
+pnpm exec tsx scripts/cleanup-expired-carts.ts [--dry-run]
 ```
 
 ## Email System

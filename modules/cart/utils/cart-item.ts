@@ -40,8 +40,10 @@ export function hasCartItemDiscount(item: CartItem): boolean {
  */
 export function getCartItemDiscountPercent(item: CartItem): number {
 	if (!hasCartItemDiscount(item)) return 0;
+	// Garde contre division par zéro (ne devrait pas arriver si hasCartItemDiscount est true)
+	if (!item.sku.compareAtPrice || item.sku.compareAtPrice <= 0) return 0;
 	return Math.round(
-		((item.sku.compareAtPrice! - item.priceAtAdd) / item.sku.compareAtPrice!) * 100
+		((item.sku.compareAtPrice - item.priceAtAdd) / item.sku.compareAtPrice) * 100
 	);
 }
 

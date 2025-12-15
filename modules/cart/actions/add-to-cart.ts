@@ -9,7 +9,6 @@ import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import {
 	getCartExpirationDate,
@@ -92,36 +91,8 @@ export async function addToCart(
 
 		// 6. Transaction: Trouver ou créer le panier, ajouter/mettre à jour l'item
 		const transactionResult = await prisma.$transaction(async (tx) => {
-			// 6a. Upsert panier
-			const cart = await tx.cart.upsert({
-				where: userId ? { userId } : { sessionId: sessionId! },
-				create: {
-					userId: userId || null,
-					sessionId: sessionId || null,
-					expiresAt: userId ? null : getCartExpirationDate(),
-				},
-				update: {
-					expiresAt: userId ? null : getCartExpirationDate(),
-					updatedAt: new Date(),
-				},
-			});
-
-			// 6b. Vérifier si le SKU est déjà dans le panier
-			const existingItem = await tx.cartItem.findUnique({
-				where: {
-					cartId_skuId: {
-						cartId: cart.id,
-						skuId: validatedData.skuId,
-					},
-				},
-			});
-
-			let cartItem;
-			let newQuantity;
-			let isUpdate = false;
-
-			// Verrouiller le SKU avec FOR UPDATE pour éviter les race conditions sur le stock
-			// Récupère toutes les données nécessaires en une seule requête atomique
+			// 6a. Verrouiller le SKU en PREMIER avec FOR UPDATE pour éviter les race conditions
+			// Le lock doit être acquis AVANT de lire existingItem pour garantir la cohérence
 			const skuRows = await tx.$queryRaw<Array<{
 				inventory: number;
 				isActive: boolean;
@@ -162,14 +133,40 @@ export async function addToCart(
 				throw new Error(CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
 			}
 
+			// 6b. Upsert panier (après validation SKU pour ne pas créer de panier inutile)
+			const cart = await tx.cart.upsert({
+				where: userId ? { userId } : { sessionId: sessionId! },
+				create: {
+					userId: userId || null,
+					sessionId: sessionId || null,
+					expiresAt: userId ? null : getCartExpirationDate(),
+				},
+				update: {
+					expiresAt: userId ? null : getCartExpirationDate(),
+					updatedAt: new Date(),
+				},
+			});
+
+			// 6c. Lire existingItem APRÈS le lock FOR UPDATE pour éviter les race conditions
+			const existingItem = await tx.cartItem.findUnique({
+				where: {
+					cartId_skuId: {
+						cartId: cart.id,
+						skuId: validatedData.skuId,
+					},
+				},
+			});
+
+			let cartItem;
+			let newQuantity;
+			let isUpdate = false;
+
 			if (existingItem) {
 				newQuantity = existingItem.quantity + validatedData.quantity;
 
 				// Vérification du stock (message générique pour ne pas révéler le stock exact)
 				if (sku.inventory < newQuantity) {
-					throw new Error(
-						"Stock insuffisant 😲"
-					);
+					throw new Error(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory));
 				}
 
 				// Mettre à jour le CartItem
@@ -190,9 +187,7 @@ export async function addToCart(
 				}
 
 				if (sku.inventory < validatedData.quantity) {
-					throw new Error(
-						"Stock insuffisant 😲"
-					);
+					throw new Error(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory));
 				}
 
 				// Créer le CartItem avec le prix récupéré dans la transaction (atomique)
@@ -210,13 +205,11 @@ export async function addToCart(
 		});
 
 		// 7. Invalider immédiatement le cache du panier (read-your-own-writes)
+		// Note: updateTag suffit car les cache tags couvrent toutes les données panier
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
 		tags.forEach(tag => updateTag(tag));
 
-		// 8. Revalider le panier pour mettre à jour le CartBadge
-		revalidatePath('/panier');
-
-		// 9. Success - Return ActionState format
+		// 8. Success - Return ActionState format
 		const successMessage = transactionResult.isUpdate
 			? `Quantité mise à jour (${transactionResult.newQuantity})`
 			: "Article ajouté au panier";

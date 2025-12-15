@@ -44,9 +44,11 @@ export async function updateCartPrices(
 								id: true,
 								priceInclTax: true,
 								isActive: true,
+								deletedAt: true,
 								product: {
 									select: {
 										status: true,
+										deletedAt: true,
 									},
 								},
 							},
@@ -63,12 +65,14 @@ export async function updateCartPrices(
 			};
 		}
 
-		// 3. Identifier les items où le prix a changé
+		// 3. Identifier les items où le prix a changé (exclure les soft-deleted)
 		const itemsToUpdate = cart.items.filter(
 			(item) =>
 				item.priceAtAdd !== item.sku.priceInclTax &&
 				item.sku.isActive &&
-				item.sku.product.status === "PUBLIC"
+				!item.sku.deletedAt &&
+				item.sku.product.status === "PUBLIC" &&
+				!item.sku.product.deletedAt
 		);
 
 		if (itemsToUpdate.length === 0) {
@@ -102,10 +106,11 @@ export async function updateCartPrices(
 				updatedCount: itemsToUpdate.length,
 			},
 		};
-	} catch (error) {
+	} catch (e) {
+		console.error("[updateCartPrices] Erreur:", e);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Erreur lors de la mise à jour des prix",
+			message: e instanceof Error ? e.message : "Erreur lors de la mise à jour des prix",
 		};
 	}
 }

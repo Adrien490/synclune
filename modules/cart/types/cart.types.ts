@@ -44,6 +44,8 @@ export interface CartValidationIssue {
 export interface ValidateCartResult {
 	isValid: boolean;
 	issues: CartValidationIssue[];
+	/** Indique si la validation a échoué à cause d'un rate limit */
+	rateLimited?: boolean;
 }
 
 // ============================================================================

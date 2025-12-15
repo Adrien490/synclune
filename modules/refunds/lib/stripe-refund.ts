@@ -111,32 +111,3 @@ export async function getStripeRefundStatus(
 	}
 }
 
-/**
- * Calcule le montant maximum remboursable pour un PaymentIntent
- *
- * @param paymentIntentId ID du PaymentIntent
- * @returns Montant maximum remboursable en centimes ou null si erreur
- */
-export async function getMaxRefundableAmount(
-	paymentIntentId: string
-): Promise<number | null> {
-	try {
-		const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-		// Récupérer tous les remboursements existants
-		const refunds = await stripe.refunds.list({
-			payment_intent: paymentIntentId,
-		});
-
-		// Calculer le total déjà remboursé
-		const totalRefunded = refunds.data
-			.filter((r) => r.status === "succeeded")
-			.reduce((sum, r) => sum + (r.amount || 0), 0);
-
-		// Retourner le montant restant
-		return paymentIntent.amount_received - totalRefunded;
-	} catch (error) {
-		console.error("[STRIPE_MAX_REFUNDABLE_ERROR]", error);
-		return null;
-	}
-}

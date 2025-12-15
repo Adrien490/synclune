@@ -19,6 +19,10 @@ import {
 	getOrCreateWishlistSessionId,
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session";
+import {
+	WISHLIST_ERROR_MESSAGES,
+	WISHLIST_SUCCESS_MESSAGES,
+} from "@/modules/wishlist/constants/error-messages";
 
 /**
  * Server Action pour ajouter un article à la wishlist
@@ -47,7 +51,7 @@ export async function addToWishlist(
 		if (!userId && !sessionId) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Impossible de créer une session wishlist",
+				message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
 			};
 		}
 
@@ -62,7 +66,7 @@ export async function addToWishlist(
 			const firstError = result.error.issues[0];
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || "Données invalides",
+				message: firstError?.message || WISHLIST_ERROR_MESSAGES.INVALID_DATA,
 			};
 		}
 
@@ -73,7 +77,7 @@ export async function addToWishlist(
 		const ipAddress = await getClientIp(headersList);
 
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
-		const rateLimit = checkRateLimit(`wishlist-add:${rateLimitId}`, WISHLIST_LIMITS.ADD);
+		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.ADD);
 
 		if (!rateLimit.success) {
 			return {
@@ -106,7 +110,7 @@ export async function addToWishlist(
 		if (!sku || !sku.isActive || sku.product.status !== "PUBLIC") {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Produit indisponible",
+				message: WISHLIST_ERROR_MESSAGES.SKU_INACTIVE,
 			};
 		}
 
@@ -182,8 +186,8 @@ export async function addToWishlist(
 		return {
 			status: ActionStatus.SUCCESS,
 			message: transactionResult.alreadyExists
-				? "Déjà dans votre wishlist"
-				: "Ajouté à votre wishlist",
+				? WISHLIST_ERROR_MESSAGES.ITEM_ALREADY_IN_WISHLIST
+				: "Ajouté à ta wishlist",
 			data: {
 				wishlistItemId: transactionResult.wishlistItem.id,
 				wishlistId: transactionResult.wishlist.id,
@@ -193,7 +197,7 @@ export async function addToWishlist(
 		console.error('[ADD_TO_WISHLIST] Error:', e);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue. Veuillez réessayer.",
+			message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
 		};
 	}
 }

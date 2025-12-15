@@ -15,6 +15,7 @@ import {
 	getWishlistSessionId,
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session"
+import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages"
 
 /**
  * Server Action pour vider complètement la wishlist
@@ -43,7 +44,7 @@ export async function clearWishlist(
 		if (!userId && !sessionId) {
 			return {
 				status: ActionStatus.ERROR,
-				message: 'Aucune wishlist trouvée',
+				message: WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND,
 			}
 		}
 
@@ -52,7 +53,7 @@ export async function clearWishlist(
 		if (!result.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: 'Données invalides',
+				message: WISHLIST_ERROR_MESSAGES.INVALID_DATA,
 			}
 		}
 
@@ -61,7 +62,7 @@ export async function clearWishlist(
 		const ipAddress = await getClientIp(headersList)
 
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress)
-		const rateLimit = checkRateLimit(`wishlist-clear:${rateLimitId}`, WISHLIST_LIMITS.CLEAR)
+		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.CLEAR)
 
 		if (!rateLimit.success) {
 			return {
@@ -83,7 +84,7 @@ export async function clearWishlist(
 		if (!wishlist) {
 			return {
 				status: ActionStatus.NOT_FOUND,
-				message: 'Wishlist introuvable',
+				message: WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND,
 			}
 		}
 
@@ -120,8 +121,8 @@ export async function clearWishlist(
 			status: ActionStatus.SUCCESS,
 			message:
 				deleteResult.count > 0
-					? `${deleteResult.count} article${deleteResult.count > 1 ? 's' : ''} retiré${deleteResult.count > 1 ? 's' : ''} de votre wishlist`
-					: 'Votre wishlist est déjà vide',
+					? `${deleteResult.count} article${deleteResult.count > 1 ? 's' : ''} retiré${deleteResult.count > 1 ? 's' : ''} de ta wishlist`
+					: 'Ta wishlist est déjà vide',
 			data: {
 				wishlistId: wishlist.id,
 				itemsRemoved: deleteResult.count,
@@ -131,7 +132,7 @@ export async function clearWishlist(
 		console.error('[CLEAR_WISHLIST] Error:', e);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue. Veuillez réessayer.",
+			message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
 		}
 	}
 }

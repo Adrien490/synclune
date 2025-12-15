@@ -47,13 +47,18 @@ export async function fetchCartSummary(
 	"use cache: private";
 	cacheCartSummary(userId, sessionId);
 
+	// Retourner un résumé vide si pas d'identifiant
+	if (!userId && !sessionId) {
+		return {
+			itemCount: 0,
+			totalAmount: 0,
+			hasItems: false,
+		};
+	}
+
 	try {
 		const cart = await prisma.cart.findFirst({
-			where: userId
-				? { userId }
-				: sessionId
-					? { sessionId }
-					: { id: "" },
+			where: userId ? { userId } : { sessionId: sessionId! },
 			select: GET_CART_SUMMARY_SELECT,
 		});
 
