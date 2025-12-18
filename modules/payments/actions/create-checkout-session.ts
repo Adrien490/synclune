@@ -569,8 +569,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				// ✅ SHIPPING OPTIONS (IDs créés dans Dashboard Stripe)
 				// Stripe filtre automatiquement selon le pays du client :
 				// - France : 6€
-				// - DOM-TOM : 15€
-				// - Europe : 15€
+				// - Europe (dont Monaco) : 15€
 				// ℹ️ Micro-entreprise : Prix FINAUX sans TVA
 				shipping_options: getStripeShippingOptions(),
 

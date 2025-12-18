@@ -14,7 +14,7 @@
  */
 export const SHIPPING_COUNTRIES = [
 	"FR", // France métropolitaine
-	"MC", // Monaco (même tarif que France)
+	"MC", // Monaco (tarif Europe : 15€)
 	// --- Pays de l'UE ---
 	"BE", // Belgique
 	"DE", // Allemagne
@@ -110,7 +110,7 @@ export function getCountryName(country: ShippingCountry): string {
  */
 export const SORTED_SHIPPING_COUNTRIES = [
 	"FR", // France toujours en premier
-	"MC", // Monaco juste après (même tarif que France)
+	"MC", // Monaco juste après
 	// Autres pays UE triés alphabétiquement
 	...SHIPPING_COUNTRIES.filter(
 		(c) => c !== "FR" && c !== "MC"

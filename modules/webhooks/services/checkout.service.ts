@@ -71,7 +71,7 @@ export async function extractShippingInfo(
 
 	const shippingMethod = shippingRateId
 		? getShippingRateName(shippingRateId)
-		: "Colissimo";
+		: "Livraison standard";
 
 	return { shippingCost, shippingMethod, shippingRateId };
 }
