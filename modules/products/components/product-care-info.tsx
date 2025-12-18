@@ -7,7 +7,7 @@ import {
 import {
 	SHIPPING_RATES,
 	formatShippingPrice,
-} from "@/modules/orders/constants/colissimo-rates";
+} from "@/modules/orders/constants/shipping-rates";
 import { addBusinessDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Droplets, Package, Truck } from "lucide-react";

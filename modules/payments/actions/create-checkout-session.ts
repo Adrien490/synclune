@@ -8,10 +8,8 @@ import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/cache";
-import {
-	calculateShipping,
-	calculateTaxAmount,
-} from "@/modules/orders/utils/shipping.utils";
+import { calculateShipping } from "@/modules/orders/utils/shipping.utils";
+import type { ShippingCountry } from "@/shared/constants/countries";
 import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import Stripe from "stripe";
@@ -301,8 +299,10 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				validatedData.shippingAddress.postalCode
 			);
 
-			// 8c. Calculer les frais de livraison
-			const shippingCost = calculateShipping();
+			// 8c. Calculer les frais de livraison selon le pays
+			const shippingCost = calculateShipping(
+				validatedData.shippingAddress.country as ShippingCountry
+			);
 
 			// 8d. 🔴 DISCOUNT ATOMIQUE : Valider et appliquer le code promo dans la transaction
 			let discountAmount = 0;
@@ -401,10 +401,9 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			}
 
 			const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
-			const totalBeforeTax = subtotalAfterDiscount + shippingCost;
-			const taxAmount = calculateTaxAmount(totalBeforeTax);
-			// 🔴 SÉCURITÉ : Garantir que le total ne peut jamais être négatif
-			const total = Math.max(0, totalBeforeTax + taxAmount);
+			// Micro-entreprise : TVA non applicable (art. 293 B du CGI)
+			const taxAmount = 0;
+			const total = Math.max(0, subtotalAfterDiscount + shippingCost);
 
 			// 8e. Créer la commande avec stock déjà réservé
 			// Note: Montants temporaires - seront recalculés par Stripe Tax dans le webhook
@@ -567,13 +566,11 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				customer: stripeCustomerId || undefined,
 				customer_email: !stripeCustomerId ? (finalEmail || undefined) : undefined,
 
-				// ✅ SHIPPING OPTIONS COLISSIMO (IDs créés dans Dashboard Stripe)
+				// ✅ SHIPPING OPTIONS (IDs créés dans Dashboard Stripe)
 				// Stripe filtre automatiquement selon le pays du client :
-				// - France : shr_france → 6€
-				// - DOM-TOM : shr_domtom → 15€
-				// - Europe : shr_europe → 15€
-				//
-				// Mondial Relay interdit pour bijoux - seul Colissimo est autorisé
+				// - France : 6€
+				// - DOM-TOM : 15€
+				// - Europe : 15€
 				// ℹ️ Micro-entreprise : Prix FINAUX sans TVA
 				shipping_options: getStripeShippingOptions(),
 

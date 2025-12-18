@@ -1,16 +1,14 @@
 /**
  * Utilitaires pour le calcul des frais de port
  *
- * Source unique de verite : @/modules/orders/constants/colissimo-rates
+ * Source unique de verite : @/modules/orders/constants/shipping-rates
  */
 
 import {
 	getShippingRate,
-	ALLOWED_SHIPPING_COUNTRIES,
 	type ShippingRate,
-	type AllowedShippingCountry,
-} from "@/modules/orders/constants/colissimo-rates";
-import { TAX_RATE } from "@/modules/orders/constants/shipping.constants";
+} from "@/modules/orders/constants/shipping-rates";
+import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
 
 /**
  * Calcule les frais de port selon le pays de destination
@@ -26,7 +24,7 @@ import { TAX_RATE } from "@/modules/orders/constants/shipping.constants";
  * ```
  */
 export function calculateShipping(
-	countryCode: AllowedShippingCountry = "FR"
+	countryCode: ShippingCountry = "FR"
 ): number {
 	try {
 		const rate = getShippingRate(countryCode);
@@ -47,65 +45,13 @@ export function calculateShipping(
  * ```typescript
  * const info = getShippingInfo("FR");
  * console.log(info.amount); // 600
- * console.log(info.displayName); // "Colissimo France (2-3 jours)"
+ * console.log(info.displayName); // "Livraison France (2-3 jours)"
  * console.log(info.minDays); // 2
  * console.log(info.maxDays); // 3
  * ```
  */
-export function getShippingInfo(countryCode: AllowedShippingCountry = "FR"): ShippingRate {
+export function getShippingInfo(countryCode: ShippingCountry = "FR"): ShippingRate {
 	return getShippingRate(countryCode);
-}
-
-/**
- * NON UTILISE - Calcule le montant HT a partir du TTC
- *
- * Micro-entreprise : Cette fonction n'est PLUS utilisee car exoneree de TVA
- * En regime micro-entreprise, il n'y a pas de distinction HT/TTC
- * Les prix sont des prix FINAUX sans TVA
- *
- * Conservee pour compatibilite et future migration en regime reel si necessaire
- *
- * @param priceInclTax - Prix TTC en centimes
- * @param taxRate - Taux de TVA (optionnel, par defaut 20% France)
- * @returns Prix HT en centimes (arrondi)
- *
- * @example
- * ```typescript
- * calculatePriceExclTax(1200); // 1000 (1200 / 1.20)
- * calculatePriceExclTax(1200, 0.19); // 1008 (1200 / 1.19) - Allemagne
- * ```
- */
-export function calculatePriceExclTax(
-	priceInclTax: number,
-	taxRate: number = TAX_RATE
-): number {
-	return Math.round(priceInclTax / (1 + taxRate));
-}
-
-/**
- * NON UTILISE - Calcule le montant de la TVA
- *
- * Micro-entreprise : Cette fonction n'est PLUS utilisee car exoneree de TVA
- * En regime micro-entreprise : TVA = 0€ (art. 293 B du CGI)
- *
- * Conservee pour compatibilite et future migration en regime reel si necessaire
- *
- * @param priceInclTax - Prix TTC en centimes
- * @param taxRate - Taux de TVA (optionnel, par defaut 20% France)
- * @returns Montant de la TVA en centimes
- *
- * @example
- * ```typescript
- * calculateTaxAmount(1200); // 200 (TVA 20%)
- * calculateTaxAmount(1200, 0.19); // 192 (TVA 19% - Allemagne)
- * ```
- */
-export function calculateTaxAmount(
-	priceInclTax: number,
-	taxRate: number = TAX_RATE
-): number {
-	const priceExclTax = calculatePriceExclTax(priceInclTax, taxRate);
-	return priceInclTax - priceExclTax;
 }
 
 /**
@@ -121,7 +67,7 @@ export function calculateTaxAmount(
  * ```
  */
 export function formatDeliveryTime(
-	countryCode: AllowedShippingCountry = "FR"
+	countryCode: ShippingCountry = "FR"
 ): string {
 	try {
 		const rate = getShippingRate(countryCode);
@@ -148,8 +94,8 @@ export function formatDeliveryTime(
  * console.log(countries); // ["FR", "BE", "DE", "ES", ...]
  * ```
  */
-export function getAllowedCountries(): AllowedShippingCountry[] {
-	return [...ALLOWED_SHIPPING_COUNTRIES];
+export function getAllowedCountries(): ShippingCountry[] {
+	return [...SHIPPING_COUNTRIES];
 }
 
 /**
@@ -166,5 +112,5 @@ export function getAllowedCountries(): AllowedShippingCountry[] {
  * ```
  */
 export function isCountrySupported(countryCode: string): boolean {
-	return ALLOWED_SHIPPING_COUNTRIES.includes(countryCode as AllowedShippingCountry);
+	return SHIPPING_COUNTRIES.includes(countryCode as ShippingCountry);
 }

@@ -52,6 +52,14 @@ const envSchema = z.object({
 	STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_"),
 	NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith("pk_"),
 
+	// Shipping Rates (requis pour le checkout)
+	STRIPE_SHIPPING_RATE_FRANCE: z
+		.string()
+		.startsWith("shr_", "STRIPE_SHIPPING_RATE_FRANCE doit être un ID Stripe valide (shr_xxx)"),
+	STRIPE_SHIPPING_RATE_EUROPE: z
+		.string()
+		.startsWith("shr_", "STRIPE_SHIPPING_RATE_EUROPE doit être un ID Stripe valide (shr_xxx)"),
+
 	// ========================================
 	// Upload (UploadThing)
 	// ========================================

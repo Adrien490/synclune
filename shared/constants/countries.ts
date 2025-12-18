@@ -1,6 +1,6 @@
 // ==============================================================================
-// LISTE OFFICIELLE DES PAYS DE L'UE (+ MONACO + DOM-TOM) POUR LIVRAISON
-// Cette liste exclut Suisse (CH) et Royaume-Uni (GB) pour éviter les douanes.
+// LISTE DES PAYS AUTORISÉS POUR LA LIVRAISON
+// France + Monaco + Union Européenne (sans DOM-TOM)
 // ==============================================================================
 
 /**
@@ -10,23 +10,11 @@
  * - Validation Zod backend
  * - Select frontend
  *
- * UE + Monaco + DOM-TOM uniquement pour éviter les déclarations en douane (CN23)
+ * France + Monaco + UE uniquement (pas de DOM-TOM)
  */
 export const SHIPPING_COUNTRIES = [
 	"FR", // France métropolitaine
-	"MC", // Monaco (Traité comme France par les transporteurs)
-	// --- DOM-TOM (Tarifs spécifiques Outre-Mer) ---
-	"GP", // Guadeloupe
-	"MQ", // Martinique
-	"GF", // Guyane française
-	"RE", // Réunion
-	"YT", // Mayotte
-	"PM", // Saint-Pierre-et-Miquelon
-	"BL", // Saint-Barthélemy
-	"MF", // Saint-Martin (partie française)
-	"WF", // Wallis-et-Futuna
-	"PF", // Polynésie française
-	"NC", // Nouvelle-Calédonie
+	"MC", // Monaco (même tarif que France)
 	// --- Pays de l'UE ---
 	"BE", // Belgique
 	"DE", // Allemagne
@@ -67,18 +55,6 @@ export type ShippingCountry = (typeof SHIPPING_COUNTRIES)[number];
 export const COUNTRY_NAMES: Record<ShippingCountry, string> = {
 	FR: "France",
 	MC: "Monaco",
-	// DOM-TOM
-	GP: "Guadeloupe",
-	MQ: "Martinique",
-	GF: "Guyane française",
-	RE: "Réunion",
-	YT: "Mayotte",
-	PM: "Saint-Pierre-et-Miquelon",
-	BL: "Saint-Barthélemy",
-	MF: "Saint-Martin",
-	WF: "Wallis-et-Futuna",
-	PF: "Polynésie française",
-	NC: "Nouvelle-Calédonie",
 	// UE
 	BE: "Belgique",
 	DE: "Allemagne",
@@ -129,45 +105,15 @@ export function getCountryName(country: ShippingCountry): string {
 }
 
 /**
- * DOM-TOM codes pour identification
- */
-export const DOM_TOM_COUNTRIES = [
-	"GP",
-	"MQ",
-	"GF",
-	"RE",
-	"YT",
-	"PM",
-	"BL",
-	"MF",
-	"WF",
-	"PF",
-	"NC",
-] as const;
-
-export type DomTomCountry = (typeof DOM_TOM_COUNTRIES)[number];
-
-/**
- * Vérifie si un pays est un DOM-TOM
- */
-export function isDomTom(country: string): country is DomTomCountry {
-	return DOM_TOM_COUNTRIES.includes(country as DomTomCountry);
-}
-
-/**
  * Liste des pays triée par nom pour l'affichage frontend
- * France en premier, DOM-TOM ensuite, puis les autres par ordre alphabétique
+ * France et Monaco en premier, puis les autres par ordre alphabétique
  */
 export const SORTED_SHIPPING_COUNTRIES = [
 	"FR", // France toujours en premier
-	"MC", // Monaco juste après (traité comme France)
-	// DOM-TOM triés alphabétiquement
-	...DOM_TOM_COUNTRIES.slice().sort((a, b) =>
-		COUNTRY_NAMES[a].localeCompare(COUNTRY_NAMES[b], "fr")
-	),
+	"MC", // Monaco juste après (même tarif que France)
 	// Autres pays UE triés alphabétiquement
 	...SHIPPING_COUNTRIES.filter(
-		(c) => c !== "FR" && c !== "MC" && !DOM_TOM_COUNTRIES.includes(c as DomTomCountry)
+		(c) => c !== "FR" && c !== "MC"
 	).sort((a, b) => COUNTRY_NAMES[a].localeCompare(COUNTRY_NAMES[b], "fr")),
 ] as const;
 

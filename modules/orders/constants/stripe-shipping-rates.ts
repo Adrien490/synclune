@@ -27,26 +27,18 @@
  */
 export const STRIPE_SHIPPING_RATE_IDS = {
 	/**
-	 * Colissimo France Métropolitaine
+	 * Livraison France Métropolitaine
 	 * Prix : 6,00€ | Délai : 2-3 jours ouvrés
 	 * Pays autorisés dans Stripe : FR
 	 */
-	FRANCE: process.env.STRIPE_SHIPPING_RATE_FRANCE || "shr_france_placeholder",
-
+	FRANCE: process.env.STRIPE_SHIPPING_RATE_FRANCE!,
 	/**
-	 * Colissimo DOM-TOM (Outre-Mer)
-	 * Prix : 15,00€ | Délai : 5-10 jours ouvrés
-	 * Pays autorisés dans Stripe : GP, MQ, GF, RE, YT, PM, BL, MF, WF, PF, NC
-	 */
-	DOM_TOM: process.env.STRIPE_SHIPPING_RATE_DOM_TOM || "shr_domtom_placeholder",
-
-	/**
-	 * Colissimo Union Européenne
+	 * Livraison Union Européenne
 	 * Prix : 15,00€ | Délai : 4-7 jours ouvrés
 	 * Pays autorisés dans Stripe : BE, DE, NL, LU, IT, ES, PT, AT, IE, FI, SE, DK, GR,
 	 *                              BG, HR, CY, CZ, EE, HU, LV, LT, MT, PL, RO, SK, SI, MC
 	 */
-	EUROPE: process.env.STRIPE_SHIPPING_RATE_EUROPE || "shr_europe_placeholder",
+	EUROPE: process.env.STRIPE_SHIPPING_RATE_EUROPE!,
 } as const;
 
 // ==============================================================================
@@ -65,7 +57,6 @@ export function getStripeShippingOptions(): Array<{ shipping_rate: string }> {
 	// Proposer tous les tarifs - Stripe affichera uniquement celui correspondant au pays
 	return [
 		{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.FRANCE },
-		{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.DOM_TOM },
 		{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.EUROPE },
 	];
 }
@@ -79,9 +70,8 @@ export function getStripeShippingOptions(): Array<{ shipping_rate: string }> {
  * Utile pour afficher la méthode de livraison dans les emails/dashboard
  */
 export const SHIPPING_RATE_NAMES: Record<string, string> = {
-	[STRIPE_SHIPPING_RATE_IDS.FRANCE]: "Colissimo France",
-	[STRIPE_SHIPPING_RATE_IDS.DOM_TOM]: "Colissimo DOM-TOM",
-	[STRIPE_SHIPPING_RATE_IDS.EUROPE]: "Colissimo Europe",
+	[STRIPE_SHIPPING_RATE_IDS.FRANCE]: "Livraison France",
+	[STRIPE_SHIPPING_RATE_IDS.EUROPE]: "Livraison Europe",
 };
 
 /**
@@ -91,7 +81,7 @@ export const SHIPPING_RATE_NAMES: Record<string, string> = {
  * @returns Nom lisible de la méthode de livraison
  */
 export function getShippingRateName(shippingRateId: string): string {
-	return SHIPPING_RATE_NAMES[shippingRateId] || "Colissimo";
+	return SHIPPING_RATE_NAMES[shippingRateId] || "Livraison standard";
 }
 
 /**
@@ -101,8 +91,8 @@ export function getShippingRateName(shippingRateId: string): string {
  * @returns La méthode de livraison (STANDARD ou EXPRESS)
  */
 export function getShippingMethodFromRate(shippingRateId: string): "STANDARD" | "EXPRESS" {
-	// Tous les tarifs Colissimo sont STANDARD pour l'instant
-	// Si ajout d'un tarif EXPRESS futur (ex: Chronopost), mapper ici
+	// Tous les tarifs sont STANDARD pour l'instant
+	// Si ajout d'un tarif EXPRESS futur, mapper ici
 	return "STANDARD";
 }
 
@@ -113,7 +103,7 @@ export function getShippingMethodFromRate(shippingRateId: string): "STANDARD" | 
  * @returns Le transporteur (enum ShippingCarrier)
  */
 export function getShippingCarrierFromRate(shippingRateId: string): "COLISSIMO" | "CHRONOPOST" | "MONDIAL_RELAY" | "DPD" | "OTHER" {
-	// Tous nos tarifs sont Colissimo
-	// Si ajout d'autres transporteurs, mapper ici selon l'ID
-	return "COLISSIMO";
+	// Par défaut, transporteur non spécifié
+	// Mapper ici selon l'ID si nécessaire
+	return "OTHER";
 }

@@ -1,10 +1,9 @@
 /**
- * Tarifs de livraison Colissimo pour bijoux
+ * Tarifs de livraison pour bijoux
  *
- * ⚠️ IMPORTANT : Mondial Relay INTERDIT l'expédition de bijoux selon leurs CGV
- * Alternatives conformes : Colissimo, Chronopost, UPS, DHL
- *
- * Colissimo accepte les bijoux avec assurance jusqu'à 5 000€
+ * Configuration des zones et tarifs de livraison.
+ * Les tarifs réels sont définis dans Stripe Dashboard (Shipping Rates).
+ * Ces valeurs locales servent pour les calculs côté backend.
  */
 
 import {
@@ -13,8 +12,8 @@ import {
 } from "@/shared/constants/countries";
 
 export const SHIPPING_CARRIERS = {
-	COLISSIMO: "colissimo",
-	CHRONOPOST: "chronopost",
+	STANDARD: "standard",
+	EXPRESS: "express",
 } as const;
 
 export type ShippingCarrier =
@@ -36,31 +35,26 @@ export interface ShippingRate {
 }
 
 /**
- * Tarifs Colissimo France et Union Européenne
- *
- * Sources des tarifs :
- * - France : https://www.laposte.fr/colissimo
- * - International : https://www.laposte.fr/colissimo-international
+ * Tarifs de livraison France/Monaco et Union Européenne
  */
 export const SHIPPING_RATES = {
-	/** Colissimo France - Livraison en 2-3 jours ouvrés */
+	/** France Métropolitaine - Livraison en 2-3 jours ouvrés */
 	FR: {
 		amount: 600, // 6.00€
-		displayName: "Colissimo France (2-3 jours)",
-		carrier: SHIPPING_CARRIERS.COLISSIMO,
+		displayName: "Livraison France (2-3 jours)",
+		carrier: SHIPPING_CARRIERS.STANDARD,
 		minDays: 2,
 		maxDays: 3,
 		countries: ["FR"] as const,
 	},
 
-	/** Colissimo Union Européenne - Livraison en 4-7 jours ouvrés */
+	/** Union Européenne (dont Monaco) - Livraison en 4-7 jours ouvrés */
 	EU: {
 		amount: 1500, // 15.00€
-		displayName: "Colissimo Union Européenne (4-7 jours)",
-		carrier: SHIPPING_CARRIERS.COLISSIMO,
+		displayName: "Livraison Europe (4-7 jours)",
+		carrier: SHIPPING_CARRIERS.STANDARD,
 		minDays: 4,
 		maxDays: 7,
-		// Tous les pays UE sauf France (+ Monaco traité comme UE pour les tarifs)
 		countries: SHIPPING_COUNTRIES.filter((c) => c !== "FR") as readonly Exclude<
 			ShippingCountry,
 			"FR"
@@ -93,7 +87,7 @@ export function getShippingRate(country: string): ShippingRate {
 		return SHIPPING_RATES.FR;
 	}
 
-	// Tous les autres pays de l'UE
+	// Monaco + tous les autres pays de l'UE
 	return SHIPPING_RATES.EU;
 }
 
