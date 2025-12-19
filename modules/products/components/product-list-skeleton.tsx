@@ -27,12 +27,12 @@ export function ProductListSkeleton() {
 							style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}
 						>
 							{/* Image avec aspect-[4/5] ratio */}
-							<div className="product-card-media relative aspect-4/5 overflow-hidden bg-muted rounded-lg">
+							<div className="product-card-media relative aspect-square sm:aspect-4/5 overflow-hidden bg-muted rounded-lg">
 								<Skeleton className="absolute inset-0 rounded-lg" />
 							</div>
 
 							{/* Contenu */}
-							<div className="flex flex-col gap-2 sm:gap-3 relative p-2.5 sm:p-4 lg:p-5">
+							<div className="flex flex-col gap-2 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
 								{/* Titre - 2 lignes (line-clamp-2) */}
 								<div className="space-y-2">
 									<Skeleton className="h-5 w-full rounded" />
@@ -41,7 +41,7 @@ export function ProductListSkeleton() {
 
 								{/* Couleurs swatches */}
 								<div className="flex gap-2">
-									{Array.from({ length: 3 }).map((_, j) => (
+									{Array.from({ length: 4 }).map((_, j) => (
 										<Skeleton key={j} className="size-6 rounded-full" />
 									))}
 								</div>

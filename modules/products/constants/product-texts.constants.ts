@@ -151,7 +151,7 @@ export type ProductTypeRequiringSize =
  */
 export const IMAGE_SIZES = {
 	PRODUCT_CARD:
-		"(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 280px",
+		"(max-width: 767px) 45vw, (max-width: 1023px) 30vw, (max-width: 1279px) 22vw, 340px",
 	PRODUCT_GALLERY: "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px",
 	PRODUCT_THUMBNAIL: "120px",
 } as const;
