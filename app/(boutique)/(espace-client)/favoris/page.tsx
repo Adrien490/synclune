@@ -2,8 +2,6 @@ import { PageHeader } from "@/shared/components/page-header";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 import { WishlistList } from "@/modules/wishlist/components/wishlist-list";
 import { WishlistGridSkeleton } from "@/modules/wishlist/components/wishlist-grid-skeleton";
-import { ClearWishlistButton } from "@/modules/wishlist/components/clear-wishlist-button";
-import { ClearWishlistAlertDialog } from "@/modules/wishlist/components/clear-wishlist-alert-dialog";
 import { RemoveWishlistItemAlertDialog } from "@/modules/wishlist/components/remove-wishlist-item-alert-dialog";
 import { getWishlist } from "@/modules/wishlist/data/get-wishlist";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
@@ -60,11 +58,6 @@ export default async function WishlistPage({
 					{ label: "Mon compte", href: "/compte" },
 					{ label: "Favoris", href: "/favoris" },
 				]}
-				action={
-					<Suspense fallback={null}>
-						<WishlistToolbarActions wishlistPromise={wishlistPromise} />
-					</Suspense>
-				}
 			/>
 
 			<section className={`bg-background ${ACCOUNT_SECTION_PADDING}`}>
@@ -78,35 +71,8 @@ export default async function WishlistPage({
 				</div>
 			</section>
 
-			{/* Alert Dialogs */}
-			<ClearWishlistAlertDialog />
+			{/* Alert Dialog pour suppression d'un item */}
 			<RemoveWishlistItemAlertDialog />
 		</div>
-	);
-}
-
-/**
- * Server Component pour afficher le bouton "Vider" seulement s'il y a des items
- * - Mobile : icône seule (ghost, 44x44px)
- * - Desktop : bouton avec texte
- */
-async function WishlistToolbarActions({
-	wishlistPromise,
-}: {
-	wishlistPromise: Promise<Awaited<ReturnType<typeof getWishlist>>>;
-}) {
-	const { totalCount } = await wishlistPromise;
-
-	if (totalCount === 0) {
-		return null;
-	}
-
-	return (
-		<>
-			{/* Mobile: icon button */}
-			<ClearWishlistButton itemCount={totalCount} iconOnly className="sm:hidden" />
-			{/* Desktop: bouton avec texte */}
-			<ClearWishlistButton itemCount={totalCount} className="hidden sm:inline-flex" />
-		</>
 	);
 }

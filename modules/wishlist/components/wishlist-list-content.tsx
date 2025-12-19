@@ -1,6 +1,6 @@
 "use client";
 
-import { Stagger } from "@/shared/components/animations";
+import { AnimatePresence, motion } from "framer-motion";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
 import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";
@@ -43,26 +43,31 @@ export function WishlistListContent({
 
 	return (
 		<div className="space-y-8">
-			{/* Header avec count */}
-			<p className="text-sm text-muted-foreground">
-				{totalCount} création{totalCount > 1 ? "s" : ""} dans ta wishlist
-			</p>
-
-			{/* Grid des items de wishlist */}
-			<Stagger
-				className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
-				stagger={0.05}
-				delay={0.1}
-			>
-				{uniqueProducts.map((item, index) => (
-					<ProductCard
-						key={item.id}
-						product={item.sku.product as Product}
-						index={index}
-						wishlistSkuIds={wishlistSkuIds}
-					/>
-				))}
-			</Stagger>
+			{/* Grid des items de wishlist avec animation */}
+			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+				<AnimatePresence mode="popLayout">
+					{uniqueProducts.map((item, index) => (
+						<motion.div
+							key={item.id}
+							layout
+							initial={{ opacity: 0, scale: 0.9 }}
+							animate={{ opacity: 1, scale: 1 }}
+							exit={{ opacity: 0, scale: 0.9 }}
+							transition={{
+								duration: 0.2,
+								delay: index * 0.05,
+								ease: [0.4, 0, 0.2, 1],
+							}}
+						>
+							<ProductCard
+								product={item.sku.product as Product}
+								index={index}
+								wishlistSkuIds={wishlistSkuIds}
+							/>
+						</motion.div>
+					))}
+				</AnimatePresence>
+			</div>
 
 			{/* Pagination */}
 			<div className="flex justify-end mt-12">
