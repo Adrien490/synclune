@@ -25,6 +25,7 @@ const ParticleSystemBase = ({
 	springPhysics = false,
 	depthParallax = true,
 	disabled = false,
+	disabledOnMobile = false,
 	gradient = false,
 }: ParticleSystemProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -33,11 +34,16 @@ const ParticleSystemBase = ({
 	// Skip rendering si désactivé
 	if (disabled) return null;
 
-	// Lazy rendering : n'anime que si visible
-	const isInView = useInView(containerRef, { once: true, margin: "-100px" });
+	// Lazy rendering : anime seulement quand visible (pause quand hors viewport)
+	const isInView = useInView(containerRef, { margin: "-100px" });
 
 	// Normalise shape en tableau (support multi-formes)
 	const shapes = normalizeShapes(shape);
+
+	// Blur réduit de 30% sur mobile pour compenser la taille d'écran
+	const mobileBlur: [number, number] = Array.isArray(blur)
+		? [blur[0] * 0.7, blur[1] * 0.7]
+		: [blur * 0.7, blur * 0.7];
 
 	// Génération des deux sets de particules
 	// CSS media queries gèrent l'affichage → pas de flash d'hydratation
@@ -52,12 +58,12 @@ const ParticleSystemBase = ({
 		shapes
 	);
 	const mobileParticles = generateParticles(
-		Math.max(3, Math.ceil(count / 2)), // Minimum 3 particules sur mobile
+		Math.ceil(count / 2),
 		size,
 		opacity,
 		colors,
 		duration,
-		blur,
+		mobileBlur,
 		depthParallax,
 		shapes
 	);
@@ -90,14 +96,16 @@ const ParticleSystemBase = ({
 				/>
 			</div>
 			{/* Mobile : visible uniquement sous md (< 768px) - glow désactivé pour performance */}
-			<div className="contents md:hidden">
-				<ParticleSet
-					particles={mobileParticles}
-					glow={false}
-					glowIntensity={0}
-					{...sharedProps}
-				/>
-			</div>
+			{!disabledOnMobile && (
+				<div className="contents md:hidden">
+					<ParticleSet
+						particles={mobileParticles}
+						glow={false}
+						glowIntensity={0}
+						{...sharedProps}
+					/>
+				</div>
+			)}
 		</div>
 	);
 };
@@ -156,5 +164,9 @@ const ParticleSystemBase = ({
  * @example
  * // Désactiver complètement les particules
  * <ParticleSystem disabled />
+ *
+ * @example
+ * // Particules uniquement sur desktop (désactivé sur mobile)
+ * <ParticleSystem disabledOnMobile />
  */
 export { ParticleSystemBase as ParticleSystem };

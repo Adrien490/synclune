@@ -95,4 +95,33 @@ export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {
 		opacity: [p.opacity, p.opacity * 0.9, p.opacity],
 		...(rotation && { rotate: [0, 45, 0] }),
 	}),
+	twinkle: (p, intensity, rotation) => ({
+		opacity: [p.opacity, p.opacity * 1.5, p.opacity * 0.5, p.opacity],
+		scale: [1, 1.1 * intensity, 0.95, 1],
+		...(rotation && { rotate: [0, 5, -5, 0] }),
+	}),
+	pulse: (p, intensity, rotation) => ({
+		scale: [1, 1.3 * intensity, 1],
+		opacity: [p.opacity, p.opacity * 1.3, p.opacity],
+		...(rotation && { rotate: [0, 10, 0] }),
+	}),
+	shimmer: (p, intensity, rotation) => ({
+		opacity: [p.opacity, p.opacity * 1.4, p.opacity * 0.7, p.opacity],
+		x: ["0%", `${3 * intensity}%`, `${-3 * intensity}%`, "0%"],
+		...(rotation && { rotate: [0, 3, -3, 0] }),
+	}),
+	cascade: (p, intensity, rotation) => ({
+		y: ["0%", `${20 * intensity}%`],
+		opacity: [p.opacity, p.opacity * 0.6],
+		...(rotation && { rotate: [0, 30 * intensity] }),
+	}),
+	orbit: (p, intensity, rotation) => ({
+		x: [`${-10 * intensity}%`, `${10 * intensity}%`, `${-10 * intensity}%`],
+		y: [`${5 * intensity}%`, `${-5 * intensity}%`, `${5 * intensity}%`],
+		...(rotation && { rotate: [0, 360] }),
+	}),
+	sway: (p, intensity, rotation) => ({
+		x: ["0%", `${12 * intensity}%`, `${-12 * intensity}%`, "0%"],
+		...(rotation && { rotate: [0, 8, -8, 0] }),
+	}),
 };

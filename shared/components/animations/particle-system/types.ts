@@ -19,7 +19,15 @@ export type ParticleShape =
 	| "leaf";
 
 /** Styles d'animation */
-export type AnimationStyle = "float" | "drift";
+export type AnimationStyle =
+	| "float"
+	| "drift"
+	| "twinkle"
+	| "pulse"
+	| "shimmer"
+	| "cascade"
+	| "orbit"
+	| "sway";
 
 /** Props du composant ParticleSystem */
 export interface ParticleSystemProps {
@@ -55,6 +63,8 @@ export interface ParticleSystemProps {
 	depthParallax?: boolean;
 	/** Désactiver complètement le rendu des particules (défaut: false) */
 	disabled?: boolean;
+	/** Désactiver uniquement sur mobile < 768px (défaut: false) */
+	disabledOnMobile?: boolean;
 	/** Activer les gradients radiaux sur les particules (défaut: false) */
 	gradient?: boolean;
 }
