@@ -181,13 +181,32 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 		filters,
 	});
 
-	// Vérifier si des filtres sont actifs (hors navigation et type)
-	const hasActiveFilters = Object.keys(searchParamsData).some(
-		(key) =>
-			!["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(
-				key
-			)
-	);
+	// Compter les filtres actifs (pour le badge FAB et hasActiveFilters)
+	const activeFiltersCount = (() => {
+		let count = 0;
+		const params = searchParamsData;
+
+		// Types de produits
+		if (params.type) {
+			count += Array.isArray(params.type) ? params.type.length : 1;
+		}
+		// Couleurs (via parseFilters -> filters.color)
+		if (filters.color && filters.color.length > 0) {
+			count += filters.color.length;
+		}
+		// Materiaux (via parseFilters -> filters.material)
+		if (filters.material && filters.material.length > 0) {
+			count += filters.material.length;
+		}
+		// Prix (compte comme 1 si priceMin ou priceMax defini)
+		if (params.priceMin || params.priceMax) {
+			count += 1;
+		}
+
+		return count;
+	})();
+
+	const hasActiveFilters = activeFiltersCount > 0;
 
 	// Configuration de la page (valeurs fixes, les types sont des filtres)
 	const pageTitle = searchTerm ? `Recherche "${searchTerm}"` : "Les créations";
@@ -298,7 +317,10 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 			</section>
 
 			{/* FAB Filtres - Mobile only */}
-			<ProductFilterFab initialHidden={isFilterFabHidden} />
+			<ProductFilterFab
+				initialHidden={isFilterFabHidden}
+				activeFiltersCount={activeFiltersCount}
+			/>
 			<ProductFilterSheet
 				colors={colors}
 				materials={materials}

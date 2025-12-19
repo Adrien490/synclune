@@ -205,7 +205,7 @@ export function CursorPagination({
 										? "Page 1"
 										: !hasNextPage
 											? "Dernière"
-											: "En cours"}
+											: "Suite →"}
 							</span>
 						</div>
 

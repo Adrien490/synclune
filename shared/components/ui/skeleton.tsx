@@ -9,7 +9,7 @@ const skeletonVariants = cva("rounded-md", {
 		},
 	},
 	defaultVariants: {
-		variant: "default",
+		variant: "shimmer",
 	},
 });
 

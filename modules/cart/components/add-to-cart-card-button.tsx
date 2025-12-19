@@ -82,14 +82,16 @@ export function AddToCartCardButton({
 				onClick={handleClick}
 				size="icon"
 				className={cn(
-					// Mobile: bouton transparent, contraste géré par drop-shadow sur l'icône
-					"size-11 rounded-full bg-transparent hover:bg-transparent",
+					// Mobile: fond semi-transparent avec backdrop-blur pour visibilite
+					"size-11 rounded-full",
+					"bg-background/80 backdrop-blur-sm shadow-lg border border-border/30",
+					"hover:bg-background/90 hover:shadow-xl hover:scale-105",
 					// Desktop: pleine largeur avec fond primary
-					"sm:bg-primary sm:text-primary-foreground",
+					"sm:bg-primary sm:text-primary-foreground sm:border-0",
 					"sm:w-full sm:h-auto sm:rounded-none sm:py-3 sm:px-4",
-					"sm:shadow-lg sm:shadow-black/20",
+					"sm:shadow-lg sm:shadow-black/20 sm:backdrop-blur-none",
 					// Active mobile uniquement: feedback tactile (pas de scale sur desktop)
-					"active:scale-95 sm:active:scale-100",
+					"active:scale-95 sm:active:scale-100 sm:hover:scale-100",
 					// Hover desktop uniquement
 					"sm:hover:bg-primary/90 sm:hover:tracking-widest",
 					// Transitions
@@ -98,14 +100,11 @@ export function AddToCartCardButton({
 				)}
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
-				{/* Mobile: icône shopping bag avec drop-shadow renforcé pour contraste */}
+				{/* Mobile: icone shopping bag (fond visible = drop-shadow inutile) */}
 				<ShoppingBag
 					size={20}
 					strokeWidth={2}
-					className={cn(
-						"sm:hidden text-primary",
-						"drop-shadow-[0_0_4px_rgba(255,255,255,1)] drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
-					)}
+					className="sm:hidden text-primary"
 					aria-hidden="true"
 				/>
 				{/* Desktop: texte */}

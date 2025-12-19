@@ -172,10 +172,18 @@ export function ProductCard({
 				)}
 
 				<Image
+					key={currentImage.url}
 					src={currentImage.url}
 					alt={currentImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
 					fill
-					className="object-cover rounded-lg transition-all duration-300 ease-out motion-safe:group-hover:scale-[1.08]"
+					className={cn(
+						"object-cover rounded-lg",
+						// Transition fluide pour changement de couleur et hover
+						"transition-all duration-300 ease-out",
+						"motion-safe:group-hover:scale-[1.08]",
+						// Animation d'entree lors du changement d'image
+						"motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300"
+					)}
 					placeholder={currentImage.blurDataUrl ? "blur" : "empty"}
 					blurDataURL={currentImage.blurDataUrl ?? undefined}
 					// Preload pour les 4 premières images (above-fold) - Next.js 16

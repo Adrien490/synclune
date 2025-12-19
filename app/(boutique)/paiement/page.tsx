@@ -63,7 +63,7 @@ export default async function CheckoutPage() {
 					]}
 				/>
 
-				<section className="bg-background py-8">
+				<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<Alert variant="destructive" className="mb-6">
 							<AlertTriangle className="h-4 w-4" />
@@ -120,7 +120,7 @@ export default async function CheckoutPage() {
 				]}
 			/>
 
-			<section className="bg-background py-8">
+			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<CheckoutContainer
 						cart={cart}

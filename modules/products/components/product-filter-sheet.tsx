@@ -2,7 +2,13 @@
 
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
-import { Separator } from "@/shared/components/ui/separator";
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@/shared/components/ui/accordion";
+import { Badge } from "@/shared/components/ui/badge";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -186,6 +192,9 @@ export function ProductFilterSheet({
 		};
 	})();
 
+	// Determiner les sections ouvertes par defaut
+	const defaultOpenSections = ["types"];
+
 	return (
 		<FilterSheetWrapper
 			open={isOpen}
@@ -205,130 +214,205 @@ export function ProductFilterSheet({
 					e.stopPropagation();
 					form.handleSubmit();
 				}}
-				className="space-y-6"
 			>
-				{/* Types de produits */}
-				{productTypes.length > 0 && (
-					<form.Field name="productTypes" mode="array">
-						{(field) => (
-							<fieldset className="space-y-1 border-0 p-0 m-0">
-								<legend className="font-medium text-sm text-foreground mb-2">
-									Types de bijoux
-								</legend>
-								{productTypes.map((type) => {
-									const isSelected = field.state.value.includes(type.slug);
-									return (
-										<CheckboxFilterItem
-											key={type.slug}
-											id={`type-${type.slug}`}
-											checked={isSelected}
-											onCheckedChange={(checked) => {
-												if (checked && !isSelected) {
-													field.pushValue(type.slug);
-												} else if (!checked && isSelected) {
-													const index = field.state.value.indexOf(type.slug);
-													field.removeValue(index);
-												}
-											}}
-										>
-											{type.label}
-										</CheckboxFilterItem>
-									);
-								})}
-							</fieldset>
-						)}
-					</form.Field>
-				)}
-
-				{/* Couleurs */}
-				{productTypes.length > 0 && colors.length > 0 && <Separator />}
-				<form.Field name="colors" mode="array">
-					{(field) => (
-						<fieldset className="space-y-1 border-0 p-0 m-0">
-							<legend className="font-medium text-sm text-foreground mb-2">
-								Couleurs
-							</legend>
-							{colors.map((color) => {
-								const isSelected = field.state.value.includes(color.slug);
-								return (
-									<CheckboxFilterItem
-										key={color.slug}
-										id={`color-${color.slug}`}
-										checked={isSelected}
-										onCheckedChange={(checked) => {
-											if (checked && !isSelected) {
-												field.pushValue(color.slug);
-											} else if (!checked && isSelected) {
-												const index = field.state.value.indexOf(color.slug);
-												field.removeValue(index);
-											}
-										}}
-										indicator={
-											<span
-												className="w-5 h-5 rounded-full border border-border/50 shadow-sm ring-1 ring-inset ring-black/5"
-												style={{ backgroundColor: color.hex }}
-											/>
-										}
-										count={color._count?.skus}
-									>
-										{color.name}
-									</CheckboxFilterItem>
-								);
-							})}
-						</fieldset>
-					)}
-				</form.Field>
-
-				{/* Matériaux */}
-				{materials.length > 0 && (
-					<>
-						<Separator />
-						<form.Field name="materials" mode="array">
+				<Accordion
+					type="multiple"
+					defaultValue={defaultOpenSections}
+					className="w-full"
+				>
+					{/* Types de produits */}
+					{productTypes.length > 0 && (
+						<form.Field name="productTypes" mode="array">
 							{(field) => (
-								<fieldset className="space-y-1 border-0 p-0 m-0">
-									<legend className="font-medium text-sm text-foreground mb-2">
-										Matériaux
-									</legend>
-									{materials.map((material) => {
-										const isSelected = field.state.value.includes(material.id);
-										return (
-											<CheckboxFilterItem
-												key={material.id}
-												id={`material-${material.id}`}
-												checked={isSelected}
-												onCheckedChange={(checked) => {
-													if (checked && !isSelected) {
-														field.pushValue(material.id);
-													} else if (!checked && isSelected) {
-														const index = field.state.value.indexOf(
-															material.id
-														);
-														field.removeValue(index);
-													}
-												}}
-											>
-												{material.name}
-											</CheckboxFilterItem>
-										);
-									})}
-								</fieldset>
+								<AccordionItem value="types">
+									<AccordionTrigger className="hover:no-underline">
+										<div className="flex items-center gap-2">
+											<span>Types de bijoux</span>
+											{field.state.value.length > 0 && (
+												<Badge
+													variant="secondary"
+													className="h-5 px-1.5 text-xs font-semibold"
+												>
+													{field.state.value.length}
+												</Badge>
+											)}
+										</div>
+									</AccordionTrigger>
+									<AccordionContent>
+										<div className="space-y-1">
+											{productTypes.map((type) => {
+												const isSelected = field.state.value.includes(
+													type.slug
+												);
+												return (
+													<CheckboxFilterItem
+														key={type.slug}
+														id={`type-${type.slug}`}
+														checked={isSelected}
+														onCheckedChange={(checked) => {
+															if (checked && !isSelected) {
+																field.pushValue(type.slug);
+															} else if (!checked && isSelected) {
+																const index = field.state.value.indexOf(
+																	type.slug
+																);
+																field.removeValue(index);
+															}
+														}}
+													>
+														{type.label}
+													</CheckboxFilterItem>
+												);
+											})}
+										</div>
+									</AccordionContent>
+								</AccordionItem>
 							)}
 						</form.Field>
-					</>
-				)}
-
-				<Separator />
-
-				{/* Prix */}
-				<form.Field name="priceRange">
-					{(field) => (
-						<PriceRangeInputs
-							value={field.state.value}
-							onChange={field.handleChange}
-							maxPrice={maxPriceInEuros}
-						/>
 					)}
-				</form.Field>
+
+					{/* Couleurs */}
+					{colors.length > 0 && (
+						<form.Field name="colors" mode="array">
+							{(field) => (
+								<AccordionItem value="colors">
+									<AccordionTrigger className="hover:no-underline">
+										<div className="flex items-center gap-2">
+											<span>Couleurs</span>
+											{field.state.value.length > 0 && (
+												<Badge
+													variant="secondary"
+													className="h-5 px-1.5 text-xs font-semibold"
+												>
+													{field.state.value.length}
+												</Badge>
+											)}
+										</div>
+									</AccordionTrigger>
+									<AccordionContent>
+										<div className="space-y-1">
+											{colors.map((color) => {
+												const isSelected = field.state.value.includes(
+													color.slug
+												);
+												return (
+													<CheckboxFilterItem
+														key={color.slug}
+														id={`color-${color.slug}`}
+														checked={isSelected}
+														onCheckedChange={(checked) => {
+															if (checked && !isSelected) {
+																field.pushValue(color.slug);
+															} else if (!checked && isSelected) {
+																const index = field.state.value.indexOf(
+																	color.slug
+																);
+																field.removeValue(index);
+															}
+														}}
+														indicator={
+															<span
+																className="w-5 h-5 rounded-full border border-border/50 shadow-sm ring-1 ring-inset ring-black/5"
+																style={{ backgroundColor: color.hex }}
+															/>
+														}
+														count={color._count?.skus}
+													>
+														{color.name}
+													</CheckboxFilterItem>
+												);
+											})}
+										</div>
+									</AccordionContent>
+								</AccordionItem>
+							)}
+						</form.Field>
+					)}
+
+					{/* Matériaux */}
+					{materials.length > 0 && (
+						<form.Field name="materials" mode="array">
+							{(field) => (
+								<AccordionItem value="materials">
+									<AccordionTrigger className="hover:no-underline">
+										<div className="flex items-center gap-2">
+											<span>Matériaux</span>
+											{field.state.value.length > 0 && (
+												<Badge
+													variant="secondary"
+													className="h-5 px-1.5 text-xs font-semibold"
+												>
+													{field.state.value.length}
+												</Badge>
+											)}
+										</div>
+									</AccordionTrigger>
+									<AccordionContent>
+										<div className="space-y-1">
+											{materials.map((material) => {
+												const isSelected = field.state.value.includes(
+													material.id
+												);
+												return (
+													<CheckboxFilterItem
+														key={material.id}
+														id={`material-${material.id}`}
+														checked={isSelected}
+														onCheckedChange={(checked) => {
+															if (checked && !isSelected) {
+																field.pushValue(material.id);
+															} else if (!checked && isSelected) {
+																const index = field.state.value.indexOf(
+																	material.id
+																);
+																field.removeValue(index);
+															}
+														}}
+													>
+														{material.name}
+													</CheckboxFilterItem>
+												);
+											})}
+										</div>
+									</AccordionContent>
+								</AccordionItem>
+							)}
+						</form.Field>
+					)}
+
+					{/* Prix */}
+					<form.Field name="priceRange">
+						{(field) => {
+							const hasCustomPrice =
+								field.state.value[0] !== 0 ||
+								field.state.value[1] !== maxPriceInEuros;
+							return (
+								<AccordionItem value="price" className="border-b-0">
+									<AccordionTrigger className="hover:no-underline">
+										<div className="flex items-center gap-2">
+											<span>Prix</span>
+											{hasCustomPrice && (
+												<Badge
+													variant="secondary"
+													className="h-5 px-1.5 text-xs font-semibold"
+												>
+													{field.state.value[0]}€ - {field.state.value[1]}€
+												</Badge>
+											)}
+										</div>
+									</AccordionTrigger>
+									<AccordionContent>
+										<PriceRangeInputs
+											value={field.state.value}
+											onChange={field.handleChange}
+											maxPrice={maxPriceInEuros}
+										/>
+									</AccordionContent>
+								</AccordionItem>
+							);
+						}}
+					</form.Field>
+				</Accordion>
 			</form>
 		</FilterSheetWrapper>
 	);
