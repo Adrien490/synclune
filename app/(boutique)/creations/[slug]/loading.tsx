@@ -47,23 +47,11 @@ export default function ProductDetailLoading() {
 										</div>
 
 										{/* Main image */}
-										<div className="relative aspect-square overflow-hidden rounded-2xl lg:rounded-3xl bg-muted/30 order-2">
+										<div className="relative aspect-square sm:aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl bg-muted/30 order-2">
 											<Skeleton className="absolute inset-0 from-muted/60 via-muted/40 to-transparent" />
 											<div className="absolute inset-0 flex items-center justify-center">
 												<div className="h-16 w-16 rounded-full border-4 border-muted/60 border-t-primary/40 animate-spin" />
 											</div>
-										</div>
-									</div>
-
-									{/* Thumbnails horizontales - Mobile uniquement */}
-									<div className="lg:hidden mt-4 sm:mt-6">
-										<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
-											{Array.from({ length: 4 }).map((_, i) => (
-												<Skeleton
-													key={i}
-													className="aspect-square rounded-lg bg-muted/40"
-												/>
-											))}
 										</div>
 									</div>
 								</section>
@@ -74,16 +62,19 @@ export default function ProductDetailLoading() {
 									<div className="space-y-4">
 										{/* Titre avec bouton wishlist - Mobile uniquement (sm:hidden) */}
 										<div className="flex items-start justify-between gap-3 sm:hidden">
-											<Skeleton className="h-10 flex-1 bg-muted/50" />
+											<div className="flex-1 space-y-2">
+												<Skeleton className="h-9 w-full bg-muted/50" />
+												<Skeleton className="h-9 w-3/4 bg-muted/50" />
+											</div>
 											<Skeleton className="h-10 w-10 rounded-full bg-muted/30 shrink-0" />
 										</div>
 
-										{/* Badges (wishlist desktop + type + collections) */}
+										{/* Badges (type + collections + wishlist desktop) */}
 										<div className="flex flex-wrap items-center gap-2">
-											{/* Bouton wishlist - Desktop uniquement */}
-											<Skeleton className="hidden sm:block h-10 w-10 rounded-full bg-muted/30" />
 											<Skeleton className="h-7 w-24 rounded-full bg-muted/30" />
 											<Skeleton className="h-7 w-28 rounded-full bg-muted/30" />
+											{/* Bouton wishlist - Desktop uniquement, aligné à droite */}
+											<Skeleton className="hidden sm:block h-10 w-10 rounded-full bg-muted/30 ml-auto" />
 										</div>
 
 										{/* Description */}
@@ -154,7 +145,7 @@ export default function ProductDetailLoading() {
 											<div className="space-y-3">
 												<Skeleton className="h-4 w-20 bg-muted/30" />
 												<div className="flex gap-2">
-													{Array.from({ length: 5 }).map((_, i) => (
+													{Array.from({ length: 4 }).map((_, i) => (
 														<Skeleton
 															key={i}
 															className="h-10 w-10 rounded-full bg-muted/40"
@@ -169,7 +160,7 @@ export default function ProductDetailLoading() {
 											<div className="space-y-3">
 												<Skeleton className="h-4 w-24 bg-muted/30" />
 												<div className="flex gap-2 flex-wrap">
-													{Array.from({ length: 3 }).map((_, i) => (
+													{Array.from({ length: 2 }).map((_, i) => (
 														<Skeleton
 															key={i}
 															className="h-10 w-24 rounded-lg bg-muted/40"
@@ -181,20 +172,6 @@ export default function ProductDetailLoading() {
 									</div>
 
 									{/* ===== 5. AddToCartForm ===== */}
-									{/* Card Quantité */}
-									<div className="rounded-xl border">
-										<div className="p-6">
-											<div className="flex items-center justify-between">
-												<Skeleton className="h-4 w-16 bg-muted/40" />
-												<div className="flex items-center gap-2">
-													<Skeleton className="h-8 w-8 rounded-md bg-muted/30" />
-													<Skeleton className="h-5 w-8 bg-muted/40" />
-													<Skeleton className="h-8 w-8 rounded-md bg-muted/30" />
-												</div>
-											</div>
-										</div>
-									</div>
-
 									{/* Bouton Ajouter au panier */}
 									<Skeleton className="h-12 w-full rounded-lg bg-primary/30" />
 
@@ -212,13 +189,11 @@ export default function ProductDetailLoading() {
 											<Skeleton className="h-3.5 w-3.5 bg-muted/30" />
 											<Skeleton className="h-3 w-32 bg-muted/30" />
 										</div>
-										{/* Bloc personnalisation */}
-										<div className="p-4 bg-muted/10 rounded-lg border border-primary/10 space-y-2">
-											<Skeleton className="h-4 w-48 mx-auto bg-muted/30" />
-											<Skeleton className="h-4 w-36 mx-auto bg-muted/40" />
+										{/* Lien personnalisation */}
+										<div className="flex items-center justify-center gap-2 py-2.5 px-4 border rounded-lg">
+											<Skeleton className="h-4 w-4 bg-muted/30" />
+											<Skeleton className="h-4 w-44 bg-muted/30" />
 										</div>
-										{/* Lien contact */}
-										<Skeleton className="h-10 w-full rounded-lg bg-muted/20" />
 									</div>
 
 									{/* Separator */}
