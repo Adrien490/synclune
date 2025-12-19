@@ -6,7 +6,7 @@ import { z } from "zod";
 
 export const addToCartSchema = z.object({
 	skuId: z.cuid("ID SKU invalide"),
-	quantity: z.literal(1).default(1),
+	quantity: z.number().int().min(1, "Quantité minimale: 1").max(10, "Quantité maximale: 10").default(1),
 });
 
 // ============================================================================
