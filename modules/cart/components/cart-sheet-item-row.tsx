@@ -101,7 +101,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				<Link
 					href={`/creations/${item.sku.product.slug}`}
 					onClick={onClose}
-					className="font-medium text-sm hover:text-foreground active:text-muted-foreground transition-colors line-clamp-1 block group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50"
+					className="font-medium text-sm hover:text-foreground active:text-muted-foreground transition-colors line-clamp-2 sm:line-clamp-1 block group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50"
 					aria-label={`Voir ${item.sku.product.title}`}
 				>
 					{item.sku.product.title}

@@ -34,14 +34,6 @@ function MenuUserSection({ session }: { session: Session | null }) {
 				<p className="text-sm text-muted-foreground">
 					Connectez-vous pour accéder à vos favoris et commandes
 				</p>
-				<SheetClose asChild>
-					<Link
-						href="/connexion"
-						className="mt-2 inline-flex text-primary font-medium hover:underline"
-					>
-						Se connecter
-					</Link>
-				</SheetClose>
 			</div>
 		);
 	}
