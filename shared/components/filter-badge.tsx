@@ -40,6 +40,7 @@ export function FilterBadge({
 
 	const displayLabel = formatted?.label || filter.label;
 	const displayValue = formatted?.displayValue || filter.displayValue;
+	const ariaLabel = `Supprimer le filtre ${displayLabel}${displayValue ? ` ${displayValue}` : ""}`;
 
 	// Gérer le focus après suppression
 	const handleRemove = () => {
@@ -72,55 +73,76 @@ export function FilterBadge({
 	return (
 		<motion.div
 			layoutId={filter.id}
-			initial={{ opacity: 0, scale: 0.85, y: -8 }}
-			animate={{ opacity: 1, scale: 1, y: 0 }}
-			exit={{ opacity: 0, scale: 0.85 }}
+			initial={{ opacity: 0, scale: 0.92 }}
+			animate={{ opacity: 1, scale: 1 }}
+			exit={{ opacity: 0, scale: 0.92 }}
 			transition={{
 				duration: 0.15,
-				ease: [0.4, 0, 0.2, 1],
-				layout: {
-					type: "spring",
-					stiffness: 400,
-					damping: 35,
-				},
+				ease: [0.25, 0.1, 0.25, 1],
+				layout: { type: "spring", stiffness: 500, damping: 35 },
 			}}
 		>
 			<Badge
 				variant="outline"
 				className={cn(
-					"flex items-center gap-1 pr-0.5 sm:pr-1 text-sm/5 tracking-normal antialiased relative font-medium",
-					"max-w-[200px] sm:max-w-[300px]",
-					"transition-all duration-200",
-					"hover:bg-accent/50 hover:border-primary/30",
-					isPending && "opacity-60",
-					isMobile && "cursor-pointer active:scale-95"
+					// Layout
+					"flex items-center gap-1.5",
+					"h-9 sm:h-8",
+					"pl-3 pr-1.5 sm:pr-2",
+					// Forme pill cohérente
+					"rounded-full",
+					// Typographie
+					"text-sm font-medium",
+					// Largeur max
+					"max-w-[280px] sm:max-w-[320px]",
+					// États
+					"transition-all duration-150",
+					"hover:bg-accent hover:border-primary/40",
+					// Mobile : cliquable avec feedback
+					"sm:cursor-default",
+					isMobile && [
+						"cursor-pointer",
+						"active:scale-[0.97]",
+						"active:bg-destructive/10",
+					],
+					isPending && "opacity-50 pointer-events-none"
 				)}
 				onClick={handleBadgeClick}
+				role={isMobile ? "button" : undefined}
+				tabIndex={isMobile ? 0 : undefined}
+				aria-label={isMobile ? ariaLabel : undefined}
 			>
-				<span className="pl-2.5 truncate">
-					{displayLabel}
+				<span className="truncate">
+					<span className="font-medium">{displayLabel}</span>
 					{displayValue && displayValue.length > 0 && (
-						<span className="font-normal text-foreground/70 ml-1">
+						<span className="text-muted-foreground ml-1">
 							: {displayValue}
 						</span>
 					)}
 				</span>
+
+				{/* Bouton X visible seulement sur desktop */}
 				<Button
 					ref={buttonRef}
 					variant="ghost"
 					size="icon"
-					onClick={handleRemove}
+					onClick={(e) => {
+						e.stopPropagation();
+						handleRemove();
+					}}
 					disabled={isPending}
 					className={cn(
-						"min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] rounded-full",
-						"p-2 sm:p-1.5"
+						"hidden sm:flex",
+						"size-7 rounded-full",
+						"hover:bg-destructive/10 hover:text-destructive",
+						"transition-colors"
 					)}
-					aria-label={`Supprimer le filtre ${displayLabel}${displayValue ? ` ${displayValue}` : ""}`}
+					aria-label={ariaLabel}
 				>
 					{isPending ? (
-						<Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+						<Loader2 className="size-3.5 animate-spin" />
 					) : (
-						<X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+						<X className="size-3.5" />
 					)}
 				</Button>
 			</Badge>

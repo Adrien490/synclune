@@ -82,7 +82,7 @@ export function FilterBadges({
 			aria-live="polite"
 			aria-atomic="true"
 			className={cn(
-				"flex flex-wrap items-start sm:items-center gap-2.5 sm:gap-2 mb-4",
+				"flex flex-wrap items-center gap-2 mb-4",
 				className
 			)}
 		>
@@ -119,7 +119,11 @@ export function FilterBadges({
 							variant="outline"
 							size="sm"
 							onClick={() => setShowAll(!showAll)}
-							className="text-xs h-auto py-2 px-3 gap-1 min-h-[44px] sm:min-h-0"
+							className={cn(
+								"h-9 sm:h-8 px-3 gap-1.5",
+								"rounded-full",
+								"text-xs font-medium"
+							)}
 							aria-label={
 								showAll
 									? "Afficher moins de filtres"
@@ -129,12 +133,12 @@ export function FilterBadges({
 							{showAll ? (
 								<>
 									Voir moins
-									<ChevronUp className="w-3 h-3" />
+									<ChevronUp className="size-3" />
 								</>
 							) : (
 								<>
 									+{activeFilters.length - effectiveMaxFilters} autres
-									<ChevronDown className="w-3 h-3" />
+									<ChevronDown className="size-3" />
 								</>
 							)}
 						</Button>
@@ -155,7 +159,13 @@ export function FilterBadges({
 							size="sm"
 							onClick={clearAllFilters}
 							disabled={isPending}
-							className="text-xs leading-normal text-muted-foreground hover:text-foreground underline ml-2 h-auto p-2 transition-colors min-h-[44px] sm:min-h-0"
+							className={cn(
+								"h-9 sm:h-8 px-3",
+								"text-xs text-muted-foreground",
+								"hover:text-destructive hover:bg-destructive/10",
+								"underline underline-offset-2",
+								"transition-colors"
+							)}
 							aria-label="Effacer tous les filtres"
 						>
 							Tout effacer
