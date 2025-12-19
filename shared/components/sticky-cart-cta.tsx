@@ -160,12 +160,11 @@ export function StickyCartCTA({
 							size="lg"
 							disabled={!canAddToCart || isPending}
 							className={cn(
-								"shrink-0 gap-2 min-w-[160px]",
+								"shrink-0 min-w-[160px]",
 								"shadow-md",
 								"active:scale-[0.98]"
 							)}
 						>
-							<ShoppingBag className="w-4 h-4" aria-hidden="true" />
 							<span>
 								{isPending ? (
 									"Ajout..."
