@@ -8,6 +8,7 @@ import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
+import { ShoppingCart } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
@@ -165,23 +166,22 @@ export function StickyCartCTA({
 								"active:scale-[0.98]"
 							)}
 						>
-							<span>
-								{isPending ? (
-									"Ajout..."
-								) : !isAvailable ? (
-									"Indisponible"
-								) : !currentSku ? (
-									<>
-										{hasOnlyOneSku ? (
-											"Non disponible"
-										) : (
-											validationErrors[0] || "Choisir"
-										)}
-									</>
+							{isPending ? (
+								"Ajout..."
+							) : !isAvailable ? (
+								"Indisponible"
+							) : !currentSku ? (
+								hasOnlyOneSku ? (
+									"Non disponible"
 								) : (
-									"Ajouter"
-								)}
-							</span>
+									validationErrors[0] || "Choisir"
+								)
+							) : (
+								<>
+									<ShoppingCart size={18} aria-hidden="true" />
+									Ajouter au panier
+								</>
+							)}
 						</Button>
 					</form>
 				</motion.div>

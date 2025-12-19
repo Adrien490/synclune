@@ -23,10 +23,12 @@ import useEmblaCarousel from "embla-carousel-react";
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { GalleryThumbnail } from "@/modules/media/components/gallery-thumbnail";
+import { markSwipeHintSeen } from "@/modules/media/actions/mark-swipe-hint-seen";
 
 interface GalleryProps {
 	product: GetProductReturn;
 	title: string;
+	hasSeenSwipeHint?: boolean;
 }
 
 /**
@@ -60,7 +62,7 @@ export function Gallery(props: GalleryProps) {
  * - Navigation clavier, swipe mobile, lightbox
  * - Synchronisation URL
  */
-function GalleryContent({ product, title }: GalleryProps) {
+function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryProps) {
 	const galleryRef = useRef<HTMLDivElement>(null);
 	const searchParams = useSearchParams();
 	const prefersReducedMotion = useReducedMotion();
@@ -279,11 +281,13 @@ function GalleryContent({ product, title }: GalleryProps) {
 								</div>
 							)}
 
-							{/* Indicateur de swipe - Mobile uniquement, premier chargement (animation CSS pure) */}
-							{safeImages.length > 1 && optimisticIndex === 0 && !prefersReducedMotion && (
+							{/* Indicateur de swipe - Mobile uniquement, première visite seulement */}
+							{/* 4.5s total = ~3s visible (15%-85% de l'animation) */}
+							{safeImages.length > 1 && optimisticIndex === 0 && !prefersReducedMotion && !hasSeenSwipeHint && (
 								<div
-									className="sm:hidden absolute bottom-14 left-1/2 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full animate-[gallery-swipe-hint_3s_ease-in-out_forwards]"
+									className="sm:hidden absolute bottom-14 left-1/2 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full animate-[gallery-swipe-hint_4.5s_ease-in-out_forwards]"
 									aria-hidden="true"
+									onAnimationEnd={() => markSwipeHintSeen()}
 								>
 									<Hand className="w-3.5 h-3.5 animate-[swipe-hand_0.8s_ease-in-out_infinite]" />
 									<span>Glisser pour voir plus</span>
