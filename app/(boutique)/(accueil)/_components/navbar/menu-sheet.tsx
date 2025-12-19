@@ -121,7 +121,7 @@ export function MenuSheet({ navItems, session }: MenuSheetProps) {
 	};
 
 	return (
-		<Sheet direction="left" onOpenChange={setIsOpen}>
+		<Sheet direction="left" onOpenChange={setIsOpen} preventScrollRestoration>
 			<SheetTrigger asChild>
 				<button
 					type="button"

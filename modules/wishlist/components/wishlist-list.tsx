@@ -33,7 +33,7 @@ export async function WishlistList({
 	// Empty state si aucun item
 	if (!items || items.length === 0) {
 		return (
-			<Empty className="my-12">
+			<Empty className="mt-4 mb-12 sm:my-12">
 				<EmptyHeader>
 					<EmptyMedia variant="icon">
 						<Heart className="size-6" />

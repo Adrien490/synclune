@@ -1,5 +1,4 @@
 import { PageHeader } from "@/shared/components/page-header";
-import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 import { WishlistList } from "@/modules/wishlist/components/wishlist-list";
 import { WishlistGridSkeleton } from "@/modules/wishlist/components/wishlist-grid-skeleton";
 import { RemoveWishlistItemAlertDialog } from "@/modules/wishlist/components/remove-wishlist-item-alert-dialog";
@@ -60,7 +59,7 @@ export default async function WishlistPage({
 				]}
 			/>
 
-			<section className={`bg-background ${ACCOUNT_SECTION_PADDING}`}>
+			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<Suspense fallback={<WishlistGridSkeleton />}>
 						<WishlistList
