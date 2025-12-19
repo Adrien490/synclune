@@ -40,27 +40,24 @@ export function ProductFilterFab({
 				fabKey={FAB_KEYS.STOREFRONT}
 				initialHidden={initialHidden}
 				hideOnMobile={false}
-				icon={
-					<div className="relative">
-						<Filter className="h-6 w-6" />
-						{activeFiltersCount > 0 && (
-							<span
-								className={cn(
-									"absolute -top-2 -right-2",
-									"size-5 min-w-5",
-									"bg-background text-primary",
-									"text-[11px] font-bold",
-									"rounded-full",
-									"flex items-center justify-center",
-									"ring-2 ring-primary",
-									"animate-in zoom-in-50 duration-200"
-								)}
-								aria-hidden="true"
-							>
-								{activeFiltersCount > 9 ? "9+" : activeFiltersCount}
-							</span>
-						)}
-					</div>
+				icon={<Filter className="h-6 w-6" />}
+				badge={
+					activeFiltersCount > 0 ? (
+						<span
+							className={cn(
+								"size-5 min-w-5",
+								"bg-background text-primary",
+								"text-[11px] font-bold",
+								"rounded-full",
+								"flex items-center justify-center",
+								"ring-2 ring-primary",
+								"animate-in zoom-in-50 duration-200"
+							)}
+							aria-hidden="true"
+						>
+							{activeFiltersCount > 9 ? "9+" : activeFiltersCount}
+						</span>
+					) : undefined
 				}
 				tooltip={{
 					title: "Filtrer",

@@ -5,7 +5,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import type { Product } from "@/modules/products/types/product.types";
 import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-dialog";
 import { cn } from "@/shared/utils/cn";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 
 interface AddToCartCardButtonProps {
@@ -82,29 +82,36 @@ export function AddToCartCardButton({
 				onClick={handleClick}
 				size="icon"
 				className={cn(
-					// Mobile: fond semi-transparent avec backdrop-blur pour visibilite
+					// Mobile: fond transparent comme WishlistButton (cohérence)
 					"size-11 rounded-full",
-					"bg-background/80 backdrop-blur-sm shadow-lg border border-border/30",
-					"hover:bg-background/90 hover:shadow-xl hover:scale-105",
-					// Desktop: pleine largeur avec fond primary
-					"sm:bg-primary sm:text-primary-foreground sm:border-0",
+					"bg-transparent",
+					"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
+					// Desktop: pleine largeur avec fond primary opaque
 					"sm:w-full sm:h-auto sm:rounded-none sm:py-3 sm:px-4",
-					"sm:shadow-lg sm:shadow-black/20 sm:backdrop-blur-none",
-					// Active mobile uniquement: feedback tactile (pas de scale sur desktop)
-					"active:scale-95 sm:active:scale-100 sm:hover:scale-100",
-					// Hover desktop uniquement
+					"sm:bg-primary sm:text-primary-foreground",
+					"sm:shadow-lg sm:shadow-black/20",
+					// Active/hover desktop
+					"sm:active:scale-100 sm:hover:scale-100",
 					"sm:hover:bg-primary/90 sm:hover:tracking-widest",
 					// Transitions
 					"motion-safe:transition-all motion-safe:duration-200",
-					"disabled:hover:tracking-normal disabled:hover:scale-100 disabled:cursor-not-allowed"
+					// Disabled
+					"disabled:hover:scale-100 disabled:cursor-not-allowed",
+					// Animation pulse pendant le chargement (comme wishlist)
+					isPending && "motion-safe:animate-pulse"
 				)}
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
-				{/* Mobile: icone shopping bag (fond visible = drop-shadow inutile) */}
-				<ShoppingBag
+				{/* Mobile: icone ShoppingCart (cohérence avec navbar) + drop-shadow (cohérence avec wishlist) */}
+				<ShoppingCart
 					size={20}
 					strokeWidth={2}
-					className="sm:hidden text-primary"
+					className={cn(
+						"sm:hidden text-primary",
+						"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
+						"motion-safe:transition-all motion-safe:duration-200",
+						isPending && "opacity-60"
+					)}
 					aria-hidden="true"
 				/>
 				{/* Desktop: texte */}

@@ -302,7 +302,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 											role="button"
 											tabIndex={index === optimisticIndex ? 0 : -1}
 											data-slide-index={index}
-											className="flex-[0_0_100%] h-full min-w-0 relative cursor-zoom-in touch-pan-y"
+											style={{ touchAction: "pan-y" }}
+											className="flex-[0_0_100%] h-full min-w-0 relative cursor-zoom-in"
 											aria-hidden={index !== optimisticIndex}
 											aria-label={`Zoomer ${media.alt || title}`}
 											onClick={() => {

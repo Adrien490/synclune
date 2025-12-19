@@ -29,6 +29,8 @@ export interface FabProps {
 	initialHidden?: boolean;
 	/** Icône à afficher dans le FAB */
 	icon: React.ReactNode;
+	/** Badge optionnel affiché en haut à droite du FAB */
+	badge?: React.ReactNode;
 	/** Contenu du tooltip principal */
 	tooltip: FabTooltipContent;
 	/** Contenu optionnel à afficher à côté du FAB */
@@ -74,6 +76,7 @@ export function Fab({
 	fabKey,
 	initialHidden = false,
 	icon,
+	badge,
 	tooltip,
 	children,
 	ariaLabel,
@@ -279,6 +282,11 @@ export function Fab({
 									aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
 								>
 									{icon}
+									{badge && (
+										<div className="absolute -top-1 -right-1 pointer-events-none">
+											{badge}
+										</div>
+									)}
 								</Button>
 							</TooltipTrigger>
 							<TooltipContent side="left" sideOffset={12}>
