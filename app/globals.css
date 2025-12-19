@@ -498,21 +498,33 @@ textarea {
 	}
 
 	.animate-shimmer {
+		--shimmer-base: var(--accent);
+		--shimmer-highlight: oklch(0.96 0.01 270);
 		background: linear-gradient(
 			90deg,
-			var(--accent) 0%,
-			oklch(0.96 0.01 270) 50%,
-			var(--accent) 100%
+			var(--shimmer-base) 0%,
+			var(--shimmer-highlight) 50%,
+			var(--shimmer-base) 100%
 		);
 		background-size: 200% 100%;
 		animation: shimmer 1.5s ease-in-out infinite;
 	}
 
+	/* Dark mode: highlight plus subtil */
+	.dark .animate-shimmer {
+		--shimmer-highlight: oklch(0.22 0.015 270);
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.animate-sparkle-pulse,
-		.animate-wave,
+		.animate-wave {
+			animation: none;
+		}
+
+		/* Fallback statique pour shimmer: couleur unie au lieu du gradient animé */
 		.animate-shimmer {
 			animation: none;
+			background: var(--accent);
 		}
 	}
 

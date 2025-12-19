@@ -43,8 +43,20 @@ export default function CollectionDetailLoading() {
 			</div>
 
 			{/* Section principale avec catalogue - Structure exacte */}
-			<section className="bg-background py-8">
+			<section className="bg-background pt-6 pb-12 lg:pt-8 lg:pb-16">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+					{/* Toolbar skeleton */}
+					<div className="rounded-lg bg-card border border-border/60 p-4 shadow-sm">
+						<div className="flex flex-row gap-2 items-center w-full">
+							<div className="flex-1 min-w-0">
+								<Skeleton className="h-10 w-full rounded-md" />
+							</div>
+							<div className="flex flex-row items-center gap-2 shrink-0">
+								<Skeleton className="h-10 w-[140px] rounded-md" />
+							</div>
+						</div>
+					</div>
+
 					{/* ProductList avec grille et pagination */}
 					<ProductListSkeleton />
 				</div>

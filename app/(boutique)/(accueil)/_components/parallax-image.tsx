@@ -10,6 +10,7 @@ import {
 import Image from "next/image";
 import { useRef, useSyncExternalStore } from "react";
 import { cn } from "@/shared/utils/cn";
+import { useIsTouchDevice } from "@/shared/hooks";
 
 interface ParallaxImageProps {
 	src: string;
@@ -28,23 +29,14 @@ interface ParallaxImageProps {
 	priority?: boolean;
 	/** Image purement decorative (aria-hidden, alt vide) */
 	decorative?: boolean;
-	/** Desactive le parallax sur mobile (<768px) */
-	disableOnMobile?: boolean;
+	/** Desactive le parallax sur appareils tactiles (defaut: true pour meilleure UX mobile) */
+	disableOnTouch?: boolean;
 }
 
 // Hydration safety pattern (evite mismatch server/client)
 const subscribeNoop = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
-
-// Hook pour detecter mobile (SSR-safe)
-function useIsMobile() {
-	return useSyncExternalStore(
-		subscribeNoop,
-		() => window.innerWidth < 768,
-		() => false
-	);
-}
 
 /**
  * Image avec effet parallax subtil au scroll
@@ -62,7 +54,7 @@ function useIsMobile() {
  * @param quality - Qualite de compression (defaut: 85)
  * @param priority - Preload prioritaire
  * @param decorative - Image purement decorative (aria-hidden)
- * @param disableOnMobile - Desactive le parallax sur mobile
+ * @param disableOnTouch - Desactive le parallax sur appareils tactiles (defaut: true)
  *
  * @example
  * ```tsx
@@ -86,14 +78,18 @@ export function ParallaxImage({
 	quality = 85,
 	priority = false,
 	decorative = false,
-	disableOnMobile = false,
+	disableOnTouch = true,
 }: ParallaxImageProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const shouldReduceMotion = useReducedMotion();
-	const isMobile = useIsMobile();
+	const isTouchDevice = useIsTouchDevice();
 
 	// Lazy animation : n'active le parallax que si visible
-	const isInView = useInView(containerRef, { once: false, margin: "-10%" });
+	// Margin bottom negative pour demarrer l'animation avant que l'element soit entierement visible
+	const isInView = useInView(containerRef, {
+		once: false,
+		margin: "0px 0px -20% 0px",
+	});
 
 	// Hydration safety : evite les mismatches useReducedMotion server/client
 	const isMounted = useSyncExternalStore(
@@ -134,9 +130,9 @@ export function ParallaxImage({
 		/>
 	);
 
-	// SSR, reduced motion, ou mobile avec option desactivee : rendu statique
+	// SSR, reduced motion, ou appareil tactile avec option activee : rendu statique
 	const shouldDisableParallax =
-		!isMounted || shouldReduceMotion || (disableOnMobile && isMobile);
+		!isMounted || shouldReduceMotion || (disableOnTouch && isTouchDevice);
 
 	if (shouldDisableParallax) {
 		return (
@@ -167,8 +163,8 @@ export function ParallaxImage({
 					height: `${100 + safeIntensity * 2}%`,
 					// Animation uniquement si visible (performance)
 					y: isInView ? y : 0,
-					// GPU hint pour optimisation
-					willChange: "transform",
+					// GPU hint uniquement quand visible (evite surconsommation memoire)
+					willChange: isInView ? "transform" : "auto",
 				}}
 			>
 				{imageElement}

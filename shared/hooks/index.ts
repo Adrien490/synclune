@@ -4,3 +4,7 @@ export { useWizardAccessibility } from "./use-wizard-accessibility"
 export { useWizardPersistence } from "./use-wizard-persistence"
 export { useFormWizard, type UseFormWizardOptions, type UseFormWizardReturn } from "./use-form-wizard"
 export { useUnsavedChanges, useUnsavedChangesWithOptions } from "@/shared/hooks/use-unsaved-changes"
+
+// Device detection hooks
+export { useIsMobile } from "./use-mobile"
+export { useIsTouchDevice } from "./use-touch-device"

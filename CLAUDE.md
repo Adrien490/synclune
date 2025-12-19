@@ -699,6 +699,36 @@ const { selectedItems, handleSelectionChange, clearAll } = useSelection()
 const { cursor, hasMore, loadMore } = useCursorPagination()
 ```
 
+### Device Detection Hooks (`shared/hooks/`)
+
+Two distinct hooks for different detection needs:
+
+| Hook | Detects | Use Case |
+|------|---------|----------|
+| `useIsMobile` | Screen width < 768px | Responsive layout, grid columns, font sizes |
+| `useIsTouchDevice` | `(hover: none) and (pointer: coarse)` | Touch interactions, parallax, hover effects |
+
+**Key difference:**
+- iPad Pro landscape: `useIsMobile() = false` (1024px), `useIsTouchDevice() = true`
+- Small laptop screen: `useIsMobile() = true`, `useIsTouchDevice() = false`
+
+```typescript
+import { useIsMobile, useIsTouchDevice } from "@/shared/hooks"
+
+// Responsive layout (screen size)
+const isMobile = useIsMobile()
+// → Show 1 column on mobile, 3 on desktop
+
+// Touch interactions (device capability)
+const isTouch = useIsTouchDevice()
+// → Disable parallax, hover effects, drag animations
+```
+
+Both hooks are:
+- SSR-safe with `useSyncExternalStore`
+- Reactive to changes (screen resize, device rotation, Bluetooth keyboard connect/disconnect)
+- Default to `false` on server (desktop-first)
+
 ## Action Helpers
 
 `shared/lib/actions/` provides:

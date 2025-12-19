@@ -10,13 +10,14 @@ export default function CheckoutLoading() {
 		<div className="min-h-screen">
 			<PageHeader
 				title="Finaliser ma commande"
+				description="Vérifie tes informations et procède au paiement sécurisé"
 				breadcrumbs={[
 					{ label: "Panier", href: "/panier" },
 					{ label: "Paiement", href: "/paiement" },
 				]}
 			/>
 
-			<section className="bg-background py-8">
+			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="grid lg:grid-cols-3 gap-8">
 						{/* Formulaire skeleton - 2/3 de la largeur */}

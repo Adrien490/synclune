@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect } from "react"
+import { ParticleSystem } from "@/shared/components/animations/particle-system"
 import { Button } from "@/shared/components/ui/button"
-import { RefreshCw, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 
 export default function BoutiqueError({
@@ -17,38 +17,47 @@ export default function BoutiqueError({
 	}, [error])
 
 	return (
-		<div
-			className="flex items-center justify-center min-h-[50vh] p-6"
+		<main
+			className="relative min-h-screen bg-linear-to-br from-background via-primary/5 to-secondary/10 flex items-center justify-center px-4"
 			role="alert"
 			aria-live="assertive"
 		>
-			<div className="max-w-md w-full rounded-lg border bg-card p-6 text-center shadow-sm">
-				<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-					<AlertTriangle className="h-6 w-6 text-destructive" aria-hidden="true" />
+			<ParticleSystem
+				count={6}
+				shape={["diamond", "circle"]}
+				animationStyle="drift"
+				opacity={[0.15, 0.35]}
+				blur={[8, 24]}
+			/>
+			<div className="relative z-10 text-center space-y-8 max-w-2xl mx-auto">
+				<div className="space-y-4">
+					<p className="text-8xl mb-4" aria-hidden="true">
+						🌙
+					</p>
+					<h1 className="text-3xl md:text-4xl font-display font-semibold text-foreground">
+						Oups, un petit souci technique
+					</h1>
+					<p className="text-lg md:text-xl text-muted-foreground">
+						Ne vous inquiétez pas, ce n'est pas de votre faute ! Réessayez dans
+						quelques instants ou retournez à l'accueil.
+					</p>
 				</div>
-				<h2 className="text-xl font-semibold">Une erreur est survenue</h2>
-				<p className="mt-2 text-sm text-muted-foreground">
-					Nous n&apos;avons pas pu charger cette page. Veuillez réessayer ou
-					retourner à l&apos;accueil.
-				</p>
-				<div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
-					<Button
-						onClick={reset}
-						aria-label="Réessayer de charger la page"
-					>
-						<RefreshCw className="h-4 w-4" aria-hidden="true" />
+
+				<div className="flex flex-col sm:flex-row gap-4 justify-center">
+					<Button onClick={reset} size="lg">
 						Réessayer
 					</Button>
-					<Button variant="outline" asChild>
-						<Link href="/">Retour à l&apos;accueil</Link>
+					<Button asChild variant="secondary" size="lg">
+						<Link href="/">Retour à l'accueil</Link>
 					</Button>
 				</div>
+
 				{error.digest && (
-					<p className="mt-4 text-xs text-muted-foreground">
-						Code d&apos;erreur : {error.digest}
+					<p className="text-xs text-muted-foreground/60">
+						Code : {error.digest}
 					</p>
 				)}
 			</div>
-		</div>
+		</main>
 	)
 }

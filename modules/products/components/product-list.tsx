@@ -50,7 +50,7 @@ export function ProductList({
 	return (
 		<div className="space-y-8">
 			{/* Grille des produits - réaction au data-pending des filtres */}
-			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 transition-opacity duration-200 group-has-[[data-pending]]/container:opacity-50 group-has-[[data-pending]]/container:pointer-events-none">
+			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 transition-all duration-200 group-has-[[data-pending]]/container:blur-[1px] group-has-[[data-pending]]/container:scale-[0.99] group-has-[[data-pending]]/container:pointer-events-none">
 				{products.map((product) => (
 					<div key={product.id} className="product-item">
 						<ProductCard

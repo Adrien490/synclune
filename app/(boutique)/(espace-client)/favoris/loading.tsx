@@ -1,8 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
-import { Skeleton } from "@/shared/components/ui/skeleton";
-import { AccountNav } from "@/modules/users/components/account-nav";
 import { WishlistGridSkeleton } from "@/modules/wishlist/components/wishlist-grid-skeleton";
-import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 
 export default function WishlistLoading() {
 	return (
@@ -14,20 +11,11 @@ export default function WishlistLoading() {
 					{ label: "Mon compte", href: "/compte" },
 					{ label: "Favoris", href: "/favoris" },
 				]}
-				action={<Skeleton className="h-8 w-32" />}
 			/>
 
-			<section className={`bg-background ${ACCOUNT_SECTION_PADDING}`}>
+			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="flex gap-8">
-						{/* Sidebar desktop */}
-						<AccountNav variant="desktop-only" />
-
-						{/* Contenu principal */}
-						<div className="flex-1 min-w-0">
-							<WishlistGridSkeleton />
-						</div>
-					</div>
+					<WishlistGridSkeleton />
 				</div>
 			</section>
 		</div>
