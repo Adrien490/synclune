@@ -20,7 +20,7 @@ import { ProductListSkeleton } from "@/modules/products/components/product-list-
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchForm } from "@/shared/components/search-form";
-import { SearchOverlay } from "@/shared/components/search-overlay";
+import { MobileSearchWrapper } from "./_components/mobile-search-wrapper";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { SortDrawerTrigger } from "@/shared/components/sort-drawer";
 import { ClearSearchButton } from "@/shared/components/clear-search-button";
@@ -268,7 +268,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 					<div className="flex items-center gap-2 md:hidden">
 						<ClearSearchButton />
 						<SortDrawerTrigger options={sortOptions} />
-						<SearchOverlay
+						<MobileSearchWrapper
 							placeholder={searchPlaceholder}
 							productTypes={productTypes.map((t) => ({
 								slug: t.slug,
@@ -284,7 +284,10 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 
 			{/* Section principale avec catalogue */}
 			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
-				<div className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+				<div
+					id="product-container"
+					className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6"
+				>
 					{/* Desktop Toolbar - hidden on mobile */}
 					<Toolbar
 						className="hidden md:flex"

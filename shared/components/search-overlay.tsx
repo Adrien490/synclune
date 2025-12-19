@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowLeft, Clock, Search, Sparkles, X } from "lucide-react"
@@ -36,6 +36,8 @@ interface SearchOverlayProps {
 	recentSearches?: string[]
 	/** Additional classes for the trigger button */
 	triggerClassName?: string
+	/** Callback when navigation pending state changes */
+	onPendingChange?: (isPending: boolean) => void
 }
 
 /**
@@ -51,6 +53,7 @@ export function SearchOverlay({
 	productTypes,
 	recentSearches = [],
 	triggerClassName,
+	onPendingChange,
 }: SearchOverlayProps) {
 	const [open, setOpen] = useState(false)
 	const searchParams = useSearchParams()
@@ -73,6 +76,11 @@ export function SearchOverlay({
 		onClose: () => setOpen(false),
 		id: "search-overlay",
 	})
+
+	// Notify parent of pending state changes
+	useEffect(() => {
+		onPendingChange?.(isPending)
+	}, [isPending, onPendingChange])
 
 	// Get current search value from URL
 	const currentSearchValue = searchParams.get("search") || ""
