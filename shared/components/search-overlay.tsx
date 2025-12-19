@@ -6,11 +6,9 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ArrowLeft, Clock, Search, Sparkles, X } from "lucide-react"
 
 import { useAppForm } from "@/shared/components/forms"
-import {
-	useAddRecentSearch,
-	useRemoveRecentSearch,
-	useClearRecentSearches,
-} from "@/shared/features/recent-searches"
+import { useAddRecentSearch } from "@/shared/hooks/use-add-recent-search"
+import { useRemoveRecentSearch } from "@/shared/hooks/use-remove-recent-search"
+import { useClearRecentSearches } from "@/shared/hooks/use-clear-recent-searches"
 import { Button } from "@/shared/components/ui/button"
 import {
 	Dialog,

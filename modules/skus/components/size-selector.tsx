@@ -106,7 +106,7 @@ export function SizeSelector({
 					)}
 				</div>
 			</div>
-			<div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+			<div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2.5 sm:gap-2">
 				{sizes.map((sizeOption) => {
 					const isSelected = sizeOption.size === selectedSize;
 					const isAvailable = isSizeAvailable(sizeOption.size);
@@ -121,8 +121,8 @@ export function SizeSelector({
 							onClick={() => updateSize(sizeOption.size)}
 							disabled={!isAvailable || isPending}
 							className={cn(
-								"p-2.5 sm:p-2 min-h-[44px] flex items-center justify-center text-center rounded-lg border transition-all",
-								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95",
+								"p-3 sm:p-2.5 min-h-[52px] sm:min-h-[44px] flex items-center justify-center text-center rounded-xl sm:rounded-lg border-2 transition-all",
+								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",

@@ -65,18 +65,18 @@ export function StockNotificationForm({ skuId }: StockNotificationFormProps) {
 				aria-label="Adresse email"
 			/>
 
-			<div className="flex items-start gap-2">
+			<div className="flex items-start gap-3">
 				<Checkbox
 					id="stock-notification-consent"
 					checked={consent}
 					onCheckedChange={(checked) => setConsent(checked === true)}
-					className="mt-0.5"
+					className="mt-0.5 size-5"
 				/>
 				<Label
 					htmlFor="stock-notification-consent"
-					className="text-xs text-muted-foreground leading-tight cursor-pointer"
+					className="text-sm sm:text-xs text-muted-foreground leading-relaxed sm:leading-tight cursor-pointer"
 				>
-					J'accepte d'être notifié(e) par email lorsque ce produit sera de nouveau disponible
+					J'accepte d'etre notifie(e) par email lorsque ce produit sera de nouveau disponible
 				</Label>
 			</div>
 

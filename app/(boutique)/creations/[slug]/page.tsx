@@ -14,6 +14,7 @@ import { ProductDetails } from "@/modules/products/components/product-details";
 import { Gallery } from "@/modules/media/components/gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
 import { ProductReassurance } from "@/modules/products/components/product-reassurance";
+import { StickyCartCTA } from "@/shared/components/sticky-cart-cta";
 
 import { RelatedProducts } from "@/modules/products/components/related-products";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
@@ -172,6 +173,9 @@ export default async function ProductPage({
 					</div>
 				</div>
 			</div>
+
+			{/* Sticky CTA mobile - apparait quand le bouton principal sort du viewport */}
+			<StickyCartCTA product={product} defaultSku={selectedSku} />
 		</div>
 	);
 }

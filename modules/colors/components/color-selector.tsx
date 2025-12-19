@@ -113,8 +113,8 @@ export function ColorSelector({
 							onClick={() => updateColor(colorIdentifier)}
 							disabled={!isAvailable || isPending}
 							className={cn(
-								"group relative flex items-center gap-2 p-3 rounded-lg border-2 transition-all",
-								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95",
+								"group relative flex items-center gap-2.5 p-3.5 sm:p-3 rounded-xl sm:rounded-lg border-2 transition-all min-h-[52px] sm:min-h-[44px]",
+								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
@@ -124,7 +124,7 @@ export function ColorSelector({
 						>
 							{color.hex && (
 								<div
-									className="w-7 h-7 sm:w-6 sm:h-6 rounded-full border-2 border-white shadow-sm"
+									className="w-8 h-8 sm:w-7 sm:h-7 rounded-full border-2 border-white shadow-sm shrink-0"
 									style={{ backgroundColor: color.hex }}
 								/>
 							)}

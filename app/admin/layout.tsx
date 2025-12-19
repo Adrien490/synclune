@@ -3,8 +3,8 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader
 import { SelectionProvider } from "@/shared/contexts/selection-context";
 import { auth } from "@/modules/auth/lib/auth";
 import { AdminSpeedDial } from "@/modules/dashboard/components/admin-speed-dial";
-import { FAB_KEYS } from "@/shared/features/fab";
-import { getFabVisibility } from "@/shared/features/fab/data/get-fab-visibility";
+import { FAB_KEYS } from "@/shared/constants/fab";
+import { getFabVisibility } from "@/shared/data/get-fab-visibility";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Logo } from "@/shared/components/logo";

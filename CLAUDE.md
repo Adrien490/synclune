@@ -138,7 +138,7 @@ Each module in `modules/` follows a consistent pattern:
 | Refunds | `RefundReason`, `RefundStatus`, `RefundAction` |
 | Audit | `OrderAction`, `OperationCategory` (GOODS, SERVICES, MIXED - French fiscal requirement) |
 | Marketing | `NewsletterStatus` (PENDING, CONFIRMED, UNSUBSCRIBED), `StockNotificationStatus`, `DiscountType` |
-| Webhooks | `DisputeStatus`, `WebhookEventStatus` |
+| Webhooks | `WebhookEventStatus` |
 
 ### Models by Domain
 
@@ -205,12 +205,11 @@ Each module in `modules/` follows a consistent pattern:
 | `NewsletterSubscriber` | Newsletter (double opt-in) | email, status, confirmationToken, confirmedAt, unsubscribeToken |
 | `StockNotificationRequest` | Back in stock alerts | skuId, email, status, notifiedAt |
 
-#### Webhooks & Disputes (2 models)
+#### Webhooks (1 model)
 
 | Model | Purpose | Key Fields |
 |-------|---------|------------|
 | `WebhookEvent` | Idempotency | stripeEventId, eventType, status, attempts, payload |
-| `Dispute` | Chargebacks | stripeDisputeId, orderId, amount, status, evidenceDueBy |
 
 ### Database Patterns
 

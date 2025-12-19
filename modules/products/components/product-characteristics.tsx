@@ -57,7 +57,7 @@ export function ProductCharacteristics({
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
-				<dl className="grid gap-4 sm:grid-cols-2">
+				<dl className="grid gap-5 sm:gap-4 sm:grid-cols-2">
 					{/* Matériau principal */}
 					{primaryMaterial && (
 						<div className="flex items-center gap-3">

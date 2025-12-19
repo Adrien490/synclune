@@ -376,6 +376,34 @@ textarea {
 		}
 	}
 
+	/* Animation hint swipe pour galerie produit - apparait puis disparait */
+	@keyframes gallery-swipe-hint {
+		0% {
+			opacity: 0;
+			transform: translateX(-50%);
+		}
+		15%,
+		85% {
+			opacity: 1;
+			transform: translateX(-50%);
+		}
+		100% {
+			opacity: 0;
+			transform: translateX(-50%);
+		}
+	}
+
+	/* Animation main qui glisse */
+	@keyframes swipe-hand {
+		0%,
+		100% {
+			transform: translateX(0);
+		}
+		50% {
+			transform: translateX(-6px);
+		}
+	}
+
 	/* Appliquer l'animation au scroll container quand data-swipe-hint est présent sur le parent */
 	[data-swipe-hint="true"] [data-carousel-scroll] {
 		animation: swipe-hint 1.5s ease-in-out 2;

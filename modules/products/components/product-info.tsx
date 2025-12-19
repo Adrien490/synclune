@@ -29,19 +29,21 @@ export function ProductInfo({
 	return (
 		<div className="space-y-4">
 			{/* Titre avec bouton wishlist - titre masqué sur desktop car affiché dans PageHeader */}
-			<div className="flex items-start justify-between gap-3 sm:hidden">
+			<div className="flex items-start justify-between gap-4 sm:hidden">
 				<h1
 					className="text-3xl/10 font-bold tracking-tight text-foreground flex-1 line-clamp-2"
 					itemProp="name"
 				>
 					{product.title}
 				</h1>
-				<WishlistButton
-					productTitle={product.title}
-					skuId={defaultSku.id}
-					isInWishlist={isInWishlist ?? false}
-					size="lg"
-				/>
+				<div className="shrink-0">
+					<WishlistButton
+						productTitle={product.title}
+						skuId={defaultSku.id}
+						isInWishlist={isInWishlist ?? false}
+						size="lg"
+					/>
+				</div>
 			</div>
 
 			{/* Labels et badges + bouton wishlist sur desktop */}
@@ -87,7 +89,7 @@ export function ProductInfo({
 			{product.description && (
 				<div
 					id="product-description"
-					className="text-base/7 tracking-normal antialiased text-muted-foreground prose-sm max-w-none space-y-2"
+					className="text-base/7 tracking-normal antialiased text-muted-foreground prose-sm max-w-none space-y-3"
 					itemProp="description"
 				>
 					{product.description.split("\n").map((line, i) => (

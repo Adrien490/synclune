@@ -40,7 +40,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 		<Accordion type="multiple" defaultValue={[]} className="w-full">
 			{/* Section Entretien */}
 			<AccordionItem value="care">
-				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold">
+				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold hover:bg-muted/50 rounded-lg -mx-2 px-2 transition-colors">
 					<div className="flex items-center gap-2">
 						<Droplets className="w-4 h-4 text-primary" aria-hidden="true" />
 						<span>Entretien</span>
@@ -69,7 +69,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 
 			{/* Section Livraison */}
 			<AccordionItem value="shipping">
-				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold">
+				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold hover:bg-muted/50 rounded-lg -mx-2 px-2 transition-colors">
 					<div className="flex items-center gap-2">
 						<Truck className="w-4 h-4 text-primary" aria-hidden="true" />
 						<span>Livraison</span>

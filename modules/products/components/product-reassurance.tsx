@@ -25,20 +25,20 @@ export function ProductReassurance({ productSlug }: ProductReassuranceProps) {
 	return (
 		<div className="space-y-3 pt-2">
 			{/* Trust badges */}
-			<div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground py-2">
-				<div className="flex items-center gap-1.5">
+			<div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-3 sm:gap-4 text-sm sm:text-xs text-muted-foreground py-2">
+				<div className="flex items-center gap-2 sm:gap-1.5">
 					<ShieldCheck
-						className="w-4 h-4 text-green-600"
+						className="w-5 h-5 sm:w-4 sm:h-4 text-green-600"
 						aria-hidden="true"
 					/>
-					<span>Paiement sécurisé</span>
+					<span>Paiement securise</span>
 				</div>
-				<div className="flex items-center gap-1.5">
-					<RotateCcw className="w-4 h-4 text-blue-600" aria-hidden="true" />
+				<div className="flex items-center gap-2 sm:gap-1.5">
+					<RotateCcw className="w-5 h-5 sm:w-4 sm:h-4 text-blue-600" aria-hidden="true" />
 					<span>Retours 14 jours</span>
 				</div>
-				<div className="flex items-center gap-1.5">
-					<CreditCard className="w-4 h-4 text-primary" aria-hidden="true" />
+				<div className="flex items-center gap-2 sm:gap-1.5">
+					<CreditCard className="w-5 h-5 sm:w-4 sm:h-4 text-primary" aria-hidden="true" />
 					<span>CB, PayPal</span>
 				</div>
 			</div>
@@ -52,7 +52,7 @@ export function ProductReassurance({ productSlug }: ProductReassuranceProps) {
 			{/* Lien personnalisation */}
 			<Link
 				href={`/personnalisation?product=${productSlug}`}
-				className="flex items-center justify-center gap-2 w-full py-2.5 px-4 text-sm border rounded-lg hover:bg-muted/50 transition-colors"
+				className="flex items-center justify-center gap-2 w-full py-3 sm:py-2.5 px-4 text-sm border rounded-xl sm:rounded-lg hover:bg-muted/50 active:bg-muted active:scale-[0.98] transition-all"
 			>
 				<Heart className="w-4 h-4" aria-hidden="true" />
 				<span>Envie de personnalisation ?</span>

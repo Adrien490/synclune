@@ -4,8 +4,8 @@ import { OpenLightboxButton } from "@/modules/media/components/open-lightbox-but
 import { Button } from "@/shared/components/ui/button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { cn } from "@/shared/utils/cn";
-import { useReducedMotion } from "framer-motion";
-import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ChevronLeft, ChevronRight, ZoomIn, Hand } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useRef } from "react";
 import { buildGallery } from "@/modules/media/utils/build-gallery";
@@ -247,10 +247,10 @@ function GalleryContent({ product, title }: GalleryProps) {
 								</button>
 							)}
 
-							{/* Dots indicator - Mobile uniquement, en bas à droite */}
+							{/* Dots indicator - Mobile uniquement, en bas centre */}
 							{safeImages.length > 1 && (
 								<div
-									className="sm:hidden absolute bottom-3 right-3 z-20 flex gap-2"
+									className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-3 py-2"
 									role="group"
 									aria-label="Navigation galerie"
 								>
@@ -264,18 +264,29 @@ function GalleryContent({ product, title }: GalleryProps) {
 											}}
 											aria-current={i === optimisticIndex ? "true" : undefined}
 											aria-label={`Image ${i + 1} sur ${safeImages.length}`}
-											className="size-7 flex items-center justify-center touch-manipulation"
+											className="size-6 flex items-center justify-center touch-manipulation"
 										>
 											<span
 												className={cn(
 													"rounded-full transition-all duration-300",
 													i === optimisticIndex
-														? "bg-primary w-3 h-3 shadow-[0_0_8px_2px] shadow-primary/40 scale-110"
-														: "bg-primary/30 w-2 h-2 hover:bg-primary/50"
+														? "bg-white w-2.5 h-2.5 shadow-[0_0_6px_1px] shadow-white/50"
+														: "bg-white/40 w-2 h-2 hover:bg-white/60"
 												)}
 											/>
 										</button>
 									))}
+								</div>
+							)}
+
+							{/* Indicateur de swipe - Mobile uniquement, premier chargement (animation CSS pure) */}
+							{safeImages.length > 1 && optimisticIndex === 0 && !prefersReducedMotion && (
+								<div
+									className="sm:hidden absolute bottom-14 left-1/2 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full animate-[gallery-swipe-hint_3s_ease-in-out_forwards]"
+									aria-hidden="true"
+								>
+									<Hand className="w-3.5 h-3.5 animate-[swipe-hand_0.8s_ease-in-out_infinite]" />
+									<span>Glisser pour voir plus</span>
 								</div>
 							)}
 

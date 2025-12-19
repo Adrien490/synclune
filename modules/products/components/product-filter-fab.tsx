@@ -1,7 +1,8 @@
 "use client";
 
 import { Filter } from "lucide-react";
-import { Fab, FAB_KEYS } from "@/shared/features/fab";
+import { Fab } from "@/shared/components/fab";
+import { FAB_KEYS } from "@/shared/constants/fab";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 /** ID du dialog pour le filter sheet produits (Zustand) */
