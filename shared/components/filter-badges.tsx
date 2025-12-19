@@ -52,13 +52,21 @@ export function FilterBadges({
 	filterOptions,
 	maxVisibleFilters = 5,
 }: FilterBadgesProps) {
-	const { activeFilters, clearAllFilters, isPending, hasActiveFilters } =
-		useFilter(filterOptions);
+	const {
+		optimisticActiveFilters,
+		removeFilterOptimistic,
+		clearAllFiltersOptimistic,
+		isPending,
+		hasOptimisticActiveFilters,
+	} = useFilter(filterOptions);
 	const [showAll, setShowAll] = useState(false);
 	const isMobile = useIsMobile();
 
+	// Utiliser les filtres optimistes pour une UX instantanée
+	const activeFilters = optimisticActiveFilters;
+
 	// Ne rien afficher s'il n'y a pas de filtres actifs
-	if (!hasActiveFilters || activeFilters.length === 0) {
+	if (!hasOptimisticActiveFilters || activeFilters.length === 0) {
 		return null;
 	}
 
@@ -81,6 +89,7 @@ export function FilterBadges({
 			aria-label="Filtres actifs"
 			aria-live="polite"
 			aria-atomic="true"
+			data-pending={isPending ? "" : undefined}
 			className={cn(
 				"flex flex-wrap items-center gap-2 mb-4",
 				className
@@ -102,7 +111,7 @@ export function FilterBadges({
 						key={filter.id}
 						filter={filter}
 						formatFilter={formatFilter}
-						filterOptions={filterOptions}
+						onRemove={removeFilterOptimistic}
 					/>
 				))}
 
@@ -157,8 +166,7 @@ export function FilterBadges({
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={clearAllFilters}
-							disabled={isPending}
+							onClick={clearAllFiltersOptimistic}
 							className={cn(
 								"h-9 sm:h-8 px-3",
 								"text-xs text-muted-foreground",

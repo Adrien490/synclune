@@ -2,12 +2,11 @@
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import { FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
+import { FilterDefinition } from "@/shared/hooks/use-filter";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { motion } from "framer-motion";
-import { Loader2, X } from "lucide-react";
-import { useRef } from "react";
+import { X } from "lucide-react";
 
 interface FilterBadgeProps {
 	filter: FilterDefinition;
@@ -15,19 +14,14 @@ interface FilterBadgeProps {
 		label: string;
 		displayValue?: string;
 	} | null;
-	filterOptions?: {
-		filterPrefix?: string;
-		preservePage?: boolean;
-	};
+	onRemove: (key: string, value?: string) => void;
 }
 
 export function FilterBadge({
 	filter,
 	formatFilter,
-	filterOptions,
+	onRemove,
 }: FilterBadgeProps) {
-	const { removeFilter, isPending } = useFilter(filterOptions);
-	const buttonRef = useRef<HTMLButtonElement>(null);
 	const isMobile = useIsMobile();
 
 	// Formater le filtre si une fonction est fournie
@@ -42,32 +36,9 @@ export function FilterBadge({
 	const displayValue = formatted?.displayValue || filter.displayValue;
 	const ariaLabel = `Supprimer le filtre ${displayLabel}${displayValue ? ` ${displayValue}` : ""}`;
 
-	// Gérer le focus après suppression
+	// Suppression optimiste - disparition instantanée du badge
 	const handleRemove = () => {
-		// Trouver le prochain élément focusable
-		const parent = buttonRef.current?.closest('[role="region"]');
-		const allButtons = parent?.querySelectorAll(
-			"button:not([disabled])"
-		) as NodeListOf<HTMLButtonElement>;
-		const currentIndex = buttonRef.current
-			? Array.from(allButtons || []).indexOf(buttonRef.current)
-			: -1;
-		const nextButton =
-			allButtons?.[currentIndex + 1] || allButtons?.[currentIndex - 1];
-
-		removeFilter(filter.key, filter.value as string);
-
-		// Focus sur le prochain badge ou le bouton "Tout effacer"
-		if (nextButton) {
-			setTimeout(() => nextButton.focus(), 200);
-		}
-	};
-
-	// Handler pour le clic sur le badge (mobile uniquement)
-	const handleBadgeClick = () => {
-		if (isMobile && !isPending) {
-			handleRemove();
-		}
+		onRemove(filter.key, filter.value as string);
 	};
 
 	return (
@@ -104,10 +75,9 @@ export function FilterBadge({
 						"cursor-pointer",
 						"active:scale-[0.97]",
 						"active:bg-destructive/10",
-					],
-					isPending && "opacity-50 pointer-events-none"
+					]
 				)}
-				onClick={handleBadgeClick}
+				onClick={isMobile ? handleRemove : undefined}
 				role={isMobile ? "button" : undefined}
 				tabIndex={isMobile ? 0 : undefined}
 				aria-label={isMobile ? ariaLabel : undefined}
@@ -123,14 +93,12 @@ export function FilterBadge({
 
 				{/* Bouton X visible seulement sur desktop */}
 				<Button
-					ref={buttonRef}
 					variant="ghost"
 					size="icon"
 					onClick={(e) => {
 						e.stopPropagation();
 						handleRemove();
 					}}
-					disabled={isPending}
 					className={cn(
 						"hidden sm:flex",
 						"size-7 rounded-full",
@@ -139,11 +107,7 @@ export function FilterBadge({
 					)}
 					aria-label={ariaLabel}
 				>
-					{isPending ? (
-						<Loader2 className="size-3.5 animate-spin" />
-					) : (
-						<X className="size-3.5" />
-					)}
+					<X className="size-3.5" />
 				</Button>
 			</Badge>
 		</motion.div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 
 export type FilterValue = string | string[] | number | boolean | Date;
 
@@ -35,51 +35,67 @@ export function useFilter(options: UseFilterOptions = {}) {
 	const [isPending, startTransition] = useTransition();
 
 	// Extraire les filtres actifs depuis l'URL
-	const getActiveFilters = (): FilterDefinition[] => {
-		const filters: FilterDefinition[] = [];
+	const activeFilters: FilterDefinition[] = [];
 
-		searchParams.forEach((value, key) => {
-			// Ignorer les paramètres de navigation
-			if (
-				[
-					"page",
-					"perPage",
-					"sortBy",
-					"sortOrder",
-					"search",
-					"cursor",
-					"direction",
-					"filter_sortBy", // Aussi ignorer si préfixé
-				].includes(key)
-			) {
-				return;
-			}
+	searchParams.forEach((value, key) => {
+		// Ignorer les paramètres de navigation
+		if (
+			[
+				"page",
+				"perPage",
+				"sortBy",
+				"sortOrder",
+				"search",
+				"cursor",
+				"direction",
+				"filter_sortBy", // Aussi ignorer si préfixé
+			].includes(key)
+		) {
+			return;
+		}
 
-			// Vérifier que c'est un paramètre de filtre
-			// Si filterPrefix est vide, on accepte tous les paramètres (sauf ceux exclus ci-dessus)
-			if (filterPrefix && !key.startsWith(filterPrefix)) {
-				return;
-			}
+		// Vérifier que c'est un paramètre de filtre
+		// Si filterPrefix est vide, on accepte tous les paramètres (sauf ceux exclus ci-dessus)
+		if (filterPrefix && !key.startsWith(filterPrefix)) {
+			return;
+		}
 
-			// Retirer le préfixe pour obtenir la clé du filtre
-			const filterKey = key.replace(filterPrefix, "");
+		// Retirer le préfixe pour obtenir la clé du filtre
+		const filterKey = key.replace(filterPrefix, "");
 
-			// Créer un ID unique basé sur la clé ET la valeur
-			const uniqueId = `${key}-${value}`;
+		// Créer un ID unique basé sur la clé ET la valeur
+		const uniqueId = `${key}-${value}`;
 
-			filters.push({
-				id: uniqueId,
-				key,
-				value,
-				label: filterKey,
-				displayValue: value,
-			});
+		activeFilters.push({
+			id: uniqueId,
+			key,
+			value,
+			label: filterKey,
+			displayValue: value,
 		});
+	});
 
-		return filters;
-	};
+	// Type pour les actions optimistes
+	type OptimisticAction =
+		| { type: "remove"; key: string; value?: string }
+		| { type: "clear" };
 
-	const activeFilters = getActiveFilters();
+	// État optimiste pour UX instantanée
+	const [optimisticActiveFilters, updateOptimisticFilters] = useOptimistic(
+		activeFilters,
+		(currentFilters, action: OptimisticAction) => {
+			if (action.type === "clear") {
+				return [];
+			}
+			const { key, value } = action;
+			return currentFilters.filter((f) => {
+				if (value !== undefined) {
+					return !(f.key === key && f.value === value);
+				}
+				return f.key !== key;
+			});
+		}
+	);
 
 	// Construire une nouvelle URL avec les paramètres mis à jour
 	const buildUrl = (params: URLSearchParams): string => {
@@ -216,6 +232,66 @@ export function useFilter(options: UseFilterOptions = {}) {
 	};
 
 	/**
+	 * Supprimer un filtre de manière optimiste (UI instantanée)
+	 */
+	const removeFilterOptimistic = (filterKey: string, filterValue?: string) => {
+		startTransition(() => {
+			// 1. Mise à jour optimiste immédiate
+			updateOptimisticFilters({ type: "remove", key: filterKey, value: filterValue });
+
+			// 2. Navigation (logique identique à removeFilter)
+			const params = new URLSearchParams(searchParams.toString());
+
+			if (filterValue !== undefined) {
+				const currentValues = params.getAll(filterKey);
+				if (currentValues.length > 1) {
+					params.delete(filterKey);
+					currentValues
+						.filter((v) => v !== filterValue)
+						.forEach((v) => params.append(filterKey, v));
+				} else {
+					params.delete(filterKey);
+				}
+			} else {
+				params.delete(filterKey);
+			}
+
+			if (!preservePage) {
+				params.set("page", "1");
+			}
+
+			router.replace(buildUrl(params), { scroll: false });
+		});
+	};
+
+	/**
+	 * Supprimer tous les filtres de manière optimiste (UI instantanée)
+	 */
+	const clearAllFiltersOptimistic = () => {
+		startTransition(() => {
+			// 1. Mise à jour optimiste immédiate
+			updateOptimisticFilters({ type: "clear" });
+
+			// 2. Navigation
+			const params = new URLSearchParams(searchParams.toString());
+
+			const keysToDelete: string[] = [];
+			params.forEach((_, key) => {
+				if (key.startsWith(filterPrefix)) {
+					keysToDelete.push(key);
+				}
+			});
+			keysToDelete.forEach((key) => params.delete(key));
+
+			if (!preservePage) {
+				params.set("page", "1");
+			}
+
+			router.replace(buildUrl(params), { scroll: false });
+		});
+	};
+
+	/**
 	 * Obtenir la valeur d'un filtre
 	 */
 	const getFilter = (key: string): string | null => {
@@ -243,8 +319,11 @@ export function useFilter(options: UseFilterOptions = {}) {
 		// État
 		isPending,
 		activeFilters,
+		optimisticActiveFilters,
 		activeFiltersCount: activeFilters.length,
+		optimisticActiveFiltersCount: optimisticActiveFilters.length,
 		hasActiveFilters: activeFilters.length > 0,
+		hasOptimisticActiveFilters: optimisticActiveFilters.length > 0,
 
 		// Actions
 		setFilter,
@@ -252,6 +331,10 @@ export function useFilter(options: UseFilterOptions = {}) {
 		removeFilter,
 		removeFilters,
 		clearAllFilters,
+
+		// Actions optimistes (UI instantanée)
+		removeFilterOptimistic,
+		clearAllFiltersOptimistic,
 
 		// Getters
 		getFilter,
