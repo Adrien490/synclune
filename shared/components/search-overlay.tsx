@@ -5,10 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowLeft, Clock, Search, Sparkles, X } from "lucide-react"
 
+import { Stagger } from "@/shared/components/animations/stagger"
+import { Tap } from "@/shared/components/animations/tap"
 import { useAppForm } from "@/shared/components/forms"
 import { useAddRecentSearch } from "@/shared/hooks/use-add-recent-search"
-import { useRemoveRecentSearch } from "@/shared/hooks/use-remove-recent-search"
+import { useBackButtonClose } from "@/shared/hooks/use-back-button-close"
 import { useClearRecentSearches } from "@/shared/hooks/use-clear-recent-searches"
+import { useRemoveRecentSearch } from "@/shared/hooks/use-remove-recent-search"
 import { Button } from "@/shared/components/ui/button"
 import {
 	Dialog,
@@ -54,27 +57,21 @@ export function SearchOverlay({
 	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
 	const inputRef = useRef<HTMLInputElement>(null)
-	const pendingNavigationRef = useRef<string | null>(null)
 
 	// Hooks pour les recherches recentes
-	const { add } = useAddRecentSearch({
-		onSuccess: () => {
-			// Navigation apres ajout aux recentes
-			if (pendingNavigationRef.current) {
-				const url = pendingNavigationRef.current
-				pendingNavigationRef.current = null
-				startTransition(() => {
-					router.replace(url, { scroll: false })
-				})
-				setOpen(false)
-			}
-		},
-	})
+	const { add } = useAddRecentSearch()
 	const { searches, remove } = useRemoveRecentSearch({
 		initialSearches: recentSearches,
 	})
 	const { clear } = useClearRecentSearches({
 		initialSearches: recentSearches,
+	})
+
+	// Back button Android support
+	useBackButtonClose({
+		isOpen: open,
+		onClose: () => setOpen(false),
+		id: "search-overlay",
 	})
 
 	// Get current search value from URL
@@ -88,7 +85,7 @@ export function SearchOverlay({
 		},
 	})
 
-	// Update URL with search params
+	// Update URL with search params (optimistic - closes immediately)
 	const performSearch = (value: string) => {
 		const trimmed = value.trim()
 		const newSearchParams = new URLSearchParams(searchParams.toString())
@@ -105,18 +102,18 @@ export function SearchOverlay({
 
 		const url = `?${newSearchParams.toString()}`
 
+		// Close immediately (optimistic)
+		setOpen(false)
+
+		// Add to recent searches (fire-and-forget)
 		if (trimmed) {
-			// Store URL for navigation in onSuccess callback
-			pendingNavigationRef.current = url
-			// Add to recent searches - navigation happens in onSuccess
 			add(trimmed)
-		} else {
-			// No search term, navigate directly
-			startTransition(() => {
-				router.replace(url, { scroll: false })
-			})
-			setOpen(false)
 		}
+
+		// Navigate in parallel
+		startTransition(() => {
+			router.replace(url, { scroll: false })
+		})
 	}
 
 	// Handle form submission
@@ -136,6 +133,11 @@ export function SearchOverlay({
 	const clearInput = () => {
 		form.setFieldValue("search", "")
 		inputRef.current?.focus()
+	}
+
+	// Blur input when scrolling (mobile UX)
+	const handleContentScroll = () => {
+		inputRef.current?.blur()
 	}
 
 	// Navigate to category
@@ -185,7 +187,7 @@ export function SearchOverlay({
 				>
 					{/* Header fixe */}
 					<header className="sticky top-0 z-10 bg-background border-b pt-[env(safe-area-inset-top,0)]">
-						<div className="grid grid-cols-[auto_1fr_auto] items-center h-14 px-2">
+						<div className="flex items-center justify-between h-14 px-2">
 							<Button
 								variant="ghost"
 								size="icon"
@@ -195,10 +197,10 @@ export function SearchOverlay({
 							>
 								<ArrowLeft className="size-5" />
 							</Button>
-							<DialogTitle className="text-center font-semibold">
+							<DialogTitle className="font-semibold">
 								Rechercher
 							</DialogTitle>
-							{/* Spacer pour equilibrer le titre */}
+							{/* Spacer pour equilibrer le titre centre */}
 							<div className="size-11" aria-hidden="true" />
 						</div>
 					</header>
@@ -325,7 +327,13 @@ export function SearchOverlay({
 					)}
 
 					{/* Scrollable content */}
-					<div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 pb-[env(safe-area-inset-bottom,0)]">
+					<div
+						className={cn(
+							"flex-1 overflow-y-auto px-4 py-4 space-y-6 pb-[env(safe-area-inset-bottom,0)]",
+							isPending && "pointer-events-none opacity-70"
+						)}
+						onScroll={handleContentScroll}
+					>
 						{/* Recent searches */}
 						{hasRecentSearches && (
 							<section>
@@ -342,17 +350,19 @@ export function SearchOverlay({
 										Effacer
 									</button>
 								</div>
-								<ul className="space-y-1">
+								<Stagger className="space-y-1" stagger={0.025} delay={0.05} y={8}>
 									{searches.map((term) => (
-										<li key={term} className="flex items-center gap-1 group">
-											<button
-												type="button"
-												onClick={() => searchFromRecent(term)}
-												className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
-											>
-												<Search className="size-4 text-muted-foreground shrink-0" />
-												<span className="flex-1 truncate">{term}</span>
-											</button>
+										<div key={term} className="flex items-center gap-1 group">
+											<Tap className="flex-1">
+												<button
+													type="button"
+													onClick={() => searchFromRecent(term)}
+													className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left"
+												>
+													<Search className="size-4 text-muted-foreground shrink-0" />
+													<span className="flex-1 truncate">{term}</span>
+												</button>
+											</Tap>
 											<button
 												type="button"
 												onClick={() => remove(term)}
@@ -361,9 +371,9 @@ export function SearchOverlay({
 											>
 												<X className="size-4" />
 											</button>
-										</li>
+										</div>
 									))}
-								</ul>
+								</Stagger>
 							</section>
 						)}
 
@@ -374,9 +384,9 @@ export function SearchOverlay({
 									<Sparkles className="size-4" />
 									Categories
 								</h2>
-								<ul className="grid grid-cols-2 gap-2">
+								<Stagger className="grid grid-cols-2 gap-2" stagger={0.025} delay={0.1} y={8}>
 									{productTypes.map((type) => (
-										<li key={type.slug}>
+										<Tap key={type.slug}>
 											<button
 												type="button"
 												onClick={() => navigateToCategory(type.slug)}
@@ -384,9 +394,9 @@ export function SearchOverlay({
 											>
 												{type.label}
 											</button>
-										</li>
+										</Tap>
 									))}
-								</ul>
+								</Stagger>
 							</section>
 						)}
 
@@ -394,7 +404,7 @@ export function SearchOverlay({
 						{!hasRecentSearches && productTypes.length === 0 && (
 							<div className="text-center py-8 text-muted-foreground">
 								<Search className="size-12 mx-auto mb-3 opacity-30" />
-								<p>Tapez votre recherche puis appuyez sur Entree</p>
+								<p className="text-sm">Saisissez votre recherche et appuyez sur le bouton</p>
 							</div>
 						)}
 					</div>
