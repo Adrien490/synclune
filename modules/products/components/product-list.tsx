@@ -35,9 +35,12 @@ export function ProductList({
 					</EmptyMedia>
 					<EmptyTitle>Aucun produit trouvé</EmptyTitle>
 				</EmptyHeader>
-				<EmptyContent>
+				<EmptyContent className="space-y-3">
+					<p className="text-sm text-muted-foreground">
+						Essaie d'ajuster tes filtres pour voir plus de créations.
+					</p>
 					<Button asChild variant="primary">
-						<a href="/produits">Voir tous les produits</a>
+						<a href="/produits">Effacer les filtres</a>
 					</Button>
 				</EmptyContent>
 			</Empty>
@@ -51,10 +54,11 @@ export function ProductList({
 		<div className="space-y-8">
 			{/* Grille des produits - réaction au data-pending des filtres */}
 			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 transition-all duration-200 group-has-[[data-pending]]/container:blur-[1px] group-has-[[data-pending]]/container:scale-[0.99] group-has-[[data-pending]]/container:pointer-events-none">
-				{products.map((product) => (
+				{products.map((product, index) => (
 					<div key={product.id} className="product-item">
 						<ProductCard
 							product={product}
+							index={index}
 							wishlistSkuIds={wishlistSkuIds}
 						/>
 					</div>

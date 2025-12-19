@@ -127,17 +127,8 @@ export function ProductCard({
 			itemScope
 			itemType="https://schema.org/Product"
 		>
-			{/* Conteneur image avec boutons interactifs EN DEHORS du Link */}
-			<div className="product-card-media relative aspect-4/5 overflow-hidden bg-muted rounded-lg">
-				{/* Link couvrant uniquement l'image */}
-				<Link
-					href={productUrl}
-					className="absolute inset-0 z-10 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-lg"
-					aria-label={`Voir ${title}`}
-					tabIndex={-1}
-				>
-					<span className="sr-only">Voir {title}</span>
-				</Link>
+			{/* Conteneur image avec boutons interactifs */}
+			<div className="product-card-media relative aspect-square sm:aspect-4/5 overflow-hidden bg-muted rounded-lg">
 
 				{/* Badge rupture de stock - Style plus doux */}
 				{stockStatus === "out_of_stock" && (
@@ -180,7 +171,7 @@ export function ProductCard({
 						"object-cover rounded-lg",
 						// Transition fluide pour changement de couleur et hover
 						"transition-all duration-300 ease-out",
-						"motion-safe:group-hover:scale-[1.08]",
+						"motion-safe:can-hover:group-hover:scale-[1.08]",
 						// Animation d'entree lors du changement d'image
 						"motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300"
 					)}
@@ -193,7 +184,15 @@ export function ProductCard({
 					itemProp="image"
 				/>
 
-					{/* Bouton d'ajout au panier - EN DEHORS du Link */}
+				{/* Link overlay pour rendre l'image cliquable */}
+				<Link
+					href={productUrl}
+					aria-label={`Voir ${title}`}
+					className="absolute inset-0 z-10"
+					tabIndex={-1}
+				/>
+
+				{/* Bouton d'ajout au panier - EN DEHORS du Link */}
 				{currentSku && stockStatus === "in_stock" && (
 					<AddToCartCardButton
 						skuId={currentSku.id}
@@ -212,7 +211,7 @@ export function ProductCard({
 			)}
 
 			{/* Contenu de la card */}
-			<div className="flex flex-col gap-2 sm:gap-3 relative p-2.5 sm:p-4 lg:p-5">
+			<div className="flex flex-col gap-2 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
 				{/* Titre cliquable */}
 				<Link
 					href={productUrl}
@@ -241,7 +240,7 @@ export function ProductCard({
 						interactive
 						selectedColor={selectedColorSlug}
 						onColorSelect={setSelectedColorSlug}
-						size="md"
+						size="lg"
 						maxVisible={4}
 					/>
 				)}

@@ -23,6 +23,7 @@ import { SearchForm } from "@/shared/components/search-form";
 import { SearchOverlay } from "@/shared/components/search-overlay";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { SortDrawerTrigger } from "@/shared/components/sort-drawer";
+import { ClearSearchButton } from "@/shared/components/clear-search-button";
 import { FAB_KEYS } from "@/shared/constants/fab";
 import { getFabVisibility } from "@/shared/data/get-fab-visibility";
 import { getRecentSearches } from "@/shared/data/get-recent-searches";
@@ -265,6 +266,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 				breadcrumbs={breadcrumbs}
 				actions={
 					<div className="flex items-center gap-2 md:hidden">
+						<ClearSearchButton />
 						<SortDrawerTrigger options={sortOptions} />
 						<SearchOverlay
 							placeholder={searchPlaceholder}

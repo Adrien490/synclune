@@ -79,6 +79,7 @@ export function SearchOverlay({
 
 	// Get current search value from URL
 	const currentSearchValue = searchParams.get("search") || ""
+	const hasActiveSearch = !!currentSearchValue
 
 	// TanStack Form
 	const form = useAppForm({
@@ -165,10 +166,16 @@ export function SearchOverlay({
 				variant="ghost"
 				size="icon"
 				onClick={() => setOpen(true)}
-				className={cn("size-11", triggerClassName)}
-				aria-label="Rechercher"
+				className={cn("size-11 relative", triggerClassName)}
+				aria-label={hasActiveSearch ? `Recherche active: ${currentSearchValue}` : "Rechercher"}
 			>
 				<Search className="size-5" />
+				{hasActiveSearch && (
+					<span
+						className="absolute -top-0.5 -right-0.5 size-3 bg-primary rounded-full ring-2 ring-background"
+						aria-hidden="true"
+					/>
+				)}
 			</Button>
 
 			<Dialog open={open} onOpenChange={handleOpenChange}>
@@ -291,6 +298,31 @@ export function SearchOverlay({
 							/>
 						</form>
 					</div>
+
+					{/* Active search indicator - one-tap clear */}
+					{hasActiveSearch && (
+						<div className="px-4 py-3 bg-primary/5 border-b shrink-0">
+							<div className="flex items-center justify-between gap-3">
+								<div className="flex items-center gap-2 min-w-0">
+									<Search className="size-4 text-primary shrink-0" />
+									<span className="text-sm truncate">
+										Recherche : <strong>{currentSearchValue}</strong>
+									</span>
+								</div>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => {
+										form.setFieldValue("search", "")
+										performSearch("")
+									}}
+									className="shrink-0 h-8 px-3 text-xs"
+								>
+									Effacer
+								</Button>
+							</div>
+						</div>
+					)}
 
 					{/* Scrollable content */}
 					<div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 pb-[env(safe-area-inset-bottom,0)]">

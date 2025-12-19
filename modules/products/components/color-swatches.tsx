@@ -12,6 +12,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/shared/components/ui/popover";
+import { useIsTouchDevice } from "@/shared/hooks";
 import type { ColorSwatch } from "@/modules/products/services/product-list-helpers";
 
 interface ColorSwatchesProps {
@@ -61,6 +62,7 @@ export function ColorSwatches({
 	const mainButtonsRef = useRef<Map<number, HTMLButtonElement>>(new Map());
 	const popoverButtonsRef = useRef<Map<number, HTMLButtonElement>>(new Map());
 	const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+	const isTouchDevice = useIsTouchDevice();
 
 	if (colors.length === 0) return null;
 
@@ -180,7 +182,7 @@ export function ColorSwatches({
 					onKeyDown={(e) => handleKeyDown(e, index, inPopover)}
 					disabled={isDisabled}
 					className={cn(
-						"rounded-full border-2 motion-safe:transition-all motion-safe:active:scale-95",
+						"rounded-full border-2 motion-safe:transition-all motion-safe:active:scale-90 motion-safe:active:ring-4 motion-safe:active:ring-primary/20",
 						sizeClasses[swatchSize],
 						"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 						isSelected
@@ -215,24 +217,32 @@ export function ColorSwatches({
 	return (
 		<div
 			className={cn(
-				"flex items-center flex-wrap",
-				// Espacement adaptatif : plus grand en mode interactif pour touch targets WCAG 2.5.5
-				interactive ? "gap-4" : "gap-1.5",
+				"flex items-center",
+				// Scroll horizontal sur mobile si beaucoup de couleurs
+				interactive ? "overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-3 sm:gap-4 -mx-1 px-1" : "flex-wrap gap-1.5",
 				className
 			)}
 			aria-label={`${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}
 		>
-			{visibleColors.map((color, index) => (
-				<Tooltip key={color.slug}>
-					<TooltipTrigger asChild>
+			{visibleColors.map((color, index) =>
+				isTouchDevice ? (
+					<span key={color.slug} className={interactive ? "snap-start shrink-0" : undefined}>
 						{renderSwatch(color, index)}
-					</TooltipTrigger>
-					<TooltipContent side="top" className="text-xs">
-						{color.name}
-						{!color.inStock && " (rupture)"}
-					</TooltipContent>
-				</Tooltip>
-			))}
+					</span>
+				) : (
+					<Tooltip key={color.slug}>
+						<TooltipTrigger asChild>
+							<span className={interactive ? "snap-start shrink-0" : undefined}>
+								{renderSwatch(color, index)}
+							</span>
+						</TooltipTrigger>
+						<TooltipContent side="top" className="text-xs">
+							{color.name}
+							{!color.inStock && " (rupture)"}
+						</TooltipContent>
+					</Tooltip>
+				)
+			)}
 
 			{/* Badge +N avec Popover pour voir/sélectionner les couleurs masquées */}
 			{remainingCount > 0 && (
@@ -264,17 +274,23 @@ export function ColorSwatches({
 							{remainingCount > 1 ? "s" : ""}
 						</p>
 						<div className="flex flex-wrap gap-2">
-							{hiddenColors.map((color, index) => (
-								<Tooltip key={color.slug}>
-									<TooltipTrigger asChild>
+							{hiddenColors.map((color, index) =>
+								isTouchDevice ? (
+									<span key={color.slug}>
 										{renderSwatch(color, maxVisible + index, true)}
-									</TooltipTrigger>
-									<TooltipContent side="top" className="text-xs">
-										{color.name}
-										{!color.inStock && " (rupture)"}
-									</TooltipContent>
-								</Tooltip>
-							))}
+									</span>
+								) : (
+									<Tooltip key={color.slug}>
+										<TooltipTrigger asChild>
+											{renderSwatch(color, maxVisible + index, true)}
+										</TooltipTrigger>
+										<TooltipContent side="top" className="text-xs">
+											{color.name}
+											{!color.inStock && " (rupture)"}
+										</TooltipContent>
+									</Tooltip>
+								)
+							)}
 						</div>
 					</PopoverContent>
 				</Popover>

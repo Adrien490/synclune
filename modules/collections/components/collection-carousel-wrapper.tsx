@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoveHorizontal } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -211,6 +211,21 @@ export function CollectionCarouselWrapper({
 						<ChevronRight className="size-5" />
 					</Button>
 				)}
+
+				{/* Indicateur de scroll (mobile uniquement, disparaît après 3s) */}
+				{totalItems > 1 && !prefersReducedMotion && (
+					<div
+						className="absolute right-6 top-1/2 -translate-y-1/2 z-10 md:hidden pointer-events-none animate-[scroll-hint-fade_3s_ease-out_forwards]"
+						aria-hidden="true"
+					>
+						<div className="flex items-center gap-1.5 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md border border-border/50 animate-[swipe-hint_1s_ease-in-out_3]">
+							<MoveHorizontal className="size-4 text-muted-foreground" />
+							<span className="text-xs text-muted-foreground font-medium">
+								Glisser
+							</span>
+						</div>
+					</div>
+				)}
 			</div>
 
 			{/* Dots (mobile) */}
@@ -238,7 +253,7 @@ export function CollectionCarouselWrapper({
 								<span
 									className={cn(
 										"rounded-full",
-										!prefersReducedMotion && "transition-all duration-300 ease-out",
+										!prefersReducedMotion && "transition-all duration-150 ease-out",
 										index === activeIndex
 											? "h-2 w-8 sm:h-2.5 sm:w-10 bg-primary shadow-md"
 											: "h-2 w-2 sm:h-2.5 sm:w-2.5 bg-muted-foreground/50 hover:bg-muted-foreground/70"
@@ -247,7 +262,7 @@ export function CollectionCarouselWrapper({
 							</button>
 						))}
 					</div>
-					<span className="text-xs text-muted-foreground sr-only sm:not-sr-only">
+					<span className="text-xs text-muted-foreground/70">
 						{activeIndex + 1} sur {totalItems}
 					</span>
 				</div>

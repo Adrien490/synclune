@@ -97,8 +97,8 @@ export function AddToCartCardButton({
 					"motion-safe:transition-all motion-safe:duration-200",
 					// Disabled
 					"disabled:hover:scale-100 disabled:cursor-not-allowed",
-					// Animation pulse pendant le chargement (comme wishlist)
-					isPending && "motion-safe:animate-pulse"
+					// Animation pulse + ring pendant le chargement (comme wishlist)
+					isPending && "motion-safe:animate-pulse ring-2 ring-primary/30"
 				)}
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>

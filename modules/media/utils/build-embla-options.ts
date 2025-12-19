@@ -12,6 +12,6 @@ export function buildEmblaOptions(
 		align: "center",
 		duration: prefersReducedMotion ? 0 : 25,
 		watchDrag: true,
-		dragThreshold: 10,
+		dragThreshold: 15,
 	};
 }

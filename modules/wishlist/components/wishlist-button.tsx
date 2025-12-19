@@ -72,8 +72,8 @@ export function WishlistButton({
 					"rounded-full",
 					"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
 					"motion-safe:transition-all motion-safe:duration-200",
-					// Animation pulse pendant le chargement pour feedback visuel
-					isPending && "motion-safe:animate-pulse",
+					// Animation pulse + ring pendant le chargement pour feedback visuel
+					isPending && "motion-safe:animate-pulse ring-2 ring-primary/30",
 					"disabled:cursor-not-allowed"
 				)}
 				aria-label={ariaLabel}

@@ -139,6 +139,8 @@ export function ProductFilterSheet({
 
 		startTransition(() => {
 			router.push(`${pathname}?${params.toString()}`);
+			// Scroll to top après application des filtres
+			window.scrollTo({ top: 0, behavior: "smooth" });
 		});
 		// La fermeture est gérée par FilterSheetWrapper (useEffect sur isPending)
 	};
@@ -162,6 +164,8 @@ export function ProductFilterSheet({
 
 		startTransition(() => {
 			router.push(`${pathname}?${params.toString()}`);
+			// Scroll to top après effacement des filtres
+			window.scrollTo({ top: 0, behavior: "smooth" });
 		});
 		// La fermeture est gérée par FilterSheetWrapper (useEffect sur isPending)
 	};
@@ -192,8 +196,23 @@ export function ProductFilterSheet({
 		};
 	})();
 
-	// Determiner les sections ouvertes par defaut
-	const defaultOpenSections = ["types"];
+	// Determiner les sections ouvertes par defaut (types + sections avec filtres actifs)
+	const defaultOpenSections = (() => {
+		const sections = ["types"];
+		if (initialValues.colors.length > 0 && !sections.includes("colors")) {
+			sections.push("colors");
+		}
+		if (initialValues.materials.length > 0 && !sections.includes("materials")) {
+			sections.push("materials");
+		}
+		if (
+			initialValues.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
+			initialValues.priceRange[1] !== DEFAULT_PRICE_RANGE[1]
+		) {
+			sections.push("price");
+		}
+		return sections;
+	})();
 
 	return (
 		<FilterSheetWrapper

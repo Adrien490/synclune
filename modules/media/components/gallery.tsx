@@ -292,14 +292,13 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 							{/* Embla Carousel - Glissement fluide natif */}
 							<div
-								className="absolute inset-0 overflow-hidden"
+								className="absolute inset-0 overflow-hidden touch-pan-y"
 								ref={emblaRef}
 							>
 								<div className="flex h-full" ref={emblaContainerRef}>
 									{safeImages.map((media, index) => (
 										<div
 											key={media.id}
-											role="button"
 											tabIndex={index === optimisticIndex ? 0 : -1}
 											data-slide-index={index}
 											className="flex-[0_0_100%] h-full min-w-0 relative cursor-zoom-in"

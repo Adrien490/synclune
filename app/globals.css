@@ -348,9 +348,9 @@ textarea {
 	}
 
 	/* Masque pour carousel avec fondu sur les bords */
-	/* Mobile: léger fondu à droite pour indiquer qu'il y a plus de contenu */
+	/* Mobile: fondu visible à droite pour indiquer qu'il y a plus de contenu */
 	.mask-carousel-edges {
-		mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
+		mask-image: linear-gradient(to right, black 0%, black 70%, transparent 95%);
 	}
 
 	@media (min-width: 640px) {
@@ -373,6 +373,18 @@ textarea {
 		}
 		50% {
 			transform: translateX(-12px);
+		}
+	}
+
+	/* Animation fade-out pour indicateur de scroll */
+	@keyframes scroll-hint-fade {
+		0%,
+		70% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0;
+			visibility: hidden;
 		}
 	}
 
