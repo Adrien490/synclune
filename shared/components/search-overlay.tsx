@@ -299,7 +299,7 @@ export function SearchOverlay({
 									<Button
 										type="submit"
 										disabled={!search?.trim() || isPending}
-										className="shrink-0 h-12 px-4 rounded-xl font-medium"
+										className="shrink-0 size-12 rounded-xl"
 										aria-label="Rechercher"
 									>
 										{isPending ? <Spinner className="size-4" /> : <Search className="size-4" />}
