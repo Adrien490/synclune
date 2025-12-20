@@ -14,7 +14,6 @@ import { PageHeader } from "@/shared/components/page-header";
 import { ProductDetails } from "@/modules/products/components/product-details";
 import { Gallery } from "@/modules/media/components/gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
-import { ProductReassurance } from "@/modules/products/components/product-reassurance";
 import { StickyCartCTA } from "@/shared/components/sticky-cart-cta";
 
 import { RelatedProducts } from "@/modules/products/components/related-products";
@@ -157,10 +156,11 @@ export default async function ProductPage({
 
 									{/* 2-6. ProductDetails - Prix, Caractéristiques, Variantes, Panier, Entretien */}
 									{/* Composant client qui synchronise le SKU avec les paramètres URL */}
-									<ProductDetails product={product} defaultSku={selectedSku} />
-
-									{/* 7. ProductReassurance - Badges et liens (RSC) */}
-									<ProductReassurance productSlug={product.slug} />
+									<ProductDetails
+										product={product}
+										defaultSku={selectedSku}
+										productSlug={product.slug}
+									/>
 								</section>
 							</div>
 

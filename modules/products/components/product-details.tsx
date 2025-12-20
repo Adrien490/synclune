@@ -3,6 +3,7 @@
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { ProductPriceDisplay } from "./product-price-display";
 import { ProductCharacteristics } from "./product-characteristics";
+import { ProductReassurance } from "./product-reassurance";
 import { AddToCartForm } from "@/modules/cart/components/add-to-cart-form";
 import { ProductCareInfo } from "./product-care-info";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";
@@ -14,6 +15,7 @@ import type { ProductSku } from "@/modules/products/types/product-services.types
 interface ProductDetailsProps {
 	product: GetProductReturn;
 	defaultSku: ProductSku;
+	productSlug: string;
 }
 
 /**
@@ -28,7 +30,11 @@ interface ProductDetailsProps {
  * - Orchestrer les composants enfants : Prix, Caractéristiques, Sélecteurs, Panier, Entretien
  * - Animer les transitions lors du changement de variante
  */
-export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
+export function ProductDetails({
+	product,
+	defaultSku,
+	productSlug,
+}: ProductDetailsProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 	const prefersReducedMotion = useReducedMotion();
 
@@ -43,7 +49,7 @@ export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 
 	return (
 		<>
-			{/* Prix du SKU sélectionné - avec animation */}
+			{/* 1. Prix du SKU sélectionné - avec animation */}
 			<AnimatePresence mode="wait">
 				<motion.div
 					key={`price-${currentSku?.id || "no-sku"}`}
@@ -57,7 +63,18 @@ export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 				</motion.div>
 			</AnimatePresence>
 
-			{/* Caractéristiques principales - avec animation */}
+			{/* 2. Sélection des variantes (REMONTE - avant caractéristiques) */}
+			<VariantSelector product={product} defaultSku={defaultSku} />
+
+			{/* 3. CTA principal (REMONTE) */}
+			<AddToCartForm product={product} selectedSku={currentSku} />
+
+			{/* 4. Réassurance - juste après le CTA pour réduire l'anxiété d'achat */}
+			<ProductReassurance productSlug={productSlug} />
+
+			<Separator className="bg-border" />
+
+			{/* 5. Caractéristiques principales - avec animation (DESCEND) */}
 			<AnimatePresence mode="wait">
 				<motion.div
 					key={`chars-${currentSku?.id || "no-sku"}`}
@@ -71,17 +88,7 @@ export function ProductDetails({ product, defaultSku }: ProductDetailsProps) {
 				</motion.div>
 			</AnimatePresence>
 
-			<Separator className="bg-border" />
-
-			{/* Sélection des variantes - pas d'animation (interaction directe) */}
-			<VariantSelector product={product} defaultSku={defaultSku} />
-
-			{/* CTA principal */}
-			<AddToCartForm product={product} selectedSku={currentSku} />
-
-			<Separator className="bg-border" />
-
-			{/* Entretien et livraison */}
+			{/* 6. Entretien et livraison (reste en bas) */}
 			<ProductCareInfo primaryMaterial={currentSku?.material?.name} />
 		</>
 	);

@@ -9,7 +9,7 @@ import type {
 	GetProductReturn,
 	ProductSku,
 } from "@/modules/products/types/product.types";
-import { Crown, Palette, Ruler, ShieldCheck, Sparkles } from "lucide-react";
+import { Palette, Ruler, ShieldCheck, Sparkles } from "lucide-react";
 
 interface ProductCharacteristicsProps {
 	product: GetProductReturn;
@@ -70,23 +70,6 @@ export function ProductCharacteristics({
 								</dt>
 								<dd className="text-xs/5 tracking-normal antialiased text-muted-foreground">
 									{primaryMaterial}
-								</dd>
-							</div>
-						</div>
-					)}
-
-					{/* Type de bijou */}
-					{product.type && (
-						<div className="flex items-center gap-3">
-							<div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center" aria-hidden="true">
-								<Crown className="w-4 h-4 text-primary" />
-							</div>
-							<div>
-								<dt className="text-sm/6 tracking-normal antialiased font-medium">
-									Catégorie
-								</dt>
-								<dd className="text-xs/5 tracking-normal antialiased text-muted-foreground">
-									{product.type.label}
 								</dd>
 							</div>
 						</div>

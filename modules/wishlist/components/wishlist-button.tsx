@@ -16,10 +16,10 @@ interface WishlistButtonProps {
 	size?: WishlistButtonSize;
 }
 
-const sizeConfig: Record<WishlistButtonSize, { button: string; icon: number }> = {
-	sm: { button: "size-9", icon: 16 },
-	md: { button: "size-11", icon: 20 },
-	lg: { button: "size-14", icon: 26 },
+const sizeConfig: Record<WishlistButtonSize, { button: string; icon: string }> = {
+	sm: { button: "size-9", icon: "size-4" },
+	md: { button: "size-11", icon: "size-5" },
+	lg: { button: "size-14", icon: "size-8 sm:size-7" },
 };
 
 /**
@@ -64,17 +64,13 @@ export function WishlistButton({
 				type="submit"
 				variant="ghost"
 				size="icon"
-				disabled={isPending}
 				onClick={(e) => e.stopPropagation()}
 				className={cn(
 					// Taille configurable (md = 44px conforme WCAG 2.5.5)
 					buttonSize,
 					"rounded-full",
 					"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
-					"motion-safe:transition-all motion-safe:duration-200",
-					// Animation pulse + ring pendant le chargement pour feedback visuel
-					isPending && "motion-safe:animate-pulse ring-2 ring-primary/30",
-					"disabled:cursor-not-allowed"
+					"motion-safe:transition-all motion-safe:duration-200"
 				)}
 				aria-label={ariaLabel}
 				aria-pressed={isInWishlist}
@@ -82,14 +78,16 @@ export function WishlistButton({
 			>
 				<HeartIcon
 					variant={isInWishlist ? "filled" : "outline"}
-					size={iconSize}
 					decorative
 					className={cn(
+						// Taille configurable (classes size-* pour bypass Button override)
+						iconSize,
 						"motion-safe:transition-all motion-safe:duration-200",
+						// Drop shadows
 						"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
-						isInWishlist && "motion-safe:scale-110 drop-shadow-[0_0_6px_rgba(215,168,178,0.7)]",
-						// Opacité réduite pendant le chargement
-						isPending && "opacity-60"
+						// Effet pop au filled
+						isInWishlist &&
+							"motion-safe:scale-110 drop-shadow-[0_0_6px_rgba(215,168,178,0.7)]"
 					)}
 				/>
 			</Button>
