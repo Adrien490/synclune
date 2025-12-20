@@ -122,10 +122,10 @@ export default async function ProductPage({
 			<ParticleSystem count={8} size={[12, 80]} className="fixed inset-0 z-0" />
 
 			<div className="relative z-10">
-				<PageHeader title={product.title} breadcrumbs={breadcrumbs} />
+				<PageHeader title={product.title} breadcrumbs={breadcrumbs} className="hidden sm:block" />
 
 				{/* Contenu principal */}
-				<div className="bg-background pb-6 sm:pt-4 sm:pb-12 lg:pt-6 lg:pb-16">
+				<div className="bg-background pt-20 pb-6 sm:pt-4 sm:pb-12 lg:pt-6 lg:pb-16">
 					<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 						<article
 							id="product-main"

@@ -3,7 +3,7 @@ import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/naviga
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
-import { LayoutDashboard, User, Heart } from "lucide-react";
+import { LayoutDashboard, User, Heart, Search } from "lucide-react";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
@@ -57,12 +57,23 @@ export async function Navbar() {
 			>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 					<div className="flex h-16 sm:h-20 items-center gap-4">
-						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
-						<div className="flex flex-1 items-center lg:flex-none min-w-0">
+						{/* Section gauche: Menu burger + Logo (mobile) / Logo (desktop) */}
+						<div className="flex flex-1 items-center gap-2 lg:flex-none min-w-0">
 							{/* Menu burger (mobile uniquement) */}
 							<MenuSheet navItems={mobileNavItems} session={session} />
 
-							{/* Logo (desktop uniquement) */}
+							{/* Logo mobile (icône seule, même taille que les boutons) */}
+							<Logo
+								href="/"
+								size={44}
+								className="lg:hidden"
+								imageClassName="shadow-md hover:shadow-lg transition-shadow duration-300 ease-out"
+								priority
+								sizes="44px"
+								showText={false}
+							/>
+
+							{/* Logo desktop (avec texte) */}
 							<Logo
 								href="/"
 								size={48}
@@ -75,26 +86,27 @@ export async function Navbar() {
 							/>
 						</div>
 
-						{/* Section centrale: Logo (mobile) / Navigation desktop */}
-						<div className="flex items-center justify-center lg:flex-1">
-							{/* Logo centré (mobile uniquement - icône seule, pas de texte) */}
-							<Logo
-								href="/"
-								size={48}
-								className="lg:hidden"
-								imageClassName="shadow-md hover:shadow-lg transition-shadow duration-300 ease-out"
-								priority
-								sizes="(max-width: 640px) 48px, 56px"
-								showText={false}
-							/>
-
-							{/* Navigation desktop (cachée sur mobile) */}
+						{/* Section centrale: Navigation desktop uniquement */}
+						<div className="hidden lg:flex items-center justify-center lg:flex-1">
 							<DesktopNav navItems={desktopNavItems} />
 						</div>
 
-						{/* Section droite: Tableau de bord (admin) + Favoris + Compte + Panier */}
+						{/* Section droite: Recherche (mobile) + Tableau de bord (admin) + Favoris + Compte + Panier */}
 						<div className="flex flex-1 items-center justify-end min-w-0">
 							<div className="flex items-center gap-1 sm:gap-3 shrink-0">
+								{/* Icône recherche (mobile uniquement) */}
+								<Link
+									href="/produits"
+									className={`inline-flex lg:hidden ${iconButtonClassName}`}
+									aria-label="Rechercher des produits"
+								>
+									<Search
+										size={20}
+										className="transition-transform duration-300 ease-out group-hover:scale-105"
+										aria-hidden="true"
+									/>
+								</Link>
+
 								{/* Icône tableau de bord (visible uniquement pour les admins, desktop seulement) */}
 								{userIsAdmin && (
 									<Link
