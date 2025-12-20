@@ -177,10 +177,7 @@ export function StickyCartCTA({
 									validationErrors[0] || "Choisir"
 								)
 							) : (
-								<>
-									<ShoppingCart size={18} aria-hidden="true" />
-									Ajouter au panier
-								</>
+								"Ajouter au panier"
 							)}
 						</Button>
 					</form>
