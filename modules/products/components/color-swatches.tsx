@@ -34,7 +34,7 @@ const sizeClasses = {
 	xs: "size-4", // 16px - décoratif uniquement
 	sm: "size-5", // 20px - compact pour cards
 	md: "size-7", // 28px - WCAG 2.5.5 avec espacement ≥16px = 44px total
-	lg: "size-9", // 36px - confortable mobile avec touch target généreux
+	lg: "size-9 sm:size-7", // 36px mobile → 28px desktop (responsive)
 };
 
 /**
@@ -273,7 +273,7 @@ export function ColorSwatches({
 							{remainingCount} autre{remainingCount > 1 ? "s" : ""} couleur
 							{remainingCount > 1 ? "s" : ""}
 						</p>
-						<div className="flex flex-wrap gap-2">
+						<div className="flex flex-wrap gap-3">
 							{hiddenColors.map((color, index) =>
 								isTouchDevice ? (
 									<span key={color.slug}>
