@@ -1,7 +1,6 @@
 import { Fade, ScrollIndicator, Slide } from "@/shared/components/animations";
-import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
+import { DeferredHeroDecorations } from "./deferred-hero-decorations";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/ui/section-title";
@@ -20,18 +19,8 @@ export function Hero() {
       itemProp="mainContentOfPage"
     >
 
-      {/* Couche 1: Particules décoratives - Multi-formes bijoux */}
-      <ParticleSystem
-        count={12}
-        shape={["diamond", "crescent", "circle", "heart"]}
-        colors={["var(--secondary)", "oklch(0.9 0.1 80)", "var(--primary)"]}
-        opacity={[0.2, 0.45]}
-        blur={[6, 24]}
-        size={[25, 70]}
-      />
-
-      {/* Couche 2: Glitter Sparkles (overlay scintillant) - Allégé pour performance mobile */}
-      <GlitterSparkles sizeRange={[2, 4]} glowIntensity={0.4} />
+      {/* Particules et paillettes - Chargées après le FCP */}
+      <DeferredHeroDecorations />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
         <div className="flex flex-col items-center">

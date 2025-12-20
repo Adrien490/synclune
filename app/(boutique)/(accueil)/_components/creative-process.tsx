@@ -8,7 +8,6 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { cacheLife, cacheTag } from "next/cache";
 import { ScrollProgressLine } from "./scroll-progress-line";
 import { ParallaxImage } from "./parallax-image";
 
@@ -94,11 +93,7 @@ const STEP_INTENSITY = [
  * <CreativeProcess />
  * ```
  */
-export async function CreativeProcess() {
-	"use cache";
-	cacheLife("reference"); // 7 jours pour contenu 100% statique
-	cacheTag("creative-process");
-
+export function CreativeProcess() {
 	return (
 		<section
 			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}

@@ -5,19 +5,13 @@ import { BRAND } from "@/shared/constants/brand";
 import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import { FOOTER_PADDING } from "@/shared/constants/spacing";
 import Link from "next/link";
-import { cacheLife, cacheTag } from "next/cache";
 
 /**
  * Footer statique de l'application
  *
- * Utilise "use cache" pour mettre en cache le rendu complet du footer
- * car le contenu est entièrement statique (navigation, liens, contact).
+ * Contenu entierement statique (navigation, liens, contact).
  */
-export async function Footer() {
-	"use cache";
-	cacheLife("reference");
-	cacheTag("footer");
-
+export function Footer() {
 	return (
 		<footer
 			className="relative bg-background overflow-hidden"

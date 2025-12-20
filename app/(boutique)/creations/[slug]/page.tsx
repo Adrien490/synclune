@@ -7,7 +7,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
-import { checkIsInWishlist } from "@/modules/wishlist/data/check-is-in-wishlist";
+import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { getSwipeHintSeen } from "@/modules/media/data/get-swipe-hint-seen";
 
 import { PageHeader } from "@/shared/components/page-header";
@@ -38,11 +38,12 @@ export default async function ProductPage({
 	const { slug } = await params;
 	const urlParams = await searchParams;
 
-	// Paralléliser isAdmin, getProduct et getSwipeHintSeen pour optimiser le TTFB
-	const [admin, product, hasSeenSwipeHint] = await Promise.all([
+	// Paralléliser toutes les requêtes pour optimiser le TTFB
+	const [admin, product, hasSeenSwipeHint, wishlistSkuIds] = await Promise.all([
 		isAdmin(),
 		getProductBySlug({ slug, includeDraft: true }), // Récupérer avec DRAFT, filtrer après
 		getSwipeHintSeen(),
+		getWishlistSkuIds(), // Récupérer tous les SKU IDs de la wishlist en parallèle
 	]);
 
 	// Vérifier existence produit
@@ -98,8 +99,8 @@ export default async function ProductPage({
 	// Génération du structured data JSON-LD
 	const structuredData = generateStructuredData(product, selectedSku);
 
-	// Vérifier si le SKU sélectionné est dans la wishlist de l'utilisateur
-	const isInWishlist = await checkIsInWishlist(selectedSku.id);
+	// Vérifier si le SKU sélectionné est dans la wishlist (lookup O(1) local)
+	const isInWishlist = wishlistSkuIds.has(selectedSku.id);
 
 	return (
 		<div className="min-h-screen relative">

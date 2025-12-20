@@ -1,39 +1,10 @@
 import { Fade, Reveal, Stagger } from "@/shared/components/animations";
+import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
-import { Heart, ImageIcon, Sparkles } from "lucide-react";
-import { cacheLife, cacheTag } from "next/cache";
+import { Heart, Sparkles } from "lucide-react";
 
-/**
- * Placeholder esthetique avec gradient pour les photos en attente
- * Ameliore : gradient plus visible, icone centrale, bordure subtile
- * @param className - Classes additionnelles pour aspect ratio responsive
- * @param label - Label accessible pour les lecteurs d'ecran (si fourni, le placeholder est annonce)
- */
-function PlaceholderImage({
-	className,
-	label,
-}: {
-	className?: string;
-	label?: string;
-}) {
-	return (
-		<div
-			className={`relative rounded-xl overflow-hidden bg-linear-to-br from-secondary/40 via-muted/50 to-primary/30 border border-border/30 flex items-center justify-center transition-opacity duration-500 ${className ?? ""}`}
-			role={label ? "img" : undefined}
-			aria-label={label}
-			aria-hidden={label ? undefined : true}
-		>
-			<ImageIcon className="w-12 h-12 text-muted-foreground/40" aria-hidden="true" />
-		</div>
-	);
-}
-
-export async function AtelierStory() {
-	"use cache";
-	cacheLife("reference");
-	cacheTag("atelier-story");
-
+export function AtelierStory() {
 	return (
 		<section
 			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
