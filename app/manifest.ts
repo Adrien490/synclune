@@ -16,41 +16,59 @@ export default function manifest(): MetadataRoute.Manifest {
 		dir: "ltr",
 		categories: ["shopping", "lifestyle"],
 		icons: [
+			// Icônes Android petites tailles
+			{
+				src: "/icons/android-icon-36x36.png",
+				sizes: "36x36",
+				type: "image/png",
+				purpose: "any",
+			},
+			{
+				src: "/icons/android-icon-48x48.png",
+				sizes: "48x48",
+				type: "image/png",
+				purpose: "any",
+			},
+			{
+				src: "/icons/android-icon-72x72.png",
+				sizes: "72x72",
+				type: "image/png",
+				purpose: "any",
+			},
+			{
+				src: "/icons/android-icon-96x96.png",
+				sizes: "96x96",
+				type: "image/png",
+				purpose: "any",
+			},
+			{
+				src: "/icons/android-icon-144x144.png",
+				sizes: "144x144",
+				type: "image/png",
+				purpose: "any",
+			},
 			// Icône standard (avec marges de sécurité pour les anciens appareils)
 			{
-				src: "/icon-192x192.png",
+				src: "/icons/icon-192x192.png",
 				sizes: "192x192",
 				type: "image/png",
 				purpose: "any",
 			},
 			{
-				src: "/icon-512x512.png",
+				src: "/icons/icon-512x512.png",
 				sizes: "512x512",
 				type: "image/png",
 				purpose: "any",
 			},
 			// Icônes maskable (adaptatives Android, remplissent tout l'espace)
 			{
-				src: "/icon-192x192-maskable.png",
+				src: "/icons/icon-192x192-maskable.png",
 				sizes: "192x192",
 				type: "image/png",
 				purpose: "maskable",
 			},
 			{
-				src: "/icon-512x512-maskable.png",
-				sizes: "512x512",
-				type: "image/png",
-				purpose: "maskable",
-			},
-			// Icône combinée (prioritaire, supporte les deux modes)
-			{
-				src: "/icon-192x192-maskable.png",
-				sizes: "192x192",
-				type: "image/png",
-				purpose: "maskable",
-			},
-			{
-				src: "/icon-512x512-maskable.png",
+				src: "/icons/icon-512x512-maskable.png",
 				sizes: "512x512",
 				type: "image/png",
 				purpose: "maskable",
@@ -62,21 +80,21 @@ export default function manifest(): MetadataRoute.Manifest {
 				short_name: "Bijoux",
 				description: "Découvrir nos créations",
 				url: "/produits",
-				icons: [{ src: "/icon-192x192.png", sizes: "192x192" }],
+				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
 			},
 			{
 				name: "Panier",
 				short_name: "Panier",
 				description: "Voir mon panier",
 				url: "/panier",
-				icons: [{ src: "/icon-192x192.png", sizes: "192x192" }],
+				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
 			},
 			{
 				name: "Mon Compte",
 				short_name: "Compte",
 				description: "Accéder à mon compte",
 				url: "/compte",
-				icons: [{ src: "/icon-192x192.png", sizes: "192x192" }],
+				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
 			},
 		],
 	};
