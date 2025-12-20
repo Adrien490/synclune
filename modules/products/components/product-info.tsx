@@ -2,8 +2,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Crown, Heart } from "lucide-react";
-import Link from "next/link";
+import { Crown } from "lucide-react";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 
 interface ProductInfoProps {
@@ -64,30 +63,14 @@ export function ProductInfo({
 				{product.type && (
 					<Badge
 						variant="outline"
-						className="text-xs/5 tracking-normal antialiased font-medium px-3 py-1"
+						className="text-xs/5 sm:text-sm/6 tracking-normal antialiased font-medium px-3 py-1.5 sm:py-1 rounded-full border-primary/30"
 					>
-						<Crown className="w-3 h-3 mr-1" aria-hidden="true" />
+						<Crown className="w-3.5 h-3.5 sm:w-3 sm:h-3" aria-hidden="true" />
 						{product.type.label}
 					</Badge>
 				)}
 
-				{product.collections?.map((pc) => (
-					<Link
-						key={pc.collection.id}
-						href={`/collections/${pc.collection.slug}`}
-						aria-label={`Voir la collection ${pc.collection.name}`}
-					>
-						<Badge
-							variant="outline"
-							className="text-xs/5 tracking-normal antialiased font-medium px-3 py-1 gap-1.5 cursor-pointer hover:bg-primary/10 transition-colors"
-						>
-							<Heart className="w-3 h-3" aria-hidden="true" />
-							{pc.collection.name}
-						</Badge>
-					</Link>
-				))}
-
-				{/* Bouton wishlist visible uniquement sur desktop - a droite des badges */}
+				{/* Bouton wishlist visible uniquement sur desktop - a droite du badge type */}
 				<div className="hidden sm:block ml-auto">
 					<WishlistButton
 						productTitle={product.title}

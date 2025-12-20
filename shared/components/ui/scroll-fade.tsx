@@ -83,7 +83,7 @@ export default function ScrollFade({
   }, [axis]);
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       <div
         ref={containerRef}
         className={cn(

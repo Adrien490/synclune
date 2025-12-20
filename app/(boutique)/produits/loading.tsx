@@ -8,7 +8,7 @@ export default function BijouxHubLoading() {
 			<PageHeader
 				title="Les créations"
 				description="Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !"
-				breadcrumbs={[{ label: "Bijoux", href: "/produits" }]}
+				breadcrumbs={[{ label: "Produits", href: "/produits" }]}
 				actions={
 					<div className="flex items-center gap-2 md:hidden">
 						<Skeleton className="h-10 w-10 rounded-md" />

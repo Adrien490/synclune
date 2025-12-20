@@ -214,7 +214,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const pageDescription =
 		"Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !";
 	const searchPlaceholder = "Rechercher des bijoux...";
-	const breadcrumbs = [{ label: "Bijoux", href: "/produits" }];
+	const breadcrumbs = [{ label: "Produits", href: "/produits" }];
 
 	// Sort options for mobile drawer
 	const sortOptions = Object.values(SORT_OPTIONS).map((option) => ({
