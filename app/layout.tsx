@@ -4,6 +4,7 @@ import { CookieBanner } from "@/shared/components/cookie-banner";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
+import SystemBanner from "@/shared/components/ui/system-banner";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import { BUSINESS_INFO, SEO_DEFAULTS, SITE_URL } from "@/shared/constants/seo-config";
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
@@ -151,6 +152,12 @@ export default async function RootLayout({
 			<body
 				className={`${inter.className} ${crimsonPro.variable} ${jetBrainsMono.variable} antialiased`}
 			>
+				<SystemBanner
+					text="Mode Developpement"
+					color="bg-orange-500"
+					size="sm"
+					show={process.env.NODE_ENV === "development"}
+				/>
 				<SkipLink />
 				<IconSprite />
 				<Suspense fallback={null}>

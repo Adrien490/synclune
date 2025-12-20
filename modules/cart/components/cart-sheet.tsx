@@ -10,7 +10,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/shared/components/ui/sheet";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import ScrollFade from "@/shared/components/ui/scroll-fade";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag, Truck } from "lucide-react";
@@ -111,7 +111,11 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 						</div>
 					) : (
 						<>
-							<ScrollArea className="flex-1 min-h-0">
+							<ScrollFade
+								axis="vertical"
+								className="flex-1 min-h-0"
+								hideScrollbar={false}
+							>
 								<div className="px-6 py-4 space-y-3">
 									<AnimatePresence mode="popLayout" initial={false}>
 										{cart.items.map((item) => (
@@ -134,12 +138,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 									{/* Alerte changement de prix */}
 									<CartPriceChangeAlert items={cart.items} />
 								</div>
-								{/* Indicateur de scroll - fade gradient */}
-								<div
-									className="pointer-events-none sticky bottom-0 h-8 bg-linear-to-t from-background to-transparent"
-									aria-hidden="true"
-								/>
-							</ScrollArea>
+							</ScrollFade>
 
 							<SheetFooter className="px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t mt-auto shrink-0">
 								<div className="w-full space-y-3">

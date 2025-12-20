@@ -24,6 +24,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { GalleryThumbnail } from "@/modules/media/components/gallery-thumbnail";
 import { markSwipeHintSeen } from "@/modules/media/actions/mark-swipe-hint-seen";
+import ScrollFade from "@/shared/components/ui/scroll-fade";
 
 interface GalleryProps {
 	product: GetProductReturn;
@@ -184,33 +185,30 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 							: "grid-cols-1"
 					)}>
 						{/* Thumbnails verticales - Desktop uniquement */}
-						{/* Indicateur de scroll avec gradient en bas quand scrollable */}
 						{safeImages.length > 1 && (
-							<div className="hidden lg:block relative order-1">
-								{/* Container scrollable */}
-								<div className="flex flex-col gap-2 max-h-[min(500px,60vh)] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent pr-1 scroll-fade-y">
-									{safeImages.map((media, index) => (
-										<GalleryThumbnail
-											key={media.id}
-											media={media}
-											index={index}
-											isActive={index === optimisticIndex}
-											hasError={hasError(media.id)}
-											title={title}
-											onClick={() => navigateToIndex(index)}
-											onError={() => handleMediaError(media.id)}
-											className="shrink-0 h-auto hover:shadow-sm"
-											isLCPCandidate={index === 0}
-										/>
-									))}
-								</div>
-								{/* Gradient indiquant plus de contenu en bas (visible si > 5 images) */}
-								{safeImages.length > 5 && (
-									<div
-										className="absolute bottom-0 left-0 right-1 h-8 bg-linear-to-t from-background to-transparent pointer-events-none"
-										aria-hidden="true"
-									/>
-								)}
+							<div className="hidden lg:block order-1">
+								<ScrollFade
+									axis="vertical"
+									className="max-h-[min(500px,60vh)]"
+									hideScrollbar={false}
+								>
+									<div className="flex flex-col gap-2 pr-1">
+										{safeImages.map((media, index) => (
+											<GalleryThumbnail
+												key={media.id}
+												media={media}
+												index={index}
+												isActive={index === optimisticIndex}
+												hasError={hasError(media.id)}
+												title={title}
+												onClick={() => navigateToIndex(index)}
+												onError={() => handleMediaError(media.id)}
+												className="shrink-0 h-auto hover:shadow-sm"
+												isLCPCandidate={index === 0}
+											/>
+										))}
+									</div>
+								</ScrollFade>
 							</div>
 						)}
 
