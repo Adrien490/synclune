@@ -15,7 +15,6 @@ import { SendNewsletterEmailForm } from "@/modules/newsletter/components/admin/s
 import { prisma } from "@/shared/lib/prisma";
 import { getFirstParam } from "@/shared/utils/params";
 import { Mail, Users } from "lucide-react";
-import { connection } from "next/server";
 import { Suspense } from "react";
 import { SubscribersDataTable } from "@/modules/newsletter/components/admin/subscribers-data-table";
 import { Metadata } from "next";
@@ -49,9 +48,6 @@ async function getNewsletterStats() {
 export default async function NewsletterPage({
 	searchParams,
 }: NewsletterPageProps) {
-	// Force dynamic rendering to enable use cache: remote in functions
-	await connection();
-
 	const params = await searchParams;
 	const stats = await getNewsletterStats();
 

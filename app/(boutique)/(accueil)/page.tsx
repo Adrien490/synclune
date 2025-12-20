@@ -32,10 +32,10 @@ export const metadata: Metadata = {
 		type: "website",
 		images: [
 			{
-				url: "/og-image.jpg",
+				url: "/opengraph-image",
 				width: 1200,
 				height: 630,
-				alt: "Synclune - Bijoux artisanaux faits main à Nantes (44)",
+				alt: "Synclune - Bijoux artisanaux faits main a Nantes (44)",
 			},
 		],
 	},

@@ -22,7 +22,7 @@ export type {
 /**
  * Récupère les statistiques du compte utilisateur
  *
- * Le cache est géré dans fetchAccountStats() avec "use cache: private"
+ * Le cache est géré dans fetchAccountStats() avec "use cache"
  *
  * Stats calculées:
  * - Nombre total de commandes
@@ -42,9 +42,9 @@ export async function getAccountStats(): Promise<GetAccountStatsReturn> {
 }
 
 /**
- * Récupère les stats compte depuis la DB avec use cache: private
+ * Récupère les stats compte depuis la DB avec use cache
  *
- * Utilise "use cache: private" pour:
+ * Utilise "use cache" pour:
  * - Isoler les données par utilisateur (pas de fuite)
  * - Permettre le prefetching runtime (stale >= 30s)
  * - Stockage côté client uniquement (sécurité)
@@ -54,7 +54,7 @@ export async function getAccountStats(): Promise<GetAccountStatsReturn> {
  * @returns Les statistiques du compte
  */
 export async function fetchAccountStats(userId: string): Promise<AccountStats> {
-	"use cache: private";
+	"use cache";
 	cacheLife("userOrders");
 	cacheTag(`account-stats-${userId}`);
 

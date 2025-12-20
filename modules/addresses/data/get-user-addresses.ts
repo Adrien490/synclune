@@ -22,7 +22,7 @@ export type {
 /**
  * Récupère toutes les adresses de l'utilisateur connecté
  *
- * Le cache est géré dans fetchUserAddresses() avec "use cache: private"
+ * Le cache est géré dans fetchUserAddresses() avec "use cache"
  *
  * @returns Liste des adresses triées par défaut puis date, ou null si non authentifié
  */
@@ -37,9 +37,9 @@ export async function getUserAddresses(): Promise<GetUserAddressesReturn | null>
 }
 
 /**
- * Récupère toutes les adresses d'un utilisateur depuis la DB avec use cache: private
+ * Récupère toutes les adresses d'un utilisateur depuis la DB avec use cache
  *
- * Utilise "use cache: private" pour:
+ * Utilise "use cache" pour:
  * - Isoler les données par utilisateur (pas de fuite)
  * - Permettre le prefetching runtime (stale >= 30s)
  * - Stockage côté client uniquement (sécurité)
@@ -51,7 +51,7 @@ export async function getUserAddresses(): Promise<GetUserAddressesReturn | null>
 export async function fetchUserAddresses(
 	userId: string
 ): Promise<GetUserAddressesReturn> {
-	"use cache: private";
+	"use cache";
 	cacheLife("cart");
 	cacheTag(`addresses-user-${userId}`);
 

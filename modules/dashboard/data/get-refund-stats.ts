@@ -41,7 +41,7 @@ export async function fetchRefundStats(
 	customStartDate?: Date,
 	customEndDate?: Date
 ): Promise<RefundStatsReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.REFUND_STATS(period));
 

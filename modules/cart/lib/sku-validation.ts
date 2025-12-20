@@ -10,9 +10,6 @@ import type {
 	BatchSkuValidationResult,
 } from "@/modules/cart/types/sku-validation.types";
 
-// Re-export des types pour compatibilite
-export type { SkuData, SkuValidationResult, SkuDetailsResult, BatchSkuValidationResult };
-
 // Schéma de validation
 const validateSkuSchema = z.object({
 	skuId: z.string().min(1, CART_ERROR_MESSAGES.SKU_NOT_FOUND),

@@ -84,7 +84,7 @@ async function fetchPersonalizedRelatedProducts(
 	userId: string,
 	limit: number
 ): Promise<Product[]> {
-	"use cache: private";
+	"use cache";
 	cacheLife("relatedProducts");
 	cacheTag(`related-products-user-${userId}`);
 

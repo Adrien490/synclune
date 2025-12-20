@@ -9,7 +9,6 @@ import {
 } from "@/modules/collections/data/get-collections";
 import { getFirstParam } from "@/shared/utils/params";
 import { Metadata } from "next";
-import { connection } from "next/server";
 import { Suspense } from "react";
 import { BulkDeleteCollectionsAlertDialog } from "@/modules/collections/components/admin/bulk-delete-collections-alert-dialog";
 import { CollectionFormDialog } from "@/modules/collections/components/admin/collection-form-dialog";
@@ -55,9 +54,6 @@ type CollectionsAdminPageProps = {
 export default async function CollectionsAdminPage({
 	searchParams,
 }: CollectionsAdminPageProps) {
-	// Force dynamic rendering to enable use cache: remote in functions
-	await connection();
-
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);

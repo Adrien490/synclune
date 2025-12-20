@@ -42,7 +42,7 @@ export async function getRecentOrders(): Promise<GetRecentOrdersReturn> {
  * Récupère les 5 dernières commandes depuis la DB avec cache
  */
 export async function fetchDashboardRecentOrders(): Promise<GetRecentOrdersReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard();
 

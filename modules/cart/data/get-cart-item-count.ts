@@ -32,7 +32,7 @@ export async function getCartItemCount(): Promise<GetCartItemCountReturn> {
 /**
  * Récupère le nombre total d'articles dans le panier depuis la DB avec cache
  *
- * Utilise "use cache: private" pour:
+ * Utilise "use cache" pour:
  * - Isoler les données par utilisateur/session (pas de fuite)
  * - Permettre le prefetching runtime (stale >= 30s)
  * - Stockage côté client uniquement (sécurité)
@@ -46,7 +46,7 @@ export async function fetchCartItemCount(
 	userId?: string,
 	sessionId?: string
 ): Promise<GetCartItemCountReturn> {
-	"use cache: private";
+	"use cache";
 	cacheLife("cart");
 
 	cacheTag(

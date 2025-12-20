@@ -90,7 +90,7 @@ export async function fetchSalesKpis(
 	customStartDate?: Date,
 	customEndDate?: Date
 ): Promise<SalesKpisReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.SALES_KPIS(period));
 

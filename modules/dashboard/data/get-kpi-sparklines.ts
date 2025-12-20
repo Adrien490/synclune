@@ -35,7 +35,7 @@ function getLast7Days(): string[] {
  * Utilise pour afficher une tendance visuelle sur les KpiCard
  */
 export async function fetchKpiSparklines(): Promise<KpiSparklineData> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard();
 

@@ -37,7 +37,7 @@ export async function getCustomizationRequests({
 	sortBy = CUSTOMIZATION_SORT_OPTIONS.RECENT,
 	filters,
 }: GetCustomizationRequestsParams = {}): Promise<GetCustomizationRequestsResult> {
-	"use cache: remote";
+	"use cache";
 	cacheCustomizationList();
 
 	// Build where clause

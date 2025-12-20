@@ -10,7 +10,7 @@ import type { CustomizationRequestDetail } from "../types/customization.types";
 export async function getCustomizationRequest(
 	id: string
 ): Promise<CustomizationRequestDetail | null> {
-	"use cache: remote";
+	"use cache";
 	cacheCustomizationDetail(id);
 
 	const request = await prisma.customizationRequest.findFirst({

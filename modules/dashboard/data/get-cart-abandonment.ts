@@ -86,7 +86,7 @@ async function fetchCartAbandonment(
 	customStartDate?: Date,
 	customEndDate?: Date
 ): Promise<CartAbandonmentReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.ABANDONMENT_RATE(period));
 

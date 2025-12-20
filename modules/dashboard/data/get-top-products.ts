@@ -51,7 +51,7 @@ export async function getTopProducts(): Promise<GetTopProductsReturn> {
  * Utilise une requête SQL agrégée pour de meilleures performances
  */
 export async function fetchDashboardTopProducts(): Promise<GetTopProductsReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard();
 

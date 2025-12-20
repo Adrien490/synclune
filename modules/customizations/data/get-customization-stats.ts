@@ -9,7 +9,7 @@ import type { CustomizationStats } from "../types/customization.types";
 // ============================================================================
 
 export async function getCustomizationStats(): Promise<CustomizationStats> {
-	"use cache: remote";
+	"use cache";
 	cacheCustomizationStats();
 
 	const now = new Date();

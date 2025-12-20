@@ -30,7 +30,7 @@ export async function getCartSummary(): Promise<GetCartSummaryReturn> {
 /**
  * Récupère le résumé du panier depuis la DB avec cache
  *
- * Utilise "use cache: private" pour:
+ * Utilise "use cache" pour:
  * - Isoler les données par utilisateur/session (pas de fuite)
  * - Permettre le prefetching runtime (stale >= 30s)
  * - Stockage côté client uniquement (sécurité)
@@ -44,7 +44,7 @@ export async function fetchCartSummary(
 	userId: string | undefined,
 	sessionId: string | undefined
 ): Promise<GetCartSummaryReturn> {
-	"use cache: private";
+	"use cache";
 	cacheCartSummary(userId, sessionId);
 
 	// Retourner un résumé vide si pas d'identifiant

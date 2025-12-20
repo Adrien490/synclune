@@ -82,8 +82,6 @@ const SORT_LABELS: Record<string, string> = {
 export default async function ProductsAdminPage({
 	searchParams,
 }: ProductsAdminPageProps) {
-	// Rend la page dynamique pour permettre use cache: remote dans les fonctions
-
 	const params = await searchParams;
 
 	// Parse and validate all search parameters safely

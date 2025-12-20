@@ -31,10 +31,7 @@ const nextConfig: NextConfig = {
     qualities: [75, 80, 85, 90],
   },
 
-  experimental: {
-    useCache: true,
-  },
-
+  cacheComponents: true,
 
   cacheLife: {
     products: { stale: 900, revalidate: 300, expire: 21600 },

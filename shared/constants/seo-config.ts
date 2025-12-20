@@ -57,8 +57,8 @@ export const SEO_DEFAULTS = {
 	locale: "fr_FR",
 	type: "website",
 	images: {
-		// Image par défaut pour Open Graph (à remplacer par une vraie image)
-		default: `${SITE_URL}/og-image.jpg`,
+		// Image par defaut pour Open Graph (generee dynamiquement par app/opengraph-image.tsx)
+		default: `${SITE_URL}/opengraph-image`,
 		width: 1200,
 		height: 630,
 	},
@@ -81,7 +81,7 @@ export function getLocalBusinessSchema() {
 		description: BUSINESS_INFO.description,
 		url: SITE_URL,
 		logo: `${SITE_URL}/logo.png`,
-		image: `${SITE_URL}/og-image.jpg`,
+		image: `${SITE_URL}/opengraph-image`,
 		email: BUSINESS_INFO.email,
 		address: {
 			"@type": "PostalAddress",
@@ -212,8 +212,8 @@ export function getOrganizationSchema() {
 		image: {
 			"@type": "ImageObject",
 			"@id": `${SITE_URL}/#image`,
-			url: `${SITE_URL}/og-image.jpg`,
-			contentUrl: `${SITE_URL}/og-image.jpg`,
+			url: `${SITE_URL}/opengraph-image`,
+			contentUrl: `${SITE_URL}/opengraph-image`,
 		},
 		description: BUSINESS_INFO.description,
 		email: BUSINESS_INFO.email,

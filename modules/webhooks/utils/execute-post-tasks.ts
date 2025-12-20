@@ -1,4 +1,4 @@
-import { updateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import {
 	sendOrderConfirmationEmail,
 	sendAdminNewOrderEmail,
@@ -32,7 +32,7 @@ export async function executePostWebhookTasks(tasks: PostWebhookTask[]): Promise
 					await sendAdminRefundFailedAlert(task.data);
 					break;
 				case "INVALIDATE_CACHE":
-					task.tags.forEach(tag => updateTag(tag));
+					task.tags.forEach(tag => revalidateTag(tag, "max"));
 					break;
 			}
 		} catch (error) {

@@ -49,7 +49,7 @@ export async function fetchSubscriptionStatus(
 	email: string,
 	userId: string
 ): Promise<{ status: string } | null> {
-	"use cache: private";
+	"use cache";
 	cacheLife("cart");
 	cacheTag(`newsletter-user-${userId}`);
 

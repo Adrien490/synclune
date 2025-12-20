@@ -53,7 +53,7 @@ export async function generateProductMetadata({
 
 	// Image du produit pour OpenGraph (première image du SKU principal)
 	const mainImage = primarySku?.images?.[0];
-	const imageUrl = mainImage?.url || "https://synclune.fr/og-image.jpg";
+	const imageUrl = mainImage?.url || "https://synclune.fr/opengraph-image";
 
 	return {
 		title,

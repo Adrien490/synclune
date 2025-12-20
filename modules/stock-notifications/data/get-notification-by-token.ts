@@ -47,7 +47,7 @@ export async function getNotificationByToken(
 export async function getNotificationsByUser(
 	userId: string
 ): Promise<StockNotificationRequestWithSku[]> {
-	"use cache: private";
+	"use cache";
 	cacheLife("dashboard");
 	cacheTag(STOCK_NOTIFICATIONS_CACHE_TAGS.BY_USER(userId));
 
@@ -77,7 +77,7 @@ export async function getNotificationsByUser(
 export async function getNotificationsByEmail(
 	email: string
 ): Promise<StockNotificationRequestWithSku[]> {
-	"use cache: private";
+	"use cache";
 	cacheLife("dashboard");
 	cacheTag(STOCK_NOTIFICATIONS_CACHE_TAGS.BY_EMAIL(email.toLowerCase()));
 

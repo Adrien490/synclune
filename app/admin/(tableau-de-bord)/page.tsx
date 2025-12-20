@@ -16,13 +16,15 @@ import {
 	isValidTab,
 	type DashboardTab,
 } from "@/modules/dashboard/constants/tabs";
-import {
-	DEFAULT_PERIOD,
-	
-} from "@/modules/dashboard/constants/periods";
+import { DEFAULT_PERIOD } from "@/modules/dashboard/constants/periods";
 import { dashboardPeriodSchema } from "@/modules/dashboard/schemas/dashboard.schemas";
 import type { DashboardPeriod } from "@/modules/dashboard/utils/period-resolver";
-import { KpisSkeleton } from "@/modules/dashboard/components/skeletons";
+import {
+	OverviewSectionSkeleton,
+	SalesSectionSkeleton,
+	InventorySectionSkeleton,
+	CustomersSectionSkeleton,
+} from "@/modules/dashboard/components/skeletons";
 
 export const metadata: Metadata = {
 	title: "Tableau de bord - Administration",
@@ -61,10 +63,7 @@ export default async function AdminDashboardPage({
 
 	return (
 		<>
-			<PageHeader
-				variant="compact"
-				title="Tableau de bord"
-			/>
+			<PageHeader variant="compact" title="Tableau de bord" />
 
 			{/* Navigation et filtres */}
 			<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -75,36 +74,46 @@ export default async function AdminDashboardPage({
 					toDate={toDate}
 				/>
 				<div className="flex items-center gap-3">
-				{(tab === "sales" || tab === "customers") && (
+					{(tab === "sales" || tab === "customers") && (
+						<Suspense fallback={null}>
+							<PeriodSelector />
+						</Suspense>
+					)}
 					<Suspense fallback={null}>
-						<PeriodSelector />
+						<RefreshButton showTimestamp={false} />
 					</Suspense>
-				)}
-				<Suspense fallback={null}>
-					<RefreshButton showTimestamp={false} />
-				</Suspense>
-			</div>
+				</div>
 			</div>
 
-			{/* Contenu de la section active */}
-			<Suspense fallback={<KpisSkeleton count={4} ariaLabel="Chargement de la section" />}>
-				{tab === "overview" && <OverviewSection />}
-				{tab === "sales" && (
+			{/* Contenu de la section active - Suspense individuel par section */}
+			{tab === "overview" && (
+				<Suspense fallback={<OverviewSectionSkeleton />}>
+					<OverviewSection />
+				</Suspense>
+			)}
+			{tab === "sales" && (
+				<Suspense fallback={<SalesSectionSkeleton />}>
 					<SalesSection
 						period={period}
 						fromDate={fromDate}
 						toDate={toDate}
 					/>
-				)}
-				{tab === "inventory" && <InventorySection />}
-				{tab === "customers" && (
+				</Suspense>
+			)}
+			{tab === "inventory" && (
+				<Suspense fallback={<InventorySectionSkeleton />}>
+					<InventorySection />
+				</Suspense>
+			)}
+			{tab === "customers" && (
+				<Suspense fallback={<CustomersSectionSkeleton />}>
 					<CustomersSection
 						period={period}
 						fromDate={fromDate}
 						toDate={toDate}
 					/>
-				)}
-			</Suspense>
+				</Suspense>
+			)}
 		</>
 	);
 }

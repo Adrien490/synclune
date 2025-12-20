@@ -50,7 +50,7 @@ export async function getStockByColor(): Promise<GetStockByColorReturn> {
  * Utilise une requete SQL native avec GROUP BY pour la performance
  */
 async function fetchStockByColor(): Promise<GetStockByColorReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.STOCK_BY_COLOR);
 
@@ -122,7 +122,7 @@ export async function getStockByMaterial(): Promise<GetStockByMaterialReturn> {
  * Utilise une requete SQL native avec GROUP BY pour la performance
  */
 async function fetchStockByMaterial(): Promise<GetStockByMaterialReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.STOCK_BY_MATERIAL);
 

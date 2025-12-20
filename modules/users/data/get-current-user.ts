@@ -23,7 +23,7 @@ export type {
 /**
  * Récupère l'utilisateur actuellement connecté
  *
- * Le cache est géré dans fetchCurrentUser() avec "use cache: private"
+ * Le cache est géré dans fetchCurrentUser() avec "use cache"
  *
  * @returns L'utilisateur connecté ou null si non authentifié
  */
@@ -42,9 +42,9 @@ export async function getCurrentUser(): Promise<GetCurrentUserReturn> {
 }
 
 /**
- * Récupère l'utilisateur par ID depuis la DB avec use cache: private
+ * Récupère l'utilisateur par ID depuis la DB avec use cache
  *
- * Utilise "use cache: private" pour:
+ * Utilise "use cache" pour:
  * - Isoler les données par utilisateur (pas de fuite)
  * - Permettre le prefetching runtime (stale >= 30s)
  * - Stockage côté client uniquement (sécurité)
@@ -56,7 +56,7 @@ export async function getCurrentUser(): Promise<GetCurrentUserReturn> {
 export async function fetchCurrentUser(
 	userId: string
 ): Promise<GetCurrentUserReturn> {
-	"use cache: private";
+	"use cache";
 	cacheLife("session");
 	cacheTag(`user-${userId}`);
 	const user = await prisma.user.findUnique({

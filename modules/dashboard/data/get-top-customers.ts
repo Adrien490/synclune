@@ -52,7 +52,7 @@ export async function fetchTopCustomers(
 	customEndDate?: Date,
 	limit: number = DEFAULT_LIMIT
 ): Promise<GetTopCustomersReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.TOP_CUSTOMERS(period));
 

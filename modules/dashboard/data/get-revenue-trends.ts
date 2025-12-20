@@ -27,7 +27,7 @@ export async function getRevenueTrends(): Promise<GetRevenueYearReturn> {
  * Recupere les tendances de revenus sur 12 mois depuis la DB avec cache
  */
 export async function fetchRevenueTrends(): Promise<GetRevenueYearReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.REVENUE_YEAR);
 

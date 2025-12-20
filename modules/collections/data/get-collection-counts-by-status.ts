@@ -38,7 +38,7 @@ export async function getCollectionCountsByStatus(): Promise<GetCollectionCounts
  * Récupère les compteurs depuis la DB avec cache
  */
 async function fetchCollectionCountsByStatus(): Promise<CollectionCountsByStatus> {
-	"use cache: remote";
+	"use cache";
 	cacheLife("dashboard");
 	cacheTag(COLLECTIONS_CACHE_TAGS.COUNTS);
 

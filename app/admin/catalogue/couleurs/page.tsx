@@ -5,7 +5,6 @@ import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getColors, SORT_LABELS } from "@/modules/colors/data/get-colors";
 import { getFirstParam } from "@/shared/utils/params";
-import { connection } from "next/server";
 import { Suspense } from "react";
 import { ColorsDataTable } from "@/modules/colors/components/admin/colors-data-table";
 import { ColorsDataTableSkeleton } from "@/modules/colors/components/admin/colors-data-table-skeleton";
@@ -29,9 +28,6 @@ type ColorsAdminPageProps = {
 export default async function ColorsAdminPage({
 	searchParams,
 }: ColorsAdminPageProps) {
-	// Force dynamic rendering to enable use cache: remote in functions
-	await connection();
-
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);

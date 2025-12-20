@@ -298,7 +298,7 @@ All mutations use Server Actions with a standardized pattern:
 ```typescript
 "use server"
 
-import { revalidateTag } from "next/cache"
+import { updateTag } from "next/cache"
 import { requireAdmin, validateInput, success, error, handleActionError } from "@/shared/lib/actions"
 import { prisma } from "@/shared/lib/prisma"
 import { mySchema } from "../schemas/my.schemas"
@@ -329,9 +329,9 @@ export async function createSomething(
       data: validation.data,
     })
 
-    // 4. Cache invalidation
+    // 4. Cache invalidation (updateTag pour read-your-own-writes dans Server Actions)
     const tags = getMyInvalidationTags(result.id)
-    await Promise.all(tags.map(tag => revalidateTag(tag)))
+    tags.forEach(tag => updateTag(tag))
 
     return success("Element cree avec succes", { id: result.id })
   } catch (e) {

@@ -37,7 +37,7 @@ export async function getProductCountsByStatus(): Promise<GetProductCountsByStat
  * Récupère les compteurs depuis la DB avec cache
  */
 async function fetchProductCountsByStatus(): Promise<ProductCountsByStatus> {
-	"use cache: remote";
+	"use cache";
 	cacheLife("dashboard");
 	cacheTag("product-counts");
 

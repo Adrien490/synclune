@@ -40,7 +40,7 @@ export async function fetchDiscountStats(
 	customStartDate?: Date,
 	customEndDate?: Date
 ): Promise<DiscountStatsReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.DISCOUNT_STATS(period));
 

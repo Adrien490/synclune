@@ -12,7 +12,6 @@ import {
 } from "@/modules/product-types/data/get-product-types";
 import { getFirstParam } from "@/shared/utils/params";
 import Link from "next/link";
-import { connection } from "next/server";
 import { Suspense } from "react";
 import { ProductTypesDataTable } from "@/modules/product-types/components/admin/product-types-data-table";
 import { ProductTypesDataTableSkeleton } from "@/modules/product-types/components/admin/product-types-data-table-skeleton";
@@ -55,9 +54,6 @@ type ProductTypesAdminPageProps = {
 export default async function ProductTypesAdminPage({
 	searchParams,
 }: ProductTypesAdminPageProps) {
-	// Force dynamic rendering to enable use cache: remote in functions
-	await connection();
-
 	const params = await searchParams;
 
 	// Extract params

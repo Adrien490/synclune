@@ -19,9 +19,9 @@ const getSortDirection = (sortBy: string): "asc" | "desc" => {
 };
 
 /**
- * Récupère les commandes d'un utilisateur depuis la DB avec use cache: private
+ * Récupère les commandes d'un utilisateur depuis la DB avec use cache
  *
- * Utilise "use cache: private" pour:
+ * Utilise "use cache" pour:
  * - Isoler les données par utilisateur (pas de fuite)
  * - Permettre le prefetching runtime (stale >= 30s)
  * - Stockage côté client uniquement (sécurité)
@@ -35,7 +35,7 @@ export async function fetchUserOrders(
 	userId: string,
 	params: GetUserOrdersParams
 ): Promise<GetUserOrdersReturn> {
-	"use cache: private";
+	"use cache";
 	cacheLife("userOrders");
 	cacheTag(`orders-user-${userId}`);
 

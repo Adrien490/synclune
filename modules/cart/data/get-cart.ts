@@ -32,13 +32,13 @@ export async function getCart(): Promise<GetCartReturn> {
 }
 
 /**
- * Récupère le panier de l'utilisateur ou du visiteur depuis la DB avec use cache: private
+ * Récupère le panier de l'utilisateur ou du visiteur depuis la DB avec use cache
  */
 export async function fetchCart(
 	userId?: string,
 	sessionId?: string
 ): Promise<GetCartReturn> {
-	"use cache: private";
+	"use cache";
 	cacheLife("cart");
 
 	cacheTag(

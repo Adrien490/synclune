@@ -8,7 +8,7 @@ import { fetchUserOrders } from "../utils/fetch-user-orders";
 /**
  * Récupère les commandes de l'utilisateur connecté
  *
- * Le cache est géré dans fetchUserOrders() avec "use cache: private"
+ * Le cache est géré dans fetchUserOrders() avec "use cache"
  *
  * @param params - Paramètres de pagination et tri
  * @returns Liste des commandes avec pagination

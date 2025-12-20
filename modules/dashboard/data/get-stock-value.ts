@@ -11,7 +11,7 @@ import type { StockValueReturn } from "../types/dashboard.types";
  * Optimise avec agregation SQL cote DB (evite de charger tous les SKUs en memoire)
  */
 export async function fetchStockValue(): Promise<StockValueReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.STOCK_VALUE);
 

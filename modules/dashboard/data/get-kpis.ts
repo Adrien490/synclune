@@ -212,7 +212,7 @@ export async function getKpis(): Promise<GetKpisReturn> {
  * Récupère les KPIs essentiels du dashboard avec cache
  */
 export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard();
 

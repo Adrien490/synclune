@@ -5,7 +5,6 @@ import { SearchForm } from "@/shared/components/search-form";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getMaterials, SORT_LABELS } from "@/modules/materials/data/get-materials";
 import { getFirstParam } from "@/shared/utils/params";
-import { connection } from "next/server";
 import { Suspense } from "react";
 import { MaterialsDataTable } from "@/modules/materials/components/admin/materials-data-table";
 import { MaterialsDataTableSkeleton } from "@/modules/materials/components/admin/materials-data-table-skeleton";
@@ -29,9 +28,6 @@ type MaterialsAdminPageProps = {
 export default async function MaterialsAdminPage({
 	searchParams,
 }: MaterialsAdminPageProps) {
-	// Force dynamic rendering to enable use cache: remote in functions
-	await connection();
-
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);

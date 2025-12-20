@@ -45,7 +45,7 @@ export async function fetchNeverSoldProducts(
 	skip: number = DEFAULT_SKIP,
 	take: number = DEFAULT_TAKE
 ): Promise<GetNeverSoldProductsReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.NEVER_SOLD);
 

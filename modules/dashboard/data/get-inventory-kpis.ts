@@ -19,7 +19,7 @@ type StockValueResult = {
  * Ces statistiques ne dependent pas d'une periode (etat actuel du stock)
  */
 export async function fetchInventoryKpis(): Promise<InventoryKpisReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.INVENTORY_KPIS);
 

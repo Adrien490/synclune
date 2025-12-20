@@ -35,7 +35,7 @@ export async function getOrdersStatus(): Promise<GetOrdersStatusReturn> {
  * Récupère la répartition des commandes par statut depuis la DB avec cache
  */
 export async function fetchDashboardOrdersStatus(): Promise<GetOrdersStatusReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard();
 

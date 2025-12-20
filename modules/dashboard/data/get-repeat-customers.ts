@@ -40,7 +40,7 @@ export async function fetchRepeatCustomers(
 	customStartDate?: Date,
 	customEndDate?: Date
 ): Promise<RepeatCustomersReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.REPEAT_CUSTOMERS(period));
 

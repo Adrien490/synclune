@@ -19,7 +19,7 @@ export async function fetchRevenueByCollection(
 	customStartDate?: Date,
 	customEndDate?: Date
 ): Promise<GetRevenueByCollectionReturn> {
-	"use cache: remote";
+	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.REVENUE_COLLECTIONS(period));
 
