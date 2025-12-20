@@ -3,7 +3,7 @@ import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/naviga
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
-import { LayoutDashboard, User, Heart, Search } from "lucide-react";
+import { LayoutDashboard, User, Heart } from "lucide-react";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
@@ -92,22 +92,9 @@ export async function Navbar() {
 							<DesktopNav navItems={desktopNavItems} />
 						</div>
 
-						{/* Section droite: Recherche (mobile) + Tableau de bord (admin) + Favoris + Compte + Panier */}
+						{/* Section droite: Tableau de bord (admin) + Favoris + Compte + Panier */}
 						<div className="flex flex-1 items-center justify-end min-w-0">
 							<div className="flex items-center gap-1 sm:gap-3 shrink-0">
-								{/* Icône recherche (mobile uniquement - navigue vers /produits) */}
-								<Link
-									href="/produits"
-									className={`inline-flex lg:hidden ${iconButtonClassName}`}
-									aria-label="Rechercher des produits"
-								>
-									<Search
-										size={20}
-										className="transition-transform duration-300 ease-out group-hover:scale-105"
-										aria-hidden="true"
-									/>
-								</Link>
-
 								{/* Icône tableau de bord (visible uniquement pour les admins, desktop seulement) */}
 								{userIsAdmin && (
 									<Link
