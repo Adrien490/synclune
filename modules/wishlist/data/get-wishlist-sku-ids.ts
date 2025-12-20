@@ -32,7 +32,7 @@ async function fetchWishlistSkuIds(
 	userId?: string,
 	sessionId?: string
 ): Promise<Set<string>> {
-	"use cache";
+	"use cache: private";
 	cacheLife("cart");
 
 	cacheTag(

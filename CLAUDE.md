@@ -356,9 +356,12 @@ export async function createSomething(
 ## Data Fetching & Caching
 
 ### Cache Directives
-- `"use cache"` - Public shared data (products, collections, colors)
-- `"use cache: private"` - Per-user data (cart, wishlist, addresses)
-- `"use cache: remote"` - After `await connection()` for dashboard (aggregates)
+
+| Directive | Usage | Example Modules |
+|-----------|-------|-----------------|
+| `"use cache"` | Public shared data | products, collections, colors, materials |
+| `"use cache: private"` | Per-user data (isolated by userId/sessionId) | cart, wishlist, orders, addresses, users |
+| `"use cache: remote"` | After `await connection()` for dashboard | dashboard (planned) |
 
 ### Cache Life Profiles (next.config.ts)
 
@@ -366,9 +369,45 @@ export async function createSomething(
 |---------|-------|-----------|--------|----------|
 | `products` | 15m | 5m | 6h | Product lists, searches |
 | `collections` | 1h | 15m | 1d | Collection pages |
-| `reference` | 7d | 1d | 30d | Colors, materials, types |
+| `reference` | 7d | 1d | 30d | Colors, materials, types, legal pages |
 | `productDetail` | 15m | 5m | 6h | Single product pages |
 | `dashboard` | 1m | 30s | 5m | Admin KPIs, charts |
+| `cart` | 5m | 1m | 30m | Cart data |
+| `session` | 1m | 30s | 5m | Current user data |
+| `userOrders` | 2m | 1m | 10m | User order history |
+| `relatedProducts` | 30m | 10m | 3h | Related products |
+| `skuStock` | 30s | 15s | 1m | SKU inventory levels |
+
+### Wrapper Pattern for User Data
+
+**IMPORTANT:** Functions that access `cookies()` or `headers()` cannot use `"use cache"` directly. Use the wrapper pattern:
+
+```typescript
+// 1. Public function - accesses runtime APIs (cookies/headers)
+export async function getCart(): Promise<GetCartReturn> {
+  const session = await getSession();         // accesses headers()
+  const userId = session?.user?.id;
+  const sessionId = !userId ? await getCartSessionId() : null;  // accesses cookies()
+  return fetchCart(userId, sessionId);        // passes serializable params to cached function
+}
+
+// 2. Private cached function - receives serializable parameters
+async function fetchCart(userId?: string, sessionId?: string): Promise<GetCartReturn> {
+  "use cache: private";                       // Per-user isolation
+  cacheLife("cart");
+  cacheTag(userId ? `cart-user-${userId}` : `cart-session-${sessionId}`);
+
+  // Database query here
+  return prisma.cart.findFirst({ where: userId ? { userId } : { sessionId } });
+}
+```
+
+**Files using this pattern:**
+- `modules/cart/data/get-cart.ts`
+- `modules/wishlist/data/get-wishlist-sku-ids.ts`
+- `modules/orders/utils/fetch-user-orders.ts`
+- `modules/addresses/data/get-user-addresses.ts`
+- `modules/users/data/get-current-user.ts`
 
 ### Cache Configuration Pattern
 
@@ -399,7 +438,7 @@ export function getProductInvalidationTags(slug?: string): string[] {
 }
 ```
 
-### Data Function Pattern
+### Data Function Pattern (Public Data)
 
 ```typescript
 import { cacheProducts, PRODUCTS_CACHE_TAGS } from "../constants/cache"

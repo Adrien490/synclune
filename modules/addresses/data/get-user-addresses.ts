@@ -51,7 +51,7 @@ export async function getUserAddresses(): Promise<GetUserAddressesReturn | null>
 export async function fetchUserAddresses(
 	userId: string
 ): Promise<GetUserAddressesReturn> {
-	"use cache";
+	"use cache: private";
 	cacheLife("cart");
 	cacheTag(`addresses-user-${userId}`);
 

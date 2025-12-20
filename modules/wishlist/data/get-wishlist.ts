@@ -69,7 +69,7 @@ export async function fetchWishlist(
 	sessionId?: string,
 	params: GetWishlistParams = {}
 ): Promise<GetWishlistReturn> {
-	"use cache";
+	"use cache: private";
 
 	cacheWishlist(userId, sessionId);
 

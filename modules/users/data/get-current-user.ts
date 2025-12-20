@@ -56,7 +56,7 @@ export async function getCurrentUser(): Promise<GetCurrentUserReturn> {
 export async function fetchCurrentUser(
 	userId: string
 ): Promise<GetCurrentUserReturn> {
-	"use cache";
+	"use cache: private";
 	cacheLife("session");
 	cacheTag(`user-${userId}`);
 	const user = await prisma.user.findUnique({

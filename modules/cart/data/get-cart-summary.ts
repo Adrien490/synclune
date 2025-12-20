@@ -44,7 +44,7 @@ export async function fetchCartSummary(
 	userId: string | undefined,
 	sessionId: string | undefined
 ): Promise<GetCartSummaryReturn> {
-	"use cache";
+	"use cache: private";
 	cacheCartSummary(userId, sessionId);
 
 	// Retourner un résumé vide si pas d'identifiant

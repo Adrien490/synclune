@@ -34,7 +34,7 @@ export async function getLastOrder(): Promise<GetLastOrderReturn> {
 export async function fetchLastOrder(
 	userId: string
 ): Promise<GetLastOrderReturn> {
-	"use cache";
+	"use cache: private";
 	cacheLife("userOrders");
 	cacheTag(`last-order-user-${userId}`);
 
