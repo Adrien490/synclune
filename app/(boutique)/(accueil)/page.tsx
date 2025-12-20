@@ -7,6 +7,7 @@ import { Collections } from "@/app/(boutique)/(accueil)/_components/collections"
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
+import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { Suspense } from "react";
 import { CreativeProcess } from "./_components/creative-process";
 import { Hero } from "./_components/hero";
@@ -85,6 +86,7 @@ export default async function Page() {
 							status: "PUBLIC",
 						},
 					})}
+					wishlistSkuIdsPromise={getWishlistSkuIds()}
 				/>
 			</Suspense>
 

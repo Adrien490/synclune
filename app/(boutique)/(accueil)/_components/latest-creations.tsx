@@ -5,13 +5,13 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import { getPrimarySkuForList } from "@/modules/products/services/product-list-helpers";
-import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 import { use } from "react";
 
 interface LatestCreationsProps {
 	productsPromise: Promise<GetProductsReturn>;
+	wishlistSkuIdsPromise: Promise<Set<string>>;
 }
 
 /**
@@ -27,9 +27,9 @@ interface LatestCreationsProps {
  *
  * @param productsPromise - Promise contenant les produits récents
  */
-export function LatestCreations({ productsPromise }: LatestCreationsProps) {
+export function LatestCreations({ productsPromise, wishlistSkuIdsPromise }: LatestCreationsProps) {
 	const { products } = use(productsPromise);
-	const wishlistSkuIds = use(getWishlistSkuIds());
+	const wishlistSkuIds = use(wishlistSkuIdsPromise);
 
 	// Si aucun produit, ne pas afficher la section
 	if (products.length === 0) {
