@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
-import { ChevronLeft, ChevronRight, MoveHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -212,20 +212,6 @@ export function CollectionCarouselWrapper({
 					</Button>
 				)}
 
-				{/* Indicateur de scroll (mobile uniquement, disparaît après 3s) */}
-				{totalItems > 1 && !prefersReducedMotion && (
-					<div
-						className="absolute right-6 top-1/2 -translate-y-1/2 z-10 md:hidden pointer-events-none animate-[scroll-hint-fade_3s_ease-out_forwards]"
-						aria-hidden="true"
-					>
-						<div className="flex items-center gap-1.5 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md border border-border/50 animate-[swipe-hint_1s_ease-in-out_3]">
-							<MoveHorizontal className="size-4 text-muted-foreground" />
-							<span className="text-xs text-muted-foreground font-medium">
-								Glisser
-							</span>
-						</div>
-					</div>
-				)}
 			</div>
 
 			{/* Dots (mobile) */}
