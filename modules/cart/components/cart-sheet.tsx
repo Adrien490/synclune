@@ -111,34 +111,36 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 						</div>
 					) : (
 						<>
-							<ScrollFade
-								axis="vertical"
-								className="flex-1 min-h-0"
-								hideScrollbar={false}
-							>
-								<div className="px-6 py-4 space-y-3">
-									<AnimatePresence mode="popLayout" initial={false}>
-										{cart.items.map((item) => (
-											<motion.div
-												key={item.id}
-												layout
-												initial={{ opacity: 0, height: 0 }}
-												animate={{ opacity: 1, height: "auto" }}
-												exit={{ opacity: 0, height: 0 }}
-												transition={{
-													duration: shouldReduceMotion ? 0 : 0.2,
-													ease: [0, 0, 0.2, 1],
-												}}
-											>
-												<CartSheetItemRow item={item} onClose={close} />
-											</motion.div>
-										))}
-									</AnimatePresence>
+							<div className="flex-1 min-h-0">
+								<ScrollFade
+									axis="vertical"
+									className="h-full"
+									hideScrollbar={false}
+								>
+									<div className="px-6 py-4 space-y-3">
+										<AnimatePresence mode="popLayout" initial={false}>
+											{cart.items.map((item) => (
+												<motion.div
+													key={item.id}
+													layout
+													initial={{ opacity: 0, height: 0 }}
+													animate={{ opacity: 1, height: "auto" }}
+													exit={{ opacity: 0, height: 0 }}
+													transition={{
+														duration: shouldReduceMotion ? 0 : 0.2,
+														ease: [0, 0, 0.2, 1],
+													}}
+												>
+													<CartSheetItemRow item={item} onClose={close} />
+												</motion.div>
+											))}
+										</AnimatePresence>
 
-									{/* Alerte changement de prix */}
-									<CartPriceChangeAlert items={cart.items} />
-								</div>
-							</ScrollFade>
+										{/* Alerte changement de prix */}
+										<CartPriceChangeAlert items={cart.items} />
+									</div>
+								</ScrollFade>
+							</div>
 
 							<SheetFooter className="px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t mt-auto shrink-0">
 								<div className="w-full space-y-3">
