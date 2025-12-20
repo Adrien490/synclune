@@ -191,6 +191,7 @@ export function SearchOverlay({
 			<Dialog open={open} onOpenChange={handleOpenChange}>
 				<DialogContent
 					showCloseButton={false}
+					onCloseAutoFocus={(e) => e.preventDefault()}
 					className="fixed inset-0 h-[100dvh] w-full max-w-none rounded-none border-none p-0 translate-x-0 translate-y-0 top-0 left-0 data-[state=open]:slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2 data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100 flex flex-col"
 				>
 					{/* Header fixe */}
