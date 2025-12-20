@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
+import { ColorSwatch as AriaColorSwatch } from "@/shared/components/ui/aria-color-swatch";
 import {
 	Tooltip,
 	TooltipContent,
@@ -190,27 +191,28 @@ export function ColorSwatches({
 							: "border-border/50 shadow-sm can-hover:hover:border-primary/50 motion-safe:can-hover:hover:scale-105",
 						!color.inStock && "opacity-40 cursor-not-allowed"
 					)}
-					style={{ backgroundColor: color.hex }}
-				/>
+				>
+					<AriaColorSwatch
+						color={color.hex}
+						colorName={color.name}
+						className="size-full rounded-full"
+					/>
+				</button>
 			);
 		}
 
-		// Mode décoratif - span avec sr-only pour accessibilité
+		// Mode décoratif - React Aria ColorSwatch avec accessibilité intégrée
 		return (
-			<span
+			<AriaColorSwatch
 				key={color.slug}
+				color={color.hex}
+				colorName={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
 				className={cn(
-					"rounded-full border border-border/50 shadow-sm motion-safe:transition-opacity relative",
+					"rounded-full border border-border/50 shadow-sm motion-safe:transition-opacity",
 					sizeClasses[swatchSize],
 					!color.inStock && "opacity-40"
 				)}
-				style={{ backgroundColor: color.hex }}
-			>
-				<span className="sr-only">
-					{color.name}
-					{!color.inStock && " (rupture)"}
-				</span>
-			</span>
+			/>
 		);
 	};
 
@@ -219,7 +221,8 @@ export function ColorSwatches({
 			className={cn(
 				"flex items-center",
 				// Scroll horizontal sur mobile si beaucoup de couleurs
-				interactive ? "overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-3 sm:gap-4 -mx-1 px-1" : "flex-wrap gap-1.5",
+				// pt-1 pour éviter le clipping du scale/ring au survol
+				interactive ? "overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-3 sm:gap-4 -mx-1 px-1 pt-1" : "flex-wrap gap-1.5 pt-1",
 				className
 			)}
 			aria-label={`${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}
