@@ -1,5 +1,11 @@
 import createMDX from "@next/mdx";
+import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
+
+const withSerwist = withSerwistInit({
+  swSrc: "app/sw.ts",
+  swDest: "public/sw.js",
+});
 
 const nextConfig: NextConfig = {
   async headers() {
@@ -49,4 +55,4 @@ const nextConfig: NextConfig = {
 
 const withMDX = createMDX({ extension: /\.(md|mdx)$/ });
 
-export default withMDX(nextConfig);
+export default withSerwist(withMDX(nextConfig));
