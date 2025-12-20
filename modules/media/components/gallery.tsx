@@ -163,7 +163,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 		>
 			{({ openLightbox }) => (
 				<div
-					className="product-gallery w-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+					className="product-gallery w-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
 					ref={galleryRef}
 					role="region"
 					aria-label={`Galerie d'images pour ${title}`}

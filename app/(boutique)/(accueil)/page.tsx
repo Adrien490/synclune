@@ -56,13 +56,16 @@ export default async function Page() {
 			{/* 2. Latest Creations - Product-first approach: 12 nouveautés pour engagement maximal */}
 			<Suspense fallback={<LatestCreationsSkeleton productsCount={12} />}>
 				<LatestCreations
-					productsPromise={getProducts({
-						perPage: 12,
-						sortBy: "created-descending",
-						filters: {
-							status: "PUBLIC",
+					productsPromise={getProducts(
+						{
+							perPage: 12,
+							sortBy: "created-descending",
+							filters: {
+								status: "PUBLIC",
+							},
 						},
-					})}
+						{ isAdmin: false }
+					)}
 					wishlistSkuIdsPromise={getWishlistSkuIds()}
 				/>
 			</Suspense>

@@ -1,5 +1,5 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { cacheWishlistCount } from "@/modules/wishlist/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 
@@ -40,9 +40,15 @@ export async function fetchWishlistItemCount(
 	userId?: string,
 	sessionId?: string
 ): Promise<GetWishlistItemCountReturn> {
-	"use cache";
-
-	cacheWishlistCount(userId, sessionId);
+	"use cache: private";
+	cacheLife("cart");
+	cacheTag(
+		userId
+			? `wishlist-count-user-${userId}`
+			: sessionId
+				? `wishlist-count-session-${sessionId}`
+				: "wishlist-count-anonymous"
+	);
 
 	try {
 		// Pas d'utilisateur ni de session = pas de wishlist

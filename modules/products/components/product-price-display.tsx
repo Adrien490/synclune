@@ -67,7 +67,7 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 
 	if (!selectedSku) {
 		return (
-			<Card role="region" aria-labelledby="product-price-title">
+			<Card role="region" aria-labelledby="product-price-title" className="transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60">
 				<CardContent className="pt-6 space-y-4">
 					<div className="flex items-baseline gap-3 flex-wrap">
 						{showFromPrefix && (
@@ -112,7 +112,7 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 			itemScope
 			itemType="https://schema.org/Offer"
 			itemProp="offers"
-			className="border-primary/10 shadow-sm"
+			className="border-primary/10 shadow-sm transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
 		>
 			{/* Microdata Schema.org cachées */}
 			<meta itemProp="priceCurrency" content="EUR" />

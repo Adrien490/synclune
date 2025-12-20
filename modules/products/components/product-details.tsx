@@ -48,7 +48,7 @@ export function ProductDetails({
 	};
 
 	return (
-		<>
+		<div className="space-y-6">
 			{/* 1. Prix du SKU sélectionné - avec animation */}
 			<AnimatePresence mode="wait">
 				<motion.div
@@ -90,6 +90,6 @@ export function ProductDetails({
 
 			{/* 6. Entretien et livraison (reste en bas) */}
 			<ProductCareInfo primaryMaterial={currentSku?.material?.name} />
-		</>
+		</div>
 	);
 }
