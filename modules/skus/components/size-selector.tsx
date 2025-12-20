@@ -6,7 +6,7 @@ import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import type { Size } from "@/modules/skus/types/sku-selector.types";
 import { SizeGuideDialog } from "./size-guide-dialog";
 
@@ -43,9 +43,12 @@ export function SizeSelector({
 	const [isPending, startTransition] = useTransition();
 
 	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
-	const selectedSize = searchParams.get("size") ?? defaultSku?.size ?? null;
+	const currentSize = searchParams.get("size") ?? defaultSku?.size ?? null;
 	const currentColor = searchParams.get("color");
 	const currentMaterial = searchParams.get("material");
+
+	// Etat optimiste pour une selection instantanee
+	const [optimisticSize, setOptimisticSize] = useOptimistic(currentSize);
 
 	// Calculer la disponibilité d'une taille
 	const isSizeAvailable = (size: string): boolean => {
@@ -57,9 +60,10 @@ export function SizeSelector({
 		return compatibleSkus.length > 0;
 	};
 
-	// Mettre à jour la taille dans l'URL
+	// Mettre à jour la taille dans l'URL (optimiste)
 	const updateSize = (size: string | null) => {
 		startTransition(() => {
+			setOptimisticSize(size);
 			const params = new URLSearchParams(searchParams.toString());
 			if (size) {
 				params.set("size", size);
@@ -82,7 +86,8 @@ export function SizeSelector({
 
 	return (
 		<fieldset
-			className="space-y-3"
+			data-pending={isPending ? "" : undefined}
+			className="group/size space-y-3"
 			role="radiogroup"
 			aria-label="Sélection de taille"
 		>
@@ -92,13 +97,12 @@ export function SizeSelector({
 				</legend>
 				<div className="flex items-center gap-2">
 					<SizeGuideDialog productTypeSlug={productTypeSlug} />
-					{selectedSize && (
+					{optimisticSize && (
 						<Button
 							variant="ghost"
 							size="sm"
-							className="text-xs/5 tracking-normal antialiased text-muted-foreground"
+							className="text-xs/5 tracking-normal antialiased text-muted-foreground group-has-[[data-pending]]/size:opacity-70"
 							onClick={() => updateSize(null)}
-							disabled={isPending}
 							type="button"
 						>
 							Réinitialiser
@@ -108,7 +112,7 @@ export function SizeSelector({
 			</div>
 			<div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2.5 sm:gap-2">
 				{sizes.map((sizeOption) => {
-					const isSelected = sizeOption.size === selectedSize;
+					const isSelected = sizeOption.size === optimisticSize;
 					const isAvailable = isSizeAvailable(sizeOption.size);
 
 					return (
@@ -119,15 +123,14 @@ export function SizeSelector({
 							aria-checked={isSelected}
 							aria-label={`Taille ${sizeOption.size}${!isAvailable ? " (indisponible)" : ""}`}
 							onClick={() => updateSize(sizeOption.size)}
-							disabled={!isAvailable || isPending}
+							disabled={!isAvailable}
 							className={cn(
 								"p-3 sm:p-2.5 min-h-[52px] sm:min-h-[44px] flex items-center justify-center text-center rounded-xl sm:rounded-lg border-2 transition-all",
 								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-70 saturate-50",
-								isPending && "opacity-60"
+								!isAvailable && "opacity-70 saturate-50"
 							)}
 						>
 							<span className="text-sm/6 tracking-normal antialiased font-medium">

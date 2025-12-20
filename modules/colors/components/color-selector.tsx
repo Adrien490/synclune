@@ -7,7 +7,7 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import type { Color } from "@/modules/skus/types/sku-selector.types";
 
 interface ColorSelectorProps {
@@ -39,9 +39,12 @@ export function ColorSelector({
 	const [isPending, startTransition] = useTransition();
 
 	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
-	const selectedColor = searchParams.get("color") ?? defaultSku?.color?.slug ?? null;
+	const currentColor = searchParams.get("color") ?? defaultSku?.color?.slug ?? null;
 	const currentMaterial = searchParams.get("material");
 	const currentSize = searchParams.get("size");
+
+	// Etat optimiste pour une selection instantanee
+	const [optimisticColor, setOptimisticColor] = useOptimistic(currentColor);
 
 	// Calculer la disponibilité d'une couleur
 	const isColorAvailable = (colorId: string): boolean => {
@@ -53,9 +56,10 @@ export function ColorSelector({
 		return compatibleSkus.length > 0;
 	};
 
-	// Mettre à jour la couleur dans l'URL
+	// Mettre à jour la couleur dans l'URL (optimiste)
 	const updateColor = (colorId: string | null) => {
 		startTransition(() => {
+			setOptimisticColor(colorId);
 			const params = new URLSearchParams(searchParams.toString());
 			if (colorId) {
 				params.set("color", colorId);
@@ -70,26 +74,26 @@ export function ColorSelector({
 
 	return (
 		<fieldset
-			className="space-y-3"
+			data-pending={isPending ? "" : undefined}
+			className="group/color space-y-3"
 			role="radiogroup"
 			aria-label="Sélection de couleur"
 		>
 			<div className="flex items-center justify-between">
 				<legend className="text-sm/6 font-semibold tracking-tight antialiased">
 					{showMaterialLabel ? "Couleur / Matériau" : "Couleur"}
-					{selectedColor && (
+					{optimisticColor && (
 						<span className="font-normal text-muted-foreground ml-1">
-							: {colors.find(c => (c.slug || c.id) === selectedColor)?.name}
+							: {colors.find(c => (c.slug || c.id) === optimisticColor)?.name}
 						</span>
 					)}
 				</legend>
-				{selectedColor && (
+				{optimisticColor && (
 					<Button
 						variant="ghost"
 						size="sm"
-						className="text-xs/5 tracking-normal antialiased text-muted-foreground"
+						className="text-xs/5 tracking-normal antialiased text-muted-foreground group-has-[[data-pending]]/color:opacity-70"
 						onClick={() => updateColor(null)}
-						disabled={isPending}
 						type="button"
 					>
 						Réinitialiser
@@ -100,7 +104,7 @@ export function ColorSelector({
 				{colors.map((color) => {
 					// Utiliser le slug pour l'URL (cohérence avec material/size selectors)
 					const colorIdentifier = color.slug || color.id;
-					const isSelected = colorIdentifier === selectedColor;
+					const isSelected = colorIdentifier === optimisticColor;
 					const isAvailable = isColorAvailable(colorIdentifier);
 
 					return (
@@ -111,15 +115,14 @@ export function ColorSelector({
 							aria-checked={isSelected}
 							aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
 							onClick={() => updateColor(colorIdentifier)}
-							disabled={!isAvailable || isPending}
+							disabled={!isAvailable}
 							className={cn(
 								"group relative flex items-center gap-2.5 p-3.5 sm:p-3 rounded-xl sm:rounded-lg border-2 transition-all min-h-[52px] sm:min-h-[44px]",
 								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-70 saturate-50",
-								isPending && "opacity-60"
+								!isAvailable && "opacity-70 saturate-50"
 							)}
 						>
 							{color.hex && (

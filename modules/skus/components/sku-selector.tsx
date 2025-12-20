@@ -56,7 +56,7 @@ export function VariantSelector({ product, defaultSku }: VariantSelectorProps) {
 	if (!shouldShowSelector) return null;
 
 	return (
-		<Card role="region" aria-labelledby="variant-selector-title" className="border-2 border-primary/20 shadow-sm">
+		<Card role="region" aria-labelledby="variant-selector-title" className="group/sku-selector border-2 border-primary/20 shadow-sm">
 			<CardHeader>
 				<CardTitle
 					id="variant-selector-title"

@@ -1,20 +1,16 @@
-import { CollectionStatus } from "@/app/generated/prisma/client";
-import {
-	getLocalBusinessSchema,
-	getWebSiteSchema,
-} from "@/shared/constants/seo-config";
 import { Collections } from "@/app/(boutique)/(accueil)/_components/collections";
+import { LatestCreations } from "@/app/(boutique)/(accueil)/_components/latest-creations";
+import { LatestCreationsSkeleton } from "@/app/(boutique)/(accueil)/_components/latest-creations-skeleton";
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
+import type { Metadata } from "next";
 import { Suspense } from "react";
+import { AtelierStory } from "./_components/atelier-story";
 import { CreativeProcess } from "./_components/creative-process";
 import { Hero } from "./_components/hero";
-import { LatestCreations } from "@/app/(boutique)/(accueil)/_components/latest-creations";
-import { LatestCreationsSkeleton } from "@/app/(boutique)/(accueil)/_components/latest-creations-skeleton";
-import { AtelierStory } from "./_components/atelier-story";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Synclune | Bijoux artisanaux faits main à Nantes (44) - Loire-Atlantique",
@@ -51,27 +47,8 @@ export const metadata: Metadata = {
 
 export default async function Page() {
 
-	// Génération du structured data pour SEO
-	const localBusinessSchema = getLocalBusinessSchema();
-	const websiteSchema = getWebSiteSchema();
-
 	return (
 		<>
-			{/* Structured Data JSON-LD pour SEO local (Nantes) */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(localBusinessSchema),
-				}}
-			/>
-
-			{/* Structured Data WebSite avec SearchAction pour améliorer le référencement */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(websiteSchema),
-				}}
-			/>
 
 			{/* 1. Hero - Capture d'attention + Positionnement de marque */}
 			<Hero />

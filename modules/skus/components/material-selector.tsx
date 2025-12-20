@@ -7,7 +7,7 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import type { Material } from "@/modules/skus/types/sku-selector.types";
 
 interface MaterialSelectorProps {
@@ -38,9 +38,12 @@ export function MaterialSelector({
 	const [isPending, startTransition] = useTransition();
 
 	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
-	const selectedMaterial = searchParams.get("material") ?? defaultSku?.material?.name ?? null;
+	const currentMaterial = searchParams.get("material") ?? defaultSku?.material?.name ?? null;
 	const currentColor = searchParams.get("color");
 	const currentSize = searchParams.get("size");
+
+	// Etat optimiste pour une selection instantanee
+	const [optimisticMaterial, setOptimisticMaterial] = useOptimistic(currentMaterial);
 
 	// Calculer la disponibilité d'un matériau
 	const isMaterialAvailable = (materialSlug: string): boolean => {
@@ -52,9 +55,10 @@ export function MaterialSelector({
 		return compatibleSkus.length > 0;
 	};
 
-	// Mettre à jour le matériau dans l'URL
+	// Mettre à jour le matériau dans l'URL (optimiste)
 	const updateMaterial = (materialSlug: string | null) => {
 		startTransition(() => {
+			setOptimisticMaterial(materialSlug);
 			const params = new URLSearchParams(searchParams.toString());
 			if (materialSlug) {
 				params.set("material", materialSlug);
@@ -70,7 +74,8 @@ export function MaterialSelector({
 
 	return (
 		<fieldset
-			className="space-y-3"
+			data-pending={isPending ? "" : undefined}
+			className="group/material space-y-3"
 			role="radiogroup"
 			aria-label="Sélection de matériau"
 		>
@@ -78,13 +83,12 @@ export function MaterialSelector({
 				<legend className="text-sm/6 font-semibold tracking-tight antialiased">
 					Matériau
 				</legend>
-				{selectedMaterial && (
+				{optimisticMaterial && (
 					<Button
 						variant="ghost"
 						size="sm"
-						className="text-xs/5 tracking-normal antialiased text-muted-foreground"
+						className="text-xs/5 tracking-normal antialiased text-muted-foreground group-has-[[data-pending]]/material:opacity-70"
 						onClick={() => updateMaterial(null)}
-						disabled={isPending}
 						type="button"
 					>
 						Réinitialiser
@@ -95,7 +99,7 @@ export function MaterialSelector({
 				{materials.map((material) => {
 					// Comparaison insensible à la casse pour éviter les problèmes de matching
 					const isSelected =
-						material.name.toLowerCase() === selectedMaterial?.toLowerCase();
+						material.name.toLowerCase() === optimisticMaterial?.toLowerCase();
 					const isAvailable = isMaterialAvailable(material.name);
 
 					return (
@@ -106,15 +110,14 @@ export function MaterialSelector({
 							aria-checked={isSelected}
 							aria-label={`${material.name}${!isAvailable ? " (indisponible)" : ""}`}
 							onClick={() => updateMaterial(material.name)}
-							disabled={!isAvailable || isPending}
+							disabled={!isAvailable}
 							className={cn(
 								"flex items-center justify-between p-3 rounded-lg border text-left transition-all",
 								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-70 saturate-50",
-								isPending && "opacity-60"
+								!isAvailable && "opacity-70 saturate-50"
 							)}
 						>
 							<span className="text-sm/6 tracking-normal antialiased font-medium">
