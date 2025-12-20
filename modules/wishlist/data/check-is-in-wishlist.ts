@@ -30,7 +30,7 @@ async function fetchIsInWishlist(
 	userId?: string,
 	sessionId?: string
 ): Promise<boolean> {
-	"use cache: private";
+	"use cache";
 	cacheLife("cart");
 
 	cacheTag(

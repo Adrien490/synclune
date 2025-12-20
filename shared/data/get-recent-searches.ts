@@ -1,23 +1,16 @@
 import "server-only"
 
-import { cacheLife, cacheTag } from "next/cache"
 import { cookies } from "next/headers"
 import { RECENT_SEARCHES_COOKIE_NAME, RECENT_SEARCHES_MAX_ITEMS } from "@/shared/constants/recent-searches"
-import { RECENT_SEARCHES_CACHE_TAGS } from "@/shared/constants/recent-searches-cache"
 
 /**
  * Recupere les recherches recentes depuis les cookies
  *
- * Cache: private (depend des cookies utilisateur)
- * Duree: reference (preference stable)
+ * Note: Pas de cache car simple lecture de cookie (pas d'operation couteuse)
  *
  * @returns Liste des recherches recentes (max 5)
  */
 export async function getRecentSearches(): Promise<string[]> {
-	"use cache: private"
-	cacheLife("reference")
-	cacheTag(RECENT_SEARCHES_CACHE_TAGS.LIST)
-
 	const cookieStore = await cookies()
 	const cookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME)
 
