@@ -5,6 +5,7 @@ import { BRAND } from "@/shared/constants/brand";
 import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import { FOOTER_PADDING } from "@/shared/constants/spacing";
 import Link from "next/link";
+import { CopyrightYear } from "./copyright-year";
 
 /**
  * Footer statique de l'application
@@ -186,7 +187,7 @@ export function Footer() {
 				{/* Copyright + Liens légaux */}
 				<div className="flex flex-col items-center gap-4 pt-8 border-t border-border">
 					<p className="text-sm/6 antialiased text-muted-foreground text-center">
-						© {new Date().getFullYear()} Synclune. Tous droits réservés.
+						© <CopyrightYear /> Synclune. Tous droits réservés.
 					</p>
 					<nav
 						aria-label="Liens légaux"
