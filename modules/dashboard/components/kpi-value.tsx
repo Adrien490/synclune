@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { NumberTicker } from "@/shared/components/ui/number-ticker";
+import { NumberTicker } from "@/shared/components/ui/animated-number";
 
 export interface KpiValueProps {
 	/** Valeur à afficher (string ou number) */
