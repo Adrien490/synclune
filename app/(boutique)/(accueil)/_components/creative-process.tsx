@@ -1,6 +1,6 @@
 import { Reveal, Stagger } from "@/shared/components/animations";
-import { Button } from "@/shared/components/ui/button";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
+import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { IMAGES } from "@/shared/constants/images";
 import { STEP_COLORS } from "@/shared/constants/process-steps";
@@ -8,8 +8,8 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { ScrollProgressLine } from "./scroll-progress-line";
 import { ParallaxImage } from "./parallax-image";
+import { ScrollProgressLine } from "./scroll-progress-line";
 
 interface ProcessStep {
 	icon: React.ReactNode;
@@ -271,8 +271,7 @@ export function CreativeProcess() {
 
 							<div className="flex-1">
 								<p className="text-sm text-muted-foreground mb-3 italic">
-									Tu as une idée de bijou ? N'hésite pas à m'en parler,
-									j'adore créer des pièces personnalisées !
+									Tu as une idée de bijou personnalisé ? N'hésite pas à m'en parler !
 								</p>
 								<Button
 									id="cta-personnalisation"
