@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Session } from "@/modules/auth/lib/auth";
+import { Fade } from "@/shared/components/animations/fade";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import {
@@ -30,16 +31,16 @@ const DISCOVERY_HREFS = ["/", "/collections", "/produits", "/personnalisation"] 
 function MenuUserSection({ session }: { session: Session | null }) {
 	if (!session?.user) {
 		return (
-			<div className="px-4 py-3 border-b border-border/40">
+			<div className="px-6 py-3 border-b border-border/40">
 				<p className="text-sm text-muted-foreground">
-					Connectez-vous pour accéder à vos favoris et commandes
+					Connectez-vous pour accéder à vos commandes
 				</p>
 			</div>
 		);
 	}
 
 	return (
-		<div className="px-4 py-3 border-b border-border/40">
+		<div className="px-6 py-3 border-b border-border/40">
 			<p className="font-medium truncate">
 				{session.user.name || "Mon compte"}
 			</p>
@@ -98,7 +99,7 @@ export function MenuSheet({ navItems, session }: MenuSheetProps) {
 						className={cn(
 							"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3 rounded-lg",
 							"transition-all duration-300 ease-out",
-							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 							isActive
 								? "bg-primary/8 text-foreground font-semibold border-l-2 border-primary pl-5"
 								: "text-foreground/80 hover:text-foreground hover:bg-primary/5 hover:pl-5"
@@ -171,7 +172,9 @@ export function MenuSheet({ navItems, session }: MenuSheetProps) {
 
 				{/* Section utilisateur */}
 				<div className="pt-12">
-					<MenuUserSection session={session} />
+					<Fade y={5} duration={0.3}>
+						<MenuUserSection session={session} />
+					</Fade>
 				</div>
 
 				{/* Skip link pour accéder directement à la section compte */}
@@ -190,8 +193,8 @@ export function MenuSheet({ navItems, session }: MenuSheetProps) {
 				<nav
 					aria-label="Menu principal"
 					className={cn(
-						"relative z-10 flex-1 overflow-y-auto px-4",
-						"transition-opacity duration-200",
+						"relative z-10 flex-1 overflow-y-auto px-6",
+						"motion-safe:transition-opacity motion-safe:duration-200",
 						isOpen ? "opacity-100" : "opacity-0"
 					)}
 				>
@@ -224,7 +227,7 @@ export function MenuSheet({ navItems, session }: MenuSheetProps) {
 
 				{/* Footer avec liens secondaires */}
 				<footer
-					className="relative z-10 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/40"
+					className="relative z-10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/40"
 				>
 					<div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
 						<SheetClose asChild>

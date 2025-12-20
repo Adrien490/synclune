@@ -6,78 +6,57 @@ import { useRef } from "react";
 import { DEFAULT_COLORS } from "./constants";
 import { ParticleSet } from "./particle-set";
 import type { ParticleSystemProps } from "./types";
-import { generateParticles, normalizeShapes } from "./utils";
+import { generateParticles } from "./utils";
 
-const ParticleSystemBase = ({
+/**
+ * Système de particules décoratives avec effet de profondeur
+ *
+ * Utilise CSS media queries pour la détection mobile (pas de flash d'hydratation).
+ * Desktop: count particules, Mobile: count/2 particules.
+ * CSS containment pour isoler les repaints.
+ *
+ * **Formes** : circle, diamond, heart, crescent, pearl, drop, sparkle-4
+ * **Animations** : float, drift
+ *
+ * @example
+ * // Défaut (couleurs primary/secondary/pastel)
+ * <ParticleSystem />
+ *
+ * @example
+ * // Multi-formes : mix diamants et cercles
+ * <ParticleSystem
+ *   shape={["diamond", "circle"]}
+ *   colors={["var(--secondary)", "oklch(0.9 0.1 80)"]}
+ *   blur={[4, 15]}
+ * />
+ */
+export function ParticleSystem({
 	count = 6,
 	size = [8, 64],
 	opacity = [0.1, 0.4],
 	colors = DEFAULT_COLORS,
 	blur = [12, 32],
-	duration = 20,
 	shape = "circle",
 	className,
 	animationStyle = "float",
-	rotation = false,
-	intensity = 1,
-	glow = false,
-	glowIntensity = 0.5,
-	springPhysics = false,
 	depthParallax = true,
-	disabled = false,
-	disabledOnMobile = false,
-	gradient = false,
-}: ParticleSystemProps) => {
+}: ParticleSystemProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
-
-	// Skip rendering si désactivé
-	if (disabled) return null;
-
-	// Lazy rendering : anime seulement quand visible (pause quand hors viewport)
 	const isInView = useInView(containerRef, { margin: "-100px" });
 
-	// Normalise shape en tableau (support multi-formes)
-	const shapes = normalizeShapes(shape);
+	// Normalise shape en tableau
+	const shapes = Array.isArray(shape) ? shape : [shape];
 
-	// Blur réduit de 30% sur mobile pour compenser la taille d'écran
+	// Blur réduit de 30% sur mobile
 	const mobileBlur: [number, number] = Array.isArray(blur)
 		? [blur[0] * 0.7, blur[1] * 0.7]
 		: [blur * 0.7, blur * 0.7];
 
-	// Génération des deux sets de particules
-	// CSS media queries gèrent l'affichage → pas de flash d'hydratation
-	const desktopParticles = generateParticles(
-		count,
-		size,
-		opacity,
-		colors,
-		duration,
-		blur,
-		depthParallax,
-		shapes
-	);
-	const mobileParticles = generateParticles(
-		Math.ceil(count / 2),
-		size,
-		opacity,
-		colors,
-		duration,
-		mobileBlur,
-		depthParallax,
-		shapes
-	);
+	const desktopParticles = generateParticles(count, size, opacity, colors, blur, depthParallax, shapes);
+	const mobileParticles = generateParticles(Math.ceil(count / 2), size, opacity, colors, mobileBlur, depthParallax, shapes);
 
-	// Props partagées pour ParticleSet
-	const sharedProps = {
-		isInView,
-		reducedMotion,
-		animationStyle,
-		rotation,
-		intensity,
-		springPhysics,
-		gradient,
-	};
+	const sharedProps = { isInView, reducedMotion, animationStyle };
 
 	return (
 		<div
@@ -86,87 +65,12 @@ const ParticleSystemBase = ({
 			className={cn("absolute inset-0 pointer-events-none overflow-hidden", className)}
 			style={{ contain: "layout paint" }}
 		>
-			{/* Desktop : visible uniquement sur md+ (768px+) - glow activé si demandé */}
 			<div className="hidden md:contents">
-				<ParticleSet
-					particles={desktopParticles}
-					glow={glow}
-					glowIntensity={glowIntensity}
-					{...sharedProps}
-				/>
+				<ParticleSet particles={desktopParticles} {...sharedProps} />
 			</div>
-			{/* Mobile : visible uniquement sous md (< 768px) - glow désactivé pour performance */}
-			{!disabledOnMobile && (
-				<div className="contents md:hidden">
-					<ParticleSet
-						particles={mobileParticles}
-						glow={false}
-						glowIntensity={0}
-						{...sharedProps}
-					/>
-				</div>
-			)}
+			<div className="contents md:hidden">
+				<ParticleSet particles={mobileParticles} {...sharedProps} />
+			</div>
 		</div>
 	);
-};
-
-/**
- * Système de particules décoratives avec effet de profondeur
- *
- * Utilise CSS media queries pour la détection mobile (pas de flash d'hydratation).
- * Desktop: count particules, Mobile: count/2 particules.
- * Glow désactivé automatiquement sur mobile pour performance.
- * CSS containment pour isoler les repaints.
- *
- * **Formes** : circle, diamond, soft-square, star, hexagon, ring, heart, crescent,
- *             pearl, drop, sparkle-4, butterfly-wing, flower-petal, leaf
- * **Animations** : float, twinkle, drift, pulse, shimmer, cascade, orbit, sway
- *
- * @example
- * // Défaut (couleurs primary/secondary/pastel)
- * <ParticleSystem />
- *
- * @example
- * // Multi-formes : mix diamants, étoiles et cercles
- * <ParticleSystem
- *   shape={["diamond", "star", "circle"]}
- *   colors={["var(--secondary)", "oklch(0.9 0.1 80)"]}
- *   blur={[4, 15]}
- * />
- *
- * @example
- * // Scintillement étoilé doré
- * <ParticleSystem
- *   shape="star"
- *   colors={["var(--secondary)", "oklch(0.9 0.1 80)"]}
- *   animationStyle="twinkle"
- *   glow
- * />
- *
- * @example
- * // Perles avec effet shimmer
- * <ParticleSystem
- *   shape="pearl"
- *   colors={["var(--secondary)", "oklch(0.95 0.04 80)"]}
- *   animationStyle="shimmer"
- *   gradient
- * />
- *
- * @example
- * // Pétales en cascade
- * <ParticleSystem
- *   shape={["flower-petal", "leaf"]}
- *   colors={["var(--primary)", "oklch(0.90 0.10 140)"]}
- *   animationStyle="cascade"
- *   rotation
- * />
- *
- * @example
- * // Désactiver complètement les particules
- * <ParticleSystem disabled />
- *
- * @example
- * // Particules uniquement sur desktop (désactivé sur mobile)
- * <ParticleSystem disabledOnMobile />
- */
-export { ParticleSystemBase as ParticleSystem };
+}

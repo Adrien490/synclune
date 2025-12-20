@@ -3,33 +3,22 @@ import { MOTION_CONFIG } from "../motion.config";
 import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
 
-/** Normalise shape en tableau */
-export function normalizeShapes(shape: ParticleShape | ParticleShape[]): ParticleShape[] {
-	return Array.isArray(shape) ? shape : [shape];
-}
-
 /** Générateur pseudo-aléatoire déterministe (seeded) */
 export function seededRandom(seed: number): number {
 	const x = Math.sin(seed) * 10000;
 	return x - Math.floor(x);
 }
 
-/** Génère une valeur entre min et max avec un seed */
-export function randomBetween(min: number, max: number, seed: number): number {
-	return min + seededRandom(seed) * (max - min);
-}
-
 /** Cache pour la memoization des particules générées */
 const particleCache = new Map<number, Particle[]>();
 const MAX_CACHE_SIZE = 50;
 
-/** Hash numerique simple pour cle de cache (plus performant que JSON.stringify) */
+/** Hash numerique simple pour cle de cache */
 function hashParams(
 	count: number,
 	size: [number, number],
 	opacity: [number, number],
 	colors: string[],
-	duration: number,
 	blur: number | [number, number],
 	depthParallax: boolean,
 	shapes: ParticleShape[]
@@ -37,11 +26,9 @@ function hashParams(
 	let hash = count * 1000000;
 	hash += size[0] * 10000 + size[1] * 100;
 	hash += Math.floor(opacity[0] * 10) + Math.floor(opacity[1] * 10) * 10;
-	hash += duration * 100;
 	hash += (Array.isArray(blur) ? blur[0] + blur[1] * 100 : blur * 100);
 	hash += depthParallax ? 1 : 0;
 	hash += shapes.length * 10000;
-	// Hash des strings (colors + shapes)
 	for (const c of colors) {
 		for (let i = 0; i < c.length; i++) {
 			hash = (hash * 31 + c.charCodeAt(i)) | 0;
@@ -55,19 +42,19 @@ function hashParams(
 	return hash;
 }
 
+const DURATION = 20;
+
 /** Génère un tableau de particules avec des propriétés déterministes (memoizé) */
 export function generateParticles(
 	count: number,
 	size: [number, number],
 	opacity: [number, number],
 	colors: string[],
-	duration: number,
 	blur: number | [number, number],
 	depthParallax: boolean,
 	shapes: ParticleShape[] = ["circle"]
 ): Particle[] {
-	// Clé de cache basée sur un hash numerique (plus rapide que JSON.stringify)
-	const cacheKey = hashParams(count, size, opacity, colors, duration, blur, depthParallax, shapes);
+	const cacheKey = hashParams(count, size, opacity, colors, blur, depthParallax, shapes);
 	const cached = particleCache.get(cacheKey);
 	if (cached) return cached;
 
@@ -75,29 +62,26 @@ export function generateParticles(
 
 	const particles = Array.from({ length: count }, (_, i) => {
 		const seed = i * 1000;
-		const particleSize = randomBetween(size[0], size[1], seed + 1);
-		const particleOpacity = randomBetween(opacity[0], opacity[1], seed + 2);
-		const x = randomBetween(5, 95, seed + 3);
-		const y = randomBetween(5, 95, seed + 4);
+		const rand = (offset: number) => {
+			const x = Math.sin(seed + offset) * 10000;
+			return x - Math.floor(x);
+		};
+
+		const particleSize = size[0] + rand(1) * (size[1] - size[0]);
+		const particleOpacity = opacity[0] + rand(2) * (opacity[1] - opacity[0]);
+		const x = 5 + rand(3) * 90;
+		const y = 5 + rand(4) * 90;
 		const color = colors[i % colors.length];
 		const particleBlur = Array.isArray(blur)
-			? randomBetween(blur[0], blur[1], seed + 7)
+			? blur[0] + rand(7) * (blur[1] - blur[0])
 			: blur;
 
-		// Facteur de profondeur : plus le blur est élevé, plus la particule est "loin"
 		const depthFactor = maxBlur > 0 ? particleBlur / maxBlur : 0;
-
-		// Parallax : les particules loin (blur élevé) bougent plus lentement
 		const parallaxMultiplier = depthParallax ? 1 + depthFactor * 0.5 : 1;
-		const particleDuration = randomBetween(
-			duration * 0.7 * parallaxMultiplier,
-			duration * 1.3 * parallaxMultiplier,
-			seed + 5
-		);
-		const delay = randomBetween(0, duration * 0.5, seed + 6);
-
-		// Forme : rotation déterministe parmi les formes disponibles
-		const shape = shapes[i % shapes.length];
+		const particleDuration =
+			DURATION * 0.7 * parallaxMultiplier +
+			rand(5) * DURATION * 0.6 * parallaxMultiplier;
+		const delay = rand(6) * DURATION * 0.5;
 
 		return {
 			id: i,
@@ -110,11 +94,10 @@ export function generateParticles(
 			delay,
 			blur: particleBlur,
 			depthFactor,
-			shape,
+			shape: shapes[i % shapes.length],
 		};
 	});
 
-	// Stocker dans le cache avec limite de taille
 	if (particleCache.size >= MAX_CACHE_SIZE) {
 		const firstKey = particleCache.keys().next().value;
 		if (firstKey) particleCache.delete(firstKey);
@@ -128,24 +111,11 @@ export function generateParticles(
 export function getShapeStyles(
 	shape: ParticleShape,
 	size: number,
-	color: string,
-	useGradient: boolean = false
+	color: string
 ): React.CSSProperties {
 	const config = SHAPE_CONFIGS[shape];
 
-	// Styles de base avec gradient optionnel
-	const getBackground = (baseColor: string, applyGradient: boolean) => {
-		if (!applyGradient) return { backgroundColor: baseColor };
-		return {
-			background: `radial-gradient(circle at 30% 30%,
-				color-mix(in oklch, ${baseColor}, white 30%) 0%,
-				${baseColor} 50%,
-				color-mix(in oklch, ${baseColor}, black 15%) 100%)`,
-		};
-	};
-
 	if (config.type === "css") {
-		// Traitement spécial pour pearl avec reflet réaliste
 		if (shape === "pearl") {
 			return {
 				borderRadius: "50%",
@@ -158,39 +128,20 @@ export function getShapeStyles(
 				`,
 			};
 		}
-
-		return {
-			...getBackground(color, useGradient),
-			...config.styles,
-		};
+		return { backgroundColor: color, ...config.styles };
 	}
 
 	if (config.type === "clipPath") {
-		return {
-			...getBackground(color, useGradient),
-			clipPath: config.clipPath,
-		};
+		return { backgroundColor: color, clipPath: config.clipPath };
 	}
 
-	if (config.type === "svg") {
-		// Le SVG sera rendu dans le composant ParticleSet
-		return {
-			backgroundColor: "transparent",
-		};
-	}
-
-	// Ring : bordure colorée avec centre transparent
-	return {
-		backgroundColor: "transparent",
-		borderRadius: "9999px",
-		border: `${Math.max(2, size * 0.15)}px solid ${color}`,
-	};
+	// SVG - rendu dans le composant
+	return { backgroundColor: "transparent" };
 }
 
 /** Vérifie si une forme utilise le rendu SVG */
 export function isSvgShape(shape: ParticleShape): boolean {
-	const config = SHAPE_CONFIGS[shape];
-	return config.type === "svg";
+	return SHAPE_CONFIGS[shape].type === "svg";
 }
 
 /** Retourne la configuration SVG pour une forme */
@@ -202,38 +153,8 @@ export function getSvgConfig(shape: ParticleShape) {
 	return null;
 }
 
-/** Génère le style de glow multi-couches optimisé */
-export function getMultiLayerGlow(
-	color: string,
-	size: number,
-	intensity: number
-): React.CSSProperties {
-	const glowSize = size * intensity;
-	return {
-		boxShadow: `
-			0 0 ${glowSize * 0.5}px ${color},
-			0 0 ${glowSize}px color-mix(in oklch, ${color}, transparent 50%),
-			0 0 ${glowSize * 1.5}px color-mix(in oklch, ${color}, transparent 75%)
-		`,
-	};
-}
-
 /** Retourne la transition Framer Motion */
-export function getTransition(
-	particle: Particle,
-	springPhysics: boolean
-): Transition {
-	if (springPhysics) {
-		return {
-			duration: particle.duration,
-			delay: particle.delay,
-			repeat: Infinity,
-			type: "spring",
-			damping: 20,
-			stiffness: 60,
-		};
-	}
-
+export function getTransition(particle: Particle): Transition {
 	return {
 		duration: particle.duration,
 		delay: particle.delay,
