@@ -49,7 +49,11 @@ export function cacheWishlistCount(userId?: string, sessionId?: string) {
  * - Les items de la wishlist (si wishlistId fourni)
  */
 export function getWishlistInvalidationTags(userId?: string, sessionId?: string, wishlistId?: string): string[] {
-	const tags = [WISHLIST_CACHE_TAGS.WISHLIST(userId, sessionId), WISHLIST_CACHE_TAGS.COUNT(userId, sessionId)];
+	const tags = [
+		WISHLIST_CACHE_TAGS.WISHLIST(userId, sessionId),
+		WISHLIST_CACHE_TAGS.COUNT(userId, sessionId),
+		WISHLIST_CACHE_TAGS.SKU_IDS(userId, sessionId),
+	];
 
 	if (wishlistId) {
 		tags.push(WISHLIST_CACHE_TAGS.ITEMS(wishlistId));

@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
+import { WISHLIST_CACHE_TAGS } from "@/modules/wishlist/constants/cache";
 
 /**
  * Récupère tous les SKU IDs présents dans la wishlist de l'utilisateur/visiteur
@@ -35,13 +36,7 @@ async function fetchWishlistSkuIds(
 	"use cache: private";
 	cacheLife("cart");
 
-	cacheTag(
-		userId
-			? `wishlist-skus-user-${userId}`
-			: sessionId
-				? `wishlist-skus-session-${sessionId}`
-				: "wishlist-skus-anonymous"
-	);
+	cacheTag(WISHLIST_CACHE_TAGS.SKU_IDS(userId, sessionId));
 
 	// Pas d'utilisateur ni de session = wishlist vide
 	if (!userId && !sessionId) return new Set();
