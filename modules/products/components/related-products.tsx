@@ -61,7 +61,7 @@ export async function RelatedProducts({
 						id="related-products-heading"
 						className="text-2xl font-semibold tracking-tight"
 					>
-						J'espère que tu trouveras ton bonheur 😊
+						D'autres créations que tu pourrais aimer 😊
 					</h2>
 				</div>
 			</Reveal>

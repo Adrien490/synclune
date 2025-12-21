@@ -35,12 +35,12 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 			<ResponsiveDialogTrigger asChild>
 				{children ?? (
 					<Button
-						variant="link"
+						variant="outline"
 						size="sm"
-						className="text-xs text-muted-foreground p-0 h-auto gap-1"
+						className="text-xs gap-1.5 h-8 px-3 border-primary/30 hover:border-primary hover:bg-primary/5"
 						type="button"
 					>
-						<Ruler className="w-3 h-3" aria-hidden="true" />
+						<Ruler className="w-3.5 h-3.5" aria-hidden="true" />
 						Guide des tailles
 					</Button>
 				)}

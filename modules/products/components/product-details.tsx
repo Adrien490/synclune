@@ -63,14 +63,14 @@ export function ProductDetails({
 				</motion.div>
 			</AnimatePresence>
 
-			{/* 2. Sélection des variantes (REMONTE - avant caractéristiques) */}
+			{/* 2. Sélection des variantes */}
 			<VariantSelector product={product} defaultSku={defaultSku} />
 
-			{/* 3. CTA principal (REMONTE) */}
-			<AddToCartForm product={product} selectedSku={currentSku} />
-
-			{/* 4. Réassurance - juste après le CTA pour réduire l'anxiété d'achat */}
+			{/* 3. Réassurance AVANT le CTA - réduit l'anxiété d'achat */}
 			<ProductReassurance productSlug={productSlug} />
+
+			{/* 4. CTA principal - après réassurance pour confiance maximale */}
+			<AddToCartForm product={product} selectedSku={currentSku} />
 
 			<Separator className="bg-border" />
 

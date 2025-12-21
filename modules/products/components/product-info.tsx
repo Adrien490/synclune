@@ -46,16 +46,23 @@ export function ProductInfo({
 				</div>
 			</div>
 
-			{/* Prix compact visible sur mobile - above the fold */}
-			<div className="sm:hidden">
-				<p className="text-2xl font-bold text-foreground">
-					{formatEuro(defaultSku.priceInclTax)}
+			{/* Prix compact visible sur mobile - above the fold, plus proéminent */}
+			<div className="sm:hidden space-y-1">
+				<div className="flex items-baseline gap-2 flex-wrap">
+					<p className="text-3xl font-bold text-foreground tracking-tight">
+						{formatEuro(defaultSku.priceInclTax)}
+					</p>
 					{defaultSku.compareAtPrice && defaultSku.compareAtPrice > defaultSku.priceInclTax && (
-						<span className="ml-2 text-base text-muted-foreground line-through font-normal">
-							{formatEuro(defaultSku.compareAtPrice)}
-						</span>
+						<>
+							<span className="text-lg text-muted-foreground line-through font-normal">
+								{formatEuro(defaultSku.compareAtPrice)}
+							</span>
+							<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-accent text-accent-foreground">
+								-{Math.round(((defaultSku.compareAtPrice - defaultSku.priceInclTax) / defaultSku.compareAtPrice) * 100)}%
+							</span>
+						</>
 					)}
-				</p>
+				</div>
 			</div>
 
 			{/* Labels et badges + bouton wishlist sur desktop */}

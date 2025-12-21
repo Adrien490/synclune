@@ -166,12 +166,14 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 					{stockStatus === "low_stock" && (
 						<Badge
 							variant="outline"
-							className="text-xs/5 tracking-normal antialiased gap-1.5 border-orange-500 text-orange-700 bg-orange-50 dark:bg-orange-950/50 dark:text-orange-400 dark:border-orange-600 motion-safe:animate-pulse"
+							className="text-xs/5 tracking-normal antialiased gap-1.5 border-orange-600 text-orange-800 bg-orange-100 dark:bg-orange-950/70 dark:text-orange-300 dark:border-orange-500 motion-safe:animate-pulse shadow-sm"
 							role="status"
 							aria-label={`Attention, plus que ${inventory} exemplaires en stock. Dépêchez-vous !`}
 						>
-							<AlertTriangle className="w-3 h-3" aria-hidden="true" />
-							<span className="font-semibold">Plus que {inventory}</span> en stock !
+							<AlertTriangle className="w-3.5 h-3.5 motion-safe:animate-bounce" aria-hidden="true" />
+							<span>
+								<span className="font-bold">Plus que {inventory}</span> en stock !
+							</span>
 						</Badge>
 					)}
 					{stockStatus === "out_of_stock" && (

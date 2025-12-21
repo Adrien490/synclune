@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/shared/components/ui/button";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
@@ -8,8 +8,8 @@ import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
-import { ShoppingCart } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 
@@ -123,7 +123,7 @@ export function StickyCartCTA({
 				>
 					<form
 						action={action}
-						className="flex items-center gap-3 px-4 py-3"
+						className="flex items-center gap-2.5 px-3 py-2.5"
 						aria-label="Ajout rapide au panier"
 					>
 						{/* Champs caches */}
@@ -134,20 +134,39 @@ export function StickyCartCTA({
 							</>
 						)}
 
-						{/* Prix */}
+						{/* Miniature du produit */}
+						{currentSku?.images?.[0]?.url && (
+							<div className="shrink-0 relative w-10 h-10 rounded-lg overflow-hidden border border-border bg-muted">
+								<Image
+									src={currentSku.images[0].thumbnailUrl || currentSku.images[0].url}
+									alt={product.title}
+									fill
+									className="object-cover"
+									sizes="40px"
+								/>
+							</div>
+						)}
+
+						{/* Prix et nom */}
 						<div className="flex-1 min-w-0">
 							{currentSku ? (
-								<div className="flex items-baseline gap-2">
-									<span className="text-lg font-bold text-foreground truncate">
-										{formatEuro(currentSku.priceInclTax)}
-									</span>
-									{currentSku.compareAtPrice &&
-										currentSku.compareAtPrice > currentSku.priceInclTax && (
-											<span className="text-sm text-muted-foreground line-through">
-												{formatEuro(currentSku.compareAtPrice)}
-											</span>
-										)}
-								</div>
+								<>
+									<div className="flex items-baseline gap-1.5">
+										<span className="text-base font-bold text-foreground">
+											{formatEuro(currentSku.priceInclTax)}
+										</span>
+										{currentSku.compareAtPrice &&
+											currentSku.compareAtPrice > currentSku.priceInclTax && (
+												<span className="text-xs text-muted-foreground line-through">
+													{formatEuro(currentSku.compareAtPrice)}
+												</span>
+											)}
+									</div>
+									{/* Nom du SKU tronqué */}
+									<p className="text-xs text-muted-foreground truncate">
+										{currentSku.color?.name || product.title}
+									</p>
+								</>
 							) : (
 								<span className="text-sm text-muted-foreground">
 									Selectionne tes options

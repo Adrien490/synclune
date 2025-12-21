@@ -67,14 +67,20 @@ export function AddToCartForm({
 				</>
 			)}
 
-			{/* Bouton ajout au panier */}
+			{/* Bouton ajout au panier - CTA principal avec contraste élevé */}
 			<Button
 				type="submit"
 				className={cn(
-					"w-full shadow-md",
-					"transition-transform duration-200 transform-gpu",
-					"hover:scale-[1.02] hover:shadow-lg",
-					"active:scale-[0.98]"
+					"w-full shadow-lg",
+					// Style amélioré pour meilleur contraste
+					"bg-primary hover:bg-primary/90",
+					"text-primary-foreground font-semibold",
+					// Animation fluide
+					"transition-all duration-200 transform-gpu",
+					"hover:scale-[1.02] hover:shadow-xl",
+					"active:scale-[0.98]",
+					// Anneau de focus accessible
+					"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
 				)}
 				disabled={!canAddToCart || isPending}
 				size="lg"

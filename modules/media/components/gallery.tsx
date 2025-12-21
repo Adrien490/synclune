@@ -225,10 +225,10 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 							{/* Effet hover subtil */}
 							<div className="absolute inset-0 ring-1 ring-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl sm:rounded-3xl z-10" />
 
-							{/* Compteur d'images - Desktop uniquement */}
+							{/* Compteur d'images - Visible sur mobile et desktop */}
 							{safeImages.length > 1 && (
-								<div className="hidden sm:block absolute top-4 left-4 z-20">
-									<div className="bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+								<div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20">
+									<div className="bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-lg">
 										{optimisticIndex + 1} / {safeImages.length}
 									</div>
 								</div>
