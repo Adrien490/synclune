@@ -7,6 +7,8 @@ export const FAB_KEYS = {
 	ADMIN_SPEED_DIAL: "admin-speed-dial",
 	/** FAB pour la boutique (site public) - partage sur toutes les pages */
 	STOREFRONT: "storefront",
+	/** FAB pour acceder au tableau de bord admin depuis le site public */
+	ADMIN_DASHBOARD: "admin-dashboard",
 } as const;
 
 export type FabKey = (typeof FAB_KEYS)[keyof typeof FAB_KEYS];

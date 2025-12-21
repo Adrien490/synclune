@@ -10,20 +10,30 @@ import { cn } from "@/shared/utils/cn";
 
 interface ProductFilterTriggerProps {
 	className?: string;
+	/**
+	 * Variante d'affichage :
+	 * - "icon" : bouton icone seul (style mobile, comme SortDrawerTrigger)
+	 * - "full" : bouton avec texte et badge (style desktop)
+	 */
+	variant?: "icon" | "full";
 }
 
 /**
  * Bouton trigger pour ouvrir le ProductFilterSheet
  *
  * Utilise Zustand pour ouvrir le sheet via le meme dialog ID.
- * Affiche un badge avec le nombre de filtres actifs.
+ * Affiche un indicateur si des filtres sont actifs.
  *
  * @example
  * ```tsx
- * <ProductFilterTrigger className="hidden md:flex" />
+ * // Mobile - style icon comme SortDrawerTrigger
+ * <ProductFilterTrigger variant="icon" className="md:hidden" />
+ *
+ * // Desktop - style full avec texte
+ * <ProductFilterTrigger variant="full" className="hidden md:flex" />
  * ```
  */
-export function ProductFilterTrigger({ className }: ProductFilterTriggerProps) {
+export function ProductFilterTrigger({ className, variant = "full" }: ProductFilterTriggerProps) {
 	const { open } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const searchParams = useSearchParams();
 
@@ -43,22 +53,45 @@ export function ProductFilterTrigger({ className }: ProductFilterTriggerProps) {
 		return count;
 	})();
 
+	const hasActiveFilters = activeFiltersCount > 0;
+
+	// Variante icon (mobile) - meme style que SortDrawerTrigger
+	if (variant === "icon") {
+		return (
+			<Button
+				variant="ghost"
+				size="icon"
+				onClick={() => open()}
+				className={cn("size-11 relative", className)}
+				aria-label={`Filtres${hasActiveFilters ? ` (${activeFiltersCount} actifs)` : ""}`}
+			>
+				<Filter className="size-5" />
+				{hasActiveFilters && (
+					<span
+						className="absolute -top-0.5 -right-0.5 size-3 bg-primary rounded-full ring-2 ring-background"
+						aria-hidden="true"
+					/>
+				)}
+			</Button>
+		);
+	}
+
+	// Variante full (desktop) - style original avec texte et badge
 	return (
 		<Button
 			variant="outline"
 			onClick={() => open()}
 			className={cn(
-				"relative h-[44px] w-11 p-0",
-				"sm:w-auto sm:px-3 sm:gap-2",
+				"relative h-[44px] px-3 gap-2",
 				"border-border/60 hover:border-border hover:bg-accent/50 transition-all duration-200",
-				activeFiltersCount > 0 && "border-primary/30 bg-primary/5",
+				hasActiveFilters && "border-primary/30 bg-primary/5",
 				className
 			)}
-			aria-label={`Filtres${activeFiltersCount > 0 ? ` (${activeFiltersCount} actifs)` : ""}`}
+			aria-label={`Filtres${hasActiveFilters ? ` (${activeFiltersCount} actifs)` : ""}`}
 		>
 			<Filter className="w-4 h-4" />
-			<span className="hidden sm:inline">Filtres</span>
-			{activeFiltersCount > 0 && (
+			<span>Filtres</span>
+			{hasActiveFilters && (
 				<Badge
 					variant="secondary"
 					className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold bg-primary text-primary-foreground"

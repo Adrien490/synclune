@@ -12,21 +12,16 @@ import {
 import { getProducts } from "@/modules/products/data/get-products";
 import type { SortField } from "@/modules/products/data/get-products";
 import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
-import { ProductFilterFab } from "@/modules/products/components/product-filter-fab";
 import { ProductFilterSheet } from "@/modules/products/components/product-filter-sheet";
 import { ProductFilterTrigger } from "@/modules/products/components/product-filter-trigger";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
-import { MobileSearchWrapper } from "./_components/mobile-search-wrapper";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { SortDrawerTrigger } from "@/shared/components/sort-drawer";
 import { ClearSearchButton } from "@/shared/components/clear-search-button";
-import { FAB_KEYS } from "@/shared/constants/fab";
-import { getFabVisibility } from "@/shared/data/get-fab-visibility";
-import { getRecentSearches } from "@/shared/data/get-recent-searches";
+import { SearchForm } from "@/shared/components/search-form";
 import { centsToEuros } from "@/shared/utils/format-euro";
 import { getFirstParam } from "@/shared/utils/params";
 import { parseFilters } from "./_utils/params";
@@ -141,18 +136,15 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 			? searchParamsData.search
 			: undefined;
 
-	// Récupérer les couleurs, matériaux, prix maximum, visibilité FAB et recherches récentes en parallèle
-	const [colorsData, materials, maxPriceInCents, isFilterFabHidden, recentSearches] =
-		await Promise.all([
-			getColors({
-				perPage: 100,
-				sortBy: "name-ascending",
-			}),
-			getMaterialOptions(),
-			getMaxProductPrice(),
-			getFabVisibility(FAB_KEYS.STOREFRONT),
-			getRecentSearches(),
-		]);
+	// Récupérer les couleurs, matériaux et prix maximum en parallèle
+	const [colorsData, materials, maxPriceInCents] = await Promise.all([
+		getColors({
+			perPage: 100,
+			sortBy: "name-ascending",
+		}),
+		getMaterialOptions(),
+		getMaxProductPrice(),
+	]);
 
 	const maxPriceInEuros = centsToEuros(maxPriceInCents);
 	const colors = colorsData.colors;
@@ -213,7 +205,6 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const pageTitle = searchTerm ? `Recherche "${searchTerm}"` : "Les créations";
 	const pageDescription =
 		"Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !";
-	const searchPlaceholder = "Rechercher des bijoux...";
 	const breadcrumbs = [{ label: "Produits", href: "/produits" }];
 
 	// Sort options for mobile drawer
@@ -221,6 +212,8 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 		value: option,
 		label: SORT_LABELS[option as keyof typeof SORT_LABELS],
 	}));
+
+	const searchPlaceholder = "Rechercher des bijoux...";
 
 	// JSON-LD structured data pour SEO
 	const jsonLd = {
@@ -268,14 +261,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 					<div className="flex items-center gap-2 md:hidden">
 						<ClearSearchButton />
 						<SortDrawerTrigger options={sortOptions} />
-						<MobileSearchWrapper
-							placeholder={searchPlaceholder}
-							productTypes={productTypes.map((t) => ({
-								slug: t.slug,
-								label: t.label,
-							}))}
-							recentSearches={recentSearches}
-						/>
+						<ProductFilterTrigger variant="icon" />
 					</div>
 				}
 			/>
@@ -321,11 +307,6 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 				</div>
 			</section>
 
-			{/* FAB Filtres - Mobile only */}
-			<ProductFilterFab
-				initialHidden={isFilterFabHidden}
-				activeFiltersCount={activeFiltersCount}
-			/>
 			<ProductFilterSheet
 				colors={colors}
 				materials={materials}

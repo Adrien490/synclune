@@ -3,11 +3,16 @@ import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/naviga
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
-import { LayoutDashboard, User, Heart } from "lucide-react";
+import { getRecentSearches } from "@/shared/data/get-recent-searches";
+import { getCollections } from "@/modules/collections/data/get-collections";
+import { getProductTypes } from "@/modules/product-types/data/get-product-types";
+import { CollectionStatus } from "@/app/generated/prisma/client";
+import { User, Heart } from "lucide-react";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { BadgeCountsStoreProvider } from "@/shared/stores/badge-counts-store-provider";
+import { QuickSearchDialog, QuickSearchTrigger } from "@/shared/components/quick-search-dialog";
 import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarWrapper } from "./navbar-wrapper";
@@ -17,21 +22,40 @@ const iconButtonClassName = "relative items-center justify-center size-11 text-m
 
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
-	const [session, cartCount, wishlistCount] = await Promise.all([
+	const [session, cartCount, wishlistCount, recentSearches, collectionsData, productTypesData] = await Promise.all([
 		getSession(),
 		getCartItemCount(),
 		getWishlistItemCount(),
+		getRecentSearches(),
+		getCollections({
+			perPage: 8,
+			sortBy: "name-ascending",
+			filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
+		}),
+		getProductTypes({
+			perPage: 12,
+			sortBy: "label-ascending",
+			filters: { isActive: true },
+		}),
 	]);
-
-	// Dériver isAdmin depuis la session (évite un appel DB redondant)
-	const userIsAdmin = session?.user?.role === "ADMIN";
 
 	// Protection si les fonctions retournent undefined/null
 	const safeCartCount = cartCount ?? 0;
 	const safeWishlistCount = wishlistCount ?? 0;
 
-	// Générer les items de navigation mobile en fonction de la session et statut admin
-	const mobileNavItems = getMobileNavItems(session, [], [], userIsAdmin);
+	// Collections et types de produits pour le quick search dialog
+	const collections = collectionsData.collections.map((c) => ({
+		slug: c.slug,
+		name: c.name,
+	}));
+
+	const productTypes = productTypesData.productTypes.map((t) => ({
+		slug: t.slug,
+		label: t.label,
+	}));
+
+	// Générer les items de navigation mobile en fonction de la session
+	const mobileNavItems = getMobileNavItems(session);
 
 	// Générer les items de navigation desktop
 	const desktopNavItems = getDesktopNavItems();
@@ -90,23 +114,16 @@ export async function Navbar() {
 							<DesktopNav navItems={desktopNavItems} />
 						</div>
 
-						{/* Section droite: Tableau de bord (admin) + Favoris + Compte + Panier */}
+						{/* Section droite: Recherche + Favoris + Compte + Panier */}
 						<div className="flex flex-1 items-center justify-end min-w-0">
 							<div className="flex items-center gap-1 sm:gap-3 shrink-0">
-								{/* Icône tableau de bord (visible uniquement pour les admins, desktop seulement) */}
-								{userIsAdmin && (
-									<Link
-										href="/admin"
-										className={`hidden sm:inline-flex ${iconButtonClassName}`}
-										aria-label="Accéder au tableau de bord"
-									>
-										<LayoutDashboard
-											size={20}
-											className="transition-transform duration-300 ease-out group-hover:scale-105"
-											aria-hidden="true"
-										/>
-									</Link>
-								)}
+								{/* Recherche globale */}
+								<QuickSearchTrigger />
+								<QuickSearchDialog
+									recentSearches={recentSearches}
+									collections={collections}
+									productTypes={productTypes}
+								/>
 
 								{/* Icône favoris (visible sur tous les écrans) */}
 								<Link
