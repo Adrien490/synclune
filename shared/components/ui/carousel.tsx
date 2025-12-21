@@ -28,6 +28,8 @@ type CarouselContextProps = {
 	scrollNext: () => void;
 	canScrollPrev: boolean;
 	canScrollNext: boolean;
+	carouselId: string;
+	scrollSnaps: number[];
 } & CarouselProps;
 
 const CarouselContext = React.createContext<CarouselContextProps | null>(null);
@@ -49,8 +51,12 @@ function Carousel({
 	plugins,
 	className,
 	children,
+	id,
 	...props
 }: React.ComponentProps<"div"> & CarouselProps) {
+	const generatedId = React.useId();
+	const carouselId = id ?? generatedId;
+
 	const [carouselRef, api] = useEmblaCarousel(
 		{
 			...opts,
@@ -60,6 +66,7 @@ function Carousel({
 	);
 	const [canScrollPrev, setCanScrollPrev] = React.useState(false);
 	const [canScrollNext, setCanScrollNext] = React.useState(false);
+	const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]);
 
 	const onSelect = (api: CarouselApi) => {
 		if (!api) return;
@@ -76,12 +83,25 @@ function Carousel({
 	};
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-		if (event.key === "ArrowLeft") {
-			event.preventDefault();
-			scrollPrev();
-		} else if (event.key === "ArrowRight") {
-			event.preventDefault();
-			scrollNext();
+		switch (event.key) {
+			case "ArrowLeft":
+				event.preventDefault();
+				scrollPrev();
+				break;
+			case "ArrowRight":
+				event.preventDefault();
+				scrollNext();
+				break;
+			case "Home":
+				event.preventDefault();
+				api?.scrollTo(0);
+				break;
+			case "End":
+				event.preventDefault();
+				if (scrollSnaps.length > 0) {
+					api?.scrollTo(scrollSnaps.length - 1);
+				}
+				break;
 		}
 	};
 
@@ -93,13 +113,17 @@ function Carousel({
 	React.useEffect(() => {
 		if (!api) return;
 		onSelect(api);
-		api.on("reInit", onSelect);
+		setScrollSnaps(api.scrollSnapList());
+		api.on("reInit", () => {
+			onSelect(api);
+			setScrollSnaps(api.scrollSnapList());
+		});
 		api.on("select", onSelect);
 
 		return () => {
 			api?.off("select", onSelect);
 		};
-	}, [api, onSelect]);
+	}, [api]);
 
 	return (
 		<CarouselContext.Provider
@@ -113,6 +137,8 @@ function Carousel({
 				scrollNext,
 				canScrollPrev,
 				canScrollNext,
+				carouselId,
+				scrollSnaps,
 			}}
 		>
 			<div
@@ -134,12 +160,13 @@ interface CarouselContentProps extends React.ComponentProps<"div"> {
 }
 
 function CarouselContent({ className, showFade = false, ...props }: CarouselContentProps) {
-	const { carouselRef, orientation, canScrollPrev, canScrollNext } = useCarousel();
+	const { carouselRef, orientation, canScrollPrev, canScrollNext, carouselId } = useCarousel();
 
 	return (
 		<div className="relative">
 			<div
 				ref={carouselRef}
+				id={`${carouselId}-content`}
 				className="overflow-hidden"
 				data-slot="carousel-content"
 			>
@@ -218,7 +245,10 @@ function CarouselPrevious({
 	size = "icon",
 	...props
 }: React.ComponentProps<typeof Button>) {
-	const { orientation, scrollPrev, canScrollPrev } = useCarousel();
+	const { orientation, scrollPrev, canScrollPrev, scrollSnaps } = useCarousel();
+
+	// Cacher si 1 seul élément (cohérent avec CarouselDots)
+	if (scrollSnaps.length <= 1) return null;
 
 	return (
 		<Button
@@ -231,8 +261,8 @@ function CarouselPrevious({
 				orientation === "horizontal"
 					? "top-1/2 -left-12 -translate-y-1/2"
 					: "-top-12 left-1/2 -translate-x-1/2 rotate-90",
-				// Touch targets responsives (WCAG 2.5.5)
-				"size-12 md:size-10",
+				// Touch targets 48px (WCAG 2.5.5)
+				"size-12",
 				// Forme et fond primary
 				"rounded-full bg-primary",
 				// Ombres
@@ -240,8 +270,10 @@ function CarouselPrevious({
 				// Couleurs
 				"text-primary-foreground",
 				"hover:bg-primary/90 hover:scale-105",
+				// Focus visible (accessibilité clavier)
+				"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 				// États disabled
-				"disabled:opacity-40 disabled:pointer-events-none",
+				"disabled:opacity-30 disabled:pointer-events-none disabled:cursor-not-allowed",
 				// Transitions fluides
 				"transition-all duration-300",
 				className
@@ -262,7 +294,10 @@ function CarouselNext({
 	size = "icon",
 	...props
 }: React.ComponentProps<typeof Button>) {
-	const { orientation, scrollNext, canScrollNext } = useCarousel();
+	const { orientation, scrollNext, canScrollNext, scrollSnaps } = useCarousel();
+
+	// Cacher si 1 seul élément (cohérent avec CarouselDots)
+	if (scrollSnaps.length <= 1) return null;
 
 	return (
 		<Button
@@ -275,8 +310,8 @@ function CarouselNext({
 				orientation === "horizontal"
 					? "top-1/2 -right-12 -translate-y-1/2"
 					: "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
-				// Touch targets responsives (WCAG 2.5.5)
-				"size-12 md:size-10",
+				// Touch targets 48px (WCAG 2.5.5)
+				"size-12",
 				// Forme et fond primary
 				"rounded-full bg-primary",
 				// Ombres
@@ -284,8 +319,10 @@ function CarouselNext({
 				// Couleurs
 				"text-primary-foreground",
 				"hover:bg-primary/90 hover:scale-105",
+				// Focus visible (accessibilité clavier)
+				"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 				// États disabled
-				"disabled:opacity-40 disabled:pointer-events-none",
+				"disabled:opacity-30 disabled:pointer-events-none disabled:cursor-not-allowed",
 				// Transitions fluides
 				"transition-all duration-300",
 				className
@@ -304,27 +341,23 @@ function CarouselDots({
 	className,
 	...props
 }: React.ComponentProps<"div">) {
-	const { api } = useCarousel();
+	const { api, carouselId, scrollSnaps } = useCarousel();
 	const [selectedIndex, setSelectedIndex] = React.useState(0);
-	const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]);
 
 	React.useEffect(() => {
 		if (!api) return;
-
-		setScrollSnaps(api.scrollSnapList());
 
 		const onSelect = () => {
 			setSelectedIndex(api.selectedScrollSnap());
 		};
 
+		onSelect();
 		api.on("select", onSelect);
-		api.on("reInit", () => {
-			setScrollSnaps(api.scrollSnapList());
-			onSelect();
-		});
+		api.on("reInit", onSelect);
 
 		return () => {
 			api.off("select", onSelect);
+			api.off("reInit", onSelect);
 		};
 	}, [api]);
 
@@ -345,17 +378,27 @@ function CarouselDots({
 						type="button"
 						role="tab"
 						aria-selected={index === selectedIndex}
+						aria-controls={`${carouselId}-content`}
 						aria-label={`Aller à la diapositive ${index + 1}`}
 						onClick={() => api?.scrollTo(index)}
 						className={cn(
+							// Touch target 44px (WCAG 2.5.5)
 							"relative w-11 h-11 flex items-center justify-center",
-							"active:scale-95 transition-transform duration-100",
-							"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-full"
+							// Forme pour feedback visuel
+							"rounded-full",
+							// Feedback visuel sur zone cliquable
+							"hover:bg-muted/20 active:bg-muted/30",
+							// Animation avec respect reduced motion
+							"motion-safe:active:scale-95 motion-safe:transition-all motion-safe:duration-100",
+							// Focus visible
+							"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
 						)}
 					>
 						<span
 							className={cn(
-								"rounded-full transition-all duration-150 ease-out",
+								"rounded-full",
+								// Animation avec respect reduced motion (WCAG 2.3.3)
+								"motion-safe:transition-all motion-safe:duration-150 ease-out",
 								index === selectedIndex
 									? "h-2 w-8 sm:h-2.5 sm:w-10 bg-primary shadow-md"
 									: "h-2 w-2 sm:h-2.5 sm:w-2.5 bg-muted-foreground/50 hover:bg-muted-foreground/70"
