@@ -7,7 +7,7 @@ import { getRecentSearches } from "@/shared/data/get-recent-searches";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { CollectionStatus } from "@/app/generated/prisma/client";
-import { User, Heart } from "lucide-react";
+import { LayoutDashboard, User, Heart } from "lucide-react";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
@@ -39,6 +39,9 @@ export async function Navbar() {
 		}),
 	]);
 
+	// Dériver isAdmin depuis la session (évite un appel DB redondant)
+	const userIsAdmin = session?.user?.role === "ADMIN";
+
 	// Protection si les fonctions retournent undefined/null
 	const safeCartCount = cartCount ?? 0;
 	const safeWishlistCount = wishlistCount ?? 0;
@@ -54,8 +57,8 @@ export async function Navbar() {
 		label: t.label,
 	}));
 
-	// Générer les items de navigation mobile en fonction de la session
-	const mobileNavItems = getMobileNavItems(session);
+	// Générer les items de navigation mobile en fonction de la session et statut admin
+	const mobileNavItems = getMobileNavItems(session, [], [], userIsAdmin);
 
 	// Générer les items de navigation desktop
 	const desktopNavItems = getDesktopNavItems();
@@ -114,7 +117,7 @@ export async function Navbar() {
 							<DesktopNav navItems={desktopNavItems} />
 						</div>
 
-						{/* Section droite: Recherche + Favoris + Compte + Panier */}
+						{/* Section droite: Recherche + Tableau de bord (admin) + Favoris + Compte + Panier */}
 						<div className="flex flex-1 items-center justify-end min-w-0">
 							<div className="flex items-center gap-1 sm:gap-3 shrink-0">
 								{/* Recherche globale */}
@@ -124,6 +127,21 @@ export async function Navbar() {
 									collections={collections}
 									productTypes={productTypes}
 								/>
+
+								{/* Icône tableau de bord (visible uniquement pour les admins, desktop seulement) */}
+								{userIsAdmin && (
+									<Link
+										href="/admin"
+										className={`hidden sm:inline-flex ${iconButtonClassName}`}
+										aria-label="Accéder au tableau de bord"
+									>
+										<LayoutDashboard
+											size={20}
+											className="transition-transform duration-300 ease-out group-hover:scale-105"
+											aria-hidden="true"
+										/>
+									</Link>
+								)}
 
 								{/* Icône favoris (visible sur tous les écrans) */}
 								<Link

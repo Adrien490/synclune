@@ -106,6 +106,7 @@ export const desktopNavItems = [
  * ─────────────
  * 👤 COMPTE (gestion utilisateur)
  *    → Mon compte / Se connecter
+ *    → Tableau de bord (si admin)
  *
  * 📖 EN SAVOIR PLUS (découverte de l'atelier)
  *    → L'atelier
@@ -115,12 +116,14 @@ export const desktopNavItems = [
  * @param session - Session de l'utilisateur (null si non connecté)
  * @param productTypes - Types de produits actifs
  * @param collections - Collections actives (optionnel)
+ * @param isAdmin - Si l'utilisateur est administrateur
  * @returns Items de navigation filtrés et adaptés avec support des children
  */
 export function getMobileNavItems(
 	session: Session | null,
 	productTypes?: Array<{ slug: string; label: string }>,
-	collections?: Array<{ slug: string; label: string; description?: string | null; imageUrl?: string | null }>
+	collections?: Array<{ slug: string; label: string; description?: string | null; imageUrl?: string | null }>,
+	isAdmin?: boolean
 ): NavItemWithChildren[] {
 	// Item "Les créations" avec collapsible des types
 	const bijouxItem: NavItemWithChildren = {
@@ -182,6 +185,11 @@ export function getMobileNavItems(
 		// ❤️ FAVORIS - Accessible à tous
 		{ href: "/favoris", label: "Favoris", icon: "heart" },
 	];
+
+	// 🛠️ ADMIN - Tableau de bord (uniquement pour les administrateurs)
+	if (isAdmin) {
+		items.push({ href: "/admin", label: "Tableau de bord", icon: "layout-dashboard" });
+	}
 
 	return items;
 }
