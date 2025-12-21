@@ -12,10 +12,12 @@ import { Input } from "@/shared/components/ui/input"
 import { Spinner } from "@/shared/components/ui/spinner"
 import { cn } from "@/shared/utils/cn"
 
-type BaseProps = {
+type SearchInputProps = {
+	/** URL param name - manages URL state automatically */
+	paramName: string
 	/** Placeholder text */
 	placeholder?: string
-	/** Search mode: submit requires button click, live updates on change with debounce */
+	/** Search mode: submit redirects to /produits, live updates param in place */
 	mode?: "submit" | "live"
 	/** Size variant: sm (44px) for toolbars, md (48px) for dialogs */
 	size?: "sm" | "md"
@@ -29,32 +31,9 @@ type BaseProps = {
 	className?: string
 	/** Aria label for the input */
 	ariaLabel?: string
+	/** Callback before search navigation (for side effects like saving recent searches, closing dialogs) */
+	onSubmit?: (term: string) => void
 }
-
-type CallbackModeProps = BaseProps & {
-	/** URL param name - when provided, manages URL state automatically */
-	paramName?: never
-	/** Callback when search is submitted or changed */
-	onSearch: (value: string) => void
-	/** Current search value (for controlled mode) */
-	value?: string
-	/** Callback when input value changes */
-	onValueChange?: (value: string) => void
-	/** Callback when clear button is clicked */
-	onClear?: () => void
-}
-
-type UrlModeProps = BaseProps & {
-	/** URL param name - manages URL state automatically */
-	paramName: string
-	/** Not needed in URL mode */
-	onSearch?: never
-	value?: never
-	onValueChange?: never
-	onClear?: never
-}
-
-type SearchInputProps = CallbackModeProps | UrlModeProps
 
 const sizeStyles = {
 	sm: {
@@ -76,61 +55,60 @@ const sizeStyles = {
 }
 
 /**
- * Reusable search input component.
+ * Self-sufficient search input component with automatic URL state management.
  *
- * Two modes of operation:
- * 1. Callback mode: Pass `onSearch` for manual handling
- * 2. URL mode: Pass `paramName` for automatic URL state management
+ * Modes:
+ * - Submit: shows button, redirects to /produits?{paramName}=xxx on submit
+ * - Live: updates {paramName} URL param in place with debounce
  *
- * Search behavior:
- * - Submit mode: shows submit button, requires explicit submission
- * - Live mode: updates on change with debounce
+ * Optional `onSubmit` callback for side effects (e.g., save recent searches, close dialogs)
  */
-export function SearchInput(props: SearchInputProps) {
-	const {
-		placeholder = "Rechercher...",
-		mode = "submit",
-		size = "md",
-		debounceMs = 300,
-		isPending: externalPending = false,
-		autoFocus = false,
-		className,
-		ariaLabel,
-	} = props
-
+export function SearchInput({
+	paramName,
+	placeholder = "Rechercher...",
+	mode = "submit",
+	size = "md",
+	debounceMs = 300,
+	isPending: externalPending = false,
+	autoFocus = false,
+	className,
+	ariaLabel,
+	onSubmit,
+}: SearchInputProps) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const [internalPending, startTransition] = useTransition()
 	const styles = sizeStyles[size]
 
-	// URL mode hooks (only used when paramName is provided)
 	const searchParams = useSearchParams()
 	const router = useRouter()
 
-	// Determine if we're in URL mode
-	const isUrlMode = "paramName" in props && props.paramName !== undefined
-
-	// Get initial value based on mode
-	const initialValue = isUrlMode
-		? searchParams.get(props.paramName) || ""
-		: (props as CallbackModeProps).value || ""
-
+	const initialValue = mode === "live" ? searchParams.get(paramName) || "" : ""
 	const isPending = externalPending || internalPending
 
 	const form = useAppForm({
 		defaultValues: { search: initialValue },
 	})
 
-	// Handle search based on mode
 	const handleSearch = (searchValue: string) => {
 		const trimmed = searchValue.trim()
 
-		if (isUrlMode) {
-			// URL mode: update URL params
+		if (mode === "submit") {
+			// Submit mode: redirect to /produits with search param
+			if (!trimmed) return
+
+			onSubmit?.(trimmed)
+
+			startTransition(() => {
+				router.push(`/produits?${paramName}=${encodeURIComponent(trimmed)}`)
+			})
+		} else {
+			// Live mode: update URL param in place
 			const newSearchParams = new URLSearchParams(searchParams.toString())
+
 			if (trimmed) {
-				newSearchParams.set(props.paramName, trimmed)
+				newSearchParams.set(paramName, trimmed)
 			} else {
-				newSearchParams.delete(props.paramName)
+				newSearchParams.delete(paramName)
 			}
 
 			// Reset pagination
@@ -145,11 +123,6 @@ export function SearchInput(props: SearchInputProps) {
 			if (typeof window !== "undefined" && window.innerWidth < 768) {
 				inputRef.current?.blur()
 			}
-		} else {
-			// Callback mode
-			startTransition(() => {
-				;(props as CallbackModeProps).onSearch(trimmed)
-			})
 		}
 	}
 
@@ -162,15 +135,10 @@ export function SearchInput(props: SearchInputProps) {
 
 	const handleClear = () => {
 		form.setFieldValue("search", "")
-
-		if (isUrlMode) {
+		// In live mode, also clear the URL param
+		if (mode === "live") {
 			handleSearch("")
-		} else {
-			const callbackProps = props as CallbackModeProps
-			callbackProps.onValueChange?.("")
-			callbackProps.onClear?.()
 		}
-
 		inputRef.current?.focus()
 	}
 
@@ -180,12 +148,6 @@ export function SearchInput(props: SearchInputProps) {
 			if (currentValue) {
 				handleClear()
 			}
-		}
-	}
-
-	const handleChange = (value: string) => {
-		if (!isUrlMode) {
-			;(props as CallbackModeProps).onValueChange?.(value)
 		}
 	}
 
@@ -248,10 +210,7 @@ export function SearchInput(props: SearchInputProps) {
 								inputMode="search"
 								enterKeyHint="search"
 								value={field.state.value}
-								onChange={(e) => {
-									field.handleChange(e.target.value)
-									handleChange(e.target.value)
-								}}
+								onChange={(e) => field.handleChange(e.target.value)}
 								onKeyDown={(e) => handleKeyDown(e, field.state.value)}
 								className={cn(
 									"border-none shadow-none focus-visible:ring-0",

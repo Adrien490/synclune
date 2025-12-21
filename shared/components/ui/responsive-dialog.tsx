@@ -123,7 +123,7 @@ function ResponsiveDialogContent({
 
 	return (
 		<DialogContent
-			className={cn("max-h-[90vh] overflow-y-auto", className)}
+			className={cn("p-6 gap-4 max-h-[90vh] overflow-y-auto", className)}
 			showCloseButton={showCloseButton}
 			{...props}
 		>

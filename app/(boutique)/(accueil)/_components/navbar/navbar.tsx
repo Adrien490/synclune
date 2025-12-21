@@ -7,12 +7,13 @@ import { getRecentSearches } from "@/shared/data/get-recent-searches";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { CollectionStatus } from "@/app/generated/prisma/client";
-import { LayoutDashboard, User, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { BadgeCountsStoreProvider } from "@/shared/stores/badge-counts-store-provider";
 import { QuickSearchDialog, QuickSearchTrigger } from "@/shared/components/quick-search-dialog";
+import { AccountDropdown } from "./account-dropdown";
 import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarWrapper } from "./navbar-wrapper";
@@ -117,7 +118,7 @@ export async function Navbar() {
 							<DesktopNav navItems={desktopNavItems} />
 						</div>
 
-						{/* Section droite: Recherche + Tableau de bord (admin) + Favoris + Compte + Panier */}
+						{/* Section droite: Recherche + Favoris + Compte (dropdown) + Panier */}
 						<div className="flex flex-1 items-center justify-end min-w-0">
 							<div className="flex items-center gap-1 sm:gap-3 shrink-0">
 								{/* Recherche globale */}
@@ -127,21 +128,6 @@ export async function Navbar() {
 									collections={collections}
 									productTypes={productTypes}
 								/>
-
-								{/* Icône tableau de bord (visible uniquement pour les admins, desktop seulement) */}
-								{userIsAdmin && (
-									<Link
-										href="/admin"
-										className={`hidden sm:inline-flex ${iconButtonClassName}`}
-										aria-label="Accéder au tableau de bord"
-									>
-										<LayoutDashboard
-											size={20}
-											className="transition-transform duration-300 ease-out group-hover:scale-105"
-											aria-hidden="true"
-										/>
-									</Link>
-								)}
 
 								{/* Icône favoris (visible sur desktop seulement - accessible via menu sur mobile) */}
 								<Link
@@ -157,20 +143,12 @@ export async function Navbar() {
 									<WishlistBadge />
 								</Link>
 
-								{/* Icône compte / Se connecter (visible sur desktop seulement) */}
-								<Link
-									href={session ? "/compte" : "/connexion"}
+								{/* Dropdown compte (visible sur desktop seulement) */}
+								<AccountDropdown
+									session={session}
+									isAdmin={userIsAdmin}
 									className={`hidden sm:inline-flex ${iconButtonClassName}`}
-									aria-label={
-										session ? "Accéder à mon compte personnel" : "Se connecter"
-									}
-								>
-									<User
-										size={20}
-										className="transition-transform duration-300 ease-out group-hover:scale-105"
-										aria-hidden="true"
-									/>
-								</Link>
+								/>
 
 								{/* Icône panier - Ouvre le cart sheet */}
 								<CartSheetTrigger className={`inline-flex ${iconButtonClassName}`} />

@@ -31,7 +31,7 @@ export default function NotFound() {
 							Retour à l'accueil
 						</Link>
 					</Button>
-					<Button asChild variant="outline" size="lg">
+					<Button asChild variant="secondary" size="lg">
 						<Link href="/produits">
 							Découvrir mes créations
 						</Link>

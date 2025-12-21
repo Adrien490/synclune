@@ -41,7 +41,7 @@ export function AdminSpeedDial({ initialHidden = false }: AdminSpeedDialProps) {
 			/>
 
 			<Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
-				<DialogContent className="sm:max-w-[525px]">
+				<DialogContent className="p-6 gap-4 sm:max-w-[525px]">
 					<DialogHeader>
 						<DialogTitle>Contacter Adri</DialogTitle>
 						<DialogDescription>
