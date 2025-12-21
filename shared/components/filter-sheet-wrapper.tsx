@@ -8,7 +8,6 @@ import {
 	Sheet,
 	SheetClose,
 	SheetContent,
-	SheetDescription,
 	SheetFooter,
 	SheetHeader,
 	SheetTitle,
@@ -35,7 +34,7 @@ export interface FilterSheetWrapperProps {
 	triggerClassName?: string;
 	/** Sheet title */
 	title?: string;
-	/** Sheet description */
+	/** Sheet description (optional subtitle) */
 	description?: string;
 	/** Custom apply button text */
 	applyButtonText?: string;
@@ -62,7 +61,7 @@ export function FilterSheetWrapper({
 	isPending = false,
 	triggerClassName,
 	title = "Filtres",
-	description = "Affinez votre recherche",
+	description,
 	applyButtonText = "Appliquer",
 	cancelButtonText = "Annuler",
 	showCancelButton = true,
@@ -93,7 +92,8 @@ export function FilterSheetWrapper({
 			variant="outline"
 			className={cn(
 				"relative gap-2 text-sm font-medium min-h-[44px] px-4 border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 transition-all duration-200",
-				activeFiltersCount > 0 && "border-primary/40 bg-primary/5",
+				activeFiltersCount > 0 &&
+					"border-primary/50 bg-primary/5 shadow-sm shadow-primary/10",
 				triggerClassName
 			)}
 			aria-label={
@@ -108,7 +108,7 @@ export function FilterSheetWrapper({
 				<>
 					<Badge
 						variant="default"
-						className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold animate-in zoom-in-50 duration-300"
+						className="absolute -top-2.5 -right-2.5 h-5 min-w-5 flex items-center justify-center px-1 text-xs font-bold animate-in zoom-in-50 duration-200 shadow-sm"
 						aria-hidden="true"
 					>
 						{activeFiltersCount}
@@ -130,26 +130,24 @@ export function FilterSheetWrapper({
 
 			<SheetContent
 				className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full"
-				aria-describedby="filter-sheet-description"
 				onKeyDown={handleKeyDown}
 			>
-				<SheetHeader className="px-6 py-4 border-b bg-background/95 shrink-0">
+				<SheetHeader className="px-6 py-5 border-b border-primary/10 bg-gradient-to-r from-background via-primary/[0.02] to-background shrink-0">
 					<div className="flex items-center justify-between gap-4">
-						<div className="min-w-0 flex-1">
-							<SheetTitle className="text-lg font-semibold">{title}</SheetTitle>
-							<SheetDescription
-								id="filter-sheet-description"
-								className="text-sm text-muted-foreground"
-							>
-								{description}
-							</SheetDescription>
+						<div className="space-y-0.5">
+							<SheetTitle className="text-lg font-semibold font-serif tracking-tight">
+								{title}
+							</SheetTitle>
+							{description && (
+								<p className="text-sm text-muted-foreground">{description}</p>
+							)}
 						</div>
 						{hasActiveFilters && onClearAll && (
 							<Button
 								variant="ghost"
 								size="sm"
 								onClick={onClearAll}
-								className="text-xs hover:bg-destructive/10 hover:text-destructive shrink-0 min-h-[36px]"
+								className="text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0 min-h-[36px] transition-colors"
 								aria-label="Effacer tous les filtres"
 							>
 								<X className="w-3 h-3 mr-1" aria-hidden="true" />
@@ -177,11 +175,11 @@ export function FilterSheetWrapper({
 					/>
 				</ScrollArea>
 
-				<SheetFooter className="px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t bg-background/95 shrink-0">
+				<SheetFooter className="px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] border-t border-primary/10 bg-background shrink-0">
 					{showCancelButton ? (
 						<ButtonGroup className="w-full" aria-label="Actions de filtrage">
 							<SheetClose asChild className="flex-1">
-								<Button variant="outline" disabled={isPending}>
+								<Button variant="secondary" disabled={isPending}>
 									{cancelButtonText}
 								</Button>
 							</SheetClose>

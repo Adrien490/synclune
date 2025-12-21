@@ -216,7 +216,7 @@ export function ProductCard({
 			)}
 
 			{/* Contenu de la card */}
-			<div className="flex flex-col gap-2 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
+			<div className="flex flex-col gap-2.5 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
 				{/* Titre cliquable */}
 				<Link
 					href={productUrl}
@@ -226,7 +226,7 @@ export function ProductCard({
 				>
 					<h3
 						id={titleId}
-						className="line-clamp-2 font-sans text-foreground text-base sm:text-lg break-words"
+						className="line-clamp-1 sm:line-clamp-2 font-sans text-foreground text-base sm:text-lg break-words"
 						itemProp="name"
 					>
 						{title}

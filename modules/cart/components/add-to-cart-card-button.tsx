@@ -90,9 +90,9 @@ export function AddToCartCardButton({
 					"sm:w-full sm:h-auto sm:rounded-none sm:py-3 sm:px-4",
 					"sm:bg-primary sm:text-primary-foreground",
 					"sm:shadow-lg sm:shadow-black/20",
-					// Active/hover desktop
-					"sm:active:scale-100 sm:hover:scale-100",
-					"sm:hover:bg-primary/90 sm:hover:tracking-widest",
+					// Active/hover desktop - feedback visuel clair
+					"sm:hover:bg-primary/85 sm:hover:shadow-xl sm:hover:-translate-y-0.5",
+					"sm:active:bg-primary/90 sm:active:shadow-md sm:active:translate-y-0",
 					// Transitions
 					"motion-safe:transition-all motion-safe:duration-200",
 					// Disabled

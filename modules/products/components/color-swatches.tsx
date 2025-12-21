@@ -14,6 +14,7 @@ import {
 	PopoverTrigger,
 } from "@/shared/components/ui/popover";
 import { useIsTouchDevice } from "@/shared/hooks";
+import { isLightColor } from "@/shared/utils/color";
 import type { ColorSwatch } from "@/modules/products/services/product-list-helpers";
 
 interface ColorSwatchesProps {
@@ -189,7 +190,9 @@ export function ColorSwatches({
 						isSelected
 							? "border-primary ring-2 ring-primary/40 motion-safe:scale-110"
 							: "border-border/50 shadow-sm can-hover:hover:border-primary/50 motion-safe:can-hover:hover:scale-105",
-						!color.inStock && "opacity-40 cursor-not-allowed"
+						!color.inStock && "opacity-40 cursor-not-allowed",
+						// Contraste pour couleurs très claires (blanc, jaune pâle...)
+						!isSelected && isLightColor(color.hex) && "ring-1 ring-border/30"
 					)}
 				>
 					<AriaColorSwatch
@@ -210,7 +213,9 @@ export function ColorSwatches({
 				className={cn(
 					"rounded-full border border-border/50 shadow-sm motion-safe:transition-opacity",
 					sizeClasses[swatchSize],
-					!color.inStock && "opacity-40"
+					!color.inStock && "opacity-40",
+					// Contraste pour couleurs très claires (blanc, jaune pâle...)
+					isLightColor(color.hex) && "ring-1 ring-border/30"
 				)}
 			/>
 		);
@@ -255,7 +260,7 @@ export function ColorSwatches({
 							type="button"
 							onClick={(e) => e.stopPropagation()}
 							className={cn(
-								"flex items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium transition-colors",
+								"flex items-center justify-center rounded-full bg-muted text-muted-foreground text-sm font-medium transition-colors",
 								"hover:bg-muted/80 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 								sizeClasses[size]
 							)}
@@ -268,7 +273,8 @@ export function ColorSwatches({
 					</PopoverTrigger>
 					<PopoverContent
 						side="top"
-						align="start"
+						align="center"
+						collisionPadding={16}
 						className="w-auto p-3"
 						onClick={(e) => e.stopPropagation()}
 					>
