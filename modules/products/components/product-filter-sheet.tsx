@@ -13,7 +13,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { PRODUCT_FILTER_DIALOG_ID } from "./product-filter-fab";
+import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { PriceRangeInputs } from "./price-range-inputs";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";

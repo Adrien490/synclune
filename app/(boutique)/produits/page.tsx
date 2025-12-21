@@ -19,9 +19,9 @@ import { ProductListSkeleton } from "@/modules/products/components/product-list-
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SelectFilter } from "@/shared/components/select-filter";
-import { SortDrawerTrigger } from "@/shared/components/sort-drawer";
 import { ClearSearchButton } from "@/shared/components/clear-search-button";
 import { SearchInput } from "@/shared/components/search-input";
+import { BottomActionBar } from "@/shared/components/bottom-action-bar";
 import { centsToEuros } from "@/shared/utils/format-euro";
 import { getFirstParam } from "@/shared/utils/params";
 import { parseFilters } from "./_utils/params";
@@ -260,8 +260,6 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 				actions={
 					<div className="flex items-center gap-2 md:hidden">
 						<ClearSearchButton />
-						<SortDrawerTrigger options={sortOptions} />
-						<ProductFilterTrigger variant="icon" />
 					</div>
 				}
 			/>
@@ -316,6 +314,9 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 				}))}
 				maxPriceInEuros={maxPriceInEuros}
 			/>
+
+			{/* Bottom Action Bar Mobile */}
+			<BottomActionBar sortOptions={sortOptions} />
 		</div>
 	);
 }

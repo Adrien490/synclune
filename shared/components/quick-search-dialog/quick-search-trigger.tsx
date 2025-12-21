@@ -37,11 +37,11 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 			variant="ghost"
 			size="icon"
 			onClick={() => open()}
-			className={cn("size-11 relative", className)}
-			aria-label="Rechercher (⌘K)"
+			className={cn("size-11 group-data-[scrolled=true]:size-10 relative transition-all duration-300 ease-out", className)}
+			aria-label="Ouvrir la recherche rapide, raccourci clavier Commande K"
 		>
 			<Search className="size-5" />
-			<Kbd className="hidden can-hover:inline-flex absolute -bottom-1 -right-1.5 h-4 min-w-4 text-[9px] px-0.5 opacity-70">
+			<Kbd className="hidden lg:can-hover:inline-flex absolute -bottom-1 -right-1.5 h-4 min-w-4 text-[9px] px-0.5 opacity-70" aria-hidden="true">
 				⌘K
 			</Kbd>
 		</Button>

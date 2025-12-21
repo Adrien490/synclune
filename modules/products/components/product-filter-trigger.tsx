@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { PRODUCT_FILTER_DIALOG_ID } from "./product-filter-fab";
+import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { cn } from "@/shared/utils/cn";
 
 interface ProductFilterTriggerProps {

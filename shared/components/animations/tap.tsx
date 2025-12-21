@@ -8,6 +8,7 @@ export interface TapProps {
 	className?: string;
 	scale?: number;
 	duration?: number;
+	role?: string;
 }
 
 /**
@@ -19,12 +20,14 @@ export function Tap({
 	className,
 	scale = 0.95,
 	duration = 0.1,
+	role,
 }: TapProps) {
 	const shouldReduceMotion = useReducedMotion();
 
 	return (
 		<motion.div
 			className={className}
+			role={role}
 			whileTap={
 				shouldReduceMotion
 					? undefined

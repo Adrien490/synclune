@@ -63,8 +63,9 @@ export const CONTAINER_CLASS = `${CONTAINER_MAX_WIDTH} mx-auto ${CONTAINER_PADDI
 /**
  * Footer padding vertical
  * Usage : Footer principal
+ * Note: pb-24 sur mobile pour éviter que BottomActionBar cache le contenu
  */
-export const FOOTER_PADDING = "py-12" as const;
+export const FOOTER_PADDING = "py-12 pb-24 md:pb-12" as const;
 
 /**
  * Espacement espace client (avec padding bottom mobile pour nav)

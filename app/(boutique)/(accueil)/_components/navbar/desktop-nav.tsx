@@ -39,7 +39,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 
 	return (
 		<NavigationMenu className="hidden lg:flex" viewport={true} delayDuration={200}>
-			<NavigationMenuList className="gap-1">
+			<NavigationMenuList className="gap-1 transition-all duration-300 group-data-[scrolled=true]:gap-0.5">
 				{navItems.map((item) => {
 					const isActive = isMenuItemActive(item.href);
 					const hasDropdown =
@@ -53,6 +53,8 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 									data-active={isActive}
 									className={cn(
 										"h-auto px-3 py-2 rounded-md text-sm font-medium tracking-normal relative overflow-visible",
+										"transition-all duration-300 ease-out",
+										"group-data-[scrolled=true]:px-2.5 group-data-[scrolled=true]:py-1.5",
 										// Bordure bottom animée avec ::after (primary pour cohérence avec mobile)
 										"after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-primary after:origin-center",
 										"after:scale-x-0 after:transition-transform after:duration-200 after:ease-out",
@@ -147,6 +149,8 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 								className={cn(
 									navigationMenuTriggerStyle(),
 									"h-auto px-3 py-2 rounded-md text-sm font-medium tracking-normal relative overflow-visible",
+									"transition-all duration-300 ease-out",
+									"group-data-[scrolled=true]:px-2.5 group-data-[scrolled=true]:py-1.5",
 									// Bordure bottom animée avec ::after (primary pour cohérence avec mobile)
 									"after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-primary after:origin-center",
 									"after:scale-x-0 after:transition-transform after:duration-200 after:ease-out",

@@ -3,7 +3,7 @@
 import { ArrowLeft, Clock, Layers, Search, Sparkles, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useTransition } from "react"
+import { useRef, useTransition } from "react"
 import { toast } from "sonner"
 
 import { Stagger } from "@/shared/components/animations/stagger"
@@ -53,6 +53,55 @@ export function QuickSearchDialog({
 	const displayedSearches = searches.slice(0, MAX_RECENT_SEARCHES)
 	const hasContent =
 		searches.length > 0 || collections.length > 0 || productTypes.length > 0
+
+	const contentRef = useRef<HTMLDivElement>(null)
+
+	const handleArrowNavigation = (e: React.KeyboardEvent<HTMLDivElement>) => {
+		const container = contentRef.current
+		if (!container) return
+
+		const focusableSelector =
+			'button:not([disabled]), a:not([disabled]), [tabindex]:not([tabindex="-1"])'
+		const focusables = Array.from(
+			container.querySelectorAll<HTMLElement>(focusableSelector)
+		)
+
+		if (focusables.length === 0) return
+
+		const currentIndex = focusables.findIndex(
+			(el) => el === document.activeElement
+		)
+
+		let nextIndex: number | null = null
+
+		switch (e.key) {
+			case "ArrowDown":
+				e.preventDefault()
+				nextIndex =
+					currentIndex === -1 ? 0 : (currentIndex + 1) % focusables.length
+				break
+			case "ArrowUp":
+				e.preventDefault()
+				nextIndex =
+					currentIndex === -1
+						? focusables.length - 1
+						: (currentIndex - 1 + focusables.length) % focusables.length
+				break
+			case "Home":
+				e.preventDefault()
+				nextIndex = 0
+				break
+			case "End":
+				e.preventDefault()
+				nextIndex = focusables.length - 1
+				break
+		}
+
+		if (nextIndex !== null && focusables[nextIndex]) {
+			focusables[nextIndex].focus()
+			focusables[nextIndex].scrollIntoView({ block: "nearest" })
+		}
+	}
 
 	useBackButtonClose({
 		isOpen,
@@ -140,8 +189,20 @@ export function QuickSearchDialog({
 					/>
 				</div>
 
+				{/* Screen reader announcements */}
+				<div role="status" aria-live="polite" className="sr-only">
+					{displayedSearches.length > 0 &&
+						`${displayedSearches.length} recherche${displayedSearches.length > 1 ? "s" : ""} recente${displayedSearches.length > 1 ? "s" : ""}.`}
+					{collections.length > 0 && ` ${collections.length} collection${collections.length > 1 ? "s" : ""}.`}
+					{productTypes.length > 0 && ` ${productTypes.length} categorie${productTypes.length > 1 ? "s" : ""}.`}
+				</div>
+
 				{/* Content */}
-				<div className="flex-1 min-h-0 overflow-hidden">
+				<div
+					ref={contentRef}
+					className="flex-1 min-h-0 overflow-hidden"
+					onKeyDown={handleArrowNavigation}
+				>
 					<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
 						<div className="px-4 py-4 space-y-6">
 							{/* Recent Searches */}
@@ -149,13 +210,14 @@ export function QuickSearchDialog({
 								<section>
 									<div className="flex items-center justify-between mb-3">
 										<h2 className="font-display text-sm font-medium text-muted-foreground tracking-wide flex items-center gap-2">
-											<Clock className="size-4" />
+											<Clock className="size-4" aria-hidden="true" />
 											Recherches recentes
 										</h2>
 										<button
 											type="button"
 											onClick={clear}
 											className="text-xs text-muted-foreground hover:text-foreground transition-colors min-h-11 px-3 -mr-3"
+											aria-label="Effacer toutes les recherches recentes"
 										>
 											Effacer
 										</button>
@@ -167,16 +229,16 @@ export function QuickSearchDialog({
 													<button
 														type="button"
 														onClick={() => handleRecentSearch(term)}
-														className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+														className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
 													>
-														<Search className="size-4 text-muted-foreground shrink-0" />
+														<Search className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
 														<span className="flex-1 truncate">{term}</span>
 													</button>
 												</Tap>
 												<button
 													type="button"
 													onClick={() => remove(term)}
-													className="size-10 flex items-center justify-center hover:bg-muted rounded-lg transition-all shrink-0 text-muted-foreground/60 hover:text-muted-foreground"
+													className="size-10 flex items-center justify-center hover:bg-muted rounded-lg transition-all shrink-0 text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
 													aria-label={`Supprimer "${term}"`}
 												>
 													<X className="size-4" />
@@ -191,16 +253,16 @@ export function QuickSearchDialog({
 							{collections.length > 0 && (
 								<section>
 									<h2 className="font-display text-sm font-medium text-muted-foreground tracking-wide flex items-center gap-2 mb-3">
-										<Layers className="size-4" />
+										<Layers className="size-4" aria-hidden="true" />
 										Collections
 									</h2>
-									<Stagger className="grid grid-cols-2 gap-2" stagger={0.025} delay={0.1} y={8}>
+									<Stagger className="grid grid-cols-2 gap-2" stagger={0.025} delay={0.1} y={8} role="list">
 										{collections.map((collection) => (
-											<Tap key={collection.slug}>
+											<Tap key={collection.slug} role="listitem">
 												<Link
 													href={`/collections/${collection.slug}`}
 													onClick={close}
-													className="block px-4 py-3 min-h-11 rounded-xl bg-muted/30 hover:bg-muted border border-transparent hover:border-border transition-all text-left font-medium"
+													className="block px-4 py-3 min-h-11 rounded-xl bg-muted/30 hover:bg-muted border border-transparent hover:border-border transition-all text-left font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
 												>
 													{collection.name}
 												</Link>
@@ -214,16 +276,16 @@ export function QuickSearchDialog({
 							{productTypes.length > 0 && (
 								<section>
 									<h2 className="font-display text-sm font-medium text-muted-foreground tracking-wide flex items-center gap-2 mb-3">
-										<Sparkles className="size-4" />
+										<Sparkles className="size-4" aria-hidden="true" />
 										Categories
 									</h2>
-									<Stagger className="grid grid-cols-2 gap-2" stagger={0.025} delay={0.15} y={8}>
+									<Stagger className="grid grid-cols-2 gap-2" stagger={0.025} delay={0.15} y={8} role="list">
 										{productTypes.map((type) => (
-											<Tap key={type.slug}>
+											<Tap key={type.slug} role="listitem">
 												<Link
 													href={`/produits/${type.slug}`}
 													onClick={close}
-													className="block px-4 py-3 min-h-11 rounded-xl bg-muted/30 hover:bg-muted border border-transparent hover:border-border transition-all text-left font-medium"
+													className="block px-4 py-3 min-h-11 rounded-xl bg-muted/30 hover:bg-muted border border-transparent hover:border-border transition-all text-left font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
 												>
 													{type.label}
 												</Link>
@@ -235,9 +297,9 @@ export function QuickSearchDialog({
 
 							{/* Empty State */}
 							{!hasContent && (
-								<div className="text-center py-8">
+								<div className="text-center py-8" role="status">
 									<div className="relative mx-auto mb-4 w-16 h-16 flex items-center justify-center">
-										<Search className="size-10 text-muted-foreground/20" />
+										<Search className="size-10 text-muted-foreground/20" aria-hidden="true" />
 									</div>
 									<p className="text-sm text-muted-foreground">
 										Trouvez votre prochain bijou
