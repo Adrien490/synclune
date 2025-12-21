@@ -51,14 +51,17 @@ export function NavbarSkeleton() {
 							</div>
 						</div>
 
-						{/* Section droite: Compte + Favoris + Panier */}
+						{/* Section droite: Favoris + Recherche + Compte + Panier */}
 						<div className="flex flex-1 items-center justify-end">
-							<div className="flex items-center gap-2 lg:gap-3">
-								{/* Icône compte skeleton (visible sur sm+ seulement) */}
-								<div className="hidden sm:inline-flex h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />
-
+							<div className="flex items-center gap-2 sm:gap-3">
 								{/* Icône favoris skeleton (toujours visible) */}
 								<div className="h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />
+
+								{/* Icône recherche skeleton (visible sur sm+ seulement) */}
+								<div className="hidden sm:inline-flex h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />
+
+								{/* Icône compte skeleton (visible sur sm+ seulement) */}
+								<div className="hidden sm:inline-flex h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />
 
 								{/* Icône panier skeleton (toujours visible) */}
 								<div className="h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />

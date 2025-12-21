@@ -38,9 +38,9 @@ type SearchInputProps = {
 const sizeStyles = {
 	sm: {
 		container: "h-11 rounded-md",
-		input: "h-11 pl-10 pr-10 text-base sm:text-sm",
+		input: "h-11 pl-10 pr-11 text-base sm:text-sm",
 		iconLeft: "left-3",
-		clearButton: "size-9",
+		clearButton: "size-11",
 		clearIcon: "size-4",
 		submitButton: "size-11 rounded-md",
 	},
@@ -48,7 +48,7 @@ const sizeStyles = {
 		container: "h-12 rounded-xl",
 		input: "h-12 pl-12 pr-12 text-base",
 		iconLeft: "left-4",
-		clearButton: "size-10",
+		clearButton: "size-12",
 		clearIcon: "size-5",
 		submitButton: "size-12 rounded-xl",
 	},
@@ -156,7 +156,7 @@ export function SearchInput({
 			role="search"
 			onSubmit={handleSubmit}
 			className={cn("flex gap-2", className)}
-			data-pending={isPending ? "" : undefined}
+			data-pending={isPending ? "true" : undefined}
 		>
 			<div
 				className={cn(
@@ -176,13 +176,9 @@ export function SearchInput({
 					)}
 				>
 					{isPending && mode === "live" ? (
-						<MiniDotsLoader
-							size="sm"
-							color="primary"
-							className="group-hover:text-foreground/70 group-focus-within:text-primary transition-colors duration-150"
-						/>
+						<MiniDotsLoader size="sm" color="primary" />
 					) : (
-						<Search className="h-4 w-4 group-hover:text-foreground/70 group-focus-within:text-primary transition-colors duration-150" />
+						<Search className="size-4" />
 					)}
 				</div>
 

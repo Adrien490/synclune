@@ -62,6 +62,9 @@ export default function ScrollFade({
     const container = containerRef.current;
     if (!container) return;
 
+    // Feature check pour anciens navigateurs
+    if (typeof ResizeObserver === "undefined") return;
+
     const onScroll = () => checkScroll();
     container.addEventListener("scroll", onScroll, { passive: true });
 

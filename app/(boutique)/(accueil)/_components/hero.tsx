@@ -60,14 +60,13 @@ export function Hero() {
                   <span className="hidden sm:inline">
                     Crées à la main pour des occasions particulières, ou pour sublimer votre quotidien{" "}
                   </span>
-                  <span role="img" aria-label="coeur">
-                    <Heart
-                      size={22}
-                      fill="currentColor"
-                      className="text-primary inline align-middle"
-                      aria-hidden="true"
-                    />
-                  </span>
+                  <Heart
+                    size={22}
+                    fill="currentColor"
+                    className="text-primary inline align-middle"
+                    role="img"
+                    aria-label="coeur"
+                  />
                 </p>
               </Fade>
             </div>
@@ -78,11 +77,10 @@ export function Hero() {
                 <Button
                   asChild
                   size="lg"
-                  className="shadow-lg font-semibold w-full sm:w-auto"
+                  className="shadow-lg font-medium w-full sm:w-auto"
                 >
                   <Link
                     href="/produits"
-                    aria-label="Découvrir mes créations de bijoux artisanaux colorés"
                     className="flex items-center justify-center"
                   >
                     Découvrir la boutique
@@ -92,11 +90,10 @@ export function Hero() {
                   asChild
                   size="lg"
                   variant="secondary"
-                  className="shadow-md font-semibold w-full sm:w-auto"
+                  className="shadow-md font-medium w-full sm:w-auto"
                 >
                   <Link
                     href="/personnalisation"
-                    aria-label="Créer un bijou personnalisé sur-mesure - Contact gratuit"
                     className="flex items-center justify-center"
                   >
                     <span className="sm:hidden">Personnalisation</span>
@@ -112,7 +109,7 @@ export function Hero() {
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   Suivez-moi :
                 </span>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <Link
                     href={BRAND.social.instagram.url}
                     target="_blank"

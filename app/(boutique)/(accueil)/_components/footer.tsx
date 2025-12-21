@@ -23,15 +23,6 @@ export function Footer() {
 			itemScope
 			itemType="https://schema.org/Organization"
 		>
-			{/* Meta tags invisibles pour schema.org (crawlables) */}
-			<meta itemProp="name" content="Synclune" />
-			<meta
-				itemProp="description"
-				content="Créatrice de bijoux artisanaux faits main à Nantes - Créations uniques pour occasions particulières"
-			/>
-			<meta itemProp="url" content="https://synclune.fr" />
-			<link itemProp="logo" href="https://synclune.fr/logo.png" />
-
 			{/* Contenu sr-only pour voice search */}
 			<p className="sr-only">
 				Footer du site de Synclune, créatrice de bijoux faits main avec amour.
@@ -51,13 +42,7 @@ export function Footer() {
 					{/* Colonne 1: Logo + phrase perso */}
 					<div className="order-1 space-y-4">
 						<div className="mb-4">
-							{/* Logo responsive: 40px mobile → 48px desktop */}
-							<div className="lg:hidden">
-								<Logo href="/" size={40} />
-							</div>
-							<div className="hidden lg:block">
-								<Logo href="/" size={48} />
-							</div>
+							<Logo href="/" size={40} className="lg:[&_>_div]:size-12" />
 						</div>
 						<div className="space-y-2 max-w-xs">
 							<p className="text-sm/6 antialiased text-muted-foreground">
@@ -126,9 +111,9 @@ export function Footer() {
 						>
 							Navigation
 						</h3>
-						<ul className="space-y-2" role="list">
+						<ul className="space-y-2">
 							{footerNavItems.map((item, index) => (
-								<li key={index} role="listitem">
+								<li key={index}>
 									<Link
 										href={item.href}
 										className="text-sm/6 antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 rounded-lg inline-flex items-center px-3 py-2 min-h-11"
@@ -155,7 +140,7 @@ export function Footer() {
 							<a
 								href={`mailto:${BRAND.contact.email}`}
 								itemProp="email"
-								className="inline-flex items-center px-3 py-2 min-h-11 text-sm/6 antialiased font-medium text-foreground hover:bg-accent rounded-lg transition-colors duration-200 break-all focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+								className="inline-flex items-center px-3 py-2 min-h-11 text-sm/6 antialiased font-medium text-foreground hover:bg-accent rounded-lg transition-colors duration-200 break-words focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
 								aria-label="Envoyer un email à Synclune"
 							>
 								{BRAND.contact.email}
@@ -191,20 +176,16 @@ export function Footer() {
 					</p>
 					<nav
 						aria-label="Liens légaux"
-						className="flex flex-wrap justify-center items-center"
+						className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center items-center gap-x-1"
 					>
-						{legalLinks.map((link, index) => (
-							<span key={index} className="inline-flex items-center">
-								<Link
-									href={link.href}
-									className="text-sm antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 rounded-lg px-3 py-2 min-h-11 inline-flex items-center"
-								>
-									{link.label}
-								</Link>
-								{index < legalLinks.length - 1 && (
-									<span className="text-muted-foreground/50 select-none" aria-hidden="true">·</span>
-								)}
-							</span>
+						{legalLinks.map((link) => (
+							<Link
+								key={link.href}
+								href={link.href}
+								className="text-sm antialiased text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 rounded-lg px-3 py-2 min-h-11 inline-flex items-center justify-center sm:justify-start"
+							>
+								{link.label}
+							</Link>
 						))}
 					</nav>
 				</div>

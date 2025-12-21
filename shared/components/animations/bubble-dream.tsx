@@ -2,7 +2,8 @@
 
 import { cn } from "@/shared/utils/cn";
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { memo, useRef } from "react";
+import { useRef } from "react";
+import { seededRandom } from "./particle-system/utils";
 
 // ============================================================================
 // TYPES
@@ -102,25 +103,30 @@ const REDUCED_MOTION_ANIMATION = {
 // ============================================================================
 
 /**
- * Génère un nombre aléatoire entre min et max
+ * Génère un nombre entre min et max avec un seed déterministe
+ * Évite les différences d'hydratation SSR/CSR
  */
-const random = (min: number, max: number): number =>
-	Math.random() * (max - min) + min;
+const randomBetween = (min: number, max: number, seed: number): number =>
+	min + seededRandom(seed) * (max - min);
 
 /**
- * Génère les données des bulles
+ * Génère les données des bulles de manière déterministe
+ * Utilise seededRandom pour cohérence SSR/CSR
  */
 const generateBubbles = (count: number): Bubble[] => {
-	return Array.from({ length: count }, (_, i) => ({
-		id: i,
-		size: random(DEFAULT_CONFIG.SIZE_MIN, DEFAULT_CONFIG.SIZE_MAX),
-		left: random(0, 100),
-		delay: random(0, DEFAULT_CONFIG.DELAY_MAX),
-		duration: random(DEFAULT_CONFIG.DURATION_MIN, DEFAULT_CONFIG.DURATION_MAX),
-		opacity: random(DEFAULT_CONFIG.OPACITY_MIN, DEFAULT_CONFIG.OPACITY_MAX),
-		waveAmplitude: random(DEFAULT_CONFIG.WAVE_MIN, DEFAULT_CONFIG.WAVE_MAX),
-		color: BUBBLE_COLORS[Math.floor(Math.random() * BUBBLE_COLORS.length)],
-	}));
+	return Array.from({ length: count }, (_, i) => {
+		const seed = i * 1000;
+		return {
+			id: i,
+			size: randomBetween(DEFAULT_CONFIG.SIZE_MIN, DEFAULT_CONFIG.SIZE_MAX, seed + 1),
+			left: randomBetween(0, 100, seed + 2),
+			delay: randomBetween(0, DEFAULT_CONFIG.DELAY_MAX, seed + 3),
+			duration: randomBetween(DEFAULT_CONFIG.DURATION_MIN, DEFAULT_CONFIG.DURATION_MAX, seed + 4),
+			opacity: randomBetween(DEFAULT_CONFIG.OPACITY_MIN, DEFAULT_CONFIG.OPACITY_MAX, seed + 5),
+			waveAmplitude: randomBetween(DEFAULT_CONFIG.WAVE_MIN, DEFAULT_CONFIG.WAVE_MAX, seed + 6),
+			color: BUBBLE_COLORS[i % BUBBLE_COLORS.length],
+		};
+	});
 };
 
 // ============================================================================
@@ -262,7 +268,7 @@ const BubbleDreamBase = ({
  * **Lisibilité** : ⭐⭐⭐⭐⭐ (bulles transparentes, fond toujours visible)
  *
  * **Performance** :
- * - Optimisé avec React.memo et useMemo
+ * - Génération déterministe (seededRandom) pour cohérence SSR/CSR
  * - Adaptatif : moins de bulles sur mobile
  * - Respecte prefers-reduced-motion
  * - Utilise will-change pour GPU acceleration
@@ -279,5 +285,4 @@ const BubbleDreamBase = ({
  * <BubbleDream intensity={0.25} />
  * ```
  */
-export const BubbleDream = memo(BubbleDreamBase);
-BubbleDream.displayName = "BubbleDream";
+export { BubbleDreamBase as BubbleDream };

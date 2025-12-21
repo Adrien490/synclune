@@ -4,7 +4,7 @@ import { OpenLightboxButton } from "@/modules/media/components/open-lightbox-but
 import { Button } from "@/shared/components/ui/button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { cn } from "@/shared/utils/cn";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, ZoomIn, Hand } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useRef } from "react";
@@ -189,7 +189,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 							<div className="hidden lg:block order-1">
 								<ScrollFade
 									axis="vertical"
-									className="max-h-[min(500px,60vh)]"
+									className="max-h-[min(520px,70vh)]"
 									hideScrollbar={false}
 								>
 									<div className="flex flex-col gap-2 pr-1">
@@ -239,7 +239,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 								<button
 									type="button"
 									onClick={openLightbox}
-									className="hidden sm:flex absolute top-4 right-4 z-20 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1.5 rounded-full text-sm font-medium shadow-lg items-center gap-1.5 hover:bg-black/80 active:scale-95 transition-all sm:opacity-0 sm:group-hover:opacity-100"
+									className="hidden sm:flex absolute top-4 right-4 z-20 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1.5 rounded-full text-sm font-medium shadow-lg items-center gap-1.5 hover:bg-black/80 active:scale-95 transition-all sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/60"
 									aria-label="Zoomer l'image en plein ecran"
 								>
 									<ZoomIn className="w-4 h-4" />
@@ -265,7 +265,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 											}}
 											aria-selected={i === optimisticIndex}
 											aria-label={`Image ${i + 1} sur ${safeImages.length}`}
-											className="size-6 flex items-center justify-center touch-manipulation"
+											className="size-11 flex items-center justify-center touch-manipulation"
 										>
 											<span
 												className={cn(
@@ -283,14 +283,16 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 							{/* Indicateur de swipe - Mobile uniquement, première visite seulement */}
 							{/* 4.5s total = ~3s visible (15%-85% de l'animation) */}
 							{safeImages.length > 1 && optimisticIndex === 0 && !prefersReducedMotion && !hasSeenSwipeHint && (
-								<div
-									className="sm:hidden absolute bottom-14 left-1/2 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full animate-[gallery-swipe-hint_4.5s_ease-in-out_forwards]"
+								<button
+									type="button"
+									className="sm:hidden absolute bottom-14 left-1/2 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full animate-[gallery-swipe-hint_4.5s_ease-in-out_forwards] cursor-pointer"
 									aria-hidden="true"
+									onClick={() => markSwipeHintSeen()}
 									onAnimationEnd={() => markSwipeHintSeen()}
 								>
 									<Hand className="w-3.5 h-3.5 animate-[swipe-hand_0.8s_ease-in-out_infinite]" />
 									<span>Glisser pour voir plus</span>
-								</div>
+								</button>
 							)}
 
 							{/* Embla Carousel - Glissement fluide natif */}
@@ -302,6 +304,8 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 									{safeImages.map((media, index) => (
 										<div
 											key={media.id}
+											role="group"
+											aria-roledescription="slide"
 											tabIndex={index === optimisticIndex ? 0 : -1}
 											data-slide-index={index}
 											className="flex-[0_0_100%] h-full min-w-0 relative cursor-zoom-in"

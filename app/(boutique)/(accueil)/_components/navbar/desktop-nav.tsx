@@ -34,6 +34,21 @@ interface DesktopNavProps {
 	navItems: NavItemWithChildren[];
 }
 
+/** Classes communes pour les items de navigation avec bordure animee */
+const navItemBaseClasses = cn(
+	"h-auto px-3 py-2 rounded-md text-sm font-medium tracking-normal relative overflow-visible",
+	"transition-all duration-300 ease-out",
+	"group-data-[scrolled=true]:px-2.5 group-data-[scrolled=true]:py-1.5"
+);
+
+/** Bordure bottom animee avec ::after */
+const animatedBorderClasses = cn(
+	"after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0",
+	"after:h-1 after:bg-primary after:origin-center",
+	"after:scale-x-0 after:transition-transform after:duration-200 after:ease-out",
+	"hover:after:scale-x-100 data-[active=true]:after:scale-x-100"
+);
+
 export function DesktopNav({ navItems }: DesktopNavProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 
@@ -51,15 +66,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 							<NavigationMenuItem key={item.href}>
 								<NavigationMenuTrigger
 									data-active={isActive}
-									className={cn(
-										"h-auto px-3 py-2 rounded-md text-sm font-medium tracking-normal relative overflow-visible",
-										"transition-all duration-300 ease-out",
-										"group-data-[scrolled=true]:px-2.5 group-data-[scrolled=true]:py-1.5",
-										// Bordure bottom animée avec ::after (primary pour cohérence avec mobile)
-										"after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-primary after:origin-center",
-										"after:scale-x-0 after:transition-transform after:duration-200 after:ease-out",
-										"hover:after:scale-x-100 data-[active=true]:after:scale-x-100"
-									)}
+									className={cn(navItemBaseClasses, animatedBorderClasses)}
 								>
 									{item.label}
 								</NavigationMenuTrigger>
@@ -148,13 +155,8 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 								active={isActive}
 								className={cn(
 									navigationMenuTriggerStyle(),
-									"h-auto px-3 py-2 rounded-md text-sm font-medium tracking-normal relative overflow-visible",
-									"transition-all duration-300 ease-out",
-									"group-data-[scrolled=true]:px-2.5 group-data-[scrolled=true]:py-1.5",
-									// Bordure bottom animée avec ::after (primary pour cohérence avec mobile)
-									"after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-1 after:bg-primary after:origin-center",
-									"after:scale-x-0 after:transition-transform after:duration-200 after:ease-out",
-									"hover:after:scale-x-100 data-[active=true]:after:scale-x-100"
+									navItemBaseClasses,
+									animatedBorderClasses
 								)}
 							>
 								<Link

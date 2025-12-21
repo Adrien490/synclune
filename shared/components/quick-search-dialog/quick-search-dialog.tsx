@@ -18,7 +18,6 @@ import {
 } from "@/shared/components/ui/dialog"
 import ScrollFade from "@/shared/components/ui/scroll-fade"
 import { useAddRecentSearch } from "@/shared/hooks/use-add-recent-search"
-import { useBackButtonClose } from "@/shared/hooks/use-back-button-close"
 import { useClearRecentSearches } from "@/shared/hooks/use-clear-recent-searches"
 import { useRemoveRecentSearch } from "@/shared/hooks/use-remove-recent-search"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
@@ -107,12 +106,6 @@ export function QuickSearchDialog({
 			focusables[nextIndex].scrollIntoView({ block: "nearest" })
 		}
 	}
-
-	useBackButtonClose({
-		isOpen,
-		onClose: close,
-		id: QUICK_SEARCH_DIALOG_ID,
-	})
 
 	const handleSubmit = (term: string) => {
 		add(term)
@@ -227,9 +220,9 @@ export function QuickSearchDialog({
 						<div className="px-4 py-4 space-y-6">
 							{/* Recent Searches */}
 							{displayedSearches.length > 0 && (
-								<section>
+								<section aria-labelledby="recent-searches-heading">
 									<div className="flex items-center justify-between mb-3">
-										<h2 className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2">
+										<h2 id="recent-searches-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2">
 											<Clock className="size-5" aria-hidden="true" />
 											Recherches recentes
 										</h2>
@@ -262,7 +255,7 @@ export function QuickSearchDialog({
 													type="button"
 													onClick={() => remove(term)}
 													disabled={isPending}
-													className="size-11 flex items-center justify-center rounded-lg transition-all shrink-0 text-muted-foreground/40 opacity-0 group-hover/item:opacity-100 group-focus-within/item:opacity-100 hover:bg-muted hover:text-muted-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
+													className="size-11 flex items-center justify-center rounded-lg transition-all shrink-0 text-muted-foreground/40 md:opacity-0 md:group-hover/item:opacity-100 group-focus-within/item:opacity-100 hover:bg-muted hover:text-muted-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
 													aria-label={`Supprimer "${term}"`}
 												>
 													<X className="size-4" />
@@ -275,14 +268,14 @@ export function QuickSearchDialog({
 
 							{/* Collections */}
 							{collections.length > 0 && (
-								<section>
-									<h2 className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2 mb-3">
+								<section aria-labelledby="collections-heading">
+									<h2 id="collections-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2 mb-3">
 										<Layers className="size-5" aria-hidden="true" />
 										Collections
 									</h2>
-									<Stagger className="grid grid-cols-2 gap-2" stagger={0.015} delay={0.02} y={6} role="list">
+									<Stagger className="grid grid-cols-2 gap-2" stagger={0.015} delay={0.02} y={6}>
 										{collections.map((collection) => (
-											<Tap key={collection.slug} role="listitem">
+											<Tap key={collection.slug}>
 												<Link
 													href={`/collections/${collection.slug}`}
 													onClick={close}
@@ -298,14 +291,14 @@ export function QuickSearchDialog({
 
 							{/* Product Types */}
 							{productTypes.length > 0 && (
-								<section>
-									<h2 className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2 mb-3">
+								<section aria-labelledby="categories-heading">
+									<h2 id="categories-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2 mb-3">
 										<Sparkles className="size-5" aria-hidden="true" />
 										Categories
 									</h2>
-									<Stagger className="grid grid-cols-2 gap-2" stagger={0.015} delay={0.02} y={6} role="list">
+									<Stagger className="grid grid-cols-2 gap-2" stagger={0.015} delay={0.02} y={6}>
 										{productTypes.map((type) => (
-											<Tap key={type.slug} role="listitem">
+											<Tap key={type.slug}>
 												<Link
 													href={`/produits/${type.slug}`}
 													onClick={close}

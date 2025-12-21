@@ -12,6 +12,8 @@ export function MiniDotsLoader({
 }: MiniDotsLoaderProps) {
 	return (
 		<motion.div
+			role="status"
+			aria-label="Chargement en cours"
 			className={cn("inline-flex gap-0.5", className)}
 			variants={loaderAnimations.container}
 			initial="initial"

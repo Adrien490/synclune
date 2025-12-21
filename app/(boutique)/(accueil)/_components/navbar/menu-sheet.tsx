@@ -191,7 +191,7 @@ export function MenuSheet({ navItems, session }: MenuSheetProps) {
 				</div>
 
 				<nav
-					aria-label="Menu principal"
+					aria-label="Menu principal mobile"
 					className={cn(
 						"relative z-10 flex-1 overflow-y-auto px-6",
 						"motion-safe:transition-opacity motion-safe:duration-200",

@@ -1,7 +1,5 @@
 "use client";
 
-import { memo } from "react";
-
 /**
  * Logo Instagram - Version minimaliste
  *
@@ -50,7 +48,7 @@ export interface InstagramIconProps {
 	decorative?: boolean;
 }
 
-export const InstagramIcon = memo(function InstagramIcon({
+export function InstagramIcon({
 	className = "",
 	size = 24,
 	ariaLabel = "Suivre sur Instagram",
@@ -97,7 +95,4 @@ export const InstagramIcon = memo(function InstagramIcon({
 			<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
 		</svg>
 	);
-});
-
-// Display name pour React DevTools et debugging
-InstagramIcon.displayName = "InstagramIcon";
+}

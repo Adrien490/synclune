@@ -54,6 +54,7 @@ export function Autocomplete<T>({
 	// IDs uniques pour eviter les collisions
 	const id = useId();
 	const listboxId = `${id}-listbox`;
+	const hintId = `${id}-hint`;
 	const getItemId = (index: number) => `${id}-item-${index}`;
 
 	// Etats
@@ -64,6 +65,7 @@ export function Autocomplete<T>({
 	const [localValue, setLocalValue] = useState(value);
 
 	// Refs
+	const inputRef = useRef<HTMLInputElement>(null);
 	const blurTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 	const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -172,6 +174,10 @@ export function Autocomplete<T>({
 		onSelect(item);
 		setIsOpen(false);
 		setActiveIndex(-1);
+		// Redonner le focus a l'input sur desktop
+		if (!isMobile) {
+			inputRef.current?.focus();
+		}
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -267,8 +273,8 @@ export function Autocomplete<T>({
 						>
 							<Image
 								src={imageData.src}
-								alt=""
-								aria-hidden="true"
+								alt={imageData.alt}
+								aria-hidden={!imageData.alt}
 								fill
 								sizes={`${imageSize}px`}
 								quality={80}
@@ -349,7 +355,10 @@ export function Autocomplete<T>({
 		if (!showResultsCount || !hasResults || isLoading) return null;
 
 		return (
-			<li className="px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/30">
+			<li
+				role="presentation"
+				className="px-3 py-1.5 text-xs text-muted-foreground border-b bg-muted/30"
+			>
 				{items.length} résultat{items.length > 1 ? "s" : ""}
 			</li>
 		);
@@ -397,6 +406,7 @@ export function Autocomplete<T>({
 					<Input
 						name={name}
 						type="text"
+						role="combobox"
 						disabled={disabled}
 						value={localValue}
 						readOnly
@@ -430,7 +440,6 @@ export function Autocomplete<T>({
 								</button>
 							</DrawerClose>
 							<Input
-								name={`${name}-mobile`}
 								type="text"
 								autoFocus
 								value={localValue}
@@ -451,6 +460,7 @@ export function Autocomplete<T>({
 								aria-activedescendant={
 									activeIndex >= 0 ? getItemId(activeIndex) : undefined
 								}
+								aria-describedby={showMinQueryHint ? hintId : undefined}
 								autoComplete="off"
 							/>
 						</div>
@@ -459,6 +469,7 @@ export function Autocomplete<T>({
 						<AnimatePresence>
 							{showMinQueryHint && (
 								<motion.p
+									id={hintId}
 									className="text-sm text-muted-foreground px-4 py-2 border-b"
 									initial={AUTOCOMPLETE_ANIMATIONS.hint.initial}
 									animate={AUTOCOMPLETE_ANIMATIONS.hint.animate}
@@ -498,6 +509,7 @@ export function Autocomplete<T>({
 			<div className={cn("relative w-full", className)}>
 				<div className="relative">
 					<Input
+						ref={inputRef}
 						name={name}
 						type="text"
 						disabled={disabled}
@@ -522,6 +534,7 @@ export function Autocomplete<T>({
 						aria-activedescendant={
 							showResults && activeIndex >= 0 ? getItemId(activeIndex) : undefined
 						}
+						aria-describedby={showMinQueryHint ? hintId : undefined}
 						autoComplete="off"
 					/>
 				</div>
@@ -530,6 +543,7 @@ export function Autocomplete<T>({
 				<AnimatePresence>
 					{showMinQueryHint && (
 						<motion.p
+							id={hintId}
 							className="text-sm md:text-xs text-muted-foreground mt-1.5 ml-0.5"
 							initial={AUTOCOMPLETE_ANIMATIONS.hint.initial}
 							animate={AUTOCOMPLETE_ANIMATIONS.hint.animate}
@@ -550,7 +564,7 @@ export function Autocomplete<T>({
 							id={listboxId}
 							role="listbox"
 							aria-label="Résultats de recherche"
-							className="absolute z-10 w-full mt-1 max-h-80 overflow-auto rounded-md border shadow-lg py-1 text-sm focus:outline-hidden bg-background"
+							className="absolute z-50 w-full mt-1 max-h-80 overflow-auto rounded-md border shadow-lg py-1 text-sm focus:outline-hidden bg-background"
 							initial={AUTOCOMPLETE_ANIMATIONS.dropdown.initial}
 							animate={AUTOCOMPLETE_ANIMATIONS.dropdown.animate}
 							exit={AUTOCOMPLETE_ANIMATIONS.dropdown.exit}

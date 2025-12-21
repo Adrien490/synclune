@@ -52,7 +52,6 @@ export function Reveal({
 		<motion.div
 			className={className}
 			role={role}
-			style={{ willChange: "opacity, transform" }}
 			initial={{ opacity: 0, y }}
 			whileInView={{ opacity: 1, y: 0 }}
 			viewport={{ once, amount }}

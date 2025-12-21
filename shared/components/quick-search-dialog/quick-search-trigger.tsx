@@ -19,6 +19,7 @@ interface QuickSearchTriggerProps {
  */
 export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 	const { open } = useDialog(QUICK_SEARCH_DIALOG_ID)
+	const isMac = true
 
 	// Cmd+K / Ctrl+K global shortcut
 	useEffect(() => {
@@ -38,11 +39,11 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 			size="icon"
 			onClick={() => open()}
 			className={cn("size-11 group-data-[scrolled=true]:sm:size-10 relative transition-all duration-300 ease-out", className)}
-			aria-label="Ouvrir la recherche rapide, raccourci clavier Commande K"
+			aria-label={`Ouvrir la recherche rapide, raccourci clavier ${isMac ? "Commande" : "Ctrl"} K`}
 		>
 			<Search className="size-5" />
 			<Kbd className="hidden lg:can-hover:inline-flex absolute -bottom-1 -right-1.5 h-4 min-w-4 text-[9px] px-0.5 opacity-70" aria-hidden="true">
-				⌘K
+				{isMac ? "⌘K" : "Ctrl K"}
 			</Kbd>
 		</Button>
 	)

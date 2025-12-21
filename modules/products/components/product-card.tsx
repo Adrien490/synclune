@@ -119,6 +119,7 @@ export function ProductCard({
 
 	return (
 		<article
+			aria-labelledby={titleId}
 			className={cn(
 				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent gap-4",
 				// Transition optimisée avec cubic-bezier pour fluidité
@@ -220,7 +221,6 @@ export function ProductCard({
 				{/* Titre cliquable */}
 				<Link
 					href={productUrl}
-					tabIndex={0}
 					className="block focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm"
 					aria-label={`Voir ${title}`}
 				>

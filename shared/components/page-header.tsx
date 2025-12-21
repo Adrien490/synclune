@@ -172,7 +172,7 @@ export function PageHeader({
 												? breadcrumbs[breadcrumbs.length - 2].href
 												: "/"
 										}
-										className="shrink-0 inline-flex items-center justify-center size-9 -ml-2 text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+										className="shrink-0 inline-flex items-center justify-center size-11 -ml-3 text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
 										aria-label={`Retour vers ${
 											breadcrumbs.length > 1
 												? breadcrumbs[breadcrumbs.length - 2].label
@@ -182,9 +182,12 @@ export function PageHeader({
 										<ChevronLeft className="size-5" />
 									</Link>
 									{titleSlot ?? (
-										<h1 className="text-2xl font-display font-semibold text-foreground tracking-normal truncate flex-1 min-w-0">
+										<span
+											className="text-2xl font-display font-semibold text-foreground tracking-normal truncate flex-1 min-w-0"
+											aria-hidden="true"
+										>
 											{title}
-										</h1>
+										</span>
 									)}
 									{/* Actions mobile - alignées à droite */}
 									{displayActions && (
@@ -229,7 +232,7 @@ export function PageHeader({
 											>
 												<span aria-hidden="true">/</span>
 												{index === breadcrumbs.length - 1 ? (
-													// Dernier élément = page active (pas de lien, mais schema.org name)
+													// Dernier élément = page active (pas de lien, mais schema.org complet)
 													<>
 														<span
 															className="text-foreground font-medium"
@@ -238,6 +241,7 @@ export function PageHeader({
 														>
 															{item.label}
 														</span>
+														<meta itemProp="item" content={item.href} />
 														<meta
 															itemProp="position"
 															content={String(index + 2)}
@@ -340,7 +344,12 @@ export function PageHeaderSkeleton({
 }: PageHeaderSkeletonProps) {
 	if (variant === "compact") {
 		return (
-			<div className={cn("space-y-6 mb-4 md:mb-6 animate-pulse", className)}>
+			<div
+				className={cn("space-y-6 mb-4 md:mb-6 animate-pulse", className)}
+				role="status"
+				aria-busy="true"
+				aria-label="Chargement de l'en-tête"
+			>
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
 					<div className="min-w-0 flex-1 space-y-3">
 						<div className="h-9 w-48 bg-muted rounded" />
@@ -357,7 +366,12 @@ export function PageHeaderSkeleton({
 	}
 
 	return (
-		<header className={cn("relative overflow-hidden bg-background border-b border-border", className)}>
+		<header
+			className={cn("relative overflow-hidden bg-background border-b border-border", className)}
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement de l'en-tête"
+		>
 			<div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-32 pb-6 animate-pulse">
 				<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6">
 					<div className="min-w-0 flex-1 space-y-2">

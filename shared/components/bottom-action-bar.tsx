@@ -29,6 +29,33 @@ const IGNORED_FILTER_PARAMS = [
 	"filter_sortBy",
 ] as const;
 
+interface ActiveBadgeProps {
+	count?: number;
+	showDot?: boolean;
+}
+
+function ActiveBadge({ count, showDot = false }: ActiveBadgeProps) {
+	if (showDot && !count) {
+		return (
+			<span
+				className="absolute top-1.5 right-1/2 translate-x-5 size-2.5 bg-primary rounded-full ring-2 ring-background"
+				aria-hidden="true"
+			/>
+		);
+	}
+	if (count && count > 0) {
+		return (
+			<span
+				className="absolute -top-0.5 right-1/2 translate-x-6 min-w-[18px] h-[18px] bg-primary text-primary-foreground rounded-full text-[11px] flex items-center justify-center font-semibold px-1 ring-2 ring-background"
+				aria-hidden="true"
+			>
+				{count > 9 ? "9+" : count}
+			</span>
+		);
+	}
+	return null;
+}
+
 /**
  * Barre d'actions fixe en bas pour mobile.
  *
@@ -47,13 +74,17 @@ const IGNORED_FILTER_PARAMS = [
  */
 export function BottomActionBar({ sortOptions, className }: BottomActionBarProps) {
 	const [sortOpen, setSortOpen] = useState(false);
+	const [focusedIndex, setFocusedIndex] = useState(0);
 	const { open: openSearch } = useDialog(QUICK_SEARCH_DIALOG_ID);
 	const { open: openFilter } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const searchParams = useSearchParams();
 	const prefersReducedMotion = useReducedMotion();
 
-	// Refs pour la navigation clavier entre boutons
-	const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+	// Refs individuelles pour les boutons
+	const searchButtonRef = useRef<HTMLButtonElement>(null);
+	const sortButtonRef = useRef<HTMLButtonElement>(null);
+	const filterButtonRef = useRef<HTMLButtonElement>(null);
+	const buttonRefs = [searchButtonRef, sortButtonRef, filterButtonRef];
 
 	// Calculer si recherche active
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
@@ -61,9 +92,9 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 	// Calculer si tri actif
 	const hasActiveSort = searchParams.has("filter_sortBy");
 
-	// Calculer le nombre de filtres actifs (detection dynamique)
-	const activeFiltersCount = Array.from(searchParams.keys()).filter(
-		(key) => !IGNORED_FILTER_PARAMS.includes(key as (typeof IGNORED_FILTER_PARAMS)[number])
+	// Calculer le nombre de filtres actifs (compte toutes les valeurs, pas seulement les clés)
+	const activeFiltersCount = Array.from(searchParams.entries()).filter(
+		([key]) => !IGNORED_FILTER_PARAMS.includes(key as (typeof IGNORED_FILTER_PARAMS)[number])
 	).length;
 
 	const hasActiveFilters = activeFiltersCount > 0;
@@ -105,7 +136,8 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 		}
 
 		if (nextIndex !== null) {
-			buttonRefs.current[nextIndex]?.focus();
+			setFocusedIndex(nextIndex);
+			buttonRefs[nextIndex].current?.focus();
 		}
 	};
 
@@ -122,29 +154,6 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 
 	const iconClassName = "size-5";
 	const labelClassName = "text-xs font-medium"; // 12px au lieu de 11px
-
-	// Composant Badge pour les indicateurs actifs
-	const ActiveBadge = ({ count, showDot = false }: { count?: number; showDot?: boolean }) => {
-		if (showDot && !count) {
-			return (
-				<span
-					className="absolute top-1.5 right-1/2 translate-x-5 size-2.5 bg-primary rounded-full ring-2 ring-background"
-					aria-hidden="true"
-				/>
-			);
-		}
-		if (count && count > 0) {
-			return (
-				<span
-					className="absolute -top-0.5 right-1/2 translate-x-6 min-w-[18px] h-[18px] bg-primary text-primary-foreground rounded-full text-[10px] flex items-center justify-center font-semibold px-1 ring-2 ring-background"
-					aria-hidden="true"
-				>
-					{count > 9 ? "9+" : count}
-				</span>
-			);
-		}
-		return null;
-	};
 
 	return (
 		<>
@@ -174,11 +183,11 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 				>
 					{/* Recherche */}
 					<button
-						ref={(el) => { buttonRefs.current[0] = el; }}
+						ref={searchButtonRef}
 						type="button"
 						onClick={() => openSearch()}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
-						tabIndex={0}
+						tabIndex={focusedIndex === 0 ? 0 : -1}
 						className={buttonClassName}
 						aria-label={
 							hasActiveSearch
@@ -193,11 +202,11 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 
 					{/* Tri */}
 					<button
-						ref={(el) => { buttonRefs.current[1] = el; }}
+						ref={sortButtonRef}
 						type="button"
 						onClick={() => setSortOpen(true)}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
-						tabIndex={-1}
+						tabIndex={focusedIndex === 1 ? 0 : -1}
 						className={buttonClassName}
 						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
 					>
@@ -208,11 +217,11 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 
 					{/* Filtres */}
 					<button
-						ref={(el) => { buttonRefs.current[2] = el; }}
+						ref={filterButtonRef}
 						type="button"
 						onClick={() => openFilter()}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
-						tabIndex={-1}
+						tabIndex={focusedIndex === 2 ? 0 : -1}
 						className={buttonClassName}
 						aria-label={
 							hasActiveFilters

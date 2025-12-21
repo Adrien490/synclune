@@ -2,7 +2,7 @@ import { Fade, Reveal, Stagger } from "@/shared/components/animations";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
-import { Heart, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export function AtelierStory() {
@@ -87,7 +87,7 @@ export function AtelierStory() {
 							</p>
 							<p>
 								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies.
-								Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base 😂
+								Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span role="img" aria-label="visage qui rit aux larmes">😂</span>
 							</p>
 							<p>
 								Chaque bijou que tu vois ici, j'ai
@@ -97,7 +97,7 @@ export function AtelierStory() {
 							{/* Citation finale mise en valeur avec blockquote */}
 							<blockquote className="relative pl-6 border-l-2 border-primary/70 text-foreground font-medium text-left">
 								<p>Tout est fait à la main !</p>
-								<p>Je mets du cœur à chaque création, j'espère que ça vous plaira ❤️</p>
+								<p>Je mets du cœur à chaque création, j'espère que ça vous plaira <span role="img" aria-label="coeur rouge">❤️</span></p>
 							</blockquote>
 						</Stagger>
 
@@ -131,7 +131,7 @@ export function AtelierStory() {
 						<div className="text-center">
 							<Link
 								href="/personnalisation"
-								className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+								className="inline-block py-3 px-4 -mx-4 text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
 							>
 								Discuter d'un projet personnalisé →
 							</Link>

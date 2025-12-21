@@ -71,9 +71,9 @@ export function ScrollIndicator({
 			aria-label={ariaLabel}
 			tabIndex={isVisible ? 0 : -1}
 			className={cn(
-				// Position au-dessus des zones mask (typiquement 85%+)
+				// Position au-dessus des zones mask avec fallback minimum
 				"absolute left-1/2 -translate-x-1/2 z-20",
-				"bottom-[18%]",
+				"bottom-[max(12%,3rem)]",
 				// Zone tactile 48x48px minimum (p-2.5 + icône 28px = 48px)
 				"p-2.5 rounded-full",
 				// Couleurs avec contraste suffisant
