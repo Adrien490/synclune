@@ -18,6 +18,13 @@ export interface UseCursorPaginationProps {
 	 * de reprendre la navigation depuis le bon endroit
 	 */
 	focusTargetRef?: RefObject<HTMLElement | null>;
+	/**
+	 * Active les raccourcis clavier pour la pagination
+	 * Alt+ArrowLeft = Page précédente
+	 * Alt+ArrowRight = Page suivante
+	 * @default true
+	 */
+	enableKeyboardShortcuts?: boolean;
 }
 
 /**
@@ -33,6 +40,7 @@ export function useCursorPagination({
 	prevCursor,
 	onNavigate,
 	focusTargetRef,
+	enableKeyboardShortcuts = true,
 }: UseCursorPaginationProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -69,11 +77,12 @@ export function useCursorPagination({
 		return new URLSearchParams(searchParams.toString());
 	};
 
-	const handleNext = () => {
-		if (!nextCursor) return;
+	// Navigation functions need to be defined before the keyboard shortcut effect
+	const navigateNext = (nc: string | null) => {
+		if (!nc) return;
 
 		const params = preserveParams();
-		params.set("cursor", nextCursor);
+		params.set("cursor", nc);
 		params.set("direction", "forward");
 
 		startTransition(() => {
@@ -81,17 +90,50 @@ export function useCursorPagination({
 		});
 	};
 
-	const handlePrevious = () => {
-		if (!prevCursor) return;
+	const navigatePrevious = (pc: string | null) => {
+		if (!pc) return;
 
 		const params = preserveParams();
-		params.set("cursor", prevCursor);
+		params.set("cursor", pc);
 		params.set("direction", "backward");
 
 		startTransition(() => {
 			router.push("?" + params.toString(), { scroll: false });
 		});
 	};
+
+	// Raccourcis clavier Alt+Left/Right pour navigation rapide
+	useEffect(() => {
+		if (!enableKeyboardShortcuts) return;
+
+		const handleKeyDown = (e: KeyboardEvent) => {
+			// Ne pas intercepter si on est dans un champ de saisie
+			const target = e.target as HTMLElement;
+			if (
+				target.tagName === "INPUT" ||
+				target.tagName === "TEXTAREA" ||
+				target.isContentEditable
+			) {
+				return;
+			}
+
+			if (e.altKey && e.key === "ArrowLeft" && prevCursor) {
+				e.preventDefault();
+				navigatePrevious(prevCursor);
+			}
+
+			if (e.altKey && e.key === "ArrowRight" && nextCursor) {
+				e.preventDefault();
+				navigateNext(nextCursor);
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [enableKeyboardShortcuts, nextCursor, prevCursor]);
+
+	const handleNext = () => navigateNext(nextCursor);
+	const handlePrevious = () => navigatePrevious(prevCursor);
 
 	const handleReset = () => {
 		const params = preserveParams();

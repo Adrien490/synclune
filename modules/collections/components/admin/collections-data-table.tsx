@@ -3,14 +3,7 @@ import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -69,20 +62,12 @@ export async function CollectionsDataTable({
 
 	if (collections.length === 0) {
 		return (
-			<Empty className="py-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<FolderOpen />
-					</EmptyMedia>
-					<EmptyTitle>Aucune collection trouvée</EmptyTitle>
-					<EmptyDescription>
-						Aucune collection ne correspond aux critères de recherche.
-					</EmptyDescription>
-				</EmptyHeader>
-				<EmptyContent>
-					<CreateCollectionButton />
-				</EmptyContent>
-			</Empty>
+			<TableEmptyState
+				icon={FolderOpen}
+				title="Aucune collection trouvee"
+				description="Aucune collection ne correspond aux criteres de recherche."
+				actionElement={<CreateCollectionButton />}
+			/>
 		);
 	}
 

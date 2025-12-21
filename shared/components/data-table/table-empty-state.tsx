@@ -1,5 +1,6 @@
 import {
 	Empty,
+	EmptyActions,
 	EmptyContent,
 	EmptyDescription,
 	EmptyHeader,
@@ -11,33 +12,35 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 
 export interface TableEmptyStateProps {
-	/** Icône à afficher (composant Lucide) */
+	/** Icone a afficher (composant Lucide) */
 	icon: LucideIcon;
-	/** Titre de l'état vide */
+	/** Titre de l'etat vide */
 	title: string;
-	/** Description de l'état vide */
+	/** Description de l'etat vide */
 	description: string;
-	/** Action optionnelle (bouton) */
+	/** Action optionnelle (bouton avec lien) */
 	action?: {
 		/** Label du bouton */
 		label: string;
 		/** URL de destination */
 		href: string;
 	};
+	/** Element d'action personnalise (alternative a action) */
+	actionElement?: React.ReactNode;
 	/** Classe CSS additionnelle */
 	className?: string;
 }
 
 /**
- * Composant d'état vide standardisé pour les data tables admin
+ * Composant d'etat vide standardise pour les data tables admin
  *
  * @example
  * ```tsx
  * <TableEmptyState
  *   icon={ShoppingBag}
- *   title="Aucune commande trouvée"
- *   description="Aucune commande ne correspond aux critères de recherche."
- *   action={{ label: "Créer une commande", href: "/admin/commandes/nouveau" }}
+ *   title="Aucune commande trouvee"
+ *   description="Aucune commande ne correspond aux criteres de recherche."
+ *   action={{ label: "Creer une commande", href: "/admin/commandes/nouveau" }}
  * />
  * ```
  */
@@ -46,23 +49,26 @@ export function TableEmptyState({
 	title,
 	description,
 	action,
-	className = "py-12",
+	actionElement,
+	className,
 }: TableEmptyStateProps) {
 	return (
-		<Empty className={className} role="status" aria-label={title}>
+		<Empty size="lg" className={className}>
 			<EmptyHeader>
 				<EmptyMedia variant="icon">
-					<Icon aria-hidden="true" />
+					<Icon />
 				</EmptyMedia>
 				<EmptyTitle>{title}</EmptyTitle>
 				<EmptyDescription>{description}</EmptyDescription>
 			</EmptyHeader>
-			{action && (
-				<EmptyContent>
-					<Button asChild>
-						<Link href={action.href}>{action.label}</Link>
-					</Button>
-				</EmptyContent>
+			{(action || actionElement) && (
+				<EmptyActions>
+					{actionElement ?? (
+						<Button asChild>
+							<Link href={action!.href}>{action!.label}</Link>
+						</Button>
+					)}
+				</EmptyActions>
 			)}
 		</Empty>
 	);

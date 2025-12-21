@@ -14,7 +14,7 @@ import {
 } from "@/shared/components/ui/table";
 import { Badge } from "@/shared/components/ui/badge";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/shared/components/ui/empty";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/shared/components/ui/empty";
 import { Bell } from "lucide-react";
 import { StockNotificationsRowActions } from "./stock-notifications-row-actions";
 import { StockNotificationsSelectionToolbar } from "./stock-notifications-selection-toolbar";
@@ -49,7 +49,9 @@ export async function StockNotificationsDataTable({
 				<CardContent className="py-12">
 					<Empty>
 						<EmptyHeader>
-							<Bell className="h-12 w-12 text-muted-foreground" />
+							<EmptyMedia variant="icon">
+								<Bell />
+							</EmptyMedia>
 							<EmptyTitle>Aucune demande de notification</EmptyTitle>
 							<EmptyDescription>
 								Les demandes de notification de retour en stock apparaitront ici.

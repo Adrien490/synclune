@@ -15,6 +15,7 @@ import {
 	ChevronsLeft,
 	Loader2,
 } from "lucide-react";
+import type { RefObject } from "react";
 import { Button } from "../ui/button";
 import { PER_PAGE_OPTIONS } from "./pagination";
 import { useCursorPagination } from "@/shared/hooks/use-cursor-pagination";
@@ -28,6 +29,11 @@ export interface CursorPaginationProps {
 	prevCursor: string | null;
 	/** Options personnalisées pour le nombre d'éléments par page */
 	perPageOptions?: readonly number[] | number[];
+	/**
+	 * Ref vers l'élément qui doit recevoir le focus après navigation
+	 * Améliore l'accessibilité clavier en ramenant le focus au bon endroit
+	 */
+	focusTargetRef?: RefObject<HTMLElement | null>;
 }
 
 export function CursorPagination({
@@ -38,6 +44,7 @@ export function CursorPagination({
 	nextCursor,
 	prevCursor,
 	perPageOptions = PER_PAGE_OPTIONS,
+	focusTargetRef,
 }: CursorPaginationProps) {
 	const {
 		cursor,
@@ -46,7 +53,7 @@ export function CursorPagination({
 		handlePrevious,
 		handleReset,
 		handlePerPageChange,
-	} = useCursorPagination({ nextCursor, prevCursor });
+	} = useCursorPagination({ nextCursor, prevCursor, focusTargetRef });
 
 	const isFirstPage = !cursor;
 	const canNavigate = hasNextPage || hasPreviousPage;
@@ -95,11 +102,11 @@ export function CursorPagination({
 				{ariaLiveMessage}
 			</div>
 			{/* Informations sur la pagination */}
-			<div className="flex items-center gap-3 text-sm">
-				<div className="flex items-center gap-2">
+			<div className="flex items-center gap-2 sm:gap-3 text-sm">
+				<div className="flex items-center gap-1.5 sm:gap-2">
 					<label
 						htmlFor="perPage-select"
-						className="text-xs text-muted-foreground"
+						className="hidden sm:block text-xs text-muted-foreground"
 					>
 						Par page
 					</label>
@@ -110,7 +117,8 @@ export function CursorPagination({
 					>
 						<SelectTrigger
 							id="perPage-select"
-							className="w-[70px] sm:w-[80px] h-9"
+							className="w-16 sm:w-20 h-9"
+							aria-label="Éléments par page"
 						>
 							<SelectValue>{perPage}</SelectValue>
 						</SelectTrigger>
@@ -129,11 +137,13 @@ export function CursorPagination({
 						<>
 							<span className="font-medium text-foreground">
 								{currentPageSize}
-							</span>{" "}
-							résultat{currentPageSize > 1 ? "s" : ""}
+							</span>
+							<span className="hidden sm:inline">
+								{" "}résultat{currentPageSize > 1 ? "s" : ""}
+							</span>
 						</>
 					) : (
-						"Aucun résultat"
+						<span className="hidden sm:inline">Aucun résultat</span>
 					)}
 				</span>
 			</div>
@@ -152,14 +162,14 @@ export function CursorPagination({
 						disabled={isFirstPage || isPending}
 						onClick={handleReset}
 						className={cn(
-							"h-11 md:h-9 gap-1 cursor-pointer",
+							"h-12 md:h-9 gap-1 cursor-pointer",
 							"backdrop-blur-sm",
 							"border-primary/20",
 							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-							"hover:scale-[1.02]",
-							"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-							"active:scale-[0.98]",
-							"transition-all duration-300"
+							"motion-safe:hover:scale-[1.02]",
+							"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+							"motion-safe:active:scale-[0.98]",
+							"motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none"
 						)}
 						aria-label="Retour au début"
 					>
@@ -179,14 +189,14 @@ export function CursorPagination({
 							disabled={!hasPreviousPage || isPending}
 							onClick={handlePrevious}
 							className={cn(
-								"h-11 w-11 md:h-9 md:w-9 cursor-pointer",
+								"h-12 w-12 md:h-9 md:w-9 cursor-pointer",
 								"backdrop-blur-sm",
 								"border-primary/20",
 								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-								"hover:scale-[1.02]",
-								"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-								"active:scale-[0.98]",
-								"transition-all duration-300"
+								"motion-safe:hover:scale-[1.02]",
+								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+								"motion-safe:active:scale-[0.98]",
+								"motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none"
 							)}
 							aria-label="Page précédente"
 						>
@@ -196,7 +206,7 @@ export function CursorPagination({
 						<div
 							role="status"
 							aria-current="page"
-							className="px-3 text-xs sm:text-sm bg-muted/50 min-w-[80px] sm:min-w-[100px] text-center flex items-center justify-center h-11 md:h-9"
+							className="px-3 text-xs sm:text-sm bg-muted/50 min-w-[80px] sm:min-w-[100px] text-center flex items-center justify-center h-12 md:h-9"
 						>
 							<span className="font-medium text-foreground">
 								{!hasPreviousPage && !hasNextPage
@@ -204,8 +214,8 @@ export function CursorPagination({
 									: !hasPreviousPage
 										? "Page 1"
 										: !hasNextPage
-											? "Dernière"
-											: "Suite →"}
+											? "Dernière page"
+											: "Page 2+"}
 							</span>
 						</div>
 
@@ -216,14 +226,14 @@ export function CursorPagination({
 							disabled={!hasNextPage || isPending}
 							onClick={handleNext}
 							className={cn(
-								"h-11 w-11 md:h-9 md:w-9 cursor-pointer",
+								"h-12 w-12 md:h-9 md:w-9 cursor-pointer",
 								"backdrop-blur-sm",
 								"border-primary/20",
 								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-								"hover:scale-[1.02]",
-								"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-								"active:scale-[0.98]",
-								"transition-all duration-300"
+								"motion-safe:hover:scale-[1.02]",
+								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+								"motion-safe:active:scale-[0.98]",
+								"motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none"
 							)}
 							aria-label="Page suivante"
 						>

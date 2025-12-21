@@ -29,15 +29,18 @@ export function OpenLightboxButton({
 	const historyPushedRef = useRef(false);
 
 	const openLightbox = () => {
-		// Pousser un état dans l'historique pour intercepter le bouton retour
-		history.pushState({ lightbox: true }, "");
-		historyPushedRef.current = true;
+		// Guard: verifier que window et history sont disponibles (SSR safety)
+		if (typeof window !== "undefined" && typeof window.history?.pushState === "function") {
+			// Pousser un etat dans l'historique pour intercepter le bouton retour
+			history.pushState({ lightbox: true }, "");
+			historyPushedRef.current = true;
+		}
 		setLightboxOpen(true);
 	};
 
 	const closeLightbox = () => {
-		// Si on a poussé un état, revenir en arrière pour le nettoyer
-		if (historyPushedRef.current) {
+		// Si on a pousse un etat, revenir en arriere pour le nettoyer
+		if (historyPushedRef.current && typeof window !== "undefined") {
 			historyPushedRef.current = false;
 			history.back();
 		}

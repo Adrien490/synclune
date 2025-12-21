@@ -3,13 +3,7 @@ import { TableScrollContainer } from "@/shared/components/table-scroll-container
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -63,22 +57,15 @@ export async function ProductVariantsDataTable({
 		return (
 			<Card>
 				<CardContent className="py-12">
-					<Empty>
-						<EmptyHeader>
-							<EmptyMedia variant="icon">
-								<Package />
-							</EmptyMedia>
-							<EmptyTitle>Aucune variante</EmptyTitle>
-							<EmptyDescription>
-								Ce produit n'a pas encore de variante. Créez-en une pour commencer.
-							</EmptyDescription>
-						</EmptyHeader>
-						<Button asChild variant="primary" className="mt-4">
-							<Link href={`/admin/catalogue/produits/${productSlug}/variantes/nouveau`}>
-								Créer une variante
-							</Link>
-						</Button>
-					</Empty>
+					<TableEmptyState
+						icon={Package}
+						title="Aucune variante"
+						description="Ce produit n'a pas encore de variante. Creez-en une pour commencer."
+						action={{
+							label: "Creer une variante",
+							href: `/admin/catalogue/produits/${productSlug}/variantes/nouveau`,
+						}}
+					/>
 				</CardContent>
 			</Card>
 		);

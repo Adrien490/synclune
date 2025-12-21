@@ -1,17 +1,22 @@
 import { useEffect, type RefObject } from "react";
 
 /**
- * Gère le play/pause automatique des vidéos selon la slide active
- * - Joue la vidéo de la slide active
- * - Met en pause et reset les autres vidéos
+ * Gere le play/pause automatique des videos selon la slide active
+ * - Joue la video de la slide active
+ * - Met en pause et reset les autres videos
+ * - Respecte prefers-reduced-motion (WCAG 2.3.3)
  */
 export function useVideoAutoplay(
 	containerRef: RefObject<HTMLDivElement | null>,
-	activeIndex: number
+	activeIndex: number,
+	prefersReducedMotion?: boolean | null
 ): void {
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container) return;
+
+		// Respecter la preference utilisateur pour reduced motion
+		if (prefersReducedMotion) return;
 
 		const videos = container.querySelectorAll("video");
 		videos.forEach((video) => {

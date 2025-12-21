@@ -12,16 +12,8 @@ import { ProductStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -129,24 +121,15 @@ export async function ProductsDataTable({
 
 	if (products.length === 0) {
 		return (
-			<Empty className="py-12">
-				<EmptyHeader>
-					<EmptyMedia>
-						<Package />
-					</EmptyMedia>
-					<EmptyTitle>Aucun bijou trouvé</EmptyTitle>
-					<EmptyDescription>
-						Aucun bijou ne correspond aux critères de recherche.
-					</EmptyDescription>
-				</EmptyHeader>
-				<EmptyContent>
-					<Button asChild variant="primary">
-						<Link href="/admin/catalogue/produits/nouveau">
-							Créer un produit
-						</Link>
-					</Button>
-				</EmptyContent>
-			</Empty>
+			<TableEmptyState
+				icon={Package}
+				title="Aucun bijou trouve"
+				description="Aucun bijou ne correspond aux criteres de recherche."
+				action={{
+					label: "Creer un produit",
+					href: "/admin/catalogue/produits/nouveau",
+				}}
+			/>
 		);
 	}
 

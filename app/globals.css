@@ -450,7 +450,7 @@ textarea {
 	}
 
 	.animate-sparkle-pulse {
-		animation: sparkle-pulse 3s ease-in-out infinite;
+		animation: sparkle-pulse 2s ease-in-out infinite;
 	}
 
 	/* Animation heart-beat pour toast error */

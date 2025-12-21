@@ -111,7 +111,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 
 	// Gestion vidéos: pause/play selon la slide active
 	const emblaContainerRef = useRef<HTMLDivElement>(null);
-	useVideoAutoplay(emblaContainerRef, optimisticIndex);
+	useVideoAutoplay(emblaContainerRef, optimisticIndex, prefersReducedMotion);
 
 	// Preload de l'image suivante
 	usePreloadNextImage(safeImages, optimisticIndex);
@@ -251,18 +251,19 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 							{safeImages.length > 1 && (
 								<div
 									className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-3 py-2"
-									role="group"
+									role="tablist"
 									aria-label="Navigation galerie"
 								>
 									{safeImages.map((_, i) => (
 										<button
 											key={i}
 											type="button"
+											role="tab"
 											onClick={(e) => {
 												e.stopPropagation();
 												navigateToIndex(i);
 											}}
-											aria-current={i === optimisticIndex ? "true" : undefined}
+											aria-selected={i === optimisticIndex}
 											aria-label={`Image ${i + 1} sur ${safeImages.length}`}
 											className="size-6 flex items-center justify-center touch-manipulation"
 										>

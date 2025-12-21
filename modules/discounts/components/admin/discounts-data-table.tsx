@@ -1,14 +1,7 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -61,20 +54,12 @@ export async function DiscountsDataTable({
 
 	if (discounts.length === 0) {
 		return (
-			<Empty className="py-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<Ticket />
-					</EmptyMedia>
-					<EmptyTitle>Aucun code promo trouvé</EmptyTitle>
-					<EmptyDescription>
-						Aucun code promo ne correspond aux critères de recherche.
-					</EmptyDescription>
-				</EmptyHeader>
-				<EmptyContent>
-					<CreateDiscountButton />
-				</EmptyContent>
-			</Empty>
+			<TableEmptyState
+				icon={Ticket}
+				title="Aucun code promo trouve"
+				description="Aucun code promo ne correspond aux criteres de recherche."
+				actionElement={<CreateDiscountButton />}
+			/>
 		);
 	}
 

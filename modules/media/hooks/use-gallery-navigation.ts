@@ -38,12 +38,20 @@ export function useGalleryNavigation({
 	const totalImagesRef = useRef(totalImages);
 	totalImagesRef.current = totalImages;
 
-	// Source de vérité : l'URL (avec validation NaN)
+	// Source de verite : l'URL (avec validation stricte)
 	const rawGalleryParam = searchParams.get("gallery");
-	const parsedIndex = rawGalleryParam ? parseInt(rawGalleryParam, 10) : 0;
+
+	// Validation stricte: rejeter les negatifs, floats et valeurs non-numeriques
+	const parsedIndex = (() => {
+		if (!rawGalleryParam) return 0;
+		const num = Number(rawGalleryParam);
+		// Rejeter NaN, Infinity, negatifs et non-entiers
+		if (!Number.isFinite(num) || !Number.isInteger(num) || num < 0) return 0;
+		return num;
+	})();
 
 	const selectedIndex = totalImages > 0
-		? Math.max(0, Math.min(totalImages - 1, Number.isNaN(parsedIndex) ? 0 : parsedIndex))
+		? Math.max(0, Math.min(totalImages - 1, parsedIndex))
 		: 0;
 
 	// État optimiste pour navigation fluide

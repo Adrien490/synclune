@@ -3,13 +3,7 @@ import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -46,17 +40,11 @@ export async function RefundsDataTable({
 
 	if (refunds.length === 0) {
 		return (
-			<Empty className="py-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<ReceiptText />
-					</EmptyMedia>
-					<EmptyTitle>Aucun remboursement trouvé</EmptyTitle>
-					<EmptyDescription>
-						Aucun remboursement ne correspond aux critères de recherche.
-					</EmptyDescription>
-				</EmptyHeader>
-			</Empty>
+			<TableEmptyState
+				icon={ReceiptText}
+				title="Aucun remboursement trouve"
+				description="Aucun remboursement ne correspond aux criteres de recherche."
+			/>
 		);
 	}
 

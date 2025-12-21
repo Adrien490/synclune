@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, type RefObject } from "react";
 
-/** Délai minimum entre deux navigations clavier (throttle) */
-const KEYBOARD_THROTTLE_MS = 120;
+/** Delai minimum entre deux navigations clavier (throttle) - 80ms pour claviers mecaniques */
+const KEYBOARD_THROTTLE_MS = 80;
 
 interface UseGalleryKeyboardOptions {
 	galleryRef: RefObject<HTMLElement | null>;

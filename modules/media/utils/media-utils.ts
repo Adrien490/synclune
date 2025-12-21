@@ -23,32 +23,37 @@ export function isImage(mediaType: MediaType): boolean {
 	return mediaType === "IMAGE";
 }
 
+/** Mapping des extensions video vers types MIME */
+const VIDEO_MIME_TYPES: Record<string, string> = {
+	webm: "video/webm",
+	ogg: "video/ogg",
+	ogv: "video/ogg",
+	mov: "video/quicktime",
+	avi: "video/x-msvideo",
+	mkv: "video/x-matroska",
+	mp4: "video/mp4",
+};
+
 /**
- * Obtient le type MIME d'une vidéo à partir de son URL
+ * Obtient le type MIME d'une video a partir de son URL
  * Utilise une regex pour extraire l'extension en fin d'URL (avant query string)
- * @param url - L'URL de la vidéo
- * @returns Le type MIME de la vidéo
+ * @param url - L'URL de la video
+ * @returns Le type MIME de la video
  */
 export function getVideoMimeType(url: string): string {
 	// Extraire l'extension de fichier (avant query params)
 	const extensionMatch = url.toLowerCase().match(/\.(\w+)(?:\?|#|$)/);
 	const extension = extensionMatch?.[1];
 
-	switch (extension) {
-		case "webm":
-			return "video/webm";
-		case "ogg":
-		case "ogv":
-			return "video/ogg";
-		case "mov":
-			return "video/quicktime";
-		case "avi":
-			return "video/x-msvideo";
-		case "mkv":
-			return "video/x-matroska";
-		default:
-			return "video/mp4";
+	// Warning si pas d'extension detectee (URLs CDN sans extension)
+	if (!extension) {
+		console.warn(
+			`[Media] Impossible de detecter le type MIME pour l'URL: ${url.substring(0, 100)}... - fallback vers video/mp4`
+		);
+		return "video/mp4";
 	}
+
+	return VIDEO_MIME_TYPES[extension] || "video/mp4";
 }
 
 /**

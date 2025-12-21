@@ -3,13 +3,7 @@ import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -41,17 +35,11 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 
 	if (orders.length === 0) {
 		return (
-			<Empty className="py-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<ShoppingBag />
-					</EmptyMedia>
-					<EmptyTitle>Aucune commande trouvée</EmptyTitle>
-					<EmptyDescription>
-						Aucune commande ne correspond aux critères de recherche.
-					</EmptyDescription>
-				</EmptyHeader>
-			</Empty>
+			<TableEmptyState
+				icon={ShoppingBag}
+				title="Aucune commande trouvee"
+				description="Aucune commande ne correspond aux criteres de recherche."
+			/>
 		);
 	}
 

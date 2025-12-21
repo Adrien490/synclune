@@ -50,12 +50,14 @@ export function GalleryMediaRenderer({
 				{/* Loader vidéo - responsive desktop/mobile */}
 				{isVideoLoading && (
 					<div
+						role="status"
+						aria-live="polite"
 						className={cn(
 							"absolute inset-0 z-10 flex flex-col items-center justify-center gap-3",
 							"bg-muted/80 backdrop-blur-sm"
 						)}
-						aria-label="Chargement de la vidéo"
 					>
+						<span className="sr-only">Chargement de la video en cours</span>
 						{/* Spinner responsive: 24px mobile, 32px desktop */}
 						<Spinner className="size-6 sm:size-8 text-primary" />
 						{/* Label visible sur desktop uniquement */}
@@ -67,13 +69,14 @@ export function GalleryMediaRenderer({
 				<video
 					key={media.id}
 					className="w-full h-full object-cover"
+					controls
 					autoPlay={isActive}
 					muted
 					loop
 					playsInline
 					preload={isActive ? "auto" : "none"}
 					poster={media.thumbnailUrl || undefined}
-					aria-label={media.alt || `${title} - Vidéo ${index + 1}`}
+					aria-label={media.alt || `${title} - Video ${index + 1}`}
 					onError={onError}
 					onCanPlay={() => setIsVideoLoading(false)}
 				>

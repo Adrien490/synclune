@@ -1,3 +1,6 @@
+import { ProductCard } from "@/modules/products/components/product-card";
+import { GetProductsReturn } from "@/modules/products/data/get-products";
+import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -7,9 +10,6 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
-import { ProductCard } from "@/modules/products/components/product-card";
-import { GetProductsReturn } from "@/modules/products/data/get-products";
-import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
 import { SearchX } from "lucide-react";
 import { use } from "react";
 
@@ -53,7 +53,10 @@ export function ProductList({
 	return (
 		<div className="space-y-8">
 			{/* Grille des produits - réaction au data-pending des filtres */}
-			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 transition-all duration-200 group-has-[[data-pending]]/container:blur-[1px] group-has-[[data-pending]]/container:scale-[0.99] group-has-[[data-pending]]/container:pointer-events-none">
+			<div
+				tabIndex={-1}
+				className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 outline-none motion-safe:transition-all motion-safe:duration-200 motion-reduce:transition-none group-has-[[data-pending]]/container:blur-[1px] group-has-[[data-pending]]/container:scale-[0.99] group-has-[[data-pending]]/container:pointer-events-none"
+			>
 				{products.map((product, index) => (
 					<div key={product.id} className="product-item">
 						<ProductCard

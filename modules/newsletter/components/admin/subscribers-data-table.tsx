@@ -2,13 +2,7 @@ import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -39,17 +33,11 @@ export async function SubscribersDataTable({
 
 	if (subscribers.length === 0) {
 		return (
-			<Empty className="py-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<Mail />
-					</EmptyMedia>
-					<EmptyTitle>Aucun abonné trouvé</EmptyTitle>
-					<EmptyDescription>
-						Aucun abonné ne correspond aux critères de recherche.
-					</EmptyDescription>
-				</EmptyHeader>
-			</Empty>
+			<TableEmptyState
+				icon={Mail}
+				title="Aucun abonne trouve"
+				description="Aucun abonne ne correspond aux criteres de recherche."
+			/>
 		);
 	}
 

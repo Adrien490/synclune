@@ -47,6 +47,7 @@ export function GalleryThumbnail({
 			className={cn(
 				"group relative aspect-square overflow-hidden rounded-xl w-full",
 				"border-2 transition-all duration-200 active:scale-95",
+				"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none",
 				isActive
 					? "border-primary shadow-md ring-2 ring-primary/20"
 					: "border-border hover:border-primary/50",

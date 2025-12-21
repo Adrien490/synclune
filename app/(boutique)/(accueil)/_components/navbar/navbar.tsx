@@ -18,8 +18,8 @@ import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarWrapper } from "./navbar-wrapper";
 
-/** Classes communes pour les boutons icônes de la navbar (shrink au scroll) */
-const iconButtonClassName = "relative items-center justify-center size-11 group-data-[scrolled=true]:sm:size-10 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group";
+/** Classes communes pour les boutons icônes de la navbar */
+const iconButtonClassName = "relative items-center justify-center size-11 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group";
 
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
@@ -84,17 +84,16 @@ export async function Navbar() {
 				className="transition-all duration-300 ease-in-out"
 			>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-					<div className="flex h-16 sm:h-20 group-data-[scrolled=true]:sm:h-14 items-center gap-4 transition-all duration-300 ease-out">
+					<div className="flex h-16 sm:h-20 items-center gap-4">
 						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
 						<div className="flex flex-1 items-center lg:flex-none min-w-0">
 							{/* Menu burger (mobile uniquement) */}
 							<MenuSheet navItems={mobileNavItems} session={session} />
 
-							{/* Logo desktop (avec texte) - shrink au scroll */}
 							<Logo
 								href="/"
 								size={48}
-								className="hidden lg:flex min-w-0 max-w-full transition-transform duration-300 ease-out origin-left group-data-[scrolled=true]:scale-[0.9]"
+								className="hidden lg:flex min-w-0 max-w-full"
 								imageClassName="shadow-md hover:shadow-lg transition-shadow duration-300 ease-out"
 								priority
 								sizes="64px"
@@ -120,7 +119,7 @@ export async function Navbar() {
 
 						{/* Section droite: Favoris + Recherche + Compte (dropdown) + Panier */}
 						<div className="flex flex-1 items-center justify-end min-w-0">
-							<div className="flex items-center gap-2 sm:gap-3 group-data-[scrolled=true]:sm:gap-2 shrink-0 transition-all duration-300 ease-out">
+							<div className="flex items-center gap-2 sm:gap-3 shrink-0">
 								{/* Icône favoris (visible sur mobile et desktop) */}
 								<Link
 									href="/favoris"

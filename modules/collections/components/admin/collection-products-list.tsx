@@ -4,14 +4,7 @@ import { ProductStatus } from "@/app/generated/prisma/enums";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -73,22 +66,15 @@ export function CollectionProductsList({
 
 	if (products.length === 0) {
 		return (
-			<Empty className="py-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<Package />
-					</EmptyMedia>
-					<EmptyTitle>Aucun produit dans cette collection</EmptyTitle>
-					<EmptyDescription>
-						Ajoutez des produits a cette collection depuis la page d'edition des produits.
-					</EmptyDescription>
-				</EmptyHeader>
-				<EmptyContent>
-					<Button asChild>
-						<Link href="/admin/catalogue/produits">Voir les produits</Link>
-					</Button>
-				</EmptyContent>
-			</Empty>
+			<TableEmptyState
+				icon={Package}
+				title="Aucun produit dans cette collection"
+				description="Ajoutez des produits a cette collection depuis la page d'edition des produits."
+				action={{
+					label: "Voir les produits",
+					href: "/admin/catalogue/produits",
+				}}
+			/>
 		);
 	}
 

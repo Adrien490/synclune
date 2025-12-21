@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-/** Limite pour éviter les memory leaks avec beaucoup d'erreurs */
+/** Limite pour eviter les memory leaks avec beaucoup d'erreurs */
 const MAX_ERRORS = 500;
-/** Nombre maximum de tentatives de retry par média */
+/** Nombre maximum de tentatives de retry par media */
 const MAX_RETRIES = 3;
-/** Délai de base pour le backoff exponentiel (1s, 2s, 4s) */
+/** Delai de base pour le backoff exponentiel (1s, 2s, 4s) */
 const BACKOFF_BASE_MS = 1000;
 
 export interface UseMediaErrorsReturn {
@@ -43,8 +43,11 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 	// File FIFO pour l'ordre d'insertion (Set ne garantit pas l'ordre dans tous les cas)
 	const errorQueueRef = useRef<string[]>([]);
 
-	// Compteur de retries par média
+	// Compteur de retries par media
 	const retryCountRef = useRef<Map<string, number>>(new Map());
+
+	// Timeouts en cours pour debounce des retries
+	const retryTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
 	// Ref pour stabiliser hasError et éviter re-renders en cascade
 	// Assignation directe dans le render (pas besoin de useEffect)
@@ -86,18 +89,25 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 	};
 
 	const retryMedia = (mediaId: string) => {
+		// Debounce: annuler un retry en cours pour le meme media
+		const existingTimeout = retryTimeoutsRef.current.get(mediaId);
+		if (existingTimeout) {
+			clearTimeout(existingTimeout);
+			retryTimeoutsRef.current.delete(mediaId);
+		}
+
 		const currentCount = retryCountRef.current.get(mediaId) || 0;
 
-		// Vérifier si le nombre max de retries est atteint
+		// Verifier si le nombre max de retries est atteint
 		if (currentCount >= MAX_RETRIES) {
-			toast.error("Impossible de charger ce média après plusieurs tentatives");
+			toast.error("Impossible de charger ce media apres plusieurs tentatives");
 			return;
 		}
 
-		// Incrémenter le compteur de retries
+		// Incrementer le compteur de retries
 		retryCountRef.current.set(mediaId, currentCount + 1);
 
-		// Calculer le délai avec backoff exponentiel (1s, 2s, 4s)
+		// Calculer le delai avec backoff exponentiel (1s, 2s, 4s)
 		const delay = BACKOFF_BASE_MS * Math.pow(2, currentCount);
 
 		// Afficher un toast de chargement
@@ -106,9 +116,10 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 			{ duration: delay }
 		);
 
-		// Supprimer l'erreur après le délai pour permettre un rechargement
-		setTimeout(() => {
+		// Supprimer l'erreur apres le delai pour permettre un rechargement
+		const timeout = setTimeout(() => {
 			toast.dismiss(toastId);
+			retryTimeoutsRef.current.delete(mediaId);
 
 			setMediaErrors((prev) => {
 				if (!prev.has(mediaId)) return prev;
@@ -122,7 +133,17 @@ export function useMediaErrors(): UseMediaErrorsReturn {
 				return next;
 			});
 		}, delay);
+
+		retryTimeoutsRef.current.set(mediaId, timeout);
 	};
+
+	// Cleanup des timeouts au unmount
+	useEffect(() => {
+		return () => {
+			retryTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+			retryTimeoutsRef.current.clear();
+		};
+	}, []);
 
 	const isMaxRetriesReached = (mediaId: string) => {
 		return (retryCountRef.current.get(mediaId) || 0) >= MAX_RETRIES;

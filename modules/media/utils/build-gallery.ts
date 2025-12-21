@@ -73,22 +73,13 @@ export function buildGallery({
 				})
 			: null;
 
-	// Construire la galerie inline
-	const gallery: Array<{
-		id: string;
-		url: string;
-		thumbnailUrl?: string | null;
-		blurDataUrl?: string | null;
-		alt: string;
-		mediaType: "IMAGE" | "VIDEO";
-		source: "default" | "selected" | "sku";
-		skuId?: string;
-	}> = [];
+	// Construire la galerie avec type ProductMedia directement
+	const gallery: ProductMedia[] = [];
 
 	// Set pour déduplication O(1) au lieu de O(n) avec array.find
 	const seenUrls = new Set<string>();
 
-	// Helper pour ajouter une image unique
+	// Helper pour ajouter une image unique (type aligne avec ProductMedia)
 	const addUniqueImage = (
 		skuImage: {
 			id: string;
@@ -99,7 +90,7 @@ export function buildGallery({
 			mediaType: "IMAGE" | "VIDEO";
 		},
 		alt: string,
-		source: "default" | "selected" | "sku",
+		source: ProductMedia["source"],
 		skuId: string
 	): boolean => {
 		if (seenUrls.has(skuImage.url)) return false;
@@ -108,7 +99,7 @@ export function buildGallery({
 			id: skuImage.id,
 			url: skuImage.url,
 			thumbnailUrl: skuImage.thumbnailUrl,
-			blurDataUrl: skuImage.blurDataUrl,
+			blurDataUrl: skuImage.blurDataUrl || undefined,
 			alt: skuImage.altText || alt,
 			mediaType: skuImage.mediaType,
 			source,
@@ -186,17 +177,5 @@ export function buildGallery({
 		});
 	}
 
-	// Convertir en ProductMedia format
-	return gallery.map((img) => {
-		return {
-			id: img.id,
-			url: img.url,
-			thumbnailUrl: img.thumbnailUrl,
-			blurDataUrl: img.blurDataUrl || undefined,
-			alt: img.alt,
-			mediaType: img.mediaType,
-			source: img.source,
-			skuId: img.skuId,
-		};
-	});
+	return gallery;
 }

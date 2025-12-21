@@ -1,13 +1,7 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -35,17 +29,11 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 
 	if (materials.length === 0) {
 		return (
-			<Empty className="py-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<Gem />
-					</EmptyMedia>
-					<EmptyTitle>Aucun matériau trouvé</EmptyTitle>
-					<EmptyDescription>
-						Aucun matériau ne correspond aux critères de recherche.
-					</EmptyDescription>
-				</EmptyHeader>
-			</Empty>
+			<TableEmptyState
+				icon={Gem}
+				title="Aucun materiau trouve"
+				description="Aucun materiau ne correspond aux criteres de recherche."
+			/>
 		);
 	}
 

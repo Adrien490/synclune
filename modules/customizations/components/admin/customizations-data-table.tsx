@@ -7,13 +7,7 @@ import { ItemCheckbox } from "@/shared/components/item-checkbox";
 import { SelectAllCheckbox } from "@/shared/components/select-all-checkbox";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -48,17 +42,11 @@ export function CustomizationsDataTable({
 
 	if (requests.length === 0) {
 		return (
-			<Empty className="py-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<Sparkles />
-					</EmptyMedia>
-					<EmptyTitle>Aucune demande trouvée</EmptyTitle>
-					<EmptyDescription>
-						Aucune demande de personnalisation ne correspond aux critères de recherche.
-					</EmptyDescription>
-				</EmptyHeader>
-			</Empty>
+			<TableEmptyState
+				icon={Sparkles}
+				title="Aucune demande trouvee"
+				description="Aucune demande de personnalisation ne correspond aux criteres de recherche."
+			/>
 		);
 	}
 

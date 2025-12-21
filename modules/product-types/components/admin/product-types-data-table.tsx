@@ -1,15 +1,7 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
-import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import {
-	Empty,
-	EmptyContent,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
+import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -40,24 +32,15 @@ export async function ProductTypesDataTable({
 
 	if (productTypes.length === 0) {
 		return (
-			<Empty className="py-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<Tags />
-					</EmptyMedia>
-					<EmptyTitle>Aucun type trouvé</EmptyTitle>
-					<EmptyDescription>
-						Aucun type de bijou ne correspond aux critères de recherche.
-					</EmptyDescription>
-				</EmptyHeader>
-				<EmptyContent>
-					<Button asChild variant="primary">
-						<Link href="/admin/catalogue/types-de-produits">
-							Créer un type de bijou
-						</Link>
-					</Button>
-				</EmptyContent>
-			</Empty>
+			<TableEmptyState
+				icon={Tags}
+				title="Aucun type trouve"
+				description="Aucun type de bijou ne correspond aux criteres de recherche."
+				action={{
+					label: "Creer un type de bijou",
+					href: "/admin/catalogue/types-de-produits",
+				}}
+			/>
 		);
 	}
 
