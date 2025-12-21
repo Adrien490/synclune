@@ -312,7 +312,9 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 											aria-hidden={index !== optimisticIndex}
 											aria-label={`Zoomer ${media.alt || title}`}
 											onClick={() => {
-												openLightbox();
+												if (emblaApi?.clickAllowed()) {
+													openLightbox();
+												}
 											}}
 											onKeyDown={(e) => {
 												if (e.key === "Enter" || e.key === " ") {
