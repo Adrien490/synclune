@@ -118,21 +118,13 @@ export async function Navbar() {
 							<DesktopNav navItems={desktopNavItems} />
 						</div>
 
-						{/* Section droite: Recherche + Favoris + Compte (dropdown) + Panier */}
+						{/* Section droite: Favoris + Recherche + Compte (dropdown) + Panier */}
 						<div className="flex flex-1 items-center justify-end min-w-0">
 							<div className="flex items-center gap-1 sm:gap-3 group-data-[scrolled=true]:gap-1 group-data-[scrolled=true]:sm:gap-2 shrink-0 transition-all duration-300 ease-out">
-								{/* Recherche globale */}
-								<QuickSearchTrigger />
-								<QuickSearchDialog
-									recentSearches={recentSearches}
-									collections={collections}
-									productTypes={productTypes}
-								/>
-
-								{/* Icône favoris (visible sur desktop seulement - accessible via menu sur mobile) */}
+								{/* Icône favoris (visible sur mobile et desktop) */}
 								<Link
 									href="/favoris"
-									className={`hidden sm:inline-flex ${iconButtonClassName}`}
+									className={`inline-flex ${iconButtonClassName}`}
 									aria-label="Accéder à mes favoris"
 								>
 									<Heart
@@ -142,6 +134,14 @@ export async function Navbar() {
 									/>
 									<WishlistBadge />
 								</Link>
+
+								{/* Recherche globale (visible sur desktop seulement) */}
+								<QuickSearchTrigger className="hidden sm:inline-flex" />
+								<QuickSearchDialog
+									recentSearches={recentSearches}
+									collections={collections}
+									productTypes={productTypes}
+								/>
 
 								{/* Dropdown compte (visible sur desktop seulement) */}
 								<AccountDropdown
