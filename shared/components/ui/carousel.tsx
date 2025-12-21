@@ -129,23 +129,67 @@ function Carousel({
 	);
 }
 
-function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
-	const { carouselRef, orientation } = useCarousel();
+interface CarouselContentProps extends React.ComponentProps<"div"> {
+	showFade?: boolean;
+}
+
+function CarouselContent({ className, showFade = false, ...props }: CarouselContentProps) {
+	const { carouselRef, orientation, canScrollPrev, canScrollNext } = useCarousel();
 
 	return (
-		<div
-			ref={carouselRef}
-			className="overflow-hidden"
-			data-slot="carousel-content"
-		>
+		<div className="relative">
 			<div
-				className={cn(
-					"flex",
-					orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
-					className
-				)}
-				{...props}
-			/>
+				ref={carouselRef}
+				className="overflow-hidden"
+				data-slot="carousel-content"
+			>
+				<div
+					className={cn(
+						"flex",
+						orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
+						className
+					)}
+					{...props}
+				/>
+			</div>
+
+			{/* Fade edges */}
+			{showFade && orientation === "horizontal" && canScrollPrev && (
+				<div
+					aria-hidden
+					className="pointer-events-none absolute left-0 top-0 h-full w-10 z-10"
+					style={{
+						background: "linear-gradient(to right, var(--background) 0%, transparent 100%)"
+					}}
+				/>
+			)}
+			{showFade && orientation === "horizontal" && canScrollNext && (
+				<div
+					aria-hidden
+					className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10"
+					style={{
+						background: "linear-gradient(to left, var(--background) 0%, transparent 100%)"
+					}}
+				/>
+			)}
+			{showFade && orientation === "vertical" && canScrollPrev && (
+				<div
+					aria-hidden
+					className="pointer-events-none absolute top-0 left-0 w-full h-10 z-10"
+					style={{
+						background: "linear-gradient(to bottom, var(--background) 0%, transparent 100%)"
+					}}
+				/>
+			)}
+			{showFade && orientation === "vertical" && canScrollNext && (
+				<div
+					aria-hidden
+					className="pointer-events-none absolute bottom-0 left-0 w-full h-10 z-10"
+					style={{
+						background: "linear-gradient(to top, var(--background) 0%, transparent 100%)"
+					}}
+				/>
+			)}
 		</div>
 	);
 }
@@ -256,11 +300,84 @@ function CarouselNext({
 	);
 }
 
+function CarouselDots({
+	className,
+	...props
+}: React.ComponentProps<"div">) {
+	const { api } = useCarousel();
+	const [selectedIndex, setSelectedIndex] = React.useState(0);
+	const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]);
+
+	React.useEffect(() => {
+		if (!api) return;
+
+		setScrollSnaps(api.scrollSnapList());
+
+		const onSelect = () => {
+			setSelectedIndex(api.selectedScrollSnap());
+		};
+
+		api.on("select", onSelect);
+		api.on("reInit", () => {
+			setScrollSnaps(api.scrollSnapList());
+			onSelect();
+		});
+
+		return () => {
+			api.off("select", onSelect);
+		};
+	}, [api]);
+
+	if (scrollSnaps.length <= 1) return null;
+
+	return (
+		<div
+			data-slot="carousel-dots"
+			className={cn("flex flex-col items-center gap-1 pt-4", className)}
+			role="tablist"
+			aria-label="Navigation du carousel"
+			{...props}
+		>
+			<div className="flex justify-center">
+				{scrollSnaps.map((_, index) => (
+					<button
+						key={index}
+						type="button"
+						role="tab"
+						aria-selected={index === selectedIndex}
+						aria-label={`Aller à la diapositive ${index + 1}`}
+						onClick={() => api?.scrollTo(index)}
+						className={cn(
+							"relative w-11 h-11 flex items-center justify-center",
+							"active:scale-95 transition-transform duration-100",
+							"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-full"
+						)}
+					>
+						<span
+							className={cn(
+								"rounded-full transition-all duration-150 ease-out",
+								index === selectedIndex
+									? "h-2 w-8 sm:h-2.5 sm:w-10 bg-primary shadow-md"
+									: "h-2 w-2 sm:h-2.5 sm:w-2.5 bg-muted-foreground/50 hover:bg-muted-foreground/70"
+							)}
+						/>
+					</button>
+				))}
+			</div>
+			<span className="text-xs text-muted-foreground/70">
+				{selectedIndex + 1} sur {scrollSnaps.length}
+			</span>
+		</div>
+	);
+}
+
 export {
 	Carousel,
 	CarouselContent,
 	CarouselItem,
 	CarouselNext,
 	CarouselPrevious,
+	CarouselDots,
 	type CarouselApi,
+	useCarousel,
 };

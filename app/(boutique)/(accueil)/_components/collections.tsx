@@ -1,37 +1,25 @@
+import { CollectionCard } from "@/modules/collections/components/collection-card";
+import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
+import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import { Fade, Reveal } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
+import {
+	Carousel,
+	CarouselContent,
+	CarouselDots,
+	CarouselItem,
+	CarouselNext,
+	CarouselPrevious,
+} from "@/shared/components/ui/carousel";
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
-import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
 import Link from "next/link";
 import { use } from "react";
-import { CollectionCard } from "../../../../modules/collections/components/collection-card";
-import { CollectionCarouselWrapper } from "../../../../modules/collections/components/collection-carousel-wrapper";
 
 interface CollectionsProps {
 	collectionsPromise: Promise<GetCollectionsReturn>;
 }
 
-/**
- * Section Collections - Affiche les dernières collections de bijoux
- *
- * Pattern : Server Component qui accepte une Promise pour le streaming
- * Permet le rendu progressif avec React Suspense
- *
- * @param collectionsPromise - Promise contenant les données des collections
- *
- * @example
- * ```tsx
- * // Dans une page Server Component
- * import { getCollections } from "@/modules/collections/data/get-collections";
- *
- * export default function HomePage() {
- *   const collectionsPromise = getCollections();
- *   return <Collections collectionsPromise={collectionsPromise} />;
- * }
- * ```
- */
 export function Collections({ collectionsPromise }: CollectionsProps) {
 	const { collections } = use(collectionsPromise);
 
@@ -39,6 +27,8 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 	if (collections.length === 0) {
 		return null;
 	}
+
+	const showArrows = collections.length > 3;
 
 	return (
 		<section
@@ -70,45 +60,61 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 					</Fade>
 				</header>
 
-				<div className="mb-8 lg:mb-12 -mx-4 sm:-mx-6 lg:-mx-8">
-					<CollectionCarouselWrapper showArrows={collections.length > 3}>
-						<Reveal
-							role="list"
-							delay={0.2}
-							duration={0.8}
-							y={20}
-							once={true}
-							className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 px-4 sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mask-carousel-edges"
-							data-carousel-scroll
+				<div className="mb-8 lg:mb-12">
+					<Reveal delay={0.2} duration={0.8} y={20} once={true}>
+						<Carousel
+							opts={{
+								align: "center",
+								containScroll: "trimSnaps",
+							}}
+							className="w-full"
+							aria-label="Carousel de collections"
 						>
-							{collections.map((collection, index) => {
-								// Le produit featured (ou le plus recent si aucun featured)
-								// est en premier grace a orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }]
-								const featuredProduct = collection.products[0];
-								const featuredImage = featuredProduct?.product?.skus?.[0]?.images?.[0];
+							<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
+								{collections.map((collection, index) => {
+									// Le produit featured (ou le plus recent si aucun featured)
+									// est en premier grace a orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }]
+									const featuredProduct = collection.products[0];
+									const featuredImage = featuredProduct?.product?.skus?.[0]?.images?.[0];
 
-								return (
-									<div
-										key={collection.id}
-										data-index={index}
-										className="shrink-0 w-[clamp(200px,72vw,280px)] snap-center"
-										role="listitem"
-									>
-										<CollectionCard
-											slug={collection.slug}
-											name={collection.name}
-											description={collection.description}
-											imageUrl={featuredImage?.url || null}
-											blurDataUrl={featuredImage?.blurDataUrl}
-											showDescription={false}
-											index={index}
-											sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CAROUSEL}
-										/>
-									</div>
-								);
-							})}
-						</Reveal>
-					</CollectionCarouselWrapper>
+									return (
+										<CarouselItem
+											key={collection.id}
+											className="pl-4 sm:pl-6 basis-[clamp(200px,72vw,280px)] md:basis-1/3 lg:basis-1/4"
+										>
+											<CollectionCard
+												slug={collection.slug}
+												name={collection.name}
+												description={collection.description}
+												imageUrl={featuredImage?.url || null}
+												blurDataUrl={featuredImage?.blurDataUrl}
+												showDescription={false}
+												index={index}
+												sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CAROUSEL}
+											/>
+										</CarouselItem>
+									);
+								})}
+							</CarouselContent>
+
+							{/* Flèches de navigation - Desktop uniquement */}
+							{showArrows && (
+								<>
+									<CarouselPrevious
+										className="hidden md:flex left-4 top-[40%]"
+										aria-label="Voir les collections précédentes"
+									/>
+									<CarouselNext
+										className="hidden md:flex right-4 top-[40%]"
+										aria-label="Voir les collections suivantes"
+									/>
+								</>
+							)}
+
+							{/* Dots - Mobile uniquement */}
+							<CarouselDots className="md:hidden" />
+						</Carousel>
+					</Reveal>
 				</div>
 
 				<div id="collections-cta" className="text-center">
