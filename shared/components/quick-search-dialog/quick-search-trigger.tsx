@@ -5,6 +5,7 @@ import { Search } from "lucide-react"
 
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { Button } from "@/shared/components/ui/button"
+import { Kbd } from "@/shared/components/ui/kbd"
 import { cn } from "@/shared/utils/cn"
 import { QUICK_SEARCH_DIALOG_ID } from "./constants"
 
@@ -37,9 +38,12 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 			size="icon"
 			onClick={() => open()}
 			className={cn("size-11 relative", className)}
-			aria-label="Rechercher"
+			aria-label="Rechercher (⌘K)"
 		>
 			<Search className="size-5" />
+			<Kbd className="hidden can-hover:inline-flex absolute -bottom-1 -right-1.5 h-4 min-w-4 text-[9px] px-0.5 opacity-70">
+				⌘K
+			</Kbd>
 		</Button>
 	)
 }

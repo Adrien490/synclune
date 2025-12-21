@@ -46,7 +46,7 @@ export function RecentSearchesSection({
 				<button
 					type="button"
 					onClick={clear}
-					className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+					className="text-xs text-muted-foreground hover:text-foreground transition-colors min-h-11 px-3 -mr-3"
 				>
 					Effacer
 				</button>
@@ -67,7 +67,7 @@ export function RecentSearchesSection({
 						<button
 							type="button"
 							onClick={() => remove(term)}
-							className="p-1.5 hover:bg-muted rounded transition-all shrink-0 text-muted-foreground/60 hover:text-muted-foreground"
+							className="size-10 flex items-center justify-center hover:bg-muted rounded-lg transition-all shrink-0 text-muted-foreground/60 hover:text-muted-foreground"
 							aria-label={`Supprimer "${term}"`}
 						>
 							<X className="size-4" />

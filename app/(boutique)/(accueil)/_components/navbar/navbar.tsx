@@ -143,10 +143,10 @@ export async function Navbar() {
 									</Link>
 								)}
 
-								{/* Icône favoris (visible sur tous les écrans) */}
+								{/* Icône favoris (visible sur desktop seulement - accessible via menu sur mobile) */}
 								<Link
 									href="/favoris"
-									className={`inline-flex ${iconButtonClassName}`}
+									className={`hidden sm:inline-flex ${iconButtonClassName}`}
 									aria-label="Accéder à mes favoris"
 								>
 									<Heart
