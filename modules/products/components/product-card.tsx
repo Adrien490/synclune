@@ -91,6 +91,11 @@ export function ProductCard({
 	// Utilise getPrimarySkuForList qui respecte isDefault + fallbacks intelligents
 	const defaultSku = getPrimarySkuForList(product);
 
+	// Vérifie si n'importe quel SKU du produit est dans la wishlist
+	// Important : on ne compare pas juste le defaultSku car l'utilisateur peut avoir
+	// ajouté un autre SKU (variante) à sa wishlist
+	const isProductInWishlist = product.skus?.some(sku => wishlistSkuIds?.has(sku.id)) ?? false;
+
 	// Génération ID unique pour aria-labelledby
 	// Sanitise le slug pour éviter les ID HTML invalides (accents, apostrophes, etc.)
 	const sanitizedSlug = slug.replace(/[^a-z0-9-]/gi, "");
@@ -156,7 +161,7 @@ export function ProductCard({
 				{defaultSku && (
 					<WishlistButton
 						skuId={defaultSku.id}
-						isInWishlist={wishlistSkuIds?.has(defaultSku.id) ?? false}
+						isInWishlist={isProductInWishlist}
 						productTitle={title}
 						className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity duration-200"
 					/>
