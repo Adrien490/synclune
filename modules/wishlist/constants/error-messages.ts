@@ -5,12 +5,12 @@
 
 export const WISHLIST_ERROR_MESSAGES = {
 	// Erreurs liées à la wishlist
-	WISHLIST_NOT_FOUND: "Votre liste de souhaits n'existe pas",
-	WISHLIST_EXPIRED: "Votre liste de souhaits a expiré. Connectez-vous pour la sauvegarder",
+	WISHLIST_NOT_FOUND: "Ta liste de souhaits n'existe pas",
+	WISHLIST_EXPIRED: "Ta liste de souhaits a expiré. Connecte-toi pour la sauvegarder",
 
 	// Erreurs liées aux articles
-	ITEM_NOT_FOUND: "Cet article n'est pas dans votre wishlist",
-	ITEM_ALREADY_IN_WISHLIST: "Cet article est déjà dans votre wishlist",
+	ITEM_NOT_FOUND: "Cet article n'est pas dans ta wishlist",
+	ITEM_ALREADY_IN_WISHLIST: "Cet article est déjà dans ta wishlist",
 
 	// Erreurs liées au produit/SKU
 	SKU_NOT_FOUND: "Produit introuvable",
@@ -23,7 +23,7 @@ export const WISHLIST_ERROR_MESSAGES = {
 
 	// Erreurs générales
 	GENERAL_ERROR: "Une erreur est survenue",
-	PERMISSION_DENIED: "Vous n'avez pas l'autorisation d'effectuer cette action",
+	PERMISSION_DENIED: "Tu n'as pas l'autorisation d'effectuer cette action",
 } as const;
 
 /**

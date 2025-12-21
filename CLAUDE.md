@@ -47,6 +47,9 @@ pnpm exec tsx scripts/generate-blur-placeholders.ts [--dry-run] [--parallel=N]
 
 # Clean up expired guest carts
 pnpm exec tsx scripts/cleanup-expired-carts.ts [--dry-run]
+
+# Clean up expired guest wishlists
+pnpm exec tsx scripts/cleanup-expired-wishlists.ts [--dry-run]
 ```
 
 ## Directory Structure
@@ -953,10 +956,12 @@ Les tâches planifiées sont configurées dans `vercel.json` et exécutent des s
 | Schedule | Script | Purpose |
 |----------|--------|---------|
 | Daily | `scripts/cleanup-expired-carts.ts` | Remove expired guest carts (>30 days) |
+| Daily | `scripts/cleanup-expired-wishlists.ts` | Remove expired guest wishlists (>30 days) |
 
 ```bash
 # Exécution manuelle
 pnpm exec tsx scripts/cleanup-expired-carts.ts [--dry-run]
+pnpm exec tsx scripts/cleanup-expired-wishlists.ts [--dry-run]
 ```
 
 ## Email System
