@@ -2,10 +2,12 @@ import createMDX from "@next/mdx";
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV !== "production";
+
 const withSerwist = withSerwistInit({
   swSrc: "app/sw.ts",
   swDest: "public/sw.js",
-  disable: process.env.NODE_ENV !== "production",
+  disable: isDev,
 });
 
 const nextConfig: NextConfig = {
@@ -56,4 +58,5 @@ const nextConfig: NextConfig = {
 
 const withMDX = createMDX({ extension: /\.(md|mdx)$/ });
 
-export default withSerwist(withMDX(nextConfig));
+const config = withMDX(nextConfig);
+export default isDev ? config : withSerwist(config);

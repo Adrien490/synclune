@@ -5,22 +5,13 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
-		"build": "prisma generate && next build --webpack",
+		"build": "prisma generate && next build",
 		"start": "next start",
 		"lint": "eslint",
-		"test": "vitest run",
-		"test:watch": "vitest",
-		"test:ui": "vitest --ui",
-		"test:coverage": "vitest run --coverage",
-		"test:webhooks": "./scripts/test-stripe-webhooks.sh",
 		"seed": "prisma db seed",
 		"email:dev": "email dev --dir emails --port 3001",
-		"verify:stripe": "tsx scripts/verify-stripe-config.ts",
-		"generate:video-thumbnails": "tsx scripts/generate-video-thumbnails.ts",
-		"generate:color-placeholders": "tsx scripts/generate-color-placeholders.ts",
-		"convert:blur-to-color": "tsx scripts/convert-blur-to-color-placeholders.ts",
-		"strip:video-audio": "tsx scripts/strip-video-audio.ts",
-		"db:studio": "prisma studio"
+		"db:studio": "prisma studio",
+		"analyse": "next experimental-analyse"
 	},
 	"dependencies": {
 		"@arcjet/inspect": "1.0.0-beta.15",
