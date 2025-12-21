@@ -85,7 +85,7 @@ export function CursorPagination({
 	return (
 		<div
 			className={cn(
-				"flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3",
+				"flex flex-row items-center justify-between gap-2 sm:gap-3",
 				// Opacity réduite pendant le chargement avec transition smooth pour UX fluide
 				// opacity-80 (au lieu de 70) pour meilleur contraste WCAG AA (4.5:1)
 				isPending &&

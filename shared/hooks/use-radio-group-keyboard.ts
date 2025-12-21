@@ -11,7 +11,7 @@ interface UseRadioGroupKeyboardOptions<T> {
 
 /**
  * Hook pour la navigation clavier dans un radio group
- * Gere les fleches Haut/Bas/Gauche/Droite selon WCAG
+ * Gère les flèches Haut/Bas/Gauche/Droite et Home/End selon WCAG 2.1
  */
 export function useRadioGroupKeyboard<T>({
 	options,
@@ -23,38 +23,59 @@ export function useRadioGroupKeyboard<T>({
 
 	const handleKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
 		const { key } = e;
+		const optionsCount = options.length;
 
-		if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+		// Navigation par flèches
+		if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+			e.preventDefault();
+
+			const direction = ["ArrowDown", "ArrowRight"].includes(key) ? 1 : -1;
+			let nextIndex = currentIndex;
+			let attempts = 0;
+
+			do {
+				nextIndex = (nextIndex + direction + optionsCount) % optionsCount;
+				attempts++;
+			} while (isOptionDisabled(options[nextIndex]) && attempts < optionsCount);
+
+			if (attempts >= optionsCount) return;
+
+			const nextOption = options[nextIndex];
+			onSelect(nextOption);
+			focusOption(nextOption);
 			return;
 		}
 
-		e.preventDefault();
+		// Navigation Home/End (WCAG 2.1)
+		if (key === "Home" || key === "End") {
+			e.preventDefault();
 
-		const direction = ["ArrowDown", "ArrowRight"].includes(key) ? 1 : -1;
-		const optionsCount = options.length;
+			const startIndex = key === "Home" ? 0 : optionsCount - 1;
+			const direction = key === "Home" ? 1 : -1;
+			let nextIndex = startIndex;
+			let attempts = 0;
 
-		// Trouver la prochaine option disponible
-		let nextIndex = currentIndex;
-		let attempts = 0;
+			// Trouver la première/dernière option non-disabled
+			while (isOptionDisabled(options[nextIndex]) && attempts < optionsCount) {
+				nextIndex = (nextIndex + direction + optionsCount) % optionsCount;
+				attempts++;
+			}
 
-		do {
-			nextIndex = (nextIndex + direction + optionsCount) % optionsCount;
-			attempts++;
-		} while (isOptionDisabled(options[nextIndex]) && attempts < optionsCount);
+			if (attempts >= optionsCount) return;
 
-		// Si toutes les options sont disabled, ne rien faire
-		if (attempts >= optionsCount) return;
+			const nextOption = options[nextIndex];
+			onSelect(nextOption);
+			focusOption(nextOption);
+		}
+	};
 
-		const nextOption = options[nextIndex];
-		onSelect(nextOption);
-
-		// Focus sur le bouton suivant
+	const focusOption = (option: T) => {
 		const buttons = containerRef.current?.querySelectorAll<HTMLButtonElement>(
 			'button[role="radio"]:not([disabled])'
 		);
 		if (buttons) {
 			const targetButton = Array.from(buttons).find(
-				(btn) => btn.getAttribute("data-option-id") === getOptionId(nextOption)
+				(btn) => btn.getAttribute("data-option-id") === getOptionId(option)
 			);
 			targetButton?.focus();
 		}

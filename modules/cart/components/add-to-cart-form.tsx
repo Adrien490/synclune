@@ -31,7 +31,7 @@ export function AddToCartForm({
 	const searchParams = useSearchParams();
 
 	// Validation des variantes pour message explicite
-	const { validationErrors } = useVariantValidation({
+	const { validationErrors, requiresColor, requiresMaterial, requiresSize } = useVariantValidation({
 		product,
 		selection: {
 			color: searchParams.get("color"),
@@ -39,6 +39,19 @@ export function AddToCartForm({
 			size: searchParams.get("size"),
 		},
 	});
+
+	// Message specifique selon les options manquantes
+	const getMissingOptionsMessage = () => {
+		const missing: string[] = [];
+		if (requiresColor && !searchParams.get("color")) missing.push("la couleur");
+		if (requiresMaterial && !searchParams.get("material")) missing.push("le materiau");
+		if (requiresSize && !searchParams.get("size")) missing.push("la taille");
+
+		if (missing.length === 0) return "Choisis tes options";
+		if (missing.length === 1) return `Choisis ${missing[0]}`;
+		if (missing.length === 2) return `Choisis ${missing[0]} et ${missing[1]}`;
+		return `Choisis ${missing.slice(0, -1).join(", ")} et ${missing[missing.length - 1]}`;
+	};
 
 	// Vérifier si le produit a un seul SKU
 	const hasOnlyOneSku = product.skus && product.skus.length === 1;
@@ -94,10 +107,7 @@ export function AddToCartForm({
 						{hasOnlyOneSku ? (
 							<span>Produit non disponible</span>
 						) : (
-							<>
-								<span className="sm:hidden">{validationErrors[0] || "Choisis tes options"}</span>
-								<span className="hidden sm:inline">{validationErrors[0] || "Sélectionne tes options"}</span>
-							</>
+							<span>{getMissingOptionsMessage()}</span>
 						)}
 					</>
 				) : (

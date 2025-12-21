@@ -104,7 +104,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
 		<tr
 			data-slot="table-row"
 			className={cn(
-				"hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors min-h-11",
+				"hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
 				className
 			)}
 			{...props}
@@ -112,48 +112,21 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
 	);
 }
 
-type SortDirection = "ascending" | "descending" | "none";
-
-interface TableHeadProps extends React.ComponentProps<"th"> {
-	/** Indique si la colonne est triable */
-	sortable?: boolean;
-	/** Direction du tri actuel (ARIA) */
-	sortDirection?: SortDirection;
-}
-
 function TableHead({
 	className,
-	sortable,
-	sortDirection,
-	children,
 	...props
-}: TableHeadProps) {
+}: React.ComponentProps<"th">) {
 	return (
 		<th
 			data-slot="table-head"
 			scope="col"
-			aria-sort={sortable ? (sortDirection || "none") : undefined}
 			className={cn(
 				"text-foreground h-11 px-2 sm:px-3 text-left align-middle font-medium whitespace-nowrap",
 				"[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-				sortable && "cursor-pointer select-none hover:bg-muted/50 transition-colors",
 				className
 			)}
 			{...props}
-		>
-			{sortable ? (
-				<span className="inline-flex items-center gap-1">
-					{children}
-					{sortDirection && sortDirection !== "none" && (
-						<span className="text-muted-foreground" aria-hidden="true">
-							{sortDirection === "ascending" ? "↑" : "↓"}
-						</span>
-					)}
-				</span>
-			) : (
-				children
-			)}
-		</th>
+		/>
 	);
 }
 
@@ -162,7 +135,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
 		<td
 			data-slot="table-cell"
 			className={cn(
-				"p-2 sm:p-3 align-middle whitespace-nowrap min-h-11",
+				"p-2 sm:p-3 align-middle whitespace-nowrap",
 				"[&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
 				className
 			)}
@@ -199,6 +172,4 @@ export type {
 	TableProps,
 	TableHeaderProps,
 	TableBodyProps,
-	TableHeadProps,
-	SortDirection,
 };

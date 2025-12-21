@@ -57,13 +57,20 @@ export function StockNotificationForm({ skuId }: StockNotificationFormProps) {
 			<input type="hidden" name="skuId" value={skuId} />
 			<input type="hidden" name="consent" value={consent ? "true" : "false"} />
 
-			<Input
-				type="email"
-				name="email"
-				required
-				className="h-9 text-sm"
-				aria-label="Adresse email"
-			/>
+			<div>
+				<Input
+					type="email"
+					name="email"
+					required
+					placeholder="ton@email.com"
+					className="h-9 text-sm"
+					aria-label="Adresse email pour notification de retour en stock"
+					aria-describedby="email-notification-help"
+				/>
+				<span id="email-notification-help" className="sr-only">
+					Nous t'enverrons un email des que ce produit sera disponible
+				</span>
+			</div>
 
 			<div className="flex items-start gap-3">
 				<Checkbox

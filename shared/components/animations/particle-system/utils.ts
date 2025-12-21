@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { Transition } from "framer-motion";
 import { MOTION_CONFIG } from "../motion.config";
 import { SHAPE_CONFIGS } from "./constants";
@@ -45,7 +46,6 @@ function hashParams(
 }
 
 const DEFAULT_DURATION = 20;
-const MOBILE_DURATION = 12;
 
 /** Génère un tableau de particules avec des propriétés déterministes (memoizé) */
 export function generateParticles(
@@ -116,7 +116,7 @@ export function getShapeStyles(
 	shape: ParticleShape,
 	size: number,
 	color: string
-): React.CSSProperties {
+): CSSProperties {
 	const config = SHAPE_CONFIGS[shape];
 
 	if (config.type === "css") {

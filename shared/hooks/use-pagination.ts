@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { type RefObject, useTransition } from "react";
 
 export type PaginationState = {
 	total: number;
@@ -10,7 +10,12 @@ export type PaginationState = {
 	perPage: number;
 };
 
-export function usePagination() {
+export interface UsePaginationOptions {
+	/** Ref pour focus management après pagination */
+	focusTargetRef?: RefObject<HTMLElement | null>;
+}
+
+export function usePagination(options?: UsePaginationOptions) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -30,6 +35,13 @@ export function usePagination() {
 
 		startTransition(() => {
 			router.push(`?${params.toString()}`, { scroll: false });
+
+			// Focus management pour accessibilité clavier
+			if (options?.focusTargetRef?.current) {
+				requestAnimationFrame(() => {
+					options.focusTargetRef?.current?.focus({ preventScroll: true });
+				});
+			}
 		});
 	};
 

@@ -12,6 +12,7 @@ import { ParallaxImage } from "./parallax-image";
 import { ScrollProgressLine } from "./scroll-progress-line";
 
 interface ProcessStep {
+	id: string;
 	icon: React.ReactNode;
 	title: string;
 	description: string;
@@ -23,6 +24,7 @@ interface ProcessStep {
 // Étapes du processus créatif - données statiques
 const processSteps: ProcessStep[] = [
 	{
+		id: "idea",
 		icon: <Lightbulb className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "D'abord, une idée",
 		description:
@@ -31,6 +33,7 @@ const processSteps: ProcessStep[] = [
 		iconHoverClass: "group-hover:[&_svg]:text-yellow-500 group-hover:[&_svg]:drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]",
 	},
 	{
+		id: "drawing",
 		icon: <Pencil className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "Le dessin et la peinture",
 		description:
@@ -39,6 +42,7 @@ const processSteps: ProcessStep[] = [
 		iconHoverClass: "group-hover:[&_svg]:rotate-[-15deg]",
 	},
 	{
+		id: "assembly",
 		icon: <Hammer className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "La cuisson et l'assemblage",
 		description:
@@ -47,6 +51,7 @@ const processSteps: ProcessStep[] = [
 		iconHoverClass: "group-hover:[&_svg]:translate-y-[-2px] group-hover:[&_svg]:rotate-[-8deg]",
 	},
 	{
+		id: "finishing",
 		icon: <CheckCircle className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "La touche finale",
 		description:
@@ -96,7 +101,7 @@ const STEP_INTENSITY = [
 export function CreativeProcess() {
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
+			className={cn("relative overflow-hidden bg-background", SECTION_SPACING.section)}
 			aria-labelledby="creative-process-title"
 		>
 			{/* Skip link pour accessibilité */}
@@ -104,7 +109,7 @@ export function CreativeProcess() {
 				href="#cta-personnalisation"
 				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-secondary focus:text-secondary-foreground focus:rounded-md focus:shadow-md"
 			>
-				Aller au formulaire de personnalisation
+				Aller au bouton de contact
 			</a>
 
 			<div className="absolute inset-0" aria-hidden="true">
@@ -187,7 +192,7 @@ export function CreativeProcess() {
 							>
 								{processSteps.map((step, index) => (
 									<article
-										key={index}
+										key={step.id}
 										role="listitem"
 										className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 transition-all duration-300 hover:bg-muted/30 hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
 									>

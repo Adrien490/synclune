@@ -157,8 +157,10 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 									{/* Alerte si problemes */}
 									{hasStockIssues && (
 										<div
+											id="stock-issues-alert"
 											className="p-2.5 bg-destructive/10 border border-destructive/20 rounded-md text-xs text-destructive"
 											role="alert"
+											aria-label="Problemes de stock dans le panier"
 										>
 											<p className="font-medium">Ajuste ton panier pour continuer</p>
 											<ul className="mt-1 space-y-0.5 text-destructive/80">
@@ -185,7 +187,8 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 												size="lg"
 												className="w-full"
 												disabled
-												title="Ajuste ton panier pour continuer"
+												aria-disabled="true"
+												aria-describedby="stock-issues-alert"
 											>
 												Passer commande
 											</Button>

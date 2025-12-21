@@ -21,25 +21,21 @@ export function TableScrollContainer({
 	const [canScrollLeft, setCanScrollLeft] = useState(false);
 	const [canScrollRight, setCanScrollRight] = useState(false);
 
-	const updateScrollIndicators = () => {
-		const el = scrollRef.current;
-		if (!el) return;
-
-		const { scrollLeft, scrollWidth, clientWidth } = el;
-		setCanScrollLeft(scrollLeft > 0);
-		setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
-	};
-
 	useEffect(() => {
 		const el = scrollRef.current;
 		if (!el) return;
+
+		const updateScrollIndicators = () => {
+			const { scrollLeft, scrollWidth, clientWidth } = el;
+			setCanScrollLeft(scrollLeft > 0);
+			setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
+		};
 
 		updateScrollIndicators();
 
 		el.addEventListener("scroll", updateScrollIndicators, { passive: true });
 		window.addEventListener("resize", updateScrollIndicators);
 
-		// Observer pour détecter les changements de contenu
 		const resizeObserver = new ResizeObserver(updateScrollIndicators);
 		resizeObserver.observe(el);
 
@@ -48,7 +44,7 @@ export function TableScrollContainer({
 			window.removeEventListener("resize", updateScrollIndicators);
 			resizeObserver.disconnect();
 		};
-	}, [updateScrollIndicators]);
+	}, []);
 
 	return (
 		<div className={cn("relative", className)}>
@@ -67,7 +63,7 @@ export function TableScrollContainer({
 			{/* Container scrollable */}
 			<div
 				ref={scrollRef}
-				className="overflow-x-auto"
+				className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 				tabIndex={0}
 				role="region"
 				aria-label="Tableau avec scroll horizontal"

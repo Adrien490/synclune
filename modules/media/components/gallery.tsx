@@ -250,7 +250,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 							{/* Dots indicator - Mobile uniquement, en bas centre */}
 							{safeImages.length > 1 && (
 								<div
-									className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-3 py-2"
+									className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1.5"
 									role="tablist"
 									aria-label="Navigation galerie"
 								>

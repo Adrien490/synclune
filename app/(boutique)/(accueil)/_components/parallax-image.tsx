@@ -8,6 +8,7 @@ import {
 	useInView,
 } from "framer-motion";
 import Image from "next/image";
+import type { RefObject } from "react";
 import { useRef, useSyncExternalStore } from "react";
 import { cn } from "@/shared/utils/cn";
 import { useIsTouchDevice } from "@/shared/hooks";
@@ -33,10 +34,63 @@ interface ParallaxImageProps {
 	disableOnTouch?: boolean;
 }
 
+interface ParallaxInnerProps {
+	containerRef: RefObject<HTMLDivElement | null>;
+	safeIntensity: number;
+	imageElement: React.ReactNode;
+}
+
 // Hydration safety pattern (evite mismatch server/client)
 const subscribeNoop = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
+
+/**
+ * Composant interne qui gere l'animation parallax
+ * Isole les hooks scroll pour eviter les listeners inutiles quand desactive
+ */
+function ParallaxInner({
+	containerRef,
+	safeIntensity,
+	imageElement,
+}: ParallaxInnerProps) {
+	// Lazy animation : n'active le parallax que si visible
+	// Margin fixe en pixels pour comportement consistant mobile/desktop
+	const isInView = useInView(containerRef, {
+		once: false,
+		margin: "0px 0px -100px 0px",
+	});
+
+	const { scrollYProgress } = useScroll({
+		target: containerRef,
+		offset: ["start end", "end start"],
+	});
+
+	// Effet parallax : translation Y basee sur le scroll
+	const y = useTransform(
+		scrollYProgress,
+		[0, 1],
+		[`-${safeIntensity}%`, `${safeIntensity}%`]
+	);
+
+	return (
+		<motion.div
+			className="absolute inset-x-0 w-full"
+			style={{
+				// Container plus grand pour eviter le clipping lors du parallax
+				height: `${100 + safeIntensity * 2}%`,
+				// Centrage vertical pour eviter le clipping aux extremes
+				top: `-${safeIntensity}%`,
+				// Animation uniquement si visible (performance)
+				y: isInView ? y : 0,
+				// GPU hint uniquement quand visible (evite surconsommation memoire)
+				willChange: isInView ? "transform" : "auto",
+			}}
+		>
+			{imageElement}
+		</motion.div>
+	);
+}
 
 /**
  * Image avec effet parallax subtil au scroll
@@ -84,13 +138,6 @@ export function ParallaxImage({
 	const shouldReduceMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
 
-	// Lazy animation : n'active le parallax que si visible
-	// Margin bottom negative pour demarrer l'animation avant que l'element soit entierement visible
-	const isInView = useInView(containerRef, {
-		once: false,
-		margin: "0px 0px -20% 0px",
-	});
-
 	// Hydration safety : evite les mismatches useReducedMotion server/client
 	const isMounted = useSyncExternalStore(
 		subscribeNoop,
@@ -100,18 +147,6 @@ export function ParallaxImage({
 
 	// Limite l'intensite pour eviter overflow (max 15%)
 	const safeIntensity = Math.min(intensity, 15);
-
-	const { scrollYProgress } = useScroll({
-		target: containerRef,
-		offset: ["start end", "end start"],
-	});
-
-	// Effet parallax : translation Y basee sur le scroll
-	const y = useTransform(
-		scrollYProgress,
-		[0, 1],
-		[`-${safeIntensity}%`, `${safeIntensity}%`]
-	);
 
 	// Image commune (evite la duplication de code)
 	const imageElement = (
@@ -131,6 +166,7 @@ export function ParallaxImage({
 	);
 
 	// SSR, reduced motion, ou appareil tactile avec option activee : rendu statique
+	// Les hooks scroll sont isoles dans ParallaxInner pour eviter les listeners inutiles
 	const shouldDisableParallax =
 		!isMounted || shouldReduceMotion || (disableOnTouch && isTouchDevice);
 
@@ -156,19 +192,11 @@ export function ParallaxImage({
 				containerClassName
 			)}
 		>
-			<motion.div
-				className="relative w-full"
-				style={{
-					// Container plus grand pour eviter le clipping lors du parallax
-					height: `${100 + safeIntensity * 2}%`,
-					// Animation uniquement si visible (performance)
-					y: isInView ? y : 0,
-					// GPU hint uniquement quand visible (evite surconsommation memoire)
-					willChange: isInView ? "transform" : "auto",
-				}}
-			>
-				{imageElement}
-			</motion.div>
+			<ParallaxInner
+				containerRef={containerRef}
+				safeIntensity={safeIntensity}
+				imageElement={imageElement}
+			/>
 		</div>
 	);
 }

@@ -1,5 +1,6 @@
 import { createStore } from "zustand/vanilla";
 import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
+import { differenceInMonths } from "date-fns";
 
 // Noop storage pour le SSR (quand localStorage n'est pas disponible)
 const noopStorage: StateStorage = {
@@ -129,7 +130,7 @@ export const createCookieConsentStore = (
 						if (state.consentDate) {
 							const consentDate = new Date(state.consentDate);
 							const now = new Date();
-							const monthsDiff = (now.getTime() - consentDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+							const monthsDiff = differenceInMonths(now, consentDate);
 
 							if (monthsDiff >= CONSENT_EXPIRY_MONTHS) {
 								// Consentement expiré → réafficher banner et réinitialiser

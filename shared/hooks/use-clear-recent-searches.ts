@@ -52,10 +52,15 @@ export function useClearRecentSearches(options: UseClearRecentSearchesOptions) {
 		undefined
 	)
 
+	const isPending = isTransitionPending || isActionPending
+
 	/**
 	 * Efface toutes les recherches recentes
 	 */
 	const clear = () => {
+		// Guard contre double-click
+		if (isPending) return
+
 		startTransition(() => {
 			// Mise a jour optimiste
 			setOptimisticSearches([])
@@ -69,7 +74,7 @@ export function useClearRecentSearches(options: UseClearRecentSearchesOptions) {
 		state,
 		searches: optimisticSearches,
 		clear,
-		isPending: isTransitionPending || isActionPending,
+		isPending,
 		isEmpty: optimisticSearches.length === 0,
 		isSuccess: state?.status === ActionStatus.SUCCESS,
 		isError: state?.status === ActionStatus.ERROR,

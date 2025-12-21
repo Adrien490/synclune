@@ -13,11 +13,13 @@ interface UseLongPressResult {
 	onPointerUp: () => void;
 	onPointerLeave: () => void;
 	onPointerCancel: () => void;
+	onKeyDown: (e: React.KeyboardEvent) => void;
+	onKeyUp: (e: React.KeyboardEvent) => void;
 }
 
 /**
  * Hook pour détecter les interactions de pression longue (long-press)
- * Compatible souris et tactile via Pointer Events
+ * Compatible souris, tactile via Pointer Events, et clavier (Espace/Entrée)
  *
  * @param callback - Fonction appelée après le délai de pression
  * @param options.threshold - Délai en ms avant déclenchement (défaut: 500ms)
@@ -61,10 +63,33 @@ export function useLongPress(
 		}
 	};
 
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		// Support clavier : Espace ou Entrée pour accessibilité
+		if (e.code !== "Space" && e.code !== "Enter") return;
+		if (e.repeat) return; // Évite les répétitions
+		e.preventDefault();
+
+		isLongPressRef.current = false;
+		onStart?.();
+
+		timeoutRef.current = setTimeout(() => {
+			isLongPressRef.current = true;
+			callback();
+		}, threshold);
+	};
+
+	const handleKeyUp = (e: React.KeyboardEvent) => {
+		if (e.code !== "Space" && e.code !== "Enter") return;
+		e.preventDefault();
+		cancel();
+	};
+
 	return {
 		onPointerDown: start,
 		onPointerUp: cancel,
 		onPointerLeave: cancel,
 		onPointerCancel: cancel,
+		onKeyDown: handleKeyDown,
+		onKeyUp: handleKeyUp,
 	};
 }

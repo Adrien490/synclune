@@ -1,11 +1,16 @@
 "use client";
 
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useSyncExternalStore } from "react";
 
 interface ScrollProgressLineProps {
 	className?: string;
 }
+
+// Hydration safety pattern (évite mismatch server/client)
+const subscribeNoop = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 /**
  * Ligne de progression animée au scroll
@@ -14,7 +19,16 @@ interface ScrollProgressLineProps {
  */
 export function ScrollProgressLine({ className }: ScrollProgressLineProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const shouldReduceMotion = useReducedMotion();
+	const prefersReducedMotion = useReducedMotion();
+
+	// Hydration safety : évite les mismatches useReducedMotion server/client
+	const isMounted = useSyncExternalStore(
+		subscribeNoop,
+		getClientSnapshot,
+		getServerSnapshot
+	);
+
+	const shouldReduceMotion = isMounted && prefersReducedMotion;
 
 	const { scrollYProgress } = useScroll({
 		target: containerRef,
@@ -24,13 +38,16 @@ export function ScrollProgressLine({ className }: ScrollProgressLineProps) {
 	const scaleY = useTransform(scrollYProgress, [0, 1], [0, 1]);
 	const opacity = useTransform(scrollYProgress, [0, 0.1], [0.3, 1]);
 
+	// Reduced motion : affiche une ligne statique (repère visuel conservé)
 	if (shouldReduceMotion) {
 		return (
 			<div
 				ref={containerRef}
-				className={className}
+				className="absolute left-5 sm:left-6 top-6 bottom-6 z-0 hidden sm:block"
 				aria-hidden="true"
-			/>
+			>
+				<div className="absolute inset-0 w-0.5 sm:w-1 bg-secondary/40 rounded-full" />
+			</div>
 		);
 	}
 

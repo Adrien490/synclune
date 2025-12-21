@@ -14,6 +14,7 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { useSearchParams } from "next/navigation";
 import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
+import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { ColorSelector } from "@/modules/colors/components/color-selector";
 import { MaterialSelector } from "@/modules/skus/components/material-selector";
 import { SizeSelector } from "@/modules/skus/components/size-selector";
@@ -44,10 +45,40 @@ export function VariantSelector({ product, defaultSku }: VariantSelectorProps) {
 	};
 
 	// Déterminer si la taille est requise
-	const { requiresSize } = useVariantValidation({ product, selection: variants });
+	const { requiresSize, validationErrors } = useVariantValidation({ product, selection: variants });
 
 	// Calculer les variantes disponibles depuis le produit
 	const variantInfo = extractVariantInfo(product);
+
+	// SKU selectionne pour le message de disponibilite
+	const { selectedSku } = useSelectedSku({ product, defaultSku });
+
+	// Message de disponibilite pour ARIA live region
+	const getAvailabilityMessage = () => {
+		if (!selectedSku) {
+			if (validationErrors.length > 0) {
+				return validationErrors[0];
+			}
+			return "Selectionne tes options pour voir la disponibilite";
+		}
+		if (selectedSku.inventory === 0 || !selectedSku.isActive) {
+			return "Cette combinaison est en rupture de stock";
+		}
+		if (selectedSku.inventory <= 3) {
+			return `Plus que ${selectedSku.inventory} en stock`;
+		}
+		return "En stock";
+	};
+
+	// Description dynamique selon les selecteurs affiches
+	const getDescription = () => {
+		const parts = [];
+		if (variantInfo.availableColors.length > 0) parts.push("la couleur");
+		if (variantInfo.availableMaterials.length > 1) parts.push("le materiau");
+		if (requiresSize && variantInfo.availableSizes.length > 0) parts.push("la taille");
+		if (parts.length === 0) return "";
+		return `Selectionne ${parts.join(" et ")} pour continuer`;
+	};
 
 	// Vérifier si on doit afficher le sélecteur (plusieurs SKUs)
 	const shouldShowSelector = product.skus && product.skus.length > 1;
@@ -66,8 +97,12 @@ export function VariantSelector({ product, defaultSku }: VariantSelectorProps) {
 					Choisis tes options
 				</CardTitle>
 				<CardDescription className="text-sm/6 tracking-normal antialiased">
-					Sélectionne la couleur et la taille qui te correspondent
+					{getDescription() || "Selectionne tes options"}
 				</CardDescription>
+				{/* ARIA live region pour annoncer les changements de disponibilite */}
+				<div aria-live="polite" aria-atomic="true" className="sr-only">
+					{getAvailabilityMessage()}
+				</div>
 			</CardHeader>
 			<CardContent className="space-y-6">
 				{/* Sélecteur de couleur autonome */}

@@ -84,18 +84,30 @@ export function useWizardPersistence({
 	useEffect(() => {
 		if (!enabled || hasRestored.current) return
 
-		const savedStep = restoreStep()
-		if (savedStep !== null && onRestore) {
-			hasRestored.current = true
-			onRestore(savedStep)
+		try {
+			const saved = sessionStorage.getItem(key)
+			if (saved !== null) {
+				const step = parseInt(saved, 10)
+				if (!isNaN(step) && step >= 0 && onRestore) {
+					hasRestored.current = true
+					onRestore(step)
+				}
+			}
+		} catch {
+			// sessionStorage peut être indisponible
 		}
-	}, [enabled, restoreStep, onRestore])
+	}, [enabled, key, onRestore])
 
 	// Persistence automatique lors du changement d'étape
 	useEffect(() => {
 		if (!enabled || currentStep === undefined) return
-		persistStep(currentStep)
-	}, [enabled, currentStep, persistStep])
+
+		try {
+			sessionStorage.setItem(key, String(currentStep))
+		} catch {
+			// sessionStorage peut être indisponible
+		}
+	}, [enabled, currentStep, key])
 
 	return {
 		persistStep,

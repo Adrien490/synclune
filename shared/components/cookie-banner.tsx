@@ -51,6 +51,20 @@ export function CookieBanner() {
 		}
 	}, [shouldShow, shouldReduceMotion]);
 
+	// Gestion touche Escape pour refuser les cookies
+	useEffect(() => {
+		if (!shouldShow) return;
+
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				rejectCookies();
+			}
+		};
+
+		document.addEventListener("keydown", handleKeyDown);
+		return () => document.removeEventListener("keydown", handleKeyDown);
+	}, [shouldShow, rejectCookies]);
+
 	// Ne rien afficher tant que le store n'est pas hydraté depuis localStorage
 	// Cela évite le flash du banner pendant le chargement
 	if (!_hasHydrated) {
@@ -68,9 +82,8 @@ export function CookieBanner() {
 					className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 md:bottom-6 md:left-6 md:right-auto z-50 w-auto max-w-[calc(100vw-2rem)] md:max-w-md"
 					role="dialog"
 					aria-modal="true"
-					aria-live="polite"
 					aria-label="Consentement cookies"
-					aria-describedby="cookie-description cookie-duration"
+					aria-describedby="cookie-description"
 				>
 					<FocusScope trapped loop>
 						<div className="bg-background/95 backdrop-blur-md border border-primary/15 shadow-lg rounded-xl p-4 md:p-6 space-y-3 md:space-y-4">
@@ -89,11 +102,9 @@ export function CookieBanner() {
 							{/* Message */}
 							<p id="cookie-description" className="text-sm text-muted-foreground leading-relaxed">
 								Nous utilisons des cookies pour améliorer ton expérience.
-							</p>
-
-							{/* Description SR-only pour contexte */}
-							<p id="cookie-duration" className="sr-only">
-								Votre choix sera mémorisé pendant 6 mois conformément aux recommandations CNIL.
+								<span className="sr-only">
+									{" "}Votre choix sera mémorisé pendant 6 mois conformément aux recommandations CNIL.
+								</span>
 							</p>
 
 							{/* Liens */}
@@ -119,7 +130,7 @@ export function CookieBanner() {
 									onClick={acceptCookies}
 									variant="default"
 									size="sm"
-									className="flex-1 min-h-[44px] sm:min-h-0"
+									className="flex-1 min-h-11"
 								>
 									Accepter
 								</Button>
@@ -127,7 +138,7 @@ export function CookieBanner() {
 									onClick={rejectCookies}
 									variant="secondary"
 									size="sm"
-									className="flex-1 min-h-[44px] sm:min-h-0"
+									className="flex-1 min-h-11"
 								>
 									Refuser
 								</Button>

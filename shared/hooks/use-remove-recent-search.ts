@@ -58,10 +58,15 @@ export function useRemoveRecentSearch(options: UseRemoveRecentSearchOptions) {
 		undefined
 	)
 
+	const isPending = isTransitionPending || isActionPending
+
 	/**
 	 * Supprime un terme des recherches recentes
 	 */
 	const remove = (term: string) => {
+		// Guard contre double-click
+		if (isPending) return
+
 		startTransition(() => {
 			// Mise a jour optimiste
 			setOptimisticSearches(optimisticSearches.filter((s) => s !== term))
@@ -76,7 +81,7 @@ export function useRemoveRecentSearch(options: UseRemoveRecentSearchOptions) {
 		state,
 		searches: optimisticSearches,
 		remove,
-		isPending: isTransitionPending || isActionPending,
+		isPending,
 		isSuccess: state?.status === ActionStatus.SUCCESS,
 		isError: state?.status === ActionStatus.ERROR,
 	}
