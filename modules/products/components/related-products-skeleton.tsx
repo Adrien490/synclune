@@ -6,9 +6,9 @@
  *
  * Structure à respecter :
  * - Container : <aside className="space-y-6">
- * - En-tête : <div className="space-y-2"> avec h2 + p
- * - Grille : grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6
- * - Cards : ProductCard avec size="md" structure
+ * - En-tête : <div className="space-y-2"> avec h2
+ * - Carousel : flex horizontal avec basis-[clamp(...)]
+ * - Cards : ProductCard structure
  * - CTA : <div className="flex justify-center pt-4">
  */
 export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
@@ -19,18 +19,32 @@ export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
 		>
 			{/* En-tête de section - Correspond exactement à RelatedProducts */}
 			<div className="space-y-2">
-				{/* h2 avec text-2xl font-semibold tracking-tight + flex items-center gap-2 */}
+				{/* h2 avec text-2xl font-semibold tracking-tight */}
 				<div className="h-8 w-64 bg-muted animate-pulse rounded" />
-
-				{/* p avec text-sm leading-normal text-muted-foreground */}
-				<div className="h-5 w-80 max-w-full bg-muted animate-pulse rounded" />
 			</div>
 
-			{/* Grille de produits - Correspond EXACTEMENT à la grille de RelatedProducts */}
-			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-				{[...Array(limit)].map((_, index) => (
-					<ProductCardSkeleton key={index} />
-				))}
+			{/* Carousel skeleton - Correspond à la structure du carousel */}
+			<div className="w-full overflow-hidden">
+				<div className="-ml-4 sm:-ml-6 flex py-4">
+					{[...Array(limit)].map((_, index) => (
+						<div
+							key={index}
+							className="pl-4 sm:pl-6 flex-shrink-0 basis-[clamp(200px,72vw,280px)] md:basis-1/3 lg:basis-1/4"
+						>
+							<ProductCardSkeleton />
+						</div>
+					))}
+				</div>
+
+				{/* Dots skeleton - Mobile uniquement */}
+				<div className="md:hidden flex justify-center gap-2 mt-4">
+					{[...Array(Math.min(5, limit))].map((_, i) => (
+						<div
+							key={i}
+							className="h-2 w-2 rounded-full bg-muted animate-pulse"
+						/>
+					))}
+				</div>
 			</div>
 
 			{/* CTA - Correspond exactement à RelatedProducts */}

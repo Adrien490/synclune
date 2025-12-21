@@ -1,8 +1,15 @@
 import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
-import { getPrimarySkuForList } from "@/modules/products/services/product-list-helpers";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
-import { Reveal, Stagger } from "@/shared/components/animations";
+import { Reveal } from "@/shared/components/animations";
+import {
+	Carousel,
+	CarouselContent,
+	CarouselDots,
+	CarouselItem,
+	CarouselNext,
+	CarouselPrevious,
+} from "@/shared/components/ui/carousel";
 
 interface RelatedProductsProps {
 	/** Slug du produit actuel (à exclure des recommandations) */
@@ -59,23 +66,49 @@ export async function RelatedProducts({
 				</div>
 			</Reveal>
 
-			{/* Grille de produits avec animation stagger au scroll */}
-			<Stagger
-				className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
-				inView
-				stagger={0.08}
-				y={30}
-				amount={0.1}
-			>
-				{relatedProducts.map((product, index) => (
-					<ProductCard
-						key={product.id}
-						product={product}
-						index={index}
-						wishlistSkuIds={wishlistSkuIds}
-					/>
-				))}
-			</Stagger>
+			{/* Carousel de produits similaires */}
+			<Reveal delay={0.2} duration={0.8} y={20} once={true}>
+				<Carousel
+					opts={{
+						align: "center",
+						containScroll: "trimSnaps",
+					}}
+					className="w-full"
+					aria-label="Carousel de produits similaires"
+				>
+					<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
+						{relatedProducts.map((product, index) => (
+							<CarouselItem
+								key={product.id}
+								className="pl-4 sm:pl-6 basis-[clamp(200px,72vw,280px)] md:basis-1/3 lg:basis-1/4"
+							>
+								<ProductCard
+									product={product}
+									index={index}
+									wishlistSkuIds={wishlistSkuIds}
+								/>
+							</CarouselItem>
+						))}
+					</CarouselContent>
+
+					{/* Flèches de navigation - Desktop uniquement */}
+					{relatedProducts.length > 3 && (
+						<>
+							<CarouselPrevious
+								className="hidden md:flex left-4 top-[40%]"
+								aria-label="Voir les produits précédents"
+							/>
+							<CarouselNext
+								className="hidden md:flex right-4 top-[40%]"
+								aria-label="Voir les produits suivants"
+							/>
+						</>
+					)}
+
+					{/* Dots - Mobile uniquement */}
+					<CarouselDots className="md:hidden" />
+				</Carousel>
+			</Reveal>
 
 			{/* CTA pour voir plus de produits */}
 			{relatedProducts.length >= limit && (

@@ -712,7 +712,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 
 									{/* Message d'erreur de validation */}
 									<AnimatePresence mode="wait">
-										{validationErrors.length > 0 && (
+										{validationErrors.length > 0 && !isPending && (
 											<motion.p
 												key="validation-error"
 												initial={{ opacity: 0, height: 0 }}

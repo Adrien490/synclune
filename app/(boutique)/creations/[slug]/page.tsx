@@ -18,6 +18,9 @@ import { StickyCartCTA } from "@/shared/components/sticky-cart-cta";
 
 import { RelatedProducts } from "@/modules/products/components/related-products";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
+import { RecentlyViewedProducts } from "@/modules/products/components/recently-viewed-products";
+import { RecentlyViewedProductsSkeleton } from "@/modules/products/components/recently-viewed-products-skeleton";
+import { RecordProductView } from "@/modules/products/components/record-product-view";
 import { generateProductMetadata } from "@/modules/products/utils/seo/generate-metadata";
 import { generateStructuredData } from "@/modules/products/utils/seo/generate-structured-data";
 
@@ -112,6 +115,9 @@ export default async function ProductPage({
 				Aller au contenu principal
 			</a>
 
+			{/* Enregistrer la vue produit (client-side, non-bloquant) */}
+			<RecordProductView slug={product.slug} />
+
 			{/* Structured Data JSON-LD pour SEO */}
 			<script
 				type="application/ld+json"
@@ -162,10 +168,18 @@ export default async function ProductPage({
 								</section>
 							</div>
 
+							{/* Separator avant produits recemment vus */}
+							<Separator className="bg-border" />
+
+							{/* 7. RecentlyViewedProducts - Produits recemment consultes */}
+							<Suspense fallback={<RecentlyViewedProductsSkeleton limit={4} />}>
+								<RecentlyViewedProducts currentProductSlug={product.slug} />
+							</Suspense>
+
 							{/* Separator avant produits similaires */}
 							<Separator className="bg-border" />
 
-							{/* 7. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
+							{/* 8. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
 							<Suspense fallback={<RelatedProductsSkeleton limit={8} />}>
 								<RelatedProducts currentProductSlug={product.slug} limit={8} />
 							</Suspense>
