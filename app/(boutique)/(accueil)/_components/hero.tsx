@@ -53,7 +53,7 @@ export function Hero() {
                 </SectionTitle>
               </Fade>
               <Fade y={8} delay={0.15} duration={0.5}>
-                <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 text-foreground font-light tracking-tight antialiased max-w-2xl mx-auto">
+                <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 text-foreground font-normal tracking-tight antialiased max-w-2xl mx-auto">
                   <span className="sm:hidden">
                     Faits main pour sublimer votre quotidien{" "}
                   </span>
@@ -112,7 +112,7 @@ export function Hero() {
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   Suivez-moi :
                 </span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Link
                     href={BRAND.social.instagram.url}
                     target="_blank"

@@ -3,11 +3,12 @@ import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
 import { Heart, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 export function AtelierStory() {
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.spacious}`}
 			aria-labelledby="atelier-story-title"
 			itemScope
 			itemType="https://schema.org/Article"
@@ -45,8 +46,8 @@ export function AtelierStory() {
 					</div>
 				</Reveal>
 
-				{/* Separateur decoratif anime - delay 0 pour apparaitre en premier */}
-				<Fade y={8} delay={0} duration={0.5} inView once>
+				{/* Separateur decoratif anime - delay 0.4s pour apparaitre apres l'image */}
+				<Fade y={8} delay={0.4} duration={0.5} inView once>
 					<div
 						className="flex justify-center items-center gap-3 mb-8 sm:mb-12"
 						aria-hidden="true"
@@ -79,7 +80,7 @@ export function AtelierStory() {
 							y={12}
 							inView
 							once
-							className="space-y-4 sm:space-y-6 text-base sm:text-lg/8 text-muted-foreground"
+							className="space-y-4 sm:space-y-6 text-base sm:text-lg text-muted-foreground leading-relaxed"
 						>
 							<p>
 								Quand j'ai commencé à créer des bijoux, c'était juste pour moi.
@@ -92,19 +93,18 @@ export function AtelierStory() {
 								Chaque bijou que tu vois ici, j'ai
 								choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il
 								n'existe qu'en quelques exemplaires (parfois moins de dix).
-						
 							</p>
 							{/* Citation finale mise en valeur avec blockquote */}
-							<blockquote className="relative pl-6 border-l-2 border-primary/50 text-foreground font-medium text-left">
+							<blockquote className="relative pl-6 border-l-2 border-primary/70 text-foreground font-medium text-left">
 								<p>Tout est fait à la main !</p>
-								<p>Je mets du cœur à chaque création, j'espère que ça vous plaira{" "}<Heart className="w-4 h-4 text-primary inline-block align-middle" aria-hidden="true" /></p>
+								<p>Je mets du cœur à chaque création, j'espère que ça vous plaira ❤️</p>
 							</blockquote>
 						</Stagger>
 
 						{/* Signature - taille agrandie sur mobile */}
 						<div className="pt-6">
 							<p
-								className={`${dancingScript.className} text-2xl sm:text-2xl md:text-3xl text-foreground italic`}
+								className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic`}
 							>
 								— Léane
 							</p>
@@ -127,6 +127,15 @@ export function AtelierStory() {
 							/>
 						</div>
 
+						{/* CTA vers personnalisation */}
+						<div className="text-center">
+							<Link
+								href="/personnalisation"
+								className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+							>
+								Discuter d'un projet personnalisé →
+							</Link>
+						</div>
 					</div>
 				</Reveal>
 			</div>

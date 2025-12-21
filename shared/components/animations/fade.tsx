@@ -76,11 +76,7 @@ export function Fade({
 		  };
 
 	return (
-		<motion.div
-			className={className}
-			style={{ willChange: "opacity, transform" }}
-			{...animationProps}
-		>
+		<motion.div className={className} {...animationProps}>
 			{children}
 		</motion.div>
 	);

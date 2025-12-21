@@ -1,6 +1,5 @@
 "use client";
 
-import { memo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/shared/utils/cn";
 
@@ -154,5 +153,4 @@ const LiquidGradientBase = ({
  * <LiquidGradient intensity={0.2} speed={0.8} />
  * ```
  */
-export const LiquidGradient = memo(LiquidGradientBase);
-LiquidGradient.displayName = "LiquidGradient";
+export const LiquidGradient = LiquidGradientBase;

@@ -14,7 +14,7 @@ import {
 	PopoverTrigger,
 } from "@/shared/components/ui/popover";
 import { useIsTouchDevice } from "@/shared/hooks";
-import { isLightColor } from "@/shared/utils/color";
+import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
 import type { ColorSwatch } from "@/modules/products/services/product-list-helpers";
 
 interface ColorSwatchesProps {
@@ -192,7 +192,7 @@ export function ColorSwatches({
 							: "border-border/50 shadow-sm can-hover:hover:border-primary/50 motion-safe:can-hover:hover:scale-105",
 						!color.inStock && "opacity-40 cursor-not-allowed",
 						// Contraste pour couleurs très claires (blanc, jaune pâle...)
-						!isSelected && isLightColor(color.hex) && "ring-1 ring-border/30"
+						!isSelected && isLightColor(color.hex, 0.85) && "ring-1 ring-border/30"
 					)}
 				>
 					<AriaColorSwatch
@@ -215,7 +215,7 @@ export function ColorSwatches({
 					sizeClasses[swatchSize],
 					!color.inStock && "opacity-40",
 					// Contraste pour couleurs très claires (blanc, jaune pâle...)
-					isLightColor(color.hex) && "ring-1 ring-border/30"
+					isLightColor(color.hex, 0.85) && "ring-1 ring-border/30"
 				)}
 			/>
 		);

@@ -48,7 +48,6 @@ export function Slide({
 	return (
 		<motion.div
 			className={className}
-			style={{ willChange: "opacity, transform" }}
 			initial={getInitial()}
 			animate={{ opacity: 1, x: 0, y: 0 }}
 			transition={{
