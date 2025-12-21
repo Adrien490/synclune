@@ -63,7 +63,7 @@ export const WizardNavigation = memo(function WizardNavigation({
 					disabled={isDisabled}
 					className="flex-1 h-12 md:h-10 md:flex-none md:w-auto"
 				>
-					<ChevronLeft className="size-4" />
+					<ChevronLeft className="size-4" aria-hidden="true" />
 					{previousLabel}
 				</Button>
 			)}
@@ -79,12 +79,12 @@ export const WizardNavigation = memo(function WizardNavigation({
 				>
 					{isSubmitting ? (
 						<>
-							<Loader2 className="size-4 animate-spin" />
+							<Loader2 className="size-4 animate-spin" aria-hidden="true" />
 							Enregistrement...
 						</>
 					) : isBlocked && blockedMessage ? (
 						<>
-							<Loader2 className="size-4 animate-spin" />
+							<Loader2 className="size-4 animate-spin" aria-hidden="true" />
 							{blockedMessage}
 						</>
 					) : (
@@ -101,18 +101,18 @@ export const WizardNavigation = memo(function WizardNavigation({
 				>
 					{isValidating ? (
 						<>
-							<Loader2 className="size-4 animate-spin" />
+							<Loader2 className="size-4 animate-spin" aria-hidden="true" />
 							Validation...
 						</>
 					) : isBlocked && blockedMessage ? (
 						<>
-							<Loader2 className="size-4 animate-spin" />
+							<Loader2 className="size-4 animate-spin" aria-hidden="true" />
 							{blockedMessage}
 						</>
 					) : (
 						<>
 							{nextLabel}
-							<ChevronRight className="size-4" />
+							<ChevronRight className="size-4" aria-hidden="true" />
 						</>
 					)}
 				</Button>

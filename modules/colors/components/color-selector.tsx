@@ -9,6 +9,7 @@ import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import type { Color } from "@/modules/skus/types/sku-selector.types";
+import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 
 interface ColorSelectorProps {
 	colors: Color[];
@@ -26,6 +27,7 @@ interface ColorSelectorProps {
  * - Calculer la disponibilité des options
  * - Afficher les options indisponibles (grayed out)
  * - Bouton de réinitialisation
+ * - Navigation clavier (fleches)
  */
 export function ColorSelector({
 	colors,
@@ -70,6 +72,14 @@ export function ColorSelector({
 		});
 	};
 
+	// Navigation clavier pour le radio group
+	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
+		options: colors,
+		getOptionId: (color) => color.slug || color.id,
+		isOptionDisabled: (color) => !isColorAvailable(color.slug || color.id),
+		onSelect: (color) => updateColor(color.slug || color.id),
+	});
+
 	if (colors.length === 0) return null;
 
 	return (
@@ -100,8 +110,8 @@ export function ColorSelector({
 					</Button>
 				)}
 			</div>
-			<div className="flex flex-wrap gap-3">
-				{colors.map((color) => {
+			<div ref={containerRef} className="flex flex-wrap gap-3">
+				{colors.map((color, index) => {
 					// Utiliser le slug pour l'URL (cohérence avec material/size selectors)
 					const colorIdentifier = color.slug || color.id;
 					const isSelected = colorIdentifier === optimisticColor;
@@ -114,7 +124,9 @@ export function ColorSelector({
 							role="radio"
 							aria-checked={isSelected}
 							aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
+							data-option-id={colorIdentifier}
 							onClick={() => updateColor(colorIdentifier)}
+							onKeyDown={(e) => handleKeyDown(e, index)}
 							disabled={!isAvailable}
 							className={cn(
 								"group relative flex items-center gap-2.5 p-3.5 sm:p-3 rounded-xl sm:rounded-lg border-2 transition-all min-h-[52px] sm:min-h-[44px]",
@@ -142,7 +154,7 @@ export function ColorSelector({
 								)}
 							</div>
 							{isSelected && (
-								<Check className="w-4 h-4 text-primary ml-auto" />
+								<Check className="w-4 h-4 text-primary ml-auto" aria-hidden="true" />
 							)}
 						</button>
 					);

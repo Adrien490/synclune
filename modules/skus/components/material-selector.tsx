@@ -9,6 +9,7 @@ import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import type { Material } from "@/modules/skus/types/sku-selector.types";
+import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 
 interface MaterialSelectorProps {
 	materials: Material[];
@@ -26,6 +27,7 @@ interface MaterialSelectorProps {
  * - Afficher les options indisponibles
  * - Bouton de réinitialisation
  * - Affichage en grid 2 colonnes
+ * - Navigation clavier (fleches)
  */
 export function MaterialSelector({
 	materials,
@@ -69,6 +71,14 @@ export function MaterialSelector({
 		});
 	};
 
+	// Navigation clavier pour le radio group
+	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
+		options: materials,
+		getOptionId: (material) => material.name,
+		isOptionDisabled: (material) => !isMaterialAvailable(material.name),
+		onSelect: (material) => updateMaterial(material.name),
+	});
+
 	// Ne pas afficher si un seul matériau ou aucun
 	if (materials.length <= 1) return null;
 
@@ -95,8 +105,8 @@ export function MaterialSelector({
 					</Button>
 				)}
 			</div>
-			<div className="grid grid-cols-2 gap-2">
-				{materials.map((material) => {
+			<div ref={containerRef} className="grid grid-cols-2 gap-2">
+				{materials.map((material, index) => {
 					// Comparaison insensible à la casse pour éviter les problèmes de matching
 					const isSelected =
 						material.name.toLowerCase() === optimisticMaterial?.toLowerCase();
@@ -109,7 +119,9 @@ export function MaterialSelector({
 							role="radio"
 							aria-checked={isSelected}
 							aria-label={`${material.name}${!isAvailable ? " (indisponible)" : ""}`}
+							data-option-id={material.name}
 							onClick={() => updateMaterial(material.name)}
+							onKeyDown={(e) => handleKeyDown(e, index)}
 							disabled={!isAvailable}
 							className={cn(
 								"flex items-center justify-between p-3 rounded-lg border text-left transition-all",
@@ -123,7 +135,7 @@ export function MaterialSelector({
 							<span className="text-sm/6 tracking-normal antialiased font-medium">
 								{material.name}
 							</span>
-							{isSelected && <Check className="w-4 h-4 text-primary" />}
+							{isSelected && <Check className="w-4 h-4 text-primary" aria-hidden="true" />}
 						</button>
 					);
 				})}

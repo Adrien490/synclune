@@ -34,7 +34,7 @@ interface TabNavigationProps {
 
 /** Classes de base pour les pills */
 const PILL_BASE =
-	"inline-flex items-center justify-center gap-1.5 h-12 md:h-10 px-4 rounded-full text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+	"inline-flex items-center justify-center gap-1.5 h-12 md:h-10 min-w-[44px] px-4 rounded-full text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 /**
  * Composant de navigation par onglets
@@ -67,7 +67,7 @@ export function TabNavigation({
 			PILL_BASE,
 			isActive
 				? "bg-primary text-primary-foreground shadow-sm"
-				: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+				: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground hover:shadow-sm"
 		);
 
 	return (
@@ -110,7 +110,6 @@ export function TabNavigation({
 					<>
 						<Button
 							type="button"
-							variant="ghost"
 							onClick={() => setIsDrawerOpen(true)}
 							className={cn(
 								PILL_BASE,
@@ -145,7 +144,7 @@ export function TabNavigation({
 								</DrawerHeader>
 								<DrawerBody>
 									{/* Grid de catégories - TOUS les items */}
-									<div role="menu" className="grid grid-cols-2 gap-2">
+									<div className="grid grid-cols-2 gap-2 max-w-md mx-auto">
 										{items.map((item) => {
 											const isActive = item.value === activeValue;
 											return (
@@ -154,7 +153,6 @@ export function TabNavigation({
 													href={item.href}
 													prefetch={prefetch}
 													onClick={() => setIsDrawerOpen(false)}
-													role="menuitem"
 													aria-current={isActive ? "page" : undefined}
 													className={cn(
 														"flex items-center justify-center gap-2",

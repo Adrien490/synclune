@@ -44,7 +44,7 @@ export function CollectionsSectionSkeleton({
 						{Array.from({ length: collectionsCount }).map((_, i) => (
 							<div
 								key={i}
-								className="shrink-0 w-[clamp(220px,75vw,280px)] snap-center"
+								className="shrink-0 w-[clamp(200px,72vw,280px)] snap-center"
 							>
 								{/* Card skeleton */}
 								<div className="bg-card rounded-xl border shadow-sm overflow-hidden">

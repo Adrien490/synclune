@@ -65,19 +65,23 @@ export const WizardProgress = memo(function WizardProgress({
 						{steps[currentStep]?.label}
 					</span>
 				</div>
-				<Progress value={progress} className="h-2" />
+				<Progress
+					value={progress}
+					className="h-2"
+					aria-label={`Progression: étape ${currentStep + 1} sur ${steps.length}`}
+				/>
 			</div>
 		);
 	}
 
 	// Variante dots : points cliquables compacts (recommandé pour mobile)
+	// Roving tabindex: seul le dot actif est tabbable, navigation par flèches
 	return (
 		<div
 			role="tablist"
 			aria-label="Navigation entre les étapes"
 			onKeyDown={handleKeyDown}
-			tabIndex={0}
-			className={cn("flex items-center gap-3 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-full", className)}
+			className={cn("flex items-center gap-3", className)}
 		>
 			{steps.map((step, index) => {
 				const isActive = index === currentStep
@@ -93,7 +97,8 @@ export const WizardProgress = memo(function WizardProgress({
 						onClick={() => canNavigate && onStepClick?.(index)}
 						disabled={!canNavigate}
 						className={cn(
-							"relative size-3 rounded-full transition-all",
+							// Zone tactile 44px (p-4 = 16px * 2 + 12px = 44px)
+							"relative size-3 rounded-full transition-all p-4 -m-4 bg-clip-content",
 							isActive
 								? "bg-primary scale-125"
 								: isCompleted
@@ -104,7 +109,7 @@ export const WizardProgress = memo(function WizardProgress({
 						aria-label={`Étape ${index + 1}: ${step.label}${hasErrors ? " (contient des erreurs)" : ""}`}
 						aria-selected={isActive}
 						aria-current={isActive ? "step" : undefined}
-						tabIndex={-1}
+						tabIndex={isActive ? 0 : -1}
 					>
 						{/* Indicateur d'erreur */}
 						{hasErrors && !isActive && (

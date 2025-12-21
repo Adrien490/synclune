@@ -34,11 +34,14 @@ export function FilterBadge({
 
 	const displayLabel = formatted?.label || filter.label;
 	const displayValue = formatted?.displayValue || filter.displayValue;
-	const ariaLabel = `Supprimer le filtre ${displayLabel}${displayValue ? ` ${displayValue}` : ""}`;
+	const filterDescription = `${displayLabel}${displayValue ? ` ${displayValue}` : ""}`;
+	const ariaLabelRemove = `Supprimer le filtre ${filterDescription}`;
+	const ariaLabelGroup = `Filtre actif : ${filterDescription}`;
 
 	// Suppression optimiste - disparition instantanée du badge
 	const handleRemove = () => {
-		onRemove(filter.key, filter.value as string);
+		const value = typeof filter.value === "string" ? filter.value : undefined;
+		onRemove(filter.key, value);
 	};
 
 	return (
@@ -58,7 +61,7 @@ export function FilterBadge({
 				className={cn(
 					// Layout
 					"flex items-center gap-1.5",
-					"h-9 sm:h-8",
+					"h-11 sm:h-8",
 					"pl-3 pr-1.5 sm:pr-2",
 					// Forme pill cohérente
 					"rounded-full",
@@ -69,18 +72,17 @@ export function FilterBadge({
 					// États
 					"transition-all duration-150",
 					"hover:bg-accent hover:border-primary/40",
-					// Mobile : cliquable avec feedback
-					"sm:cursor-default",
-					isMobile && [
-						"cursor-pointer",
-						"active:scale-[0.97]",
-						"active:bg-destructive/10",
-					]
+					// Mobile : badge entier cliquable avec feedback
+					"cursor-pointer sm:cursor-default",
+					"max-sm:active:scale-[0.97]",
+					"max-sm:active:bg-destructive/10",
+					// Desktop : seul le bouton X est cliquable
+					"sm:pointer-events-none"
 				)}
-				onClick={isMobile ? handleRemove : undefined}
-				role={isMobile ? "button" : undefined}
+				onClick={handleRemove}
+				role={isMobile ? "button" : "group"}
 				tabIndex={isMobile ? 0 : undefined}
-				aria-label={isMobile ? ariaLabel : undefined}
+				aria-label={isMobile ? ariaLabelRemove : ariaLabelGroup}
 			>
 				<span className="truncate">
 					<span className="font-medium">{displayLabel}</span>
@@ -101,13 +103,14 @@ export function FilterBadge({
 					}}
 					className={cn(
 						"hidden sm:flex",
-						"size-7 rounded-full",
+						"size-8 rounded-full",
 						"hover:bg-destructive/10 hover:text-destructive",
-						"transition-colors"
+						"transition-colors",
+						"pointer-events-auto"
 					)}
-					aria-label={ariaLabel}
+					aria-label={ariaLabelRemove}
 				>
-					<X className="size-3.5" />
+					<X className="size-4" />
 				</Button>
 			</Badge>
 		</motion.div>

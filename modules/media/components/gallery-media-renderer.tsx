@@ -69,7 +69,6 @@ export function GalleryMediaRenderer({
 				<video
 					key={media.id}
 					className="w-full h-full object-cover"
-					controls
 					autoPlay={isActive}
 					muted
 					loop

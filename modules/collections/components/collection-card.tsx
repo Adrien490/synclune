@@ -16,6 +16,8 @@ interface CollectionCardProps {
 	index?: number;
 	/** Custom sizes pour contextes differents (grid vs carousel) */
 	sizes?: string;
+	/** Niveau de heading pour hierarchie a11y (defaut: h3) */
+	headingLevel?: "h2" | "h3" | "h4";
 }
 
 /**
@@ -41,9 +43,11 @@ export function CollectionCard({
 	showDescription = false,
 	index,
 	sizes = COLLECTION_IMAGE_SIZES.COLLECTION_CARD,
+	headingLevel: HeadingTag = "h3",
 }: CollectionCardProps) {
 	// Generation ID unique pour aria-labelledby (RSC compatible)
-	const titleId = `collection-title-${slug}`;
+	// Inclut index pour eviter collisions si meme collection affichee 2x
+	const titleId = `collection-title-${slug}-${index ?? 0}`;
 
 	// Preload above-fold images (4 premieres)
 	const isAboveFold = index !== undefined && index < 4;
@@ -61,7 +65,7 @@ export function CollectionCard({
 			>
 				<Card
 					className={cn(
-						"collection-card overflow-hidden gap-4",
+						"collection-card overflow-hidden",
 						// Supprimer le padding par defaut de Card (py-6)
 						"p-0",
 						// Border renforcee (2px comme ProductCard)
@@ -77,8 +81,8 @@ export function CollectionCard({
 						"motion-safe:active:scale-[0.98] motion-safe:active:translate-y-0",
 					)}
 				>
-					{/* SEO: URL de la collection */}
-					<meta itemProp="url" content={`/collections/${slug}`} />
+					{/* SEO: URL de la collection (absolue pour Schema.org) */}
+					<meta itemProp="url" content={`${process.env.NEXT_PUBLIC_BASE_URL}/collections/${slug}`} />
 
 					{/* Image */}
 					<div className="collection-card-media relative aspect-square overflow-hidden bg-muted">
@@ -87,7 +91,7 @@ export function CollectionCard({
 								src={imageUrl}
 								alt={`Collection ${name} - Synclune bijoux artisanaux`}
 								fill
-								className="object-cover rounded-t-lg transition-transform duration-500 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
+								className="object-cover rounded-t-lg transition-transform duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
 								loading={isAboveFold ? undefined : "lazy"}
 								priority={isAboveFold}
 								placeholder={blurDataUrl ? "blur" : "empty"}
@@ -118,7 +122,7 @@ export function CollectionCard({
 					{/* Contenu avec padding responsive */}
 					<div className="space-y-2 p-4 sm:p-5 lg:p-6">
 						{/* Titre avec Crimson Pro uniformise */}
-						<h3
+						<HeadingTag
 							id={titleId}
 							className={cn(
 								crimsonPro.className,
@@ -128,7 +132,7 @@ export function CollectionCard({
 							itemProp="name"
 						>
 							{name}
-						</h3>
+						</HeadingTag>
 
 						{/* Description optionnelle */}
 						{showDescription && description && (

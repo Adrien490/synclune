@@ -9,6 +9,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import type { Size } from "@/modules/skus/types/sku-selector.types";
 import { SizeGuideDialog } from "./size-guide-dialog";
+import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 
 interface SizeSelectorProps {
 	sizes: Size[];
@@ -29,6 +30,7 @@ interface SizeSelectorProps {
  * - Adapter le label selon le type de produit (bague, bracelet)
  * - Bouton de réinitialisation
  * - Affichage en grid adaptatif (3-4 colonnes)
+ * - Navigation clavier (fleches)
  */
 export function SizeSelector({
 	sizes,
@@ -74,12 +76,20 @@ export function SizeSelector({
 		});
 	};
 
+	// Navigation clavier pour le radio group
+	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
+		options: sizes,
+		getOptionId: (sizeOption) => sizeOption.size,
+		isOptionDisabled: (sizeOption) => !isSizeAvailable(sizeOption.size),
+		onSelect: (sizeOption) => updateSize(sizeOption.size),
+	});
+
 	if (!shouldShow || sizes.length === 0) return null;
 
 	// Label adapté au type de produit (comparaison insensible à la casse)
 	const getSizeLabel = () => {
 		const slug = productTypeSlug?.toLowerCase();
-		if (slug === "rings" || slug === "ring") return "Taille (Diamètre)";
+		if (slug === "rings" || slug === "ring") return "Taille (Diametre)";
 		if (slug === "bracelets" || slug === "bracelet") return "Taille (Tour de poignet)";
 		return "Taille";
 	};
@@ -110,8 +120,8 @@ export function SizeSelector({
 					)}
 				</div>
 			</div>
-			<div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2.5 sm:gap-2">
-				{sizes.map((sizeOption) => {
+			<div ref={containerRef} className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-2.5 sm:gap-2">
+				{sizes.map((sizeOption, index) => {
 					const isSelected = sizeOption.size === optimisticSize;
 					const isAvailable = isSizeAvailable(sizeOption.size);
 
@@ -122,7 +132,9 @@ export function SizeSelector({
 							role="radio"
 							aria-checked={isSelected}
 							aria-label={`Taille ${sizeOption.size}${!isAvailable ? " (indisponible)" : ""}`}
+							data-option-id={sizeOption.size}
 							onClick={() => updateSize(sizeOption.size)}
+							onKeyDown={(e) => handleKeyDown(e, index)}
 							disabled={!isAvailable}
 							className={cn(
 								"p-3 sm:p-2.5 min-h-[52px] sm:min-h-[44px] flex items-center justify-center text-center rounded-xl sm:rounded-lg border-2 transition-all",

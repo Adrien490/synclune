@@ -13,6 +13,7 @@ export function Hero() {
   return (
     <section
       id="main-content"
+      role="region"
       aria-labelledby="hero-title"
       className="relative min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-5rem)] flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
       itemScope
@@ -115,7 +116,7 @@ export function Hero() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    aria-label="Suivre Synclune sur Instagram"
+                    aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
                   >
                     <InstagramIcon decorative size={20} className="text-foreground" />
                   </Link>
@@ -124,7 +125,7 @@ export function Hero() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    aria-label="Suivre Synclune sur TikTok"
+                    aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
                   >
                     <TikTokIcon decorative size={20} className="text-foreground" />
                   </Link>

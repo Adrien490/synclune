@@ -76,11 +76,12 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 
 						<div className="rounded-lg border overflow-hidden">
 							<table className="w-full text-sm">
+								<caption className="sr-only">Correspondances des tailles de bagues francaises</caption>
 								<thead className="bg-muted/50">
 									<tr>
-										<th className="px-3 py-2 text-left font-medium">Tour de doigt</th>
-										<th className="px-3 py-2 text-left font-medium">Diamètre</th>
-										<th className="px-3 py-2 text-left font-medium">Taille FR</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">Tour de doigt</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">Diametre</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">Taille FR</th>
 									</tr>
 								</thead>
 								<tbody className="divide-y">
@@ -120,11 +121,12 @@ export function SizeGuideDialog({ productTypeSlug, children }: SizeGuideDialogPr
 
 						<div className="rounded-lg border overflow-hidden">
 							<table className="w-full text-sm">
+								<caption className="sr-only">Correspondances des tailles de bracelets</caption>
 								<thead className="bg-muted/50">
 									<tr>
-										<th className="px-3 py-2 text-left font-medium">Tour de poignet</th>
-										<th className="px-3 py-2 text-left font-medium">Taille bracelet</th>
-										<th className="px-3 py-2 text-left font-medium">Ajustement</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">Tour de poignet</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">Taille bracelet</th>
+										<th scope="col" className="px-3 py-2 text-left font-medium">Ajustement</th>
 									</tr>
 								</thead>
 								<tbody className="divide-y">

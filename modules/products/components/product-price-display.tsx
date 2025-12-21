@@ -133,7 +133,8 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 
 					{/* Prix barré si promotion */}
 					{hasDiscount && (
-						<span className="text-lg text-muted-foreground line-through" aria-label={`Prix initial ${formatEuro(selectedSku.compareAtPrice!)}`}>
+						<span className="text-lg text-muted-foreground line-through">
+							<span className="sr-only">Prix initial : </span>
 							{formatEuro(selectedSku.compareAtPrice!)}
 						</span>
 					)}

@@ -143,8 +143,14 @@ export function WizardMobileShell({
 	const showNextIndicator = swipeOffset < -DIRECTION_INDICATOR_THRESHOLD && !isLastStep;
 	const showPrevIndicator = swipeOffset > DIRECTION_INDICATOR_THRESHOLD && !isFirstStep;
 
+	const wizardTitleId = title ? "wizard-mobile-title" : undefined
+
 	return (
-		<div className={cn("flex flex-col min-h-0", className)}>
+		<div
+			className={cn("flex flex-col min-h-0", className)}
+			role="region"
+			aria-labelledby={wizardTitleId}
+		>
 			{/* Live region for screen reader announcements */}
 			<div
 				role="status"
@@ -158,7 +164,7 @@ export function WizardMobileShell({
 			{/* Progress bar at top - using dots variant for compact mobile display */}
 			<div className="-mx-4 px-4 py-3 border-b bg-background">
 				{title && (
-					<h2 className="text-lg font-semibold font-display mb-3">{title}</h2>
+					<h2 id={wizardTitleId} className="text-lg font-semibold font-display mb-3">{title}</h2>
 				)}
 				<div className="flex items-center justify-between gap-4">
 					<WizardProgress
@@ -193,14 +199,14 @@ export function WizardMobileShell({
 
 				{/* Indicateur swipe vers la droite (previous) */}
 				{showPrevIndicator && (
-					<div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none">
+					<div className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none" aria-hidden="true">
 						<ChevronLeft className="size-8 animate-pulse" />
 					</div>
 				)}
 
 				{/* Indicateur swipe vers la gauche (next) */}
 				{showNextIndicator && (
-					<div className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none">
+					<div className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none" aria-hidden="true">
 						<ChevronRight className="size-8 animate-pulse" />
 					</div>
 				)}

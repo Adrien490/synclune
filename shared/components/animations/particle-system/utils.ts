@@ -21,7 +21,8 @@ function hashParams(
 	colors: string[],
 	blur: number | [number, number],
 	depthParallax: boolean,
-	shapes: ParticleShape[]
+	shapes: ParticleShape[],
+	baseDuration: number
 ): number {
 	let hash = count * 1000000;
 	hash += size[0] * 10000 + size[1] * 100;
@@ -29,6 +30,7 @@ function hashParams(
 	hash += (Array.isArray(blur) ? blur[0] + blur[1] * 100 : blur * 100);
 	hash += depthParallax ? 1 : 0;
 	hash += shapes.length * 10000;
+	hash += baseDuration * 1000;
 	for (const c of colors) {
 		for (let i = 0; i < c.length; i++) {
 			hash = (hash * 31 + c.charCodeAt(i)) | 0;
@@ -42,7 +44,8 @@ function hashParams(
 	return hash;
 }
 
-const DURATION = 20;
+const DEFAULT_DURATION = 20;
+const MOBILE_DURATION = 12;
 
 /** Génère un tableau de particules avec des propriétés déterministes (memoizé) */
 export function generateParticles(
@@ -52,9 +55,10 @@ export function generateParticles(
 	colors: string[],
 	blur: number | [number, number],
 	depthParallax: boolean,
-	shapes: ParticleShape[] = ["circle"]
+	shapes: ParticleShape[] = ["circle"],
+	baseDuration: number = DEFAULT_DURATION
 ): Particle[] {
-	const cacheKey = hashParams(count, size, opacity, colors, blur, depthParallax, shapes);
+	const cacheKey = hashParams(count, size, opacity, colors, blur, depthParallax, shapes, baseDuration);
 	const cached = particleCache.get(cacheKey);
 	if (cached) return cached;
 
@@ -79,9 +83,9 @@ export function generateParticles(
 		const depthFactor = maxBlur > 0 ? particleBlur / maxBlur : 0;
 		const parallaxMultiplier = depthParallax ? 1 + depthFactor * 0.5 : 1;
 		const particleDuration =
-			DURATION * 0.7 * parallaxMultiplier +
-			rand(5) * DURATION * 0.6 * parallaxMultiplier;
-		const delay = rand(6) * DURATION * 0.5;
+			baseDuration * 0.7 * parallaxMultiplier +
+			rand(5) * baseDuration * 0.6 * parallaxMultiplier;
+		const delay = rand(6) * baseDuration * 0.5;
 
 		return {
 			id: i,

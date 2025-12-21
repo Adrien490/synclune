@@ -345,7 +345,12 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 					)}
 				>
 					{isLoading ? (
-						<div className="flex items-center justify-center py-6">
+						<div
+							className="flex items-center justify-center py-6"
+							role="status"
+							aria-busy="true"
+							aria-label="Chargement des options"
+						>
 							<Spinner className="h-4 w-4" />
 							<span className="ml-2 text-sm text-muted-foreground">
 								Chargement...
@@ -617,16 +622,33 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 										}}
 									>
 										{`+ ${selectedValues.length - responsiveSettings.maxCount} de plus`}
-										<XCircle
-											className={cn(
-												"ml-2 h-4 w-4 cursor-pointer",
-												responsiveSettings.compactMode && "ml-1 h-3 w-3"
-											)}
+										<div
+											role="button"
+											tabIndex={0}
 											onClick={(event) => {
 												event.stopPropagation();
 												clearExtraOptions();
 											}}
-										/>
+											onKeyDown={(event) => {
+												if (event.key === "Enter" || event.key === " ") {
+													event.preventDefault();
+													event.stopPropagation();
+													clearExtraOptions();
+												}
+											}}
+											aria-label={`Retirer les ${selectedValues.length - responsiveSettings.maxCount} options supplémentaires`}
+											className={cn(
+												"cursor-pointer hover:bg-white/20 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-white/50 flex items-center justify-center",
+												isMobile ? "ml-2 h-10 w-10" : "ml-2 h-6 w-6"
+											)}
+										>
+											<XCircle
+												className={cn(
+													"h-4 w-4",
+													responsiveSettings.compactMode && "h-3 w-3"
+												)}
+											/>
+										</div>
 									</Badge>
 								</TooltipTrigger>
 								<TooltipContent side="bottom" className="max-w-[200px]">
@@ -744,7 +766,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						onOpenChange={setIsPopoverOpen}
 						direction="bottom"
 					>
-						<DrawerContent className="h-[100dvh] max-h-[100dvh] flex flex-col rounded-none">
+						<DrawerContent className="max-h-[100dvh] min-h-[100dvh] flex flex-col rounded-none">
 							<DrawerTitle className="sr-only">Sélection</DrawerTitle>
 
 							{/* Header sticky avec retour + recherche */}
@@ -999,16 +1021,30 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																}}
 															>
 																{`+ ${overflowCount} de plus`}
-																<XCircle
-																	className={cn(
-																		"ml-2 h-4 w-4 cursor-pointer",
-																		responsiveSettings.compactMode && "ml-1 h-3 w-3"
-																	)}
+																<div
+																	role="button"
+																	tabIndex={0}
 																	onClick={(event) => {
 																		event.stopPropagation();
 																		clearExtraOptions();
 																	}}
-																/>
+																	onKeyDown={(event) => {
+																		if (event.key === "Enter" || event.key === " ") {
+																			event.preventDefault();
+																			event.stopPropagation();
+																			clearExtraOptions();
+																		}
+																	}}
+																	aria-label={`Retirer les ${overflowCount} options supplémentaires`}
+																	className="ml-2 h-6 w-6 cursor-pointer hover:bg-white/20 rounded-sm focus:outline-hidden focus:ring-1 focus:ring-white/50 flex items-center justify-center"
+																>
+																	<XCircle
+																		className={cn(
+																			"h-4 w-4",
+																			responsiveSettings.compactMode && "h-3 w-3"
+																		)}
+																	/>
+																</div>
 															</Badge>
 														</TooltipTrigger>
 														<TooltipContent side="bottom" className="max-w-[200px]">
@@ -1099,6 +1135,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 									onValueChange={setSearchValue}
 									aria-label="Rechercher parmi les options"
 									aria-describedby={`${multiSelectId}-search-help`}
+									autoFocus
 								/>
 							)}
 							{searchable && (
@@ -1110,7 +1147,12 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 								className="max-h-[40vh] overflow-y-auto multiselect-scrollbar overscroll-behavior-y-contain"
 							>
 								{isLoading ? (
-									<div className="flex items-center justify-center py-6">
+									<div
+										className="flex items-center justify-center py-6"
+										role="status"
+										aria-busy="true"
+										aria-label="Chargement des options"
+									>
 										<Spinner className="h-4 w-4" />
 										<span className="ml-2 text-sm text-muted-foreground">
 											Chargement...
@@ -1258,6 +1300,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 												<CommandItem
 													onSelect={handleClear}
 													className="flex-1 justify-center cursor-pointer"
+													aria-label="Effacer toutes les options sélectionnées"
 												>
 													Effacer
 												</CommandItem>
@@ -1270,6 +1313,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 										<CommandItem
 											onSelect={() => setIsPopoverOpen(false)}
 											className="flex-1 justify-center cursor-pointer max-w-full"
+											aria-label="Fermer la liste d'options"
 										>
 											Fermer
 										</CommandItem>

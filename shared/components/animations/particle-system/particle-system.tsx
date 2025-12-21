@@ -53,8 +53,9 @@ export function ParticleSystem({
 		? [blur[0] * 0.7, blur[1] * 0.7]
 		: [blur * 0.7, blur * 0.7];
 
-	const desktopParticles = generateParticles(count, size, opacity, colors, blur, depthParallax, shapes);
-	const mobileParticles = generateParticles(Math.ceil(count / 2), size, opacity, colors, mobileBlur, depthParallax, shapes);
+	// Desktop: durée 20s, Mobile: durée 12s (économie batterie)
+	const desktopParticles = generateParticles(count, size, opacity, colors, blur, depthParallax, shapes, 20);
+	const mobileParticles = generateParticles(Math.ceil(count / 2), size, opacity, colors, mobileBlur, depthParallax, shapes, 12);
 
 	const sharedProps = { isInView, reducedMotion, animationStyle };
 
