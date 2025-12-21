@@ -50,7 +50,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 			aria-live="polite"
 		>
 			<p className="font-medium mb-1">
-				<span aria-hidden="true">💎</span>
+				<span role="img" aria-hidden="true">💎</span>
 				<span className="sr-only">Information :</span> Prix mis à jour
 			</p>
 			<ul className="list-disc list-inside space-y-0.5 text-blue-600/90 dark:text-blue-400/90">
@@ -66,9 +66,9 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 								{formatEuro(item.sku.priceInclTax)}
 							</span>
 							{priceIncrease ? (
-								<span aria-label="prix en hausse"> 📈</span>
+								<span role="img" aria-label="prix en hausse"> 📈</span>
 							) : (
-								<span aria-label="prix en baisse"> 📉</span>
+								<span role="img" aria-label="prix en baisse"> 📉</span>
 							)}
 						</li>
 					);
@@ -101,7 +101,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 						)}
 					</Button>
 					<p className="text-xs text-green-600 dark:text-green-400 font-medium text-center sm:text-left">
-						<span aria-hidden="true">💚</span> Économisez {formatEuro(totalSavings)} en actualisant !
+						<span role="img" aria-hidden="true">💚</span> Économisez {formatEuro(totalSavings)} en actualisant !
 					</p>
 				</div>
 			)}

@@ -92,6 +92,7 @@ export function CartItemQuantitySelector({
 				</Button>
 
 				<Input
+					role="spinbutton"
 					type="text"
 					inputMode="numeric"
 					pattern="[0-9]*"
