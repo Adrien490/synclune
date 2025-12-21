@@ -77,7 +77,7 @@ export function Hero() {
                 <Button
                   asChild
                   size="lg"
-                  className="shadow-lg font-medium w-full sm:w-auto"
+                  className="shadow-lg font-semibold w-full sm:w-auto"
                 >
                   <Link
                     href="/produits"
@@ -90,7 +90,7 @@ export function Hero() {
                   asChild
                   size="lg"
                   variant="secondary"
-                  className="shadow-md font-medium w-full sm:w-auto"
+                  className="shadow-md font-semibold w-full sm:w-auto"
                 >
                   <Link
                     href="/personnalisation"
