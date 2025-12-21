@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { useTransition } from "react";
 import { useLogout } from "../hooks/use-logout";
 
 interface LogoutButtonProps {
@@ -10,16 +9,15 @@ interface LogoutButtonProps {
 }
 
 export function LogoutButton({ className, children }: LogoutButtonProps) {
-	const { action } = useLogout();
-	const [, startTransition] = useTransition();
+	const { action, isPending, isLoggedOut } = useLogout();
 
 	return (
 		<span
 			className={cn(className)}
+			data-pending={isPending || isLoggedOut ? "" : undefined}
 			onClick={() => {
-				startTransition(() => {
-					action(new FormData());
-				});
+				if (isPending || isLoggedOut) return;
+				action(new FormData());
 			}}
 		>
 			{children}

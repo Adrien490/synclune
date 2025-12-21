@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -20,10 +21,13 @@ interface LogoutAlertDialogProps {
 }
 
 export function LogoutAlertDialog({ children }: LogoutAlertDialogProps) {
-	const { action, isPending } = useLogout();
+	const [open, setOpen] = useState(false);
+	const { action, isPending, isLoggedOut } = useLogout({
+		onSuccess: () => setOpen(false),
+	});
 
 	return (
-		<AlertDialog>
+		<AlertDialog open={open} onOpenChange={setOpen}>
 			<AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
 			<AlertDialogContent>
 				<form action={action}>
@@ -39,11 +43,15 @@ export function LogoutAlertDialog({ children }: LogoutAlertDialogProps) {
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
+						<AlertDialogCancel type="button" disabled={isPending || isLoggedOut}>
 							Annuler
 						</AlertDialogCancel>
-						<Button type="submit" disabled={isPending}>
-							{isPending ? "Déconnexion..." : "Se déconnecter"}
+						<Button type="submit" disabled={isPending || isLoggedOut}>
+							{isLoggedOut
+								? "Déconnecté !"
+								: isPending
+									? "Déconnexion..."
+									: "Se déconnecter"}
 						</Button>
 					</AlertDialogFooter>
 				</form>

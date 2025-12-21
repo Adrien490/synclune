@@ -2,12 +2,10 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { getSessionInvalidationTags } from "@/modules/users/constants/cache";
-import { error } from "@/shared/lib/actions";
+import { error, success } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 /**
  * Déconnecte l'utilisateur et révoque sa session
@@ -18,7 +16,7 @@ import { redirect } from "next/navigation";
  * - Gérer les sessions orphelines (utilisateur supprimé mais session active)
  * - Nettoyer les cookies et le cache dans tous les cas
  */
-export async function logout(): Promise<ActionState | never> {
+export async function logout(): Promise<ActionState> {
 	try {
 		const headersList = await headers();
 		const session = await auth.api.getSession({ headers: headersList });
@@ -35,20 +33,8 @@ export async function logout(): Promise<ActionState | never> {
 		// Révoquer la session et nettoyer les cookies
 		await auth.api.signOut({ headers: headersList });
 
-		redirect("/");
-	} catch (err: unknown) {
-		if (isRedirectError(err)) {
-			throw err;
-		}
-
-		// Tenter de rediriger quand même
-		try {
-			redirect("/");
-		} catch (redirectErr) {
-			if (isRedirectError(redirectErr)) {
-				throw redirectErr;
-			}
-			return error("Une erreur est survenue lors de la déconnexion");
-		}
+		return success("Déconnexion réussie");
+	} catch {
+		return error("Une erreur est survenue lors de la déconnexion");
 	}
 }
