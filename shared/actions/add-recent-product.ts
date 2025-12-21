@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
-import { success, error, handleActionError } from "@/shared/lib/actions"
+import { success, handleActionError, validateInput } from "@/shared/lib/actions"
 import type { ActionState } from "@/shared/types/server-action"
 import {
 	RECENT_PRODUCTS_COOKIE_NAME,
@@ -10,6 +10,7 @@ import {
 	RECENT_PRODUCTS_MAX_ITEMS,
 } from "@/shared/constants/recent-products"
 import { getRecentProductsInvalidationTags } from "@/shared/constants/recent-products-cache"
+import { recentProductSlugSchema } from "@/shared/schemas/recent-product-schema"
 
 /**
  * Server Action pour ajouter un produit aux recemment vus
@@ -20,12 +21,12 @@ export async function addRecentProduct(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const slug = (formData.get("slug") as string)?.trim()
+		const rawSlug = (formData.get("slug") as string)?.trim()
 
-		// Validation
-		if (!slug || slug.length < 1) {
-			return error("Slug produit invalide")
-		}
+		// Validation avec Zod
+		const validated = validateInput(recentProductSlugSchema, rawSlug)
+		if ("error" in validated) return validated.error
+		const slug = validated.data
 
 		const cookieStore = await cookies()
 		const existingCookie = cookieStore.get(RECENT_PRODUCTS_COOKIE_NAME)
@@ -38,8 +39,11 @@ export async function addRecentProduct(
 				if (Array.isArray(parsed)) {
 					products = parsed
 				}
-			} catch {
-				// Ignore les erreurs de parsing
+			} catch (e) {
+				// Log en dev, silencieux en prod (cookie corrompu = reset)
+				if (process.env.NODE_ENV === "development") {
+					console.error("[RecentProducts] Erreur parsing cookie:", e)
+				}
 			}
 		}
 

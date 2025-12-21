@@ -1,10 +1,12 @@
 import "server-only"
 
+import { cacheLife, cacheTag } from "next/cache"
 import { prisma } from "@/shared/lib/prisma"
 import { GET_PRODUCTS_SELECT } from "@/modules/products/constants/product.constants"
 import type { Product } from "@/modules/products/types/product.types"
 import { getRecentProductSlugs } from "./get-recent-product-slugs"
 import { RECENT_PRODUCTS_DISPLAY_LIMIT } from "@/shared/constants/recent-products"
+import { RECENT_PRODUCTS_CACHE_TAGS } from "@/shared/constants/recent-products-cache"
 
 interface GetRecentProductsOptions {
 	/** Slug du produit courant a exclure */
@@ -16,6 +18,8 @@ interface GetRecentProductsOptions {
 /**
  * Recupere les produits recemment vus
  *
+ * Pattern wrapper: accede aux cookies puis delegue a une fonction cachee
+ *
  * @param options.excludeSlug - Slug du produit courant (pour ne pas l'afficher)
  * @param options.limit - Nombre max de produits (default: 8)
  * @returns Liste des produits recemment vus
@@ -25,7 +29,7 @@ export async function getRecentProducts(
 ): Promise<Product[]> {
 	const { excludeSlug, limit = RECENT_PRODUCTS_DISPLAY_LIMIT } = options ?? {}
 
-	// 1. Recuperer les slugs depuis le cookie
+	// 1. Recuperer les slugs depuis le cookie (acces runtime)
 	const slugs = await getRecentProductSlugs()
 
 	if (slugs.length === 0) {
@@ -44,11 +48,25 @@ export async function getRecentProducts(
 	// 3. Limiter avant la requete DB
 	const slugsToFetch = filteredSlugs.slice(0, limit)
 
+	// 4. Deleguer a la fonction cachee
+	return fetchProductsBySlugs(slugsToFetch)
+}
+
+/**
+ * Fonction cachee qui recupere les produits par slugs
+ *
+ * Cache: private (isole par utilisateur via cookies)
+ * Invalide par: updateTag("recent-products-list") dans addRecentProduct
+ */
+async function fetchProductsBySlugs(slugs: string[]): Promise<Product[]> {
+	"use cache: private"
+	cacheLife("relatedProducts") // 30m stale, 10m revalidate, 3h expire
+	cacheTag(RECENT_PRODUCTS_CACHE_TAGS.LIST)
+
 	try {
-		// 4. Recuperer les produits depuis la DB
 		const products = await prisma.product.findMany({
 			where: {
-				slug: { in: slugsToFetch },
+				slug: { in: slugs },
 				status: "PUBLIC",
 				skus: {
 					some: {
@@ -59,14 +77,18 @@ export async function getRecentProducts(
 			select: GET_PRODUCTS_SELECT,
 		})
 
-		// 5. Trier selon l'ordre du cookie (plus recent en premier)
+		// Trier selon l'ordre des slugs (plus recent en premier)
 		const productsBySlug = new Map(products.map((p) => [p.slug, p]))
-		const orderedProducts = slugsToFetch
+		const orderedProducts = slugs
 			.map((slug) => productsBySlug.get(slug))
 			.filter((p): p is Product => p !== undefined)
 
 		return orderedProducts
-	} catch {
+	} catch (e) {
+		// Log en dev, silencieux en prod
+		if (process.env.NODE_ENV === "development") {
+			console.error("[RecentProducts] Erreur DB:", e)
+		}
 		return []
 	}
 }

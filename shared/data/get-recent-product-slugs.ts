@@ -26,8 +26,11 @@ export async function getRecentProductSlugs(): Promise<string[]> {
 		if (Array.isArray(parsed)) {
 			return parsed.slice(0, RECENT_PRODUCTS_MAX_ITEMS)
 		}
-	} catch {
-		// Ignore les erreurs de parsing
+	} catch (e) {
+		// Log en dev, silencieux en prod (cookie corrompu = ignore)
+		if (process.env.NODE_ENV === "development") {
+			console.error("[RecentProducts] Erreur parsing cookie:", e)
+		}
 	}
 
 	return []
