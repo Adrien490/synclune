@@ -31,7 +31,7 @@ export const KPI_TOOLTIPS: Record<string, string> = {
 	outOfStock:
 		"Produits actuellement en rupture de stock. Action requise pour eviter des ventes perdues.",
 	lowStock:
-		"Produits dont le stock est inferieur au seuil d'alerte (5 unites). Pensez a reapprovisionner.",
+		"Produits dont le stock est inferieur ou egal au seuil d'alerte (3 unites). Pensez a reapprovisionner.",
 	stockNotifications:
 		"Clients en attente de notification de retour en stock. Opportunite de vente.",
 	totalSkus:

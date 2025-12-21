@@ -158,7 +158,7 @@ export function generateStructuredData(
 							value:
 								selectedSku.inventory === 1
 									? "Pièce unique"
-									: selectedSku.inventory <= 5
+									: selectedSku.inventory <= 3 // STOCK_THRESHOLDS.LOW
 										? "Stock limité"
 										: "En stock",
 						},

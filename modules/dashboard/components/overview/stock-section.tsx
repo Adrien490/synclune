@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { fetchDashboardKpis } from "../../data/get-kpis"
+import { fetchInventoryKpis } from "../../data/get-inventory-kpis"
 import { KpiCard } from "../kpi-card"
 import { KpisSkeleton } from "../skeletons"
 import { PackageX, AlertTriangle } from "lucide-react"
@@ -11,7 +11,7 @@ import { KPI_TOOLTIPS } from "../../constants/kpi-tooltips"
  * Affiche les KPIs de ruptures et stock bas
  */
 export async function StockSection() {
-	const kpis = await fetchDashboardKpis()
+	const kpis = await fetchInventoryKpis()
 
 	return (
 		<div className="grid gap-4 md:grid-cols-2">
@@ -30,13 +30,14 @@ export async function StockSection() {
 			<KpiCard
 				title="Stock bas"
 				value=""
-				numericValue={0}
+				numericValue={kpis.lowStock.count}
 				icon={<AlertTriangle className="h-4 w-4" />}
 				href={KPI_DRILLDOWN.lowStock.href}
-				subtitle="< 5 unites"
+				subtitle={`≤ ${kpis.lowStock.threshold} unités`}
 				tooltip={KPI_TOOLTIPS.lowStock}
 				size="compact"
 				priority="info"
+				status={kpis.lowStock.count > 0 ? "warning" : "default"}
 			/>
 		</div>
 	)

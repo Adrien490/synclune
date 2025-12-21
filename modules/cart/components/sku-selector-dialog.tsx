@@ -18,6 +18,7 @@ import {
 import { useAppForm } from "@/shared/components/forms";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
+import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import type { Product } from "@/modules/products/types/product.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
@@ -440,7 +441,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 													<span className="sr-only"> - Prix du produit</span>
 												</motion.span>
 											</AnimatePresence>
-											{selectedSku && selectedSku.inventory <= 5 && availableToAdd > 0 && (
+											{selectedSku && selectedSku.inventory <= STOCK_THRESHOLDS.LOW && availableToAdd > 0 && (
 												<span className="text-xs text-amber-600 mt-1">
 													Plus que {selectedSku.inventory} en stock
 												</span>
