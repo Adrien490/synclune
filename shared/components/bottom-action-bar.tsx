@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { Search, ArrowUpDown, SlidersHorizontal } from "lucide-react";
@@ -19,12 +18,16 @@ interface BottomActionBarProps {
 	className?: string;
 }
 
-/** Feedback haptique léger pour les interactions tactiles */
-function triggerHapticFeedback() {
-	if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-		navigator.vibrate(5);
-	}
-}
+/** Parametres URL ignores pour le comptage des filtres actifs */
+const IGNORED_FILTER_PARAMS = [
+	"page",
+	"perPage",
+	"sortBy",
+	"search",
+	"cursor",
+	"direction",
+	"filter_sortBy",
+] as const;
 
 /**
  * Barre d'actions fixe en bas pour mobile.
@@ -58,21 +61,22 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 	// Calculer si tri actif
 	const hasActiveSort = searchParams.has("filter_sortBy");
 
-	// Calculer le nombre de filtres actifs
-	const activeFiltersCount = (() => {
-		let count = 0;
-		searchParams.forEach((_, key) => {
-			if (["page", "perPage", "sortBy", "search", "cursor", "direction", "filter_sortBy"].includes(key)) {
-				return;
-			}
-			if (key === "type" || key === "color" || key === "material" || key === "priceMin") {
-				count += 1;
-			}
-		});
-		return count;
-	})();
+	// Calculer le nombre de filtres actifs (detection dynamique)
+	const activeFiltersCount = Array.from(searchParams.keys()).filter(
+		(key) => !IGNORED_FILTER_PARAMS.includes(key as (typeof IGNORED_FILTER_PARAMS)[number])
+	).length;
 
 	const hasActiveFilters = activeFiltersCount > 0;
+
+	// Annonce pour screen readers (calculee directement)
+	const announcement = [
+		hasActiveSearch && `Recherche "${searchParams.get("search")}" active`,
+		hasActiveSort && "Tri actif",
+		hasActiveFilters &&
+			`${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}`,
+	]
+		.filter(Boolean)
+		.join(". ");
 
 	// Navigation clavier pour toolbar (flèches gauche/droite)
 	const handleToolbarKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
@@ -107,17 +111,17 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 
 	// Style commun pour les boutons
 	const buttonClassName = cn(
-		"flex-1 min-w-[72px] flex flex-col items-center justify-center gap-0.5",
-		"h-full min-h-[52px]",
+		"flex-1 min-w-[72px] flex flex-col items-center justify-center gap-1",
+		"h-full min-h-14", // 56px - Material Design 3 touch target
 		"text-muted-foreground hover:text-foreground",
 		"transition-colors duration-200",
-		"active:scale-95 active:bg-primary/5",
+		"active:scale-95 active:bg-primary/10", // Couleur ajoutee pour feedback visuel
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
 		"relative"
 	);
 
 	const iconClassName = "size-5";
-	const labelClassName = "text-[11px] font-medium";
+	const labelClassName = "text-xs font-medium"; // 12px au lieu de 11px
 
 	// Composant Badge pour les indicateurs actifs
 	const ActiveBadge = ({ count, showDot = false }: { count?: number; showDot?: boolean }) => {
@@ -157,7 +161,8 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 					"pb-[env(safe-area-inset-bottom)]",
 					// Style
 					"bg-background/95 backdrop-blur-md",
-					"border-t border-border",
+					"border-t border-x border-border",
+					"rounded-t-2xl",
 					"shadow-[0_-4px_20px_rgba(0,0,0,0.08)]",
 					className
 				)}
@@ -171,14 +176,15 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 					<button
 						ref={(el) => { buttonRefs.current[0] = el; }}
 						type="button"
-						onClick={() => {
-							triggerHapticFeedback();
-							openSearch();
-						}}
+						onClick={() => openSearch()}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						tabIndex={0}
 						className={buttonClassName}
-						aria-label={`Rechercher${hasActiveSearch ? " (recherche active)" : ""}`}
+						aria-label={
+							hasActiveSearch
+								? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
+								: "Ouvrir la recherche"
+						}
 					>
 						<Search className={iconClassName} aria-hidden="true" />
 						<span className={labelClassName}>Recherche</span>
@@ -189,14 +195,11 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 					<button
 						ref={(el) => { buttonRefs.current[1] = el; }}
 						type="button"
-						onClick={() => {
-							triggerHapticFeedback();
-							setSortOpen(true);
-						}}
+						onClick={() => setSortOpen(true)}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						tabIndex={-1}
 						className={buttonClassName}
-						aria-label={`Trier${hasActiveSort ? " (tri actif)" : ""}`}
+						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
 					>
 						<ArrowUpDown className={iconClassName} aria-hidden="true" />
 						<span className={labelClassName}>Trier</span>
@@ -207,14 +210,15 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 					<button
 						ref={(el) => { buttonRefs.current[2] = el; }}
 						type="button"
-						onClick={() => {
-							triggerHapticFeedback();
-							openFilter();
-						}}
+						onClick={() => openFilter()}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
 						tabIndex={-1}
 						className={buttonClassName}
-						aria-label={`Filtres${hasActiveFilters ? ` (${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""})` : ""}`}
+						aria-label={
+							hasActiveFilters
+								? `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}. Modifier les filtres`
+								: "Ouvrir les filtres"
+						}
 					>
 						<SlidersHorizontal className={iconClassName} aria-hidden="true" />
 						<span className={labelClassName}>Filtres</span>
@@ -224,10 +228,8 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 				</div>
 
 				{/* Live region pour screen readers */}
-				<span role="status" aria-live="polite" className="sr-only">
-					{hasActiveSearch && "Recherche active. "}
-					{hasActiveSort && "Tri actif. "}
-					{hasActiveFilters && `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}.`}
+				<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+					{announcement}
 				</span>
 			</motion.div>
 
