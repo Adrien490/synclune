@@ -1,7 +1,7 @@
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import {
 	getCollections,
@@ -106,7 +106,7 @@ export default async function CollectionsAdminPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des collections"
 					search={
-						<SearchForm
+						<SearchInput mode="live" size="sm"
 							paramName="search"
 							placeholder="Rechercher par nom, slug, description..."
 							ariaLabel="Rechercher une collection par nom, slug ou description"

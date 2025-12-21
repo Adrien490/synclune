@@ -1,7 +1,7 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { ExportSubscribersButton } from "@/modules/newsletter/components/admin/export-subscribers-button";
@@ -174,7 +174,7 @@ export default async function NewsletterPage({
 					<Toolbar
 						ariaLabel="Barre d'outils de gestion des abonnés"
 						search={
-							<SearchForm
+							<SearchInput mode="live" size="sm"
 								paramName="search"
 								placeholder="Rechercher un email..."
 								ariaLabel="Rechercher un abonné par email"

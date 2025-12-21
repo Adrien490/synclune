@@ -1,7 +1,7 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import type { ProductFiltersSearchParams } from "@/app/(boutique)/produits/page";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { Toolbar } from "@/shared/components/toolbar";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
@@ -127,7 +127,7 @@ export default async function CollectionPage({
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 					<Toolbar
 						search={
-							<SearchForm
+							<SearchInput mode="live" size="sm"
 								paramName="search"
 								placeholder={`Rechercher dans ${collection.name}...`}
 								className="w-full"

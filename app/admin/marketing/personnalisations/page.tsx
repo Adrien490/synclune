@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getCustomizationRequests } from "@/modules/customizations/data/get-customization-requests";
 import { getCustomizationStats } from "@/modules/customizations/data/get-customization-stats";
@@ -93,7 +93,7 @@ export default async function CustomizationsPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des personnalisations"
 					search={
-						<SearchForm
+						<SearchInput mode="live" size="sm"
 							paramName="search"
 							placeholder="Rechercher par nom, email..."
 							ariaLabel="Rechercher une demande"

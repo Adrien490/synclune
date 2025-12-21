@@ -1,7 +1,7 @@
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getMaterials, SORT_LABELS } from "@/modules/materials/data/get-materials";
 import { getFirstParam } from "@/shared/utils/params";
@@ -69,7 +69,7 @@ export default async function MaterialsAdminPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des matériaux"
 					search={
-						<SearchForm
+						<SearchInput mode="live" size="sm"
 							paramName="search"
 							placeholder="Rechercher par nom, slug ou description..."
 							ariaLabel="Rechercher un matériau par nom, slug ou description"

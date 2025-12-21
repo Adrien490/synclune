@@ -1,6 +1,6 @@
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getOrders } from "@/modules/orders/data/get-orders";
 import { SORT_LABELS as ORDERS_SORT_LABELS } from "@/modules/orders/constants/order.constants";
@@ -88,7 +88,7 @@ export default async function OrdersAdminPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des commandes"
 					search={
-						<SearchForm
+						<SearchInput mode="live" size="sm"
 							paramName="search"
 							placeholder="Rechercher par numéro, email, nom client, Payment Intent..."
 							ariaLabel="Rechercher une commande par numéro, email client ou Payment Intent"

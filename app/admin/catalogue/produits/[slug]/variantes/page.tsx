@@ -15,7 +15,7 @@ import {
 } from "@/shared/components/ui/breadcrumb";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getProductSkus } from "@/modules/skus/data/get-skus";
@@ -202,7 +202,7 @@ export default async function ProductVariantsPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des variantes"
 					search={
-						<SearchForm
+						<SearchInput mode="live" size="sm"
 							paramName="search"
 							placeholder="Rechercher une variante..."
 							ariaLabel="Rechercher une variante"

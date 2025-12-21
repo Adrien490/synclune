@@ -1,6 +1,6 @@
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { Button } from "@/shared/components/ui/button";
 import { getCollections } from "@/modules/collections/data/get-collections";
@@ -149,7 +149,7 @@ export default async function ProductsAdminPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des produits"
 					search={
-						<SearchForm
+						<SearchInput mode="live" size="sm"
 							paramName="search"
 							placeholder="Rechercher par titre, type..."
 							ariaLabel="Rechercher un produit par titre ou type"

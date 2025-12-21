@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { Metadata } from "next";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getFirstParam } from "@/shared/utils/params";
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
@@ -101,7 +101,7 @@ export default async function NotificationsStockPage({
 			<Toolbar
 				ariaLabel="Barre d'outils des alertes stock"
 				search={
-					<SearchForm
+					<SearchInput mode="live" size="sm"
 						paramName="search"
 						placeholder="Rechercher un email ou produit..."
 						ariaLabel="Rechercher une demande"

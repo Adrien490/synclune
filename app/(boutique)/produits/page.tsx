@@ -21,7 +21,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { SortDrawerTrigger } from "@/shared/components/sort-drawer";
 import { ClearSearchButton } from "@/shared/components/clear-search-button";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { centsToEuros } from "@/shared/utils/format-euro";
 import { getFirstParam } from "@/shared/utils/params";
 import { parseFilters } from "./_utils/params";
@@ -278,7 +278,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 					<Toolbar
 						className="hidden md:flex"
 						search={
-							<SearchForm
+							<SearchInput mode="live" size="sm"
 								paramName="search"
 								placeholder={searchPlaceholder}
 								className="w-full"

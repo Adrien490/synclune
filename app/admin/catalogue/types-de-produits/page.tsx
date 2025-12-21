@@ -1,7 +1,7 @@
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { Button } from "@/shared/components/ui/button";
 import { ProductTypeFormDialog } from "@/modules/product-types/components/product-type-form-dialog";
@@ -107,7 +107,7 @@ export default async function ProductTypesAdminPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des types de bijoux"
 					search={
-						<SearchForm
+						<SearchInput mode="live" size="sm"
 							paramName="search"
 							placeholder="Rechercher par label, slug..."
 							ariaLabel="Rechercher un type de bijou par label ou slug"

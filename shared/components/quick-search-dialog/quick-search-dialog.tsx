@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/shared/components/ui/dialo
 import { cn } from "@/shared/utils/cn"
 
 import { QUICK_SEARCH_DIALOG_ID } from "./constants"
-import { SearchInput } from "./search-input"
+import { SearchInput } from "@/shared/components/search-input"
 import { RecentSearchesSection } from "./recent-searches-section"
 import { CollectionsSection } from "./collections-section"
 import { ProductTypesSection } from "./product-types-section"
@@ -93,9 +93,9 @@ export function QuickSearchDialog({
 					"data-[state=open]:slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2",
 					"data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100",
 					"flex flex-col",
-					// Desktop: centered dialog
-					"md:inset-auto md:top-[10%] md:left-1/2 md:-translate-x-1/2 md:translate-y-0",
-					"md:h-auto md:max-h-[80vh] md:w-full md:max-w-lg",
+					// Desktop: centered dialog (UX optimized)
+					"md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2",
+					"md:h-auto md:max-h-[70vh] md:w-full md:max-w-[640px]",
 					"md:rounded-xl md:border md:shadow-lg",
 					"md:data-[state=open]:slide-in-from-top-4 md:data-[state=open]:zoom-in-95"
 				)}
@@ -139,7 +139,7 @@ export function QuickSearchDialog({
 				<div className="px-4 py-3 border-b bg-background shrink-0">
 					<SearchInput
 						onSearch={handleSearch}
-						placeholder="Rechercher..."
+						placeholder="Rechercher un produit..."
 						mode="submit"
 						autoFocus
 						isPending={isPending}

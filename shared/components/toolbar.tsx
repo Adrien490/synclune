@@ -9,7 +9,7 @@ import { ReactNode } from "react";
  *
  * @example
  * ```tsx
- * <Toolbar search={<SearchForm placeholder="Rechercher..." />}>
+ * <Toolbar search={<SearchInput mode="live" size="sm" placeholder="Rechercher..." />}>
  *   <SortSelect />
  *   <FilterSheet />
  * </Toolbar>

@@ -1,7 +1,7 @@
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getColors, SORT_LABELS } from "@/modules/colors/data/get-colors";
 import { getFirstParam } from "@/shared/utils/params";
@@ -64,7 +64,7 @@ export default async function ColorsAdminPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des couleurs"
 					search={
-						<SearchForm
+						<SearchInput mode="live" size="sm"
 							paramName="search"
 							placeholder="Rechercher par nom, slug ou hex..."
 							ariaLabel="Rechercher une couleur par nom, slug ou code hex"

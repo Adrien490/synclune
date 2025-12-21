@@ -1,6 +1,6 @@
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
-import { SearchForm } from "@/shared/components/search-form";
+import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getRefunds, SORT_LABELS } from "@/modules/refunds/data/get-refunds";
 import { connection } from "next/server";
@@ -70,7 +70,7 @@ export default async function RefundsAdminPage({
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des remboursements"
 					search={
-						<SearchForm
+						<SearchInput mode="live" size="sm"
 							paramName="search"
 							placeholder="Rechercher par numéro de commande, email client..."
 							ariaLabel="Rechercher un remboursement"
