@@ -52,6 +52,9 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 	// Refs pour la navigation clavier entre boutons
 	const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+	// Calculer si recherche active
+	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
+
 	// Calculer si tri actif
 	const hasActiveSort = searchParams.has("filter_sortBy");
 
@@ -175,10 +178,11 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						tabIndex={0}
 						className={buttonClassName}
-						aria-label="Rechercher"
+						aria-label={`Rechercher${hasActiveSearch ? " (recherche active)" : ""}`}
 					>
 						<Search className={iconClassName} aria-hidden="true" />
 						<span className={labelClassName}>Recherche</span>
+						<ActiveBadge showDot={hasActiveSearch} />
 					</button>
 
 					{/* Tri */}
@@ -221,6 +225,7 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 
 				{/* Live region pour screen readers */}
 				<span role="status" aria-live="polite" className="sr-only">
+					{hasActiveSearch && "Recherche active. "}
 					{hasActiveSort && "Tri actif. "}
 					{hasActiveFilters && `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}.`}
 				</span>

@@ -37,7 +37,7 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 			variant="ghost"
 			size="icon"
 			onClick={() => open()}
-			className={cn("size-11 group-data-[scrolled=true]:size-10 relative transition-all duration-300 ease-out", className)}
+			className={cn("size-11 group-data-[scrolled=true]:sm:size-10 relative transition-all duration-300 ease-out", className)}
 			aria-label="Ouvrir la recherche rapide, raccourci clavier Commande K"
 		>
 			<Search className="size-5" />
