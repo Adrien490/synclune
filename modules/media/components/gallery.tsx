@@ -18,7 +18,7 @@ import { useGalleryNavigation } from "@/modules/media/hooks/use-gallery-navigati
 import { useMediaErrors } from "@/modules/media/hooks/use-media-errors";
 import { useEmblaSync } from "@/modules/media/hooks/use-embla-sync";
 import { useVideoAutoplay } from "@/modules/media/hooks/use-video-autoplay";
-import { usePreloadNextImage } from "@/modules/media/hooks/use-preload-next-image";
+import { usePreloadNextMedia } from "@/modules/media/hooks/use-preload-next-media";
 import useEmblaCarousel from "embla-carousel-react";
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
@@ -113,8 +113,8 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 	const emblaContainerRef = useRef<HTMLDivElement>(null);
 	useVideoAutoplay(emblaContainerRef, optimisticIndex, prefersReducedMotion);
 
-	// Preload de l'image suivante
-	usePreloadNextImage(safeImages, optimisticIndex);
+	// Preload des medias suivants (images + videos)
+	usePreloadNextMedia(safeImages, optimisticIndex);
 
 	// Handlers mémorisés pour les boutons navigation (évite re-renders)
 	const handlePrev = (e: React.MouseEvent) => {
