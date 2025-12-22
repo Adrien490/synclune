@@ -1,6 +1,7 @@
 "use client";
 
-import { OpenLightboxButton } from "@/modules/media/components/open-lightbox-button";
+import MediaLightbox from "@/modules/media/components/media-lightbox";
+import { useLightbox } from "@/modules/media/hooks/use-lightbox";
 import { Button } from "@/shared/components/ui/button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { cn } from "@/shared/utils/cn";
@@ -116,6 +117,9 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 	// Preload des medias suivants (images + videos)
 	usePreloadNextMedia(safeImages, optimisticIndex);
 
+	// Hook lightbox (gère aussi le bouton retour mobile)
+	const { isOpen: lightboxOpen, open: openLightbox, close: closeLightbox } = useLightbox();
+
 	// Handlers mémorisés pour les boutons navigation (évite re-renders)
 	const handlePrev = (e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -157,13 +161,8 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 	if (!current) return null;
 
 	return (
-		<OpenLightboxButton
-			slides={lightboxSlides}
-			index={optimisticIndex}
-			onIndexChange={handleLightboxIndexChange}
-		>
-			{({ openLightbox }) => (
-				<div
+		<>
+			<div
 					className="product-gallery w-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg transition-all duration-300 group-has-[[data-pending]]/product-details:blur-[1px] group-has-[[data-pending]]/product-details:scale-[0.99] group-has-[[data-pending]]/product-details:pointer-events-none"
 					ref={galleryRef}
 					role="region"
@@ -297,7 +296,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 
 							{/* Embla Carousel - Glissement fluide natif */}
 							<div
-								className="absolute inset-0 overflow-hidden touch-pan-x"
+								className="absolute inset-0 overflow-hidden touch-pan-y"
 								ref={emblaRef}
 							>
 								<div className="flex h-full" ref={emblaContainerRef}>
@@ -404,7 +403,14 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 						</div>
 					)}
 				</div>
-			)}
-		</OpenLightboxButton>
+
+			<MediaLightbox
+				open={lightboxOpen}
+				close={closeLightbox}
+				slides={lightboxSlides}
+				index={optimisticIndex}
+				onIndexChange={handleLightboxIndexChange}
+			/>
+		</>
 	);
 }
