@@ -186,8 +186,8 @@ export async function mergeWishlists(
 		});
 
 		// 7. Invalider les caches
-		const guestTags = getWishlistInvalidationTags(undefined, sessionId, guestWishlist.id);
-		const userTags = getWishlistInvalidationTags(userId, undefined, targetWishlist.id);
+		const guestTags = getWishlistInvalidationTags(undefined, sessionId);
+		const userTags = getWishlistInvalidationTags(userId, undefined);
 		[...guestTags, ...userTags].forEach(tag => updateTag(tag));
 
 		return {

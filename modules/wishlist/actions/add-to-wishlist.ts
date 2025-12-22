@@ -173,11 +173,7 @@ export async function addToWishlist(
 		});
 
 		// 7. Invalidation cache immédiate (read-your-own-writes)
-		const tags = getWishlistInvalidationTags(
-			userId,
-			sessionId || undefined,
-			transactionResult.wishlist.id
-		);
+		const tags = getWishlistInvalidationTags(userId, sessionId || undefined);
 		tags.forEach(tag => updateTag(tag));
 
 		// 8. Revalidation complète pour mise à jour du header (badge count)

@@ -117,7 +117,7 @@ export function CursorPagination({
 					>
 						<SelectTrigger
 							id="perPage-select"
-							className="w-16 sm:w-20 h-9"
+							className="w-20 h-9"
 							aria-label="Éléments par page"
 						>
 							<SelectValue>{perPage}</SelectValue>

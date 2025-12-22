@@ -53,10 +53,6 @@ export function getAuthSessionInvalidationTags(sessionId?: string): string[] {
 /**
  * Retourne les tags à invalider pour une vérification
  */
-export function getAuthVerificationInvalidationTags(verificationId?: string): string[] {
-	const tags: string[] = [AUTH_CACHE_TAGS.VERIFICATIONS_LIST];
-	if (verificationId) {
-		tags.push(AUTH_CACHE_TAGS.VERIFICATION(verificationId));
-	}
-	return tags;
+export function getAuthVerificationInvalidationTags(): string[] {
+	return [AUTH_CACHE_TAGS.VERIFICATIONS_LIST];
 }

@@ -73,3 +73,11 @@ export function getUserSessionsInvalidationTags(userId: string): string[] {
 export function getUserAccountsInvalidationTags(userId: string): string[] {
 	return [USERS_CACHE_TAGS.ACCOUNTS(userId)];
 }
+
+/**
+ * Tags à invalider lors de la modification d'un utilisateur (admin)
+ * Inclut la liste des comptes OAuth
+ */
+export function getAdminAccountsListInvalidationTags(): string[] {
+	return [USERS_CACHE_TAGS.ACCOUNTS_LIST];
+}

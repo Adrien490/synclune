@@ -46,18 +46,12 @@ export function cacheWishlistCount(userId?: string, sessionId?: string) {
  * Invalide automatiquement :
  * - La wishlist de l'utilisateur/visiteur
  * - Le compteur d'items dans la wishlist
- * - Les items de la wishlist (si wishlistId fourni)
+ * - Les SKU IDs dans la wishlist
  */
-export function getWishlistInvalidationTags(userId?: string, sessionId?: string, wishlistId?: string): string[] {
-	const tags = [
+export function getWishlistInvalidationTags(userId?: string, sessionId?: string): string[] {
+	return [
 		WISHLIST_CACHE_TAGS.WISHLIST(userId, sessionId),
 		WISHLIST_CACHE_TAGS.COUNT(userId, sessionId),
 		WISHLIST_CACHE_TAGS.SKU_IDS(userId, sessionId),
 	];
-
-	if (wishlistId) {
-		tags.push(WISHLIST_CACHE_TAGS.ITEMS(wishlistId));
-	}
-
-	return tags;
 }

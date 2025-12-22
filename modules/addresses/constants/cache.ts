@@ -12,9 +12,6 @@ export const ADDRESSES_CACHE_TAGS = {
 	/** Adresses d'un utilisateur */
 	USER_ADDRESSES: (userId: string) => `addresses-user-${userId}`,
 
-	/** Adresse par défaut d'un utilisateur */
-	DEFAULT_ADDRESS: (userId: string) => `address-default-${userId}`,
-
 	/** Recherche d'adresses via l'API BAN (autocomplete) */
 	ADDRESS_SEARCH: (query: string) => `address-search-${query}`,
 } as const;
@@ -52,8 +49,5 @@ export function cacheAddressSearch(query: string) {
  * Tags à invalider lors de la modification des adresses d'un utilisateur
  */
 export function getUserAddressesInvalidationTags(userId: string): string[] {
-	return [
-		ADDRESSES_CACHE_TAGS.USER_ADDRESSES(userId),
-		ADDRESSES_CACHE_TAGS.DEFAULT_ADDRESS(userId),
-	];
+	return [ADDRESSES_CACHE_TAGS.USER_ADDRESSES(userId)];
 }

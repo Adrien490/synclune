@@ -15,6 +15,7 @@ import {
 } from "@/shared/lib/actions";
 import { deleteUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USERS_CACHE_TAGS } from "../../constants/cache";
 
 // Rate limit: 10 requêtes par minute
 const DELETE_USER_RATE_LIMIT = { limit: 10, windowMs: 60 * 1000 };
@@ -70,6 +71,7 @@ export async function deleteUser(
 		// 7. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
 
 		return success(`L'utilisateur ${user.name || user.email} a ete supprime.`);
 	} catch (e) {

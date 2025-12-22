@@ -111,7 +111,7 @@ export async function clearWishlist(
 		})
 
 		// 6. Invalidation cache immédiate (read-your-own-writes)
-		const tags = getWishlistInvalidationTags(userId, sessionId || undefined, wishlist.id)
+		const tags = getWishlistInvalidationTags(userId, sessionId || undefined)
 		tags.forEach(tag => updateTag(tag))
 
 		// 7. Revalidation complète pour mise à jour du header (badge count)

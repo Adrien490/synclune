@@ -15,7 +15,6 @@ export const AUTH_CACHE_TAGS = {
 
 	// Verifications
 	VERIFICATIONS_LIST: "auth-verifications-list",
-	VERIFICATION: (id: string) => `auth-verification-${id}` as const,
 } as const;
 
 // Re-exports pour retrocompatibilite

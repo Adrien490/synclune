@@ -30,7 +30,7 @@ export function cacheColors() {
  * @param slug - Slug de la couleur modifiee (optionnel)
  */
 export function getColorInvalidationTags(slug?: string): string[] {
-	const tags: string[] = [COLORS_CACHE_TAGS.LIST, COLORS_CACHE_TAGS.OPTIONS];
+	const tags: string[] = [COLORS_CACHE_TAGS.LIST];
 	if (slug) {
 		tags.push(COLORS_CACHE_TAGS.DETAIL(slug));
 	}

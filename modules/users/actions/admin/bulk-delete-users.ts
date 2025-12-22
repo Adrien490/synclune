@@ -14,6 +14,7 @@ import {
 } from "@/shared/lib/actions";
 import { bulkDeleteUsersSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USERS_CACHE_TAGS } from "../../constants/cache";
 
 // Rate limit: 5 requêtes par minute (bulk actions)
 const BULK_DELETE_RATE_LIMIT = { limit: 5, windowMs: 60 * 1000 };
@@ -74,6 +75,7 @@ export async function bulkDeleteUsers(
 		// 7. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
 
 		return success(
 			`${result.count} utilisateur${result.count > 1 ? "s" : ""} supprime${result.count > 1 ? "s" : ""} avec succes.`

@@ -9,15 +9,9 @@
 // ============================================
 
 export const WISHLIST_CACHE_TAGS = {
-	/** Liste des wishlists (dashboard admin) */
-	LIST: "wishlists-list",
-
 	/** Wishlist d'un utilisateur ou visiteur */
 	WISHLIST: (userId?: string, sessionId?: string) =>
 		userId ? `wishlist-user-${userId}` : sessionId ? `wishlist-session-${sessionId}` : "wishlist-anonymous",
-
-	/** Items d'une wishlist spécifique */
-	ITEMS: (wishlistId: string) => `wishlist-${wishlistId}-items`,
 
 	/** Compteur d'items dans une wishlist */
 	COUNT: (userId?: string, sessionId?: string) =>
