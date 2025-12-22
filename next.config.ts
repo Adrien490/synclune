@@ -1,14 +1,5 @@
 import createMDX from "@next/mdx";
-import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
-
-const isDev = process.env.NODE_ENV !== "production";
-
-const withSerwist = withSerwistInit({
-  swSrc: "app/sw.ts",
-  swDest: "public/sw.js",
-  disable: isDev,
-});
 
 const nextConfig: NextConfig = {
   async headers() {
@@ -25,7 +16,7 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon"],
+  serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "esbuild-wasm"],
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
 
   images: {
@@ -58,5 +49,4 @@ const nextConfig: NextConfig = {
 
 const withMDX = createMDX({ extension: /\.(md|mdx)$/ });
 
-const config = withMDX(nextConfig);
-export default isDev ? config : withSerwist(config);
+export default withMDX(nextConfig);

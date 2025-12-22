@@ -297,7 +297,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 
 							{/* Embla Carousel - Glissement fluide natif */}
 							<div
-								className="absolute inset-0 overflow-hidden touch-pan-x"
+								className="absolute inset-0 overflow-hidden touch-pan-y"
 								ref={emblaRef}
 							>
 								<div className="flex h-full" ref={emblaContainerRef}>
@@ -311,11 +311,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 											className="flex-[0_0_100%] h-full min-w-0 relative cursor-zoom-in"
 											aria-hidden={index !== optimisticIndex}
 											aria-label={`Zoomer ${media.alt || title}`}
-											onClick={() => {
-												if (emblaApi?.clickAllowed()) {
-													openLightbox();
-												}
-											}}
+											onClick={openLightbox}
 											onKeyDown={(e) => {
 												if (e.key === "Enter" || e.key === " ") {
 													e.preventDefault();

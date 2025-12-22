@@ -22,6 +22,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import { getCart } from "@/modules/cart/data/get-cart";
 import { CartSheetSkeleton } from "@/modules/cart/components/cart-sheet-skeleton";
+import { SerwistProvider } from "@/shared/lib/serwist-client";
 
 export const metadata: Metadata = {
 	title: {
@@ -152,7 +153,8 @@ export default async function RootLayout({
 			<body
 				className={`${inter.className} ${crimsonPro.variable} ${jetBrainsMono.variable} antialiased`}
 			>
-				<SystemBanner
+				<SerwistProvider swUrl="/serwist/sw.js">
+					<SystemBanner
 					text="Mode Developpement"
 					color="bg-orange-500"
 					size="sm"
@@ -195,7 +197,8 @@ export default async function RootLayout({
 						</CookieConsentStoreProvider>
 					</Suspense>
 				</MotionConfig>
-				<AppToaster />
+					<AppToaster />
+				</SerwistProvider>
 			</body>
 		</html>
 	);
