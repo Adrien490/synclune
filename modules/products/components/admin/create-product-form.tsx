@@ -351,7 +351,7 @@ export function CreateProductForm({
 								{(field) => (
 									<div className="space-y-2">
 										<FieldLabel required>Titre du bijou</FieldLabel>
-										<field.InputField label="" required autoFocus />
+										<field.InputField label="" required />
 									</div>
 								)}
 							</form.AppField>
