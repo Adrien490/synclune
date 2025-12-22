@@ -6,7 +6,6 @@ Analyse des Priorités - Audit UX/UI 2025
   |-----|-------------------------|------------------------|--------|---------------------------------------------------------|
   | 1   | Apple Pay / Google Pay  | x2-3 conversion mobile | Faible | modules/payments/actions/create-checkout-session.ts:555 |
   | 2   | Date livraison estimée  | Confiance client       | Faible | modules/payments/components/checkout-summary.tsx        |
-  | 4   | Section "Récemment vus" | +30% engagement        | Faible | app/(boutique)/creations/[slug]/page.tsx                |
 
   Priorités Moyenne (ROI élevé, effort modéré)
 
