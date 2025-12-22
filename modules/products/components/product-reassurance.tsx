@@ -1,16 +1,15 @@
 import { Truck, ShieldCheck, RotateCcw, CreditCard } from "lucide-react";
 
 /**
- * ProductReassurance - Badges de réassurance et liens
+ * ProductReassurance - Badges de réassurance
  *
  * Composant Server (RSC) pour le contenu statique :
  * - Trust badges (paiement sécurisé, retours, méthodes de paiement)
  * - Information livraison
- * - Liens personnalisation et questions
  *
  * Séparé de AddToCartForm pour respecter la séparation SSR/Client.
  */
-export function ProductReassurance({ productSlug }: ProductReassuranceProps) {
+export function ProductReassurance() {
 	return (
 		<div className="space-y-3 pt-2">
 			{/* Trust badges */}
