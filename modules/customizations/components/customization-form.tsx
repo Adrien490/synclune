@@ -186,7 +186,7 @@ export function CustomizationForm({
 				validators={{
 					onChange: ({ value }: { value: string }) => {
 						if (!value || value.trim().length < 20) {
-							return "Les details doivent contenir au moins 20 caracteres";
+							return "Les détails doivent contenir au moins 20 caractères";
 						}
 					},
 				}}
@@ -194,25 +194,25 @@ export function CustomizationForm({
 				{(field) => (
 					<div className="space-y-2">
 						<field.TextareaField
-							label="Decris ton projet"
+							label="Décris ton projet"
 							required
 							rows={4}
-							placeholder="Decris ton idee de bijou... Par exemple : Je cherche un bracelet pour un anniversaire de mariage, dans des tons dores avec des perles..."
+							placeholder="Décris ton idée de bijou... Par exemple : Je cherche un bracelet pour un anniversaire de mariage, dans des tons dorés avec des perles..."
 						/>
 						<p className="text-sm text-muted-foreground text-right">
-							{field.state.value?.length || 0} / 2000 caracteres
+							{field.state.value?.length || 0} / 2000 caractères
 						</p>
 					</div>
 				)}
 			</form.AppField>
 
-			{/* Creations inspirantes (optionnel) */}
+			{/* Créations inspirantes (optionnel) */}
 			<div className="space-y-2">
 				<FieldLabel
 					optional
-					tooltip="Selectionne jusqu'a 5 creations existantes qui t'inspirent"
+					tooltip="Sélectionne jusqu'à 5 créations existantes qui t'inspirent"
 				>
-					Creations qui t'inspirent
+					Créations qui t'inspirent
 				</FieldLabel>
 				<Autocomplete
 					name="productSearch"
@@ -228,11 +228,11 @@ export function CustomizationForm({
 							: null
 					}
 					imageSize={48}
-					placeholder="Rechercher une creation..."
+					placeholder="Rechercher une création..."
 					isLoading={isSearchPending}
 					minQueryLength={0}
 					disabled={isPending || selectedProducts.length >= 5}
-					noResultsMessage="Aucune creation trouvee"
+					noResultsMessage="Aucune création trouvée"
 					showSearchIcon
 					showClearButton
 				/>
@@ -254,23 +254,23 @@ export function CustomizationForm({
 					</div>
 				)}
 				<p className="text-sm text-muted-foreground">
-					{selectedProducts.length}/5 creations selectionnees
+					{selectedProducts.length}/5 créations sélectionnées
 				</p>
 			</div>
 
-			{/* Nom et prenom */}
+			{/* Nom et prénom */}
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<form.AppField
 					name="firstName"
 					validators={{
 						onChange: ({ value }: { value: string }) => {
 							if (!value || value.trim().length < 2) {
-								return "Le prenom doit contenir au moins 2 caracteres";
+								return "Le prénom doit contenir au moins 2 caractères";
 							}
 						},
 					}}
 				>
-					{(field) => <field.InputField label="Prenom" required />}
+					{(field) => <field.InputField label="Prénom" required />}
 				</form.AppField>
 
 				<form.AppField
@@ -278,7 +278,7 @@ export function CustomizationForm({
 					validators={{
 						onChange: ({ value }: { value: string }) => {
 							if (!value || value.trim().length < 2) {
-								return "Le nom doit contenir au moins 2 caracteres";
+								return "Le nom doit contenir au moins 2 caractères";
 							}
 						},
 					}}
@@ -304,11 +304,11 @@ export function CustomizationForm({
 				{(field) => <field.InputField label="Adresse email" type="email" required />}
 			</form.AppField>
 
-			{/* Telephone */}
+			{/* Téléphone */}
 			<form.AppField name="phone">
 				{(field) => (
 					<field.PhoneField
-						label="Telephone"
+						label="Téléphone"
 						defaultCountry="FR"
 						placeholder="06 12 34 56 78"
 					/>
@@ -321,7 +321,7 @@ export function CustomizationForm({
 				validators={{
 					onChange: ({ value }: { value: boolean }) => {
 						if (!value) {
-							return "Tu dois accepter la politique de confidentialite pour continuer";
+							return "Tu dois accepter la politique de confidentialité pour continuer";
 						}
 					},
 				}}
@@ -329,7 +329,7 @@ export function CustomizationForm({
 				{(field) => (
 					<div className="space-y-1">
 						<field.CheckboxField
-							label="J'accepte la politique de confidentialite"
+							label="J'accepte la politique de confidentialité"
 							required
 						/>
 						<p className="text-sm leading-relaxed text-muted-foreground ml-7">
@@ -340,7 +340,7 @@ export function CustomizationForm({
 								target="_blank"
 								rel="noopener noreferrer"
 							>
-								Politique de confidentialite
+								Politique de confidentialité
 							</a>
 						</p>
 					</div>

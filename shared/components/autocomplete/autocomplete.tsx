@@ -68,7 +68,6 @@ export function Autocomplete<T>({
 	const inputRef = useRef<HTMLInputElement>(null);
 	const blurTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 	const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
-	const justSelectedRef = useRef(false);
 
 	// Calculs derives
 	const hasValidQuery = localValue.length >= minQueryLength;
@@ -117,11 +116,6 @@ export function Autocomplete<T>({
 
 	// Gestionnaires d'evenements
 	const handleFocus = () => {
-		// Ignorer le focus si on vient de selectionner un item
-		if (justSelectedRef.current) {
-			justSelectedRef.current = false;
-			return;
-		}
 		if (localValue.length >= minQueryLength) {
 			setIsOpen(true);
 		}
@@ -180,11 +174,6 @@ export function Autocomplete<T>({
 		onSelect(item);
 		setIsOpen(false);
 		setActiveIndex(-1);
-		// Redonner le focus a l'input sur desktop sans rouvrir le dropdown
-		if (!isMobile) {
-			justSelectedRef.current = true;
-			inputRef.current?.focus();
-		}
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent) => {

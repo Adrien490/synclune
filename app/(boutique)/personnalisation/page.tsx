@@ -122,11 +122,14 @@ export default async function CustomizationPage({ searchParams }: PageProps) {
 
 					{/* Témoignage mobile - après le formulaire */}
 					{testimonial && (
-						<div className="lg:hidden mt-12">
-							<h2 className="font-display text-lg font-semibold text-foreground mb-4">
+						<div className="lg:hidden mt-12 space-y-2">
+							<h2 className="font-display text-lg font-semibold text-foreground">
 								Témoignages
 							</h2>
-							<TestimonialCard testimonial={testimonial} />
+							<p className="text-sm text-muted-foreground">
+								Des créations uniques, des clients ravis
+							</p>
+							<TestimonialCard testimonial={testimonial} className="mt-4" />
 						</div>
 					)}
 				</div>
