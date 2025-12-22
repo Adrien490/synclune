@@ -17,16 +17,8 @@ import {
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
 import { fetchDashboardRevenueChart } from "@/modules/dashboard/data/get-revenue-chart";
 import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-orders";
-import { fetchDashboardStockAlerts } from "@/modules/dashboard/data/get-stock-alerts";
 
-import {
-	Euro,
-	ShoppingBag,
-	Receipt,
-	Clock,
-	AlertTriangle,
-	Package,
-} from "lucide-react";
+import { Euro, ShoppingBag, Receipt } from "lucide-react";
 
 export const metadata: Metadata = {
 	title: "Tableau de bord - Administration",
@@ -44,7 +36,7 @@ export default async function AdminDashboardPage() {
 			<PageHeader variant="compact" title="Tableau de bord" />
 
 			<div className="space-y-6">
-				{/* 6 KPIs en grille */}
+				{/* 3 KPIs en grille */}
 				<DashboardErrorBoundary
 					fallback={
 						<ChartError
@@ -57,7 +49,7 @@ export default async function AdminDashboardPage() {
 					<Suspense
 						fallback={
 							<KpisSkeleton
-								count={6}
+								count={3}
 								ariaLabel="Chargement des indicateurs"
 							/>
 						}
@@ -116,13 +108,10 @@ export default async function AdminDashboardPage() {
 }
 
 /**
- * Composant async pour les 6 KPIs
+ * Composant async pour les 3 KPIs
  */
 async function DashboardKpis() {
-	const [kpis, stockAlerts] = await Promise.all([
-		fetchDashboardKpis(),
-		fetchDashboardStockAlerts(0, 1), // Juste pour avoir le count
-	]);
+	const kpis = await fetchDashboardKpis();
 
 	const formatCurrency = (amount: number) =>
 		new Intl.NumberFormat("fr-FR", {
@@ -174,46 +163,6 @@ async function DashboardKpis() {
 				size="featured"
 				priority="operational"
 				tooltip="Valeur moyenne des commandes ce mois"
-			/>
-
-			{/* Commandes à traiter */}
-			<KpiCard
-				title="À traiter"
-				value={kpis.pendingOrders.count.toString()}
-				numericValue={kpis.pendingOrders.count}
-				icon={<Clock className="h-4 w-4" />}
-				size="default"
-				priority="operational"
-				status={kpis.pendingOrders.count > 0 ? "warning" : "default"}
-				href="/admin/ventes/commandes?status=PROCESSING"
-				tooltip="Commandes en attente de traitement"
-			/>
-
-			{/* Commandes urgentes */}
-			<KpiCard
-				title="Urgentes (>48h)"
-				value={kpis.pendingOrders.urgentCount.toString()}
-				numericValue={kpis.pendingOrders.urgentCount}
-				icon={<AlertTriangle className="h-4 w-4" />}
-				size="default"
-				priority="alert"
-				status={kpis.pendingOrders.urgentCount > 0 ? "danger" : "default"}
-				href="/admin/ventes/commandes?status=PROCESSING&urgent=true"
-				tooltip="Commandes en traitement depuis plus de 48h"
-			/>
-
-			{/* Alertes stock */}
-			<KpiCard
-				title="Alertes stock"
-				value={stockAlerts.totalCount.toString()}
-				numericValue={stockAlerts.totalCount}
-				subtitle={`${kpis.outOfStock.count} en rupture`}
-				icon={<Package className="h-4 w-4" />}
-				size="default"
-				priority="alert"
-				status={stockAlerts.totalCount > 0 ? "warning" : "default"}
-				href="/admin/catalogue/inventaire?stock=low"
-				tooltip="Produits en rupture ou avec stock faible"
 			/>
 		</div>
 	);

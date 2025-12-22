@@ -72,7 +72,7 @@ export function RevenueChart({ chartDataPromise }: RevenueChartProps) {
 							<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
 								<LineChart accessibilityLayer
 								data={chartData}
-								margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+								margin={{ top: 5, right: 10, bottom: 5, left: -10 }}
 							>
 								<CartesianGrid vertical={false} />
 								<XAxis
@@ -82,6 +82,7 @@ export function RevenueChart({ chartDataPromise }: RevenueChartProps) {
 									tickMargin={8}
 									interval="preserveStartEnd"
 									tick={{ fontSize: 11 }}
+									minTickGap={30}
 								/>
 								<ChartTooltip
 									content={

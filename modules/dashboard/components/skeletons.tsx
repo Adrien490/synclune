@@ -4,7 +4,7 @@ import { CHART_STYLES } from "../constants/chart-styles";
 
 interface KpisSkeletonProps {
 	/** Nombre de cartes KPI a afficher */
-	count?: 2 | 4 | 6;
+	count?: 2 | 3 | 4 | 6;
 	/** Label pour l'accessibilite */
 	ariaLabel?: string;
 }
@@ -42,7 +42,11 @@ export function KpisSkeleton({
 	ariaLabel = "Chargement des indicateurs",
 }: KpisSkeletonProps) {
 	const gridCols =
-		count === 2 ? "lg:grid-cols-2" : count === 6 ? "lg:grid-cols-3" : "lg:grid-cols-4";
+		count === 2
+			? "lg:grid-cols-2"
+			: count === 3 || count === 6
+				? "lg:grid-cols-3"
+				: "lg:grid-cols-4";
 
 	return (
 		<div
