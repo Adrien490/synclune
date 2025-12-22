@@ -250,7 +250,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 							{/* Dots indicator - Mobile uniquement, en bas centre */}
 							{safeImages.length > 1 && (
 								<div
-									className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1.5"
+									className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1.5 pointer-events-none"
 									role="tablist"
 									aria-label="Navigation galerie"
 								>
@@ -265,7 +265,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 											}}
 											aria-selected={i === optimisticIndex}
 											aria-label={`Image ${i + 1} sur ${safeImages.length}`}
-											className="size-11 flex items-center justify-center touch-manipulation"
+											className="size-11 flex items-center justify-center touch-manipulation pointer-events-auto"
 										>
 											<span
 												className={cn(
@@ -285,7 +285,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 							{safeImages.length > 1 && optimisticIndex === 0 && !prefersReducedMotion && !hasSeenSwipeHint && (
 								<button
 									type="button"
-									className="sm:hidden absolute bottom-14 left-1/2 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full animate-[gallery-swipe-hint_4.5s_ease-in-out_forwards] cursor-pointer"
+									className="sm:hidden absolute bottom-14 left-1/2 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full animate-[gallery-swipe-hint_4.5s_ease-in-out_forwards] pointer-events-none"
 									aria-hidden="true"
 									onClick={() => markSwipeHintSeen()}
 									onAnimationEnd={() => markSwipeHintSeen()}

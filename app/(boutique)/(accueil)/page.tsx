@@ -15,16 +15,16 @@ import { Hero } from "./_components/hero";
 export const metadata: Metadata = {
 	title: "Synclune | Bijoux artisanaux faits main à Nantes (44) - Loire-Atlantique",
 	description:
-		"Découvrez les bijoux colorés de Synclune, créatrice à Nantes. Boucles d'oreilles, colliers, bracelets faits main. Éditions limitées inspirées de Pokémon, Van Gogh, Twilight. Atelier artisanal en Loire-Atlantique.",
+		"Découvrez les bijoux colorés de Synclune, créatrice à Nantes. Boucles d'oreilles, colliers, bracelets faits main. Atelier artisanal en Loire-Atlantique.",
 	keywords:
-		"bijoux artisanaux Nantes, bijoux faits main Nantes, créatrice bijoux Nantes, bagues Nantes, colliers Nantes, boucles d'oreilles Nantes, bracelets Nantes, bijoux colorés Loire-Atlantique, bijoux pokemon Nantes, bijoux van gogh Nantes, atelier bijoux Nantes 44",
+		"bijoux artisanaux Nantes, bijoux faits main Nantes, créatrice bijoux Nantes, bagues Nantes, colliers Nantes, boucles d'oreilles Nantes, bracelets Nantes, bijoux colorés Loire-Atlantique. atelier bijoux Nantes 44",
 	alternates: {
 		canonical: "/",
 	},
 	openGraph: {
 		title: "Synclune | Bijoux artisanaux faits main à Nantes (44)",
 		description:
-			"Bijoux colorés faits main dans mon atelier nantais. Boucles d'oreilles, colliers, bracelets. Pièces uniques inspirées de Pokémon, Van Gogh, Twilight. Éditions limitées 5-10 exemplaires. Loire-Atlantique.",
+			"Bijoux colorés faits main dans mon atelier nantais. Boucles d'oreilles, colliers, bracelets. Loire-Atlantique.",
 		url: "https://synclune.fr",
 		type: "website",
 		images: [
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 				url: "/opengraph-image",
 				width: 1200,
 				height: 630,
-				alt: "Synclune - Bijoux artisanaux faits main a Nantes (44)",
+				alt: "Synclune - Bijoux artisanaux faits main à Nantes (44)",
 			},
 		],
 	},
