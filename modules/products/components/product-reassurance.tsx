@@ -1,15 +1,4 @@
-import Link from "next/link";
-import {
-	Truck,
-	ShieldCheck,
-	RotateCcw,
-	CreditCard,
-	Heart,
-} from "lucide-react";
-
-interface ProductReassuranceProps {
-	productSlug: string;
-}
+import { Truck, ShieldCheck, RotateCcw, CreditCard } from "lucide-react";
 
 /**
  * ProductReassurance - Badges de réassurance et liens
@@ -48,15 +37,6 @@ export function ProductReassurance({ productSlug }: ProductReassuranceProps) {
 				<Truck className="w-3.5 h-3.5" aria-hidden="true" />
 				<span>Livraison France et UE</span>
 			</div>
-
-			{/* Lien personnalisation */}
-			<Link
-				href={`/personnalisation?product=${productSlug}`}
-				className="flex items-center justify-center gap-2 w-full py-3 sm:py-2.5 px-4 text-sm bg-secondary border border-secondary text-secondary-foreground rounded-xl sm:rounded-lg hover:bg-secondary/80 active:bg-secondary/70 active:scale-[0.98] transition-all"
-			>
-				<Heart className="w-4 h-4" aria-hidden="true" />
-				<span>Envie de personnalisation ?</span>
-			</Link>
 		</div>
 	);
 }
