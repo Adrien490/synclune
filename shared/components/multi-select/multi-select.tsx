@@ -74,7 +74,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 			maxWidth,
 			deduplicateOptions = false,
 			resetOnDefaultValueChange = true,
-			closeOnSelect = false,
+			closeOnSelect = true,
 			isLoading = false,
 			...props
 		},
