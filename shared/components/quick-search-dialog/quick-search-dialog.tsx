@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Clock, Layers, Loader2, Search, Sparkles, X } from "lucide-react"
+import { Clock, Layers, Loader2, Search, Sparkles, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useRef, useTransition } from "react"
@@ -65,7 +65,7 @@ export function QuickSearchDialog({
 		if (!container) return
 
 		const focusableSelector =
-			'button:not([disabled]), a:not([disabled]), [tabindex]:not([tabindex="-1"])'
+			'button:not([disabled]), a:not([disabled]), [tabindex]:not([tabindex="-1"]):not([type="search"])'
 		const focusables = Array.from(
 			container.querySelectorAll<HTMLElement>(focusableSelector)
 		)
@@ -127,6 +127,7 @@ export function QuickSearchDialog({
 			<DialogContent
 				showCloseButton={false}
 				onCloseAutoFocus={(e) => e.preventDefault()}
+				aria-busy={isPending}
 				className={cn(
 					"group/search",
 					// Mobile: fullscreen
@@ -165,7 +166,7 @@ export function QuickSearchDialog({
 							className="size-11 md:hidden shrink-0"
 							aria-label="Fermer"
 						>
-							<ArrowLeft className="size-5" />
+							<X className="size-5" />
 						</Button>
 
 						<DialogTitle className="font-display font-medium text-lg flex-1 text-center md:text-left">
@@ -237,7 +238,7 @@ export function QuickSearchDialog({
 											Effacer
 										</Button>
 									</div>
-									<Stagger className="space-y-1" stagger={0.015} delay={0.02} y={6}>
+									<Stagger role="list" className="space-y-1" stagger={0.015} delay={0.02} y={6}>
 										{displayedSearches.map((term) => (
 											<div key={term} className="flex items-center gap-1 group/item">
 												<Tap className="flex-1">
@@ -273,7 +274,7 @@ export function QuickSearchDialog({
 										<Layers className="size-5" aria-hidden="true" />
 										Collections
 									</h2>
-									<Stagger className="grid grid-cols-2 gap-2" stagger={0.015} delay={0.02} y={6}>
+									<Stagger role="list" className="grid grid-cols-2 gap-2" stagger={0.015} delay={0.02} y={6}>
 										{collections.map((collection) => (
 											<Tap key={collection.slug}>
 												<Link
@@ -296,7 +297,7 @@ export function QuickSearchDialog({
 										<Sparkles className="size-5" aria-hidden="true" />
 										Categories
 									</h2>
-									<Stagger className="grid grid-cols-2 gap-2" stagger={0.015} delay={0.02} y={6}>
+									<Stagger role="list" className="grid grid-cols-2 gap-2" stagger={0.015} delay={0.02} y={6}>
 										{productTypes.map((type) => (
 											<Tap key={type.slug}>
 												<Link
@@ -323,21 +324,21 @@ export function QuickSearchDialog({
 										<Link
 											href="/produits/bagues"
 											onClick={close}
-											className="inline-flex items-center px-4 py-2 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+											className="inline-flex items-center px-4 py-2 min-h-11 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
 										>
 											Bagues
 										</Link>
 										<Link
 											href="/produits/colliers"
 											onClick={close}
-											className="inline-flex items-center px-4 py-2 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+											className="inline-flex items-center px-4 py-2 min-h-11 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
 										>
 											Colliers
 										</Link>
 										<Link
 											href="/collections"
 											onClick={close}
-											className="inline-flex items-center px-4 py-2 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+											className="inline-flex items-center px-4 py-2 min-h-11 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
 										>
 											Collections
 										</Link>

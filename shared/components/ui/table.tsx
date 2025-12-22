@@ -76,6 +76,7 @@ function TableBody({
 		<tbody
 			data-slot="table-body"
 			aria-busy={isLoading || undefined}
+			aria-live={isLoading ? "polite" : undefined}
 			className={cn(
 				"[&_tr:last-child]:border-0",
 				isLoading && "opacity-50 pointer-events-none",

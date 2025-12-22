@@ -112,7 +112,7 @@ export default function ScrollFade({
 
       {(axis === "horizontal" || axis === "both") && showLeft && (
         <div
-          aria-hidden
+          aria-hidden="true"
           className="pointer-events-none absolute left-0 top-0 h-full w-10 z-10"
           style={{
             background:
@@ -123,7 +123,7 @@ export default function ScrollFade({
 
       {(axis === "horizontal" || axis === "both") && showRight && (
         <div
-          aria-hidden
+          aria-hidden="true"
           className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10"
           style={{
             background:
@@ -134,7 +134,7 @@ export default function ScrollFade({
 
       {(axis === "vertical" || axis === "both") && showTop && (
         <div
-          aria-hidden
+          aria-hidden="true"
           className="pointer-events-none absolute top-0 left-0 w-full h-10 z-10"
           style={{
             background:
@@ -145,7 +145,7 @@ export default function ScrollFade({
 
       {(axis === "vertical" || axis === "both") && showBottom && (
         <div
-          aria-hidden
+          aria-hidden="true"
           className="pointer-events-none absolute bottom-0 left-0 w-full h-10 z-10"
           style={{
             background:

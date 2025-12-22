@@ -2,7 +2,7 @@
 
 import { useRef, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { Search, X } from "lucide-react"
 
 import { useAppForm } from "@/shared/components/forms"
@@ -77,6 +77,7 @@ export function SearchInput({
 }: SearchInputProps) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const [internalPending, startTransition] = useTransition()
+	const shouldReduceMotion = useReducedMotion()
 	const styles = sizeStyles[size]
 
 	const searchParams = useSearchParams()
@@ -224,10 +225,10 @@ export function SearchInput({
 							<AnimatePresence mode="wait">
 								{field.state.value && (
 									<motion.div
-										initial={{ opacity: 0, scale: 0.8 }}
+										initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
 										animate={{ opacity: 1, scale: 1 }}
-										exit={{ opacity: 0, scale: 0.8 }}
-										transition={{ duration: 0.15 }}
+										exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.8 }}
+										transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
 										className="absolute right-0"
 									>
 										<Button

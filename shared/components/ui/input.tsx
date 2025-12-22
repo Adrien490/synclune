@@ -4,11 +4,11 @@ import { X } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
 interface InputProps extends React.ComponentProps<"input"> {
-	/** Icône affichée au début du champ */
+	/** Icône affichée au début du champ (élément SVG 16x16) */
 	startIcon?: React.ReactNode;
-	/** Icône affichée à la fin du champ */
+	/** Icône affichée à la fin du champ (élément SVG 16x16). Note : masquée si clearable est actif et le champ a une valeur. */
 	endIcon?: React.ReactNode;
-	/** Affiche un bouton pour effacer le contenu */
+	/** Affiche un bouton pour effacer le contenu. Prioritaire sur endIcon quand le champ a une valeur. */
 	clearable?: boolean;
 	/** Callback appelé lors du clic sur le bouton effacer */
 	onClear?: () => void;
@@ -88,7 +88,7 @@ function Input({
 							<X className="size-4" />
 						</button>
 					) : hasEndIcon ? (
-						<div className="[&>svg]:size-4">
+						<div className="[&>svg]:size-4" aria-hidden="true">
 							{endIcon}
 						</div>
 					) : null}
