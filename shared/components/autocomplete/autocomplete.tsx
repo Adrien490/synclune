@@ -442,7 +442,6 @@ export function Autocomplete<T>({
 							</DrawerClose>
 							<Input
 								type="text"
-								autoFocus
 								value={localValue}
 								onChange={handleInputChange}
 								onKeyDown={handleKeyDown}
@@ -486,16 +485,14 @@ export function Autocomplete<T>({
 						{renderLiveRegion()}
 
 						{/* Liste des resultats */}
-						{hasValidQuery && (
-							<ul
-								id={listboxId}
-								role="listbox"
-								aria-label="Résultats de recherche"
-								className="flex-1 overflow-auto"
-							>
-								{renderListContent()}
-							</ul>
-						)}
+						<ul
+							id={listboxId}
+							role="listbox"
+							aria-label="Résultats de recherche"
+							className="flex-1 overflow-auto"
+						>
+							{renderListContent()}
+						</ul>
 					</DrawerContent>
 				</Drawer>
 			</>
