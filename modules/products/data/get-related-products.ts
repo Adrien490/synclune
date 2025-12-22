@@ -8,6 +8,7 @@ import {
 	RELATED_PRODUCTS_STRATEGY,
 } from "../constants/related-products.constants";
 import { GET_PRODUCTS_SELECT } from "../constants/product.constants";
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import type { Product } from "../types/product.types";
 
 // ============================================================================
@@ -53,7 +54,7 @@ async function fetchPublicRelatedProducts(
 ): Promise<Product[]> {
 	"use cache";
 	cacheLife("collections");
-	cacheTag("related-products-public");
+	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC);
 
 	try {
 		return await prisma.product.findMany({
@@ -86,7 +87,7 @@ async function fetchPersonalizedRelatedProducts(
 ): Promise<Product[]> {
 	"use cache";
 	cacheLife("relatedProducts");
-	cacheTag(`related-products-user-${userId}`);
+	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_USER(userId));
 
 	try {
 		const orderHistory = await prisma.orderItem.findMany({
@@ -177,7 +178,7 @@ async function fetchContextualRelatedProducts(
 ): Promise<Product[]> {
 	"use cache";
 	cacheLife("relatedProducts");
-	cacheTag(`related-products-contextual-${currentProductSlug}`);
+	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_CONTEXTUAL(currentProductSlug));
 
 	try {
 		const currentProduct = await prisma.product.findUnique({

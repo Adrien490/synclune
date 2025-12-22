@@ -2,6 +2,7 @@ import { ProductStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
 import type {
 	GetProductCountsByStatusReturn,
@@ -39,7 +40,7 @@ export async function getProductCountsByStatus(): Promise<GetProductCountsByStat
 async function fetchProductCountsByStatus(): Promise<ProductCountsByStatus> {
 	"use cache";
 	cacheLife("dashboard");
-	cacheTag("product-counts");
+	cacheTag(PRODUCTS_CACHE_TAGS.COUNTS);
 
 	try {
 		const counts = await prisma.product.groupBy({

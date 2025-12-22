@@ -20,6 +20,9 @@ export const USERS_CACHE_TAGS = {
 
 	/** Comptes OAuth liés d'un utilisateur */
 	ACCOUNTS: (userId: string) => `accounts-user-${userId}`,
+
+	/** Liste des comptes utilisateurs (admin dashboard) */
+	ACCOUNTS_LIST: "accounts-list",
 } as const;
 
 // Re-exports pour retrocompatibilite

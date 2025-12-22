@@ -2,6 +2,7 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
 /**
  * Récupère le prix maximum parmi tous les produits publics
@@ -17,8 +18,8 @@ import { cacheLife, cacheTag } from "next/cache";
 export async function getMaxProductPrice(): Promise<number> {
 	// Cache reference : données quasi-statiques qui changent très rarement
 	cacheLife("reference"); // 24h stale, 2h revalidate, 30j expire
-	cacheTag("products-list");
-	cacheTag("max-product-price");
+	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
+	cacheTag(PRODUCTS_CACHE_TAGS.MAX_PRICE);
 
 	try {
 		// Récupérer le prix maximum des SKUs actifs uniquement (utiliser priceInclTax)

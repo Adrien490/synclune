@@ -29,6 +29,15 @@ export const PRODUCTS_CACHE_TAGS = {
 
 	/** Détail d'un SKU spécifique */
 	SKU_DETAIL: (sku: string) => `sku-${sku}`,
+
+	/** Produits similaires publics (visiteurs non authentifiés) */
+	RELATED_PUBLIC: "related-products-public",
+
+	/** Produits similaires personnalisés par utilisateur */
+	RELATED_USER: (userId: string) => `related-products-user-${userId}`,
+
+	/** Produits similaires contextuels par produit */
+	RELATED_CONTEXTUAL: (productSlug: string) => `related-products-contextual-${productSlug}`,
 } as const;
 
 // Re-exports pour retrocompatibilite

@@ -61,6 +61,7 @@ export function cacheSkuDetail(sku: string) {
  * - Les SKUs du produit (si productId fourni)
  * - Le prix maximum (affecte les filtres)
  * - Les compteurs de produits par statut
+ * - Les produits similaires publics
  * - L'inventaire dashboard
  * - Les badges de la sidebar (affecte le count d'inventaire)
  */
@@ -70,6 +71,7 @@ export function getProductInvalidationTags(productSlug: string, productId?: stri
 		PRODUCTS_CACHE_TAGS.DETAIL(productSlug),
 		PRODUCTS_CACHE_TAGS.MAX_PRICE,
 		PRODUCTS_CACHE_TAGS.COUNTS,
+		PRODUCTS_CACHE_TAGS.RELATED_PUBLIC,
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];

@@ -8,6 +8,7 @@ import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheTag } from "next/cache";
 import { z } from "zod";
+import { USERS_CACHE_TAGS } from "../constants/cache";
 
 import {
 	GET_ACCOUNTS_DEFAULT_SELECT,
@@ -87,7 +88,7 @@ export async function fetchAccounts(
 ): Promise<GetAccountsReturn> {
 	"use cache";
 	cacheDashboard();
-	cacheTag("accounts-list");
+	cacheTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
 
 	const sortOrder = (params.sortOrder ||
 		GET_ACCOUNTS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;

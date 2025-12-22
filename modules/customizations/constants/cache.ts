@@ -1,14 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
-
-// ============================================================================
-// CONSTANTES PARTAGÉES
-// ============================================================================
-
-/**
- * Tag de cache utilisé par les badges de navigation admin
- * Note: nav-badges-data.ts utilise "nav-badges" directement
- */
-const NAV_BADGES_TAG = "nav-badges";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 // ============================================================================
 // CACHE TAGS - Demandes de personnalisation
@@ -59,13 +50,13 @@ export function cacheCustomizationDetail(id: string) {
 
 /**
  * Retourne les tags à invalider lors d'une modification
- * Inclut le tag nav-badges pour mettre à jour les compteurs admin
+ * Inclut le tag admin-badges pour mettre à jour les compteurs admin
  */
 export function getCustomizationInvalidationTags(id?: string): string[] {
 	const tags: string[] = [
 		CUSTOMIZATION_CACHE_TAGS.LIST,
 		CUSTOMIZATION_CACHE_TAGS.STATS,
-		NAV_BADGES_TAG,
+		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
 	if (id) {
 		tags.push(CUSTOMIZATION_CACHE_TAGS.DETAIL(id));
