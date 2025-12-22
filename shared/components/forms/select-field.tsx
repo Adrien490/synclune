@@ -132,15 +132,18 @@ export const SelectField = <T extends string>({
 					>
 						<div className="flex items-center w-full min-w-0">
 							<span className="flex-1 truncate text-left">
-								{renderValue && field.state.value ? (
-									renderValue(field.state.value)
+								{field.state.value ? (
+									renderValue ? (
+										renderValue(field.state.value)
+									) : selectedOption ? (
+										renderOption ? (
+											renderOption(selectedOption)
+										) : (
+											selectedOption.label
+										)
+									) : null
 								) : (
-									<SelectValue placeholder={placeholder}>
-										{selectedOption &&
-											(renderOption
-												? renderOption(selectedOption)
-												: selectedOption.label)}
-									</SelectValue>
+									<SelectValue placeholder={placeholder} />
 								)}
 							</span>
 							{clearable && field.state.value && (

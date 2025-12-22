@@ -130,8 +130,6 @@ export function CreateProductForm({
 						validators={{
 							onChange: ({ value }) =>
 								value.length === 0 ? "Au moins une image est requise" : undefined,
-							onSubmit: ({ value }) =>
-								value.length === 0 ? "Au moins une image est requise" : undefined,
 						}}
 					>
 						{(field) => {
@@ -532,19 +530,7 @@ export function CreateProductForm({
 
 					{/* Prix et stock */}
 					<div className="space-y-6">
-							<form.AppField
-								name="initialSku.priceInclTaxEuros"
-								validators={{
-									onChange: ({ value }: { value: number | null }) =>
-										value === null || value <= 0
-											? "Le prix doit être supérieur à 0"
-											: undefined,
-									onSubmit: ({ value }: { value: number | null }) =>
-										value === null || value <= 0
-											? "Le prix doit être supérieur à 0"
-											: undefined,
-								}}
-							>
+							<form.AppField name="initialSku.priceInclTaxEuros">
 								{(field) => (
 									<div className="space-y-2">
 										<FieldLabel required>Prix de vente final</FieldLabel>
