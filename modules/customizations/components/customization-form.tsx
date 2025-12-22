@@ -348,7 +348,7 @@ export function CustomizationForm({
 			</form.AppField>
 
 			{/* Submit sticky sur mobile */}
-			<div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border/50 py-4 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:py-4 sm:mx-0 flex justify-center">
+			<div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border/50 py-4 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:py-4 sm:mx-0 flex justify-center sm:justify-start">
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (
 						<Button

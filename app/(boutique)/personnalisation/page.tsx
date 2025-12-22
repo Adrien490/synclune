@@ -50,7 +50,7 @@ export default async function CustomizationPage({ searchParams }: PageProps) {
 			search: productSearch || undefined,
 			status: ProductStatus.PUBLIC,
 			perPage: 8,
-			sortBy: productSearch ? "title-ascending" : "newest",
+			sortBy: productSearch ? "title-ascending" : "created-descending",
 			filters: {},
 		}),
 		getRandomTestimonial(),
