@@ -49,7 +49,7 @@ export async function fetchUserSessions(
 	userId: string,
 	currentSessionId?: string
 ): Promise<GetUserSessionsReturn> {
-	"use cache";
+	"use cache: private";
 	cacheUserSessions(userId);
 
 	try {
