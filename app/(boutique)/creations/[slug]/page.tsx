@@ -163,7 +163,6 @@ export default async function ProductPage({
 									<ProductDetails
 										product={product}
 										defaultSku={selectedSku}
-										productSlug={product.slug}
 									/>
 								</section>
 							</div>

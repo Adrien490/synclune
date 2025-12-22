@@ -15,7 +15,6 @@ import type { ProductSku } from "@/modules/products/types/product-services.types
 interface ProductDetailsProps {
 	product: GetProductReturn;
 	defaultSku: ProductSku;
-	productSlug: string;
 }
 
 /**
@@ -33,7 +32,6 @@ interface ProductDetailsProps {
 export function ProductDetails({
 	product,
 	defaultSku,
-	productSlug,
 }: ProductDetailsProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 	const prefersReducedMotion = useReducedMotion();
@@ -67,7 +65,7 @@ export function ProductDetails({
 			<VariantSelector product={product} defaultSku={defaultSku} />
 
 			{/* 3. Réassurance AVANT le CTA - réduit l'anxiété d'achat */}
-			<ProductReassurance productSlug={productSlug} />
+			<ProductReassurance />
 
 			{/* 4. CTA principal - après réassurance pour confiance maximale */}
 			<AddToCartForm product={product} selectedSku={currentSku} />
