@@ -297,7 +297,7 @@ function GalleryContent({ product, title, hasSeenSwipeHint = false }: GalleryPro
 
 							{/* Embla Carousel - Glissement fluide natif */}
 							<div
-								className="absolute inset-0 overflow-hidden touch-pan-y"
+								className="absolute inset-0 overflow-hidden touch-pan-x"
 								ref={emblaRef}
 							>
 								<div className="flex h-full" ref={emblaContainerRef}>
