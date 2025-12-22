@@ -297,65 +297,6 @@ export const PRODUCT_REVIEW_LIMIT: RateLimitConfig = {
 };
 
 // ========================================
-// 🎯 CONFIGURATION PAR ENVIRONNEMENT
-// ========================================
-
-/**
- * Permet d'ajuster toutes les limites selon l'environnement
- *
- * Utilisation :
- * ```ts
- * const limit = isDevelopment()
- *   ? adjustForEnvironment(CART_ADD_LIMIT, 'development')
- *   : CART_ADD_LIMIT;
- * ```
- */
-export function adjustForEnvironment(
-	config: RateLimitConfig,
-	env: "development" | "production" | "test"
-): RateLimitConfig {
-	switch (env) {
-		case "development":
-			// En dev, on multiplie les limites par 10 pour faciliter les tests
-			return {
-				limit: (config.limit ?? 10) * 10,
-				windowMs: config.windowMs,
-			};
-		case "test":
-			// En test, limites très permissives
-			return {
-				limit: 999999,
-				windowMs: config.windowMs,
-			};
-		case "production":
-		default:
-			return config;
-	}
-}
-
-/**
- * Détecte l'environnement actuel
- */
-export function getCurrentEnvironment(): "development" | "production" | "test" {
-	if (process.env.NODE_ENV === "test") return "test";
-	if (process.env.NODE_ENV === "development") return "development";
-	return "production";
-}
-
-/**
- * Helper pour appliquer automatiquement l'ajustement d'environnement
- *
- * @example
- * ```ts
- * const limit = getConfigForEnvironment(CART_ADD_LIMIT);
- * ```
- */
-export function getConfigForEnvironment(config: RateLimitConfig): RateLimitConfig {
-	const env = getCurrentEnvironment();
-	return adjustForEnvironment(config, env);
-}
-
-// ========================================
 // ❤️ WISHLIST (FAVORIS)
 // ========================================
 

@@ -84,7 +84,7 @@ export async function createSomething(prevState: ActionState | undefined, formDa
 
 **Helpers** (`shared/lib/actions/`):
 - `requireAuth()`, `requireAdmin()` - Auth checks
-- `success()`, `error()`, `notFound()`, `conflict()` - Responses
+- `success()`, `error()`, `notFound()` - Responses
 - `validateInput()` - Zod validation
 - `handleActionError()` - Error handling
 

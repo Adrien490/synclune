@@ -30,14 +30,13 @@ export {
 } from "./rate-limit";
 
 // Error handling helpers
-export { handleActionError, withErrorHandling } from "./errors";
+export { handleActionError } from "./errors";
 
 // Response helpers
 export {
 	success,
 	error,
 	notFound,
-	conflict,
 	unauthorized,
 	forbidden,
 	validationError,

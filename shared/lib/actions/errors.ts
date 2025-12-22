@@ -55,33 +55,3 @@ export function handleActionError(error: unknown, defaultMessage?: string): Acti
 	};
 }
 
-/**
- * Wrapper pour exécuter une action avec gestion d'erreurs automatique
- *
- * @param action - La fonction action à exécuter
- * @param defaultErrorMessage - Message d'erreur par défaut
- * @returns Le résultat de l'action ou une erreur ActionState
- *
- * @example
- * ```ts
- * export async function createProduct(
- *   _: ActionState | undefined,
- *   formData: FormData
- * ): Promise<ActionState> {
- *   return withErrorHandling(async () => {
- *     // ... logique métier
- *     return { status: ActionStatus.SUCCESS, message: "Créé" };
- *   }, "Échec de création du produit");
- * }
- * ```
- */
-export async function withErrorHandling(
-	action: () => Promise<ActionState>,
-	defaultErrorMessage?: string
-): Promise<ActionState> {
-	try {
-		return await action();
-	} catch (error) {
-		return handleActionError(error, defaultErrorMessage);
-	}
-}

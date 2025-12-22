@@ -68,24 +68,6 @@ export function notFound(resource: string): ActionState {
 }
 
 /**
- * Crée un ActionState CONFLICT
- *
- * @param message - Message de conflit
- * @returns ActionState avec status CONFLICT
- *
- * @example
- * ```ts
- * return conflict("Ce nom existe déjà");
- * ```
- */
-export function conflict(message: string): ActionState {
-	return {
-		status: ActionStatus.CONFLICT,
-		message,
-	};
-}
-
-/**
  * Crée un ActionState UNAUTHORIZED
  *
  * @param message - Message optionnel (message par défaut si non fourni)

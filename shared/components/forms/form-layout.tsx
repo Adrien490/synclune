@@ -7,8 +7,6 @@ interface FormLayoutProps {
 
 export function FormLayout({ children, className }: FormLayoutProps) {
 	return (
-		<div className={cn("grid grid-cols-1 gap-4 md:gap-6", className)}>
-			{children}
-		</div>
+		<div className={cn("space-y-4 md:space-y-6", className)}>{children}</div>
 	);
 }
