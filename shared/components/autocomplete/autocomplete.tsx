@@ -236,6 +236,11 @@ export function Autocomplete<T>({
 		}
 	};
 
+	// Taille d'image adaptee mobile/desktop
+	const effectiveImageSize = isMobile
+		? AUTOCOMPLETE_DEFAULTS.imageSizeMobile
+		: imageSize;
+
 	// Composant de rendu d'un item (partage entre desktop et mobile)
 	const renderItem = (item: T, index: number, isActive: boolean) => {
 		const imageData = getItemImage?.(item);
@@ -269,14 +274,14 @@ export function Autocomplete<T>({
 					{imageData && (
 						<div
 							className="shrink-0 relative overflow-hidden rounded-sm"
-							style={{ width: imageSize, height: imageSize }}
+							style={{ width: effectiveImageSize, height: effectiveImageSize }}
 						>
 							<Image
 								src={imageData.src}
 								alt={imageData.alt}
 								aria-hidden={!imageData.alt}
 								fill
-								sizes={`${imageSize}px`}
+								sizes={`${effectiveImageSize}px`}
 								quality={80}
 								className="object-cover"
 								placeholder={imageData.blurDataUrl ? "blur" : "empty"}
@@ -309,8 +314,8 @@ export function Autocomplete<T>({
 							<Skeleton
 								className="rounded-sm shrink-0"
 								style={{
-									width: imageSize,
-									height: imageSize,
+									width: effectiveImageSize,
+									height: effectiveImageSize,
 									animationDelay: `${i * 100}ms`,
 								}}
 							/>

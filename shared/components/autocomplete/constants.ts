@@ -4,8 +4,10 @@ import type { Transition } from "framer-motion";
  * Valeurs par defaut pour le composant Autocomplete
  */
 export const AUTOCOMPLETE_DEFAULTS = {
-	/** Taille des images en pixels (40px pour meilleure lisibilité mobile) */
-	imageSize: 40,
+	/** Taille des images en pixels - desktop */
+	imageSize: 56,
+	/** Taille des images en pixels - mobile (plus grand pour tactile) */
+	imageSizeMobile: 72,
 	/** Placeholder du champ de recherche */
 	placeholder: "Rechercher...",
 	/** Message quand aucun resultat */

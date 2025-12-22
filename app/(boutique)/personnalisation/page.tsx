@@ -46,15 +46,13 @@ export default async function CustomizationPage({ searchParams }: PageProps) {
 	// Récupérer les données pour le formulaire en parallèle
 	const [{ productTypes }, productsResult, testimonial] = await Promise.all([
 		getProductTypes({ perPage: 100 }),
-		productSearch.length >= 3
-			? getProducts({
-					search: productSearch,
-					status: ProductStatus.PUBLIC,
-					perPage: 10,
-					sortBy: "title-ascending",
-					filters: {},
-				})
-			: Promise.resolve({ products: [], pagination: null }),
+		getProducts({
+			search: productSearch || undefined,
+			status: ProductStatus.PUBLIC,
+			perPage: 8,
+			sortBy: productSearch ? "title-ascending" : "newest",
+			filters: {},
+		}),
 		getRandomTestimonial(),
 	]);
 

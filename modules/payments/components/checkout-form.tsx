@@ -126,6 +126,7 @@ export function CheckoutForm({
 							<div className="space-y-2">
 								<field.InputField
 									label="Adresse email"
+									type="email"
 									required
 									autoComplete="email"
 									autoFocus
