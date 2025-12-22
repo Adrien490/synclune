@@ -212,3 +212,21 @@ export const formatVersionDisplay = (version: string): string => {
 	// Sinon, juste major
 	return `V${major}`;
 };
+
+/**
+ * Génère un index déterministe basé sur le jour
+ * Change chaque jour à minuit UTC
+ *
+ * @param length - Longueur du tableau pour le modulo
+ * @returns Index entre 0 et length-1
+ *
+ * @example
+ * ```ts
+ * getDailyIndex(10) // Retourne un nombre entre 0 et 9, constant pour la journée
+ * ```
+ */
+export function getDailyIndex(length: number): number {
+	const now = new Date();
+	const daysSinceEpoch = Math.floor(now.getTime() / (1000 * 60 * 60 * 24));
+	return daysSinceEpoch % length;
+}
