@@ -12,7 +12,6 @@ import {
 import { cn } from "@/shared/utils/cn";
 import { ChevronRight, Info } from "lucide-react";
 import Link from "next/link";
-import { Sparkline } from "./sparkline";
 import { KpiEvolution } from "./kpi-evolution";
 import { KpiValue } from "./kpi-value";
 
@@ -79,8 +78,6 @@ export interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	tooltip?: string;
 	/** Label explicite de la periode de comparaison (ex: "vs 30j precedents") */
 	comparisonLabel?: string;
-	/** Donnees pour le sparkline (7 derniers jours) */
-	sparklineData?: { value: number }[];
 }
 
 export function KpiCard({
@@ -100,7 +97,6 @@ export function KpiCard({
 	href,
 	tooltip,
 	comparisonLabel,
-	sparklineData,
 }: KpiCardProps) {
 	// Determiner les styles d'icone selon la taille
 	const iconClassName = cn(
@@ -184,19 +180,6 @@ export function KpiCard({
 						</p>
 					)}
 				</div>
-
-				{/* Sparkline pour featured et default uniquement */}
-				{sparklineData && sparklineData.length > 1 && size !== "compact" && (
-					<div className="mt-3 -mx-1">
-						<Sparkline
-							data={sparklineData}
-							height={size === "featured" ? 40 : 28}
-							positiveColor="var(--chart-1)"
-							negativeColor="var(--destructive)"
-							showGradient={size === "featured"}
-						/>
-					</div>
-				)}
 			</CardContent>
 		</>
 	);

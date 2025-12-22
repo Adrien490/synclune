@@ -5,7 +5,6 @@ import { MediaCounterBadge } from "@/modules/media/components/media-counter-badg
 import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
-import { Label } from "@/shared/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { MultiSelect } from "@/shared/components/multi-select";
 import { useCreateProductForm } from "@/modules/products/hooks/use-create-product-form";
@@ -90,7 +89,8 @@ export function CreateProductForm({
 	return (
 		<form
 			action={action}
-			className="space-y-6 pb-32"
+			aria-label="Formulaire de création de bijou"
+			className="space-y-6 pb-16 sm:pb-32"
 			onSubmit={() => void form.handleSubmit()}
 		>
 			{/* Hidden fields */}
@@ -142,9 +142,9 @@ export function CreateProductForm({
 								<div className="space-y-3">
 									<div className="flex items-center justify-between">
 										<div>
-											<Label>
-												Médias <span className="text-destructive">*</span>
-											</Label>
+											<FieldLabel htmlFor="media-upload-zone" required>
+												Médias
+											</FieldLabel>
 											<p className="text-xs text-muted-foreground mt-1">
 												La première image sera l'image principale. Glissez pour réordonner.
 											</p>
@@ -165,7 +165,11 @@ export function CreateProductForm({
 										<div className="space-y-3">
 											{/* Feedback d'upload en cours */}
 											{isMediaUploading && uploadProgress ? (
-												<div className="flex flex-col items-center justify-center gap-4 py-8 px-4 bg-primary/5 rounded-xl border-2 border-primary/20">
+												<div
+													role="status"
+													aria-live="polite"
+													className="flex flex-col items-center justify-center gap-4 py-8 px-4 bg-primary/5 rounded-xl border-2 border-primary/20"
+												>
 													<div className="relative">
 														<div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
 														<Upload className="absolute inset-0 m-auto h-6 w-6 text-primary" />
@@ -188,7 +192,7 @@ export function CreateProductForm({
 													</div>
 												</div>
 											) : (
-												<>
+												<div id="media-upload-zone" className="space-y-3">
 													<div className="flex items-center gap-3 py-3 px-3 bg-muted/20 rounded-lg border border-dashed border-border">
 														<ImagePlus className="h-5 w-5 text-muted-foreground/50" />
 														<p className="text-sm text-muted-foreground">
@@ -199,7 +203,7 @@ export function CreateProductForm({
 														endpoint="catalogMedia"
 														onChange={(files) => handleUpload(files, field)}
 														onUploadError={(error) => { toast.error(`Erreur: ${error.message}`); }}
-														className="w-full"
+														className="w-full focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 rounded-xl"
 														appearance={{
 															container: ({ isDragActive }) => ({
 																border: "2px dashed",
@@ -239,12 +243,14 @@ export function CreateProductForm({
 															),
 														}}
 													/>
-												</>
+												</div>
 											)}
 											{field.state.meta.errors.length > 0 && (
-												<p className="text-sm text-destructive text-center">
-													{field.state.meta.errors[0]}
-												</p>
+												<div role="alert" className="text-sm text-destructive text-center space-y-1">
+													{field.state.meta.errors.map((error, index) => (
+														<p key={index}>{String(error)}</p>
+													))}
+												</div>
 											)}
 										</div>
 									) : (
@@ -416,15 +422,21 @@ export function CreateProductForm({
 							</div>
 
 							{/* Section attributs de la variante initiale */}
-							<div className="space-y-1 pt-4 border-t border-border/50">
-								<div className="flex items-center gap-2">
-									<h4 className="text-sm font-medium text-foreground/80">
+							<fieldset className="space-y-1 pt-4 border-t border-border/50">
+								<div className="flex items-center gap-1">
+									<legend className="text-sm font-medium text-foreground/80">
 										Attributs de la variante
-									</h4>
+									</legend>
 									<Tooltip>
 										<TooltipTrigger asChild>
-											<Button type="button" variant="ghost" size="icon" className="h-auto w-auto p-0 hover:bg-transparent">
-												<Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
+												className="h-8 w-8 min-h-[44px] min-w-[44px] -m-2 hover:bg-transparent"
+												aria-label="Plus d'informations sur les attributs de la variante"
+											>
+												<Info className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
 											</Button>
 										</TooltipTrigger>
 										<TooltipContent side="right" className="max-w-[250px]">
@@ -438,7 +450,7 @@ export function CreateProductForm({
 								<p className="text-xs text-muted-foreground">
 									Caractéristiques de la première variante
 								</p>
-							</div>
+							</fieldset>
 
 							<form.AppField name="initialSku.colorId">
 								{(field) => (
@@ -458,6 +470,7 @@ export function CreateProductForm({
 															<div
 																className="w-4 h-4 rounded-full border border-border"
 																style={{ backgroundColor: c.hex }}
+																aria-hidden="true"
 															/>
 														)}
 														<span>{opt.label}</span>
@@ -471,6 +484,7 @@ export function CreateProductForm({
 														<div
 															className="w-4 h-4 rounded-full border border-border"
 															style={{ backgroundColor: c.hex }}
+															aria-hidden="true"
 														/>
 														<span>{c.name}</span>
 													</div>
@@ -522,6 +536,10 @@ export function CreateProductForm({
 								name="initialSku.priceInclTaxEuros"
 								validators={{
 									onChange: ({ value }: { value: number | null }) =>
+										value === null || value <= 0
+											? "Le prix doit être supérieur à 0"
+											: undefined,
+									onSubmit: ({ value }: { value: number | null }) =>
 										value === null || value <= 0
 											? "Le prix doit être supérieur à 0"
 											: undefined,
@@ -607,6 +625,10 @@ export function CreateProductForm({
 				{/* Footer */}
 				<form.AppForm>
 					<div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
+						{/* Annonce pour les lecteurs d'ecran */}
+						<span className="sr-only" role="status" aria-live="polite">
+							{isPending ? "Envoi du formulaire en cours..." : ""}
+						</span>
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<>
