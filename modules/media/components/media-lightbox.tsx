@@ -59,7 +59,7 @@ export default function MediaLightbox({
 			counter={{ container: { style: { top: "unset", bottom: 16 } } }}
 			video={{
 				autoPlay: true,
-				controls: true,
+				controls: false,
 				playsInline: true,
 				loop: true,
 				muted: true,
