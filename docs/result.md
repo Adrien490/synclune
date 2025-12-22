@@ -12,15 +12,11 @@ Analyse des Priorités - Audit UX/UI 2025
   | #   | Fonctionnalité                        | Impact                    | Effort |
   |-----|---------------------------------------|---------------------------|--------|
   | 5   | Auto-complétion recherche avec images | +43% conversion recherche | Moyen  |
-  | 6   | Recherche fuzzy/tolérance fautes      | Découvrabilité            | Moyen  |
+  | 6   | Recherche fuzzy/tolérance fautes https://neon.com/docs/extensions/pg_trgm       | Découvrabilité            | Moyen  |
   | 7   | Emails panier abandonné               | Récupération ventes       | Moyen  |
 
   Priorités Basse (Impact majeur, effort élevé)
 
-  | #   | Fonctionnalité                    | Impact              | Effort |
-  |-----|-----------------------------------|---------------------|--------|
-  | 8   | Système d'avis clients            | Social proof majeur | Élevé  |
-  | 9   | Buy Now Pay Later (Klarna/Stripe) | Paniers élevés      | Moyen  |
 
   ---
   Ma Recommandation

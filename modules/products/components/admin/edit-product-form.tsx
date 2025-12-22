@@ -441,7 +441,7 @@ export function EditProductForm({
 				{/* Visuels */}
 				<form.Field name="defaultSku.media" mode="array">
 						{(field) => {
-							const maxCount = 11;
+							const maxCount = 6;
 
 							const handleUploadComplete = (
 								uploadedFiles: Array<{

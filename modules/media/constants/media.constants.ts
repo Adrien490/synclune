@@ -3,6 +3,16 @@
  */
 
 // ============================================================================
+// LIMITES DE MÉDIAS PAR ITEM
+// ============================================================================
+
+/** Nombre maximum de médias par produit/SKU (total) */
+export const MAX_MEDIA_PER_ITEM = 6;
+
+/** Nombre maximum de médias dans la galerie SKU (hors image primaire) */
+export const MAX_GALLERY_MEDIA = 5;
+
+// ============================================================================
 // EXTENSIONS SUPPORTÉES
 // ============================================================================
 

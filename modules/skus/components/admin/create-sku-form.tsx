@@ -509,7 +509,7 @@ export function CreateProductVariantForm({
 							<form.Field name="galleryMedia" mode="array">
 								{(field) => {
 									const currentCount = field.state.value.length;
-									const maxCount = 10;
+									const maxCount = 5;
 									const isAtLimit = currentCount >= maxCount;
 
 									return (

@@ -57,7 +57,7 @@ export function MediaUploadGrid({
 	media,
 	onChange,
 	skipUtapiDelete,
-	maxItems = 11,
+	maxItems = 6,
 	renderUploadZone,
 }: MediaUploadGridProps) {
 	const deleteDialog = useAlertDialog(DELETE_GALLERY_MEDIA_DIALOG_ID);

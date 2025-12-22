@@ -198,7 +198,7 @@ const initialSkuSchema = z.object({
 	// Medias (images et videos) - premier = principal
 	media: z
 		.array(imageSchema)
-		.max(11, { message: "Maximum 11 médias" })
+		.max(6, { message: "Maximum 6 médias" })
 		.refine(
 			(media) => new Set(media.map((m) => m.url)).size === media.length,
 			{ message: "Les URLs de médias doivent être uniques" }
@@ -253,7 +253,7 @@ const defaultSkuSchema = z.object({
 	// Medias (images et videos) - premier = principal
 	media: z
 		.array(imageSchema)
-		.max(11, { message: "Maximum 11 médias" })
+		.max(6, { message: "Maximum 6 médias" })
 		.refine(
 			(media) => new Set(media.map((m) => m.url)).size === media.length,
 			{ message: "Les URLs de médias doivent être uniques" }

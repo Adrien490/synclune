@@ -42,7 +42,7 @@ export function CreateProductForm({
 
 	const isUploading = isMediaUploading;
 
-	const maxMediaCount = 11;
+	const maxMediaCount = 6;
 
 	const handleUpload = async (
 		files: File[],

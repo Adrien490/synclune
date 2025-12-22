@@ -1,14 +1,67 @@
 import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
 import type { GetProductsParams, ProductFilters } from "../types/product.types";
 
+import { FUZZY_MIN_LENGTH } from "../constants/search.constants";
+import { fuzzySearchProductIds } from "./fuzzy-search";
+
 // ============================================================================
-// PRODUCT QUERY BUILDER UTILS
+// TYPES
 // ============================================================================
 
-export function buildProductSearchConditions(
-	search: string
+export type SearchResult = {
+	/** IDs de produits triés par pertinence (fuzzy search) */
+	fuzzyIds: string[] | null;
+	/** Conditions de recherche exacte (SKU, couleurs, etc.) */
+	exactConditions: Prisma.ProductWhereInput[];
+};
+
+// ============================================================================
+// PRODUCT SEARCH BUILDER
+// ============================================================================
+
+/**
+ * Construit les conditions de recherche hybride (fuzzy + exact)
+ *
+ * - >= 3 caractères : fuzzy sur title/description + exact sur autres champs
+ * - < 3 caractères : exact seulement sur tous les champs
+ *
+ * @param search - Terme de recherche
+ * @param options - Options (status pour filtrer les produits)
+ * @returns Résultat de recherche avec IDs fuzzy et conditions exactes
+ */
+export async function buildSearchConditions(
+	search: string,
+	options?: { status?: ProductStatus }
+): Promise<SearchResult> {
+	const term = search.trim();
+	if (!term) return { fuzzyIds: null, exactConditions: [] };
+
+	// Recherche courte (< 3 chars) : exact seulement sur tous les champs
+	if (term.length < FUZZY_MIN_LENGTH) {
+		return {
+			fuzzyIds: null,
+			exactConditions: buildFullExactSearchConditions(term),
+		};
+	}
+
+	// Recherche fuzzy sur title/description
+	const fuzzyIds = await fuzzySearchProductIds(term, {
+		status: options?.status,
+	});
+
+	// Conditions exactes pour les autres champs (SKU, couleurs, etc.)
+	const exactConditions = buildRelatedFieldsSearchConditions(term);
+
+	return { fuzzyIds, exactConditions };
+}
+
+/**
+ * Recherche exacte sur tous les champs (fallback pour termes courts)
+ * Inclut title et description
+ */
+function buildFullExactSearchConditions(
+	searchTerm: string
 ): Prisma.ProductWhereInput[] {
-	const searchTerm = search.trim();
 	if (!searchTerm) return [];
 
 	return [
@@ -26,6 +79,24 @@ export function buildProductSearchConditions(
 						mode: Prisma.QueryMode.insensitive,
 					},
 				},
+				...buildRelatedFieldsSearchConditions(searchTerm)[0]?.OR ?? [],
+			],
+		},
+	];
+}
+
+/**
+ * Recherche exacte sur les champs liés (SKU, couleurs, matériaux, collections)
+ * N'inclut PAS title/description (gérés par fuzzy search)
+ */
+function buildRelatedFieldsSearchConditions(
+	searchTerm: string
+): Prisma.ProductWhereInput[] {
+	if (!searchTerm) return [];
+
+	return [
+		{
+			OR: [
 				{
 					skus: {
 						some: {
@@ -252,8 +323,17 @@ export function buildProductFilterConditions(
 	return conditions;
 }
 
+/**
+ * Construit la clause WHERE pour la requête de produits
+ *
+ * @param params - Paramètres de recherche (filtres, status, etc.)
+ * @param searchResult - Résultat de la recherche (fuzzyIds + exactConditions)
+ *                       Si fourni, utilise la recherche hybride
+ *                       Si non fourni, pas de recherche appliquée
+ */
 export function buildProductWhereClause(
-	params: GetProductsParams
+	params: GetProductsParams,
+	searchResult?: SearchResult
 ): Prisma.ProductWhereInput {
 	const whereClause: Prisma.ProductWhereInput = {};
 	const andConditions: Prisma.ProductWhereInput[] = [];
@@ -273,10 +353,24 @@ export function buildProductWhereClause(
 		});
 	}
 
-	if (params.search) {
-		const searchConditions = buildProductSearchConditions(params.search);
-		if (searchConditions.length > 0) {
-			andConditions.push(...searchConditions);
+	// Appliquer les conditions de recherche si fournies
+	if (searchResult) {
+		const { fuzzyIds, exactConditions } = searchResult;
+
+		if (fuzzyIds !== null && fuzzyIds.length > 0) {
+			// Recherche fuzzy active : combiner IDs fuzzy OU conditions exactes
+			// Cela permet de trouver des produits via fuzzy (title/desc)
+			// OU via match exact (SKU, couleurs, etc.)
+			if (exactConditions.length > 0) {
+				andConditions.push({
+					OR: [{ id: { in: fuzzyIds } }, ...exactConditions],
+				});
+			} else {
+				andConditions.push({ id: { in: fuzzyIds } });
+			}
+		} else if (exactConditions.length > 0) {
+			// Pas de résultats fuzzy : utiliser uniquement les conditions exactes
+			andConditions.push(...exactConditions);
 		}
 	}
 

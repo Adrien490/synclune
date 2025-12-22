@@ -132,8 +132,8 @@ export const ourFileRouter = {
 
 	// Route pour les médias de catalogue (produits et SKUs) - images et vidéos
 	catalogMedia: f({
-		image: { maxFileSize: "16MB", maxFileCount: 10 },
-		video: { maxFileSize: "512MB", maxFileCount: 10 },
+		image: { maxFileSize: "16MB", maxFileCount: 6 },
+		video: { maxFileSize: "512MB", maxFileCount: 6 },
 	})
 		.middleware(async ({ files }) => {
 			// 1. Vérifier l'authentification et les permissions admin

@@ -122,7 +122,7 @@ const baseSkuFieldsSchema = z.object({
 	primaryImage: imageSchema.optional(),
 	galleryMedia: z
 		.array(imageSchema)
-		.max(10, { error: "Maximum 10 medias dans la galerie" })
+		.max(5, { error: "Maximum 5 médias dans la galerie" })
 		.default([])
 		.transform((arr) => arr.filter((item): item is NonNullable<typeof item> => item !== null)),
 });

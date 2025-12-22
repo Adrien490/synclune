@@ -10,7 +10,11 @@ import {
 	GET_PRODUCTS_SELECT,
 } from "../constants/product.constants";
 import type { GetProductsParams, GetProductsReturn, Product } from "../types/product.types";
-import { buildProductWhereClause } from "../services/product-query-builder";
+import {
+	buildProductWhereClause,
+	buildSearchConditions,
+	type SearchResult,
+} from "../services/product-query-builder";
 import { cacheProducts } from "../constants/cache";
 
 // Re-export pour compatibilité
@@ -40,6 +44,7 @@ const hasSortByInput = (input: unknown): input is string =>
 
 /**
  * Action serveur pour récupérer les produits avec gestion des droits
+ * Intègre la recherche fuzzy avec pg_trgm pour la tolérance aux fautes
  */
 export async function getProducts(
 	params: GetProductsParams,
@@ -55,7 +60,16 @@ export async function getProducts(
 		params = { ...params, sortBy: GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY };
 	}
 
-	return fetchProducts(params);
+	// Exécuter la recherche fuzzy AVANT le cache
+	// Cela permet de cacher les résultats basés sur les IDs trouvés
+	let searchResult: SearchResult | undefined;
+	if (params.search) {
+		searchResult = await buildSearchConditions(params.search, {
+			status: params.status,
+		});
+	}
+
+	return fetchProducts(params, searchResult);
 }
 
 /**
@@ -99,17 +113,37 @@ function sortProducts(products: Product[], sortBy: string): Product[] {
 }
 
 /**
+ * Préserve l'ordre des produits selon une liste d'IDs ordonnés
+ * Utilisé pour maintenir l'ordre de pertinence de la recherche fuzzy
+ */
+function orderByIds<T extends { id: string }>(
+	items: T[],
+	orderedIds: string[]
+): T[] {
+	const orderMap = new Map(orderedIds.map((id, index) => [id, index]));
+	return [...items].sort((a, b) => {
+		const orderA = orderMap.get(a.id) ?? Infinity;
+		const orderB = orderMap.get(b.id) ?? Infinity;
+		return orderA - orderB;
+	});
+}
+
+/**
  * Récupère la liste des produits avec pagination, tri et filtrage
  * Approche simplifiée : tri en JS pour supporter le tri par prix sans champ dénormalisé
+ *
+ * @param params - Paramètres de recherche
+ * @param searchResult - Résultat de la recherche fuzzy (optionnel)
  */
 async function fetchProducts(
-	params: GetProductsParams
+	params: GetProductsParams,
+	searchResult?: SearchResult
 ): Promise<GetProductsReturn> {
 	"use cache";
 	cacheProducts();
 
 	try {
-		const where = buildProductWhereClause(params);
+		const where = buildProductWhereClause(params, searchResult);
 
 		// Récupérer tous les produits correspondant aux filtres
 		// Le tri et la pagination sont faits en JS pour supporter le tri par prix
@@ -118,8 +152,20 @@ async function fetchProducts(
 			select: GET_PRODUCTS_SELECT,
 		});
 
-		// Trier les produits selon le critère demandé
-		const sortedProducts = sortProducts(allProducts as Product[], params.sortBy);
+		// Trier les produits :
+		// - Si recherche fuzzy active avec résultats → tri par pertinence (défaut)
+		// - Sinon → tri selon le critère demandé
+		const fuzzyIds = searchResult?.fuzzyIds;
+		const hasFuzzyResults = fuzzyIds && fuzzyIds.length > 0;
+
+		let sortedProducts: Product[];
+		if (hasFuzzyResults && params.sortBy === GET_PRODUCTS_DEFAULT_SORT_BY) {
+			// Tri par pertinence (préserve l'ordre de la recherche fuzzy)
+			sortedProducts = orderByIds(allProducts as Product[], fuzzyIds);
+		} else {
+			// Tri selon le critère demandé par l'utilisateur
+			sortedProducts = sortProducts(allProducts as Product[], params.sortBy);
+		}
 
 		// Pagination manuelle
 		const perPage = Math.min(

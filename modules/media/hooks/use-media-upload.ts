@@ -79,7 +79,7 @@ export interface UseMediaUploadReturn {
 
 const DEFAULT_MAX_SIZE_IMAGE = 16 * 1024 * 1024; // 16MB
 const DEFAULT_MAX_SIZE_VIDEO = 512 * 1024 * 1024; // 512MB
-const DEFAULT_MAX_FILES = 10;
+const DEFAULT_MAX_FILES = 6;
 const DEFAULT_VIDEO_CONCURRENCY = 2;
 
 // ============================================================================
