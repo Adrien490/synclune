@@ -1,14 +1,14 @@
 "use client";
 
-import { FormSection } from "@/shared/components/forms";
-import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+import { useState } from "react";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping } from "@/modules/orders/utils/shipping.utils";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { CreditCard, Info, Mail, MapPin, Shield } from "lucide-react";
+import { CreditCard, Info, Mail, Shield } from "lucide-react";
 import {
 	SORTED_SHIPPING_COUNTRIES,
 	COUNTRY_NAMES,
@@ -31,7 +31,7 @@ interface CheckoutFormProps {
 
 /**
  * Formulaire de checkout simple (sans wizard)
- * Toutes les sections affichées sur une seule page
+ * Flux continu sans sections
  */
 export function CheckoutForm({
 	cart,
@@ -44,6 +44,15 @@ export function CheckoutForm({
 	// Form hook
 	const { form, action, isPending } = useCheckoutForm({ session, addresses, onSuccess });
 
+	// Progressive disclosure states
+	const initialCountry = form.state.values.shipping?.country;
+	const [showCountrySelect, setShowCountrySelect] = useState(
+		initialCountry !== undefined && initialCountry !== "FR"
+	);
+	const [showAddressLine2, setShowAddressLine2] = useState(
+		!!form.state.values.shipping?.addressLine2
+	);
+
 	// Calculer le total
 	const subtotal = cart.items.reduce((sum, item) => {
 		return sum + item.priceAtAdd * item.quantity;
@@ -54,7 +63,7 @@ export function CheckoutForm({
 	return (
 		<form
 			action={action}
-			className="space-y-8"
+			className="space-y-6"
 			onSubmit={() => void form.handleSubmit()}
 		>
 			{/* Champs cachés */}
@@ -90,7 +99,6 @@ export function CheckoutForm({
 								})}
 							/>
 							{isGuest && <input type="hidden" name="email" value={(v?.email as string) || ""} />}
-							{!isGuest && <input type="hidden" name="saveAddress" value={v?.saveAddress ? "true" : "false"} />}
 						</>
 					);
 				}}
@@ -100,204 +108,191 @@ export function CheckoutForm({
 				<form.FormErrorDisplay />
 			</form.AppForm>
 
-			{/* Section Email (guests uniquement) */}
+			{/* Email (guests uniquement) */}
 			{isGuest && (
-				<FormSection
-					title="Contact"
-					description="Ton adresse email"
-					icon={<Mail />}
-				>
-					<div className="space-y-4">
-						<form.AppField
-							name="email"
-							validators={{
-								onChange: ({ value }: { value: string }) => {
-									if (!value) return "L'adresse email est requise";
-									if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-										return "Entre une adresse email valide";
-									}
-								},
-							}}
-						>
-							{(field) => (
-								<div className="space-y-2">
-									<field.InputField
-										label="Adresse email"
-										type="email"
-										required
-										autoComplete="email"
-										autoFocus
-									/>
-									<p className="text-xs text-muted-foreground flex items-start gap-1.5">
-										<Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-										<span>
-											Tu as déjà un compte ?{" "}
-											<Link
-												href="/connexion?callbackURL=/paiement"
-												className="text-foreground underline hover:no-underline font-medium"
-												onClick={() => {
-													if (typeof window !== "undefined") {
-														localStorage.setItem(
-															"checkout-form-draft",
-															JSON.stringify({
-																email: form.state.values.email || "",
-																shipping: form.state.values.shipping || {},
-																timestamp: Date.now(),
-															})
-														);
-													}
-												}}
-											>
-												Connecte-toi
-											</Link>{" "}
-											pour accéder à tes adresses enregistrées
-										</span>
-									</p>
-								</div>
-							)}
-						</form.AppField>
-
-						<Alert>
-							<Info className="h-4 w-4" />
-							<AlertDescription>
-								Tu peux commander sans créer de compte. Un email de confirmation
-								te sera envoyé à l'adresse indiquée.
-							</AlertDescription>
-						</Alert>
-					</div>
-				</FormSection>
+				<>
+					<form.AppField
+						name="email"
+						validators={{
+							onChange: ({ value }: { value: string }) => {
+								if (!value) return "L'adresse email est requise";
+								if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+									return "Entre une adresse email valide";
+								}
+							},
+						}}
+					>
+						{(field) => (
+							<div className="space-y-2">
+								<field.InputField
+									label="Adresse email"
+									required
+									autoComplete="email"
+									autoFocus
+								/>
+								<p className="text-sm text-muted-foreground flex items-start gap-1.5">
+									<Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+									<span>
+										Tu as déjà un compte ?{" "}
+										<Link
+											href="/connexion?callbackURL=/paiement"
+											className="text-foreground underline hover:no-underline font-medium"
+											onClick={() => {
+												if (typeof window !== "undefined") {
+													localStorage.setItem(
+														"checkout-form-draft",
+														JSON.stringify({
+															email: form.state.values.email || "",
+															shipping: form.state.values.shipping || {},
+															timestamp: Date.now(),
+														})
+													);
+												}
+											}}
+										>
+											Connecte-toi
+										</Link>{" "}
+										pour accéder à tes adresses enregistrées
+									</span>
+								</p>
+							</div>
+						)}
+					</form.AppField>
+				</>
 			)}
 
-			{/* Section Adresse de livraison */}
-			<FormSection
-				title="Adresse de livraison"
-				description="Où souhaites-tu recevoir ta commande ?"
-				icon={<MapPin />}
-			>
-				{/* Email affiché pour utilisateurs connectés */}
-				{!isGuest && session?.user?.email && (
-					<Alert className="mb-6">
-						<Mail className="h-4 w-4" />
-						<AlertDescription>
-							Email de contact : <strong>{session.user.email}</strong>
-						</AlertDescription>
-					</Alert>
-				)}
+			{/* Email affiché pour utilisateurs connectés */}
+			{!isGuest && session?.user?.email && (
+				<Alert>
+					<Mail className="h-4 w-4" />
+					<AlertDescription>
+						Email de contact : <strong>{session.user.email}</strong>
+					</AlertDescription>
+				</Alert>
+			)}
 
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<form.AppField
-						name="shipping.firstName"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value || value.trim().length < 2) {
-									return "Le prénom doit contenir au moins 2 caractères";
-								}
-							},
-						}}
-					>
-						{(field) => (
-							<field.InputField
-								label="Prénom"
-								required
-								autoComplete="given-name"
-							/>
-						)}
-					</form.AppField>
-
-					<form.AppField
-						name="shipping.lastName"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value || value.trim().length < 2) {
-									return "Le nom doit contenir au moins 2 caractères";
-								}
-							},
-						}}
-					>
-						{(field) => (
-							<field.InputField
-								label="Nom"
-								required
-								autoComplete="family-name"
-							/>
-						)}
-					</form.AppField>
-				</div>
-
+			{/* Adresse de livraison */}
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<form.AppField
-					name="shipping.addressLine1"
+					name="shipping.firstName"
 					validators={{
 						onChange: ({ value }: { value: string }) => {
-							if (!value || value.trim().length < 5) {
-								return "L'adresse doit contenir au moins 5 caractères";
+							if (!value || value.trim().length < 2) {
+								return "Le prénom doit contenir au moins 2 caractères";
 							}
 						},
 					}}
 				>
 					{(field) => (
 						<field.InputField
-							label="Adresse"
+							label="Prénom"
 							required
-							autoComplete="address-line1"
+							autoComplete="given-name"
 						/>
 					)}
 				</form.AppField>
 
+				<form.AppField
+					name="shipping.lastName"
+					validators={{
+						onChange: ({ value }: { value: string }) => {
+							if (!value || value.trim().length < 2) {
+								return "Le nom doit contenir au moins 2 caractères";
+							}
+						},
+					}}
+				>
+					{(field) => (
+						<field.InputField
+							label="Nom"
+							required
+							autoComplete="family-name"
+						/>
+					)}
+				</form.AppField>
+			</div>
+
+			<form.AppField
+				name="shipping.addressLine1"
+				validators={{
+					onChange: ({ value }: { value: string }) => {
+						if (!value || value.trim().length < 5) {
+							return "L'adresse doit contenir au moins 5 caractères";
+						}
+					},
+				}}
+			>
+				{(field) => (
+					<field.InputField
+						label="Adresse"
+						required
+						autoComplete="address-line1"
+					/>
+				)}
+			</form.AppField>
+
+			{showAddressLine2 ? (
 				<form.AppField name="shipping.addressLine2">
 					{(field) => (
-						<div className="space-y-2">
-							<field.InputField
-								label="Complément d'adresse"
-								autoComplete="address-line2"
-							/>
-							<p className="text-xs text-muted-foreground">
-								Appartement, bâtiment, etc.
-							</p>
-						</div>
+						<field.InputField
+							label="Complément d'adresse"
+							placeholder="Appartement, bâtiment, etc."
+							autoComplete="address-line2"
+						/>
+					)}
+				</form.AppField>
+			) : (
+				<button
+					type="button"
+					className="text-sm text-muted-foreground underline hover:no-underline hover:text-foreground text-left transition-colors"
+					onClick={() => setShowAddressLine2(true)}
+				>
+					+ Ajouter un complément d'adresse (appartement, bâtiment...)
+				</button>
+			)}
+
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<form.AppField
+					name="shipping.postalCode"
+					validators={{
+						onChange: ({ value }: { value: string }) => {
+							if (!value) return "Le code postal est requis";
+							if (value.length < 3 || value.length > 10) {
+								return "Code postal invalide";
+							}
+						},
+					}}
+				>
+					{(field) => (
+						<field.InputField
+							label="Code postal"
+							required
+							autoComplete="postal-code"
+						/>
 					)}
 				</form.AppField>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<form.AppField
-						name="shipping.postalCode"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value) return "Le code postal est requis";
-								if (value.length < 3 || value.length > 10) {
-									return "Code postal invalide";
-								}
-							},
-						}}
-					>
-						{(field) => (
-							<field.InputField
-								label="Code postal"
-								required
-								autoComplete="postal-code"
-							/>
-						)}
-					</form.AppField>
+				<form.AppField
+					name="shipping.city"
+					validators={{
+						onChange: ({ value }: { value: string }) => {
+							if (!value || value.trim().length < 2) {
+								return "La ville est requise";
+							}
+						},
+					}}
+				>
+					{(field) => (
+						<field.InputField
+							label="Ville"
+							required
+							autoComplete="address-level2"
+						/>
+					)}
+				</form.AppField>
+			</div>
 
-					<form.AppField
-						name="shipping.city"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value || value.trim().length < 2) {
-									return "La ville est requise";
-								}
-							},
-						}}
-					>
-						{(field) => (
-							<field.InputField
-								label="Ville"
-								required
-								autoComplete="address-level2"
-							/>
-						)}
-					</form.AppField>
-				</div>
-
+			{showCountrySelect ? (
 				<form.AppField
 					name="shipping.country"
 					validators={{
@@ -315,129 +310,72 @@ export function CheckoutForm({
 						/>
 					)}
 				</form.AppField>
-
-				<form.AppField
-					name="shipping.phoneNumber"
-					validators={{
-						onChange: ({ value }: { value: string }) => {
-							if (!value) return "Le numéro de téléphone est requis";
-							const cleaned = value.replace(/[\s.\-()]/g, "");
-							if (!/^(?:\+|00)?[1-9]\d{8,14}$/.test(cleaned)) {
-								return "Numéro de téléphone invalide";
-							}
-						},
-					}}
-				>
-					{(field) => (
-						<div className="space-y-2">
-							<field.InputField
-								label="Téléphone"
-								type="tel"
-								required
-								placeholder="06 12 34 56 78"
-								autoComplete="tel"
-							/>
-							<p className="text-xs text-muted-foreground">
-								Pour faciliter la livraison
-							</p>
-						</div>
-					)}
-				</form.AppField>
-
-				<Alert>
-					<Info className="h-4 w-4" />
-					<AlertDescription>
-						Livraison en France et Union Européenne uniquement
-					</AlertDescription>
-				</Alert>
-
-				{!isGuest && (
-					<form.AppField name="saveAddress">
-						{(field) => (
-							<div className="space-y-2">
-								<field.CheckboxField label="Enregistrer cette adresse pour mes prochaines commandes" />
-								<p className="text-xs text-muted-foreground ml-8">
-									Cette adresse sera ajoutée à ton carnet d'adresses
-								</p>
-							</div>
-						)}
-					</form.AppField>
-				)}
-			</FormSection>
-
-			{/* Section Conditions et paiement */}
-			<FormSection
-				title="Conditions et paiement"
-				description="Finaliser ta commande"
-				icon={<Shield />}
-			>
-				{/* Droit de rétractation */}
-				<Alert className="mb-6">
-					<Info className="h-4 w-4" />
-					<AlertTitle>Droit de rétractation</AlertTitle>
-					<AlertDescription>
-						Conformément à la législation française, tu disposes d'un délai de{" "}
-						<strong>14 jours</strong> à compter de la réception de ta commande
-						pour exercer ton droit de rétractation.{" "}
-						<Link
-							href="/retractation"
-							className="underline hover:no-underline font-medium"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							En savoir plus
-						</Link>
-					</AlertDescription>
-				</Alert>
-
-				{/* CGV */}
-				<form.AppField
-					name="termsAccepted"
-					validators={{
-						onChange: ({ value }: { value: boolean }) => {
-							if (!value) {
-								return "Tu dois accepter les conditions générales de vente";
-							}
-						},
-					}}
-				>
-					{(field) => (
-						<div className="space-y-2">
-							<field.CheckboxField
-								label="J'accepte les conditions générales de vente"
-								required
-							/>
-							<p className="text-xs/5 text-muted-foreground ml-8">
-								Consultez nos{" "}
-								<Link
-									href="/cgv"
-									className="text-foreground underline hover:no-underline"
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									conditions générales de vente
-								</Link>
-							</p>
-						</div>
-					)}
-				</form.AppField>
-
-				{/* Message sécurité */}
-				<div className="p-4 bg-muted/50 rounded-lg border space-y-3 mt-6">
-					<div className="flex items-center gap-2 text-sm font-medium">
-						<Shield className="w-4 h-4 text-primary" />
-						<span>Paiement sécurisé</span>
-					</div>
-					<p className="text-xs text-muted-foreground leading-relaxed">
-						Tes informations de paiement sont entièrement sécurisées. Je
-						n'enregistre jamais tes coordonnées bancaires. Le paiement est
-						géré par Stripe, leader de la sécurité des paiements en ligne.
-					</p>
+			) : (
+				<div className="flex items-center justify-between py-2">
+					<span className="text-sm">
+						Pays : <strong>France</strong>
+						<span className="text-muted-foreground ml-1">(Livraison UE disponible)</span>
+					</span>
+					<button
+						type="button"
+						className="text-sm text-muted-foreground underline hover:no-underline hover:text-foreground transition-colors"
+						onClick={() => setShowCountrySelect(true)}
+					>
+						Modifier
+					</button>
 				</div>
-			</FormSection>
+			)}
 
-			{/* Bouton de paiement */}
-			<div className="space-y-3">
+			<form.AppField name="shipping.phoneNumber">
+				{(field) => (
+					<div className="space-y-2">
+						<field.PhoneField
+							label="Téléphone"
+							required
+							defaultCountry="FR"
+							placeholder="06 12 34 56 78"
+						/>
+						<p className="text-sm text-muted-foreground">
+							Pour faciliter la livraison
+						</p>
+					</div>
+				)}
+			</form.AppField>
+
+			{/* CGV */}
+			<form.AppField
+				name="termsAccepted"
+				validators={{
+					onChange: ({ value }: { value: boolean }) => {
+						if (!value) {
+							return "Tu dois accepter les conditions générales de vente";
+						}
+					},
+				}}
+			>
+				{(field) => (
+					<div className="space-y-2">
+						<field.CheckboxField
+							label="J'accepte les conditions générales de vente"
+							required
+						/>
+						<p className="text-sm text-muted-foreground ml-8">
+							Consultez nos{" "}
+							<Link
+								href="/cgv"
+								className="text-foreground underline hover:no-underline"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								conditions générales de vente
+							</Link>
+						</p>
+					</div>
+				)}
+			</form.AppField>
+
+			{/* Bouton de paiement - sticky sur mobile */}
+			<div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border/50 py-4 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:py-0 sm:mx-0 space-y-3">
 				<Button
 					type="submit"
 					size="lg"
@@ -448,6 +386,12 @@ export function CheckoutForm({
 					{isPending ? "Validation..." : `Continuer vers le paiement · ${formatEuro(total)}`}
 					<span className="absolute inset-0 bg-linear-to-r from-accent/0 via-accent/20 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 				</Button>
+
+				{/* Message sécurité condensé */}
+				<p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
+					<Shield className="w-3.5 h-3.5" />
+					Paiement sécurisé par Stripe
+				</p>
 			</div>
 		</form>
 	);

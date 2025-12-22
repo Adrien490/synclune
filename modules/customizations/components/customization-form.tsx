@@ -2,28 +2,23 @@
 
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormSection, FieldLabel } from "@/shared/components/forms";
+import { FieldLabel } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { Badge } from "@/shared/components/ui/badge";
 import { Autocomplete } from "@/shared/components/autocomplete";
-import { MultiSelect, type MultiSelectOption } from "@/shared/components/multi-select";
-import { Sparkles, UserCircle, Palette, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { toast } from "sonner";
 
 import { useCustomizationForm } from "../hooks/use-customization-form";
 import type { ProductSearchResult, ProductType } from "../types/customization.types";
-import type { Color } from "@/modules/colors/types/color.types";
-import type { Material } from "@/modules/materials/types/materials.types";
 
 interface CustomizationFormProps {
 	productTypes: ProductType[];
 	productSearchQuery: string;
 	productSearchResults: ProductSearchResult[];
-	colors: Color[];
-	materials: Material[];
 	onSuccess?: () => void;
 }
 
@@ -31,8 +26,6 @@ export function CustomizationForm({
 	productTypes,
 	productSearchQuery,
 	productSearchResults,
-	colors,
-	materials,
 	onSuccess,
 }: CustomizationFormProps) {
 	const router = useRouter();
@@ -104,26 +97,46 @@ export function CustomizationForm({
 		form.setFieldValue("inspirationProductIds", newSelected.map((p) => p.id));
 	};
 
-	// Convertir les couleurs en options pour MultiSelect
-	const colorOptions: MultiSelectOption[] = colors.map((color) => ({
-		label: color.name,
-		value: color.id,
-		style: { badgeColor: color.hex },
-	}));
-
-	// Convertir les matériaux en options pour MultiSelect
-	const materialOptions: MultiSelectOption[] = materials.map((material) => ({
-		label: material.name,
-		value: material.id,
-	}));
-
-	// Rendu de la section "Ton projet"
-	const renderProjectSection = () => (
-		<FormSection
-			title="Ton projet de bijou"
-			description="Raconte-moi tout ! Meme si l'idee n'est pas encore claire, on affinera ensemble"
-			icon={<Sparkles className="w-5 h-5" />}
+	return (
+		<form
+			action={action}
+			className="space-y-6"
+			onSubmit={() => void form.handleSubmit()}
 		>
+			{/* Champ honeypot caché (anti-spam) */}
+			<input
+				type="text"
+				name="website"
+				className="hidden"
+				aria-hidden="true"
+				tabIndex={-1}
+			/>
+
+			{/* Champs cachés pour les multi-selects */}
+			<form.Subscribe
+				selector={(state) => [
+					state.values.productTypeLabel,
+					state.values.inspirationProductIds,
+				]}
+			>
+				{([productTypeLabel, inspirationProductIds]) => (
+					<>
+						{productTypeLabel && (
+							<input type="hidden" name="productTypeLabel" value={productTypeLabel} />
+						)}
+						{(inspirationProductIds as string[])?.map((id) => (
+							<input key={id} type="hidden" name="inspirationProductIds" value={id} />
+						))}
+					</>
+				)}
+			</form.Subscribe>
+
+			<form.AppForm>
+				<form.FormErrorDisplay />
+			</form.AppForm>
+
+			<RequiredFieldsNote />
+
 			{/* Type de bijou (optionnel) */}
 			<form.AppField name="productTypeLabel">
 				{(field) => (
@@ -136,10 +149,10 @@ export function CustomizationForm({
 									type="button"
 									onClick={() => field.handleChange(type.label)}
 									className={cn(
-										"px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-										"border hover:border-primary/50",
+										"px-4 py-2.5 rounded-full text-sm font-medium transition-all",
+										"border hover:border-primary/50 hover:shadow-sm",
 										field.state.value === type.label
-											? "bg-primary text-primary-foreground border-primary"
+											? "bg-primary text-primary-foreground border-primary shadow-sm"
 											: "bg-background text-muted-foreground border-border hover:text-foreground"
 									)}
 								>
@@ -150,10 +163,10 @@ export function CustomizationForm({
 								type="button"
 								onClick={() => field.handleChange("Autre")}
 								className={cn(
-									"px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-									"border hover:border-primary/50",
+									"px-4 py-2.5 rounded-full text-sm font-medium transition-all",
+									"border hover:border-primary/50 hover:shadow-sm",
 									field.state.value === "Autre"
-										? "bg-primary text-primary-foreground border-primary"
+										? "bg-primary text-primary-foreground border-primary shadow-sm"
 										: "bg-background text-muted-foreground border-border hover:text-foreground"
 								)}
 							>
@@ -167,7 +180,7 @@ export function CustomizationForm({
 				)}
 			</form.AppField>
 
-			{/* Détails de personnalisation */}
+			{/* Description du projet */}
 			<form.AppField
 				name="details"
 				validators={{
@@ -183,29 +196,17 @@ export function CustomizationForm({
 						<field.TextareaField
 							label="Decris ton projet"
 							required
-							rows={6}
-							placeholder="Decris ton idee de bijou..."
+							rows={4}
+							placeholder="Decris ton idee de bijou... Par exemple : Je cherche un bracelet pour un anniversaire de mariage, dans des tons dores avec des perles..."
 						/>
-						<p className="text-xs text-muted-foreground">
-							Par exemple : "Je cherche un bracelet pour un anniversaire de mariage, dans des tons dores avec des perles..." Quelques phrases suffisent !
-						</p>
-						<p className="text-xs text-muted-foreground text-right">
+						<p className="text-sm text-muted-foreground text-right">
 							{field.state.value?.length || 0} / 2000 caracteres
 						</p>
 					</div>
 				)}
 			</form.AppField>
-		</FormSection>
-	);
 
-	// Rendu de la section "Inspirations"
-	const renderInspirationsSection = () => (
-		<FormSection
-			title="Inspirations et preferences"
-			description="Aide-moi a comprendre tes gouts (facultatif)"
-			icon={<Palette className="w-5 h-5" />}
-		>
-			{/* Produits inspirants - Autocomplete */}
+			{/* Creations inspirantes (optionnel) */}
 			<div className="space-y-2">
 				<FieldLabel
 					optional
@@ -243,76 +244,21 @@ export function CustomizationForm({
 								<button
 									type="button"
 									onClick={() => handleProductRemove(product.id)}
-									className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors"
+									className="ml-1 rounded-full p-1 -mr-0.5 hover:bg-muted-foreground/20 transition-colors"
 									aria-label={`Retirer ${product.title}`}
 								>
-									<X className="size-3" />
+									<X className="size-4" />
 								</button>
 							</Badge>
 						))}
 					</div>
 				)}
-				<p className="text-xs text-muted-foreground">
+				<p className="text-sm text-muted-foreground">
 					{selectedProducts.length}/5 creations selectionnees
 				</p>
 			</div>
 
-			{/* Couleurs et Materiaux */}
-			<div className="space-y-6">
-				<form.AppField name="preferredColorIds">
-					{(field) => (
-						<div className="space-y-2">
-							<FieldLabel
-								optional
-								tooltip="Selectionne les couleurs que tu aimerais voir dans ta creation"
-							>
-								Couleurs preferees
-							</FieldLabel>
-							<MultiSelect
-								options={colorOptions}
-								defaultValue={field.state.value || []}
-								onValueChange={(value) => field.handleChange(value)}
-								placeholder="Choisir des couleurs..."
-								maxCount={5}
-								disabled={isPending}
-								searchable={false}
-							/>
-						</div>
-					)}
-				</form.AppField>
-
-				<form.AppField name="preferredMaterialIds">
-					{(field) => (
-						<div className="space-y-2">
-							<FieldLabel
-								optional
-								tooltip="Selectionne les materiaux que tu preferes"
-							>
-								Materiaux souhaites
-							</FieldLabel>
-							<MultiSelect
-								options={materialOptions}
-								defaultValue={field.state.value || []}
-								onValueChange={(value) => field.handleChange(value)}
-								placeholder="Choisir des materiaux..."
-								maxCount={3}
-								disabled={isPending}
-								searchable={false}
-							/>
-						</div>
-					)}
-				</form.AppField>
-			</div>
-		</FormSection>
-	);
-
-	// Rendu de la section "Coordonnées"
-	const renderContactSection = () => (
-		<FormSection
-			title="Tes coordonnees"
-			description="Pour que je puisse te recontacter et discuter de ton projet"
-			icon={<UserCircle className="w-5 h-5" />}
-		>
+			{/* Nom et prenom */}
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<form.AppField
 					name="firstName"
@@ -341,6 +287,7 @@ export function CustomizationForm({
 				</form.AppField>
 			</div>
 
+			{/* Email */}
 			<form.AppField
 				name="email"
 				validators={{
@@ -357,14 +304,14 @@ export function CustomizationForm({
 				{(field) => <field.InputField label="Adresse email" type="email" required />}
 			</form.AppField>
 
+			{/* Telephone */}
 			<form.AppField name="phone">
 				{(field) => (
-					<div className="space-y-2">
-						<field.InputField label="Telephone" type="tel" placeholder="06 12 34 56 78" />
-						<p className="text-xs text-muted-foreground">
-							Facultatif - Format francais (ex: 06 12 34 56 78)
-						</p>
-					</div>
+					<field.PhoneField
+						label="Telephone"
+						defaultCountry="FR"
+						placeholder="06 12 34 56 78"
+					/>
 				)}
 			</form.AppField>
 
@@ -380,12 +327,12 @@ export function CustomizationForm({
 				}}
 			>
 				{(field) => (
-					<div className="space-y-1 pt-4 border-t border-border/50">
+					<div className="space-y-1">
 						<field.CheckboxField
 							label="J'accepte la politique de confidentialite"
 							required
 						/>
-						<p className="text-xs/5 tracking-normal antialiased text-muted-foreground ml-7">
+						<p className="text-sm leading-relaxed text-muted-foreground ml-7">
 							Consulte notre{" "}
 							<a
 								href="/confidentialite"
@@ -399,84 +346,28 @@ export function CustomizationForm({
 					</div>
 				)}
 			</form.AppField>
-		</FormSection>
-	);
 
-	return (
-		<form
-			action={action}
-			className="space-y-8"
-			onSubmit={() => void form.handleSubmit()}
-		>
-			{/* Champ honeypot caché (anti-spam) */}
-			<input
-				type="text"
-				name="website"
-				className="hidden"
-				aria-hidden="true"
-				tabIndex={-1}
-			/>
-
-			{/* Champs cachés pour les multi-selects */}
-			<form.Subscribe
-				selector={(state) => [
-					state.values.productTypeLabel,
-					state.values.inspirationProductIds,
-					state.values.preferredColorIds,
-					state.values.preferredMaterialIds,
-				]}
-			>
-				{([productTypeLabel, inspirationProductIds, preferredColorIds, preferredMaterialIds]) => (
-					<>
-						{productTypeLabel && (
-							<input type="hidden" name="productTypeLabel" value={productTypeLabel} />
-						)}
-						{(inspirationProductIds as string[])?.map((id) => (
-							<input key={id} type="hidden" name="inspirationProductIds" value={id} />
-						))}
-						{(preferredColorIds as string[])?.map((id) => (
-							<input key={id} type="hidden" name="preferredColorIds" value={id} />
-						))}
-						{(preferredMaterialIds as string[])?.map((id) => (
-							<input key={id} type="hidden" name="preferredMaterialIds" value={id} />
-						))}
-					</>
-				)}
-			</form.Subscribe>
-
-			<form.AppForm>
-				<form.FormErrorDisplay />
-			</form.AppForm>
-
-			<RequiredFieldsNote />
-
-			{renderProjectSection()}
-			{renderInspirationsSection()}
-			{renderContactSection()}
-
-			{/* Footer */}
-			<div className="mt-6">
-				<div className="flex flex-col sm:flex-row justify-end gap-3">
-					<form.Subscribe selector={(state) => [state.canSubmit]}>
-						{([canSubmit]) => (
-							<Button
-								type="submit"
-								disabled={!canSubmit || isPending}
-								size="lg"
-								className="min-w-[200px] relative overflow-hidden group w-full sm:w-auto"
-							>
-								{isPending ? (
-									"Envoi en cours..."
-								) : (
-									<>
-										Envoyer mon message
-										<span className="absolute inset-0 bg-linear-to-r from-accent/0 via-accent/20 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-									</>
-								)}
-							</Button>
-						)}
-					</form.Subscribe>
-				</div>
+			{/* Submit sticky sur mobile */}
+			<div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border/50 py-4 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:py-4 sm:mx-0 flex justify-center">
+				<form.Subscribe selector={(state) => [state.canSubmit]}>
+					{([canSubmit]) => (
+						<Button
+							type="submit"
+							disabled={!canSubmit || isPending}
+							size="lg"
+							className="w-full sm:w-auto sm:min-w-[220px] relative overflow-hidden group"
+						>
+							{isPending ? (
+								"Envoi en cours..."
+							) : (
+								<>
+									Envoyer mon message
+									<span className="absolute inset-0 bg-linear-to-r from-accent/0 via-accent/20 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+								</>
+							)}
+						</Button>
+					)}
+				</form.Subscribe>
 			</div>
 		</form>
 	);

@@ -1,13 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import {
-	Heart,
-	LayoutDashboard,
-	MapPin,
-	Package,
-	Settings,
-} from "lucide-react";
+import { Heart, LayoutDashboard, Package, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -26,11 +20,6 @@ const navItems = [
 		href: "/favoris",
 		label: "Favoris",
 		icon: Heart,
-	},
-	{
-		href: "/adresses",
-		label: "Adresses",
-		icon: MapPin,
 	},
 	{
 		href: "/parametres",

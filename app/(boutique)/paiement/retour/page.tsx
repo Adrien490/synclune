@@ -30,9 +30,9 @@ export default async function CheckoutReturnPage({
 	const sessionId = params.session_id
 	const orderId = params.order_id
 
-	// Si pas de session_id, retour au panier
+	// Si pas de session_id, retour à l'accueil
 	if (!sessionId) {
-		redirect("/panier")
+		redirect("/")
 	}
 
 	try {

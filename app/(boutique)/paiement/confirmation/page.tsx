@@ -59,7 +59,6 @@ export default async function CheckoutSuccessPage({
 			<PageHeader
 				title="Commande confirmée"
 				breadcrumbs={[
-					{ label: "Panier", href: "/panier" },
 					{ label: "Paiement", href: "/paiement" },
 					{ label: "Confirmation", href: "/paiement/confirmation" },
 				]}

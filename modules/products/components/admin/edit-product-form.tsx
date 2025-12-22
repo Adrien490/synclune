@@ -1,6 +1,6 @@
 "use client";
 
-import { FieldLabel, FormLayout, FormSection } from "@/shared/components/forms";
+import { FieldLabel } from "@/shared/components/forms";
 import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
@@ -11,7 +11,7 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { useUpdateProductForm } from "@/modules/products/hooks/use-update-product-form";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
-import { Euro, Gem, Image as ImageIcon, Upload } from "lucide-react";
+import { Euro, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -154,17 +154,7 @@ export function EditProductForm({
 						<form.FormErrorDisplay />
 					</form.AppForm>
 
-					{/* ═══════════════════════════════════════════════════════════════════════
-					    SECTION 1 : Le bijou + SECTION 2 : Prix et stock
-					    ═══════════════════════════════════════════════════════════════════════ */}
-					<FormLayout>
-					{/* SECTION 1 : Le bijou */}
-					<FormSection
-						title="Le bijou"
-						description="Informations et caractéristiques"
-						icon={<Gem />}
-					>
-						{/* Titre */}
+					{/* Le bijou */}
 						<form.AppField
 							name="title"
 							validators={{
@@ -358,15 +348,7 @@ export function EditProductForm({
 								</div>
 							)}
 						</form.AppField>
-					</FormSection>
-
-					{/* SECTION 2 : Prix et stock */}
-					<FormSection
-						title="Prix et stock"
-						description="Tarification et disponibilité du SKU par défaut"
-						icon={<Euro />}
-					>
-						{/* Prix final */}
+					{/* Prix et stock */}
 						<form.AppField
 							name="defaultSku.priceInclTaxEuros"
 							validators={{
@@ -456,18 +438,8 @@ export function EditProductForm({
 								</div>
 							)}
 						</form.AppField>
-					</FormSection>
-				</FormLayout>
-
-				{/* ═══════════════════════════════════════════════════════════════════════
-				    SECTION 3 : Visuels (pleine largeur)
-				    ═══════════════════════════════════════════════════════════════════════ */}
-				<FormSection
-					title="Visuels"
-					description="Première image = principale • Glissez pour réordonner"
-					icon={<ImageIcon />}
-				>
-					<form.Field name="defaultSku.media" mode="array">
+				{/* Visuels */}
+				<form.Field name="defaultSku.media" mode="array">
 						{(field) => {
 							const maxCount = 11;
 
@@ -734,7 +706,6 @@ export function EditProductForm({
 							);
 						}}
 					</form.Field>
-				</FormSection>
 
 				{/* Footer */}
 				<form.AppForm>

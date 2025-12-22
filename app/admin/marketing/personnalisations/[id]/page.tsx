@@ -17,11 +17,8 @@ import {
 	Phone,
 	User,
 	Package,
-	Palette,
-	Gem,
 	Sparkles,
 	FileText,
-	ExternalLink,
 } from "lucide-react";
 import { UpdateStatusForm } from "@/modules/customizations/components/admin/update-status-form";
 
@@ -173,58 +170,6 @@ export default async function CustomizationDetailPage({
 						</Card>
 					)}
 
-					{/* Préférences */}
-					{(request.preferredColors.length > 0 || request.preferredMaterials.length > 0) && (
-						<Card>
-							<CardHeader>
-								<CardTitle className="flex items-center gap-2 text-lg">
-									<Palette className="h-5 w-5" />
-									Préférences
-								</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								{request.preferredColors.length > 0 && (
-									<div>
-										<p className="text-sm font-medium text-muted-foreground mb-2">
-											Couleurs
-										</p>
-										<div className="flex flex-wrap gap-2">
-											{request.preferredColors.map((color) => (
-												<span
-													key={color.id}
-													className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border bg-card text-sm"
-												>
-													<span
-														className="h-4 w-4 rounded-full border"
-														style={{ backgroundColor: color.hex }}
-													/>
-													{color.name}
-												</span>
-											))}
-										</div>
-									</div>
-								)}
-								{request.preferredMaterials.length > 0 && (
-									<div>
-										<p className="text-sm font-medium text-muted-foreground mb-2">
-											<Gem className="h-4 w-4 inline mr-1" />
-											Matériaux
-										</p>
-										<div className="flex flex-wrap gap-2">
-											{request.preferredMaterials.map((material) => (
-												<span
-													key={material.id}
-													className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border bg-card text-sm"
-												>
-													{material.name}
-												</span>
-											))}
-										</div>
-									</div>
-								)}
-							</CardContent>
-						</Card>
-					)}
 				</div>
 
 				{/* Sidebar */}

@@ -14,8 +14,6 @@ interface CustomizationConfirmationEmailProps {
 	productTypeLabel: string;
 	details: string;
 	inspirationProducts?: Array<{ title: string }>;
-	preferredColors?: Array<{ name: string; hex: string }>;
-	preferredMaterials?: Array<{ name: string }>;
 }
 
 export const CustomizationConfirmationEmail = ({
@@ -23,13 +21,8 @@ export const CustomizationConfirmationEmail = ({
 	productTypeLabel,
 	details,
 	inspirationProducts,
-	preferredColors,
-	preferredMaterials,
 }: CustomizationConfirmationEmailProps) => {
-	const hasPreferences =
-		(inspirationProducts && inspirationProducts.length > 0) ||
-		(preferredColors && preferredColors.length > 0) ||
-		(preferredMaterials && preferredMaterials.length > 0);
+	const hasInspirations = inspirationProducts && inspirationProducts.length > 0;
 
 	return (
 		<Html>
@@ -81,63 +74,18 @@ export const CustomizationConfirmationEmail = ({
 						</Text>
 					</Section>
 
-					{/* Préférences */}
-					{hasPreferences && (
+					{/* Inspirations */}
+					{hasInspirations && (
 						<Section style={{ marginBottom: "24px" }}>
 							<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-								Préférences
+								Inspirations
 							</Text>
 							<div style={EMAIL_STYLES.section.card}>
-								{inspirationProducts && inspirationProducts.length > 0 && (
-									<div style={{ marginBottom: "12px" }}>
-										<Text
-											style={{
-												...EMAIL_STYLES.text.small,
-												fontWeight: "600",
-												marginBottom: "4px",
-											}}
-										>
-											Inspirations
-										</Text>
-										{inspirationProducts.map((product, index) => (
-											<Text key={index} style={EMAIL_STYLES.text.small}>
-												• {product.title}
-											</Text>
-										))}
-									</div>
-								)}
-								{preferredColors && preferredColors.length > 0 && (
-									<div style={{ marginBottom: "12px" }}>
-										<Text
-											style={{
-												...EMAIL_STYLES.text.small,
-												fontWeight: "600",
-												marginBottom: "4px",
-											}}
-										>
-											Couleurs
-										</Text>
-										<Text style={EMAIL_STYLES.text.small}>
-											{preferredColors.map((c) => c.name).join(", ")}
-										</Text>
-									</div>
-								)}
-								{preferredMaterials && preferredMaterials.length > 0 && (
-									<div>
-										<Text
-											style={{
-												...EMAIL_STYLES.text.small,
-												fontWeight: "600",
-												marginBottom: "4px",
-											}}
-										>
-											Matériaux
-										</Text>
-										<Text style={EMAIL_STYLES.text.small}>
-											{preferredMaterials.map((m) => m.name).join(", ")}
-										</Text>
-									</div>
-								)}
+								{inspirationProducts.map((product, index) => (
+									<Text key={index} style={EMAIL_STYLES.text.small}>
+										• {product.title}
+									</Text>
+								))}
 							</div>
 						</Section>
 					)}
@@ -186,8 +134,6 @@ CustomizationConfirmationEmail.PreviewProps = {
 	details:
 		"Je souhaiterais un collier personnalisé avec les initiales 'ML' gravées sur un pendentif rond en argent.",
 	inspirationProducts: [{ title: "Collier Lune Céleste" }],
-	preferredColors: [{ name: "Argent", hex: "#C0C0C0" }],
-	preferredMaterials: [{ name: "Argent 925" }],
 } as CustomizationConfirmationEmailProps;
 
 export default CustomizationConfirmationEmail;

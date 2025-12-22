@@ -1,4 +1,3 @@
-import { FormLayout, FormSection } from "@/shared/components/forms";
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
@@ -15,89 +14,68 @@ export default function EditProductLoadingPage() {
 
 			<section className="bg-background py-8">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pb-32">
-					{/* SECTIONS 1 & 2 : Image principale + Informations générales */}
-					<FormLayout>
-						{/* Image principale */}
-						<FormSection
-							title="Média principal"
-							description="Chargement de l'image principale..."
-						>
-							<Skeleton className="h-64 w-full rounded-lg" />
-						</FormSection>
+					{/* Le bijou */}
+					<div className="space-y-6">
+						{/* Titre */}
+						<div className="space-y-2">
+							<Skeleton className="h-4 w-24" />
+							<Skeleton className="h-10 w-full" />
+						</div>
 
-						{/* Informations générales */}
-						<FormSection
-							title="Informations générales"
-							description="Chargement des informations..."
-						>
-							<div className="space-y-4">
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-24" />
-									<Skeleton className="h-10 w-full" />
-								</div>
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-20" />
-									<Skeleton className="h-24 w-full" />
-								</div>
-								<div className="space-y-4">
-									<div className="space-y-2">
-										<Skeleton className="h-4 w-28" />
-										<Skeleton className="h-10 w-full" />
-									</div>
-									<div className="space-y-2">
-										<Skeleton className="h-4 w-20" />
-										<Skeleton className="h-10 w-full" />
-									</div>
-									<div className="space-y-2">
-										<Skeleton className="h-4 w-32" />
-										<Skeleton className="h-10 w-full" />
-									</div>
-								</div>
-							</div>
-						</FormSection>
-					</FormLayout>
+						{/* Description */}
+						<div className="space-y-2">
+							<Skeleton className="h-4 w-20" />
+							<Skeleton className="h-24 w-full" />
+						</div>
 
-					{/* SECTIONS 3 & 4 : Prix et galerie */}
-					<FormLayout>
-						{/* Prix et disponibilité */}
-						<FormSection
-							title="Prix et disponibilité"
-							description="Chargement des informations de prix..."
-						>
-							<div className="space-y-4">
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-16" />
-									<Skeleton className="h-10 w-full" />
-								</div>
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-32" />
-									<Skeleton className="h-10 w-full" />
-								</div>
-								<div className="space-y-4">
-									<div className="space-y-2">
-										<Skeleton className="h-4 w-20" />
-										<Skeleton className="h-10 w-full" />
-									</div>
-									<div className="space-y-2">
-										<Skeleton className="h-4 w-20" />
-										<Skeleton className="h-10 w-full" />
-									</div>
-								</div>
+						{/* Type + Collections */}
+						<div className="space-y-4">
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-28" />
+								<Skeleton className="h-10 w-full" />
 							</div>
-						</FormSection>
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-20" />
+								<Skeleton className="h-10 w-full" />
+							</div>
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-32" />
+								<Skeleton className="h-10 w-full" />
+							</div>
+						</div>
+					</div>
 
-						{/* Galerie */}
-						<FormSection
-							title="Galerie d'images"
-							description="Chargement de la galerie..."
-						>
-							<div className="grid grid-cols-3 gap-4">
-								<Skeleton className="aspect-square rounded-lg" />
-								<Skeleton className="aspect-square rounded-lg" />
-								<Skeleton className="aspect-square rounded-lg" />
+					{/* Prix et disponibilité */}
+					<div className="space-y-6">
+						<div className="space-y-2">
+							<Skeleton className="h-4 w-16" />
+							<Skeleton className="h-10 w-full" />
+						</div>
+						<div className="space-y-2">
+							<Skeleton className="h-4 w-32" />
+							<Skeleton className="h-10 w-full" />
+						</div>
+						<div className="space-y-4">
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-20" />
+								<Skeleton className="h-10 w-full" />
 							</div>
-						</FormSection>
-					</FormLayout>
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-20" />
+								<Skeleton className="h-10 w-full" />
+							</div>
+						</div>
+					</div>
+
+					{/* Galerie */}
+					<div className="space-y-4">
+						<Skeleton className="h-5 w-32" />
+						<div className="grid grid-cols-3 gap-4">
+							<Skeleton className="aspect-square rounded-lg" />
+							<Skeleton className="aspect-square rounded-lg" />
+							<Skeleton className="aspect-square rounded-lg" />
+						</div>
+					</div>
 
 					{/* Footer */}
 					<div className="mt-6">

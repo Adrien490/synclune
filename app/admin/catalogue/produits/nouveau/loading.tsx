@@ -1,6 +1,6 @@
 import { PageHeader } from "@/shared/components/page-header";
-import { FormLayout, FormSection } from "@/shared/components/forms";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 
 /**
  * Skeleton wizard pour mobile
@@ -63,18 +63,18 @@ function MobileWizardSkeleton() {
 
 /**
  * Skeleton desktop pour le formulaire complet
- * Structure: Section visuels + 2 sections en grille + Footer
- * Ordre: Visuels → Le bijou → Prix
+ * Structure: Champs en flux continu + Footer
  */
 function DesktopFormSkeleton() {
 	return (
 		<div className="space-y-6 pb-32">
-			{/* Section 1: Visuels (full-width) */}
-			<FormSection
-				title="Visuels"
-				description="Images et vidéos du produit"
-			>
-				<div className="space-y-3">
+			{/* Visuels */}
+			<Card>
+				<CardHeader>
+					<Skeleton className="h-5 w-20" />
+					<Skeleton className="h-4 w-48" />
+				</CardHeader>
+				<CardContent className="space-y-3">
 					{/* Header avec compteur */}
 					<div className="flex items-center justify-between">
 						<div className="space-y-1">
@@ -92,100 +92,87 @@ function DesktopFormSkeleton() {
 							<Skeleton className="h-3 w-48" />
 						</div>
 					</div>
+				</CardContent>
+			</Card>
+
+			{/* Le bijou */}
+			<div className="space-y-6">
+				{/* Titre */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-28" />
+					<Skeleton className="h-10 w-full" />
 				</div>
-			</FormSection>
 
-			{/* Sections 2 & 3 */}
-			<FormLayout>
-				{/* Section 2: Le bijou */}
-				<FormSection
-					title="Le bijou"
-					description="Informations et caractéristiques"
-				>
-					<div className="space-y-6">
-						{/* Titre */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-28" />
-							<Skeleton className="h-10 w-full" />
-						</div>
+				{/* Description */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-24" />
+					<Skeleton className="h-24 w-full" />
+					<Skeleton className="h-3 w-32 ml-auto" />
+				</div>
 
-						{/* Description */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-24" />
-							<Skeleton className="h-24 w-full" />
-							<Skeleton className="h-3 w-32 ml-auto" />
-						</div>
-
-						{/* Type + Collections */}
-						<div className="space-y-4">
-							<div className="space-y-2">
-								<Skeleton className="h-4 w-28" />
-								<Skeleton className="h-10 w-full" />
-							</div>
-							<div className="space-y-2">
-								<Skeleton className="h-4 w-24" />
-								<Skeleton className="h-10 w-full" />
-							</div>
-						</div>
-
-						{/* Séparateur attributs variante */}
-						<div className="pt-4 border-t space-y-1">
-							<div className="flex items-center gap-2">
-								<Skeleton className="h-4 w-36" />
-								<Skeleton className="h-3.5 w-3.5 rounded-full" />
-							</div>
-							<Skeleton className="h-3 w-52" />
-						</div>
-
-						{/* Couleur */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-20" />
-							<Skeleton className="h-10 w-full" />
-						</div>
-
-						{/* Matériau + Taille */}
-						<div className="space-y-4">
-							<div className="space-y-2">
-								<Skeleton className="h-4 w-20" />
-								<Skeleton className="h-10 w-full" />
-							</div>
-							<div className="space-y-2">
-								<Skeleton className="h-4 w-16" />
-								<Skeleton className="h-10 w-full" />
-							</div>
-						</div>
+				{/* Type + Collections */}
+				<div className="space-y-4">
+					<div className="space-y-2">
+						<Skeleton className="h-4 w-28" />
+						<Skeleton className="h-10 w-full" />
 					</div>
-				</FormSection>
-
-				{/* Section 3: Prix et stock */}
-				<FormSection
-					title="Prix et stock"
-					description="Tarification et disponibilité"
-				>
-					<div className="space-y-6">
-						{/* Prix de vente */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-32" />
-							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-3 w-40" />
-						</div>
-
-						{/* Ancien prix (barré) */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-40" />
-							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-3 w-56" />
-						</div>
-
-						{/* Stock */}
-						<div className="space-y-2">
-							<Skeleton className="h-4 w-32" />
-							<Skeleton className="h-10 w-full" />
-							<Skeleton className="h-3 w-52" />
-						</div>
+					<div className="space-y-2">
+						<Skeleton className="h-4 w-24" />
+						<Skeleton className="h-10 w-full" />
 					</div>
-				</FormSection>
-			</FormLayout>
+				</div>
+
+				{/* Séparateur attributs variante */}
+				<div className="pt-4 border-t space-y-1">
+					<div className="flex items-center gap-2">
+						<Skeleton className="h-4 w-36" />
+						<Skeleton className="h-3.5 w-3.5 rounded-full" />
+					</div>
+					<Skeleton className="h-3 w-52" />
+				</div>
+
+				{/* Couleur */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-20" />
+					<Skeleton className="h-10 w-full" />
+				</div>
+
+				{/* Matériau + Taille */}
+				<div className="space-y-4">
+					<div className="space-y-2">
+						<Skeleton className="h-4 w-20" />
+						<Skeleton className="h-10 w-full" />
+					</div>
+					<div className="space-y-2">
+						<Skeleton className="h-4 w-16" />
+						<Skeleton className="h-10 w-full" />
+					</div>
+				</div>
+			</div>
+
+			{/* Prix et stock */}
+			<div className="space-y-6">
+				{/* Prix de vente */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-32" />
+					<Skeleton className="h-10 w-full" />
+					<Skeleton className="h-3 w-40" />
+				</div>
+
+				{/* Ancien prix (barré) */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-40" />
+					<Skeleton className="h-10 w-full" />
+					<Skeleton className="h-3 w-56" />
+				</div>
+
+				{/* Stock */}
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-32" />
+					<Skeleton className="h-10 w-full" />
+					<Skeleton className="h-3 w-52" />
+				</div>
+			</div>
 
 			{/* Footer */}
 			<div className="flex justify-end gap-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import { FieldLabel, FormLayout, FormSection } from "@/shared/components/forms";
+import { FieldLabel } from "@/shared/components/forms";
 import { MediaCounterBadge } from "@/modules/media/components/media-counter-badge";
 import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
 import { Button } from "@/shared/components/ui/button";
@@ -12,7 +12,7 @@ import { useCreateProductForm } from "@/modules/products/hooks/use-create-produc
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
-import { Euro, Gem, ImagePlus, Image as ImageIcon, Info, Package, Upload } from "lucide-react";
+import { Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -123,13 +123,8 @@ export function CreateProductForm({
 					<form.FormErrorDisplay />
 				</form.AppForm>
 
-				{/* Section Visuels */}
-				<FormSection
-					title="Visuels"
-					description="Images et vidéos du produit"
-					icon={<ImageIcon />}
-				>
-					<form.Field
+				{/* Visuels */}
+				<form.Field
 						name="initialSku.media"
 						mode="array"
 						validators={{
@@ -329,16 +324,9 @@ export function CreateProductForm({
 							);
 						}}
 					</form.Field>
-				</FormSection>
 
-				{/* Section Le bijou */}
-				<FormLayout>
-					<FormSection
-						title="Le bijou"
-						description="Informations et caractéristiques"
-						icon={<Gem />}
-					>
-						<div className="space-y-6">
+				{/* Le bijou */}
+				<div className="space-y-6">
 							<form.AppField
 								name="title"
 								validators={{
@@ -527,15 +515,9 @@ export function CreateProductForm({
 								</form.AppField>
 							</div>
 						</div>
-					</FormSection>
 
-					{/* Section Prix et stock */}
-					<FormSection
-						title="Prix et stock"
-						description="Tarification et disponibilité"
-						icon={<Euro />}
-					>
-						<div className="space-y-6">
+					{/* Prix et stock */}
+					<div className="space-y-6">
 							<form.AppField
 								name="initialSku.priceInclTaxEuros"
 								validators={{
@@ -620,9 +602,7 @@ export function CreateProductForm({
 									</div>
 								)}
 							</form.AppField>
-						</div>
-					</FormSection>
-				</FormLayout>
+					</div>
 
 				{/* Footer */}
 				<form.AppForm>

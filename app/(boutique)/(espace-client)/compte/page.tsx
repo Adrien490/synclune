@@ -10,9 +10,6 @@ import {
 	AccountStatsCards,
 	AccountStatsCardsSkeleton,
 } from "@/modules/users/components/account-stats-cards";
-import { AddressInfoCard } from "@/modules/addresses/components/address-info-card";
-import { AddressInfoCardSkeleton } from "@/modules/addresses/components/address-info-card-skeleton";
-import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
 import { RecentOrders } from "@/modules/orders/components/recent-orders";
 import { RecentOrdersSkeleton } from "@/modules/orders/components/recent-orders-skeleton";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
@@ -41,7 +38,6 @@ export default async function AccountPage() {
 		sortBy: "created-descending",
 		direction: "forward",
 	});
-	const addressesPromise = getUserAddresses();
 
 	const user = await userPromise;
 
@@ -98,11 +94,6 @@ export default async function AccountPage() {
 										</Link>
 									</CardContent>
 								</Card>
-
-								{/* Adresse par défaut */}
-								<Suspense fallback={<AddressInfoCardSkeleton />}>
-									<AddressInfoCard addressesPromise={addressesPromise} />
-								</Suspense>
 							</div>
 						</div>
 					</div>

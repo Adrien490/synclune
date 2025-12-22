@@ -1,13 +1,9 @@
+import { isValidPhoneNumber } from "react-phone-number-input";
 import { z } from "zod";
 
 // ============================================================================
 // CUSTOMIZATION FORM SCHEMA
 // ============================================================================
-
-/**
- * Regex pour validation téléphone français
- */
-const FRENCH_PHONE_REGEX = /^(\+33|0)[1-9](\d{2}){4}$/;
 
 /**
  * Regex pour validation CUID
@@ -42,9 +38,8 @@ export const customizationSchema = z
 
 		phone: z
 			.string()
-			.regex(FRENCH_PHONE_REGEX, {
-				message:
-					"Le numéro de téléphone doit être au format français valide (ex: 06 12 34 56 78 ou +33 6 12 34 56 78)",
+			.refine((val) => !val || isValidPhoneNumber(val), {
+				message: "Numéro de téléphone invalide",
 			})
 			.optional()
 			.or(z.literal("")),
@@ -56,20 +51,6 @@ export const customizationSchema = z
 		inspirationProductIds: z
 			.array(z.string().regex(CUID_REGEX, { message: "ID de produit invalide" }))
 			.max(5, { message: "Vous pouvez sélectionner au maximum 5 produits" })
-			.optional()
-			.default([]),
-
-		// Préférences de couleurs
-		preferredColorIds: z
-			.array(z.string().regex(CUID_REGEX, { message: "ID de couleur invalide" }))
-			.max(10, { message: "Vous pouvez sélectionner au maximum 10 couleurs" })
-			.optional()
-			.default([]),
-
-		// Préférences de matériaux
-		preferredMaterialIds: z
-			.array(z.string().regex(CUID_REGEX, { message: "ID de matériau invalide" }))
-			.max(5, { message: "Vous pouvez sélectionner au maximum 5 matériaux" })
 			.optional()
 			.default([]),
 

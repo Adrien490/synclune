@@ -52,7 +52,7 @@ export function ProductReassurance({ productSlug }: ProductReassuranceProps) {
 			{/* Lien personnalisation */}
 			<Link
 				href={`/personnalisation?product=${productSlug}`}
-				className="flex items-center justify-center gap-2 w-full py-3 sm:py-2.5 px-4 text-sm border rounded-xl sm:rounded-lg hover:bg-muted/50 active:bg-muted active:scale-[0.98] transition-all"
+				className="flex items-center justify-center gap-2 w-full py-3 sm:py-2.5 px-4 text-sm bg-primary/5 border border-primary/20 text-primary rounded-xl sm:rounded-lg hover:bg-primary/10 active:bg-primary/15 active:scale-[0.98] transition-all"
 			>
 				<Heart className="w-4 h-4" aria-hidden="true" />
 				<span>Envie de personnalisation ?</span>

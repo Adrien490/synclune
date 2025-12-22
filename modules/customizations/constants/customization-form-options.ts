@@ -12,10 +12,8 @@ export const customizationFormOpts = {
 		// Type de produit
 		productTypeLabel: "",
 
-		// Inspirations et préférences
+		// Inspirations
 		inspirationProductIds: [] as string[],
-		preferredColorIds: [] as string[],
-		preferredMaterialIds: [] as string[],
 
 		// Détails de personnalisation
 		details: "",

@@ -45,7 +45,7 @@ export default async function CheckoutPage() {
 
 	// Vérifier que le panier existe et n'est pas vide
 	if (!cart || cart.items.length === 0) {
-		redirect("/panier");
+		redirect("/");
 	}
 
 	// Valider le panier (stock, disponibilité)
@@ -57,10 +57,6 @@ export default async function CheckoutPage() {
 			<div className="min-h-screen">
 				<PageHeader
 					title="Finaliser ma commande"
-					breadcrumbs={[
-						{ label: "Panier", href: "/panier" },
-						{ label: "Paiement", href: "/paiement" },
-					]}
 				/>
 
 				<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">
@@ -98,7 +94,7 @@ export default async function CheckoutPage() {
 
 								<div className="flex gap-2">
 									<Button asChild variant="outline">
-										<Link href="/panier">Retourner au panier</Link>
+										<Link href="/creations">Continuer mes achats</Link>
 									</Button>
 								</div>
 							</AlertDescription>
@@ -114,10 +110,6 @@ export default async function CheckoutPage() {
 			<PageHeader
 				title="Finaliser ma commande"
 				description="Vérifie tes informations et procède au paiement sécurisé"
-				breadcrumbs={[
-					{ label: "Panier", href: "/panier" },
-					{ label: "Paiement", href: "/paiement" },
-				]}
 			/>
 
 			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">

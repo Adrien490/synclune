@@ -11,10 +11,6 @@ export default function CheckoutLoading() {
 			<PageHeader
 				title="Finaliser ma commande"
 				description="Vérifie tes informations et procède au paiement sécurisé"
-				breadcrumbs={[
-					{ label: "Panier", href: "/panier" },
-					{ label: "Paiement", href: "/paiement" },
-				]}
 			/>
 
 			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">

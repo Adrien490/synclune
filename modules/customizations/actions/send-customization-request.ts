@@ -54,8 +54,6 @@ export async function sendCustomizationRequest(
 			phone: (formData.get("phone") as string) || "",
 			productTypeLabel: (formData.get("productTypeLabel") as string) || "",
 			inspirationProductIds: formData.getAll("inspirationProductIds") as string[],
-			preferredColorIds: formData.getAll("preferredColorIds") as string[],
-			preferredMaterialIds: formData.getAll("preferredMaterialIds") as string[],
 			details: (formData.get("details") as string) || "",
 			rgpdConsent: formData.get("rgpdConsent") === "true",
 			website: (formData.get("website") as string) || "",
@@ -103,22 +101,10 @@ export async function sendCustomizationRequest(
 				inspirationProducts: {
 					connect: validatedData.inspirationProductIds.map((id) => ({ id })),
 				},
-				preferredColors: {
-					connect: validatedData.preferredColorIds.map((id) => ({ id })),
-				},
-				preferredMaterials: {
-					connect: validatedData.preferredMaterialIds.map((id) => ({ id })),
-				},
 			},
 			include: {
 				inspirationProducts: {
 					select: { id: true, title: true, slug: true },
-				},
-				preferredColors: {
-					select: { id: true, name: true, hex: true },
-				},
-				preferredMaterials: {
-					select: { id: true, name: true },
 				},
 			},
 		});
@@ -132,8 +118,6 @@ export async function sendCustomizationRequest(
 			productTypeLabel: validatedData.productTypeLabel,
 			details: validatedData.details,
 			inspirationProducts: customizationRequest.inspirationProducts,
-			preferredColors: customizationRequest.preferredColors,
-			preferredMaterials: customizationRequest.preferredMaterials,
 		});
 
 		if (!emailResult.success) {
@@ -152,8 +136,6 @@ export async function sendCustomizationRequest(
 			productTypeLabel: validatedData.productTypeLabel,
 			details: validatedData.details,
 			inspirationProducts: customizationRequest.inspirationProducts,
-			preferredColors: customizationRequest.preferredColors,
-			preferredMaterials: customizationRequest.preferredMaterials,
 		});
 
 		if (!confirmationResult.success) {

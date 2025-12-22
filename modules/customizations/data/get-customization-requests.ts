@@ -89,8 +89,6 @@ export async function getCustomizationRequests({
 			_count: {
 				select: {
 					inspirationProducts: true,
-					preferredColors: true,
-					preferredMaterials: true,
 				},
 			},
 		},

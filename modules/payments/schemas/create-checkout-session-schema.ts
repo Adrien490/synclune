@@ -1,3 +1,4 @@
+import { isValidPhoneNumber } from "react-phone-number-input";
 import { z } from "zod";
 import {
 	SHIPPING_COUNTRIES,
@@ -15,7 +16,10 @@ const addressSchema = z.object({
 	country: z.enum(SHIPPING_COUNTRIES, {
 		message: COUNTRY_ERROR_MESSAGE,
 	}),
-	phoneNumber: z.string().optional(),
+	phoneNumber: z
+		.string()
+		.min(1, "Le numéro de téléphone est requis")
+		.refine(isValidPhoneNumber, { message: "Numéro de téléphone invalide" }),
 });
 
 // Schéma de validation pour la création de session Stripe Checkout

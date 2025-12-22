@@ -4,10 +4,11 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
-import { getColors } from "@/modules/colors/data/get-colors";
-import { getMaterials } from "@/modules/materials/data/get-materials";
 import { getProducts } from "@/modules/products/data/get-products";
+import { getRandomTestimonial } from "@/modules/testimonials/data/get-random-testimonial";
 import { CustomizationForm } from "@/modules/customizations/components/customization-form";
+import { CustomizationSidebar } from "@/modules/customizations/components/customization-sidebar";
+import { TestimonialCard } from "@/modules/testimonials/components/testimonial-card";
 import type { ProductSearchResult } from "@/modules/customizations/types/customization.types";
 import type { Metadata } from "next";
 
@@ -43,10 +44,8 @@ export default async function CustomizationPage({ searchParams }: PageProps) {
 	const productSearch = params.productSearch || "";
 
 	// Récupérer les données pour le formulaire en parallèle
-	const [{ productTypes }, { colors }, { materials }, productsResult] = await Promise.all([
+	const [{ productTypes }, productsResult, testimonial] = await Promise.all([
 		getProductTypes({ perPage: 100 }),
-		getColors({ perPage: 100 }),
-		getMaterials({ perPage: 100 }),
 		productSearch.length >= 3
 			? getProducts({
 					search: productSearch,
@@ -56,6 +55,7 @@ export default async function CustomizationPage({ searchParams }: PageProps) {
 					filters: {},
 				})
 			: Promise.resolve({ products: [], pagination: null }),
+		getRandomTestimonial(),
 	]);
 
 	// Transformer les produits en ProductSearchResult
@@ -104,14 +104,33 @@ export default async function CustomizationPage({ searchParams }: PageProps) {
 			{/* Section principale avec formulaire */}
 			<section className={`bg-background ${SECTION_SPACING.compact} relative z-10`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					{/* Formulaire de personnalisation */}
-					<CustomizationForm
-						productTypes={productTypes}
-						productSearchQuery={productSearch}
-						productSearchResults={productSearchResults}
-						colors={colors}
-						materials={materials}
-					/>
+					{/* Layout split : formulaire + sidebar sur desktop */}
+					<div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-12">
+						{/* Formulaire de personnalisation */}
+						<div className="max-w-xl">
+							<CustomizationForm
+								productTypes={productTypes}
+								productSearchQuery={productSearch}
+								productSearchResults={productSearchResults}
+							/>
+						</div>
+
+						{/* Sidebar avec témoignage - desktop uniquement */}
+						<CustomizationSidebar
+							testimonial={testimonial}
+							className="hidden lg:block"
+						/>
+					</div>
+
+					{/* Témoignage mobile - après le formulaire */}
+					{testimonial && (
+						<div className="lg:hidden mt-12">
+							<h2 className="font-display text-lg font-semibold text-foreground mb-4">
+								Témoignages
+							</h2>
+							<TestimonialCard testimonial={testimonial} />
+						</div>
+					)}
 				</div>
 			</section>
 		</div>

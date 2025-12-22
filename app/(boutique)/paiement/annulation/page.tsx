@@ -85,7 +85,6 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 			<PageHeader
 				title={errorInfo.title}
 				breadcrumbs={[
-					{ label: "Panier", href: "/panier" },
 					{ label: "Paiement", href: "/paiement" },
 					{ label: "Annulation", href: "/paiement/annulation" },
 				]}
@@ -177,9 +176,9 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 							{/* Actions */}
 							<div className="flex flex-col sm:flex-row gap-3 pt-4">
 								<Button asChild size="lg" className="flex-1">
-									<Link href="/panier">
+									<Link href="/paiement">
 										<ShoppingBag className="w-4 h-4 mr-2" />
-										Retourner au panier
+										Reprendre ma commande
 									</Link>
 								</Button>
 								<Button asChild variant="outline" size="lg" className="flex-1">

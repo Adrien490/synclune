@@ -39,8 +39,6 @@ export interface CustomizationRequestListItem {
 	respondedAt: Date | null;
 	_count: {
 		inspirationProducts: number;
-		preferredColors: number;
-		preferredMaterials: number;
 	};
 }
 
@@ -76,16 +74,6 @@ export interface CustomizationRequestDetail {
 				url: string;
 			}[];
 		}[];
-	}[];
-	preferredColors: {
-		id: string;
-		name: string;
-		hex: string;
-	}[];
-	preferredMaterials: {
-		id: string;
-		name: string;
-		description: string | null;
 	}[];
 }
 

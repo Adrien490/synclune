@@ -7,6 +7,7 @@ import { FormErrorDisplay } from "./form-error-display";
 import { InputField } from "./input-field";
 import { InputGroupField } from "./input-group-field";
 import { PasswordInputField } from "./password-input-field";
+import { PhoneField } from "./phone-field";
 import { RadioGroupField } from "./radio-group-field";
 import { SelectField } from "./select-field";
 import { TextareaField } from "./textarea-field";
@@ -15,11 +16,9 @@ import { TextareaGroupField } from "./textarea-group-field";
 // Export field and form contexts
 export { useFieldContext, useFormContext } from "@/shared/lib/form-context";
 
-// Export UI components (layout and helpers)
+// Export UI components (helpers)
 export { FieldLabel } from "./field-label";
 export { FormFooter } from "./form-footer";
-export { FormLayout } from "./form-layout";
-export { FormSection } from "./form-section";
 
 // Export filter components
 export { CheckboxFilterItem } from "./checkbox-filter-item";
@@ -32,6 +31,7 @@ export const { useAppForm } = createFormHook({
 		InputField,
 		InputGroupField,
 		PasswordInputField,
+		PhoneField,
 		SelectField,
 		CheckboxField,
 		TextareaField,

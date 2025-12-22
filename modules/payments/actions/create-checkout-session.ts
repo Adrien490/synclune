@@ -7,7 +7,6 @@ import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/li
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
-import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/cache";
 import { calculateShipping } from "@/modules/orders/utils/shipping.utils";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -65,7 +64,6 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 		const cartItemsRaw = formData.get("cartItems") as string;
 		const shippingAddressRaw = formData.get("shippingAddress") as string;
 		const email = (formData.get("email") as string) || undefined;
-		const saveAddress = formData.get("saveAddress") === "true" || formData.get("saveAddress") === "on";
 		const discountCode = (formData.get("discountCode") as string) || undefined;
 
 		let cartItems, shippingAddress;
@@ -494,53 +492,6 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			return newOrder;
 		});
 
-		// 8h. Enregistrer l'adresse si demandé par l'utilisateur connecté
-		const userIdForAddress = userId;
-		if (userIdForAddress && saveAddress) {
-			try {
-				// Vérifier si l'utilisateur n'a pas déjà cette adresse
-				const existingAddress = await prisma.address.findFirst({
-					where: {
-						userId: userIdForAddress,
-						firstName: validatedData.shippingAddress.firstName,
-						lastName: validatedData.shippingAddress.lastName,
-						address1: validatedData.shippingAddress.addressLine1,
-						postalCode: validatedData.shippingAddress.postalCode,
-						city: validatedData.shippingAddress.city,
-					},
-				});
-
-				if (!existingAddress) {
-					// Compter les adresses existantes pour savoir si c'est la première
-					const addressCount = await prisma.address.count({
-						where: { userId: userIdForAddress },
-					});
-
-					// Créer la nouvelle adresse
-					await prisma.address.create({
-						data: {
-							userId: userIdForAddress,
-							firstName: validatedData.shippingAddress.firstName,
-							lastName: validatedData.shippingAddress.lastName,
-							address1: validatedData.shippingAddress.addressLine1,
-							address2: validatedData.shippingAddress.addressLine2 || null,
-							postalCode: validatedData.shippingAddress.postalCode,
-							city: validatedData.shippingAddress.city,
-							country: validatedData.shippingAddress.country || "FR",
-							phone: validatedData.shippingAddress.phoneNumber || "",
-							isDefault: addressCount === 0, // Première adresse = par défaut
-						},
-					});
-
-					// Invalider le cache des adresses de l'utilisateur
-					getUserAddressesInvalidationTags(userIdForAddress).forEach(tag => updateTag(tag));
-				}
-			} catch (addressError) {
-				// Ne pas bloquer le checkout si l'enregistrement de l'adresse échoue
-				// L'adresse pourra être ajoutée manuellement plus tard
-// console.error("[SAVE_ADDRESS_ERROR]", addressError);
-			}
-		}
 
 		// 9. Créer la session Stripe Checkout
 		// 🔴 CORRECTION CRITIQUE : Idempotency key pour éviter double facturation

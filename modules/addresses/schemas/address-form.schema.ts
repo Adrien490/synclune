@@ -1,3 +1,4 @@
+import { isValidPhoneNumber } from "react-phone-number-input";
 import { z } from "zod";
 import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
 
@@ -36,10 +37,8 @@ export const addressFormSchema = z.object({
 
 	phone: z
 		.string()
-		.transform((val) => val.replace(/\s/g, "")) // Normalise en supprimant les espaces
-		.pipe(
-			z.string().regex(ADDRESS_CONSTANTS.PHONE_REGEX, ADDRESS_ERROR_MESSAGES.INVALID_PHONE)
-		),
+		.min(1, ADDRESS_ERROR_MESSAGES.INVALID_PHONE)
+		.refine(isValidPhoneNumber, { message: ADDRESS_ERROR_MESSAGES.INVALID_PHONE }),
 });
 
 /**

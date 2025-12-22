@@ -10,8 +10,8 @@ import { Separator } from "@/shared/components/ui/separator";
 import { calculateShipping } from "@/modules/orders/utils/shipping.utils";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { Pencil, ShoppingBag, TruckIcon } from "lucide-react";
-import Link from "next/link";
 
 interface CheckoutSummaryProps {
 	cart: NonNullable<GetCartReturn>;
@@ -22,6 +22,8 @@ interface CheckoutSummaryProps {
  * Affiche le récapitulatif des articles, frais de port et total
  */
 export function CheckoutSummary({ cart }: CheckoutSummaryProps) {
+	const { open: openCart } = useSheet("cart");
+
 	// Calculer le nombre total d'articles
 	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -108,15 +110,16 @@ export function CheckoutSummary({ cart }: CheckoutSummaryProps) {
 					))}
 				</div>
 
-				{/* Lien modifier panier */}
+				{/* Bouton modifier panier */}
 				<div className="text-center">
-					<Link
-						href="/panier"
+					<button
+						type="button"
+						onClick={openCart}
 						className="text-xs text-foreground underline hover:no-underline inline-flex items-center gap-1"
 					>
 						<Pencil className="w-3 h-3" />
 						Modifier mon panier
-					</Link>
+					</button>
 				</div>
 
 				<Separator />

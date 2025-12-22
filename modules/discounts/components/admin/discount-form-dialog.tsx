@@ -7,7 +7,7 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/ui/responsive-dialog";
-import { FieldLabel, FormLayout, useAppForm } from "@/shared/components/forms";
+import { FieldLabel, useAppForm } from "@/shared/components/forms";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { createDiscount } from "@/modules/discounts/actions/create-discount";
 import { updateDiscount } from "@/modules/discounts/actions/update-discount";
@@ -173,7 +173,7 @@ export function DiscountFormDialog() {
 						</form.AppField>
 
 						{/* Type and Value */}
-						<FormLayout>
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 							{/* Type Field */}
 							<form.AppField name="type">
 								{(field) => (
@@ -222,7 +222,7 @@ export function DiscountFormDialog() {
 									</div>
 								)}
 							</form.AppField>
-						</FormLayout>
+						</div>
 
 						{/* Min Order Amount Field */}
 						<form.AppField name="minOrderAmount">
@@ -244,7 +244,7 @@ export function DiscountFormDialog() {
 						</form.AppField>
 
 						{/* Max Usage Fields */}
-						<FormLayout>
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 							{/* Max Usage Count Field */}
 							<form.AppField name="maxUsageCount">
 								{(field) => (
@@ -276,7 +276,7 @@ export function DiscountFormDialog() {
 									</div>
 								)}
 							</form.AppField>
-						</FormLayout>
+						</div>
 					</div>
 
 					</div>

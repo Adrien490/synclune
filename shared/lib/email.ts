@@ -637,8 +637,6 @@ export async function sendCustomizationRequestEmail({
 	productTypeLabel,
 	details,
 	inspirationProducts,
-	preferredColors,
-	preferredMaterials,
 }: {
 	firstName: string;
 	lastName: string;
@@ -647,8 +645,6 @@ export async function sendCustomizationRequestEmail({
 	productTypeLabel: string;
 	details: string;
 	inspirationProducts?: Array<{ title: string }>;
-	preferredColors?: Array<{ name: string; hex: string }>;
-	preferredMaterials?: Array<{ name: string }>;
 }) {
 	try {
 		const emailHtml = await render(
@@ -660,8 +656,6 @@ export async function sendCustomizationRequestEmail({
 				productTypeLabel,
 				details,
 				inspirationProducts,
-				preferredColors,
-				preferredMaterials,
 			})
 		);
 
@@ -695,16 +689,12 @@ export async function sendCustomizationConfirmationEmail({
 	productTypeLabel,
 	details,
 	inspirationProducts,
-	preferredColors,
-	preferredMaterials,
 }: {
 	firstName: string;
 	email: string;
 	productTypeLabel: string;
 	details: string;
 	inspirationProducts?: Array<{ title: string }>;
-	preferredColors?: Array<{ name: string; hex: string }>;
-	preferredMaterials?: Array<{ name: string }>;
 }) {
 	try {
 		const emailHtml = await render(
@@ -713,8 +703,6 @@ export async function sendCustomizationConfirmationEmail({
 				productTypeLabel,
 				details,
 				inspirationProducts,
-				preferredColors,
-				preferredMaterials,
 			})
 		);
 

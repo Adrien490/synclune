@@ -348,21 +348,13 @@ export function AddressFormDialog({
 						{/* Téléphone */}
 						<form.AppField name="phone">
 							{(field) => (
-								<div className="space-y-2">
-									<field.InputField
-										label="Téléphone"
-										type="tel"
-										inputMode="tel"
-										autoComplete="tel"
-										enterKeyHint="done"
-										placeholder="0612345678"
-										disabled={isPending}
-										required
-									/>
-									<p className="text-xs text-muted-foreground">
-										Format : 0612345678 ou +33612345678
-									</p>
-								</div>
+								<field.PhoneField
+									label="Téléphone"
+									required
+									defaultCountry="FR"
+									placeholder="06 12 34 56 78"
+									disabled={isPending}
+								/>
 							)}
 						</form.AppField>
 					</div>

@@ -59,20 +59,6 @@ export async function getCustomizationRequest(
 					},
 				},
 			},
-			preferredColors: {
-				select: {
-					id: true,
-					name: true,
-					hex: true,
-				},
-			},
-			preferredMaterials: {
-				select: {
-					id: true,
-					name: true,
-					description: true,
-				},
-			},
 		},
 	});
 

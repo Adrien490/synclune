@@ -1,6 +1,6 @@
 "use client";
 
-import { FieldLabel, FormSection } from "@/shared/components/forms";
+import { FieldLabel } from "@/shared/components/forms";
 import { MediaCounterBadge } from "@/modules/media/components/media-counter-badge";
 import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
 import { PrimaryImageUpload } from "@/modules/media/components/admin/primary-image-upload";
@@ -14,7 +14,7 @@ import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { AnimatePresence, motion } from "framer-motion";
-import { Euro, ImagePlus, Image as ImageIcon, Info, Palette, Upload } from "lucide-react";
+import { Euro, ImagePlus, Info, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -111,15 +111,8 @@ export function EditProductVariantForm({
 						<form.FormErrorDisplay />
 					</form.AppForm>
 
-					{/* ═══════════════════════════════════════════════════════════════════════
-					    SECTION 1 : La variante (infos + prix + stock)
-					    ═══════════════════════════════════════════════════════════════════════ */}
-					<FormSection
-						title="La variante"
-						description="Caractéristiques, prix et disponibilité"
-						icon={<Palette />}
-					>
-						<div className="space-y-6">
+					{/* La variante */}
+					<div className="space-y-6">
 							{/* Caractéristiques */}
 							<div className="space-y-4">
 								{/* Couleur */}
@@ -298,19 +291,11 @@ export function EditProductVariantForm({
 								</form.AppField>
 
 							</div>
-						</div>
-					</FormSection>
+					</div>
 
-					{/* ═══════════════════════════════════════════════════════════════════════
-					    SECTION 2 : Visuels (pleine largeur)
-					    ═══════════════════════════════════════════════════════════════════════ */}
-					<FormSection
-						title="Visuels"
-						description="Image principale et galerie"
-						icon={<ImageIcon />}
-					>
-						<div className="space-y-6">
-							{/* Image principale */}
+					{/* Visuels */}
+					<div className="space-y-6">
+						{/* Image principale */}
 							<form.Field name="primaryImage">
 								{(field) => (
 									<div className="space-y-2">
@@ -727,8 +712,7 @@ export function EditProductVariantForm({
 									);
 								}}
 							</form.Field>
-						</div>
-					</FormSection>
+					</div>
 
 					{/* Footer */}
 					<form.AppForm>
