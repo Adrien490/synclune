@@ -118,7 +118,7 @@ export function PageHeader({
 							</h1>
 						)}
 						{description && (
-							<p className="text-base lg:text-lg font-sans text-muted-foreground leading-relaxed max-w-prose break-words line-clamp-2 md:line-clamp-none overflow-hidden">
+							<p className="text-base lg:text-lg font-sans text-muted-foreground leading-relaxed max-w-prose break-words">
 								{description}
 							</p>
 						)}
@@ -285,9 +285,9 @@ export function PageHeader({
 								)}
 							</div>
 
-							{/* Description optionnelle - tronquée sur mobile, complète sur desktop */}
+							{/* Description optionnelle */}
 							{description && (
-								<p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl break-words line-clamp-2 sm:line-clamp-none">
+								<p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl break-words">
 									{description}
 								</p>
 							)}
