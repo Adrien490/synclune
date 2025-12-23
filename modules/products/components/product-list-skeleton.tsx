@@ -32,22 +32,18 @@ export function ProductListSkeleton() {
 							</div>
 
 							{/* Contenu */}
-							<div className="flex flex-col gap-2 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
-								{/* Titre - 2 lignes (line-clamp-2) */}
-								<div className="space-y-2">
-									<Skeleton className="h-5 w-full rounded" />
-									<Skeleton className="h-5 w-3/4 rounded" />
-								</div>
+							<div className="flex flex-col gap-2.5 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
+								{/* Titre - line-clamp-1 sm:line-clamp-2 */}
+								<Skeleton className="h-5 sm:h-6 w-4/5 rounded" />
 
-								{/* Couleurs swatches */}
-								<div className="flex gap-2">
-									{Array.from({ length: 4 }).map((_, j) => (
-										<Skeleton key={j} className="size-6 rounded-full" />
-									))}
-								</div>
+								{/* Texte "X couleurs disponibles" */}
+								<Skeleton className="h-4 w-2/5 rounded" />
 
 								{/* Prix */}
 								<Skeleton className="h-6 w-1/3 rounded" />
+
+								{/* Bouton mobile */}
+								<Skeleton className="h-10 w-full rounded-md sm:hidden" />
 							</div>
 						</article>
 					</div>
