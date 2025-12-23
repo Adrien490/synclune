@@ -15,7 +15,7 @@ import {
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
-import { MAX_COLLECTIONS_IN_MENU, MAX_PRODUCT_TYPES_IN_MENU } from "@/shared/constants/navigation";
+import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
@@ -65,7 +65,7 @@ interface MenuSheetProps {
 		imageUrl?: string | null;
 	}>;
 	totalProductTypes?: number;
-	totalCollections?: number;
+	isAdmin?: boolean;
 }
 
 export function MenuSheet({
@@ -73,7 +73,7 @@ export function MenuSheet({
 	productTypes,
 	collections,
 	totalProductTypes,
-	totalCollections,
+	isAdmin = false,
 }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 	const { wishlistCount } = useBadgeCountsStore();
@@ -87,10 +87,7 @@ export function MenuSheet({
 	);
 
 	// Limites d'affichage
-	const displayedProductTypes = productTypes?.slice(0, MAX_PRODUCT_TYPES_IN_MENU);
 	const displayedCollections = collections?.slice(0, MAX_COLLECTIONS_IN_MENU);
-	const hasMoreProductTypes = (totalProductTypes ?? 0) > MAX_PRODUCT_TYPES_IN_MENU;
-	const hasMoreCollections = (totalCollections ?? 0) > MAX_COLLECTIONS_IN_MENU;
 
 	// Style commun pour les liens
 	const linkClassName = cn(
@@ -102,7 +99,7 @@ export function MenuSheet({
 
 	const activeLinkClassName = cn(
 		linkClassName,
-		"bg-primary/8 text-foreground font-semibold border-l-2 border-primary pl-5"
+		"bg-primary/12 text-foreground font-semibold border-l-2 border-primary pl-5 shadow-sm"
 	);
 
 	const ctaLinkClassName = cn(
@@ -181,11 +178,11 @@ export function MenuSheet({
 						)}
 
 						{/* Section Les créations (productTypes) */}
-						{displayedProductTypes && displayedProductTypes.length > 0 && (
+						{productTypes && productTypes.length > 0 && (
 							<section aria-labelledby="section-creations" className="mb-4">
 								<SectionHeader>Les créations</SectionHeader>
 								<Stagger stagger={0.02} delay={0.08} y={8} className="space-y-1">
-									{displayedProductTypes.map((type) => (
+									{productTypes.map((type) => (
 										<Tap key={type.slug}>
 											<SheetClose asChild>
 												<Link
@@ -206,14 +203,6 @@ export function MenuSheet({
 											</SheetClose>
 										</Tap>
 									))}
-									{hasMoreProductTypes && (
-										<SheetClose asChild>
-											<Link href="/produits" className={ctaLinkClassName}>
-												<ArrowRight className="h-4 w-4" aria-hidden="true" />
-												Voir les {totalProductTypes} créations
-											</Link>
-										</SheetClose>
-									)}
 								</Stagger>
 							</section>
 						)}
@@ -248,16 +237,16 @@ export function MenuSheet({
 														<Image
 															src={collection.imageUrl}
 															alt=""
-															width={32}
-															height={32}
-															className="rounded-md object-cover shrink-0"
+															width={48}
+															height={48}
+															className="size-12 rounded-lg object-cover shrink-0"
 														/>
 													) : (
 														<div
-															className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0"
+															className="size-12 rounded-lg bg-muted flex items-center justify-center shrink-0"
 															aria-hidden="true"
 														>
-															<FolderOpen className="h-4 w-4 text-muted-foreground" />
+															<FolderOpen className="h-5 w-5 text-muted-foreground" />
 														</div>
 													)}
 													<span>{collection.label}</span>
@@ -346,46 +335,55 @@ export function MenuSheet({
 										</Tap>
 									);
 								})}
+								{isAdmin && (
+									<Tap>
+										<SheetClose asChild>
+											<Link
+												href="/admin"
+												className={
+													isMenuItemActive("/admin")
+														? activeLinkClassName
+														: linkClassName
+												}
+												aria-current={
+													isMenuItemActive("/admin") ? "page" : undefined
+												}
+											>
+												<Settings
+													className="h-5 w-5 mr-2"
+													aria-hidden="true"
+												/>
+												<span className="flex-1">Tableau de bord</span>
+											</Link>
+										</SheetClose>
+									</Tap>
+								)}
 							</Stagger>
 						</section>
 					</nav>
 				</ScrollArea>
 
-				{/* Footer avec réseaux sociaux et admin */}
+				{/* Footer avec réseaux sociaux */}
 				<footer className="relative z-10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/40 shrink-0">
-					<div className="flex items-center justify-between">
-						{/* Réseaux sociaux à gauche */}
-						<div className="flex items-center gap-3">
-							<Link
-								href={BRAND.social.instagram.url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="inline-flex items-center justify-center size-10 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
-								aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
-							>
-								<InstagramIcon decorative size={18} />
-							</Link>
-							<Link
-								href={BRAND.social.tiktok.url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="inline-flex items-center justify-center size-10 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
-								aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
-							>
-								<TikTokIcon decorative size={18} />
-							</Link>
-						</div>
-
-						{/* Icône admin à droite */}
-						<SheetClose asChild>
-							<Link
-								href="/admin"
-								className="inline-flex items-center justify-center size-10 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
-								aria-label="Tableau de bord"
-							>
-								<Settings className="h-[18px] w-[18px]" aria-hidden="true" />
-							</Link>
-						</SheetClose>
+					<div className="flex items-center justify-center gap-4">
+						<Link
+							href={BRAND.social.instagram.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+							aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
+						>
+							<InstagramIcon decorative size={20} />
+						</Link>
+						<Link
+							href={BRAND.social.tiktok.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+							aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
+						>
+							<TikTokIcon decorative size={20} />
+						</Link>
 					</div>
 				</footer>
 			</SheetContent>

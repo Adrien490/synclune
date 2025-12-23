@@ -99,7 +99,7 @@ export async function Navbar() {
 								productTypes={productTypes}
 								collections={menuCollections}
 								totalProductTypes={productTypesData.productTypes.length}
-								totalCollections={collectionsData.collections.length}
+								isAdmin={userIsAdmin}
 							/>
 
 							{/* Recherche mobile (juste à droite du menu) */}

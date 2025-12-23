@@ -4,7 +4,6 @@ import type { Session } from "@/modules/auth/lib/auth";
  * Constantes pour limiter les items affichés dans les menus
  */
 export const MAX_COLLECTIONS_IN_MENU = 3;
-export const MAX_PRODUCT_TYPES_IN_MENU = 50;
 
 /**
  * Catégories d'items de navigation pour le menu mobile
