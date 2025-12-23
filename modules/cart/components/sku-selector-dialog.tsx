@@ -26,6 +26,7 @@ import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/produ
 import { getPrimaryImageForList } from "@/modules/products/services/product-list-helpers";
 import { filterCompatibleSkus as filterCompatibleSkusService } from "@/modules/skus/services/filter-compatible-skus";
 import { slugify } from "@/shared/utils/generate-slug";
+import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
 
 export const SKU_SELECTOR_DIALOG_ID = "sku-selector";
 
@@ -49,13 +50,6 @@ interface SkuSelectorDialogProps {
  *
  * Utilise TanStack Form (useAppForm) pour la gestion du formulaire
  */
-/** Feedback haptique léger pour confirmer les sélections sur mobile */
-function triggerHapticFeedback() {
-	if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-		navigator.vibrate(10);
-	}
-}
-
 export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 	const cart = use(cartPromise);
 	const cartItems = cart?.items?.map((item) => ({
@@ -405,25 +399,30 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 									{isPending && (
 										<div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 pointer-events-none" aria-hidden="true" />
 									)}
-									{/* Fix 4: Scroll indicator gradient */}
-									<div className="pointer-events-none absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-background to-transparent z-[5]" aria-hidden="true" />
+									{/* Fix 4: Scroll indicator gradient - amélioré */}
+									<div className="pointer-events-none absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-background via-background/80 to-transparent z-[5]" aria-hidden="true" />
 									{/* Image + Prix */}
 									<div className="flex gap-4">
-										{/* Fix 3: Image plus grande sur mobile */}
-										<div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-lg overflow-hidden bg-muted shrink-0">
+										{/* Fix 3: Image uniforme 32x32 + Fix 17: Animation zoom */}
+										<motion.div
+											key={currentImage.url}
+											initial={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0 }}
+											animate={{ scale: 1, opacity: 1 }}
+											transition={{ duration: 0.2 }}
+											className="relative w-32 h-32 rounded-lg overflow-hidden bg-muted shrink-0"
+										>
 											<Image
-												key={currentImage.url}
 												src={currentImage.url}
 												alt={currentImage.alt}
 												fill
-												className="object-cover animate-in fade-in duration-300"
+												className="object-cover"
 												placeholder={
 													currentImage.blurDataUrl ? "blur" : "empty"
 												}
 												blurDataURL={currentImage.blurDataUrl ?? undefined}
 												sizes="128px"
 											/>
-										</div>
+										</motion.div>
 										<div className="flex flex-col justify-center">
 											{/* Fix 10: Animation prix avec reduced motion support */}
 											<AnimatePresence mode="wait">
@@ -441,10 +440,15 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 													<span className="sr-only"> - Prix du produit</span>
 												</motion.span>
 											</AnimatePresence>
+											{/* Fix 19: Badge stock avec animation pulse */}
 											{selectedSku && selectedSku.inventory <= STOCK_THRESHOLDS.LOW && availableToAdd > 0 && (
-												<span className="text-xs text-amber-600 mt-1">
+												<motion.span
+													animate={shouldReduceMotion ? {} : { opacity: [1, 0.7, 1] }}
+													transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+													className="text-xs text-amber-600 mt-1 font-medium"
+												>
 													Plus que {selectedSku.inventory} en stock
-												</span>
+												</motion.span>
 											)}
 											{quantityInCart > 0 && (
 												<span className="text-xs text-muted-foreground mt-1">
@@ -480,7 +484,12 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 															</span>
 														)}
 													</legend>
-													<div className="flex flex-wrap gap-2">
+													{/* Fix 24: Carousel horizontal si > 5 couleurs */}
+													<div className={cn(
+														colors.length > 5
+															? "flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide"
+															: "flex flex-wrap gap-2"
+													)}>
 														{colors.map((color) => {
 															const isSelected =
 																color.slug === field.state.value;
@@ -491,10 +500,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																	key={color.slug}
 																	type="button"
 																	aria-pressed={isSelected}
-																	onClick={() => {
-																		triggerHapticFeedback();
-																		field.handleChange(color.slug);
-																	}}
+																	onClick={() => field.handleChange(color.slug)}
 																	disabled={!isAvailable || isPending}
 																	className={cn(
 																		"relative flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
@@ -505,18 +511,30 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																			? "border-primary bg-primary/5"
 																			: "border-border hover:border-primary/50",
 																		/* Fix 9: État disabled plus visible */
-																		!isAvailable && "opacity-40 saturate-0"
+																		!isAvailable && "opacity-40 saturate-0",
+																		/* Shrink-0 pour carousel */
+																		colors.length > 5 && "shrink-0 snap-start"
 																	)}
 																	aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
 																>
-																	{/* Fix 13: Preview couleur plus grande sur mobile */}
+																	{/* Fix 13: Preview couleur + Fix 22: Bordure couleurs claires */}
 																	<div
-																		className="w-6 h-6 sm:w-5 sm:h-5 rounded-full border border-border/50 shadow-sm shrink-0"
+																		className={cn(
+																			"w-6 h-6 sm:w-5 sm:h-5 rounded-full shadow-sm shrink-0",
+																			isLightColor(color.hex, 0.85) ? "border-2 border-border" : "border border-border/50"
+																		)}
 																		style={{ backgroundColor: color.hex }}
 																	/>
 																	<span className="text-sm">{color.name}</span>
+																	{/* Fix 20: Checkmark animé */}
 																	{isSelected && (
-																		<Check className="w-4 h-4 text-primary shrink-0" />
+																		<motion.div
+																			initial={{ scale: 0 }}
+																			animate={{ scale: 1 }}
+																			transition={{ type: "spring", stiffness: 400, damping: 15 }}
+																		>
+																			<Check className="w-4 h-4 text-primary shrink-0" />
+																		</motion.div>
 																	)}
 																	{/* Fix 9: Ligne barrée pour indisponible */}
 																	{!isAvailable && (
@@ -558,10 +576,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																	key={material.slug}
 																	type="button"
 																	aria-pressed={isSelected}
-																	onClick={() => {
-																		triggerHapticFeedback();
-																		field.handleChange(material.slug);
-																	}}
+																	onClick={() => field.handleChange(material.slug)}
 																	disabled={!isAvailable || isPending}
 																	className={cn(
 																		"relative flex items-center justify-between px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
@@ -578,8 +593,15 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																	<span className="text-sm">
 																		{material.name}
 																	</span>
+																	{/* Fix 20: Checkmark animé */}
 																	{isSelected && (
-																		<Check className="w-4 h-4 text-primary shrink-0" />
+																		<motion.div
+																			initial={{ scale: 0 }}
+																			animate={{ scale: 1 }}
+																			transition={{ type: "spring", stiffness: 400, damping: 15 }}
+																		>
+																			<Check className="w-4 h-4 text-primary shrink-0" />
+																		</motion.div>
 																	)}
 																	{/* Fix 9: Ligne barrée pour indisponible */}
 																	{!isAvailable && (
@@ -627,10 +649,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																	key={size}
 																	type="button"
 																	aria-pressed={isSelected}
-																	onClick={() => {
-																		triggerHapticFeedback();
-																		field.handleChange(size);
-																	}}
+																	onClick={() => field.handleChange(size)}
 																	disabled={!isAvailable || isPending}
 																	className={cn(
 																		"relative flex items-center justify-center px-2 py-3 min-h-[44px] rounded-lg border-2 transition-all",
@@ -647,8 +666,16 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																	<span className="text-sm font-medium truncate">
 																		{size}
 																	</span>
+																	{/* Fix 20: Checkmark animé */}
 																	{isSelected && (
-																		<Check className="w-3.5 h-3.5 text-primary absolute top-1.5 right-1.5" />
+																		<motion.div
+																			initial={{ scale: 0 }}
+																			animate={{ scale: 1 }}
+																			transition={{ type: "spring", stiffness: 400, damping: 15 }}
+																			className="absolute top-1.5 right-1.5"
+																		>
+																			<Check className="w-3.5 h-3.5 text-primary" />
+																		</motion.div>
 																	)}
 																	{/* Fix 9: Ligne barrée pour indisponible */}
 																	{!isAvailable && (
@@ -687,9 +714,20 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 													>
 														<Minus className="h-4 w-4" />
 													</Button>
-													<span className="w-12 text-center text-lg font-semibold tabular-nums">
-														{field.state.value}
-													</span>
+													{/* Fix 18: Input quantité cliquable */}
+													<input
+														type="text"
+														inputMode="numeric"
+														pattern="[0-9]*"
+														value={field.state.value}
+														onChange={(e) => {
+															const val = parseInt(e.target.value) || 1;
+															field.handleChange(Math.max(1, Math.min(maxQuantity, val)));
+														}}
+														disabled={isPending}
+														className="w-12 text-center text-lg font-semibold tabular-nums bg-transparent focus:outline-none"
+														aria-label="Quantité"
+													/>
 													<Button
 														type="button"
 														variant="outline"
@@ -711,14 +749,19 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 										)}
 									</form.Field>
 
-									{/* Message d'erreur de validation */}
+									{/* Message d'erreur de validation - Fix 21: Shake animation */}
 									<AnimatePresence mode="wait">
 										{validationErrors.length > 0 && !isPending && (
 											<motion.p
-												key="validation-error"
-												initial={{ opacity: 0, height: 0 }}
-												animate={{ opacity: 1, height: "auto" }}
+												key={validationErrors.join()}
+												initial={{ opacity: 0, height: 0, x: 0 }}
+												animate={{
+													opacity: 1,
+													height: "auto",
+													x: shouldReduceMotion ? 0 : [0, -8, 8, -8, 0]
+												}}
 												exit={{ opacity: 0, height: 0 }}
+												transition={{ duration: 0.35 }}
 												className="text-sm text-amber-600 overflow-hidden"
 												role="alert"
 											>
@@ -740,8 +783,14 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 											className="w-full"
 											size="lg"
 										>
-											{isPending ? "Ajout en cours..." : "Ajouter au panier"}
+											{isPending ? "Ajout en cours..." : `Ajouter au panier · ${formatEuro(displayPrice * quantity)}`}
 										</Button>
+										{/* Fix 16: Message validation proactive */}
+										{!canAddToCart && validationErrors.length > 0 && !isPending && (
+											<p className="text-xs text-muted-foreground text-center mt-2">
+												{validationErrors[0]}
+											</p>
+										)}
 									</ResponsiveDialogFooter>
 								</>
 							);
