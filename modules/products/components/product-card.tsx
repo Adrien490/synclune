@@ -162,7 +162,7 @@ export function ProductCard({
 				>
 					<h3
 						id={titleId}
-						className="line-clamp-1 sm:line-clamp-2 font-sans text-foreground text-base sm:text-lg break-words"
+						className="font-sans text-foreground text-base sm:text-lg break-words"
 						itemProp="name"
 					>
 						{title}

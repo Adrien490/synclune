@@ -95,7 +95,7 @@ export function AddToCartCardButton({
 								"bg-primary text-primary-foreground",
 								"font-medium text-sm",
 								"shadow-md",
-								"active:scale-[0.98]",
+								"active:scale-95",
 								"motion-safe:transition-all motion-safe:duration-200"
 							)
 						: // Icon variant: styles responsive existants
