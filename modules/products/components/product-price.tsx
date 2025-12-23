@@ -1,6 +1,6 @@
 import { formatEuro } from "@/shared/utils/format-euro";
 
-interface ProductPriceCompactProps {
+interface ProductPriceProps {
 	price: number;
 	compareAtPrice?: number | null;
 	className?: string;
@@ -10,11 +10,11 @@ interface ProductPriceCompactProps {
  * Affichage compact du prix pour les cartes produits
  * Note: Schema.org géré par le parent (ProductCard)
  */
-export function ProductPriceCompact({
+export function ProductPrice({
 	price,
 	compareAtPrice,
 	className = "",
-}: ProductPriceCompactProps) {
+}: ProductPriceProps) {
 	const hasDiscount = compareAtPrice && compareAtPrice > price;
 
 	return (

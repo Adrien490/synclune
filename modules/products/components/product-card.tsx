@@ -1,22 +1,17 @@
-"use client";
-
-import { useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
 import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
-import { ProductPriceCompact } from "./product-price";
+import { ProductPrice } from "./product-price";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
-import { ColorSwatches } from "./color-swatches";
 import type { Product } from "@/modules/products/types/product.types";
 import {
 	getPrimaryPriceForList,
 	getStockInfoForList,
 	getPrimaryImageForList,
 	getAvailableColorsForList,
-	getSkuByColorForList,
 	getPrimarySkuForList,
 } from "@/modules/products/services/product-list-helpers";
 
@@ -24,7 +19,7 @@ interface ProductCardProps {
 	product: Product;
 	/** Index dans la liste (pour priority images above-fold) */
 	index?: number;
-	/** Set des SKU IDs présents dans la wishlist (pour état dynamique selon couleur sélectionnée) */
+	/** Set des SKU IDs présents dans la wishlist */
 	wishlistSkuIds?: Set<string>;
 }
 
@@ -32,89 +27,46 @@ interface ProductCardProps {
  * Carte produit pour l'affichage dans les grilles (catalogue, collections, recherche).
  *
  * @description
- * Composant optimisé pour les Core Web Vitals avec:
+ * Server component optimisé pour les Core Web Vitals avec:
  * - Preload des images above-fold (index < 4)
  * - Schema.org Product/Offer complet
  * - Support responsive
  * - Animations respectant prefers-reduced-motion (WCAG 2.3.3)
- * - Swatches couleur interactifs (changent l'image au clic)
+ * - WishlistButton et AddToCartCardButton comme client islands
  *
  * @example
  * ```tsx
  * <ProductCard product={product} index={0} />
  * ```
- *
- * @see {@link ProductPriceCompact} - Sous-composant utilisé pour l'affichage du prix
  */
 export function ProductCard({
 	product,
 	index,
 	wishlistSkuIds,
 }: ProductCardProps) {
-	// État local pour la couleur sélectionnée
-	const [selectedColorSlug, setSelectedColorSlug] = useState<string | null>(null);
-
-	// Déstructuration des données du produit
 	const { slug, title } = product;
 	const { price, compareAtPrice } = getPrimaryPriceForList(product);
 	const stockInfo = getStockInfoForList(product);
 	const primaryImage = getPrimaryImageForList(product);
 	const colors = getAvailableColorsForList(product);
+	const defaultSku = getPrimarySkuForList(product);
 
 	const { status: stockStatus, message: stockMessage, totalInventory: inventory } = stockInfo;
 
-	// Nombre de couleurs pour déterminer l'interactivité
-	const hasMultipleColors = colors.length > 1;
-
-	// Image dynamique selon la couleur sélectionnée
-	const currentImage = (() => {
-		if (selectedColorSlug && product.skus) {
-			const skuWithColor = product.skus.find(
-				(sku) => sku.color?.slug === selectedColorSlug && sku.images && sku.images.length > 0
-			);
-			if (skuWithColor?.images?.length) {
-				const img = skuWithColor.images.find((i) => i.isPrimary) || skuWithColor.images[0];
-				return {
-					url: img.url,
-					alt: img.altText || `${title} - ${skuWithColor.color?.name || selectedColorSlug}`,
-					blurDataUrl: img.blurDataUrl,
-				};
-			}
-		}
-		return primaryImage;
-	})();
-
-	// SKU dynamique selon la couleur sélectionnée (pour panier)
-	const currentSku = getSkuByColorForList(product, selectedColorSlug);
-
-	// SKU par défaut pour la wishlist (unicité par produit)
-	// Utilise getPrimarySkuForList qui respecte isDefault + fallbacks intelligents
-	const defaultSku = getPrimarySkuForList(product);
-
 	// Vérifie si n'importe quel SKU du produit est dans la wishlist
-	// Important : on ne compare pas juste le defaultSku car l'utilisateur peut avoir
-	// ajouté un autre SKU (variante) à sa wishlist
 	const isProductInWishlist = product.skus?.some(sku => wishlistSkuIds?.has(sku.id)) ?? false;
 
 	// Génération ID unique pour aria-labelledby
-	// Sanitise le slug pour éviter les ID HTML invalides (accents, apostrophes, etc.)
 	const sanitizedSlug = slug.replace(/[^a-z0-9-]/gi, "");
 	const titleId = `product-title-${sanitizedSlug}`;
 
-	// Nom de la couleur sélectionnée pour l'aria-live (feedback screen readers)
-	const selectedColorName = selectedColorSlug
-		? colors.find((c) => c.slug === selectedColorSlug)?.name
-		: null;
-
-	// Déterminer si on affiche le badge urgency (stock bas mais pas rupture)
+	// Badge urgency (stock bas mais pas rupture)
 	const showUrgencyBadge =
 		stockStatus === "in_stock" &&
 		typeof inventory === "number" &&
 		inventory > 0 &&
 		inventory <= STOCK_THRESHOLDS.LOW;
 
-	// URL canonique uniquement (stratégie SEO e-commerce recommandée)
-	// Toujours pointer vers /creations/[slug] pour consolider les signaux SEO
 	const productUrl = `/creations/${slug}`;
 
 	return (
@@ -122,11 +74,8 @@ export function ProductCard({
 			aria-labelledby={titleId}
 			className={cn(
 				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent gap-4",
-				// Transition optimisée avec cubic-bezier pour fluidité
 				"transition-all duration-300 ease-out",
-				// Border, shadow et scale au hover (can-hover pour desktop uniquement)
 				"shadow-sm can-hover:hover:border-primary/30 can-hover:hover:shadow-xl can-hover:hover:shadow-primary/15",
-				// Focus-within pour indiquer le focus sur les liens enfants (a11y)
 				"focus-within:border-primary/30 focus-within:shadow-lg focus-within:shadow-primary/10",
 				"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01] will-change-transform"
 			)}
@@ -136,7 +85,7 @@ export function ProductCard({
 			{/* Conteneur image avec boutons interactifs */}
 			<div className="product-card-media relative aspect-square sm:aspect-4/5 overflow-hidden bg-muted rounded-lg">
 
-				{/* Badge rupture de stock - Style plus doux */}
+				{/* Badge rupture de stock */}
 				{stockStatus === "out_of_stock" && (
 					<div
 						role="status"
@@ -157,8 +106,7 @@ export function ProductCard({
 					</div>
 				)}
 
-				{/* Bouton wishlist - EN DEHORS du Link */}
-				{/* Utilise toujours le SKU par défaut (unicité par produit, pas par variante) */}
+				{/* Bouton wishlist (client island) */}
 				{defaultSku && (
 					<WishlistButton
 						skuId={defaultSku.id}
@@ -169,21 +117,16 @@ export function ProductCard({
 				)}
 
 				<Image
-					key={currentImage.url}
-					src={currentImage.url}
-					alt={currentImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
+					src={primaryImage.url}
+					alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
 					fill
 					className={cn(
 						"object-cover rounded-lg",
-						// Transition fluide pour changement de couleur et hover
 						"transition-all duration-300 ease-out",
-						"motion-safe:can-hover:group-hover:scale-[1.08]",
-						// Animation d'entree lors du changement d'image
-						"motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300"
+						"motion-safe:can-hover:group-hover:scale-[1.08]"
 					)}
-					placeholder={currentImage.blurDataUrl ? "blur" : "empty"}
-					blurDataURL={currentImage.blurDataUrl ?? undefined}
-					// Preload pour les 4 premières images (above-fold) - Next.js 16
+					placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
+					blurDataURL={primaryImage.blurDataUrl ?? undefined}
 					preload={index !== undefined && index < 4}
 					loading={index !== undefined && index < 4 ? undefined : "lazy"}
 					sizes={IMAGE_SIZES.PRODUCT_CARD}
@@ -198,24 +141,16 @@ export function ProductCard({
 					tabIndex={-1}
 				/>
 
-				{/* Bouton d'ajout au panier - Desktop uniquement (overlay) */}
-				{currentSku && stockStatus === "in_stock" && (
+				{/* Bouton d'ajout au panier - Desktop (client island) */}
+				{defaultSku && stockStatus === "in_stock" && (
 					<AddToCartCardButton
-						skuId={currentSku.id}
+						skuId={defaultSku.id}
 						productTitle={title}
 						product={product}
-						preselectedColor={selectedColorSlug}
 						className="hidden sm:block"
 					/>
 				)}
 			</div>
-
-			{/* Region aria-live pour annoncer les changements de couleur aux screen readers */}
-			{selectedColorName && (
-				<div aria-live="polite" aria-atomic="true" className="sr-only">
-					Variante sélectionnée : {selectedColorName}
-				</div>
-			)}
 
 			{/* Contenu de la card */}
 			<div className="flex flex-col gap-2.5 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
@@ -239,16 +174,16 @@ export function ProductCard({
 					<span className="sr-only">{stockMessage}</span>
 				)}
 
-				{/* Pastilles couleur interactives - Entre titre et prix */}
-				{hasMultipleColors && (
-					<ColorSwatches
-						colors={colors}
-						interactive
-						selectedColor={selectedColorSlug}
-						onColorSelect={setSelectedColorSlug}
-						size="lg"
-						maxVisible={4}
-					/>
+				{/* Indicateur couleurs avec lien */}
+				{colors.length > 1 && (
+					<p className="text-sm text-muted-foreground">
+						<Link
+							href={productUrl}
+							className="underline underline-offset-4 hover:text-foreground transition-colors"
+						>
+							{colors.length} couleurs disponibles
+						</Link>
+					</p>
 				)}
 
 				{/* Brand Schema.org (Synclune) */}
@@ -274,16 +209,15 @@ export function ProductCard({
 						}
 					/>
 					<meta itemProp="url" content={productUrl} />
-					<ProductPriceCompact price={price} compareAtPrice={compareAtPrice} />
+					<ProductPrice price={price} compareAtPrice={compareAtPrice} />
 				</div>
 
-				{/* Bouton d'ajout au panier - Mobile pleine largeur */}
-				{currentSku && stockStatus === "in_stock" && (
+				{/* Bouton d'ajout au panier - Mobile (client island) */}
+				{defaultSku && stockStatus === "in_stock" && (
 					<AddToCartCardButton
-						skuId={currentSku.id}
+						skuId={defaultSku.id}
 						productTitle={title}
 						product={product}
-						preselectedColor={selectedColorSlug}
 						variant="mobile-full"
 						className="sm:hidden"
 					/>

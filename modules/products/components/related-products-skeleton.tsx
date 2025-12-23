@@ -81,7 +81,7 @@ function ProductCardSkeleton() {
 					<div className="h-6 w-3/4 bg-muted animate-pulse rounded" />
 				</div>
 
-				{/* Prix - ProductPriceCompact avec size="sm" → text-sm → h-5 */}
+				{/* Prix - ProductPrice → text-sm → h-5 */}
 				<div className="h-5 w-20 bg-muted animate-pulse rounded" />
 			</div>
 		</div>

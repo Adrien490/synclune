@@ -9,24 +9,24 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Mes Collections - Synclune | Collections de bijoux artisanaux",
+	title: "Les Collections - Synclune | Collections de bijoux artisanaux",
 	description:
-		"Explorez toutes mes collections de bijoux colorés et originaux faits main. Chaque collection a son univers : Pokémon, Van Gogh, et bien d'autres !",
+		"Explorez toutes les collections de bijoux colorés et originaux faits main. Chaque collection a son univers : Pokémon, Van Gogh, et bien d'autres !",
 	keywords:
 		"collections bijoux, bijoux artisanaux, collections thématiques, bijoux faits main, créations uniques, bijoux pokemon, bijoux van gogh",
 	alternates: {
 		canonical: "/collections",
 	},
 	openGraph: {
-		title: "Mes Collections - Synclune | Bijoux artisanaux faits main",
+		title: "Les Collections - Synclune | Bijoux artisanaux faits main",
 		description:
-			"Explorez toutes mes collections de bijoux colorés faits main. Chaque collection a son univers unique !",
+			"Explorez toutes les collections de bijoux colorés faits main. Chaque collection a son univers unique !",
 		url: "https://synclune.fr/collections",
 		type: "website",
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Mes Collections | Synclune",
+		title: "Les Collections | Synclune",
 		description:
 			"Collections de bijoux colorés faits main à Nantes. Univers Pokémon, Van Gogh et bien d'autres !",
 	},
@@ -99,7 +99,7 @@ export default async function CollectionsPage({
 			<ParticleSystem className="fixed inset-0 z-0" />
 
 			<PageHeader
-				title="Mes collections"
+				title="Les collections"
 				breadcrumbs={[{ label: "Collections", href: "/collections" }]}
 			/>
 
