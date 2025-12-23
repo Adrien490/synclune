@@ -7,7 +7,7 @@ export const CART_ERROR_MESSAGES = {
 	// Erreurs liées au stock
 	// Note: On ne divulgue pas le stock exact pour eviter les fuites d'information business
 	INSUFFICIENT_STOCK: (_available: number) =>
-		"Stock insuffisant pour cette quantite",
+		"Ce produit n'est plus disponible pour le moment",
 	OUT_OF_STOCK: "Cet article n'est plus en stock",
 	STOCK_CHANGED: "Le stock a changé depuis votre dernière visite",
 

@@ -14,6 +14,7 @@ import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 import Image from "next/image";
+import { COLLECTION_IMAGE_SIZES, COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-sizes.constants";
 
 /**
  * Navigation Desktop - Avec NavigationMenu
@@ -95,9 +96,10 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 																	width={64}
 																	height={64}
 																	className="w-16 h-16 object-cover rounded-md bg-secondary/20 shrink-0"
-																	sizes="64px"
-																	quality={90}
-																	placeholder="empty"
+																	sizes={COLLECTION_IMAGE_SIZES.MENU_DESKTOP}
+																	quality={COLLECTION_IMAGE_QUALITY}
+																	placeholder={child.blurDataUrl ? "blur" : "empty"}
+																	blurDataURL={child.blurDataUrl ?? undefined}
 																/>
 															) : (
 																<div

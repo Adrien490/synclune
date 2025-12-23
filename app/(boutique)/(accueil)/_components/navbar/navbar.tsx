@@ -58,11 +58,12 @@ export async function Navbar() {
 		label: t.label,
 	}));
 
-	// Collections avec imageUrl pour le menu mobile (produit vedette)
+	// Collections avec imageUrl et blurDataUrl pour les menus (produit vedette)
 	const menuCollections = collectionsData.collections.map((c) => ({
 		slug: c.slug,
 		label: c.name,
 		imageUrl: c.products[0]?.product?.skus[0]?.images[0]?.url ?? null,
+		blurDataUrl: c.products[0]?.product?.skus[0]?.images[0]?.blurDataUrl ?? null,
 	}));
 
 	// Générer les items de navigation mobile en fonction de la session et statut admin

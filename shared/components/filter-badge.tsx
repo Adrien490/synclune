@@ -84,13 +84,8 @@ export function FilterBadge({
 				tabIndex={isMobile ? 0 : undefined}
 				aria-label={isMobile ? ariaLabelRemove : ariaLabelGroup}
 			>
-				<span className="truncate">
-					<span className="font-medium">{displayLabel}</span>
-					{displayValue && displayValue.length > 0 && (
-						<span className="text-muted-foreground ml-1">
-							: {displayValue}
-						</span>
-					)}
+				<span className="truncate font-medium">
+					{displayValue && displayValue.length > 0 ? displayValue : displayLabel}
 				</span>
 
 				{/* Bouton X visible seulement sur desktop */}

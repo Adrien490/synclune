@@ -4,7 +4,7 @@ import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import ScrollFade from "@/shared/components/ui/scroll-fade";
 import { BRAND } from "@/shared/constants/brand";
 import {
 	Sheet,
@@ -16,6 +16,7 @@ import {
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
+import { COLLECTION_IMAGE_SIZES, COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-sizes.constants";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
@@ -63,6 +64,7 @@ interface MenuSheetProps {
 		slug: string;
 		label: string;
 		imageUrl?: string | null;
+		blurDataUrl?: string | null;
 	}>;
 	totalProductTypes?: number;
 	isAdmin?: boolean;
@@ -145,15 +147,16 @@ export function MenuSheet({
 				</SheetHeader>
 
 				{/* Contenu scrollable */}
-				<ScrollArea className="flex-1 min-h-0">
-					<nav
-						aria-label="Menu principal mobile"
-						className={cn(
-							"relative z-10 px-6 pt-6 pb-4",
-							"motion-safe:transition-opacity motion-safe:duration-200",
-							isOpen ? "opacity-100" : "opacity-0"
-						)}
-					>
+				<div className="flex-1 min-h-0">
+					<ScrollFade axis="vertical" className="h-full" hideScrollbar={false}>
+						<nav
+							aria-label="Menu principal mobile"
+							className={cn(
+								"relative z-10 px-6 pt-14 pb-4",
+								"motion-safe:transition-opacity motion-safe:duration-200",
+								isOpen ? "opacity-100" : "opacity-0"
+							)}
+						>
 						{/* Accueil */}
 						{homeItem && (
 							<Stagger stagger={0.025} delay={0.05} y={10} className="mb-4">
@@ -240,6 +243,10 @@ export function MenuSheet({
 															width={48}
 															height={48}
 															className="size-12 rounded-lg object-cover shrink-0"
+															sizes={COLLECTION_IMAGE_SIZES.MENU_MOBILE}
+															quality={COLLECTION_IMAGE_QUALITY}
+															placeholder={collection.blurDataUrl ? "blur" : "empty"}
+															blurDataURL={collection.blurDataUrl ?? undefined}
 														/>
 													) : (
 														<div
@@ -335,55 +342,46 @@ export function MenuSheet({
 										</Tap>
 									);
 								})}
-								{isAdmin && (
-									<Tap>
-										<SheetClose asChild>
-											<Link
-												href="/admin"
-												className={
-													isMenuItemActive("/admin")
-														? activeLinkClassName
-														: linkClassName
-												}
-												aria-current={
-													isMenuItemActive("/admin") ? "page" : undefined
-												}
-											>
-												<Settings
-													className="h-5 w-5 mr-2"
-													aria-hidden="true"
-												/>
-												<span className="flex-1">Tableau de bord</span>
-											</Link>
-										</SheetClose>
-									</Tap>
-								)}
 							</Stagger>
 						</section>
-					</nav>
-				</ScrollArea>
+						</nav>
+					</ScrollFade>
+				</div>
 
 				{/* Footer avec réseaux sociaux */}
-				<footer className="relative z-10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/40 shrink-0">
-					<div className="flex items-center justify-center gap-4">
-						<Link
-							href={BRAND.social.instagram.url}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
-							aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
-						>
-							<InstagramIcon decorative size={20} />
-						</Link>
-						<Link
-							href={BRAND.social.tiktok.url}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
-							aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
-						>
-							<TikTokIcon decorative size={20} />
-						</Link>
+				<footer className="relative z-10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-4">
+							<Link
+								href={BRAND.social.instagram.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+								aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
+							>
+								<InstagramIcon decorative size={20} />
+							</Link>
+							<Link
+								href={BRAND.social.tiktok.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+								aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
+							>
+								<TikTokIcon decorative size={20} />
+							</Link>
+						</div>
+						{isAdmin && (
+							<SheetClose asChild>
+								<Link
+									href="/admin"
+									className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+									aria-label="Tableau de bord"
+								>
+									<Settings size={20} aria-hidden="true" />
+								</Link>
+							</SheetClose>
+						)}
 					</div>
 				</footer>
 			</SheetContent>

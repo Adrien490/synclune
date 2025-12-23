@@ -42,6 +42,7 @@ export type NavItemChild = {
 	icon?: IconName;
 	description?: string | null;
 	imageUrl?: string | null;
+	blurDataUrl?: string | null;
 };
 
 export type NavItemWithChildren = {
@@ -121,7 +122,7 @@ export const desktopNavItems = [
 export function getMobileNavItems(
 	session: Session | null,
 	productTypes?: Array<{ slug: string; label: string }>,
-	collections?: Array<{ slug: string; label: string; description?: string | null; imageUrl?: string | null }>,
+	collections?: Array<{ slug: string; label: string; description?: string | null; imageUrl?: string | null; blurDataUrl?: string | null }>,
 	isAdmin?: boolean
 ): NavItemWithChildren[] {
 	// Item "Les créations" avec collapsible des types
@@ -159,6 +160,7 @@ export function getMobileNavItems(
 						label: collection.label,
 						description: collection.description,
 						imageUrl: collection.imageUrl,
+						blurDataUrl: collection.blurDataUrl,
 					})),
 			  ]
 			: COLLECTIONS_MENU_ITEMS, // Fallback sur les collections statiques

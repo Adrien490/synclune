@@ -16,4 +16,16 @@ export const COLLECTION_IMAGE_SIZES = {
 		"(max-width: 389px) 200px, (max-width: 640px) 72vw, 280px",
 
 	COLLECTION_HERO: "(max-width: 1024px) 100vw, 50vw",
+
+	// Menu mobile: 48x48px (size-12)
+	MENU_MOBILE: "48px",
+
+	// Menu desktop dropdown: 64x64px (w-16 h-16)
+	MENU_DESKTOP: "64px",
 } as const;
+
+/**
+ * Qualite d'image standardisee pour les collections
+ * Balance entre qualite visuelle et taille du fichier
+ */
+export const COLLECTION_IMAGE_QUALITY = 85;
