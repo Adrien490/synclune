@@ -15,6 +15,8 @@ interface AddToCartCardButtonProps {
 	product?: Product;
 	/** Couleur pré-sélectionnée depuis les swatches de la ProductCard */
 	preselectedColor?: string | null;
+	/** Variante d'affichage: "icon" (défaut) ou "mobile-full" (pleine largeur mobile) */
+	variant?: "icon" | "mobile-full";
 	className?: string;
 }
 
@@ -35,8 +37,10 @@ export function AddToCartCardButton({
 	productTitle,
 	product,
 	preselectedColor,
+	variant = "icon",
 	className,
 }: AddToCartCardButtonProps) {
+	const isMobileFull = variant === "mobile-full";
 	const { action, isPending } = useAddToCart();
 	const { open: openSkuSelector } = useDialog(SKU_SELECTOR_DIALOG_ID);
 
@@ -61,15 +65,17 @@ export function AddToCartCardButton({
 		<form
 			action={action}
 			className={cn(
-				// Position absolue dans les deux cas
-				"absolute z-30",
-				// Mobile: coin bas droite
-				"bottom-2.5 right-2.5",
-				// Desktop: pleine largeur en bas
-				"sm:bottom-0 sm:right-0 sm:inset-x-0",
-				// Visibilité
-				"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100",
-				"transition-opacity duration-300",
+				isMobileFull
+					? // Mobile full-width: position relative dans le flux
+						"relative w-full"
+					: // Icon variant: position absolue overlay
+						cn(
+							"absolute z-30",
+							"bottom-2.5 right-2.5",
+							"sm:bottom-0 sm:right-0 sm:inset-x-0",
+							"opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100",
+							"transition-opacity duration-300"
+						),
 				className
 			)}
 		>
@@ -80,44 +86,66 @@ export function AddToCartCardButton({
 				disabled={isPending}
 				aria-busy={isPending}
 				onClick={handleClick}
-				size="icon"
+				size={isMobileFull ? "default" : "icon"}
 				className={cn(
-					// Mobile: fond transparent comme WishlistButton (cohérence)
-					"size-11 rounded-full",
-					"bg-transparent",
-					"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
-					// Desktop: pleine largeur avec fond primary opaque
-					"sm:w-full sm:h-auto sm:rounded-none sm:py-3 sm:px-4",
-					"sm:bg-primary sm:text-primary-foreground",
-					"sm:shadow-lg sm:shadow-black/20",
-					// Active/hover desktop - feedback visuel clair
-					"sm:hover:bg-primary/85 sm:hover:shadow-xl sm:hover:-translate-y-0.5",
-					"sm:active:bg-primary/90 sm:active:shadow-md sm:active:translate-y-0",
-					// Transitions
-					"motion-safe:transition-all motion-safe:duration-200",
-					// Disabled
+					isMobileFull
+						? // Mobile full-width: bouton pleine largeur avec fond primary
+							cn(
+								"w-full h-11 rounded-lg",
+								"bg-primary text-primary-foreground",
+								"font-medium text-sm",
+								"shadow-md",
+								"active:scale-[0.98]",
+								"motion-safe:transition-all motion-safe:duration-200"
+							)
+						: // Icon variant: styles responsive existants
+							cn(
+								// Mobile: fond transparent comme WishlistButton (cohérence)
+								"size-11 rounded-full",
+								"bg-transparent",
+								"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
+								// Desktop: pleine largeur avec fond primary opaque
+								"sm:w-full sm:h-auto sm:rounded-none sm:py-3 sm:px-4",
+								"sm:bg-primary sm:text-primary-foreground",
+								"sm:shadow-lg sm:shadow-black/20",
+								// Active/hover desktop - feedback visuel clair
+								"sm:hover:bg-primary/85 sm:hover:shadow-xl sm:hover:-translate-y-0.5",
+								"sm:active:bg-primary/90 sm:active:shadow-md sm:active:translate-y-0",
+								// Transitions
+								"motion-safe:transition-all motion-safe:duration-200"
+							),
+					// Disabled (commun)
 					"disabled:hover:scale-100 disabled:cursor-not-allowed",
-					// Animation pulse + ring pendant le chargement (comme wishlist)
+					// Animation pulse + ring pendant le chargement
 					isPending && "motion-safe:animate-pulse ring-2 ring-primary/30"
 				)}
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
-				{/* Mobile: icone ShoppingCart (cohérence avec navbar) + drop-shadow (cohérence avec wishlist) */}
-				<ShoppingCart
-					size={20}
-					strokeWidth={2}
-					className={cn(
-						"sm:hidden text-primary",
-						"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
-						"motion-safe:transition-all motion-safe:duration-200",
-						isPending && "opacity-60"
-					)}
-					aria-hidden="true"
-				/>
-				{/* Desktop: texte */}
-				<span className="hidden sm:inline text-sm font-medium">
-					Ajouter au panier
-				</span>
+				{isMobileFull ? (
+					// Mobile full-width: texte uniquement
+					<span className={cn("text-sm font-medium", isPending && "opacity-60")}>
+						{isPending ? "Ajout..." : "Ajouter au panier"}
+					</span>
+				) : (
+					<>
+						{/* Mobile icon: icone ShoppingCart + drop-shadow */}
+						<ShoppingCart
+							size={20}
+							strokeWidth={2}
+							className={cn(
+								"sm:hidden text-primary",
+								"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
+								"motion-safe:transition-all motion-safe:duration-200",
+								isPending && "opacity-60"
+							)}
+							aria-hidden="true"
+						/>
+						{/* Desktop: texte */}
+						<span className="hidden sm:inline text-sm font-medium">
+							Ajouter au panier
+						</span>
+					</>
+				)}
 			</Button>
 		</form>
 	);

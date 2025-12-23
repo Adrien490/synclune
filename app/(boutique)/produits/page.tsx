@@ -296,7 +296,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 					</Toolbar>
 
 					{hasActiveFilters && (
-						<ProductFilterBadges colors={colors} materials={materials} />
+						<ProductFilterBadges colors={colors} materials={materials} productTypes={productTypes} />
 					)}
 
 					<Suspense fallback={<ProductListSkeleton />}>

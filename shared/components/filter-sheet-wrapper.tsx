@@ -177,17 +177,13 @@ export function FilterSheetWrapper({
 
 				<SheetFooter className="px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] border-t border-primary/10 bg-background shrink-0">
 					{showCancelButton ? (
-						<ButtonGroup className="w-full" aria-label="Actions de filtrage">
-							<SheetClose asChild className="flex-1">
-								<Button variant="secondary" disabled={isPending}>
-									{cancelButtonText}
-								</Button>
-							</SheetClose>
+						<>
+							{/* Mobile: bouton pleine largeur */}
 							<Button
 								type="button"
 								onClick={handleApply}
 								disabled={isPending}
-								className="flex-1"
+								className="w-full sm:hidden"
 							>
 								{isPending && (
 									<Loader2
@@ -197,7 +193,29 @@ export function FilterSheetWrapper({
 								)}
 								{applyButtonText}
 							</Button>
-						</ButtonGroup>
+							{/* Desktop: groupe de boutons */}
+							<ButtonGroup className="hidden sm:flex w-full" aria-label="Actions de filtrage">
+								<SheetClose asChild className="flex-1">
+									<Button variant="secondary" disabled={isPending}>
+										{cancelButtonText}
+									</Button>
+								</SheetClose>
+								<Button
+									type="button"
+									onClick={handleApply}
+									disabled={isPending}
+									className="flex-1"
+								>
+									{isPending && (
+										<Loader2
+											className="h-4 w-4 animate-spin"
+											aria-hidden="true"
+										/>
+									)}
+									{applyButtonText}
+								</Button>
+							</ButtonGroup>
+						</>
 					) : (
 						<Button
 							type="button"

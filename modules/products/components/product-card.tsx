@@ -261,34 +261,33 @@ export function ProductCard({
 					<meta itemProp="name" content="Synclune" />
 				</div>
 
-				{/* Prix + bouton ajout panier */}
-				<div className="flex items-center justify-between gap-2">
-					<div itemProp="offers" itemScope itemType="https://schema.org/Offer">
-						<meta itemProp="priceCurrency" content="EUR" />
-						<meta itemProp="price" content={(price / 100).toString()} />
-						<meta
-							itemProp="availability"
-							content={
-								stockStatus === "out_of_stock"
-									? "https://schema.org/OutOfStock"
-									: "https://schema.org/InStock"
-							}
-						/>
-						<meta itemProp="url" content={productUrl} />
-						<ProductPriceCompact price={price} compareAtPrice={compareAtPrice} />
-					</div>
-
-					{/* Bouton d'ajout au panier - Mobile uniquement */}
-					{currentSku && stockStatus === "in_stock" && (
-						<AddToCartCardButton
-							skuId={currentSku.id}
-							productTitle={title}
-							product={product}
-							preselectedColor={selectedColorSlug}
-							className="sm:hidden static"
-						/>
-					)}
+				{/* Prix */}
+				<div itemProp="offers" itemScope itemType="https://schema.org/Offer">
+					<meta itemProp="priceCurrency" content="EUR" />
+					<meta itemProp="price" content={(price / 100).toString()} />
+					<meta
+						itemProp="availability"
+						content={
+							stockStatus === "out_of_stock"
+								? "https://schema.org/OutOfStock"
+								: "https://schema.org/InStock"
+						}
+					/>
+					<meta itemProp="url" content={productUrl} />
+					<ProductPriceCompact price={price} compareAtPrice={compareAtPrice} />
 				</div>
+
+				{/* Bouton d'ajout au panier - Mobile pleine largeur */}
+				{currentSku && stockStatus === "in_stock" && (
+					<AddToCartCardButton
+						skuId={currentSku.id}
+						productTitle={title}
+						product={product}
+						preselectedColor={selectedColorSlug}
+						variant="mobile-full"
+						className="sm:hidden"
+					/>
+				)}
 			</div>
 		</article>
 	);
