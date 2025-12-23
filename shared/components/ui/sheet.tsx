@@ -79,13 +79,18 @@ function SheetOverlay({
 function SheetContent({
 	className,
 	children,
+	overlayClassName,
+	showCloseButton = true,
 	...props
-}: React.ComponentProps<typeof SheetPrimitive.Content>) {
+}: React.ComponentProps<typeof SheetPrimitive.Content> & {
+	overlayClassName?: string;
+	showCloseButton?: boolean;
+}) {
 	const { direction } = React.useContext(SheetContext);
 
 	return (
 		<SheetPortal>
-			<SheetOverlay />
+			<SheetOverlay className={overlayClassName} />
 			<SheetPrimitive.Content
 				data-slot="sheet-content"
 				className={cn(
@@ -104,10 +109,12 @@ function SheetContent({
 				{...props}
 			>
 				{children}
-				<SheetPrimitive.Close className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-secondary absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 rounded-md p-3 opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none">
-					<XIcon className="size-5" />
-					<span className="sr-only">Fermer</span>
-				</SheetPrimitive.Close>
+				{showCloseButton && (
+					<SheetPrimitive.Close className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-secondary absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 rounded-md p-3 opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none">
+						<XIcon className="size-5" />
+						<span className="sr-only">Fermer</span>
+					</SheetPrimitive.Close>
+				)}
 			</SheetPrimitive.Content>
 		</SheetPortal>
 	);

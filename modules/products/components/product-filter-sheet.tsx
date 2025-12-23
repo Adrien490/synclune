@@ -221,7 +221,6 @@ export function ProductFilterSheet({
 			hideTrigger
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
-			onClearAll={clearAllFilters}
 			onApply={() => form.handleSubmit()}
 			isPending={isPending}
 			title="Filtres"

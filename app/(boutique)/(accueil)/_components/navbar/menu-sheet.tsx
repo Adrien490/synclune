@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import type { Session } from "@/modules/auth/lib/auth";
-import { Fade } from "@/shared/components/animations/fade";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import {
@@ -19,37 +16,12 @@ import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
 import { Heart, Menu } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 /** HREFs de la zone compte (memoisation) */
 const ACCOUNT_HREFS = ["/compte", "/connexion", "/admin", "/favoris"] as const;
 /** HREFs de la zone decouverte (memoisation) */
 const DISCOVERY_HREFS = ["/", "/collections", "/produits", "/personnalisation"] as const;
-
-/**
- * Section utilisateur - Affiche l'état de connexion en haut du menu
- */
-function MenuUserSection({ session }: { session: Session | null }) {
-	if (!session?.user) {
-		return (
-			<div className="px-6 py-3 border-b border-border/40">
-				<p className="text-sm text-muted-foreground">
-					Connectez-vous pour accéder à vos commandes
-				</p>
-			</div>
-		);
-	}
-
-	return (
-		<div className="px-6 py-3 border-b border-border/40">
-			<p className="font-medium truncate">
-				{session.user.name || "Mon compte"}
-			</p>
-			<p className="text-xs text-muted-foreground truncate">
-				{session.user.email}
-			</p>
-		</div>
-	);
-}
 
 /**
  * Composant Menu Sheet pour la navigation mobile
@@ -70,10 +42,9 @@ function MenuUserSection({ session }: { session: Session | null }) {
  */
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
-	session: Session | null;
 }
 
-export function MenuSheet({ navItems, session }: MenuSheetProps) {
+export function MenuSheet({ navItems}: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 	const { wishlistCount } = useBadgeCountsStore();
 
@@ -170,12 +141,7 @@ export function MenuSheet({ navItems, session }: MenuSheetProps) {
 					</p>
 				</SheetHeader>
 
-				{/* Section utilisateur */}
-				<div className="pt-12">
-					<Fade y={5} duration={0.3}>
-						<MenuUserSection session={session} />
-					</Fade>
-				</div>
+
 
 				{/* Skip link pour accéder directement à la section compte */}
 				<a
@@ -193,7 +159,7 @@ export function MenuSheet({ navItems, session }: MenuSheetProps) {
 				<nav
 					aria-label="Menu principal mobile"
 					className={cn(
-						"relative z-10 flex-1 overflow-y-auto px-6",
+						"relative z-10 flex-1 overflow-y-auto px-6 pt-6",
 						"motion-safe:transition-opacity motion-safe:duration-200",
 						isOpen ? "opacity-100" : "opacity-0"
 					)}

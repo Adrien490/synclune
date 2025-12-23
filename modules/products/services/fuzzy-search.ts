@@ -58,9 +58,14 @@ export async function fuzzySearchProductIds(
 	// Construire les paramètres de recherche
 	const likeTerm = `%${term}%`;
 
+	// Configurer le seuil de similarité pour cette session
+	// L'opérateur % retourne TRUE si similarity > pg_trgm.similarity_threshold
+	await prisma.$executeRawUnsafe(
+		`SET pg_trgm.similarity_threshold = ${threshold}`
+	);
+
 	// Requête SQL avec pg_trgm
 	// Utilise l'opérateur % qui exploite l'index GIN pour de meilleures performances
-	// L'opérateur % retourne TRUE si similarity > pg_trgm.similarity_threshold (défaut: 0.3)
 	const results = await prisma.$queryRaw<FuzzySearchResult[]>`
 		SELECT
 			p.id as "productId",

@@ -87,7 +87,10 @@ export async function Navbar() {
 						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
 						<div className="flex flex-1 items-center lg:flex-none min-w-0">
 							{/* Menu burger (mobile uniquement) */}
-							<MenuSheet navItems={mobileNavItems} session={session} />
+							<MenuSheet navItems={mobileNavItems} />
+
+							{/* Recherche mobile (juste à droite du menu) */}
+							<QuickSearchTrigger className={`sm:hidden inline-flex ${iconButtonClassName}`} />
 
 							<Logo
 								href="/"

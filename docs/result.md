@@ -12,7 +12,6 @@ Analyse des Priorités - Audit UX/UI 2025
   | #   | Fonctionnalité                        | Impact                    | Effort |
   |-----|---------------------------------------|---------------------------|--------|
   | 5   | Auto-complétion recherche avec images | +43% conversion recherche | Moyen  |
-  | 6   | Recherche fuzzy/tolérance fautes https://neon.com/docs/extensions/pg_trgm       | Découvrabilité            | Moyen  |
   | 7   | Emails panier abandonné               | Récupération ventes       | Moyen  |
 
   Priorités Basse (Impact majeur, effort élevé)
@@ -25,7 +24,4 @@ Analyse des Priorités - Audit UX/UI 2025
 
   1. Apple/Google Pay → Changement d'une ligne dans Stripe
   2. Date livraison → Calcul simple basé sur les délais Colissimo
-  3. "Ajouté ✓" → État temporaire 2s avec useState
-  4. Récemment vus → localStorage + section sur fiche produit
 
-  Ensuite prioriser la recherche (#5-6) car +43% conversion est significatif.
