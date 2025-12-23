@@ -29,8 +29,8 @@ export async function Navbar() {
 		getWishlistItemCount(),
 		getRecentSearches(),
 		getCollections({
-			perPage: 8,
-			sortBy: "name-ascending",
+			perPage: 3,
+			sortBy: "created-descending",
 			filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
 		}),
 		getProductTypes({
@@ -58,8 +58,15 @@ export async function Navbar() {
 		label: t.label,
 	}));
 
+	// Collections avec imageUrl pour le menu mobile (produit vedette)
+	const menuCollections = collectionsData.collections.map((c) => ({
+		slug: c.slug,
+		label: c.name,
+		imageUrl: c.products[0]?.product?.skus[0]?.images[0]?.url ?? null,
+	}));
+
 	// Générer les items de navigation mobile en fonction de la session et statut admin
-	const mobileNavItems = getMobileNavItems(session, [], [], userIsAdmin);
+	const mobileNavItems = getMobileNavItems(session, productTypes, menuCollections, userIsAdmin);
 
 	// Générer les items de navigation desktop
 	const desktopNavItems = getDesktopNavItems();
@@ -87,7 +94,13 @@ export async function Navbar() {
 						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
 						<div className="flex flex-1 items-center lg:flex-none min-w-0">
 							{/* Menu burger (mobile uniquement) */}
-							<MenuSheet navItems={mobileNavItems} />
+							<MenuSheet
+								navItems={mobileNavItems}
+								productTypes={productTypes}
+								collections={menuCollections}
+								totalProductTypes={productTypesData.productTypes.length}
+								totalCollections={collectionsData.collections.length}
+							/>
 
 							{/* Recherche mobile (juste à droite du menu) */}
 							<QuickSearchTrigger className={`sm:hidden inline-flex ${iconButtonClassName}`} />

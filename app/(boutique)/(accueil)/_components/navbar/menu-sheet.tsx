@@ -2,6 +2,10 @@
 
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
+import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
+import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import { BRAND } from "@/shared/constants/brand";
 import {
 	Sheet,
 	SheetClose,
@@ -11,29 +15,41 @@ import {
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
+import { MAX_COLLECTIONS_IN_MENU, MAX_PRODUCT_TYPES_IN_MENU } from "@/shared/constants/navigation";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
-import { Heart, Menu } from "lucide-react";
+import { ArrowRight, FolderOpen, Heart, Menu, Settings } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-/** HREFs de la zone compte (memoisation) */
-const ACCOUNT_HREFS = ["/compte", "/connexion", "/admin", "/favoris"] as const;
-/** HREFs de la zone decouverte (memoisation) */
-const DISCOVERY_HREFS = ["/", "/collections", "/produits", "/personnalisation"] as const;
+/** HREFs de la zone compte */
+const ACCOUNT_HREFS = ["/compte", "/connexion", "/favoris"] as const;
+
+/**
+ * Header de section pour les catégories du menu
+ */
+function SectionHeader({ children }: { children: React.ReactNode }) {
+	return (
+		<h3 className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+			{children}
+		</h3>
+	);
+}
 
 /**
  * Composant Menu Sheet pour la navigation mobile
  *
- * Architecture simplifiée:
- * - Navigation directe sans sous-menus
- * - Séparation visuelle entre découverte et compte
- * - Accès direct aux pages principales
+ * Architecture:
+ * - Menu plat scrollable avec ScrollArea
+ * - Sections visuelles pour productTypes et collections
+ * - CTAs "Voir plus" avec limites d'affichage
+ * - Images pour les collections (produit vedette)
  *
  * Performance:
  * - Animation stagger pour meilleure perception UX
- * - Key dynamique basée sur pathname pour éviter les problèmes de portails
+ * - Limites d'affichage (6 productTypes, 3 collections)
  *
  * Accessibilité:
  * - Labels ARIA descriptifs
@@ -42,55 +58,57 @@ const DISCOVERY_HREFS = ["/", "/collections", "/produits", "/personnalisation"] 
  */
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
+	productTypes?: Array<{ slug: string; label: string }>;
+	collections?: Array<{
+		slug: string;
+		label: string;
+		imageUrl?: string | null;
+	}>;
+	totalProductTypes?: number;
+	totalCollections?: number;
 }
 
-export function MenuSheet({ navItems}: MenuSheetProps) {
+export function MenuSheet({
+	navItems,
+	productTypes,
+	collections,
+	totalProductTypes,
+	totalCollections,
+}: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 	const { wishlistCount } = useBadgeCountsStore();
-
-	// State pour aria-live (annonce ouverture/fermeture)
 	const [isOpen, setIsOpen] = useState(false);
 
-	// Séparer les items en deux zones
-	// Zone découverte: Accueil, Les créations, Les collections, Personnalisation
-	const discoveryItems = navItems.filter((item) => DISCOVERY_HREFS.includes(item.href as typeof DISCOVERY_HREFS[number]));
-	// Zone compte: Mon compte / Se connecter, Tableau de bord (admin), Favoris
-	const accountItems = navItems.filter((item) => ACCOUNT_HREFS.includes(item.href as typeof ACCOUNT_HREFS[number]));
+	// Séparer les items en zones
+	const homeItem = navItems.find((item) => item.href === "/");
+	const personalizationItem = navItems.find((item) => item.href === "/personnalisation");
+	const accountItems = navItems.filter((item) =>
+		ACCOUNT_HREFS.includes(item.href as (typeof ACCOUNT_HREFS)[number])
+	);
 
-	// Composant pour rendre un item de navigation avec Tap animation et badge
-	const renderNavItem = (item: (typeof navItems)[0]) => {
-		const isActive = isMenuItemActive(item.href);
-		const showWishlistBadge = item.href === "/favoris" && wishlistCount > 0;
+	// Limites d'affichage
+	const displayedProductTypes = productTypes?.slice(0, MAX_PRODUCT_TYPES_IN_MENU);
+	const displayedCollections = collections?.slice(0, MAX_COLLECTIONS_IN_MENU);
+	const hasMoreProductTypes = (totalProductTypes ?? 0) > MAX_PRODUCT_TYPES_IN_MENU;
+	const hasMoreCollections = (totalCollections ?? 0) > MAX_COLLECTIONS_IN_MENU;
 
-		return (
-			<Tap key={item.href}>
-				<SheetClose asChild>
-					<Link
-						href={item.href}
-						className={cn(
-							"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3 rounded-lg",
-							"transition-all duration-300 ease-out",
-							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-							isActive
-								? "bg-primary/8 text-foreground font-semibold border-l-2 border-primary pl-5"
-								: "text-foreground/80 hover:text-foreground hover:bg-primary/5 hover:pl-5"
-						)}
-						aria-current={isActive ? "page" : undefined}
-					>
-						<span className="flex-1">{item.label}</span>
-						{showWishlistBadge && (
-							<span
-								className="ml-2 bg-secondary text-secondary-foreground text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center"
-								aria-label={`${wishlistCount} article${wishlistCount > 1 ? "s" : ""} dans les favoris`}
-							>
-								{wishlistCount > 99 ? "99+" : wishlistCount}
-							</span>
-						)}
-					</Link>
-				</SheetClose>
-			</Tap>
-		);
-	};
+	// Style commun pour les liens
+	const linkClassName = cn(
+		"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3 rounded-lg",
+		"transition-all duration-300 ease-out",
+		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+		"text-foreground/80 hover:text-foreground hover:bg-primary/5 hover:pl-5"
+	);
+
+	const activeLinkClassName = cn(
+		linkClassName,
+		"bg-primary/8 text-foreground font-semibold border-l-2 border-primary pl-5"
+	);
+
+	const ctaLinkClassName = cn(
+		"flex items-center gap-2 px-4 py-3 text-sm font-medium text-foreground/70",
+		"hover:text-foreground transition-colors duration-200"
+	);
 
 	return (
 		<Sheet direction="left" open={isOpen} onOpenChange={setIsOpen} preventScrollRestoration>
@@ -115,23 +133,11 @@ export function MenuSheet({ navItems}: MenuSheetProps) {
 			</div>
 
 			<SheetContent
-				className="w-[min(85vw,320px)] sm:w-80 sm:max-w-md border-r bg-background/95 !p-0 flex flex-col overflow-hidden"
+				className="w-[min(85vw,320px)] sm:w-80 sm:max-w-md border-r bg-background/95 !p-0 flex flex-col"
 				id="mobile-menu-synclune"
 				aria-describedby="mobile-menu-synclune-description"
 			>
-				{/* Halos décoratifs subtils */}
-				<div
-					className="absolute -top-20 -left-20 w-40 h-40 pointer-events-none"
-					aria-hidden="true"
-				>
-					<div className="w-full h-full rounded-full bg-primary/10 blur-3xl" />
-				</div>
-				<div
-					className="absolute -bottom-20 -right-20 w-32 h-32 pointer-events-none"
-					aria-hidden="true"
-				>
-					<div className="w-full h-full rounded-full bg-secondary/15 blur-3xl" />
-				</div>
+
 
 				{/* Header sr-only */}
 				<SheetHeader className="!p-0 sr-only">
@@ -141,92 +147,243 @@ export function MenuSheet({ navItems}: MenuSheetProps) {
 					</p>
 				</SheetHeader>
 
-
-
-				{/* Skip link pour accéder directement à la section compte */}
-				<a
-					href="#account-section"
-					className="sr-only focus:not-sr-only focus:absolute focus:top-20 focus:left-4 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:text-sm"
-				>
-					Aller à la section compte
-				</a>
-
-				{/* Annonce SR du contenu */}
-				<div className="sr-only" aria-live="polite">
-					{discoveryItems.length} liens de découverte, {accountItems.length} liens de compte
-				</div>
-
-				<nav
-					aria-label="Menu principal mobile"
-					className={cn(
-						"relative z-10 flex-1 overflow-y-auto px-6 pt-6",
-						"motion-safe:transition-opacity motion-safe:duration-200",
-						isOpen ? "opacity-100" : "opacity-0"
-					)}
-				>
-					{/* Zone découverte: Accueil, Les créations, Les collections, Personnalisation */}
-					<Stagger stagger={0.025} delay={0.05} y={10} className="space-y-1">
-						{discoveryItems.map((item) => renderNavItem(item))}
-					</Stagger>
-
-					{/* Séparateur décoratif */}
-					<div
-						className="relative my-6 flex items-center justify-center"
-						role="separator"
-						aria-hidden="true"
+				{/* Contenu scrollable */}
+				<ScrollArea className="flex-1 min-h-0">
+					<nav
+						aria-label="Menu principal mobile"
+						className={cn(
+							"relative z-10 px-6 pt-6 pb-4",
+							"motion-safe:transition-opacity motion-safe:duration-200",
+							isOpen ? "opacity-100" : "opacity-0"
+						)}
 					>
-						<div className="absolute inset-0 flex items-center">
-							<div className="w-full border-t border-border/60" />
-						</div>
-						<div className="relative bg-background/95 px-3 rounded-full">
-							<Heart className="h-4 w-4 text-muted-foreground/40 fill-muted-foreground/10" />
-						</div>
-					</div>
+						{/* Accueil */}
+						{homeItem && (
+							<Stagger stagger={0.025} delay={0.05} y={10} className="mb-4">
+								<Tap>
+									<SheetClose asChild>
+										<Link
+											href={homeItem.href}
+											className={
+												isMenuItemActive(homeItem.href)
+													? activeLinkClassName
+													: linkClassName
+											}
+											aria-current={
+												isMenuItemActive(homeItem.href) ? "page" : undefined
+											}
+										>
+											{homeItem.label}
+										</Link>
+									</SheetClose>
+								</Tap>
+							</Stagger>
+						)}
 
-					{/* Zone compte: Mon compte / Se connecter, Tableau de bord (admin), Favoris */}
-					<div id="account-section">
-						<Stagger stagger={0.025} delay={0.15} y={10} className="space-y-1">
-							{accountItems.map((item) => renderNavItem(item))}
-						</Stagger>
-					</div>
-				</nav>
+						{/* Section Les créations (productTypes) */}
+						{displayedProductTypes && displayedProductTypes.length > 0 && (
+							<section aria-labelledby="section-creations" className="mb-4">
+								<SectionHeader>Les créations</SectionHeader>
+								<Stagger stagger={0.02} delay={0.08} y={8} className="space-y-1">
+									{displayedProductTypes.map((type) => (
+										<Tap key={type.slug}>
+											<SheetClose asChild>
+												<Link
+													href={`/produits/${type.slug}`}
+													className={
+														isMenuItemActive(`/produits/${type.slug}`)
+															? activeLinkClassName
+															: linkClassName
+													}
+													aria-current={
+														isMenuItemActive(`/produits/${type.slug}`)
+															? "page"
+															: undefined
+													}
+												>
+													{type.label}
+												</Link>
+											</SheetClose>
+										</Tap>
+									))}
+									{hasMoreProductTypes && (
+										<SheetClose asChild>
+											<Link href="/produits" className={ctaLinkClassName}>
+												<ArrowRight className="h-4 w-4" aria-hidden="true" />
+												Voir les {totalProductTypes} créations
+											</Link>
+										</SheetClose>
+									)}
+								</Stagger>
+							</section>
+						)}
 
-				{/* Footer avec liens secondaires */}
-				<footer
-					className="relative z-10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/40"
-				>
-					<div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-						<SheetClose asChild>
+						{/* Section Dernières collections */}
+						{displayedCollections && displayedCollections.length > 0 && (
+							<section aria-labelledby="section-collections" className="mb-4">
+								<SectionHeader>Dernières collections</SectionHeader>
+								<Stagger stagger={0.02} delay={0.12} y={8} className="space-y-1">
+									{displayedCollections.map((collection) => (
+										<Tap key={collection.slug}>
+											<SheetClose asChild>
+												<Link
+													href={`/collections/${collection.slug}`}
+													className={cn(
+														isMenuItemActive(
+															`/collections/${collection.slug}`
+														)
+															? activeLinkClassName
+															: linkClassName,
+														"gap-3"
+													)}
+													aria-current={
+														isMenuItemActive(
+															`/collections/${collection.slug}`
+														)
+															? "page"
+															: undefined
+													}
+												>
+													{collection.imageUrl ? (
+														<Image
+															src={collection.imageUrl}
+															alt=""
+															width={32}
+															height={32}
+															className="rounded-md object-cover shrink-0"
+														/>
+													) : (
+														<div
+															className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0"
+															aria-hidden="true"
+														>
+															<FolderOpen className="h-4 w-4 text-muted-foreground" />
+														</div>
+													)}
+													<span>{collection.label}</span>
+												</Link>
+											</SheetClose>
+										</Tap>
+									))}
+									<SheetClose asChild>
+										<Link href="/collections" className={ctaLinkClassName}>
+											<ArrowRight className="h-4 w-4" aria-hidden="true" />
+											Voir toutes les collections
+										</Link>
+									</SheetClose>
+								</Stagger>
+							</section>
+						)}
+
+						{/* Personnalisation */}
+						{personalizationItem && (
+							<Stagger stagger={0.025} delay={0.16} y={10} className="mb-4">
+								<Tap>
+									<SheetClose asChild>
+										<Link
+											href={personalizationItem.href}
+											className={
+												isMenuItemActive(personalizationItem.href)
+													? activeLinkClassName
+													: linkClassName
+											}
+											aria-current={
+												isMenuItemActive(personalizationItem.href)
+													? "page"
+													: undefined
+											}
+										>
+											{personalizationItem.label}
+										</Link>
+									</SheetClose>
+								</Tap>
+							</Stagger>
+						)}
+
+						{/* Séparateur décoratif */}
+						<div
+							className="relative my-6 flex items-center justify-center"
+							role="separator"
+							aria-hidden="true"
+						>
+							<div className="absolute inset-0 flex items-center">
+								<div className="w-full border-t border-border/60" />
+							</div>
+							<div className="relative bg-background/95 px-3 rounded-full">
+								<Heart className="h-4 w-4 text-muted-foreground/40 fill-muted-foreground/10" />
+							</div>
+						</div>
+
+						{/* Zone compte */}
+						<section id="account-section" aria-labelledby="section-account">
+							<Stagger stagger={0.025} delay={0.2} y={10} className="space-y-1">
+								{accountItems.map((item) => {
+									const isActive = isMenuItemActive(item.href);
+									const showWishlistBadge =
+										item.href === "/favoris" && wishlistCount > 0;
+
+									return (
+										<Tap key={item.href}>
+											<SheetClose asChild>
+												<Link
+													href={item.href}
+													className={
+														isActive ? activeLinkClassName : linkClassName
+													}
+													aria-current={isActive ? "page" : undefined}
+												>
+													<span className="flex-1">{item.label}</span>
+													{showWishlistBadge && (
+														<span
+															className="ml-2 bg-secondary text-secondary-foreground text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center"
+															aria-label={`${wishlistCount} article${wishlistCount > 1 ? "s" : ""} dans les favoris`}
+														>
+															{wishlistCount > 99 ? "99+" : wishlistCount}
+														</span>
+													)}
+												</Link>
+											</SheetClose>
+										</Tap>
+									);
+								})}
+							</Stagger>
+						</section>
+					</nav>
+				</ScrollArea>
+
+				{/* Footer avec réseaux sociaux et admin */}
+				<footer className="relative z-10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/40 shrink-0">
+					<div className="flex items-center justify-between">
+						{/* Réseaux sociaux à gauche */}
+						<div className="flex items-center gap-3">
 							<Link
-								href="/mentions-legales"
-								className="hover:text-foreground transition-colors duration-200"
-								aria-label="Consulter les mentions légales"
+								href={BRAND.social.instagram.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center justify-center size-10 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+								aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
 							>
-								Mentions légales
+								<InstagramIcon decorative size={18} />
 							</Link>
-						</SheetClose>
-						<span className="text-border" aria-hidden="true">
-							·
-						</span>
-						<SheetClose asChild>
 							<Link
-								href="/confidentialite"
-								className="hover:text-foreground transition-colors duration-200"
-								aria-label="Consulter la politique de confidentialité"
+								href={BRAND.social.tiktok.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center justify-center size-10 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+								aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
 							>
-								Confidentialité
+								<TikTokIcon decorative size={18} />
 							</Link>
-						</SheetClose>
-						<span className="text-border" aria-hidden="true">
-							·
-						</span>
+						</div>
+
+						{/* Icône admin à droite */}
 						<SheetClose asChild>
 							<Link
-								href="/accessibilite"
-								className="hover:text-foreground transition-colors duration-200"
-								aria-label="Consulter la déclaration d'accessibilité"
+								href="/admin"
+								className="inline-flex items-center justify-center size-10 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+								aria-label="Tableau de bord"
 							>
-								Accessibilité
+								<Settings className="h-[18px] w-[18px]" aria-hidden="true" />
 							</Link>
 						</SheetClose>
 					</div>

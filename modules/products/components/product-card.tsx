@@ -198,13 +198,14 @@ export function ProductCard({
 					tabIndex={-1}
 				/>
 
-				{/* Bouton d'ajout au panier - EN DEHORS du Link */}
+				{/* Bouton d'ajout au panier - Desktop uniquement (overlay) */}
 				{currentSku && stockStatus === "in_stock" && (
 					<AddToCartCardButton
 						skuId={currentSku.id}
 						productTitle={title}
 						product={product}
 						preselectedColor={selectedColorSlug}
+						className="hidden sm:block"
 					/>
 				)}
 			</div>
@@ -260,21 +261,33 @@ export function ProductCard({
 					<meta itemProp="name" content="Synclune" />
 				</div>
 
-				{/* Prix avec composant extrait et données structurées */}
-				<div itemProp="offers" itemScope itemType="https://schema.org/Offer">
-					<meta itemProp="priceCurrency" content="EUR" />
-					<meta itemProp="price" content={(price / 100).toString()} />
-					<meta
-						itemProp="availability"
-						content={
-							stockStatus === "out_of_stock"
-								? "https://schema.org/OutOfStock"
-								: "https://schema.org/InStock"
-						}
-					/>
-					<meta itemProp="url" content={productUrl} />
-					{/* ProductPriceCompact avec disableSchemaOrg par défaut (évite duplication) */}
-					<ProductPriceCompact price={price} compareAtPrice={compareAtPrice} />
+				{/* Prix + bouton ajout panier */}
+				<div className="flex items-center justify-between gap-2">
+					<div itemProp="offers" itemScope itemType="https://schema.org/Offer">
+						<meta itemProp="priceCurrency" content="EUR" />
+						<meta itemProp="price" content={(price / 100).toString()} />
+						<meta
+							itemProp="availability"
+							content={
+								stockStatus === "out_of_stock"
+									? "https://schema.org/OutOfStock"
+									: "https://schema.org/InStock"
+							}
+						/>
+						<meta itemProp="url" content={productUrl} />
+						<ProductPriceCompact price={price} compareAtPrice={compareAtPrice} />
+					</div>
+
+					{/* Bouton d'ajout au panier - Mobile uniquement */}
+					{currentSku && stockStatus === "in_stock" && (
+						<AddToCartCardButton
+							skuId={currentSku.id}
+							productTitle={title}
+							product={product}
+							preselectedColor={selectedColorSlug}
+							className="sm:hidden static"
+						/>
+					)}
 				</div>
 			</div>
 		</article>
