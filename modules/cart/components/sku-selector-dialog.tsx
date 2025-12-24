@@ -394,7 +394,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 									)}
 
 									{/* Contenu scrollable avec overlay pendant submit */}
-									<div className="relative flex-1 min-h-0 overflow-y-auto space-y-6 py-4 pb-6 sm:pr-2 overscroll-contain [-webkit-overflow-scrolling:touch]">
+									<div className="relative flex-1 min-h-0 sm:overflow-y-auto space-y-6 py-4 pb-6 sm:pr-2 sm:overscroll-contain">
 									{/* Fix 15: Overlay pendant le submit */}
 									{isPending && (
 										<div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 pointer-events-none" aria-hidden="true" />
