@@ -89,13 +89,14 @@ export function AddToCartCardButton({
 				size={isMobileFull ? "default" : "icon"}
 				className={cn(
 					isMobileFull
-						? // Mobile full-width: bouton pleine largeur avec fond primary
+						? // Mobile full-width: bouton discret avec bordure complète
 							cn(
 								"w-full h-11 rounded-lg",
-								"bg-primary text-primary-foreground",
+								"bg-primary/5 text-foreground",
+								"border border-primary/50",
+								"hover:border-primary/70 hover:bg-primary/10",
+								"active:scale-[0.98]",
 								"font-medium text-sm",
-								"shadow-md",
-								"active:scale-95",
 								"motion-safe:transition-all motion-safe:duration-200"
 							)
 						: // Icon variant: styles responsive existants
@@ -122,11 +123,14 @@ export function AddToCartCardButton({
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
 				{isMobileFull ? (
-					// Mobile full-width: texte ou spinner
+					// Mobile full-width: icône + texte ou spinner
 					isPending ? (
-						<Loader2 size={20} className="animate-spin" aria-hidden="true" />
+						<Loader2 size={18} className="animate-spin" aria-hidden="true" />
 					) : (
-						<span className="text-sm font-medium">Ajouter au panier</span>
+						<span className="inline-flex items-center gap-2">
+							<ShoppingCart size={18} className="text-foreground/70" aria-hidden="true" />
+							<span className="text-sm font-medium">Ajouter au panier</span>
+						</span>
 					)
 				) : (
 					<>

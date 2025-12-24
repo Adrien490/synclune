@@ -2,7 +2,6 @@ import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { AccountStatsCardsSkeleton } from "@/modules/users/components/account-stats-cards";
-import { AddressInfoCardSkeleton } from "@/modules/addresses/components/address-info-card-skeleton";
 import { RecentOrdersSkeleton } from "@/modules/orders/components/recent-orders-skeleton";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 
@@ -42,9 +41,6 @@ export default function AccountDashboardLoading() {
 										<Skeleton className="h-4 w-40 mt-2" />
 									</CardContent>
 								</Card>
-
-								{/* Adresse skeleton */}
-								<AddressInfoCardSkeleton />
 							</div>
 						</div>
 					</div>

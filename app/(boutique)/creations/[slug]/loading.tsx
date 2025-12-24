@@ -1,4 +1,5 @@
 import { PageHeaderSkeleton } from "@/shared/components/page-header";
+import { RecentlyViewedProductsSkeleton } from "@/modules/products/components/recently-viewed-products-skeleton";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
@@ -226,6 +227,12 @@ export default function ProductDetailLoading() {
 									</div>
 								</section>
 							</div>
+
+							{/* Separator avant produits recemment vus */}
+							<div className="h-px bg-border" />
+
+							{/* RecentlyViewedProducts Skeleton */}
+							<RecentlyViewedProductsSkeleton limit={4} />
 
 							{/* Separator avant produits similaires */}
 							<div className="h-px bg-border" />

@@ -17,7 +17,6 @@ import { GalleryDots } from "./dots";
 import { GalleryNavigation } from "./navigation";
 import { GalleryZoomButton } from "./zoom-button";
 import { GallerySlide } from "./slide";
-import ScrollFade from "@/shared/components/ui/scroll-fade";
 
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
@@ -130,29 +129,23 @@ function GalleryContent({ product, title }: GalleryProps) {
 				>
 					{/* Thumbnails verticales - Desktop uniquement */}
 					{images.length > 1 && (
-						<div className="hidden lg:block order-1">
-							<ScrollFade
-								axis="vertical"
-								className="max-h-[min(520px,70vh)]"
-								hideScrollbar={false}
-							>
-								<div className="flex flex-col gap-2 pr-1">
-									{images.map((media, index) => (
-										<GalleryThumbnail
-											key={media.id}
-											media={media}
-											index={index}
-											isActive={index === current}
-											hasError={false}
-											title={title}
-											onClick={() => scrollTo(index)}
-											onError={() => {}}
-											className="shrink-0 h-auto hover:shadow-sm"
-											isLCPCandidate={index === 0}
-										/>
-									))}
-								</div>
-							</ScrollFade>
+						<div className="hidden lg:block order-1 self-stretch">
+							<div className="flex flex-col justify-between h-full gap-2">
+								{images.map((media, index) => (
+									<GalleryThumbnail
+										key={media.id}
+										media={media}
+										index={index}
+										isActive={index === current}
+										hasError={false}
+										title={title}
+										onClick={() => scrollTo(index)}
+										onError={() => {}}
+										className="flex-1 min-h-0 hover:shadow-sm"
+										isLCPCandidate={index === 0}
+									/>
+								))}
+							</div>
 						</div>
 					)}
 
