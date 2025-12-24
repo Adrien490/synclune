@@ -12,7 +12,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { PriceRangeInputs } from "./price-range-inputs";
 
@@ -51,19 +51,19 @@ export function ProductFilterSheet({
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	// Initialisation des valeurs depuis les paramètres URL
-	const initialValues = ((): FilterFormData => {
-		const colors: string[] = [];
-		const materials: string[] = [];
+	// Fonction pour calculer les valeurs depuis les paramètres URL
+	const getValuesFromURL = (): FilterFormData => {
+		const colorsFromURL: string[] = [];
+		const materialsFromURL: string[] = [];
 		const types: string[] = [];
 		let priceMin = DEFAULT_PRICE_RANGE[0];
 		let priceMax = DEFAULT_PRICE_RANGE[1];
 
 		searchParams.forEach((value, key) => {
 			if (key === "color") {
-				colors.push(value);
+				colorsFromURL.push(value);
 			} else if (key === "material") {
-				materials.push(value);
+				materialsFromURL.push(value);
 			} else if (key === "type") {
 				types.push(value);
 			} else if (key === "priceMin") {
@@ -74,12 +74,14 @@ export function ProductFilterSheet({
 		});
 
 		return {
-			colors: [...new Set(colors)],
-			materials: [...new Set(materials)],
+			colors: [...new Set(colorsFromURL)],
+			materials: [...new Set(materialsFromURL)],
 			productTypes: [...new Set(types)],
 			priceRange: [priceMin, priceMax],
 		};
-	})();
+	};
+
+	const initialValues = getValuesFromURL();
 
 	const form = useAppForm({
 		defaultValues: initialValues,
@@ -87,6 +89,13 @@ export function ProductFilterSheet({
 			applyFilters(value);
 		},
 	});
+
+	// Synchroniser le formulaire avec l'URL à chaque ouverture du sheet
+	useEffect(() => {
+		if (isOpen) {
+			form.reset(getValuesFromURL());
+		}
+	}, [isOpen, searchParams]);
 
 	const applyFilters = (formData: FilterFormData) => {
 		const params = new URLSearchParams(searchParams.toString());

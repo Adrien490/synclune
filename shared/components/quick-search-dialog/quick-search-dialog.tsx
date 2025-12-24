@@ -2,7 +2,7 @@
 
 import { Clock, Layers, Loader2, Search, Sparkles, X } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useRef, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -40,6 +40,7 @@ export function QuickSearchDialog({
 }: QuickSearchDialogProps) {
 	const { isOpen, close } = useDialog(QUICK_SEARCH_DIALOG_ID)
 	const router = useRouter()
+	const searchParams = useSearchParams()
 	const [isPending, startTransition] = useTransition()
 
 	const { add } = useAddRecentSearch({
@@ -110,14 +111,24 @@ export function QuickSearchDialog({
 	const handleSubmit = (term: string) => {
 		add(term)
 		startTransition(() => {
-			router.push(`/produits?search=${encodeURIComponent(term)}`)
+			const params = new URLSearchParams(searchParams.toString())
+			params.set("search", term)
+			// Reset cursor pagination
+			params.delete("cursor")
+			params.delete("direction")
+			router.push(`/produits?${params.toString()}`)
 			close()
 		})
 	}
 
 	const handleRecentSearch = (term: string) => {
 		startTransition(() => {
-			router.push(`/produits?search=${encodeURIComponent(term)}`)
+			const params = new URLSearchParams(searchParams.toString())
+			params.set("search", term)
+			// Reset cursor pagination
+			params.delete("cursor")
+			params.delete("direction")
+			router.push(`/produits?${params.toString()}`)
 			close()
 		})
 	}
