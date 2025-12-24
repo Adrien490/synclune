@@ -7,6 +7,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { AlertCircle, CheckCircle, AlertTriangle, Sparkles } from "lucide-react";
 import { StockNotificationForm } from "@/modules/stock-notifications/components/stock-notification-form";
+import { motion, useReducedMotion } from "framer-motion";
 
 interface ProductPriceProps {
 	selectedSku: ProductSku | null;
@@ -23,6 +24,8 @@ interface ProductPriceProps {
  * - Afficher le badge de disponibilité (En stock / Stock limité / Rupture)
  */
 export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps) {
+	const shouldReduceMotion = useReducedMotion();
+
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
 	const priceInfo = (() => {
 		if (!product || !product.skus || product.skus.length === 0) {
@@ -165,17 +168,22 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 						</Badge>
 					)}
 					{stockStatus === "low_stock" && (
-						<Badge
-							variant="outline"
-							className="text-xs/5 tracking-normal antialiased gap-1.5 border-orange-600 text-orange-800 bg-orange-100 dark:bg-orange-950/70 dark:text-orange-300 dark:border-orange-500 motion-safe:animate-pulse shadow-sm"
-							role="status"
-							aria-label={`Attention, plus que ${inventory} exemplaires en stock. Dépêchez-vous !`}
+						<motion.div
+							animate={shouldReduceMotion ? {} : { opacity: [1, 0.7, 1] }}
+							transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
 						>
-							<AlertTriangle className="w-3.5 h-3.5 motion-safe:animate-bounce" aria-hidden="true" />
-							<span>
-								<span className="font-bold">Plus que {inventory}</span> en stock !
-							</span>
-						</Badge>
+							<Badge
+								variant="outline"
+								className="text-xs/5 tracking-normal antialiased gap-1.5 border-orange-600 text-orange-800 bg-orange-100 dark:bg-orange-950/70 dark:text-orange-300 dark:border-orange-500 shadow-sm"
+								role="status"
+								aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
+							>
+								<AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
+								<span>
+									<span className="font-bold">Plus que {inventory}</span> en stock !
+								</span>
+							</Badge>
+						</motion.div>
 					)}
 					{stockStatus === "out_of_stock" && (
 						<Badge

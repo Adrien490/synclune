@@ -80,11 +80,11 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 	const searchParams = useSearchParams();
 	const prefersReducedMotion = useReducedMotion();
 
-	// Refs individuelles pour les boutons
-	const searchButtonRef = useRef<HTMLButtonElement>(null);
+	// Refs individuelles pour les boutons (ordre: Tri, Recherche, Filtres)
 	const sortButtonRef = useRef<HTMLButtonElement>(null);
+	const searchButtonRef = useRef<HTMLButtonElement>(null);
 	const filterButtonRef = useRef<HTMLButtonElement>(null);
-	const buttonRefs = [searchButtonRef, sortButtonRef, filterButtonRef];
+	const buttonRefs = [sortButtonRef, searchButtonRef, filterButtonRef];
 
 	// Calculer si recherche active
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
@@ -181,13 +181,28 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 					aria-label="Actions rapides"
 					className="flex items-stretch h-14"
 				>
+					{/* Tri */}
+					<button
+						ref={sortButtonRef}
+						type="button"
+						onClick={() => setSortOpen(true)}
+						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
+						tabIndex={focusedIndex === 0 ? 0 : -1}
+						className={buttonClassName}
+						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
+					>
+						<ArrowUpDown className={iconClassName} aria-hidden="true" />
+						<span className={labelClassName}>Trier</span>
+						<ActiveBadge showDot={hasActiveSort} />
+					</button>
+
 					{/* Recherche */}
 					<button
 						ref={searchButtonRef}
 						type="button"
 						onClick={() => openSearch()}
-						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
-						tabIndex={focusedIndex === 0 ? 0 : -1}
+						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
+						tabIndex={focusedIndex === 1 ? 0 : -1}
 						className={buttonClassName}
 						aria-label={
 							hasActiveSearch
@@ -198,21 +213,6 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 						<Search className={iconClassName} aria-hidden="true" />
 						<span className={labelClassName}>Recherche</span>
 						<ActiveBadge showDot={hasActiveSearch} />
-					</button>
-
-					{/* Tri */}
-					<button
-						ref={sortButtonRef}
-						type="button"
-						onClick={() => setSortOpen(true)}
-						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
-						tabIndex={focusedIndex === 1 ? 0 : -1}
-						className={buttonClassName}
-						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
-					>
-						<ArrowUpDown className={iconClassName} aria-hidden="true" />
-						<span className={labelClassName}>Trier</span>
-						<ActiveBadge showDot={hasActiveSort} />
 					</button>
 
 					{/* Filtres */}

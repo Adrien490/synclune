@@ -10,6 +10,8 @@ import { useOptimistic, useTransition } from "react";
 import type { Size } from "@/modules/skus/types/sku-selector.types";
 import { SizeGuideDialog } from "./size-guide-dialog";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
+import { Check } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 
 interface SizeSelectorProps {
 	sizes: Size[];
@@ -43,6 +45,7 @@ export function SizeSelector({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+	const shouldReduceMotion = useReducedMotion();
 
 	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
 	const currentSize = searchParams.get("size") ?? defaultSku?.size ?? null;
@@ -137,7 +140,7 @@ export function SizeSelector({
 							onKeyDown={(e) => handleKeyDown(e, index)}
 							disabled={!isAvailable}
 							className={cn(
-								"p-3 sm:p-2.5 min-h-[52px] sm:min-h-[44px] flex items-center justify-center text-center rounded-xl sm:rounded-lg border-2 transition-all",
+								"relative p-3 sm:p-2.5 min-h-[52px] sm:min-h-[44px] flex items-center justify-center text-center rounded-xl sm:rounded-lg border-2 transition-all",
 								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]",
 								isSelected
 									? "border-primary bg-primary/5"
@@ -148,6 +151,16 @@ export function SizeSelector({
 							<span className="text-sm/6 tracking-normal antialiased font-medium">
 								{sizeOption.size}
 							</span>
+							{isSelected && (
+								<motion.div
+									initial={shouldReduceMotion ? {} : { scale: 0 }}
+									animate={{ scale: 1 }}
+									transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 15 }}
+									className="absolute top-1.5 right-1.5"
+								>
+									<Check className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+								</motion.div>
+							)}
 						</button>
 					);
 				})}

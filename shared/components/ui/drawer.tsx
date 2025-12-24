@@ -19,8 +19,23 @@ export function useIsInsideDrawer() {
 function Drawer({
   open,
   onOpenChange,
+  handleOnly = false,
+  scrollLockTimeout = 800,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) {
+}: React.ComponentProps<typeof DrawerPrimitive.Root> & {
+  /**
+   * Si true, seul le DrawerHandle permet de drag le drawer.
+   * Recommandé pour les drawers avec contenu scrollable sur mobile.
+   * @default false
+   */
+  handleOnly?: boolean
+  /**
+   * Délai en ms après un scroll avant que le drawer redevienne draggable.
+   * Augmenté à 800ms pour éviter les fermetures accidentelles sur mobile.
+   * @default 800
+   */
+  scrollLockTimeout?: number
+}) {
   const { handleClose } = useBackButtonClose({
     isOpen: open ?? false,
     onClose: () => onOpenChange?.(false),
@@ -41,6 +56,8 @@ function Drawer({
         data-slot="drawer"
         open={open}
         onOpenChange={wrappedOnOpenChange}
+        handleOnly={handleOnly}
+        scrollLockTimeout={scrollLockTimeout}
         {...props}
       />
     </DrawerContext.Provider>
@@ -69,6 +86,31 @@ function DrawerNestedRoot({
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.NestedRoot>) {
   return <DrawerPrimitive.NestedRoot data-slot="drawer-nested-root" {...props} />
+}
+
+/**
+ * Handle draggable pour le drawer.
+ * Quand handleOnly est activé sur le Drawer parent, seul ce composant
+ * permet de drag/fermer le drawer, évitant les fermetures accidentelles.
+ */
+function DrawerHandle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DrawerPrimitive.Handle>) {
+  return (
+    <DrawerPrimitive.Handle
+      data-slot="drawer-handle"
+      className={cn(
+        "mx-auto mt-4 h-1.5 w-[100px] shrink-0 rounded-full bg-primary/20",
+        "cursor-grab active:cursor-grabbing",
+        // Zone tactile étendue (44px min pour accessibilité)
+        "before:absolute before:-inset-x-4 before:-inset-y-5 before:content-['']",
+        "relative",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
 function DrawerOverlay({
@@ -112,14 +154,8 @@ function DrawerContent({
         )}
         {...props}
       >
-        {/* Drag handle avec zone tactile 44px */}
-        <div
-          className="relative mx-auto mt-4 hidden shrink-0 group-data-[vaul-drawer-direction=bottom]/drawer-content:block"
-          aria-hidden="true"
-        >
-          <div className="absolute -inset-x-4 -inset-y-5 cursor-grab active:cursor-grabbing" />
-          <div className="h-1.5 w-[100px] rounded-full bg-primary/20" />
-        </div>
+        {/* Handle visible uniquement pour les bottom drawers */}
+        <DrawerHandle className="hidden group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
         {children}
       </DrawerPrimitive.Content>
     </DrawerPortal>
@@ -192,6 +228,7 @@ export {
   DrawerTrigger,
   DrawerClose,
   DrawerNestedRoot,
+  DrawerHandle,
   DrawerContent,
   DrawerHeader,
   DrawerBody,

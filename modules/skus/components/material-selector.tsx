@@ -10,6 +10,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import type { Material } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
+import { motion, useReducedMotion } from "framer-motion";
 
 interface MaterialSelectorProps {
 	materials: Material[];
@@ -38,6 +39,7 @@ export function MaterialSelector({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+	const shouldReduceMotion = useReducedMotion();
 
 	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
 	const currentMaterial = searchParams.get("material") ?? defaultSku?.material?.name ?? null;
@@ -135,7 +137,15 @@ export function MaterialSelector({
 							<span className="text-sm/6 tracking-normal antialiased font-medium">
 								{material.name}
 							</span>
-							{isSelected && <Check className="w-4 h-4 text-primary" aria-hidden="true" />}
+							{isSelected && (
+								<motion.div
+									initial={shouldReduceMotion ? {} : { scale: 0 }}
+									animate={{ scale: 1 }}
+									transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 15 }}
+								>
+									<Check className="w-4 h-4 text-primary" aria-hidden="true" />
+								</motion.div>
+							)}
 						</button>
 					);
 				})}

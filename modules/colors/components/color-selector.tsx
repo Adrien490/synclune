@@ -10,6 +10,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import type { Color } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
+import { motion, useReducedMotion } from "framer-motion";
 
 interface ColorSelectorProps {
 	colors: Color[];
@@ -39,6 +40,7 @@ export function ColorSelector({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+	const shouldReduceMotion = useReducedMotion();
 
 	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
 	const currentColor = searchParams.get("color") ?? defaultSku?.color?.slug ?? null;
@@ -154,7 +156,13 @@ export function ColorSelector({
 								)}
 							</div>
 							{isSelected && (
-								<Check className="w-4 h-4 text-primary ml-auto" aria-hidden="true" />
+								<motion.div
+									initial={shouldReduceMotion ? {} : { scale: 0 }}
+									animate={{ scale: 1 }}
+									transition={shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 15 }}
+								>
+									<Check className="w-4 h-4 text-primary ml-auto" aria-hidden="true" />
+								</motion.div>
 							)}
 						</button>
 					);

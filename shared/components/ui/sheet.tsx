@@ -17,9 +17,16 @@ function Sheet({
 	direction = "right",
 	open,
 	onOpenChange,
+	scrollLockTimeout = 800,
 	...props
 }: React.ComponentProps<typeof SheetPrimitive.Root> & {
 	direction?: SheetDirection;
+	/**
+	 * Délai en ms après un scroll avant que le sheet redevienne draggable.
+	 * Augmenté à 800ms pour éviter les fermetures accidentelles sur mobile.
+	 * @default 800
+	 */
+	scrollLockTimeout?: number;
 }) {
 	// Gère uniquement le bouton retour du navigateur (mobile)
 	// Les autres fermetures (X, overlay, etc.) passent directement par onOpenChange
@@ -36,6 +43,7 @@ function Sheet({
 				direction={direction}
 				open={open}
 				onOpenChange={onOpenChange}
+				scrollLockTimeout={scrollLockTimeout}
 				{...props}
 			/>
 		</SheetContext.Provider>
@@ -96,10 +104,12 @@ function SheetContent({
 				className={cn(
 					// Base + group pour permettre group-has-[[data-pending]]/sheet sur les descendants
 					"group/sheet bg-background fixed z-[70] flex flex-col gap-4 shadow-lg transition ease-in-out",
+					// Right sheet avec safe-area latérale (mode paysage)
 					direction === "right" &&
-						"inset-y-0 right-0 h-full w-full border-l sm:max-w-sm",
+						"inset-y-0 right-0 h-full w-full border-l sm:max-w-sm pr-[max(0px,env(safe-area-inset-right))]",
+					// Left sheet avec safe-area latérale (mode paysage)
 					direction === "left" &&
-						"inset-y-0 left-0 h-full w-full border-r sm:max-w-sm",
+						"inset-y-0 left-0 h-full w-full border-r sm:max-w-sm pl-[max(0px,env(safe-area-inset-left))]",
 					direction === "top" &&
 						"inset-x-0 top-0 h-auto border-b",
 					direction === "bottom" &&

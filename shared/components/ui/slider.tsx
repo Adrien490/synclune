@@ -22,6 +22,8 @@ function Slider({
 	return (
 		<SliderPrimitive.Root
 			data-slot="slider"
+			// Empêche le drag du drawer/sheet parent quand on interagit avec le slider
+			data-vaul-no-drag
 			defaultValue={defaultValue}
 			value={value}
 			min={min}
