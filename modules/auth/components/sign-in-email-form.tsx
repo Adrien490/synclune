@@ -78,7 +78,9 @@ export function SignInEmailForm() {
 							<field.InputField
 								label="Email"
 								type="email"
+								inputMode="email"
 								autoComplete="email"
+								spellCheck={false}
 								disabled={isPending}
 								required
 							/>

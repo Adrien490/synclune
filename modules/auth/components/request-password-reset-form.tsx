@@ -83,7 +83,9 @@ export function RequestPasswordResetForm() {
 							<field.InputField
 								label="Email"
 								type="email"
+								inputMode="email"
 								autoComplete="email"
+								spellCheck={false}
 								disabled={isPending || state?.status === ActionStatus.SUCCESS}
 								required
 							/>

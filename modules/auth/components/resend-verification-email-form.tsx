@@ -85,7 +85,9 @@ export function ResendVerificationEmailForm({
 							<field.InputField
 								label="Adresse email"
 								type="email"
+								inputMode="email"
 								autoComplete="email"
+								spellCheck={false}
 								disabled={isPending || state?.status === ActionStatus.SUCCESS}
 								required
 							/>
