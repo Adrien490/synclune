@@ -38,7 +38,7 @@ export function CartItemRemoveButton({
 			variant="link"
 			onClick={handleRemove}
 			disabled={isPending}
-			className="min-h-11 min-w-11 px-2 text-sm text-foreground hover:text-destructive active:text-destructive/80 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+			className="min-h-11 min-w-11 px-2 text-sm text-foreground hover:text-destructive active:text-destructive/80"
 			aria-label={`Supprimer ${itemName} du panier`}
 		>
 			<Trash2 className="size-4 sm:hidden" aria-hidden="true" />

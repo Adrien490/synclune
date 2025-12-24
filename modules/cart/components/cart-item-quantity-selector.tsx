@@ -80,11 +80,7 @@ export function CartItemQuantitySelector({
 	}
 
 	return (
-		<div
-			aria-label="Modifier la quantite"
-			data-pending={isLoading ? "" : undefined}
-			className="group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
-		>
+		<div aria-label="Modifier la quantite">
 			<ButtonGroup aria-label="Quantite">
 				<Button
 					type="button"
