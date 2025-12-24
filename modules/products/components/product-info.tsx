@@ -88,11 +88,11 @@ export function ProductInfo({
 				</div>
 			</div>
 
-			{/* Description */}
+			{/* Description - max-w-prose pour lisibilité WCAG (80 chars/ligne), leading-relaxed (1.625) */}
 			{product.description && (
 				<div
 					id="product-description"
-					className="text-base/7 tracking-normal antialiased text-muted-foreground prose-sm max-w-none space-y-3"
+					className="text-base tracking-normal antialiased text-muted-foreground leading-relaxed max-w-prose space-y-3"
 					itemProp="description"
 				>
 					{product.description.split("\n").map((line, i) => (

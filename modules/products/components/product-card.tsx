@@ -44,7 +44,8 @@ export function ProductCard({
 	index,
 	wishlistSkuIds,
 }: ProductCardProps) {
-	const { slug, title } = product;
+	const { slug, title, type } = product;
+	const productType = type?.label;
 	const { price, compareAtPrice } = getPrimaryPriceForList(product);
 	const stockInfo = getStockInfoForList(product);
 	const primaryImage = getPrimaryImageForList(product);
@@ -118,7 +119,7 @@ export function ProductCard({
 
 				<Image
 					src={primaryImage.url}
-					alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title)}
+					alt={primaryImage.alt || PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
 					fill
 					className={cn(
 						"object-cover rounded-lg",

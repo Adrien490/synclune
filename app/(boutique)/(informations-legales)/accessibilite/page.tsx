@@ -64,7 +64,7 @@ export default async function AccessibilityPage() {
 
       <section className={`bg-background ${SECTION_SPACING.default} relative z-10`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="prose prose-slate dark:prose-invert max-w-none space-y-6">
+          <div className="prose prose-slate dark:prose-invert max-w-prose space-y-6">
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold">État de conformité</h2>
               <p>

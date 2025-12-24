@@ -26,7 +26,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "sonner";
-import { GalleryErrorBoundary } from "@/modules/media/components/gallery-error-boundary";
+import { GalleryErrorBoundary } from "@/modules/media/components/gallery";
 import MediaLightbox from "@/modules/media/components/media-lightbox";
 import { DELETE_GALLERY_MEDIA_DIALOG_ID } from "./delete-gallery-media-alert-dialog";
 import { SortableMediaItem } from "./sortable-media-item";

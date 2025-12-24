@@ -1,372 +1,341 @@
-# Audit UX/UI E-commerce 2025 - Synclune
+# Rapport d'Audit UX/UI - Synclune
+## Basé sur les meilleures pratiques Baymard Institute & Arounda Agency 2025
 
-> **Document de référence** - Comparaison avec les meilleures pratiques UX/UI e-commerce 2025.
-
-## Résumé Exécutif
-
-Cet audit compare l'implémentation actuelle de Synclune aux meilleures pratiques UX/UI e-commerce 2025. L'application présente une **bonne base solide** avec des points forts notables en accessibilité, performance et checkout, mais plusieurs opportunités d'amélioration existent.
-
----
-
-## Tableau de Conformité
-
-| Catégorie | Score | Statut |
-|-----------|-------|--------|
-| Navigation & Architecture | 7/10 | Bon |
-| Checkout & Paiement | 7/10 | Bon |
-| Fiches Produits | 6/10 | Correct |
-| Performance & Mobile | 9/10 | Excellent |
-| Micro-interactions | 8/10 | Très bon |
-| Accessibilité WCAG 2.2 | 8/10 | Très bon |
-| Personnalisation | 5/10 | À améliorer |
-| IA & Innovation | 2/10 | Non implémenté |
+**Date :** 24 décembre 2024
+**Scope :** Checkout/Conversion, Pages produits, Mobile UX, Accessibilité
+**Exclusions :** Système d'avis (reporté), Bottom navigation (garder hamburger)
 
 ---
 
-## 1. Navigation & Recherche
+## SYNTHÈSE EXÉCUTIVE
 
-### Points Forts
-- **Navigation sticky** avec effet glass au scroll (seuil 20px)
-  - `app/(boutique)/(accueil)/_components/navbar/navbar-wrapper.tsx:35-51`
-- **Breadcrumbs** avec niveau actuel mis en évidence (`aria-current="page"`)
-  - `shared/components/page-header.tsx:196-266`
-- **Délai hover** 200ms (acceptable, recommandé 300-500ms)
-  - `app/(boutique)/(accueil)/_components/navbar/desktop-nav.tsx:41`
-- **Menu limité** : 3 items desktop, 7 mobile (bien < 10 recommandés)
-- **Recherches récentes** stockées en cookies
-  - `shared/components/search-overlay.tsx:66-68`
-- **Filtres progressifs** : type, couleur, matériau, prix, stock
-  - `app/(boutique)/produits/page.tsx`
+| Domaine | Score | Statut |
+|---------|-------|--------|
+| Navigation | 85% | Bon |
+| Recherche & Filtres | 80% | Bon |
+| Pages Produits | 70% | À améliorer |
+| Checkout | 90% | Excellent |
+| Mobile UX | 85% | Bon |
+| Accessibilité | 75% | À améliorer |
 
-### Lacunes Identifiées
-
-| Fonctionnalité | Priorité | Effort | Impact |
-|----------------|----------|--------|--------|
-| Auto-complétion avec images produits | Haute | Moyen | +43% conversion recherche |
-| Recherche fuzzy/tolérance fautes | Haute | Moyen | Meilleure découvrabilité |
-| Mega menu avec visuels | Basse | Faible | Engagement navigation |
-
-**Fichiers concernés :**
-- `shared/components/search-overlay.tsx` - Ajouter suggestions avec images
-- `modules/products/services/product-query-builder.ts:14-93` - Implémenter fuzzy search (PostgreSQL full-text ou trigram)
+**Score global : 81%** - Supérieur à la moyenne des sites e-commerce (67% échouent selon Baymard)
 
 ---
 
-## 2. Checkout & Paiement
+## 1. CHECKOUT & CONVERSION (Score: 90%)
 
-### Points Forts
-- **Guest checkout proéminent** avec email-only flow
-  - `modules/payments/components/checkout-form.tsx:104-169`
-  - Préservation du brouillon en localStorage pour navigation login
-- **Validation inline temps réel** avec messages spécifiques en français
-  - Email, prénom/nom (min 2 chars), adresse (min 5 chars), code postal, téléphone
-  - `modules/payments/hooks/use-checkout-form.ts`
-- **Champs requis/optionnels** clairement marqués
-  - Astérisque rouge avec `aria-label="requis"` + "(Optionnel)" en gris
-  - `shared/components/forms/field-label.tsx:35-37`
-- **Autofill navigateur** complet
-  - `autoComplete`: email, given-name, family-name, address-line1/2, postal-code, tel
-  - `modules/payments/components/checkout-form.tsx:128-338`
-- **Coût total sticky** visible pendant le scroll
-  - `modules/payments/components/checkout-summary.tsx:40`
-- **Touch targets** 44-56px (conforme WCAG AAA)
-  - Bouton principal : `h-14` = 56px
+### Points conformes
 
-### Lacunes Identifiées
+| Critère | Statut | Fichier |
+|---------|--------|---------|
+| Guest checkout supporté | OK | `checkout-form.tsx` |
+| Nombre de champs optimal (8-10 vs 11-12 recommandés) | OK | `checkout-schema.ts` |
+| Validation inline avec Zod | OK | `checkout-form.tsx:validation` |
+| Messages d'erreur spécifiques | OK | Ex: "min 2 caractères" |
+| Autocomplete HTML5 | OK | `given-name`, `address-line1`, etc. |
+| Labels au-dessus des champs | OK | `FieldLabel` composant |
+| Progressive disclosure | OK | Adresse ligne 2 + pays masqués |
+| 2 étapes claires (Adresse → Paiement) | OK | `checkout-container.tsx` |
+| Bouton CTA sticky mobile | OK | Footer fixe |
+| Explication téléphone | OK | "Pour les problèmes de livraison" |
+| Badge sécurité Stripe | OK | Shield + "Paiement sécurisé" |
+| SSL mentionné | OK | "Informations protégées par SSL" |
 
-| Fonctionnalité | Priorité | Effort | Impact |
-|----------------|----------|--------|--------|
-| Apple Pay / Google Pay | Haute | Faible | x2-3 conversion mobile |
-| Date de livraison estimée | Haute | Faible | Confiance client |
-| Buy Now Pay Later (Klarna) | Moyenne | Moyen | Paniers élevés |
+### Points à améliorer
 
-**Fichiers concernés :**
-- `modules/payments/actions/create-checkout-session.ts:555`
-  - Actuellement : `payment_method_types: ["card"]`
-  - À modifier : `payment_method_types: ["card", "apple_pay", "google_pay"]`
-- `modules/payments/components/checkout-summary.tsx` - Afficher estimation livraison
+| Problème | Impact | Recommandation | Fichier |
+|----------|--------|----------------|---------|
+| **Input mask téléphone absent** | 64% des sites échouent | Formater avec espaces/tirets selon pays | `phone-field.tsx` |
+| **Pas d'auto-détection type carte visible** | Stripe le gère en interne mais non visible | Afficher logo carte détectée avant Stripe | `checkout-summary.tsx` |
+| **Méthodes de paiement non listées avant checkout** | 11% abandons si méthode absente | Icônes Visa/MC/Apple Pay sur page panier | `cart-sheet.tsx` |
 
----
+### Recommandations prioritaires
 
-## 3. Fiches Produits
+1. **Ajouter icônes moyens de paiement sur la page panier**
+   - Fichier: `modules/cart/components/cart-sheet.tsx`
+   - Position: Avant le bouton "Aller au paiement"
+   - Icônes: Visa, Mastercard, CB, Apple Pay, Google Pay
 
-### Points Forts
-- **Layout vertical collapsible** (accordions, cards) - pas d'onglets horizontaux
-  - Évite le problème des 27% d'utilisateurs ignorant le contenu des onglets
-  - `app/(boutique)/creations/[slug]/page.tsx:130-163`
-- **Galerie images** complète
-  - Embla Carousel avec swipe mobile
-  - Zoom lightbox (3x max, double-tap, pinch)
-  - Support vidéo avec auto-play
-  - `modules/media/components/gallery.tsx` (407 lignes)
-- **Blur placeholders** générés et stockés
-  - `modules/media/services/generate-blur-data-url.ts`
-  - Script batch : `scripts/generate-blur-placeholders.ts`
-- **Recommandations intelligentes**
-  - Algorithme : même collection > même type > couleurs similaires > best-sellers
-  - `modules/products/data/get-related-products.ts`
-- **Sticky gallery** sur desktop
-  - `app/(boutique)/creations/[slug]/page.tsx:140`
-
-### Lacunes Identifiées
-
-| Fonctionnalité | Priorité | Effort | Impact |
-|----------------|----------|--------|--------|
-| Système d'avis clients | Haute | Élevé | Social proof majeur |
-| Section "Récemment vus" | Moyenne | Faible | Engagement +30% |
-| Images avec référence de taille | Moyenne | Faible | Réduction retours |
-| Vues 360° | Basse | Élevé | Bijoux complexes |
-
-**Fichiers concernés :**
-- Nouveau module `modules/reviews/` à créer (5 fichiers minimum)
-- `app/(boutique)/creations/[slug]/page.tsx` - Ajouter section "Récemment vus" (localStorage)
+2. **Input mask téléphone international**
+   - Fichier: `shared/components/forms/phone-field.tsx`
+   - Utiliser: react-phone-number-input déjà installé
+   - Formater selon le pays sélectionné
 
 ---
 
-## 4. Performance & Mobile
+## 2. PAGES PRODUITS (Score: 70%)
 
-### Points Forts (Score: 9/10)
+### Points conformes
 
-#### PWA Complète
-- Service worker avec Serwist : `app/sw.ts`
-- Manifest avec icônes et shortcuts : `app/manifest.ts`
-- Page offline : `/offline`
-- `skipWaiting: true`, `clientsClaim: true`, `navigationPreload: true`
+| Critère | Statut | Fichier |
+|---------|--------|---------|
+| Sections collapsibles (pas d'onglets) | OK | `product-care-info.tsx` (Accordéon) |
+| Galerie avec vignettes verticales | OK | `gallery.tsx` |
+| Zoom/Lightbox | OK | `media-lightbox.tsx` |
+| Compteur images visible | OK | "4/12" |
+| Swipe mobile + dots | OK | Embla Carousel |
+| Variantes synchronisées URL | OK | `?color=rouge&size=55` |
+| Stock warnings | OK | "Plus que X en stock" |
+| Prix animé au changement | OK | Framer Motion |
+| Sélecteurs visuels (swatches) | OK | Pas de dropdowns |
 
-#### Images Optimisées
-- Formats : AVIF, WebP avec fallback
-  - `next.config.ts:29-39` : `formats: ["image/avif", "image/webp"]`
-- Lazy loading avec priority pour above-fold (index < 4)
-- Blur placeholders partout
-- `sizes` responsives sur toutes les images
+### Points manquants critiques
 
-#### Caching Granulaire
-```
-products:       stale 15m, revalidate 5m, expire 6h
-collections:    stale 1h, revalidate 15m, expire 1d
-reference:      stale 7d, revalidate 1d, expire 30d
-productDetail:  stale 15m, revalidate 5m, expire 6h
-cart:           stale 5m, revalidate 1m, expire 30m
-skuStock:       stale 30s, revalidate 15s, expire 1m
-```
+| Problème | Impact | Stat Baymard | Fichier concerné |
+|----------|--------|--------------|------------------|
+| **Image "In Scale" absente** | Critique - taille incompréhensible | 91% des sites l'omettent | `gallery.tsx` |
+| **Image lifestyle absente** | Contexte d'utilisation manquant | Recommandé pour bijoux | Contenu à ajouter |
+| **Highlights description** | Scanabilité réduite | 78% ne le font pas | `product-info.tsx` |
+| **3+ vignettes sur liste produits** | Exploration limitée | 80% échouent | `product-card.tsx` |
 
-#### Fonts Optimisées
-- Preload sur fonts critiques (Crimson Pro, Inter)
-- `display: "swap"` pour éviter FOIT
-- Subset latin uniquement
-- `shared/styles/fonts.ts`
+### Points à améliorer
 
-#### CLS Prevention
-- Skeleton screens avec shimmer (1418 usages)
-- Suspense boundaries sur navbar et sections dynamiques
-- Aspect ratios définis sur images
+| Problème | Recommandation | Fichier |
+|----------|----------------|---------|
+| Descriptions non structurées | Ajouter bullet points "highlights" au-dessus | `product-info.tsx` |
+| Pas de table de tailles | Ajouter modal/tooltip avec guide tailles | `size-selector.tsx` |
+| Vignettes carousel masquent contenu | Montrer 3 images minimum sur ProductCard | `product-card.tsx` |
 
-### Lacunes Mineures
+### Recommandations prioritaires
 
-| Fonctionnalité | Priorité | Effort |
-|----------------|----------|--------|
-| Code splitting (1 seul dynamic import) | Basse | Moyen |
-| Bundle size monitoring | Basse | Faible |
+1. **Images "In Scale" - CRITIQUE**
+   - Ajouter une image de bijou porté ou avec référence taille (pièce, main)
+   - Type d'image à taguer dans le CMS/upload
+   - Fichier: `modules/media/types/media.types.ts` (ajouter type IN_SCALE)
+   - Afficher en priorité dans la galerie
 
----
+2. **Highlights produit**
+   - Fichier: `modules/products/components/product-info.tsx`
+   - Extraire 3-5 points clés de la description
+   - Afficher en bullet points avant la description complète
+   - Format: icône + texte court (ex: "Argent 925", "Fait main")
 
-## 5. Micro-interactions
-
-### Points Forts
-
-#### Panier
-- **Badge animé** : pulse 300ms sur changement de quantité
-  - `modules/cart/components/cart-badge.tsx:23-30`
-  - `aria-live="polite"` pour accessibilité
-- **Mini-cart overlay** : Vaul drawer non-modal depuis la droite
-  - `modules/cart/components/cart-sheet.tsx`
-- **Animations items** : AnimatePresence avec fade + height 200ms
-  - Easing : `[0, 0, 0.2, 1]` cubic-bezier
-
-#### Transitions
-- Hover/Focus : 150-200ms
-- Transitions page : 200-300ms
-- Modals/Popovers : 200-250ms
-- Configuration centralisée : `shared/components/animations/motion.config.ts`
-
-#### Loading States
-- **Skeleton screens** avec shimmer 1.5s
-  - `shared/components/ui/skeleton.tsx`
-- **Spinner** pour actions ponctuelles
-  - `shared/components/ui/spinner.tsx`
-
-#### Accessibilité Motion
-- `prefers-reduced-motion` respecté partout
-  - CSS : `app/globals.css:432-437, 531-542, 632-641`
-  - Framer Motion : `useReducedMotion()` hook
-
-### Lacunes Identifiées
-
-| Fonctionnalité | Priorité | Effort |
-|----------------|----------|--------|
-| Texte bouton "Ajouté ✓" après ajout | Moyenne | Faible |
-| Undo toast sur suppression panier | Basse | Faible |
-
-**Fichiers concernés :**
-- `modules/cart/components/add-to-cart-form.tsx:83-100`
-  - Actuellement : "Ajout en cours..." puis retour immédiat
-  - À ajouter : état "Ajouté ✓" pendant 2s
+3. **Guide des tailles**
+   - Fichier: `modules/skus/components/size-selector.tsx`
+   - Ajouter bouton "Guide des tailles" avec modal
+   - Contenu: tableau tailles + instructions mesure
 
 ---
 
-## 6. Accessibilité WCAG 2.2
+## 3. MOBILE UX (Score: 85%)
 
-### Points Forts
+### Points conformes
 
-#### Navigation Clavier
-- **Skip links** implémentés : `shared/components/skip-link.tsx`
-- **Main content** : `<main id="main-content">` dans layout
-- **Keyboard navigation** complète sur color swatches (arrows, Home/End)
+| Critère | Statut | Fichier |
+|---------|--------|---------|
+| Touch targets 44x44px | OK | `size-11` partout |
+| Safe areas iOS | OK | `env(safe-area-inset-*)` |
+| Menu mobile scrollable | OK | `menu-sheet.tsx` |
+| Drawer patterns | OK | Panier, Filtres, Menu |
+| Navigation clavier recherche | OK | Arrow Up/Down, Escape |
+| Labels au-dessus des champs | OK | Standard forms |
+| Blur placeholders images | OK | `blurDataUrl` |
 
-#### Focus Visible
-```css
-:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-```
-- `app/globals.css:199-203`
+### Points à améliorer
 
-#### Contraste
-- Muted foreground light : `oklch(0.55)` - WCAG AAA
-- Muted foreground dark : `oklch(0.75)` - WCAG AAA
-- Documenté dans CSS : `app/globals.css:94-177`
+| Problème | Impact | Fichier | Solution |
+|----------|--------|---------|----------|
+| **Keyboard numeric manquant** | Mauvais clavier affiché | `checkout-form.tsx` | `inputMode="numeric"` sur code postal |
+| **Autocorrect non désactivé** | 87% échouent | `input-field.tsx` | `autoCorrect="off"` sur noms/adresses |
+| **Scope contexte liens mobile** | Vision tunnel | `menu-sheet.tsx` | Préfixer liens avec catégorie parent |
 
-#### Touch Targets
-- Boutons : 40-56px (WCAG AAA = 44px)
-- Inputs : `min-h-11` = 44px
-- Color swatches : 36px + 8px gap = 44px effectif
+### Recommandations prioritaires
 
-#### ARIA
-- **Live regions** : panier (`aria-live="polite"`), sélection couleurs
-- **Roles** : `alert` sur erreurs, `status` sur badges stock
-- **Labels** : `aria-describedby` sur champs avec erreurs, `aria-invalid`
+1. **Optimiser inputMode par type de champ**
+   - Code postal: `inputMode="numeric"` (pas "text")
+   - Téléphone: `inputMode="tel"` (déjà OK via phone-field)
+   - Email: `inputMode="email"` (déjà OK)
+   - Fichier: `modules/payments/components/checkout-form.tsx`
 
-#### Reduced Motion
-- Support complet CSS + Framer Motion
-- Animations désactivées quand préférence active
+2. **Désactiver autocorrect sur champs sensibles**
+   - Prénom, Nom, Adresse, Code promo
+   - Ajouter: `autoCorrect="off" autoCapitalize="words"`
+   - Fichier: `shared/components/forms/input-field.tsx` (prop par défaut selon type)
 
-#### Documentation
-- Page accessibilité publique : `app/(boutique)/(informations-legales)/accessibilite/page.tsx`
-- Conformité partielle WCAG 2.1 AA déclarée
-- Engagement réponse 48h
-
-### Lacunes Identifiées
-
-| Fonctionnalité | Priorité | Effort |
-|----------------|----------|--------|
-| aria-expanded inconsistant sur toggles | Moyenne | Faible |
-| Focus trap dans modals/sheets | Moyenne | Moyen |
-| aria-controls sur boutons dropdown | Basse | Faible |
+3. **Améliorer contexte mobile**
+   - "Bagues" → "Les créations > Bagues"
+   - Fichier: `app/(boutique)/(accueil)/_components/navbar/menu-sheet.tsx`
 
 ---
 
-## 7. Personnalisation
+## 4. ACCESSIBILITÉ (Score: 75%)
 
-### Points Forts
-- **Recommandations contextuelles**
-  - Algorithme multi-stratégie : collection > type > couleurs > best-sellers
-  - `modules/products/data/get-related-products.ts`
-- **Wishlists persistantes** pour utilisateurs connectés
-  - `modules/wishlist/`
+### Points conformes
 
-### Lacunes Identifiées
+| Critère | Statut | Fichier |
+|---------|--------|---------|
+| ARIA roles sur autocomplete | OK | `combobox`, `listbox`, `option` |
+| Live regions | OK | `aria-live="polite"` |
+| fieldset/legend radio groups | OK | Variantes produit |
+| aria-describedby erreurs | OK | `${field.name}-error` |
+| Focus visible styles | OK | Ring outlines |
+| Breadcrumbs Schema.org | OK | JSON-LD SEO |
+| Skip links | OK | Carousel collections |
+| Reduced motion support | OK | `useReducedMotion()` |
 
-| Fonctionnalité | Priorité | Effort |
-|----------------|----------|--------|
-| Section "Récemment vus" | Moyenne | Faible |
-| Emails récupération panier | Haute | Moyen |
-| Adaptation géographique (devise, langue) | Basse | Élevé |
+### Points à auditer/améliorer
 
----
+| Problème | Impact WCAG | Fichier | Solution |
+|----------|-------------|---------|----------|
+| **ALT text images** | 55% manquent d'ALT | `gallery.tsx` | Auditer chaque image, ALT descriptif |
+| **Ordre de focus** | 30% échouent | Global | Tester navigation Tab |
+| **Contraste couleurs** | Non vérifié | Tailwind config | Audit avec axe-core |
+| **Texte 80 chars/ligne** | Lisibilité | `prose` classes | Vérifier `max-w-prose` |
+| **Hauteur ligne 1.5em** | Lisibilité | Tailwind | `leading-relaxed` partout |
 
-## 8. IA & Innovation
+### Points critiques European Accessibility Act 2025
 
-### État Actuel
-Aucune fonctionnalité IA implémentée.
+| Exigence | Statut | Action requise |
+|----------|--------|----------------|
+| Navigation clavier complète | À tester | Audit Tab navigation toutes pages |
+| Compatibilité lecteurs d'écran | À tester | Test avec VoiceOver/NVDA |
+| Text-to-speech | À valider | Vérifier order lecture logique |
 
-### Opportunités Futures (Non prioritaires)
+### Recommandations prioritaires
 
-| Fonctionnalité | Priorité | Effort | ROI |
-|----------------|----------|--------|-----|
-| Chatbot IA (Tidio, Lyro) | Basse | Faible (SaaS) | 93% questions résolues |
-| Recherche visuelle | Basse | Élevé | Marché 150Mds$ 2032 |
-| Recommandations ML | Basse | Élevé | +35% ventes (Amazon) |
+1. **Audit ALT text systématique**
+   - Toutes les images produits doivent avoir un ALT descriptif
+   - Format: "[Type bijou] [Matériau] [Couleur] - Vue [angle]"
+   - Fichier: `modules/media/components/gallery.tsx` (prop alt obligatoire)
+   - Fichier: `modules/products/components/product-card.tsx`
 
----
+2. **Test navigation clavier**
+   - Parcourir tout le site avec Tab uniquement
+   - Vérifier focus visible sur chaque élément interactif
+   - Corriger l'ordre de focus si illogique
+   - Outil: axe DevTools extension
 
-## Plan d'Action Recommandé
-
-### Phase 1 : Quick Wins (Impact immédiat, effort faible)
-
-| # | Fonctionnalité | Fichier | Action |
-|---|----------------|---------|--------|
-| 1 | Apple Pay / Google Pay | `modules/payments/actions/create-checkout-session.ts:555` | Ajouter types de paiement |
-| 2 | Date livraison estimée | `modules/payments/components/checkout-summary.tsx` | Calculer et afficher fenêtre |
-| 3 | Bouton "Ajouté ✓" | `modules/cart/components/add-to-cart-form.tsx:83-100` | État temporaire 2s |
-| 4 | Récemment vus | `app/(boutique)/creations/[slug]/page.tsx` | localStorage tracking |
-
-### Phase 2 : Améliorations Moyennes (2-4 semaines)
-
-| # | Fonctionnalité | Fichier | Action |
-|---|----------------|---------|--------|
-| 5 | Auto-complétion recherche | `shared/components/search-overlay.tsx` | Suggestions avec images |
-| 6 | Recherche fuzzy | `modules/products/services/product-query-builder.ts` | PostgreSQL trigram/FTS |
-| 7 | Emails panier abandonné | Nouveau : `modules/cart/services/abandoned-cart-email.ts` | Cron 2h après abandon |
-
-### Phase 3 : Fonctionnalités Majeures (4-8 semaines)
-
-| # | Fonctionnalité | Module | Action |
-|---|----------------|--------|--------|
-| 8 | Système d'avis | Nouveau : `modules/reviews/` | Formulaire, notes, filtres |
-| 9 | Buy Now Pay Later | `modules/payments/` | Intégration Stripe BNPL |
+3. **Contraste couleurs**
+   - Audit avec Lighthouse Accessibility
+   - Vérifier ratio 4.5:1 pour texte normal
+   - Vérifier ratio 3:1 pour texte large
+   - Fichier: `tailwind.config.ts` (couleurs theme)
 
 ---
 
-## Fichiers Critiques
+## 5. RECHERCHE & FILTRES (Score: 80%)
 
-| Fichier | Modifications potentielles |
-|---------|---------------------------|
-| `modules/payments/actions/create-checkout-session.ts` | Apple Pay, Google Pay, BNPL |
-| `modules/payments/components/checkout-summary.tsx` | Date livraison estimée |
-| `modules/cart/components/add-to-cart-form.tsx` | Feedback "Ajouté ✓" |
-| `shared/components/search-overlay.tsx` | Auto-complétion images |
-| `modules/products/services/product-query-builder.ts` | Fuzzy search |
-| `app/(boutique)/creations/[slug]/page.tsx` | Récemment vus, avis |
+### Points conformes
 
----
+| Critère | Statut |
+|---------|--------|
+| 4/5 filtres essentiels (Prix, Couleur, Matériau, Type) | OK |
+| Autocomplétion avec debounce 300ms | OK |
+| Filtres appliqués visibles (badges) | OK |
+| Suppression individuelle filtres | OK |
+| Sidebar verticale (accordéon) | OK |
+| URL state synchronisé | OK |
+| Recherche fuzzy (pg_trgm) | OK |
 
-## Conclusion
+### Points à améliorer
 
-### Position Actuelle
-Synclune se positionne **au-dessus de la moyenne** des sites e-commerce :
-- 81% des sites ont une UX "médiocre ou pire" selon Baymard Institute
-- Score global estimé : **7/10** (bon)
-
-### Forces Distinctives
-1. **Performance technique** de niveau production (PWA, images optimisées, caching)
-2. **Accessibilité** exemplaire (WCAG AA/AAA, reduced motion, skip links)
-3. **Checkout optimisé** (guest prominent, validation inline, touch-friendly)
-4. **Micro-interactions** soignées (animations, skeletons, feedback)
-
-### Priorités d'Amélioration
-1. **Méthodes de paiement modernes** - Apple Pay, Google Pay (conversion mobile x2-3)
-2. **Informations livraison** - Dates estimées (confiance client)
-3. **Recherche améliorée** - Auto-complétion, fuzzy (conversion recherche +43%)
-4. **Social proof** - Système d'avis (impact majeur, effort élevé)
-
-### Métriques Cibles (si implémentation)
-- Taux de conversion checkout : +35% (Baymard)
-- Conversion recherche : +43%
-- Revenus via personnalisation : +40%
+| Problème | Fichier | Solution |
+|----------|---------|----------|
+| **Pas de filtres thématiques** | `product-filter-sheet.tsx` | Ajouter "Occasions", "Style" |
+| **Scope catégorie dans autocomplete** | `autocomplete.tsx` | Afficher type produit |
 
 ---
 
-*Audit réalisé le 20 décembre 2025*
-*Basé sur les meilleures pratiques UX/UI e-commerce 2025 (Baymard Institute, Nielsen Norman Group, WCAG 2.2)*
+## 6. NAVIGATION (Score: 85%)
+
+### Points conformes
+
+| Critère | Statut |
+|---------|--------|
+| Touch targets 44px | OK |
+| Breadcrumbs SEO | OK |
+| Safe areas iOS | OK |
+| Menu mobile scrollable | OK |
+
+### Point à améliorer
+
+| Problème | Fichier | Solution |
+|----------|---------|----------|
+| **Hover delay trop court (200ms)** | `desktop-nav.tsx:57` | Passer à 300-400ms |
+
+---
+
+## MATRICE DE PRIORISATION
+
+### Impact élevé / Effort faible (Quick Wins)
+
+| Action | Fichier | Temps estimé |
+|--------|---------|--------------|
+| Ajouter icônes paiement sur panier | `cart-sheet.tsx` | 15 min |
+| Hover delay 200→300ms | `desktop-nav.tsx:57` | 2 min |
+| inputMode="numeric" code postal | `checkout-form.tsx` | 5 min |
+| autoCorrect="off" sur noms | `input-field.tsx` | 10 min |
+
+### Impact élevé / Effort moyen
+
+| Action | Fichier | Temps estimé |
+|--------|---------|--------------|
+| Highlights produit (bullet points) | `product-info.tsx` | 1h |
+| Guide des tailles modal | `size-selector.tsx` | 2h |
+| Input mask téléphone | `phone-field.tsx` | 1h |
+| Audit ALT text images | `gallery.tsx`, `product-card.tsx` | 2h |
+
+### Impact élevé / Effort élevé
+
+| Action | Fichier | Temps estimé |
+|--------|---------|--------------|
+| Images "In Scale" | CMS + `gallery.tsx` | 4h+ (contenu) |
+| Audit accessibilité complet | Global | 1 jour |
+| Filtres thématiques | `product-filter-sheet.tsx` + DB | 4h |
+
+---
+
+## FICHIERS CLÉS PAR DOMAINE
+
+### Checkout
+- `modules/payments/components/checkout-form.tsx`
+- `modules/payments/components/checkout-container.tsx`
+- `modules/payments/components/checkout-summary.tsx`
+- `modules/payments/schemas/checkout-schema.ts`
+- `modules/cart/components/cart-sheet.tsx`
+- `shared/components/forms/phone-field.tsx`
+
+### Pages Produits
+- `app/(boutique)/creations/[slug]/page.tsx`
+- `modules/media/components/gallery.tsx`
+- `modules/products/components/product-info.tsx`
+- `modules/products/components/product-details.tsx`
+- `modules/products/components/product-card.tsx`
+- `modules/skus/components/size-selector.tsx`
+- `modules/skus/components/sku-selector-dialog.tsx`
+
+### Mobile UX
+- `app/(boutique)/(accueil)/_components/navbar/menu-sheet.tsx`
+- `shared/components/forms/input-field.tsx`
+- `shared/components/autocomplete/autocomplete.tsx`
+
+### Accessibilité
+- `shared/components/forms/input-field.tsx`
+- `modules/media/components/gallery.tsx`
+- `tailwind.config.ts`
+- Tous les composants interactifs
+
+### Navigation
+- `app/(boutique)/(accueil)/_components/navbar/desktop-nav.tsx`
+- `shared/components/page-header.tsx`
+
+---
+
+## CONCLUSION
+
+Synclune obtient un score de **81%**, supérieur à la moyenne du secteur. Les points forts sont :
+- Checkout optimisé (90%) avec validation et UX soignée
+- Mobile-first bien exécuté (85%)
+- Recherche et filtres fonctionnels (80%)
+
+Les axes d'amélioration prioritaires :
+1. **Images produits** - Ajouter images "In Scale" et lifestyle
+2. **Accessibilité** - Audit ALT text et navigation clavier
+3. **Quick wins** - Icônes paiement, hover delay, inputMode
+
+Le système d'avis clients, bien que critique (95% des utilisateurs s'y fient), est reporté à une phase ultérieure.
+
+---
+
+*Audit réalisé le 24 décembre 2024*
+*Basé sur les meilleures pratiques UX/UI e-commerce 2025 (Baymard Institute, Arounda Agency)*

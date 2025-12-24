@@ -57,7 +57,7 @@ export default async function RetractationPage() {
 
       <section className={`bg-background ${SECTION_SPACING.default}`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="prose prose-slate dark:prose-invert max-w-none space-y-8">
+          <div className="prose prose-slate dark:prose-invert max-w-prose space-y-8">
             {/* Composant formulaire de rétractation */}
             <section className="space-y-8">
               {/* Information préliminaire */}

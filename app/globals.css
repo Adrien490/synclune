@@ -366,17 +366,6 @@ textarea {
 		}
 	}
 
-	/* Animation hint swipe pour carousel mobile */
-	@keyframes swipe-hint {
-		0%,
-		100% {
-			transform: translateX(0);
-		}
-		50% {
-			transform: translateX(-12px);
-		}
-	}
-
 	/* Animation fade-out pour indicateur de scroll */
 	@keyframes scroll-hint-fade {
 		0%,
@@ -386,53 +375,6 @@ textarea {
 		100% {
 			opacity: 0;
 			visibility: hidden;
-		}
-	}
-
-	/* Animation hint swipe pour galerie produit - apparait puis disparait */
-	@keyframes gallery-swipe-hint {
-		0% {
-			opacity: 0;
-			transform: translateX(-50%);
-		}
-		15%,
-		85% {
-			opacity: 1;
-			transform: translateX(-50%);
-		}
-		100% {
-			opacity: 0;
-			transform: translateX(-50%);
-		}
-	}
-
-	/* Animation main qui glisse */
-	@keyframes swipe-hand {
-		0%,
-		100% {
-			transform: translateX(0);
-		}
-		50% {
-			transform: translateX(-6px);
-		}
-	}
-
-	/* Appliquer l'animation au scroll container quand data-swipe-hint est présent sur le parent */
-	[data-swipe-hint="true"] [data-carousel-scroll] {
-		animation: swipe-hint 1.5s ease-in-out 2;
-	}
-
-	/* Désactiver l'animation sur desktop (les flèches sont visibles) */
-	@media (min-width: 1024px) {
-		[data-swipe-hint="true"] [data-carousel-scroll] {
-			animation: none;
-		}
-	}
-
-	/* Respecter prefers-reduced-motion */
-	@media (prefers-reduced-motion: reduce) {
-		[data-swipe-hint="true"] [data-carousel-scroll] {
-			animation: none;
 		}
 	}
 

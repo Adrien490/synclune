@@ -8,7 +8,6 @@ import { getProductBySlug } from "@/modules/products/data/get-product";
 import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
-import { getSwipeHintSeen } from "@/modules/media/data/get-swipe-hint-seen";
 
 import { PageHeader } from "@/shared/components/page-header";
 import { ProductDetails } from "@/modules/products/components/product-details";
@@ -42,10 +41,9 @@ export default async function ProductPage({
 	const urlParams = await searchParams;
 
 	// Paralléliser toutes les requêtes pour optimiser le TTFB
-	const [admin, product, hasSeenSwipeHint, wishlistSkuIds] = await Promise.all([
+	const [admin, product, wishlistSkuIds] = await Promise.all([
 		isAdmin(),
 		getProductBySlug({ slug, includeDraft: true }), // Récupérer avec DRAFT, filtrer après
-		getSwipeHintSeen(),
 		getWishlistSkuIds(), // Récupérer tous les SKU IDs de la wishlist en parallèle
 	]);
 
@@ -144,7 +142,7 @@ export default async function ProductPage({
 							<div className="group/product-details grid gap-6 lg:gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 								{/* Galerie sticky sur desktop uniquement - avec hauteur max sécurisée */}
 								<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
-									<Gallery product={product} title={product.title} hasSeenSwipeHint={hasSeenSwipeHint} />
+									<Gallery product={product} title={product.title} />
 								</section>
 
 								{/* Informations et configurateur scrollables */}

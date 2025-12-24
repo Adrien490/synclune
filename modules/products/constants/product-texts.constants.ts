@@ -50,12 +50,43 @@ export const PRODUCT_TEXTS = {
 		LIMITED_EDITION: "Édition limitée",
 	},
 
-	// Images et médias
+	// Images et médias - Format WCAG : "[Type bijou] [Titre] en [Matériau] [Couleur] - Vue [X sur Y]"
 	IMAGES: {
-		DEFAULT_ALT: (title: string) => `${title} - Bijou artisanal fait main à Nantes par Synclune`,
-		PLACEHOLDER_ALT: (title: string) => `Image non disponible pour ${title}`,
-		GALLERY_MAIN_ALT: (title: string, index: number) => `${title} - Photo ${index} - Bijou artisanal Synclune Nantes`,
-		GALLERY_THUMBNAIL_ALT: (title: string, index: number) => `${title} - Miniature ${index} - Création artisanale Synclune`,
+		/**
+		 * ALT par défaut pour les images produit
+		 * Format: "[Type] [Titre] - Bijou artisanal fait main par Synclune"
+		 */
+		DEFAULT_ALT: (title: string, productType?: string) =>
+			productType
+				? `${productType} ${title} - Bijou artisanal fait main par Synclune`
+				: `${title} - Bijou artisanal fait main par Synclune`,
+
+		/**
+		 * ALT pour image placeholder/non disponible
+		 */
+		PLACEHOLDER_ALT: (title: string, productType?: string) =>
+			productType
+				? `${productType} ${title} - Image bientôt disponible`
+				: `${title} - Image bientôt disponible`,
+
+		/**
+		 * ALT pour les images de la galerie principale
+		 * Format: "[Type] [Titre] - Vue [index] sur [total]"
+		 */
+		GALLERY_MAIN_ALT: (title: string, index: number, total?: number, productType?: string) => {
+			const prefix = productType ? `${productType} ${title}` : title;
+			const viewInfo = total && total > 1 ? `Vue ${index} sur ${total}` : `Photo ${index}`;
+			return `${prefix} - ${viewInfo}`;
+		},
+
+		/**
+		 * ALT pour les miniatures de la galerie
+		 */
+		GALLERY_THUMBNAIL_ALT: (title: string, index: number, isVideo = false, productType?: string) => {
+			const prefix = productType ? `${productType} ${title}` : title;
+			const mediaType = isVideo ? "Vidéo" : "Miniature";
+			return `${prefix} - ${mediaType} ${index}`;
+		},
 	},
 
 	// Actions utilisateur
