@@ -399,8 +399,6 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 									{isPending && (
 										<div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 pointer-events-none" aria-hidden="true" />
 									)}
-									{/* Fix 4: Scroll indicator gradient - amélioré */}
-									<div className="pointer-events-none absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-background via-background/80 to-transparent z-[5]" aria-hidden="true" />
 									{/* Image + Prix */}
 									<div className="flex gap-4">
 										{/* Fix 3: Image uniforme 32x32 + Fix 17: Animation zoom */}

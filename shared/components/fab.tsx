@@ -193,6 +193,7 @@ export function Fab({
 										"border-r-0",
 										"shadow-md",
 										"hover:bg-accent",
+										"active:scale-95 transition-transform",
 										"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 										"focus-visible:outline-none",
 										isPending && "cursor-wait opacity-70"
@@ -236,12 +237,13 @@ export function Fab({
 										"border border-border",
 										"shadow-sm",
 										"hover:bg-accent",
+										"active:scale-95",
 										"flex",
 										"md:opacity-0 md:group-hover:opacity-100",
 										"focus-visible:opacity-100",
 										"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
 										"focus-visible:outline-none",
-										"transition-opacity duration-200",
+										"transition-all duration-200",
 										isPending && "cursor-wait md:opacity-100"
 									)}
 									aria-label={hideTooltip}

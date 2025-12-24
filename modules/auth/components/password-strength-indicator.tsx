@@ -31,11 +31,7 @@ export function PasswordStrengthIndicator({
 					<span
 						className={cn(
 							"font-medium",
-							strengthLevel <= 2
-								? "text-destructive"
-								: strengthLevel <= 3
-									? "text-yellow-600"
-									: "text-green-600"
+							strengthLevel < 2 ? "text-destructive" : "text-green-600"
 						)}
 					>
 						{strengthLabel}
@@ -46,7 +42,7 @@ export function PasswordStrengthIndicator({
 					role="progressbar"
 					aria-valuenow={strengthLevel}
 					aria-valuemin={0}
-					aria-valuemax={5}
+					aria-valuemax={2}
 					aria-label={`Force du mot de passe : ${strengthLabel}`}
 				>
 					<div
@@ -54,7 +50,7 @@ export function PasswordStrengthIndicator({
 							"h-full transition-all duration-300 rounded-full",
 							strengthColor
 						)}
-						style={{ width: `${(strengthLevel / 5) * 100}%` }}
+						style={{ width: `${(strengthLevel / 2) * 100}%` }}
 					/>
 				</div>
 			</div>

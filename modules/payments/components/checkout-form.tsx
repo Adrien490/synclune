@@ -337,7 +337,7 @@ export function CheckoutForm({
 							placeholder="06 12 34 56 78"
 						/>
 						<p className="text-sm text-muted-foreground">
-							Pour faciliter la livraison
+							Utilisé uniquement par le transporteur en cas de problème de livraison (absence, adresse introuvable). Jamais de démarchage.
 						</p>
 					</div>
 				)}

@@ -16,19 +16,29 @@ export const callbackURLSchema = z
 	.default("/");
 
 /**
+ * Compte le nombre de types de caractères différents
+ */
+function countCharacterTypes(password: string): number {
+	let count = 0;
+	if (/[A-Z]/.test(password)) count++;
+	if (/[a-z]/.test(password)) count++;
+	if (/[0-9]/.test(password)) count++;
+	if (/[^A-Za-z0-9]/.test(password)) count++;
+	return count;
+}
+
+/**
  * Schéma de validation pour les nouveaux mots de passe
- * Exige: majuscule, minuscule, chiffre, caractère spécial
+ * Simplifié selon Baymard Institute pour réduire l'abandon de 18%
+ * Exige: 8 caractères + 2 types de caractères différents
  */
 export const newPasswordSchema = z
 	.string()
 	.min(8, "Le mot de passe doit contenir au moins 8 caractères")
 	.max(128, "Le mot de passe ne doit pas dépasser 128 caractères")
-	.regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
-	.regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
-	.regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
-	.regex(
-		/[^A-Za-z0-9]/,
-		"Le mot de passe doit contenir au moins un caractère spécial"
+	.refine(
+		(password) => countCharacterTypes(password) >= 2,
+		"Le mot de passe doit contenir au moins 2 types de caractères (lettre, chiffre, symbole)"
 	);
 
 // ============================================================================

@@ -165,7 +165,7 @@ export async function ProductVariantsDataTable({
 											role="gridcell"
 											className="hidden md:table-cell py-3"
 										>
-											<div className="w-20 h-20 relative shrink-0">
+											<div className="w-20 h-20 relative shrink-0 bg-muted rounded-md">
 												{primaryImage ? (
 													primaryImage.mediaType === "VIDEO" ? (
 														<video

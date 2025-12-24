@@ -287,11 +287,12 @@ export function SpeedDialFab({
 									"border border-border",
 									"shadow-sm",
 									"hover:bg-accent",
+									"active:scale-95",
 									"md:opacity-0 md:group-hover:opacity-100",
 									"focus-visible:opacity-100",
 									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
 									"focus-visible:outline-none",
-									"transition-opacity duration-200",
+									"transition-all duration-200",
 									isPending && "cursor-wait opacity-100"
 								)}
 								aria-label={hideTooltip}

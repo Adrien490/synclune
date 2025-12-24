@@ -5,7 +5,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import type { Product } from "@/modules/products/types/product.types";
 import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-dialog";
 import { cn } from "@/shared/utils/cn";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 
 interface AddToCartCardButtonProps {
@@ -122,10 +122,12 @@ export function AddToCartCardButton({
 				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
 				{isMobileFull ? (
-					// Mobile full-width: texte uniquement
-					<span className={cn("text-sm font-medium", isPending && "opacity-60")}>
-						{isPending ? "Ajout..." : "Ajouter au panier"}
-					</span>
+					// Mobile full-width: texte ou spinner
+					isPending ? (
+						<Loader2 size={20} className="animate-spin" aria-hidden="true" />
+					) : (
+						<span className="text-sm font-medium">Ajouter au panier</span>
+					)
 				) : (
 					<>
 						{/* Mobile icon: icone ShoppingCart + drop-shadow */}

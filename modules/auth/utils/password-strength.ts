@@ -11,28 +11,35 @@ export interface PasswordRule {
 // CONSTANTS
 // ============================================================================
 
+/**
+ * Règles simplifiées selon Baymard Institute :
+ * - 8 caractères minimum
+ * - Au moins 2 types de caractères différents
+ * Réduit l'abandon de 18% vs 5 critères obligatoires
+ */
 export const PASSWORD_RULES: PasswordRule[] = [
 	{
 		label: "Au moins 8 caractères",
 		test: (password) => password.length >= 8,
 	},
 	{
-		label: "Une lettre majuscule",
-		test: (password) => /[A-Z]/.test(password),
-	},
-	{
-		label: "Une lettre minuscule",
-		test: (password) => /[a-z]/.test(password),
-	},
-	{
-		label: "Un chiffre",
-		test: (password) => /[0-9]/.test(password),
-	},
-	{
-		label: "Un caractère spécial",
-		test: (password) => /[^A-Za-z0-9]/.test(password),
+		label: "Au moins 2 types de caractères (lettre, chiffre, symbole)",
+		test: (password) => countCharacterTypes(password) >= 2,
 	},
 ];
+
+/**
+ * Compte le nombre de types de caractères différents dans le mot de passe
+ * Types : majuscule, minuscule, chiffre, caractère spécial
+ */
+export function countCharacterTypes(password: string): number {
+	let count = 0;
+	if (/[A-Z]/.test(password)) count++;
+	if (/[a-z]/.test(password)) count++;
+	if (/[0-9]/.test(password)) count++;
+	if (/[^A-Za-z0-9]/.test(password)) count++;
+	return count;
+}
 
 // ============================================================================
 // FUNCTIONS
@@ -46,16 +53,11 @@ export function getStrengthLevel(password: string): number {
 export function getStrengthLabel(level: number): string {
 	switch (level) {
 		case 0:
-		case 1:
 			return "Très faible";
-		case 2:
+		case 1:
 			return "Faible";
-		case 3:
-			return "Moyen";
-		case 4:
+		case 2:
 			return "Fort";
-		case 5:
-			return "Très fort";
 		default:
 			return "";
 	}
@@ -64,15 +66,10 @@ export function getStrengthLabel(level: number): string {
 export function getStrengthColor(level: number): string {
 	switch (level) {
 		case 0:
-		case 1:
 			return "bg-destructive";
-		case 2:
+		case 1:
 			return "bg-orange-500";
-		case 3:
-			return "bg-yellow-500";
-		case 4:
-			return "bg-green-500";
-		case 5:
+		case 2:
 			return "bg-green-600";
 		default:
 			return "bg-muted";

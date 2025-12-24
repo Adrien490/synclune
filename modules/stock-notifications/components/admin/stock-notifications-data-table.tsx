@@ -136,17 +136,19 @@ function StockNotificationRow({
 			<TableCell>
 				<div className="flex items-center gap-3">
 					{imageUrl ? (
-						<Image
-							src={imageUrl}
-							alt={sku.product.title}
-							width={40}
-							height={40}
-							sizes="40px"
-							quality={80}
-							className="rounded-md object-cover"
-							placeholder={blurDataUrl ? "blur" : "empty"}
-							blurDataURL={blurDataUrl ?? undefined}
-						/>
+						<div className="w-10 h-10 shrink-0 bg-muted rounded-md">
+							<Image
+								src={imageUrl}
+								alt={sku.product.title}
+								width={40}
+								height={40}
+								sizes="40px"
+								quality={80}
+								className="rounded-md object-cover"
+								placeholder={blurDataUrl ? "blur" : "empty"}
+								blurDataURL={blurDataUrl ?? undefined}
+							/>
+						</div>
 					) : (
 						<div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
 							<Bell className="h-4 w-4 text-muted-foreground" />

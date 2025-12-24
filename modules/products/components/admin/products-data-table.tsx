@@ -197,7 +197,7 @@ export async function ProductsDataTable({
 											/>
 										</TableCell>
 										<TableCell className="hidden sm:table-cell py-3">
-											<div className="w-20 h-20 relative shrink-0">
+											<div className="w-20 h-20 relative shrink-0 bg-muted rounded-md">
 												{defaultImage ? (
 													<Image
 														src={defaultImage.url}

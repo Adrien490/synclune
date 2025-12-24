@@ -68,8 +68,7 @@ export function StockNotificationsRowActions({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="h-8 w-8 p-0">
-						<span className="sr-only">Ouvrir le menu</span>
+					<Button variant="ghost" className="h-8 w-8 p-0 active:scale-95 transition-transform" aria-label="Actions">
 						<MoreVertical className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>
