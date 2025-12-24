@@ -166,7 +166,7 @@ export function SortDrawer({
 	};
 
 	return (
-		<Drawer open={open} onOpenChange={onOpenChange} handleOnly>
+		<Drawer open={open} onOpenChange={onOpenChange}>
 			<DrawerContent>
 				<DrawerHeader className="pb-2 relative">
 					<DrawerTitle className="flex items-center gap-2">

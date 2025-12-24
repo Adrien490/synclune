@@ -19,23 +19,8 @@ export function useIsInsideDrawer() {
 function Drawer({
   open,
   onOpenChange,
-  handleOnly = false,
-  scrollLockTimeout = 800,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root> & {
-  /**
-   * Si true, seul le DrawerHandle permet de drag le drawer.
-   * Recommandé pour les drawers avec contenu scrollable sur mobile.
-   * @default false
-   */
-  handleOnly?: boolean
-  /**
-   * Délai en ms après un scroll avant que le drawer redevienne draggable.
-   * Augmenté à 800ms pour éviter les fermetures accidentelles sur mobile.
-   * @default 800
-   */
-  scrollLockTimeout?: number
-}) {
+}: React.ComponentProps<typeof DrawerPrimitive.Root>) {
   const { handleClose } = useBackButtonClose({
     isOpen: open ?? false,
     onClose: () => onOpenChange?.(false),
@@ -56,8 +41,6 @@ function Drawer({
         data-slot="drawer"
         open={open}
         onOpenChange={wrappedOnOpenChange}
-        handleOnly={handleOnly}
-        scrollLockTimeout={scrollLockTimeout}
         {...props}
       />
     </DrawerContext.Provider>
@@ -189,7 +172,7 @@ function DrawerBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="drawer-body"
-      className={cn("flex-1 pb-4", className)}
+      className={cn("flex-1 overflow-y-auto pb-4", className)}
       {...props}
     />
   )
