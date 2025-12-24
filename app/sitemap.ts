@@ -104,11 +104,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		})
 	);
 
-	// Récupérer tous les types de produits actifs
+	// Récupérer tous les types de produits actifs avec au moins 1 produit
 	const { productTypes } = await getProductTypes({
 		perPage: 200,
 		sortBy: "label-ascending",
-		filters: { isActive: true },
+		filters: { isActive: true, hasProducts: true },
 	});
 
 	const productTypePages: MetadataRoute.Sitemap = productTypes.map((type) => ({

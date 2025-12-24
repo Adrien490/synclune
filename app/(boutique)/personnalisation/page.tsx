@@ -45,7 +45,7 @@ export default async function CustomizationPage({ searchParams }: PageProps) {
 
 	// Récupérer les données pour le formulaire en parallèle
 	const [{ productTypes }, productsResult, testimonial] = await Promise.all([
-		getProductTypes({ perPage: 100 }),
+		getProductTypes({ perPage: 100, filters: { isActive: true } }),
 		getProducts({
 			search: productSearch || undefined,
 			status: ProductStatus.PUBLIC,

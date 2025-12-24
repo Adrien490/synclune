@@ -41,6 +41,14 @@ export function buildProductTypeFilterConditions(
 		conditions.isSystem = filters.isSystem;
 	}
 
+	if (filters.hasProducts !== undefined) {
+		if (filters.hasProducts) {
+			conditions.products = { some: {} };
+		} else {
+			conditions.products = { none: {} };
+		}
+	}
+
 	return conditions;
 }
 

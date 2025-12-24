@@ -120,12 +120,13 @@ export async function generateMetadata({
 export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const searchParamsData = await searchParams;
 
-	// Récupérer tous les types de bijoux actifs
+	// Récupérer tous les types de bijoux actifs avec au moins 1 produit
 	const productTypesData = await getProductTypes({
 		perPage: 50,
 		sortBy: "label-ascending",
 		filters: {
 			isActive: true,
+			hasProducts: true,
 		},
 	});
 	const productTypes = productTypesData.productTypes;

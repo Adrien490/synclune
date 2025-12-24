@@ -36,7 +36,7 @@ export async function Navbar() {
 		getProductTypes({
 			perPage: 12,
 			sortBy: "label-ascending",
-			filters: { isActive: true },
+			filters: { isActive: true, hasProducts: true },
 		}),
 	]);
 

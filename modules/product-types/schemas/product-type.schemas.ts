@@ -18,6 +18,7 @@ import {
 export const productTypeFiltersSchema = z.object({
 	isActive: z.boolean().optional(),
 	isSystem: z.boolean().optional(),
+	hasProducts: z.boolean().optional(),
 });
 
 // ============================================================================
