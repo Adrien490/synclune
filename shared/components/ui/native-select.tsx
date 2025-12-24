@@ -8,9 +8,13 @@ function NativeSelect({
   size = "default",
   ...props
 }: Omit<React.ComponentProps<"select">, "size"> & { size?: "sm" | "default" }) {
+  const isFullWidth = className?.includes("w-full")
   return (
     <div
-      className="group/native-select relative w-fit has-[select:disabled]:opacity-50"
+      className={cn(
+        "group/native-select relative has-[select:disabled]:opacity-50",
+        isFullWidth ? "w-full" : "w-fit"
+      )}
       data-slot="native-select-wrapper"
     >
       <select
