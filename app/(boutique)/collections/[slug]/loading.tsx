@@ -1,4 +1,5 @@
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
  * Loading state for collection detail page
