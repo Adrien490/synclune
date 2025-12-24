@@ -15,7 +15,7 @@ export function Hero() {
       id="main-content"
       role="region"
       aria-labelledby="hero-title"
-      className="relative min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-5rem)] flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
+      className="relative min-h-[calc(75dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
       itemScope
       itemType="https://schema.org/WebPageElement"
       itemProp="mainContentOfPage"
@@ -136,7 +136,7 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Indicateur de scroll - Best practice UX 2025 (masqué sur mobile) */}
+      {/* Indicateur de scroll - Best practice UX 2025 */}
       <ScrollIndicator
         targetId="latest-creations"
         ariaLabel="Voir les dernières créations"

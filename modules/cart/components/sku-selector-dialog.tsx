@@ -246,7 +246,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-			<ResponsiveDialogContent className="sm:max-w-[520px] sm:max-h-[85vh]">
+			<ResponsiveDialogContent className="group/sku-selector sm:max-w-[520px] sm:max-h-[85vh]">
 				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle>Choisir une variante</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
@@ -255,7 +255,11 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 				</ResponsiveDialogHeader>
 
 				{/* Form avec layout flex pour scroll + footer fixe */}
-				<form action={action} className="flex flex-col flex-1 min-h-0">
+				<form
+					action={action}
+					className="flex flex-col flex-1 min-h-0"
+					data-pending={isPending ? "" : undefined}
+				>
 					{/* Subscribe pour obtenir les valeurs et calculer le SKU */}
 					<form.Subscribe selector={(state) => state.values}>
 						{(values) => {
@@ -393,12 +397,13 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 										</>
 									)}
 
-									{/* Contenu scrollable avec overlay pendant submit */}
-									<div className="relative flex-1 min-h-0 overflow-y-auto space-y-6 py-4 pb-6 pr-2 overscroll-contain">
-									{/* Fix 15: Overlay pendant le submit */}
-									{isPending && (
-										<div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-10 pointer-events-none" aria-hidden="true" />
-									)}
+									{/* Contenu scrollable avec effets CSS pendant submit */}
+									<div className={cn(
+										"relative flex-1 min-h-0 overflow-y-auto space-y-6 py-4 pb-6 pr-2 overscroll-contain",
+										"group-has-[[data-pending]]/sku-selector:opacity-50",
+										"group-has-[[data-pending]]/sku-selector:pointer-events-none",
+										"transition-opacity duration-200"
+									)}>
 									{/* Image + Prix */}
 									<div className="flex gap-4">
 										{/* Fix 3: Image uniforme 32x32 + Fix 17: Animation zoom */}

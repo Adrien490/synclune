@@ -2,6 +2,7 @@
 
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -9,7 +10,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteUploadThingFile } from "@/modules/media/lib/uploadthing/use-delete-uploadthing-file";
 import { startTransition } from "react";
@@ -81,14 +81,14 @@ export function DeleteGalleryMediaAlertDialog() {
 					>
 						Annuler
 					</AlertDialogCancel>
-					<Button
+					<AlertDialogAction
 						type="button"
 						onClick={handleDelete}
 						disabled={isPending}
 						className="w-full sm:w-auto"
 					>
 						{isPending ? "Suppression..." : "Supprimer"}
-					</Button>
+					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>

@@ -2,6 +2,7 @@
 
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -9,7 +10,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsReturned } from "@/modules/orders/hooks/use-mark-as-returned";
 
@@ -61,9 +61,9 @@ export function MarkAsReturnedAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<Button type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending}>
 							{isPending ? "Marquage..." : "Marquer comme retourné"}
-						</Button>
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

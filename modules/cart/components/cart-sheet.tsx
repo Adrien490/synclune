@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useOptimistic, useTransition } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
 	Sheet,
@@ -27,6 +27,10 @@ import { CartSheetItemRow } from "./cart-sheet-item-row";
 import { RemoveCartItemAlertDialog } from "./remove-cart-item-alert-dialog";
 import { CartPriceChangeAlert } from "./cart-price-change-alert";
 import type { GetCartReturn } from "../types/cart.types";
+import {
+	CartOptimisticContext,
+	type CartOptimisticAction,
+} from "../contexts/cart-optimistic-context";
 
 interface CartSheetProps {
 	cartPromise: Promise<GetCartReturn>;
@@ -36,20 +40,45 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 	const { isOpen, close } = useSheet("cart");
 	const cart = use(cartPromise);
 	const shouldReduceMotion = useReducedMotion();
+	const [isPending, startTransition] = useTransition();
 
-	const hasItems = cart && cart.items.length > 0;
+	// Optimistic state pour la liste d'items et leurs quantités
+	const [optimisticCart, updateOptimisticCart] = useOptimistic(
+		cart,
+		(state, action: CartOptimisticAction) => {
+			if (!state) return state;
+			switch (action.type) {
+				case "remove":
+					return {
+						...state,
+						items: state.items.filter((item) => item.id !== action.itemId),
+					};
+				case "updateQuantity":
+					return {
+						...state,
+						items: state.items.map((item) =>
+							item.id === action.itemId
+								? { ...item, quantity: action.quantity }
+								: item
+						),
+					};
+			}
+		}
+	);
 
-	// Calculs pour le résumé
+	const hasItems = optimisticCart && optimisticCart.items.length > 0;
+
+	// Calculs pour le résumé - basés sur l'état optimiste
 	const totalItems = hasItems
-		? cart.items.reduce((sum, item) => sum + item.quantity, 0)
+		? optimisticCart.items.reduce((sum, item) => sum + item.quantity, 0)
 		: 0;
 
 	const subtotal = hasItems
-		? cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0)
+		? optimisticCart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0)
 		: 0;
 
 	const itemsWithIssues = hasItems
-		? cart.items.filter(
+		? optimisticCart.items.filter(
 				(item) =>
 					item.sku.inventory < item.quantity ||
 					!item.sku.isActive ||
@@ -58,8 +87,15 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 		: [];
 	const hasStockIssues = itemsWithIssues.length > 0;
 
+	// Valeur du contexte optimiste
+	const cartOptimisticValue = {
+		updateOptimisticCart,
+		isPending,
+		startTransition,
+	};
+
 	return (
-		<>
+		<CartOptimisticContext.Provider value={cartOptimisticValue}>
 			<Sheet direction="right" open={isOpen} onOpenChange={(open) => !open && close()}>
 				<SheetContent
 					className="w-full sm:max-w-lg flex flex-col p-0 gap-0"
@@ -119,7 +155,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 								>
 									<div className="px-6 py-4 space-y-3">
 										<AnimatePresence mode="popLayout" initial={false}>
-											{cart.items.map((item) => (
+											{optimisticCart.items.map((item) => (
 												<motion.div
 													key={item.id}
 													layout
@@ -137,7 +173,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										</AnimatePresence>
 
 										{/* Alerte changement de prix */}
-										<CartPriceChangeAlert items={cart.items} />
+										<CartPriceChangeAlert items={optimisticCart.items} />
 									</div>
 								</ScrollFade>
 							</div>
@@ -228,6 +264,6 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 			</Sheet>
 
 			<RemoveCartItemAlertDialog />
-		</>
+		</CartOptimisticContext.Provider>
 	);
 }

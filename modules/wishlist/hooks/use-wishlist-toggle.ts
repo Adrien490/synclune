@@ -13,6 +13,7 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { ActionStatus } from "@/shared/types/server-action";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
+import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
 
 interface UseWishlistToggleOptions {
 	initialIsInWishlist?: boolean;
@@ -50,6 +51,9 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	const decrementWishlist = useBadgeCountsStore(
 		(state) => state.decrementWishlist
 	);
+
+	// Contexte pour notifier la liste parente (optionnel, null si hors contexte)
+	const wishlistListOptimistic = useWishlistListOptimistic();
 
 	const [isTransitionPending, startTransition] = useTransition();
 	const [optimisticIsInWishlist, setOptimisticIsInWishlist] = useOptimistic(
@@ -142,6 +146,11 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 				incrementWishlist();
 			} else {
 				decrementWishlist();
+				// Notifier la liste parente pour suppression visuelle immédiate
+				const skuId = formData.get("skuId");
+				if (skuId && typeof skuId === "string" && wishlistListOptimistic) {
+					wishlistListOptimistic.onItemRemoved(skuId);
+				}
 			}
 
 			formAction(formData);

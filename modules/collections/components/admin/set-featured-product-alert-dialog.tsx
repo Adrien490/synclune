@@ -2,6 +2,7 @@
 
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -9,7 +10,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Star } from "lucide-react";
 import { useSetFeaturedProduct } from "../../hooks/use-set-featured-product";
@@ -95,14 +95,13 @@ export function SetFeaturedProductAlertDialog() {
 					<AlertDialogCancel type="button" disabled={isPending}>
 						Annuler
 					</AlertDialogCancel>
-					<Button
+					<AlertDialogAction
 						type="button"
 						onClick={handleConfirm}
 						disabled={isPending}
-						variant={isFeatured ? "outline" : "default"}
 					>
 						{isPending ? (isFeatured ? "Retrait..." : "Definition...") : isFeatured ? "Retirer" : "Definir comme vedette"}
-					</Button>
+					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>

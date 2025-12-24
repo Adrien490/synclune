@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { FilterDefinition, useFilter } from "@/shared/hooks/use-filter";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { FilterBadge } from "./filter-badge";
@@ -61,6 +61,7 @@ export function FilterBadges({
 	} = useFilter(filterOptions);
 	const [showAll, setShowAll] = useState(false);
 	const isMobile = useIsMobile();
+	const shouldReduceMotion = useReducedMotion();
 
 	// Utiliser les filtres optimistes pour une UX instantanée
 	const activeFilters = optimisticActiveFilters;
@@ -105,7 +106,7 @@ export function FilterBadges({
 				{label}
 			</span>
 
-			<AnimatePresence mode="sync">
+			<AnimatePresence mode="popLayout">
 				{displayedFilters.map((filter) => (
 					<FilterBadge
 						key={filter.id}
@@ -119,17 +120,21 @@ export function FilterBadges({
 				{hasMoreFilters && (
 					<motion.div
 						key="show-more-button"
-						initial={{ opacity: 0, scale: 0.9 }}
+						initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.9 }}
 						animate={{ opacity: 1, scale: 1 }}
-						exit={{ opacity: 0, scale: 0.9 }}
-						transition={{ duration: 0.15, ease: "easeOut" }}
+						exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
+						transition={
+							shouldReduceMotion
+								? { duration: 0 }
+								: { duration: 0.15, ease: "easeOut" }
+						}
 					>
 						<Button
 							variant="outline"
 							size="sm"
 							onClick={() => setShowAll(!showAll)}
 							className={cn(
-								"h-9 sm:h-8 px-3 gap-1.5",
+								"h-11 sm:h-8 px-3 gap-1.5",
 								"rounded-full",
 								"text-xs font-medium"
 							)}
@@ -158,17 +163,21 @@ export function FilterBadges({
 				{activeFilters.length > 1 && (
 					<motion.div
 						key="clear-all-button"
-						initial={{ opacity: 0, scale: 0.9 }}
+						initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.9 }}
 						animate={{ opacity: 1, scale: 1 }}
-						exit={{ opacity: 0, scale: 0.9 }}
-						transition={{ duration: 0.15, ease: "easeOut" }}
+						exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
+						transition={
+							shouldReduceMotion
+								? { duration: 0 }
+								: { duration: 0.15, ease: "easeOut" }
+						}
 					>
 						<Button
 							variant="ghost"
 							size="sm"
 							onClick={clearAllFiltersOptimistic}
 							className={cn(
-								"h-9 sm:h-8 px-3",
+								"h-11 sm:h-8 px-3",
 								"text-xs text-muted-foreground",
 								"hover:text-destructive hover:bg-destructive/10",
 								"underline underline-offset-2",

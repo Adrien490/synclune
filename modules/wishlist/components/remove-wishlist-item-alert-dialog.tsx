@@ -2,6 +2,7 @@
 
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -9,7 +10,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useRemoveFromWishlist } from "@/modules/wishlist/hooks/use-remove-from-wishlist";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { AlertDialogData } from "@/shared/stores/alert-dialog-store";
@@ -104,13 +104,13 @@ export function RemoveWishlistItemAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<Button
+						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isPending ? "Suppression..." : "Supprimer"}
-						</Button>
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

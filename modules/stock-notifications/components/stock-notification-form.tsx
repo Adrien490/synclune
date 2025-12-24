@@ -1,14 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useOptimistic, useTransition, useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
-import { subscribeToStockNotification } from "../actions/subscribe-to-stock-notification";
+import { useSubscribeToStockNotification } from "../hooks/use-subscribe-to-stock-notification";
 import { Bell, CheckCircle } from "lucide-react";
 import { ActionStatus } from "@/shared/types/server-action";
-import { useState } from "react";
 
 interface StockNotificationFormProps {
 	skuId: string;
@@ -19,20 +18,36 @@ interface StockNotificationFormProps {
  *
  * Affiché sur la page produit quand un SKU est en rupture de stock.
  * Permet à l'utilisateur de s'inscrire pour être notifié par email.
+ * Utilise useOptimistic pour un feedback de confirmation immédiat.
  */
 export function StockNotificationForm({ skuId }: StockNotificationFormProps) {
-	const [state, action, isPending] = useActionState(
-		subscribeToStockNotification,
-		undefined
-	);
+	const [, startTransition] = useTransition();
 	const [consent, setConsent] = useState(false);
 
-	// Si inscription réussie, afficher un message de confirmation
-	if (state?.status === ActionStatus.SUCCESS) {
+	// Optimistic state pour feedback immédiat
+	const [optimisticSubscribed, setOptimisticSubscribed] = useOptimistic(false);
+
+	// Hook avec callbacks pour gérer le rollback
+	const { state, action, isPending } = useSubscribeToStockNotification({
+		onError: () => {
+			// Rollback de l'état optimiste en cas d'erreur
+			startTransition(() => {
+				setOptimisticSubscribed(false);
+			});
+		},
+	});
+
+	// L'inscription est considérée réussie si optimistic OU state.status === SUCCESS
+	const isSuccess = optimisticSubscribed || state?.status === ActionStatus.SUCCESS;
+
+	// Si inscription réussie (optimistic ou réel), afficher un message de confirmation
+	if (isSuccess) {
 		return (
 			<div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 text-sm">
 				<CheckCircle className="w-4 h-4 text-green-600 shrink-0 mt-0.5" aria-hidden="true" />
-				<p className="text-green-700 dark:text-green-300">{state.message}</p>
+				<p className="text-green-700 dark:text-green-300">
+					{state?.message || "Tu seras notifié(e) dès le retour en stock !"}
+				</p>
 			</div>
 		);
 	}
@@ -47,8 +62,21 @@ export function StockNotificationForm({ skuId }: StockNotificationFormProps) {
 		);
 	}
 
+	// Handler pour déclencher l'optimistic update
+	const handleSubmit = () => {
+		startTransition(() => {
+			setOptimisticSubscribed(true);
+		});
+	};
+
 	return (
-		<form action={action} className="space-y-3 p-3 bg-muted/30 rounded-lg border">
+		<form
+			action={action}
+			onSubmit={handleSubmit}
+			className="space-y-3 p-3 bg-muted/30 rounded-lg border"
+			data-pending={isPending ? "" : undefined}
+			aria-busy={isPending}
+		>
 			<p className="text-xs font-medium flex items-center gap-1.5">
 				<Bell className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
 				Me prévenir du retour en stock

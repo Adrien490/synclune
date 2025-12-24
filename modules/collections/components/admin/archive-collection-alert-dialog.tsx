@@ -3,6 +3,7 @@
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -10,7 +11,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
 
@@ -97,7 +97,7 @@ export function ArchiveCollectionAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<Button
+						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
 							className={
@@ -107,7 +107,7 @@ export function ArchiveCollectionAlertDialog() {
 							}
 						>
 							{isPending ? (isArchiving ? "Archivage..." : "Restauration...") : (isArchiving ? "Archiver" : "Restaurer")}
-						</Button>
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

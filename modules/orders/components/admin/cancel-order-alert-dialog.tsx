@@ -2,6 +2,7 @@
 
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -9,7 +10,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
 
@@ -68,9 +68,9 @@ export function CancelOrderAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Fermer
 						</AlertDialogCancel>
-						<Button type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending}>
 							{isPending ? "Annulation..." : "Annuler la commande"}
-						</Button>
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

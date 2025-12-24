@@ -7,6 +7,7 @@ import { subscribeToNewsletter } from "@/modules/newsletter/actions/subscribe-to
 
 interface UseSubscribeToNewsletterOptions {
 	onSuccess?: (message: string) => void;
+	onError?: () => void;
 }
 
 /**
@@ -33,6 +34,10 @@ export function useSubscribeToNewsletter(
 					) {
 						options?.onSuccess?.(result.message);
 					}
+				},
+				onError: () => {
+					// Appeler le callback d'erreur pour rollback optimiste
+					options?.onError?.();
 				},
 			})
 		),

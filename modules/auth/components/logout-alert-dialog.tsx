@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -11,7 +12,6 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useLogout } from "../hooks/use-logout";
 
 export const LOGOUT_DIALOG_ID = "logout";
@@ -30,7 +30,11 @@ export function LogoutAlertDialog({ children }: LogoutAlertDialogProps) {
 		<AlertDialog open={open} onOpenChange={setOpen}>
 			<AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
 			<AlertDialogContent>
-				<form action={action}>
+				<form
+					action={action}
+					data-pending={isPending || isLoggedOut ? "" : undefined}
+					aria-busy={isPending || isLoggedOut}
+				>
 					<AlertDialogHeader>
 						<AlertDialogTitle>Se déconnecter ?</AlertDialogTitle>
 						<AlertDialogDescription>
@@ -46,13 +50,13 @@ export function LogoutAlertDialog({ children }: LogoutAlertDialogProps) {
 						<AlertDialogCancel type="button" disabled={isPending || isLoggedOut}>
 							Annuler
 						</AlertDialogCancel>
-						<Button type="submit" disabled={isPending || isLoggedOut}>
+						<AlertDialogAction type="submit" disabled={isPending || isLoggedOut}>
 							{isLoggedOut
 								? "Déconnecté !"
 								: isPending
 									? "Déconnexion..."
 									: "Se déconnecter"}
-						</Button>
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

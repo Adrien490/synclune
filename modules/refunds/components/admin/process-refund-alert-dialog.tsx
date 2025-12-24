@@ -2,6 +2,7 @@
 
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -9,7 +10,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useProcessRefund } from "@/modules/refunds/hooks/use-process-refund";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -75,9 +75,9 @@ export function ProcessRefundAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<Button type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending}>
 							{isPending ? "Traitement..." : "Traiter le remboursement"}
-						</Button>
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

@@ -2,6 +2,7 @@
 
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -9,7 +10,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelRefund } from "@/modules/refunds/hooks/use-cancel-refund";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -71,9 +71,9 @@ export function CancelRefundAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Fermer
 						</AlertDialogCancel>
-						<Button type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending}>
 							{isPending ? "Annulation..." : "Annuler la demande"}
-						</Button>
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

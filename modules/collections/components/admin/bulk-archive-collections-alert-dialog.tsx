@@ -3,6 +3,7 @@
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -10,7 +11,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkArchiveCollections } from "@/modules/collections/hooks/use-bulk-archive-collections";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
@@ -101,7 +101,7 @@ export function BulkArchiveCollectionsAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<Button
+						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
 							className={
@@ -111,7 +111,7 @@ export function BulkArchiveCollectionsAlertDialog() {
 							}
 						>
 							{isPending ? (isArchiving ? "Archivage..." : "Restauration...") : (isArchiving ? "Archiver" : "Restaurer")}
-						</Button>
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

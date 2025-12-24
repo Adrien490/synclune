@@ -2,6 +2,7 @@
 
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -9,9 +10,9 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useRemoveFromCart } from "../hooks/use-remove-from-cart";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 
 export const REMOVE_CART_ITEM_DIALOG_ID = "remove-cart-item";
 
@@ -27,11 +28,13 @@ interface RemoveCartItemData {
  * Utilise le store AlertDialog pour gérer l'état
  * et le hook useRemoveFromCart pour l'action
  * Toast de confirmation après suppression réussie
+ * Intégré avec CartOptimisticContext pour suppression visuelle immédiate
  */
 export function RemoveCartItemAlertDialog() {
 	const removeDialog = useAlertDialog<RemoveCartItemData>(
 		REMOVE_CART_ITEM_DIALOG_ID
 	);
+	const cartOptimistic = useCartOptimisticSafe();
 
 	const { action, isPending } = useRemoveFromCart({
 		onSuccess: () => {
@@ -47,10 +50,28 @@ export function RemoveCartItemAlertDialog() {
 		}
 	};
 
+	// Handler pour soumettre avec optimistic update
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		const formData = new FormData(e.currentTarget);
+		const cartItemId = removeDialog.data?.cartItemId;
+
+		if (cartItemId && cartOptimistic) {
+			// Optimistic update : supprimer visuellement l'item immédiatement
+			cartOptimistic.startTransition(() => {
+				cartOptimistic.updateOptimisticCart({ type: "remove", itemId: cartItemId });
+				action(formData);
+			});
+		} else {
+			// Fallback si pas de contexte (ne devrait pas arriver)
+			action(formData);
+		}
+	};
+
 	return (
 		<AlertDialog open={removeDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
-				<form action={action} aria-label="Supprimer l'article du panier">
+				<form onSubmit={handleSubmit} aria-label="Supprimer l'article du panier">
 					<input
 						type="hidden"
 						name="cartItemId"
@@ -71,9 +92,9 @@ export function RemoveCartItemAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<Button type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending}>
 							{isPending ? "Retrait..." : "Retirer"}
-						</Button>
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

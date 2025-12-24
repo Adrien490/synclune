@@ -1,5 +1,6 @@
 "use client";
 
+import { useOptimistic, useTransition } from "react";
 import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
@@ -11,6 +12,11 @@ import { Mail, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export function NewsletterForm() {
+	const [, startTransition] = useTransition();
+
+	// Optimistic state pour feedback immédiat
+	const [optimisticSubmitted, setOptimisticSubmitted] = useOptimistic(false);
+
 	// TanStack Form setup
 	const form = useAppForm({
 		defaultValues: {
@@ -27,15 +33,33 @@ export function NewsletterForm() {
 			// Reset form
 			form.reset();
 		},
+		onError: () => {
+			// Rollback de l'état optimiste en cas d'erreur
+			startTransition(() => {
+				setOptimisticSubmitted(false);
+			});
+		},
 	});
 
-// console.log(state);
+	// Handler combiné pour optimistic UI + form submit
+	const handleSubmit = () => {
+		form.handleSubmit();
+		// Déclencher l'état optimiste immédiatement
+		startTransition(() => {
+			setOptimisticSubmitted(true);
+		});
+	};
+
+	// L'inscription est considérée réussie si optimistic OU state.status === SUCCESS
+	const isSuccess = optimisticSubmitted || state?.status === ActionStatus.SUCCESS;
 
 	return (
 		<form
 			action={action}
 			className="space-y-4"
-			onSubmit={() => form.handleSubmit()}
+			onSubmit={handleSubmit}
+			data-pending={isPending ? "" : undefined}
+			aria-busy={isPending}
 		>
 			{/* Success message */}
 			{state?.status === ActionStatus.SUCCESS && state.message && (
@@ -82,9 +106,7 @@ export function NewsletterForm() {
 										{/* ✅ Using pre-bound InputField component */}
 										<field.InputField
 											type="email"
-											disabled={
-												isPending || state?.status === ActionStatus.SUCCESS
-											}
+											disabled={isPending || isSuccess}
 											className="h-12 text-base bg-background/80 backdrop-blur-sm border-2 focus:border-primary"
 											aria-label="Ton adresse email pour la newsletter"
 											required
@@ -97,20 +119,16 @@ export function NewsletterForm() {
 											<Button
 												type="submit"
 												size="lg"
-												disabled={
-													!canSubmit ||
-													isPending ||
-													state?.status === ActionStatus.SUCCESS
-												}
+												disabled={!canSubmit || isPending || isSuccess}
 												className="h-12 px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all duration-300"
 											>
-												{isPending ? (
-													"Inscription..."
-												) : state?.status === ActionStatus.SUCCESS ? (
+												{isSuccess ? (
 													<>
 														<Sparkles className="w-4 h-4 mr-2" />
 														Inscrit(e)
 													</>
+												) : isPending ? (
+													"Inscription..."
 												) : (
 													"S'inscrire"
 												)}
@@ -148,7 +166,7 @@ export function NewsletterForm() {
 											</Link>
 										</span>
 									}
-									disabled={isPending || state?.status === ActionStatus.SUCCESS}
+									disabled={isPending || isSuccess}
 									required
 								/>
 							</div>

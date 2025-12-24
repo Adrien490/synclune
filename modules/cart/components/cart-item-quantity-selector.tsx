@@ -6,6 +6,7 @@ import { Input } from "@/shared/components/ui/input";
 import { useUpdateCartItem } from "@/modules/cart/hooks/use-update-cart-item";
 import { Minus, Plus } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
+import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 
 interface CartItemQuantitySelectorProps {
 	cartItemId: string;
@@ -18,7 +19,8 @@ interface CartItemQuantitySelectorProps {
  * Client Component pour le sélecteur de quantité d'un article du panier
  *
  * Pattern inspiré de useAddToCart :
- * - Optimistic UI via useOptimistic dans startTransition
+ * - Optimistic UI via useOptimistic dans startTransition (pour l'input local)
+ * - Intégré avec CartOptimisticContext pour mettre à jour le total du panier
  * - Pas de debounce : soumission immédiate pour lier useOptimistic à l'action
  * - Badge navbar mis à jour via le hook useUpdateCartItem
  */
@@ -31,6 +33,7 @@ export function CartItemQuantitySelector({
 	const [isPending, startTransition] = useTransition();
 	const [optimisticQuantity, setOptimisticQuantity] =
 		useOptimistic(currentQuantity);
+	const cartOptimistic = useCartOptimisticSafe();
 
 	const { action, isPending: isActionPending } = useUpdateCartItem();
 
@@ -50,6 +53,14 @@ export function CartItemQuantitySelector({
 		// Tout dans la même transition : optimistic UI + action
 		startTransition(() => {
 			setOptimisticQuantity(clampedQuantity);
+			// Mettre à jour le total du cart via le contexte
+			if (cartOptimistic) {
+				cartOptimistic.updateOptimisticCart({
+					type: "updateQuantity",
+					itemId: cartItemId,
+					quantity: clampedQuantity,
+				});
+			}
 			action(formData, delta);
 		});
 	};

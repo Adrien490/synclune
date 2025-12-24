@@ -7,9 +7,9 @@ import { Button } from "@/shared/components/ui/button";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { Badge } from "@/shared/components/ui/badge";
 import { Autocomplete } from "@/shared/components/autocomplete";
+import { ResponsiveSelect, type ResponsiveSelectOption } from "@/shared/components/ui/responsive-select";
 import { X } from "lucide-react";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
-import { cn } from "@/shared/utils/cn";
 import { toast } from "sonner";
 
 import { useCustomizationForm } from "../hooks/use-customization-form";
@@ -139,45 +139,30 @@ export function CustomizationForm({
 
 			{/* Type de bijou (optionnel) */}
 			<form.AppField name="productTypeLabel">
-				{(field) => (
-					<div className="space-y-3">
-						<FieldLabel optional>Type de bijou</FieldLabel>
-						<div className="flex flex-wrap gap-2">
-							{productTypes.map((type) => (
-								<button
-									key={type.id}
-									type="button"
-									onClick={() => field.handleChange(type.label)}
-									className={cn(
-										"px-4 py-2.5 rounded-full text-sm font-medium transition-all",
-										"border hover:border-primary/50 hover:shadow-sm",
-										field.state.value === type.label
-											? "bg-primary text-primary-foreground border-primary shadow-sm"
-											: "bg-background text-muted-foreground border-border hover:text-foreground"
-									)}
-								>
-									{type.label}
-								</button>
-							))}
-							<button
-								type="button"
-								onClick={() => field.handleChange("Autre")}
-								className={cn(
-									"px-4 py-2.5 rounded-full text-sm font-medium transition-all",
-									"border hover:border-primary/50 hover:shadow-sm",
-									field.state.value === "Autre"
-										? "bg-primary text-primary-foreground border-primary shadow-sm"
-										: "bg-background text-muted-foreground border-border hover:text-foreground"
-								)}
-							>
-								Autre
-							</button>
+				{(field) => {
+					const options: ResponsiveSelectOption[] = [
+						...productTypes.map((type) => ({
+							value: type.label,
+							label: type.label,
+						})),
+						{ value: "Autre", label: "Autre" },
+					];
+
+					return (
+						<div className="space-y-2">
+							<FieldLabel optional>Type de bijou</FieldLabel>
+							<ResponsiveSelect
+								options={options}
+								value={field.state.value || ""}
+								onValueChange={(value) => field.handleChange(value)}
+								placeholder="Sélectionner un type de bijou"
+							/>
+							{field.state.meta.errors && field.state.meta.errors.length > 0 && (
+								<p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
+							)}
 						</div>
-						{field.state.meta.errors && field.state.meta.errors.length > 0 && (
-							<p className="text-sm text-destructive">{field.state.meta.errors[0]}</p>
-						)}
-					</div>
-				)}
+					);
+				}}
 			</form.AppField>
 
 			{/* Description du projet */}

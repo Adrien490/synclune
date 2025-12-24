@@ -2,6 +2,7 @@
 
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -9,7 +10,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useToggleDiscountStatus } from "@/modules/discounts/hooks/use-toggle-discount-status";
 import { cn } from "@/shared/utils/cn";
@@ -78,7 +78,7 @@ export function ToggleDiscountStatusAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<Button
+						<AlertDialogAction
 							type="submit"
 							disabled={isPending}
 							className={cn(
@@ -89,7 +89,7 @@ export function ToggleDiscountStatusAlertDialog() {
 							)}
 						>
 							{isPending ? "En cours..." : isActive ? "Désactiver" : "Activer"}
-						</Button>
+						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>
 			</AlertDialogContent>

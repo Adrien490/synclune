@@ -68,7 +68,7 @@ export function AddToCartForm({
 			id="add-to-cart-form"
 			action={action}
 			className="space-y-6"
-			data-cart-pending={isPending ? "" : undefined}
+			data-pending={isPending ? "" : undefined}
 			aria-busy={isPending}
 			aria-label="Formulaire d'ajout au panier"
 		>

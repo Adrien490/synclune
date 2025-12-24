@@ -2,6 +2,7 @@
 
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -9,7 +10,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkDeleteOrders } from "@/modules/orders/hooks/use-bulk-delete-orders";
@@ -79,12 +79,12 @@ export function BulkDeleteOrdersAlertDialog() {
 					<AlertDialogCancel type="button" disabled={isPending}>
 						Annuler
 					</AlertDialogCancel>
-					<Button
+					<AlertDialogAction
 						onClick={handleDelete}
 						disabled={isPending}
 					>
 						{isPending ? "Suppression..." : "Supprimer"}
-					</Button>
+					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>

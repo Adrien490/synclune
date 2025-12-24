@@ -29,8 +29,8 @@ export async function Navbar() {
 		getWishlistItemCount(),
 		getRecentSearches(),
 		getCollections({
-			perPage: 3,
-			sortBy: "created-descending",
+			perPage: 50, // Toutes les collections pour le quick search
+			sortBy: "products-descending", // Collections avec le plus de produits en premier
 			filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
 		}),
 		getProductTypes({
@@ -51,6 +51,7 @@ export async function Navbar() {
 	const collections = collectionsData.collections.map((c) => ({
 		slug: c.slug,
 		name: c.name,
+		productCount: c._count.products,
 	}));
 
 	const productTypes = productTypesData.productTypes.map((t) => ({

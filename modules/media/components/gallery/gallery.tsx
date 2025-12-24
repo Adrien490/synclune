@@ -129,8 +129,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 				>
 					{/* Thumbnails verticales - Desktop uniquement */}
 					{images.length > 1 && (
-						<div className="hidden lg:block order-1 self-stretch">
-							<div className="flex flex-col justify-between h-full gap-2">
+						<div className="hidden lg:block order-1">
+							<div className="flex flex-col gap-2">
 								{images.map((media, index) => (
 									<GalleryThumbnail
 										key={media.id}
@@ -141,7 +141,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 										title={title}
 										onClick={() => scrollTo(index)}
 										onError={() => {}}
-										className="flex-1 min-h-0 hover:shadow-sm"
+										className="hover:shadow-sm"
 										isLCPCandidate={index === 0}
 									/>
 								))}

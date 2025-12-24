@@ -356,7 +356,7 @@ export function MenuSheet({
 								href={BRAND.social.instagram.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+								className="inline-flex items-center justify-center size-11 rounded-full text-muted-foreground active:text-foreground active:scale-95 transition-all duration-150"
 								aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
 							>
 								<InstagramIcon decorative size={20} />
@@ -365,7 +365,7 @@ export function MenuSheet({
 								href={BRAND.social.tiktok.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+								className="inline-flex items-center justify-center size-11 rounded-full text-muted-foreground active:text-foreground active:scale-95 transition-all duration-150"
 								aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
 							>
 								<TikTokIcon decorative size={20} />
@@ -375,7 +375,7 @@ export function MenuSheet({
 							<SheetClose asChild>
 								<Link
 									href="/admin"
-									className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors duration-200"
+									className="inline-flex items-center justify-center size-11 rounded-full text-muted-foreground active:text-foreground active:scale-95 transition-all duration-150"
 									aria-label="Tableau de bord"
 								>
 									<Settings size={20} aria-hidden="true" />

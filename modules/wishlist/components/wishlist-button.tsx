@@ -58,7 +58,7 @@ export function WishlistButton({
 			: "Ajouter à la wishlist";
 
 	return (
-		<form action={action} className={className}>
+		<form action={action} className={className} data-pending={isPending ? "" : undefined}>
 			<input type="hidden" name="skuId" value={skuId} />
 			<Button
 				type="submit"

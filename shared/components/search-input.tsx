@@ -100,7 +100,13 @@ export function SearchInput({
 			onSubmit?.(trimmed)
 
 			startTransition(() => {
-				router.push(`/produits?${paramName}=${encodeURIComponent(trimmed)}`)
+				// Preserve existing URL params (filters, sort, etc.)
+				const newSearchParams = new URLSearchParams(searchParams.toString())
+				newSearchParams.set(paramName, trimmed)
+				// Reset pagination
+				newSearchParams.delete("cursor")
+				newSearchParams.delete("direction")
+				router.push(`/produits?${newSearchParams.toString()}`)
 			})
 		} else {
 			// Live mode: update URL param in place
@@ -157,7 +163,7 @@ export function SearchInput({
 			role="search"
 			onSubmit={handleSubmit}
 			className={cn("flex gap-2", className)}
-			data-pending={isPending ? "true" : undefined}
+			data-pending={isPending ? "" : undefined}
 		>
 			<div
 				className={cn(
