@@ -91,7 +91,7 @@ export function AddToCartCardButton({
 					isMobileFull
 						? // Mobile full-width: bouton discret avec bordure complète
 							cn(
-								"w-full h-11 rounded-lg",
+								"w-full h-11 rounded-md",
 								"bg-primary/5 text-foreground",
 								"border border-primary/50",
 								"hover:border-primary/70 hover:bg-primary/10",
@@ -129,7 +129,7 @@ export function AddToCartCardButton({
 					) : (
 						<span className="inline-flex items-center gap-2">
 							<ShoppingCart size={18} className="text-foreground/70" aria-hidden="true" />
-							<span className="text-sm font-medium">Ajouter au panier</span>
+							<span className="text-sm font-medium">Ajouter</span>
 						</span>
 					)
 				) : (

@@ -154,7 +154,7 @@ export function ProductCard({
 			</div>
 
 			{/* Contenu de la card */}
-			<div className="flex flex-col gap-2.5 sm:gap-3 relative p-3 sm:p-4 lg:p-5">
+			<div className="flex flex-col gap-2.5 sm:gap-3 relative px-3 pb-3 sm:px-4 sm:pb-4 lg:px-5 lg:pb-5 overflow-hidden">
 				{/* Titre cliquable */}
 				<Link
 					href={productUrl}
