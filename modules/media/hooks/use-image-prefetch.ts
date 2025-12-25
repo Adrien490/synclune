@@ -14,13 +14,37 @@ interface UsePrefetchImagesOptions {
 }
 
 /**
+ * Polyfill pour requestIdleCallback (Safari, Edge < 79)
+ * Utilise setTimeout comme fallback avec priorité basse
+ */
+const requestIdleCallbackPolyfill =
+	typeof window !== "undefined" && "requestIdleCallback" in window
+		? window.requestIdleCallback
+		: (callback: IdleRequestCallback, options?: IdleRequestOptions) => {
+				const start = Date.now();
+				return setTimeout(() => {
+					callback({
+						didTimeout: false,
+						timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
+					});
+				}, 1) as unknown as number;
+			};
+
+const cancelIdleCallbackPolyfill =
+	typeof window !== "undefined" && "cancelIdleCallback" in window
+		? window.cancelIdleCallback
+		: (id: number) => clearTimeout(id);
+
+/**
  * Hook pour prefetch intelligent des images dans un carousel
  *
  * Stratégie de prefetch (Next.js 16 + React 19 best practices) :
  * 1. Prefetch images adjacentes (suivante + précédente)
- * 2. Utilise requestIdleCallback pour ne pas bloquer le main thread
+ * 2. Utilise requestIdleCallback pour ne pas bloquer le main thread (avec polyfill Safari)
  * 3. Crée des éléments <link rel="prefetch"> dans le <head>
  * 4. Nettoie automatiquement les prefetch inutilisés
+ * 5. Protection SSR (vérifie window)
+ * 6. Sécurité XSS (pas d'injection dans querySelector)
  *
  * @example
  * usePrefetchImages({
@@ -36,6 +60,8 @@ export function usePrefetchImages({
 	enabled = true,
 }: UsePrefetchImagesOptions) {
 	useEffect(() => {
+		// Protection SSR : vérifier que window existe
+		if (typeof window === "undefined") return;
 		if (!enabled || imageUrls.length === 0) return;
 
 		// Calculer les index à prefetch (avec wrap pour carousel circulaire)
@@ -49,19 +75,22 @@ export function usePrefetchImages({
 			);
 		}
 
-		// Utiliser requestIdleCallback pour ne pas bloquer le main thread
-		const prefetchId = requestIdleCallback(
+		// Utiliser requestIdleCallback avec polyfill pour Safari
+		const prefetchId = requestIdleCallbackPolyfill(
 			() => {
-				const prefetchedLinks: HTMLLinkElement[] = [];
-
 				for (const index of indicesToPrefetch) {
 					const imageUrl = imageUrls[index];
 					if (!imageUrl) continue;
 
-					// Vérifier si déjà prefetch
-					const existingLink = document.querySelector(
-						`link[rel="prefetch"][href="${imageUrl}"]`
+					// Sécurité : vérifier si déjà prefetch sans injection SQL/XSS
+					// On récupère tous les links et on filtre en JS plutôt que via querySelector avec interpolation
+					const allGalleryLinks = Array.from(
+						document.querySelectorAll<HTMLLinkElement>(
+							'link[rel="prefetch"][data-prefetched-by="gallery"]'
+						)
 					);
+
+					const existingLink = allGalleryLinks.find((link) => link.href === imageUrl);
 					if (existingLink) continue;
 
 					// Créer link prefetch
@@ -72,7 +101,6 @@ export function usePrefetchImages({
 					link.dataset.prefetchedBy = "gallery";
 
 					document.head.appendChild(link);
-					prefetchedLinks.push(link);
 				}
 
 				// Cleanup: supprimer les anciens prefetch qui ne sont plus adjacents
@@ -96,7 +124,7 @@ export function usePrefetchImages({
 		);
 
 		return () => {
-			cancelIdleCallback(prefetchId);
+			cancelIdleCallbackPolyfill(prefetchId);
 		};
 	}, [imageUrls, currentIndex, prefetchRange, enabled]);
 }

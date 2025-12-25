@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
+import { useMediaQuery } from "@/shared/hooks";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { GalleryHoverZoom } from "./hover-zoom";
@@ -41,6 +42,10 @@ export function GallerySlide({
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [isVideoLoading, setIsVideoLoading] = useState(true);
 
+	// Détection desktop pour rendu conditionnel (évite double image dans DOM)
+	// Breakpoint sm = 640px (Tailwind default)
+	const isDesktop = useMediaQuery("(min-width: 640px)");
+
 	// Autoplay vidéo quand active
 	useEffect(() => {
 		if (!videoRef.current) return;
@@ -60,6 +65,7 @@ export function GallerySlide({
 		}
 	}, [media.url, media.mediaType]);
 
+	// Vidéo : même rendu mobile/desktop
 	if (media.mediaType === "VIDEO") {
 		return (
 			<div
@@ -92,10 +98,24 @@ export function GallerySlide({
 		media.alt ||
 		PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1, totalImages, productType);
 
+	// Image : rendu conditionnel desktop/mobile
+	// Desktop → Zoom hover (CSS background)
+	// Mobile → Next.js Image (optimisations LCP)
 	return (
-		<div className="flex-[0_0_100%] min-w-0 h-full relative">
-			{/* Mobile : Image normale sans zoom hover */}
-			<div className="sm:hidden w-full h-full cursor-zoom-in" onClick={onOpen}>
+		<div
+			className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in"
+			onClick={onOpen}
+		>
+			{isDesktop ? (
+				// Desktop : Zoom hover avec CSS background
+				<GalleryHoverZoom
+					src={media.url}
+					alt={alt}
+					blurDataUrl={media.blurDataUrl}
+					zoomLevel={3}
+				/>
+			) : (
+				// Mobile : Next.js Image pour LCP optimal
 				<Image
 					src={media.url}
 					alt={alt}
@@ -108,17 +128,7 @@ export function GallerySlide({
 					placeholder={media.blurDataUrl ? "blur" : "empty"}
 					blurDataURL={media.blurDataUrl}
 				/>
-			</div>
-
-			{/* Desktop : Zoom hover interactif */}
-			<div className="hidden sm:block w-full h-full cursor-zoom-in" onClick={onOpen}>
-				<GalleryHoverZoom
-					src={media.url}
-					alt={alt}
-					blurDataUrl={media.blurDataUrl}
-					zoomLevel={3}
-				/>
-			</div>
+			)}
 		</div>
 	);
 }
