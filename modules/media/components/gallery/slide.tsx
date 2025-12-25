@@ -5,6 +5,7 @@ import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
+import { GalleryHoverZoom } from "./hover-zoom";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
 interface GallerySlideProps {
@@ -87,26 +88,37 @@ export function GallerySlide({
 		);
 	}
 
+	const alt =
+		media.alt ||
+		PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1, totalImages, productType);
+
 	return (
-		<div
-			className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in"
-			onClick={onOpen}
-		>
-			<Image
-				src={media.url}
-				alt={
-					media.alt ||
-					PRODUCT_TEXTS.IMAGES.GALLERY_MAIN_ALT(title, index + 1, totalImages, productType)
-				}
-				fill
-				className="object-cover"
-				priority={index === 0}
-				loading={index === 0 ? "eager" : "lazy"}
-				quality={MAIN_IMAGE_QUALITY}
-				sizes="(max-width: 768px) 100vw, 50vw"
-				placeholder={media.blurDataUrl ? "blur" : "empty"}
-				blurDataURL={media.blurDataUrl}
-			/>
+		<div className="flex-[0_0_100%] min-w-0 h-full relative">
+			{/* Mobile : Image normale sans zoom hover */}
+			<div className="sm:hidden w-full h-full cursor-zoom-in" onClick={onOpen}>
+				<Image
+					src={media.url}
+					alt={alt}
+					fill
+					className="object-cover"
+					priority={index === 0}
+					loading={index === 0 ? "eager" : "lazy"}
+					quality={MAIN_IMAGE_QUALITY}
+					sizes="100vw"
+					placeholder={media.blurDataUrl ? "blur" : "empty"}
+					blurDataURL={media.blurDataUrl}
+				/>
+			</div>
+
+			{/* Desktop : Zoom hover interactif */}
+			<div className="hidden sm:block w-full h-full cursor-zoom-in" onClick={onOpen}>
+				<GalleryHoverZoom
+					src={media.url}
+					alt={alt}
+					blurDataUrl={media.blurDataUrl}
+					zoomLevel={3}
+				/>
+			</div>
 		</div>
 	);
 }

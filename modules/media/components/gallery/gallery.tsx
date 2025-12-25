@@ -8,6 +8,7 @@ import { cn } from "@/shared/utils/cn";
 
 import MediaLightbox from "@/modules/media/components/media-lightbox";
 import { useLightbox } from "@/modules/media/hooks/use-lightbox";
+import { usePrefetchImages } from "@/modules/media/hooks/use-image-prefetch";
 import { buildGallery } from "@/modules/media/utils/build-gallery";
 import { buildLightboxSlides } from "@/modules/media/utils/build-lightbox-slides";
 import { GalleryErrorBoundary } from "./error-boundary";
@@ -71,6 +72,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 	});
 
 	const slides = buildLightboxSlides(images, false);
+
+	// Prefetch intelligent des images adjacentes (Next.js 16 + React 19)
+	usePrefetchImages({
+		imageUrls: images.map((img) => img.url),
+		currentIndex: current,
+		prefetchRange: 2, // Prefetch 2 images avant et après
+		enabled: images.length > 1, // Désactiver si une seule image
+	});
 
 	// Sync index quand le carousel change
 	useEffect(() => {
