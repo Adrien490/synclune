@@ -10,6 +10,7 @@ export { useUnsavedChanges, useUnsavedChangesWithOptions } from "./use-unsaved-c
 export { useIsMobile } from "./use-mobile"
 export { useIsTouchDevice } from "./use-touch-device"
 export { useMediaQuery } from "./use-media-query"
+export { useReducedMotion } from "./use-reduced-motion"
 
 // Navigation & Pagination hooks
 export { useSelection } from "./use-selection"

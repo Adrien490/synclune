@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useEffectEvent } from "react";
 
 /**
  * Hook optimisé pour détecter le scroll
@@ -16,20 +16,23 @@ import { useEffect, useState } from "react";
 export function useIsScrolled(threshold: number = 10): boolean {
 	const [isScrolled, setIsScrolled] = useState(false);
 
+	// Effect Event pour accéder à threshold sans re-registration du listener
+	const updateScrollState = useEffectEvent(() => {
+		const scrolled = window.scrollY > threshold;
+		setIsScrolled(scrolled);
+	});
+
 	useEffect(() => {
 		// Flag pour éviter les appels multiples de RAF
 		let ticking = false;
 
-		const updateScrollState = () => {
-			const scrolled = window.scrollY > threshold;
-			setIsScrolled(scrolled);
-			ticking = false;
-		};
-
 		const handleScroll = () => {
 			if (!ticking) {
 				// requestAnimationFrame garantit 60fps max et sync avec le navigateur
-				window.requestAnimationFrame(updateScrollState);
+				window.requestAnimationFrame(() => {
+					updateScrollState();
+					ticking = false;
+				});
 				ticking = true;
 			}
 		};
@@ -43,7 +46,7 @@ export function useIsScrolled(threshold: number = 10): boolean {
 		return () => {
 			window.removeEventListener("scroll", handleScroll);
 		};
-	}, [threshold]);
+	}, [threshold, updateScrollState]);
 
 	return isScrolled;
 }

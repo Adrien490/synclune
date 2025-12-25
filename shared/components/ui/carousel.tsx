@@ -5,6 +5,7 @@ import useEmblaCarousel, {
 } from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
+import { useEffectEvent } from "react";
 
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
@@ -68,12 +69,6 @@ function Carousel({
 	const [canScrollNext, setCanScrollNext] = React.useState(false);
 	const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]);
 
-	const onSelect = (api: CarouselApi) => {
-		if (!api) return;
-		setCanScrollPrev(api.canScrollPrev());
-		setCanScrollNext(api.canScrollNext());
-	};
-
 	const scrollPrev = () => {
 		api?.scrollPrev();
 	};
@@ -105,6 +100,20 @@ function Carousel({
 		}
 	};
 
+	// Effect Event pour gérer onSelect sans re-registration
+	const onSelect = useEffectEvent((carouselApi: CarouselApi) => {
+		if (!carouselApi) return;
+		setCanScrollPrev(carouselApi.canScrollPrev());
+		setCanScrollNext(carouselApi.canScrollNext());
+	});
+
+	// Effect Event pour gérer reInit sans re-registration
+	const onReInit = useEffectEvent((carouselApi: CarouselApi) => {
+		if (!carouselApi) return;
+		onSelect(carouselApi);
+		setScrollSnaps(carouselApi.scrollSnapList());
+	});
+
 	React.useEffect(() => {
 		if (!api || !setApi) return;
 		setApi(api);
@@ -114,16 +123,14 @@ function Carousel({
 		if (!api) return;
 		onSelect(api);
 		setScrollSnaps(api.scrollSnapList());
-		api.on("reInit", () => {
-			onSelect(api);
-			setScrollSnaps(api.scrollSnapList());
-		});
-		api.on("select", onSelect);
+		api.on("reInit", () => onReInit(api));
+		api.on("select", () => onSelect(api));
 
 		return () => {
-			api?.off("select", onSelect);
+			api?.off("select", () => onSelect(api));
+			api?.off("reInit", () => onReInit(api));
 		};
-	}, [api]);
+	}, [api, onSelect, onReInit]);
 
 	return (
 		<CarouselContext.Provider
@@ -230,13 +237,16 @@ function CarouselItem({ className, index, ...props }: CarouselItemProps) {
 	const { orientation, api } = useCarousel();
 	const [isVisible, setIsVisible] = React.useState(true);
 
+	// Effect Event pour gérer la visibilité sans re-registration
+	const updateVisibility = useEffectEvent(() => {
+		if (api && index !== undefined) {
+			setIsVisible(api.slidesInView().includes(index));
+		}
+	});
+
 	// Only subscribe to visibility changes if index is provided
 	React.useEffect(() => {
 		if (index === undefined || !api) return;
-
-		const updateVisibility = () => {
-			setIsVisible(api.slidesInView().includes(index));
-		};
 
 		updateVisibility();
 		api.on("select", updateVisibility);
@@ -246,7 +256,7 @@ function CarouselItem({ className, index, ...props }: CarouselItemProps) {
 			api.off("select", updateVisibility);
 			api.off("reInit", updateVisibility);
 		};
-	}, [api, index]);
+	}, [api, index, updateVisibility]);
 
 	return (
 		<div
@@ -369,22 +379,25 @@ function CarouselDots({
 	const { api, carouselId, scrollSnaps } = useCarousel();
 	const [selectedIndex, setSelectedIndex] = React.useState(0);
 
+	// Effect Event pour gérer onSelect sans re-registration
+	const onSelectDot = useEffectEvent(() => {
+		if (api) {
+			setSelectedIndex(api.selectedScrollSnap());
+		}
+	});
+
 	React.useEffect(() => {
 		if (!api) return;
 
-		const onSelect = () => {
-			setSelectedIndex(api.selectedScrollSnap());
-		};
-
-		onSelect();
-		api.on("select", onSelect);
-		api.on("reInit", onSelect);
+		onSelectDot();
+		api.on("select", onSelectDot);
+		api.on("reInit", onSelectDot);
 
 		return () => {
-			api.off("select", onSelect);
-			api.off("reInit", onSelect);
+			api.off("select", onSelectDot);
+			api.off("reInit", onSelectDot);
 		};
-	}, [api]);
+	}, [api, onSelectDot]);
 
 	if (scrollSnaps.length <= 1) return null;
 

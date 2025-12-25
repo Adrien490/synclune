@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useEffectEvent } from "react"
 import { WIZARD_STORAGE_KEY_PREFIX } from "@/shared/constants/form-wizard"
 
 interface UseWizardPersistenceOptions {
@@ -80,6 +80,11 @@ export function useWizardPersistence({
 		}
 	}
 
+	// Effect Event pour appeler onRestore sans le mettre dans les deps
+	const onRestoreEvent = useEffectEvent((step: number) => {
+		onRestore?.(step)
+	})
+
 	// Restauration automatique au montage
 	useEffect(() => {
 		if (!enabled || hasRestored.current) return
@@ -88,15 +93,15 @@ export function useWizardPersistence({
 			const saved = sessionStorage.getItem(key)
 			if (saved !== null) {
 				const step = parseInt(saved, 10)
-				if (!isNaN(step) && step >= 0 && onRestore) {
+				if (!isNaN(step) && step >= 0) {
 					hasRestored.current = true
-					onRestore(step)
+					onRestoreEvent(step)
 				}
 			}
 		} catch {
 			// sessionStorage peut être indisponible
 		}
-	}, [enabled, key, onRestore])
+	}, [enabled, key, onRestoreEvent])
 
 	// Persistence automatique lors du changement d'étape
 	useEffect(() => {

@@ -9,7 +9,7 @@ import {
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, Plus, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useEffectEvent } from "react";
 import { toast } from "sonner";
 import { maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
@@ -112,34 +112,36 @@ export function SpeedDialFab({
 		};
 	}, []);
 
+	// Effect Event pour gérer Escape sans re-registration
+	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
+		if (e.key === "Escape" && isOpen) {
+			setIsOpen(false);
+			mainButtonRef.current?.focus();
+		}
+	});
+
 	// Fermer le menu avec Escape
 	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.key === "Escape" && isOpen) {
-				setIsOpen(false);
-				mainButtonRef.current?.focus();
-			}
-		};
+		document.addEventListener("keydown", onKeyDown);
+		return () => document.removeEventListener("keydown", onKeyDown);
+	}, [onKeyDown]);
 
-		document.addEventListener("keydown", handleKeyDown);
-		return () => document.removeEventListener("keydown", handleKeyDown);
-	}, [isOpen]);
+	// Effect Event pour gérer le click extérieur sans re-registration
+	const onClickOutside = useEffectEvent((e: MouseEvent) => {
+		if (
+			isOpen &&
+			containerRef.current &&
+			!containerRef.current.contains(e.target as Node)
+		) {
+			setIsOpen(false);
+		}
+	});
 
 	// Fermer le menu au click extérieur
 	useEffect(() => {
-		const handleClickOutside = (e: MouseEvent) => {
-			if (
-				isOpen &&
-				containerRef.current &&
-				!containerRef.current.contains(e.target as Node)
-			) {
-				setIsOpen(false);
-			}
-		};
-
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, [isOpen]);
+		document.addEventListener("mousedown", onClickOutside);
+		return () => document.removeEventListener("mousedown", onClickOutside);
+	}, [onClickOutside]);
 
 	// Respecter prefers-reduced-motion avec config globale
 	const prefersReducedMotion = useReducedMotion();

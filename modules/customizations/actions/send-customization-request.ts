@@ -53,7 +53,6 @@ export async function sendCustomizationRequest(
 			email: formData.get("email") as string,
 			phone: (formData.get("phone") as string) || "",
 			productTypeLabel: (formData.get("productTypeLabel") as string) || "",
-			inspirationProductIds: formData.getAll("inspirationProductIds") as string[],
 			details: (formData.get("details") as string) || "",
 			rgpdConsent: formData.get("rgpdConsent") === "true",
 			website: (formData.get("website") as string) || "",
@@ -97,15 +96,6 @@ export async function sendCustomizationRequest(
 				productTypeLabel: validatedData.productTypeLabel,
 				productTypeId: productType?.id || null,
 				details: validatedData.details,
-				// Relations many-to-many
-				inspirationProducts: {
-					connect: validatedData.inspirationProductIds.map((id) => ({ id })),
-				},
-			},
-			include: {
-				inspirationProducts: {
-					select: { id: true, title: true, slug: true },
-				},
 			},
 		});
 
@@ -117,7 +107,6 @@ export async function sendCustomizationRequest(
 			phone: validatedData.phone || undefined,
 			productTypeLabel: validatedData.productTypeLabel,
 			details: validatedData.details,
-			inspirationProducts: customizationRequest.inspirationProducts,
 		});
 
 		if (!emailResult.success) {
@@ -135,7 +124,6 @@ export async function sendCustomizationRequest(
 			email: validatedData.email,
 			productTypeLabel: validatedData.productTypeLabel,
 			details: validatedData.details,
-			inspirationProducts: customizationRequest.inspirationProducts,
 		});
 
 		if (!confirmationResult.success) {

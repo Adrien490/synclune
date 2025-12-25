@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef } from "react"
+import { useEffect, useId, useRef, useEffectEvent } from "react"
 import { useNavigationGuardOptional } from "@/shared/contexts/navigation-guard-context"
 
 const DEFAULT_MESSAGE =
@@ -109,23 +109,49 @@ export function useUnsavedChanges(
 		}
 	}, [navigationGuard, id, isBlocking, message, onBlock])
 
+	// Effect Event pour beforeunload - accède à message sans déclencher de re-registration
+	const onBeforeUnload = useEffectEvent((e: BeforeUnloadEvent) => {
+		e.preventDefault()
+		// Pour les navigateurs plus anciens
+		e.returnValue = message
+		return message
+	})
+
 	// Handler pour beforeunload (fermeture/refresh navigateur)
 	useEffect(() => {
 		if (!isBlocking) return
 
-		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-			e.preventDefault()
-			// Pour les navigateurs plus anciens
-			e.returnValue = message
-			return message
-		}
-
-		window.addEventListener("beforeunload", handleBeforeUnload)
+		window.addEventListener("beforeunload", onBeforeUnload)
 
 		return () => {
-			window.removeEventListener("beforeunload", handleBeforeUnload)
+			window.removeEventListener("beforeunload", onBeforeUnload)
 		}
-	}, [isBlocking, message])
+	}, [isBlocking, onBeforeUnload])
+
+	// Effect Event pour popstate - accède à message, id, onBlock sans déclencher de re-registration
+	const onPopState = useEffectEvent(() => {
+		if (isBlockingPopstateRef.current) return
+
+		// Afficher la confirmation native pour popstate
+		// (le modal du contexte ne fonctionne pas bien avec popstate car
+		// l'URL a déjà changé quand popstate est déclenché)
+		// eslint-disable-next-line no-alert
+		const shouldLeave = window.confirm(message)
+
+		if (shouldLeave) {
+			// Permettre la navigation
+			allowNavigationRef.current = true
+			window.history.back()
+			return
+		}
+
+		// Annuler la navigation - remettre l'URL
+		isBlockingPopstateRef.current = true
+		window.history.pushState({ guardId: id }, "", window.location.href)
+		isBlockingPopstateRef.current = false
+
+		onBlock?.()
+	})
 
 	// Handler pour popstate (back/forward navigateur)
 	useEffect(() => {
@@ -134,36 +160,12 @@ export function useUnsavedChanges(
 		// Ajouter un état pour pouvoir intercepter le retour
 		window.history.pushState({ guardId: id }, "", window.location.href)
 
-		const handlePopState = () => {
-			if (isBlockingPopstateRef.current) return
-
-			// Afficher la confirmation native pour popstate
-			// (le modal du contexte ne fonctionne pas bien avec popstate car
-			// l'URL a déjà changé quand popstate est déclenché)
-			// eslint-disable-next-line no-alert
-			const shouldLeave = window.confirm(message)
-
-			if (shouldLeave) {
-				// Permettre la navigation
-				allowNavigationRef.current = true
-				window.history.back()
-				return
-			}
-
-			// Annuler la navigation - remettre l'URL
-			isBlockingPopstateRef.current = true
-			window.history.pushState({ guardId: id }, "", window.location.href)
-			isBlockingPopstateRef.current = false
-
-			onBlock?.()
-		}
-
-		window.addEventListener("popstate", handlePopState)
+		window.addEventListener("popstate", onPopState)
 
 		return () => {
-			window.removeEventListener("popstate", handlePopState)
+			window.removeEventListener("popstate", onPopState)
 		}
-	}, [isBlocking, interceptHistoryNavigation, id, message, onBlock])
+	}, [isBlocking, interceptHistoryNavigation, id, onPopState])
 
 	const allowNavigation = () => {
 		allowNavigationRef.current = true

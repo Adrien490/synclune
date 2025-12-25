@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useEffectEvent } from "react"
 import { Search } from "lucide-react"
 
 import { useDialog } from "@/shared/providers/dialog-store-provider"
@@ -23,17 +23,19 @@ export function QuickSearchTrigger({ className, showShortcut = true }: QuickSear
 	const { open } = useDialog(QUICK_SEARCH_DIALOG_ID)
 	const isMac = useIsMac()
 
+	// Effect Event pour gérer le raccourci clavier sans re-registration
+	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
+		if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+			e.preventDefault()
+			open()
+		}
+	})
+
 	// Cmd+K / Ctrl+K global shortcut
 	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-				e.preventDefault()
-				open()
-			}
-		}
-		document.addEventListener("keydown", handleKeyDown)
-		return () => document.removeEventListener("keydown", handleKeyDown)
-	}, [open])
+		document.addEventListener("keydown", onKeyDown)
+		return () => document.removeEventListener("keydown", onKeyDown)
+	}, [onKeyDown])
 
 	return (
 		<Button

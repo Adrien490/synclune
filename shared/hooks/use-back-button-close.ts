@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useEffectEvent } from "react";
 
 interface UseBackButtonCloseOptions {
 	/** État d'ouverture du modal */
@@ -48,18 +48,19 @@ export function useBackButtonClose({
 		}
 	}, [isOpen]);
 
+	// Effect Event pour accéder aux dernières valeurs sans re-registration du listener
+	const onPopState = useEffectEvent(() => {
+		if (isOpen && historyPushedRef.current) {
+			historyPushedRef.current = false;
+			onClose();
+		}
+	});
+
 	// Écouter le bouton retour (popstate) pour fermer le modal
 	useEffect(() => {
-		const handlePopState = () => {
-			if (isOpen && historyPushedRef.current) {
-				historyPushedRef.current = false;
-				onClose();
-			}
-		};
-
-		window.addEventListener("popstate", handlePopState);
-		return () => window.removeEventListener("popstate", handlePopState);
-	}, [isOpen, onClose]);
+		window.addEventListener("popstate", onPopState);
+		return () => window.removeEventListener("popstate", onPopState);
+	}, [onPopState]);
 
 	// Fonction pour fermer proprement
 	const handleClose = () => {

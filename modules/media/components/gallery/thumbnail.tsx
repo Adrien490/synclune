@@ -8,6 +8,7 @@ import {
 	EAGER_LOAD_THUMBNAILS,
 } from "@/modules/media/constants/image-config.constants";
 import { cn } from "@/shared/utils/cn";
+import { useReducedMotion } from "@/shared/hooks";
 import Image from "next/image";
 
 interface GalleryThumbnailProps {
@@ -36,17 +37,23 @@ export function GalleryThumbnail({
 	className,
 	isLCPCandidate = false,
 }: GalleryThumbnailProps) {
+	const prefersReduced = useReducedMotion();
 	const isVideo = media.mediaType === "VIDEO";
 	const thumbnailSrc = isVideo ? media.thumbnailUrl : media.url;
 	const alt = media.alt || `${title} - ${isVideo ? "Vidéo" : "Photo"} ${index + 1}`;
 
+	const transitionClass = prefersReduced ? "" : "transition-all duration-200";
+
 	return (
 		<button
 			type="button"
+			role="tab"
 			onClick={onClick}
 			className={cn(
 				"group relative overflow-hidden rounded-xl w-full aspect-square",
-				"border-2 transition-all duration-200 active:scale-95",
+				"border-2",
+				transitionClass,
+				!prefersReduced && "active:scale-95",
 				"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none",
 				isActive
 					? "border-primary shadow-md ring-2 ring-primary/20"
@@ -54,7 +61,7 @@ export function GalleryThumbnail({
 				className
 			)}
 			aria-label={`Voir ${isVideo ? "vidéo" : "photo"} ${index + 1}${isActive ? " (sélectionnée)" : ""}`}
-			aria-current={isActive ? "true" : undefined}
+			aria-selected={isActive}
 		>
 			{hasError ? (
 				<MediaErrorFallback type="image" size="small" />
@@ -78,6 +85,7 @@ export function GalleryThumbnail({
 			) : (
 				<div
 					className="w-full h-full flex items-center justify-center bg-muted"
+					role="img"
 					aria-label={alt}
 				/>
 			)}

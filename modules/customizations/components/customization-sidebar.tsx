@@ -18,18 +18,7 @@ export function CustomizationSidebar({
 	}
 
 	return (
-		<aside className={cn("sticky top-24 space-y-6", className)}>
-			{/* Titre de section */}
-			<div className="space-y-2">
-				<h2 className="font-display text-lg font-semibold text-foreground">
-					Témoignages
-				</h2>
-				<p className="text-sm text-muted-foreground">
-					Des créations uniques, des clients ravis
-				</p>
-			</div>
-
-			{/* Témoignage */}
+		<aside className={cn("sticky top-24", className)}>
 			<TestimonialCard testimonial={testimonial} />
 		</aside>
 	)

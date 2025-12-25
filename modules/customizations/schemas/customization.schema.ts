@@ -6,11 +6,6 @@ import { z } from "zod";
 // ============================================================================
 
 /**
- * Regex pour validation CUID
- */
-const CUID_REGEX = /^c[a-z0-9]{24}$/;
-
-/**
  * Schema du formulaire de personnalisation
  * Formulaire dédié aux demandes de personnalisation et gravure uniquement
  */
@@ -46,13 +41,6 @@ export const customizationSchema = z
 
 		// Type de produit (optionnel)
 		productTypeLabel: z.string().optional().default(""),
-
-		// Inspirations (produits existants comme référence)
-		inspirationProductIds: z
-			.array(z.string().regex(CUID_REGEX, { message: "ID de produit invalide" }))
-			.max(5, { message: "Vous pouvez sélectionner au maximum 5 produits" })
-			.optional()
-			.default([]),
 
 		// Détails de la personnalisation
 		details: z

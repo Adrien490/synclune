@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef, useEffectEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import useEmblaCarousel from "embla-carousel-react";
 
 import { cn } from "@/shared/utils/cn";
+import { useReducedMotion } from "@/shared/hooks";
 
 import MediaLightbox from "@/modules/media/components/media-lightbox";
 import { useLightbox } from "@/modules/media/hooks/use-lightbox";
@@ -49,6 +50,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const searchParams = useSearchParams();
 	const [current, setCurrent] = useState(0);
 	const { isOpen, open, close } = useLightbox();
+	const prefersReduced = useReducedMotion();
+	const galleryRef = useRef<HTMLDivElement>(null);
 
 	// Embla carousel
 	const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -73,40 +76,108 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	const slides = buildLightboxSlides(images, false);
 
+	// Connection-aware prefetch range
+	const connection = typeof navigator !== "undefined"
+		? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType
+		: undefined;
+	const prefetchRange = connection === "slow-2g" || connection === "2g" ? 1 : 2;
+
 	// Prefetch intelligent des images adjacentes (Next.js 16 + React 19)
+	// Extraire les URLs pour éviter de recréer un tableau à chaque render
+	const imageUrls = images.map((img) => img.url);
+
 	usePrefetchImages({
-		imageUrls: images.map((img) => img.url),
+		imageUrls,
 		currentIndex: current,
-		prefetchRange: 2, // Prefetch 2 images avant et après
-		enabled: images.length > 1, // Désactiver si une seule image
+		prefetchRange,
+		enabled: images.length > 1,
+	});
+
+	// Effect Event pour gérer onSelect sans re-registration
+	const onSelect = useEffectEvent(() => {
+		if (emblaApi) {
+			setCurrent(emblaApi.selectedScrollSnap());
+		}
 	});
 
 	// Sync index quand le carousel change
 	useEffect(() => {
 		if (!emblaApi) return;
 
-		const onSelect = () => setCurrent(emblaApi.selectedScrollSnap());
 		onSelect();
 		emblaApi.on("select", onSelect);
 
 		return () => {
 			emblaApi.off("select", onSelect);
 		};
-	}, [emblaApi]);
+	}, [emblaApi, onSelect]);
+
+	// Effect Event pour gérer la navigation clavier sans re-registration
+	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
+		// Ne pas capturer si focus dans un input/textarea
+		if (
+			e.target instanceof HTMLInputElement ||
+			e.target instanceof HTMLTextAreaElement
+		) {
+			return;
+		}
+
+		if (!emblaApi) return;
+
+		switch (e.key) {
+			case "ArrowLeft":
+				e.preventDefault();
+				emblaApi.scrollPrev();
+				break;
+			case "ArrowRight":
+				e.preventDefault();
+				emblaApi.scrollNext();
+				break;
+			case "Home":
+				e.preventDefault();
+				emblaApi.scrollTo(0);
+				break;
+			case "End":
+				e.preventDefault();
+				emblaApi.scrollTo(images.length - 1);
+				break;
+		}
+	});
+
+	// Navigation clavier (WCAG 2.1.1)
+	useEffect(() => {
+		if (!emblaApi || images.length <= 1) return;
+
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [emblaApi, images.length, onKeyDown]);
 
 	// Navigation
 	const scrollPrev = () => emblaApi?.scrollPrev();
 	const scrollNext = () => emblaApi?.scrollNext();
 	const scrollTo = (index: number) => emblaApi?.scrollTo(index);
 
+	// Classes de transition conditionnelles
+	const transitionClass = prefersReduced ? "" : "transition-all duration-300";
+
 	// Cas limite : aucune image
 	if (!images.length) {
 		return (
 			<div className="gallery-empty">
 				<div className="relative aspect-square sm:aspect-[4/5] rounded-3xl bg-linear-card p-8 flex items-center justify-center overflow-hidden">
-					<div className="absolute inset-0 bg-linear-organic opacity-10 animate-pulse rounded-3xl" />
+					<div
+						className={cn(
+							"absolute inset-0 bg-linear-organic opacity-10 rounded-3xl",
+							!prefersReduced && "animate-pulse"
+						)}
+					/>
 					<div className="text-center space-y-3 z-10 relative">
-						<span className="text-4xl animate-bounce">✨</span>
+						<span
+							className={cn("text-4xl", !prefersReduced && "animate-bounce")}
+							aria-hidden="true"
+						>
+							✨
+						</span>
 						<p className="text-sm font-medium text-primary">Photos en préparation</p>
 						<p className="text-sm leading-normal text-muted-foreground">
 							Un peu de patience !
@@ -122,14 +193,23 @@ function GalleryContent({ product, title }: GalleryProps) {
 	return (
 		<>
 			<div
+				ref={galleryRef}
 				className={cn(
 					"product-gallery w-full",
-					"transition-all duration-300",
+					transitionClass,
 					"group-has-[[data-pending]]/product-details:blur-[1px]",
 					"group-has-[[data-pending]]/product-details:scale-[0.99]",
 					"group-has-[[data-pending]]/product-details:pointer-events-none"
 				)}
+				role="region"
+				aria-label={`Galerie photos ${title}`}
+				aria-roledescription="carrousel"
 			>
+				{/* Annonce pour lecteurs d'écran (WCAG 4.1.3) */}
+				<div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+					Image {current + 1} sur {images.length}
+				</div>
+
 				<div
 					className={cn(
 						"grid gap-3 lg:gap-4",
@@ -139,7 +219,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 					{/* Thumbnails verticales - Desktop uniquement */}
 					{images.length > 1 && (
 						<div className="hidden lg:block order-1">
-							<div className="flex flex-col gap-2">
+							<div className="flex flex-col gap-2" role="tablist" aria-label="Vignettes">
 								{images.map((media, index) => (
 									<GalleryThumbnail
 										key={media.id}
@@ -164,11 +244,17 @@ function GalleryContent({ product, title }: GalleryProps) {
 							className={cn(
 								"relative aspect-square sm:aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl",
 								"bg-linear-organic border-0 sm:border-2 sm:border-border",
-								"shadow-md sm:shadow-lg hover:shadow-lg transition-all duration-300"
+								"shadow-md sm:shadow-lg hover:shadow-lg",
+								transitionClass
 							)}
 						>
 							{/* Effet hover subtil */}
-							<div className="absolute inset-0 ring-1 ring-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl sm:rounded-3xl z-10" />
+							<div
+								className={cn(
+									"absolute inset-0 ring-1 ring-primary/20 opacity-0 group-hover:opacity-100 pointer-events-none rounded-2xl sm:rounded-3xl z-10",
+									!prefersReduced && "transition-opacity duration-300"
+								)}
+							/>
 
 							{/* Compteur d'images */}
 							{images.length > 1 && (

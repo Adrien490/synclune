@@ -9,7 +9,7 @@ import { Cookie } from "lucide-react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { FocusScope } from "@radix-ui/react-focus-scope";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useEffectEvent } from "react";
 
 /**
  * Cookie Banner RGPD conforme - Version simplifiée bas gauche
@@ -51,19 +51,20 @@ export function CookieBanner() {
 		}
 	}, [shouldShow, shouldReduceMotion]);
 
+	// Effect Event pour gérer Escape sans re-registration
+	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
+		if (e.key === "Escape") {
+			rejectCookies();
+		}
+	});
+
 	// Gestion touche Escape pour refuser les cookies
 	useEffect(() => {
 		if (!shouldShow) return;
 
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.key === "Escape") {
-				rejectCookies();
-			}
-		};
-
-		document.addEventListener("keydown", handleKeyDown);
-		return () => document.removeEventListener("keydown", handleKeyDown);
-	}, [shouldShow, rejectCookies]);
+		document.addEventListener("keydown", onKeyDown);
+		return () => document.removeEventListener("keydown", onKeyDown);
+	}, [shouldShow, onKeyDown]);
 
 	// Ne rien afficher tant que le store n'est pas hydraté depuis localStorage
 	// Cela évite le flash du banner pendant le chargement

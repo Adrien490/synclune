@@ -23,7 +23,7 @@ export const MAX_IMAGE_SIZE = 3840
 export const LIGHTBOX_QUALITY = 95
 
 /** Qualité pour les thumbnails de la galerie */
-export const THUMBNAIL_IMAGE_QUALITY = 85
+export const THUMBNAIL_IMAGE_QUALITY = 65
 
 /** Qualité pour l'image principale de la galerie */
 export const MAIN_IMAGE_QUALITY = 85

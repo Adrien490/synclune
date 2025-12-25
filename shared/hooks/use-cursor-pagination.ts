@@ -2,7 +2,7 @@
 
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useTransition, type RefObject } from "react";
+import { useEffect, useRef, useTransition, useEffectEvent, type RefObject } from "react";
 
 export interface UseCursorPaginationProps {
 	nextCursor: string | null;
@@ -50,28 +50,32 @@ export function useCursorPagination({
 	const perPage = Number(searchParams.get("perPage")) || DEFAULT_PER_PAGE;
 	const cursor = searchParams.get("cursor") || undefined;
 
+	// Effect Event pour appeler onNavigate et gérer le focus sans re-runs inutiles
+	const onCursorChange = useEffectEvent(() => {
+		if (onNavigate) {
+			onNavigate();
+		} else {
+			// Comportement par défaut : scroll to top
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		}
+
+		// Focus management pour accessibilité
+		// Permet aux utilisateurs de clavier de reprendre depuis le bon endroit
+		if (focusTargetRef?.current) {
+			// Délai pour permettre au DOM de se mettre à jour
+			requestAnimationFrame(() => {
+				focusTargetRef.current?.focus({ preventScroll: true });
+			});
+		}
+	});
+
 	// Détecte le changement de page et gère le focus/scroll
 	useEffect(() => {
 		if (previousCursorRef.current !== cursor) {
 			previousCursorRef.current = cursor;
-
-			if (onNavigate) {
-				onNavigate();
-			} else {
-				// Comportement par défaut : scroll to top
-				window.scrollTo({ top: 0, behavior: "smooth" });
-			}
-
-			// Focus management pour accessibilité
-			// Permet aux utilisateurs de clavier de reprendre depuis le bon endroit
-			if (focusTargetRef?.current) {
-				// Délai pour permettre au DOM de se mettre à jour
-				requestAnimationFrame(() => {
-					focusTargetRef.current?.focus({ preventScroll: true });
-				});
-			}
+			onCursorChange();
 		}
-	}, [cursor, onNavigate, focusTargetRef]);
+	}, [cursor, onCursorChange]);
 
 	const preserveParams = () => {
 		return new URLSearchParams(searchParams.toString());
@@ -102,35 +106,36 @@ export function useCursorPagination({
 		});
 	};
 
+	// Effect Event pour gérer les raccourcis clavier sans re-registration
+	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
+		// Ne pas intercepter si on est dans un champ de saisie
+		const target = e.target as HTMLElement;
+		if (
+			target.tagName === "INPUT" ||
+			target.tagName === "TEXTAREA" ||
+			target.isContentEditable
+		) {
+			return;
+		}
+
+		if (e.altKey && e.key === "ArrowLeft" && prevCursor) {
+			e.preventDefault();
+			navigatePrevious(prevCursor);
+		}
+
+		if (e.altKey && e.key === "ArrowRight" && nextCursor) {
+			e.preventDefault();
+			navigateNext(nextCursor);
+		}
+	});
+
 	// Raccourcis clavier Alt+Left/Right pour navigation rapide
 	useEffect(() => {
 		if (!enableKeyboardShortcuts) return;
 
-		const handleKeyDown = (e: KeyboardEvent) => {
-			// Ne pas intercepter si on est dans un champ de saisie
-			const target = e.target as HTMLElement;
-			if (
-				target.tagName === "INPUT" ||
-				target.tagName === "TEXTAREA" ||
-				target.isContentEditable
-			) {
-				return;
-			}
-
-			if (e.altKey && e.key === "ArrowLeft" && prevCursor) {
-				e.preventDefault();
-				navigatePrevious(prevCursor);
-			}
-
-			if (e.altKey && e.key === "ArrowRight" && nextCursor) {
-				e.preventDefault();
-				navigateNext(nextCursor);
-			}
-		};
-
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [enableKeyboardShortcuts, nextCursor, prevCursor]);
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [enableKeyboardShortcuts, onKeyDown]);
 
 	const handleNext = () => navigateNext(nextCursor);
 	const handlePrevious = () => navigatePrevious(prevCursor);

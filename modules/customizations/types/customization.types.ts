@@ -118,15 +118,3 @@ export interface GetCustomizationRequestsResult {
 	};
 }
 
-// ============================================================================
-// PRODUCT SEARCH TYPE
-// ============================================================================
-
-export interface ProductSearchResult {
-	id: string;
-	title: string;
-	slug: string;
-	description: string | null;
-	imageUrl: string | null;
-	blurDataUrl: string | null;
-}
