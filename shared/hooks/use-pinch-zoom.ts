@@ -269,6 +269,8 @@ export function usePinchZoom({
 			e.preventDefault();
 
 			const center = getCenter(e.touches);
+			if (!rect) return;
+
 			// Calculer la distance totale depuis le début du geste
 			const totalDistance = Math.hypot(
 				center.x - startTouchCenter.current.x,
@@ -284,13 +286,17 @@ export function usePinchZoom({
 			const ratio = newDistance / initialDistance.current;
 			const newScale = Math.min(config.maxScale, Math.max(config.minScale, initialScale.current * ratio));
 
-			const deltaX = center.x - lastTouchCenter.current.x;
-			const deltaY = center.y - lastTouchCenter.current.y;
+			// Point focal en coordonnées relatives au centre du container
+			const focalX = center.x - rect.left - rect.width / 2;
+			const focalY = center.y - rect.top - rect.height / 2;
 
+			// Position qui maintient le point focal fixe pendant le zoom
+			// Formule: newPos = focal - (focal - oldPos) * (newScale / oldScale)
+			const scaleRatio = scale > 0 ? newScale / scale : 1;
 			const newPosition = clampPosition(
 				{
-					x: initialPosition.current.x + deltaX,
-					y: initialPosition.current.y + deltaY,
+					x: focalX - (focalX - position.x) * scaleRatio,
+					y: focalY - (focalY - position.y) * scaleRatio,
 				},
 				newScale,
 				rect

@@ -307,7 +307,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 					{images.length > 1 && (
 						<div className="lg:hidden order-3 mt-3">
 							<div
-								className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory"
+								className="flex flex-wrap gap-2 justify-center"
 								role="tablist"
 								aria-label="Vignettes"
 							>
@@ -321,7 +321,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 										title={title}
 										onClick={() => scrollTo(index)}
 										onError={() => handleThumbnailError(media.id)}
-										className="shrink-0 w-16 h-16 snap-start"
+										className="w-14 h-14"
 										isLCPCandidate={index === 0}
 									/>
 								))}
