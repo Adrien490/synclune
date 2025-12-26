@@ -52,6 +52,7 @@ export function cacheSkuDetail(sku: string) {
  * Invalide automatiquement :
  * - La liste globale des SKUs
  * - Le détail du SKU
+ * - Le prix maximum (affecte les filtres de prix)
  * - Le stock temps réel du SKU (si skuId fourni)
  * - Les SKUs du produit parent (si productId fourni)
  * - Le détail du produit parent (si productSlug fourni)
@@ -63,6 +64,7 @@ export function getSkuInvalidationTags(sku: string, productId?: string, productS
 	const tags = [
 		PRODUCTS_CACHE_TAGS.SKUS_LIST,
 		PRODUCTS_CACHE_TAGS.SKU_DETAIL(sku),
+		PRODUCTS_CACHE_TAGS.MAX_PRICE,
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
