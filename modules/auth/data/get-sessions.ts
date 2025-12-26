@@ -24,7 +24,7 @@ import {
 	sessionSortBySchema,
 } from "../schemas/session.schemas";
 import type { GetSessionsParams, GetSessionsReturn } from "../types/session.types";
-import { buildSessionWhereClause } from "../utils/session-query-builder";
+import { buildSessionWhereClause } from "../services/session-query-builder";
 
 // Re-export pour compatibilité
 export {

@@ -15,7 +15,7 @@ import {
 	hasCartItemDiscount,
 	getCartItemDiscountPercent,
 	getCartItemPrimaryImage,
-} from "../utils/cart-item";
+} from "../services/cart-item.service";
 import Image from "next/image";
 import Link from "next/link";
 

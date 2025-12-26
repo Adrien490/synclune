@@ -23,7 +23,7 @@ import {
 	hasSortByInput,
 	buildReviewOrderBy,
 	buildReviewWhereClause,
-} from "../utils/review-query-builder"
+} from "../services/review-query-builder"
 
 // Re-export pour compatibilité
 export {

@@ -16,7 +16,7 @@ import {
 } from "../constants/collection.constants";
 import { getCollectionsSchema } from "../schemas/collection.schemas";
 import type { GetCollectionsParams, GetCollectionsReturn } from "../types/collection.types";
-import { buildCollectionWhereClause } from "../utils/collection-query-builder";
+import { buildCollectionWhereClause } from "../services/collection-query-builder";
 
 // Re-export pour compatibilité
 export {

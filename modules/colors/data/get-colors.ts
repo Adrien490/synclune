@@ -20,7 +20,7 @@ import type {
 	GetColorsParamsInput,
 	GetColorsReturn,
 } from "../types/color.types";
-import { buildColorWhereClause } from "../utils/color-query-builder";
+import { buildColorWhereClause } from "../services/color-query-builder";
 
 // Re-export pour compatibilité
 export {

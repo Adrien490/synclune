@@ -24,7 +24,7 @@ import {
 	userSortBySchema,
 } from "../schemas/user.schemas";
 import type { GetUsersParams, GetUsersReturn, User } from "../types/user.types";
-import { buildUserWhereClause } from "../utils/user-query-builder";
+import { buildUserWhereClause } from "../services/user-query-builder";
 
 // Re-export pour compatibilité
 export {

@@ -19,7 +19,7 @@ import { getStripeShippingOptions } from "@/modules/orders/constants/stripe-ship
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { checkDiscountEligibility } from "@/modules/discounts/utils/check-discount-eligibility";
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/services/discount-calculation.service";
-import { getShippingZoneFromPostalCode } from "@/modules/payments/utils/postal-zone.utils";
+import { getShippingZoneFromPostalCode } from "@/modules/payments/services/postal-zone.service";
 import { getInvoiceFooter } from "@/shared/lib/stripe";
 import { getValidImageUrl } from "@/modules/payments/utils/validate-image-url";
 

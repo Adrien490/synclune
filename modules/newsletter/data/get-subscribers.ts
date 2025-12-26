@@ -25,7 +25,7 @@ import type {
 	GetSubscribersReturn,
 	Subscriber,
 } from "../types/subscriber.types";
-import { buildSubscriberWhereClause } from "../utils/subscriber-query-builder";
+import { buildSubscriberWhereClause } from "../services/subscriber-query-builder";
 
 // Re-export pour compatibilité
 export {

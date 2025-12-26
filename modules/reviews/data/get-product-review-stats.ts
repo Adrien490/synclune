@@ -16,10 +16,21 @@ export async function getProductReviewStatsRaw(
 	"use cache"
 	cacheProductReviewStats(productId)
 
-	return prisma.productReviewStats.findUnique({
+	const stats = await prisma.productReviewStats.findUnique({
 		where: { productId },
 		select: REVIEW_STATS_SELECT,
 	})
+
+	if (!stats) return null
+
+	// Convert Prisma Decimal to number for cache serialization
+	return {
+		...stats,
+		averageRating:
+			typeof stats.averageRating === "number"
+				? stats.averageRating
+				: stats.averageRating.toNumber(),
+	}
 }
 
 /**

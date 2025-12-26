@@ -18,7 +18,7 @@ import type {
 	GetVerificationsParams,
 	GetVerificationsReturn,
 } from "../types/verification.types";
-import { buildVerificationWhereClause } from "../utils/verification-query-builder";
+import { buildVerificationWhereClause } from "../services/verification-query-builder";
 
 // ============================================================================
 // UTILS

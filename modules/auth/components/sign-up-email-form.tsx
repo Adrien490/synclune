@@ -8,7 +8,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useSignUpEmail } from "@/modules/auth/hooks/use-sign-up-email";
 import { PasswordStrengthIndicator } from "./password-strength-indicator";
-import { countCharacterTypes } from "../utils/password-strength";
+import { countCharacterTypes } from "../services/password-strength.service";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 

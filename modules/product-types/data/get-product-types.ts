@@ -23,7 +23,7 @@ import type {
 	GetProductTypesParamsInput,
 	GetProductTypesReturn,
 } from "../types/product-type.types";
-import { buildProductTypeWhereClause } from "../utils/product-type-query-builder";
+import { buildProductTypeWhereClause } from "../services/product-type-query-builder";
 
 // Re-export pour compatibilité
 export {

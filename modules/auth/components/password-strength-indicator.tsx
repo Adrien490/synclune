@@ -7,7 +7,7 @@ import {
 	getStrengthLevel,
 	getStrengthLabel,
 	getStrengthColor,
-} from "../utils/password-strength";
+} from "../services/password-strength.service";
 
 interface PasswordStrengthIndicatorProps {
 	password: string;

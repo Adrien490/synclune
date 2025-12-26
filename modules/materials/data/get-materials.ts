@@ -20,7 +20,7 @@ import type {
 	GetMaterialsParamsInput,
 	GetMaterialsReturn,
 } from "../types/materials.types";
-import { buildMaterialWhereClause } from "../utils/materials-query-builder";
+import { buildMaterialWhereClause } from "../services/materials-query-builder";
 
 // Re-export pour compatibilité
 export {

@@ -26,7 +26,7 @@ import type {
 	GetAccountsReturn,
 	GetAccountsParams,
 } from "../types/accounts.types";
-import { buildAccountsWhereClause } from "../utils/accounts-query-builder";
+import { buildAccountsWhereClause } from "../services/accounts-query-builder";
 
 // Re-export pour compatibilité
 export {

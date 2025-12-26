@@ -75,14 +75,6 @@ export async function updateProductReviewStats(
 }
 
 /**
- * Convertit une valeur Prisma Decimal en number
- */
-function toNumber(value: number | { toNumber: () => number }): number {
-	if (typeof value === "number") return value
-	return value.toNumber()
-}
-
-/**
  * Transforme les statistiques brutes en statistiques UI-friendly
  * avec distribution calculée en pourcentages
  *
@@ -132,7 +124,7 @@ export function formatReviewStats(stats: ReviewStats | null): ProductReviewStati
 
 	return {
 		totalCount: stats.totalCount,
-		averageRating: toNumber(stats.averageRating),
+		averageRating: stats.averageRating,
 		distribution,
 	}
 }

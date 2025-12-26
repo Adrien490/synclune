@@ -106,10 +106,12 @@ export interface ReviewUser {
 
 /**
  * Statistiques agrégées d'un produit
+ * Note: averageRating is already converted from Prisma Decimal to number
+ * in getProductReviewStatsRaw for cache serialization
  */
 export interface ReviewStats {
 	totalCount: number
-	averageRating: number | { toNumber: () => number }
+	averageRating: number
 	rating1Count: number
 	rating2Count: number
 	rating3Count: number

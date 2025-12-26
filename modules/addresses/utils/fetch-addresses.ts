@@ -4,8 +4,8 @@ import type {
 	ValidatedSearchAddressParams,
 	SearchAddressReturn,
 } from "../types/search-address.types";
-import { buildApiUrl } from "./build-api-url";
-import { transformCompletionResult } from "./transform-completion-result";
+import { buildApiUrl } from "../services/address-api.service";
+import { transformCompletionResult } from "../services/address-transform.service";
 
 /**
  * Récupère les suggestions d'adresses depuis l'API d'autocomplétion de l'IGN
