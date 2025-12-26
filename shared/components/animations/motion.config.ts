@@ -29,6 +29,14 @@ export const MOTION_CONFIG = {
 			mass: 0.8,
 		},
 
+		// Snappy spring for quick UI elements (FAB, toggles)
+		springSnappy: {
+			type: "spring" as const,
+			damping: 35,
+			stiffness: 500,
+			mass: 0.3,
+		},
+
 		// Tween-based easings for precise control
 		easeInOut: [0.25, 0.1, 0.25, 1],
 		easeOut: [0, 0, 0.2, 1],

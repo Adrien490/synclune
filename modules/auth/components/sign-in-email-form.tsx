@@ -6,6 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -115,8 +116,16 @@ export function SignInEmailForm() {
 						disabled={!canSubmit || isPending}
 						className="w-full"
 						type="submit"
+						aria-busy={isPending}
 					>
-						Se connecter
+						{isPending ? (
+							<>
+								<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+								<span>Connexion...</span>
+							</>
+						) : (
+							"Se connecter"
+						)}
 					</Button>
 				)}
 			</form.Subscribe>

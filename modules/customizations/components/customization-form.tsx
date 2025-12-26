@@ -173,6 +173,7 @@ export function CustomizationForm({
 				{(field) => (
 					<field.PhoneField
 						label="Téléphone"
+						optional
 						defaultCountry="FR"
 						placeholder="06 12 34 56 78"
 					/>
@@ -205,6 +206,7 @@ export function CustomizationForm({
 								rel="noopener noreferrer"
 							>
 								Politique de confidentialité
+								<span className="sr-only"> (ouvre dans un nouvel onglet)</span>
 							</a>
 						</p>
 					</div>

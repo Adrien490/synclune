@@ -15,8 +15,11 @@ export type {
 
 // Tier 3 - Constants (customisation avancee)
 export {
+	ARIA_CLEAR_DELAY,
 	BADGE_ANIMATION_CLASSES,
 	DEFAULT_RESPONSIVE_CONFIG,
+	FOCUS_RING_DURATION,
+	MULTI_SELECT_LABELS,
 	multiSelectVariants,
 	POPOVER_ANIMATION_CLASSES,
 } from "./constants";

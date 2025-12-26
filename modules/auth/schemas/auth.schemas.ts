@@ -75,7 +75,12 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 // ============================================================================
 
 export const signInEmailSchema = z.object({
-	email: z.string(),
+	email: z
+		.string()
+		.min(1, "L'email est requis")
+		.email("Format d'email invalide")
+		.toLowerCase()
+		.trim(),
 	password: z.string().min(1, { message: "Le mot de passe est requis" }),
 	callbackURL: callbackURLSchema,
 });
@@ -130,7 +135,9 @@ export const requestPasswordResetSchema = z.object({
 	email: z
 		.string()
 		.min(1, "L'email est requis")
-		.email("Format d'email invalide"),
+		.email("Format d'email invalide")
+		.toLowerCase()
+		.trim(),
 });
 
 export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;

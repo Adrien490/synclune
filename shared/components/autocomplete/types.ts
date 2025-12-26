@@ -31,6 +31,10 @@ export interface AutocompleteProps<T> {
 	placeholder?: string;
 	/** Indique si les donnees sont en cours de chargement */
 	isLoading?: boolean;
+	/** Message d'erreur a afficher (ex: erreur reseau) */
+	error?: string | null;
+	/** Callback pour retenter la recherche apres une erreur */
+	onRetry?: () => void;
 	/** Classes CSS additionnelles pour le conteneur */
 	className?: string;
 	/** Classes CSS additionnelles pour l'input */

@@ -1,9 +1,28 @@
 "use server";
 
-import { success, error, handleActionError } from "@/shared/lib/actions";
+import { z } from "zod";
+import {
+	success,
+	error,
+	handleActionError,
+	validateInput,
+} from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { toggleFabVisibility } from "./toggle-fab-visibility";
-import { FAB_KEYS, type FabKey } from "@/shared/constants/fab";
+import { FAB_KEYS } from "@/shared/constants/fab";
+
+/**
+ * Schema de validation pour la visibilité FAB
+ */
+const setFabVisibilitySchema = z.object({
+	key: z.enum([
+		FAB_KEYS.CONTACT_ADRIEN,
+		FAB_KEYS.ADMIN_SPEED_DIAL,
+		FAB_KEYS.STOREFRONT,
+		FAB_KEYS.ADMIN_DASHBOARD,
+	]),
+	isHidden: z.preprocess((v) => v === "true", z.boolean()),
+});
 
 /**
  * Wrapper Server Action pour useActionState
@@ -13,16 +32,17 @@ export async function setFabVisibility(
 	_prevState: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
+	const validation = validateInput(setFabVisibilitySchema, {
+		key: formData.get("key"),
+		isHidden: formData.get("isHidden"),
+	});
+
+	if ("error" in validation) {
+		return validation.error;
+	}
+
 	try {
-		const key = formData.get("key") as FabKey;
-		const isHidden = formData.get("isHidden") === "true";
-
-		// Validation de la clé
-		const validKeys = Object.values(FAB_KEYS);
-		if (!validKeys.includes(key)) {
-			return error("Clé FAB invalide");
-		}
-
+		const { key, isHidden } = validation.data;
 		const result = await toggleFabVisibility(key, isHidden);
 
 		return success("Préférence enregistrée", { isHidden: result.isHidden });

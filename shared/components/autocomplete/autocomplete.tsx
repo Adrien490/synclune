@@ -19,7 +19,8 @@ import { Spinner } from "@/shared/components/ui/spinner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
-import { ArrowLeftIcon, SearchIcon } from "lucide-react";
+import { AlertCircleIcon, ArrowLeftIcon, SearchIcon } from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
 import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
 import { AUTOCOMPLETE_ANIMATIONS, AUTOCOMPLETE_DEFAULTS } from "./constants";
@@ -38,6 +39,8 @@ export function Autocomplete<T>({
 	imageSize = AUTOCOMPLETE_DEFAULTS.imageSize,
 	placeholder = AUTOCOMPLETE_DEFAULTS.placeholder,
 	isLoading = false,
+	error,
+	onRetry,
 	className,
 	inputClassName,
 	noResultsMessage = AUTOCOMPLETE_DEFAULTS.noResultsMessage,
@@ -351,6 +354,29 @@ export function Autocomplete<T>({
 		</li>
 	);
 
+	// Composant de rendu de l'etat d'erreur
+	const renderErrorState = () => {
+		if (!error) return null;
+
+		return (
+			<li className="w-full">
+				<Empty>
+					<EmptyHeader>
+						<EmptyMedia>
+							<AlertCircleIcon className="size-6 text-destructive" strokeWidth={1.5} />
+						</EmptyMedia>
+						<EmptyTitle className="text-destructive">{error}</EmptyTitle>
+						{onRetry && (
+							<Button variant="ghost" size="sm" onClick={onRetry}>
+								Réessayer
+							</Button>
+						)}
+					</EmptyHeader>
+				</Empty>
+			</li>
+		);
+	};
+
 	// Composant compteur de resultats
 	const renderResultsCount = () => {
 		if (!showResultsCount || !hasResults || isLoading) return null;
@@ -367,6 +393,11 @@ export function Autocomplete<T>({
 
 	// Rendu du contenu de la liste
 	const renderListContent = () => {
+		// Erreur en priorite
+		if (error) {
+			return renderErrorState();
+		}
+
 		if (isLoading) {
 			return renderLoadingSkeletons();
 		}
@@ -412,7 +443,7 @@ export function Autocomplete<T>({
 						value={localValue}
 						readOnly
 						onClick={() => !disabled && setIsOpen(true)}
-						placeholder={placeholder}
+						placeholder={localValue ? placeholder : "Appuyer pour rechercher..."}
 						startIcon={
 							showSearchIcon ? (
 								<SearchIcon className="size-4 text-muted-foreground" />

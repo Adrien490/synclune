@@ -37,7 +37,6 @@ export type ProductFiltersSearchParams = {
 	filter_typeId?: string | string[];
 	filter_collectionId?: string | string[];
 	filter_stockStatus?: string | string[];
-	filter_sortBy?: string;
 	filter_updatedAfter?: string;
 	filter_updatedBefore?: string;
 	filter_material?: string | string[];

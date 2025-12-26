@@ -10,6 +10,7 @@ import {
 	WishlistListOptimisticContext,
 	type WishlistListOptimisticContextValue,
 } from "../contexts/wishlist-list-optimistic-context";
+import { cn } from "@/shared/utils/cn";
 
 interface WishlistListContentProps {
 	items: GetWishlistReturn["items"];
@@ -32,7 +33,7 @@ export function WishlistListContent({
 	perPage,
 }: WishlistListContentProps) {
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
-	const [, startTransition] = useTransition();
+	const [isTransitionPending, startTransition] = useTransition();
 
 	// Optimistic state pour la liste d'items
 	const [optimisticItems, removeOptimisticItem] = useOptimistic(
@@ -70,7 +71,13 @@ export function WishlistListContent({
 		<WishlistListOptimisticContext.Provider value={contextValue}>
 			<div className="space-y-8">
 				{/* Grid des items de wishlist avec animation */}
-				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+				<div
+					className={cn(
+						"grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6",
+						"motion-safe:transition-opacity motion-safe:duration-200",
+						isTransitionPending && "opacity-70 pointer-events-none"
+					)}
+				>
 					<AnimatePresence mode="popLayout">
 						{uniqueProducts.map((item, index) => (
 							<motion.div
@@ -93,6 +100,18 @@ export function WishlistListContent({
 							</motion.div>
 						))}
 					</AnimatePresence>
+				</div>
+
+				{/* Annonce pour screen readers */}
+				<div
+					role="status"
+					aria-live="polite"
+					aria-atomic="true"
+					className="sr-only"
+				>
+					{optimisticItems.length === 0
+						? "Ta wishlist est maintenant vide"
+						: `${optimisticItems.length} article${optimisticItems.length > 1 ? "s" : ""} dans ta wishlist`}
 				</div>
 
 				{/* Pagination */}

@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
+import { checkArcjetProtection } from "@/modules/auth/utils/arcjet-protection";
 import { error, unauthorized, validateInput } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -14,6 +15,13 @@ export const signInSocial = async (
 ): Promise<ActionState> => {
 	try {
 		const headersList = await headers();
+
+		// Protection Arcjet contre le brute-force
+		const arcjetResult = await checkArcjetProtection(
+			"/sign-in/social",
+			headersList
+		);
+		if (arcjetResult) return arcjetResult;
 
 		// Vérifier si l'utilisateur est déjà connecté
 		const session = await auth.api.getSession({ headers: headersList });

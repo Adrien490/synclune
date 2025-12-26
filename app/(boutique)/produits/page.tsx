@@ -48,7 +48,6 @@ export type ProductSearchParams = {
 	perPage?: string;
 	sortBy?: string;
 	search?: string;
-	filter_sortBy?: string;
 } & ProductFiltersSearchParams;
 
 const DEFAULT_METADATA = {
@@ -80,7 +79,6 @@ export async function generateMetadata({
 				"perPage",
 				"sortBy",
 				"search",
-				"filter_sortBy",
 			].includes(key)
 	);
 
@@ -158,9 +156,8 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const perPage =
 		Number(getFirstParam(searchParamsData.perPage)) ||
 		GET_PRODUCTS_DEFAULT_PER_PAGE;
-	const sortByFromFilter = getFirstParam(searchParamsData.filter_sortBy);
-	const sortByFromParam = getFirstParam(searchParamsData.sortBy);
-	const sortBy = sortByFromFilter || sortByFromParam || "created-descending";
+	const sortBy =
+		getFirstParam(searchParamsData.sortBy) || "created-descending";
 
 	// Parser les filtres (le type est déjà géré par parseFilters)
 	const filters = parseFilters(searchParamsData);

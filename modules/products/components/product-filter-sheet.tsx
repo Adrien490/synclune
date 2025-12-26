@@ -93,8 +93,11 @@ export function ProductFilterSheet({
 	// Synchroniser le formulaire avec l'URL à chaque ouverture du sheet
 	useEffect(() => {
 		if (isOpen) {
-			form.reset(getValuesFromURL());
+			const values = getValuesFromURL();
+			form.reset(values);
 		}
+		// form.reset est stable (TanStack Form), getValuesFromURL lit searchParams
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isOpen, searchParams]);
 
 	const applyFilters = (formData: FilterFormData) => {
@@ -106,7 +109,9 @@ export function ProductFilterSheet({
 			params.delete(key);
 		});
 
-		params.set("page", "1");
+		// Reset cursor pagination (pas de "page" - utilise des curseurs)
+		params.delete("cursor");
+		params.delete("direction");
 
 		// Types de produits
 		if (formData.productTypes.length > 0) {
@@ -169,7 +174,10 @@ export function ProductFilterSheet({
 		filterKeys.forEach((key) => {
 			params.delete(key);
 		});
-		params.set("page", "1");
+
+		// Reset cursor pagination
+		params.delete("cursor");
+		params.delete("direction");
 
 		startTransition(() => {
 			router.push(`${pathname}?${params.toString()}`);
@@ -246,6 +254,7 @@ export function ProductFilterSheet({
 					type="multiple"
 					defaultValue={defaultOpenSections}
 					className="w-full"
+					aria-label="Filtres de recherche"
 				>
 					{/* Types de produits */}
 					{productTypes.length > 0 && (

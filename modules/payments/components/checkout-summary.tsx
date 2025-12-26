@@ -12,6 +12,7 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { Pencil, ShoppingBag, TruckIcon } from "lucide-react";
+import Image from "next/image";
 
 interface CheckoutSummaryProps {
 	cart: NonNullable<GetCartReturn>;
@@ -58,10 +59,12 @@ export function CheckoutSummary({ cart }: CheckoutSummaryProps) {
 							{/* Image */}
 							<div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden bg-muted border">
 								{item.sku.images[0] ? (
-									<img
+									<Image
 										src={item.sku.images[0].url}
 										alt={item.sku.images[0].altText || item.sku.product.title}
-										className="w-full h-full object-cover"
+										fill
+										sizes="64px"
+										className="object-cover"
 									/>
 								) : (
 									<div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
@@ -115,7 +118,7 @@ export function CheckoutSummary({ cart }: CheckoutSummaryProps) {
 					<button
 						type="button"
 						onClick={openCart}
-						className="text-xs text-foreground underline hover:no-underline inline-flex items-center gap-1"
+						className="text-xs text-foreground underline hover:no-underline inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
 					>
 						<Pencil className="w-3 h-3" />
 						Modifier mon panier

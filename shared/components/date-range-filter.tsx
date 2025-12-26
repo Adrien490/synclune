@@ -134,28 +134,40 @@ export function DateRangeFilter({
 	return (
 		<div
 			data-pending={isPending ? "" : undefined}
+			aria-live="polite"
+			aria-busy={isPending}
 			className={cn("min-w-[280px] relative", className)}
 		>
+			{isPending && (
+				<span className="sr-only">Mise à jour du filtre en cours...</span>
+			)}
 			<Popover>
 				<PopoverTrigger asChild>
 					<Button
 						variant="outline"
 						disabled={isPending}
+						aria-label={
+							dateRange?.from
+								? `${label}: ${formatDateRange(dateRange)}. Cliquer pour modifier`
+								: `${label}: Sélectionner une période`
+						}
 						className={cn(
 							"w-full justify-start text-left font-normal",
 							!dateRange && "text-muted-foreground"
 						)}
 					>
 						<span className="text-muted-foreground text-xs mr-2">{label}</span>
-						<CalendarIcon className="mr-2 h-4 w-4" />
+						<CalendarIcon className="mr-2 h-4 w-4" aria-hidden="true" />
 						<span className="flex-1">{formatDateRange(dateRange)}</span>
 						{dateRange && (
-							<span
-								className="h-5 w-5 p-0 rounded-full inline-flex items-center justify-center cursor-pointer hover:bg-accent/50 ml-2"
+							<button
+								type="button"
+								className="h-6 w-6 min-h-[44px] min-w-[44px] -m-2 p-2 rounded-full inline-flex items-center justify-center cursor-pointer hover:bg-accent/50 ml-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 								onClick={handleClear}
+								aria-label="Effacer la période sélectionnée"
 							>
-								<X className="h-3 w-3" />
-							</span>
+								<X className="h-3 w-3" aria-hidden="true" />
+							</button>
 						)}
 					</Button>
 				</PopoverTrigger>

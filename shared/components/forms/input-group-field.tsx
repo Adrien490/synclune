@@ -6,24 +6,41 @@ import { useFieldContext } from "@/shared/lib/form-context";
 
 interface InputGroupFieldProps
 	extends React.InputHTMLAttributes<HTMLInputElement> {
-	/** Addon (InputGroupAddon) à afficher avant ou après le champ */
+	/**
+	 * Addon(s) à afficher avant ou après le champ.
+	 * Utiliser InputGroupAddon avec `align` pour positionner.
+	 * @example
+	 * <InputGroupAddon align="inline-end">€</InputGroupAddon>
+	 */
 	children?: React.ReactNode;
+	/**
+	 * Marque le champ comme requis (aria-required).
+	 * La validation reste gérée par le schema Zod.
+	 */
 	required?: boolean;
 }
 
 /**
  * Champ input avec addon (prefix/suffix) pour formulaires TanStack Form.
  *
- * N'inclut pas de label - utilisez FieldLabel séparément si nécessaire.
- * Pour les champs numériques, les valeurs vides retournent `null`.
+ * **Note:** Ce composant n'inclut pas de label intégré, contrairement à InputField.
+ * Cela permet une flexibilité de layout (ex: label au-dessus avec espacement custom).
+ * Utilisez `<FieldLabel htmlFor={field.name}>` si nécessaire.
+ *
+ * Pour les champs numériques :
+ * - Les valeurs vides retournent `null`
+ * - La valeur `0` est correctement affichée et préservée
  *
  * @example
  * ```tsx
  * <form.AppField name="price">
  *   {(field) => (
- *     <field.InputGroupField type="number" min={0} step={0.01}>
- *       <InputGroupAddon position="end">€</InputGroupAddon>
- *     </field.InputGroupField>
+ *     <div className="space-y-2">
+ *       <FieldLabel htmlFor="price">Prix</FieldLabel>
+ *       <field.InputGroupField type="number" min={0} step={0.01}>
+ *         <InputGroupAddon align="inline-end">€</InputGroupAddon>
+ *       </field.InputGroupField>
+ *     </div>
  *   )}
  * </form.AppField>
  * ```
@@ -37,6 +54,10 @@ export const InputGroupField = ({
 	max,
 	step,
 	children,
+	inputMode,
+	enterKeyHint,
+	autoComplete,
+	pattern,
 	...props
 }: InputGroupFieldProps) => {
 	const field = useFieldContext<string | number | null>();
@@ -77,7 +98,10 @@ export const InputGroupField = ({
 					value={displayValue}
 					onChange={handleChange}
 					onBlur={field.handleBlur}
-					inputMode={type === "number" ? "decimal" : undefined}
+					inputMode={inputMode ?? (type === "number" ? "decimal" : undefined)}
+					enterKeyHint={enterKeyHint}
+					autoComplete={autoComplete}
+					pattern={pattern}
 					aria-invalid={field.state.meta.errors.length > 0}
 					aria-describedby={
 						field.state.meta.errors.length > 0

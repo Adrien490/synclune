@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
 import {
 	Select,
@@ -31,6 +32,8 @@ interface SelectFieldProps<T extends string> {
 	renderValue?: (value: T) => React.ReactNode;
 	/** Affiche un bouton pour effacer la sélection */
 	clearable?: boolean;
+	/** Classes CSS additionnelles pour le conteneur Field */
+	className?: string;
 }
 
 /**
@@ -65,15 +68,17 @@ export const SelectField = <T extends string>({
 	renderOption,
 	renderValue,
 	clearable,
+	className,
 }: SelectFieldProps<T>) => {
 	const field = useFieldContext<T | undefined>();
 	const isMobile = useIsMobile();
+	const triggerRef = useRef<HTMLButtonElement>(null);
 
 	const hasError = field.state.meta.errors.length > 0;
 	const selectedOption = options.find((opt) => opt.value === field.state.value);
 
 	return (
-		<Field data-invalid={hasError}>
+		<Field data-invalid={hasError} className={className}>
 			{label && (
 				<FieldLabel htmlFor={field.name}>
 					{label}
@@ -92,6 +97,7 @@ export const SelectField = <T extends string>({
 					disabled={disabled}
 					value={field.state.value ?? ""}
 					onChange={(e) =>
+						// Cast sécurisé : value vient des options typées T[]
 						field.handleChange((e.target.value || undefined) as T | undefined)
 					}
 					onBlur={field.handleBlur}
@@ -102,9 +108,12 @@ export const SelectField = <T extends string>({
 					className="w-full"
 				>
 					{placeholder && (
-						<NativeSelectOption value="" disabled>
+						<NativeSelectOption value="" disabled={!clearable}>
 							{placeholder}
 						</NativeSelectOption>
+					)}
+					{clearable && !placeholder && (
+						<NativeSelectOption value="">Aucune sélection</NativeSelectOption>
 					)}
 					{options.map((option) => (
 						<NativeSelectOption key={option.value} value={option.value}>
@@ -118,11 +127,13 @@ export const SelectField = <T extends string>({
 					disabled={disabled}
 					value={field.state.value ?? ""}
 					onValueChange={(value) =>
+						// Cast sécurisé : value vient des options typées T[]
 						field.handleChange((value || undefined) as T | undefined)
 					}
 					required={required}
 				>
 					<SelectTrigger
+						ref={triggerRef}
 						id={field.name}
 						className="w-full"
 						onBlur={field.handleBlur}
@@ -134,22 +145,27 @@ export const SelectField = <T extends string>({
 							<span className="flex-1 truncate text-left">
 								{field.state.value ? (
 									renderValue ? (
-										renderValue(field.state.value)
+										(renderValue(field.state.value) ??
+											selectedOption?.label ??
+											field.state.value)
 									) : selectedOption ? (
 										renderOption ? (
 											renderOption(selectedOption)
 										) : (
 											selectedOption.label
 										)
-									) : null
+									) : (
+										<span className="text-muted-foreground">
+											{field.state.value}
+										</span>
+									)
 								) : (
 									<SelectValue placeholder={placeholder} />
 								)}
 							</span>
 							{clearable && field.state.value && (
-								<span
-									role="button"
-									tabIndex={0}
+								<button
+									type="button"
 									className={cn(
 										"inline-flex items-center justify-center h-6 w-6 ml-1 mr-0.5 shrink-0 rounded-sm",
 										"hover:bg-accent hover:text-accent-foreground",
@@ -164,18 +180,12 @@ export const SelectField = <T extends string>({
 										e.preventDefault();
 										e.stopPropagation();
 										field.handleChange(undefined);
-									}}
-									onKeyDown={(e) => {
-										if (e.key === "Enter" || e.key === " ") {
-											e.preventDefault();
-											e.stopPropagation();
-											field.handleChange(undefined);
-										}
+										triggerRef.current?.focus();
 									}}
 									aria-label="Effacer la sélection"
 								>
 									<X className="h-3.5 w-3.5" />
-								</span>
+								</button>
 							)}
 						</div>
 					</SelectTrigger>

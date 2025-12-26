@@ -35,14 +35,13 @@ export type OrderFiltersSearchParams = {
 	filter_createdAfter?: string;
 	filter_createdBefore?: string;
 	filter_showDeleted?: string;
-	filter_sortBy?: string;
+	sortBy?: string;
 };
 
 export type OrdersSearchParams = {
 	cursor?: string;
 	direction?: "forward" | "backward";
 	perPage?: string;
-	sortBy?: string;
 	search?: string;
 } & OrderFiltersSearchParams;
 

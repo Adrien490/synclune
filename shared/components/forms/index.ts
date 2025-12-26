@@ -2,10 +2,12 @@
 
 import { fieldContext, formContext } from "@/shared/lib/form-context";
 import { createFormHook } from "@tanstack/react-form";
+import { AutocompleteField } from "./autocomplete-field";
 import { CheckboxField } from "./checkbox-field";
 import { FormErrorDisplay } from "./form-error-display";
 import { InputField } from "./input-field";
 import { InputGroupField } from "./input-group-field";
+import { MultiSelectField } from "./multi-select-field";
 import { PasswordInputField } from "./password-input-field";
 import { PhoneField } from "./phone-field";
 import { RadioGroupField } from "./radio-group-field";
@@ -28,15 +30,17 @@ export const { useAppForm } = createFormHook({
 	fieldContext,
 	formContext,
 	fieldComponents: {
+		AutocompleteField,
+		CheckboxField,
 		InputField,
 		InputGroupField,
+		MultiSelectField,
 		PasswordInputField,
 		PhoneField,
+		RadioGroupField,
 		SelectField,
-		CheckboxField,
 		TextareaField,
 		TextareaGroupField,
-		RadioGroupField,
 	},
 	formComponents: {
 		FormErrorDisplay,

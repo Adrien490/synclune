@@ -28,6 +28,7 @@ export function Tap({
 		<motion.div
 			className={className}
 			role={role}
+			tabIndex={-1}
 			whileTap={
 				shouldReduceMotion
 					? undefined

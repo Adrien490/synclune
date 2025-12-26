@@ -219,7 +219,7 @@ export async function mergeCarts(
 				conflicts: conflictCount,
 			},
 		};
-	} catch (error) {
+	} catch {
 		return {
 			status: ActionStatus.ERROR,
 			message: "Une erreur est survenue lors de la fusion des paniers",

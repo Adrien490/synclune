@@ -26,7 +26,6 @@ const IGNORED_FILTER_PARAMS = [
 	"search",
 	"cursor",
 	"direction",
-	"filter_sortBy",
 ] as const;
 
 interface ActiveBadgeProps {
@@ -90,7 +89,7 @@ export function BottomActionBar({ sortOptions, className }: BottomActionBarProps
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
 
 	// Calculer si tri actif
-	const hasActiveSort = searchParams.has("filter_sortBy");
+	const hasActiveSort = searchParams.has("sortBy");
 
 	// Calculer le nombre de filtres actifs (compte toutes les valeurs, pas seulement les clés)
 	const activeFiltersCount = Array.from(searchParams.entries()).filter(

@@ -32,7 +32,7 @@ interface GalleryProps {
 function GalleryLoadingSkeleton() {
 	return (
 		<div className="w-full">
-			<div className="aspect-square sm:aspect-[4/5] rounded-3xl bg-muted animate-pulse" />
+			<div className="aspect-3/4 sm:aspect-[4/5] rounded-3xl bg-muted animate-pulse" />
 		</div>
 	);
 }
@@ -50,9 +50,14 @@ export function Gallery(props: GalleryProps) {
 function GalleryContent({ product, title }: GalleryProps) {
 	const searchParams = useSearchParams();
 	const [current, setCurrent] = useState(0);
+	const [thumbnailErrors, setThumbnailErrors] = useState<Set<string>>(new Set());
 	const { isOpen, open, close } = useLightbox();
 	const prefersReduced = useReducedMotion();
 	const galleryRef = useRef<HTMLDivElement>(null);
+
+	const handleThumbnailError = (mediaId: string) => {
+		setThumbnailErrors((prev) => new Set(prev).add(mediaId));
+	};
 
 	// Embla carousel
 	const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -165,7 +170,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 	if (!images.length) {
 		return (
 			<div className="gallery-empty">
-				<div className="relative aspect-square sm:aspect-[4/5] rounded-3xl bg-linear-card p-8 flex items-center justify-center overflow-hidden">
+				<div className="relative aspect-3/4 sm:aspect-[4/5] rounded-3xl bg-linear-card p-8 flex items-center justify-center overflow-hidden">
 					<div
 						className={cn(
 							"absolute inset-0 bg-linear-organic opacity-10 rounded-3xl",
@@ -227,10 +232,10 @@ function GalleryContent({ product, title }: GalleryProps) {
 										media={media}
 										index={index}
 										isActive={index === current}
-										hasError={false}
+										hasError={thumbnailErrors.has(media.id)}
 										title={title}
 										onClick={() => scrollTo(index)}
-										onError={() => {}}
+										onError={() => handleThumbnailError(media.id)}
 										className="hover:shadow-sm"
 										isLCPCandidate={index === 0}
 									/>
@@ -243,7 +248,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 					<div className="gallery-main relative group order-2">
 						<div
 							className={cn(
-								"relative aspect-square sm:aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl",
+								"relative aspect-3/4 sm:aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl",
 								"bg-linear-organic border-0 sm:border-2 sm:border-border",
 								"shadow-md sm:shadow-lg hover:shadow-lg",
 								transitionClass

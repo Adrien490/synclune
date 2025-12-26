@@ -1,7 +1,6 @@
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
-import { Button } from "@/shared/components/ui/button";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { OfflineActions } from "./offline-actions";
 
 export const metadata: Metadata = {
 	title: "Hors ligne",
@@ -35,18 +34,7 @@ export default function OfflinePage() {
 					</p>
 				</div>
 
-				<div className="flex flex-col sm:flex-row gap-4 justify-center">
-					<Button asChild size="lg">
-						<Link href="/">
-							Réessayer
-						</Link>
-					</Button>
-					<Button asChild variant="secondary" size="lg">
-						<Link href="/produits">
-							Découvrir mes créations
-						</Link>
-					</Button>
-				</div>
+				<OfflineActions />
 			</div>
 		</main>
 	);

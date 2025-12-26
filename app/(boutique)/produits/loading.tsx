@@ -8,7 +8,7 @@ export default function BijouxHubLoading() {
 			<PageHeader
 				title="Les créations"
 				description="Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !"
-				breadcrumbs={[{ label: "Produits", href: "/produits" }]}
+				breadcrumbs={[{ label: "Créations", href: "/produits" }]}
 			/>
 
 			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">

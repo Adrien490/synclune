@@ -2,33 +2,30 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
  * Loading state for auth pages (login/signup/forgot-password/etc.)
- * Matches the real layout: particle system, back link, Logo in top right, centered form
+ * Matches the real layout: back link, Logo in top right, centered form
  */
 export default function AuthLoading() {
 	return (
 		<div
-			className="min-h-screen relative overflow-hidden bg-background"
+			className="relative min-h-screen bg-background"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement"
 		>
 			<span className="sr-only">Chargement...</span>
 
-			{/* Particle system placeholder */}
-			<div className="absolute inset-0 z-0 from-muted/5 via-transparent to-muted/5" />
-
 			{/* Back link */}
-			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
+			<div className="absolute top-4 left-4 sm:top-6 sm:left-6">
 				<Skeleton className="h-5 w-32 bg-muted/40 rounded" />
 			</div>
 
 			{/* Logo en haut à droite */}
-			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+			<div className="absolute top-4 right-4 sm:top-6 sm:right-6">
 				<Skeleton className="h-10 w-10 rounded-full bg-muted/40" />
 			</div>
 
 			{/* Main content */}
-			<div className="relative z-10 min-h-screen flex justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
+			<div className="min-h-screen flex justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
 				<div className="w-full max-w-md space-y-8 my-auto">
 					{/* Header */}
 					<div className="text-center space-y-7">
@@ -56,23 +53,36 @@ export default function AuthLoading() {
 							</div>
 						</div>
 
-						{/* Form fields */}
+						{/* Form fields - Matches sign-up form structure */}
 						<div className="space-y-4">
-							{Array.from({ length: 2 }).map((_, i) => (
-								<div key={i} className="space-y-2">
-									<Skeleton className="h-4 w-24 bg-muted/40" />
-									<Skeleton className="h-10 w-full bg-muted/30 rounded-md" />
-								</div>
-							))}
+							{/* Name */}
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-16 bg-muted/40" />
+								<Skeleton className="h-10 w-full bg-muted/30 rounded-md" />
+							</div>
+							{/* Email */}
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-12 bg-muted/40" />
+								<Skeleton className="h-10 w-full bg-muted/30 rounded-md" />
+								<Skeleton className="h-3 w-80 bg-muted/20" />
+							</div>
+							{/* Password */}
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-28 bg-muted/40" />
+								<Skeleton className="h-10 w-full bg-muted/30 rounded-md" />
+								<Skeleton className="h-1.5 w-full bg-muted/20 rounded-full" />
+							</div>
+							{/* Confirm password */}
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-44 bg-muted/40" />
+								<Skeleton className="h-10 w-full bg-muted/30 rounded-md" />
+							</div>
 						</div>
 
-						{/* Checkbox/Link row (login) */}
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-2">
-								<Skeleton className="h-4 w-4 bg-muted/40 rounded" />
-								<Skeleton className="h-4 w-24 bg-muted/30" />
-							</div>
-							<Skeleton className="h-4 w-40 bg-muted/30" />
+						{/* Terms checkbox */}
+						<div className="flex items-center gap-2">
+							<Skeleton className="h-4 w-4 bg-muted/40 rounded" />
+							<Skeleton className="h-4 w-72 bg-muted/30" />
 						</div>
 
 						{/* Submit button */}

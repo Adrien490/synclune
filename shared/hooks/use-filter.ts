@@ -48,7 +48,6 @@ export function useFilter(options: UseFilterOptions = {}) {
 				"search",
 				"cursor",
 				"direction",
-				"filter_sortBy", // Aussi ignorer si préfixé
 			].includes(key)
 		) {
 			return;

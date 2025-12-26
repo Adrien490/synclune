@@ -8,6 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import {
 	Drawer,
 	DrawerContent,
+	DrawerHandle,
 	DrawerHeader,
 	DrawerTitle,
 	DrawerBody,
@@ -51,6 +52,11 @@ export function TabNavigation({
 	panelTitle,
 }: TabNavigationProps) {
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+	// Early return si pas d'items
+	if (items.length === 0) {
+		return null;
+	}
 
 	// Séparer les items visibles et ceux dans le panel mobile
 	const visibleItems = items.slice(0, mobileVisibleCount);
@@ -137,6 +143,7 @@ export function TabNavigation({
 
 						<Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
 							<DrawerContent>
+								<DrawerHandle />
 								<DrawerHeader>
 									<DrawerTitle>
 										{panelTitle || "Parcourir par type"}
@@ -144,7 +151,12 @@ export function TabNavigation({
 								</DrawerHeader>
 								<DrawerBody>
 									{/* Grid de catégories - TOUS les items */}
-									<div className="grid grid-cols-2 gap-2 max-w-md mx-auto">
+									<div
+										className={cn(
+											"grid gap-2 max-w-md mx-auto",
+											items.length === 3 ? "grid-cols-3" : "grid-cols-2"
+										)}
+									>
 										{items.map((item) => {
 											const isActive = item.value === activeValue;
 											return (

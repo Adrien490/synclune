@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { ActionStatus } from "@/shared/types/server-action";
-import { XCircle, CheckCircle2, Mail } from "lucide-react";
+import { XCircle, CheckCircle2, Mail, Loader2 } from "lucide-react";
 import { useResendVerificationEmail } from "@/modules/auth/hooks/use-resend-verification-email";
 import { useEffect, useRef } from "react";
 
@@ -103,7 +103,11 @@ export function ResendVerificationEmailForm({
 						className="w-full"
 						type="submit"
 					>
-						<Mail className="h-4 w-4" />
+						{isPending ? (
+							<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+						) : (
+							<Mail className="h-4 w-4" aria-hidden="true" />
+						)}
 						{isPending
 							? "Envoi en cours..."
 							: state?.status === ActionStatus.SUCCESS

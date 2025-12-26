@@ -5,6 +5,7 @@ import {
 	FieldLabel,
 } from "@/shared/components/ui/field";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { cn } from "@/shared/utils/cn";
 import { ReactNode } from "react";
 
 interface CheckboxFieldProps extends React.ComponentProps<typeof Checkbox> {
@@ -17,6 +18,8 @@ export const CheckboxField = ({
 	required,
 	checked,
 	onCheckedChange,
+	className,
+	...props
 }: CheckboxFieldProps) => {
 	const field = useFieldContext<boolean>();
 
@@ -41,7 +44,8 @@ export const CheckboxField = ({
 						field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
 					}
 					aria-required={required}
-					className="mt-1"
+					className={cn("mt-1", className)}
+					{...props}
 				/>
 				{label && (
 					<FieldLabel htmlFor={field.name}>

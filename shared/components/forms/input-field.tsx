@@ -1,3 +1,5 @@
+"use client";
+
 import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
 import { useFieldContext } from "@/shared/lib/form-context";
@@ -73,13 +75,11 @@ export const InputField = ({
 		}
 	};
 
-	// Pour les inputs number, on affiche une chaîne vide si null, NaN ou 0
+	// Pour les inputs number, on affiche une chaîne vide si null ou NaN
 	const fieldValue = field.state.value;
 	const isEmpty =
 		fieldValue === undefined ||
 		fieldValue === null ||
-		fieldValue === 0 ||
-		fieldValue === "0" ||
 		fieldValue === "" ||
 		(typeof fieldValue === "number" && isNaN(fieldValue));
 	const displayValue = type === "number" ? (isEmpty ? "" : fieldValue) : fieldValue ?? "";

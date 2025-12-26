@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
+import { useReducedMotion } from "@/shared/hooks";
 
 interface GalleryNavigationProps {
 	onPrev: () => void;
@@ -10,6 +11,10 @@ interface GalleryNavigationProps {
 }
 
 export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
+	const prefersReduced = useReducedMotion();
+	const transitionClass = prefersReduced ? "" : "transition-all duration-300";
+	const scaleClass = prefersReduced ? "" : "hover:scale-105 active:scale-95";
+
 	return (
 		<>
 			<Button
@@ -19,9 +24,10 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 					"absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10",
 					"size-12 md:size-11 rounded-full bg-primary",
 					"shadow-lg hover:shadow-xl text-primary-foreground",
-					"hover:bg-primary/90 hover:scale-105 active:scale-95",
+					"hover:bg-primary/90",
+					scaleClass,
 					"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
-					"transition-all duration-300"
+					transitionClass
 				)}
 				onClick={onPrev}
 				aria-label="Image précédente"
@@ -35,9 +41,10 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 					"absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10",
 					"size-12 md:size-11 rounded-full bg-primary",
 					"shadow-lg hover:shadow-xl text-primary-foreground",
-					"hover:bg-primary/90 hover:scale-105 active:scale-95",
+					"hover:bg-primary/90",
+					scaleClass,
 					"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
-					"transition-all duration-300"
+					transitionClass
 				)}
 				onClick={onNext}
 				aria-label="Image suivante"

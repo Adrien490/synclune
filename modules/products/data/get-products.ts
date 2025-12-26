@@ -52,11 +52,8 @@ export async function getProducts(
 ): Promise<GetProductsReturn> {
 	const admin = options?.isAdmin ?? (await isAdmin());
 
-	if (
-		admin &&
-		params.sortBy === GET_PRODUCTS_DEFAULT_SORT_BY &&
-		!hasSortByInput(params?.sortBy)
-	) {
+	// Admin: utiliser le tri par défaut admin si aucun tri explicite fourni
+	if (admin && !hasSortByInput(params?.sortBy)) {
 		params = { ...params, sortBy: GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY };
 	}
 

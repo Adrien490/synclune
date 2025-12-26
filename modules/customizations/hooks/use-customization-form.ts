@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
+import type { ActionState } from "@/shared/types/server-action";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
@@ -17,19 +18,14 @@ interface UseCustomizationFormOptions {
  * Utilise TanStack Form avec Next.js App Router
  */
 export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
-	const [state, action, isPending] = useActionState(
+	const [state, action, isPending] = useActionState<ActionState | undefined, FormData>(
 		withCallbacks(
 			sendCustomizationRequest,
 			createToastCallbacks({
 				showSuccessToast: false,
 				showErrorToast: false,
-				onSuccess: (result: unknown) => {
-					if (
-						result &&
-						typeof result === "object" &&
-						"message" in result &&
-						typeof result.message === "string"
-					) {
+				onSuccess: (result: ActionState) => {
+					if (result.message) {
 						options?.onSuccess?.(result.message);
 					}
 				},
@@ -41,8 +37,9 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 	const form = useAppForm({
 		...customizationFormOpts,
 		// Merge server state with form state for validation errors
+		// Note: Le cast est nécessaire car TanStack Form attend FormState, pas ActionState
 		transform: useTransform(
-			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
+			(baseForm) => mergeForm(baseForm, (state ?? {}) as Parameters<typeof mergeForm>[1]),
 			[state]
 		),
 	});

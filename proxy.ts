@@ -1,3 +1,14 @@
+/**
+ * FICHIER DE RÉFÉRENCE - MIDDLEWARE DÉSACTIVÉ
+ *
+ * Ce fichier contient la logique de middleware pour la protection des routes,
+ * mais il n'est PAS activé. La protection des routes repose sur les validations
+ * côté serveur via requireAuth() et requireAdmin() dans les pages et actions.
+ *
+ * Pour activer ce middleware, créer middleware.ts à la racine :
+ * export { proxy as middleware, config } from "./proxy";
+ */
+
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -26,18 +37,16 @@ const authRoutes = [
 ];
 
 // Routes protégées par authentification (utilisateur connecté requis)
+// Note: Couvre les routes exactes ET leurs sous-routes (ex: /compte/*)
 const protectedRoutes = [
 	"/compte",
 	"/commandes",
 	"/adresses",
 	"/parametres",
-];
+] as const;
 
 // Routes protégées par admin (admin requis)
-const adminRoutes = ["/admin"];
-
-// Préfixes de routes protégées (toutes les routes sous ce préfixe nécessitent authentification)
-const protectedPrefixes = ["/compte", "/commandes", "/adresses", "/parametres"];
+const adminRoutes = ["/admin"] as const;
 
 // Routes API publiques (ne nécessitent pas d'authentification)
 const publicApiRoutes = [
@@ -48,10 +57,9 @@ const publicApiRoutes = [
 	"/api/collections", // APIs publiques de collections
 ];
 
-// Helper functions pour vérifier les routes
-function matchesAnyRoute(pathname: string, routes: string[]): boolean {
+// Helper function pour vérifier les routes (exactes ou sous-routes)
+function matchesAnyRoute(pathname: string, routes: readonly string[]): boolean {
 	return routes.some((route) => {
-		// Match exact ou match de préfixe avec /
 		return pathname === route || pathname.startsWith(route + "/");
 	});
 }
@@ -106,12 +114,8 @@ export async function proxy(request: NextRequest) {
 	}
 
 	// ===== 5. ROUTES PROTÉGÉES UTILISATEUR =====
-	// Vérifier les routes exactes et les préfixes
-	const isProtectedRoute =
-		matchesAnyRoute(pathname, protectedRoutes) ||
-		protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
-
-	if (isProtectedRoute) {
+	// matchesAnyRoute vérifie les routes exactes ET les sous-routes
+	if (matchesAnyRoute(pathname, protectedRoutes)) {
 		// Pas connecté -> redirection vers login
 		if (!isLoggedIn) {
 			const redirectUrl = new URL("/connexion", nextUrl.origin);

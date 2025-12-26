@@ -245,10 +245,11 @@ export function CheckoutForm({
 			) : (
 				<button
 					type="button"
-					className="text-sm text-muted-foreground underline hover:no-underline hover:text-foreground text-left transition-colors"
+					aria-expanded={showAddressLine2}
+					className="text-sm text-muted-foreground underline hover:no-underline hover:text-foreground text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
 					onClick={() => setShowAddressLine2(true)}
 				>
-					+ Ajouter un complément d'adresse (appartement, bâtiment...)
+					+ Ajouter un complement d'adresse (appartement, batiment...)
 				</button>
 			)}
 
@@ -319,7 +320,8 @@ export function CheckoutForm({
 					</span>
 					<button
 						type="button"
-						className="text-sm text-muted-foreground underline hover:no-underline hover:text-foreground transition-colors"
+						aria-expanded={showCountrySelect}
+						className="text-sm text-muted-foreground underline hover:no-underline hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
 						onClick={() => setShowCountrySelect(true)}
 					>
 						Modifier

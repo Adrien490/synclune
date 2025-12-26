@@ -1,4 +1,5 @@
 import { ImageIcon } from "lucide-react";
+import { cn } from "@/shared/utils/cn";
 
 /**
  * Placeholder esthetique avec gradient pour les photos en attente
@@ -15,7 +16,10 @@ export function PlaceholderImage({
 }) {
 	return (
 		<div
-			className={`relative rounded-xl overflow-hidden bg-linear-to-br from-secondary/40 via-muted/50 to-primary/30 border border-border/30 flex items-center justify-center transition-opacity duration-500 aspect-square ${className ?? ""}`}
+			className={cn(
+				"relative rounded-xl overflow-hidden bg-linear-to-br from-secondary/40 via-muted/50 to-primary/30 border border-border/30 flex items-center justify-center transition-opacity duration-500 aspect-square",
+				className
+			)}
 			role={label ? "img" : undefined}
 			aria-label={label}
 			aria-hidden={label ? undefined : true}

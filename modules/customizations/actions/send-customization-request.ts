@@ -10,9 +10,13 @@ import {
 } from "@/shared/lib/email";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { COMMUNICATION_LIMITS } from "@/shared/lib/rate-limit-config";
+import {
+	validateInput,
+	success,
+	error,
+	handleActionError,
+} from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-
 import { customizationSchema } from "../schemas/customization.schema";
 import { getCustomizationInvalidationTags } from "../constants/cache";
 
@@ -36,14 +40,9 @@ export async function sendCustomizationRequest(
 		const rateLimit = checkRateLimit(rateLimitId, COMMUNICATION_LIMITS.CONTACT);
 
 		if (!rateLimit.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message: rateLimit.error || "Trop de demandes envoyées. Veuillez réessayer plus tard.",
-				data: {
-					retryAfter: rateLimit.retryAfter,
-					reset: rateLimit.reset,
-				},
-			};
+			return error(
+				rateLimit.error || "Trop de demandes envoyées. Veuillez réessayer plus tard."
+			);
 		}
 
 		// 2. Extraction des données du FormData
@@ -59,30 +58,23 @@ export async function sendCustomizationRequest(
 		};
 
 		// 3. Validation avec Zod
-		const result = customizationSchema.safeParse(rawData);
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			const errorPath = firstError.path.join(".");
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: `${errorPath}: ${firstError.message}`,
-			};
-		}
+		const validation = validateInput(customizationSchema, rawData);
+		if ("error" in validation) return validation.error;
 
-		const validatedData = result.data;
+		const validatedData = validation.data;
 
 		// 4. Vérification honeypot (anti-spam)
 		if (validatedData.website && validatedData.website.trim() !== "") {
 			// On retourne un succès pour ne pas alerter le bot
-			return {
-				status: ActionStatus.SUCCESS,
-				message: "Votre demande a bien été envoyée.",
-			};
+			return success("Votre demande a bien été envoyée.");
 		}
 
 		// 5. Trouver le productTypeId correspondant au label (optionnel)
 		const productType = await prisma.productType.findFirst({
-			where: { label: validatedData.productTypeLabel },
+			where: {
+				label: validatedData.productTypeLabel,
+				isActive: true,
+			},
 			select: { id: true },
 		});
 
@@ -138,20 +130,12 @@ export async function sendCustomizationRequest(
 		tags.forEach((tag) => updateTag(tag));
 
 		// 10. Success
-		return {
-			status: ActionStatus.SUCCESS,
-			message:
-				"Votre demande de personnalisation a bien été envoyée. Nous vous répondrons dans les plus brefs délais.",
-			data: { id: customizationRequest.id },
-		};
+		return success(
+			"Votre demande de personnalisation a bien été envoyée. Nous vous répondrons dans les plus brefs délais.",
+			{ id: customizationRequest.id }
+		);
 	} catch (e) {
 		console.error("[CustomizationRequest] Erreur:", e);
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				e instanceof Error
-					? e.message
-					: "Une erreur est survenue lors de l'envoi de votre demande. Veuillez réessayer.",
-		};
+		return handleActionError(e, "Une erreur est survenue lors de l'envoi de votre demande.");
 	}
 }

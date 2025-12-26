@@ -11,7 +11,10 @@ import { ChevronLeft, Plus, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef, useEffect, useState, useEffectEvent } from "react";
 import { toast } from "sonner";
-import { maybeReduceMotion } from "@/shared/components/animations/motion.config";
+import {
+	MOTION_CONFIG,
+	maybeReduceMotion,
+} from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
 import type { FabKey } from "@/shared/constants/fab";
 import Link from "next/link";
@@ -128,10 +131,12 @@ export function SpeedDialFab({
 
 	// Effect Event pour gérer le click extérieur sans re-registration
 	const onClickOutside = useEffectEvent((e: MouseEvent) => {
+		const target = e.target;
 		if (
 			isOpen &&
 			containerRef.current &&
-			!containerRef.current.contains(e.target as Node)
+			target instanceof Node &&
+			!containerRef.current.contains(target)
 		) {
 			setIsOpen(false);
 		}
@@ -145,14 +150,10 @@ export function SpeedDialFab({
 
 	// Respecter prefers-reduced-motion avec config globale
 	const prefersReducedMotion = useReducedMotion();
+	const reducedMotion = prefersReducedMotion ?? false;
 	const transition = maybeReduceMotion(
-		{
-			type: "spring",
-			stiffness: 400,
-			damping: 30,
-			mass: 0.5,
-		},
-		prefersReducedMotion ?? false
+		MOTION_CONFIG.easing.springSnappy,
+		reducedMotion
 	);
 
 	// Hook pour toggle la visibilité du FAB
@@ -215,9 +216,9 @@ export function SpeedDialFab({
 				<AnimatePresence mode="wait">
 					<motion.div
 						key="fab-hidden"
-						initial={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
+						initial={reducedMotion ? undefined : { opacity: 0, x: 20 }}
 						animate={{ opacity: 1, x: 0 }}
-						exit={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
+						exit={reducedMotion ? undefined : { opacity: 0, x: 20 }}
 						transition={transition}
 						className={cn(visibilityClass, "fixed z-45 bottom-6 right-0")}
 					>
@@ -241,7 +242,6 @@ export function SpeedDialFab({
 										isPending && "cursor-wait opacity-70"
 									)}
 									aria-label={showTooltip}
-									aria-expanded={false}
 								>
 									<ChevronLeft
 										className={cn("size-5", isPending && "animate-pulse")}
@@ -268,9 +268,9 @@ export function SpeedDialFab({
 					key="fab-visible"
 					ref={containerRef}
 					data-fab-container
-					initial={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
+					initial={reducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
 					animate={{ opacity: 1, scale: 1 }}
-					exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
+					exit={reducedMotion ? undefined : { opacity: 0, scale: 0.8 }}
 					transition={transition}
 					className={cn(visibilityClass, "group fixed z-45 bottom-6 right-6")}
 				>
@@ -326,19 +326,19 @@ export function SpeedDialFab({
 									<motion.div
 										key={action.id}
 										initial={
-											prefersReducedMotion
+											reducedMotion
 												? undefined
 												: { opacity: 0, y: 20, scale: 0.8 }
 										}
 										animate={{ opacity: 1, y: 0, scale: 1 }}
 										exit={
-											prefersReducedMotion
+											reducedMotion
 												? undefined
 												: { opacity: 0, y: 10, scale: 0.8 }
 										}
 										transition={{
 											...transition,
-											delay: prefersReducedMotion ? 0 : index * 0.05,
+											delay: reducedMotion ? 0 : index * 0.05,
 										}}
 										className="flex items-center gap-3"
 									>

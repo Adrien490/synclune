@@ -73,7 +73,8 @@ export default async function CheckoutSuccessPage({
 								<CheckCircle2 className="w-10 h-10 text-primary" />
 							</div>
 							<CardTitle className="text-2xl sm:text-3xl">
-								Merci pour ta confiance ! ✨
+								Merci pour ta confiance !{" "}
+								<span aria-hidden="true">✨</span>
 							</CardTitle>
 							<div className="space-y-2">
 								<p className="text-sm text-muted-foreground">

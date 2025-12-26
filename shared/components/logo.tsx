@@ -37,6 +37,7 @@ export function Logo({
 	// Classes communes pour les liens (évite la duplication)
 	const linkClassName = cn(
 		"inline-flex items-center",
+		"min-w-11 min-h-11", // Touch target minimum 44px (WCAG)
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 		"rounded-full transition-transform duration-200",
 		"hover:scale-[1.02] active:scale-95",
@@ -59,7 +60,7 @@ export function Logo({
 					quality={quality}
 					placeholder="blur"
 					blurDataURL={BLUR_DATA_URL}
-					aria-hidden={showText || undefined}
+					aria-hidden={showText ? true : undefined}
 					itemProp="image"
 				/>
 			</div>
@@ -102,11 +103,18 @@ export function Logo({
 
 	// Autres liens (sans Schema.org)
 	if (href) {
+		// Génère un label accessible basé sur la destination
+		const linkLabel = showText
+			? undefined
+			: href === "/admin"
+				? `${BRAND.name} - Administration`
+				: `${BRAND.name} - Accueil`;
+
 		return (
 			<Link
 				href={href}
 				className={linkClassName}
-				aria-label={showText ? undefined : `${BRAND.name} - Accueil`}
+				aria-label={linkLabel}
 			>
 				{logoContent}
 			</Link>

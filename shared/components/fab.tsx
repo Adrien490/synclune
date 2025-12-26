@@ -11,7 +11,10 @@ import { ChevronLeft, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { maybeReduceMotion } from "@/shared/components/animations/motion.config";
+import {
+	MOTION_CONFIG,
+	maybeReduceMotion,
+} from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
 import type { FabKey } from "@/shared/constants/fab";
 
@@ -111,12 +114,7 @@ export function Fab({
 	const prefersReducedMotion = useReducedMotion();
 	const reducedMotion = prefersReducedMotion ?? false;
 	const transition = maybeReduceMotion(
-		{
-			type: "spring",
-			stiffness: 500,
-			damping: 35,
-			mass: 0.3,
-		},
+		MOTION_CONFIG.easing.springSnappy,
 		reducedMotion
 	);
 
@@ -152,10 +150,23 @@ export function Fab({
 
 	// Feedback utilisateur en cas d'erreur
 	useEffect(() => {
-		if (isError) {
-			toast.error("Erreur lors de la modification");
-		}
+		if (!isError) return;
+		toast.error("Erreur lors de la modification");
 	}, [isError]);
+
+	// Handler ESC pour masquer le FAB
+	useEffect(() => {
+		if (isHidden) return;
+
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape" && !isPending) {
+				toggle();
+			}
+		};
+
+		document.addEventListener("keydown", handleKeyDown);
+		return () => document.removeEventListener("keydown", handleKeyDown);
+	}, [isHidden, isPending, toggle]);
 
 	// Classes de base pour la visibilité mobile
 	const visibilityClass = hideOnMobile ? "hidden md:block" : "block";

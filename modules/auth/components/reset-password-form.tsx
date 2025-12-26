@@ -92,6 +92,15 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 								if (value.length > 128) {
 									return "Le mot de passe ne doit pas dépasser 128 caractères";
 								}
+								// Vérification des 2 types de caractères (sync avec serveur)
+								const hasUppercase = /[A-Z]/.test(value);
+								const hasLowercase = /[a-z]/.test(value);
+								const hasNumber = /[0-9]/.test(value);
+								const hasSpecial = /[^A-Za-z0-9]/.test(value);
+								const typeCount = [hasUppercase, hasLowercase, hasNumber, hasSpecial].filter(Boolean).length;
+								if (typeCount < 2) {
+									return "Le mot de passe doit contenir au moins 2 types de caractères (lettre, chiffre, symbole)";
+								}
 								return undefined;
 							},
 						}}

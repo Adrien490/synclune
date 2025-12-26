@@ -3,6 +3,7 @@
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { Button } from "@/shared/components/ui/button";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { X } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -29,8 +30,8 @@ export function SelectionToolbar({ children }: SelectionToolbarProps) {
 					animate={{ opacity: 1, height: "auto" }}
 					exit={{ opacity: 0, height: 0 }}
 					transition={{
-						duration: shouldReduceMotion ? 0 : 0.2,
-						ease: "easeOut",
+						duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.collapse,
+						ease: MOTION_CONFIG.easing.collapse,
 					}}
 					className="overflow-hidden mb-4"
 				>
@@ -44,7 +45,7 @@ export function SelectionToolbar({ children }: SelectionToolbarProps) {
 										shouldReduceMotion ? false : { scale: 0.8, opacity: 0 }
 									}
 									animate={{ scale: 1, opacity: 1 }}
-									transition={{ duration: 0.15 }}
+									transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
 								>
 									{selectedCount}
 								</motion.span>

@@ -128,6 +128,19 @@ export function useSelection(selectionKey: string = "selected") {
 		items.length > 0 &&
 		items.every((item) => optimisticSelection.includes(item));
 
+	/**
+	 * Vérifie si certains (mais pas tous) éléments d'une liste sont sélectionnés
+	 * @param items - La liste des IDs à vérifier
+	 * @returns true si sélection partielle, false sinon
+	 */
+	const areSomeSelected = (items: string[]) => {
+		if (items.length === 0) return false;
+		const selectedCount = items.filter((item) =>
+			optimisticSelection.includes(item)
+		).length;
+		return selectedCount > 0 && selectedCount < items.length;
+	};
+
 	return {
 		isPending,
 		selectedItems: optimisticSelection,
@@ -138,5 +151,6 @@ export function useSelection(selectionKey: string = "selected") {
 		getSelectedCount,
 		isSelected,
 		areAllSelected,
+		areSomeSelected,
 	};
 }

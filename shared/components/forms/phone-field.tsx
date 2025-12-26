@@ -1,6 +1,7 @@
 "use client";
 
-import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
+import { Field, FieldError } from "@/shared/components/ui/field";
+import { FieldLabel } from "@/shared/components/forms/field-label";
 import { inputBaseStyles } from "@/shared/components/ui/input";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
@@ -15,8 +16,10 @@ interface PhoneFieldProps {
 	label?: string;
 	placeholder?: string;
 	required?: boolean;
+	optional?: boolean;
 	defaultCountry?: Country;
 	className?: string;
+	description?: string;
 }
 
 const CustomInput = forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
@@ -64,8 +67,10 @@ export const PhoneField = ({
 	label,
 	placeholder,
 	required,
+	optional,
 	defaultCountry = "FR",
 	className,
+	description,
 }: PhoneFieldProps) => {
 	const field = useFieldContext<string | undefined>();
 
@@ -74,13 +79,8 @@ export const PhoneField = ({
 	return (
 		<Field data-invalid={hasError}>
 			{label && (
-				<FieldLabel htmlFor={field.name}>
+				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
 					{label}
-					{required && (
-						<span className="text-destructive ml-1" aria-label="requis">
-							*
-						</span>
-					)}
 				</FieldLabel>
 			)}
 			<PhoneInput
@@ -102,6 +102,11 @@ export const PhoneField = ({
 				className={cn("PhoneInput--synclune", className)}
 			/>
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			{description && (
+				<p className="text-xs text-muted-foreground mt-1.5">{description}</p>
+			)}
 		</Field>
 	);
 };
+
+export type { PhoneFieldProps };

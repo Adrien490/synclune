@@ -5,9 +5,10 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useSignUpEmail } from "@/modules/auth/hooks/use-sign-up-email";
 import { PasswordStrengthIndicator } from "./password-strength-indicator";
+import { countCharacterTypes } from "../utils/password-strength";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
@@ -88,13 +89,18 @@ export function SignUpEmailForm() {
 					}}
 				>
 					{(field) => (
-						<field.InputField
-							label="Prénom"
-							type="text"
-							autoComplete="given-name"
-							disabled={isPending}
-							required
-						/>
+						<div className="space-y-2">
+							<field.InputField
+								label="Prénom"
+								type="text"
+								autoComplete="given-name"
+								disabled={isPending}
+								required
+							/>
+							<p className="text-xs text-muted-foreground">
+								Sera utilisé pour personnaliser tes communications
+							</p>
+						</div>
 					)}
 				</form.AppField>
 
@@ -138,6 +144,9 @@ export function SignUpEmailForm() {
 							}
 							if (value.length > 128) {
 								return "Le mot de passe ne doit pas dépasser 128 caractères";
+							}
+							if (countCharacterTypes(value) < 2) {
+								return "Le mot de passe doit contenir au moins 2 types de caractères";
 							}
 							return undefined;
 						},
@@ -244,7 +253,14 @@ export function SignUpEmailForm() {
 						className="w-full"
 						type="submit"
 					>
-						S'inscrire
+						{isPending ? (
+							<>
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+								Inscription en cours...
+							</>
+						) : (
+							"S'inscrire"
+						)}
 					</Button>
 				)}
 			</form.Subscribe>

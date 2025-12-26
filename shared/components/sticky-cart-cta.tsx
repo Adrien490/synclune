@@ -125,6 +125,8 @@ export function StickyCartCTA({
 						action={action}
 						className="flex items-center gap-2.5 px-3 py-2.5"
 						aria-label="Ajout rapide au panier"
+						aria-busy={isPending}
+						data-pending={isPending ? "" : undefined}
 					>
 						{/* Champs caches */}
 						{currentSku && (
@@ -134,12 +136,15 @@ export function StickyCartCTA({
 							</>
 						)}
 
-						{/* Miniature du produit */}
+						{/* Miniature du produit (decorative) */}
 						{currentSku?.images?.[0]?.url && (
-							<div className="shrink-0 relative w-10 h-10 rounded-lg overflow-hidden border border-border bg-muted">
+							<div
+								className="shrink-0 relative w-10 h-10 rounded-lg overflow-hidden border border-border bg-muted"
+								aria-hidden="true"
+							>
 								<Image
 									src={currentSku.images[0].thumbnailUrl || currentSku.images[0].url}
-									alt={product.title}
+									alt=""
 									fill
 									className="object-cover"
 									sizes="40px"
@@ -179,10 +184,12 @@ export function StickyCartCTA({
 							type="submit"
 							size="lg"
 							disabled={!canAddToCart || isPending}
+							aria-busy={isPending}
 							className={cn(
 								"shrink-0 min-w-[160px]",
 								"shadow-md",
-								"active:scale-[0.98]"
+								"active:scale-[0.98]",
+								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
 							)}
 						>
 							{isPending ? (

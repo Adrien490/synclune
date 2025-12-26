@@ -24,11 +24,6 @@ export type PopoverAnimationType =
 	| "none";
 
 /**
- * Types d'animation pour le survol des options
- */
-export type OptionHoverAnimationType = "highlight" | "scale" | "glow" | "none";
-
-/**
  * Configuration des animations pour le composant MultiSelect
  */
 export interface AnimationConfig {
@@ -36,8 +31,6 @@ export interface AnimationConfig {
 	badgeAnimation?: BadgeAnimationType;
 	/** Type d'animation pour le popover */
 	popoverAnimation?: PopoverAnimationType;
-	/** Type d'animation au survol des options */
-	optionHoverAnimation?: OptionHoverAnimationType;
 	/** Duree de l'animation en secondes */
 	duration?: number;
 	/** Delai de l'animation en secondes */

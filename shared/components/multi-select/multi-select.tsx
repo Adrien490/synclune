@@ -31,7 +31,12 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { ArrowLeftIcon, CheckIcon, ChevronDown, XCircle, XIcon } from "lucide-react";
 import * as React from "react";
-import { multiSelectVariants } from "./constants";
+import {
+	ARIA_CLEAR_DELAY,
+	FOCUS_RING_DURATION,
+	MULTI_SELECT_LABELS,
+	multiSelectVariants,
+} from "./constants";
 import type {
 	MultiSelectOption,
 	MultiSelectProps,
@@ -91,20 +96,52 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 		const prevIsOpen = React.useRef(isPopoverOpen);
 		const prevSearchValue = React.useRef(searchValue);
 
+		// Ref pour cleanup du timeout focus (P0 - Memory leak fix)
+		const focusTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+			null
+		);
+
 		const isMobile = useIsMobile();
 
+		// Announce function - messages nettoyés via useEffect
 		const announce = (
 			message: string,
 			priority: "polite" | "assertive" = "polite"
 		) => {
 			if (priority === "assertive") {
 				setAssertiveMessage(message);
-				setTimeout(() => setAssertiveMessage(""), 100);
 			} else {
 				setPoliteMessage(message);
-				setTimeout(() => setPoliteMessage(""), 100);
 			}
 		};
+
+		// P0 Fix: Cleanup des messages ARIA avec useEffect (évite memory leak)
+		React.useEffect(() => {
+			if (!politeMessage) return;
+			const timeoutId = setTimeout(
+				() => setPoliteMessage(""),
+				ARIA_CLEAR_DELAY
+			);
+			return () => clearTimeout(timeoutId);
+		}, [politeMessage]);
+
+		React.useEffect(() => {
+			if (!assertiveMessage) return;
+			const timeoutId = setTimeout(
+				() => setAssertiveMessage(""),
+				ARIA_CLEAR_DELAY
+			);
+			return () => clearTimeout(timeoutId);
+		}, [assertiveMessage]);
+
+		// P0 Fix: Cleanup focusTimeout on unmount
+		React.useEffect(() => {
+			return () => {
+				if (focusTimeoutRef.current) {
+					clearTimeout(focusTimeoutRef.current);
+				}
+			};
+		}, []);
 
 		const multiSelectId = React.useId();
 		const listboxId = `${multiSelectId}-listbox`;
@@ -115,6 +152,11 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
 		// Flat list of all options
 		const allOptions = flattenOptions(options, deduplicateOptions);
+
+		// P1 Fix: Compute enabled options once for performance
+		const enabledOptions = allOptions.filter((option) => !option.disabled);
+		const enabledCount = enabledOptions.length;
+		const isAllSelected = selectedValues.length === enabledCount;
 
 		const resetToDefault = () => {
 			setSelectedValues(defaultValue);
@@ -145,12 +187,18 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						const originalOutlineOffset = buttonRef.current.style.outlineOffset;
 						buttonRef.current.style.outline = "2px solid hsl(var(--ring))";
 						buttonRef.current.style.outlineOffset = "2px";
-						setTimeout(() => {
+
+						// P0 Fix: Clear previous timeout to prevent memory leak
+						if (focusTimeoutRef.current) {
+							clearTimeout(focusTimeoutRef.current);
+						}
+						focusTimeoutRef.current = setTimeout(() => {
 							if (buttonRef.current) {
 								buttonRef.current.style.outline = originalOutline;
 								buttonRef.current.style.outlineOffset = originalOutlineOffset;
 							}
-						}, 1000);
+							focusTimeoutRef.current = null;
+						}, FOCUS_RING_DURATION);
 					}
 				},
 			}),
@@ -225,8 +273,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
 		const toggleAll = () => {
 			if (disabled) return;
-			const enabledOptions = allOptions.filter((option) => !option.disabled);
-			if (selectedValues.length === enabledOptions.length) {
+			// P1 Fix: Use pre-computed isAllSelected and enabledOptions
+			if (isAllSelected) {
 				handleClear();
 			} else {
 				const allValues = enabledOptions.map((option) => option.value);
@@ -266,7 +314,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 		// Effect 1: Annonces de selection
 		React.useEffect(() => {
 			const selectedCount = selectedValues.length;
-			const totalOptions = allOptions.filter((opt) => !opt.disabled).length;
+			const totalOptions = enabledCount;
 
 			if (selectedCount !== prevSelectedCount.current) {
 				const diff = selectedCount - prevSelectedCount.current;
@@ -299,7 +347,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 		// Effect 2: Annonces d'ouverture/fermeture
 		React.useEffect(() => {
 			if (isPopoverOpen !== prevIsOpen.current) {
-				const totalOptions = allOptions.filter((opt) => !opt.disabled).length;
+				const totalOptions = enabledCount;
 				if (isPopoverOpen) {
 					announce(
 						`Liste ouverte. ${totalOptions} options. Flèches pour naviguer.`
@@ -312,23 +360,23 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 		}, [isPopoverOpen, allOptions]);
 
 		// Effect 3: Annonces de recherche
+		// P1 Fix: Use pre-computed filteredOptions instead of re-filtering
 		React.useEffect(() => {
 			if (
 				searchValue !== prevSearchValue.current &&
 				searchValue &&
 				isPopoverOpen
 			) {
-				const filteredCount = allOptions.filter(
-					(opt) =>
-						opt.label.toLowerCase().includes(searchValue.toLowerCase()) ||
-						opt.value.toLowerCase().includes(searchValue.toLowerCase())
-				).length;
+				// Calculate count from already filtered options
+				const filteredCount = isGroupedOptions(filteredOptions)
+					? filteredOptions.reduce((acc, group) => acc + group.options.length, 0)
+					: filteredOptions.length;
 				announce(
 					`${filteredCount} résultat${filteredCount === 1 ? "" : "s"} pour "${searchValue}"`
 				);
 			}
 			prevSearchValue.current = searchValue;
-		}, [searchValue, isPopoverOpen, allOptions]);
+		}, [searchValue, isPopoverOpen, filteredOptions]);
 
 		// Composant de rendu des options (réutilisé mobile/desktop)
 		const renderCommandContent = () => (
@@ -371,8 +419,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 								onSelect={toggleAll}
 								role="option"
 								aria-selected={
-									selectedValues.length ===
-									allOptions.filter((opt) => !opt.disabled).length
+									isAllSelected
 								}
 								aria-label={`Sélectionner les ${allOptions.length} options`}
 								className="cursor-pointer py-3"
@@ -380,8 +427,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 								<div
 									className={cn(
 										"mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-										selectedValues.length ===
-											allOptions.filter((opt) => !opt.disabled).length
+										isAllSelected
 											? "bg-primary text-primary-foreground"
 											: "opacity-50 [&_svg]:invisible"
 									)}
@@ -1173,18 +1219,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											key="all"
 											onSelect={toggleAll}
 											role="option"
-											aria-selected={
-												selectedValues.length ===
-												allOptions.filter((opt) => !opt.disabled).length
-											}
+											aria-selected={isAllSelected}
 											aria-label={`Sélectionner les ${allOptions.length} options`}
 											className="cursor-pointer"
 										>
 											<div
 												className={cn(
 													"mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-													selectedValues.length ===
-														allOptions.filter((opt) => !opt.disabled).length
+													isAllSelected
 														? "bg-primary text-primary-foreground"
 														: "opacity-50 [&_svg]:invisible"
 												)}

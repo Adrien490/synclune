@@ -99,7 +99,7 @@ export function LatestCreations({ productsPromise, wishlistSkuIdsPromise }: Late
 						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
 						aria-describedby="latest-creations-cta-description"
 					>
-						<Link href="/produits?filter_sortBy=created-descending">
+						<Link href="/produits?sortBy=created-descending">
 							Voir toutes mes créations
 						</Link>
 					</Button>

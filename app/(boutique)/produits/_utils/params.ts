@@ -17,8 +17,7 @@ export const parseFilters = (params: ProductSearchParams): ProductFilters => {
 			key === "direction" ||
 			key === "perPage" ||
 			key === "sortBy" ||
-			key === "search" ||
-			key === "filter_sortBy"
+			key === "search"
 		) {
 			return;
 		}

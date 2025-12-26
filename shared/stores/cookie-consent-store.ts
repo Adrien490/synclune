@@ -66,7 +66,7 @@ export const defaultInitState: CookieConsentState = {
  * Crée un store Zustand pour gérer le consentement cookies RGPD
  *
  * Persiste dans localStorage sous la clé "cookie-consent"
- * Durée: 13 mois (recommandation CNIL)
+ * Durée: 6 mois (recommandation CNIL)
  */
 export const createCookieConsentStore = (
 	initState: CookieConsentState = defaultInitState

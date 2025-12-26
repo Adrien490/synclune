@@ -1,4 +1,5 @@
 "use client";
+
 import { FieldError, FieldLabel, FieldSet } from "@/shared/components/ui/field";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
@@ -25,11 +26,14 @@ export const RadioGroupField = ({
 	onValueChangeCallback,
 }: RadioGroupFieldProps) => {
 	const field = useFieldContext<string>();
+	const labelId = `${field.name}-label`;
+	const errorId = `${field.name}-error`;
+	const hasErrors = field.state.meta.errors.length > 0;
 
 	return (
-		<FieldSet data-invalid={field.state.meta.errors.length > 0}>
+		<FieldSet data-invalid={hasErrors}>
 			{label && (
-				<FieldLabel>
+				<FieldLabel id={labelId}>
 					{label}
 					{required && (
 						<span className="text-destructive ml-1" aria-label="requis">
@@ -46,19 +50,25 @@ export const RadioGroupField = ({
 					onValueChangeCallback?.(value);
 				}}
 				className="flex gap-4 flex-wrap"
-				aria-invalid={field.state.meta.errors.length > 0}
-				aria-describedby={
-					field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
-				}
+				aria-invalid={hasErrors}
+				aria-labelledby={label ? labelId : undefined}
+				aria-describedby={hasErrors ? errorId : undefined}
 			>
-				{options.map((option) => (
-					<div key={option.value} className="flex items-center space-x-2">
-						<RadioGroupItem value={option.value} id={option.value} />
-						<Label htmlFor={option.value}>{option.label}</Label>
-					</div>
-				))}
+				{options.map((option) => {
+					const optionId = `${field.name}-${option.value}`;
+					return (
+						<Label
+							key={option.value}
+							htmlFor={optionId}
+							className="flex items-center gap-2 cursor-pointer py-2 -my-2"
+						>
+							<RadioGroupItem value={option.value} id={optionId} />
+							<span>{option.label}</span>
+						</Label>
+					);
+				})}
 			</RadioGroup>
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			<FieldError id={errorId} errors={field.state.meta.errors} />
 		</FieldSet>
 	);
 };

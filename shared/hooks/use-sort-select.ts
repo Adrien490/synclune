@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 
 /**
- * Hook pour gérer le tri (sortBy) sans préfixe filter_
+ * Hook pour gérer le tri via URL param sortBy
  */
 export function useSortSelect() {
 	const router = useRouter();

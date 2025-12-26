@@ -7,6 +7,75 @@ import type {
 	ScreenSize,
 } from "./types";
 
+// =============================================================================
+// TIMING CONSTANTS
+// =============================================================================
+
+/**
+ * Délai avant de vider les messages ARIA (ms)
+ * Court pour éviter les annonces répétées
+ */
+export const ARIA_CLEAR_DELAY = 100;
+
+/**
+ * Durée d'affichage du focus ring lors de focus() (ms)
+ */
+export const FOCUS_RING_DURATION = 1000;
+
+// =============================================================================
+// I18N LABELS (French)
+// =============================================================================
+
+/**
+ * Labels centralisés pour l'internationalisation
+ */
+export const MULTI_SELECT_LABELS = {
+	placeholder: "Sélectionner",
+	selectAll: "Tout sélectionner",
+	selectAllWithCount: (count: number) =>
+		count > 20 ? `Tout sélectionner - ${count} éléments` : "Tout sélectionner",
+	clearAll: "Effacer",
+	close: "Fermer",
+	finish: "Terminer la sélection",
+	search: "Rechercher...",
+	loading: "Chargement...",
+	noResults: "Aucun résultat",
+	noResultsFor: (search: string) => `Aucun résultat pour "${search}"`,
+	noOptions: "Aucune option disponible",
+	moreItems: (count: number) => `+ ${count} de plus`,
+	removeItem: (label: string) => `Retirer ${label} de la sélection`,
+	removeExtra: (count: number) => `Retirer les ${count} options supplémentaires`,
+	clearSelection: (count: number) =>
+		`Effacer les ${count} options sélectionnées`,
+	// Annonces ARIA
+	ariaSelected: (label: string, count: number, total: number) =>
+		`${label} sélectionné. ${count} sur ${total} options.`,
+	ariaMultipleAdded: (added: number, count: number, total: number) =>
+		`${added} options ajoutées. ${count} sur ${total}.`,
+	ariaRemoved: (count: number, total: number) =>
+		`Option retirée. ${count} sur ${total} options.`,
+	ariaListOpen: (total: number) =>
+		`Liste ouverte. ${total} options. Flèches pour naviguer.`,
+	ariaListClosed: "Liste fermée.",
+	ariaSearchResults: (count: number, search: string) =>
+		`${count} résultat${count === 1 ? "" : "s"} pour "${search}"`,
+	ariaNoSelection: "Aucune option sélectionnée",
+	ariaSelectionCount: (count: number, labels: string) =>
+		`${count} option${count === 1 ? "" : "s"} sélectionnée${count === 1 ? "" : "s"} : ${labels}`,
+	ariaComboboxLabel: (count: number, total: number, placeholder: string) =>
+		`Sélection multiple : ${count} sur ${total} options sélectionnées. ${placeholder}`,
+	ariaSelectAllOptions: (count: number) =>
+		`Sélectionner les ${count} options`,
+	ariaSearchHelp: "Tapez pour filtrer. Flèches pour naviguer.",
+	ariaMultiSelectHelp:
+		"Sélection multiple. Utilisez les flèches pour naviguer, Entrée pour sélectionner, Échap pour fermer.",
+	ariaOptionsLabel: "Options disponibles",
+	ariaLoadingOptions: "Chargement des options",
+	ariaClearAll: "Effacer toutes les options sélectionnées",
+	ariaCloseList: "Fermer la liste d'options",
+	ariaCloseDrawer: "Fermer",
+} as const;
+
 /**
  * Variants CVA pour les badges du MultiSelect
  */

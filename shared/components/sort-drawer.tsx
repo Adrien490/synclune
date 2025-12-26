@@ -1,9 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import { useState } from "react";
+import { useOptimistic, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowUpDown, Check, X } from "lucide-react";
 
@@ -29,7 +27,7 @@ interface SortDrawerProps {
 	onOpenChange: (open: boolean) => void;
 	/** Available sort options */
 	options: SortOption[];
-	/** URL parameter key for sort (will be prefixed with filter_) */
+	/** URL parameter key for sort */
 	filterKey?: string;
 	/** Title displayed in drawer header */
 	title?: string;
@@ -54,8 +52,8 @@ interface SortDrawerProps {
  *   onOpenChange={setSortOpen}
  *   options={[
  *     { value: "price-ascending", label: "Prix croissant" },
- *     { value: "price-descending", label: "Prix decroissant" },
- *     { value: "created-descending", label: "Plus recents" },
+ *     { value: "price-descending", label: "Prix décroissant" },
+ *     { value: "created-descending", label: "Plus récents" },
  *   ]}
  *   showResetOption
  * />
@@ -69,7 +67,7 @@ export function SortDrawer({
 	title = "Trier par",
 	autoCloseOnSelect = true,
 	showResetOption = false,
-	resetLabel = "Par defaut",
+	resetLabel = "Par défaut",
 }: SortDrawerProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -77,8 +75,8 @@ export function SortDrawer({
 	const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 	const shouldReduceMotion = useReducedMotion();
 
-	// URL parameter key with filter prefix
-	const paramKey = `filter_${filterKey}`;
+	// URL parameter key (no prefix)
+	const paramKey = filterKey;
 
 	// Get current value from URL
 	const currentValue = searchParams.get(paramKey) || "";
@@ -264,7 +262,7 @@ export function SortDrawer({
 					{/* Live region for screen readers */}
 					<span role="status" aria-live="polite" className="sr-only">
 						{isPending
-							? `Tri en cours : ${selectedLabel || "par defaut"}...`
+							? `Tri en cours : ${selectedLabel || "par défaut"}...`
 							: ""}
 					</span>
 				</DrawerBody>
@@ -276,7 +274,7 @@ export function SortDrawer({
 interface SortDrawerTriggerProps {
 	/** Available sort options */
 	options: SortOption[];
-	/** URL parameter key for sort (will be prefixed with filter_) */
+	/** URL parameter key for sort */
 	filterKey?: string;
 	/** Additional CSS classes for the trigger button */
 	className?: string;
@@ -308,8 +306,7 @@ export function SortDrawerTrigger({
 }: SortDrawerTriggerProps) {
 	const [open, setOpen] = useState(false);
 	const searchParams = useSearchParams();
-	const paramKey = `filter_${filterKey}`;
-	const hasActiveSort = searchParams.has(paramKey);
+	const hasActiveSort = searchParams.has(filterKey);
 
 	return (
 		<>
