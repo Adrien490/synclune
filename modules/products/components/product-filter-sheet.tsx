@@ -387,19 +387,19 @@ export function ProductFilterSheet({
 										<div className="space-y-1">
 											{materials.map((material) => {
 												const isSelected = field.state.value.includes(
-													material.id
+													material.slug
 												);
 												return (
 													<CheckboxFilterItem
-														key={material.id}
-														id={`material-${material.id}`}
+														key={material.slug}
+														id={`material-${material.slug}`}
 														checked={isSelected}
 														onCheckedChange={(checked) => {
 															if (checked && !isSelected) {
-																field.pushValue(material.id);
+																field.pushValue(material.slug);
 															} else if (!checked && isSelected) {
 																const index = field.state.value.indexOf(
-																	material.id
+																	material.slug
 																);
 																field.removeValue(index);
 															}

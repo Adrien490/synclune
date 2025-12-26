@@ -8,6 +8,7 @@ import { cacheMaterials } from "../constants/cache";
 export type MaterialOption = {
 	id: string;
 	name: string;
+	slug: string;
 };
 
 // ============================================================================
@@ -35,6 +36,7 @@ async function fetchMaterialOptions(): Promise<MaterialOption[]> {
 			select: {
 				id: true,
 				name: true,
+				slug: true,
 			},
 			orderBy: { name: "asc" },
 		});

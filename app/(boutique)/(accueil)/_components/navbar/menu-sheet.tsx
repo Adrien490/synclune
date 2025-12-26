@@ -207,6 +207,12 @@ export function MenuSheet({
 											</SheetClose>
 										</Tap>
 									))}
+									<SheetClose asChild>
+										<Link href="/produits" className={ctaLinkClassName}>
+											<ArrowRight className="h-4 w-4" aria-hidden="true" />
+											Voir toutes les créations
+										</Link>
+									</SheetClose>
 								</Stagger>
 							</section>
 						)}

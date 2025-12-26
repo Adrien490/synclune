@@ -118,6 +118,8 @@ function SheetContent({
 				)}
 				{...props}
 			>
+				{/* Titre fallback pour accessibilité Radix - remplacé par SheetTitle si présent */}
+				<SheetPrimitive.Title className="sr-only">Panneau latéral</SheetPrimitive.Title>
 				{children}
 				{showCloseButton && (
 					<SheetPrimitive.Close className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-secondary absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 rounded-md p-3 opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none">
