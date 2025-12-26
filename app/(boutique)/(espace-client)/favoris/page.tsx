@@ -53,10 +53,7 @@ export default async function WishlistPage({
 			<PageHeader
 				title="Mes favoris"
 				description="Retrouvez tous vos coups de cœur"
-				breadcrumbs={[
-					{ label: "Mon compte", href: "/compte" },
-					{ label: "Favoris", href: "/favoris" },
-				]}
+				breadcrumbs={[{ label: "Favoris", href: "/favoris" }]}
 			/>
 
 			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
