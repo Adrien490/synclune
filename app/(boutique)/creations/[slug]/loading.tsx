@@ -57,6 +57,20 @@ export default function ProductDetailLoading() {
 											<div className="absolute inset-0 flex items-center justify-center">
 												<div className="h-16 w-16 rounded-full border-4 border-muted/60 border-t-primary/40 animate-spin" />
 											</div>
+											{/* GalleryCounter skeleton */}
+											<div className="absolute top-3 right-3">
+												<Skeleton className="h-6 w-12 rounded-full bg-muted/60" />
+											</div>
+										</div>
+
+										{/* Thumbnails horizontales - Mobile uniquement */}
+										<div className="flex gap-2 overflow-x-auto py-2 lg:hidden order-3">
+											{Array.from({ length: 4 }).map((_, i) => (
+												<Skeleton
+													key={i}
+													className="h-16 w-16 shrink-0 rounded-lg bg-muted/40"
+												/>
+											))}
 										</div>
 									</div>
 								</section>
@@ -122,14 +136,14 @@ export default function ProductDetailLoading() {
 										</div>
 										{/* CardContent */}
 										<div className="p-6 space-y-6">
-											{/* Couleurs */}
+											{/* Couleurs - 52px mobile / 44px desktop comme ColorSelector */}
 											<div className="space-y-3">
 												<Skeleton className="h-4 w-20 bg-muted/30" />
-												<div className="flex gap-2">
+												<div className="flex flex-wrap gap-3">
 													{Array.from({ length: 4 }).map((_, i) => (
 														<Skeleton
 															key={i}
-															className="h-10 w-10 rounded-full bg-muted/40"
+															className="h-[52px] w-[52px] sm:h-11 sm:w-11 rounded-full bg-muted/40"
 														/>
 													))}
 												</div>
@@ -140,11 +154,26 @@ export default function ProductDetailLoading() {
 											{/* Matériaux */}
 											<div className="space-y-3">
 												<Skeleton className="h-4 w-24 bg-muted/30" />
-												<div className="flex gap-2 flex-wrap">
+												<div className="grid grid-cols-2 gap-2">
 													{Array.from({ length: 2 }).map((_, i) => (
 														<Skeleton
 															key={i}
-															className="h-10 w-24 rounded-lg bg-muted/40"
+															className="h-10 rounded-lg bg-muted/40"
+														/>
+													))}
+												</div>
+											</div>
+
+											<div className="h-px bg-border" />
+
+											{/* Tailles - grid responsive comme SizeSelector */}
+											<div className="space-y-3">
+												<Skeleton className="h-4 w-16 bg-muted/30" />
+												<div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-2">
+													{Array.from({ length: 4 }).map((_, i) => (
+														<Skeleton
+															key={i}
+															className="h-12 sm:h-11 rounded-lg bg-muted/40"
 														/>
 													))}
 												</div>

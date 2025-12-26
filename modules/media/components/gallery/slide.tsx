@@ -8,6 +8,7 @@ import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.const
 import { GALLERY_ZOOM_LEVEL } from "@/modules/media/constants/gallery.constants";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { GalleryHoverZoom } from "./hover-zoom";
+import { GalleryPinchZoom } from "./pinch-zoom";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
 interface GallerySlideProps {
@@ -125,39 +126,42 @@ export function GallerySlide({
 
 	// Image : rendu conditionnel desktop/mobile
 	// Desktop → Zoom hover
-	// Mobile → Next.js Image (optimisations LCP)
-	return (
-		<div
-			className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in"
-			onClick={onOpen}
-			role="button"
-			tabIndex={0}
-			onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
-			aria-label="Ouvrir l'image en plein écran"
-		>
-			{isDesktop ? (
-				// Desktop : Zoom hover
+	// Mobile → Pinch-zoom natif
+	if (isDesktop) {
+		return (
+			<div
+				className="flex-[0_0_100%] min-w-0 h-full relative cursor-zoom-in"
+				onClick={onOpen}
+				role="button"
+				tabIndex={0}
+				onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
+				aria-label="Ouvrir l'image en plein écran"
+			>
 				<GalleryHoverZoom
 					src={media.url}
 					alt={alt}
 					blurDataUrl={media.blurDataUrl}
 					zoomLevel={GALLERY_ZOOM_LEVEL}
 				/>
-			) : (
-				// Mobile : Next.js Image pour LCP optimal
-				<Image
-					src={media.url}
-					alt={alt}
-					fill
-					className="object-cover"
-					priority={index === 0}
-					loading={index === 0 ? "eager" : "lazy"}
-					quality={MAIN_IMAGE_QUALITY}
-					sizes="100vw"
-					placeholder={media.blurDataUrl ? "blur" : "empty"}
-					blurDataURL={media.blurDataUrl}
-				/>
-			)}
+			</div>
+		);
+	}
+
+	// Mobile : Pinch-zoom natif (gère son propre onClick via onTap)
+	return (
+		<div
+			className="flex-[0_0_100%] min-w-0 h-full relative"
+			role="img"
+			aria-label={alt}
+		>
+			<GalleryPinchZoom
+				src={media.url}
+				alt={alt}
+				blurDataUrl={media.blurDataUrl}
+				isActive={isActive}
+				onTap={onOpen}
+				priority={index === 0}
+			/>
 		</div>
 	);
 }

@@ -40,15 +40,14 @@
 | Critère | Recommandation Baymard | État Synclune | Écart |
 |---------|------------------------|---------------|-------|
 | Vignettes desktop | Toujours visibles | ✅ Présentes | OK |
-| Vignettes mobile | Scrollables horizontalement | ❌ Dots seulement | **HAUT** |
 | Swipe gesture | Navigation par défaut mobile | ✅ Embla carousel | OK |
-| Pinch-to-zoom | Geste attendu sur mobile | ❌ Non implémenté | **MOYEN** |
-| Double-tap zoom | Alternatif au pinch | ❌ Non implémenté | MOYEN |
+| Pinch-to-zoom | Geste attendu sur mobile | ✅ GalleryPinchZoom | OK |
+| Double-tap zoom | Alternatif au pinch | ✅ Toggle 2x/reset | OK |
 | Troncature visible | Indicateur "+X images" clair | ✅ Counter "1/8" | OK |
 | Hover zoom desktop | Détails visibles | ✅ Implémenté | OK |
 | Lightbox | Vue agrandie | ✅ Implémenté | OK |
 | Lazy loading | Performance | ✅ Preload 4 premières | OK |
-| Hit areas thumbnails | Min 7mm × 7mm | ⚠️ À vérifier | MOYEN |
+| Hit areas thumbnails | Min 7mm × 7mm | ✅ 80px desktop, 64px mobile | OK |
 
 ### Recommandations Galerie
 
