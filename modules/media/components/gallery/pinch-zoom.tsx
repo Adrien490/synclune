@@ -76,9 +76,9 @@ export function GalleryPinchZoom({
 				"outline-none",
 				"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 				"active:scale-[0.99] transition-transform", // Feedback tactile
-				isZoomed ? "touch-none cursor-grab" : "touch-pan-x cursor-zoom-in"
+				isZoomed ? "touch-none cursor-grab" : "touch-manipulation cursor-zoom-in"
 			)}
-			style={{ touchAction: isZoomed ? "none" : "pan-x" }}
+			style={{ touchAction: isZoomed ? "none" : "manipulation" }}
 		>
 			{/* Container image transformable */}
 			<div
