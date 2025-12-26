@@ -72,7 +72,6 @@ export function GallerySlide({
 			});
 		} else {
 			videoRef.current.pause();
-			videoRef.current.currentTime = 0;
 		}
 	}, [isActive, prefersReduced]);
 
@@ -99,6 +98,7 @@ export function GallerySlide({
 				{isVideoLoading && <VideoLoadingSpinner />}
 				<video
 					ref={videoRef}
+					preload="metadata"
 					className={cn(
 						"w-full h-full object-cover",
 						transitionClass,
@@ -109,8 +109,11 @@ export function GallerySlide({
 					playsInline
 					autoPlay={isActive && !prefersReduced}
 					poster={media.thumbnailUrl || undefined}
-					onCanPlay={() => setIsVideoLoading(false)}
-					onWaiting={() => setIsVideoLoading(true)}
+					onCanPlay={() => {
+						if (videoRef.current && videoRef.current.readyState >= 3) {
+							setIsVideoLoading(false);
+						}
+					}}
 					onPlaying={() => setIsVideoLoading(false)}
 					aria-label={`Vidéo ${title}`}
 				>
