@@ -16,6 +16,12 @@ export const ORDERS_CACHE_TAGS = {
 	/** Commandes d'un utilisateur spécifique */
 	USER_ORDERS: (userId: string) => `orders-user-${userId}`,
 
+	/** Dernière commande d'un utilisateur (page confirmation, espace client) */
+	LAST_ORDER: (userId: string) => `last-order-user-${userId}`,
+
+	/** Statistiques du compte utilisateur (nb commandes, total dépensé) */
+	ACCOUNT_STATS: (userId: string) => `account-stats-${userId}`,
+
 	/** Liste des clients (dashboard admin) */
 	CUSTOMERS_LIST: "customers-list",
 } as const
@@ -57,13 +63,19 @@ export function cacheUserOrders(userId: string) {
  * Invalide automatiquement :
  * - La liste des commandes admin
  * - Les commandes de l'utilisateur (si userId fourni)
+ * - La dernière commande de l'utilisateur
+ * - Les statistiques du compte utilisateur
  * - Les badges de la sidebar (affecte le count de commandes en attente)
  */
 export function getOrderInvalidationTags(userId?: string): string[] {
 	const tags: string[] = [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES]
 
 	if (userId) {
-		tags.push(ORDERS_CACHE_TAGS.USER_ORDERS(userId))
+		tags.push(
+			ORDERS_CACHE_TAGS.USER_ORDERS(userId),
+			ORDERS_CACHE_TAGS.LAST_ORDER(userId),
+			ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId)
+		)
 	}
 
 	return tags

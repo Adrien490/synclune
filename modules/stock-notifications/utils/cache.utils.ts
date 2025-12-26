@@ -36,10 +36,17 @@ export function cacheStockNotificationsBySku(skuId: string) {
 
 /**
  * Tags à invalider lors de la modification d'une demande de notification
+ *
+ * @param skuId - ID du SKU concerné
+ * @param userId - ID de l'utilisateur (si connecté)
+ * @param email - Email du demandeur (pour invités)
+ * @param token - Token de désinscription unique
  */
 export function getStockNotificationInvalidationTags(
 	skuId: string,
-	userId?: string | null
+	userId?: string | null,
+	email?: string | null,
+	token?: string | null
 ): string[] {
 	const tags: string[] = [
 		STOCK_NOTIFICATIONS_CACHE_TAGS.PENDING_LIST,
@@ -49,6 +56,14 @@ export function getStockNotificationInvalidationTags(
 
 	if (userId) {
 		tags.push(STOCK_NOTIFICATIONS_CACHE_TAGS.BY_USER(userId));
+	}
+
+	if (email) {
+		tags.push(STOCK_NOTIFICATIONS_CACHE_TAGS.BY_EMAIL(email.toLowerCase()));
+	}
+
+	if (token) {
+		tags.push(STOCK_NOTIFICATIONS_CACHE_TAGS.BY_TOKEN(token));
 	}
 
 	return tags;

@@ -238,7 +238,8 @@ export async function deleteProductSku(
 		const tags = getSkuInvalidationTags(
 			existingSku.sku,
 			existingSku.productId,
-			existingSku.product.slug
+			existingSku.product.slug,
+			validatedSkuId // Invalide aussi le cache stock temps réel
 		);
 		tags.forEach(tag => updateTag(tag));
 

@@ -16,6 +16,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * Type pour les données SKU nécessaires à l'invalidation bulk
  */
 export interface SkuDataForInvalidation {
+	id: string;
 	sku: string;
 	productId: string;
 	product: { slug: string };
@@ -51,19 +52,25 @@ export function cacheSkuDetail(sku: string) {
  * Invalide automatiquement :
  * - La liste globale des SKUs
  * - Le détail du SKU
+ * - Le stock temps réel du SKU (si skuId fourni)
  * - Les SKUs du produit parent (si productId fourni)
  * - Le détail du produit parent (si productSlug fourni)
  * - La liste des produits (si productSlug fourni)
  * - L'inventaire dashboard
  * - Les badges de la sidebar (affecte le count d'inventaire critique)
  */
-export function getSkuInvalidationTags(sku: string, productId?: string, productSlug?: string): string[] {
+export function getSkuInvalidationTags(sku: string, productId?: string, productSlug?: string, skuId?: string): string[] {
 	const tags = [
 		PRODUCTS_CACHE_TAGS.SKUS_LIST,
 		PRODUCTS_CACHE_TAGS.SKU_DETAIL(sku),
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
+
+	// Invalider le cache stock temps réel si skuId fourni
+	if (skuId) {
+		tags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+	}
 
 	if (productId) {
 		tags.push(PRODUCTS_CACHE_TAGS.SKUS(productId));
@@ -82,13 +89,22 @@ export function getSkuInvalidationTags(sku: string, productId?: string, productS
  * Invalide uniquement les données affectées, pas toutes les listes.
  * Utile pour les mises à jour fréquentes de stock.
  */
-export function getInventoryInvalidationTags(productSlug: string, productId: string): string[] {
-	return [
+export function getInventoryInvalidationTags(productSlug: string, productId: string, skuIds?: string[]): string[] {
+	const tags = [
 		PRODUCTS_CACHE_TAGS.DETAIL(productSlug),
 		PRODUCTS_CACHE_TAGS.SKUS(productId),
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
+
+	// Invalider le cache stock temps réel de chaque SKU
+	if (skuIds) {
+		for (const skuId of skuIds) {
+			tags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+		}
+	}
+
+	return tags;
 }
 
 /**
@@ -107,7 +123,8 @@ export function collectBulkInvalidationTags(skusData: SkuDataForInvalidation[]):
 		const tags = getSkuInvalidationTags(
 			skuData.sku,
 			skuData.productId,
-			skuData.product.slug
+			skuData.product.slug,
+			skuData.id
 		);
 		tags.forEach((tag) => uniqueTags.add(tag));
 	}

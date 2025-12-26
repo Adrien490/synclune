@@ -2,6 +2,8 @@ import Stripe from "stripe";
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
+import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
 import {
 	getShippingRateName,
@@ -217,9 +219,25 @@ export function buildPostCheckoutTasks(
 	const tasks: PostWebhookTask[] = [];
 	const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
 
-	// 1. Invalider le cache du panier
+	// 1. Invalider les caches (panier, commandes user, stats compte)
+	const cacheTags: string[] = [];
+
 	if (order.userId) {
-		const cacheTags = getCartInvalidationTags(order.userId, undefined);
+		// Panier de l'utilisateur
+		cacheTags.push(...getCartInvalidationTags(order.userId, undefined));
+
+		// Commandes de l'utilisateur (inclut LAST_ORDER et ACCOUNT_STATS)
+		cacheTags.push(...getOrderInvalidationTags(order.userId));
+	}
+
+	// Stock temps réel des SKUs achetés
+	for (const item of order.items) {
+		if (item.sku?.id) {
+			cacheTags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(item.sku.id));
+		}
+	}
+
+	if (cacheTags.length > 0) {
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 	}
 

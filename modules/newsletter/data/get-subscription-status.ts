@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_NEWSLETTER_STATUS_DEFAULT_SELECT } from "../constants/subscriber.constants";
+import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
 import type { GetSubscriptionStatusReturn } from "../types/subscriber.types";
 
 // Re-export pour compatibilité
@@ -51,7 +52,7 @@ export async function fetchSubscriptionStatus(
 ): Promise<{ status: string } | null> {
 	"use cache";
 	cacheLife("cart");
-	cacheTag(`newsletter-user-${userId}`);
+	cacheTag(NEWSLETTER_CACHE_TAGS.USER_STATUS(userId));
 
 	try {
 		const subscriber = await prisma.newsletterSubscriber.findUnique({

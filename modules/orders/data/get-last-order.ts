@@ -3,6 +3,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_LAST_ORDER_DEFAULT_SELECT } from "../constants/last-order.constants";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import type { GetLastOrderReturn } from "../types/last-order.types";
 
 // Re-export pour compatibilité
@@ -36,7 +37,7 @@ export async function fetchLastOrder(
 ): Promise<GetLastOrderReturn> {
 	"use cache: private";
 	cacheLife("userOrders");
-	cacheTag(`last-order-user-${userId}`);
+	cacheTag(ORDERS_CACHE_TAGS.LAST_ORDER(userId));
 
 	try {
 		const lastOrder = await prisma.order.findFirst({

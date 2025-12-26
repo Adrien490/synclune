@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 
 import { CART_SELECT_FOR_COUNT } from "../constants/account-stats.constants";
 import type {
@@ -56,7 +57,7 @@ export async function getAccountStats(): Promise<GetAccountStatsReturn> {
 export async function fetchAccountStats(userId: string): Promise<AccountStats> {
 	"use cache";
 	cacheLife("userOrders");
-	cacheTag(`account-stats-${userId}`);
+	cacheTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId));
 
 	try {
 		const [totalOrders, pendingOrders, cart] = await Promise.all([

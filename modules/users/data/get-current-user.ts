@@ -4,6 +4,7 @@ import { auth } from "@/modules/auth/lib/auth";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_CURRENT_USER_DEFAULT_SELECT } from "../constants/current-user.constants";
+import { USERS_CACHE_TAGS } from "../constants/cache";
 import type {
 	GetCurrentUserReturn,
 	CurrentUser,
@@ -58,7 +59,7 @@ export async function fetchCurrentUser(
 ): Promise<GetCurrentUserReturn> {
 	"use cache: private";
 	cacheLife("session");
-	cacheTag(`user-${userId}`);
+	cacheTag(USERS_CACHE_TAGS.CURRENT_USER(userId));
 	const user = await prisma.user.findUnique({
 		where: {
 			id: userId,

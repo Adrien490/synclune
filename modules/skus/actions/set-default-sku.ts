@@ -84,7 +84,8 @@ export async function setDefaultSku(
 		const tags = getSkuInvalidationTags(
 			skuData.sku,
 			skuData.productId,
-			skuData.product.slug
+			skuData.product.slug,
+			skuId // Invalide aussi le cache stock temps réel
 		);
 		tags.forEach(tag => updateTag(tag));
 

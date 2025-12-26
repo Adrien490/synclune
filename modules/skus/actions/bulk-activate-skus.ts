@@ -32,6 +32,7 @@ export async function bulkActivateSkus(
 		const skusData = await prisma.productSku.findMany({
 			where: { id: { in: ids } },
 			select: {
+				id: true,
 				sku: true,
 				productId: true,
 				product: { select: { slug: true } },

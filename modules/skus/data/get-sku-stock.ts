@@ -1,6 +1,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { STOCK_THRESHOLDS } from "../constants/inventory.constants";
 import type { GetSkuStockReturn } from "../types/sku-stock.types";
 
@@ -29,7 +30,7 @@ export async function getSkuStock(skuId: string): Promise<GetSkuStockReturn> {
 async function fetchSkuStock(skuId: string): Promise<GetSkuStockReturn> {
 	"use cache";
 	cacheLife("skuStock");
-	cacheTag(`sku-stock-${skuId}`);
+	cacheTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
 
 	try {
 		const sku = await prisma.productSku.findUnique({

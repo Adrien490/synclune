@@ -246,7 +246,7 @@ export function QuickSearchDialog({
 									<Stagger role="list" className="space-y-1" stagger={0.02} delay={0.02} y={8}>
 										{displayedSearches.map((term) => (
 											<div key={term} role="listitem" className="flex items-center gap-1 group/item">
-												<Tap className="flex-1" scale={0.98}>
+												<Tap className="flex-1 min-w-0" scale={0.98}>
 													<button
 														type="button"
 														onClick={() => handleRecentSearch(term)}

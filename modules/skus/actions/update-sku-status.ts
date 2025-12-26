@@ -88,7 +88,8 @@ export async function updateProductSkuStatus(
 		const tags = getSkuInvalidationTags(
 			updatedSku.sku,
 			existingSku.productId,
-			existingSku.product?.slug
+			existingSku.product?.slug,
+			updatedSku.id // Invalide aussi le cache stock temps réel
 		);
 		tags.forEach(tag => updateTag(tag));
 

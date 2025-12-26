@@ -77,6 +77,9 @@ model User {
   refundsCreated       Refund[]        @relation("RefundCreator")
   refundHistoryActions RefundHistory[] @relation("RefundHistoryAuthor")
 
+  // Avis produits
+  reviews ProductReview[]
+
   @@index([suspendedAt])
   @@index([role, id])
   @@index([emailVerified, id])
@@ -180,6 +183,12 @@ enum CollectionStatus {
 enum MediaType {
   IMAGE
   VIDEO
+}
+
+/// Statut de modération des avis produits
+enum ReviewStatus {
+  PUBLISHED // Auto-publié (défaut)
+  HIDDEN    // Masqué par modération (spam, inapproprié, etc.)
 }
 
 // ============================================================================
@@ -335,6 +344,10 @@ model Product {
   orderItems OrderItem[]
 
   customizationInspirations CustomizationRequest[] @relation("CustomizationInspirations")
+
+  // Avis produits
+  reviews     ProductReview[]
+  reviewStats ProductReviewStats?
 
   @@index([title, id])
   @@index([typeId])
@@ -778,6 +791,9 @@ model OrderItem {
   // Relations
   refundItems RefundItem[]
 
+  // Avis produit (un OrderItem peut avoir un avis, relation 1:1)
+  review ProductReview?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1151,6 +1167,141 @@ model Testimonial {
   @@index([deletedAt])
   @@index([createdAt(sort: Desc)])
   @@index([deletedAt, isPublished, createdAt(sort: Desc)]) // Query admin avec filtres
+}
+
+// ============================================================================
+// AVIS PRODUITS
+// ============================================================================
+
+/// Avis produit laissé par un acheteur vérifié
+/// Un seul avis par utilisateur et par produit (pas par OrderItem)
+/// Permet de mettre à jour l'avis après un nouvel achat
+model ProductReview {
+  id String @id @default(cuid())
+
+  // === RELATIONS PRINCIPALES ===
+  // Produit concerné (relation vers Product, pas ProductSku)
+  // Les avis sont au niveau produit, pas variante
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  // Auteur de l'avis (acheteur vérifié)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  // Preuve d'achat : OrderItem du PREMIER achat ayant permis de laisser l'avis
+  // Ce champ ne change pas lors des mises à jour de l'avis (même si rachat ultérieur)
+  // Garantit que seuls les acheteurs vérifiés peuvent laisser un avis
+  orderItemId String    @unique // Un OrderItem ne peut générer qu'un seul avis
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+
+  // === CONTENU DE L'AVIS ===
+  rating  Int     // Note de 1 à 5 étoiles (validation Zod côté serveur)
+  title   String? @db.VarChar(150) // Titre optionnel de l'avis
+  content String  @db.Text // Commentaire texte
+
+  // === MODÉRATION ===
+  status ReviewStatus @default(PUBLISHED) // Auto-publié, modération a posteriori
+
+  // === RELATIONS ===
+  medias   ReviewMedia[] // Photos de l'avis (max 3)
+  response ReviewResponse? // Réponse admin (unique)
+
+  // === TIMESTAMPS ===
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete RGPD (10 ans conservation)
+
+  // === CONTRAINTES ===
+  // Un utilisateur ne peut laisser qu'un seul avis par produit
+  // S'il rachète le produit, il peut modifier son avis existant
+  @@unique([userId, productId])
+
+  // === INDEXES ===
+  // Index composite principal pour affichage des avis d'un produit
+  @@index([productId, status, deletedAt, createdAt(sort: Desc)])
+  // Index pour page "Mes avis" du client
+  @@index([userId, deletedAt, createdAt(sort: Desc)])
+  // Index pour modération admin
+  @@index([status, createdAt(sort: Desc)])
+  // Index pour calcul des stats (rating) et filtrage par note
+  @@index([productId, deletedAt, rating])
+}
+
+/// Photo jointe à un avis produit
+/// Maximum 3 photos par avis (validation applicative)
+model ReviewMedia {
+  id       String        @id @default(cuid())
+  reviewId String
+  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  // === MEDIA (Pattern SkuMedia) ===
+  url         String  @db.VarChar(2048) // URL UploadThing
+  blurDataUrl String? @db.Text // Base64 blur placeholder (~200 bytes)
+  altText     String? @db.VarChar(255) // Alt text pour accessibilité
+
+  // Position pour ordre d'affichage (0, 1, 2)
+  position Int @default(0)
+
+  // === TIMESTAMPS ===
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // === INDEXES ===
+  @@index([reviewId, position])
+}
+
+/// Réponse de l'admin/marque à un avis
+/// Une seule réponse possible par avis
+model ReviewResponse {
+  id       String        @id @default(cuid())
+  reviewId String        @unique // Une seule réponse par avis
+  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  // === CONTENU ===
+  content String @db.Text // Réponse texte de la marque
+
+  // === AUTEUR ADMIN (Pattern OrderNote) ===
+  // L'admin qui a rédigé la réponse
+  authorId   String // ID de l'admin
+  authorName String @db.VarChar(100) // Dénormalisé pour historique si admin supprimé
+
+  // === TIMESTAMPS ===
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete RGPD
+
+  // === INDEXES ===
+  @@index([authorId, createdAt(sort: Desc)])
+}
+
+/// Statistiques agrégées des avis par produit
+/// Table de cache pour performances (évite COUNT/AVG à chaque requête)
+/// Mise à jour via trigger applicatif après création/modification/suppression d'avis
+model ProductReviewStats {
+  id        String  @id @default(cuid())
+  productId String  @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // === STATISTIQUES AGRÉGÉES ===
+  totalCount    Int     @default(0) // Nombre total d'avis publiés
+  averageRating Decimal @default(0) @db.Decimal(3, 2) // Moyenne (ex: 4.75)
+
+  // Distribution des notes (pour graphique cliquable)
+  rating1Count Int @default(0) // Nombre d'avis 1 étoile
+  rating2Count Int @default(0) // Nombre d'avis 2 étoiles
+  rating3Count Int @default(0) // Nombre d'avis 3 étoiles
+  rating4Count Int @default(0) // Nombre d'avis 4 étoiles
+  rating5Count Int @default(0) // Nombre d'avis 5 étoiles
+
+  // === TIMESTAMPS ===
+  updatedAt DateTime @updatedAt
+
+  // === INDEXES ===
+  // Index pour tri par note moyenne (best rated products)
+  @@index([averageRating(sort: Desc), totalCount(sort: Desc)])
+  // Index pour filtrage produits avec avis
+  @@index([totalCount])
 }
 
 // ============================================================================

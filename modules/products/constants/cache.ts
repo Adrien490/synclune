@@ -30,6 +30,9 @@ export const PRODUCTS_CACHE_TAGS = {
 	/** Détail d'un SKU spécifique */
 	SKU_DETAIL: (sku: string) => `sku-${sku}`,
 
+	/** Stock temps réel d'un SKU (invalidé après achat/mise à jour stock) */
+	SKU_STOCK: (skuId: string) => `sku-stock-${skuId}`,
+
 	/** Produits similaires publics (visiteurs non authentifiés) */
 	RELATED_PUBLIC: "related-products-public",
 
@@ -49,4 +52,5 @@ export {
 	getProductInvalidationTags,
 	getSkuInvalidationTags,
 	getInventoryInvalidationTags,
+	getSkuStockInvalidationTags,
 } from "../utils/cache.utils";

@@ -259,7 +259,8 @@ export async function createProductSku(
 			const tags = getSkuInvalidationTags(
 				productSku.sku,
 				validatedData.productId,
-				product.slug
+				product.slug,
+				productSku.id // Invalide aussi le cache stock temps réel
 			);
 			tags.forEach(tag => updateTag(tag));
 		}

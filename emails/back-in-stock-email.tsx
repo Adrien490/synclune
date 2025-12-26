@@ -1,3 +1,4 @@
+import { formatEuro } from "@/shared/utils/format-euro";
 import {
 	Body,
 	Button,
@@ -35,11 +36,6 @@ export const BackInStockEmail = ({
 	availableQuantity,
 	unsubscribeUrl,
 }: BackInStockEmailProps) => {
-	const formattedPrice = new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: "EUR",
-	}).format(price / 100);
-
 	const variantParts: string[] = [];
 	if (skuColor) variantParts.push(skuColor);
 	if (skuMaterial) variantParts.push(skuMaterial);
@@ -120,7 +116,7 @@ export const BackInStockEmail = ({
 								color: EMAIL_COLORS.primary,
 							}}
 						>
-							{formattedPrice}
+							{formatEuro(price)}
 						</Text>
 
 						<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
