@@ -3,17 +3,22 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 
+interface UseSelectFilterOptions {
+	/** Si true, utilise filterKey directement sans préfixe "filter_" */
+	noPrefix?: boolean;
+}
+
 /**
  * Hook pour gérer l'état du filtrage avec un select simple
  * Gère un seul filtre avec une seule valeur
  */
-export function useSelectFilter(filterKey: string) {
+export function useSelectFilter(filterKey: string, options?: UseSelectFilterOptions) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	// Préfixe pour les filtres dans l'URL
-	const paramKey = `filter_${filterKey}`;
+	// Préfixe pour les filtres dans l'URL (sauf si noPrefix)
+	const paramKey = options?.noPrefix ? filterKey : `filter_${filterKey}`;
 
 	// Récupérer la valeur actuelle du filtre (première valeur uniquement)
 	const currentValue = searchParams.get(paramKey) || "";

@@ -87,6 +87,7 @@ export default async function RefundsAdminPage({
 						}))}
 						placeholder="Plus récents"
 						className="w-full sm:min-w-[180px]"
+						noPrefix
 					/>
 					<RefreshRefundsButton />
 				</Toolbar>

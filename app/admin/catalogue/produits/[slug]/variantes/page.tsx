@@ -223,6 +223,7 @@ export default async function ProductVariantsPage({
 						}))}
 						placeholder="Plus recents"
 						className="w-full sm:min-w-[180px]"
+						noPrefix
 					/>
 					<RefreshSkusButton productId={product.id} />
 				</Toolbar>

@@ -123,6 +123,7 @@ export default async function CollectionsAdminPage({
 						}))}
 						placeholder="Position"
 						className="w-full sm:min-w-[180px]"
+						noPrefix
 					/>
 					<CollectionsFilterSheet />
 					<RefreshCollectionsButton />

@@ -102,7 +102,7 @@ export default async function CustomizationsPage({
 					}
 				>
 					<SelectFilter
-						filterKey="filter_status"
+						filterKey="status"
 						label="Statut"
 						options={STATUS_FILTER_OPTIONS.map((opt) => ({
 							value: opt.value,
@@ -117,6 +117,7 @@ export default async function CustomizationsPage({
 						options={sortOptions}
 						placeholder="Plus récentes"
 						className="w-full sm:min-w-[160px]"
+						noPrefix
 					/>
 				</Toolbar>
 

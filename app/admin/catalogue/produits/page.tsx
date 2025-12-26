@@ -166,6 +166,7 @@ export default async function ProductsAdminPage({
 						}))}
 						placeholder="Plus récents"
 						className="w-full sm:min-w-[180px]"
+						noPrefix
 					/>
 					<ProductsFilterSheet
 						productTypes={productTypes}

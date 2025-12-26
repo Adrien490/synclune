@@ -25,6 +25,8 @@ export interface SelectFilterProps {
 	placeholder?: string;
 	className?: string;
 	maxHeight?: number;
+	/** Si true, utilise filterKey directement sans préfixe "filter_" dans l'URL */
+	noPrefix?: boolean;
 }
 
 export function SelectFilter({
@@ -34,9 +36,10 @@ export function SelectFilter({
 	placeholder = "Sélectionner...",
 	className,
 	maxHeight = 250,
+	noPrefix = false,
 }: SelectFilterProps) {
 	const { value, setFilter, clearFilter, isPending } =
-		useSelectFilter(filterKey);
+		useSelectFilter(filterKey, { noPrefix });
 
 	// Filtrer les options avec value vide (requis par Radix SelectItem)
 	const validOptions = options.filter((opt) => opt.value.length > 0);

@@ -110,7 +110,7 @@ export default async function NotificationsStockPage({
 				}
 			>
 				<SelectFilter
-					filterKey="filter_status"
+					filterKey="status"
 					label="Statut"
 					options={statusOptions}
 					placeholder="Tous les statuts"
@@ -122,6 +122,7 @@ export default async function NotificationsStockPage({
 					options={SORT_OPTIONS_FOR_SELECT}
 					placeholder="Date (recent)"
 					className="w-full sm:min-w-[160px]"
+					noPrefix
 				/>
 			</Toolbar>
 

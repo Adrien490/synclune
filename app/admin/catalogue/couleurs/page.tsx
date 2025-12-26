@@ -81,6 +81,7 @@ export default async function ColorsAdminPage({
 						}))}
 						placeholder="Position"
 						className="w-full sm:min-w-[180px]"
+						noPrefix
 					/>
 					<ColorsFilterSheet />
 					<RefreshColorsButton />

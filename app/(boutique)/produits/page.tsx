@@ -289,6 +289,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 								label: SORT_LABELS[option as keyof typeof SORT_LABELS],
 							}))}
 							placeholder="Plus récents"
+							noPrefix
 						/>
 						<ProductFilterTrigger />
 					</Toolbar>

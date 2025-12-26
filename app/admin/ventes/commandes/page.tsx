@@ -104,6 +104,7 @@ export default async function OrdersAdminPage({
 						}))}
 						placeholder="Plus récentes"
 						className="w-full sm:min-w-[180px]"
+						noPrefix
 					/>
 					<OrdersFilterSheet />
 					{/* TODO: Implémenter ExportInvoicesButton */}

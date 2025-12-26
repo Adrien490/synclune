@@ -124,6 +124,7 @@ export default async function ProductTypesAdminPage({
 						}))}
 						placeholder="Label (A-Z)"
 						className="w-full sm:min-w-[180px]"
+						noPrefix
 					/>
 					<ProductTypesFilterSheet />
 					<RefreshProductTypesButton />

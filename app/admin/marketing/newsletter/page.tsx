@@ -188,6 +188,7 @@ export default async function NewsletterPage({
 							options={sortOptions}
 							placeholder="Plus récents"
 							className="w-full sm:min-w-[180px]"
+							noPrefix
 						/>
 						<ExportSubscribersButton />
 						<RefreshNewsletterButton />

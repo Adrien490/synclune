@@ -52,7 +52,7 @@ export default function ProductDetailLoading() {
 										</div>
 
 										{/* Main image */}
-										<div className="relative aspect-square sm:aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl bg-muted/30 order-2">
+										<div className="relative aspect-3/4 sm:aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl bg-muted/30 order-2">
 											<Skeleton className="absolute inset-0 from-muted/60 via-muted/40 to-transparent" />
 											<div className="absolute inset-0 flex items-center justify-center">
 												<div className="h-16 w-16 rounded-full border-4 border-muted/60 border-t-primary/40 animate-spin" />

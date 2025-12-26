@@ -86,6 +86,7 @@ export default async function MaterialsAdminPage({
 						}))}
 						placeholder="Position"
 						className="w-full sm:min-w-[180px]"
+						noPrefix
 					/>
 					<MaterialsFilterSheet />
 					<RefreshMaterialsButton />
