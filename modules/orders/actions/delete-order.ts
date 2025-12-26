@@ -5,9 +5,10 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma, softDelete } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
+import { getOrderInvalidationTags } from "../constants/cache";
 import { deleteOrderSchema } from "../schemas/order.schemas";
 
 /**
@@ -56,6 +57,7 @@ export async function deleteOrder(
 			select: {
 				id: true,
 				orderNumber: true,
+				userId: true,
 				// TODO: Ajouter invoiceNumber au schéma Prisma quand la feature factures sera implémentée
 				paymentStatus: true,
 			},
@@ -86,6 +88,8 @@ export async function deleteOrder(
 		// Conformité Art. L123-22 Code de Commerce : conservation 10 ans
 		await softDelete.order(id);
 
+		// Invalider les caches (orders list admin + commandes user)
+		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
 		revalidatePath("/admin/ventes/commandes");
 
 		return {

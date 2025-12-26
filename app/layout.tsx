@@ -6,7 +6,14 @@ import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
 import SystemBanner from "@/shared/components/ui/system-banner";
 import { AppToaster } from "@/shared/components/ui/toaster";
-import { BUSINESS_INFO, SEO_DEFAULTS, SITE_URL } from "@/shared/constants/seo-config";
+import {
+	BUSINESS_INFO,
+	SEO_DEFAULTS,
+	SITE_URL,
+	getLocalBusinessSchema,
+	getOrganizationSchema,
+	getWebSiteSchema,
+} from "@/shared/constants/seo-config";
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
 import { crimsonPro, inter, jetBrainsMono } from "@/shared/styles/fonts";
 import { UploadThingSSR } from "@/modules/media/lib/uploadthing/uploadthing-ssr";
@@ -148,7 +155,27 @@ export default async function RootLayout({
 }>) {
 	return (
 		<html lang="fr" data-scroll-behavior="smooth">
-			<head></head>
+			<head>
+				{/* Structured Data - SEO */}
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(getOrganizationSchema()),
+					}}
+				/>
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(getWebSiteSchema()),
+					}}
+				/>
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(getLocalBusinessSchema()),
+					}}
+				/>
+			</head>
 			<body
 				className={`${inter.className} ${crimsonPro.variable} ${jetBrainsMono.variable} antialiased`}
 			>

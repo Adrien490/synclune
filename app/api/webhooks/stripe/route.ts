@@ -7,6 +7,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { ANTI_REPLAY_WINDOW_SECONDS } from "@/modules/webhooks/constants/webhook.constants";
 import { dispatchEvent } from "@/modules/webhooks/utils/event-registry";
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
+import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
 
 /**
  * Webhook Stripe
@@ -135,6 +136,19 @@ export async function POST(req: Request) {
 					processedAt: new Date(),
 				},
 			});
+
+			// P0.2: Alerter admin si trop de tentatives échouées (>= 3)
+			if (webhookRecord.attempts >= 2) {
+				after(async () => {
+					await sendWebhookFailedAlert({
+						eventId: event.id,
+						eventType: event.type,
+						attempts: webhookRecord.attempts + 1,
+						error: error instanceof Error ? error.message : String(error),
+					});
+				});
+			}
+
 			console.error(`❌ [WEBHOOK:${correlationId}] Error processing webhook event:`, error);
 			throw error;
 		}

@@ -5,9 +5,10 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { bulkCancelOrdersSchema } from "../schemas/order.schemas";
+import { getOrderInvalidationTags } from "../constants/cache";
 
 /**
  * Annule plusieurs commandes en masse
@@ -58,6 +59,7 @@ export async function bulkCancelOrders(
 			select: {
 				id: true,
 				orderNumber: true,
+				userId: true,
 				paymentStatus: true,
 				items: {
 					select: {
@@ -140,6 +142,13 @@ export async function bulkCancelOrders(
 			}
 		});
 
+		// Invalider les caches pour chaque userId unique
+		const uniqueUserIds = [...new Set(eligibleOrders.map(o => o.userId).filter(Boolean))] as string[];
+		uniqueUserIds.forEach(userId => {
+			getOrderInvalidationTags(userId).forEach(tag => updateTag(tag));
+		});
+		// Toujours invalider la liste admin (même si pas d'userId)
+		getOrderInvalidationTags().forEach(tag => updateTag(tag));
 		revalidatePath("/admin/ventes/commandes");
 		revalidatePath("/admin/catalogue/inventaire");
 

@@ -10,9 +10,10 @@ import { prisma } from "@/shared/lib/prisma";
 import { sendRevertShippingNotificationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
+import { getOrderInvalidationTags } from "../constants/cache";
 import { revertToProcessingSchema } from "../schemas/order.schemas";
 import { createOrderAudit } from "../utils/order-audit";
 
@@ -68,6 +69,7 @@ export async function revertToProcessing(
 				orderNumber: true,
 				status: true,
 				fulfillmentStatus: true,
+				userId: true,
 				trackingNumber: true,
 				trackingUrl: true,
 				customerEmail: true,
@@ -122,6 +124,8 @@ export async function revertToProcessing(
 			},
 		});
 
+		// Invalider les caches (orders list admin + commandes user)
+		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
 		revalidatePath("/admin/ventes/commandes");
 
 		// Envoyer l'email de notification au client

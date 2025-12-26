@@ -173,7 +173,8 @@ export async function processRefund(
 			idempotencyKey: `refund_${id}`,
 		});
 
-		if (!stripeResult.success) {
+		// P0.1: Gérer les différents états de retour Stripe
+		if (!stripeResult.success && !stripeResult.pending) {
 			// Marquer le remboursement comme échoué
 			await prisma.$transaction(async (tx) => {
 				await tx.refund.update({
@@ -194,6 +195,35 @@ export async function processRefund(
 			return {
 				status: ActionStatus.ERROR,
 				message: stripeResult.error || REFUND_ERROR_MESSAGES.STRIPE_ERROR,
+			};
+		}
+
+		// P0.1: Si pending, garder APPROVED et attendre webhook refund.updated
+		if (stripeResult.pending) {
+			await prisma.$transaction(async (tx) => {
+				// Mettre à jour avec l'ID Stripe mais garder APPROVED
+				await tx.refund.update({
+					where: { id },
+					data: {
+						stripeRefundId: stripeResult.refundId,
+						// Status reste APPROVED - sera COMPLETED par webhook
+					},
+				});
+
+				await tx.refundHistory.create({
+					data: {
+						refundId: id,
+						action: RefundAction.PROCESSED,
+						authorId: session?.user?.id,
+						note: `Remboursement Stripe en attente de confirmation (${stripeResult.refundId})`,
+					},
+				});
+			});
+
+			return {
+				status: ActionStatus.SUCCESS,
+				message: `Remboursement de ${(refundData.refund.amount / 100).toFixed(2)} € envoyé à Stripe. En attente de confirmation.`,
+				data: { stripeRefundId: stripeResult.refundId, pending: true },
 			};
 		}
 

@@ -5,9 +5,10 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
+import { getOrderInvalidationTags } from "../constants/cache";
 import { bulkDeleteOrdersSchema } from "../schemas/order.schemas";
 
 /**
@@ -53,6 +54,7 @@ export async function bulkDeleteOrders(
 			select: {
 				id: true,
 				orderNumber: true,
+				userId: true,
 				// TODO: Ajouter invoiceNumber au schéma Prisma quand la feature factures sera implémentée
 				paymentStatus: true,
 			},
@@ -82,6 +84,13 @@ export async function bulkDeleteOrders(
 			data: { deletedAt: new Date() },
 		});
 
+		// Invalider les caches pour chaque userId unique
+		const uniqueUserIds = [...new Set(deletableOrders.map(o => o.userId).filter(Boolean))] as string[];
+		uniqueUserIds.forEach(userId => {
+			getOrderInvalidationTags(userId).forEach(tag => updateTag(tag));
+		});
+		// Toujours invalider la liste admin (même si pas d'userId)
+		getOrderInvalidationTags().forEach(tag => updateTag(tag));
 		revalidatePath("/admin/ventes/commandes");
 
 		const message =

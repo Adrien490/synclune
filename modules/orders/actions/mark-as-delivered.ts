@@ -8,11 +8,13 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 import { sendDeliveryConfirmationEmail } from "@/shared/lib/email";
+import { scheduleReviewRequestEmail } from "@/modules/webhooks/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
+import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsDeliveredSchema } from "../schemas/order.schemas";
 import { createOrderAudit } from "../utils/order-audit";
 
@@ -67,6 +69,7 @@ export async function markAsDelivered(
 				orderNumber: true,
 				status: true,
 				fulfillmentStatus: true,
+				userId: true,
 				customerEmail: true,
 				customerName: true,
 				shippingFirstName: true,
@@ -125,6 +128,8 @@ export async function markAsDelivered(
 			},
 		});
 
+		// Invalider les caches (orders list admin + commandes user)
+		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
 		revalidatePath("/admin/ventes/commandes");
 		revalidatePath(`/compte/commandes/${order.orderNumber}`);
 
@@ -156,6 +161,10 @@ export async function markAsDelivered(
 				orderDetailsUrl,
 			});
 		}
+
+		// Planifier l'envoi de l'email de demande d'avis
+		// (ne bloque pas le flux principal en cas d'erreur)
+		await scheduleReviewRequestEmail(id);
 
 		const emailSent = result.data.sendEmail ? " Email envoyé au client." : "";
 

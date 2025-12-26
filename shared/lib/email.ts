@@ -22,6 +22,7 @@ import { ReturnConfirmationEmail } from "@/emails/return-confirmation-email";
 import { RevertShippingNotificationEmail } from "@/emails/revert-shipping-notification-email";
 import { BackInStockEmail } from "@/emails/back-in-stock-email";
 import { AdminContactEmail } from "@/emails/admin-contact-email";
+import { ReviewRequestEmail } from "@/emails/review-request-email";
 import { EMAIL_FROM, EMAIL_SUBJECTS, EMAIL_ADMIN } from "@/shared/lib/email-config";
 
 // Initialiser le client Resend
@@ -1190,6 +1191,57 @@ export async function sendAdminContactEmail({
 
 		return { success: true, data };
 	} catch (error) {
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email de demande d'avis après livraison
+ */
+export async function sendReviewRequestEmail({
+	to,
+	customerName,
+	orderNumber,
+	products,
+	reviewUrl,
+}: {
+	to: string;
+	customerName: string;
+	orderNumber: string;
+	products: Array<{
+		title: string;
+		slug: string;
+		imageUrl: string | null;
+		skuVariants: string | null;
+	}>;
+	reviewUrl: string;
+}) {
+	try {
+		const emailHtml = await render(
+			ReviewRequestEmail({
+				customerName,
+				orderNumber,
+				products,
+				reviewUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.REVIEW_REQUEST,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending review request:", error);
+			return { success: false, error };
+		}
+
+		console.log(`✅ [EMAIL] Review request sent to ${to} for order ${orderNumber}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending review request:", error);
 		return { success: false, error };
 	}
 }

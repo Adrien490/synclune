@@ -8,6 +8,7 @@ import { getProductBySlug } from "@/modules/products/data/get-product";
 import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
+import { getProductReviewStats } from "@/modules/reviews/data/get-product-review-stats";
 
 import { PageHeader } from "@/shared/components/page-header";
 import { ProductDetails } from "@/modules/products/components/product-details";
@@ -22,6 +23,8 @@ import { RecentlyViewedProductsSkeleton } from "@/modules/products/components/re
 import { RecordProductView } from "@/modules/products/components/record-product-view";
 import { generateProductMetadata } from "@/modules/products/utils/seo/generate-metadata";
 import { generateStructuredData } from "@/modules/products/utils/seo/generate-structured-data";
+
+import { ProductReviewsSection, ProductReviewsSectionSkeleton } from "@/modules/reviews/components/product-reviews-section";
 
 type ProductPageParams = Promise<{ slug: string }>;
 type ProductSearchParams = Promise<{
@@ -51,6 +54,9 @@ export default async function ProductPage({
 	if (!product) {
 		notFound();
 	}
+
+	// Récupérer les stats des avis (après vérification existence produit)
+	const reviewStats = await getProductReviewStats(product.id);
 
 	// Sécurité: Bloquer les DRAFT pour les non-admins
 	if (product.status === "DRAFT" && !admin) {
@@ -97,8 +103,12 @@ export default async function ProductPage({
 		{ label: product.title, href: `/creations/${product.slug}` },
 	];
 
-	// Génération du structured data JSON-LD
-	const structuredData = generateStructuredData(product, selectedSku);
+	// Génération du structured data JSON-LD (avec stats avis pour Rich Snippets Google)
+	const structuredData = generateStructuredData({
+		product,
+		selectedSku,
+		reviewStats,
+	});
 
 	// Vérifier si le SKU sélectionné est dans la wishlist (lookup O(1) local)
 	const isInWishlist = wishlistSkuIds.has(selectedSku.id);
@@ -179,6 +189,17 @@ export default async function ProductPage({
 							{/* 8. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
 							<Suspense fallback={<RelatedProductsSkeleton limit={8} />}>
 								<RelatedProducts currentProductSlug={product.slug} limit={8} />
+							</Suspense>
+
+							{/* Separator avant avis clients */}
+							<Separator className="bg-border" />
+
+							{/* 9. Avis clients */}
+							<Suspense fallback={<ProductReviewsSectionSkeleton />}>
+								<ProductReviewsSection
+									productId={product.id}
+									productSlug={product.slug}
+								/>
 							</Suspense>
 						</article>
 					</div>

@@ -10,9 +10,10 @@ import { sendTrackingUpdateEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { getCarrierLabel, getTrackingUrl, toShippingCarrierEnum, type Carrier } from "@/modules/orders/utils/carrier-detection";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
+import { getOrderInvalidationTags } from "../constants/cache";
 import { updateTrackingSchema } from "../schemas/order.schemas";
 
 /**
@@ -68,6 +69,7 @@ export async function updateTracking(
 				orderNumber: true,
 				status: true,
 				fulfillmentStatus: true,
+				userId: true,
 				customerEmail: true,
 				customerName: true,
 				shippingFirstName: true,
@@ -113,6 +115,8 @@ export async function updateTracking(
 			},
 		});
 
+		// Invalider les caches (orders list admin + commandes user)
+		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
 		revalidatePath("/admin/ventes/commandes");
 		revalidatePath(`/compte/commandes/${order.orderNumber}`);
 

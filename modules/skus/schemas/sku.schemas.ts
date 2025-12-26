@@ -1,4 +1,5 @@
-import { z } from "zod";
+import { z } from "zod"
+import { isAllowedMediaDomain } from "@/shared/lib/media-validation"
 
 // ============================================================================
 // MAIN SCHEMA
@@ -6,36 +7,7 @@ import { z } from "zod";
 
 export const getProductSkuSchema = z.object({
 	sku: z.string().trim().min(1),
-});
-
-// ============================================================================
-// SECURITY: ALLOWED MEDIA DOMAINS
-// ============================================================================
-
-/**
- * Whitelist des domaines autorisés pour les URLs de médias
- * Seuls les fichiers hébergés sur UploadThing sont acceptés
- */
-const ALLOWED_MEDIA_DOMAINS = [
-	"utfs.io",
-	"ufs.sh",
-	"uploadthing.com",
-	"uploadthing-prod.s3.us-west-2.amazonaws.com",
-];
-
-/**
- * Vérifie si une URL provient d'un domaine autorisé
- */
-function isAllowedMediaDomain(url: string): boolean {
-	try {
-		const hostname = new URL(url).hostname;
-		return ALLOWED_MEDIA_DOMAINS.some(
-			(domain) => hostname === domain || hostname.endsWith(`.${domain}`)
-		);
-	} catch {
-		return false;
-	}
-}
+})
 
 // ============================================================================
 // SHARED SCHEMAS

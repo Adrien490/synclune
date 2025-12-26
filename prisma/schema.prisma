@@ -657,6 +657,9 @@ model Order {
   actualDelivery    DateTime? // Date réelle de livraison
   shippedAt         DateTime? // Date d'expédition
 
+  // === EMAIL INCITATIF AVIS ===
+  reviewRequestSentAt DateTime? // Date d'envoi de l'email de demande d'avis
+
   // === STATUTS ===
   status            OrderStatus       @default(PENDING)
   paymentStatus     PaymentStatus     @default(PENDING)

@@ -1,11 +1,19 @@
 import { SITE_URL } from "@/shared/constants/seo-config";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
+import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
 
-export function generateStructuredData(
-	product: GetProductReturn,
-	selectedSku: ProductSku | null
-) {
+interface StructuredDataOptions {
+	product: GetProductReturn;
+	selectedSku: ProductSku | null;
+	reviewStats?: ProductReviewStatistics | null;
+}
+
+export function generateStructuredData({
+	product,
+	selectedSku,
+	reviewStats,
+}: StructuredDataOptions) {
 	// Calculer le prix minimum et maximum pour les offres agrégées
 	const activePrices =
 		product.skus
@@ -104,7 +112,16 @@ export function generateStructuredData(
 			"@type": "Brand",
 			name: "Synclune",
 		},
-		// NOTE: aggregateRating supprimé - À réactiver quand un vrai système d'avis sera en place
+		// AggregateRating - affiché seulement si des avis existent
+		...(reviewStats && reviewStats.totalCount > 0 && {
+			aggregateRating: {
+				"@type": "AggregateRating",
+				ratingValue: reviewStats.averageRating.toFixed(1),
+				reviewCount: reviewStats.totalCount,
+				bestRating: 5,
+				worstRating: 1,
+			},
+		}),
 		offers: {
 			"@type": "Offer",
 			price,

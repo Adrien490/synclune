@@ -1,0 +1,79 @@
+"use server"
+
+import { updateTag } from "next/cache"
+import { prisma, notDeleted } from "@/shared/lib/prisma"
+import {
+	requireAdmin,
+	success,
+	notFound,
+	validationError,
+	handleActionError,
+} from "@/shared/lib/actions"
+import type { ActionState } from "@/shared/types/server-action"
+
+import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"
+import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
+import { deleteReviewResponseSchema } from "../schemas/review.schemas"
+
+/**
+ * Supprime (soft delete) une reponse admin a un avis
+ * Action admin uniquement
+ */
+export async function deleteReviewResponse(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
+	try {
+		// 1. Verification admin
+		const adminCheck = await requireAdmin()
+		if ("error" in adminCheck) return adminCheck.error
+
+		// 2. Extraire et valider les donnees
+		const rawData = {
+			id: formData.get("id"),
+		}
+
+		const validation = deleteReviewResponseSchema.safeParse(rawData)
+		if (!validation.success) {
+			return validationError(validation.error.issues[0]?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA)
+		}
+
+		const { id } = validation.data
+
+		// 3. Récupérer la réponse et l'avis associé
+		const response = await prisma.reviewResponse.findFirst({
+			where: {
+				id,
+				...notDeleted,
+			},
+			select: {
+				id: true,
+				review: {
+					select: {
+						id: true,
+						productId: true,
+					},
+				},
+			},
+		})
+
+		if (!response) {
+			return notFound("Réponse")
+		}
+
+		// 4. Soft delete la reponse
+		await prisma.reviewResponse.update({
+			where: { id },
+			data: { deletedAt: new Date() },
+		})
+
+		// 5. Invalider le cache
+		const tags = getReviewModerationTags(response.review.productId, response.review.id)
+		tags.forEach((tag) => updateTag(tag))
+		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST)
+
+		return success("Réponse supprimée avec succès")
+	} catch (e) {
+		return handleActionError(e, REVIEW_ERROR_MESSAGES.RESPONSE_DELETE_FAILED)
+	}
+}

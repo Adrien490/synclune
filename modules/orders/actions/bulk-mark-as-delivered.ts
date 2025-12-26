@@ -6,11 +6,13 @@ import {
 } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
+import { scheduleReviewRequestEmailsBulk } from "@/modules/webhooks/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { bulkMarkAsDeliveredSchema } from "../schemas/order.schemas";
+import { getOrderInvalidationTags } from "../constants/cache";
 
 /**
  * Marque plusieurs commandes comme livrées
@@ -58,7 +60,7 @@ export async function bulkMarkAsDelivered(
 				id: { in: validatedData.ids },
 				status: OrderStatus.SHIPPED,
 			},
-			select: { id: true, orderNumber: true },
+			select: { id: true, orderNumber: true, userId: true },
 		});
 
 		if (eligibleOrders.length === 0) {
@@ -81,6 +83,17 @@ export async function bulkMarkAsDelivered(
 			},
 		});
 
+		// Planifier l'envoi des emails de demande d'avis
+		// (ne bloque pas le flux principal en cas d'erreur)
+		await scheduleReviewRequestEmailsBulk(eligibleIds);
+
+		// Invalider les caches pour chaque userId unique
+		const uniqueUserIds = [...new Set(eligibleOrders.map(o => o.userId).filter(Boolean))] as string[];
+		uniqueUserIds.forEach(userId => {
+			getOrderInvalidationTags(userId).forEach(tag => updateTag(tag));
+		});
+		// Toujours invalider la liste admin (même si pas d'userId)
+		getOrderInvalidationTags().forEach(tag => updateTag(tag));
 		revalidatePath("/admin/ventes/commandes");
 
 		return {

@@ -11,6 +11,7 @@ import {
 	Settings,
 	Sparkles,
 	Mail,
+	MessageSquare,
 } from "lucide-react";
 
 // ============================================================================
@@ -101,18 +102,25 @@ export const navigationData: NavigationData = {
 			],
 		},
 		// ─────────────────────────────────────────────────────────────────────────
-		// MARKETING - Newsletter et personnalisations
+		// MARKETING - Newsletter, avis et personnalisations
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Marketing",
 			icon: Mail,
 			items: [
 				{
+					id: "reviews",
+					title: "Avis clients",
+					shortTitle: "Avis",
+					url: "/admin/marketing/avis",
+					icon: MessageSquare,
+				},
+				{
 					id: "customizations",
 					title: "Personnalisations",
 					shortTitle: "Persos",
 					url: "/admin/marketing/personnalisations",
-					icon: Sparkles,	
+					icon: Sparkles,
 				},
 				{
 					id: "newsletter",

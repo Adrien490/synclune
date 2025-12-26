@@ -284,6 +284,52 @@ export const ourFileRouter = {
 				uploadedBy: metadata.userId,
 			};
 		}),
+
+	// Route pour les photos d'avis clients
+	// Accessible aux utilisateurs connectés (acheteurs vérifiés)
+	reviewMedia: f({
+		image: { maxFileSize: "4MB", maxFileCount: 3 },
+	})
+		.middleware(async ({ files }) => {
+			// 1. Authentification requise
+			const session = await getSession();
+			if (!session?.user) {
+				throw new UploadThingError("Vous devez être connecté pour ajouter des photos à votre avis");
+			}
+
+			// 2. Rate limiting (5 uploads/minute)
+			const headersList = await headers();
+			const clientIp = await getClientIp(headersList);
+			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
+			const rateLimit = checkRateLimit(rateLimitId, { limit: 5, windowMs: 60000 });
+
+			if (!rateLimit.success) {
+				throw new UploadThingError(
+					rateLimit.error || "Trop de tentatives d'upload. Veuillez patienter."
+				);
+			}
+
+			// 3. Validation MIME et taille côté serveur
+			for (const file of files) {
+				validateMimeType(file, ALLOWED_IMAGE_TYPES);
+				validateFileSize(file, 4 * 1024 * 1024); // 4MB
+			}
+
+			return {
+				userId: session.user.id,
+				userName: session.user.name,
+			};
+		})
+		.onUploadComplete(async ({ metadata, file }) => {
+			// Générer le blur placeholder pour les photos d'avis (avec retry)
+			const blurDataUrl = await generateBlurSafe(file.ufsUrl);
+
+			return {
+				url: file.ufsUrl,
+				blurDataUrl,
+				uploadedBy: metadata.userId,
+			};
+		}),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

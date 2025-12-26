@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { Heart, LayoutDashboard, Package, Settings } from "lucide-react";
+import { Heart, LayoutDashboard, MessageSquare, Package, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -15,6 +15,11 @@ const navItems = [
 		href: "/commandes",
 		label: "Commandes",
 		icon: Package,
+	},
+	{
+		href: "/mes-avis",
+		label: "Mes avis",
+		icon: MessageSquare,
 	},
 	{
 		href: "/favoris",

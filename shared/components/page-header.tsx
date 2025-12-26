@@ -226,24 +226,16 @@ export function PageHeader({
 							</nav>
 						)}
 
-						{/* Titre - Desktop ou Mobile sans breadcrumbs */}
-						{breadcrumbs.length > 0 ? (
-							// Avec breadcrumbs : h1 déjà affiché sur mobile, span décoratif sur desktop
-							<span
-								className="hidden sm:block text-2xl sm:text-3xl font-display font-semibold text-foreground tracking-normal break-words"
-								aria-hidden="true"
-							>
-								{title}
-							</span>
-						) : (
-							// Sans breadcrumbs : h1 visible sur tous les breakpoints
-							<h1
-								id="page-title"
-								className="text-2xl sm:text-3xl font-display font-semibold text-foreground tracking-normal break-words"
-							>
-								{title}
-							</h1>
-						)}
+						{/* Titre principal - SEO: toujours un h1 visible par les crawlers */}
+						<h1
+							id={breadcrumbs.length > 0 ? undefined : "page-title"}
+							className={cn(
+								"text-2xl sm:text-3xl font-display font-semibold text-foreground tracking-normal break-words",
+								breadcrumbs.length > 0 && "hidden sm:block"
+							)}
+						>
+							{title}
+						</h1>
 
 						{/* Description optionnelle */}
 						{description && (

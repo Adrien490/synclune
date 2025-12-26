@@ -9,6 +9,7 @@ import {
   Prisma,
   PrismaClient,
   ProductStatus,
+  ReviewStatus,
 } from "../app/generated/prisma/client";
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
@@ -1187,6 +1188,244 @@ async function main(): Promise<void> {
 
   await prisma.testimonial.createMany({ data: testimonialsData, skipDuplicates: true });
   console.log(`✅ ${testimonialsData.length} témoignages créés`);
+
+  // ============================================
+  // AVIS PRODUITS (REVIEWS)
+  // ============================================
+  const reviewTitles = {
+    positive: [
+      "Absolument magnifique !",
+      "Coup de cœur",
+      "Qualité exceptionnelle",
+      "Je recommande vivement",
+      "Très satisfaite",
+      "Sublime",
+      "Parfait pour offrir",
+      "Élégance au quotidien",
+      "Un vrai bijou",
+      "Superbe cadeau",
+    ],
+    neutral: [
+      "Correct dans l'ensemble",
+      "Bien mais...",
+      "Conforme à la description",
+      "Satisfaisant",
+    ],
+    negative: [
+      "Déçue",
+      "Pas à la hauteur",
+      "Qualité décevante",
+    ],
+  };
+
+  const reviewContents = {
+    positive: [
+      "J'ai reçu ce bijou pour mon anniversaire et je suis absolument ravie ! La qualité est au rendez-vous, les finitions sont impeccables. Je le porte tous les jours.",
+      "Commande reçue rapidement, emballage soigné. Le bijou est encore plus beau en vrai qu'en photo. Ma mère a adoré son cadeau !",
+      "C'est mon troisième achat chez Synclune et je ne suis jamais déçue. Les bijoux sont délicats, féminins et de très bonne qualité. Bravo !",
+      "Parfait pour un cadeau de mariage. Ma témoin était émue aux larmes. Un bijou qui a du sens et qui est magnifiquement réalisé.",
+      "Je cherchais un bijou original et j'ai trouvé mon bonheur. Design unique, livraison rapide, je suis conquise !",
+      "La chaîne est très délicate et s'accorde parfaitement avec mes tenues. Reçu dans un joli écrin, parfait pour offrir.",
+      "Qualité irréprochable, le bijou ne ternit pas et reste brillant même après plusieurs semaines de port quotidien.",
+      "J'ai craqué sur le design bohème et je ne regrette pas. C'est devenu mon bijou préféré, il attire toujours des compliments.",
+      "Superbe réalisation artisanale. On sent le travail soigné et l'attention aux détails. Je recommande à 100%.",
+      "Achat pour les fêtes, livraison express parfaitement respectée. Le bijou est sublime et le packaging très élégant.",
+    ],
+    neutral: [
+      "Le bijou est joli mais la chaîne est un peu plus fine que ce que j'imaginais. Reste un bon rapport qualité-prix.",
+      "Conforme à la description, livraison dans les temps. Rien de négatif à signaler mais rien d'exceptionnel non plus.",
+      "Le bijou est correct pour le prix. J'aurais aimé un emballage un peu plus soigné pour offrir.",
+      "Belle couleur mais les finitions auraient pu être plus soignées. Globalement satisfaite.",
+    ],
+    negative: [
+      "Le bijou est joli mais la fermeture s'est abîmée après quelques utilisations. Dommage.",
+      "La couleur est différente de ce que je voyais sur les photos. Un peu déçue mais le service client m'a bien accompagnée.",
+      "Délai de livraison plus long que prévu. Le bijou est correct mais je m'attendais à mieux pour ce prix.",
+    ],
+  };
+
+  // Récupérer les commandes DELIVERED avec leurs items et users
+  const deliveredOrders = await prisma.order.findMany({
+    where: {
+      status: OrderStatus.DELIVERED,
+      userId: { not: null },
+    },
+    include: {
+      items: {
+        include: {
+          product: true,
+        },
+      },
+      user: true,
+    },
+  });
+
+  console.log(`📝 ${deliveredOrders.length} commandes livrées trouvées pour les avis`);
+
+  let reviewsCreated = 0;
+  const reviewedPairs = new Set<string>(); // Pour éviter les doublons userId-productId
+
+  for (const order of deliveredOrders) {
+    if (!order.userId || !order.user) continue;
+
+    // 70% de chance de laisser un avis sur une commande
+    if (!sampleBoolean(0.7)) continue;
+
+    for (const item of order.items) {
+      if (!item.productId) continue;
+
+      const pairKey = `${order.userId}-${item.productId}`;
+
+      // Vérifier si cet utilisateur a déjà laissé un avis pour ce produit
+      if (reviewedPairs.has(pairKey)) continue;
+
+      // Vérifier aussi en base de données
+      const existingReview = await prisma.productReview.findUnique({
+        where: {
+          userId_productId: {
+            userId: order.userId,
+            productId: item.productId,
+          },
+        },
+      });
+
+      if (existingReview) {
+        reviewedPairs.add(pairKey);
+        continue;
+      }
+
+      // Vérifier si cet orderItem a déjà un avis
+      const existingOrderItemReview = await prisma.productReview.findUnique({
+        where: { orderItemId: item.id },
+      });
+
+      if (existingOrderItemReview) {
+        reviewedPairs.add(pairKey);
+        continue;
+      }
+
+      // 60% de chance de laisser un avis sur un article spécifique
+      if (!sampleBoolean(0.6)) continue;
+
+      // Distribution réaliste des notes (majorité positive)
+      const rating = faker.helpers.weightedArrayElement([
+        { weight: 2, value: 5 },  // 5 étoiles - très fréquent
+        { weight: 3, value: 4 },  // 4 étoiles - le plus fréquent
+        { weight: 1, value: 3 },  // 3 étoiles - occasionnel
+        { weight: 0.3, value: 2 }, // 2 étoiles - rare
+        { weight: 0.1, value: 1 }, // 1 étoile - très rare
+      ]);
+
+      let titlePool: string[];
+      let contentPool: string[];
+
+      if (rating >= 4) {
+        titlePool = reviewTitles.positive;
+        contentPool = reviewContents.positive;
+      } else if (rating === 3) {
+        titlePool = reviewTitles.neutral;
+        contentPool = reviewContents.neutral;
+      } else {
+        titlePool = reviewTitles.negative;
+        contentPool = reviewContents.negative;
+      }
+
+      const hasTitle = sampleBoolean(0.7); // 70% des avis ont un titre
+      const title = hasTitle ? faker.helpers.arrayElement(titlePool) : null;
+      const content = faker.helpers.arrayElement(contentPool);
+
+      // Date de l'avis : entre 1 et 14 jours après la commande
+      const reviewDate = new Date(order.createdAt);
+      reviewDate.setDate(reviewDate.getDate() + faker.number.int({ min: 1, max: 14 }));
+
+      // Status : 95% publiés, 5% masqués
+      const status = sampleBoolean(0.95) ? ReviewStatus.PUBLISHED : ReviewStatus.HIDDEN;
+
+      try {
+        await prisma.productReview.create({
+          data: {
+            productId: item.productId,
+            userId: order.userId,
+            orderItemId: item.id,
+            rating,
+            title,
+            content,
+            status,
+            createdAt: reviewDate,
+            updatedAt: reviewDate,
+          },
+        });
+
+        reviewedPairs.add(pairKey);
+        reviewsCreated++;
+      } catch {
+        // Ignore les erreurs de contrainte unique
+        continue;
+      }
+    }
+  }
+
+  console.log(`✅ ${reviewsCreated} avis créés`);
+
+  // ============================================
+  // MISE À JOUR DES STATS DES REVIEWS
+  // ============================================
+  const productsWithReviews = await prisma.product.findMany({
+    where: {
+      reviews: {
+        some: {
+          status: ReviewStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
+    },
+    select: { id: true },
+  });
+
+  for (const product of productsWithReviews) {
+    const reviews = await prisma.productReview.findMany({
+      where: {
+        productId: product.id,
+        status: ReviewStatus.PUBLISHED,
+        deletedAt: null,
+      },
+      select: { rating: true },
+    });
+
+    const totalCount = reviews.length;
+    const sumRatings = reviews.reduce((sum, r) => sum + r.rating, 0);
+    const averageRating = totalCount > 0 ? sumRatings / totalCount : 0;
+
+    const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const review of reviews) {
+      ratingCounts[review.rating as keyof typeof ratingCounts]++;
+    }
+
+    await prisma.productReviewStats.upsert({
+      where: { productId: product.id },
+      create: {
+        productId: product.id,
+        totalCount,
+        averageRating,
+        rating1Count: ratingCounts[1],
+        rating2Count: ratingCounts[2],
+        rating3Count: ratingCounts[3],
+        rating4Count: ratingCounts[4],
+        rating5Count: ratingCounts[5],
+      },
+      update: {
+        totalCount,
+        averageRating,
+        rating1Count: ratingCounts[1],
+        rating2Count: ratingCounts[2],
+        rating3Count: ratingCounts[3],
+        rating4Count: ratingCounts[4],
+        rating5Count: ratingCounts[5],
+      },
+    });
+  }
+
+  console.log(`✅ Stats des avis mises à jour pour ${productsWithReviews.length} produits`);
 
   console.log("\n🎉 Seed terminé avec succès!");
 }

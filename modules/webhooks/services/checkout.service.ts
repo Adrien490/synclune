@@ -11,6 +11,25 @@ import {
 	getShippingCarrierFromRate,
 } from "@/modules/orders/constants/stripe-shipping-rates";
 import type { PostWebhookTask } from "../types/webhook.types";
+import type { SkuValidationResult } from "@/modules/cart/types/sku-validation.types";
+
+// P1.2: Timeout pour validation stock (évite webhook timeout si DB lente)
+const VALIDATION_TIMEOUT_MS = 5000;
+
+async function validateWithTimeout(
+	validateFn: () => Promise<SkuValidationResult>,
+	skuId: string
+): Promise<SkuValidationResult> {
+	return Promise.race([
+		validateFn(),
+		new Promise<SkuValidationResult>((_, reject) =>
+			setTimeout(
+				() => reject(new Error(`Validation timeout for SKU ${skuId}`)),
+				VALIDATION_TIMEOUT_MS
+			)
+		),
+	]);
+}
 
 // Types pour les résultats des services
 export interface ProcessCheckoutResult {
@@ -118,6 +137,13 @@ export async function processOrderTransaction(
 			throw new Error(`Order not found: ${orderId}`);
 		}
 
+		// P1.1: Vérifier que l'email Stripe correspond à la commande (anti-fraude)
+		const stripeEmail = session.customer_email || session.customer_details?.email;
+		if (stripeEmail && order.customerEmail && stripeEmail.toLowerCase() !== order.customerEmail.toLowerCase()) {
+			console.warn(`⚠️ [WEBHOOK] Email mismatch for order ${orderId}: Stripe=${stripeEmail}, Order=${order.customerEmail}`);
+			// On log mais on ne bloque pas (guest checkout peut changer d'email)
+		}
+
 		// 2. Vérifier l'idempotence - Si déjà traité, on skip
 		if (order.paymentStatus === "PAID") {
 			console.log(`⚠️  [WEBHOOK] Order ${orderId} already processed, skipping`);
@@ -125,13 +151,14 @@ export async function processOrderTransaction(
 		}
 
 		// 3. Re-validation de tous les items AVANT de marquer comme PAID
+		// P1.2: Avec timeout pour éviter webhook timeout si DB lente
 		console.log(`🔍 [WEBHOOK] Re-validating ${order.items.length} items for order ${orderId}`);
 
 		for (const item of order.items) {
-			const validation = await validateSkuAndStock({
-				skuId: item.skuId,
-				quantity: item.quantity,
-			});
+			const validation = await validateWithTimeout(
+				() => validateSkuAndStock({ skuId: item.skuId, quantity: item.quantity }),
+				item.skuId
+			);
 
 			if (!validation.success) {
 				console.error(

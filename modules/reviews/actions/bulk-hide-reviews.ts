@@ -1,0 +1,101 @@
+"use server"
+
+import { updateTag } from "next/cache"
+import { prisma, notDeleted } from "@/shared/lib/prisma"
+import {
+	requireAdmin,
+	success,
+	error,
+	validationError,
+	handleActionError,
+} from "@/shared/lib/actions"
+import type { ActionState } from "@/shared/types/server-action"
+
+import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"
+import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
+import { bulkHideReviewsSchema } from "../schemas/review.schemas"
+import { updateProductReviewStats } from "../utils/stats.utils"
+
+/**
+ * Masque plusieurs avis en masse
+ * Action admin uniquement
+ */
+export async function bulkHideReviews(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
+	try {
+		// 1. Vérification admin
+		const adminCheck = await requireAdmin()
+		if ("error" in adminCheck) return adminCheck.error
+
+		// 2. Extraire et valider les données
+		const rawData = {
+			ids: JSON.parse((formData.get("ids") as string) || "[]"),
+		}
+
+		const validation = bulkHideReviewsSchema.safeParse(rawData)
+		if (!validation.success) {
+			const firstError = validation.error.issues[0]
+			const errorPath = firstError?.path.join(".")
+			return validationError(
+				errorPath ? `${errorPath}: ${firstError.message}` : firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA
+			)
+		}
+
+		const { ids } = validation.data
+
+		// 3. Récupérer les avis pour connaître leurs productIds
+		const reviews = await prisma.productReview.findMany({
+			where: {
+				id: { in: ids },
+				...notDeleted,
+			},
+			select: {
+				id: true,
+				productId: true,
+			},
+		})
+
+		if (reviews.length === 0) {
+			return error("Aucun avis trouvé")
+		}
+
+		// 4. Masquer tous les avis et recalculer les stats
+		const productIds = [...new Set(reviews.map((r) => r.productId))]
+
+		await prisma.$transaction(async (tx) => {
+			// Masquer tous les avis
+			await tx.productReview.updateMany({
+				where: {
+					id: { in: ids },
+					...notDeleted,
+				},
+				data: { status: "HIDDEN" },
+			})
+
+			// Recalculer les stats pour chaque produit affecté
+			for (const productId of productIds) {
+				await updateProductReviewStats(tx, productId)
+			}
+		})
+
+		// 5. Invalider le cache pour chaque avis et produit
+		const tagsToInvalidate = new Set<string>()
+
+		reviews.forEach((review) => {
+			getReviewModerationTags(review.productId, review.id).forEach((tag) =>
+				tagsToInvalidate.add(tag)
+			)
+		})
+
+		// Ajouter le tag admin list
+		tagsToInvalidate.add(REVIEWS_CACHE_TAGS.ADMIN_LIST)
+
+		tagsToInvalidate.forEach((tag) => updateTag(tag))
+
+		return success(`${reviews.length} avis masqué(s) avec succès`, { count: reviews.length })
+	} catch (e) {
+		return handleActionError(e, REVIEW_ERROR_MESSAGES.MODERATE_FAILED)
+	}
+}

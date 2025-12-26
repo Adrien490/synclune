@@ -8,6 +8,7 @@ import {
 	sendShippingConfirmationEmail,
 	sendDeliveryConfirmationEmail,
 } from "@/shared/lib/email";
+import { sendReviewRequestEmailInternal } from "@/modules/reviews/actions/send-review-request-email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier-detection";
@@ -188,6 +189,30 @@ export async function resendOrderEmail(
 				return {
 					status: ActionStatus.SUCCESS,
 					message: "Email de livraison renvoyé",
+				};
+			}
+
+			case "review-request": {
+				// Verifier que la commande a ete livree
+				if (order.status !== OrderStatus.DELIVERED && order.fulfillmentStatus !== FulfillmentStatus.DELIVERED) {
+					return {
+						status: ActionStatus.ERROR,
+						message: "La commande n'a pas encore ete livree",
+					};
+				}
+
+				const reviewResult = await sendReviewRequestEmailInternal(orderId);
+
+				if (reviewResult.status !== ActionStatus.SUCCESS) {
+					return {
+						status: ActionStatus.ERROR,
+						message: reviewResult.message || "Erreur lors de l'envoi de l'email de demande d'avis",
+					};
+				}
+
+				return {
+					status: ActionStatus.SUCCESS,
+					message: "Email de demande d'avis renvoye",
 				};
 			}
 

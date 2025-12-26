@@ -21,6 +21,7 @@ import { checkDiscountEligibility } from "@/modules/discounts/utils/check-discou
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/utils/calculate-discount-amount";
 import { getShippingZoneFromPostalCode } from "@/modules/payments/utils/postal-zone.utils";
 import { getInvoiceFooter } from "@/shared/lib/stripe";
+import { getValidImageUrl } from "@/modules/payments/utils/validate-image-url";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -205,8 +206,8 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			if (sku.size) productName += ` - Taille: ${sku.size}`;
 			if (sku.material) productName += ` - ${sku.material}`;
 
-			// Récupérer la première image du SKU
-			const imageUrl = sku.images?.[0]?.url || undefined;
+			// P1.3: Valider l'URL de l'image avant envoi à Stripe
+			const imageUrl = getValidImageUrl(sku.images?.[0]?.url);
 
 			lineItems.push({
 				price_data: {
@@ -453,8 +454,10 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				const product = sku.product;
 
 				// Utiliser les données déjà chargées par getSkuDetails (évite un re-fetch)
+				// P1.3: Valider l'URL avant stockage (cohérence avec envoi Stripe)
 				const primaryImage = sku.images?.find((img) => img.isPrimary);
-				const imageUrl = primaryImage?.url || sku.images?.[0]?.url || null;
+				const rawImageUrl = primaryImage?.url || sku.images?.[0]?.url || null;
+				const imageUrl = getValidImageUrl(rawImageUrl) || null;
 
 				await tx.orderItem.create({
 					data: {

@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
 	title: "Erreur d'authentification",
 	description: "Une erreur est survenue lors de l'authentification",
+	robots: "noindex, nofollow",
 };
 
 const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {

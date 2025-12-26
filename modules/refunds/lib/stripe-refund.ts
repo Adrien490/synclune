@@ -25,6 +25,7 @@ export type StripeRefundStatus =
 
 export interface StripeRefundResult {
 	success: boolean;
+	pending?: boolean;
 	refundId?: string;
 	status?: StripeRefundStatus;
 	error?: string;
@@ -70,8 +71,12 @@ export async function createStripeRefund(
 
 		const refund = await stripe.refunds.create(refundParams, requestOptions);
 
+		// P0.1: Distinguer pending de succeeded
+		// - succeeded = remboursement confirmé immédiatement
+		// - pending = en attente de confirmation (ex: virement bancaire)
 		return {
-			success: refund.status === "succeeded" || refund.status === "pending",
+			success: refund.status === "succeeded",
+			pending: refund.status === "pending",
 			refundId: refund.id,
 			status: (refund.status ?? undefined) as StripeRefundStatus | undefined,
 		};
@@ -80,6 +85,16 @@ export async function createStripeRefund(
 
 		// Gérer les erreurs Stripe spécifiques
 		if (error instanceof Stripe.errors.StripeError) {
+			// P0.3: Idempotence - si déjà remboursé, c'est un succès
+			// Peut arriver si retry webhook ou hash collision idempotency key
+			if (error.code === "charge_already_refunded") {
+				console.log("[STRIPE_REFUND] Charge already refunded, treating as success (idempotence)");
+				return {
+					success: true,
+					pending: false,
+				};
+			}
+
 			return {
 				success: false,
 				error: error.message,
