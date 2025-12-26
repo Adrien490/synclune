@@ -53,6 +53,7 @@ export function useAddRecentSearch(options?: UseAddRecentSearchOptions) {
 	 * Ajoute un terme aux recherches recentes
 	 */
 	const add = (term: string) => {
+		if (isTransitionPending || isActionPending) return
 		startTransition(() => {
 			const formData = new FormData()
 			formData.set("term", term)

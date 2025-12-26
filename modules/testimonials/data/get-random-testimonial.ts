@@ -1,3 +1,4 @@
+import { connection } from "next/server"
 import { getDailyIndex } from "@/shared/utils/dates"
 import type { TestimonialDisplay } from "../types/testimonial.types"
 import { getTestimonials } from "./get-testimonials"
@@ -12,6 +13,7 @@ import { getTestimonials } from "./get-testimonials"
  * @returns Un témoignage ou null si aucun témoignage publié
  */
 export async function getRandomTestimonial(): Promise<TestimonialDisplay | null> {
+	await connection()
 	const testimonials = await getTestimonials()
 
 	if (testimonials.length === 0) {

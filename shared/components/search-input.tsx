@@ -153,8 +153,10 @@ export function SearchInput({
 		if (e.key === "Escape") {
 			e.preventDefault()
 			if (currentValue) {
+				e.stopPropagation() // Empêche la fermeture du dialog parent
 				handleClear()
 			}
+			// Si pas de valeur, laisse l'event se propager pour fermer le dialog
 		}
 	}
 

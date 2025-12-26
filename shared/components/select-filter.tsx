@@ -38,6 +38,9 @@ export function SelectFilter({
 	const { value, setFilter, clearFilter, isPending } =
 		useSelectFilter(filterKey);
 
+	// Filtrer les options avec value vide (requis par Radix SelectItem)
+	const validOptions = options.filter((opt) => opt.value.length > 0);
+
 	const handleSelect = (newValue: string) => {
 		setFilter(newValue);
 	};
@@ -49,7 +52,11 @@ export function SelectFilter({
 	return (
 		<div
 			data-pending={isPending ? "" : undefined}
-			className={cn("relative", className)}
+			className={cn(
+				"relative transition-opacity",
+				isPending && "opacity-70 pointer-events-none",
+				className
+			)}
 			aria-live="polite"
 			aria-busy={isPending}
 		>
@@ -82,9 +89,15 @@ export function SelectFilter({
 							<SelectValue placeholder={placeholder} />
 						</div>
 
-						{/* Icône mobile */}
-						<div className="sm:hidden flex items-center justify-center">
+						{/* Icône mobile avec indicateur de valeur active */}
+						<div className="sm:hidden flex items-center justify-center gap-1">
 							<ArrowUpDown className="h-4 w-4" />
+							{value && (
+								<span
+									className="w-1.5 h-1.5 rounded-full bg-primary"
+									aria-hidden="true"
+								/>
+							)}
 						</div>
 					</SelectTrigger>
 					<SelectContent>
@@ -92,11 +105,17 @@ export function SelectFilter({
 							className="w-full"
 							style={{ maxHeight: `${maxHeight}px` }}
 						>
-							{options.map((option) => (
-								<SelectItem key={option.value} value={option.value}>
-									{option.label}
-								</SelectItem>
-							))}
+							{validOptions.length === 0 ? (
+								<div className="py-6 text-center text-sm text-muted-foreground">
+									Aucune option disponible
+								</div>
+							) : (
+								validOptions.map((option) => (
+									<SelectItem key={option.value} value={option.value}>
+										{option.label}
+									</SelectItem>
+								))
+							)}
 						</ScrollArea>
 					</SelectContent>
 				</Select>
@@ -106,7 +125,7 @@ export function SelectFilter({
 						variant="ghost"
 						size="icon"
 						aria-label={`Effacer le filtre ${label}`}
-						className="h-8 w-8 rounded-full shrink-0 hidden sm:inline-flex"
+						className="h-8 w-8 rounded-full shrink-0"
 						onClick={handleClear}
 						disabled={isPending}
 					>

@@ -153,8 +153,13 @@ export function CursorPagination({
 				<nav
 					role="navigation"
 					aria-label="Pagination"
+					aria-describedby="pagination-shortcuts"
 					className="flex items-center gap-2"
 				>
+					<span id="pagination-shortcuts" className="sr-only">
+						Raccourcis : Alt+Flèche gauche pour page précédente, Alt+Flèche
+						droite pour page suivante
+					</span>
 					{/* Bouton retour au début - toujours affiché pour éviter layout shift */}
 					<Button
 						variant="outline"
@@ -204,18 +209,16 @@ export function CursorPagination({
 						</Button>
 
 						<div
-							role="status"
-							aria-current="page"
 							className="px-3 text-xs sm:text-sm bg-muted/50 min-w-[80px] sm:min-w-[100px] text-center flex items-center justify-center h-12 md:h-9"
 						>
 							<span className="font-medium text-foreground">
 								{!hasPreviousPage && !hasNextPage
 									? "Page unique"
 									: !hasPreviousPage
-										? "Page 1"
+										? "Première page"
 										: !hasNextPage
 											? "Dernière page"
-											: "Page 2+"}
+											: "Suite"}
 							</span>
 						</div>
 

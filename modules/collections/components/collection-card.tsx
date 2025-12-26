@@ -71,6 +71,8 @@ export function CollectionCard({
 						// Border renforcee (2px comme ProductCard)
 						"border-2 border-transparent",
 						"motion-safe:can-hover:hover:border-primary/30",
+						// Focus-within pour navigation clavier (harmonise avec ProductCard)
+						"focus-within:border-primary/30 focus-within:shadow-lg focus-within:shadow-primary/10",
 						// Shadow harmonisee avec ProductCard
 						"shadow-sm",
 						"motion-safe:can-hover:hover:shadow-xl motion-safe:can-hover:hover:shadow-primary/15",
@@ -79,17 +81,19 @@ export function CollectionCard({
 						"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01]",
 						// Etat active pour feedback tactile
 						"motion-safe:active:scale-[0.98] motion-safe:active:translate-y-0",
+						// GPU optimization pour animations fluides
+						"will-change-transform",
 					)}
 				>
 					{/* SEO: URL de la collection (absolue pour Schema.org) */}
-					<meta itemProp="url" content={`${process.env.NEXT_PUBLIC_BASE_URL}/collections/${slug}`} />
+					<meta itemProp="url" content={`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://synclune.fr"}/collections/${slug}`} />
 
 					{/* Image */}
 					<div className="collection-card-media relative aspect-square overflow-hidden bg-muted">
 						{imageUrl ? (
 							<Image
 								src={imageUrl}
-								alt={`Collection ${name} - Synclune bijoux artisanaux`}
+								alt={`Collection ${name}`}
 								fill
 								className="object-cover rounded-t-lg transition-transform duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
 								loading={isAboveFold ? undefined : "lazy"}
@@ -106,15 +110,7 @@ export function CollectionCard({
 								role="img"
 								aria-label={`Image non disponible pour la collection ${name}`}
 							>
-								<div className="text-center space-y-3">
-									<Gem className="w-12 h-12 text-primary/40 mx-auto" />
-									<span
-										className="text-sm/6 tracking-normal text-muted-foreground"
-										aria-hidden="true"
-									>
-										{name}
-									</span>
-								</div>
+								<Gem className="w-12 h-12 text-primary/40" />
 							</div>
 						)}
 					</div>

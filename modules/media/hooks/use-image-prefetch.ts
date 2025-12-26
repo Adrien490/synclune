@@ -16,24 +16,28 @@ interface UsePrefetchImagesOptions {
 /**
  * Polyfill pour requestIdleCallback (Safari, Edge < 79)
  * Utilise setTimeout comme fallback avec priorité basse
+ * Respecte l'option timeout pour un comportement cohérent
+ * Note: Dans le browser, setTimeout retourne un number, pas un NodeJS.Timeout
  */
 const requestIdleCallbackPolyfill =
 	typeof window !== "undefined" && "requestIdleCallback" in window
 		? window.requestIdleCallback
-		: (callback: IdleRequestCallback, options?: IdleRequestOptions) => {
+		: (callback: IdleRequestCallback, options?: IdleRequestOptions): number => {
+				const timeout = options?.timeout ?? 50;
 				const start = Date.now();
-				return setTimeout(() => {
+				return window.setTimeout(() => {
+					const elapsed = Date.now() - start;
 					callback({
-						didTimeout: false,
-						timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
+						didTimeout: elapsed >= timeout,
+						timeRemaining: () => Math.max(0, 50 - elapsed),
 					});
-				}, 1) as unknown as number;
+				}, Math.min(1, timeout));
 			};
 
 const cancelIdleCallbackPolyfill =
 	typeof window !== "undefined" && "cancelIdleCallback" in window
 		? window.cancelIdleCallback
-		: (id: number) => clearTimeout(id);
+		: (id: number) => window.clearTimeout(id);
 
 /**
  * Hook pour prefetch intelligent des images dans un carousel
@@ -125,6 +129,11 @@ export function usePrefetchImages({
 
 		return () => {
 			cancelIdleCallbackPolyfill(prefetchId);
+			// Cleanup tous les links prefetch au unmount
+			const allLinks = document.querySelectorAll<HTMLLinkElement>(
+				'link[rel="prefetch"][data-prefetched-by="gallery"]'
+			);
+			allLinks.forEach((link) => link.remove());
 		};
 	}, [imageUrls, currentIndex, prefetchRange, enabled]);
 }

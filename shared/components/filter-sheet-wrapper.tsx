@@ -70,15 +70,15 @@ export function FilterSheetWrapper({
 	trigger,
 	hideTrigger = false,
 }: FilterSheetWrapperProps) {
-	const open = controlledOpen ?? false;
-	const setOpen = (newOpen: boolean) => controlledOnOpenChange?.(newOpen);
+	// Note: Ne pas utiliser de fallback pour permettre le mode uncontrolled
+	// Si controlledOpen est undefined, Vaul gère l'état en interne
 
 	const handleApply = () => {
 		onApply?.();
-		setOpen(false);
+		controlledOnOpenChange?.(false);
 	};
 
-	const handleKeyDown = (e: React.KeyboardEvent) => {
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
 		// Cmd+Enter (Mac) ou Ctrl+Enter (Windows) pour appliquer
 		if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
 			e.preventDefault();
@@ -123,7 +123,7 @@ export function FilterSheetWrapper({
 	);
 
 	return (
-		<Sheet direction="right" open={open} onOpenChange={setOpen}>
+		<Sheet direction="right" open={controlledOpen} onOpenChange={controlledOnOpenChange}>
 			{!hideTrigger && (
 				<SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>
 			)}
@@ -132,10 +132,17 @@ export function FilterSheetWrapper({
 				className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full"
 				onKeyDown={handleKeyDown}
 			>
-				<SheetHeader className="px-6 py-5 border-b border-primary/10 bg-gradient-to-r from-background via-primary/[0.02] to-background shrink-0">
+				<SheetHeader
+					className="px-6 py-5 border-b border-primary/10 bg-gradient-to-r from-background via-primary/[0.02] to-background shrink-0"
+					role="banner"
+					aria-labelledby="filter-sheet-title"
+				>
 					<div className="flex items-center justify-between gap-4">
 						<div className="space-y-0.5">
-							<SheetTitle className="text-lg font-semibold font-serif tracking-tight">
+							<SheetTitle
+								id="filter-sheet-title"
+								className="text-lg font-semibold font-serif tracking-tight"
+							>
 								{title}
 							</SheetTitle>
 							{description && (
@@ -164,6 +171,8 @@ export function FilterSheetWrapper({
 							"px-6 py-4 transition-opacity duration-200",
 							isPending && "opacity-50 pointer-events-none"
 						)}
+						role="region"
+						aria-label="Options de filtrage"
 						aria-busy={isPending}
 					>
 						{children}
@@ -178,21 +187,28 @@ export function FilterSheetWrapper({
 				<SheetFooter className="px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] border-t border-primary/10 bg-background shrink-0">
 					{showCancelButton ? (
 						<>
-							{/* Mobile: bouton pleine largeur */}
-							<Button
-								type="button"
-								onClick={handleApply}
-								disabled={isPending}
-								className="w-full sm:hidden"
-							>
-								{isPending && (
-									<Loader2
-										className="h-4 w-4 animate-spin"
-										aria-hidden="true"
-									/>
-								)}
-								{applyButtonText}
-							</Button>
+							{/* Mobile: boutons empilés */}
+							<div className="flex flex-col gap-2 sm:hidden">
+								<Button
+									type="button"
+									onClick={handleApply}
+									disabled={isPending}
+									className="w-full"
+								>
+									{isPending && (
+										<Loader2
+											className="h-4 w-4 animate-spin"
+											aria-hidden="true"
+										/>
+									)}
+									{applyButtonText}
+								</Button>
+								<SheetClose asChild>
+									<Button variant="ghost" className="w-full">
+										{cancelButtonText}
+									</Button>
+								</SheetClose>
+							</div>
 							{/* Desktop: groupe de boutons */}
 							<ButtonGroup className="hidden sm:flex w-full" aria-label="Actions de filtrage">
 								<SheetClose asChild className="flex-1">

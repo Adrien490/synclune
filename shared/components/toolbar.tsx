@@ -4,14 +4,17 @@ import { ReactNode } from "react";
 /**
  * Toolbar - Container for page controls (search, filters, sort, actions)
  *
- * Layout horizontal adaptatif sur tous les écrans (ultrathink).
+ * Layout horizontal adaptatif sur tous les écrans.
  * Les éléments s'adaptent automatiquement à l'espace disponible.
  *
  * @example
  * ```tsx
- * <Toolbar search={<SearchInput mode="live" size="sm" placeholder="Rechercher..." />}>
- *   <SortSelect />
- *   <FilterSheet />
+ * <Toolbar
+ *   search={<SearchInput paramName="search" mode="live" size="sm" placeholder="Rechercher..." />}
+ *   ariaLabel="Barre d'outils de gestion"
+ * >
+ *   <SelectFilter ... />
+ *   <ProductsFilterSheet />
  * </Toolbar>
  * ```
  */
@@ -64,8 +67,8 @@ export function Toolbar({
 				className={cn(
 					"flex flex-row flex-wrap gap-2 items-center",
 					"md:rounded-lg md:bg-card md:border md:border-border/60",
-					"min-w-0 p-0 md:p-4 md:shadow-sm transition-colors duration-200",
-					isPending && "opacity-60 pointer-events-none",
+					"min-w-0 p-0 md:p-4 md:shadow-sm",
+					isPending && "opacity-60 pointer-events-none transition-opacity duration-200",
 					className
 				)}
 			>
@@ -82,17 +85,16 @@ export function Toolbar({
 			aria-orientation="horizontal"
 			aria-busy={isPending}
 			className={cn(
+				"flex flex-row gap-2 items-center",
 				"md:rounded-lg md:bg-card md:border md:border-border/60",
-				"min-w-0 p-0 md:p-4 md:shadow-sm transition-colors duration-200",
-				isPending && "opacity-60 pointer-events-none",
+				"min-w-0 p-0 md:p-4 md:shadow-sm",
+				isPending && "opacity-60 pointer-events-none transition-opacity duration-200",
 				className
 			)}
 		>
-			<div className="flex flex-row gap-2 items-center w-full">
-				<div className="flex-1 min-w-0">{search}</div>
-				<div className="flex flex-row items-center gap-2 shrink-0">
-					{children}
-				</div>
+			<div className="flex-1 min-w-0">{search}</div>
+			<div className="flex flex-row items-center gap-2 shrink-0">
+				{children}
 			</div>
 		</div>
 	);

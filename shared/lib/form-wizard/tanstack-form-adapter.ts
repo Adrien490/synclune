@@ -1,17 +1,21 @@
 import type { FormLike } from "@/shared/types/form-wizard"
 
 /**
- * Type représentant un formulaire TanStack Form.
+ * Interface minimale pour l'adaptateur TanStack Form.
  *
- * Utilise `any` intentionnellement car TanStack Form utilise des types génériques
- * stricts où les noms de champs sont des unions littérales typées (ex: "title" | "description").
- * Un adapter doit accepter n'importe quel formulaire indépendamment de ses champs.
+ * Définit les méthodes requises par l'adapter sans coupler aux types
+ * génériques stricts de TanStack Form (où les noms de champs sont des
+ * unions littérales typées comme "title" | "description").
  *
- * Le duck typing de l'implémentation garantit la présence des méthodes nécessaires
- * à l'exécution : validateField, getFieldMeta, getFieldValue, state.isDirty.
+ * Cette interface permet d'accepter n'importe quel formulaire TanStack
+ * tout en conservant la type-safety à la compilation.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TanStackFormInstance = any
+interface TanStackFormInstance {
+	validateField: (name: string, cause?: string) => Promise<void>
+	getFieldMeta: (name: string) => { errors: string[] } | undefined
+	getFieldValue?: (name: string) => unknown
+	state?: { isDirty: boolean }
+}
 
 /**
  * Crée un adaptateur FormLike à partir d'un formulaire TanStack Form.
@@ -24,7 +28,7 @@ type TanStackFormInstance = any
  *
  * @example
  * ```tsx
- * import { createTanStackFormAdapter } from "@/shared/features/form-wizard/adapters"
+ * import { createTanStackFormAdapter } from "@/shared/lib/form-wizard"
  *
  * const form = useAppForm<ProductFormInput>({ ... })
  *
@@ -35,17 +39,21 @@ type TanStackFormInstance = any
  * ```
  */
 export function createTanStackFormAdapter(form: TanStackFormInstance): FormLike {
-	// Validation des méthodes requises pour un meilleur debug
+	// Validate required methods for better debugging
 	if (!form?.validateField) {
 		throw new Error(
-			"[FormWizard] L'adaptateur nécessite la méthode validateField sur le formulaire"
+			"[FormWizard] Adapter requires validateField method on form instance"
 		)
 	}
 	if (!form?.getFieldMeta) {
 		throw new Error(
-			"[FormWizard] L'adaptateur nécessite la méthode getFieldMeta sur le formulaire"
+			"[FormWizard] Adapter requires getFieldMeta method on form instance"
 		)
 	}
+
+	// Extract optional properties to enable proper type narrowing
+	const { getFieldValue } = form
+	const stateIsDirty = form.state?.isDirty
 
 	return {
 		validateField: async (name: string, opts?: { cause: string }) => {
@@ -55,9 +63,11 @@ export function createTanStackFormAdapter(form: TanStackFormInstance): FormLike 
 		getFieldMeta: (name: string) => {
 			return form.getFieldMeta(name)
 		},
-		getFieldValue: form.getFieldValue
-			? (name: string) => form.getFieldValue(name)
+		getFieldValue: getFieldValue
+			? (name: string) => getFieldValue(name)
 			: undefined,
-		isDirty: () => form.state.isDirty,
+		isDirty: stateIsDirty !== undefined
+			? () => form.state!.isDirty
+			: undefined,
 	}
 }

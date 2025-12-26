@@ -35,6 +35,6 @@ export const BRAND = {
 	},
 
 	website: {
-		url: process.env.BETTER_AUTH_URL,
+		url: process.env.BETTER_AUTH_URL ?? "https://synclune.fr",
 	},
 } as const;

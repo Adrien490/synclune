@@ -41,7 +41,22 @@ export function FilterBadge({
 
 	// Suppression optimiste - disparition instantanée du badge
 	const handleRemove = () => {
-		const value = typeof filter.value === "string" ? filter.value : undefined;
+		// Pour les tableaux, on ne passe pas de valeur spécifique (supprime la clé entière)
+		// Pour les autres types primitifs, on convertit en string
+		let value: string | undefined;
+
+		if (typeof filter.value === "string") {
+			value = filter.value;
+		} else if (
+			typeof filter.value === "number" ||
+			typeof filter.value === "boolean"
+		) {
+			value = String(filter.value);
+		} else if (filter.value instanceof Date) {
+			value = filter.value.toISOString();
+		}
+		// Pour string[] et undefined, on laisse value = undefined
+
 		onRemove(filter.key, value);
 	};
 
@@ -125,7 +140,6 @@ export function FilterBadge({
 					"cursor-default",
 					"pointer-events-none"
 				)}
-				role="group"
 				aria-label={ariaLabelGroup}
 			>
 				{textContent}

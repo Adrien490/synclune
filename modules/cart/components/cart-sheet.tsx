@@ -32,6 +32,30 @@ import {
 	type CartOptimisticAction,
 } from "../contexts/cart-optimistic-context";
 
+// Reducer extrait pour éviter la recréation à chaque render
+function cartReducer(
+	state: GetCartReturn,
+	action: CartOptimisticAction
+): GetCartReturn {
+	if (!state) return state;
+	switch (action.type) {
+		case "remove":
+			return {
+				...state,
+				items: state.items.filter((item) => item.id !== action.itemId),
+			};
+		case "updateQuantity":
+			return {
+				...state,
+				items: state.items.map((item) =>
+					item.id === action.itemId
+						? { ...item, quantity: action.quantity }
+						: item
+				),
+			};
+	}
+}
+
 interface CartSheetProps {
 	cartPromise: Promise<GetCartReturn>;
 }
@@ -45,25 +69,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 	// Optimistic state pour la liste d'items et leurs quantités
 	const [optimisticCart, updateOptimisticCart] = useOptimistic(
 		cart,
-		(state, action: CartOptimisticAction) => {
-			if (!state) return state;
-			switch (action.type) {
-				case "remove":
-					return {
-						...state,
-						items: state.items.filter((item) => item.id !== action.itemId),
-					};
-				case "updateQuantity":
-					return {
-						...state,
-						items: state.items.map((item) =>
-							item.id === action.itemId
-								? { ...item, quantity: action.quantity }
-								: item
-						),
-					};
-			}
-		}
+		cartReducer
 	);
 
 	const hasItems = optimisticCart && optimisticCart.items.length > 0;
@@ -104,7 +110,11 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 						<SheetTitle>
 							Mon panier
 							{hasItems && (
-								<span className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50">
+								<span
+									aria-live="polite"
+									aria-atomic="true"
+									className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
+								>
 									{" "}({totalItems})
 								</span>
 							)}
@@ -138,9 +148,8 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										asChild
 										size="lg"
 										className="w-full max-w-xs group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
-										onClick={close}
 									>
-										<Link href="/produits">Découvrir la boutique</Link>
+										<Link href="/produits" onClick={close}>Découvrir la boutique</Link>
 									</Button>
 								</EmptyContent>
 							</Empty>
@@ -166,6 +175,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 														duration: shouldReduceMotion ? 0 : 0.2,
 														ease: [0, 0, 0.2, 1],
 													}}
+													className="overflow-hidden"
 												>
 													<CartSheetItemRow item={item} onClose={close} />
 												</motion.div>
@@ -185,7 +195,11 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										<span className="font-semibold">
 											Sous-total ({totalItems} article{totalItems > 1 ? "s" : ""})
 										</span>
-										<span className="font-mono font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse">
+										<span
+											aria-busy={isPending}
+											aria-live="polite"
+											className="font-mono font-bold text-lg transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50 group-has-[[data-pending]]/sheet:animate-pulse"
+										>
 											{formatEuro(subtotal)}
 										</span>
 									</div>
@@ -233,9 +247,8 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 												asChild
 												size="lg"
 												className="w-full group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
-												onClick={close}
 											>
-												<Link href="/paiement">Passer commande</Link>
+												<Link href="/paiement" onClick={close}>Passer commande</Link>
 											</Button>
 										)}
 

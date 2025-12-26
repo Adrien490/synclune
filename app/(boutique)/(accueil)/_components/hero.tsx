@@ -23,16 +23,16 @@ export function Hero() {
 
       {/* Couche 1: Particules décoratives - Multi-formes bijoux */}
       <ParticleSystem
-        count={12}
+        count={8}
         shape={["diamond", "crescent", "circle", "heart"]}
         colors={["var(--secondary)", "oklch(0.9 0.1 80)", "var(--primary)"]}
         opacity={[0.2, 0.45]}
-        blur={[6, 24]}
+        blur={[4, 16]}
         size={[25, 70]}
       />
 
       {/* Couche 2: Glitter Sparkles (overlay scintillant) */}
-      <GlitterSparkles sizeRange={[2, 4]} glowIntensity={0.4} />
+      <GlitterSparkles count={15} sizeRange={[2, 4]} glowIntensity={0.3} />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
         <div className="flex flex-col items-center">

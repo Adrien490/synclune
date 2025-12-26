@@ -46,8 +46,7 @@ export function NavbarSkeleton() {
 							<div className="hidden lg:flex items-center gap-1">
 								<div className="h-9 w-24 animate-pulse bg-muted/60 rounded-lg" />
 								<div className="h-9 w-28 animate-pulse bg-muted/60 rounded-lg" />
-								<div className="h-9 w-26 animate-pulse bg-muted/60 rounded-lg" />
-								<div className="h-9 w-20 animate-pulse bg-muted/60 rounded-lg" />
+								<div className="h-9 w-28 animate-pulse bg-muted/60 rounded-lg" />
 							</div>
 						</div>
 

@@ -31,9 +31,12 @@ const ACCOUNT_HREFS = ["/compte", "/connexion", "/favoris"] as const;
 /**
  * Header de section pour les catégories du menu
  */
-function SectionHeader({ children }: { children: React.ReactNode }) {
+function SectionHeader({ children, id }: { children: React.ReactNode; id?: string }) {
 	return (
-		<h3 className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+		<h3
+			id={id}
+			className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+		>
 			{children}
 		</h3>
 	);
@@ -66,7 +69,6 @@ interface MenuSheetProps {
 		imageUrl?: string | null;
 		blurDataUrl?: string | null;
 	}>;
-	totalProductTypes?: number;
 	isAdmin?: boolean;
 }
 
@@ -74,7 +76,6 @@ export function MenuSheet({
 	navItems,
 	productTypes,
 	collections,
-	totalProductTypes,
 	isAdmin = false,
 }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
@@ -183,7 +184,7 @@ export function MenuSheet({
 						{/* Section Les créations (productTypes) */}
 						{productTypes && productTypes.length > 0 && (
 							<section aria-labelledby="section-creations" className="mb-4">
-								<SectionHeader>Les créations</SectionHeader>
+								<SectionHeader id="section-creations">Les créations</SectionHeader>
 								<Stagger stagger={0.02} delay={0.08} y={8} className="space-y-1">
 									{productTypes.map((type) => (
 										<Tap key={type.slug}>
@@ -213,7 +214,7 @@ export function MenuSheet({
 						{/* Section Dernières collections */}
 						{displayedCollections && displayedCollections.length > 0 && (
 							<section aria-labelledby="section-collections" className="mb-4">
-								<SectionHeader>Dernières collections</SectionHeader>
+								<SectionHeader id="section-collections">Dernières collections</SectionHeader>
 								<Stagger stagger={0.02} delay={0.12} y={8} className="space-y-1">
 									{displayedCollections.map((collection) => (
 										<Tap key={collection.slug}>
@@ -239,7 +240,7 @@ export function MenuSheet({
 													{collection.imageUrl ? (
 														<Image
 															src={collection.imageUrl}
-															alt=""
+															alt={`Image de la collection ${collection.label}`}
 															width={48}
 															height={48}
 															className="size-12 rounded-lg object-cover shrink-0"
@@ -311,7 +312,7 @@ export function MenuSheet({
 						</div>
 
 						{/* Zone compte */}
-						<section id="account-section" aria-labelledby="section-account">
+						<section aria-label="Mon compte">
 							<Stagger stagger={0.025} delay={0.2} y={10} className="space-y-1">
 								{accountItems.map((item) => {
 									const isActive = isMenuItemActive(item.href);

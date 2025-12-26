@@ -2,7 +2,11 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export function CursorPaginationSkeleton() {
 	return (
-		<div className="flex flex-row items-center justify-between gap-2 sm:gap-3">
+		<div
+			role="status"
+			aria-label="Chargement de la pagination"
+			className="flex flex-row items-center justify-between gap-2 sm:gap-3"
+		>
 			{/* Informations sur la pagination */}
 			<div className="flex items-center gap-2 sm:gap-3 text-sm">
 				<div className="flex items-center gap-1.5 sm:gap-2">

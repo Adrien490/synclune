@@ -12,6 +12,7 @@ import { useLightbox } from "@/modules/media/hooks/use-lightbox";
 import { usePrefetchImages } from "@/modules/media/hooks/use-image-prefetch";
 import { buildGallery } from "@/modules/media/utils/build-gallery";
 import { buildLightboxSlides } from "@/modules/media/utils/build-lightbox-slides";
+import { PREFETCH_RANGE_SLOW, PREFETCH_RANGE_FAST } from "@/modules/media/constants/gallery.constants";
 import { GalleryErrorBoundary } from "./error-boundary";
 import { GalleryThumbnail } from "./thumbnail";
 import { GalleryCounter } from "./counter";
@@ -80,7 +81,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const connection = typeof navigator !== "undefined"
 		? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType
 		: undefined;
-	const prefetchRange = connection === "slow-2g" || connection === "2g" ? 1 : 2;
+	const prefetchRange = connection === "slow-2g" || connection === "2g" ? PREFETCH_RANGE_SLOW : PREFETCH_RANGE_FAST;
 
 	// Prefetch intelligent des images adjacentes (Next.js 16 + React 19)
 	// Extraire les URLs pour éviter de recréer un tableau à chaque render

@@ -13,7 +13,7 @@ export default function CustomerOrdersLoading() {
 					{ label: "Mon compte", href: "/compte" },
 					{ label: "Commandes", href: "/commandes" },
 				]}
-				action={<Skeleton className="h-10 w-[200px]" />}
+				actions={<Skeleton className="h-10 w-[200px]" />}
 			/>
 
 			<section className={`bg-background ${ACCOUNT_SECTION_PADDING}`}>

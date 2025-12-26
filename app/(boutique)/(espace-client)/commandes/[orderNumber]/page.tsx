@@ -54,7 +54,7 @@ export default async function OrderDetailPage({
 					{ label: "Commandes", href: "/commandes" },
 					{ label: order.orderNumber, href: `/commandes/${order.orderNumber}` },
 				]}
-				action={
+				actions={
 					<Button variant="outline" asChild>
 						<Link href="/commandes">
 							<ArrowLeft className="h-4 w-4 mr-2" />

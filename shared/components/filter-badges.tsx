@@ -90,6 +90,7 @@ export function FilterBadges({
 			aria-label="Filtres actifs"
 			aria-live="polite"
 			aria-atomic="true"
+			aria-busy={isPending}
 			data-pending={isPending ? "" : undefined}
 			className={cn(
 				"flex flex-wrap items-center gap-2 mb-4",
@@ -97,7 +98,7 @@ export function FilterBadges({
 			)}
 		>
 			{/* Visually hidden count for screen readers */}
-			<span id="filter-count-label" className="sr-only">
+			<span className="sr-only">
 				{activeFilters.length} filtre{activeFilters.length > 1 ? "s" : ""} actif
 				{activeFilters.length > 1 ? "s" : ""}
 			</span>

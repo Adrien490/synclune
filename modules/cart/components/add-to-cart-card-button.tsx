@@ -11,8 +11,11 @@ import { Button } from "@/shared/components/ui/button";
 interface AddToCartCardButtonProps {
 	skuId: string;
 	productTitle?: string;
-	/** Produit complet pour déterminer si une sélection de variante est nécessaire */
-	product?: Product;
+	/**
+	 * Produit complet pour déterminer si une sélection de variante est nécessaire.
+	 * Required pour ouvrir le dialog de sélection SKU si le produit a plusieurs variantes.
+	 */
+	product: Product;
 	/** Couleur pré-sélectionnée depuis les swatches de la ProductCard */
 	preselectedColor?: string | null;
 	/** Variante d'affichage: "icon" (défaut) ou "mobile-full" (pleine largeur mobile) */
@@ -46,14 +49,14 @@ export function AddToCartCardButton({
 
 	// Détermine si le produit a plusieurs variantes actives (SKUs)
 	// Note: On filtre par isActive car le dialog ne montre que les SKUs actifs
-	const activeSkusCount = product?.skus?.filter((s) => s.isActive).length ?? 0;
+	const activeSkusCount = product.skus?.filter((s) => s.isActive).length ?? 0;
 	const hasMultipleVariants = activeSkusCount > 1;
 
 	// Handler de clic : ouvre le dialog si plusieurs variantes, sinon soumet le formulaire
 	const handleClick = (e: React.MouseEvent) => {
 		e.stopPropagation();
 
-		if (hasMultipleVariants && product) {
+		if (hasMultipleVariants) {
 			// Plusieurs variantes : ouvrir le dialog de sélection
 			e.preventDefault();
 			openSkuSelector({ product, preselectedColor });

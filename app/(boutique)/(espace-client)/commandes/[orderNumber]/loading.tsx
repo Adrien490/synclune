@@ -17,7 +17,7 @@ export default function OrderDetailLoading() {
 					{ label: "Commandes", href: "/commandes" },
 					{ label: "...", href: "/commandes" },
 				]}
-				action={
+				actions={
 					<Button variant="outline" asChild>
 						<Link href="/commandes">
 							<ArrowLeft className="h-4 w-4 mr-2" />

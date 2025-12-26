@@ -25,7 +25,7 @@ import { cn } from "@/shared/utils/cn"
 
 import { RECENT_SEARCHES_MAX_ITEMS } from "@/shared/constants/recent-searches"
 
-import { QUICK_SEARCH_DIALOG_ID } from "./constants"
+import { QUICK_SEARCH_DIALOG_ID, QUICK_SEARCH_SUGGESTED_LINKS } from "./constants"
 
 interface QuickSearchDialogProps {
 	recentSearches?: string[]
@@ -245,7 +245,7 @@ export function QuickSearchDialog({
 									</div>
 									<Stagger role="list" className="space-y-1" stagger={0.02} delay={0.02} y={8}>
 										{displayedSearches.map((term) => (
-											<div key={term} className="flex items-center gap-1 group/item">
+											<div key={term} role="listitem" className="flex items-center gap-1 group/item">
 												<Tap className="flex-1" scale={0.98}>
 													<button
 														type="button"
@@ -286,7 +286,7 @@ export function QuickSearchDialog({
 									</div>
 									<Stagger role="list" className="grid grid-cols-2 gap-2" stagger={0.02} delay={0.03} y={8}>
 										{collections.map((collection) => (
-											<Tap key={collection.slug} scale={0.98}>
+											<Tap key={collection.slug} role="listitem" scale={0.98}>
 												<Link
 													href={`/collections/${collection.slug}`}
 													onClick={close}
@@ -317,7 +317,7 @@ export function QuickSearchDialog({
 									</div>
 									<Stagger role="list" className="grid grid-cols-2 gap-2" stagger={0.02} delay={0.04} y={8}>
 										{productTypes.map((type) => (
-											<Tap key={type.slug} scale={0.98}>
+											<Tap key={type.slug} role="listitem" scale={0.98}>
 												<Link
 													href={`/produits/${type.slug}`}
 													onClick={close}
@@ -339,33 +339,17 @@ export function QuickSearchDialog({
 										Trouvez votre prochain bijou
 									</p>
 									<div className="flex flex-wrap justify-center gap-2">
-										<Tap scale={0.95}>
-											<Link
-												href="/produits/bagues"
-												onClick={close}
-												className="inline-flex items-center px-4 py-2 min-h-11 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-											>
-												Bagues
-											</Link>
-										</Tap>
-										<Tap scale={0.95}>
-											<Link
-												href="/produits/colliers"
-												onClick={close}
-												className="inline-flex items-center px-4 py-2 min-h-11 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-											>
-												Colliers
-											</Link>
-										</Tap>
-										<Tap scale={0.95}>
-											<Link
-												href="/collections"
-												onClick={close}
-												className="inline-flex items-center px-4 py-2 min-h-11 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-											>
-												Collections
-											</Link>
-										</Tap>
+										{QUICK_SEARCH_SUGGESTED_LINKS.map((link) => (
+											<Tap key={link.href} scale={0.95}>
+												<Link
+													href={link.href}
+													onClick={close}
+													className="inline-flex items-center px-4 py-2 min-h-11 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+												>
+													{link.label}
+												</Link>
+											</Tap>
+										))}
 									</div>
 								</Stagger>
 							)}

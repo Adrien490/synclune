@@ -7,13 +7,7 @@ import { ProductPrice } from "./product-price";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
 import type { Product } from "@/modules/products/types/product.types";
-import {
-	getPrimaryPriceForList,
-	getStockInfoForList,
-	getPrimaryImageForList,
-	getAvailableColorsForList,
-	getPrimarySkuForList,
-} from "@/modules/products/services/product-list-helpers";
+import { getProductCardData } from "@/modules/products/services/product-list-helpers";
 
 interface ProductCardProps {
 	product: Product;
@@ -46,11 +40,10 @@ export function ProductCard({
 }: ProductCardProps) {
 	const { slug, title, type } = product;
 	const productType = type?.label;
-	const { price, compareAtPrice } = getPrimaryPriceForList(product);
-	const stockInfo = getStockInfoForList(product);
-	const primaryImage = getPrimaryImageForList(product);
-	const colors = getAvailableColorsForList(product);
-	const defaultSku = getPrimarySkuForList(product);
+
+	// Extraction optimisée en une seule passe O(n) au lieu de 5 appels séparés
+	const { defaultSku, price, compareAtPrice, stockInfo, primaryImage, colors } =
+		getProductCardData(product);
 
 	const { status: stockStatus, message: stockMessage, totalInventory: inventory } = stockInfo;
 

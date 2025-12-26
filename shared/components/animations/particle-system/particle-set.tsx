@@ -33,7 +33,7 @@ function renderParticle(
 					animate={ANIMATION_PRESETS[animationStyle](p)}
 					transition={getTransition(p)}
 				>
-					<svg viewBox={svgConfig.viewBox} className="w-full h-full" fill={p.color} aria-hidden="true">
+					<svg viewBox={svgConfig.viewBox} className="w-full h-full" fill={p.color} aria-hidden="true" role="presentation">
 						<path d={svgConfig.path} fillRule={svgConfig.fillRule} />
 					</svg>
 				</motion.span>
@@ -41,7 +41,7 @@ function renderParticle(
 		}
 		return (
 			<span key={p.id} className="absolute" style={{ ...baseStyle, opacity: p.opacity }}>
-				<svg viewBox={svgConfig.viewBox} className="w-full h-full" fill={p.color} aria-hidden="true">
+				<svg viewBox={svgConfig.viewBox} className="w-full h-full" fill={p.color} aria-hidden="true" role="presentation">
 					<path d={svgConfig.path} fillRule={svgConfig.fillRule} />
 				</svg>
 			</span>

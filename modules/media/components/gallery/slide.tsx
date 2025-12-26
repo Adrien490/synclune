@@ -5,6 +5,7 @@ import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
 import { useMediaQuery, useReducedMotion } from "@/shared/hooks";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
+import { GALLERY_ZOOM_LEVEL } from "@/modules/media/constants/gallery.constants";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { GalleryHoverZoom } from "./hover-zoom";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
@@ -63,7 +64,11 @@ export function GallerySlide({
 		if (!videoRef.current) return;
 
 		if (isActive && !prefersReduced) {
-			videoRef.current.play().catch(() => {});
+			videoRef.current.play().catch((err) => {
+				if (process.env.NODE_ENV === "development") {
+					console.warn("[Gallery] Video autoplay blocked:", err.message);
+				}
+			});
 		} else {
 			videoRef.current.pause();
 			videoRef.current.currentTime = 0;
@@ -87,7 +92,7 @@ export function GallerySlide({
 				onClick={onOpen}
 				role="button"
 				tabIndex={0}
-				onKeyDown={(e) => e.key === "Enter" && onOpen()}
+				onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
 				aria-label="Ouvrir la vidéo en plein écran"
 			>
 				{isVideoLoading && <VideoLoadingSpinner />}
@@ -127,7 +132,7 @@ export function GallerySlide({
 			onClick={onOpen}
 			role="button"
 			tabIndex={0}
-			onKeyDown={(e) => e.key === "Enter" && onOpen()}
+			onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
 			aria-label="Ouvrir l'image en plein écran"
 		>
 			{isDesktop ? (
@@ -136,7 +141,7 @@ export function GallerySlide({
 					src={media.url}
 					alt={alt}
 					blurDataUrl={media.blurDataUrl}
-					zoomLevel={3}
+					zoomLevel={GALLERY_ZOOM_LEVEL}
 				/>
 			) : (
 				// Mobile : Next.js Image pour LCP optimal

@@ -100,7 +100,6 @@ export async function Navbar() {
 								navItems={mobileNavItems}
 								productTypes={productTypes}
 								collections={menuCollections}
-								totalProductTypes={productTypesData.productTypes.length}
 								isAdmin={userIsAdmin}
 							/>
 

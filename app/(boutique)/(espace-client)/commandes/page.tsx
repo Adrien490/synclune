@@ -73,7 +73,7 @@ export default async function CustomerOrdersPage({
 					{ label: "Mon compte", href: "/compte" },
 					{ label: "Commandes", href: "/commandes" },
 				]}
-				action={
+				actions={
 					<SortSelect
 						label="Trier par"
 						options={Object.entries(USER_ORDERS_SORT_LABELS).map(
