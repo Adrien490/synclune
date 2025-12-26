@@ -102,8 +102,8 @@ export default function ScrollFade({
           ref={contentRef}
           className={cn(
             axis === "horizontal" && "w-fit min-w-full",
-            axis === "vertical" && "h-fit min-h-full",
-            axis === "both" && "min-w-full min-h-full w-fit h-fit"
+            axis === "vertical" && "h-fit",
+            axis === "both" && "min-w-full w-fit h-fit"
           )}
         >
           {children}

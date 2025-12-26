@@ -4,6 +4,7 @@ import { createProductFilterFormatter } from "@/app/(boutique)/produits/_utils/f
 import { FilterBadges } from "@/shared/components/filter-badges";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
+import { useFilter } from "@/shared/hooks/use-filter";
 import { useSearchParams } from "next/navigation";
 
 interface ProductTypeOption {
@@ -29,6 +30,13 @@ export function ProductFilterBadges({
 	className,
 }: ProductFilterBadgesProps) {
 	const searchParams = useSearchParams();
+	const {
+		optimisticActiveFilters,
+		removeFilterOptimistic,
+		removeFiltersOptimistic,
+		clearAllFiltersOptimistic,
+	} = useFilter({ filterPrefix: "" });
+
 	const formatFilter = createProductFilterFormatter(
 		colors,
 		materials,
@@ -36,11 +44,22 @@ export function ProductFilterBadges({
 		searchParams
 	);
 
+	const handleRemove = (key: string, value?: string) => {
+		if (key === "priceMin") {
+			// Supprimer les deux paramètres de prix ensemble
+			removeFiltersOptimistic(["priceMin", "priceMax"]);
+		} else {
+			removeFilterOptimistic(key, value);
+		}
+	};
+
 	return (
 		<FilterBadges
 			formatFilter={formatFilter}
 			className={className}
-			filterOptions={{ filterPrefix: "" }}
+			activeFilters={optimisticActiveFilters}
+			onRemove={handleRemove}
+			onClearAll={clearAllFiltersOptimistic}
 		/>
 	);
 }

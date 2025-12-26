@@ -4,6 +4,7 @@ import type { ProductSku } from "@/modules/products/types/product-services.types
 import { formatEuro } from "@/shared/utils/format-euro";
 import { Crown } from "lucide-react";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
+import { ProductHighlights } from "./product-highlights";
 
 interface ProductInfoProps {
 	product: GetProductReturn;
@@ -87,6 +88,9 @@ export function ProductInfo({
 					/>
 				</div>
 			</div>
+
+			{/* Highlights produit - scanabilite UX */}
+			<ProductHighlights product={product} />
 
 			{/* Description - max-w-prose pour lisibilité WCAG (80 chars/ligne), leading-relaxed (1.625) */}
 			{product.description && (

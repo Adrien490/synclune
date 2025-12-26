@@ -142,7 +142,7 @@ export function QuickSearchDialog({
 					"flex flex-col",
 					// Desktop: centered dialog
 					"md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2",
-					"md:h-auto md:max-h-[70vh] md:w-full md:max-w-[640px] md:rounded-xl",
+					"md:max-h-[70vh] md:w-full md:max-w-[640px] md:rounded-xl md:overflow-hidden",
 					"motion-safe:md:data-[state=open]:slide-in-from-top-4 motion-safe:md:data-[state=open]:zoom-in-95"
 				)}
 			>

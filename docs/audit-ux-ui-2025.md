@@ -83,7 +83,6 @@
 
 | Problème | Impact | Stat Baymard | Fichier concerné |
 |----------|--------|--------------|------------------|
-| **Image "In Scale" absente** | Critique - taille incompréhensible | 91% des sites l'omettent | `gallery.tsx` |
 | **Image lifestyle absente** | Contexte d'utilisation manquant | Recommandé pour bijoux | Contenu à ajouter |
 | **Highlights description** | Scanabilité réduite | 78% ne le font pas | `product-info.tsx` |
 | **3+ vignettes sur liste produits** | Exploration limitée | 80% échouent | `product-card.tsx` |

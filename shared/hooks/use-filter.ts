@@ -77,6 +77,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 	// Type pour les actions optimistes
 	type OptimisticAction =
 		| { type: "remove"; key: string; value?: string }
+		| { type: "removeMany"; keys: string[] }
 		| { type: "clear" };
 
 	// État optimiste pour UX instantanée
@@ -85,6 +86,9 @@ export function useFilter(options: UseFilterOptions = {}) {
 		(currentFilters, action: OptimisticAction) => {
 			if (action.type === "clear") {
 				return [];
+			}
+			if (action.type === "removeMany") {
+				return currentFilters.filter((f) => !action.keys.includes(f.key));
 			}
 			const { key, value } = action;
 			return currentFilters.filter((f) => {
@@ -203,6 +207,27 @@ export function useFilter(options: UseFilterOptions = {}) {
 			}
 
 			router.replace(buildUrl(params));
+		});
+	};
+
+	/**
+	 * Supprimer plusieurs filtres de manière optimiste (UI instantanée)
+	 */
+	const removeFiltersOptimistic = (filterKeys: string[]) => {
+		startTransition(() => {
+			// 1. Mise à jour optimiste immédiate
+			updateOptimisticFilters({ type: "removeMany", keys: filterKeys });
+
+			// 2. Navigation
+			const params = new URLSearchParams(searchParams.toString());
+
+			filterKeys.forEach((key) => params.delete(key));
+
+			if (!preservePage) {
+				params.set("page", "1");
+			}
+
+			router.replace(buildUrl(params), { scroll: false });
 		});
 	};
 
@@ -333,6 +358,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 
 		// Actions optimistes (UI instantanée)
 		removeFilterOptimistic,
+		removeFiltersOptimistic,
 		clearAllFiltersOptimistic,
 
 		// Getters

@@ -39,6 +39,21 @@ interface FilterBadgesProps {
 	 * @default 5
 	 */
 	maxVisibleFilters?: number;
+	/**
+	 * Filtres actifs externes (pour état optimistic géré par le parent)
+	 * Si fourni, utilise ces filtres au lieu du hook interne
+	 */
+	activeFilters?: FilterDefinition[];
+	/**
+	 * Handler personnalisé pour la suppression de filtres
+	 * Si fourni, remplace le comportement par défaut
+	 */
+	onRemove?: (key: string, value?: string) => void;
+	/**
+	 * Handler personnalisé pour effacer tous les filtres
+	 * Si fourni, remplace le comportement par défaut
+	 */
+	onClearAll?: () => void;
 }
 
 /**
@@ -51,23 +66,28 @@ export function FilterBadges({
 	label = "Filtres actifs :",
 	filterOptions,
 	maxVisibleFilters = 5,
+	activeFilters: activeFiltersProp,
+	onRemove,
+	onClearAll,
 }: FilterBadgesProps) {
 	const {
 		optimisticActiveFilters,
 		removeFilterOptimistic,
 		clearAllFiltersOptimistic,
 		isPending,
-		hasOptimisticActiveFilters,
 	} = useFilter(filterOptions);
+
+	// Utiliser les filtres externes si fournis, sinon le hook interne
+	const activeFilters = activeFiltersProp ?? optimisticActiveFilters;
+	const handleRemove = onRemove ?? removeFilterOptimistic;
+	const handleClearAll = onClearAll ?? clearAllFiltersOptimistic;
+
 	const [showAll, setShowAll] = useState(false);
 	const isMobile = useIsMobile();
 	const shouldReduceMotion = useReducedMotion();
 
-	// Utiliser les filtres optimistes pour une UX instantanée
-	const activeFilters = optimisticActiveFilters;
-
 	// Ne rien afficher s'il n'y a pas de filtres actifs
-	if (!hasOptimisticActiveFilters || activeFilters.length === 0) {
+	if (activeFilters.length === 0) {
 		return null;
 	}
 
@@ -113,7 +133,7 @@ export function FilterBadges({
 						key={filter.id}
 						filter={filter}
 						formatFilter={formatFilter}
-						onRemove={removeFilterOptimistic}
+						onRemove={handleRemove}
 					/>
 				))}
 
@@ -176,7 +196,7 @@ export function FilterBadges({
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={clearAllFiltersOptimistic}
+							onClick={handleClearAll}
 							className={cn(
 								"h-11 sm:h-8 px-3",
 								"text-xs text-muted-foreground",

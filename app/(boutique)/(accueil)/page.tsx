@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
 import { CreativeProcess } from "./_components/creative-process";
+import { FaqSection } from "./_components/faq-section";
 import { Hero } from "./_components/hero";
 
 export const metadata: Metadata = {
@@ -89,6 +90,9 @@ export default async function Page() {
 
 			{/* 5. CreativeProcess - Storytelling atelier + Connexion émotionnelle */}
 			<CreativeProcess />
+
+			{/* 6. FAQ - Questions fréquentes avec schema SEO */}
+			<FaqSection />
 		</>
 	);
 }

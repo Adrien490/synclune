@@ -8,8 +8,8 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  * Structure exacte : PageHeader → Gallery + ProductInfo/ProductDetails → RelatedProducts
  *
  * IMPORTANT: L'ordre des composants doit correspondre exactement à page.tsx pour éviter le CLS
- * ProductInfo: Titre → Prix mobile → Badges → Description
- * ProductDetails: Prix → VariantSelector → AddToCart → Reassurance → Separator → Characteristics → CareInfo
+ * ProductInfo: Titre → Prix mobile → Badge type → Description
+ * ProductDetails: Prix → VariantSelector → Reassurance → AddToCart → Separator → Characteristics → CareInfo
  */
 export default function ProductDetailLoading() {
 	return (
@@ -79,10 +79,9 @@ export default function ProductDetailLoading() {
 											<Skeleton className="h-8 w-24 bg-muted/50" />
 										</div>
 
-										{/* Badges (type + collections + wishlist desktop) */}
+										{/* Badges (type + wishlist desktop) */}
 										<div className="flex flex-wrap items-center gap-2">
 											<Skeleton className="h-7 w-24 rounded-full bg-muted/30" />
-											<Skeleton className="h-7 w-28 rounded-full bg-muted/30" />
 											{/* Bouton wishlist - Desktop uniquement, aligné à droite */}
 											<Skeleton className="hidden sm:block h-10 w-10 rounded-full bg-muted/30 ml-auto" />
 										</div>
@@ -153,10 +152,7 @@ export default function ProductDetailLoading() {
 										</div>
 									</div>
 
-									{/* ===== 4. AddToCartForm ===== */}
-									<Skeleton className="h-12 w-full rounded-lg bg-primary/30" />
-
-									{/* ===== 5. ProductReassurance - Trust badges ===== */}
+									{/* ===== 4. ProductReassurance - Trust badges (AVANT CTA) ===== */}
 									<div className="space-y-3 pt-2">
 										{/* Trust badges - flex-col sur mobile, flex-row sur desktop */}
 										<div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-3 sm:gap-4 py-2">
@@ -172,12 +168,10 @@ export default function ProductDetailLoading() {
 											<Skeleton className="h-3.5 w-3.5 bg-muted/30" />
 											<Skeleton className="h-3 w-32 bg-muted/30" />
 										</div>
-										{/* Lien personnalisation */}
-										<div className="flex items-center justify-center gap-2 w-full py-3 sm:py-2.5 px-4 border rounded-xl sm:rounded-lg">
-											<Skeleton className="h-4 w-4 bg-muted/30" />
-											<Skeleton className="h-4 w-44 bg-muted/30" />
-										</div>
 									</div>
+
+									{/* ===== 5. AddToCartForm ===== */}
+									<Skeleton className="h-12 w-full rounded-lg bg-primary/30" />
 
 									{/* Separator */}
 									<div className="h-px bg-border" />
