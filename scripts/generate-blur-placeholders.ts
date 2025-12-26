@@ -23,6 +23,7 @@ import { prisma } from "../shared/lib/prisma";
 import { generateBlurDataUrlWithRetry } from "../modules/media/services/generate-blur-data-url";
 import { BLUR_PLACEHOLDER_CONFIG } from "../modules/media/constants/media.constants";
 import { isValidUploadThingUrl } from "../modules/media/utils/validate-media-file";
+import { delay } from "../shared/utils/delay";
 import type { MediaItem, ProcessResult as BaseProcessResult, ProcessMetrics, StructuredLog } from "../modules/media/types/script.types";
 import { requireScriptEnvVars } from "../shared/utils/script-env";
 
@@ -112,10 +113,6 @@ interface BlurProcessResult extends BaseProcessResult {
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 /**
  * Crée un objet ProcessMetrics avec les valeurs par défaut

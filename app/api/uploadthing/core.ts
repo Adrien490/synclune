@@ -3,7 +3,19 @@ import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
-import { generateBlurDataUrl } from "@/modules/media/services/generate-blur-data-url";
+import { generateBlurDataUrlWithRetry } from "@/modules/media/services/generate-blur-data-url";
+
+/**
+ * Génère un blur placeholder avec retry, retourne undefined en cas d'échec
+ * Silencieux pour ne pas polluer les logs en production
+ */
+async function generateBlurSafe(url: string): Promise<string | undefined> {
+	try {
+		return await generateBlurDataUrlWithRetry(url);
+	} catch {
+		return undefined;
+	}
+}
 
 // Note: La generation de thumbnails video est maintenant faite cote client
 // via useMediaUpload hook (Canvas API) pour compatibilite Vercel serverless
@@ -120,8 +132,8 @@ export const ourFileRouter = {
 			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
-			// Générer le blur placeholder pour les photos de témoignages
-			const blurDataUrl = await generateBlurDataUrl(file.ufsUrl);
+			// Générer le blur placeholder pour les photos de témoignages (avec retry)
+			const blurDataUrl = await generateBlurSafe(file.ufsUrl);
 
 			return {
 				url: file.ufsUrl,
@@ -183,9 +195,9 @@ export const ourFileRouter = {
 		.onUploadComplete(async ({ metadata, file }) => {
 			const isImage = file.type.startsWith("image/");
 
-			// Pour les images: generer le blur placeholder
+			// Pour les images: generer le blur placeholder (avec retry)
 			if (isImage) {
-				const blurDataUrl = await generateBlurDataUrl(file.ufsUrl);
+				const blurDataUrl = await generateBlurSafe(file.ufsUrl);
 				return {
 					url: file.ufsUrl,
 					thumbnailUrl: null,

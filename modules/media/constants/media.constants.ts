@@ -153,7 +153,7 @@ export const CLIENT_THUMBNAIL_CONFIG = {
 // CONFIGURATION BLUR PLACEHOLDERS
 // ============================================================================
 
-/** Configuration pour la génération de blur placeholders (images) - LEGACY */
+/** Configuration pour la génération de blur placeholders (images) */
 export const BLUR_PLACEHOLDER_CONFIG = {
 	/** Timeout pour le téléchargement d'image (ms) */
 	downloadTimeout: 30000,

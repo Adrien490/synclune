@@ -10,15 +10,11 @@
 import { getPlaiceholder } from "plaiceholder";
 import { BLUR_PLACEHOLDER_CONFIG } from "../constants/media.constants";
 import { isValidUploadThingUrl } from "../utils/validate-media-file";
+import { delay } from "@/shared/utils/delay";
 
 // ============================================================================
 // TYPES
 // ============================================================================
-
-export interface BlurDataUrlResult {
-	/** Base64 blur placeholder */
-	base64: string;
-}
 
 /** Fonction de log pour les avertissements */
 export type BlurLogFn = (message: string, data?: Record<string, unknown>) => void;
@@ -39,13 +35,6 @@ export interface GenerateBlurOptions {
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-/**
- * Attendre un delai
- */
-function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 /**
  * Valide qu'un blur data URL est au format attendu
