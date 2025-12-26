@@ -1,5 +1,6 @@
 import { Fade, Reveal, Stagger } from "@/shared/components/animations";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
+import { PolaroidFrame } from "@/shared/components/ui/polaroid-frame";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
 import { Sparkles } from "lucide-react";
@@ -115,16 +116,32 @@ export function AtelierStory() {
 				{/* Photos secondaires + CTA - delay 0.3s pour sequence naturelle */}
 				<Reveal y={25} delay={0.3} duration={0.6} once>
 					<div className="mt-12 sm:mt-16 space-y-8">
-						{/* Photos en grid 2 colonnes */}
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-							<PlaceholderImage
-								className="aspect-[4/3]"
-								label="Photo des mains de Léane assemblant un bijou artisanal"
-							/>
-							<PlaceholderImage
-								className="aspect-[4/3]"
-								label="Perles et matériaux colorés utilisés pour la création"
-							/>
+						{/* Photos en grid 2 colonnes - Style Polaroid */}
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto">
+							<PolaroidFrame
+								tilt="left"
+								caption="Les mains dans les perles !"
+								washiTape
+								washiColor="pink"
+								washiPosition="top-left"
+							>
+								<PlaceholderImage
+									className="w-full h-full"
+									label="Photo des mains de Léane assemblant un bijou artisanal"
+								/>
+							</PolaroidFrame>
+							<PolaroidFrame
+								tilt="right"
+								caption="Mes petits trésors"
+								washiTape
+								washiColor="lavender"
+								washiPosition="top-right"
+							>
+								<PlaceholderImage
+									className="w-full h-full"
+									label="Perles et matériaux colorés utilisés pour la création"
+								/>
+							</PolaroidFrame>
 						</div>
 
 						{/* CTA vers personnalisation */}

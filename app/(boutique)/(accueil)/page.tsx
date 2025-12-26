@@ -6,6 +6,7 @@ import { CollectionsSectionSkeleton } from "@/modules/collections/components/col
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
 import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
+import { SparklesDivider } from "@/shared/components/ui/section-divider";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
@@ -85,11 +86,17 @@ export default async function Page() {
 				/>
 			</Suspense>
 
+			{/* Séparateur décoratif girly */}
+			<SparklesDivider />
+
 			{/* 4. AtelierStory - Storytelling intimiste de Léane (après engagement produit) */}
 			<AtelierStory />
 
 			{/* 5. CreativeProcess - Storytelling atelier + Connexion émotionnelle */}
 			<CreativeProcess />
+
+			{/* Séparateur décoratif girly */}
+			<SparklesDivider />
 
 			{/* 6. FAQ - Questions fréquentes avec schema SEO */}
 			<FaqSection />

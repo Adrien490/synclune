@@ -1,4 +1,4 @@
-import { Fade, ScrollIndicator, Slide } from "@/shared/components/animations";
+import { Fade, FloatingBlobs, ScrollIndicator, Slide } from "@/shared/components/animations";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
@@ -20,6 +20,9 @@ export function Hero() {
       itemType="https://schema.org/WebPageElement"
       itemProp="mainContentOfPage"
     >
+
+      {/* Couche 0: Blobs flottants organiques - Effet moderne 2025 */}
+      <FloatingBlobs />
 
       {/* Couche 1: Particules décoratives - Multi-formes bijoux */}
       <ParticleSystem
@@ -80,10 +83,7 @@ export function Hero() {
                   size="lg"
                   className="shadow-lg font-semibold w-full sm:w-auto"
                 >
-                  <Link
-                    href="/produits"
-                    className="flex items-center justify-center"
-                  >
+                  <Link href="/produits" className="flex items-center justify-center">
                     Découvrir la boutique
                   </Link>
                 </Button>

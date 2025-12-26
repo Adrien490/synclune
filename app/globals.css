@@ -461,6 +461,56 @@ textarea {
 		animation: wave 2.5s ease-in-out infinite;
 	}
 
+	/* Animation gradient-shift pour texte irisé */
+	@keyframes gradient-shift {
+		0% {
+			background-position: 0% 50%;
+		}
+		50% {
+			background-position: 100% 50%;
+		}
+		100% {
+			background-position: 0% 50%;
+		}
+	}
+
+	/* Animations floating blobs - mouvement organique */
+	@keyframes blob-float-1 {
+		0%, 100% {
+			transform: translate(0, 0) scale(1);
+		}
+		25% {
+			transform: translate(30px, -20px) scale(1.05);
+		}
+		50% {
+			transform: translate(-20px, 30px) scale(0.95);
+		}
+		75% {
+			transform: translate(20px, 20px) scale(1.02);
+		}
+	}
+
+	@keyframes blob-float-2 {
+		0%, 100% {
+			transform: translate(0, 0) scale(1);
+		}
+		33% {
+			transform: translate(-25px, 25px) scale(1.08);
+		}
+		66% {
+			transform: translate(25px, -15px) scale(0.92);
+		}
+	}
+
+	@keyframes blob-float-3 {
+		0%, 100% {
+			transform: translate(0, 0) rotate(0deg) scale(1);
+		}
+		50% {
+			transform: translate(15px, -25px) rotate(10deg) scale(1.1);
+		}
+	}
+
 	/* Animation shimmer pour skeleton loading */
 	@keyframes shimmer {
 		0% {
@@ -484,9 +534,42 @@ textarea {
 		animation: shimmer 1.5s ease-in-out infinite;
 	}
 
+	/* Variante girly: shimmer rose-doré */
+	.animate-shimmer-girly {
+		--shimmer-base: oklch(0.95 0.03 350);
+		--shimmer-highlight: oklch(0.92 0.06 60);
+		background: linear-gradient(
+			90deg,
+			var(--shimmer-base) 0%,
+			var(--shimmer-highlight) 25%,
+			oklch(0.96 0.04 350) 50%,
+			var(--shimmer-highlight) 75%,
+			var(--shimmer-base) 100%
+		);
+		background-size: 200% 100%;
+		animation: shimmer 2s ease-in-out infinite;
+	}
+
 	/* Dark mode: highlight plus subtil */
 	.dark .animate-shimmer {
 		--shimmer-highlight: oklch(0.22 0.015 270);
+	}
+
+	.dark .animate-shimmer-girly {
+		--shimmer-base: oklch(0.18 0.02 350);
+		--shimmer-highlight: oklch(0.22 0.03 60);
+	}
+
+	/* Animation sparkle fade pour curseur */
+	@keyframes sparkle-fade {
+		0% {
+			opacity: 1;
+			transform: translate(-50%, -50%) scale(1) rotate(var(--rotation, 0deg));
+		}
+		100% {
+			opacity: 0;
+			transform: translate(-50%, -50%) scale(0.5) rotate(var(--rotation, 0deg)) translateY(-20px);
+		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {

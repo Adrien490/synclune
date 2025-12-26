@@ -69,9 +69,16 @@ export function ProductCard({
 			className={cn(
 				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent gap-4",
 				"transition-all duration-300 ease-out",
-				"shadow-sm can-hover:hover:border-primary/30 can-hover:hover:shadow-xl can-hover:hover:shadow-primary/15",
-				"focus-within:border-primary/30 focus-within:shadow-lg focus-within:shadow-primary/10",
-				"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01] will-change-transform"
+				// Glow pastel + shadow enrichi
+				"shadow-sm",
+				"can-hover:hover:border-primary/40",
+				"can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
+				// Tilt 3D subtil + scale
+				"motion-safe:can-hover:hover:-translate-y-2 motion-safe:can-hover:hover:scale-[1.02]",
+				"motion-safe:can-hover:hover:[transform:perspective(1000px)_rotateX(2deg)_translateY(-8px)]",
+				// Focus state
+				"focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
+				"will-change-transform"
 			)}
 			itemScope
 			itemType="https://schema.org/Product"

@@ -29,7 +29,10 @@ export { ParticleSystem } from "./particle-system/index";
 export { DecorativeHalo, DecorativeHaloGroup } from "./decorative-halo";
 export { BubbleDream } from "./bubble-dream";
 
-
+// Interactive Animations
+export { FloatingBlob, FloatingBlobs } from "./floating-blob";
+export { CursorSparkle } from "./cursor-sparkle";
+export { MagneticWrapper } from "./magnetic-wrapper";
 
 // Types
 export type { FadeProps } from "./fade";

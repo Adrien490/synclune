@@ -68,7 +68,7 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 				<meta itemProp="bestRating" content="5" />
 			</div>
 
-			<CardContent className="space-y-4">
+			<CardContent className="py-4 space-y-4">
 				{/* En-tête: Avatar, nom, date, étoiles */}
 				<div className="flex items-start gap-3">
 					<Avatar className="size-10">
