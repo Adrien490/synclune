@@ -4,7 +4,8 @@ import {
 	Autocomplete,
 	type AutocompleteProps,
 } from "@/shared/components/autocomplete";
-import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
+import { Field, FieldError } from "@/shared/components/ui/field";
+import { FieldLabel } from "./field-label";
 import { useFieldContext } from "@/shared/lib/form-context";
 
 type AutocompleteFieldProps<T> = Omit<
@@ -15,6 +16,8 @@ type AutocompleteFieldProps<T> = Omit<
 	label?: string;
 	/** Indique si le champ est requis */
 	required?: boolean;
+	/** Marque le champ comme optionnel avec "(Optionnel)" */
+	optional?: boolean;
 };
 
 /**
@@ -46,6 +49,7 @@ type AutocompleteFieldProps<T> = Omit<
 export function AutocompleteField<T>({
 	label,
 	required,
+	optional,
 	onSelect,
 	disabled,
 	...props
@@ -55,13 +59,8 @@ export function AutocompleteField<T>({
 	return (
 		<Field data-invalid={field.state.meta.errors.length > 0}>
 			{label && (
-				<FieldLabel htmlFor={field.name}>
+				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
 					{label}
-					{required && (
-						<span className="text-destructive ml-1" aria-label="requis">
-							*
-						</span>
-					)}
 				</FieldLabel>
 			)}
 			<Autocomplete<T>

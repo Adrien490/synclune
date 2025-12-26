@@ -186,8 +186,8 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					)}
 				</div>
 
-				{/* Badges problemes */}
-				{hasIssue && (
+				{/* Badges stock */}
+				{hasIssue ? (
 					<div className="flex gap-1">
 						{isOutOfStock && (
 							<Badge variant="destructive" className="text-[10px] px-1.5 py-0">
@@ -200,6 +200,13 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 							</Badge>
 						)}
 					</div>
+				) : (
+					<Badge
+						variant="outline"
+						className="text-[10px] px-1.5 py-0 text-green-600 border-green-200 bg-green-50"
+					>
+						En stock
+					</Badge>
 				)}
 			</div>
 

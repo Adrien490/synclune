@@ -75,6 +75,7 @@ export function GalleryPinchZoom({
 				"relative w-full h-full overflow-hidden",
 				"outline-none",
 				"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+				"active:scale-[0.99] transition-transform", // Feedback tactile
 				isZoomed ? "touch-none cursor-grab" : "touch-pan-x cursor-zoom-in"
 			)}
 			style={{ touchAction: isZoomed ? "none" : "pan-x" }}
@@ -83,7 +84,7 @@ export function GalleryPinchZoom({
 			<div
 				className={cn(
 					"relative w-full h-full",
-					!isInteracting && transitionClass
+					transitionClass // Toujours appliqué pour smooth double-tap
 				)}
 				style={{
 					transform: `translate3d(${position.x}px, ${position.y}px, 0) scale(${scale})`,

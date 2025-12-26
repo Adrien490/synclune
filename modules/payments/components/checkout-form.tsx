@@ -128,7 +128,10 @@ export function CheckoutForm({
 									label="Adresse email"
 									type="email"
 									required
+									inputMode="email"
 									autoComplete="email"
+									spellCheck={false}
+									autoCorrect="off"
 									autoFocus
 								/>
 								<p className="text-sm text-muted-foreground flex items-start gap-1.5">
@@ -189,6 +192,8 @@ export function CheckoutForm({
 							label="Prénom"
 							required
 							autoComplete="given-name"
+							autoCapitalize="words"
+							autoCorrect="off"
 						/>
 					)}
 				</form.AppField>
@@ -208,6 +213,8 @@ export function CheckoutForm({
 							label="Nom"
 							required
 							autoComplete="family-name"
+							autoCapitalize="words"
+							autoCorrect="off"
 						/>
 					)}
 				</form.AppField>
@@ -269,7 +276,10 @@ export function CheckoutForm({
 						<field.InputField
 							label="Code postal"
 							required
+							inputMode="numeric"
+							pattern="[0-9]*"
 							autoComplete="postal-code"
+							autoCorrect="off"
 						/>
 					)}
 				</form.AppField>

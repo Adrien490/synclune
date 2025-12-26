@@ -26,7 +26,7 @@ export const customizationSchema = z
 
 		email: z
 			.string({ message: "L'adresse email est requise" })
-			.email({ message: "Veuillez entrer une adresse email valide" })
+			.email({ message: "Vérifie le format de ton email (ex: nom@domaine.com)" })
 			.max(100, { message: "L'email ne peut pas dépasser 100 caractères" })
 			.trim()
 			.toLowerCase(),

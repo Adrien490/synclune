@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
+import { Field, FieldError } from "@/shared/components/ui/field";
+import { FieldLabel } from "./field-label";
 import {
 	Select,
 	SelectContent,
@@ -24,6 +25,8 @@ interface SelectFieldProps<T extends string> {
 	label?: string;
 	placeholder?: string;
 	required?: boolean;
+	/** Marque le champ comme optionnel avec "(Optionnel)" */
+	optional?: boolean;
 	/** Options disponibles pour la sélection */
 	options: { value: T; label: string }[];
 	/** Rendu personnalisé pour chaque option dans la liste */
@@ -64,6 +67,7 @@ export const SelectField = <T extends string>({
 	label,
 	placeholder,
 	required,
+	optional,
 	options,
 	renderOption,
 	renderValue,
@@ -80,13 +84,8 @@ export const SelectField = <T extends string>({
 	return (
 		<Field data-invalid={hasError} className={className}>
 			{label && (
-				<FieldLabel htmlFor={field.name}>
+				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
 					{label}
-					{required && (
-						<span className="text-destructive ml-1" aria-label="requis">
-							*
-						</span>
-					)}
 				</FieldLabel>
 			)}
 

@@ -42,7 +42,7 @@ const COMMON_TYPO_CORRECTIONS: Record<string, string> = {
 
 export const subscribeToNewsletterSchema = z.object({
 	email: z
-		.email("Format d'email invalide")
+		.email("Vérifie le format de ton email (ex: nom@domaine.com)")
 		.transform((email) => {
 			// Auto-correction des typos courantes
 			const [localPart, domain] = email.split("@");
@@ -83,7 +83,7 @@ export const unsubscribeFromNewsletterSchema = z.object({
 	email: z
 		.string()
 		.min(1, "L'email est requis")
-		.email("Format d'email invalide"),
+		.email("Vérifie le format de ton email (ex: nom@domaine.com)"),
 	token: z.string().optional(),
 });
 

@@ -1,5 +1,6 @@
 "use client";
 
+import * as FocusScope from "@radix-ui/react-focus-scope";
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Counter from "yet-another-react-lightbox/plugins/counter";
@@ -33,51 +34,57 @@ export default function MediaLightbox({
 	index,
 	onIndexChange,
 }: MediaLightboxProps) {
+	if (!open) return null;
+
 	return (
-		<Lightbox
-			open={open}
-			close={close}
-			slides={slides}
-			index={index}
-			on={{
-				view: ({ index: newIndex }) => {
-					onIndexChange?.(newIndex);
-				},
-			}}
-			plugins={[Zoom, Counter, Video]}
-			zoom={{
-				maxZoomPixelRatio: 3,
-				zoomInMultiplier: 2,
-				doubleTapDelay: 300,
-				doubleClickDelay: 300,
-				doubleClickMaxStops: 2,
-				keyboardMoveDistance: 50,
-				wheelZoomDistanceFactor: 100,
-				pinchZoomDistanceFactor: 100,
-				scrollToZoom: true,
-			}}
-			counter={{ container: { style: { top: "unset", bottom: 16 } } }}
-			video={{
-				autoPlay: true,
-				controls: false,
-				playsInline: true,
-				loop: true,
-				muted: true,
-			}}
-			animation={{ fade: 350, swipe: 300 }}
-			carousel={{ finite: false, preload: 2 }}
-			controller={{ closeOnBackdropClick: true }}
-			styles={{
-				container: {
-					backgroundColor: "rgba(0, 0, 0, 0.95)",
-					backdropFilter: "blur(20px)",
-				},
-				button: {
-					filter: "none",
-					color: "white",
-				},
-			}}
-			className="synclune-lightbox"
-		/>
+		<FocusScope.Root trapped onMountAutoFocus={(e) => e.preventDefault()}>
+			<div role="dialog" aria-modal="true" aria-label="Galerie en plein écran">
+				<Lightbox
+					open={open}
+					close={close}
+					slides={slides}
+					index={index}
+					on={{
+						view: ({ index: newIndex }) => {
+							onIndexChange?.(newIndex);
+						},
+					}}
+					plugins={[Zoom, Counter, Video]}
+					zoom={{
+						maxZoomPixelRatio: 3,
+						zoomInMultiplier: 2,
+						doubleTapDelay: 300,
+						doubleClickDelay: 300,
+						doubleClickMaxStops: 2,
+						keyboardMoveDistance: 50,
+						wheelZoomDistanceFactor: 100,
+						pinchZoomDistanceFactor: 100,
+						scrollToZoom: true,
+					}}
+					counter={{ container: { style: { top: "unset", bottom: 16 } } }}
+					video={{
+						autoPlay: true,
+						controls: false,
+						playsInline: true,
+						loop: true,
+						muted: true,
+					}}
+					animation={{ fade: 350, swipe: 300 }}
+					carousel={{ finite: false, preload: 2 }}
+					controller={{ closeOnBackdropClick: true, aria: true }}
+					styles={{
+						container: {
+							backgroundColor: "rgba(0, 0, 0, 0.95)",
+							backdropFilter: "blur(20px)",
+						},
+						button: {
+							filter: "none",
+							color: "white",
+						},
+					}}
+					className="synclune-lightbox"
+				/>
+			</div>
+		</FocusScope.Root>
 	);
 }

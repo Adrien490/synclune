@@ -142,6 +142,7 @@ export function GallerySlide({
 					alt={alt}
 					blurDataUrl={media.blurDataUrl}
 					zoomLevel={GALLERY_ZOOM_LEVEL}
+					priority={index === 0}
 				/>
 			</div>
 		);

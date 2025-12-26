@@ -71,7 +71,7 @@ export function SelectionToolbar({ children }: SelectionToolbarProps) {
 						<div className="flex-1" />
 
 						{/* Actions */}
-						<div className="flex items-center gap-1.5">
+						<div className="flex items-center gap-2">
 							{children}
 							<Button
 								variant="ghost"

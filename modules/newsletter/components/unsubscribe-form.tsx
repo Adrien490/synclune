@@ -87,6 +87,10 @@ export function UnsubscribeForm({
 							{(field) => (
 								<field.InputField
 									type="email"
+									inputMode="email"
+									autoComplete="email"
+									spellCheck={false}
+									autoCorrect="off"
 									label="Adresse email"
 									disabled={isPending}
 									required

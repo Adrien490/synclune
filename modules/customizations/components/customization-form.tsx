@@ -134,7 +134,15 @@ export function CustomizationForm({
 						},
 					}}
 				>
-					{(field) => <field.InputField label="Prénom" required />}
+					{(field) => (
+					<field.InputField
+						label="Prénom"
+						required
+						autoComplete="given-name"
+						autoCapitalize="words"
+						autoCorrect="off"
+					/>
+				)}
 				</form.AppField>
 
 				<form.AppField
@@ -147,7 +155,15 @@ export function CustomizationForm({
 						},
 					}}
 				>
-					{(field) => <field.InputField label="Nom" required />}
+					{(field) => (
+					<field.InputField
+						label="Nom"
+						required
+						autoComplete="family-name"
+						autoCapitalize="words"
+						autoCorrect="off"
+					/>
+				)}
 				</form.AppField>
 			</div>
 
@@ -165,7 +181,17 @@ export function CustomizationForm({
 					},
 				}}
 			>
-				{(field) => <field.InputField label="Adresse email" type="email" required />}
+				{(field) => (
+				<field.InputField
+					label="Adresse email"
+					type="email"
+					required
+					inputMode="email"
+					autoComplete="email"
+					spellCheck={false}
+					autoCorrect="off"
+				/>
+			)}
 			</form.AppField>
 
 			{/* Téléphone */}

@@ -13,6 +13,8 @@ interface GalleryHoverZoomProps {
 	zoomLevel?: 2 | 3;
 	enabled?: boolean;
 	className?: string;
+	/** Marque l'image comme LCP candidate (first image) */
+	priority?: boolean;
 }
 
 export function GalleryHoverZoom({
@@ -22,6 +24,7 @@ export function GalleryHoverZoom({
 	zoomLevel = 2,
 	enabled = true,
 	className,
+	priority = false,
 }: GalleryHoverZoomProps) {
 	const [isZooming, setIsZooming] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -111,6 +114,9 @@ export function GalleryHoverZoom({
 					alt={alt}
 					fill
 					className="object-cover"
+					priority={priority}
+					loading={priority ? "eager" : "lazy"}
+					fetchPriority={priority ? "high" : "auto"}
 					quality={MAIN_IMAGE_QUALITY}
 					sizes="(min-width: 1024px) 45vw, 100vw"
 					placeholder={blurDataUrl ? "blur" : "empty"}
@@ -142,6 +148,9 @@ export function GalleryHoverZoom({
 					transform: isZooming ? `scale(${zoomLevel})` : "scale(1)",
 					transformOrigin: "center center",
 				}}
+				priority={priority}
+				loading={priority ? "eager" : "lazy"}
+				fetchPriority={priority ? "high" : "auto"}
 				quality={MAIN_IMAGE_QUALITY}
 				sizes="(min-width: 1024px) 45vw, 100vw"
 				placeholder={blurDataUrl ? "blur" : "empty"}

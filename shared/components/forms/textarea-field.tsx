@@ -1,12 +1,15 @@
 "use client";
 
-import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
+import { Field, FieldError } from "@/shared/components/ui/field";
+import { FieldLabel } from "./field-label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
 
 interface TextareaFieldProps extends React.ComponentProps<"textarea"> {
 	label?: string;
+	/** Marque le champ comme optionnel avec "(Optionnel)" */
+	optional?: boolean;
 }
 
 /**
@@ -17,6 +20,7 @@ interface TextareaFieldProps extends React.ComponentProps<"textarea"> {
  * - `spellCheck`: Correction orthographique
  * - `autoComplete`: Autofill navigateur
  * - `autoCapitalize`: Capitalisation auto (sentences par défaut)
+ * - `autoCorrect`: Correction auto mobile (off pour noms, adresses)
  */
 export const TextareaField = ({
 	disabled,
@@ -24,12 +28,14 @@ export const TextareaField = ({
 	rows,
 	placeholder,
 	required,
+	optional,
 	className,
 	// Props mobile PWA
 	enterKeyHint,
 	spellCheck,
 	autoComplete,
 	autoCapitalize,
+	autoCorrect,
 	maxLength,
 	...rest
 }: TextareaFieldProps) => {
@@ -38,13 +44,8 @@ export const TextareaField = ({
 	return (
 		<Field data-invalid={field.state.meta.errors.length > 0}>
 			{label && (
-				<FieldLabel htmlFor={field.name}>
+				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
 					{label}
-					{required && (
-						<span className="text-destructive ml-1" aria-label="requis">
-							*
-						</span>
-					)}
 				</FieldLabel>
 			)}
 			<Textarea
@@ -66,6 +67,7 @@ export const TextareaField = ({
 				spellCheck={spellCheck}
 				autoComplete={autoComplete}
 				autoCapitalize={autoCapitalize}
+				autoCorrect={autoCorrect}
 				maxLength={maxLength}
 				className={cn("border-input focus:ring-1 focus:ring-primary", className)}
 				{...rest}

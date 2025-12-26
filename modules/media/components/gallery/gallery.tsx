@@ -6,6 +6,7 @@ import useEmblaCarousel from "embla-carousel-react";
 
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "@/shared/hooks";
+import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
 import MediaLightbox from "@/modules/media/components/media-lightbox";
 import { useLightbox } from "@/modules/media/hooks/use-lightbox";
@@ -30,9 +31,14 @@ interface GalleryProps {
 
 function GalleryLoadingSkeleton() {
 	return (
-		<div className="w-full">
-			<div className="aspect-3/4 sm:aspect-[4/5] rounded-3xl bg-muted animate-pulse" />
-		</div>
+		<SkeletonGroup label="Chargement de la galerie">
+			<div className="w-full">
+				<Skeleton
+					className="aspect-3/4 sm:aspect-[4/5] rounded-3xl w-full"
+					variant="shimmer"
+				/>
+			</div>
+		</SkeletonGroup>
 	);
 }
 
@@ -316,6 +322,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 										onClick={() => scrollTo(index)}
 										onError={() => handleThumbnailError(media.id)}
 										className="shrink-0 w-16 h-16 snap-start"
+										isLCPCandidate={index === 0}
 									/>
 								))}
 							</div>

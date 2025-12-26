@@ -163,6 +163,7 @@ export function usePinchZoom({
 		switch (e.key) {
 			case "+":
 			case "=":
+			case "*": // Numpad
 				e.preventDefault();
 				zoomIn();
 				break;
@@ -232,13 +233,13 @@ export function usePinchZoom({
 		}
 	};
 
-	// Touch Start
+	// Début du toucher
 	const handleTouchStart = useEffectEvent((e: TouchEvent) => {
 		hasMoved.current = false;
 		setIsInteracting(true);
 
 		if (e.touches.length === 2) {
-			// Pinch start
+			// Début du pinch
 			isPinching.current = true;
 			isPanning.current = false;
 			initialDistance.current = getDistance(e.touches);
@@ -251,7 +252,7 @@ export function usePinchZoom({
 			const touchPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
 			startTouchCenter.current = touchPoint;
 			if (isZoomed) {
-				// Pan start
+				// Début du pan
 				isPanning.current = true;
 				lastTouchCenter.current = touchPoint;
 				initialPosition.current = { ...position };
@@ -259,12 +260,12 @@ export function usePinchZoom({
 		}
 	});
 
-	// Touch Move
+	// Mouvement tactile
 	const handleTouchMove = useEffectEvent((e: TouchEvent) => {
 		const rect = containerRef.current?.getBoundingClientRect() ?? null;
 
 		if (e.touches.length === 2 && isPinching.current) {
-			// Pinch zoom
+			// Zoom par pinch
 			e.preventDefault();
 
 			const center = getCenter(e.touches);
@@ -298,7 +299,7 @@ export function usePinchZoom({
 			setScale(newScale);
 			setPosition(newPosition);
 		} else if (e.touches.length === 1 && isPanning.current && isZoomed) {
-			// Pan
+			// Déplacement
 			e.preventDefault();
 
 			const touch = e.touches[0];
@@ -340,7 +341,7 @@ export function usePinchZoom({
 		}
 	});
 
-	// Touch End
+	// Fin du toucher
 	const handleTouchEnd = useEffectEvent((e: TouchEvent) => {
 		const wasPinching = isPinching.current;
 		const wasPanning = isPanning.current;
@@ -348,6 +349,11 @@ export function usePinchZoom({
 		isPinching.current = false;
 		isPanning.current = false;
 		setIsInteracting(false);
+
+		// Restaurer le focus pour les utilisateurs clavier/voix (accessibilité)
+		if (containerRef.current && e.touches.length === 0) {
+			containerRef.current.focus();
+		}
 
 		// Reset si scale < min
 		if (scale < config.minScale) {
@@ -439,7 +445,7 @@ export function usePinchZoom({
 
 		window.addEventListener("resize", handleResize);
 		return () => window.removeEventListener("resize", handleResize);
-	}, [scale, config.minScale, containerRef]);
+	}, [scale, config.minScale]);
 
 	return {
 		scale,

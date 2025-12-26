@@ -49,7 +49,7 @@ export function CartBadge() {
 			<div className="absolute -top-1 -right-1">
 				<Badge
 					className={cn(
-						"h-5 w-5 flex items-center justify-center p-0 text-[10px] font-bold bg-secondary text-secondary-foreground border-2 border-secondary shadow-lg animate-in zoom-in-50 duration-300",
+						"h-[22px] w-[22px] flex items-center justify-center p-0 text-[11px] font-bold bg-secondary text-secondary-foreground border-2 border-background ring-2 ring-background shadow-lg animate-in zoom-in-50 duration-300",
 						shouldPulse && "animate-badge-pulse"
 					)}
 					aria-hidden="true"

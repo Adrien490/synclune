@@ -86,7 +86,7 @@ export function CartItemQuantitySelector({
 					type="button"
 					variant="outline"
 					size="icon"
-					className="size-11 sm:size-9"
+					className="size-11"
 					onClick={() => handleQuantityChange(optimisticQuantity - 1)}
 					disabled={isInactive || isLoading || optimisticQuantity <= 1}
 					aria-label={
@@ -109,7 +109,7 @@ export function CartItemQuantitySelector({
 					onChange={(e) => handleQuantityChange(parseInt(e.target.value, 10))}
 					onBlur={handleBlur}
 					disabled={isInactive || isLoading}
-					className="min-h-0 h-11 sm:h-9 w-14 sm:w-12 text-center text-base px-0 py-0"
+					className="min-h-0 h-11 w-14 text-center text-base px-0 py-0"
 					aria-label={`Quantite, entre 1 et ${maxQuantity}`}
 					aria-valuemin={1}
 					aria-valuemax={maxQuantity}
@@ -120,7 +120,7 @@ export function CartItemQuantitySelector({
 					type="button"
 					variant="outline"
 					size="icon"
-					className="size-11 sm:size-9"
+					className="size-11"
 					onClick={() => handleQuantityChange(optimisticQuantity + 1)}
 					disabled={isInactive || isLoading || optimisticQuantity >= maxQuantity}
 					aria-label={

@@ -101,7 +101,7 @@ export function Pagination({
 						disabled={page <= 1 || pageCount <= 1 || isPending}
 						onClick={() => handlePageChange(1)}
 						className={cn(
-							"h-11 w-11 md:h-8 md:w-8",
+							"size-11",
 							"backdrop-blur-sm",
 							"border-primary/20",
 							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
@@ -121,7 +121,7 @@ export function Pagination({
 						disabled={page <= 1 || pageCount <= 1 || isPending}
 						onClick={() => handlePageChange(page - 1)}
 						className={cn(
-							"h-11 w-11 md:h-8 md:w-8",
+							"size-11",
 							"backdrop-blur-sm",
 							"border-primary/20",
 							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
@@ -146,7 +146,7 @@ export function Pagination({
 							item.type === "dots" ? (
 								<div
 									key={item.id}
-									className="flex items-center justify-center h-8 w-8 mx-0.5 text-sm text-muted-foreground"
+									className="flex items-center justify-center size-11 mx-0.5 text-sm text-muted-foreground"
 									aria-hidden="true"
 								>
 									{item.value}
@@ -159,7 +159,7 @@ export function Pagination({
 									disabled={isPending || pageCount <= 1}
 									onClick={() => handlePageChange(item.value as number)}
 									className={cn(
-										"h-8 w-8",
+										"size-11",
 										"backdrop-blur-sm",
 										page !== item.value && "border-primary/20",
 										"hover:scale-[1.02]",
@@ -183,7 +183,7 @@ export function Pagination({
 						disabled={page >= pageCount || pageCount <= 1 || isPending}
 						onClick={() => handlePageChange(page + 1)}
 						className={cn(
-							"h-11 w-11 md:h-8 md:w-8",
+							"size-11",
 							"backdrop-blur-sm",
 							"border-primary/20",
 							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
@@ -202,7 +202,7 @@ export function Pagination({
 						disabled={page >= pageCount || pageCount <= 1 || isPending}
 						onClick={() => handlePageChange(pageCount)}
 						className={cn(
-							"h-11 w-11 md:h-8 md:w-8",
+							"size-11",
 							"backdrop-blur-sm",
 							"border-primary/20",
 							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",

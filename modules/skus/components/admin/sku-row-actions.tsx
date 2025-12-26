@@ -86,7 +86,7 @@ export function ProductSkuRowActions({
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-8 w-8 p-0 active:scale-95 transition-transform"
+					className="h-11 w-11 p-0 active:scale-95 transition-transform"
 					aria-label="Actions pour cette variante"
 				>
 					<MoreVertical className="h-4 w-4" />

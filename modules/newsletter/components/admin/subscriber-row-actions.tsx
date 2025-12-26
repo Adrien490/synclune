@@ -67,7 +67,7 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="h-8 w-8 p-0 active:scale-95 transition-transform" aria-label="Actions">
+					<Button variant="ghost" className="h-11 w-11 p-0 active:scale-95 transition-transform" aria-label="Actions">
 						<MoreVertical className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>

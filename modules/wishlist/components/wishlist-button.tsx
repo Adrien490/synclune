@@ -17,7 +17,7 @@ interface WishlistButtonProps {
 }
 
 const sizeConfig: Record<WishlistButtonSize, { button: string; icon: string }> = {
-	sm: { button: "size-9", icon: "size-4" },
+	sm: { button: "size-11", icon: "size-4" },
 	md: { button: "size-11", icon: "size-5" },
 	lg: { button: "size-14", icon: "size-8 sm:size-7" },
 };

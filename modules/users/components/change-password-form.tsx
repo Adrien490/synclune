@@ -71,6 +71,7 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 						<field.InputField
 							label="Mot de passe actuel"
 							type="password"
+							autoComplete="current-password"
 							disabled={isPending || state?.status === ActionStatus.SUCCESS}
 							required
 						/>
@@ -104,6 +105,7 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 							<field.InputField
 								label="Nouveau mot de passe"
 								type="password"
+								autoComplete="new-password"
 								disabled={isPending || state?.status === ActionStatus.SUCCESS}
 								required
 							/>
@@ -138,6 +140,7 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 						<field.InputField
 							label="Confirmer le mot de passe"
 							type="password"
+							autoComplete="new-password"
 							disabled={isPending || state?.status === ActionStatus.SUCCESS}
 							required
 						/>

@@ -106,6 +106,10 @@ export function NewsletterForm() {
 										{/* ✅ Using pre-bound InputField component */}
 										<field.InputField
 											type="email"
+											inputMode="email"
+											autoComplete="email"
+											spellCheck={false}
+											autoCorrect="off"
 											disabled={isPending || isSuccess}
 											className="h-12 text-base bg-background/80 backdrop-blur-sm border-2 focus:border-primary"
 											aria-label="Ton adresse email pour la newsletter"

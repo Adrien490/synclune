@@ -57,6 +57,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
 							label="Prénom"
 							disabled={isPending}
 							required
+							autoComplete="given-name"
+							autoCapitalize="words"
+							autoCorrect="off"
 						/>
 						<p className="text-sm text-muted-foreground">
 							Ce prénom sera utilisé pour vos commandes et communications

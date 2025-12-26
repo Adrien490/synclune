@@ -90,6 +90,10 @@ export function StockNotificationForm({ skuId }: StockNotificationFormProps) {
 					type="email"
 					name="email"
 					required
+					inputMode="email"
+					autoComplete="email"
+					spellCheck={false}
+					autoCorrect="off"
 					placeholder="ton@email.com"
 					className="h-9 text-sm"
 					aria-label="Adresse email pour notification de retour en stock"

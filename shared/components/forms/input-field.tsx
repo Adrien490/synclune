@@ -1,6 +1,7 @@
 "use client";
 
-import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
+import { Field, FieldError } from "@/shared/components/ui/field";
+import { FieldLabel } from "./field-label";
 import { Input } from "@/shared/components/ui/input";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
@@ -8,6 +9,8 @@ import { cn } from "@/shared/utils/cn";
 interface HTMLInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 	/** Label affiché au-dessus du champ */
 	label?: string;
+	/** Marque le champ comme optionnel avec "(Optionnel)" */
+	optional?: boolean;
 }
 
 /**
@@ -24,6 +27,7 @@ interface HTMLInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
  * - `pattern`: Regex validation HTML5
  * - `spellCheck`: Correction orthographique (false pour email/password)
  * - `autoCapitalize`: Capitalisation auto (off, words, sentences)
+ * - `autoCorrect`: Correction auto mobile (off pour noms, adresses, emails)
  *
  * @example
  * ```tsx
@@ -48,6 +52,7 @@ export const InputField = ({
 	label,
 	placeholder,
 	required,
+	optional,
 	type,
 	min,
 	step,
@@ -60,6 +65,7 @@ export const InputField = ({
 	pattern,
 	spellCheck,
 	autoCapitalize,
+	autoCorrect,
 	maxLength,
 	...rest
 }: HTMLInputProps) => {
@@ -87,13 +93,8 @@ export const InputField = ({
 	return (
 		<Field data-invalid={field.state.meta.errors.length > 0}>
 			{label && (
-				<FieldLabel htmlFor={field.name}>
+				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
 					{label}
-					{required && (
-						<span className="text-destructive ml-1" aria-label="requis">
-							*
-						</span>
-					)}
 				</FieldLabel>
 			)}
 			<Input
@@ -119,6 +120,7 @@ export const InputField = ({
 				pattern={pattern}
 				spellCheck={spellCheck}
 				autoCapitalize={autoCapitalize}
+				autoCorrect={autoCorrect}
 				maxLength={maxLength}
 				className={className}
 				{...rest}

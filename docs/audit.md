@@ -909,8 +909,8 @@
 | Focus visible | ring-2 visible | ✅ focus-visible:ring | OK |
 | Skip links | Sauter au contenu | ✅ Présent | OK |
 | Reduced motion | Respecter préférence | ✅ useReducedMotion | OK |
-| Focus trap modals | Confinement focus | ❌ Non mentionné | MOYEN |
-| Lightbox keyboard | Escape, flèches | ⚠️ À vérifier | MOYEN |
+| Focus trap modals | Confinement focus | ✅ Radix/Vaul natif | OK |
+| Lightbox keyboard | Escape, flèches | ✅ FocusScope + aria-modal | OK |
 | Color contrast | Ratio suffisant | ✅ Design system | OK |
 | Alt text images | Descriptifs | ✅ IMAGE_SIZES config | OK |
 

@@ -33,7 +33,7 @@ export const createCheckoutSessionSchema = z.object({
 		)
 		.min(1, "Le panier doit contenir au moins un article"),
 	shippingAddress: addressSchema,
-	email: z.email().optional(), // Requis si guest
+	email: z.email("Vérifie le format de ton email (ex: nom@domaine.com)").optional(), // Requis si guest
 	discountCode: z.string().max(30).optional(), // Code promo optionnel
 });
 

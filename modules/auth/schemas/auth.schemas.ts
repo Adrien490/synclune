@@ -78,7 +78,7 @@ export const signInEmailSchema = z.object({
 	email: z
 		.string()
 		.min(1, "L'email est requis")
-		.email("Format d'email invalide")
+		.email("Vérifie le format de ton email (ex: nom@domaine.com)")
 		.toLowerCase()
 		.trim(),
 	password: z.string().min(1, { message: "Le mot de passe est requis" }),
@@ -106,7 +106,7 @@ export type SignInSocialInput = z.infer<typeof signInSocialSchema>;
 
 export const signUpEmailSchema = z
 	.object({
-		email: z.email({ message: "Format d'email invalide" }),
+		email: z.email({ message: "Vérifie le format de ton email (ex: nom@domaine.com)" }),
 		password: newPasswordSchema,
 		confirmPassword: z
 			.string()
@@ -135,7 +135,7 @@ export const requestPasswordResetSchema = z.object({
 	email: z
 		.string()
 		.min(1, "L'email est requis")
-		.email("Format d'email invalide")
+		.email("Vérifie le format de ton email (ex: nom@domaine.com)")
 		.toLowerCase()
 		.trim(),
 });
@@ -169,7 +169,7 @@ export const resendVerificationEmailSchema = z.object({
 	email: z
 		.string()
 		.min(1, "L'email est requis")
-		.email("Format d'email invalide")
+		.email("Vérifie le format de ton email (ex: nom@domaine.com)")
 		.toLowerCase()
 		.trim(),
 });

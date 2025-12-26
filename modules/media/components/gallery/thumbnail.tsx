@@ -82,6 +82,15 @@ export function GalleryThumbnail({
 					/>
 					{isVideo && <VideoPlayBadge />}
 				</>
+			) : isVideo ? (
+				// Fallback pour vidéo sans thumbnail
+				<div
+					className="w-full h-full bg-muted"
+					role="img"
+					aria-label={alt}
+				>
+					<VideoPlayBadge />
+				</div>
 			) : (
 				<div
 					className="w-full h-full flex items-center justify-center bg-muted"

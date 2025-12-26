@@ -1,4 +1,10 @@
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
+import {
+	CBIcon,
+	MastercardIcon,
+	PayPalIcon,
+	VisaIcon,
+} from "@/shared/components/icons/payment-icons";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
@@ -176,8 +182,19 @@ export function Footer() {
 					</div>
 				</div>
 
+				{/* Paiement sécurisé */}
+				<div className="flex flex-col items-center gap-3 pt-8 border-t border-border">
+					<p className="text-sm text-muted-foreground">Paiement sécurisé</p>
+					<div className="flex items-center gap-4">
+						<VisaIcon className="text-muted-foreground" />
+						<MastercardIcon className="text-muted-foreground" />
+						<CBIcon className="text-muted-foreground" />
+						<PayPalIcon className="text-muted-foreground" />
+					</div>
+				</div>
+
 				{/* Copyright + Liens légaux */}
-				<div className="flex flex-col items-center gap-4 pt-8 border-t border-border">
+				<div className="flex flex-col items-center gap-4 pt-6">
 					<p className="text-sm/6 antialiased text-muted-foreground text-center">
 						© <CopyrightYear /> Synclune. Tous droits réservés.
 					</p>

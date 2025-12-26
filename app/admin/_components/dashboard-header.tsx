@@ -60,7 +60,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 						<Button
 							variant="outline"
 							size="sm"
-							className="h-9 gap-2"
+							className="h-11 gap-2"
 							asChild
 						>
 							<Link href="/" target="_blank" rel="noopener noreferrer">

@@ -43,7 +43,7 @@ export function QuickSearchTrigger({ className, showShortcut = true }: QuickSear
 			size="icon"
 			onClick={() => open()}
 			className={cn(
-				"size-11 group-data-[scrolled=true]:sm:size-10 transition-all duration-300 ease-out relative",
+				"size-11 transition-all duration-300 ease-out relative",
 				className
 			)}
 			aria-label={`Ouvrir la recherche rapide (${isMac ? "⌘" : "Ctrl+"}K)`}

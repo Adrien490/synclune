@@ -13,7 +13,8 @@ import {
 import ScrollFade from "@/shared/components/ui/scroll-fade";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { ShoppingBag, Truck } from "lucide-react";
+import { ShoppingBag, Truck, ShieldCheck, RotateCcw, Package, Sparkles } from "lucide-react";
+import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import {
 	Empty,
 	EmptyContent,
@@ -156,6 +157,34 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 						</div>
 					) : (
 						<>
+							{/* Alerte stock EN HAUT - visible immédiatement */}
+							{hasStockIssues && (
+								<div
+									id="stock-issues-alert"
+									className="px-6 py-2.5 bg-destructive/10 border-b border-destructive/20 shrink-0"
+									role="alert"
+									aria-label="Problèmes de stock dans le panier"
+								>
+									<p className="text-xs text-destructive font-medium">
+										Ajuste ton panier pour continuer
+									</p>
+									<ul className="mt-1 space-y-0.5 text-[11px] text-destructive/80">
+										{itemsWithIssues.map((item) => (
+											<li key={item.id} className="flex items-center gap-1">
+												<span aria-hidden="true">•</span>
+												<span className="line-clamp-1">
+													{item.sku.product.title}
+													{item.sku.inventory < item.quantity && " (rupture)"}
+													{(!item.sku.isActive ||
+														item.sku.product.status !== "PUBLIC") &&
+														" (indisponible)"}
+												</span>
+											</li>
+										))}
+									</ul>
+								</div>
+							)}
+
 							<div className="flex-1 min-h-0">
 								<ScrollFade
 									axis="vertical"
@@ -204,31 +233,15 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										</span>
 									</div>
 
-									{/* Alerte si problemes */}
-									{hasStockIssues && (
-										<div
-											id="stock-issues-alert"
-											className="p-2.5 bg-destructive/10 border border-destructive/20 rounded-md text-xs text-destructive"
-											role="alert"
-											aria-label="Problemes de stock dans le panier"
-										>
-											<p className="font-medium">Ajuste ton panier pour continuer</p>
-											<ul className="mt-1 space-y-0.5 text-destructive/80">
-												{itemsWithIssues.map((item) => (
-													<li key={item.id} className="flex items-center gap-1">
-														<span aria-hidden="true">•</span>
-														<span className="line-clamp-1">
-															{item.sku.product.title}
-															{item.sku.inventory < item.quantity && " (rupture)"}
-															{(!item.sku.isActive ||
-																item.sku.product.status !== "PUBLIC") &&
-																" (indisponible)"}
-														</span>
-													</li>
-												))}
-											</ul>
-										</div>
-									)}
+									{/* Lien cross-sell */}
+									<Link
+										href="/produits"
+										onClick={close}
+										className="text-xs text-foreground hover:underline flex items-center justify-center gap-1 py-1 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
+									>
+										<Sparkles className="w-3 h-3" />
+										Voir mes créations
+									</Link>
 
 									{/* CTAs */}
 									<div className="space-y-2">
@@ -262,13 +275,30 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										</Button>
 									</div>
 
-									<p className="text-[11px] text-muted-foreground flex items-center justify-between">
+									{/* Estimation frais de port */}
+									<div className="flex items-center justify-between text-[11px] text-muted-foreground">
 										<span className="flex items-center gap-1">
 											<Truck className="w-3 h-3" />
-											Livraison estimée au paiement
+											Livraison : {formatEuro(SHIPPING_RATES.FR.amount)} - {formatEuro(SHIPPING_RATES.EU.amount)}
 										</span>
-										<span>TVA non applicable</span>
-									</p>
+										<span>France et UE</span>
+									</div>
+
+									{/* Trust badges */}
+									<div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground pt-1">
+										<span className="flex items-center gap-1">
+											<ShieldCheck className="w-3 h-3 text-green-600" />
+											Paiement sécurisé
+										</span>
+										<span className="flex items-center gap-1">
+											<RotateCcw className="w-3 h-3 text-blue-600" />
+											Retours 14j
+										</span>
+										<span className="flex items-center gap-1">
+											<Package className="w-3 h-3" />
+											Suivi colis
+										</span>
+									</div>
 								</div>
 							</SheetFooter>
 						</>

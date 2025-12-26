@@ -18,7 +18,7 @@ export const subscribeToStockNotificationSchema = z.object({
 		.string()
 		.trim()
 		.min(1, "L'email est requis")
-		.email("Format d'email invalide")
+		.email("Vérifie le format de ton email (ex: nom@domaine.com)")
 		.max(255, "L'email ne peut pas dépasser 255 caractères")
 		.toLowerCase(),
 

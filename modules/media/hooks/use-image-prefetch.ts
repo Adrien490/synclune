@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { nextImageUrl, MAIN_IMAGE_QUALITY } from "../constants/image-config.constants";
 
 interface UsePrefetchImagesOptions {
 	/** URLs des images à prefetch */
@@ -94,14 +95,17 @@ export function usePrefetchImages({
 						)
 					);
 
-					const existingLink = allGalleryLinks.find((link) => link.href === imageUrl);
+					// Comparer avec l'URL Next.js optimisée
+					const optimizedUrl = nextImageUrl(imageUrl, 1080, MAIN_IMAGE_QUALITY);
+					const existingLink = allGalleryLinks.find((link) => link.href === optimizedUrl);
 					if (existingLink) continue;
 
-					// Créer link prefetch
+					// Créer link prefetch avec URL Next.js optimisée
 					const link = document.createElement("link");
 					link.rel = "prefetch";
 					link.as = "image";
-					link.href = imageUrl;
+					// Utiliser l'URL Next.js optimisée (1080px pour desktop, quality 85)
+					link.href = nextImageUrl(imageUrl, 1080, MAIN_IMAGE_QUALITY);
 					link.dataset.prefetchedBy = "gallery";
 
 					document.head.appendChild(link);
@@ -114,8 +118,12 @@ export function usePrefetchImages({
 					)
 				);
 
+				// Utiliser les URLs optimisées pour le cleanup
 				const currentUrls = new Set(
-					indicesToPrefetch.map((i) => imageUrls[i]).filter(Boolean)
+					indicesToPrefetch
+						.map((i) => imageUrls[i])
+						.filter(Boolean)
+						.map((url) => nextImageUrl(url, 1080, MAIN_IMAGE_QUALITY))
 				);
 
 				for (const link of allPrefetchLinks) {
@@ -124,7 +132,7 @@ export function usePrefetchImages({
 					}
 				}
 			},
-			{ timeout: 1000 }
+			{ timeout: 500 }
 		);
 
 		return () => {
