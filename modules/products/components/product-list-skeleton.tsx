@@ -4,7 +4,12 @@ import { cn } from "@/shared/utils/cn";
 
 export function ProductListSkeleton() {
 	return (
-		<div className="space-y-8">
+		<div className="space-y-6">
+			{/* Compteur de résultats */}
+			<div className="flex items-center justify-between">
+				<Skeleton className="h-5 w-24 rounded" />
+			</div>
+
 			{/* Grille des produits */}
 			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
 				{Array.from({ length: 8 }).map((_, i) => (

@@ -13,20 +13,22 @@ export const GALLERY_ZOOM_LEVEL = 3 as const;
 // ZOOM MOBILE (Pinch)
 // ============================================
 
-/** Configuration du pinch-to-zoom mobile */
+/** Configuration du pinch-to-zoom mobile (format camelCase pour shared/hooks/use-pinch-zoom) */
 export const PINCH_ZOOM_CONFIG = {
 	/** Échelle minimum (1 = taille normale) */
-	MIN_SCALE: 1,
+	minScale: 1,
 	/** Échelle maximum */
-	MAX_SCALE: 3,
+	maxScale: 3,
 	/** Échelle appliquée au double-tap */
-	DOUBLE_TAP_SCALE: 2,
+	doubleTapScale: 2,
 	/** Délai pour détecter un double-tap (ms) */
-	DOUBLE_TAP_DELAY: 300,
+	doubleTapDelay: 300,
 	/** Incrément de zoom au clavier (+/-) */
-	KEYBOARD_ZOOM_STEP: 0.5,
+	keyboardZoomStep: 0.5,
 	/** Incrément de pan au clavier (flèches, px) */
-	KEYBOARD_PAN_STEP: 50,
+	keyboardPanStep: 50,
+	/** Distance minimale (px) avant d'invalider un double-tap */
+	moveThreshold: 10,
 } as const;
 
 // ============================================

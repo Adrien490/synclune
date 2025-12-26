@@ -22,7 +22,7 @@ export function ProductList({
 	productsPromise,
 	perPage,
 }: ProductListProps) {
-	const { products, pagination } = use(productsPromise);
+	const { products, pagination, totalCount } = use(productsPromise);
 	const wishlistSkuIds = use(getWishlistSkuIds());
 
 	// Afficher le composant Empty si aucun produit
@@ -51,7 +51,15 @@ export function ProductList({
 
 	// Layout Grid par défaut
 	return (
-		<div className="space-y-8">
+		<div className="space-y-6">
+			{/* Compteur de résultats */}
+			<div className="flex items-center justify-between">
+				<p className="text-sm text-muted-foreground">
+					<span className="font-medium text-foreground">{totalCount}</span>{" "}
+					{totalCount > 1 ? "produits" : "produit"}
+				</p>
+			</div>
+
 			{/* Grille des produits - réaction au data-pending des filtres */}
 			<div
 				tabIndex={-1}

@@ -181,7 +181,7 @@ export function FilterBadges({
 				)}
 
 				{/* Bouton "Tout effacer" */}
-				{activeFilters.length > 1 && (
+				{activeFilters.length >= 1 && (
 					<motion.div
 						key="clear-all-button"
 						initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.9 }}

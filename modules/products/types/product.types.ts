@@ -86,6 +86,8 @@ export type GetProductsReturn = {
 		Prisma.ProductGetPayload<{ select: typeof GET_PRODUCTS_SELECT }>
 	>;
 	pagination: PaginationInfo;
+	/** Nombre total de produits correspondant aux filtres (avant pagination) */
+	totalCount: number;
 };
 
 export type Product = Prisma.ProductGetPayload<{

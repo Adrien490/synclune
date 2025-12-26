@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/shared/components/ui/input";
 import { Slider } from "@/shared/components/ui/slider";
+import {
+	priceToSlider,
+	sliderToPrice,
+	SLIDER_MAX,
+} from "../constants/price-filter";
 
 interface PriceRangeInputsProps {
 	value: [number, number];
@@ -13,24 +18,36 @@ interface PriceRangeInputsProps {
 /**
  * Composant pour gerer les inputs de prix avec etat local
  * Resout les problemes de synchronisation avec le slider
+ *
+ * Utilise une echelle quadratique non-lineaire pour le slider:
+ * - Plus de precision dans la gamme 0-100€ (ou la majorite des produits se trouvent)
+ * - Les prix eleves restent accessibles sans monopoliser le slider
  */
 export function PriceRangeInputs({
 	value,
 	onChange,
 	maxPrice,
 }: PriceRangeInputsProps) {
-	// Etat local pour permettre l'edition libre
+	// Etat local pour permettre l'edition libre des inputs texte
 	const [minInput, setMinInput] = useState(String(value[0]));
 	const [maxInput, setMaxInput] = useState(String(value[1]));
 
-	// Synchroniser l'etat local quand la valeur externe change (ex: slider)
+	// Position interne du slider (0-100) avec echelle non-lineaire
+	const [sliderPosition, setSliderPosition] = useState<[number, number]>([
+		priceToSlider(value[0], maxPrice),
+		priceToSlider(value[1], maxPrice),
+	]);
+
+	// Synchroniser l'etat local quand la valeur externe change
 	useEffect(() => {
 		setMinInput(String(value[0]));
-	}, [value[0]]);
+		setSliderPosition((prev) => [priceToSlider(value[0], maxPrice), prev[1]]);
+	}, [value[0], maxPrice]);
 
 	useEffect(() => {
 		setMaxInput(String(value[1]));
-	}, [value[1]]);
+		setSliderPosition((prev) => [prev[0], priceToSlider(value[1], maxPrice)]);
+	}, [value[1], maxPrice]);
 
 	const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const inputValue = e.target.value;
@@ -97,11 +114,17 @@ export function PriceRangeInputs({
 				{/* data-vaul-no-drag empeche le drawer de capturer le drag du slider */}
 				<div data-vaul-no-drag>
 					<Slider
-						value={value}
-						onValueChange={(newValue) => onChange([newValue[0], newValue[1]])}
-						max={maxPrice}
+						value={sliderPosition}
+						onValueChange={(newPos) => {
+							setSliderPosition([newPos[0], newPos[1]]);
+							// Convertir les positions en prix reels
+							const newMinPrice = sliderToPrice(newPos[0], maxPrice);
+							const newMaxPrice = sliderToPrice(newPos[1], maxPrice);
+							onChange([newMinPrice, newMaxPrice]);
+						}}
+						max={SLIDER_MAX}
 						min={0}
-						step={5}
+						step={1}
 						className="w-full"
 					/>
 				</div>

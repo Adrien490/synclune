@@ -382,9 +382,9 @@
 
 | Critère | Recommandation | État Synclune | Écart |
 |---------|----------------|---------------|-------|
-| Slider dual-thumb | Visual intuitif | ❌ Inputs seulement | **MOYEN** |
+| Slider dual-thumb | Visual intuitif | ✅ Radix UI dual-thumb | OK |
 | Text inputs | Fallback précis | ✅ Présents | OK |
-| Échelle adaptée | Non-linéaire si skewed | ❌ N/A | - |
+| Échelle adaptée | Non-linéaire si skewed | ✅ Quadratique | OK |
 | Feedback valeurs | Immédiat | ✅ Via inputs | OK |
 
 ---

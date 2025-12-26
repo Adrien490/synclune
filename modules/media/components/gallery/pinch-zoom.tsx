@@ -3,9 +3,9 @@
 import { useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
-import { useReducedMotion } from "@/shared/hooks";
-import { usePinchZoom } from "@/modules/media/hooks/use-pinch-zoom";
+import { useReducedMotion, usePinchZoom } from "@/shared/hooks";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
+import { PINCH_ZOOM_CONFIG } from "@/modules/media/constants/gallery.constants";
 
 interface GalleryPinchZoomProps {
 	src: string;
@@ -53,6 +53,7 @@ export function GalleryPinchZoom({
 		containerRef,
 		isActive,
 		onTap,
+		config: PINCH_ZOOM_CONFIG,
 	});
 
 	const transitionClass = prefersReduced ? "" : "transition-transform duration-200 ease-out";

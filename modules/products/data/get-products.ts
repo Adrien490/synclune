@@ -198,6 +198,7 @@ async function fetchProducts(
 				hasNextPage,
 				hasPreviousPage,
 			},
+			totalCount: sortedProducts.length,
 		};
 	} catch (error) {
 		const baseReturn = {
@@ -208,6 +209,7 @@ async function fetchProducts(
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 			error:
 				process.env.NODE_ENV === "development"
 					? error instanceof Error

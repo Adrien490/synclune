@@ -1,68 +1,130 @@
 "use client";
 
 import { useState, useRef, useEffect, useEffectEvent, type RefObject } from "react";
-import { getDistance, getCenter, clampPosition, getZoomToPointPosition, type Point } from "@/modules/media/utils/touch-geometry";
-import { PINCH_ZOOM_CONFIG } from "@/modules/media/constants/gallery.constants";
+import { getDistance, getCenter, clampPosition, getZoomToPointPosition, type Point } from "@/shared/utils/touch-geometry";
+
+// ============================================
+// TYPES
+// ============================================
+
+export interface PinchZoomConfig {
+	/** Échelle minimum (défaut: 1) */
+	minScale: number;
+	/** Échelle maximum (défaut: 3) */
+	maxScale: number;
+	/** Échelle appliquée au double-tap (défaut: 2) */
+	doubleTapScale: number;
+	/** Délai pour détecter un double-tap en ms (défaut: 300) */
+	doubleTapDelay: number;
+	/** Incrément de zoom au clavier (défaut: 0.5) */
+	keyboardZoomStep: number;
+	/** Incrément de pan au clavier en px (défaut: 50) */
+	keyboardPanStep: number;
+	/** Distance minimale en px avant d'invalider un double-tap (défaut: 10) */
+	moveThreshold: number;
+}
 
 export interface UsePinchZoomOptions {
+	/** Ref du container DOM */
 	containerRef: RefObject<HTMLDivElement | null>;
-	isActive: boolean;
+	/** Si true, le zoom est actif (reset automatique si false) */
+	isActive?: boolean;
+	/** Callback appelé sur tap simple (ex: ouvrir lightbox) */
 	onTap?: () => void;
-	config?: Partial<typeof PINCH_ZOOM_CONFIG>;
+	/** Configuration personnalisée */
+	config?: Partial<PinchZoomConfig>;
 }
 
 export interface UsePinchZoomReturn {
+	/** Niveau de zoom actuel */
 	scale: number;
+	/** Position de pan actuelle */
 	position: Point;
+	/** true si zoomé (scale > minScale) */
 	isZoomed: boolean;
+	/** true si l'utilisateur interagit (pinch/pan en cours) */
 	isInteracting: boolean;
+	/** Réinitialiser zoom et position */
 	reset: () => void;
+	/** Zoomer d'un pas */
 	zoomIn: () => void;
+	/** Dézoomer d'un pas */
 	zoomOut: () => void;
+	/** Handler clavier à attacher au container */
 	handleKeyDown: (e: React.KeyboardEvent) => void;
 }
 
+// ============================================
+// DEFAULTS
+// ============================================
+
+const DEFAULT_CONFIG: PinchZoomConfig = {
+	minScale: 1,
+	maxScale: 3,
+	doubleTapScale: 2,
+	doubleTapDelay: 300,
+	keyboardZoomStep: 0.5,
+	keyboardPanStep: 50,
+	moveThreshold: 10,
+};
+
+// ============================================
+// HOOK
+// ============================================
+
 /**
- * Hook pour gérer le pinch-to-zoom sur mobile
- * - Pinch pour zoomer (1x → 3x)
+ * Hook réutilisable pour pinch-to-zoom sur mobile et desktop
+ *
+ * Fonctionnalités:
+ * - Pinch pour zoomer
  * - Double-tap pour toggle zoom
  * - Pan quand zoomé
- * - Support clavier complet
+ * - Support clavier complet (+/-/flèches/Escape)
+ *
+ * @example
+ * ```tsx
+ * const containerRef = useRef<HTMLDivElement>(null);
+ * const { scale, position, isZoomed, handleKeyDown } = usePinchZoom({
+ *   containerRef,
+ *   onTap: () => openLightbox(),
+ * });
+ * ```
  */
 export function usePinchZoom({
 	containerRef,
-	isActive,
+	isActive = true,
 	onTap,
 	config: configOverride,
 }: UsePinchZoomOptions): UsePinchZoomReturn {
-	const config = { ...PINCH_ZOOM_CONFIG, ...configOverride };
+	const config = { ...DEFAULT_CONFIG, ...configOverride };
 
 	// États réactifs (déclenchent re-render)
-	const [scale, setScale] = useState(config.MIN_SCALE);
+	const [scale, setScale] = useState<number>(config.minScale);
 	const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
 	const [isInteracting, setIsInteracting] = useState(false);
 
 	// Refs pour tracking touch (pas de re-render)
 	const initialDistance = useRef(0);
-	const initialScale = useRef(config.MIN_SCALE);
+	const initialScale = useRef<number>(config.minScale);
 	const initialPosition = useRef<Point>({ x: 0, y: 0 });
 	const lastTouchCenter = useRef<Point>({ x: 0, y: 0 });
+	const startTouchCenter = useRef<Point>({ x: 0, y: 0 });
 	const lastTapTime = useRef(0);
 	const isPinching = useRef(false);
 	const isPanning = useRef(false);
 	const hasMoved = useRef(false);
 	const tapTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	const isZoomed = scale > config.MIN_SCALE;
+	const isZoomed = scale > config.minScale;
 
-	// Reset au changement de slide
+	// Reset au changement de slide/désactivation
 	useEffect(() => {
 		if (!isActive) {
-			setScale(config.MIN_SCALE);
+			setScale(config.minScale);
 			setPosition({ x: 0, y: 0 });
 			setIsInteracting(false);
 		}
-	}, [isActive, config.MIN_SCALE]);
+	}, [isActive, config.minScale]);
 
 	// Cleanup timeout
 	useEffect(() => {
@@ -74,20 +136,20 @@ export function usePinchZoom({
 	}, []);
 
 	const reset = () => {
-		setScale(config.MIN_SCALE);
+		setScale(config.minScale);
 		setPosition({ x: 0, y: 0 });
 	};
 
 	const zoomIn = () => {
-		const newScale = Math.min(config.MAX_SCALE, scale + config.KEYBOARD_ZOOM_STEP);
+		const newScale = Math.min(config.maxScale, scale + config.keyboardZoomStep);
 		setScale(newScale);
 		setPosition(clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null));
 	};
 
 	const zoomOut = () => {
-		const newScale = Math.max(config.MIN_SCALE, scale - config.KEYBOARD_ZOOM_STEP);
+		const newScale = Math.max(config.minScale, scale - config.keyboardZoomStep);
 		setScale(newScale);
-		if (newScale === config.MIN_SCALE) {
+		if (newScale === config.minScale) {
 			setPosition({ x: 0, y: 0 });
 		} else {
 			setPosition(clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null));
@@ -120,7 +182,7 @@ export function usePinchZoom({
 				if (isZoomed) {
 					e.preventDefault();
 					setPosition(clampPosition(
-						{ x: position.x + config.KEYBOARD_PAN_STEP, y: position.y },
+						{ x: position.x + config.keyboardPanStep, y: position.y },
 						scale,
 						rect
 					));
@@ -131,7 +193,7 @@ export function usePinchZoom({
 				if (isZoomed) {
 					e.preventDefault();
 					setPosition(clampPosition(
-						{ x: position.x - config.KEYBOARD_PAN_STEP, y: position.y },
+						{ x: position.x - config.keyboardPanStep, y: position.y },
 						scale,
 						rect
 					));
@@ -142,7 +204,7 @@ export function usePinchZoom({
 				if (isZoomed) {
 					e.preventDefault();
 					setPosition(clampPosition(
-						{ x: position.x, y: position.y + config.KEYBOARD_PAN_STEP },
+						{ x: position.x, y: position.y + config.keyboardPanStep },
 						scale,
 						rect
 					));
@@ -153,7 +215,7 @@ export function usePinchZoom({
 				if (isZoomed) {
 					e.preventDefault();
 					setPosition(clampPosition(
-						{ x: position.x, y: position.y - config.KEYBOARD_PAN_STEP },
+						{ x: position.x, y: position.y - config.keyboardPanStep },
 						scale,
 						rect
 					));
@@ -181,13 +243,17 @@ export function usePinchZoom({
 			isPanning.current = false;
 			initialDistance.current = getDistance(e.touches);
 			initialScale.current = scale;
-			lastTouchCenter.current = getCenter(e.touches);
+			const center = getCenter(e.touches);
+			lastTouchCenter.current = center;
+			startTouchCenter.current = center;
 			initialPosition.current = { ...position };
 		} else if (e.touches.length === 1) {
+			const touchPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+			startTouchCenter.current = touchPoint;
 			if (isZoomed) {
 				// Pan start
 				isPanning.current = true;
-				lastTouchCenter.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+				lastTouchCenter.current = touchPoint;
 				initialPosition.current = { ...position };
 			}
 		}
@@ -200,13 +266,23 @@ export function usePinchZoom({
 		if (e.touches.length === 2 && isPinching.current) {
 			// Pinch zoom
 			e.preventDefault();
-			hasMoved.current = true;
+
+			const center = getCenter(e.touches);
+			// Calculer la distance totale depuis le début du geste
+			const totalDistance = Math.hypot(
+				center.x - startTouchCenter.current.x,
+				center.y - startTouchCenter.current.y
+			);
+
+			// Ne marquer comme "moved" que si la distance dépasse le threshold
+			if (totalDistance > config.moveThreshold) {
+				hasMoved.current = true;
+			}
 
 			const newDistance = getDistance(e.touches);
 			const ratio = newDistance / initialDistance.current;
-			const newScale = Math.min(config.MAX_SCALE, Math.max(config.MIN_SCALE, initialScale.current * ratio));
+			const newScale = Math.min(config.maxScale, Math.max(config.minScale, initialScale.current * ratio));
 
-			const center = getCenter(e.touches);
 			const deltaX = center.x - lastTouchCenter.current.x;
 			const deltaY = center.y - lastTouchCenter.current.y;
 
@@ -224,9 +300,19 @@ export function usePinchZoom({
 		} else if (e.touches.length === 1 && isPanning.current && isZoomed) {
 			// Pan
 			e.preventDefault();
-			hasMoved.current = true;
 
 			const touch = e.touches[0];
+			// Calculer la distance totale depuis le début du geste
+			const totalDistance = Math.hypot(
+				touch.clientX - startTouchCenter.current.x,
+				touch.clientY - startTouchCenter.current.y
+			);
+
+			// Ne marquer comme "moved" que si la distance dépasse le threshold
+			if (totalDistance > config.moveThreshold) {
+				hasMoved.current = true;
+			}
+
 			const deltaX = touch.clientX - lastTouchCenter.current.x;
 			const deltaY = touch.clientY - lastTouchCenter.current.y;
 
@@ -240,6 +326,17 @@ export function usePinchZoom({
 			);
 
 			setPosition(newPosition);
+		} else if (e.touches.length === 1 && !isZoomed) {
+			// Tracking du mouvement pour single tap (non zoomé)
+			const touch = e.touches[0];
+			const totalDistance = Math.hypot(
+				touch.clientX - startTouchCenter.current.x,
+				touch.clientY - startTouchCenter.current.y
+			);
+
+			if (totalDistance > config.moveThreshold) {
+				hasMoved.current = true;
+			}
 		}
 	});
 
@@ -253,14 +350,14 @@ export function usePinchZoom({
 		setIsInteracting(false);
 
 		// Reset si scale < min
-		if (scale < config.MIN_SCALE) {
-			setScale(config.MIN_SCALE);
+		if (scale < config.minScale) {
+			setScale(config.minScale);
 			setPosition({ x: 0, y: 0 });
 			return;
 		}
 
 		// Reset position si scale = min
-		if (scale === config.MIN_SCALE) {
+		if (scale === config.minScale) {
 			setPosition({ x: 0, y: 0 });
 		}
 
@@ -269,7 +366,7 @@ export function usePinchZoom({
 			const now = Date.now();
 			const timeSinceLastTap = now - lastTapTime.current;
 
-			if (timeSinceLastTap < config.DOUBLE_TAP_DELAY && timeSinceLastTap > 0) {
+			if (timeSinceLastTap < config.doubleTapDelay && timeSinceLastTap > 0) {
 				// Double-tap détecté
 				e.preventDefault();
 				lastTapTime.current = 0;
@@ -290,24 +387,24 @@ export function usePinchZoom({
 						const newPosition = getZoomToPointPosition(
 							{ x: touch.clientX, y: touch.clientY },
 							rect,
-							config.DOUBLE_TAP_SCALE
+							config.doubleTapScale
 						);
-						setScale(config.DOUBLE_TAP_SCALE);
+						setScale(config.doubleTapScale);
 						setPosition(newPosition);
 					} else {
-						setScale(config.DOUBLE_TAP_SCALE);
+						setScale(config.doubleTapScale);
 					}
 				}
 			} else {
 				lastTapTime.current = now;
 
-				// Single tap après délai → ouvre lightbox
+				// Single tap après délai → callback onTap
 				if (!isZoomed && !wasPanning) {
 					tapTimeout.current = setTimeout(() => {
-						if (Date.now() - lastTapTime.current >= config.DOUBLE_TAP_DELAY) {
+						if (Date.now() - lastTapTime.current >= config.doubleTapDelay) {
 							onTap?.();
 						}
-					}, config.DOUBLE_TAP_DELAY);
+					}, config.doubleTapDelay);
 				}
 			}
 		}
@@ -330,6 +427,19 @@ export function usePinchZoom({
 			container.removeEventListener("touchend", handleTouchEnd);
 		};
 	}, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+	// Reclamper la position lors d'un changement de taille (orientation, resize)
+	useEffect(() => {
+		if (scale <= config.minScale) return;
+
+		const handleResize = () => {
+			const rect = containerRef.current?.getBoundingClientRect() ?? null;
+			setPosition((prev) => clampPosition(prev, scale, rect));
+		};
+
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, [scale, config.minScale, containerRef]);
 
 	return {
 		scale,

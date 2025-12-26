@@ -33,3 +33,6 @@ export { useRadioGroupKeyboard } from "./use-radio-group-keyboard"
 export { useAddRecentSearch } from "./use-add-recent-search"
 export { useRemoveRecentSearch } from "./use-remove-recent-search"
 export { useClearRecentSearches } from "./use-clear-recent-searches"
+
+// Gesture hooks
+export { usePinchZoom, type PinchZoomConfig, type UsePinchZoomOptions, type UsePinchZoomReturn } from "./use-pinch-zoom"
