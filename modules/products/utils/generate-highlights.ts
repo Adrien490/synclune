@@ -8,6 +8,7 @@ export type ProductHighlight = {
 	id: string;
 	icon: LucideIcon;
 	label: string;
+	description: string;
 	priority: number;
 };
 
@@ -29,6 +30,7 @@ export function generateHighlights(
 			id: "material",
 			icon: Gem,
 			label: primaryMaterial,
+			description: "Matériau de qualité sélectionné avec soin",
 			priority: 1,
 		});
 	}
@@ -38,6 +40,7 @@ export function generateHighlights(
 		id: "handmade",
 		icon: Hand,
 		label: "Fait main",
+		description: "Chaque pièce est unique, façonnée à la main",
 		priority: 2,
 	});
 
@@ -45,7 +48,8 @@ export function generateHighlights(
 	highlights.push({
 		id: "french",
 		icon: Sparkles,
-		label: "Artisanat francais",
+		label: "Artisanat français",
+		description: "Créé dans notre atelier en France",
 		priority: 3,
 	});
 
@@ -58,6 +62,7 @@ export function generateHighlights(
 			id: "adjustable",
 			icon: Ruler,
 			label: "Taille ajustable",
+			description: "S'adapte à toutes les morphologies",
 			priority: 4,
 		});
 	}
@@ -76,6 +81,7 @@ export function generateHighlights(
 			id: "collection",
 			icon: Heart,
 			label: `Collection ${displayName}`,
+			description: "Fait partie d'une collection exclusive",
 			priority: 5,
 		});
 	}

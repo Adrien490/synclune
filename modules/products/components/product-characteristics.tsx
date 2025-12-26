@@ -4,37 +4,22 @@ import {
 	CardDescription,
 	CardHeader,
 } from "@/shared/components/ui/card";
-import { Separator } from "@/shared/components/ui/separator";
-import type {
-	GetProductReturn,
-	ProductSku,
-} from "@/modules/products/types/product.types";
-import { Palette, Ruler, ShieldCheck, Sparkles } from "lucide-react";
+import type { ProductSku } from "@/modules/products/types/product.types";
+import { Ruler } from "lucide-react";
 
 interface ProductCharacteristicsProps {
-	product: GetProductReturn;
 	selectedSku?: ProductSku | null;
 }
 
 /**
- * ProductCharacteristics - Affiche les caractéristiques principales du produit
+ * ProductCharacteristics - Affiche les informations de taille du SKU selectionne
  *
- * Placé AVANT le bouton d'ajout au panier pour aider le client à prendre une décision éclairée.
- *
- * Responsabilités :
- * - Matériau principal
- * - Catégorie du bijou
- * - Fabrication artisanale
- * - Dimensions du SKU sélectionné
+ * Place AVANT le bouton d'ajout au panier pour aider le client.
+ * Les autres caracteristiques (materiau, fabrication) sont dans ProductHighlights.
  */
 export function ProductCharacteristics({
-	product,
 	selectedSku,
 }: ProductCharacteristicsProps) {
-	const primarySku = product.skus[0];
-	const primaryMaterial = primarySku?.material?.name;
-
-	// Informations de taille du SKU sélectionné (séparé du matériau pour clarté)
 	const sizeInfo = selectedSku?.size
 		? {
 				size: selectedSku.size,
@@ -42,82 +27,50 @@ export function ProductCharacteristics({
 			}
 		: null;
 
+	if (!sizeInfo) {
+		return null;
+	}
+
 	return (
-		<Card role="region" aria-labelledby="product-characteristics-title" className="bg-muted/30 border-transparent transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60">
+		<Card
+			role="region"
+			aria-labelledby="product-characteristics-title"
+			className="bg-muted/30 border-transparent transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
+		>
 			<CardHeader>
 				<h2
 					id="product-characteristics-title"
 					className="text-xs/5 font-semibold uppercase tracking-widest antialiased text-muted-foreground flex items-center gap-2"
 				>
-					<Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
-					Caractéristiques
+					<Ruler className="w-4 h-4 text-primary" aria-hidden="true" />
+					Taille sélectionnée
 				</h2>
 				<CardDescription className="text-sm/6 tracking-normal antialiased">
-					Détails de ce produit
+					Dimensions de la variante choisie
 				</CardDescription>
 			</CardHeader>
-			<CardContent className="space-y-4">
-				<dl className="grid gap-5 sm:gap-4 sm:grid-cols-2">
-					{/* Matériau principal */}
-					{primaryMaterial && (
-						<div className="flex items-center gap-3">
-							<div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center" aria-hidden="true">
-								<Palette className="w-4 h-4 text-primary" />
-							</div>
-							<div>
-								<dt className="text-sm/6 tracking-normal antialiased font-medium">
-									Matériau principal
-								</dt>
-								<dd className="text-xs/5 tracking-normal antialiased text-muted-foreground">
-									{primaryMaterial}
-								</dd>
-							</div>
-						</div>
-					)}
+			<CardContent className="space-y-3">
+				<div className="p-2 bg-muted/50 rounded-lg">
+					<span className="text-sm/6 tracking-normal antialiased">
+						{sizeInfo.size}
+					</span>
+				</div>
 
-					{/* Fabrication */}
-					<div className="flex items-center gap-3">
-						<div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center" aria-hidden="true">
-							<ShieldCheck className="w-4 h-4 text-primary" />
-						</div>
-						<div>
-							<dt className="text-sm/6 tracking-normal antialiased font-medium">Fabrication</dt>
-							<dd className="text-xs/5 tracking-normal antialiased text-muted-foreground">
-								Artisanale française
-							</dd>
+				{sizeInfo.isAdjustable && (
+					<div className="p-3 bg-accent rounded-lg border border-primary/20">
+						<div className="flex items-center gap-2">
+							<Ruler
+								className="w-4 h-4 text-primary"
+								aria-hidden="true"
+							/>
+							<span className="text-sm/6 tracking-normal antialiased font-medium text-accent-foreground">
+								<span className="hidden sm:inline">
+									Taille ajustable -{" "}
+								</span>
+								Convient à la plupart des morphologies
+							</span>
 						</div>
 					</div>
-				</dl>
-
-				{/* Taille du SKU sélectionné */}
-				{sizeInfo && selectedSku && (
-					<>
-						<Separator />
-						<div className="space-y-3">
-							<h3 className="text-sm/6 font-semibold tracking-tight antialiased flex items-center gap-2">
-								<Ruler className="w-4 h-4" aria-hidden="true" />
-								Taille
-							</h3>
-
-							<div className="p-2 bg-muted/50 rounded-lg">
-								<span className="text-sm/6 tracking-normal antialiased">
-									{sizeInfo.size}
-								</span>
-							</div>
-
-							{sizeInfo.isAdjustable && (
-								<div className="p-3 bg-accent rounded-lg border border-primary/20">
-									<div className="flex items-center gap-2">
-										<Ruler className="w-4 h-4 text-primary" aria-hidden="true" />
-										<span className="text-sm/6 tracking-normal antialiased font-medium text-accent-foreground">
-											<span className="hidden sm:inline">Taille ajustable - </span>
-											Convient à la plupart des morphologies
-										</span>
-									</div>
-								</div>
-							)}
-						</div>
-					</>
 				)}
 			</CardContent>
 		</Card>

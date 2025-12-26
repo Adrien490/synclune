@@ -10,6 +10,7 @@ import {
 import { SectionTitle } from "@/shared/components/ui/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
+import Script from "next/script";
 
 interface FaqItem {
 	question: string;
@@ -103,10 +104,13 @@ export function FaqSection() {
 			aria-labelledby="faq-title"
 		>
 			{/* JSON-LD Schema pour SEO */}
-			<script
+			<Script
+				id="faq-schema"
 				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-			/>
+				strategy="beforeInteractive"
+			>
+				{JSON.stringify(faqSchema)}
+			</Script>
 
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<header className="text-center mb-10 lg:mb-12">
@@ -127,7 +131,7 @@ export function FaqSection() {
 								<AccordionItem
 									key={`${category.id}-${idx}`}
 									value={`${category.id}-${idx}`}
-									className="bg-muted/30 rounded-xl px-5 border shadow-sm"
+									className="bg-muted/30 rounded-xl px-5 border shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
 								>
 									<AccordionTrigger className="text-base font-medium text-left py-5">
 										{item.question}

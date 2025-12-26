@@ -82,7 +82,7 @@ export function ProductDetails({
 					exit="exit"
 					transition={{ duration: prefersReducedMotion ? 0 : 0.15, delay: 0.05 }}
 				>
-					<ProductCharacteristics product={product} selectedSku={currentSku} />
+					<ProductCharacteristics selectedSku={currentSku} />
 				</motion.div>
 			</AnimatePresence>
 

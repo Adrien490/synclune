@@ -16,7 +16,6 @@ import { PREFETCH_RANGE_SLOW, PREFETCH_RANGE_FAST } from "@/modules/media/consta
 import { GalleryErrorBoundary } from "./error-boundary";
 import { GalleryThumbnail } from "./thumbnail";
 import { GalleryCounter } from "./counter";
-import { GalleryDots } from "./dots";
 import { GalleryNavigation } from "./navigation";
 import { GalleryZoomButton } from "./zoom-button";
 import { GallerySlide } from "./slide";
@@ -272,14 +271,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 								<GalleryZoomButton onOpen={open} />
 							)}
 
-							{/* Dots mobile */}
-							{images.length > 1 && (
-								<GalleryDots
-									current={current}
-									total={images.length}
-									onSelect={scrollTo}
-								/>
-							)}
 
 							{/* Embla viewport */}
 							<div ref={emblaRef} className="absolute inset-0 overflow-hidden">
@@ -305,6 +296,31 @@ function GalleryContent({ product, title }: GalleryProps) {
 							)}
 						</div>
 					</div>
+
+					{/* Vignettes horizontales - Mobile uniquement */}
+					{images.length > 1 && (
+						<div className="lg:hidden order-3 mt-3">
+							<div
+								className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory"
+								role="tablist"
+								aria-label="Vignettes"
+							>
+								{images.map((media, index) => (
+									<GalleryThumbnail
+										key={media.id}
+										media={media}
+										index={index}
+										isActive={index === current}
+										hasError={thumbnailErrors.has(media.id)}
+										title={title}
+										onClick={() => scrollTo(index)}
+										onError={() => handleThumbnailError(media.id)}
+										className="shrink-0 w-16 h-16 snap-start"
+									/>
+								))}
+							</div>
+						</div>
+					)}
 				</div>
 			</div>
 
