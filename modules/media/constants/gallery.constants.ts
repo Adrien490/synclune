@@ -32,6 +32,13 @@ export const PINCH_ZOOM_CONFIG = {
 } as const;
 
 // ============================================
+// VIDEO
+// ============================================
+
+/** Timeout avant d'afficher une erreur si la vidéo ne charge pas (ms) */
+export const VIDEO_LOAD_TIMEOUT = 30_000;
+
+// ============================================
 // PREFETCH
 // ============================================
 

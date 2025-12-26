@@ -10,6 +10,8 @@ interface TextareaFieldProps extends React.ComponentProps<"textarea"> {
 	label?: string;
 	/** Marque le champ comme optionnel avec "(Optionnel)" */
 	optional?: boolean;
+	/** Afficher un compteur de caractères (nécessite maxLength) */
+	showCounter?: boolean;
 }
 
 /**
@@ -29,6 +31,7 @@ export const TextareaField = ({
 	placeholder,
 	required,
 	optional,
+	showCounter,
 	className,
 	// Props mobile PWA
 	enterKeyHint,
@@ -40,9 +43,11 @@ export const TextareaField = ({
 	...rest
 }: TextareaFieldProps) => {
 	const field = useFieldContext<string>();
+	const hasErrors = field.state.meta.errors.length > 0;
+	const showFooter = hasErrors || (showCounter && maxLength);
 
 	return (
-		<Field data-invalid={field.state.meta.errors.length > 0}>
+		<Field data-invalid={hasErrors}>
 			{label && (
 				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
 					{label}
@@ -57,9 +62,9 @@ export const TextareaField = ({
 				onChange={(e) => field.handleChange(e.target.value)}
 				onBlur={field.handleBlur}
 				rows={rows}
-				aria-invalid={field.state.meta.errors.length > 0}
+				aria-invalid={hasErrors}
 				aria-describedby={
-					field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
+					hasErrors ? `${field.name}-error` : undefined
 				}
 				aria-required={required}
 				// Props mobile PWA
@@ -72,7 +77,18 @@ export const TextareaField = ({
 				className={cn("border-input focus:ring-1 focus:ring-primary", className)}
 				{...rest}
 			/>
-			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			{showFooter ? (
+				<div className="flex justify-between text-xs text-muted-foreground">
+					<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+					{showCounter && maxLength && (
+						<span aria-live="polite">
+							{field.state.value?.length ?? 0}/{maxLength}
+						</span>
+					)}
+				</div>
+			) : (
+				<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
+			)}
 		</Field>
 	);
 };

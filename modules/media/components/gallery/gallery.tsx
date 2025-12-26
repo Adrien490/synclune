@@ -11,6 +11,7 @@ import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import MediaLightbox from "@/modules/media/components/media-lightbox";
 import { useLightbox } from "@/modules/media/hooks/use-lightbox";
 import { usePrefetchImages } from "@/modules/media/hooks/use-image-prefetch";
+import { usePrefetchVideos } from "@/modules/media/hooks/use-video-prefetch";
 import { buildGallery } from "@/modules/media/utils/build-gallery";
 import { buildLightboxSlides } from "@/modules/media/utils/build-lightbox-slides";
 import { PREFETCH_RANGE_SLOW, PREFETCH_RANGE_FAST } from "@/modules/media/constants/gallery.constants";
@@ -85,7 +86,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 		selectedVariants: { colorSlug, materialSlug, size },
 	});
 
-	const slides = buildLightboxSlides(images, false);
+	const slides = buildLightboxSlides(images, prefersReduced);
 
 	// Connection-aware prefetch range
 	const connection = typeof navigator !== "undefined"
@@ -99,6 +100,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	usePrefetchImages({
 		imageUrls,
+		currentIndex: current,
+		prefetchRange,
+		enabled: images.length > 1,
+	});
+
+	// Prefetch métadonnées des vidéos adjacentes
+	usePrefetchVideos({
+		medias: images,
 		currentIndex: current,
 		prefetchRange,
 		enabled: images.length > 1,

@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { useMediaQuery, useReducedMotion } from "@/shared/hooks";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
-import { GALLERY_ZOOM_LEVEL } from "@/modules/media/constants/gallery.constants";
+import { GALLERY_ZOOM_LEVEL, VIDEO_LOAD_TIMEOUT } from "@/modules/media/constants/gallery.constants";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
 import { GalleryHoverZoom } from "./hover-zoom";
 import { GalleryPinchZoom } from "./pinch-zoom";
@@ -43,6 +44,40 @@ function VideoLoadingSpinner() {
 	);
 }
 
+interface VideoErrorFallbackProps {
+	onRetry: () => void;
+	poster?: string;
+}
+
+function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
+	return (
+		<div
+			className="absolute inset-0 flex flex-col items-center justify-center bg-muted/80 z-10"
+			style={poster ? { backgroundImage: `url(${poster})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+		>
+			<div className="flex flex-col items-center gap-3 p-4 rounded-xl bg-background/90 backdrop-blur-sm shadow-lg">
+				<AlertCircle className="w-8 h-8 text-muted-foreground" aria-hidden="true" />
+				<p className="text-sm text-muted-foreground text-center">
+					Impossible de charger la vidéo
+				</p>
+				<button
+					type="button"
+					onClick={(e) => {
+						e.stopPropagation();
+						onRetry();
+					}}
+					className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+				>
+					<RefreshCw className="w-4 h-4" aria-hidden="true" />
+					Réessayer
+				</button>
+			</div>
+		</div>
+	);
+}
+
+type VideoState = "loading" | "ready" | "error";
+
 export function GallerySlide({
 	media,
 	index,
@@ -53,7 +88,7 @@ export function GallerySlide({
 	onOpen,
 }: GallerySlideProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
-	const [isVideoLoading, setIsVideoLoading] = useState(true);
+	const [videoState, setVideoState] = useState<VideoState>("loading");
 	const prefersReduced = useReducedMotion();
 
 	// Détection desktop pour rendu conditionnel (évite double image dans DOM)
@@ -62,7 +97,7 @@ export function GallerySlide({
 
 	// Autoplay vidéo quand active (respect prefers-reduced-motion)
 	useEffect(() => {
-		if (!videoRef.current) return;
+		if (!videoRef.current || videoState === "error") return;
 
 		if (isActive && !prefersReduced) {
 			videoRef.current.play().catch((err) => {
@@ -73,14 +108,32 @@ export function GallerySlide({
 		} else {
 			videoRef.current.pause();
 		}
-	}, [isActive, prefersReduced]);
+	}, [isActive, prefersReduced, videoState]);
 
-	// Reset loading state si l'URL change
+	// Reset state si l'URL change
 	useEffect(() => {
 		if (media.mediaType === "VIDEO") {
-			setIsVideoLoading(true);
+			setVideoState("loading");
 		}
 	}, [media.url, media.mediaType]);
+
+	// Timeout pour éviter spinner infini
+	useEffect(() => {
+		if (media.mediaType !== "VIDEO" || videoState !== "loading") return;
+
+		const timeout = setTimeout(() => {
+			setVideoState("error");
+		}, VIDEO_LOAD_TIMEOUT);
+
+		return () => clearTimeout(timeout);
+	}, [media.mediaType, media.url, videoState]);
+
+	const handleRetry = () => {
+		setVideoState("loading");
+		if (videoRef.current) {
+			videoRef.current.load();
+		}
+	};
 
 	const transitionClass = prefersReduced ? "" : "transition-opacity duration-300";
 
@@ -95,14 +148,20 @@ export function GallerySlide({
 				onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen()}
 				aria-label="Ouvrir la vidéo en plein écran"
 			>
-				{isVideoLoading && <VideoLoadingSpinner />}
+				{videoState === "loading" && <VideoLoadingSpinner />}
+				{videoState === "error" && (
+					<VideoErrorFallback
+						onRetry={handleRetry}
+						poster={media.thumbnailUrl || undefined}
+					/>
+				)}
 				<video
 					ref={videoRef}
 					preload="metadata"
 					className={cn(
 						"w-full h-full object-cover",
 						transitionClass,
-						isVideoLoading ? "opacity-0" : "opacity-100"
+						videoState !== "ready" ? "opacity-0" : "opacity-100"
 					)}
 					muted
 					loop={!prefersReduced}
@@ -111,10 +170,11 @@ export function GallerySlide({
 					poster={media.thumbnailUrl || undefined}
 					onCanPlay={() => {
 						if (videoRef.current && videoRef.current.readyState >= 3) {
-							setIsVideoLoading(false);
+							setVideoState("ready");
 						}
 					}}
-					onPlaying={() => setIsVideoLoading(false)}
+					onPlaying={() => setVideoState("ready")}
+					onError={() => setVideoState("error")}
 					aria-label={`Vidéo ${title}`}
 				>
 					<source src={media.url} type="video/mp4" />
