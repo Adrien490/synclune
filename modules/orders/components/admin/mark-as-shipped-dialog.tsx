@@ -25,7 +25,7 @@ import {
 	CARRIERS,
 	detectCarrierAndUrl,
 	type Carrier,
-} from "@/modules/orders/utils/carrier-detection";
+} from "@/modules/orders/services/carrier.service";
 import { useStore } from "@tanstack/react-form";
 import { Mail, Truck } from "lucide-react";
 import { useMarkAsShippedForm } from "@/modules/orders/hooks/use-mark-as-shipped-form";

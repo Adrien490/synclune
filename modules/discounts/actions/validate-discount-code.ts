@@ -3,7 +3,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { validateDiscountCodeSchema } from "../schemas/discount.schemas";
 import { GET_DISCOUNT_VALIDATION_SELECT, DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
-import { calculateDiscountAmount } from "../utils/calculate-discount-amount";
+import { calculateDiscountAmount } from "../services/discount-calculation.service";
 import { checkDiscountEligibility } from "../utils/check-discount-eligibility";
 import type { ValidateDiscountCodeReturn, DiscountApplicationContext } from "../types/discount.types";
 

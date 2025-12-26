@@ -40,7 +40,7 @@ import { ORDER_NOTES_DIALOG_ID } from "../order-notes-dialog";
 import { RESEND_EMAIL_DIALOG_ID } from "../resend-email-dialog";
 import { MARK_AS_RETURNED_DIALOG_ID } from "../mark-as-returned-alert-dialog";
 import { REVERT_TO_PROCESSING_DIALOG_ID } from "../revert-to-processing-dialog";
-import type { Carrier } from "@/modules/orders/utils/carrier-detection";
+import type { Carrier } from "@/modules/orders/services/carrier.service";
 import type { OrderHeaderProps } from "./types";
 
 export function OrderHeader({ order, notesCount }: OrderHeaderProps) {

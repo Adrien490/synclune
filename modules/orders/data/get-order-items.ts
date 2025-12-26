@@ -25,7 +25,7 @@ import type {
 	GetOrderItemsReturn,
 	GetOrderItemsParams,
 } from "../types/order-items.types";
-import { buildOrderItemsWhereClause } from "../utils/order-items-query-builder";
+import { buildOrderItemsWhereClause } from "../services/order-items-query-builder";
 
 // Re-export pour compatibilité
 export {

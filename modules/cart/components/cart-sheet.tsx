@@ -13,7 +13,7 @@ import {
 import ScrollFade from "@/shared/components/ui/scroll-fade";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { ShoppingBag, Truck, ShieldCheck, RotateCcw, Package, Sparkles } from "lucide-react";
+import { ShoppingBag, Truck, ShieldCheck, RotateCcw, Package } from "lucide-react";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import {
 	Empty,
@@ -232,16 +232,6 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 											{formatEuro(subtotal)}
 										</span>
 									</div>
-
-									{/* Lien cross-sell */}
-									<Link
-										href="/produits"
-										onClick={close}
-										className="text-xs text-foreground hover:underline flex items-center justify-center gap-1 py-1 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
-									>
-										<Sparkles className="w-3 h-3" />
-										Voir mes créations
-									</Link>
 
 									{/* CTAs */}
 									<div className="space-y-2">

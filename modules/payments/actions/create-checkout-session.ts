@@ -7,7 +7,7 @@ import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/li
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
-import { calculateShipping } from "@/modules/orders/utils/shipping.utils";
+import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
@@ -18,7 +18,7 @@ import type { CreateCheckoutSessionData } from "@/modules/payments/types/checkou
 import { getStripeShippingOptions } from "@/modules/orders/constants/stripe-shipping-rates";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { checkDiscountEligibility } from "@/modules/discounts/utils/check-discount-eligibility";
-import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/utils/calculate-discount-amount";
+import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/services/discount-calculation.service";
 import { getShippingZoneFromPostalCode } from "@/modules/payments/utils/postal-zone.utils";
 import { getInvoiceFooter } from "@/shared/lib/stripe";
 import { getValidImageUrl } from "@/modules/payments/utils/validate-image-url";

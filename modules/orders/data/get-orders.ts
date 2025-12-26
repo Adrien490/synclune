@@ -27,7 +27,7 @@ import type {
 	GetOrdersReturn,
 	Order,
 } from "../types/order.types";
-import { buildOrderWhereClause } from "../utils/order-query-builder";
+import { buildOrderWhereClause } from "../services/order-query-builder";
 
 // Re-export pour compatibilité
 export {

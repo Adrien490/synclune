@@ -11,7 +11,7 @@ import {
 import { sendReviewRequestEmailInternal } from "@/modules/reviews/actions/send-review-request-email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier-detection";
+import { getCarrierLabel, type Carrier } from "@/modules/orders/services/carrier.service";
 import type { ResendEmailType } from "../types/email.types";
 
 // Re-export du type pour compatibilité

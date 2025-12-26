@@ -28,13 +28,15 @@ app/
 ├── admin/               # Dashboard admin
 └── api/                 # Auth, webhooks, uploads
 
-modules/                 # DDD - 22 modules
+modules/                 # DDD - 23 modules
 ├── [module]/
-│   ├── actions/         # Server Actions
+│   ├── actions/         # Server Actions (mutations)
 │   ├── data/            # Data fetching + cache
+│   ├── services/        # Pure business logic
 │   ├── components/      # React components
 │   ├── schemas/         # Zod schemas
 │   ├── constants/       # Cache tags, config
+│   ├── utils/           # Helpers, query builders
 │   └── types/           # TypeScript types
 
 shared/                  # Cross-cutting
@@ -114,6 +116,84 @@ async function fetchCart(userId?: string) {
 ```
 
 **Profiles** (next.config.ts): `products`, `collections`, `reference`, `cart`, `session`, `dashboard`
+
+## Module Layers Pattern
+
+Chaque module suit une architecture en couches pour la separation des responsabilites:
+
+### data/ - Requetes DB cachees
+
+Fonctions de lecture avec `"use cache"`. Jamais de mutations.
+
+```typescript
+export async function getOrders(params: GetOrdersParams) {
+  const session = await getSession()
+  return fetchOrders(params, session?.user?.id)
+}
+
+async function fetchOrders(params: GetOrdersParams, userId?: string) {
+  "use cache"
+  cacheLife("dashboard")
+  cacheTag("orders-list")
+
+  const where = buildOrderWhereClause(params) // Appel service
+  return prisma.order.findMany({ where })
+}
+```
+
+### services/ - Logique metier pure
+
+Fonctions pures sans effets de bord. Pas de `"use server"`, pas de mutations DB.
+
+```typescript
+// modules/orders/services/order-query-builder.ts
+export function buildOrderWhereClause(params: GetOrdersParams): Prisma.OrderWhereInput {
+  const conditions: Prisma.OrderWhereInput[] = []
+
+  if (params.search) {
+    conditions.push(buildOrderSearchConditions(params.search))
+  }
+  if (params.filters) {
+    conditions.push(buildOrderFilterConditions(params.filters))
+  }
+
+  return { AND: conditions, deletedAt: null }
+}
+```
+
+### actions/ - Server Actions (mutations)
+
+Mutations avec auth, validation, DB write, cache invalidation.
+
+```typescript
+"use server"
+
+export async function cancelOrder(_: ActionState | undefined, formData: FormData): Promise<ActionState> {
+  const admin = await requireAdmin()
+  if ("error" in admin) return admin.error
+
+  const validation = validateInput(schema, { id: formData.get("id") })
+  if (!validation.success) return error(validation.error.errors[0]?.message)
+
+  await prisma.order.update({ where: { id }, data: { status: "CANCELLED" } })
+  updateTag("orders-list")
+  return success("Commande annulee")
+}
+```
+
+### Matrice de decision
+
+| Besoin | Layer |
+|--------|-------|
+| Lire des donnees avec cache | `data/` |
+| Transformer/calculer (sans DB) | `services/` |
+| Muter la base de donnees | `actions/` |
+| Construire des WHERE clauses | `services/` |
+| Helpers simples, type guards | `utils/` |
+
+### Exception: Module webhooks
+
+Le module `webhooks/` suit un pattern different car les webhooks Stripe sont des handlers internes (pas des Server Actions). Les fichiers dans `webhooks/services/` contiennent de la logique transactionnelle complete (lecture + mutation) pour garantir l'atomicite des operations critiques.
 
 ## Prisma Patterns
 
