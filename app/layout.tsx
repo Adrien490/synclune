@@ -84,15 +84,13 @@ export const metadata: Metadata = {
 			"Bijoux colorés faits main à Nantes. Boucles d'oreilles, colliers, bracelets. Créations uniques en Loire-Atlantique.",
 		images: [SEO_DEFAULTS.images.default],
 	},
+	// TODO: Réactiver l'indexation avant le lancement en production
 	robots: {
-		index: true,
-		follow: true,
+		index: false,
+		follow: false,
 		googleBot: {
-			index: true,
-			follow: true,
-			"max-video-preview": -1,
-			"max-image-preview": "large",
-			"max-snippet": -1,
+			index: false,
+			follow: false,
 		},
 	},
 	verification: {
