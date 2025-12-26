@@ -357,7 +357,7 @@ export function QuickSearchDialog({
 					</ScrollFade>
 				</div>
 
-				{/* Safe area bottom spacer - outside ScrollFade */}
+				{/* Safe area bottom spacer */}
 				<div className="h-[env(safe-area-inset-bottom,0)] shrink-0 bg-background md:hidden" />
 			</DialogContent>
 		</Dialog>

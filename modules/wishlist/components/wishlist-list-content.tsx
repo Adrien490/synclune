@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
@@ -10,7 +10,6 @@ import {
 	WishlistListOptimisticContext,
 	type WishlistListOptimisticContextValue,
 } from "../contexts/wishlist-list-optimistic-context";
-import { cn } from "@/shared/utils/cn";
 
 interface WishlistListContentProps {
 	items: GetWishlistReturn["items"];
@@ -33,7 +32,6 @@ export function WishlistListContent({
 	perPage,
 }: WishlistListContentProps) {
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
-	const [isTransitionPending, startTransition] = useTransition();
 
 	// Optimistic state pour la liste d'items
 	const [optimisticItems, removeOptimisticItem] = useOptimistic(
@@ -43,9 +41,7 @@ export function WishlistListContent({
 
 	// Callback pour le contexte - appelé par WishlistButton quand un item est retiré
 	const handleItemRemoved = (skuId: string) => {
-		startTransition(() => {
-			removeOptimisticItem(skuId);
-		});
+		removeOptimisticItem(skuId);
 	};
 
 	// Valeur du contexte
@@ -72,11 +68,7 @@ export function WishlistListContent({
 			<div className="space-y-8">
 				{/* Grid des items de wishlist avec animation */}
 				<div
-					className={cn(
-						"grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6",
-						"motion-safe:transition-opacity motion-safe:duration-200",
-						isTransitionPending && "opacity-70 pointer-events-none"
-					)}
+					className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
 				>
 					<AnimatePresence mode="popLayout">
 						{uniqueProducts.map((item, index) => (
