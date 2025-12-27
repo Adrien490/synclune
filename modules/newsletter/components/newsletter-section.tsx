@@ -15,23 +15,9 @@ export function NewsletterSection() {
 		<section
 			aria-labelledby="newsletter-title"
 			aria-describedby="newsletter-subtitle"
-			className={cn("relative overflow-hidden", SECTION_SPACING.section)}
+			className={cn(SECTION_SPACING.section)}
 		>
-			{/* Formes décoratives floues - hidden on mobile for INP */}
-			<div
-				className="absolute top-8 left-10 w-24 h-24 rounded-full bg-primary/20 blur-3xl hidden md:block"
-				aria-hidden="true"
-			/>
-			<div
-				className="absolute bottom-8 right-16 w-32 h-32 rounded-full bg-amber-200/30 blur-3xl hidden md:block"
-				aria-hidden="true"
-			/>
-			<div
-				className="absolute top-1/2 left-1/4 w-16 h-16 rounded-full bg-pink-200/25 blur-2xl hidden md:block"
-				aria-hidden="true"
-			/>
-
-			<div className={cn("relative z-10", CONTAINER_CLASS)}>
+			<div className={cn(CONTAINER_CLASS)}>
 				{/* Header pattern standard */}
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
