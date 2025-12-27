@@ -4,12 +4,11 @@ import { useState } from "react"
 import Image from "next/image"
 
 import dynamic from "next/dynamic"
-import { MediaLightboxSkeleton } from "@/shared/components/skeletons/lazy-loading"
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
 const MediaLightbox = dynamic(
 	() => import("@/modules/media/components/media-lightbox"),
-	{ ssr: false, loading: () => <MediaLightboxSkeleton /> }
+	{ ssr: false }
 )
 import { CardContent } from "@/shared/components/ui/card"
 import { cn } from "@/shared/utils/cn"

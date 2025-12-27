@@ -5,12 +5,11 @@ import Image from "next/image"
 
 import { useLightbox } from "@/modules/media/hooks/use-lightbox"
 import dynamic from "next/dynamic"
-import { MediaLightboxSkeleton } from "@/shared/components/skeletons/lazy-loading"
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
 const MediaLightbox = dynamic(
 	() => import("@/modules/media/components/media-lightbox"),
-	{ ssr: false, loading: () => <MediaLightboxSkeleton /> }
+	{ ssr: false }
 )
 
 import type { ReviewPublic } from "../types/review.types"
