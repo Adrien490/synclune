@@ -57,8 +57,12 @@ export function RatingStars({
 	return (
 		<div
 			className={cn("flex items-center gap-0.5", className)}
-			role={interactive ? "group" : undefined}
-			aria-label={interactive ? "Sélection de la note" : undefined}
+			role={interactive ? "radiogroup" : "img"}
+			aria-label={
+				interactive
+					? "Sélection de la note"
+					: `Note : ${rating} sur ${maxRating}`
+			}
 		>
 			{Array.from({ length: maxRating }, (_, i) => {
 				const star = i + 1
@@ -69,6 +73,8 @@ export function RatingStars({
 						<button
 							key={star}
 							type="button"
+							role="radio"
+							aria-checked={star === rating}
 							onClick={() => handleClick(star)}
 							onKeyDown={(e) => handleKeyDown(star, e)}
 							className={cn(
@@ -129,10 +135,16 @@ export function RatingStarsCompact({
 	className?: string
 }) {
 	return (
-		<div className={cn("flex items-center gap-1.5", className)}>
-			<Star className="size-4 fill-amber-400 text-amber-400" />
-			<span className="text-sm font-medium">{rating.toFixed(1)}</span>
-			<span className="text-sm text-muted-foreground">
+		<div
+			className={cn("flex items-center gap-1.5", className)}
+			role="img"
+			aria-label={`Note moyenne : ${rating.toFixed(1)} sur 5, basée sur ${count} ${countLabel}`}
+		>
+			<Star className="size-4 fill-amber-400 text-amber-400" aria-hidden="true" />
+			<span className="text-sm font-medium" aria-hidden="true">
+				{rating.toFixed(1)}
+			</span>
+			<span className="text-sm text-muted-foreground" aria-hidden="true">
 				({count} {countLabel})
 			</span>
 		</div>

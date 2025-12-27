@@ -11,12 +11,12 @@ import {
 	SelectSeparator,
 	SelectTrigger,
 	SelectValue,
-} from "./select";
+} from "@/shared/components/ui/select";
 import {
 	NativeSelect,
 	NativeSelectOptGroup,
 	NativeSelectOption,
-} from "./native-select";
+} from "@/shared/components/native-select";
 import { cn } from "@/shared/utils/cn";
 
 // ============================================================================

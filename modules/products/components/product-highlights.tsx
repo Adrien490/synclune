@@ -8,7 +8,7 @@ interface ProductHighlightsProps {
 /**
  * ProductHighlights - Points cles produit avec pattern Baymard
  *
- * Pattern: [ICONE] + [TITRE] + [DESCRIPTION]
+ * Pattern: [DOT] + [TITRE] + [DESCRIPTION]
  * Ameliore la scanabilite UX (78% des sites echouent selon Baymard).
  * Genere automatiquement depuis les donnees existantes.
  */
@@ -25,27 +25,21 @@ export function ProductHighlights({ product }: ProductHighlightsProps) {
 				Points clés du produit
 			</h2>
 			<ul className="grid gap-4 sm:grid-cols-2">
-				{highlights.map((highlight) => {
-					const Icon = highlight.icon;
-					return (
-						<li key={highlight.id} className="flex items-start gap-3">
-							<div
-								className="shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"
-								aria-hidden="true"
-							>
-								<Icon className="w-5 h-5 text-primary" />
-							</div>
-							<div className="min-w-0">
-								<p className="text-sm/6 font-medium tracking-normal antialiased">
-									{highlight.label}
-								</p>
-								<p className="text-xs/5 tracking-normal antialiased text-muted-foreground">
-									{highlight.description}
-								</p>
-							</div>
-						</li>
-					);
-				})}
+				{highlights.map((highlight) => (
+					<li key={highlight.id} className="flex items-start gap-2">
+						<span className="text-primary mt-1" aria-hidden="true">
+							•
+						</span>
+						<div className="min-w-0">
+							<p className="text-sm/6 font-medium tracking-normal antialiased">
+								{highlight.label}
+							</p>
+							<p className="text-xs/5 tracking-normal antialiased text-muted-foreground">
+								{highlight.description}
+							</p>
+						</div>
+					</li>
+				))}
 			</ul>
 		</section>
 	);

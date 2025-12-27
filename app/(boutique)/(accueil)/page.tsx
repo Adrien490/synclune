@@ -95,9 +95,6 @@ export default async function Page() {
 			{/* 5. CreativeProcess - Storytelling atelier + Connexion émotionnelle */}
 			<CreativeProcess />
 
-			{/* Séparateur décoratif girly */}
-			<SparklesDivider />
-
 			{/* 6. FAQ - Questions fréquentes avec schema SEO */}
 			<FaqSection />
 		</>

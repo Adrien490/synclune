@@ -410,22 +410,16 @@ textarea {
 		animation: heart-beat 2s ease-in-out infinite;
 	}
 
-	/* Animation heartbeat pour wishlist button - effet "pop" rapide */
-	@keyframes heartbeat {
+	/* Animation wishlist button - single pop subtil (200ms) */
+	@keyframes wishlist-pop {
 		0% {
-			transform: scale(1.1);
-		}
-		25% {
-			transform: scale(1.3);
+			transform: scale(1);
 		}
 		50% {
-			transform: scale(1.1);
-		}
-		75% {
-			transform: scale(1.2);
+			transform: scale(1.12);
 		}
 		100% {
-			transform: scale(1.1);
+			transform: scale(1);
 		}
 	}
 

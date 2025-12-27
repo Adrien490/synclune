@@ -1,12 +1,9 @@
-import type { LucideIcon } from "lucide-react";
-import { Gem, Hand, Sparkles, Ruler, Heart } from "lucide-react";
 import type { GetProductReturn } from "../types/product.types";
 
 const MAX_COLLECTION_NAME_LENGTH = 20;
 
 export type ProductHighlight = {
 	id: string;
-	icon: LucideIcon;
 	label: string;
 	description: string;
 	priority: number;
@@ -28,7 +25,6 @@ export function generateHighlights(
 	if (primaryMaterial) {
 		highlights.push({
 			id: "material",
-			icon: Gem,
 			label: primaryMaterial,
 			description: "Matériau de qualité sélectionné avec soin",
 			priority: 1,
@@ -38,7 +34,6 @@ export function generateHighlights(
 	// 2. Fait main (toujours vrai pour ce site artisanal)
 	highlights.push({
 		id: "handmade",
-		icon: Hand,
 		label: "Fait main",
 		description: "Chaque pièce est unique, façonnée à la main",
 		priority: 2,
@@ -47,7 +42,6 @@ export function generateHighlights(
 	// 3. Artisanat francais (differenciateur marque)
 	highlights.push({
 		id: "french",
-		icon: Sparkles,
 		label: "Artisanat français",
 		description: "Créé dans notre atelier en France",
 		priority: 3,
@@ -60,7 +54,6 @@ export function generateHighlights(
 	if (hasAdjustableSize) {
 		highlights.push({
 			id: "adjustable",
-			icon: Ruler,
 			label: "Taille ajustable",
 			description: "S'adapte à toutes les morphologies",
 			priority: 4,
@@ -79,7 +72,6 @@ export function generateHighlights(
 				: name;
 		highlights.push({
 			id: "collection",
-			icon: Heart,
 			label: `Collection ${displayName}`,
 			description: "Fait partie d'une collection exclusive",
 			priority: 5,

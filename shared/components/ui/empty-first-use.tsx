@@ -1,7 +1,7 @@
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { Button } from "./button";
+import { Button } from "@/shared/components/ui/button";
 import {
 	Empty,
 	EmptyActions,
@@ -9,7 +9,7 @@ import {
 	EmptyHeader,
 	EmptyMedia,
 	EmptyTitle,
-} from "./empty";
+} from "@/shared/components/empty";
 
 export interface EmptyFirstUseProps {
 	/** Titre de l'etat vide */

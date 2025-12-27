@@ -12,7 +12,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-} from "./dialog";
+} from "@/shared/components/ui/dialog";
 import {
 	Drawer,
 	DrawerClose,
@@ -22,7 +22,7 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 	DrawerTrigger,
-} from "./drawer";
+} from "@/shared/components/ui/drawer";
 
 // Context pour partager l'état mobile avec les sous-composants
 type ResponsiveDialogContextValue = {

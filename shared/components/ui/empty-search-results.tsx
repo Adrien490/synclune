@@ -1,5 +1,5 @@
 import { SearchX } from "lucide-react";
-import { Button } from "./button";
+import { Button } from "@/shared/components/ui/button";
 import {
 	Empty,
 	EmptyActions,
@@ -7,7 +7,7 @@ import {
 	EmptyHeader,
 	EmptyMedia,
 	EmptyTitle,
-} from "./empty";
+} from "@/shared/components/empty";
 
 export interface EmptySearchResultsProps {
 	/** Terme de recherche (optionnel, affiche dans le titre) */

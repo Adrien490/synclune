@@ -23,6 +23,9 @@ const paths: Record<DividerVariant, string> = {
 	curve: "M0,80 Q600,0 1200,80 L1200,120 L0,120 Z",
 };
 
+const SPARKLE_PATH =
+	"M12 2L13.09 8.26L18 6L14.74 11.09L21 12L14.74 12.91L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 12.91L3 12L9.26 11.09L6 6L10.91 8.26L12 2Z";
+
 /**
  * Séparateur de section avec forme SVG ondulée.
  * Crée une transition fluide entre sections.
@@ -57,6 +60,7 @@ export function SectionDivider({
 				className
 			)}
 			aria-hidden="true"
+			role="presentation"
 		>
 			<svg
 				viewBox="0 0 1200 120"
@@ -74,6 +78,20 @@ export function SectionDivider({
 	);
 }
 
+function SparkleIcon({ size, className }: { size: number; className?: string }) {
+	return (
+		<svg
+			width={size}
+			height={size}
+			viewBox="0 0 24 24"
+			fill="none"
+			className={className}
+		>
+			<path d={SPARKLE_PATH} fill="currentColor" />
+		</svg>
+	);
+}
+
 /**
  * Séparateur décoratif avec sparkles et gradient.
  * Pour transitions plus festives/girly.
@@ -86,46 +104,14 @@ export function SparklesDivider({ className }: { className?: string }) {
 				className
 			)}
 			aria-hidden="true"
+			role="presentation"
 		>
 			<div className="h-px w-16 bg-gradient-to-r from-transparent to-primary/30" />
-			<svg
-				width="20"
-				height="20"
-				viewBox="0 0 24 24"
-				fill="none"
-				className="text-primary/60"
-			>
-				<path
-					d="M12 2L13.09 8.26L18 6L14.74 11.09L21 12L14.74 12.91L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 12.91L3 12L9.26 11.09L6 6L10.91 8.26L12 2Z"
-					fill="currentColor"
-				/>
-			</svg>
+			<SparkleIcon size={20} className="text-primary/60" />
 			<div className="h-px w-24 bg-gradient-to-r from-primary/30 via-secondary/40 to-primary/30" />
-			<svg
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				fill="none"
-				className="text-secondary"
-			>
-				<path
-					d="M12 2L13.09 8.26L18 6L14.74 11.09L21 12L14.74 12.91L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 12.91L3 12L9.26 11.09L6 6L10.91 8.26L12 2Z"
-					fill="currentColor"
-				/>
-			</svg>
+			<SparkleIcon size={24} className="text-secondary" />
 			<div className="h-px w-24 bg-gradient-to-r from-primary/30 via-secondary/40 to-primary/30" />
-			<svg
-				width="20"
-				height="20"
-				viewBox="0 0 24 24"
-				fill="none"
-				className="text-primary/60"
-			>
-				<path
-					d="M12 2L13.09 8.26L18 6L14.74 11.09L21 12L14.74 12.91L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 12.91L3 12L9.26 11.09L6 6L10.91 8.26L12 2Z"
-					fill="currentColor"
-				/>
-			</svg>
+			<SparkleIcon size={20} className="text-primary/60" />
 			<div className="h-px w-16 bg-gradient-to-l from-transparent to-primary/30" />
 		</div>
 	);
