@@ -1,10 +1,7 @@
-import type {
-	sendOrderConfirmationEmail,
-	sendAdminNewOrderEmail,
-	sendRefundConfirmationEmail,
-	sendPaymentFailedEmail,
-	sendAdminRefundFailedAlert,
-} from "@/shared/lib/email";
+import type { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
+import type { sendAdminNewOrderEmail, sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
+import type { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
+import type { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
 
 /**
  * Tâches à exécuter après la réponse 200 via after()

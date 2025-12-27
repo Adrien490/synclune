@@ -4,8 +4,8 @@ import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { success, handleActionError } from "@/shared/lib/actions"
 import type { ActionState } from "@/shared/types/server-action"
-import { RECENT_SEARCHES_COOKIE_NAME } from "@/shared/constants/recent-searches"
-import { getRecentSearchesInvalidationTags } from "@/shared/constants/recent-searches-cache"
+import { RECENT_SEARCHES_COOKIE_NAME } from "../constants/recent-searches"
+import { getRecentSearchesInvalidationTags } from "../constants/cache"
 
 /**
  * Server Action pour effacer toutes les recherches recentes

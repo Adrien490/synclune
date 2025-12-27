@@ -8,7 +8,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
 
-import { sendRefundApprovedEmail } from "@/shared/lib/email";
+import { sendRefundApprovedEmail } from "@/modules/emails/services/refund-emails";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { approveRefundSchema } from "../schemas/refund.schemas";

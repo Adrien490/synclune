@@ -1,7 +1,7 @@
 import "server-only"
 
 import { cookies } from "next/headers"
-import { RECENT_SEARCHES_COOKIE_NAME, RECENT_SEARCHES_MAX_ITEMS } from "@/shared/constants/recent-searches"
+import { RECENT_SEARCHES_COOKIE_NAME, RECENT_SEARCHES_MAX_ITEMS } from "../constants/recent-searches"
 
 /**
  * Recupere les recherches recentes depuis les cookies

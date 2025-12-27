@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { sendAdminRefundFailedAlert } from "@/shared/lib/email";
+import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 
 // Types pour les résultats des services
 export interface PaymentFailureDetails {

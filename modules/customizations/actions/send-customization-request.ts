@@ -7,7 +7,7 @@ import { prisma } from "@/shared/lib/prisma";
 import {
 	sendCustomizationRequestEmail,
 	sendCustomizationConfirmationEmail,
-} from "@/shared/lib/email";
+} from "@/modules/emails/services/customization-emails";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { COMMUNICATION_LIMITS } from "@/shared/lib/rate-limit-config";
 import {

@@ -7,21 +7,25 @@ import type { ActionState } from "@/shared/types/server-action"
 import {
 	RECENT_SEARCHES_COOKIE_NAME,
 	RECENT_SEARCHES_COOKIE_MAX_AGE,
-} from "@/shared/constants/recent-searches"
-import { getRecentSearchesInvalidationTags } from "@/shared/constants/recent-searches-cache"
+	RECENT_SEARCHES_MAX_ITEMS,
+	RECENT_SEARCHES_MIN_LENGTH,
+} from "../constants/recent-searches"
+import { getRecentSearchesInvalidationTags } from "../constants/cache"
 
 /**
- * Server Action pour supprimer une recherche recente specifique
+ * Server Action pour ajouter une recherche recente
+ * Stocke les recherches dans un cookie cote serveur
  */
-export async function removeRecentSearch(
+export async function addRecentSearch(
 	_prevState: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
 	try {
 		const term = (formData.get("term") as string)?.trim().toLowerCase()
 
-		if (!term) {
-			return error("Terme manquant")
+		// Validation
+		if (!term || term.length < RECENT_SEARCHES_MIN_LENGTH) {
+			return error("Terme de recherche trop court")
 		}
 
 		const cookieStore = await cookies()
@@ -40,33 +44,27 @@ export async function removeRecentSearch(
 			}
 		}
 
-		// Supprimer le terme
-		const updated = searches.filter((s) => s !== term)
+		// Ajouter la nouvelle recherche en premier (sans doublons)
+		const updated = [term, ...searches.filter((s) => s !== term)].slice(
+			0,
+			RECENT_SEARCHES_MAX_ITEMS
+		)
 
-		if (updated.length === 0) {
-			// Plus de recherches, supprimer le cookie
-			cookieStore.delete(RECENT_SEARCHES_COOKIE_NAME)
-		} else {
-			// Mettre a jour le cookie
-			cookieStore.set(
-				RECENT_SEARCHES_COOKIE_NAME,
-				encodeURIComponent(JSON.stringify(updated)),
-				{
-					path: "/",
-					maxAge: RECENT_SEARCHES_COOKIE_MAX_AGE,
-					httpOnly: true,
-					sameSite: "strict",
-					secure: process.env.NODE_ENV === "production",
-				}
-			)
-		}
+		// Sauvegarder dans le cookie
+		cookieStore.set(RECENT_SEARCHES_COOKIE_NAME, encodeURIComponent(JSON.stringify(updated)), {
+			path: "/",
+			maxAge: RECENT_SEARCHES_COOKIE_MAX_AGE,
+			httpOnly: true,
+			sameSite: "strict",
+			secure: process.env.NODE_ENV === "production",
+		})
 
 		// Invalider le cache
 		const tags = getRecentSearchesInvalidationTags()
 		tags.forEach((tag) => updateTag(tag))
 
-		return success("Recherche supprimee", { searches: updated })
+		return success("Recherche ajoutee", { searches: updated })
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la suppression")
+		return handleActionError(e, "Erreur lors de l'ajout")
 	}
 }

@@ -8,7 +8,7 @@ import {
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
-import { sendShippingConfirmationEmail } from "@/shared/lib/email";
+import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { getCarrierLabel, getTrackingUrl, toShippingCarrierEnum, type Carrier } from "@/modules/orders/services/carrier.service";

@@ -1,7 +1,7 @@
 import { mergeCarts } from "@/modules/cart/actions/merge-carts";
 import { mergeWishlists } from "@/modules/wishlist/actions/merge-wishlists";
 import { LEGAL_VERSIONS } from "@/shared/constants/legal-versions";
-import { sendPasswordResetEmail, sendVerificationEmail } from "@/shared/lib/email";
+import { sendPasswordResetEmail, sendVerificationEmail } from "@/modules/emails/services/auth-emails";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus } from "@/shared/types/server-action";
 import { stripe } from "@better-auth/stripe";

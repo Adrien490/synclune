@@ -3,7 +3,7 @@
 import { useActionState, useTransition } from "react"
 import { withCallbacks } from "@/shared/utils/with-callbacks"
 import { ActionStatus } from "@/shared/types/server-action"
-import { addRecentSearch } from "@/shared/actions/add-recent-search"
+import { addRecentSearch } from "@/modules/products/actions/add-recent-search"
 
 interface UseAddRecentSearchOptions {
 	/** Callback apres ajout reussi */

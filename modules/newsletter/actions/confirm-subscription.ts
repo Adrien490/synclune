@@ -2,7 +2,7 @@
 
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterConfirm } from "@/shared/lib/arcjet";
-import { sendNewsletterWelcomeEmail } from "@/shared/lib/email";
+import { sendNewsletterWelcomeEmail } from "@/modules/emails/services/newsletter-emails";
 import { prisma } from "@/shared/lib/prisma";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";

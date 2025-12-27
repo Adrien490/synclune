@@ -1293,22 +1293,19 @@ enum WebhookEventStatus {
   SKIPPED    // Ignoré (type non géré ou doublon)
 }
 
-/// Événements webhook reçus (Stripe, Resend, etc.)
+/// Événements webhook Stripe
 /// Permet l'idempotence et l'audit trail des webhooks
 model WebhookEvent {
   id            String             @id @default(cuid())
   stripeEventId String             @unique // evt_xxx - Clé d'idempotence
   eventType     String             @db.VarChar(100) // checkout.session.completed, etc.
-  source        String             @db.VarChar(50) @default("stripe")
   status        WebhookEventStatus @default(PENDING)
-  payload       Json? // Payload complet pour debug/replay
   errorMessage  String?            @db.Text
   attempts      Int                @default(0)
   receivedAt    DateTime           @default(now())
   processedAt   DateTime?
 
   @@index([eventType, status])
-  @@index([source, receivedAt(sort: Desc)])
   @@index([status, receivedAt])
   @@index([processedAt])
 }

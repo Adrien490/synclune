@@ -3,7 +3,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
-import { sendBackInStockEmail } from "@/shared/lib/email";
+import { sendBackInStockEmail } from "@/modules/emails/services/stock-emails";
 import { requireAdmin } from "@/shared/lib/actions";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { getNotifyStockInvalidationTags } from "../constants/cache";

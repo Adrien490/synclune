@@ -1,7 +1,7 @@
 "use server";
 
 import { NewsletterStatus } from "@/app/generated/prisma/client";
-import { sendNewsletterEmail as sendEmail } from "@/shared/lib/email";
+import { sendNewsletterEmail as sendEmail } from "@/modules/emails/services/newsletter-emails";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
 import { sanitizeForEmail, newlinesToBr } from "@/shared/lib/sanitize";

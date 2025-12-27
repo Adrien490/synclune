@@ -1,7 +1,8 @@
 import Stripe from "stripe";
 import { PaymentStatus, RefundStatus, RefundAction, CurrencyCode } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { sendRefundConfirmationEmail, sendAdminRefundFailedAlert } from "@/shared/lib/email";
+import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
+import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 
 // Types pour les résultats des services
 export interface RefundSyncResult {

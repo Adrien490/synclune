@@ -2,12 +2,12 @@ import "server-only"
 
 import { cacheLife, cacheTag } from "next/cache"
 import { prisma } from "@/shared/lib/prisma"
-import { GET_PRODUCTS_SELECT } from "@/modules/products/constants/product.constants"
-import type { Product } from "@/modules/products/types/product.types"
-import { serializeProducts } from "@/modules/products/utils/serialize-product"
+import { GET_PRODUCTS_SELECT } from "../constants/product.constants"
+import type { Product } from "../types/product.types"
+import { serializeProducts } from "../utils/serialize-product"
 import { getRecentProductSlugs } from "./get-recent-product-slugs"
-import { RECENT_PRODUCTS_DISPLAY_LIMIT } from "@/shared/constants/recent-products"
-import { RECENT_PRODUCTS_CACHE_TAGS } from "@/shared/constants/recent-products-cache"
+import { RECENT_PRODUCTS_DISPLAY_LIMIT } from "../constants/recent-products"
+import { RECENT_PRODUCTS_CACHE_TAGS } from "../constants/cache"
 
 interface GetRecentProductsOptions {
 	/** Slug du produit courant a exclure */

@@ -3,7 +3,7 @@
 import { useActionState, useOptimistic, useTransition } from "react"
 import { withCallbacks } from "@/shared/utils/with-callbacks"
 import { ActionStatus } from "@/shared/types/server-action"
-import { removeRecentSearch } from "@/shared/actions/remove-recent-search"
+import { removeRecentSearch } from "@/modules/products/actions/remove-recent-search"
 
 interface UseRemoveRecentSearchOptions {
 	/** Liste initiale des recherches (depuis le serveur) */

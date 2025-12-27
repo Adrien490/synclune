@@ -7,7 +7,7 @@ import {
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
-import { sendDeliveryConfirmationEmail } from "@/shared/lib/email";
+import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
 import { scheduleReviewRequestEmail } from "@/modules/webhooks/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";

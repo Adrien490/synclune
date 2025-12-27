@@ -1,11 +1,8 @@
 import { revalidateTag } from "next/cache";
-import {
-	sendOrderConfirmationEmail,
-	sendAdminNewOrderEmail,
-	sendRefundConfirmationEmail,
-	sendPaymentFailedEmail,
-	sendAdminRefundFailedAlert,
-} from "@/shared/lib/email";
+import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
+import { sendAdminNewOrderEmail, sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
+import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
+import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
 import type { PostWebhookTask } from "../types/webhook.types";
 
 /**

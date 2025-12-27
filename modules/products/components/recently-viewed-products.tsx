@@ -1,5 +1,5 @@
 import { ProductCard } from "@/modules/products/components/product-card"
-import { getRecentProducts } from "@/shared/data/get-recent-products"
+import { getRecentProducts } from "../data/get-recent-products"
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids"
 import { Reveal, Stagger } from "@/shared/components/animations"
 

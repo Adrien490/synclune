@@ -2,7 +2,7 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { error, notFound, success, unauthorized, validateInput } from "@/shared/lib/actions";
-import { sendPasswordChangedEmail } from "@/shared/lib/email";
+import { sendPasswordChangedEmail } from "@/modules/emails/services/auth-emails";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";

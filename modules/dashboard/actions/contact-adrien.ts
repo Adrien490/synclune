@@ -7,7 +7,7 @@ import {
 	handleActionError,
 } from "@/shared/lib/actions";
 import { forbidden, success } from "@/shared/lib/actions/responses";
-import { sendAdminContactEmail } from "@/shared/lib/email";
+import { sendAdminContactEmail } from "@/modules/emails/services/admin-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { contactAdrienSchema } from "../schemas/dashboard.schemas";
 

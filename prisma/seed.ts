@@ -2118,7 +2118,6 @@ async function main(): Promise<void> {
         data: {
           stripeEventId: `evt_${faker.string.alphanumeric(24)}`,
           eventType,
-          source: "stripe",
           status,
           attempts: status === WebhookEventStatus.FAILED ? 3 : 1,
           errorMessage: status === WebhookEventStatus.FAILED ? "Handler threw an error" : null,

@@ -23,7 +23,7 @@ import { useRemoveRecentSearch } from "@/shared/hooks/use-remove-recent-search"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { cn } from "@/shared/utils/cn"
 
-import { RECENT_SEARCHES_MAX_ITEMS } from "@/shared/constants/recent-searches"
+import { RECENT_SEARCHES_MAX_ITEMS } from "@/modules/products/constants/recent-searches"
 
 import { QUICK_SEARCH_DIALOG_ID, QUICK_SEARCH_SUGGESTED_LINKS } from "./constants"
 

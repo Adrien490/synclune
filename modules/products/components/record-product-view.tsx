@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { addRecentProduct } from "@/shared/actions/add-recent-product"
+import { addRecentProduct } from "../actions/add-recent-product"
 
 interface RecordProductViewProps {
 	/** Slug du produit a enregistrer */

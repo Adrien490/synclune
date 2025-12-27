@@ -8,8 +8,8 @@ import {
 	RECENT_PRODUCTS_COOKIE_NAME,
 	RECENT_PRODUCTS_COOKIE_MAX_AGE,
 	RECENT_PRODUCTS_MAX_ITEMS,
-} from "@/shared/constants/recent-products"
-import { getRecentProductsInvalidationTags } from "@/shared/constants/recent-products-cache"
+} from "../constants/recent-products"
+import { getRecentProductsInvalidationTags } from "../constants/cache"
 import { recentProductSlugSchema } from "@/shared/schemas/recent-product-schema"
 
 /**

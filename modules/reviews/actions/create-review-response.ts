@@ -10,7 +10,7 @@ import {
 	validationError,
 	handleActionError,
 } from "@/shared/lib/actions"
-import { sendReviewResponseEmail } from "@/shared/lib/email"
+import { sendReviewResponseEmail } from "@/modules/emails/services/review-emails"
 import type { ActionState } from "@/shared/types/server-action"
 
 import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"

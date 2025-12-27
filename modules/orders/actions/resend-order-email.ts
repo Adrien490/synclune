@@ -7,7 +7,7 @@ import {
 	sendOrderConfirmationEmail,
 	sendShippingConfirmationEmail,
 	sendDeliveryConfirmationEmail,
-} from "@/shared/lib/email";
+} from "@/modules/emails/services/order-emails";
 import { sendReviewRequestEmailInternal } from "@/modules/reviews/actions/send-review-request-email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";

@@ -4,7 +4,7 @@ import { cookies } from "next/headers"
 import {
 	RECENT_PRODUCTS_COOKIE_NAME,
 	RECENT_PRODUCTS_MAX_ITEMS,
-} from "@/shared/constants/recent-products"
+} from "../constants/recent-products"
 
 /**
  * Recupere les slugs des produits recemment vus depuis les cookies

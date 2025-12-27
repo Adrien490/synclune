@@ -3,7 +3,7 @@ import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/naviga
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
-import { getRecentSearches } from "@/shared/data/get-recent-searches";
+import { getRecentSearches } from "@/modules/products/data/get-recent-searches";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { CollectionStatus } from "@/app/generated/prisma/client";

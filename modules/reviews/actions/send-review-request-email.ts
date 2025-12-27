@@ -1,7 +1,7 @@
 "use server"
 
 import { prisma } from "@/shared/lib/prisma"
-import { sendReviewRequestEmail } from "@/shared/lib/email"
+import { sendReviewRequestEmail } from "@/modules/emails/services/review-emails"
 import { SITE_URL } from "@/shared/constants/seo-config"
 import {
 	requireAdmin,
