@@ -92,7 +92,7 @@ export function Logo({
 					rel="home"
 					itemProp="url"
 					className={linkClassName}
-					aria-label={showText ? undefined : `${BRAND.name} - Accueil`}
+					aria-label={`${BRAND.name} - Accueil`}
 				>
 					<div itemProp="logo">{logoContent}</div>
 				</Link>
@@ -104,11 +104,9 @@ export function Logo({
 	// Autres liens (sans Schema.org)
 	if (href) {
 		// Génère un label accessible basé sur la destination
-		const linkLabel = showText
-			? undefined
-			: href === "/admin"
-				? `${BRAND.name} - Administration`
-				: `${BRAND.name} - Accueil`;
+		const linkLabel = href === "/admin"
+			? `${BRAND.name} - Administration`
+			: `${BRAND.name} - Accueil`;
 
 		return (
 			<Link
