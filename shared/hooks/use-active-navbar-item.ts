@@ -100,9 +100,9 @@ export function useActiveNavbarItem() {
 			return { label: "Mon compte", href: "/compte" };
 		}
 
-		// Pages panier/paiement
-		if (pathname.startsWith("/panier") || pathname.startsWith("/paiement")) {
-			return { label: "Panier", href: "/panier" };
+		// Pages paiement
+		if (pathname.startsWith("/paiement")) {
+			return { label: "Paiement", href: "/paiement" };
 		}
 
 		return null;
