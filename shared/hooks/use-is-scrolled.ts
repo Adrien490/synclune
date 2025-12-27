@@ -1,52 +1,58 @@
 "use client";
 
-import { useEffect, useState, useEffectEvent } from "react";
+import { useEffect, useState, useRef } from "react";
 
 /**
- * Hook optimisé pour détecter le scroll
+ * Hook optimisé pour détecter le scroll via IntersectionObserver
  *
- * Utilise requestAnimationFrame au lieu de throttle custom pour :
- * - Meilleure performance (synchronisé avec le refresh du navigateur)
- * - Pas de memory leaks avec setTimeout
- * - Optimisation GPU automatique
+ * Utilise IntersectionObserver au lieu de scroll events pour :
+ * - Exécution sur le compositor thread (pas de blocking main thread)
+ * - Ne se déclenche que lors du franchissement du seuil
+ * - Meilleur INP (Interaction to Next Paint)
  *
  * @param threshold - Seuil de scroll en pixels (défaut: 10)
  * @returns true si scrollY > threshold
  */
 export function useIsScrolled(threshold: number = 10): boolean {
 	const [isScrolled, setIsScrolled] = useState(false);
-
-	// Effect Event pour accéder à threshold sans re-registration du listener
-	const updateScrollState = useEffectEvent(() => {
-		const scrolled = window.scrollY > threshold;
-		setIsScrolled(scrolled);
-	});
+	const sentinelRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
-		// Flag pour éviter les appels multiples de RAF
-		let ticking = false;
-
-		const handleScroll = () => {
-			if (!ticking) {
-				// requestAnimationFrame garantit 60fps max et sync avec le navigateur
-				window.requestAnimationFrame(() => {
-					updateScrollState();
-					ticking = false;
-				});
-				ticking = true;
-			}
-		};
-
-		// Initial check (synchrone pour éviter flash)
+		// Initial check synchrone pour éviter flash
 		setIsScrolled(window.scrollY > threshold);
 
-		// Listener passif pour ne pas bloquer le scroll
-		window.addEventListener("scroll", handleScroll, { passive: true });
+		// Créer un élément sentinel invisible en haut de la page
+		const sentinel = document.createElement("div");
+		sentinel.style.cssText = `
+			position: absolute;
+			top: ${threshold}px;
+			left: 0;
+			width: 1px;
+			height: 1px;
+			pointer-events: none;
+		`;
+		document.body.appendChild(sentinel);
+		sentinelRef.current = sentinel;
+
+		// Observer le sentinel - quand il sort du viewport, on a scrollé
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				// isIntersecting = false signifie qu'on a scrollé au-delà du threshold
+				setIsScrolled(!entry.isIntersecting);
+			},
+			{
+				threshold: 0,
+				rootMargin: "0px",
+			}
+		);
+
+		observer.observe(sentinel);
 
 		return () => {
-			window.removeEventListener("scroll", handleScroll);
+			observer.disconnect();
+			sentinel.remove();
 		};
-	}, [threshold, updateScrollState]);
+	}, [threshold]);
 
 	return isScrolled;
 }

@@ -8,7 +8,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 export function AtelierStorySkeleton() {
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
+			className={`relative overflow-hidden bg-background ${SECTION_SPACING.spacious}`}
 			aria-label="Chargement de la section atelier"
 		>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -67,11 +67,16 @@ export function AtelierStorySkeleton() {
 				</div>
 
 				{/* Section images secondaires */}
-				<div className="mt-12 sm:mt-16">
-					{/* Grid 2 images */}
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+				<div className="mt-12 sm:mt-16 space-y-8">
+					{/* Grid 2 images - PolaroidFrame style */}
+					<div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto">
 						<Skeleton className="w-full aspect-[4/3] rounded-xl bg-muted/40" />
 						<Skeleton className="w-full aspect-[4/3] rounded-xl bg-muted/40" />
+					</div>
+
+					{/* CTA skeleton */}
+					<div className="text-center">
+						<Skeleton className="h-5 w-56 mx-auto bg-muted/30" />
 					</div>
 				</div>
 			</div>

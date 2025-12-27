@@ -15,24 +15,28 @@ export function Hero() {
       id="main-content"
       role="region"
       aria-labelledby="hero-title"
-      className="relative min-h-[calc(75dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
+      className="relative min-h-[calc(85dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
       itemScope
       itemType="https://schema.org/WebPageElement"
       itemProp="mainContentOfPage"
     >
 
-      {/* Couche 1: Particules décoratives - Multi-formes bijoux */}
-      <ParticleSystem
-        count={8}
-        shape={["diamond", "crescent", "circle", "heart"]}
-        colors={["var(--secondary)", "oklch(0.9 0.1 80)", "var(--primary)"]}
-        opacity={[0.2, 0.45]}
-        blur={[4, 16]}
-        size={[25, 70]}
-      />
+      {/* Couche 1: Particules décoratives - Désactivées sur mobile pour INP */}
+      <div className="hidden md:block">
+        <ParticleSystem
+          count={4}
+          shape={["diamond", "crescent", "circle", "heart"]}
+          colors={["var(--secondary)", "oklch(0.9 0.1 80)", "var(--primary)"]}
+          opacity={[0.2, 0.45]}
+          blur={[4, 16]}
+          size={[25, 70]}
+        />
+      </div>
 
-      {/* Couche 2: Glitter Sparkles (overlay scintillant) */}
-      <GlitterSparkles count={15} sizeRange={[2, 4]} glowIntensity={0.3} />
+      {/* Couche 2: Glitter Sparkles - Désactivées sur mobile pour INP */}
+      <div className="hidden md:block">
+        <GlitterSparkles count={8} sizeRange={[2, 4]} glowIntensity={0.3} />
+      </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
         <div className="flex flex-col items-center">

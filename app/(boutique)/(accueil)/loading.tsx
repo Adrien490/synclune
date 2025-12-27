@@ -1,7 +1,9 @@
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
+import { SparklesDivider } from "@/shared/components/section-divider";
 import { AtelierStorySkeleton } from "./_components/atelier-story-skeleton";
 import { BestsellersSkeleton } from "./_components/bestsellers-skeleton";
 import { CreativeProcessSkeleton } from "./_components/creative-process-skeleton";
+import { FaqSectionSkeleton } from "./_components/faq-section-skeleton";
 import { HeroSkeleton } from "./_components/hero-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 
@@ -24,8 +26,10 @@ export default function HomeLoading() {
 			<BestsellersSkeleton />
 			<LatestCreationsSkeleton productsCount={8} />
 			<CollectionsSectionSkeleton collectionsCount={6} />
+			<SparklesDivider />
 			<AtelierStorySkeleton />
 			<CreativeProcessSkeleton />
+			<FaqSectionSkeleton />
 		</div>
 	);
 }

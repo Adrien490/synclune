@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 		template: "%s | Synclune Nantes",
 	},
 	description:
-		"Créatrice de bijoux artisanaux à Nantes (44). Boucles d'oreilles, colliers, bracelets faits main. Éditions limitées colorées inspirées de Pokémon, Van Gogh, Twilight. Atelier en Loire-Atlantique. Pièces uniques 100% faites main.",
+		"Bijoux artisanaux faits main à Nantes. Boucles d'oreilles, colliers, bracelets colorés. Éditions limitées uniques en Loire-Atlantique.",
 	keywords: [
 		"bijoux faits main Nantes",
 		"bijoux artisanaux Nantes",
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
 		siteName: SEO_DEFAULTS.siteName,
 		title: "Synclune - Bijoux artisanaux faits main à Nantes (44)",
 		description:
-			"Créatrice de bijoux artisanaux à Nantes. Boucles d'oreilles, colliers, bracelets colorés faits main. Éditions limitées inspirées de Pokémon, Van Gogh. Loire-Atlantique.",
+			"Bijoux artisanaux faits main à Nantes. Boucles d'oreilles, colliers, bracelets colorés. Éditions limitées uniques en Loire-Atlantique.",
 		images: [
 			{
 				url: SEO_DEFAULTS.images.default,

@@ -19,7 +19,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 export function BestsellersSkeleton() {
 	return (
 		<section
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
+			className={`relative overflow-hidden ${SECTION_SPACING.section}`}
 			aria-label="Chargement des meilleures ventes"
 		>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
