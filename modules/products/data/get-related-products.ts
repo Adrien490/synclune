@@ -10,6 +10,7 @@ import {
 import { GET_PRODUCTS_SELECT } from "../constants/product.constants";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import type { Product } from "../types/product.types";
+import { serializeProducts } from "../utils/serialize-product";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -57,7 +58,7 @@ async function fetchPublicRelatedProducts(
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC);
 
 	try {
-		return await prisma.product.findMany({
+		const products = await prisma.product.findMany({
 			where: {
 				status: "PUBLIC",
 				skus: {
@@ -73,6 +74,7 @@ async function fetchPublicRelatedProducts(
 			},
 			take: limit,
 		});
+		return serializeProducts(products);
 	} catch {
 		return [];
 	}
@@ -143,11 +145,11 @@ async function fetchPersonalizedRelatedProducts(
 			});
 
 			if (relatedProducts.length > 0) {
-				return relatedProducts;
+				return serializeProducts(relatedProducts);
 			}
 		}
 
-		return await prisma.product.findMany({
+		const fallbackProducts = await prisma.product.findMany({
 			where: {
 				status: "PUBLIC",
 				skus: {
@@ -163,6 +165,7 @@ async function fetchPersonalizedRelatedProducts(
 			},
 			take: limit,
 		});
+		return serializeProducts(fallbackProducts);
 	} catch {
 		return [];
 	}
@@ -311,7 +314,7 @@ async function fetchContextualRelatedProducts(
 		addProducts(similarColorProducts, RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS);
 		addProducts(bestSellers, limit - relatedProducts.length);
 
-		return relatedProducts;
+		return serializeProducts(relatedProducts);
 	} catch {
 		return fetchPublicRelatedProducts(limit);
 	}

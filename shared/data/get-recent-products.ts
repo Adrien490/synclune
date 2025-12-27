@@ -4,6 +4,7 @@ import { cacheLife, cacheTag } from "next/cache"
 import { prisma } from "@/shared/lib/prisma"
 import { GET_PRODUCTS_SELECT } from "@/modules/products/constants/product.constants"
 import type { Product } from "@/modules/products/types/product.types"
+import { serializeProducts } from "@/modules/products/utils/serialize-product"
 import { getRecentProductSlugs } from "./get-recent-product-slugs"
 import { RECENT_PRODUCTS_DISPLAY_LIMIT } from "@/shared/constants/recent-products"
 import { RECENT_PRODUCTS_CACHE_TAGS } from "@/shared/constants/recent-products-cache"
@@ -83,7 +84,7 @@ async function fetchProductsBySlugs(slugs: string[]): Promise<Product[]> {
 			.map((slug) => productsBySlug.get(slug))
 			.filter((p): p is Product => p !== undefined)
 
-		return orderedProducts
+		return serializeProducts(orderedProducts)
 	} catch (e) {
 		// Log en dev, silencieux en prod
 		if (process.env.NODE_ENV === "development") {

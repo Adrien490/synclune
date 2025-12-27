@@ -19,6 +19,7 @@ import {
 } from "../services/product-query-builder";
 import { getBestsellerIds } from "../services/bestseller-query";
 import { cacheProducts, PRODUCTS_CACHE_TAGS } from "../constants/cache";
+import { serializeProduct } from "../utils/serialize-product";
 
 // Re-export pour compatibilité
 export {
@@ -104,26 +105,6 @@ function getAverageRating(product: Product): number {
 	return typeof rating === "number" ? rating : Number(rating);
 }
 
-/**
- * Sérialise un produit pour les Client Components (Decimal → number)
- * Le cast est nécessaire car Prisma type averageRating comme Decimal,
- * mais après conversion c'est un number sérialisable.
- */
-function serializeProduct(product: Product): Product {
-	if (!product.reviewStats) return product;
-
-	return {
-		...product,
-		reviewStats: {
-			...product.reviewStats,
-			averageRating: (
-				typeof product.reviewStats.averageRating === "number"
-					? product.reviewStats.averageRating
-					: product.reviewStats.averageRating.toNumber()
-			) as unknown as typeof product.reviewStats.averageRating,
-		},
-	};
-}
 
 /**
  * Trie les produits selon le critère demandé
