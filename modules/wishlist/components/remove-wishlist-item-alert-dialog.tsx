@@ -17,7 +17,7 @@ import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";
 import { toast } from "sonner";
 
 type RemoveWishlistItemData = AlertDialogData & {
-	skuId: string;
+	productId: string;
 	itemId: string;
 	itemName: string;
 };
@@ -50,9 +50,9 @@ export function RemoveWishlistItemAlertDialog() {
 
 	// Wrapper de l'action pour fermer le dialog après soumission
 	const handleAction = async (formData: FormData) => {
-		// Guard: vérifier que skuId est présent avant soumission
-		const skuId = removeDialog.data?.skuId;
-		if (!skuId) {
+		// Guard: vérifier que productId est présent avant soumission
+		const productId = removeDialog.data?.productId;
+		if (!productId) {
 			removeDialog.close();
 			return;
 		}
@@ -73,8 +73,8 @@ export function RemoveWishlistItemAlertDialog() {
 				<form action={handleAction}>
 					<input
 						type="hidden"
-						name="skuId"
-						value={removeDialog.data?.skuId ?? ""}
+						name="productId"
+						value={removeDialog.data?.productId ?? ""}
 					/>
 
 					<AlertDialogHeader>

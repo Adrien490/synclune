@@ -7,7 +7,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
-import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { getProductReviewStats } from "@/modules/reviews/data/get-product-review-stats";
 
 import { PageHeader } from "@/shared/components/page-header";
@@ -44,10 +44,10 @@ export default async function ProductPage({
 	const urlParams = await searchParams;
 
 	// Paralléliser toutes les requêtes pour optimiser le TTFB
-	const [admin, product, wishlistSkuIds] = await Promise.all([
+	const [admin, product, wishlistProductIds] = await Promise.all([
 		isAdmin(),
 		getProductBySlug({ slug, includeDraft: true }), // Récupérer avec DRAFT, filtrer après
-		getWishlistSkuIds(), // Récupérer tous les SKU IDs de la wishlist en parallèle
+		getWishlistProductIds(), // Récupérer tous les Product IDs de la wishlist en parallèle
 	]);
 
 	// Vérifier existence produit
@@ -110,8 +110,8 @@ export default async function ProductPage({
 		reviewStats,
 	});
 
-	// Vérifier si le SKU sélectionné est dans la wishlist (lookup O(1) local)
-	const isInWishlist = wishlistSkuIds.has(selectedSku.id);
+	// Vérifier si le produit est dans la wishlist (lookup O(1) local)
+	const isInWishlist = wishlistProductIds.has(product.id);
 
 	return (
 		<div className="min-h-screen relative">

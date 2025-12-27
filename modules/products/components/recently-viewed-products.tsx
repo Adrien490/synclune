@@ -1,6 +1,6 @@
 import { ProductCard } from "@/modules/products/components/product-card"
 import { getRecentProducts } from "@/shared/data/get-recent-products"
-import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids"
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids"
 import { Reveal, Stagger } from "@/shared/components/animations"
 
 interface RecentlyViewedProductsProps {
@@ -27,13 +27,13 @@ export async function RecentlyViewedProducts({
 	currentProductSlug,
 	limit = 8,
 }: RecentlyViewedProductsProps) {
-	// Recuperer les produits recemment vus et les SKU IDs wishlist en parallele
-	const [recentProducts, wishlistSkuIds] = await Promise.all([
+	// Recuperer les produits recemment vus et les Product IDs wishlist en parallele
+	const [recentProducts, wishlistProductIds] = await Promise.all([
 		getRecentProducts({
 			excludeSlug: currentProductSlug,
 			limit,
 		}),
-		getWishlistSkuIds(),
+		getWishlistProductIds(),
 	])
 
 	// Ne rien afficher si pas de produits recemment vus
@@ -68,7 +68,7 @@ export async function RecentlyViewedProducts({
 						key={product.id}
 						product={product}
 						index={index}
-						wishlistSkuIds={wishlistSkuIds}
+						isInWishlist={wishlistProductIds.has(product.id)}
 					/>
 				))}
 			</Stagger>

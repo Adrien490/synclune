@@ -61,12 +61,7 @@ export async function exportUserData(): Promise<ActionState> {
 					include: {
 						items: {
 							include: {
-								sku: {
-									include: {
-										product: { select: { title: true } },
-										color: { select: { name: true } },
-									},
-								},
+								product: { select: { title: true } },
 							},
 						},
 					},
@@ -129,9 +124,7 @@ export async function exportUserData(): Promise<ActionState> {
 			})),
 			wishlist:
 				user.wishlist?.items.map((item) => ({
-					productTitle: item.sku.product.title,
-					skuColor: item.sku.color?.name ?? null,
-					price: item.priceAtAdd / 100, // Convertir centimes en euros
+					productTitle: item.product.title,
 					addedAt: item.createdAt.toISOString(),
 				})) ?? [],
 			discountUsages: user.discountUsages.map((usage) => ({

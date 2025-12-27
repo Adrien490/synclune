@@ -84,6 +84,7 @@ export function MenuSheet({
 
 	// Séparer les items en zones
 	const homeItem = navItems.find((item) => item.href === "/");
+	const bestsellerItem = navItems.find((item) => item.href.startsWith("/produits?sortBy=best-selling"));
 	const personalizationItem = navItems.find((item) => item.href === "/personnalisation");
 	const accountItems = navItems.filter((item) =>
 		ACCOUNT_HREFS.includes(item.href as (typeof ACCOUNT_HREFS)[number])
@@ -276,6 +277,31 @@ export function MenuSheet({
 									</SheetClose>
 								</Stagger>
 							</section>
+						)}
+
+						{/* Meilleures ventes */}
+						{bestsellerItem && (
+							<Stagger stagger={0.025} delay={0.14} y={10} className="mb-4">
+								<Tap>
+									<SheetClose asChild>
+										<Link
+											href={bestsellerItem.href}
+											className={
+												isMenuItemActive(bestsellerItem.href)
+													? activeLinkClassName
+													: linkClassName
+											}
+											aria-current={
+												isMenuItemActive(bestsellerItem.href)
+													? "page"
+													: undefined
+											}
+										>
+											{bestsellerItem.label}
+										</Link>
+									</SheetClose>
+								</Tap>
+							</Stagger>
 						)}
 
 						{/* Personnalisation */}

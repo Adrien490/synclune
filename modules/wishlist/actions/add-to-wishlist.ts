@@ -57,7 +57,7 @@ export async function addToWishlist(
 
 		// 2. Extraction des données du FormData
 		const rawData = {
-			skuId: formData.get("skuId") as string,
+			productId: formData.get("productId") as string,
 		};
 
 		// 3. Validation avec Zod
@@ -91,26 +91,19 @@ export async function addToWishlist(
 			};
 		}
 
-		// 5. Valider le SKU (existence et status actif)
-		const sku = await prisma.productSku.findUnique({
-			where: { id: validatedData.skuId },
+		// 5. Valider le produit (existence et status)
+		const product = await prisma.product.findUnique({
+			where: { id: validatedData.productId },
 			select: {
 				id: true,
-				sku: true,
-				isActive: true,
-				priceInclTax: true,
-				product: {
-					select: {
-						status: true,
-					},
-				},
+				status: true,
 			},
 		});
 
-		if (!sku || !sku.isActive || sku.product.status !== "PUBLIC") {
+		if (!product || product.status !== "PUBLIC") {
 			return {
 				status: ActionStatus.ERROR,
-				message: WISHLIST_ERROR_MESSAGES.SKU_INACTIVE,
+				message: WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
 			};
 		}
 
@@ -135,13 +128,11 @@ export async function addToWishlist(
 				},
 			});
 
-			// 6b. Vérifier si le SKU est déjà dans la wishlist
-			const existingItem = await tx.wishlistItem.findUnique({
+			// 6b. Vérifier si ce produit est déjà dans la wishlist
+			const existingItem = await tx.wishlistItem.findFirst({
 				where: {
-					wishlistId_skuId: {
-						wishlistId: wishlist.id,
-						skuId: validatedData.skuId,
-					},
+					wishlistId: wishlist.id,
+					productId: validatedData.productId,
 				},
 			});
 
@@ -157,8 +148,7 @@ export async function addToWishlist(
 			const wishlistItem = await tx.wishlistItem.create({
 				data: {
 					wishlistId: wishlist.id,
-					skuId: validatedData.skuId,
-					priceAtAdd: sku.priceInclTax, // Snapshot du prix
+					productId: validatedData.productId,
 				},
 				select: {
 					id: true,

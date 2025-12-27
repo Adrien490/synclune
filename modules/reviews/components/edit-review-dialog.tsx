@@ -8,7 +8,7 @@ import {
 	DialogTitle,
 } from "@/shared/components/ui/dialog"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
-import { EDIT_REVIEW_DIALOG_ID } from "../constants/dialog.constants"
+import { EDIT_REVIEW_DIALOG_ID } from "../constants/review.constants"
 import { UpdateReviewForm } from "./update-review-form"
 import type { ReviewUser } from "../types/review.types"
 

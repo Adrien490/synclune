@@ -1,3 +1,5 @@
+import { cacheTag } from "next/cache";
+
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
@@ -15,7 +17,8 @@ import {
 	buildSearchConditions,
 	type SearchResult,
 } from "../services/product-query-builder";
-import { cacheProducts } from "../constants/cache";
+import { getBestsellerIds } from "../services/bestseller-query";
+import { cacheProducts, PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
 // Re-export pour compatibilité
 export {
@@ -66,7 +69,19 @@ export async function getProducts(
 		});
 	}
 
-	return fetchProducts(params, searchResult);
+	// Récupérer les IDs des bestsellers si tri par meilleures ventes demandé
+	// Exécuté AVANT le cache pour inclure les IDs dans la clé de cache
+	// Limite optimisée selon perPage pour éviter de récupérer trop de données
+	let bestsellerIds: string[] | undefined;
+	if (params.sortBy === "best-selling") {
+		const bestsellerLimit = Math.min(
+			Math.max(params.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE, 50),
+			GET_PRODUCTS_MAX_RESULTS_PER_PAGE
+		);
+		bestsellerIds = await getBestsellerIds(bestsellerLimit);
+	}
+
+	return fetchProducts(params, searchResult, bestsellerIds);
 }
 
 /**
@@ -98,7 +113,7 @@ function sortProducts(products: Product[], sortBy: string): Product[] {
 			return multiplier * (priceA - priceB);
 		}
 
-		if (sortBy.startsWith("created-") || sortBy.startsWith("best-selling")) {
+		if (sortBy.startsWith("created-")) {
 			const dateA = new Date(a.createdAt).getTime();
 			const dateB = new Date(b.createdAt).getTime();
 			return multiplier * (dateA - dateB);
@@ -131,13 +146,20 @@ function orderByIds<T extends { id: string }>(
  *
  * @param params - Paramètres de recherche
  * @param searchResult - Résultat de la recherche fuzzy (optionnel)
+ * @param bestsellerIds - IDs des produits triés par ventes (optionnel)
  */
 async function fetchProducts(
 	params: GetProductsParams,
-	searchResult?: SearchResult
+	searchResult?: SearchResult,
+	bestsellerIds?: string[]
 ): Promise<GetProductsReturn> {
 	"use cache";
 	cacheProducts();
+
+	// Tag spécifique pour les bestsellers (invalidé après paiement)
+	if (bestsellerIds !== undefined) {
+		cacheTag(PRODUCTS_CACHE_TAGS.BESTSELLERS);
+	}
 
 	try {
 		const where = buildProductWhereClause(params, searchResult);
@@ -151,14 +173,19 @@ async function fetchProducts(
 
 		// Trier les produits :
 		// - Si recherche fuzzy active avec résultats → tri par pertinence (défaut)
+		// - Si tri best-selling avec résultats → tri par ventes
 		// - Sinon → tri selon le critère demandé
 		const fuzzyIds = searchResult?.fuzzyIds;
 		const hasFuzzyResults = fuzzyIds && fuzzyIds.length > 0;
+		const hasBestsellerResults = bestsellerIds && bestsellerIds.length > 0;
 
 		let sortedProducts: Product[];
 		if (hasFuzzyResults && params.sortBy === GET_PRODUCTS_DEFAULT_SORT_BY) {
 			// Tri par pertinence (préserve l'ordre de la recherche fuzzy)
 			sortedProducts = orderByIds(allProducts as Product[], fuzzyIds);
+		} else if (params.sortBy === "best-selling" && hasBestsellerResults) {
+			// Tri par meilleures ventes (préserve l'ordre des ventes)
+			sortedProducts = orderByIds(allProducts as Product[], bestsellerIds);
 		} else {
 			// Tri selon le critère demandé par l'utilisateur
 			sortedProducts = sortProducts(allProducts as Product[], params.sortBy);

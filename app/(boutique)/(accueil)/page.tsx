@@ -1,3 +1,5 @@
+import { Bestsellers } from "@/app/(boutique)/(accueil)/_components/bestsellers";
+import { BestsellersSkeleton } from "@/app/(boutique)/(accueil)/_components/bestsellers-skeleton";
 import { Collections } from "@/app/(boutique)/(accueil)/_components/collections";
 import { LatestCreations } from "@/app/(boutique)/(accueil)/_components/latest-creations";
 import { LatestCreationsSkeleton } from "@/app/(boutique)/(accueil)/_components/latest-creations-skeleton";
@@ -5,7 +7,7 @@ import { CollectionStatus } from "@/app/generated/prisma/client";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
-import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { SparklesDivider } from "@/shared/components/section-divider";
 import type { Metadata } from "next";
 import { Suspense } from "react";
@@ -55,6 +57,23 @@ export default async function Page() {
 			{/* 1. Hero - Capture d'attention + Positionnement de marque */}
 			<Hero />
 
+			{/* 1.5. Bestsellers - Les bijoux les plus vendus (preuve sociale) */}
+			<Suspense fallback={<BestsellersSkeleton />}>
+				<Bestsellers
+					productsPromise={getProducts(
+						{
+							perPage: 8,
+							sortBy: "best-selling",
+							filters: {
+								status: "PUBLIC",
+							},
+						},
+						{ isAdmin: false }
+					)}
+					wishlistProductIdsPromise={getWishlistProductIds()}
+				/>
+			</Suspense>
+
 			{/* 2. Latest Creations - Product-first approach: 12 nouveautés pour engagement maximal */}
 			<Suspense fallback={<LatestCreationsSkeleton productsCount={12} />}>
 				<LatestCreations
@@ -68,7 +87,7 @@ export default async function Page() {
 						},
 						{ isAdmin: false }
 					)}
-					wishlistSkuIdsPromise={getWishlistSkuIds()}
+					wishlistProductIdsPromise={getWishlistProductIds()}
 				/>
 			</Suspense>
 

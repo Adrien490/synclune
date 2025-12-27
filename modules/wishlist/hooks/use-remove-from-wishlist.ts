@@ -26,7 +26,7 @@ interface UseRemoveFromWishlistOptions {
  * })
  *
  * <form action={action}>
- *   <input type="hidden" name="skuId" value={sku.id} />
+ *   <input type="hidden" name="productId" value={product.id} />
  *   <button type="submit" disabled={isPending}>
  *     Retirer de la wishlist
  *   </button>

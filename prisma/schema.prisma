@@ -349,6 +349,9 @@ model Product {
   reviews     ProductReview[]
   reviewStats ProductReviewStats?
 
+  // Wishlist
+  wishlistItems WishlistItem[]
+
   @@index([title, id])
   @@index([typeId])
   @@index([createdAt, id])
@@ -384,7 +387,6 @@ model ProductSku {
   images                    SkuMedia[]
   orderItems                OrderItem[]
   cartItems                 CartItem[]
-  wishlistItems             WishlistItem[]
   stockNotificationRequests StockNotificationRequest[]
 
   createdAt DateTime  @default(now())
@@ -504,20 +506,17 @@ model WishlistItem {
   wishlistId String
   wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
-  skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
-
-  // Prix snapshot au moment de l'ajout (pour notifier si baisse de prix)
-  priceAtAdd Int
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete (RGPD - Art. L123-22 Code de Commerce : 10 ans)
 
-  // Un SKU ne peut être ajouté qu'une seule fois par wishlist
-  @@unique([wishlistId, skuId])
+  // Un produit ne peut être ajouté qu'une seule fois par wishlist
+  @@unique([wishlistId, productId])
   @@index([wishlistId])
-  @@index([skuId, createdAt]) // Notifications baisse de prix, couvre aussi skuId seul
+  @@index([productId])
   @@index([deletedAt])
 }
 
@@ -763,8 +762,10 @@ model OrderItem {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
+  // ⚠️ onDelete: NoAction - Préserve l'historique des ventes pour le calcul des bestsellers
+  // Un produit avec commandes ne peut pas être supprimé physiquement (utiliser soft-delete)
   productId String?
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: NoAction)
 
   // ⚠️ onDelete: Restrict intentionnel - Un SKU avec commandes ne peut pas être supprimé
   // Garantit l'intégrité comptable (Art. L123-22 Code de commerce - conservation 10 ans)
@@ -1142,34 +1143,6 @@ model StockNotificationRequest {
   @@index([notifiedAt(sort: Desc)]) // Analyse historique notifications
   @@index([status, deletedAt]) // Stats avec soft delete
   @@index([status, notifiedAt, deletedAt]) // notifiedThisMonth stat query
-}
-
-// ============================================================================
-// TÉMOIGNAGES
-// ============================================================================
-
-model Testimonial {
-  id String @id @default(cuid())
-
-  // Contenu
-  authorName String @db.VarChar(50) // Prénom du client
-  content    String @db.Text        // Texte du témoignage
-
-  // Image (via UploadThing)
-  imageUrl String? @db.VarChar(2048) // URL de l'image (bijou porté)
-
-  // État
-  isPublished Boolean @default(false) // Brouillon ou publié
-
-  // Timestamps
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?                 // Soft delete RGPD
-
-  @@index([isPublished])
-  @@index([deletedAt])
-  @@index([createdAt(sort: Desc)])
-  @@index([deletedAt, isPublished, createdAt(sort: Desc)]) // Query admin avec filtres
 }
 
 // ============================================================================

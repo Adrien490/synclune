@@ -32,7 +32,7 @@ interface UseWishlistToggleOptions {
  * });
  *
  * <form action={action}>
- *   <input type="hidden" name="skuId" value={skuId} />
+ *   <input type="hidden" name="productId" value={productId} />
  *   <button disabled={isPending}>
  *     <HeartIcon variant={isInWishlist ? 'filled' : 'outline'} />
  *   </button>
@@ -147,9 +147,9 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 			} else {
 				decrementWishlist();
 				// Notifier la liste parente pour suppression visuelle immédiate
-				const skuId = formData.get("skuId");
-				if (skuId && typeof skuId === "string" && wishlistListOptimistic) {
-					wishlistListOptimistic.onItemRemoved(skuId);
+				const productId = formData.get("productId");
+				if (productId && typeof productId === "string" && wishlistListOptimistic) {
+					wishlistListOptimistic.onItemRemoved(productId);
 				}
 			}
 

@@ -60,8 +60,13 @@ export async function fuzzySearchProductIds(
 
 	// Configurer le seuil de similarité pour cette session
 	// L'opérateur % retourne TRUE si similarity > pg_trgm.similarity_threshold
+	// Validation explicite pour éviter toute injection via $executeRawUnsafe
+	const safeThreshold = Math.max(0, Math.min(1, Number(threshold)));
+	if (!Number.isFinite(safeThreshold)) {
+		throw new Error("Invalid similarity threshold");
+	}
 	await prisma.$executeRawUnsafe(
-		`SET pg_trgm.similarity_threshold = ${threshold}`
+		`SET pg_trgm.similarity_threshold = ${safeThreshold}`
 	);
 
 	// Requête SQL avec pg_trgm

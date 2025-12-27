@@ -84,16 +84,10 @@ export async function mergeWishlists(
 				include: {
 					items: {
 						include: {
-							sku: {
+							product: {
 								select: {
 									id: true,
-									isActive: true,
-									priceInclTax: true,
-									product: {
-										select: {
-											status: true,
-										},
-									},
+									status: true,
 								},
 							},
 						},
@@ -105,7 +99,7 @@ export async function mergeWishlists(
 				include: {
 					items: {
 						select: {
-							skuId: true,
+							productId: true,
 						},
 					},
 				},
@@ -135,7 +129,7 @@ export async function mergeWishlists(
 				include: {
 					items: {
 						select: {
-							skuId: true,
+							productId: true,
 						},
 					},
 				},
@@ -143,40 +137,22 @@ export async function mergeWishlists(
 		}
 
 		// 4. Préparer les items à fusionner (stratégie UNION)
-		const userSkuIds = new Set(targetWishlist.items.map((item) => item.skuId));
-		const guestSkuIds = guestWishlist.items.map((item) => item.skuId);
+		const userProductIds = new Set(targetWishlist.items.map((item) => item.productId));
 
 		let addedCount = 0;
 		let skippedCount = 0;
 
 		// 5. Fusionner les items dans une transaction atomique
-		// Note: La validation des SKUs est faite INSIDE la transaction pour éviter les race conditions
 		await prisma.$transaction(async (tx) => {
-			// Re-valider les SKUs à l'intérieur de la transaction (protection contre race condition)
-			const validSkus = await tx.productSku.findMany({
-				where: {
-					id: { in: guestSkuIds },
-					isActive: true,
-					product: { status: "PUBLIC" },
-				},
-				select: {
-					id: true,
-					priceInclTax: true,
-				},
-			});
-			const validSkuMap = new Map(validSkus.map((sku) => [sku.id, sku]));
-
 			for (const guestItem of guestWishlist.items) {
-				const sku = validSkuMap.get(guestItem.skuId);
-
-				// Skip les produits inactifs ou non trouvés
-				if (!sku) {
+				// Skip les produits non publics
+				if (guestItem.product.status !== "PUBLIC") {
 					skippedCount++;
 					continue;
 				}
 
 				// Skip si déjà dans la wishlist utilisateur
-				if (userSkuIds.has(guestItem.skuId)) {
+				if (userProductIds.has(guestItem.productId)) {
 					skippedCount++;
 					continue;
 				}
@@ -185,8 +161,7 @@ export async function mergeWishlists(
 				await tx.wishlistItem.create({
 					data: {
 						wishlistId: targetWishlist.id,
-						skuId: guestItem.skuId,
-						priceAtAdd: sku.priceInclTax, // Prix actuel validé dans la transaction
+						productId: guestItem.productId,
 					},
 				});
 				addedCount++;

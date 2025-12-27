@@ -21,13 +21,13 @@ export const WISHLIST_CACHE_TAGS = {
 				? `wishlist-count-session-${sessionId}`
 				: "wishlist-count-anonymous",
 
-	/** Set des SKU IDs dans la wishlist (pour lookups O(1) dans ProductCards) */
-	SKU_IDS: (userId?: string, sessionId?: string) =>
+	/** Set des Product IDs dans la wishlist (pour lookups O(1) dans ProductCards) */
+	PRODUCT_IDS: (userId?: string, sessionId?: string) =>
 		userId
-			? `wishlist-skus-user-${userId}`
+			? `wishlist-products-user-${userId}`
 			: sessionId
-				? `wishlist-skus-session-${sessionId}`
-				: "wishlist-skus-anonymous",
+				? `wishlist-products-session-${sessionId}`
+				: "wishlist-products-anonymous",
 } as const;
 
 // Re-exports pour retrocompatibilite

@@ -103,11 +103,8 @@ export async function fetchWishlist(
 		// Supporte userId OU sessionId
 		const itemWhereClause = {
 			wishlist: userId ? { userId } : { sessionId },
-			sku: {
-				isActive: true,
-				product: {
-					status: "PUBLIC" as const,
-				},
+			product: {
+				status: "PUBLIC" as const,
 			},
 		};
 

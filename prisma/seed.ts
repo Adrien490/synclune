@@ -1163,33 +1163,6 @@ async function main(): Promise<void> {
   console.log("✅ Sessions créées");
 
   // ============================================
-  // TÉMOIGNAGES
-  // ============================================
-  const testimonialsData: Prisma.TestimonialCreateManyInput[] = [
-    {
-      authorName: "Marie",
-      content: "J'ai reçu mon collier Lune Céleste pour mon anniversaire et je ne le quitte plus ! La qualité est exceptionnelle et il attire toujours des compliments. Merci Synclune pour cette petite merveille.",
-      imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=600&fit=crop&crop=center",
-      isPublished: true,
-    },
-    {
-      authorName: "Sophie",
-      content: "Le bracelet perles fines que j'ai commandé pour mon mariage était parfait. Livraison rapide, emballage soigné et le bijou encore plus beau en vrai qu'en photo. Je recommande à 100% !",
-      imageUrl: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&h=600&fit=crop&crop=center",
-      isPublished: true,
-    },
-    {
-      authorName: "Camille",
-      content: "Coup de cœur pour les papilloux ! C'est original, élégant et ça change des bijoux classiques. J'en ai commandé plusieurs pour offrir à mes amies, elles ont adoré.",
-      imageUrl: "https://images.unsplash.com/photo-1594736797933-d0d8aa06a2d8?w=600&h=600&fit=crop&crop=center",
-      isPublished: true,
-    },
-  ];
-
-  await prisma.testimonial.createMany({ data: testimonialsData, skipDuplicates: true });
-  console.log(`✅ ${testimonialsData.length} témoignages créés`);
-
-  // ============================================
   // AVIS PRODUITS (REVIEWS)
   // ============================================
   const reviewTitles = {

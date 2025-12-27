@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog"
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider"
 import { useDeleteReview } from "../hooks/use-delete-review"
-import { DELETE_REVIEW_DIALOG_ID } from "../constants/dialog.constants"
+import { DELETE_REVIEW_DIALOG_ID } from "../constants/review.constants"
 
 interface DeleteReviewData {
 	reviewId: string

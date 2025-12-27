@@ -8,7 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 type WishlistButtonSize = "sm" | "md" | "lg";
 
 interface WishlistButtonProps {
-	skuId: string;
+	productId: string;
 	isInWishlist: boolean;
 	productTitle?: string;
 	className?: string;
@@ -32,12 +32,12 @@ const sizeConfig: Record<WishlistButtonSize, { button: string; icon: string }> =
  * ```tsx
  * // Dans une carte (positionnement géré par le parent)
  * <div className="absolute top-2.5 right-2.5 z-20">
- *   <WishlistButton skuId={sku.id} isInWishlist={false} />
+ *   <WishlistButton productId={product.id} isInWishlist={false} />
  * </div>
  * ```
  */
 export function WishlistButton({
-	skuId,
+	productId,
 	isInWishlist: initialIsInWishlist,
 	productTitle,
 	className,
@@ -59,7 +59,7 @@ export function WishlistButton({
 
 	return (
 		<form action={action} className={className}>
-			<input type="hidden" name="skuId" value={skuId} />
+			<input type="hidden" name="productId" value={productId} />
 			<Button
 				type="submit"
 				variant="ghost"

@@ -61,8 +61,17 @@ export function ReviewsList({
 
 			{/* Liste des avis */}
 			<div className="space-y-4" role="feed" aria-label="Liste des avis clients">
-				{initialReviews.map((review) => (
-					<ReviewCard key={review.id} review={review} />
+				{initialReviews.map((review, index) => (
+					<div
+						key={review.id}
+						className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-4"
+						style={{
+							animationDelay: `${index * 50}ms`,
+							animationFillMode: "backwards",
+						}}
+					>
+						<ReviewCard review={review} />
+					</div>
 				))}
 			</div>
 		</div>

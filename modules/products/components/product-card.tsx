@@ -13,8 +13,8 @@ interface ProductCardProps {
 	product: Product;
 	/** Index dans la liste (pour priority images above-fold) */
 	index?: number;
-	/** Set des SKU IDs présents dans la wishlist */
-	wishlistSkuIds?: Set<string>;
+	/** Indique si le produit est dans la wishlist */
+	isInWishlist?: boolean;
 }
 
 /**
@@ -36,7 +36,7 @@ interface ProductCardProps {
 export function ProductCard({
 	product,
 	index,
-	wishlistSkuIds,
+	isInWishlist = false,
 }: ProductCardProps) {
 	const { slug, title, type } = product;
 	const productType = type?.label;
@@ -46,9 +46,6 @@ export function ProductCard({
 		getProductCardData(product);
 
 	const { status: stockStatus, message: stockMessage, totalInventory: inventory } = stockInfo;
-
-	// Vérifie si n'importe quel SKU du produit est dans la wishlist
-	const isProductInWishlist = product.skus?.some(sku => wishlistSkuIds?.has(sku.id)) ?? false;
 
 	// Génération ID unique pour aria-labelledby
 	const sanitizedSlug = slug.replace(/[^a-z0-9-]/gi, "");
@@ -108,14 +105,12 @@ export function ProductCard({
 				)}
 
 				{/* Bouton wishlist (client island) */}
-				{defaultSku && (
-					<WishlistButton
-						skuId={defaultSku.id}
-						isInWishlist={isProductInWishlist}
-						productTitle={title}
-						className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity duration-200"
-					/>
-				)}
+				<WishlistButton
+					productId={product.id}
+					isInWishlist={isInWishlist}
+					productTitle={title}
+					className="absolute top-2.5 right-2.5 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity duration-200"
+				/>
 
 				<Image
 					src={primaryImage.url}

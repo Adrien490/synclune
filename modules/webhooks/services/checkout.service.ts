@@ -264,6 +264,9 @@ export function buildPostCheckoutTasks(
 		}
 	}
 
+	// Meilleures ventes (la nouvelle commande affecte le classement)
+	cacheTags.push(PRODUCTS_CACHE_TAGS.BESTSELLERS);
+
 	if (cacheTags.length > 0) {
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 	}

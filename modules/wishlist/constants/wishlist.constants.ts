@@ -9,7 +9,7 @@ import { Prisma } from "@/app/generated/prisma/client";
  * Compatible avec ProductCard pour réutilisation directe
  *
  * Inclut :
- * - skuId : ID du SKU ajouté en wishlist (pour WishlistButton)
+ * - productId : ID du produit ajouté en wishlist
  * - product : Produit complet avec tous ses SKUs actifs (pour ProductCard)
  */
 export const GET_WISHLIST_SELECT = {
@@ -20,69 +20,62 @@ export const GET_WISHLIST_SELECT = {
 	items: {
 		select: {
 			id: true,
-			skuId: true,
-			priceAtAdd: true,
+			productId: true,
 			createdAt: true,
 			updatedAt: true,
-			sku: {
+			product: {
 				select: {
 					id: true,
-					priceInclTax: true,
-					product: {
+					slug: true,
+					title: true,
+					status: true,
+					type: {
 						select: {
 							id: true,
 							slug: true,
-							title: true,
-							status: true,
-							type: {
+							label: true,
+						},
+					},
+					skus: {
+						where: { isActive: true },
+						select: {
+							id: true,
+							priceInclTax: true,
+							compareAtPrice: true,
+							inventory: true,
+							isActive: true,
+							isDefault: true,
+							color: {
 								select: {
 									id: true,
 									slug: true,
-									label: true,
+									name: true,
+									hex: true,
 								},
 							},
-							skus: {
-								where: { isActive: true },
+							material: {
 								select: {
 									id: true,
-									priceInclTax: true,
-									compareAtPrice: true,
-									inventory: true,
-									isActive: true,
-									isDefault: true,
-									color: {
-										select: {
-											id: true,
-											slug: true,
-											name: true,
-											hex: true,
-										},
-									},
-									material: {
-										select: {
-											id: true,
-											name: true,
-										},
-									},
-									size: true,
-									images: {
-										where: { isPrimary: true },
-										take: 1,
-										select: {
-											url: true,
-											blurDataUrl: true,
-											altText: true,
-											mediaType: true,
-											isPrimary: true,
-										},
-									},
+									name: true,
 								},
-								orderBy: [
-									{ isDefault: "desc" as const },
-									{ priceInclTax: "asc" as const },
-								],
+							},
+							size: true,
+							images: {
+								where: { isPrimary: true },
+								take: 1,
+								select: {
+									url: true,
+									blurDataUrl: true,
+									altText: true,
+									mediaType: true,
+									isPrimary: true,
+								},
 							},
 						},
+						orderBy: [
+							{ isDefault: "desc" as const },
+							{ priceInclTax: "asc" as const },
+						],
 					},
 				},
 			},

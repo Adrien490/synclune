@@ -41,6 +41,9 @@ export const PRODUCTS_CACHE_TAGS = {
 
 	/** Produits similaires contextuels par produit */
 	RELATED_CONTEXTUAL: (productSlug: string) => `related-products-contextual-${productSlug}`,
+
+	/** Produits les plus vendus (homepage) */
+	BESTSELLERS: "bestsellers",
 } as const;
 
 // Re-exports pour retrocompatibilite

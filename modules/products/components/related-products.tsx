@@ -1,6 +1,6 @@
 import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
-import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { Reveal } from "@/shared/components/animations";
 import {
 	Carousel,
@@ -38,13 +38,13 @@ export async function RelatedProducts({
 	currentProductSlug,
 	limit = 8,
 }: RelatedProductsProps) {
-	// Récupérer les produits similaires et les SKU IDs wishlist en parallèle
-	const [relatedProducts, wishlistSkuIds] = await Promise.all([
+	// Récupérer les produits similaires et les Product IDs wishlist en parallèle
+	const [relatedProducts, wishlistProductIds] = await Promise.all([
 		getRelatedProducts({
 			currentProductSlug,
 			limit,
 		}),
-		getWishlistSkuIds(),
+		getWishlistProductIds(),
 	]);
 
 	// Ne rien afficher si pas de produits similaires
@@ -85,7 +85,7 @@ export async function RelatedProducts({
 								<ProductCard
 									product={product}
 									index={index}
-									wishlistSkuIds={wishlistSkuIds}
+									isInWishlist={wishlistProductIds.has(product.id)}
 								/>
 							</CarouselItem>
 						))}

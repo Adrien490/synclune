@@ -10,7 +10,6 @@ import {
 import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
-import Script from "next/script";
 
 interface FaqItem {
 	question: string;
@@ -20,6 +19,22 @@ interface FaqItem {
 interface FaqCategory {
 	id: string;
 	items: FaqItem[];
+}
+
+function generateFaqSchema(categories: FaqCategory[]) {
+	const allQuestions = categories.flatMap((cat) => cat.items);
+	return {
+		"@context": "https://schema.org",
+		"@type": "FAQPage",
+		mainEntity: allQuestions.map((item) => ({
+			"@type": "Question",
+			name: item.question,
+			acceptedAnswer: {
+				"@type": "Answer",
+				text: item.answer,
+			},
+		})),
+	};
 }
 
 const faqCategories: FaqCategory[] = [
@@ -70,21 +85,8 @@ const faqCategories: FaqCategory[] = [
 	},
 ];
 
-function generateFaqSchema(categories: FaqCategory[]) {
-	const allQuestions = categories.flatMap((cat) => cat.items);
-	return {
-		"@context": "https://schema.org",
-		"@type": "FAQPage",
-		mainEntity: allQuestions.map((item) => ({
-			"@type": "Question",
-			name: item.question,
-			acceptedAnswer: {
-				"@type": "Answer",
-				text: item.answer,
-			},
-		})),
-	};
-}
+// Schema JSON-LD généré une seule fois (données statiques)
+const faqSchema = generateFaqSchema(faqCategories);
 
 /**
  * Section FAQ - Questions fréquentes avec schema SEO
@@ -96,28 +98,24 @@ function generateFaqSchema(categories: FaqCategory[]) {
  * - Design cohérent avec les autres sections homepage
  */
 export function FaqSection() {
-	const faqSchema = generateFaqSchema(faqCategories);
-
 	return (
 		<section
 			className={cn("bg-background", SECTION_SPACING.section)}
 			aria-labelledby="faq-title"
 		>
 			{/* JSON-LD Schema pour SEO */}
-			<Script
+			<script
 				id="faq-schema"
 				type="application/ld+json"
-				strategy="beforeInteractive"
-			>
-				{JSON.stringify(faqSchema)}
-			</Script>
+				dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+			/>
 
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<header className="text-center mb-10 lg:mb-12">
 					<Fade y={20} duration={0.6}>
 						<SectionTitle id="faq-title">Questions fréquentes</SectionTitle>
 					</Fade>
-					<Fade y={10} delay={0.15} duration={0.6}>
+					<Fade y={10} delay={0.1} duration={0.6}>
 						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-xl mx-auto">
 							Retrouve ici les réponses aux questions les plus posées
 						</p>

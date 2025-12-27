@@ -46,12 +46,12 @@ export function cacheWishlistCount(userId?: string, sessionId?: string) {
  * Invalide automatiquement :
  * - La wishlist de l'utilisateur/visiteur
  * - Le compteur d'items dans la wishlist
- * - Les SKU IDs dans la wishlist
+ * - Les Product IDs dans la wishlist
  */
 export function getWishlistInvalidationTags(userId?: string, sessionId?: string): string[] {
 	return [
 		WISHLIST_CACHE_TAGS.WISHLIST(userId, sessionId),
 		WISHLIST_CACHE_TAGS.COUNT(userId, sessionId),
-		WISHLIST_CACHE_TAGS.SKU_IDS(userId, sessionId),
+		WISHLIST_CACHE_TAGS.PRODUCT_IDS(userId, sessionId),
 	];
 }

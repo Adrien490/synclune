@@ -17,7 +17,7 @@
  */
 
 // Authentication helpers
-export { requireAuth, requireAdmin } from "./auth";
+export { requireAuth, requireAdmin, requireAdminWithUser } from "./auth";
 
 // Validation helpers
 export { validateInput, validateFormData } from "./validation";

@@ -100,7 +100,6 @@ export async function deleteProductSku(
 				_count: {
 					select: {
 						orderItems: true,
-						wishlistItems: true,
 						cartItems: true,
 					},
 				},
@@ -136,20 +135,7 @@ export async function deleteProductSku(
 			};
 		}
 
-		// 6b. CRITIQUE : Verifier que le SKU n'est pas dans des wishlists
-		// Prisma a onDelete: Restrict sur WishlistItem.sku
-		const wishlistItemsCount = existingSku._count.wishlistItems;
-
-		if (wishlistItemsCount > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					`Cette variante ne peut pas être supprimée car elle est présente dans ${wishlistItemsCount} wishlist${wishlistItemsCount > 1 ? "s" : ""}. ` +
-					"Pour éviter de frustrer vos clients, veuillez désactiver cette variante à la place.",
-			};
-		}
-
-		// 6c. CRITIQUE : Verifier que le SKU n'est pas dans des paniers
+		// 6b. CRITIQUE : Verifier que le SKU n'est pas dans des paniers
 		// Prisma a onDelete: Restrict sur CartItem.sku
 		const cartItemsCount = existingSku._count.cartItems;
 

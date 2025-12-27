@@ -37,10 +37,8 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	},
 
 	// === REFUND ===
-	"charge.refunded": async (e) => {
-		await handleChargeRefunded(e.data.object as Stripe.Charge);
-		return null;
-	},
+	"charge.refunded": async (e) =>
+		handleChargeRefunded(e.data.object as Stripe.Charge),
 	"refund.created": async (e) => {
 		await handleRefundUpdated(e.data.object as Stripe.Refund);
 		return null;

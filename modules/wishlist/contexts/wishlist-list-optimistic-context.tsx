@@ -7,7 +7,7 @@ export interface WishlistListOptimisticContextValue {
 	 * Appelé quand un item est retiré de la wishlist depuis la liste
 	 * Permet au parent de mettre à jour l'affichage optimiste
 	 */
-	onItemRemoved: (skuId: string) => void;
+	onItemRemoved: (productId: string) => void;
 }
 
 export const WishlistListOptimisticContext = createContext<WishlistListOptimisticContextValue | null>(null);

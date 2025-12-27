@@ -50,7 +50,7 @@ export async function removeFromWishlist(
 
 		// 2. Extraction des données du FormData
 		const rawData = {
-			skuId: formData.get('skuId') as string,
+			productId: formData.get('productId') as string,
 		}
 
 		// 3. Validation avec Zod
@@ -83,16 +83,16 @@ export async function removeFromWishlist(
 			}
 		}
 
-		// 5. Valider le SKU (existence)
-		const sku = await prisma.productSku.findUnique({
-			where: { id: validatedData.skuId },
+		// 5. Valider le produit (existence)
+		const product = await prisma.product.findUnique({
+			where: { id: validatedData.productId },
 			select: { id: true },
 		})
 
-		if (!sku) {
+		if (!product) {
 			return {
 				status: ActionStatus.NOT_FOUND,
-				message: WISHLIST_ERROR_MESSAGES.SKU_NOT_FOUND,
+				message: WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
 			}
 		}
 
@@ -109,12 +109,12 @@ export async function removeFromWishlist(
 			}
 		}
 
-		// 7. Supprimer l'item de la wishlist et mettre à jour le timestamp
+		// 7. Supprimer l'item de ce produit de la wishlist et mettre à jour le timestamp
 		const deleteResult = await prisma.$transaction(async (tx) => {
 			const result = await tx.wishlistItem.deleteMany({
 				where: {
 					wishlistId: wishlist.id,
-					skuId: validatedData.skuId,
+					productId: validatedData.productId,
 				},
 			})
 

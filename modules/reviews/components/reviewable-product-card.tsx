@@ -8,13 +8,13 @@ import { Star, ExternalLink } from "lucide-react"
 import { Button } from "@/shared/components/ui/button"
 import { CardContent } from "@/shared/components/ui/card"
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/shared/components/ui/dialog"
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+	ResponsiveDialogTrigger,
+} from "@/shared/components/responsive-dialog"
 import { cn } from "@/shared/utils/cn"
 
 import type { ReviewableProduct } from "../types/review.types"
@@ -88,28 +88,28 @@ export function ReviewableProductCard({ product, className }: ReviewableProductC
 						</div>
 
 						{/* CTA */}
-						<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-							<DialogTrigger asChild>
-								<Button size="sm" className="w-full sm:w-auto">
+						<ResponsiveDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+							<ResponsiveDialogTrigger asChild>
+								<Button size="sm" className="w-full sm:w-auto min-h-11">
 									<Star className="size-4 mr-1" aria-hidden="true" />
 									Laisser un avis
 								</Button>
-							</DialogTrigger>
-							<DialogContent className="max-w-lg">
-								<DialogHeader>
-									<DialogTitle>Donner mon avis</DialogTitle>
-									<DialogDescription>
+							</ResponsiveDialogTrigger>
+							<ResponsiveDialogContent className="max-w-lg">
+								<ResponsiveDialogHeader>
+									<ResponsiveDialogTitle>Donner mon avis</ResponsiveDialogTitle>
+									<ResponsiveDialogDescription>
 										Partagez votre expérience avec {product.productTitle}
-									</DialogDescription>
-								</DialogHeader>
+									</ResponsiveDialogDescription>
+								</ResponsiveDialogHeader>
 								<CreateReviewForm
 									productId={product.productId}
 									orderItemId={product.orderItemId}
 									productTitle={product.productTitle}
 									onSuccess={() => setIsDialogOpen(false)}
 								/>
-							</DialogContent>
-						</Dialog>
+							</ResponsiveDialogContent>
+						</ResponsiveDialog>
 					</div>
 				</div>
 			</CardContent>

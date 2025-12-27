@@ -166,7 +166,7 @@ export function getMobileNavItems(
 			: COLLECTIONS_MENU_ITEMS, // Fallback sur les collections statiques
 	};
 
-	// Flow optimisé: Accueil → Créations → Collections → Personnaliser → Compte → Tableau de bord (admin)
+	// Flow optimisé: Accueil → Créations → Collections → Meilleures ventes → Personnaliser → Compte → Tableau de bord (admin)
 	const items: NavItemWithChildren[] = [
 		// 🏠 ACCUEIL - Retour à la page d'accueil
 		{ href: "/", label: "Accueil", icon: "home" },
@@ -174,6 +174,9 @@ export function getMobileNavItems(
 		// 💎 DÉCOUVRIR - Créations en premier
 		bijouxItem,
 		collectionsItem,
+
+		// ⭐ MEILLEURES VENTES - Social proof
+		{ href: "/produits?sortBy=best-selling", label: "Meilleures ventes", icon: "sparkles" },
 
 		// ✨ PERSONNALISER - Service différenciateur
 		{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },

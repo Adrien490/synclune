@@ -101,7 +101,7 @@ export function UserReviewCard({ review, className }: UserReviewCardProps) {
 						{review.response && (
 							<div className="bg-muted/50 rounded-lg p-3 mt-2">
 								<p className="text-xs font-medium text-primary mb-1">
-									Reponse de {review.response.authorName}
+									Réponse de {review.response.authorName}
 								</p>
 								<p className="text-sm text-muted-foreground line-clamp-2">
 									{review.response.content}

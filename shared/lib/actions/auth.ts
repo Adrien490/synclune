@@ -68,3 +68,47 @@ export async function requireAdmin(): Promise<{ admin: true } | { error: ActionS
 
 	return { admin: true };
 }
+
+/**
+ * Vérifie que l'utilisateur est authentifié ET admin
+ *
+ * Combine requireAuth() et requireAdmin() en un seul appel
+ * pour éviter le double fetch de session.
+ *
+ * @returns L'utilisateur admin ou une erreur ActionState
+ *
+ * @example
+ * ```ts
+ * const auth = await requireAdminWithUser();
+ * if ("error" in auth) return auth.error;
+ *
+ * const user = auth.user;
+ * // user.id, user.name, etc. sont disponibles
+ * ```
+ */
+export async function requireAdminWithUser(): Promise<
+	| { user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>> }
+	| { error: ActionState }
+> {
+	const user = await getCurrentUser();
+
+	if (!user) {
+		return {
+			error: {
+				status: ActionStatus.UNAUTHORIZED,
+				message: "Vous devez être connecté pour effectuer cette action.",
+			},
+		};
+	}
+
+	if (user.role !== "ADMIN") {
+		return {
+			error: {
+				status: ActionStatus.FORBIDDEN,
+				message: "Accès non autorisé. Droits administrateur requis.",
+			},
+		};
+	}
+
+	return { user };
+}

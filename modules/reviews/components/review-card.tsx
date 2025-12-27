@@ -40,6 +40,7 @@ interface ReviewCardProps {
 export function ReviewCard({ review, className }: ReviewCardProps) {
 	const [lightboxOpen, setLightboxOpen] = useState(false)
 	const [lightboxIndex, setLightboxIndex] = useState(0)
+	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
 
 	const hasMedia = review.medias.length > 0
 	const userInitials = review.user.name
@@ -116,14 +117,22 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 									key={media.id}
 									type="button"
 									onClick={() => openLightbox(index)}
-									className="relative size-20 rounded-lg overflow-hidden group cursor-zoom-in"
+									className="relative size-20 md:size-24 rounded-lg overflow-hidden group cursor-zoom-in"
 								>
+									{/* Skeleton shimmer pendant chargement */}
+									{!loadedImages.has(media.id) && (
+										<div className="absolute inset-0 animate-shimmer rounded-lg" />
+									)}
 									<Image
 										src={media.url}
 										alt={media.altText || `Photo ${index + 1}`}
 										fill
-										className="object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-105"
-										sizes="80px"
+										onLoad={() => setLoadedImages((prev) => new Set(prev).add(media.id))}
+										className={cn(
+											"object-cover motion-safe:transition-all motion-safe:duration-300 motion-safe:group-hover:scale-105",
+											loadedImages.has(media.id) ? "opacity-100" : "opacity-0"
+										)}
+										sizes="(min-width: 768px) 96px, 80px"
 									/>
 								</button>
 							))}

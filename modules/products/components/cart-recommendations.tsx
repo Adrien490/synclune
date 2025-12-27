@@ -1,7 +1,7 @@
 import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
 import { getPrimarySkuForList } from "@/modules/products/services/product-list-helpers";
-import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { Reveal, Stagger } from "@/shared/components/animations";
 import { Separator } from "@/shared/components/ui/separator";
 
@@ -28,10 +28,10 @@ interface CartRecommendationsProps {
 export async function CartRecommendations({
 	limit = 4,
 }: CartRecommendationsProps) {
-	// Récupérer les recommandations et les SKU IDs wishlist en parallèle
-	const [recommendations, wishlistSkuIds] = await Promise.all([
+	// Récupérer les recommandations et les Product IDs wishlist en parallèle
+	const [recommendations, wishlistProductIds] = await Promise.all([
 		getRelatedProducts({ limit }),
-		getWishlistSkuIds(),
+		getWishlistProductIds(),
 	]);
 
 	// Ne rien afficher si pas de recommandations
@@ -71,7 +71,7 @@ export async function CartRecommendations({
 						key={product.id}
 						product={product}
 						index={index}
-						wishlistSkuIds={wishlistSkuIds}
+						isInWishlist={wishlistProductIds.has(product.id)}
 					/>
 				))}
 			</Stagger>

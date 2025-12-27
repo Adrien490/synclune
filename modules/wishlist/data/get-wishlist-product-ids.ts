@@ -5,38 +5,38 @@ import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 import { WISHLIST_CACHE_TAGS } from "@/modules/wishlist/constants/cache";
 
 /**
- * Récupère tous les SKU IDs présents dans la wishlist de l'utilisateur/visiteur
+ * Récupère tous les Product IDs présents dans la wishlist de l'utilisateur/visiteur
  *
- * Optimisé pour éviter le problème N+1 : une seule requête pour tous les SKUs.
+ * Optimisé pour éviter le problème N+1 : une seule requête pour tous les produits.
  * Retourne un Set pour des lookups O(1) dans les listes de produits.
  *
- * @returns Set des SKU IDs dans la wishlist (vide si pas de wishlist)
+ * @returns Set des Product IDs dans la wishlist (vide si pas de wishlist)
  *
  * @example
  * ```tsx
- * const wishlistSkuIds = await getWishlistSkuIds();
- * const isInWishlist = wishlistSkuIds.has(sku.id);
+ * const wishlistProductIds = await getWishlistProductIds();
+ * const isInWishlist = wishlistProductIds.has(product.id);
  * ```
  */
-export async function getWishlistSkuIds(): Promise<Set<string>> {
+export async function getWishlistProductIds(): Promise<Set<string>> {
 	const session = await getSession();
 	const userId = session?.user?.id;
 	const sessionId = !userId ? await getWishlistSessionId() : null;
 
-	return fetchWishlistSkuIds(userId, sessionId || undefined);
+	return fetchWishlistProductIds(userId, sessionId || undefined);
 }
 
 /**
- * Fonction cachée qui récupère les SKU IDs de la wishlist
+ * Fonction cachée qui récupère les Product IDs de la wishlist
  */
-async function fetchWishlistSkuIds(
+async function fetchWishlistProductIds(
 	userId?: string,
 	sessionId?: string
 ): Promise<Set<string>> {
 	"use cache: private";
 	cacheLife("cart");
 
-	cacheTag(WISHLIST_CACHE_TAGS.SKU_IDS(userId, sessionId));
+	cacheTag(WISHLIST_CACHE_TAGS.PRODUCT_IDS(userId, sessionId));
 
 	// Pas d'utilisateur ni de session = wishlist vide
 	if (!userId && !sessionId) return new Set();
@@ -44,15 +44,12 @@ async function fetchWishlistSkuIds(
 	const wishlistItems = await prisma.wishlistItem.findMany({
 		where: {
 			wishlist: userId ? { userId } : { sessionId },
-			sku: {
-				isActive: true,
-				product: {
-					status: "PUBLIC",
-				},
+			product: {
+				status: "PUBLIC",
 			},
 		},
-		select: { skuId: true },
+		select: { productId: true },
 	});
 
-	return new Set(wishlistItems.map((item) => item.skuId));
+	return new Set(wishlistItems.map((item) => item.productId));
 }

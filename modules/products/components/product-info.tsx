@@ -40,7 +40,7 @@ export function ProductInfo({
 				<div className="shrink-0">
 					<WishlistButton
 						productTitle={product.title}
-						skuId={defaultSku.id}
+						productId={product.id}
 						isInWishlist={isInWishlist ?? false}
 						size="lg"
 					/>
@@ -82,7 +82,7 @@ export function ProductInfo({
 				<div className="hidden sm:block ml-auto">
 					<WishlistButton
 						productTitle={product.title}
-						skuId={defaultSku.id}
+						productId={product.id}
 						isInWishlist={isInWishlist ?? false}
 						size="lg"
 					/>

@@ -283,6 +283,7 @@ export const PRODUCT_FILTER_DIALOG_ID = "product-filter-sheet";
 // ============================================================================
 
 export const PRODUCTS_SORT_OPTIONS = {
+	BEST_SELLING: "best-selling",
 	TITLE_ASC: "title-ascending",
 	TITLE_DESC: "title-descending",
 	PRICE_ASC: "price-ascending",
@@ -292,6 +293,7 @@ export const PRODUCTS_SORT_OPTIONS = {
 } as const;
 
 export const PRODUCTS_SORT_LABELS = {
+	[PRODUCTS_SORT_OPTIONS.BEST_SELLING]: "Meilleures ventes",
 	[PRODUCTS_SORT_OPTIONS.TITLE_ASC]: "Alphabétique (A-Z)",
 	[PRODUCTS_SORT_OPTIONS.TITLE_DESC]: "Alphabétique (Z-A)",
 	[PRODUCTS_SORT_OPTIONS.PRICE_ASC]: "Prix croissant",

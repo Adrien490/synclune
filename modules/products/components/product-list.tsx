@@ -1,6 +1,6 @@
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import { getWishlistSkuIds } from "@/modules/wishlist/data/get-wishlist-sku-ids";
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -23,7 +23,7 @@ export function ProductList({
 	perPage,
 }: ProductListProps) {
 	const { products, pagination, totalCount } = use(productsPromise);
-	const wishlistSkuIds = use(getWishlistSkuIds());
+	const wishlistProductIds = use(getWishlistProductIds());
 
 	// Afficher le composant Empty si aucun produit
 	if (!products || products.length === 0) {
@@ -70,7 +70,7 @@ export function ProductList({
 						<ProductCard
 							product={product}
 							index={index}
-							wishlistSkuIds={wishlistSkuIds}
+							isInWishlist={wishlistProductIds.has(product.id)}
 						/>
 					</div>
 				))}

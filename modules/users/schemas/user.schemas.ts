@@ -214,8 +214,6 @@ export const exportUserDataResponseSchema = z.object({
 	wishlist: z.array(
 		z.object({
 			productTitle: z.string(),
-			skuColor: z.string().nullable(),
-			price: z.number(),
 			addedAt: z.string().datetime(),
 		})
 	),

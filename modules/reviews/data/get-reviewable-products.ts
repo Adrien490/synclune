@@ -83,7 +83,25 @@ async function fetchReviewableProducts(
 		},
 	});
 
-	// Dedupliquer par productId (un user peut avoir commande plusieurs fois le meme produit)
+	// Collecter les productIds uniques (dedupliques)
+	const uniqueProductIds = new Set<string>();
+	for (const item of orderItems) {
+		if (item.sku?.product?.id && !item.sku.product.deletedAt) {
+			uniqueProductIds.add(item.sku.product.id);
+		}
+	}
+
+	// Batch query: recuperer tous les avis existants en une seule requete
+	const existingReviews = await prisma.productReview.findMany({
+		where: {
+			userId,
+			productId: { in: Array.from(uniqueProductIds) },
+		},
+		select: { productId: true },
+	});
+	const reviewedProductIds = new Set(existingReviews.map((r) => r.productId));
+
+	// Construire la liste des produits evaluables
 	const seenProductIds = new Set<string>();
 	const reviewableProducts: ReviewableProduct[] = [];
 
@@ -95,20 +113,14 @@ async function fetchReviewableProducts(
 
 		const productId = item.sku.product.id;
 
+		// Dedupliquer par productId
 		if (seenProductIds.has(productId)) {
 			continue;
 		}
 		seenProductIds.add(productId);
 
-		// Verifier qu'il n'a pas deja un avis sur ce produit
-		const existingReview = await prisma.productReview.findUnique({
-			where: {
-				userId_productId: { userId, productId },
-			},
-			select: { id: true },
-		});
-
-		if (existingReview) {
+		// Exclure les produits deja notes (verifie via le Set)
+		if (reviewedProductIds.has(productId)) {
 			continue;
 		}
 

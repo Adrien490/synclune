@@ -80,20 +80,6 @@ export async function bulkDeleteSkus(
 			};
 		}
 
-		// CRITIQUE : Verifier que les SKUs ne sont pas dans des wishlists
-		const wishlistItemsCount = await prisma.wishlistItem.count({
-			where: { skuId: { in: ids } },
-		});
-
-		if (wishlistItemsCount > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					`Impossible de supprimer ces variantes car ${wishlistItemsCount} sont presentes dans des wishlists. ` +
-					"Veuillez desactiver ces variantes a la place.",
-			};
-		}
-
 		// CRITIQUE : Verifier que les SKUs ne sont pas dans des paniers
 		const cartItemsCount = await prisma.cartItem.count({
 			where: { skuId: { in: ids } },

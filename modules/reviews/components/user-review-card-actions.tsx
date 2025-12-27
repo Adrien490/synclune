@@ -4,7 +4,7 @@ import { Edit2, Trash2 } from "lucide-react"
 import { Button } from "@/shared/components/ui/button"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider"
-import { EDIT_REVIEW_DIALOG_ID, DELETE_REVIEW_DIALOG_ID } from "../constants/dialog.constants"
+import { EDIT_REVIEW_DIALOG_ID, DELETE_REVIEW_DIALOG_ID } from "../constants/review.constants"
 import type { ReviewUser } from "../types/review.types"
 
 interface UserReviewCardActionsProps {
@@ -20,6 +20,7 @@ export function UserReviewCardActions({ review }: UserReviewCardActionsProps) {
 			<Button
 				variant="outline"
 				size="sm"
+				className="min-h-11"
 				onClick={() => editDialog.open({ review })}
 			>
 				<Edit2 className="size-4 mr-1" aria-hidden="true" />
@@ -29,7 +30,7 @@ export function UserReviewCardActions({ review }: UserReviewCardActionsProps) {
 			<Button
 				variant="outline"
 				size="sm"
-				className="text-destructive hover:text-destructive"
+				className="min-h-11 text-destructive hover:text-destructive"
 				onClick={() =>
 					deleteDialog.open({
 						reviewId: review.id,

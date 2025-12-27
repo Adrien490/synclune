@@ -1,4 +1,4 @@
-import { Reveal, Stagger } from "@/shared/components/animations";
+import { Fade, Reveal, Stagger } from "@/shared/components/animations";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -124,16 +124,20 @@ export function CreativeProcess() {
 
 			<div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<header className="text-center mb-12 lg:mb-16">
-					<SectionTitle id="creative-process-title">
-						Comment je crée tes bijoux
-					</SectionTitle>
-					<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto">
-						De l'inspiration à la finition
-						<span className="hidden sm:inline">
-							, voici quelques étapes explicatives !
-						</span>
-						.
-					</p>
+					<Fade y={20} duration={0.6}>
+						<SectionTitle id="creative-process-title">
+							Comment je crée tes bijoux
+						</SectionTitle>
+					</Fade>
+					<Fade y={10} delay={0.1} duration={0.6}>
+						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto">
+							De l'inspiration à la finition
+							<span className="hidden sm:inline">
+								, voici quelques étapes explicatives !
+							</span>
+							.
+						</p>
+					</Fade>
 				</header>
 
 				<div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -184,8 +188,8 @@ export function CreativeProcess() {
 
 							<Stagger
 								role="list"
-								stagger={0.15}
-								y={35}
+								stagger={0.08}
+								y={25}
 								delay={0}
 								inView
 								once={true}

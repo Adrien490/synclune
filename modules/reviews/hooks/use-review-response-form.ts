@@ -1,7 +1,9 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useTransition } from "react"
 import { toast } from "sonner"
+import type { ActionState } from "@/shared/types/server-action"
+import { ActionStatus } from "@/shared/types/server-action"
 import { createReviewResponse } from "../actions/create-review-response"
 import { updateReviewResponse } from "../actions/update-review-response"
 import { deleteReviewResponse } from "../actions/delete-review-response"
@@ -11,44 +13,47 @@ interface UseReviewResponseFormOptions {
 }
 
 /**
+ * Helper pour afficher les toasts selon le résultat de l'action
+ */
+function handleActionResult(result: ActionState, onSuccess?: () => void) {
+	if (result.status === ActionStatus.SUCCESS) {
+		toast.success(result.message)
+		onSuccess?.()
+	} else {
+		toast.error(result.message)
+	}
+}
+
+/**
  * Hook pour gérer les réponses admin aux avis
+ *
+ * Expose 3 actions:
+ * - createResponse: Créer une nouvelle réponse
+ * - editResponse: Modifier une réponse existante
+ * - removeResponse: Supprimer une réponse
  */
 export function useReviewResponseForm(options?: UseReviewResponseFormOptions) {
 	const [isPending, startTransition] = useTransition()
-	const [content, setContent] = useState("")
 
-	const createResponse = (reviewId: string, responseContent: string) => {
+	const createResponse = (reviewId: string, content: string) => {
 		startTransition(async () => {
 			const formData = new FormData()
 			formData.append("reviewId", reviewId)
-			formData.append("content", responseContent)
+			formData.append("content", content)
 
 			const result = await createReviewResponse(undefined, formData)
-
-			if (result && "error" in result && typeof result.error === "string") {
-				toast.error(result.error)
-			} else if (result && "message" in result && typeof result.message === "string") {
-				toast.success(result.message)
-				setContent("")
-				options?.onSuccess?.()
-			}
+			handleActionResult(result, options?.onSuccess)
 		})
 	}
 
-	const editResponse = (responseId: string, responseContent: string) => {
+	const editResponse = (responseId: string, content: string) => {
 		startTransition(async () => {
 			const formData = new FormData()
 			formData.append("id", responseId)
-			formData.append("content", responseContent)
+			formData.append("content", content)
 
 			const result = await updateReviewResponse(undefined, formData)
-
-			if (result && "error" in result && typeof result.error === "string") {
-				toast.error(result.error)
-			} else if (result && "message" in result && typeof result.message === "string") {
-				toast.success(result.message)
-				options?.onSuccess?.()
-			}
+			handleActionResult(result, options?.onSuccess)
 		})
 	}
 
@@ -58,19 +63,11 @@ export function useReviewResponseForm(options?: UseReviewResponseFormOptions) {
 			formData.append("id", responseId)
 
 			const result = await deleteReviewResponse(undefined, formData)
-
-			if (result && "error" in result && typeof result.error === "string") {
-				toast.error(result.error)
-			} else if (result && "message" in result && typeof result.message === "string") {
-				toast.success(result.message)
-				options?.onSuccess?.()
-			}
+			handleActionResult(result, options?.onSuccess)
 		})
 	}
 
 	return {
-		content,
-		setContent,
 		createResponse,
 		editResponse,
 		removeResponse,

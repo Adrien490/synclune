@@ -78,7 +78,7 @@ export function AtelierStory() {
 						{/* Corps du texte avec stagger pour lecture progressive */}
 						<Stagger
 							stagger={0.08}
-							y={12}
+							y={20}
 							inView
 							once
 							className="space-y-4 sm:space-y-6 text-base sm:text-lg text-muted-foreground leading-relaxed"

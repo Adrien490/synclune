@@ -22,7 +22,7 @@ interface WishlistListContentProps {
  * Contenu de la liste wishlist - Client Component
  *
  * Réutilise ProductCard pour uniformité visuelle avec le reste du site.
- * Les items sont tous marqués comme "en wishlist" via wishlistSkuIds.
+ * Les items sont tous marqués comme "en wishlist" via isInWishlist boolean.
  * Utilise useOptimistic pour supprimer visuellement les items immédiatement.
  */
 export function WishlistListContent({
@@ -33,15 +33,15 @@ export function WishlistListContent({
 }: WishlistListContentProps) {
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
 
-	// Optimistic state pour la liste d'items
+	// Optimistic state pour la liste d'items (filtre par productId)
 	const [optimisticItems, removeOptimisticItem] = useOptimistic(
 		items,
-		(state, removedSkuId: string) => state.filter((item) => item.skuId !== removedSkuId)
+		(state, removedProductId: string) => state.filter((item) => item.productId !== removedProductId)
 	);
 
 	// Callback pour le contexte - appelé par WishlistButton quand un item est retiré
-	const handleItemRemoved = (skuId: string) => {
-		removeOptimisticItem(skuId);
+	const handleItemRemoved = (productId: string) => {
+		removeOptimisticItem(productId);
 	};
 
 	// Valeur du contexte
@@ -49,19 +49,8 @@ export function WishlistListContent({
 		onItemRemoved: handleItemRemoved,
 	};
 
-	// Set des SKU IDs en wishlist (basé sur l'état optimiste)
-	const wishlistSkuIds = new Set(optimisticItems.map((item) => item.skuId));
-
-	// Dédupliquer par productId pour éviter doublons si plusieurs SKUs du même produit
-	const uniqueProducts = (() => {
-		const seen = new Set<string>();
-		return optimisticItems.filter((item) => {
-			const productId = item.sku.product.id;
-			if (seen.has(productId)) return false;
-			seen.add(productId);
-			return true;
-		});
-	})();
+	// Set des Product IDs en wishlist (basé sur l'état optimiste)
+	const wishlistProductIds = new Set(optimisticItems.map((item) => item.productId));
 
 	return (
 		<WishlistListOptimisticContext.Provider value={contextValue}>
@@ -71,7 +60,7 @@ export function WishlistListContent({
 					className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
 				>
 					<AnimatePresence mode="popLayout">
-						{uniqueProducts.map((item, index) => (
+						{optimisticItems.map((item, index) => (
 							<motion.div
 								key={item.id}
 								layout
@@ -85,9 +74,9 @@ export function WishlistListContent({
 								}}
 							>
 								<ProductCard
-									product={item.sku.product as Product}
+									product={item.product as Product}
 									index={index}
-									wishlistSkuIds={wishlistSkuIds}
+									isInWishlist={wishlistProductIds.has(item.productId)}
 								/>
 							</motion.div>
 						))}

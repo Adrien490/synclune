@@ -3,10 +3,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
-import { getRandomTestimonial } from "@/modules/testimonials/data/get-random-testimonial";
 import { CustomizationForm } from "@/modules/customizations/components/customization-form";
-import { CustomizationSidebar } from "@/modules/customizations/components/customization-sidebar";
-import { TestimonialCard } from "@/modules/testimonials/components/testimonial-card";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -30,11 +27,10 @@ export const metadata: Metadata = {
  * Affiche le formulaire de demande de personnalisation
  */
 export default async function CustomizationPage() {
-	// Récupérer les données pour le formulaire en parallèle
-	const [{ productTypes }, testimonial] = await Promise.all([
-		getProductTypes({ perPage: 100, filters: { isActive: true } }),
-		getRandomTestimonial(),
-	]);
+	const { productTypes } = await getProductTypes({
+		perPage: 100,
+		filters: { isActive: true },
+	});
 
 	return (
 		<div className="relative min-h-screen">
@@ -69,26 +65,13 @@ export default async function CustomizationPage() {
 			{/* Section principale avec formulaire */}
 			<section className={`bg-background ${SECTION_SPACING.compact} relative z-10`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					{/* Layout split : formulaire + sidebar sur desktop */}
 					<div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-12">
-						{/* Formulaire de personnalisation */}
 						<div className="max-w-xl">
 							<CustomizationForm productTypes={productTypes} />
 						</div>
-
-						{/* Sidebar avec témoignage - desktop uniquement */}
-						<CustomizationSidebar
-							testimonial={testimonial}
-							className="hidden lg:block"
-						/>
+						{/* Espace réservé pour sidebar future - desktop uniquement */}
+						<div className="hidden lg:block" />
 					</div>
-
-					{/* Témoignage mobile - après le formulaire */}
-					{testimonial && (
-						<div className="lg:hidden mt-12">
-							<TestimonialCard testimonial={testimonial} />
-						</div>
-					)}
 				</div>
 			</section>
 		</div>

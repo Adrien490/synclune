@@ -3,8 +3,7 @@
 import { updateTag } from "next/cache"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
 import {
-	requireAuth,
-	requireAdmin,
+	requireAdminWithUser,
 	success,
 	notFound,
 	error,
@@ -26,12 +25,9 @@ export async function createReviewResponse(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Vérification authentification + admin
-		const auth = await requireAuth()
+		// 1. Vérification authentification + admin (un seul appel)
+		const auth = await requireAdminWithUser()
 		if ("error" in auth) return auth.error
-
-		const adminCheck = await requireAdmin()
-		if ("error" in adminCheck) return adminCheck.error
 
 		const user = auth.user
 

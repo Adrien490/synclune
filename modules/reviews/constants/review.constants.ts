@@ -287,6 +287,16 @@ export const REVIEW_SCHEMA_ORG = {
 } as const
 
 // ============================================
+// Dialog IDs
+// ============================================
+
+/** ID du dialog de modification d'avis */
+export const EDIT_REVIEW_DIALOG_ID = "edit-review"
+
+/** ID du dialog de suppression d'avis */
+export const DELETE_REVIEW_DIALOG_ID = "delete-review"
+
+// ============================================
 // Messages d'erreur
 // ============================================
 

@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { prisma } from "@/shared/lib/prisma";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import {
 	syncStripeRefunds,
 	updateOrderPaymentStatus,
@@ -10,12 +11,14 @@ import {
 	markRefundAsFailed,
 	sendRefundFailedAlert,
 } from "../services/refund.service";
+import type { WebhookHandlerResult } from "../types/webhook.types";
 
 /**
  * Gère les remboursements (charge.refunded)
  * Synchronise les remboursements Stripe avec la base de données
+ * Invalide le cache des bestsellers car le remboursement affecte le classement
  */
-export async function handleChargeRefunded(charge: Stripe.Charge): Promise<void> {
+export async function handleChargeRefunded(charge: Stripe.Charge): Promise<WebhookHandlerResult> {
 	console.log(`💰 [WEBHOOK] Charge refunded: ${charge.id}`);
 
 	try {
@@ -26,7 +29,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<void>
 
 		if (!paymentIntentId) {
 			console.error("❌ [WEBHOOK] No payment intent found for refunded charge");
-			return;
+			return { success: false };
 		}
 
 		// 2. Trouver la commande via payment intent
@@ -52,7 +55,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<void>
 
 		if (!order) {
 			console.warn(`⚠️ [WEBHOOK] Order not found for payment intent ${paymentIntentId}`);
-			return;
+			return { success: true, skipped: true, reason: "Order not found" };
 		}
 
 		// 3. Synchroniser les remboursements Stripe avec la base
@@ -88,8 +91,15 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<void>
 				reason
 			);
 		}
+
+		// 6. Invalider le cache des bestsellers (le remboursement change le classement)
+		return {
+			success: true,
+			tasks: [{ type: "INVALIDATE_CACHE", tags: [PRODUCTS_CACHE_TAGS.BESTSELLERS] }],
+		};
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling charge refunded:`, error);
+		return { success: false };
 	}
 }
 

@@ -62,8 +62,17 @@ export function UpdateReviewForm({
 	}
 
 	return (
-		<form action={action} className={cn("space-y-6", className)}>
-			{/* Champs cachés */}
+		<div className="group/form">
+			<form
+				action={action}
+				data-pending={isPending || undefined}
+				className={cn(
+					"space-y-6 transition-all duration-200",
+					"group-has-[[data-pending]]/form:blur-[1px] group-has-[[data-pending]]/form:scale-[0.99] group-has-[[data-pending]]/form:pointer-events-none",
+					className
+				)}
+			>
+				{/* Champs cachés */}
 			<input type="hidden" name="reviewId" value={review.id} />
 			<input type="hidden" name="rating" value={rating} />
 			<input type="hidden" name="media" value={JSON.stringify(media)} />
@@ -177,7 +186,8 @@ export function UpdateReviewForm({
 						</>
 					)}
 				</Button>
-			</div>
-		</form>
+				</div>
+			</form>
+		</div>
 	)
 }

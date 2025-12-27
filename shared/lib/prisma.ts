@@ -60,7 +60,6 @@ export const softDelete = {
   discountUsage: (id: string) => prisma.discountUsage.update({ where: { id }, data: { deletedAt: new Date() } }),
   newsletterSubscriber: (id: string) => prisma.newsletterSubscriber.update({ where: { id }, data: { deletedAt: new Date() } }),
   stockNotificationRequest: (id: string) => prisma.stockNotificationRequest.update({ where: { id }, data: { deletedAt: new Date() } }),
-  testimonial: (id: string) => prisma.testimonial.update({ where: { id }, data: { deletedAt: new Date() } }),
   productReview: (id: string) => prisma.productReview.update({ where: { id }, data: { deletedAt: new Date() } }),
   reviewResponse: (id: string) => prisma.reviewResponse.update({ where: { id }, data: { deletedAt: new Date() } }),
 };

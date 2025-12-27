@@ -40,7 +40,16 @@ export function CreateReviewForm({
 	});
 
 	return (
-		<form action={action} className={cn("space-y-6", className)}>
+		<div className="group/form">
+			<form
+				action={action}
+				data-pending={isPending || undefined}
+				className={cn(
+					"space-y-6 transition-all duration-200",
+					"group-has-[[data-pending]]/form:blur-[1px] group-has-[[data-pending]]/form:scale-[0.99] group-has-[[data-pending]]/form:pointer-events-none",
+					className
+				)}
+			>
 			{/* Champs cachés pour les IDs */}
 			<input type="hidden" name="productId" value={productId} />
 			<input type="hidden" name="orderItemId" value={orderItemId} />
@@ -100,6 +109,7 @@ export function CreateReviewForm({
 					</>
 				)}
 			</Button>
-		</form>
+			</form>
+		</div>
 	);
 }
