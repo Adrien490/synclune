@@ -44,6 +44,9 @@ export const PRODUCTS_CACHE_TAGS = {
 
 	/** Produits les plus vendus (homepage) */
 	BESTSELLERS: "bestsellers",
+
+	/** Produits populaires (ventes + avis combinés) */
+	POPULAR: "popular-products",
 } as const;
 
 // Re-exports pour retrocompatibilite

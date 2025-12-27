@@ -1,6 +1,5 @@
 import { cn } from "@/shared/utils/cn";
-import { formatRating } from "@/shared/utils/rating-utils";
-import { Star } from "lucide-react";
+import { RatingStars } from "@/shared/components/rating-stars";
 import Image from "next/image";
 import Link from "next/link";
 import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
@@ -169,17 +168,11 @@ export function ProductCard({
 
 				{/* Note moyenne */}
 				{product.reviewStats && product.reviewStats.totalCount > 0 && (
-					<div
-						className="flex items-center gap-1.5 text-sm"
-						aria-label={`Note moyenne: ${formatRating(Number(product.reviewStats.averageRating))} sur 5, ${product.reviewStats.totalCount} avis`}
-					>
-						<Star
-							className="size-3.5 fill-amber-400 text-amber-400"
-							aria-hidden="true"
+					<div className="flex items-center gap-1.5 text-sm">
+						<RatingStars
+							rating={Number(product.reviewStats.averageRating)}
+							size="sm"
 						/>
-						<span className="font-medium">
-							{formatRating(Number(product.reviewStats.averageRating))}
-						</span>
 						<span className="text-muted-foreground">
 							({product.reviewStats.totalCount})
 						</span>

@@ -3,7 +3,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
+import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
@@ -103,6 +103,14 @@ export async function removeUnavailableItems(
 		// 5. Invalider le cache
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
 		tags.forEach(tag => updateTag(tag));
+
+		// 5b. Invalider le cache des compteurs de paniers pour les produits supprimes
+		const productIds = new Set(
+			unavailableItems.map(item => item.sku.product.id)
+		);
+		productIds.forEach(productId => {
+			updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(productId));
+		});
 
 		// 6. Success - Return ActionState format
 		return {

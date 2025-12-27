@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
+import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";
 import { batchValidateSkusForMerge } from "@/modules/cart/lib/sku-validation";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
@@ -85,6 +85,7 @@ export async function mergeCarts(
 									isActive: true,
 									product: {
 										select: {
+											id: true,
 											status: true,
 										},
 									},
@@ -210,6 +211,16 @@ export async function mergeCarts(
 		const guestTags = getCartInvalidationTags(undefined, sessionId);
 		const userTags = getCartInvalidationTags(userId, undefined);
 		[...guestTags, ...userTags].forEach(tag => updateTag(tag));
+
+		// 8. Invalider le cache des compteurs de paniers pour les produits du guest cart
+		const productIds = new Set(
+			guestCart.items
+				.filter(item => item.sku.isActive && item.sku.product.status === "PUBLIC")
+				.map(item => item.sku.product.id)
+		);
+		productIds.forEach(productId => {
+			updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(productId));
+		});
 
 		return {
 			status: ActionStatus.SUCCESS,

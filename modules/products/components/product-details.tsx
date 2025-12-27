@@ -15,6 +15,8 @@ import type { ProductSku } from "@/modules/products/types/product-services.types
 interface ProductDetailsProps {
 	product: GetProductReturn;
 	defaultSku: ProductSku;
+	/** Nombre de paniers contenant ce produit (FOMO "dans X paniers") */
+	cartsCount?: number;
 }
 
 /**
@@ -32,6 +34,7 @@ interface ProductDetailsProps {
 export function ProductDetails({
 	product,
 	defaultSku,
+	cartsCount,
 }: ProductDetailsProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 	const prefersReducedMotion = useReducedMotion();
@@ -57,7 +60,7 @@ export function ProductDetails({
 					exit="exit"
 					transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
 				>
-					<ProductPriceDisplay selectedSku={currentSku} product={product} />
+					<ProductPriceDisplay selectedSku={currentSku} product={product} cartsCount={cartsCount} />
 				</motion.div>
 			</AnimatePresence>
 

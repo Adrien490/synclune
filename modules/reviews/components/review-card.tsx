@@ -116,7 +116,7 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 					<div className="mt-4 pt-4 border-t border-border">
 						<div className="bg-muted/50 rounded-lg p-3">
 							<div className="flex items-center gap-2 mb-2">
-								<span className="text-xs font-medium text-primary">
+								<span className="text-xs font-medium text-foreground">
 									Réponse de {review.response.authorName}
 								</span>
 								<span className="text-xs text-muted-foreground">

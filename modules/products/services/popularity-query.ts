@@ -1,0 +1,92 @@
+import { PaymentStatus } from "@/app/generated/prisma/client";
+import { prisma } from "@/shared/lib/prisma";
+import { connection } from "next/server";
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Periode de calcul de la popularite en jours */
+const POPULARITY_DAYS = 30;
+
+/** Poids des ventes dans le score de popularite */
+const SALES_WEIGHT = 3;
+
+/** Poids des avis dans le score de popularite */
+const REVIEWS_WEIGHT = 2;
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+type PopularityAggregation = {
+	productId: string;
+	popularityScore: number;
+};
+
+// ============================================================================
+// POPULARITY QUERY SERVICE
+// ============================================================================
+
+/**
+ * Recupere les IDs des produits tries par score de popularite
+ *
+ * Score de popularite = (ventes 30j * SALES_WEIGHT) + (note moyenne * nombre d'avis * REVIEWS_WEIGHT)
+ *
+ * Ce score combine:
+ * - Les ventes recentes (30 derniers jours) - indicateur de demande actuelle
+ * - Les avis (note * quantite) - indicateur de satisfaction client
+ *
+ * Difference avec best-selling:
+ * - best-selling = tri uniquement par ventes
+ * - popular = tri par score combine (ventes + avis)
+ *
+ * @param limit - Nombre max de produits (defaut: 200)
+ * @returns Liste d'IDs de produits tries par popularite
+ */
+export async function getPopularProductIds(limit: number = 200): Promise<string[]> {
+	await connection();
+	const thirtyDaysAgo = new Date(Date.now() - POPULARITY_DAYS * 24 * 60 * 60 * 1000);
+
+	// Requete SQL qui combine les ventes et les avis en un score de popularite
+	// LEFT JOIN pour inclure les produits sans ventes mais avec des avis (et vice versa)
+	const results = await prisma.$queryRaw<PopularityAggregation[]>`
+		WITH sales AS (
+			SELECT
+				oi."productId",
+				COALESCE(SUM(oi.quantity), 0)::float AS "totalSales"
+			FROM "OrderItem" oi
+			INNER JOIN "Order" o ON oi."orderId" = o.id
+			WHERE
+				o."paymentStatus" = ${PaymentStatus.PAID}::"PaymentStatus"
+				AND o."deletedAt" IS NULL
+				AND o."paidAt" >= ${thirtyDaysAgo}
+				AND oi."productId" IS NOT NULL
+			GROUP BY oi."productId"
+		),
+		reviews AS (
+			SELECT
+				rs."productId",
+				COALESCE(rs."averageRating"::float * rs."totalCount"::float, 0) AS "reviewScore"
+			FROM "ProductReviewStats" rs
+			WHERE rs."totalCount" > 0
+		)
+		SELECT
+			p.id AS "productId",
+			(
+				COALESCE(s."totalSales", 0) * ${SALES_WEIGHT} +
+				COALESCE(r."reviewScore", 0) * ${REVIEWS_WEIGHT}
+			) AS "popularityScore"
+		FROM "Product" p
+		LEFT JOIN sales s ON p.id = s."productId"
+		LEFT JOIN reviews r ON p.id = r."productId"
+		WHERE
+			p."deletedAt" IS NULL
+			AND p.status = 'PUBLIC'
+			AND (s."totalSales" > 0 OR r."reviewScore" > 0)
+		ORDER BY "popularityScore" DESC
+		LIMIT ${limit}
+	`;
+
+	return results.map((r) => r.productId);
+}

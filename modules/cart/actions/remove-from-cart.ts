@@ -3,7 +3,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
+import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -61,11 +61,14 @@ export async function removeFromCart(
 
 		const validatedData = result.data;
 
-		// 4. Récupérer l'item avec son panier
+		// 4. Récupérer l'item avec son panier et le productId du SKU
 		const cartItem = await prisma.cartItem.findUnique({
 			where: { id: validatedData.cartItemId },
 			include: {
 				cart: true,
+				sku: {
+					select: { productId: true },
+				},
 			},
 		});
 
@@ -101,7 +104,10 @@ export async function removeFromCart(
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
 		tags.forEach(tag => updateTag(tag));
 
-		// 8. Success - Return ActionState format
+		// 8. Invalider le cache du compteur de paniers pour ce produit (FOMO "dans X paniers")
+		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(cartItem.sku.productId));
+
+		// 9. Success - Return ActionState format
 		return {
 			status: ActionStatus.SUCCESS,
 			message: "Article supprimé du panier",

@@ -2,14 +2,23 @@ import { fakerFR } from "@faker-js/faker";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import {
   CollectionStatus,
+  CustomizationRequestStatus,
+  DiscountType,
   FulfillmentStatus,
   MediaType,
+  NewsletterStatus,
+  OrderAction,
   OrderStatus,
   PaymentStatus,
   Prisma,
   PrismaClient,
   ProductStatus,
+  RefundAction,
+  RefundReason,
+  RefundStatus,
   ReviewStatus,
+  StockNotificationStatus,
+  WebhookEventStatus,
 } from "../app/generated/prisma/client";
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
@@ -1148,19 +1157,26 @@ async function main(): Promise<void> {
   // ============================================
   // SESSIONS (pour les utilisateurs)
   // ============================================
+  let sessionsCreated = 0;
   for (const user of usersData.slice(0, 10)) {
-    await prisma.session.create({
-      data: {
-        id: faker.string.nanoid(12),
-        user: { connect: { id: user.id } },
-        token: faker.string.alphanumeric({ length: 32 }),
-        expiresAt: faker.date.future({ years: 0.1 }),
-        ipAddress: faker.internet.ipv4(),
-        userAgent: faker.internet.userAgent(),
-      },
-    });
+    try {
+      await prisma.session.create({
+        data: {
+          id: faker.string.nanoid(12),
+          user: { connect: { id: user.id } },
+          token: faker.string.alphanumeric({ length: 32 }),
+          expiresAt: faker.date.future({ years: 0.1 }),
+          ipAddress: faker.internet.ipv4(),
+          userAgent: faker.internet.userAgent(),
+        },
+      });
+      sessionsCreated++;
+    } catch {
+      // Session déjà existante (même ID)
+      continue;
+    }
   }
-  console.log("✅ Sessions créées");
+  console.log(`✅ ${sessionsCreated} sessions créées`);
 
   // ============================================
   // AVIS PRODUITS (REVIEWS)
@@ -1277,8 +1293,8 @@ async function main(): Promise<void> {
         continue;
       }
 
-      // 60% de chance de laisser un avis sur un article spécifique
-      if (!sampleBoolean(0.6)) continue;
+      // 85% de chance de laisser un avis sur un article spécifique
+      if (!sampleBoolean(0.85)) continue;
 
       // Distribution réaliste des notes (majorité positive)
       const rating = faker.helpers.weightedArrayElement([
@@ -1341,6 +1357,90 @@ async function main(): Promise<void> {
   console.log(`✅ ${reviewsCreated} avis créés`);
 
   // ============================================
+  // RÉPONSES ADMIN AUX AVIS
+  // ============================================
+  const adminResponses = {
+    positive: [
+      "Merci infiniment pour ce retour chaleureux ! Votre satisfaction est notre plus belle récompense. Au plaisir de vous retrouver parmi nous. 💫",
+      "Quel bonheur de lire votre commentaire ! Nous sommes ravies que ce bijou ait trouvé sa place dans votre quotidien. Merci pour votre confiance.",
+      "Un immense merci pour ce témoignage ! Chaque bijou est créé avec amour et savoir-faire artisanal. Votre retour nous touche profondément.",
+      "Merci pour ces mots si gentils ! Nous mettons tout notre cœur dans chaque création. Ravie que cela se ressente à travers nos bijoux.",
+      "Votre avis nous fait chaud au cœur ! Merci de faire partie de l'aventure Synclune. À très bientôt pour de nouvelles découvertes.",
+      "Merci beaucoup pour cette belle recommandation ! Nous sommes heureuses que notre travail artisanal vous plaise autant.",
+      "Quel plaisir de vous compter parmi nos clientes fidèles ! Merci pour votre confiance renouvelée et ce magnifique retour.",
+      "Merci pour ce retour enthousiaste ! Les compliments que vous recevez sont notre plus belle publicité. 🌟",
+    ],
+    neutral: [
+      "Merci pour votre retour honnête. Nous prenons note de vos remarques pour continuer à nous améliorer. N'hésitez pas à nous contacter si besoin.",
+      "Merci d'avoir pris le temps de partager votre expérience. Vos suggestions nous aident à progresser. Notre équipe reste à votre disposition.",
+      "Nous vous remercions pour cet avis. La satisfaction de nos clientes est primordiale. N'hésitez pas à nous écrire pour toute question.",
+    ],
+    negative: [
+      "Nous sommes sincèrement désolées de cette expérience. Votre satisfaction est notre priorité. Notre service client vous a contactée pour trouver une solution.",
+      "Merci pour ce retour, même s'il nous attriste. Nous allons examiner ce point attentivement. N'hésitez pas à nous contacter directement à contact@synclune.fr.",
+      "Nous regrettons que ce bijou n'ait pas répondu à vos attentes. Notre équipe se tient à votre disposition pour échanger et trouver une solution adaptée.",
+    ],
+  };
+
+  // Récupérer tous les avis publiés sans réponse
+  const reviewsWithoutResponse = await prisma.productReview.findMany({
+    where: {
+      status: ReviewStatus.PUBLISHED,
+      deletedAt: null,
+      response: null,
+    },
+    select: {
+      id: true,
+      rating: true,
+      createdAt: true,
+    },
+  });
+
+  console.log(`💬 ${reviewsWithoutResponse.length} avis sans réponse trouvés`);
+
+  let responsesCreated = 0;
+
+  for (const review of reviewsWithoutResponse) {
+    // 50% de chance de répondre à un avis
+    if (!sampleBoolean(0.5)) continue;
+
+    // Sélectionner une réponse appropriée selon la note
+    let responsePool: string[];
+    if (review.rating >= 4) {
+      responsePool = adminResponses.positive;
+    } else if (review.rating === 3) {
+      responsePool = adminResponses.neutral;
+    } else {
+      responsePool = adminResponses.negative;
+    }
+
+    const responseContent = faker.helpers.arrayElement(responsePool);
+
+    // Date de la réponse : entre 1 et 7 jours après l'avis
+    const responseDate = new Date(review.createdAt);
+    responseDate.setDate(responseDate.getDate() + faker.number.int({ min: 1, max: 7 }));
+
+    try {
+      await prisma.reviewResponse.create({
+        data: {
+          reviewId: review.id,
+          content: responseContent,
+          authorId: adminUser.id,
+          authorName: "L'équipe Synclune",
+          createdAt: responseDate,
+          updatedAt: responseDate,
+        },
+      });
+      responsesCreated++;
+    } catch {
+      // Ignore les erreurs (ex: réponse déjà existante)
+      continue;
+    }
+  }
+
+  console.log(`✅ ${responsesCreated} réponses admin créées`);
+
+  // ============================================
   // MISE À JOUR DES STATS DES REVIEWS
   // ============================================
   const productsWithReviews = await prisma.product.findMany({
@@ -1399,6 +1499,767 @@ async function main(): Promise<void> {
   }
 
   console.log(`✅ Stats des avis mises à jour pour ${productsWithReviews.length} produits`);
+
+  // ============================================
+  // ADRESSES UTILISATEURS
+  // ============================================
+  const usersWithOrders = await prisma.user.findMany({
+    where: { orders: { some: {} } },
+    select: { id: true, name: true },
+    take: 15,
+  });
+
+  let addressesCreated = 0;
+  for (const user of usersWithOrders) {
+    // Vérifier si l'utilisateur a déjà des adresses
+    const existingAddresses = await prisma.address.count({ where: { userId: user.id } });
+    if (existingAddresses > 0) continue;
+
+    const firstName = user.name?.split(" ")[0] || faker.person.firstName();
+    const lastName = user.name?.split(" ").slice(1).join(" ") || faker.person.lastName();
+
+    // Adresse par défaut
+    await prisma.address.create({
+      data: {
+        userId: user.id,
+        firstName,
+        lastName,
+        address1: faker.location.streetAddress(),
+        address2: sampleBoolean(0.3) ? faker.location.secondaryAddress() : null,
+        postalCode: faker.location.zipCode("#####"),
+        city: faker.location.city(),
+        country: "FR",
+        phone: faker.helpers.replaceSymbols("+33 # ## ## ## ##"),
+        isDefault: true,
+      },
+    });
+    addressesCreated++;
+
+    // 40% ont une 2ème adresse (travail, autre)
+    if (sampleBoolean(0.4)) {
+      await prisma.address.create({
+        data: {
+          userId: user.id,
+          firstName,
+          lastName,
+          address1: faker.location.streetAddress(),
+          address2: sampleBoolean(0.5) ? "Bureau " + faker.number.int({ min: 100, max: 999 }) : null,
+          postalCode: faker.location.zipCode("#####"),
+          city: faker.location.city(),
+          country: "FR",
+          phone: faker.helpers.replaceSymbols("+33 # ## ## ## ##"),
+          isDefault: false,
+        },
+      });
+      addressesCreated++;
+    }
+  }
+  console.log(`✅ ${addressesCreated} adresses créées`);
+
+  // ============================================
+  // CODES PROMO (DISCOUNT)
+  // ============================================
+  const pastDate = new Date();
+  pastDate.setMonth(pastDate.getMonth() - 2);
+
+  const futureDate = new Date();
+  futureDate.setMonth(futureDate.getMonth() + 6);
+
+  const discountsData: Prisma.DiscountCreateManyInput[] = [
+    { code: "BIENVENUE10", type: DiscountType.PERCENTAGE, value: 10, isActive: true, startsAt: new Date(), endsAt: futureDate },
+    { code: "OFFRE5", type: DiscountType.FIXED_AMOUNT, value: 500, isActive: true, startsAt: new Date(), endsAt: futureDate },
+    { code: "NOEL2024", type: DiscountType.PERCENTAGE, value: 15, isActive: false, startsAt: pastDate, endsAt: pastDate },
+    { code: "VIP20", type: DiscountType.PERCENTAGE, value: 20, isActive: true, maxUsageCount: 50, startsAt: new Date(), endsAt: futureDate },
+    { code: "PREMIERE", type: DiscountType.FIXED_AMOUNT, value: 1000, isActive: true, maxUsagePerUser: 1, startsAt: new Date(), endsAt: futureDate },
+    { code: "MINIMUM50", type: DiscountType.PERCENTAGE, value: 10, isActive: true, minOrderAmount: 5000, startsAt: new Date(), endsAt: futureDate },
+    { code: "ETE2025", type: DiscountType.PERCENTAGE, value: 25, isActive: true, startsAt: new Date(), endsAt: futureDate },
+    { code: "FLASH30", type: DiscountType.PERCENTAGE, value: 30, isActive: true, maxUsageCount: 100, startsAt: new Date(), endsAt: futureDate },
+  ];
+
+  await prisma.discount.createMany({ data: discountsData, skipDuplicates: true });
+  const discounts = await prisma.discount.findMany();
+  console.log(`✅ ${discounts.length} codes promo créés`);
+
+  // ============================================
+  // UTILISATIONS CODES PROMO (DISCOUNT USAGE)
+  // ============================================
+  const paidOrders = await prisma.order.findMany({
+    where: { paymentStatus: PaymentStatus.PAID },
+    select: { id: true, userId: true, subtotal: true },
+    take: 25,
+  });
+
+  const activeDiscounts = discounts.filter((d) => d.isActive);
+  let discountUsagesCreated = 0;
+
+  for (const order of paidOrders) {
+    if (!sampleBoolean(0.4)) continue; // 40% des commandes ont un code promo
+
+    const discount = faker.helpers.arrayElement(activeDiscounts);
+    const amountApplied = discount.type === DiscountType.PERCENTAGE
+      ? Math.round(order.subtotal * (discount.value / 100))
+      : discount.value;
+
+    try {
+      await prisma.discountUsage.create({
+        data: {
+          discountId: discount.id,
+          orderId: order.id,
+          userId: order.userId,
+          amountApplied: Math.min(amountApplied, order.subtotal),
+        },
+      });
+      discountUsagesCreated++;
+
+      // Incrémenter le compteur du discount
+      await prisma.discount.update({
+        where: { id: discount.id },
+        data: { usageCount: { increment: 1 } },
+      });
+    } catch {
+      continue;
+    }
+  }
+  console.log(`✅ ${discountUsagesCreated} utilisations de codes promo créées`);
+
+  // ============================================
+  // PANIERS (CART + CART ITEM)
+  // ============================================
+  const usersForCarts = await prisma.user.findMany({
+    where: { cart: null, role: "USER" },
+    select: { id: true },
+    take: 8,
+  });
+
+  const activeSKUs = await prisma.productSku.findMany({
+    where: { isActive: true, inventory: { gt: 0 }, deletedAt: null },
+    select: { id: true, priceInclTax: true },
+    take: 50,
+  });
+
+  let cartsCreated = 0;
+  for (let i = 0; i < usersForCarts.length; i++) {
+    const user = usersForCarts[i];
+    const isAbandoned = i >= 5; // Les 3 derniers sont abandonnés
+
+    const cartDate = new Date();
+    if (isAbandoned) {
+      cartDate.setDate(cartDate.getDate() - faker.number.int({ min: 7, max: 30 }));
+    } else {
+      cartDate.setHours(cartDate.getHours() - faker.number.int({ min: 1, max: 24 }));
+    }
+
+    const itemCount = faker.number.int({ min: 1, max: 4 });
+    const selectedSKUs = faker.helpers.arrayElements(activeSKUs, itemCount);
+
+    try {
+      await prisma.cart.create({
+        data: {
+          userId: user.id,
+          createdAt: cartDate,
+          updatedAt: cartDate,
+          items: {
+            create: selectedSKUs.map((sku) => ({
+              skuId: sku.id,
+              quantity: faker.number.int({ min: 1, max: 2 }),
+              priceAtAdd: sku.priceInclTax,
+            })),
+          },
+        },
+      });
+      cartsCreated++;
+    } catch {
+      continue;
+    }
+  }
+
+  // Paniers invités (sessionId)
+  for (let i = 0; i < 3; i++) {
+    const itemCount = faker.number.int({ min: 1, max: 3 });
+    const selectedSKUs = faker.helpers.arrayElements(activeSKUs, itemCount);
+
+    await prisma.cart.create({
+      data: {
+        sessionId: faker.string.uuid(),
+        expiresAt: faker.date.future({ years: 0.1 }),
+        items: {
+          create: selectedSKUs.map((sku) => ({
+            skuId: sku.id,
+            quantity: 1,
+            priceAtAdd: sku.priceInclTax,
+          })),
+        },
+      },
+    });
+    cartsCreated++;
+  }
+  console.log(`✅ ${cartsCreated} paniers créés`);
+
+  // ============================================
+  // REMBOURSEMENTS (REFUND + REFUND ITEM + REFUND HISTORY)
+  // ============================================
+  const refundableOrders = await prisma.order.findMany({
+    where: {
+      paymentStatus: PaymentStatus.PAID,
+      status: { in: [OrderStatus.DELIVERED, OrderStatus.SHIPPED] },
+    },
+    include: { items: true },
+    take: 8,
+  });
+
+  const refundStatuses: RefundStatus[] = [
+    RefundStatus.PENDING,
+    RefundStatus.APPROVED,
+    RefundStatus.COMPLETED,
+    RefundStatus.COMPLETED,
+    RefundStatus.REJECTED,
+  ];
+
+  const refundReasons: RefundReason[] = [
+    RefundReason.CUSTOMER_REQUEST,
+    RefundReason.DEFECTIVE,
+    RefundReason.WRONG_ITEM,
+    RefundReason.LOST_IN_TRANSIT,
+  ];
+
+  let refundsCreated = 0;
+  for (let i = 0; i < Math.min(refundableOrders.length, 5); i++) {
+    const order = refundableOrders[i];
+    if (order.items.length === 0) continue;
+
+    const status = refundStatuses[i];
+    const reason = faker.helpers.arrayElement(refundReasons);
+    const isPartial = sampleBoolean(0.3);
+    const itemsToRefund = isPartial ? [order.items[0]] : order.items;
+    const refundAmount = itemsToRefund.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    const refundDate = new Date(order.createdAt);
+    refundDate.setDate(refundDate.getDate() + faker.number.int({ min: 3, max: 14 }));
+
+    try {
+      const refund = await prisma.refund.create({
+        data: {
+          orderId: order.id,
+          amount: refundAmount,
+          reason,
+          status,
+          stripeRefundId: status === RefundStatus.COMPLETED ? `re_${faker.string.alphanumeric(24)}` : null,
+          failureReason: status === RefundStatus.REJECTED ? "Délai de rétractation dépassé" : null,
+          note: reason === RefundReason.DEFECTIVE ? "Fermoir cassé à la réception - photos reçues par email" : null,
+          createdBy: adminUser.id,
+          processedAt: status === RefundStatus.COMPLETED ? refundDate : null,
+          createdAt: refundDate,
+          items: {
+            create: itemsToRefund.map((item) => ({
+              orderItemId: item.id,
+              quantity: item.quantity,
+              amount: item.price * item.quantity,
+              restock: reason !== RefundReason.DEFECTIVE,
+            })),
+          },
+        },
+      });
+
+      // Créer l'historique du remboursement
+      const historyEntries: Prisma.RefundHistoryCreateManyInput[] = [
+        { refundId: refund.id, action: RefundAction.CREATED, authorId: adminUser.id, createdAt: refundDate },
+      ];
+
+      if (status !== RefundStatus.PENDING) {
+        const approveDate = new Date(refundDate);
+        approveDate.setHours(approveDate.getHours() + faker.number.int({ min: 1, max: 48 }));
+
+        if (status === RefundStatus.REJECTED) {
+          historyEntries.push({
+            refundId: refund.id,
+            action: RefundAction.REJECTED,
+            note: "Délai de rétractation de 14 jours dépassé",
+            authorId: adminUser.id,
+            createdAt: approveDate,
+          });
+        } else {
+          historyEntries.push({
+            refundId: refund.id,
+            action: RefundAction.APPROVED,
+            authorId: adminUser.id,
+            createdAt: approveDate,
+          });
+
+          if (status === RefundStatus.COMPLETED) {
+            const processDate = new Date(approveDate);
+            processDate.setHours(processDate.getHours() + faker.number.int({ min: 1, max: 24 }));
+            historyEntries.push(
+              { refundId: refund.id, action: RefundAction.PROCESSED, authorId: null, createdAt: processDate },
+              { refundId: refund.id, action: RefundAction.COMPLETED, authorId: null, createdAt: processDate }
+            );
+          }
+        }
+      }
+
+      await prisma.refundHistory.createMany({ data: historyEntries });
+      refundsCreated++;
+    } catch {
+      continue;
+    }
+  }
+  console.log(`✅ ${refundsCreated} remboursements créés avec historique`);
+
+  // ============================================
+  // HISTORIQUE DES COMMANDES (ORDER HISTORY)
+  // ============================================
+  const allOrders = await prisma.order.findMany({
+    select: { id: true, status: true, paymentStatus: true, fulfillmentStatus: true, createdAt: true },
+  });
+
+  let orderHistoryCreated = 0;
+  for (const order of allOrders) {
+    // Vérifier si l'historique existe déjà
+    const existingHistory = await prisma.orderHistory.count({ where: { orderId: order.id } });
+    if (existingHistory > 0) continue;
+
+    const historyEntries: Prisma.OrderHistoryCreateManyInput[] = [];
+    let currentDate = new Date(order.createdAt);
+
+    // 1. Création
+    historyEntries.push({
+      orderId: order.id,
+      action: OrderAction.CREATED,
+      newStatus: OrderStatus.PENDING,
+      newPaymentStatus: PaymentStatus.PENDING,
+      source: "system",
+      createdAt: currentDate,
+    });
+
+    // 2. Paiement
+    if (order.paymentStatus !== PaymentStatus.PENDING) {
+      currentDate = new Date(currentDate);
+      currentDate.setMinutes(currentDate.getMinutes() + faker.number.int({ min: 5, max: 30 }));
+      historyEntries.push({
+        orderId: order.id,
+        action: OrderAction.PAID,
+        previousPaymentStatus: PaymentStatus.PENDING,
+        newPaymentStatus: PaymentStatus.PAID,
+        source: "webhook",
+        createdAt: currentDate,
+      });
+    }
+
+    // 3. Traitement
+    if ([OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(order.status)) {
+      currentDate = new Date(currentDate);
+      currentDate.setHours(currentDate.getHours() + faker.number.int({ min: 1, max: 24 }));
+      historyEntries.push({
+        orderId: order.id,
+        action: OrderAction.PROCESSING,
+        previousStatus: OrderStatus.PENDING,
+        newStatus: OrderStatus.PROCESSING,
+        authorName: "Admin Dev",
+        source: "admin",
+        createdAt: currentDate,
+      });
+    }
+
+    // 4. Expédition
+    if ([OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(order.status)) {
+      currentDate = new Date(currentDate);
+      currentDate.setDays?.(currentDate.getDate() + faker.number.int({ min: 1, max: 3 }));
+      historyEntries.push({
+        orderId: order.id,
+        action: OrderAction.SHIPPED,
+        previousStatus: OrderStatus.PROCESSING,
+        newStatus: OrderStatus.SHIPPED,
+        authorName: "Admin Dev",
+        source: "admin",
+        createdAt: currentDate,
+      });
+    }
+
+    // 5. Livraison
+    if (order.status === OrderStatus.DELIVERED) {
+      currentDate = new Date(currentDate);
+      currentDate.setDate(currentDate.getDate() + faker.number.int({ min: 2, max: 5 }));
+      historyEntries.push({
+        orderId: order.id,
+        action: OrderAction.DELIVERED,
+        previousStatus: OrderStatus.SHIPPED,
+        newStatus: OrderStatus.DELIVERED,
+        source: "system",
+        createdAt: currentDate,
+      });
+    }
+
+    // 6. Annulation
+    if (order.status === OrderStatus.CANCELLED) {
+      currentDate = new Date(currentDate);
+      currentDate.setHours(currentDate.getHours() + faker.number.int({ min: 1, max: 48 }));
+      historyEntries.push({
+        orderId: order.id,
+        action: OrderAction.CANCELLED,
+        previousStatus: OrderStatus.PENDING,
+        newStatus: OrderStatus.CANCELLED,
+        note: "Annulation à la demande du client",
+        authorName: "Admin Dev",
+        source: "admin",
+        createdAt: currentDate,
+      });
+    }
+
+    await prisma.orderHistory.createMany({ data: historyEntries });
+    orderHistoryCreated += historyEntries.length;
+  }
+  console.log(`✅ ${orderHistoryCreated} entrées d'historique de commandes créées`);
+
+  // ============================================
+  // NOTES DE COMMANDES (ORDER NOTE)
+  // ============================================
+  const ordersForNotes = await prisma.order.findMany({
+    where: { status: { in: [OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.CANCELLED] } },
+    select: { id: true, createdAt: true },
+    take: 12,
+  });
+
+  const noteContents = [
+    "Client a demandé un emballage cadeau - fait",
+    "Livraison express demandée - priorité traitée",
+    "Échange téléphonique avec la cliente - tout OK",
+    "Adresse modifiée après validation - mise à jour Colissimo",
+    "Demande de facture envoyée par email",
+    "Retard livraison - client informé par email",
+    "Bijou personnalisé avec gravure - vérifié avant envoi",
+    "Réclamation traitée - geste commercial accordé",
+    "Suivi colis bloqué - contact transporteur en cours",
+    "Client fidèle - code promo VIP envoyé",
+  ];
+
+  let orderNotesCreated = 0;
+  for (const order of ordersForNotes) {
+    if (!sampleBoolean(0.7)) continue;
+
+    const noteDate = new Date(order.createdAt);
+    noteDate.setHours(noteDate.getHours() + faker.number.int({ min: 2, max: 72 }));
+
+    try {
+      await prisma.orderNote.create({
+        data: {
+          orderId: order.id,
+          content: faker.helpers.arrayElement(noteContents),
+          authorId: adminUser.id,
+          authorName: "Admin Dev",
+          createdAt: noteDate,
+        },
+      });
+      orderNotesCreated++;
+    } catch {
+      continue;
+    }
+  }
+  console.log(`✅ ${orderNotesCreated} notes de commandes créées`);
+
+  // ============================================
+  // WISHLISTS (FAVORIS)
+  // ============================================
+  const usersForWishlist = await prisma.user.findMany({
+    where: { wishlist: null, role: "USER" },
+    select: { id: true },
+    take: 6,
+  });
+
+  const allProducts = await prisma.product.findMany({
+    where: { status: ProductStatus.PUBLIC, deletedAt: null },
+    select: { id: true },
+  });
+
+  let wishlistsCreated = 0;
+
+  // Wishlists utilisateurs
+  for (const user of usersForWishlist) {
+    const itemCount = faker.number.int({ min: 2, max: 5 });
+    const selectedProducts = faker.helpers.arrayElements(allProducts, itemCount);
+
+    try {
+      await prisma.wishlist.create({
+        data: {
+          userId: user.id,
+          items: {
+            create: selectedProducts.map((product) => ({
+              productId: product.id,
+            })),
+          },
+        },
+      });
+      wishlistsCreated++;
+    } catch {
+      continue;
+    }
+  }
+
+  // Wishlists invités (sessionId)
+  for (let i = 0; i < 2; i++) {
+    const itemCount = faker.number.int({ min: 1, max: 3 });
+    const selectedProducts = faker.helpers.arrayElements(allProducts, itemCount);
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    await prisma.wishlist.create({
+      data: {
+        sessionId: faker.string.uuid(),
+        expiresAt,
+        items: {
+          create: selectedProducts.map((product) => ({
+            productId: product.id,
+          })),
+        },
+      },
+    });
+    wishlistsCreated++;
+  }
+  console.log(`✅ ${wishlistsCreated} wishlists créées`);
+
+  // ============================================
+  // NEWSLETTER SUBSCRIBERS
+  // ============================================
+  const newsletterEmails = [
+    "marie.dupont@gmail.com",
+    "sophie.martin@outlook.fr",
+    "julie.bernard@yahoo.fr",
+    "emma.petit@gmail.com",
+    "lea.robert@hotmail.fr",
+    "camille.richard@gmail.com",
+    "chloe.durand@outlook.com",
+    "manon.leroy@gmail.com",
+    "ines.moreau@yahoo.fr",
+    "sarah.simon@gmail.com",
+    "laura.michel@hotmail.fr",
+    "clara.garcia@outlook.fr",
+  ];
+
+  let newsletterCreated = 0;
+  for (let i = 0; i < newsletterEmails.length; i++) {
+    const email = newsletterEmails[i];
+
+    let status: NewsletterStatus;
+    let emailVerified = false;
+    let confirmedAt: Date | null = null;
+    let unsubscribedAt: Date | null = null;
+    const confirmationToken = i < 4 ? faker.string.alphanumeric(32) : null;
+
+    if (i < 6) {
+      status = NewsletterStatus.CONFIRMED;
+      emailVerified = true;
+      confirmedAt = faker.date.past({ years: 0.5 });
+    } else if (i < 10) {
+      status = NewsletterStatus.PENDING;
+    } else {
+      status = NewsletterStatus.UNSUBSCRIBED;
+      emailVerified = true;
+      confirmedAt = faker.date.past({ years: 1 });
+      unsubscribedAt = faker.date.recent({ days: 30 });
+    }
+
+    try {
+      await prisma.newsletterSubscriber.create({
+        data: {
+          email,
+          status,
+          emailVerified,
+          confirmationToken,
+          confirmedAt,
+          unsubscribedAt,
+          ipAddress: faker.internet.ipv4(),
+          userAgent: faker.internet.userAgent(),
+          consentSource: "newsletter_form",
+        },
+      });
+      newsletterCreated++;
+    } catch {
+      continue;
+    }
+  }
+  console.log(`✅ ${newsletterCreated} abonnés newsletter créés`);
+
+  // ============================================
+  // WEBHOOK EVENTS (IDEMPOTENCE STRIPE)
+  // ============================================
+  const webhookEventTypes = [
+    "checkout.session.completed",
+    "checkout.session.completed",
+    "checkout.session.completed",
+    "payment_intent.succeeded",
+    "payment_intent.succeeded",
+    "payment_intent.failed",
+    "charge.refunded",
+    "charge.refunded",
+    "customer.created",
+    "invoice.paid",
+  ];
+
+  const webhookStatuses: WebhookEventStatus[] = [
+    WebhookEventStatus.COMPLETED,
+    WebhookEventStatus.COMPLETED,
+    WebhookEventStatus.COMPLETED,
+    WebhookEventStatus.COMPLETED,
+    WebhookEventStatus.COMPLETED,
+    WebhookEventStatus.FAILED,
+    WebhookEventStatus.COMPLETED,
+    WebhookEventStatus.SKIPPED,
+    WebhookEventStatus.COMPLETED,
+    WebhookEventStatus.COMPLETED,
+  ];
+
+  let webhookEventsCreated = 0;
+  for (let i = 0; i < webhookEventTypes.length; i++) {
+    const eventType = webhookEventTypes[i];
+    const status = webhookStatuses[i];
+    const receivedAt = faker.date.recent({ days: 30 });
+
+    try {
+      await prisma.webhookEvent.create({
+        data: {
+          stripeEventId: `evt_${faker.string.alphanumeric(24)}`,
+          eventType,
+          source: "stripe",
+          status,
+          attempts: status === WebhookEventStatus.FAILED ? 3 : 1,
+          errorMessage: status === WebhookEventStatus.FAILED ? "Handler threw an error" : null,
+          receivedAt,
+          processedAt: status !== WebhookEventStatus.PENDING ? receivedAt : null,
+        },
+      });
+      webhookEventsCreated++;
+    } catch {
+      continue;
+    }
+  }
+  console.log(`✅ ${webhookEventsCreated} événements webhook créés`);
+
+  // ============================================
+  // NOTIFICATIONS RETOUR EN STOCK
+  // ============================================
+  const outOfStockSKUs = await prisma.productSku.findMany({
+    where: { inventory: { lte: 2 }, isActive: true },
+    select: { id: true },
+    take: 10,
+  });
+
+  const stockNotifStatuses: StockNotificationStatus[] = [
+    StockNotificationStatus.PENDING,
+    StockNotificationStatus.PENDING,
+    StockNotificationStatus.PENDING,
+    StockNotificationStatus.NOTIFIED,
+    StockNotificationStatus.NOTIFIED,
+    StockNotificationStatus.EXPIRED,
+    StockNotificationStatus.CANCELLED,
+  ];
+
+  let stockNotifsCreated = 0;
+  for (let i = 0; i < Math.min(outOfStockSKUs.length, stockNotifStatuses.length); i++) {
+    const sku = outOfStockSKUs[i];
+    const status = stockNotifStatuses[i];
+
+    try {
+      await prisma.stockNotificationRequest.create({
+        data: {
+          skuId: sku.id,
+          email: faker.internet.email().toLowerCase(),
+          status,
+          notifiedAt: status === StockNotificationStatus.NOTIFIED ? faker.date.recent({ days: 7 }) : null,
+          notifiedInventory: status === StockNotificationStatus.NOTIFIED ? faker.number.int({ min: 1, max: 10 }) : null,
+          ipAddress: faker.internet.ipv4(),
+          userAgent: faker.internet.userAgent(),
+        },
+      });
+      stockNotifsCreated++;
+    } catch {
+      continue;
+    }
+  }
+  console.log(`✅ ${stockNotifsCreated} notifications de stock créées`);
+
+  // ============================================
+  // PHOTOS D'AVIS (REVIEW MEDIA)
+  // ============================================
+  const reviewsForMedia = await prisma.productReview.findMany({
+    where: { status: ReviewStatus.PUBLISHED, deletedAt: null, medias: { none: {} } },
+    select: { id: true },
+    take: 5,
+  });
+
+  const reviewPhotoUrls = [
+    "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop",
+  ];
+
+  let reviewMediaCreated = 0;
+  for (const review of reviewsForMedia) {
+    const photoCount = faker.number.int({ min: 1, max: 3 });
+    const selectedPhotos = faker.helpers.arrayElements(reviewPhotoUrls, photoCount);
+
+    for (let i = 0; i < selectedPhotos.length; i++) {
+      await prisma.reviewMedia.create({
+        data: {
+          reviewId: review.id,
+          url: selectedPhotos[i],
+          altText: "Photo du bijou porté",
+          position: i,
+        },
+      });
+      reviewMediaCreated++;
+    }
+  }
+  console.log(`✅ ${reviewMediaCreated} photos d'avis créées`);
+
+  // ============================================
+  // DEMANDES DE PERSONNALISATION
+  // ============================================
+  const productTypesForCustomization = await prisma.productType.findMany({ select: { id: true, label: true }, take: 4 });
+
+  const customizationDetails = [
+    "Je souhaite un collier personnalisé avec le prénom de ma fille gravé sur le pendentif. Couleur or rose de préférence.",
+    "Bracelet de mariage pour ma fiancée, avec nos initiales entrelacées. Budget autour de 150€.",
+    "Je recherche une bague unique pour mes 30 ans, avec une pierre de naissance (saphir). Style moderne et épuré.",
+    "Chaîne de corps bohème pour festival, longueur ajustable. Inspirée du modèle 'Bohème' mais en argent.",
+  ];
+
+  const customizationStatuses: CustomizationRequestStatus[] = [
+    CustomizationRequestStatus.PENDING,
+    CustomizationRequestStatus.IN_PROGRESS,
+    CustomizationRequestStatus.COMPLETED,
+    CustomizationRequestStatus.PENDING,
+  ];
+
+  let customizationsCreated = 0;
+  for (let i = 0; i < customizationDetails.length; i++) {
+    const productType = productTypesForCustomization[i % productTypesForCustomization.length];
+
+    try {
+      await prisma.customizationRequest.create({
+        data: {
+          firstName: faker.person.firstName(),
+          lastName: faker.person.lastName(),
+          email: faker.internet.email().toLowerCase(),
+          phone: sampleBoolean(0.6) ? faker.helpers.replaceSymbols("+33 # ## ## ## ##") : null,
+          productTypeId: productType.id,
+          productTypeLabel: productType.label,
+          details: customizationDetails[i],
+          status: customizationStatuses[i],
+          adminNotes: customizationStatuses[i] === CustomizationRequestStatus.IN_PROGRESS
+            ? "Devis envoyé le 15/11, en attente de validation client"
+            : null,
+          respondedAt: customizationStatuses[i] !== CustomizationRequestStatus.PENDING
+            ? faker.date.recent({ days: 14 })
+            : null,
+        },
+      });
+      customizationsCreated++;
+    } catch {
+      continue;
+    }
+  }
+  console.log(`✅ ${customizationsCreated} demandes de personnalisation créées`);
 
   console.log("\n🎉 Seed terminé avec succès!");
 }

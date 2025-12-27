@@ -1,5 +1,3 @@
-import { MessageSquare } from "lucide-react"
-
 import { Skeleton } from "@/shared/components/ui/skeleton"
 
 import { getReviews } from "../data/get-reviews"
@@ -49,7 +47,6 @@ export async function ProductReviewsSection({
 			{/* En-tête de section */}
 			<div className="flex items-center justify-between mb-6">
 				<div className="flex items-center gap-3">
-					<MessageSquare className="size-5 text-primary" aria-hidden="true" />
 					<h2 id="reviews-title" className="text-xl font-semibold">Avis clients</h2>
 					{stats.totalCount > 0 && (
 						<ReviewSummaryCompact stats={stats} />
@@ -77,7 +74,6 @@ export function ProductReviewsSectionSkeleton() {
 	return (
 		<section className="space-y-6" aria-busy="true" aria-label="Chargement des avis">
 			<div className="flex items-center gap-3" aria-hidden="true">
-				<Skeleton className="size-5 rounded" />
 				<Skeleton className="h-6 w-32" />
 			</div>
 

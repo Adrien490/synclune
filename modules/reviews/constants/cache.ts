@@ -3,6 +3,7 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache"
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache"
 
 // ============================================
 // CACHE TAGS
@@ -100,6 +101,8 @@ export function getReviewInvalidationTags(
 		REVIEWS_CACHE_TAGS.USER(userId),
 		REVIEWS_CACHE_TAGS.REVIEWABLE(userId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
+		// Les avis impactent le tri par popularité
+		PRODUCTS_CACHE_TAGS.POPULAR,
 	]
 
 	if (reviewId) {
@@ -122,5 +125,7 @@ export function getReviewModerationTags(
 		REVIEWS_CACHE_TAGS.STATS(productId),
 		REVIEWS_CACHE_TAGS.DETAIL(reviewId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
+		// La modération impacte le tri par popularité
+		PRODUCTS_CACHE_TAGS.POPULAR,
 	]
 }

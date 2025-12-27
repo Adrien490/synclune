@@ -1,6 +1,6 @@
 import { Progress } from "@/shared/components/ui/progress"
 import { cn } from "@/shared/utils/cn"
-import { Star } from "lucide-react"
+import { RatingStars } from "@/shared/components/rating-stars"
 import { REVIEW_CONFIG } from "../constants/review.constants"
 import type { ProductReviewStatistics } from "../types/review.types"
 import { formatRating } from "../utils/stats.utils"
@@ -29,18 +29,13 @@ export function ReviewSummary({
 				<div className="text-5xl font-bold text-foreground" aria-label={`Note moyenne: ${formatRating(stats.averageRating)} sur 5`}>
 					{formatRating(stats.averageRating)}
 				</div>
-				<div className="flex items-center gap-1 mt-2" aria-hidden="true">
-					{Array.from({ length: REVIEW_CONFIG.MAX_RATING }, (_, i) => (
-						<Star
-							key={i}
-							className={cn(
-								"size-4",
-								i < Math.round(stats.averageRating)
-									? "fill-amber-400 text-amber-400"
-									: "fill-muted text-muted-foreground/30"
-							)}
-						/>
-					))}
+				<div className="mt-2">
+					<RatingStars
+						rating={stats.averageRating}
+						maxRating={REVIEW_CONFIG.MAX_RATING}
+						size="sm"
+						ariaLabel=""
+					/>
 				</div>
 				<div className="text-sm text-muted-foreground mt-1">
 					{stats.totalCount} avis
@@ -100,9 +95,11 @@ export function ReviewSummaryCompact({
 
 	return (
 		<div className={cn("flex items-center gap-2", className)} aria-label={`Note moyenne: ${formatRating(stats.averageRating)} sur 5, ${stats.totalCount} avis`}>
-			<div className="flex items-center" aria-hidden="true">
-				<Star className="size-4 fill-amber-400 text-amber-400" />
-			</div>
+			<RatingStars
+				rating={stats.averageRating}
+				size="sm"
+				ariaLabel=""
+			/>
 			<span className="font-medium">{formatRating(stats.averageRating)}</span>
 			<span className="text-muted-foreground">
 				({stats.totalCount} avis)

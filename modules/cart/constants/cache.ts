@@ -20,6 +20,9 @@ export const CART_CACHE_TAGS = {
 	/** Résumé du panier (pour tableau de bord) */
 	SUMMARY: (userId?: string, sessionId?: string) =>
 		userId ? `cart-summary-user-${userId}` : sessionId ? `cart-summary-session-${sessionId}` : "cart-summary-anonymous",
+
+	/** Compteur de paniers contenant un produit (pour FOMO "dans X paniers") */
+	PRODUCT_CARTS: (productId: string) => `product-carts-${productId}`,
 } as const;
 
 // Re-exports pour retrocompatibilite

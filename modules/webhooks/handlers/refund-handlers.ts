@@ -92,10 +92,10 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			);
 		}
 
-		// 6. Invalider le cache des bestsellers (le remboursement change le classement)
+		// 6. Invalider le cache des classements (le remboursement change les tris)
 		return {
 			success: true,
-			tasks: [{ type: "INVALIDATE_CACHE", tags: [PRODUCTS_CACHE_TAGS.BESTSELLERS] }],
+			tasks: [{ type: "INVALIDATE_CACHE", tags: [PRODUCTS_CACHE_TAGS.BESTSELLERS, PRODUCTS_CACHE_TAGS.POPULAR] }],
 		};
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling charge refunded:`, error);

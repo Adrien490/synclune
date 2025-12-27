@@ -5,13 +5,18 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
-import { AlertCircle, CheckCircle, AlertTriangle, Sparkles } from "lucide-react";
+import { AlertCircle, CheckCircle, AlertTriangle, Sparkles, ShoppingBag } from "lucide-react";
 import { StockNotificationForm } from "@/modules/stock-notifications/components/stock-notification-form";
 import { motion, useReducedMotion } from "framer-motion";
+import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { addBusinessDays, format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface ProductPriceProps {
 	selectedSku: ProductSku | null;
 	product: GetProductReturn;
+	/** Nombre de paniers contenant ce produit (FOMO "dans X paniers") */
+	cartsCount?: number;
 }
 
 /**
@@ -23,7 +28,7 @@ interface ProductPriceProps {
  * - Afficher le badge de réduction
  * - Afficher le badge de disponibilité (En stock / Stock limité / Rupture)
  */
-export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps) {
+export function ProductPriceDisplay({ selectedSku, product, cartsCount }: ProductPriceProps) {
 	const shouldReduceMotion = useReducedMotion();
 
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
@@ -197,6 +202,35 @@ export function ProductPriceDisplay({ selectedSku, product }: ProductPriceProps)
 						</Badge>
 					)}
 				</div>
+
+				{/* Badge "dans X paniers" - FOMO Etsy-style */}
+				{cartsCount !== undefined && cartsCount > 0 && stockStatus !== "out_of_stock" && (
+					<Badge
+						variant="outline"
+						className="text-xs/5 tracking-normal antialiased gap-1.5 border-pink-500/50 text-pink-700 bg-pink-50 dark:bg-pink-950/50 dark:text-pink-300 dark:border-pink-500/30"
+						role="status"
+						aria-label={`Actuellement dans ${cartsCount} ${cartsCount === 1 ? "panier" : "paniers"}`}
+					>
+						<ShoppingBag className="w-3 h-3" aria-hidden="true" />
+						<span>
+							Dans <span className="font-bold">{cartsCount}</span>{" "}
+							{cartsCount === 1 ? "panier" : "paniers"}
+						</span>
+					</Badge>
+				)}
+
+				{/* Date de livraison estimée */}
+				{stockStatus !== "out_of_stock" && (
+					<div className="text-sm text-muted-foreground pt-1">
+						<span>
+							Recevez d'ici le{" "}
+							<span className="font-medium text-foreground">
+								{format(addBusinessDays(new Date(), SHIPPING_RATES.FR.minDays), "d", { locale: fr })}-
+								{format(addBusinessDays(new Date(), SHIPPING_RATES.FR.maxDays), "d MMM", { locale: fr })}
+							</span>
+						</span>
+					</div>
+				)}
 
 				{/* Message d'économie */}
 				{hasDiscount && (

@@ -18,6 +18,7 @@ import {
 	type SearchResult,
 } from "../services/product-query-builder";
 import { getBestsellerIds } from "../services/bestseller-query";
+import { getPopularProductIds } from "../services/popularity-query";
 import { cacheProducts, PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { serializeProduct } from "../utils/serialize-product";
 
@@ -82,7 +83,17 @@ export async function getProducts(
 		bestsellerIds = await getBestsellerIds(bestsellerLimit);
 	}
 
-	return fetchProducts(params, searchResult, bestsellerIds);
+	// Récupérer les IDs des produits populaires si tri par popularité demandé
+	let popularIds: string[] | undefined;
+	if (params.sortBy === "popular") {
+		const popularLimit = Math.min(
+			Math.max(params.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE, 50),
+			GET_PRODUCTS_MAX_RESULTS_PER_PAGE
+		);
+		popularIds = await getPopularProductIds(popularLimit);
+	}
+
+	return fetchProducts(params, searchResult, bestsellerIds, popularIds);
 }
 
 /**
@@ -170,11 +181,13 @@ function orderByIds<T extends { id: string }>(
  * @param params - Paramètres de recherche
  * @param searchResult - Résultat de la recherche fuzzy (optionnel)
  * @param bestsellerIds - IDs des produits triés par ventes (optionnel)
+ * @param popularIds - IDs des produits triés par popularité (optionnel)
  */
 async function fetchProducts(
 	params: GetProductsParams,
 	searchResult?: SearchResult,
-	bestsellerIds?: string[]
+	bestsellerIds?: string[],
+	popularIds?: string[]
 ): Promise<GetProductsReturn> {
 	"use cache";
 	cacheProducts();
@@ -182,6 +195,11 @@ async function fetchProducts(
 	// Tag spécifique pour les bestsellers (invalidé après paiement)
 	if (bestsellerIds !== undefined) {
 		cacheTag(PRODUCTS_CACHE_TAGS.BESTSELLERS);
+	}
+
+	// Tag spécifique pour la popularité (invalidé après paiement ou nouvel avis)
+	if (popularIds !== undefined) {
+		cacheTag(PRODUCTS_CACHE_TAGS.POPULAR);
 	}
 
 	try {
@@ -197,10 +215,12 @@ async function fetchProducts(
 		// Trier les produits :
 		// - Si recherche fuzzy active avec résultats → tri par pertinence (défaut)
 		// - Si tri best-selling avec résultats → tri par ventes
+		// - Si tri popular avec résultats → tri par popularité
 		// - Sinon → tri selon le critère demandé
 		const fuzzyIds = searchResult?.fuzzyIds;
 		const hasFuzzyResults = fuzzyIds && fuzzyIds.length > 0;
 		const hasBestsellerResults = bestsellerIds && bestsellerIds.length > 0;
+		const hasPopularResults = popularIds && popularIds.length > 0;
 
 		let sortedProducts: Product[];
 		if (hasFuzzyResults && params.sortBy === GET_PRODUCTS_DEFAULT_SORT_BY) {
@@ -209,6 +229,9 @@ async function fetchProducts(
 		} else if (params.sortBy === "best-selling" && hasBestsellerResults) {
 			// Tri par meilleures ventes (préserve l'ordre des ventes)
 			sortedProducts = orderByIds(allProducts as Product[], bestsellerIds);
+		} else if (params.sortBy === "popular" && hasPopularResults) {
+			// Tri par popularité (ventes + avis combinés)
+			sortedProducts = orderByIds(allProducts as Product[], popularIds);
 		} else {
 			// Tri selon le critère demandé par l'utilisateur
 			sortedProducts = sortProducts(allProducts as Product[], params.sortBy);

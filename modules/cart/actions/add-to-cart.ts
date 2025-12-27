@@ -3,7 +3,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
-import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
+import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -98,6 +98,7 @@ export async function addToCart(
 				isActive: boolean;
 				priceInclTax: number;
 				deletedAt: Date | null;
+				productId: string;
 				productStatus: string;
 				productDeletedAt: Date | null;
 			}>>`
@@ -106,6 +107,7 @@ export async function addToCart(
 					s."isActive",
 					s."priceInclTax",
 					s."deletedAt",
+					s."productId",
 					p.status AS "productStatus",
 					p."deletedAt" AS "productDeletedAt"
 				FROM "ProductSku" s
@@ -201,7 +203,7 @@ export async function addToCart(
 				});
 			}
 
-			return { cartItem, newQuantity, isUpdate };
+			return { cartItem, newQuantity, isUpdate, productId: sku.productId };
 		});
 
 		// 7. Invalider immédiatement le cache du panier (read-your-own-writes)
@@ -209,7 +211,10 @@ export async function addToCart(
 		const tags = getCartInvalidationTags(userId, sessionId || undefined);
 		tags.forEach(tag => updateTag(tag));
 
-		// 8. Success - Return ActionState format
+		// 8. Invalider le cache du compteur de paniers pour ce produit (FOMO "dans X paniers")
+		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(transactionResult.productId));
+
+		// 9. Success - Return ActionState format
 		const successMessage = transactionResult.isUpdate
 			? `Quantité mise à jour (${transactionResult.newQuantity})`
 			: "Article ajouté au panier";

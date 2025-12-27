@@ -10,6 +10,7 @@ import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { getProductReviewStats } from "@/modules/reviews/data/get-product-review-stats";
 import { getAllProductReviews } from "@/modules/reviews/data/get-reviews";
+import { getProductCartsCount } from "@/modules/cart/data/get-product-carts-count";
 
 import { PageHeader } from "@/shared/components/page-header";
 import { ProductDetails } from "@/modules/products/components/product-details";
@@ -56,10 +57,11 @@ export default async function ProductPage({
 		notFound();
 	}
 
-	// Récupérer les stats et les avis (après vérification existence produit)
-	const [reviewStats, reviews] = await Promise.all([
+	// Récupérer les stats, avis et compteur de paniers (après vérification existence produit)
+	const [reviewStats, reviews, cartsCount] = await Promise.all([
 		getProductReviewStats(product.id),
 		getAllProductReviews(product.id),
+		getProductCartsCount(product.id),
 	]);
 
 	// Sécurité: Bloquer les DRAFT pour les non-admins
@@ -177,6 +179,7 @@ export default async function ProductPage({
 									<ProductDetails
 										product={product}
 										defaultSku={selectedSku}
+										cartsCount={cartsCount}
 									/>
 								</section>
 							</div>
