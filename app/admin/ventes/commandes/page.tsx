@@ -10,7 +10,6 @@ import { parseOrderParams } from "@/modules/orders/utils/parse-order-params";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { AlertDialogSkeleton, AdminDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import { OrdersDataTable } from "@/modules/orders/components/admin/orders-data-table";
 import { OrdersDataTableSkeleton } from "@/modules/orders/components/admin/orders-data-table-skeleton";
 import { OrdersFilterBadges } from "@/modules/orders/components/admin/orders-filter-badges";
@@ -21,44 +20,34 @@ import { Metadata } from "next";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const CancelOrderAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/cancel-order-alert-dialog").then((mod) => mod.CancelOrderAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/cancel-order-alert-dialog").then((mod) => mod.CancelOrderAlertDialog)
 );
 const DeleteOrderAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/delete-order-alert-dialog").then((mod) => mod.DeleteOrderAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/delete-order-alert-dialog").then((mod) => mod.DeleteOrderAlertDialog)
 );
 const BulkDeleteOrdersAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/bulk-delete-orders-alert-dialog").then((mod) => mod.BulkDeleteOrdersAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/bulk-delete-orders-alert-dialog").then((mod) => mod.BulkDeleteOrdersAlertDialog)
 );
 const MarkAsPaidAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/mark-as-paid-alert-dialog").then((mod) => mod.MarkAsPaidAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/mark-as-paid-alert-dialog").then((mod) => mod.MarkAsPaidAlertDialog)
 );
 const MarkAsShippedDialog = dynamic(
-	() => import("@/modules/orders/components/admin/mark-as-shipped-dialog").then((mod) => mod.MarkAsShippedDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/mark-as-shipped-dialog").then((mod) => mod.MarkAsShippedDialog)
 );
 const MarkAsDeliveredAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/mark-as-delivered-alert-dialog").then((mod) => mod.MarkAsDeliveredAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/mark-as-delivered-alert-dialog").then((mod) => mod.MarkAsDeliveredAlertDialog)
 );
 const MarkAsProcessingAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/mark-as-processing-alert-dialog").then((mod) => mod.MarkAsProcessingAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/mark-as-processing-alert-dialog").then((mod) => mod.MarkAsProcessingAlertDialog)
 );
 const RevertToProcessingDialog = dynamic(
-	() => import("@/modules/orders/components/admin/revert-to-processing-dialog").then((mod) => mod.RevertToProcessingDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/revert-to-processing-dialog").then((mod) => mod.RevertToProcessingDialog)
 );
 const MarkAsReturnedAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/mark-as-returned-alert-dialog").then((mod) => mod.MarkAsReturnedAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/mark-as-returned-alert-dialog").then((mod) => mod.MarkAsReturnedAlertDialog)
 );
 const OrderNotesDialog = dynamic(
-	() => import("@/modules/orders/components/admin/order-notes-dialog").then((mod) => mod.OrderNotesDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/order-notes-dialog").then((mod) => mod.OrderNotesDialog)
 );
 
 export type OrderFiltersSearchParams = {

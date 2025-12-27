@@ -15,15 +15,13 @@ import {
 } from "@/shared/components/ui/breadcrumb";
 import { PageHeader } from "@/shared/components/page-header";
 import { Badge } from "@/shared/components/ui/badge";
-import { AlertDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 import { CollectionProductsList } from "@/modules/collections/components/admin/collection-products-list";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const SetFeaturedProductAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/set-featured-product-alert-dialog").then((mod) => mod.SetFeaturedProductAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/collections/components/admin/set-featured-product-alert-dialog").then((mod) => mod.SetFeaturedProductAlertDialog)
 );
 
 type CollectionDetailPageProps = {

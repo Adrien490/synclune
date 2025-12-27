@@ -2,51 +2,40 @@ import { getOrderById } from "@/modules/orders/data/get-order-by-id";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
-import { AlertDialogSkeleton, AdminDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import { OrderDetailPage as OrderDetail } from "@/modules/orders/components/admin/order-detail";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const CancelOrderAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/cancel-order-alert-dialog").then((mod) => mod.CancelOrderAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/cancel-order-alert-dialog").then((mod) => mod.CancelOrderAlertDialog)
 );
 const MarkAsPaidAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/mark-as-paid-alert-dialog").then((mod) => mod.MarkAsPaidAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/mark-as-paid-alert-dialog").then((mod) => mod.MarkAsPaidAlertDialog)
 );
 const MarkAsShippedDialog = dynamic(
-	() => import("@/modules/orders/components/admin/mark-as-shipped-dialog").then((mod) => mod.MarkAsShippedDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/mark-as-shipped-dialog").then((mod) => mod.MarkAsShippedDialog)
 );
 const MarkAsDeliveredAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/mark-as-delivered-alert-dialog").then((mod) => mod.MarkAsDeliveredAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/mark-as-delivered-alert-dialog").then((mod) => mod.MarkAsDeliveredAlertDialog)
 );
 const UpdateTrackingDialog = dynamic(
-	() => import("@/modules/orders/components/admin/update-tracking-dialog").then((mod) => mod.UpdateTrackingDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/update-tracking-dialog").then((mod) => mod.UpdateTrackingDialog)
 );
 const MarkAsProcessingAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/mark-as-processing-alert-dialog").then((mod) => mod.MarkAsProcessingAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/mark-as-processing-alert-dialog").then((mod) => mod.MarkAsProcessingAlertDialog)
 );
 const RevertToProcessingDialog = dynamic(
-	() => import("@/modules/orders/components/admin/revert-to-processing-dialog").then((mod) => mod.RevertToProcessingDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/revert-to-processing-dialog").then((mod) => mod.RevertToProcessingDialog)
 );
 const MarkAsReturnedAlertDialog = dynamic(
-	() => import("@/modules/orders/components/admin/mark-as-returned-alert-dialog").then((mod) => mod.MarkAsReturnedAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/mark-as-returned-alert-dialog").then((mod) => mod.MarkAsReturnedAlertDialog)
 );
 const OrderNotesDialog = dynamic(
-	() => import("@/modules/orders/components/admin/order-notes-dialog").then((mod) => mod.OrderNotesDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/order-notes-dialog").then((mod) => mod.OrderNotesDialog)
 );
 const ResendEmailDialog = dynamic(
-	() => import("@/modules/orders/components/admin/resend-email-dialog").then((mod) => mod.ResendEmailDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/orders/components/admin/resend-email-dialog").then((mod) => mod.ResendEmailDialog)
 );
 import {
 	Breadcrumb,

@@ -6,7 +6,6 @@ import { getRefunds, SORT_LABELS } from "@/modules/refunds/data/get-refunds";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { AlertDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import { RefundsDataTable } from "@/modules/refunds/components/admin/refunds-data-table";
 import { RefundsDataTableSkeleton } from "@/modules/refunds/components/admin/refunds-data-table-skeleton";
 import { RefreshRefundsButton } from "@/modules/refunds/components/admin/refresh-refunds-button";
@@ -15,20 +14,16 @@ import type { Metadata } from "next";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const ApproveRefundAlertDialog = dynamic(
-	() => import("@/modules/refunds/components/admin/approve-refund-alert-dialog").then((mod) => mod.ApproveRefundAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/refunds/components/admin/approve-refund-alert-dialog").then((mod) => mod.ApproveRefundAlertDialog)
 );
 const ProcessRefundAlertDialog = dynamic(
-	() => import("@/modules/refunds/components/admin/process-refund-alert-dialog").then((mod) => mod.ProcessRefundAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/refunds/components/admin/process-refund-alert-dialog").then((mod) => mod.ProcessRefundAlertDialog)
 );
 const RejectRefundAlertDialog = dynamic(
-	() => import("@/modules/refunds/components/admin/reject-refund-alert-dialog").then((mod) => mod.RejectRefundAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/refunds/components/admin/reject-refund-alert-dialog").then((mod) => mod.RejectRefundAlertDialog)
 );
 const CancelRefundAlertDialog = dynamic(
-	() => import("@/modules/refunds/components/admin/cancel-refund-alert-dialog").then((mod) => mod.CancelRefundAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/refunds/components/admin/cancel-refund-alert-dialog").then((mod) => mod.CancelRefundAlertDialog)
 );
 
 export type RefundFiltersSearchParams = {

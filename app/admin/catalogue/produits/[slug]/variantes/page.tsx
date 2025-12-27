@@ -18,7 +18,6 @@ import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
-import { AlertDialogSkeleton, AdminDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getProductSkus } from "@/modules/skus/data/get-skus";
 import { parseProductSkuParams } from "@/modules/skus/utils/parse-sku-params";
@@ -33,24 +32,19 @@ import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-ba
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const DeleteProductSkuAlertDialog = dynamic(
-	() => import("@/modules/skus/components/admin/delete-sku-alert-dialog").then((mod) => mod.DeleteProductSkuAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/skus/components/admin/delete-sku-alert-dialog").then((mod) => mod.DeleteProductSkuAlertDialog)
 );
 const AdjustStockDialog = dynamic(
-	() => import("@/modules/skus/components/admin/adjust-stock-dialog").then((mod) => mod.AdjustStockDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/skus/components/admin/adjust-stock-dialog").then((mod) => mod.AdjustStockDialog)
 );
 const UpdatePriceDialog = dynamic(
-	() => import("@/modules/skus/components/admin/update-price-dialog").then((mod) => mod.UpdatePriceDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/skus/components/admin/update-price-dialog").then((mod) => mod.UpdatePriceDialog)
 );
 const BulkAdjustStockDialog = dynamic(
-	() => import("@/modules/skus/components/admin/bulk-adjust-stock-dialog").then((mod) => mod.BulkAdjustStockDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/skus/components/admin/bulk-adjust-stock-dialog").then((mod) => mod.BulkAdjustStockDialog)
 );
 const BulkUpdatePriceDialog = dynamic(
-	() => import("@/modules/skus/components/admin/bulk-update-price-dialog").then((mod) => mod.BulkUpdatePriceDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/skus/components/admin/bulk-update-price-dialog").then((mod) => mod.BulkUpdatePriceDialog)
 );
 
 export type ProductVariantsSearchParams = {

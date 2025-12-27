@@ -6,12 +6,10 @@ import { getColorOptions } from "@/modules/colors/data/get-color-options";
 import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
-import { AlertDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const DeleteGalleryMediaAlertDialog = dynamic(
-	() => import("@/modules/media/components/admin/delete-gallery-media-alert-dialog").then((mod) => mod.DeleteGalleryMediaAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/media/components/admin/delete-gallery-media-alert-dialog").then((mod) => mod.DeleteGalleryMediaAlertDialog)
 );
 
 export const metadata: Metadata = {

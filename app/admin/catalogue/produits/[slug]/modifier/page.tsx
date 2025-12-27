@@ -6,7 +6,6 @@ import { getProductBySlug } from "@/modules/products/data/get-product";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 import { EditProductForm } from "@/modules/products/components/admin/edit-product-form";
-import { AlertDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -18,8 +17,7 @@ import {
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const DeleteGalleryMediaAlertDialog = dynamic(
-	() => import("@/modules/media/components/admin/delete-gallery-media-alert-dialog").then((mod) => mod.DeleteGalleryMediaAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/media/components/admin/delete-gallery-media-alert-dialog").then((mod) => mod.DeleteGalleryMediaAlertDialog)
 );
 
 type EditProductPageParams = Promise<{ slug: string }>;

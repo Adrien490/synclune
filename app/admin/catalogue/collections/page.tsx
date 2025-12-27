@@ -11,7 +11,6 @@ import { getFirstParam } from "@/shared/utils/params";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { AlertDialogSkeleton, AdminDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import { CollectionsDataTable } from "@/modules/collections/components/admin/collections-data-table";
 import { CollectionsDataTableSkeleton } from "@/modules/collections/components/admin/collections-data-table-skeleton";
 import { CollectionsFilterBadges } from "@/modules/collections/components/admin/collections-filter-badges";
@@ -23,28 +22,22 @@ import { parseFilters, parseStatus } from "./_utils/params";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const CollectionFormDialog = dynamic(
-	() => import("@/modules/collections/components/admin/collection-form-dialog").then((mod) => mod.CollectionFormDialog),
-	{ loading: () => <AdminDialogSkeleton /> }
+	() => import("@/modules/collections/components/admin/collection-form-dialog").then((mod) => mod.CollectionFormDialog)
 );
 const DeleteCollectionAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/delete-collection-alert-dialog").then((mod) => mod.DeleteCollectionAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/collections/components/admin/delete-collection-alert-dialog").then((mod) => mod.DeleteCollectionAlertDialog)
 );
 const BulkDeleteCollectionsAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/bulk-delete-collections-alert-dialog").then((mod) => mod.BulkDeleteCollectionsAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/collections/components/admin/bulk-delete-collections-alert-dialog").then((mod) => mod.BulkDeleteCollectionsAlertDialog)
 );
 const ArchiveCollectionAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/archive-collection-alert-dialog").then((mod) => mod.ArchiveCollectionAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/collections/components/admin/archive-collection-alert-dialog").then((mod) => mod.ArchiveCollectionAlertDialog)
 );
 const BulkArchiveCollectionsAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/bulk-archive-collections-alert-dialog").then((mod) => mod.BulkArchiveCollectionsAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/collections/components/admin/bulk-archive-collections-alert-dialog").then((mod) => mod.BulkArchiveCollectionsAlertDialog)
 );
 const ChangeCollectionStatusAlertDialog = dynamic(
-	() => import("@/modules/collections/components/admin/change-collection-status-alert-dialog").then((mod) => mod.ChangeCollectionStatusAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/collections/components/admin/change-collection-status-alert-dialog").then((mod) => mod.ChangeCollectionStatusAlertDialog)
 );
 
 type CollectionFiltersSearchParams = {
