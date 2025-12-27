@@ -94,9 +94,9 @@ export function CookieBanner() {
 									className="shrink-0 text-primary"
 									aria-hidden="true"
 								/>
-								<h2 className="text-base font-semibold text-foreground">
+								<p className="text-base font-semibold text-foreground">
 									Cookies
-								</h2>
+								</p>
 							</div>
 
 							{/* Message */}
