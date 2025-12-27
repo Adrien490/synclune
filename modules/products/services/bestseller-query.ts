@@ -1,6 +1,7 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { connection } from "next/server";
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
 // ============================================================================
 // CONSTANTS
@@ -40,25 +41,37 @@ type BestsellerAggregation = {
  * 2. Filtre: commandes payees (PAID) sur les 30 derniers jours
  * 3. Tri par quantite totale decroissante
  *
+ * Cache:
+ * - Les resultats sont caches avec le tag "bestsellers"
+ * - Invalide apres chaque paiement reussi (webhook stripe)
+ * - Utilise NOW() cote SQL pour que le cache soit coherent
+ *
  * @param limit - Nombre max de produits (1-1000, defaut: 200)
  * @returns Liste d'IDs de produits tries par ventes, ou [] en cas d'erreur
  */
 export async function getBestsellerIds(
 	limit: number = DEFAULT_BESTSELLER_LIMIT
 ): Promise<string[]> {
+	// Valider et normaliser le parametre limit
+	const safeLimit = Math.min(
+		Math.max(Math.floor(Number(limit)) || DEFAULT_BESTSELLER_LIMIT, 1),
+		MAX_BESTSELLER_LIMIT
+	);
+
+	return fetchBestsellerIds(safeLimit);
+}
+
+/**
+ * Fonction interne cachee pour recuperer les bestsellers
+ */
+async function fetchBestsellerIds(limit: number): Promise<string[]> {
+	"use cache";
+	cacheLife("products");
+	cacheTag(PRODUCTS_CACHE_TAGS.BESTSELLERS);
+
 	try {
-		// Signaler que cette route est dynamique (utilise des données temps réel)
-		await connection();
-
-		// Valider et normaliser le parametre limit
-		const safeLimit = Math.min(
-			Math.max(Math.floor(Number(limit)) || DEFAULT_BESTSELLER_LIMIT, 1),
-			MAX_BESTSELLER_LIMIT
-		);
-
 		// Requete avec timeout (5 secondes)
-		// Note: Le calcul de date est fait côté SQL avec NOW() - make_interval()
-		// pour éviter les problèmes de prerendering Next.js avec Date.now()
+		// Le calcul de date utilise NOW() cote SQL pour coherence du cache
 		const results = await Promise.race([
 			prisma.$queryRaw<BestsellerAggregation[]>`
 				SELECT
@@ -73,7 +86,7 @@ export async function getBestsellerIds(
 					AND oi."productId" IS NOT NULL
 				GROUP BY oi."productId"
 				ORDER BY "totalQuantity" DESC
-				LIMIT ${safeLimit}
+				LIMIT ${limit}
 			`,
 			new Promise<never>((_, reject) =>
 				setTimeout(() => reject(new Error("Bestseller query timeout")), QUERY_TIMEOUT_MS)

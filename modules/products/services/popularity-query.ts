@@ -1,6 +1,7 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { connection } from "next/server";
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
 // ============================================================================
 // CONSTANTS
@@ -50,26 +51,38 @@ type PopularityAggregation = {
  * - best-selling = tri uniquement par ventes
  * - popular = tri par score combine (ventes + avis)
  *
+ * Cache:
+ * - Les resultats sont caches avec le tag "popular-products"
+ * - Invalide apres chaque paiement reussi ou nouvel avis
+ * - Utilise NOW() cote SQL pour coherence du cache
+ *
  * @param limit - Nombre max de produits (1-1000, defaut: 200)
  * @returns Liste d'IDs de produits tries par popularite, ou [] en cas d'erreur
  */
 export async function getPopularProductIds(
 	limit: number = DEFAULT_POPULARITY_LIMIT
 ): Promise<string[]> {
+	// Valider et normaliser le parametre limit
+	const safeLimit = Math.min(
+		Math.max(Math.floor(Number(limit)) || DEFAULT_POPULARITY_LIMIT, 1),
+		MAX_POPULARITY_LIMIT
+	);
+
+	return fetchPopularProductIds(safeLimit);
+}
+
+/**
+ * Fonction interne cachee pour recuperer les produits populaires
+ */
+async function fetchPopularProductIds(limit: number): Promise<string[]> {
+	"use cache";
+	cacheLife("products");
+	cacheTag(PRODUCTS_CACHE_TAGS.POPULAR);
+
 	try {
-		await connection();
-
-		// Valider et normaliser le parametre limit
-		const safeLimit = Math.min(
-			Math.max(Math.floor(Number(limit)) || DEFAULT_POPULARITY_LIMIT, 1),
-			MAX_POPULARITY_LIMIT
-		);
-
-		const thirtyDaysAgo = new Date(Date.now() - POPULARITY_DAYS * 24 * 60 * 60 * 1000);
-
 		// Requete SQL qui combine les ventes et les avis en un score de popularite
 		// LEFT JOIN pour inclure les produits sans ventes mais avec des avis (et vice versa)
-		// Timeout de 5s pour eviter les requetes bloquantes
+		// Utilise NOW() cote SQL pour coherence du cache
 		const results = await Promise.race([
 			prisma.$queryRaw<PopularityAggregation[]>`
 				WITH sales AS (
@@ -81,7 +94,7 @@ export async function getPopularProductIds(
 					WHERE
 						o."paymentStatus" = ${PaymentStatus.PAID}::"PaymentStatus"
 						AND o."deletedAt" IS NULL
-						AND o."paidAt" >= ${thirtyDaysAgo}
+						AND o."paidAt" >= NOW() - make_interval(days => ${POPULARITY_DAYS})
 						AND oi."productId" IS NOT NULL
 					GROUP BY oi."productId"
 				),
@@ -106,7 +119,7 @@ export async function getPopularProductIds(
 					AND p.status = 'PUBLIC'
 					AND (s."totalSales" > 0 OR r."reviewScore" > 0)
 				ORDER BY "popularityScore" DESC
-				LIMIT ${safeLimit}
+				LIMIT ${limit}
 			`,
 			new Promise<never>((_, reject) =>
 				setTimeout(() => reject(new Error("Popularity query timeout")), QUERY_TIMEOUT_MS)
