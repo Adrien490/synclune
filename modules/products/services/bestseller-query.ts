@@ -47,6 +47,7 @@ export async function getBestsellerIds(
 	limit: number = DEFAULT_BESTSELLER_LIMIT
 ): Promise<string[]> {
 	try {
+		// Signaler que cette route est dynamique (utilise des données temps réel)
 		await connection();
 
 		// Valider et normaliser le parametre limit
@@ -55,10 +56,9 @@ export async function getBestsellerIds(
 			MAX_BESTSELLER_LIMIT
 		);
 
-		// Calcul UTC explicite pour éviter les incohérences timezone avec PostgreSQL
-		const thirtyDaysAgo = new Date(Date.now() - BESTSELLERS_DAYS * 24 * 60 * 60 * 1000);
-
 		// Requete avec timeout (5 secondes)
+		// Note: Le calcul de date est fait côté SQL avec NOW() - make_interval()
+		// pour éviter les problèmes de prerendering Next.js avec Date.now()
 		const results = await Promise.race([
 			prisma.$queryRaw<BestsellerAggregation[]>`
 				SELECT
@@ -69,7 +69,7 @@ export async function getBestsellerIds(
 				WHERE
 					o."paymentStatus" = ${PaymentStatus.PAID}::"PaymentStatus"
 					AND o."deletedAt" IS NULL
-					AND o."paidAt" >= ${thirtyDaysAgo}
+					AND o."paidAt" >= NOW() - make_interval(days => ${BESTSELLERS_DAYS})
 					AND oi."productId" IS NOT NULL
 				GROUP BY oi."productId"
 				ORDER BY "totalQuantity" DESC
