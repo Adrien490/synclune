@@ -18,7 +18,7 @@ import { Hero } from "./_components/hero";
 
 export const metadata: Metadata = {
 	title: {
-		absolute: "Synclune | Bijoux faits main à Nantes",
+		absolute: "Synclune | Bijoux artisanaux faits main à Nantes",
 	},
 	description:
 		"Découvrez les bijoux colorés de Synclune, créatrice à Nantes. Boucles d'oreilles, colliers, bracelets faits main. Atelier artisanal en Loire-Atlantique.",

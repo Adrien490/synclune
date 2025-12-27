@@ -61,7 +61,7 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
 						<SectionTitle id="latest-creations-title">
-							Nouveaux bijoux faits main
+							Nouveautés de l'atelier
 						</SectionTitle>
 					</Fade>
 					<Fade y={10} delay={0.1} duration={0.6}>
