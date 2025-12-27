@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, Layers, Search, Sparkles, X } from "lucide-react"
+import { ChevronRight, Clock, Layers, Search, Sparkles, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useRef, useTransition } from "react"
@@ -275,14 +275,11 @@ export function QuickSearchDialog({
 							{/* Collections */}
 							{collections.length > 0 && (
 								<section aria-labelledby="collections-heading">
-									<div className="flex items-center justify-between mb-3">
+									<div className="flex items-center mb-3">
 										<h2 id="collections-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2">
 											<Layers className="size-5" aria-hidden="true" />
 											Collections
 										</h2>
-										<span className="text-xs text-muted-foreground/60">
-											{collections.length} collection{collections.length > 1 ? "s" : ""}
-										</span>
 									</div>
 									<Stagger role="list" className="grid grid-cols-2 gap-2" stagger={0.02} delay={0.03} y={8}>
 										{collections.map((collection) => (
@@ -300,6 +297,16 @@ export function QuickSearchDialog({
 											</Tap>
 										))}
 									</Stagger>
+									<div className="mt-3 text-center">
+										<Link
+											href="/collections"
+											onClick={close}
+											className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none rounded-md px-2 py-1"
+										>
+											Voir toutes les collections
+											<ChevronRight className="size-4" aria-hidden="true" />
+										</Link>
+									</div>
 								</section>
 							)}
 

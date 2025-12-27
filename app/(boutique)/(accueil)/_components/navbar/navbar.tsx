@@ -29,7 +29,7 @@ export async function Navbar() {
 		getWishlistItemCount(),
 		getRecentSearches(),
 		getCollections({
-			perPage: 50, // Toutes les collections pour le quick search
+			perPage: 4, // Collections principales pour le quick search (bouton "Voir toutes" dans le dialog)
 			sortBy: "products-descending", // Collections avec le plus de produits en premier
 			filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
 		}),

@@ -164,12 +164,18 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	// Dedupliquer l'appel getCart() pour CartSheet et SkuSelectorDialog
+	const cartPromise = getCart();
+
 	return (
 		<html lang="fr" data-scroll-behavior="smooth">
 			<head>
 				{/* Preconnect to Google Fonts for faster font loading */}
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+				{/* Preconnect to UploadThing CDN for faster image loading */}
+				<link rel="dns-prefetch" href="https://utfs.io" />
+				<link rel="preconnect" href="https://utfs.io" crossOrigin="anonymous" />
 				{/* Structured Data - SEO */}
 				<script
 					type="application/ld+json"
@@ -221,10 +227,10 @@ export default async function RootLayout({
 											{children}
 
 											<Suspense fallback={<CartSheetSkeleton />}>
-												<CartSheet cartPromise={getCart()} />
+												<CartSheet cartPromise={cartPromise} />
 											</Suspense>
 											<Suspense fallback={null}>
-												<SkuSelectorDialog cartPromise={getCart()} />
+												<SkuSelectorDialog cartPromise={cartPromise} />
 											</Suspense>
 										</AlertDialogStoreProvider>
 									</SheetStoreProvider>

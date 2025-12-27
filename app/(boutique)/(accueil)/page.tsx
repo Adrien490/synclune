@@ -66,6 +66,8 @@ export const metadata: Metadata = {
 
 
 export default async function Page() {
+	// Dedupliquer l'appel getWishlistProductIds() pour Bestsellers et LatestCreations
+	const wishlistIdsPromise = getWishlistProductIds();
 
 	return (
 		<>
@@ -86,7 +88,7 @@ export default async function Page() {
 						},
 						{ isAdmin: false }
 					)}
-					wishlistProductIdsPromise={getWishlistProductIds()}
+					wishlistProductIdsPromise={wishlistIdsPromise}
 				/>
 			</Suspense>
 
@@ -103,7 +105,7 @@ export default async function Page() {
 						},
 						{ isAdmin: false }
 					)}
-					wishlistProductIdsPromise={getWishlistProductIds()}
+					wishlistProductIdsPromise={wishlistIdsPromise}
 				/>
 			</Suspense>
 
