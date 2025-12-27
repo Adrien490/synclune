@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { duplicateSku } from "@/modules/skus/actions/admin/duplicate-sku";
+import { duplicateSku } from "@/modules/skus/actions/duplicate-sku";
 import { ActionStatus } from "@/shared/types/server-action";
 
 interface UseDuplicateSkuOptions {

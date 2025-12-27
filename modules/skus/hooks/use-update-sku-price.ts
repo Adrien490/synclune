@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { updateSkuPrice } from "@/modules/skus/actions/admin/update-sku-price";
+import { updateSkuPrice } from "@/modules/skus/actions/update-sku-price";
 import { ActionStatus } from "@/shared/types/server-action";
 
 interface UseUpdateSkuPriceOptions {

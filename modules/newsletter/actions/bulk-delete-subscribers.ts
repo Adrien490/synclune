@@ -1,23 +1,22 @@
 "use server";
 
-import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
-import { getNewsletterInvalidationTags } from "../../constants/cache";
+import { getNewsletterInvalidationTags } from "../constants/cache";
 
-import { bulkUnsubscribeSubscribersSchema } from "../../schemas/subscriber.schemas";
+import { bulkDeleteSubscribersSchema } from "../schemas/subscriber.schemas";
 
 // Limite de sécurité pour éviter DoS
 const MAX_BULK_IDS = 1000;
 const MAX_JSON_LENGTH = 30000; // ~1000 CUID2 IDs
 
 /**
- * Server Action ADMIN pour désabonner plusieurs abonnés en masse
+ * Server Action ADMIN pour supprimer définitivement plusieurs abonnés en masse (RGPD)
  */
-export async function bulkUnsubscribeSubscribers(
+export async function bulkDeleteSubscribers(
 	_prevState: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
@@ -65,7 +64,7 @@ export async function bulkUnsubscribeSubscribers(
 			};
 		}
 
-		const result = bulkUnsubscribeSubscribersSchema.safeParse({ ids });
+		const result = bulkDeleteSubscribersSchema.safeParse({ ids });
 		if (!result.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
@@ -73,47 +72,30 @@ export async function bulkUnsubscribeSubscribers(
 			};
 		}
 
-		// Désabonner en masse avec transaction pour atomicité
-		const updateResult = await prisma.$transaction(async (tx) => {
-			return tx.newsletterSubscriber.updateMany({
-				where: {
-					id: { in: result.data.ids },
-					status: { not: NewsletterStatus.UNSUBSCRIBED },
-				},
-				data: { status: NewsletterStatus.UNSUBSCRIBED, unsubscribedAt: new Date() },
+		// Supprimer en masse avec transaction pour atomicité
+		const deleteResult = await prisma.$transaction(async (tx) => {
+			return tx.newsletterSubscriber.deleteMany({
+				where: { id: { in: result.data.ids } },
 			});
 		});
-
-		if (updateResult.count === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun abonné actif à désabonner",
-			};
-		}
 
 		// Invalider le cache
 		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		// Audit log
 		console.log(
-			`[BULK_UNSUBSCRIBE_AUDIT] Admin unsubscribed ${updateResult.count} subscribers`
+			`[BULK_DELETE_AUDIT] Admin deleted ${deleteResult.count} subscribers`
 		);
-
-		const skipped = result.data.ids.length - updateResult.count;
-		let message = `${updateResult.count} abonné${updateResult.count > 1 ? "s" : ""} désabonné${updateResult.count > 1 ? "s" : ""}`;
-		if (skipped > 0) {
-			message += ` - ${skipped} ignoré${skipped > 1 ? "s" : ""} (déjà inactif${skipped > 1 ? "s" : ""})`;
-		}
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message,
+			message: `${deleteResult.count} abonné${deleteResult.count > 1 ? "s" : ""} supprimé${deleteResult.count > 1 ? "s" : ""} définitivement`,
 		};
 	} catch (error) {
-		console.error("[BULK_UNSUBSCRIBE_SUBSCRIBERS]", error);
+		console.error("[BULK_DELETE_SUBSCRIBERS]", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Erreur lors du désabonnement",
+			message: "Erreur lors de la suppression",
 		};
 	}
 }

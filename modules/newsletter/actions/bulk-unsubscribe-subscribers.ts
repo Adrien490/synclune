@@ -6,19 +6,18 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
-import { getNewsletterInvalidationTags } from "../../constants/cache";
+import { getNewsletterInvalidationTags } from "../constants/cache";
 
-import { bulkResubscribeSubscribersSchema } from "../../schemas/subscriber.schemas";
+import { bulkUnsubscribeSubscribersSchema } from "../schemas/subscriber.schemas";
 
 // Limite de sécurité pour éviter DoS
 const MAX_BULK_IDS = 1000;
 const MAX_JSON_LENGTH = 30000; // ~1000 CUID2 IDs
 
 /**
- * Server Action ADMIN pour réabonner plusieurs abonnés en masse
- * Ne réabonne que les abonnés dont l'email est vérifié
+ * Server Action ADMIN pour désabonner plusieurs abonnés en masse
  */
-export async function bulkResubscribeSubscribers(
+export async function bulkUnsubscribeSubscribers(
 	_prevState: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
@@ -66,7 +65,7 @@ export async function bulkResubscribeSubscribers(
 			};
 		}
 
-		const result = bulkResubscribeSubscribersSchema.safeParse({ ids });
+		const result = bulkUnsubscribeSubscribersSchema.safeParse({ ids });
 		if (!result.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
@@ -74,23 +73,21 @@ export async function bulkResubscribeSubscribers(
 			};
 		}
 
-		// Réabonner en masse avec transaction pour atomicité
-		// Ne réabonne que les abonnés déjà confirmés dans le passé (confirmedAt)
+		// Désabonner en masse avec transaction pour atomicité
 		const updateResult = await prisma.$transaction(async (tx) => {
 			return tx.newsletterSubscriber.updateMany({
 				where: {
 					id: { in: result.data.ids },
-					status: NewsletterStatus.UNSUBSCRIBED,
-					confirmedAt: { not: null },
+					status: { not: NewsletterStatus.UNSUBSCRIBED },
 				},
-				data: { status: NewsletterStatus.CONFIRMED, unsubscribedAt: null },
+				data: { status: NewsletterStatus.UNSUBSCRIBED, unsubscribedAt: new Date() },
 			});
 		});
 
 		if (updateResult.count === 0) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Aucun abonné éligible (doit être inactif avec email vérifié)",
+				message: "Aucun abonné actif à désabonner",
 			};
 		}
 
@@ -99,13 +96,13 @@ export async function bulkResubscribeSubscribers(
 
 		// Audit log
 		console.log(
-			`[BULK_RESUBSCRIBE_AUDIT] Admin resubscribed ${updateResult.count} subscribers`
+			`[BULK_UNSUBSCRIBE_AUDIT] Admin unsubscribed ${updateResult.count} subscribers`
 		);
 
 		const skipped = result.data.ids.length - updateResult.count;
-		let message = `${updateResult.count} abonné${updateResult.count > 1 ? "s" : ""} réabonné${updateResult.count > 1 ? "s" : ""}`;
+		let message = `${updateResult.count} abonné${updateResult.count > 1 ? "s" : ""} désabonné${updateResult.count > 1 ? "s" : ""}`;
 		if (skipped > 0) {
-			message += ` - ${skipped} ignoré${skipped > 1 ? "s" : ""} (déjà actif${skipped > 1 ? "s" : ""} ou non vérifié${skipped > 1 ? "s" : ""})`;
+			message += ` - ${skipped} ignoré${skipped > 1 ? "s" : ""} (déjà inactif${skipped > 1 ? "s" : ""})`;
 		}
 
 		return {
@@ -113,10 +110,10 @@ export async function bulkResubscribeSubscribers(
 			message,
 		};
 	} catch (error) {
-		console.error("[BULK_RESUBSCRIBE_SUBSCRIBERS]", error);
+		console.error("[BULK_UNSUBSCRIBE_SUBSCRIBERS]", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Erreur lors du réabonnement",
+			message: "Erreur lors du désabonnement",
 		};
 	}
 }

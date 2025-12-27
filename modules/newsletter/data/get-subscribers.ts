@@ -1,51 +1,42 @@
-import { z } from "zod";
 import { Prisma } from "@/app/generated/prisma/client";
 import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/components/cursor-pagination/pagination";
-import { cacheNewsletterSubscribers } from "../constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
+import { z } from "zod";
+import { cacheNewsletterSubscribers } from "../constants/cache";
 
 import {
-	GET_SUBSCRIBERS_SELECT,
 	GET_SUBSCRIBERS_DEFAULT_PER_PAGE,
 	GET_SUBSCRIBERS_MAX_RESULTS_PER_PAGE,
-	SORT_OPTIONS,
-	SORT_LABELS,
+	GET_SUBSCRIBERS_SELECT,
+	SORT_OPTIONS
 } from "../constants/subscriber.constants";
 import {
 	getSubscribersSchema,
-	subscriberFiltersSchema,
-	subscriberSortBySchema,
 } from "../schemas/subscriber.schemas";
+import { buildSubscriberWhereClause } from "../services/subscriber-query-builder";
 import type {
 	GetSubscribersParams,
-	GetSubscribersReturn,
-	Subscriber,
+	GetSubscribersReturn
 } from "../types/subscriber.types";
-import { buildSubscriberWhereClause } from "../services/subscriber-query-builder";
 
 // Re-export pour compatibilité
 export {
-	GET_SUBSCRIBERS_SELECT,
-	SORT_OPTIONS,
-	GET_SUBSCRIBERS_DEFAULT_PER_PAGE,
-	SORT_LABELS,
+	GET_SUBSCRIBERS_DEFAULT_PER_PAGE, GET_SUBSCRIBERS_SELECT, SORT_LABELS, SORT_OPTIONS
 } from "../constants/subscriber.constants";
-export const GET_SUBSCRIBERS_SORT_FIELDS = Object.values(SORT_OPTIONS);
 export {
 	getSubscribersSchema,
 	subscriberFiltersSchema,
-	subscriberSortBySchema,
+	subscriberSortBySchema
 } from "../schemas/subscriber.schemas";
 export type {
 	GetSubscribersParams,
-	GetSubscribersReturn,
-	SubscriberFilters,
-	Subscriber,
+	GetSubscribersReturn, Subscriber, SubscriberFilters
 } from "../types/subscriber.types";
+export const GET_SUBSCRIBERS_SORT_FIELDS = Object.values(SORT_OPTIONS);
 
 // ============================================================================
 // MAIN FUNCTIONS

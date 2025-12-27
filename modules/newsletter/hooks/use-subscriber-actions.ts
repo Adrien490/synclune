@@ -2,10 +2,10 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { unsubscribeSubscriberAdmin } from "@/modules/newsletter/actions/admin/unsubscribe-subscriber-admin";
-import { resubscribeSubscriberAdmin } from "@/modules/newsletter/actions/admin/resubscribe-subscriber-admin";
-import { resendConfirmationAdmin } from "@/modules/newsletter/actions/admin/resend-confirmation-admin";
-import { deleteSubscriberAdmin } from "@/modules/newsletter/actions/admin/delete-subscriber-admin";
+import { unsubscribeSubscriberAdmin } from "@/modules/newsletter/actions/unsubscribe-subscriber-admin";
+import { resubscribeSubscriberAdmin } from "@/modules/newsletter/actions/resubscribe-subscriber-admin";
+import { resendConfirmationAdmin } from "@/modules/newsletter/actions/resend-confirmation-admin";
+import { deleteSubscriberAdmin } from "@/modules/newsletter/actions/delete-subscriber-admin";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 
 interface UseSubscriberActionsOptions {

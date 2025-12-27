@@ -1,6 +1,6 @@
 "use client";
 
-import { adjustSkuStock } from "@/modules/skus/actions/admin/adjust-sku-stock";
+import { adjustSkuStock } from "@/modules/skus/actions/adjust-sku-stock";
 import { useAppForm } from "@/shared/components/forms";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";

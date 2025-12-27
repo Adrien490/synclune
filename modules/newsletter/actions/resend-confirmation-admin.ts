@@ -3,16 +3,17 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/shared/lib/actions";
+import { sendNewsletterConfirmationEmail } from "@/shared/lib/email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { updateTag } from "next/cache";
-import { subscriberIdSchema } from "../../schemas/subscriber.schemas";
-import { getNewsletterInvalidationTags } from "../../constants/cache";
+import { randomUUID } from "crypto";
+import { subscriberIdSchema } from "../schemas/subscriber.schemas";
+import { NEWSLETTER_BASE_URL } from "../constants/urls.constants";
 
 /**
- * Server Action ADMIN pour réabonner un abonné newsletter désactivé
+ * Server Action ADMIN pour renvoyer l'email de confirmation newsletter
  */
-export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<ActionState> {
+export async function resendConfirmationAdmin(subscriberId: string): Promise<ActionState> {
 	try {
 		// 1. Validation de l'entrée
 		const validation = subscriberIdSchema.safeParse({ subscriberId });
@@ -30,7 +31,7 @@ export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
 			where: { id: subscriberId },
-			select: { id: true, email: true, status: true, confirmedAt: true },
+			select: { id: true, email: true, status: true },
 		});
 
 		if (!subscriber) {
@@ -43,35 +44,35 @@ export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<
 		if (subscriber.status === NewsletterStatus.CONFIRMED) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Cet abonné est déjà actif",
+				message: "Cet abonné a déjà confirmé son email et est actif",
 			};
 		}
 
-		// 4. Réabonner (uniquement si l'email était vérifié auparavant)
-		if (!subscriber.confirmedAt) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Cet abonné n'a jamais confirmé son email. Renvoyez plutôt l'email de confirmation.",
-			};
-		}
+		// 4. Régénérer un token de confirmation
+		const confirmationToken = randomUUID();
 
 		await prisma.newsletterSubscriber.update({
 			where: { id: subscriberId },
 			data: {
-				status: NewsletterStatus.CONFIRMED,
-				unsubscribedAt: null,
+				confirmationToken,
+				confirmationSentAt: new Date(),
 			},
 		});
 
-		// 5. Invalider le cache
-		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
+		// 5. Envoyer l'email de confirmation
+		const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
+
+		await sendNewsletterConfirmationEmail({
+			to: subscriber.email,
+			confirmationUrl,
+		});
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `${subscriber.email} a été réabonné`,
+			message: `Email de confirmation renvoyé à ${subscriber.email}`,
 		};
 	} catch (error) {
-		console.error("[RESUBSCRIBE_SUBSCRIBER_ADMIN] Erreur:", error);
+		console.error("[RESEND_CONFIRMATION_ADMIN] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
 			message: error instanceof Error ? error.message : "Une erreur est survenue",

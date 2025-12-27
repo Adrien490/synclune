@@ -5,8 +5,8 @@ import { requireAdmin } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
-import { subscriberIdSchema } from "../../schemas/subscriber.schemas";
-import { getNewsletterInvalidationTags } from "../../constants/cache";
+import { subscriberIdSchema } from "../schemas/subscriber.schemas";
+import { getNewsletterInvalidationTags } from "../constants/cache";
 
 /**
  * Server Action ADMIN pour supprimer définitivement un abonné newsletter

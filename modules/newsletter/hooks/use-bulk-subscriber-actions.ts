@@ -1,8 +1,8 @@
 "use client";
 
-import { bulkUnsubscribeSubscribers } from "@/modules/newsletter/actions/admin/bulk-unsubscribe-subscribers";
-import { bulkResubscribeSubscribers } from "@/modules/newsletter/actions/admin/bulk-resubscribe-subscribers";
-import { bulkDeleteSubscribers } from "@/modules/newsletter/actions/admin/bulk-delete-subscribers";
+import { bulkUnsubscribeSubscribers } from "@/modules/newsletter/actions/bulk-unsubscribe-subscribers";
+import { bulkResubscribeSubscribers } from "@/modules/newsletter/actions/bulk-resubscribe-subscribers";
+import { bulkDeleteSubscribers } from "@/modules/newsletter/actions/bulk-delete-subscribers";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useTransition } from "react";
