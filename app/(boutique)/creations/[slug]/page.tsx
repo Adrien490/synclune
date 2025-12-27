@@ -28,6 +28,16 @@ import { generateStructuredData } from "@/modules/products/utils/seo/generate-st
 
 import { ProductReviewsSection, ProductReviewsSectionSkeleton } from "@/modules/reviews/components/product-reviews-section";
 
+// Pre-genere les chemins des produits publics au build time
+export async function generateStaticParams() {
+	const { prisma } = await import("@/shared/lib/prisma");
+	const products = await prisma.product.findMany({
+		where: { status: "PUBLIC" },
+		select: { slug: true },
+	});
+	return products.map((p) => ({ slug: p.slug }));
+}
+
 type ProductPageParams = Promise<{ slug: string }>;
 type ProductSearchParams = Promise<{
 	color?: string;

@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**" },
       { protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
+      { protocol: "https", hostname: "ufs.sh", pathname: "/f/**" },
+      { protocol: "https", hostname: "uploadthing.com", pathname: "/**" },
+      { protocol: "https", hostname: "uploadthing-prod.s3.us-west-2.amazonaws.com", pathname: "/**" },
       { protocol: "https", hostname: "picsum.photos", pathname: "/**" },
       { protocol: "https", hostname: "avatars.githubusercontent.com", pathname: "/**" },
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },

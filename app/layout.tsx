@@ -167,12 +167,11 @@ export default async function RootLayout({
 	return (
 		<html lang="fr" data-scroll-behavior="smooth">
 			<head>
-				{/* Preconnect to Google Fonts for faster font loading */}
-				<link rel="preconnect" href="https://fonts.googleapis.com" />
-				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 				{/* Preconnect to UploadThing CDN for faster image loading */}
 				<link rel="dns-prefetch" href="https://utfs.io" />
 				<link rel="preconnect" href="https://utfs.io" crossOrigin="anonymous" />
+				<link rel="dns-prefetch" href="https://x1ain1wpub.ufs.sh" />
+				<link rel="preconnect" href="https://x1ain1wpub.ufs.sh" crossOrigin="anonymous" />
 				{/* Structured Data - SEO */}
 				<script
 					type="application/ld+json"

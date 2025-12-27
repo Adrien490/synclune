@@ -25,6 +25,16 @@ export type CollectionSearchParams = {
 import { generateCollectionMetadata } from "./_utils/generate-metadata";
 import { generateCollectionStructuredData } from "./_utils/generate-structured-data";
 
+// Pre-genere les chemins des collections publiques au build time
+export async function generateStaticParams() {
+	const { prisma } = await import("@/shared/lib/prisma");
+	const collections = await prisma.collection.findMany({
+		where: { status: "PUBLIC" },
+		select: { slug: true },
+	});
+	return collections.map((c) => ({ slug: c.slug }));
+}
+
 type CollectionPageProps = {
 	params: Promise<{ slug: string }>;
 	searchParams: Promise<CollectionSearchParams>;
