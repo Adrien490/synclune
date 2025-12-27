@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useEffectEvent } from "react";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
@@ -58,7 +58,16 @@ export function CheckoutForm({
 		!!form.state.values.shipping?.addressLine2
 	);
 
-	// Notifier le parent quand le pays change (via ref pour éviter boucle infinie)
+	// Effect Events pour notifier le parent sans causer de re-run quand les callbacks changent
+	const notifyCountryChange = useEffectEvent((country: ShippingCountry) => {
+		onCountryChange?.(country);
+	});
+
+	const notifyPostalCodeChange = useEffectEvent((postalCode: string) => {
+		onPostalCodeChange?.(postalCode);
+	});
+
+	// Notifier le parent quand le pays change
 	const lastCountryRef = useRef<ShippingCountry | undefined>(initialCountry as ShippingCountry | undefined);
 	const currentCountry = form.state.values.shipping?.country as ShippingCountry | undefined;
 
@@ -66,9 +75,9 @@ export function CheckoutForm({
 		const country = currentCountry || "FR";
 		if (country !== lastCountryRef.current) {
 			lastCountryRef.current = country;
-			onCountryChange?.(country);
+			notifyCountryChange(country);
 		}
-	}, [currentCountry, onCountryChange]);
+	}, [currentCountry]);
 
 	// Notifier le parent quand le code postal change (pour le calcul des frais Corse)
 	const initialPostalCode = form.state.values.shipping?.postalCode;
@@ -79,9 +88,9 @@ export function CheckoutForm({
 		const postalCode = currentPostalCode || "";
 		if (postalCode !== lastPostalCodeRef.current) {
 			lastPostalCodeRef.current = postalCode;
-			onPostalCodeChange?.(postalCode);
+			notifyPostalCodeChange(postalCode);
 		}
-	}, [currentPostalCode, onPostalCodeChange]);
+	}, [currentPostalCode]);
 
 	// Calculer le total
 	const subtotal = cart.items.reduce((sum, item) => {
