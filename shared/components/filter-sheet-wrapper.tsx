@@ -204,7 +204,7 @@ export function FilterSheetWrapper({
 									{applyButtonText}
 								</Button>
 								<SheetClose asChild>
-									<Button variant="ghost" className="w-full">
+									<Button variant="secondary" className="w-full">
 										{cancelButtonText}
 									</Button>
 								</SheetClose>

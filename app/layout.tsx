@@ -204,9 +204,7 @@ export default async function RootLayout({
 								<DialogStoreProvider>
 									<SheetStoreProvider>
 										<AlertDialogStoreProvider>
-											<main id="main-content">
-												{children}
-											</main>
+											{children}
 
 											<Suspense fallback={<CartSheetSkeleton />}>
 												<CartSheet cartPromise={getCart()} />
