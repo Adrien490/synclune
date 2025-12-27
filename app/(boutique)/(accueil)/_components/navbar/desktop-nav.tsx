@@ -92,7 +92,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 															{child.imageUrl ? (
 																<Image
 																	src={child.imageUrl}
-																	alt=""
+																	alt={`Collection ${child.label}`}
 																	width={64}
 																	height={64}
 																	className="w-16 h-16 object-cover rounded-md bg-secondary/20 shrink-0"
