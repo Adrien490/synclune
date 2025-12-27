@@ -1,6 +1,8 @@
 import { BUSINESS_INFO } from "@/shared/constants/seo-config";
 import { ImageResponse } from "next/og";
 
+export const dynamic = "force-static";
+
 // Image metadata
 export const alt = "Synclune - Créatrice de bijoux faits main à Nantes";
 export const size = {

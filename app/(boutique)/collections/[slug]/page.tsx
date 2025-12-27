@@ -1,17 +1,19 @@
-import { CollectionStatus } from "@/app/generated/prisma/client";
 import type { ProductFiltersSearchParams } from "@/app/(boutique)/produits/page";
-import { PageHeader } from "@/shared/components/page-header";
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
+import type { SortField } from "@/modules/products/data/get-products";
 import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
+	getProducts,
 } from "@/modules/products/data/get-products";
-import { getProducts } from "@/modules/products/data/get-products";
-import type { SortField } from "@/modules/products/data/get-products";
+import { PageHeader } from "@/shared/components/page-header";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { parseFilters } from "../_utils/params";
+import { generateCollectionMetadata } from "./_utils/generate-metadata";
+import { generateCollectionStructuredData } from "./_utils/generate-structured-data";
 
 /**
  * Collection page search params (pagination only, no search or sort filters)
@@ -22,8 +24,6 @@ export type CollectionSearchParams = {
 	perPage?: string;
 	sortBy?: string;
 } & Omit<ProductFiltersSearchParams, "collectionId" | "collectionSlug">;
-import { generateCollectionMetadata } from "./_utils/generate-metadata";
-import { generateCollectionStructuredData } from "./_utils/generate-structured-data";
 
 // Pre-genere les chemins des collections publiques au build time
 export async function generateStaticParams() {
