@@ -38,6 +38,8 @@ interface FilterFormData {
 	productTypes: string[];
 	priceRange: [number, number];
 	ratingMin: number | null;
+	inStockOnly: boolean;
+	onSale: boolean;
 }
 
 export function ProductFilterSheet({
@@ -61,6 +63,8 @@ export function ProductFilterSheet({
 		let priceMin = DEFAULT_PRICE_RANGE[0];
 		let priceMax = DEFAULT_PRICE_RANGE[1];
 		let ratingMin: number | null = null;
+		let inStockOnly = false;
+		let onSale = false;
 
 		searchParams.forEach((value, key) => {
 			if (key === "color") {
@@ -76,6 +80,10 @@ export function ProductFilterSheet({
 			} else if (key === "rating") {
 				const val = Number(value);
 				if (val >= 1 && val <= 5) ratingMin = val;
+			} else if (key === "stockStatus") {
+				inStockOnly = value === "in_stock";
+			} else if (key === "onSale") {
+				onSale = value === "true" || value === "1";
 			}
 		});
 
@@ -85,6 +93,8 @@ export function ProductFilterSheet({
 			productTypes: [...new Set(types)],
 			priceRange: [priceMin, priceMax],
 			ratingMin,
+			inStockOnly,
+			onSale,
 		};
 	};
 
@@ -111,7 +121,7 @@ export function ProductFilterSheet({
 		const params = new URLSearchParams(searchParams.toString());
 
 		// Nettoyer tous les anciens filtres
-		const filterKeys = ["color", "material", "type", "priceMin", "priceMax", "rating"];
+		const filterKeys = ["color", "material", "type", "priceMin", "priceMax", "rating", "stockStatus", "onSale"];
 		filterKeys.forEach((key) => {
 			params.delete(key);
 		});
@@ -163,6 +173,16 @@ export function ProductFilterSheet({
 			params.set("rating", formData.ratingMin.toString());
 		}
 
+		// Disponibilité
+		if (formData.inStockOnly) {
+			params.set("stockStatus", "in_stock");
+		}
+
+		// Promotions
+		if (formData.onSale) {
+			params.set("onSale", "true");
+		}
+
 		startTransition(() => {
 			router.push(`${pathname}?${params.toString()}`);
 			// Scroll to top après application des filtres
@@ -178,12 +198,14 @@ export function ProductFilterSheet({
 			productTypes: [],
 			priceRange: [DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]],
 			ratingMin: null,
+			inStockOnly: false,
+			onSale: false,
 		};
 
 		form.reset(defaultValues);
 
 		const params = new URLSearchParams(searchParams.toString());
-		const filterKeys = ["color", "material", "type", "priceMin", "priceMax", "rating"];
+		const filterKeys = ["color", "material", "type", "priceMin", "priceMax", "rating", "stockStatus", "onSale"];
 		filterKeys.forEach((key) => {
 			params.delete(key);
 		});
@@ -219,6 +241,10 @@ export function ProductFilterSheet({
 				if (key === "priceMin") count += 1;
 			} else if (key === "rating") {
 				count += 1;
+			} else if (key === "stockStatus") {
+				count += 1;
+			} else if (key === "onSale") {
+				count += 1;
 			}
 		});
 
@@ -231,6 +257,9 @@ export function ProductFilterSheet({
 	// Determiner les sections ouvertes par defaut (types + sections avec filtres actifs)
 	const defaultOpenSections = (() => {
 		const sections = ["types"];
+		if (initialValues.inStockOnly || initialValues.onSale) {
+			sections.unshift("availability");
+		}
 		if (initialValues.colors.length > 0 && !sections.includes("colors")) {
 			sections.push("colors");
 		}
@@ -274,6 +303,53 @@ export function ProductFilterSheet({
 					className="w-full"
 					aria-label="Filtres de recherche"
 				>
+					{/* Disponibilité */}
+					<AccordionItem value="availability">
+						<AccordionTrigger className="hover:no-underline">
+							<div className="flex items-center gap-2">
+								<span>Disponibilité</span>
+								{(initialValues.inStockOnly || initialValues.onSale) && (
+									<Badge
+										variant="secondary"
+										className="h-5 px-1.5 text-xs font-semibold"
+									>
+										{(initialValues.inStockOnly ? 1 : 0) + (initialValues.onSale ? 1 : 0)}
+									</Badge>
+								)}
+							</div>
+						</AccordionTrigger>
+						<AccordionContent>
+							<div className="space-y-1">
+								<form.Field name="inStockOnly">
+									{(field) => (
+										<CheckboxFilterItem
+											id="filter-in-stock"
+											checked={field.state.value}
+											onCheckedChange={(checked) => {
+												field.handleChange(checked === true);
+											}}
+										>
+											En stock uniquement
+										</CheckboxFilterItem>
+									)}
+								</form.Field>
+								<form.Field name="onSale">
+									{(field) => (
+										<CheckboxFilterItem
+											id="filter-on-sale"
+											checked={field.state.value}
+											onCheckedChange={(checked) => {
+												field.handleChange(checked === true);
+											}}
+										>
+											En promotion
+										</CheckboxFilterItem>
+									)}
+								</form.Field>
+							</div>
+						</AccordionContent>
+					</AccordionItem>
+
 					{/* Types de produits */}
 					{productTypes.length > 0 && (
 						<form.Field name="productTypes" mode="array">

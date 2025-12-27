@@ -4,6 +4,7 @@ import { prisma } from "@/shared/lib/prisma";
 import {
 	FUZZY_MAX_RESULTS,
 	FUZZY_SIMILARITY_THRESHOLD,
+	FUZZY_TIMEOUT_MS,
 	RELEVANCE_WEIGHTS,
 } from "../constants/search.constants";
 
@@ -55,52 +56,67 @@ export async function fuzzySearchProductIds(
 	const term = searchTerm.trim();
 	if (!term) return [];
 
-	// Construire les paramètres de recherche
-	const likeTerm = `%${term}%`;
+	try {
+		// Construire les paramètres de recherche
+		const likeTerm = `%${term}%`;
 
-	// Configurer le seuil de similarité pour cette session
-	// L'opérateur % retourne TRUE si similarity > pg_trgm.similarity_threshold
-	// Validation explicite pour éviter toute injection via $executeRawUnsafe
-	const safeThreshold = Math.max(0, Math.min(1, Number(threshold)));
-	if (!Number.isFinite(safeThreshold)) {
-		throw new Error("Invalid similarity threshold");
+		// Configurer le seuil de similarité pour cette session
+		// L'opérateur % retourne TRUE si similarity > pg_trgm.similarity_threshold
+		// Note: SET ne supporte pas les prepared statements dans PostgreSQL,
+		// donc on valide strictement le threshold avant interpolation
+		const safeThreshold = Math.max(0, Math.min(1, Number(threshold)));
+		if (!Number.isFinite(safeThreshold)) {
+			return [];
+		}
+		// SECURITY: $executeRawUnsafe car SET ne supporte pas les prepared statements
+		// Le threshold est validé numériquement ci-dessus (pas d'injection possible)
+		await prisma.$executeRawUnsafe(
+			`SET pg_trgm.similarity_threshold = ${safeThreshold}`
+		);
+
+		// Requête SQL avec pg_trgm + timeout
+		// Utilise l'opérateur % qui exploite l'index GIN pour de meilleures performances
+		const queryPromise = prisma.$queryRaw<FuzzySearchResult[]>`
+			SELECT
+				p.id as "productId",
+				GREATEST(
+					-- Match exact dans le titre (priorité maximale)
+					CASE WHEN p.title ILIKE ${likeTerm}
+						THEN ${RELEVANCE_WEIGHTS.exactTitle}::float
+						ELSE similarity(p.title, ${term}) * ${RELEVANCE_WEIGHTS.fuzzyTitle}::float
+					END,
+					-- Match exact dans la description
+					CASE WHEN COALESCE(p.description, '') ILIKE ${likeTerm}
+						THEN ${RELEVANCE_WEIGHTS.exactDescription}::float
+						ELSE COALESCE(similarity(p.description, ${term}), 0) * ${RELEVANCE_WEIGHTS.fuzzyDescription}::float
+					END
+				) as score
+			FROM "Product" p
+			WHERE
+				p."deletedAt" IS NULL
+				${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
+				AND (
+					-- Match exact (substring)
+					p.title ILIKE ${likeTerm}
+					OR COALESCE(p.description, '') ILIKE ${likeTerm}
+					-- Match fuzzy avec opérateur % (utilise l'index GIN)
+					OR p.title % ${term}
+					OR COALESCE(p.description, '') % ${term}
+				)
+			ORDER BY score DESC
+			LIMIT ${limit}
+		`;
+
+		// Timeout pour éviter les requêtes longues
+		const timeoutPromise = new Promise<never>((_, reject) =>
+			setTimeout(() => reject(new Error("Fuzzy search timeout")), FUZZY_TIMEOUT_MS)
+		);
+
+		const results = await Promise.race([queryPromise, timeoutPromise]);
+
+		return results.map((r) => r.productId);
+	} catch (error) {
+		console.error("[fuzzy-search] Error:", { term: searchTerm, error });
+		return []; // Fallback: recherche exacte prendra le relais
 	}
-	await prisma.$executeRawUnsafe(
-		`SET pg_trgm.similarity_threshold = ${safeThreshold}`
-	);
-
-	// Requête SQL avec pg_trgm
-	// Utilise l'opérateur % qui exploite l'index GIN pour de meilleures performances
-	const results = await prisma.$queryRaw<FuzzySearchResult[]>`
-		SELECT
-			p.id as "productId",
-			GREATEST(
-				-- Match exact dans le titre (priorité maximale)
-				CASE WHEN p.title ILIKE ${likeTerm}
-					THEN ${RELEVANCE_WEIGHTS.exactTitle}::float
-					ELSE similarity(p.title, ${term}) * ${RELEVANCE_WEIGHTS.fuzzyTitle}::float
-				END,
-				-- Match exact dans la description
-				CASE WHEN COALESCE(p.description, '') ILIKE ${likeTerm}
-					THEN ${RELEVANCE_WEIGHTS.exactDescription}::float
-					ELSE COALESCE(similarity(p.description, ${term}), 0) * ${RELEVANCE_WEIGHTS.fuzzyDescription}::float
-				END
-			) as score
-		FROM "Product" p
-		WHERE
-			p."deletedAt" IS NULL
-			${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
-			AND (
-				-- Match exact (substring)
-				p.title ILIKE ${likeTerm}
-				OR COALESCE(p.description, '') ILIKE ${likeTerm}
-				-- Match fuzzy avec opérateur % (utilise l'index GIN)
-				OR p.title % ${term}
-				OR COALESCE(p.description, '') % ${term}
-			)
-		ORDER BY score DESC
-		LIMIT ${limit}
-	`;
-
-	return results.map((r) => r.productId);
 }

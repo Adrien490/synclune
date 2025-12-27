@@ -11,7 +11,10 @@ import {
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
 import { SearchX } from "lucide-react";
+import Link from "next/link";
 import { use } from "react";
+
+import { SpellSuggestion } from "./spell-suggestion";
 
 interface ProductListProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -22,7 +25,7 @@ export function ProductList({
 	productsPromise,
 	perPage,
 }: ProductListProps) {
-	const { products, pagination, totalCount } = use(productsPromise);
+	const { products, pagination, totalCount, suggestion } = use(productsPromise);
 	const wishlistProductIds = use(getWishlistProductIds());
 
 	// Afficher le composant Empty si aucun produit
@@ -36,11 +39,15 @@ export function ProductList({
 					<EmptyTitle>Aucun produit trouvé</EmptyTitle>
 				</EmptyHeader>
 				<EmptyContent className="space-y-3">
-					<p className="text-sm text-muted-foreground">
-						Essaie d'ajuster tes filtres pour voir plus de créations.
-					</p>
+					{suggestion ? (
+						<SpellSuggestion suggestion={suggestion} />
+					) : (
+						<p className="text-sm text-muted-foreground">
+							Essaie d'ajuster tes filtres pour voir plus de créations.
+						</p>
+					)}
 					<Button asChild variant="primary">
-						<a href="/produits">Effacer les filtres</a>
+						<Link href="/produits">Effacer les filtres</Link>
 					</Button>
 				</EmptyContent>
 			</Empty>
@@ -52,6 +59,11 @@ export function ProductList({
 	// Layout Grid par défaut
 	return (
 		<div className="space-y-6">
+			{/* Suggestion de correction si peu de résultats */}
+			{suggestion && (
+				<SpellSuggestion suggestion={suggestion} />
+			)}
+
 			{/* Compteur de résultats - annoncé aux lecteurs d'écran lors des changements */}
 			<div className="flex items-center justify-between">
 				<p

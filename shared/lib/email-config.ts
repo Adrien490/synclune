@@ -59,4 +59,5 @@ export const EMAIL_SUBJECTS = {
 	CUSTOMIZATION_CONFIRMATION: "Ta demande de personnalisation a été reçue - Synclune",
 	BACK_IN_STOCK: "Bonne nouvelle ! Votre produit est de retour en stock - Synclune",
 	REVIEW_REQUEST: "Ton avis compte ! - Synclune",
+	REVIEW_RESPONSE: "Nous avons répondu à ton avis - Synclune",
 } as const;

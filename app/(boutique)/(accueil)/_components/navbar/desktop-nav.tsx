@@ -14,6 +14,7 @@ import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowRight } from "lucide-react";
 import { COLLECTION_IMAGE_SIZES, COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-sizes.constants";
 
 /**
@@ -143,6 +144,18 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 												</li>
 											);
 										})}
+										{/* CTA View All - Baymard UX */}
+										<li className="border-t border-border/30 mt-2 pt-2">
+											<NavigationMenuLink asChild>
+												<Link
+													href="/collections"
+													className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+												>
+													<ArrowRight className="h-4 w-4" aria-hidden="true" />
+													Voir toutes les collections
+												</Link>
+											</NavigationMenuLink>
+										</li>
 									</ul>
 								</NavigationMenuContent>
 							</NavigationMenuItem>

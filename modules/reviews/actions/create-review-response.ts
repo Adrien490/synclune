@@ -10,6 +10,7 @@ import {
 	validationError,
 	handleActionError,
 } from "@/shared/lib/actions"
+import { sendReviewResponseEmail } from "@/shared/lib/email"
 import type { ActionState } from "@/shared/types/server-action"
 
 import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"
@@ -53,8 +54,21 @@ export async function createReviewResponse(
 			select: {
 				id: true,
 				productId: true,
+				content: true,
 				response: {
 					select: { id: true },
+				},
+				user: {
+					select: {
+						email: true,
+						name: true,
+					},
+				},
+				product: {
+					select: {
+						title: true,
+						slug: true,
+					},
 				},
 			},
 		})
@@ -84,6 +98,20 @@ export async function createReviewResponse(
 		const tags = getReviewModerationTags(review.productId, reviewId)
 		tags.forEach((tag) => updateTag(tag))
 		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST)
+
+		// 6. Envoyer l'email de notification au client
+		if (review.user.email) {
+			const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"
+			await sendReviewResponseEmail({
+				to: review.user.email,
+				customerName: review.user.name?.split(" ")[0] || "Cliente",
+				productTitle: review.product.title,
+				reviewContent: review.content,
+				responseContent: content,
+				responseAuthorName: user.name || "Équipe Synclune",
+				productUrl: `${baseUrl}/creations/${review.product.slug}`,
+			})
+		}
 
 		return success("Réponse publiée avec succès", { id: response.id })
 	} catch (e) {

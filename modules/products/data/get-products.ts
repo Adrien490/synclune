@@ -19,6 +19,10 @@ import {
 } from "../services/product-query-builder";
 import { getBestsellerIds } from "../services/bestseller-query";
 import { getPopularProductIds } from "../services/popularity-query";
+import {
+	getSpellSuggestion,
+	SUGGESTION_THRESHOLD_RESULTS,
+} from "../services/spell-suggestion";
 import { cacheProducts, PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { serializeProduct } from "../utils/serialize-product";
 
@@ -93,7 +97,25 @@ export async function getProducts(
 		popularIds = await getPopularProductIds(popularLimit);
 	}
 
-	return fetchProducts(params, searchResult, bestsellerIds, popularIds);
+	// Récupérer les produits
+	const result = await fetchProducts(params, searchResult, bestsellerIds, popularIds);
+
+	// Proposer une suggestion si peu ou pas de résultats avec une recherche active
+	// Ne pas suggérer pour les admins (ils recherchent souvent des SKU/ID)
+	if (
+		params.search &&
+		!admin &&
+		result.totalCount <= SUGGESTION_THRESHOLD_RESULTS
+	) {
+		const suggestion = await getSpellSuggestion(params.search, {
+			status: params.status,
+		});
+		if (suggestion) {
+			return { ...result, suggestion: suggestion.term };
+		}
+	}
+
+	return result;
 }
 
 /**
@@ -235,6 +257,19 @@ async function fetchProducts(
 		} else {
 			// Tri selon le critère demandé par l'utilisateur
 			sortedProducts = sortProducts(allProducts as Product[], params.sortBy);
+		}
+
+		// Filtrer les produits en promotion si demandé
+		// Un produit est en promo si au moins un SKU actif a compareAtPrice > priceInclTax
+		if (params.filters?.onSale === true) {
+			sortedProducts = sortedProducts.filter((product) =>
+				product.skus.some(
+					(sku) =>
+						sku.isActive &&
+						sku.compareAtPrice !== null &&
+						sku.compareAtPrice > sku.priceInclTax
+				)
+			);
 		}
 
 		// Pagination manuelle

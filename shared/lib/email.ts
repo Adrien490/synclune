@@ -23,6 +23,7 @@ import { RevertShippingNotificationEmail } from "@/emails/revert-shipping-notifi
 import { BackInStockEmail } from "@/emails/back-in-stock-email";
 import { AdminContactEmail } from "@/emails/admin-contact-email";
 import { ReviewRequestEmail } from "@/emails/review-request-email";
+import { ReviewResponseEmail } from "@/emails/review-response-email";
 import { EMAIL_FROM, EMAIL_SUBJECTS, EMAIL_ADMIN } from "@/shared/lib/email-config";
 
 // Initialiser le client Resend
@@ -1242,6 +1243,58 @@ export async function sendReviewRequestEmail({
 		return { success: true, data };
 	} catch (error) {
 		console.error("[EMAIL] Exception sending review request:", error);
+		return { success: false, error };
+	}
+}
+
+/**
+ * Envoie un email au client quand un admin répond à son avis
+ */
+export async function sendReviewResponseEmail({
+	to,
+	customerName,
+	productTitle,
+	reviewContent,
+	responseContent,
+	responseAuthorName,
+	productUrl,
+}: {
+	to: string;
+	customerName: string;
+	productTitle: string;
+	reviewContent: string;
+	responseContent: string;
+	responseAuthorName: string;
+	productUrl: string;
+}) {
+	try {
+		const emailHtml = await render(
+			ReviewResponseEmail({
+				customerName,
+				productTitle,
+				reviewContent,
+				responseContent,
+				responseAuthorName,
+				productUrl,
+			})
+		);
+
+		const { data, error } = await resend.emails.send({
+			from: EMAIL_FROM,
+			to,
+			subject: EMAIL_SUBJECTS.REVIEW_RESPONSE,
+			html: emailHtml,
+		});
+
+		if (error) {
+			console.error("[EMAIL] Error sending review response:", error);
+			return { success: false, error };
+		}
+
+		console.log(`✅ [EMAIL] Review response sent to ${to} for ${productTitle}`);
+		return { success: true, data };
+	} catch (error) {
+		console.error("[EMAIL] Exception sending review response:", error);
 		return { success: false, error };
 	}
 }

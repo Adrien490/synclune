@@ -84,6 +84,18 @@ export const parseFilters = (params: ProductSearchParams): ProductFilters => {
 					filters.ratingMin = Math.floor(ratingValue);
 				}
 			}
+			// Stock status filter
+			else if (key === "stockStatus") {
+				if (filterValue === "in_stock" || filterValue === "out_of_stock") {
+					filters.stockStatus = filterValue;
+				}
+			}
+			// On sale filter
+			else if (key === "onSale") {
+				if (filterValue === "true" || filterValue === "1") {
+					filters.onSale = true;
+				}
+			}
 			// String fields
 			else if (key === "collectionId") {
 				filters.collectionId = filterValue;

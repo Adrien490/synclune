@@ -31,6 +31,34 @@ if (process.env.NODE_ENV !== "production") {
 
 export { prisma };
 
+// ============================================================================
+// VÉRIFICATION EXTENSION pg_trgm
+// ============================================================================
+
+/**
+ * Vérifie que l'extension pg_trgm est installée (une seule fois au démarrage)
+ * Nécessaire pour la recherche fuzzy et les suggestions orthographiques
+ */
+async function verifyPgTrgmExtension() {
+	try {
+		const result = await prisma.$queryRaw<{ extname: string }[]>`
+			SELECT extname FROM pg_extension WHERE extname = 'pg_trgm'
+		`;
+		if (result.length === 0) {
+			console.warn(
+				"[Prisma] Extension pg_trgm non installée - recherche fuzzy désactivée"
+			);
+		}
+	} catch (error) {
+		console.error("[Prisma] Erreur vérification pg_trgm:", error);
+	}
+}
+
+// Exécuter en dev uniquement (éviter ralentissement cold start en prod)
+if (process.env.NODE_ENV === "development") {
+	verifyPgTrgmExtension();
+}
+
 /**
  * Helper pour filtrer les enregistrements soft-deleted
  * À utiliser dans les clauses `where` des requêtes Prisma

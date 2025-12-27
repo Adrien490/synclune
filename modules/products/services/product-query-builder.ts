@@ -1,8 +1,10 @@
 import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
 import type { GetProductsParams, ProductFilters } from "../types/product.types";
 
-import { FUZZY_MIN_LENGTH } from "../constants/search.constants";
+import { FUZZY_MIN_LENGTH, SEARCH_RATE_LIMITS } from "../constants/search.constants";
 import { fuzzySearchProductIds } from "./fuzzy-search";
+import { getRateLimitId } from "@/shared/lib/actions/rate-limit";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 
 // ============================================================================
 // TYPES
@@ -25,6 +27,8 @@ export type SearchResult = {
  * - >= 3 caractères : fuzzy sur title/description + exact sur autres champs
  * - < 3 caractères : exact seulement sur tous les champs
  *
+ * Protection rate limiting intégrée (30 req/min auth, 15 req/min guest)
+ *
  * @param search - Terme de recherche
  * @param options - Options (status pour filtrer les produits)
  * @returns Résultat de recherche avec IDs fuzzy et conditions exactes
@@ -35,6 +39,31 @@ export async function buildSearchConditions(
 ): Promise<SearchResult> {
 	const term = search.trim();
 	if (!term) return { fuzzyIds: null, exactConditions: [] };
+
+	// Rate limiting: protège contre le scraping et les abus
+	try {
+		const rateLimitId = await getRateLimitId();
+		const isAuthenticated = rateLimitId.startsWith("user:");
+		const limits = isAuthenticated
+			? SEARCH_RATE_LIMITS.authenticated
+			: SEARCH_RATE_LIMITS.guest;
+
+		const rateLimitResult = checkRateLimit(`search:${rateLimitId}`, limits);
+		if (!rateLimitResult.success) {
+			// Fallback silencieux: retourne recherche exacte seulement
+			// L'utilisateur verra moins de résultats mais pas d'erreur visible
+			console.warn("[search] Rate limit exceeded:", {
+				identifier: rateLimitId,
+				retryAfter: rateLimitResult.retryAfter,
+			});
+			return {
+				fuzzyIds: null,
+				exactConditions: buildFullExactSearchConditions(term),
+			};
+		}
+	} catch {
+		// En cas d'erreur rate limit, continuer sans bloquer
+	}
 
 	// Recherche courte (< 3 chars) : exact seulement sur tous les champs
 	if (term.length < FUZZY_MIN_LENGTH) {
@@ -172,9 +201,9 @@ export function buildProductFilterConditions(
 	if (!filters) return conditions;
 
 	if (filters.status !== undefined) {
-		const statuses = Array.isArray(filters.status)
-			? filters.status
-			: [filters.status];
+		const statuses = (
+			Array.isArray(filters.status) ? filters.status : [filters.status]
+		).filter(Boolean);
 		if (statuses.length === 1) {
 			conditions.push({ status: statuses[0] });
 		} else if (statuses.length > 1) {
@@ -183,7 +212,9 @@ export function buildProductFilterConditions(
 	}
 
 	if (filters.type !== undefined) {
-		const types = Array.isArray(filters.type) ? filters.type : [filters.type];
+		const types = (
+			Array.isArray(filters.type) ? filters.type : [filters.type]
+		).filter(Boolean);
 		if (types.length === 1) {
 			conditions.push({ type: { slug: types[0] } });
 		} else if (types.length > 1) {
@@ -192,9 +223,9 @@ export function buildProductFilterConditions(
 	}
 
 	if (filters.color !== undefined) {
-		const colors = Array.isArray(filters.color)
-			? filters.color
-			: [filters.color];
+		const colors = (
+			Array.isArray(filters.color) ? filters.color : [filters.color]
+		).filter(Boolean);
 		if (colors.length === 1) {
 			conditions.push({
 				skus: { some: { isActive: true, color: { slug: colors[0] } } },
@@ -207,9 +238,9 @@ export function buildProductFilterConditions(
 	}
 
 	if (filters.material !== undefined) {
-		const materials = Array.isArray(filters.material)
-			? filters.material
-			: [filters.material];
+		const materials = (
+			Array.isArray(filters.material) ? filters.material : [filters.material]
+		).filter(Boolean);
 		if (materials.length === 1) {
 			conditions.push({
 				skus: { some: { isActive: true, material: { slug: materials[0] } } },
@@ -222,9 +253,11 @@ export function buildProductFilterConditions(
 	}
 
 	if (filters.collectionId !== undefined) {
-		const collectionIds = Array.isArray(filters.collectionId)
-			? filters.collectionId
-			: [filters.collectionId];
+		const collectionIds = (
+			Array.isArray(filters.collectionId)
+				? filters.collectionId
+				: [filters.collectionId]
+		).filter(Boolean);
 		if (collectionIds.length === 1) {
 			conditions.push({
 				collections: { some: { collectionId: collectionIds[0] } },
@@ -237,9 +270,11 @@ export function buildProductFilterConditions(
 	}
 
 	if (filters.collectionSlug !== undefined) {
-		const collectionSlugs = Array.isArray(filters.collectionSlug)
-			? filters.collectionSlug
-			: [filters.collectionSlug];
+		const collectionSlugs = (
+			Array.isArray(filters.collectionSlug)
+				? filters.collectionSlug
+				: [filters.collectionSlug]
+		).filter(Boolean);
 		if (collectionSlugs.length === 1) {
 			conditions.push({
 				collections: { some: { collection: { slug: collectionSlugs[0] } } },
@@ -251,30 +286,37 @@ export function buildProductFilterConditions(
 		}
 	}
 
-	if (
-		typeof filters.priceMin === "number" &&
-		typeof filters.priceMax === "number"
-	) {
+	// Validation bounds: prix doit etre >= 0
+	const validPriceMin =
+		typeof filters.priceMin === "number" && filters.priceMin >= 0
+			? filters.priceMin
+			: undefined;
+	const validPriceMax =
+		typeof filters.priceMax === "number" && filters.priceMax >= 0
+			? filters.priceMax
+			: undefined;
+
+	if (validPriceMin !== undefined && validPriceMax !== undefined) {
 		conditions.push({
 			skus: {
 				some: {
 					isActive: true,
-					priceInclTax: { gte: filters.priceMin, lte: filters.priceMax },
+					priceInclTax: { gte: validPriceMin, lte: validPriceMax },
 				},
 			},
 		});
 	} else {
-		if (typeof filters.priceMin === "number") {
+		if (validPriceMin !== undefined) {
 			conditions.push({
 				skus: {
-					some: { isActive: true, priceInclTax: { gte: filters.priceMin } },
+					some: { isActive: true, priceInclTax: { gte: validPriceMin } },
 				},
 			});
 		}
-		if (typeof filters.priceMax === "number") {
+		if (validPriceMax !== undefined) {
 			conditions.push({
 				skus: {
-					some: { isActive: true, priceInclTax: { lte: filters.priceMax } },
+					some: { isActive: true, priceInclTax: { lte: validPriceMax } },
 				},
 			});
 		}
@@ -320,8 +362,12 @@ export function buildProductFilterConditions(
 		}
 	}
 
-	// Rating filter (minimum average rating)
-	if (typeof filters.ratingMin === "number") {
+	// Rating filter (minimum average rating, 0-5)
+	if (
+		typeof filters.ratingMin === "number" &&
+		filters.ratingMin >= 0 &&
+		filters.ratingMin <= 5
+	) {
 		conditions.push({
 			reviewStats: {
 				averageRating: { gte: filters.ratingMin },

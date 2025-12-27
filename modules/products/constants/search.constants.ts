@@ -23,6 +23,18 @@ export const FUZZY_MIN_LENGTH = 3;
 export const FUZZY_MAX_RESULTS = 200;
 
 /**
+ * Timeout pour les requêtes fuzzy (ms)
+ * Évite les requêtes longues sur gros catalogues
+ */
+export const FUZZY_TIMEOUT_MS = 2000;
+
+/**
+ * Timeout pour les suggestions orthographiques (ms)
+ * Moins critique que la recherche principale
+ */
+export const SPELL_SUGGESTION_TIMEOUT_MS = 1500;
+
+/**
  * Poids de pertinence par type de correspondance
  * Utilisés pour trier les résultats par pertinence
  */
@@ -35,4 +47,19 @@ export const RELEVANCE_WEIGHTS = {
 	exactDescription: 3,
 	/** Match fuzzy (trigram) dans la description */
 	fuzzyDescription: 2,
+} as const;
+
+// ============================================================================
+// RATE LIMITING
+// ============================================================================
+
+/**
+ * Limites de requêtes pour la recherche
+ * Protège contre le scraping et les abus
+ */
+export const SEARCH_RATE_LIMITS = {
+	/** Limite pour utilisateurs authentifiés */
+	authenticated: { limit: 30, windowMs: 60_000 },
+	/** Limite pour visiteurs non authentifiés */
+	guest: { limit: 15, windowMs: 60_000 },
 } as const;
