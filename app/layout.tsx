@@ -177,7 +177,7 @@ export default async function RootLayout({
 				/>
 			</head>
 			<body
-				className={`${inter.className} ${crimsonPro.variable} ${jetBrainsMono.variable} antialiased`}
+				className={`${inter.variable} ${inter.className} ${crimsonPro.variable} ${jetBrainsMono.variable} antialiased`}
 			>
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SystemBanner
