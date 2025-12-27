@@ -8,14 +8,27 @@ import { CollectionsSectionSkeleton } from "@/modules/collections/components/col
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
-import { NewsletterSection } from "@/modules/newsletter/components/newsletter-section";
 import { SparklesDivider } from "@/shared/components/section-divider";
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
 import { CreativeProcess } from "./_components/creative-process";
-import { FaqSection } from "./_components/faq-section";
 import { Hero } from "./_components/hero";
+
+// Lazy load Client Components below the fold
+const FaqSection = dynamic(
+	() => import("./_components/faq-section").then((mod) => mod.FaqSection),
+	{ ssr: true } // Garder SSR pour le JSON-LD SEO
+);
+
+const NewsletterSection = dynamic(
+	() =>
+		import("@/modules/newsletter/components/newsletter-section").then(
+			(mod) => mod.NewsletterSection
+		),
+	{ ssr: true }
+);
 
 export const metadata: Metadata = {
 	title: {

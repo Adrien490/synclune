@@ -8,7 +8,14 @@ import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "@/shared/hooks";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
-import MediaLightbox from "@/modules/media/components/media-lightbox";
+import dynamic from "next/dynamic";
+import { MediaLightboxSkeleton } from "@/shared/components/skeletons/lazy-loading";
+
+// Lazy loading - lightbox charge uniquement a l'ouverture
+const MediaLightbox = dynamic(
+	() => import("@/modules/media/components/media-lightbox"),
+	{ ssr: false, loading: () => <MediaLightboxSkeleton /> }
+);
 import { useLightbox } from "@/modules/media/hooks/use-lightbox";
 import { usePrefetchImages } from "@/modules/media/hooks/use-image-prefetch";
 import { usePrefetchVideos } from "@/modules/media/hooks/use-video-prefetch";

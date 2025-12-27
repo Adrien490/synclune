@@ -8,7 +8,14 @@ import type { ProductSku } from "@/modules/products/types/product-services.types
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import type { Size } from "@/modules/skus/types/sku-selector.types";
-import { SizeGuideDialog } from "./size-guide-dialog";
+import dynamic from "next/dynamic";
+import { SizeGuideDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
+
+// Lazy loading - dialog charge uniquement a l'ouverture
+const SizeGuideDialog = dynamic(
+	() => import("./size-guide-dialog").then((mod) => mod.SizeGuideDialog),
+	{ loading: () => <SizeGuideDialogSkeleton /> }
+);
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { Check } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";

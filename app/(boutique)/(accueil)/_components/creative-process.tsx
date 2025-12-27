@@ -7,9 +7,17 @@ import { STEP_COLORS } from "@/shared/constants/process-steps";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ParallaxImage } from "./parallax-image";
-import { ScrollProgressLine } from "./scroll-progress-line";
+
+// Lazy load client components (code-split framer-motion)
+const ParallaxImage = dynamic(() =>
+	import("./parallax-image").then((mod) => mod.ParallaxImage)
+);
+
+const ScrollProgressLine = dynamic(() =>
+	import("./scroll-progress-line").then((mod) => mod.ScrollProgressLine)
+);
 
 interface ProcessStep {
 	id: string;

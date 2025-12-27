@@ -42,7 +42,7 @@ export { prisma };
 async function verifyPgTrgmExtension() {
 	try {
 		const result = await prisma.$queryRaw<{ extname: string }[]>`
-			SELECT extname FROM pg_extension WHERE extname = 'pg_trgm'
+			SELECT extname::text FROM pg_extension WHERE extname = 'pg_trgm'
 		`;
 		if (result.length === 0) {
 			console.warn(

@@ -4,7 +4,22 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { Button } from "@/shared/components/ui/button";
-import { ProductTypeFormDialog } from "@/modules/product-types/components/product-type-form-dialog";
+import dynamic from "next/dynamic";
+import { ProductTypeFormDialogSkeleton, AlertDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
+
+// Lazy loading - dialogs charges uniquement a l'ouverture
+const ProductTypeFormDialog = dynamic(
+	() => import("@/modules/product-types/components/product-type-form-dialog").then((mod) => mod.ProductTypeFormDialog),
+	{ loading: () => <ProductTypeFormDialogSkeleton /> }
+);
+const DeleteProductTypeAlertDialog = dynamic(
+	() => import("@/modules/product-types/components/admin/delete-product-type-alert-dialog").then((mod) => mod.DeleteProductTypeAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const BulkDeleteProductTypesAlertDialog = dynamic(
+	() => import("@/modules/product-types/components/admin/bulk-delete-product-types-alert-dialog").then((mod) => mod.BulkDeleteProductTypesAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
 import { CreateProductTypeButton } from "@/modules/product-types/components/admin/create-product-type-button";
 import {
 	getProductTypes,
@@ -17,8 +32,6 @@ import { ProductTypesDataTable } from "@/modules/product-types/components/admin/
 import { ProductTypesDataTableSkeleton } from "@/modules/product-types/components/admin/product-types-data-table-skeleton";
 import { ProductTypesFilterBadges } from "@/modules/product-types/components/admin/product-types-filter-badges";
 import { ProductTypesFilterSheet } from "@/modules/product-types/components/admin/product-types-filter-sheet";
-import { DeleteProductTypeAlertDialog } from "@/modules/product-types/components/admin/delete-product-type-alert-dialog";
-import { BulkDeleteProductTypesAlertDialog } from "@/modules/product-types/components/admin/bulk-delete-product-types-alert-dialog";
 import { RefreshProductTypesButton } from "@/modules/product-types/components/admin/refresh-product-types-button";
 import { parseFilters } from "./_utils/params";
 

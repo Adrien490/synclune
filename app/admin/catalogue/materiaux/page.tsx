@@ -11,8 +11,18 @@ import { MaterialsDataTableSkeleton } from "@/modules/materials/components/admin
 import { MaterialsFilterBadges } from "@/modules/materials/components/admin/materials-filter-badges";
 import { MaterialsFilterSheet } from "@/modules/materials/components/admin/materials-filter-sheet";
 import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
-import { MaterialFormDialog } from "@/modules/materials/components/material-form-dialog";
-import { DeleteMaterialAlertDialog } from "@/modules/materials/components/admin/delete-material-alert-dialog";
+import dynamic from "next/dynamic";
+import { MaterialFormDialogSkeleton, AlertDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
+
+// Lazy loading - dialogs charges uniquement a l'ouverture
+const MaterialFormDialog = dynamic(
+	() => import("@/modules/materials/components/material-form-dialog").then((mod) => mod.MaterialFormDialog),
+	{ loading: () => <MaterialFormDialogSkeleton /> }
+);
+const DeleteMaterialAlertDialog = dynamic(
+	() => import("@/modules/materials/components/admin/delete-material-alert-dialog").then((mod) => mod.DeleteMaterialAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
 import { RefreshMaterialsButton } from "@/modules/materials/components/admin/refresh-materials-button";
 import { Metadata } from "next";
 

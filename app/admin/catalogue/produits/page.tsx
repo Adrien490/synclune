@@ -10,13 +10,38 @@ import { GET_PRODUCTS_SORT_FIELDS } from "@/modules/products/data/get-products";
 import { parseProductParams } from "@/modules/products/utils/parse-product-params";
 import Link from "next/link";
 import { Suspense } from "react";
-import { ArchiveProductAlertDialog } from "@/modules/products/components/admin/archive-product-alert-dialog";
-import { BulkArchiveProductsAlertDialog } from "@/modules/products/components/admin/bulk-archive-products-alert-dialog";
-import { BulkDeleteProductsAlertDialog } from "@/modules/products/components/admin/bulk-delete-products-alert-dialog";
-import { ChangeProductStatusAlertDialog } from "@/modules/products/components/admin/change-product-status-alert-dialog";
-import { DeleteProductAlertDialog } from "@/modules/products/components/admin/delete-product-alert-dialog";
-import { DuplicateProductAlertDialog } from "@/modules/products/components/admin/duplicate-product-alert-dialog";
-import { ManageCollectionsDialog } from "@/modules/products/components/admin/manage-collections-dialog";
+import dynamic from "next/dynamic";
+import { AlertDialogSkeleton, AdminDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
+
+// Lazy loading - dialogs charges uniquement a l'ouverture
+const ArchiveProductAlertDialog = dynamic(
+	() => import("@/modules/products/components/admin/archive-product-alert-dialog").then((mod) => mod.ArchiveProductAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const BulkArchiveProductsAlertDialog = dynamic(
+	() => import("@/modules/products/components/admin/bulk-archive-products-alert-dialog").then((mod) => mod.BulkArchiveProductsAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const BulkDeleteProductsAlertDialog = dynamic(
+	() => import("@/modules/products/components/admin/bulk-delete-products-alert-dialog").then((mod) => mod.BulkDeleteProductsAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const ChangeProductStatusAlertDialog = dynamic(
+	() => import("@/modules/products/components/admin/change-product-status-alert-dialog").then((mod) => mod.ChangeProductStatusAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const DeleteProductAlertDialog = dynamic(
+	() => import("@/modules/products/components/admin/delete-product-alert-dialog").then((mod) => mod.DeleteProductAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const DuplicateProductAlertDialog = dynamic(
+	() => import("@/modules/products/components/admin/duplicate-product-alert-dialog").then((mod) => mod.DuplicateProductAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const ManageCollectionsDialog = dynamic(
+	() => import("@/modules/products/components/admin/manage-collections-dialog").then((mod) => mod.ManageCollectionsDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
 import { ProductStatusNavigation } from "@/modules/products/components/admin/product-status-navigation";
 import { ProductsDataTable } from "@/modules/products/components/admin/products-data-table";
 import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/products-data-table-skeleton";

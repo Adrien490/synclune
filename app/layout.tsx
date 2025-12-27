@@ -21,8 +21,19 @@ import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
-import { CartSheet } from "@/modules/cart/components/cart-sheet";
-import { SkuSelectorDialog } from "@/modules/cart/components/sku-selector-dialog";
+import dynamic from "next/dynamic";
+import { SkuSelectorDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
+
+// Lazy loading des composants lourds - charges uniquement a l'ouverture
+const CartSheet = dynamic(
+	() => import("@/modules/cart/components/cart-sheet").then((mod) => mod.CartSheet),
+	{ loading: () => null } // CartSheetSkeleton gere par Suspense
+);
+
+const SkuSelectorDialog = dynamic(
+	() => import("@/modules/cart/components/sku-selector-dialog").then((mod) => mod.SkuSelectorDialog),
+	{ loading: () => <SkuSelectorDialogSkeleton /> }
+);
 import { MotionConfig } from "framer-motion";
 import type { Metadata } from "next";
 import { Suspense } from "react";

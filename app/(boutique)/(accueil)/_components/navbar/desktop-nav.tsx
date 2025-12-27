@@ -51,9 +51,6 @@ const animatedBorderClasses = cn(
 	"hover:after:scale-x-100 data-[active=true]:after:scale-x-100"
 );
 
-/** Classes pour l'état actif - Bordure bottom uniquement */
-const activeStateClasses = "";
-
 export function DesktopNav({ navItems }: DesktopNavProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 
@@ -71,8 +68,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 							<NavigationMenuItem key={item.href}>
 								<NavigationMenuTrigger
 									data-active={isActive}
-									aria-current={isActive ? "page" : undefined}
-									className={cn(navItemBaseClasses, animatedBorderClasses, activeStateClasses)}
+									className={cn(navItemBaseClasses, animatedBorderClasses)}
 								>
 									{item.label}
 								</NavigationMenuTrigger>
@@ -175,8 +171,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 								className={cn(
 									navigationMenuTriggerStyle(),
 									navItemBaseClasses,
-									animatedBorderClasses,
-									activeStateClasses
+									animatedBorderClasses
 								)}
 							>
 								<Link

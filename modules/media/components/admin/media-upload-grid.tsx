@@ -27,7 +27,14 @@ import { useState, useEffect } from "react";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "sonner";
 import { GalleryErrorBoundary } from "@/modules/media/components/gallery";
-import MediaLightbox from "@/modules/media/components/media-lightbox";
+import dynamic from "next/dynamic";
+import { MediaLightboxSkeleton } from "@/shared/components/skeletons/lazy-loading";
+
+// Lazy loading - lightbox charge uniquement a l'ouverture
+const MediaLightbox = dynamic(
+	() => import("@/modules/media/components/media-lightbox"),
+	{ ssr: false, loading: () => <MediaLightboxSkeleton /> }
+);
 import { DELETE_GALLERY_MEDIA_DIALOG_ID } from "./delete-gallery-media-alert-dialog";
 import { SortableMediaItem } from "./sortable-media-item";
 import type { Slide } from "yet-another-react-lightbox";

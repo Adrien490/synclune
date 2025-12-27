@@ -11,8 +11,18 @@ import { ColorsDataTableSkeleton } from "@/modules/colors/components/admin/color
 import { ColorsFilterBadges } from "@/modules/colors/components/admin/colors-filter-badges";
 import { ColorsFilterSheet } from "@/modules/colors/components/admin/colors-filter-sheet";
 import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
-import { ColorFormDialog } from "@/modules/colors/components/color-form-dialog";
-import { DeleteColorAlertDialog } from "@/modules/colors/components/admin/delete-color-alert-dialog";
+import dynamic from "next/dynamic";
+import { ColorFormDialogSkeleton, AlertDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
+
+// Lazy loading - dialogs charges uniquement a l'ouverture
+const ColorFormDialog = dynamic(
+	() => import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
+	{ loading: () => <ColorFormDialogSkeleton /> }
+);
+const DeleteColorAlertDialog = dynamic(
+	() => import("@/modules/colors/components/admin/delete-color-alert-dialog").then((mod) => mod.DeleteColorAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
 import { RefreshColorsButton } from "@/modules/colors/components/admin/refresh-colors-button";
 import { Metadata } from "next";
 
