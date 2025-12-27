@@ -14,7 +14,7 @@ html {
 	/* Breakpoint personnalisé pour très petits écrans (iPhone SE, etc.) */
 	--breakpoint-xs: 375px;
 
-	--font-sans: ui-sans-serif, system-ui, sans-serif;
+	--font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
 	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
 	--font-display: "Crimson Pro", serif;
 	--font-mono:
@@ -146,14 +146,9 @@ html {
 	--chart-3: oklch(0.5 0.1 200);
 	--chart-4: oklch(0.75 0.15 25); /* Corail lumineux - bijoux colorés */
 	--chart-5: oklch(0.7 0.1 300);
-	--radius: 0.5rem;
-	--font-sans: ui-sans-serif, system-ui, sans-serif;
-	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
-	--font-mono:
-		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
-		Courier New, monospace;
+
+	/* Shadows */
 	--shadow-color: 0 0% 0%;
-	--letter-spacing: 0em;
 	--spacing: 0.25rem;
 	--shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
 	--shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
@@ -173,7 +168,6 @@ html {
 		0 20px 25px -5px hsl(0 0% 0% / 0.1),
 		0 8px 10px -6px hsl(0 0% 0% / 0.1);
 	--shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.25);
-	--tracking-normal: 0em;
 }
 
 /* ========================================================================
@@ -802,7 +796,7 @@ textarea {
 	--sidebar-accent-foreground: oklch(0.92 0.005 270);
 	--sidebar-border: oklch(0.8593 0.097 340.78 / 0.2); /* Bordure rose dark */
 	--sidebar-ring: oklch(0.8593 0.097 340.78);
-	--font-sans: ui-sans-serif, system-ui, sans-serif;
+	--font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
 	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
 	--font-mono:
 		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,

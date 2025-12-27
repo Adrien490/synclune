@@ -269,7 +269,10 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 		
 
 			{/* Section principale avec catalogue */}
-			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10">
+			<section
+				className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10"
+				aria-label="Catalogue des créations"
+			>
 				<div
 					id="product-container"
 					className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6"

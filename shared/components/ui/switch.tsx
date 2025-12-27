@@ -7,12 +7,14 @@ import { cn } from "@/shared/utils/cn";
 
 function Switch({
 	className,
+	"aria-label": ariaLabel,
 	...props
 }: React.ComponentProps<typeof SwitchPrimitive.Root>) {
 	return (
 		<span className="inline-flex items-center justify-center min-h-11 min-w-11">
 			<SwitchPrimitive.Root
 				data-slot="switch"
+				aria-label={ariaLabel}
 				className={cn(
 					"peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:border-ring focus-visible:ring-ring/50 dark:data-[state=unchecked]:bg-input/80 inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
 					className

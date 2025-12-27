@@ -92,7 +92,7 @@ export default async function Page() {
 			</Suspense>
 
 			{/* 3. Collections - Exploration thématique + Navigation visuelle (remplace ProductTypes) */}
-			<Suspense fallback={<CollectionsSectionSkeleton />}>
+			<Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
 				<Collections
 					collectionsPromise={getCollections({
 						perPage: 6,

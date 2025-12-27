@@ -64,7 +64,7 @@ export const SEO_DEFAULTS = {
 	},
 	twitter: {
 		card: "summary_large_image",
-		site: BUSINESS_INFO.social.instagram.handle,
+		// Pas de compte Twitter/X - utilisation du card type uniquement
 	},
 } as const;
 

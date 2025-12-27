@@ -67,10 +67,36 @@ export async function generateCollectionMetadata({
 	// Extraire l'image du produit vedette pour OpenGraph
 	const featuredImage = getFeaturedProductImage(collection.products);
 
+	// Keywords dynamiques enrichis
+	const collectionNameLower = collection.name.toLowerCase();
+	const dynamicKeywords = [
+		`collection ${collectionNameLower}`,
+		`${collectionNameLower} bijoux`,
+		`${collectionNameLower} fait main`,
+		"bijoux artisanaux",
+		"collection bijoux",
+		"Synclune",
+		"bijoux Nantes",
+		"créatrice Nantes",
+		"bijoux colorés",
+		"bijoux originaux",
+	];
+
+	// Ajouter les types de produits présents dans la collection
+	const productTypes = new Set<string>();
+	collection.products.forEach((pc) => {
+		if (pc.product.type?.label) {
+			productTypes.add(pc.product.type.label.toLowerCase());
+		}
+	});
+	productTypes.forEach((type) => {
+		dynamicKeywords.push(`${type} ${collectionNameLower}`);
+	});
+
 	return {
 		title,
 		description,
-		keywords: `collection ${collection.name.toLowerCase()}, bijoux artisanaux, ${collection.name.toLowerCase()} fait main, collection bijoux`,
+		keywords: dynamicKeywords.join(", "),
 		// Balise canonical pour pages collections
 		alternates: {
 			canonical: canonicalUrl,

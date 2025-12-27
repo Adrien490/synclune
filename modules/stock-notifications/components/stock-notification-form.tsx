@@ -43,7 +43,11 @@ export function StockNotificationForm({ skuId }: StockNotificationFormProps) {
 	// Si inscription réussie (optimistic ou réel), afficher un message de confirmation
 	if (isSuccess) {
 		return (
-			<div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 text-sm">
+			<div
+				role="status"
+				aria-live="polite"
+				className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 text-sm"
+			>
 				<CheckCircle className="w-4 h-4 text-green-600 shrink-0 mt-0.5" aria-hidden="true" />
 				<p className="text-green-700 dark:text-green-300">
 					{state?.message || "Tu seras notifié(e) dès le retour en stock !"}

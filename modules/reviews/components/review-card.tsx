@@ -80,6 +80,7 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 									key={media.id}
 									type="button"
 									onClick={() => openLightbox(index)}
+									aria-label={`Voir la photo ${index + 1} de l'avis`}
 									className="relative size-20 md:size-24 rounded-lg overflow-hidden group cursor-zoom-in"
 								>
 									{/* Skeleton shimmer pendant chargement */}

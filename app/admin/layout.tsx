@@ -183,7 +183,9 @@ export default async function AdminLayout({
 				</main>
 			</SidebarInset>
 			<AdminSpeedDial initialHidden={isContactFabHidden} />
-			<BottomNav />
+			<footer className="md:hidden" aria-label="Navigation mobile">
+				<BottomNav />
+			</footer>
 		</SidebarProvider>
 	);
 }

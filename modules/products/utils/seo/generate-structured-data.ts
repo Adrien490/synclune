@@ -43,16 +43,24 @@ export function generateStructuredData({
 			? "https://schema.org/InStock"
 			: "https://schema.org/OutOfStock";
 
-	// Image principale
-	const mainImage =
-		selectedSku?.images?.find((img) => img.isPrimary)?.url ||
-		product.skus?.[0]?.images?.[0]?.url;
+	// Dimensions standard pour les images produits (format carré e-commerce)
+	const PRODUCT_IMAGE_SIZE = 1200;
 
-	// Toutes les images
-	const allImages =
-		selectedSku?.images?.map((img) => img.url) ||
-		product.skus?.[0]?.images?.map((img) => img.url) ||
-		[];
+	// Images du SKU sélectionné ou du premier SKU
+	const skuImages = selectedSku?.images || product.skus?.[0]?.images || [];
+
+	// Image principale
+	const mainImage = skuImages.find((img) => img.isPrimary)?.url || skuImages[0]?.url;
+
+	// Toutes les images en format ImageObject avec dimensions
+	const allImages = skuImages.map((img) => ({
+		"@type": "ImageObject",
+		url: img.url,
+		contentUrl: img.url,
+		width: PRODUCT_IMAGE_SIZE,
+		height: PRODUCT_IMAGE_SIZE,
+		...(img.altText && { caption: img.altText }),
+	}));
 
 	// Construction du BreadcrumbList pour SEO
 	const breadcrumbList = {
@@ -100,13 +108,58 @@ export function generateStructuredData({
 	// MPN (Manufacturer Part Number) - utilise le code SKU comme référence fabricant
 	const skuCode = selectedSku?.sku || product.skus?.[0]?.sku;
 
+	// Nombre de SKUs actifs pour AggregateOffer
+	const activeSkuCount = product.skus?.filter((sku) => sku.isActive).length || 1;
+
+	// Utiliser AggregateOffer pour les produits multi-variantes
+	const offers =
+		hasMultiplePrices && activeSkuCount > 1
+			? {
+					"@type": "AggregateOffer",
+					lowPrice: (minPrice / 100).toFixed(2),
+					highPrice: (maxPrice / 100).toFixed(2),
+					priceCurrency: "EUR",
+					offerCount: activeSkuCount,
+					availability,
+					url: `${SITE_URL}/creations/${product.slug}`,
+					seller: {
+						"@type": "Organization",
+						name: "Synclune",
+					},
+				}
+			: {
+					"@type": "Offer",
+					price,
+					priceCurrency: "EUR",
+					availability,
+					url: `${SITE_URL}/creations/${product.slug}`,
+					seller: {
+						"@type": "Organization",
+						name: "Synclune",
+					},
+					priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+						.toISOString()
+						.split("T")[0], // +30 jours
+				};
+
+	// Image principale en format ImageObject
+	const mainImageObject = mainImage
+		? {
+				"@type": "ImageObject",
+				url: mainImage,
+				contentUrl: mainImage,
+				width: PRODUCT_IMAGE_SIZE,
+				height: PRODUCT_IMAGE_SIZE,
+			}
+		: null;
+
 	const productData = {
 		"@type": "Product",
 		"@id": `${SITE_URL}/creations/${product.slug}#product`,
 		name: product.title,
 		description:
 			product.description || `${product.title} - Bijou artisanal fait main`,
-		image: allImages.length > 0 ? allImages : [mainImage],
+		image: allImages.length > 0 ? allImages : mainImageObject ? [mainImageObject] : [],
 		sku: skuCode,
 		// MPN = Manufacturer Part Number (code produit du fabricant)
 		...(skuCode && { mpn: skuCode }),
@@ -143,25 +196,7 @@ export function generateStructuredData({
 				datePublished: new Date(r.createdAt).toISOString().split("T")[0],
 			})),
 		}),
-		offers: {
-			"@type": "Offer",
-			price,
-			priceCurrency: "EUR",
-			// Prix minimum et maximum si plusieurs prix différents
-			...(hasMultiplePrices && {
-				lowPrice: (minPrice / 100).toFixed(2),
-				highPrice: (maxPrice / 100).toFixed(2),
-			}),
-			availability,
-			url: `${SITE_URL}/creations/${product.slug}`,
-			seller: {
-				"@type": "Organization",
-				name: "Synclune",
-			},
-			priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-				.toISOString()
-				.split("T")[0], // +30 jours
-		},
+		offers,
 		...(product.type && {
 			category: product.type.label,
 		}),
