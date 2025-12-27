@@ -1,6 +1,13 @@
 import { createStore } from "zustand/vanilla";
 import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
-import { differenceInMonths } from "date-fns";
+
+/**
+ * Calculate months difference between two dates (replaces date-fns for bundle size)
+ */
+function getMonthsDifference(later: Date, earlier: Date): number {
+	return (later.getFullYear() - earlier.getFullYear()) * 12
+		+ (later.getMonth() - earlier.getMonth());
+}
 
 // Noop storage pour le SSR (quand localStorage n'est pas disponible)
 const noopStorage: StateStorage = {
@@ -130,7 +137,7 @@ export const createCookieConsentStore = (
 						if (state.consentDate) {
 							const consentDate = new Date(state.consentDate);
 							const now = new Date();
-							const monthsDiff = differenceInMonths(now, consentDate);
+							const monthsDiff = getMonthsDifference(now, consentDate);
 
 							if (monthsDiff >= CONSENT_EXPIRY_MONTHS) {
 								// Consentement expiré → réafficher banner et réinitialiser

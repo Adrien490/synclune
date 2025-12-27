@@ -1,4 +1,4 @@
-import { Fade, ScrollIndicator, Slide } from "@/shared/components/animations";
+import { Fade, ScrollIndicator } from "@/shared/components/animations";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
@@ -42,68 +42,62 @@ export function Hero() {
         <div className="flex flex-col items-center">
           {/* Contenu centré */}
           <div className="space-y-5 sm:space-y-7 md:space-y-10 flex flex-col items-center">
-            {/* Titre principal */}
+            {/* Titre principal - Affichage immédiat pour LCP */}
             <div className="space-y-4 sm:space-y-6 text-center w-full">
-              <Fade y={12} duration={0.6}>
-                <SectionTitle
-                  as="h1"
-                  size="hero"
-                  align="center"
-                  weight="light"
-                  id="hero-title"
-                  className="text-foreground"
-                  itemProp="headline"
-                >
-                  Des bijoux colorés
-                </SectionTitle>
-              </Fade>
-              <Fade y={8} delay={0.15} duration={0.5}>
-                <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 text-foreground font-normal tracking-tight antialiased max-w-2xl mx-auto">
-                  <span className="sm:hidden">
-                    Faits main pour sublimer votre quotidien{" "}
-                  </span>
-                  <span className="hidden sm:inline">
-                    Crées à la main pour des occasions particulières, ou pour sublimer votre quotidien{" "}
-                  </span>
-                  <Heart
-                    size={22}
-                    fill="currentColor"
-                    className="text-primary inline align-middle"
-                    role="img"
-                    aria-label="coeur"
-                  />
-                </p>
-              </Fade>
+              <SectionTitle
+                as="h1"
+                size="hero"
+                align="center"
+                weight="light"
+                id="hero-title"
+                className="text-foreground"
+                itemProp="headline"
+              >
+                Des bijoux colorés
+              </SectionTitle>
+              <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 text-foreground font-normal tracking-tight antialiased max-w-2xl mx-auto">
+                <span className="sm:hidden">
+                  Faits main pour sublimer votre quotidien{" "}
+                </span>
+                <span className="hidden sm:inline">
+                  Crées à la main pour des occasions particulières, ou pour sublimer votre quotidien{" "}
+                </span>
+                <Heart
+                  size={22}
+                  fill="currentColor"
+                  className="text-primary inline align-middle"
+                  role="img"
+                  aria-label="coeur"
+                />
+              </p>
             </div>
 
-            {/* CTA optimisés - Plus visibles et engageants */}
-            <Slide direction="up" distance={20} delay={0.3} duration={0.45}>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-                <Button
-                  asChild
-                  size="lg"
-                  className="shadow-lg font-semibold w-full sm:w-auto"
+            {/* CTA - Affichage immédiat pour LCP */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+              <Button
+                asChild
+                size="lg"
+                className="shadow-lg font-semibold w-full sm:w-auto"
+              >
+                <Link href="/produits" className="flex items-center justify-center">
+                  Découvrir la boutique
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="secondary"
+                className="shadow-md font-semibold w-full sm:w-auto"
+              >
+                <Link
+                  href="/personnalisation"
+                  className="flex items-center justify-center"
                 >
-                  <Link href="/produits" className="flex items-center justify-center">
-                    Découvrir la boutique
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="secondary"
-                  className="shadow-md font-semibold w-full sm:w-auto"
-                >
-                  <Link
-                    href="/personnalisation"
-                    className="flex items-center justify-center"
-                  >
-                    <span className="sm:hidden">Personnalisation</span>
-                    <span className="hidden sm:inline">Je veux un bijou personnalisé</span>
-                  </Link>
-                </Button>
-              </div>
-            </Slide>
+                  <span className="sm:hidden">Personnalisation</span>
+                  <span className="hidden sm:inline">Je veux un bijou personnalisé</span>
+                </Link>
+              </Button>
+            </div>
 
             {/* Réseaux sociaux - Version compacte */}
             <Fade y={8} delay={0.5} duration={0.4}>

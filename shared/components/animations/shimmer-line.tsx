@@ -37,11 +37,9 @@ export function ShimmerLine({
 				className="absolute inset-y-0 bg-linear-to-r from-transparent via-white/40 to-transparent"
 				style={{
 					width: `${width}%`,
-					left: `-${width}%`,
 				}}
-				animate={{
-					left: ["100%"],
-				}}
+				initial={{ x: `-${width}%` }}
+				animate={{ x: `${100 + width}%` }}
 				transition={{
 					duration,
 					delay,
