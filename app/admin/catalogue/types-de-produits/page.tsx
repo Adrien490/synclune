@@ -5,20 +5,16 @@ import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { Button } from "@/shared/components/ui/button";
 import dynamic from "next/dynamic";
-import { ProductTypeFormDialogSkeleton, AlertDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const ProductTypeFormDialog = dynamic(
-	() => import("@/modules/product-types/components/product-type-form-dialog").then((mod) => mod.ProductTypeFormDialog),
-	{ loading: () => <ProductTypeFormDialogSkeleton /> }
+	() => import("@/modules/product-types/components/product-type-form-dialog").then((mod) => mod.ProductTypeFormDialog)
 );
 const DeleteProductTypeAlertDialog = dynamic(
-	() => import("@/modules/product-types/components/admin/delete-product-type-alert-dialog").then((mod) => mod.DeleteProductTypeAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/product-types/components/admin/delete-product-type-alert-dialog").then((mod) => mod.DeleteProductTypeAlertDialog)
 );
 const BulkDeleteProductTypesAlertDialog = dynamic(
-	() => import("@/modules/product-types/components/admin/bulk-delete-product-types-alert-dialog").then((mod) => mod.BulkDeleteProductTypesAlertDialog),
-	{ loading: () => <AlertDialogSkeleton /> }
+	() => import("@/modules/product-types/components/admin/bulk-delete-product-types-alert-dialog").then((mod) => mod.BulkDeleteProductTypesAlertDialog)
 );
 import { CreateProductTypeButton } from "@/modules/product-types/components/admin/create-product-type-button";
 import {
