@@ -9,23 +9,57 @@ import { parseOrderParams } from "@/modules/orders/utils/parse-order-params";
 // import { ExportInvoicesButton } from "@/modules/orders/components/admin/export-invoices-button";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
+import { AlertDialogSkeleton, AdminDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import { OrdersDataTable } from "@/modules/orders/components/admin/orders-data-table";
 import { OrdersDataTableSkeleton } from "@/modules/orders/components/admin/orders-data-table-skeleton";
 import { OrdersFilterBadges } from "@/modules/orders/components/admin/orders-filter-badges";
 import { OrdersFilterSheet } from "@/modules/orders/components/admin/orders-filter-sheet";
-import { CancelOrderAlertDialog } from "@/modules/orders/components/admin/cancel-order-alert-dialog";
-import { DeleteOrderAlertDialog } from "@/modules/orders/components/admin/delete-order-alert-dialog";
-import { BulkDeleteOrdersAlertDialog } from "@/modules/orders/components/admin/bulk-delete-orders-alert-dialog";
-import { MarkAsPaidAlertDialog } from "@/modules/orders/components/admin/mark-as-paid-alert-dialog";
-import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
-import { MarkAsDeliveredAlertDialog } from "@/modules/orders/components/admin/mark-as-delivered-alert-dialog";
-import { MarkAsProcessingAlertDialog } from "@/modules/orders/components/admin/mark-as-processing-alert-dialog";
-import { RevertToProcessingDialog } from "@/modules/orders/components/admin/revert-to-processing-dialog";
-import { MarkAsReturnedAlertDialog } from "@/modules/orders/components/admin/mark-as-returned-alert-dialog";
-import { OrderNotesDialog } from "@/modules/orders/components/admin/order-notes-dialog";
 import { RefreshOrdersButton } from "@/modules/orders/components/admin/refresh-orders-button";
 import { parseFilters } from "./_utils/params";
 import { Metadata } from "next";
+
+// Lazy loading - dialogs charges uniquement a l'ouverture
+const CancelOrderAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/cancel-order-alert-dialog").then((mod) => mod.CancelOrderAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const DeleteOrderAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/delete-order-alert-dialog").then((mod) => mod.DeleteOrderAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const BulkDeleteOrdersAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/bulk-delete-orders-alert-dialog").then((mod) => mod.BulkDeleteOrdersAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const MarkAsPaidAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/mark-as-paid-alert-dialog").then((mod) => mod.MarkAsPaidAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const MarkAsShippedDialog = dynamic(
+	() => import("@/modules/orders/components/admin/mark-as-shipped-dialog").then((mod) => mod.MarkAsShippedDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
+const MarkAsDeliveredAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/mark-as-delivered-alert-dialog").then((mod) => mod.MarkAsDeliveredAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const MarkAsProcessingAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/mark-as-processing-alert-dialog").then((mod) => mod.MarkAsProcessingAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const RevertToProcessingDialog = dynamic(
+	() => import("@/modules/orders/components/admin/revert-to-processing-dialog").then((mod) => mod.RevertToProcessingDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
+const MarkAsReturnedAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/mark-as-returned-alert-dialog").then((mod) => mod.MarkAsReturnedAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const OrderNotesDialog = dynamic(
+	() => import("@/modules/orders/components/admin/order-notes-dialog").then((mod) => mod.OrderNotesDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
 
 export type OrderFiltersSearchParams = {
 	filter_status?: string;

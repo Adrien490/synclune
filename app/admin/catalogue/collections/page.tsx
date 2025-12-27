@@ -10,20 +10,42 @@ import {
 import { getFirstParam } from "@/shared/utils/params";
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { BulkDeleteCollectionsAlertDialog } from "@/modules/collections/components/admin/bulk-delete-collections-alert-dialog";
-import { CollectionFormDialog } from "@/modules/collections/components/admin/collection-form-dialog";
+import dynamic from "next/dynamic";
+import { AlertDialogSkeleton, AdminDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import { CollectionsDataTable } from "@/modules/collections/components/admin/collections-data-table";
 import { CollectionsDataTableSkeleton } from "@/modules/collections/components/admin/collections-data-table-skeleton";
 import { CollectionsFilterBadges } from "@/modules/collections/components/admin/collections-filter-badges";
 import { CollectionsFilterSheet } from "@/modules/collections/components/admin/collections-filter-sheet";
 import { CollectionStatusNavigation } from "@/modules/collections/components/admin/collection-status-navigation";
 import { CreateCollectionButton } from "@/modules/collections/components/admin/create-collection-button";
-import { DeleteCollectionAlertDialog } from "@/modules/collections/components/admin/delete-collection-alert-dialog";
-import { ArchiveCollectionAlertDialog } from "@/modules/collections/components/admin/archive-collection-alert-dialog";
-import { BulkArchiveCollectionsAlertDialog } from "@/modules/collections/components/admin/bulk-archive-collections-alert-dialog";
-import { ChangeCollectionStatusAlertDialog } from "@/modules/collections/components/admin/change-collection-status-alert-dialog";
 import { RefreshCollectionsButton } from "@/modules/collections/components/admin/refresh-collections-button";
 import { parseFilters, parseStatus } from "./_utils/params";
+
+// Lazy loading - dialogs charges uniquement a l'ouverture
+const CollectionFormDialog = dynamic(
+	() => import("@/modules/collections/components/admin/collection-form-dialog").then((mod) => mod.CollectionFormDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
+const DeleteCollectionAlertDialog = dynamic(
+	() => import("@/modules/collections/components/admin/delete-collection-alert-dialog").then((mod) => mod.DeleteCollectionAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const BulkDeleteCollectionsAlertDialog = dynamic(
+	() => import("@/modules/collections/components/admin/bulk-delete-collections-alert-dialog").then((mod) => mod.BulkDeleteCollectionsAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const ArchiveCollectionAlertDialog = dynamic(
+	() => import("@/modules/collections/components/admin/archive-collection-alert-dialog").then((mod) => mod.ArchiveCollectionAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const BulkArchiveCollectionsAlertDialog = dynamic(
+	() => import("@/modules/collections/components/admin/bulk-archive-collections-alert-dialog").then((mod) => mod.BulkArchiveCollectionsAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const ChangeCollectionStatusAlertDialog = dynamic(
+	() => import("@/modules/collections/components/admin/change-collection-status-alert-dialog").then((mod) => mod.ChangeCollectionStatusAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
 
 type CollectionFiltersSearchParams = {
 	filter_hasProducts?: string;

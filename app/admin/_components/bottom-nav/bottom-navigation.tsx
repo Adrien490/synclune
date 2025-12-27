@@ -5,11 +5,17 @@ import { cn } from "@/shared/utils/cn";
 import { ExternalLink, LogOut, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
+import dynamic from "next/dynamic";
 import {
 	getBottomNavPrimaryItems,
 	getAllNavItems,
 } from "../navigation-config";
+
+// Lazy loading - dialog charge uniquement a l'ouverture
+const LogoutAlertDialog = dynamic(
+	() => import("@/modules/auth/components/logout-alert-dialog").then((mod) => mod.LogoutAlertDialog),
+	{ ssr: false }
+);
 import { isRouteActive } from "@/shared/lib/navigation";
 import {
 	Drawer,

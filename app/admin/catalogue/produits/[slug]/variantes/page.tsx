@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import dynamic from "next/dynamic";
 
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -17,6 +18,7 @@ import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
+import { AlertDialogSkeleton, AdminDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getProductSkus } from "@/modules/skus/data/get-skus";
 import { parseProductSkuParams } from "@/modules/skus/utils/parse-sku-params";
@@ -26,13 +28,30 @@ import { SORT_LABELS } from "@/modules/skus/constants/sku.constants";
 import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-data-table";
 import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
 import { RefreshSkusButton } from "@/modules/skus/components/admin/refresh-skus-button";
-import { DeleteProductSkuAlertDialog } from "@/modules/skus/components/admin/delete-sku-alert-dialog";
-import { AdjustStockDialog } from "@/modules/skus/components/admin/adjust-stock-dialog";
-import { UpdatePriceDialog } from "@/modules/skus/components/admin/update-price-dialog";
-import { BulkAdjustStockDialog } from "@/modules/skus/components/admin/bulk-adjust-stock-dialog";
-import { BulkUpdatePriceDialog } from "@/modules/skus/components/admin/bulk-update-price-dialog";
 import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-sheet";
 import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
+
+// Lazy loading - dialogs charges uniquement a l'ouverture
+const DeleteProductSkuAlertDialog = dynamic(
+	() => import("@/modules/skus/components/admin/delete-sku-alert-dialog").then((mod) => mod.DeleteProductSkuAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const AdjustStockDialog = dynamic(
+	() => import("@/modules/skus/components/admin/adjust-stock-dialog").then((mod) => mod.AdjustStockDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
+const UpdatePriceDialog = dynamic(
+	() => import("@/modules/skus/components/admin/update-price-dialog").then((mod) => mod.UpdatePriceDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
+const BulkAdjustStockDialog = dynamic(
+	() => import("@/modules/skus/components/admin/bulk-adjust-stock-dialog").then((mod) => mod.BulkAdjustStockDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
+const BulkUpdatePriceDialog = dynamic(
+	() => import("@/modules/skus/components/admin/bulk-update-price-dialog").then((mod) => mod.BulkUpdatePriceDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
 
 export type ProductVariantsSearchParams = {
 	cursor?: string;

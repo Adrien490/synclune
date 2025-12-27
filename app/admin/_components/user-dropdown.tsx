@@ -1,5 +1,6 @@
 import { BadgeCheck, ChevronDown, LogOut } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -11,7 +12,12 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
+
+// Lazy loading - dialog charge uniquement a l'ouverture
+const LogoutAlertDialog = dynamic(
+	() => import("@/modules/auth/components/logout-alert-dialog").then((mod) => mod.LogoutAlertDialog),
+	{ ssr: true }
+);
 
 interface UserDropdownProps {
 	user: {

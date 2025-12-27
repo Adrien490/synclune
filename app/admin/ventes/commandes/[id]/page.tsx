@@ -1,19 +1,53 @@
 import { getOrderById } from "@/modules/orders/data/get-order-by-id";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import dynamic from "next/dynamic";
+import { AlertDialogSkeleton, AdminDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 import { OrderDetailPage as OrderDetail } from "@/modules/orders/components/admin/order-detail";
-import { CancelOrderAlertDialog } from "@/modules/orders/components/admin/cancel-order-alert-dialog";
-import { MarkAsPaidAlertDialog } from "@/modules/orders/components/admin/mark-as-paid-alert-dialog";
-import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
-import { MarkAsDeliveredAlertDialog } from "@/modules/orders/components/admin/mark-as-delivered-alert-dialog";
-import { UpdateTrackingDialog } from "@/modules/orders/components/admin/update-tracking-dialog";
-import { MarkAsProcessingAlertDialog } from "@/modules/orders/components/admin/mark-as-processing-alert-dialog";
-import { RevertToProcessingDialog } from "@/modules/orders/components/admin/revert-to-processing-dialog";
-import { MarkAsReturnedAlertDialog } from "@/modules/orders/components/admin/mark-as-returned-alert-dialog";
-import { OrderNotesDialog } from "@/modules/orders/components/admin/order-notes-dialog";
-import { ResendEmailDialog } from "@/modules/orders/components/admin/resend-email-dialog";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+
+// Lazy loading - dialogs charges uniquement a l'ouverture
+const CancelOrderAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/cancel-order-alert-dialog").then((mod) => mod.CancelOrderAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const MarkAsPaidAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/mark-as-paid-alert-dialog").then((mod) => mod.MarkAsPaidAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const MarkAsShippedDialog = dynamic(
+	() => import("@/modules/orders/components/admin/mark-as-shipped-dialog").then((mod) => mod.MarkAsShippedDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
+const MarkAsDeliveredAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/mark-as-delivered-alert-dialog").then((mod) => mod.MarkAsDeliveredAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const UpdateTrackingDialog = dynamic(
+	() => import("@/modules/orders/components/admin/update-tracking-dialog").then((mod) => mod.UpdateTrackingDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
+const MarkAsProcessingAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/mark-as-processing-alert-dialog").then((mod) => mod.MarkAsProcessingAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const RevertToProcessingDialog = dynamic(
+	() => import("@/modules/orders/components/admin/revert-to-processing-dialog").then((mod) => mod.RevertToProcessingDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
+const MarkAsReturnedAlertDialog = dynamic(
+	() => import("@/modules/orders/components/admin/mark-as-returned-alert-dialog").then((mod) => mod.MarkAsReturnedAlertDialog),
+	{ loading: () => <AlertDialogSkeleton /> }
+);
+const OrderNotesDialog = dynamic(
+	() => import("@/modules/orders/components/admin/order-notes-dialog").then((mod) => mod.OrderNotesDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
+const ResendEmailDialog = dynamic(
+	() => import("@/modules/orders/components/admin/resend-email-dialog").then((mod) => mod.ResendEmailDialog),
+	{ loading: () => <AdminDialogSkeleton /> }
+);
 import {
 	Breadcrumb,
 	BreadcrumbItem,
