@@ -6,6 +6,7 @@
 
 import { cacheLife, cacheTag } from "next/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
 
 // ============================================
@@ -41,9 +42,11 @@ export function cacheCollectionDetail(slug: string) {
  *
  * Invalide automatiquement :
  * - La liste des collections
+ * - Les compteurs de collections
  * - Le détail de la collection
  * - Les produits de la collection
  * - La liste des produits (car ils affichent leur collection)
+ * - Les badges de la sidebar admin
  */
 export function getCollectionInvalidationTags(collectionSlug: string): string[] {
 	return [
@@ -52,5 +55,6 @@ export function getCollectionInvalidationTags(collectionSlug: string): string[] 
 		COLLECTIONS_CACHE_TAGS.DETAIL(collectionSlug),
 		COLLECTIONS_CACHE_TAGS.PRODUCTS(collectionSlug),
 		PRODUCTS_CACHE_TAGS.LIST,
+		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
 }

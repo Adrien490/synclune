@@ -37,6 +37,7 @@ export function CheckoutContainer({
 		orderNumber: string
 	} | null>(null)
 	const [selectedCountry, setSelectedCountry] = useState<ShippingCountry>("FR")
+	const [postalCode, setPostalCode] = useState<string>("")
 
 	const handleAddressValidated = (data: CreateCheckoutSessionResult) => {
 		setClientSecret(data.clientSecret)
@@ -61,6 +62,7 @@ export function CheckoutContainer({
 						addresses={addresses}
 						onSuccess={handleAddressValidated}
 						onCountryChange={setSelectedCountry}
+						onPostalCodeChange={setPostalCode}
 					/>
 				)}
 
@@ -115,7 +117,7 @@ export function CheckoutContainer({
 
 			{/* Récapitulatif - 1/3 de la largeur */}
 			<div className="lg:col-span-1">
-				<CheckoutSummary cart={cart} selectedCountry={selectedCountry} />
+				<CheckoutSummary cart={cart} selectedCountry={selectedCountry} postalCode={postalCode} />
 			</div>
 		</div>
 	)

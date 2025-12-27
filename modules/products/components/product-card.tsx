@@ -7,7 +7,7 @@ import { ProductPrice } from "./product-price";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
 import type { Product } from "@/modules/products/types/product.types";
-import { getProductCardData } from "@/modules/products/services/product-list-helpers";
+import { getProductCardData } from "@/modules/products/services/product-sorting.service";
 
 interface ProductCardProps {
 	product: Product;

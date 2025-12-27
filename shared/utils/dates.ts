@@ -230,3 +230,30 @@ export function getDailyIndex(length: number): number {
 	const daysSinceEpoch = Math.floor(now.getTime() / (1000 * 60 * 60 * 24));
 	return daysSinceEpoch % length;
 }
+
+/**
+ * Formate une date en format relatif français avec "Aujourd'hui", "Hier", etc.
+ *
+ * @param date - Date à formater (Date ou string ISO)
+ * @returns Date formatée en relatif
+ *
+ * @example
+ * ```ts
+ * formatRelativeDate(new Date()) // "Aujourd'hui"
+ * formatRelativeDate(yesterday) // "Hier"
+ * formatRelativeDate(lastWeek) // "Il y a 5 jours"
+ * ```
+ */
+export function formatRelativeDate(date: Date | string): string {
+	const d = typeof date === "string" ? new Date(date) : date;
+	const now = new Date();
+	const diffMs = now.getTime() - d.getTime();
+	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+	if (diffDays === 0) return "Aujourd'hui";
+	if (diffDays === 1) return "Hier";
+	if (diffDays < 7) return `Il y a ${diffDays} jours`;
+	if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaine${diffDays >= 14 ? "s" : ""}`;
+	if (diffDays < 365) return `Il y a ${Math.floor(diffDays / 30)} mois`;
+	return `Il y a ${Math.floor(diffDays / 365)} an${diffDays >= 730 ? "s" : ""}`;
+}

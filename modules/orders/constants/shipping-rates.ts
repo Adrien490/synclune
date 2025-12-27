@@ -48,6 +48,16 @@ export const SHIPPING_RATES = {
 		countries: ["FR"] as const,
 	},
 
+	/** Corse - Livraison en 4-7 jours ouvrés */
+	CORSE: {
+		amount: 1000, // 10.00€
+		displayName: "Livraison Corse (4-7 jours)",
+		carrier: SHIPPING_CARRIERS.STANDARD,
+		minDays: 4,
+		maxDays: 7,
+		countries: ["FR"] as const, // Techniquement FR (codes postaux 2A/2B)
+	},
+
 	/** Union Européenne (dont Monaco) - Livraison en 4-7 jours ouvrés */
 	EU: {
 		amount: 1500, // 15.00€

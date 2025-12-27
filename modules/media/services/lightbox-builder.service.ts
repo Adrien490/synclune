@@ -1,6 +1,6 @@
 import type { Slide } from "yet-another-react-lightbox";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
-import { getVideoMimeType } from "./media-utils";
+import { getVideoMimeType } from "../utils/media-utils";
 
 /**
  * Convertit les médias produit en slides pour la lightbox

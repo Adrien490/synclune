@@ -6,6 +6,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { bulkChangeProductStatusSchema } from "../schemas/product.schemas";
+import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../constants/cache";
 
 /**
@@ -69,6 +70,7 @@ export async function bulkChangeProductStatus(
 				title: true,
 				slug: true,
 				status: true,
+				collections: { select: { collection: { select: { slug: true } } } },
 			},
 		});
 
@@ -107,6 +109,17 @@ export async function bulkChangeProductStatus(
 		for (const product of existingProducts) {
 			const productTags = getProductInvalidationTags(product.slug, product.id);
 			productTags.forEach(tag => updateTag(tag));
+		}
+
+		// 7.1 Invalider les caches des collections associees (deduplique)
+		const collectionSlugs = new Set<string>();
+		for (const product of existingProducts) {
+			for (const productCollection of product.collections) {
+				collectionSlugs.add(productCollection.collection.slug);
+			}
+		}
+		for (const slug of collectionSlugs) {
+			getCollectionInvalidationTags(slug).forEach((tag) => updateTag(tag));
 		}
 
 		// 8. Message de succes

@@ -23,7 +23,7 @@ import type { Product } from "@/modules/products/types/product.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
-import { getPrimaryImageForList } from "@/modules/products/services/product-list-helpers";
+import { getPrimaryImageForList } from "@/modules/products/services/product-sorting.service";
 import { filterCompatibleSkus as filterCompatibleSkusService } from "@/modules/skus/services/filter-compatible-skus";
 import { slugify } from "@/shared/utils/generate-slug";
 import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
@@ -424,6 +424,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 												}
 												blurDataURL={currentImage.blurDataUrl ?? undefined}
 												sizes="128px"
+												quality={85}
 											/>
 										</motion.div>
 										<div className="flex flex-col justify-center">

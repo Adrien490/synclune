@@ -209,7 +209,6 @@ Highlights: Berry doux pour CTA secondaires
 | Action | Effort | Impact | Fichier concerné |
 |--------|--------|--------|------------------|
 | Simplifier Hero (1 CTA) | Faible | Élevé | `hero.tsx` |
-| Ajouter section Bestsellers | Moyen | Élevé | `page.tsx` + nouveau composant |
 | Sticky "Ajouter au panier" mobile | Faible | Élevé | Page produit |
 
 ### 🟠 Priorité 2: Trust & Social Proof

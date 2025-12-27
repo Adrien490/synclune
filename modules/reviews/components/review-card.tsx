@@ -8,26 +8,10 @@ import MediaLightbox from "@/modules/media/components/media-lightbox"
 import { CardContent } from "@/shared/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar"
 import { cn } from "@/shared/utils/cn"
+import { formatRelativeDate } from "@/shared/utils/dates"
+import { RatingStars } from "@/shared/components/rating-stars"
 
 import type { ReviewPublic } from "../types/review.types"
-import { ReviewStars } from "./review-stars"
-
-/**
- * Formate une date en format relatif français
- */
-function formatRelativeDate(date: Date | string): string {
-	const d = typeof date === "string" ? new Date(date) : date
-	const now = new Date()
-	const diffMs = now.getTime() - d.getTime()
-	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-	if (diffDays === 0) return "Aujourd'hui"
-	if (diffDays === 1) return "Hier"
-	if (diffDays < 7) return `Il y a ${diffDays} jours`
-	if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaine${diffDays >= 14 ? "s" : ""}`
-	if (diffDays < 365) return `Il y a ${Math.floor(diffDays / 30)} mois`
-	return `Il y a ${Math.floor(diffDays / 365)} an${diffDays >= 730 ? "s" : ""}`
-}
 
 interface ReviewCardProps {
 	review: ReviewPublic
@@ -88,7 +72,7 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 							</span>
 						</div>
 						<div className="flex items-center gap-2 mt-0.5">
-							<ReviewStars rating={review.rating} size="sm" />
+							<RatingStars rating={review.rating} size="sm" />
 							<span className="text-xs text-muted-foreground">
 								{formatRelativeDate(review.createdAt)}
 							</span>
@@ -133,6 +117,7 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 											loadedImages.has(media.id) ? "opacity-100" : "opacity-0"
 										)}
 										sizes="(min-width: 768px) 96px, 80px"
+										quality={75}
 									/>
 								</button>
 							))}

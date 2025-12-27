@@ -6,6 +6,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { toggleProductStatusSchema } from "../schemas/product.schemas";
+import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../constants/cache";
 
 /**
@@ -57,6 +58,7 @@ export async function toggleProductStatus(
 				slug: true,
 				status: true,
 				description: true,
+				collections: { select: { collection: { select: { slug: true } } } },
 				skus: {
 					where: { isActive: true },
 					select: {
@@ -172,6 +174,11 @@ export async function toggleProductStatus(
 			existingProduct.id
 		);
 		productTags.forEach(tag => updateTag(tag));
+
+		// 7.1 Invalider les caches des collections associees
+		for (const productCollection of existingProduct.collections) {
+			getCollectionInvalidationTags(productCollection.collection.slug).forEach((tag) => updateTag(tag));
+		}
 
 		// 8. Messages de succes contextuels
 		const statusMessages: Record<typeof newStatus, string> = {

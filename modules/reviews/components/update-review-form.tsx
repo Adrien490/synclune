@@ -1,19 +1,14 @@
 "use client"
 
-import { useState } from "react"
 import { Send } from "lucide-react"
 
 import { Button } from "@/shared/components/ui/button"
-import { Input } from "@/shared/components/ui/input"
-import { Textarea } from "@/shared/components/ui/textarea"
-import { Label } from "@/shared/components/ui/label"
 import { cn } from "@/shared/utils/cn"
 
-import { useUpdateReviewForm } from "../hooks/use-update-review-form"
-import { ReviewStars } from "./review-stars"
-import { ReviewMediaUpload, type ReviewMediaItem } from "./review-media-upload"
 import { REVIEW_CONFIG } from "../constants/review.constants"
+import { useUpdateReviewForm } from "../hooks/use-update-review-form"
 import type { ReviewUser } from "../types/review.types"
+import { ReviewMediaField } from "./review-media-field"
 
 interface UpdateReviewFormProps {
 	review: ReviewUser
@@ -24,6 +19,10 @@ interface UpdateReviewFormProps {
 
 /**
  * Formulaire de modification d'avis
+ *
+ * Utilise TanStack Form pour gérer l'état du formulaire.
+ * Tous les champs (rating, title, content, media) sont gérés
+ * par le form hook, sans useState local.
  */
 export function UpdateReviewForm({
 	review,
@@ -48,19 +47,6 @@ export function UpdateReviewForm({
 		},
 	})
 
-	const [rating, setRating] = useState(review.rating)
-	const [media, setMedia] = useState<ReviewMediaItem[]>(initialMedia)
-
-	const handleRatingChange = (newRating: number) => {
-		setRating(newRating)
-		form.setFieldValue("rating", newRating)
-	}
-
-	const handleMediaChange = (newMedia: ReviewMediaItem[]) => {
-		setMedia(newMedia)
-		form.setFieldValue("media", newMedia)
-	}
-
 	return (
 		<div className="group/form">
 			<form
@@ -72,120 +58,72 @@ export function UpdateReviewForm({
 					className
 				)}
 			>
-				{/* Champs cachés */}
-			<input type="hidden" name="reviewId" value={review.id} />
-			<input type="hidden" name="rating" value={rating} />
-			<input type="hidden" name="media" value={JSON.stringify(media)} />
+				{/* Champ caché pour l'ID */}
+				<input type="hidden" name="reviewId" value={review.id} />
 
-			{/* Sélection de la note */}
-			<div className="flex flex-col items-center gap-2">
-				<Label className="text-base">Votre note</Label>
-				<ReviewStars
-					rating={rating}
-					size="lg"
-					interactive
-					onChange={handleRatingChange}
-				/>
-				<span className="text-sm text-muted-foreground">
-					{rating} étoile{rating > 1 ? "s" : ""}
-				</span>
-			</div>
+				{/* Sélection de la note */}
+				<form.AppField name="rating">
+					{(field) => <field.RatingField label="Votre note" size="lg" />}
+				</form.AppField>
 
-			{/* Titre (optionnel) */}
-			<div className="space-y-2">
-				<Label htmlFor="title">
-					Titre de votre avis <span className="text-muted-foreground">(optionnel)</span>
-				</Label>
-				<form.Field name="title">
+				{/* Titre (optionnel) */}
+				<form.AppField name="title">
 					{(field) => (
-						<Input
-							id="title"
-							name="title"
+						<field.InputField
+							label="Titre de votre avis"
+							optional
 							placeholder="Résumez votre expérience en quelques mots"
 							maxLength={REVIEW_CONFIG.MAX_TITLE_LENGTH}
-							value={field.state.value}
-							onChange={(e) => field.handleChange(e.target.value)}
 						/>
 					)}
-				</form.Field>
-			</div>
+				</form.AppField>
 
-			{/* Contenu */}
-			<div className="space-y-2">
-				<Label htmlFor="content">
-					Votre avis <span className="text-destructive">*</span>
-				</Label>
-				<form.Field name="content">
+				{/* Contenu */}
+				<form.AppField name="content">
 					{(field) => (
-						<>
-							<Textarea
-								id="content"
-								name="content"
-								placeholder="Partagez votre expérience avec ce produit..."
-								rows={4}
-								maxLength={REVIEW_CONFIG.MAX_CONTENT_LENGTH}
-								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
-								aria-invalid={field.state.meta.errors.length > 0}
-								aria-describedby="update-content-error update-content-counter"
-								className={cn(
-									field.state.meta.errors.length > 0 && "border-destructive"
-								)}
-							/>
-							<div className="flex justify-between text-xs text-muted-foreground">
-								<span id="update-content-error" role="alert" aria-live="assertive">
-									{field.state.meta.errors.length > 0 && (
-										<span className="text-destructive">
-											{field.state.meta.errors[0]}
-										</span>
-									)}
-								</span>
-								<span id="update-content-counter" aria-live="polite">
-									{field.state.value.length}/{REVIEW_CONFIG.MAX_CONTENT_LENGTH}
-								</span>
-							</div>
-						</>
+						<field.TextareaField
+							label="Votre avis"
+							required
+							placeholder="Partagez votre expérience avec ce produit..."
+							rows={4}
+							maxLength={REVIEW_CONFIG.MAX_CONTENT_LENGTH}
+							showCounter
+						/>
 					)}
+				</form.AppField>
+
+				{/* Photos */}
+				<form.Field name="media">
+					{() => <ReviewMediaField label="Photos" disabled={isPending} />}
 				</form.Field>
-			</div>
 
-			{/* Photos */}
-			<div className="space-y-2">
-				<Label>Photos (optionnel)</Label>
-				<ReviewMediaUpload
-					media={media}
-					onChange={handleMediaChange}
-					disabled={isPending}
-				/>
-			</div>
-
-			{/* Boutons d'action */}
-			<div className="flex gap-3">
-				{onCancel && (
+				{/* Boutons d'action */}
+				<div className="flex gap-3">
+					{onCancel && (
+						<Button
+							type="button"
+							variant="outline"
+							onClick={onCancel}
+							disabled={isPending}
+							className="flex-1"
+						>
+							Annuler
+						</Button>
+					)}
 					<Button
-						type="button"
-						variant="outline"
-						onClick={onCancel}
+						type="submit"
 						disabled={isPending}
 						className="flex-1"
 					>
-						Annuler
+						{isPending ? (
+							"Enregistrement..."
+						) : (
+							<>
+								<Send className="size-4 mr-2" aria-hidden="true" />
+								Enregistrer les modifications
+							</>
+						)}
 					</Button>
-				)}
-				<Button
-					type="submit"
-					disabled={isPending}
-					className="flex-1"
-				>
-					{isPending ? (
-						"Enregistrement..."
-					) : (
-						<>
-							<Send className="size-4 mr-2" aria-hidden="true" />
-							Enregistrer les modifications
-						</>
-					)}
-				</Button>
 				</div>
 			</form>
 		</div>

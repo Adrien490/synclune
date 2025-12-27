@@ -10,6 +10,12 @@
 import sharp from "sharp";
 import { COLOR_PLACEHOLDER_CONFIG } from "../constants/media.constants";
 import { isValidUploadThingUrl } from "../utils/validate-media-file";
+import {
+	downloadImage,
+	truncateUrl,
+	withRetry,
+	type LogFn,
+} from "./image-downloader.service";
 
 // ============================================================================
 // TYPES
@@ -25,7 +31,7 @@ export interface ColorPlaceholderResult {
 }
 
 /** Fonction de log pour les avertissements */
-export type ColorLogFn = (message: string, data?: Record<string, unknown>) => void;
+export type ColorLogFn = LogFn;
 
 export interface GenerateColorPlaceholderOptions {
 	/** Timeout pour le telechargement (ms) */
@@ -43,21 +49,6 @@ export interface GenerateColorPlaceholderOptions {
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-/**
- * Attendre un delai
- */
-function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Tronque une URL pour les logs (evite d'exposer trop d'info)
- */
-function truncateUrl(url: string, maxLength: number = 50): string {
-	if (url.length <= maxLength) return url;
-	return url.substring(0, maxLength) + "...";
-}
 
 /**
  * Logger par defaut (console.warn)
@@ -93,118 +84,6 @@ function generateSvgBlurDataUrl(dominantColor: string, darkerColor: string): str
 	// Encode en base64 pour data URL
 	const base64 = Buffer.from(svg).toString("base64");
 	return `data:image/svg+xml;base64,${base64}`;
-}
-
-/**
- * Determine si une erreur est temporaire et merite un retry
- */
-function isRetryableError(error: unknown): boolean {
-	if (!(error instanceof Error)) return true;
-
-	const message = error.message.toLowerCase();
-
-	if (error.name === "AbortError" || message.includes("timeout")) {
-		return true;
-	}
-
-	const httpMatch = message.match(/http\s*(\d{3})/i);
-	if (httpMatch) {
-		const statusCode = parseInt(httpMatch[1], 10);
-		if (statusCode >= 400 && statusCode < 500 && statusCode !== 408 && statusCode !== 429) {
-			return false;
-		}
-		return true;
-	}
-
-	if (
-		message.includes("network") ||
-		message.includes("econnrefused") ||
-		message.includes("econnreset") ||
-		message.includes("etimedout")
-	) {
-		return true;
-	}
-
-	return true;
-}
-
-/**
- * Executer une fonction avec retry et backoff exponentiel
- */
-async function withRetry<T>(
-	fn: () => Promise<T>,
-	maxRetries: number = COLOR_PLACEHOLDER_CONFIG.maxRetries,
-	baseDelay: number = COLOR_PLACEHOLDER_CONFIG.retryBaseDelay
-): Promise<T> {
-	let lastError: Error | null = null;
-
-	for (let attempt = 0; attempt < maxRetries; attempt++) {
-		try {
-			return await fn();
-		} catch (error) {
-			lastError = error instanceof Error ? error : new Error(String(error));
-
-			if (!isRetryableError(error)) {
-				throw lastError;
-			}
-
-			if (attempt < maxRetries - 1) {
-				const waitTime = baseDelay * Math.pow(2, attempt);
-				await delay(waitTime);
-			}
-		}
-	}
-
-	throw lastError;
-}
-
-// ============================================================================
-// MAIN SERVICE
-// ============================================================================
-
-/**
- * Telecharge une image et retourne le buffer
- */
-async function downloadImage(
-	url: string,
-	options: GenerateColorPlaceholderOptions = {}
-): Promise<Buffer> {
-	const timeout = options.downloadTimeout ?? COLOR_PLACEHOLDER_CONFIG.downloadTimeout;
-	const maxSize = options.maxImageSize ?? COLOR_PLACEHOLDER_CONFIG.maxImageSize;
-
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-	try {
-		const response = await fetch(url, {
-			signal: controller.signal,
-			headers: {
-				"User-Agent": "Synclune-ColorPlaceholder/1.0",
-			},
-		});
-
-		if (!response.ok) {
-			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-		}
-
-		const contentLength = response.headers.get("content-length");
-		if (contentLength && parseInt(contentLength, 10) > maxSize) {
-			throw new Error(
-				`Image trop volumineuse: ${(parseInt(contentLength, 10) / 1024 / 1024).toFixed(2)}MB`
-			);
-		}
-
-		const arrayBuffer = await response.arrayBuffer();
-		const buffer = Buffer.from(arrayBuffer);
-
-		if (buffer.length > maxSize) {
-			throw new Error(`Image trop volumineuse: ${(buffer.length / 1024 / 1024).toFixed(2)}MB`);
-		}
-
-		return buffer;
-	} finally {
-		clearTimeout(timeoutId);
-	}
 }
 
 /**
@@ -254,7 +133,11 @@ export async function generateColorPlaceholder(
 	}
 
 	try {
-		const buffer = await downloadImage(imageUrl, options);
+		const buffer = await downloadImage(imageUrl, {
+			downloadTimeout: options.downloadTimeout ?? COLOR_PLACEHOLDER_CONFIG.downloadTimeout,
+			maxImageSize: options.maxImageSize ?? COLOR_PLACEHOLDER_CONFIG.maxImageSize,
+			userAgent: "Synclune-ColorPlaceholder/1.0",
+		});
 		const { r, g, b } = await extractDominantColor(buffer, analysisSize);
 
 		const dominantColor = rgbToHex(r, g, b);
@@ -301,22 +184,32 @@ export async function generateColorPlaceholderWithRetry(
 		throw new Error(`Domaine non autorise: ${new URL(imageUrl).hostname}`);
 	}
 
-	return withRetry(async () => {
-		const buffer = await downloadImage(imageUrl, options);
-		const { r, g, b } = await extractDominantColor(buffer, analysisSize);
+	return withRetry(
+		async () => {
+			const buffer = await downloadImage(imageUrl, {
+				downloadTimeout: options.downloadTimeout ?? COLOR_PLACEHOLDER_CONFIG.downloadTimeout,
+				maxImageSize: options.maxImageSize ?? COLOR_PLACEHOLDER_CONFIG.maxImageSize,
+				userAgent: "Synclune-ColorPlaceholder/1.0",
+			});
+			const { r, g, b } = await extractDominantColor(buffer, analysisSize);
 
-		const dominantColor = rgbToHex(r, g, b);
-		const darkerColor = darkenHex(dominantColor, COLOR_PLACEHOLDER_CONFIG.darkenPercent);
+			const dominantColor = rgbToHex(r, g, b);
+			const darkerColor = darkenHex(dominantColor, COLOR_PLACEHOLDER_CONFIG.darkenPercent);
 
-		const cssGradient = `linear-gradient(135deg, ${dominantColor} 0%, ${darkerColor} 100%)`;
-		const blurDataUrl = generateSvgBlurDataUrl(dominantColor, darkerColor);
+			const cssGradient = `linear-gradient(135deg, ${dominantColor} 0%, ${darkerColor} 100%)`;
+			const blurDataUrl = generateSvgBlurDataUrl(dominantColor, darkerColor);
 
-		return {
-			dominantColor,
-			cssGradient,
-			blurDataUrl,
-		};
-	});
+			return {
+				dominantColor,
+				cssGradient,
+				blurDataUrl,
+			};
+		},
+		{
+			maxRetries: COLOR_PLACEHOLDER_CONFIG.maxRetries,
+			baseDelay: COLOR_PLACEHOLDER_CONFIG.retryBaseDelay,
+		}
+	);
 }
 
 /**

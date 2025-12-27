@@ -3,6 +3,7 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache"
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 
 // ============================================
 // CACHE TAGS
@@ -50,9 +51,10 @@ export function cacheDiscountDetail(idOrCode: string) {
  * Invalide automatiquement :
  * - La liste des codes promo
  * - Le détail du code promo (si idOrCode fourni)
+ * - Les badges de la sidebar admin
  */
 export function getDiscountInvalidationTags(idOrCode?: string): string[] {
-	const tags: string[] = [DISCOUNT_CACHE_TAGS.LIST]
+	const tags: string[] = [DISCOUNT_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES]
 
 	if (idOrCode) {
 		tags.push(DISCOUNT_CACHE_TAGS.DETAIL(idOrCode))

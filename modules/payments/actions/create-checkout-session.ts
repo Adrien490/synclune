@@ -16,7 +16,7 @@ import { createCheckoutSessionSchema } from "@/modules/payments/schemas/create-c
 import { parseFullName } from "@/modules/payments/utils/parse-full-name";
 import type { CreateCheckoutSessionData } from "@/modules/payments/types/checkout.types";
 // ALLOWED_SHIPPING_COUNTRIES n'est plus utilisé car shipping_address_collection est désactivé (embedded mode)
-import { getStripeShippingOptions } from "@/modules/orders/constants/stripe-shipping-rates";
+import { getShippingOptionsForAddress } from "@/modules/orders/constants/stripe-shipping-rates";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { checkDiscountEligibility } from "@/modules/discounts/utils/check-discount-eligibility";
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/services/discount-calculation.service";
@@ -302,9 +302,10 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				validatedData.shippingAddress.postalCode
 			);
 
-			// 8c. Calculer les frais de livraison selon le pays
+			// 8c. Calculer les frais de livraison selon le pays et la zone (Corse = 10€)
 			const shippingCost = calculateShipping(
-				validatedData.shippingAddress.country as ShippingCountry
+				validatedData.shippingAddress.country as ShippingCountry,
+				validatedData.shippingAddress.postalCode
 			);
 
 			// 8d. 🔴 DISCOUNT ATOMIQUE : Valider et appliquer le code promo dans la transaction
@@ -525,11 +526,15 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				customer_email: !stripeCustomerId ? (finalEmail || undefined) : undefined,
 
 				// ✅ SHIPPING OPTIONS (IDs créés dans Dashboard Stripe)
-				// Stripe filtre automatiquement selon le pays du client :
-				// - France : 6€
+				// Filtrage par pays ET code postal (Corse détectée côté backend) :
+				// - France métro : 6€
+				// - Corse : 10€
 				// - Europe (dont Monaco) : 15€
 				// ℹ️ Micro-entreprise : Prix FINAUX sans TVA
-				shipping_options: getStripeShippingOptions(),
+				shipping_options: getShippingOptionsForAddress(
+					validatedData.shippingAddress.country as ShippingCountry,
+					validatedData.shippingAddress.postalCode
+				),
 
 				// ❌ DÉSACTIVÉ - Adresse collectée via notre formulaire, pas Stripe
 				// shipping_address_collection: { allowed_countries: [...] },

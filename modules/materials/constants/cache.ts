@@ -3,6 +3,7 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache"
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 
 // ============================================
 // CACHE TAGS
@@ -46,10 +47,16 @@ export function cacheMaterialDetail(slug: string) {
 
 /**
  * Tags à invalider lors de la modification d'un matériau
+ *
+ * Invalide automatiquement :
+ * - La liste des matériaux
+ * - Le détail du matériau (si slug fourni)
+ * - Les badges de la sidebar admin
+ *
  * @param materialSlug - Slug du matériau (optionnel pour création/bulk)
  */
 export function getMaterialInvalidationTags(materialSlug?: string): string[] {
-	const tags = [MATERIALS_CACHE_TAGS.LIST as string];
+	const tags: string[] = [MATERIALS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
 
 	if (materialSlug) {
 		tags.push(MATERIALS_CACHE_TAGS.DETAIL(materialSlug));

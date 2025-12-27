@@ -22,7 +22,7 @@ import type { ProductStockInfo, StockStatus } from "@/modules/skus/types/sku-sel
 import {
 	getPrimarySkuForList,
 	getStockInfoForList,
-} from "@/modules/skus/services/sku-selection";
+} from "@/modules/skus/services/sku-selection.service";
 
 /**
  * Tronque le texte alternatif pour SEO (max 120 caractères par défaut)
@@ -402,7 +402,7 @@ export {
 	getSkuByColorForList,
 	computeStockFromSkus,
 	getStockInfoForList,
-} from "@/modules/skus/services/sku-selection";
+} from "@/modules/skus/services/sku-selection.service";
 
 // Fonctions d'affichage des variantes
 export {

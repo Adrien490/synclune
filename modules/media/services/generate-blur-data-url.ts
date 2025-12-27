@@ -10,14 +10,19 @@
 import { getPlaiceholder } from "plaiceholder";
 import { BLUR_PLACEHOLDER_CONFIG } from "../constants/media.constants";
 import { isValidUploadThingUrl } from "../utils/validate-media-file";
-import { delay } from "@/shared/utils/delay";
+import {
+	downloadImage,
+	truncateUrl,
+	withRetry,
+	type LogFn,
+} from "./image-downloader.service";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 /** Fonction de log pour les avertissements */
-export type BlurLogFn = (message: string, data?: Record<string, unknown>) => void;
+export type BlurLogFn = LogFn;
 
 export interface GenerateBlurOptions {
 	/** Timeout pour le telechargement (ms) */
@@ -44,149 +49,9 @@ function isValidBlurDataUrl(base64: string): boolean {
 }
 
 /**
- * Tronque une URL pour les logs (evite d'exposer trop d'info)
- */
-function truncateUrl(url: string, maxLength: number = 50): string {
-	if (url.length <= maxLength) return url;
-	return url.substring(0, maxLength) + "...";
-}
-
-/**
  * Logger par defaut (console.warn)
  */
 const defaultLogger: BlurLogFn = (message) => console.warn(message);
-
-/**
- * Determine si une erreur est temporaire et merite un retry
- * - Erreurs 5xx (serveur) -> retry
- * - Timeout/AbortError -> retry
- * - Erreurs reseau -> retry
- * - Erreurs 4xx (client) -> pas de retry (erreur permanente)
- */
-function isRetryableError(error: unknown): boolean {
-	if (!(error instanceof Error)) return true; // Erreur inconnue, on retry
-
-	const message = error.message.toLowerCase();
-
-	// Timeout ou abort -> retry
-	if (error.name === "AbortError" || message.includes("timeout")) {
-		return true;
-	}
-
-	// Erreurs HTTP: extraire le code
-	const httpMatch = message.match(/http\s*(\d{3})/i);
-	if (httpMatch) {
-		const statusCode = parseInt(httpMatch[1], 10);
-		// 4xx = erreur client permanente (sauf 408 Request Timeout, 429 Too Many Requests)
-		if (statusCode >= 400 && statusCode < 500 && statusCode !== 408 && statusCode !== 429) {
-			return false;
-		}
-		// 5xx = erreur serveur temporaire
-		return true;
-	}
-
-	// Erreurs reseau -> retry
-	if (
-		message.includes("network") ||
-		message.includes("econnrefused") ||
-		message.includes("econnreset") ||
-		message.includes("etimedout")
-	) {
-		return true;
-	}
-
-	// Par defaut, on retry (prudence)
-	return true;
-}
-
-/**
- * Executer une fonction avec retry et backoff exponentiel
- * Ne retry que les erreurs temporaires (5xx, timeout, reseau)
- */
-async function withRetry<T>(
-	fn: () => Promise<T>,
-	maxRetries: number = BLUR_PLACEHOLDER_CONFIG.maxRetries,
-	baseDelay: number = BLUR_PLACEHOLDER_CONFIG.retryBaseDelay
-): Promise<T> {
-	let lastError: Error | null = null;
-
-	for (let attempt = 0; attempt < maxRetries; attempt++) {
-		try {
-			return await fn();
-		} catch (error) {
-			lastError = error instanceof Error ? error : new Error(String(error));
-
-			// Verifier si l'erreur merite un retry
-			if (!isRetryableError(error)) {
-				throw lastError; // Erreur permanente, pas de retry
-			}
-
-			if (attempt < maxRetries - 1) {
-				const waitTime = baseDelay * Math.pow(2, attempt);
-				await delay(waitTime);
-			}
-		}
-	}
-
-	throw lastError;
-}
-
-// ============================================================================
-// MAIN SERVICE
-// ============================================================================
-
-/**
- * Telecharge une image et retourne le buffer
- *
- * @param url - URL de l'image a telecharger
- * @param options - Options de telechargement
- * @throws {Error} Si le telechargement echoue ou timeout
- */
-async function downloadImage(
-	url: string,
-	options: GenerateBlurOptions = {}
-): Promise<Buffer> {
-	const timeout = options.downloadTimeout ?? BLUR_PLACEHOLDER_CONFIG.downloadTimeout;
-	const maxSize = options.maxImageSize ?? BLUR_PLACEHOLDER_CONFIG.maxImageSize;
-
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-	try {
-		const response = await fetch(url, {
-			signal: controller.signal,
-			headers: {
-				"User-Agent": "Synclune-BlurGenerator/1.0",
-			},
-		});
-
-		if (!response.ok) {
-			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-		}
-
-		// Verifier la taille avant telechargement complet
-		const contentLength = response.headers.get("content-length");
-		if (contentLength && parseInt(contentLength, 10) > maxSize) {
-			throw new Error(
-				`Image trop volumineuse: ${(parseInt(contentLength, 10) / 1024 / 1024).toFixed(2)}MB (max: ${(maxSize / 1024 / 1024).toFixed(0)}MB)`
-			);
-		}
-
-		const arrayBuffer = await response.arrayBuffer();
-		const buffer = Buffer.from(arrayBuffer);
-
-		// Double verification apres telechargement
-		if (buffer.length > maxSize) {
-			throw new Error(
-				`Image trop volumineuse: ${(buffer.length / 1024 / 1024).toFixed(2)}MB (max: ${(maxSize / 1024 / 1024).toFixed(0)}MB)`
-			);
-		}
-
-		return buffer;
-	} finally {
-		clearTimeout(timeoutId);
-	}
-}
 
 /**
  * Genere un blurDataURL (base64) pour une image
@@ -216,7 +81,11 @@ export async function generateBlurDataUrl(
 	}
 
 	try {
-		const buffer = await downloadImage(imageUrl, options);
+		const buffer = await downloadImage(imageUrl, {
+			downloadTimeout: options.downloadTimeout ?? BLUR_PLACEHOLDER_CONFIG.downloadTimeout,
+			maxImageSize: options.maxImageSize ?? BLUR_PLACEHOLDER_CONFIG.maxImageSize,
+			userAgent: "Synclune-BlurGenerator/1.0",
+		});
 		const { base64 } = await getPlaiceholder(buffer, { size: plaiceholderSize });
 
 		// Validation du résultat
@@ -265,17 +134,27 @@ export async function generateBlurDataUrlWithRetry(
 		throw new Error(`Domaine non autorise: ${new URL(imageUrl).hostname}`);
 	}
 
-	return withRetry(async () => {
-		const buffer = await downloadImage(imageUrl, options);
-		const { base64 } = await getPlaiceholder(buffer, { size: plaiceholderSize });
+	return withRetry(
+		async () => {
+			const buffer = await downloadImage(imageUrl, {
+				downloadTimeout: options.downloadTimeout ?? BLUR_PLACEHOLDER_CONFIG.downloadTimeout,
+				maxImageSize: options.maxImageSize ?? BLUR_PLACEHOLDER_CONFIG.maxImageSize,
+				userAgent: "Synclune-BlurGenerator/1.0",
+			});
+			const { base64 } = await getPlaiceholder(buffer, { size: plaiceholderSize });
 
-		// Validation du résultat
-		if (!isValidBlurDataUrl(base64)) {
-			throw new Error("Format de blur invalide généré (attendu: data:image/...)");
+			// Validation du résultat
+			if (!isValidBlurDataUrl(base64)) {
+				throw new Error("Format de blur invalide généré (attendu: data:image/...)");
+			}
+
+			return base64;
+		},
+		{
+			maxRetries: BLUR_PLACEHOLDER_CONFIG.maxRetries,
+			baseDelay: BLUR_PLACEHOLDER_CONFIG.retryBaseDelay,
 		}
-
-		return base64;
-	});
+	);
 }
 
 /**

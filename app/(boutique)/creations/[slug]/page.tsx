@@ -180,7 +180,7 @@ export default async function ProductPage({
 
 							{/* 7. RecentlyViewedProducts - Produits recemment consultes */}
 							<Suspense fallback={<RecentlyViewedProductsSkeleton limit={4} />}>
-								<RecentlyViewedProducts currentProductSlug={product.slug} />
+								<RecentlyViewedProducts currentProductSlug={product.slug} limit={4} />
 							</Suspense>
 
 							{/* Separator avant produits similaires */}

@@ -15,7 +15,7 @@ import {
 } from "@/shared/components/ui/popover";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
-import type { ColorSwatch } from "@/modules/products/services/product-list-helpers";
+import type { ColorSwatch } from "@/modules/products/services/product-sorting.service";
 
 interface ColorSwatchesProps {
 	colors: ColorSwatch[];

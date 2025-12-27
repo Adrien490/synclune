@@ -8,8 +8,9 @@ import { CardContent } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
 import { cn } from "@/shared/utils/cn"
 
+import { RatingStars } from "@/shared/components/rating-stars"
+
 import type { ReviewUser } from "../types/review.types"
-import { ReviewStars } from "./review-stars"
 import { UserReviewCardActions } from "./user-review-card-actions"
 import { REVIEW_STATUS_LABELS } from "../constants/review.constants"
 
@@ -69,7 +70,7 @@ export function UserReviewCard({ review, className }: UserReviewCardProps) {
 									<ExternalLink className="size-3 shrink-0" aria-hidden="true" />
 								</Link>
 								<div className="flex items-center gap-2 mt-1">
-									<ReviewStars rating={review.rating} size="sm" />
+									<RatingStars rating={review.rating} size="sm" />
 									<time
 										dateTime={new Date(review.createdAt).toISOString()}
 										className="text-xs text-muted-foreground"

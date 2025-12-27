@@ -1,9 +1,9 @@
-import { Star } from "lucide-react"
 import { Progress } from "@/shared/components/ui/progress"
 import { cn } from "@/shared/utils/cn"
-import { formatRating } from "../utils/stats.utils"
-import type { ProductReviewStatistics } from "../types/review.types"
+import { Star } from "lucide-react"
 import { REVIEW_CONFIG } from "../constants/review.constants"
+import type { ProductReviewStatistics } from "../types/review.types"
+import { formatRating } from "../utils/stats.utils"
 
 interface ReviewSummaryProps {
 	stats: ProductReviewStatistics
@@ -52,15 +52,15 @@ export function ReviewSummary({
 				{stats.distribution.map(({ rating, count, percentage }) => (
 					<div
 						key={rating}
-						className="flex items-center gap-3 w-full"
+						className="flex items-center gap-2 w-full flex-nowrap"
 					>
 						{/* Label (étoiles) */}
-						<span className="text-sm font-medium w-14 text-left text-muted-foreground">
+						<span className="text-sm font-medium w-16 whitespace-nowrap text-left text-muted-foreground">
 							{rating} étoile{rating > 1 ? "s" : ""}
 						</span>
 
 						{/* Barre de progression */}
-						<div className="flex-1">
+						<div className="flex-1 min-w-0">
 							<Progress
 								value={percentage}
 								className="h-2"
@@ -74,7 +74,7 @@ export function ReviewSummary({
 						</span>
 
 						{/* Nombre d'avis */}
-						<span className="text-xs text-muted-foreground w-12 text-right">
+						<span className="text-xs text-muted-foreground w-12 text-right hidden sm:inline">
 							({count})
 						</span>
 					</div>

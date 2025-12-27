@@ -12,7 +12,7 @@ import type {
 	ProductFromList,
 	ColorSwatch,
 } from "@/modules/products/types/product-list.types";
-import { getPrimarySkuForList } from "@/modules/skus/services/sku-selection";
+import { getPrimarySkuForList } from "@/modules/skus/services/sku-selection.service";
 
 /**
  * Récupère la couleur principale du SKU principal

@@ -29,6 +29,7 @@ interface CheckoutFormProps {
 	addresses: GetUserAddressesReturn | null;
 	onSuccess?: (data: { clientSecret: string; orderId: string; orderNumber: string }) => void;
 	onCountryChange?: (country: ShippingCountry) => void;
+	onPostalCodeChange?: (postalCode: string) => void;
 }
 
 /**
@@ -41,6 +42,7 @@ export function CheckoutForm({
 	addresses,
 	onSuccess,
 	onCountryChange,
+	onPostalCodeChange,
 }: CheckoutFormProps) {
 	const isGuest = !session;
 
@@ -67,6 +69,19 @@ export function CheckoutForm({
 			onCountryChange?.(country);
 		}
 	}, [currentCountry, onCountryChange]);
+
+	// Notifier le parent quand le code postal change (pour le calcul des frais Corse)
+	const initialPostalCode = form.state.values.shipping?.postalCode;
+	const lastPostalCodeRef = useRef<string | undefined>(initialPostalCode);
+	const currentPostalCode = form.state.values.shipping?.postalCode;
+
+	useEffect(() => {
+		const postalCode = currentPostalCode || "";
+		if (postalCode !== lastPostalCodeRef.current) {
+			lastPostalCodeRef.current = postalCode;
+			onPostalCodeChange?.(postalCode);
+		}
+	}, [currentPostalCode, onPostalCodeChange]);
 
 	// Calculer le total
 	const subtotal = cart.items.reduce((sum, item) => {

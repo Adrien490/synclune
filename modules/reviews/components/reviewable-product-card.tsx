@@ -1,12 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { ExternalLink, Star } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { Star, ExternalLink } from "lucide-react"
+import { useState } from "react"
 
-import { Button } from "@/shared/components/ui/button"
-import { CardContent } from "@/shared/components/ui/card"
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
@@ -15,6 +13,8 @@ import {
 	ResponsiveDialogTitle,
 	ResponsiveDialogTrigger,
 } from "@/shared/components/responsive-dialog"
+import { Button } from "@/shared/components/ui/button"
+import { CardContent } from "@/shared/components/ui/card"
 import { cn } from "@/shared/utils/cn"
 
 import type { ReviewableProduct } from "../types/review.types"

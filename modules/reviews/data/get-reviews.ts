@@ -1,4 +1,8 @@
 import { isAdmin } from "@/modules/auth/utils/guards"
+import {
+	buildCursorPagination,
+	processCursorResults,
+} from "@/shared/components/cursor-pagination/pagination"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
 
 import {
@@ -108,34 +112,32 @@ async function fetchReviews(
 		// Compter le total
 		const totalCount = await prisma.productReview.count({ where })
 
+		// Construire la pagination cursor avec le helper centralisé
+		const cursorConfig = buildCursorPagination({
+			cursor: params.cursor,
+			direction: params.direction,
+			take: perPage,
+		})
+
 		// Récupérer les avis avec pagination cursor
 		const reviews = (await prisma.productReview.findMany({
 			where,
 			select,
 			orderBy,
-			take: perPage + 1, // +1 pour savoir s'il y a une page suivante
-			...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
+			...cursorConfig,
 		})) as Review[]
 
-		// Déterminer s'il y a plus de résultats
-		const hasNextPage = reviews.length > perPage
-		if (hasNextPage) {
-			reviews.pop() // Retirer l'élément en trop
-		}
-
-		// Calculer les curseurs
-		const nextCursor = hasNextPage && reviews.length > 0 ? reviews[reviews.length - 1].id : null
-		const prevCursor = params.cursor || null
-		const hasPreviousPage = !!params.cursor
+		// Traiter les résultats avec le helper centralisé
+		const { items, pagination } = processCursorResults(
+			reviews,
+			perPage,
+			params.direction,
+			params.cursor
+		)
 
 		return {
-			reviews,
-			pagination: {
-				nextCursor,
-				prevCursor,
-				hasNextPage,
-				hasPreviousPage,
-			},
+			reviews: items,
+			pagination,
 			totalCount,
 		}
 	} catch (error) {

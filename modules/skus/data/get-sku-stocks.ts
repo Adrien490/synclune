@@ -22,7 +22,7 @@ import type {
 	GetSkuStocksReturn,
 	SkuStock,
 } from "../types/inventory.types";
-import { buildInventoryWhereClause } from "../utils/inventory-query-builder";
+import { buildInventoryWhereClause } from "../services/inventory-query-builder";
 
 // Re-export pour compatibilité
 export {

@@ -17,9 +17,10 @@ import { formatDateShort } from "@/shared/utils/dates"
 import { CheckCircle2, EyeOff, MessageSquare } from "lucide-react"
 import Link from "next/link"
 
+import { RatingStars } from "@/shared/components/rating-stars"
+
 import type { GetReviewsReturn, ReviewAdmin } from "../../types/review.types"
 import { REVIEW_STATUS_LABELS } from "../../constants/review.constants"
-import { ReviewStars } from "../review-stars"
 import { ReviewRowActions } from "./review-row-actions"
 
 export interface ReviewsDataTableProps {
@@ -99,7 +100,7 @@ export async function ReviewsDataTable({
 
 									{/* Note */}
 									<TableCell>
-										<ReviewStars rating={review.rating} size="sm" />
+										<RatingStars rating={review.rating} size="sm" />
 									</TableCell>
 
 									{/* Statut */}

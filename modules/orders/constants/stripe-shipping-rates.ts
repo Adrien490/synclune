@@ -15,6 +15,9 @@
  * 3. Copier les IDs (shr_xxx) et les coller ci-dessous
  */
 
+import { getShippingZoneFromPostalCode } from "@/modules/payments/services/postal-zone.service";
+import { type ShippingCountry } from "@/shared/constants/countries";
+
 // ==============================================================================
 // IDS DES TARIFS STRIPE (À CONFIGURER DANS LE DASHBOARD)
 // ==============================================================================
@@ -33,6 +36,12 @@ export const STRIPE_SHIPPING_RATE_IDS = {
 	 */
 	FRANCE: process.env.STRIPE_SHIPPING_RATE_FRANCE!,
 	/**
+	 * Livraison Corse
+	 * Prix : 10,00€ | Délai : 4-7 jours ouvrés
+	 * Pays autorisés dans Stripe : FR (filtrage par code postal côté backend)
+	 */
+	CORSE: process.env.STRIPE_SHIPPING_RATE_CORSE!,
+	/**
 	 * Livraison Union Européenne
 	 * Prix : 15,00€ | Délai : 4-7 jours ouvrés
 	 * Pays autorisés dans Stripe : BE, DE, NL, LU, IT, ES, PT, AT, IE, FI, SE, DK, GR,
@@ -48,17 +57,39 @@ export const STRIPE_SHIPPING_RATE_IDS = {
 /**
  * Génère les shipping_options pour la session Stripe Checkout
  *
- * Stripe filtre automatiquement les options selon le pays du client.
- * Si le client est en Belgique, seule l'option Europe sera disponible.
- *
- * @returns Liste des shipping_options pour Stripe
+ * @deprecated Utiliser getShippingOptionsForAddress() pour un filtrage précis par code postal
+ * @returns Liste de tous les shipping_options
  */
 export function getStripeShippingOptions(): Array<{ shipping_rate: string }> {
-	// Proposer tous les tarifs - Stripe affichera uniquement celui correspondant au pays
 	return [
 		{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.FRANCE },
+		{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.CORSE },
 		{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.EUROPE },
 	];
+}
+
+/**
+ * Détermine le shipping_option approprié selon l'adresse de livraison
+ *
+ * Stripe ne filtre pas par code postal, donc on ne passe qu'un seul tarif
+ * pour éviter que le client puisse choisir un tarif incorrect.
+ *
+ * @param country - Code pays ISO (ex: "FR", "BE")
+ * @param postalCode - Code postal (ex: "75001", "20000")
+ * @returns Le shipping_option unique correspondant à l'adresse
+ */
+export function getShippingOptionsForAddress(
+	country: ShippingCountry,
+	postalCode: string
+): Array<{ shipping_rate: string }> {
+	if (country === "FR") {
+		const { zone } = getShippingZoneFromPostalCode(postalCode);
+		if (zone === "CORSE") {
+			return [{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.CORSE }];
+		}
+		return [{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.FRANCE }];
+	}
+	return [{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.EUROPE }];
 }
 
 // ==============================================================================
@@ -71,6 +102,7 @@ export function getStripeShippingOptions(): Array<{ shipping_rate: string }> {
  */
 export const SHIPPING_RATE_NAMES: Record<string, string> = {
 	[STRIPE_SHIPPING_RATE_IDS.FRANCE]: "Livraison France",
+	[STRIPE_SHIPPING_RATE_IDS.CORSE]: "Livraison Corse",
 	[STRIPE_SHIPPING_RATE_IDS.EUROPE]: "Livraison Europe",
 };
 

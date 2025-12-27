@@ -5,6 +5,7 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 
 // ============================================
@@ -27,7 +28,11 @@ export function cacheProductTypes() {
 
 /**
  * Tags à invalider lors de la modification d'un type de produit
+ *
+ * Invalide automatiquement :
+ * - La liste des types de produits
+ * - Les badges de la sidebar admin
  */
 export function getProductTypeInvalidationTags(): string[] {
-	return [PRODUCT_TYPES_CACHE_TAGS.LIST];
+	return [PRODUCT_TYPES_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
 }

@@ -24,9 +24,10 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
+import { RatingStars } from "@/shared/components/rating-stars"
+
 import type { ReviewAdmin } from "../../types/review.types"
 import { REVIEW_STATUS_LABELS } from "../../constants/review.constants"
-import { ReviewStars } from "../review-stars"
 import { ReviewResponseForm } from "./review-response-form"
 
 interface ReviewDetailDialogProps {
@@ -107,7 +108,7 @@ export function ReviewDetailDialog({ review, trigger }: ReviewDetailDialogProps)
 								</Badge>
 							</div>
 							<div className="flex items-center gap-2 text-sm text-muted-foreground">
-								<ReviewStars rating={review.rating} size="sm" />
+								<RatingStars rating={review.rating} size="sm" />
 								<span>•</span>
 								<span>{formatDateShort(review.createdAt)}</span>
 							</div>

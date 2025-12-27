@@ -18,13 +18,15 @@ import Image from "next/image";
 interface CheckoutSummaryProps {
 	cart: NonNullable<GetCartReturn>;
 	selectedCountry?: ShippingCountry;
+	postalCode?: string;
 }
 
 /**
  * Composant résumé de la commande pour la page checkout
  * Affiche le récapitulatif des articles, frais de port et total
+ * Détecte automatiquement la Corse via le code postal pour afficher les bons frais
  */
-export function CheckoutSummary({ cart, selectedCountry = "FR" }: CheckoutSummaryProps) {
+export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode }: CheckoutSummaryProps) {
 	const { open: openCart } = useSheet("cart");
 
 	// Calculer le nombre total d'articles
@@ -35,8 +37,8 @@ export function CheckoutSummary({ cart, selectedCountry = "FR" }: CheckoutSummar
 		return sum + item.priceAtAdd * item.quantity;
 	}, 0);
 
-	// Frais de port (dynamique selon le pays sélectionné)
-	const shipping = calculateShipping(selectedCountry);
+	// Frais de port (dynamique selon le pays et code postal pour la Corse)
+	const shipping = calculateShipping(selectedCountry, postalCode);
 
 	// Total
 	const total = subtotal + shipping;
@@ -66,6 +68,7 @@ export function CheckoutSummary({ cart, selectedCountry = "FR" }: CheckoutSummar
 										alt={item.sku.images[0].altText || item.sku.product.title}
 										fill
 										sizes="64px"
+										quality={70}
 										className="object-cover"
 									/>
 								) : (
