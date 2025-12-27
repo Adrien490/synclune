@@ -1,18 +1,20 @@
 import { SITE_URL } from "@/shared/constants/seo-config";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
-import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
+import type { ProductReviewStatistics, ReviewPublic } from "@/modules/reviews/types/review.types";
 
 interface StructuredDataOptions {
 	product: GetProductReturn;
 	selectedSku: ProductSku | null;
 	reviewStats?: ProductReviewStatistics | null;
+	reviews?: ReviewPublic[];
 }
 
 export function generateStructuredData({
 	product,
 	selectedSku,
 	reviewStats,
+	reviews,
 }: StructuredDataOptions) {
 	// Calculer le prix minimum et maximum pour les offres agrégées
 	const activePrices =
@@ -121,6 +123,25 @@ export function generateStructuredData({
 				bestRating: 5,
 				worstRating: 1,
 			},
+		}),
+		// Reviews individuels - max 10 pour les rich snippets Google
+		...(reviews && reviews.length > 0 && {
+			review: reviews.slice(0, 10).map((r) => ({
+				"@type": "Review",
+				reviewRating: {
+					"@type": "Rating",
+					ratingValue: r.rating,
+					bestRating: 5,
+					worstRating: 1,
+				},
+				author: {
+					"@type": "Person",
+					name: r.user?.name || "Client vérifié",
+				},
+				...(r.title && { name: r.title }),
+				reviewBody: r.content,
+				datePublished: new Date(r.createdAt).toISOString().split("T")[0],
+			})),
 		}),
 		offers: {
 			"@type": "Offer",

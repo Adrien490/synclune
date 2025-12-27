@@ -9,6 +9,7 @@ import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants"
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { getProductReviewStats } from "@/modules/reviews/data/get-product-review-stats";
+import { getAllProductReviews } from "@/modules/reviews/data/get-reviews";
 
 import { PageHeader } from "@/shared/components/page-header";
 import { ProductDetails } from "@/modules/products/components/product-details";
@@ -55,8 +56,11 @@ export default async function ProductPage({
 		notFound();
 	}
 
-	// Récupérer les stats des avis (après vérification existence produit)
-	const reviewStats = await getProductReviewStats(product.id);
+	// Récupérer les stats et les avis (après vérification existence produit)
+	const [reviewStats, reviews] = await Promise.all([
+		getProductReviewStats(product.id),
+		getAllProductReviews(product.id),
+	]);
 
 	// Sécurité: Bloquer les DRAFT pour les non-admins
 	if (product.status === "DRAFT" && !admin) {
@@ -103,11 +107,12 @@ export default async function ProductPage({
 		{ label: product.title, href: `/creations/${product.slug}` },
 	];
 
-	// Génération du structured data JSON-LD (avec stats avis pour Rich Snippets Google)
+	// Génération du structured data JSON-LD (avec stats avis et reviews pour Rich Snippets Google)
 	const structuredData = generateStructuredData({
 		product,
 		selectedSku,
 		reviewStats,
+		reviews,
 	});
 
 	// Vérifier si le produit est dans la wishlist (lookup O(1) local)
@@ -162,6 +167,7 @@ export default async function ProductPage({
 										product={product}
 										defaultSku={selectedSku}
 										isInWishlist={isInWishlist}
+										reviewStats={reviewStats}
 									/>
 
 									<Separator className="bg-border" />

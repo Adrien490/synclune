@@ -1,15 +1,18 @@
 import { Badge } from "@/shared/components/ui/badge";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
+import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { Crown } from "lucide-react";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
+import { ReviewRatingLink } from "@/modules/reviews/components/review-rating-link";
 import { ProductHighlights } from "./product-highlights";
 
 interface ProductInfoProps {
 	product: GetProductReturn;
 	defaultSku: ProductSku;
 	isInWishlist?: boolean;
+	reviewStats?: ProductReviewStatistics;
 }
 
 /**
@@ -26,17 +29,22 @@ export function ProductInfo({
 	product,
 	defaultSku,
 	isInWishlist,
+	reviewStats,
 }: ProductInfoProps) {
 	return (
 		<div className="space-y-4">
 			{/* Titre avec bouton wishlist - titre masque sur desktop car affiche dans PageHeader */}
 			<div className="flex items-start justify-between gap-4 sm:hidden">
-				<h1
-					className="text-3xl/10 font-bold tracking-tight text-foreground flex-1 line-clamp-2"
-					itemProp="name"
-				>
-					{product.title}
-				</h1>
+				<div className="flex-1 space-y-2">
+					<h1
+						className="text-3xl/10 font-bold tracking-tight text-foreground line-clamp-2"
+						itemProp="name"
+					>
+						{product.title}
+					</h1>
+					{/* Badge note cliquable - scrolle vers les avis */}
+					{reviewStats && <ReviewRatingLink stats={reviewStats} />}
+				</div>
 				<div className="shrink-0">
 					<WishlistButton
 						productTitle={product.title}
@@ -76,6 +84,13 @@ export function ProductInfo({
 						<Crown className="w-3.5 h-3.5 sm:w-3 sm:h-3" aria-hidden="true" />
 						{product.type.label}
 					</Badge>
+				)}
+
+				{/* Badge note cliquable sur desktop - scrolle vers les avis */}
+				{reviewStats && (
+					<div className="hidden sm:block">
+						<ReviewRatingLink stats={reviewStats} />
+					</div>
 				)}
 
 				{/* Bouton wishlist visible uniquement sur desktop - a droite du badge type */}

@@ -4,7 +4,6 @@ import { TableScrollContainer } from "@/shared/components/table-scroll-container
 import { Card, CardContent } from "@/shared/components/ui/card"
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state"
 import { Badge } from "@/shared/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar"
 import {
 	Table,
 	TableBody,
@@ -77,24 +76,13 @@ export async function ReviewsDataTable({
 
 									{/* Client */}
 									<TableCell>
-										<div className="flex items-center gap-2">
-											<Avatar className="size-8">
-												<AvatarImage
-													src={review.user.image || undefined}
-													alt={review.user.name || ""}
-												/>
-												<AvatarFallback className="text-xs">
-													{review.user.name?.charAt(0) || "?"}
-												</AvatarFallback>
-											</Avatar>
-											<div className="min-w-0">
-												<p className="text-sm font-medium truncate">
-													{review.user.name || "Anonyme"}
-												</p>
-												<p className="text-xs text-muted-foreground truncate">
-													{review.user.email}
-												</p>
-											</div>
+										<div className="min-w-0">
+											<p className="text-sm font-medium truncate">
+												{review.user.name || "Anonyme"}
+											</p>
+											<p className="text-xs text-muted-foreground truncate">
+												{review.user.email}
+											</p>
 										</div>
 									</TableCell>
 

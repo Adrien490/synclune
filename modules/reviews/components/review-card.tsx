@@ -6,7 +6,6 @@ import { CheckCircle2 } from "lucide-react"
 
 import MediaLightbox from "@/modules/media/components/media-lightbox"
 import { CardContent } from "@/shared/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar"
 import { cn } from "@/shared/utils/cn"
 import { formatRelativeDate } from "@/shared/utils/dates"
 import { RatingStars } from "@/shared/components/rating-stars"
@@ -27,12 +26,6 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
 
 	const hasMedia = review.medias.length > 0
-	const userInitials = review.user.name
-		?.split(" ")
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2) || "?"
 
 	const openLightbox = (index: number) => {
 		setLightboxIndex(index)
@@ -54,29 +47,22 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 			</div>
 
 			<CardContent className="py-4 space-y-4">
-				{/* En-tête: Avatar, nom, date, étoiles */}
-				<div className="flex items-start gap-3">
-					<Avatar className="size-10">
-						<AvatarImage src={review.user.image || undefined} alt={review.user.name || "Utilisateur"} />
-						<AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
-					</Avatar>
-
-					<div className="flex-1 min-w-0">
-						<div className="flex items-center gap-2">
-							<span className="font-medium text-foreground truncate">
-								{review.user.name || "Anonyme"}
-							</span>
-							<span className="inline-flex items-center gap-1 text-xs text-emerald-600">
-								<CheckCircle2 className="size-3" aria-hidden="true" />
-								Achat vérifié
-							</span>
-						</div>
-						<div className="flex items-center gap-2 mt-0.5">
-							<RatingStars rating={review.rating} size="sm" />
-							<span className="text-xs text-muted-foreground">
-								{formatRelativeDate(review.createdAt)}
-							</span>
-						</div>
+				{/* En-tête: nom, date, étoiles */}
+				<div>
+					<div className="flex items-center gap-2">
+						<span className="font-medium text-foreground truncate">
+							{review.user.name || "Anonyme"}
+						</span>
+						<span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+							<CheckCircle2 className="size-3" aria-hidden="true" />
+							Achat vérifié
+						</span>
+					</div>
+					<div className="flex items-center gap-2 mt-0.5">
+						<RatingStars rating={review.rating} size="sm" />
+						<span className="text-xs text-muted-foreground">
+							{formatRelativeDate(review.createdAt)}
+						</span>
 					</div>
 				</div>
 

@@ -1,4 +1,6 @@
 import { cn } from "@/shared/utils/cn";
+import { formatRating } from "@/shared/utils/rating-utils";
+import { Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
@@ -165,6 +167,25 @@ export function ProductCard({
 					</h3>
 				</Link>
 
+				{/* Note moyenne */}
+				{product.reviewStats && product.reviewStats.totalCount > 0 && (
+					<div
+						className="flex items-center gap-1.5 text-sm"
+						aria-label={`Note moyenne: ${formatRating(Number(product.reviewStats.averageRating))} sur 5, ${product.reviewStats.totalCount} avis`}
+					>
+						<Star
+							className="size-3.5 fill-amber-400 text-amber-400"
+							aria-hidden="true"
+						/>
+						<span className="font-medium">
+							{formatRating(Number(product.reviewStats.averageRating))}
+						</span>
+						<span className="text-muted-foreground">
+							({product.reviewStats.totalCount})
+						</span>
+					</div>
+				)}
+
 				{/* Information de rupture de stock pour les technologies d'assistance */}
 				{stockStatus === "out_of_stock" && (
 					<span className="sr-only">{stockMessage}</span>
@@ -191,6 +212,21 @@ export function ProductCard({
 				>
 					<meta itemProp="name" content="Synclune" />
 				</div>
+
+				{/* Schema.org AggregateRating */}
+				{product.reviewStats && product.reviewStats.totalCount > 0 && (
+					<div
+						itemProp="aggregateRating"
+						itemScope
+						itemType="https://schema.org/AggregateRating"
+						className="hidden"
+					>
+						<meta itemProp="ratingValue" content={String(product.reviewStats.averageRating)} />
+						<meta itemProp="reviewCount" content={String(product.reviewStats.totalCount)} />
+						<meta itemProp="bestRating" content="5" />
+						<meta itemProp="worstRating" content="1" />
+					</div>
+				)}
 
 				{/* Prix */}
 				<div itemProp="offers" itemScope itemType="https://schema.org/Offer">

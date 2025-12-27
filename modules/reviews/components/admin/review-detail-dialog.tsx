@@ -12,7 +12,6 @@ import {
 } from "@/shared/components/ui/dialog"
 import { Button } from "@/shared/components/ui/button"
 import { Badge } from "@/shared/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar"
 import { Separator } from "@/shared/components/ui/separator"
 import { formatDateShort } from "@/shared/utils/dates"
 import {
@@ -76,42 +75,31 @@ export function ReviewDetailDialog({ review, trigger }: ReviewDetailDialogProps)
 
 				<div className="space-y-6 py-4">
 					{/* Informations client */}
-					<div className="flex items-start gap-4">
-						<Avatar className="size-12">
-							<AvatarImage
-								src={review.user.image || undefined}
-								alt={review.user.name || ""}
-							/>
-							<AvatarFallback>
-								{review.user.name?.charAt(0) || "?"}
-							</AvatarFallback>
-						</Avatar>
-						<div className="flex-1 space-y-1">
-							<div className="flex items-center justify-between">
-								<div>
-									<p className="font-medium">
-										{review.user.name || "Anonyme"}
-									</p>
-									<p className="text-sm text-muted-foreground">
-										{review.user.email}
-									</p>
-								</div>
-								<Badge
-									variant={review.status === ReviewStatus.PUBLISHED ? "default" : "secondary"}
-								>
-									{review.status === ReviewStatus.PUBLISHED ? (
-										<CheckCircle2 className="size-3 mr-1" aria-hidden="true" />
-									) : (
-										<EyeOff className="size-3 mr-1" aria-hidden="true" />
-									)}
-									{REVIEW_STATUS_LABELS[review.status]}
-								</Badge>
+					<div className="space-y-1">
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="font-medium">
+									{review.user.name || "Anonyme"}
+								</p>
+								<p className="text-sm text-muted-foreground">
+									{review.user.email}
+								</p>
 							</div>
-							<div className="flex items-center gap-2 text-sm text-muted-foreground">
-								<RatingStars rating={review.rating} size="sm" />
-								<span>•</span>
-								<span>{formatDateShort(review.createdAt)}</span>
-							</div>
+							<Badge
+								variant={review.status === ReviewStatus.PUBLISHED ? "default" : "secondary"}
+							>
+								{review.status === ReviewStatus.PUBLISHED ? (
+									<CheckCircle2 className="size-3 mr-1" aria-hidden="true" />
+								) : (
+									<EyeOff className="size-3 mr-1" aria-hidden="true" />
+								)}
+								{REVIEW_STATUS_LABELS[review.status]}
+							</Badge>
+						</div>
+						<div className="flex items-center gap-2 text-sm text-muted-foreground">
+							<RatingStars rating={review.rating} size="sm" />
+							<span>•</span>
+							<span>{formatDateShort(review.createdAt)}</span>
 						</div>
 					</div>
 

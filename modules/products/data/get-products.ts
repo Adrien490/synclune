@@ -96,6 +96,36 @@ function getMinPrice(product: Product): number {
 }
 
 /**
+ * Récupère la note moyenne d'un produit
+ */
+function getAverageRating(product: Product): number {
+	if (!product.reviewStats) return 0;
+	const rating = product.reviewStats.averageRating;
+	return typeof rating === "number" ? rating : Number(rating);
+}
+
+/**
+ * Sérialise un produit pour les Client Components (Decimal → number)
+ * Le cast est nécessaire car Prisma type averageRating comme Decimal,
+ * mais après conversion c'est un number sérialisable.
+ */
+function serializeProduct(product: Product): Product {
+	if (!product.reviewStats) return product;
+
+	return {
+		...product,
+		reviewStats: {
+			...product.reviewStats,
+			averageRating: (
+				typeof product.reviewStats.averageRating === "number"
+					? product.reviewStats.averageRating
+					: product.reviewStats.averageRating.toNumber()
+			) as unknown as typeof product.reviewStats.averageRating,
+		},
+	};
+}
+
+/**
  * Trie les produits selon le critère demandé
  */
 function sortProducts(products: Product[], sortBy: string): Product[] {
@@ -117,6 +147,18 @@ function sortProducts(products: Product[], sortBy: string): Product[] {
 			const dateA = new Date(a.createdAt).getTime();
 			const dateB = new Date(b.createdAt).getTime();
 			return multiplier * (dateA - dateB);
+		}
+
+		if (sortBy.startsWith("rating-")) {
+			const ratingA = getAverageRating(a);
+			const ratingB = getAverageRating(b);
+			// Tri secondaire par nombre d'avis pour départager les égalités
+			if (ratingA === ratingB) {
+				const countA = a.reviewStats?.totalCount ?? 0;
+				const countB = b.reviewStats?.totalCount ?? 0;
+				return multiplier * (countA - countB);
+			}
+			return multiplier * (ratingA - ratingB);
 		}
 
 		// Par défaut : plus récents en premier
@@ -218,7 +260,7 @@ async function fetchProducts(
 		const prevCursor = hasPreviousPage ? sortedProducts[startIndex - 1]?.id ?? null : null;
 
 		return {
-			products: pageProducts,
+			products: pageProducts.map(serializeProduct),
 			pagination: {
 				nextCursor,
 				prevCursor,

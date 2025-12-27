@@ -100,9 +100,10 @@ export const metadata: Metadata = {
 		},
 	},
 	verification: {
-		// À ajouter après création des comptes
-		// google: "votre-code-google-search-console",
-		// bing: "votre-code-bing-webmaster",
+		google: process.env.GOOGLE_SITE_VERIFICATION,
+		other: {
+			"msvalidate.01": process.env.BING_SITE_VERIFICATION ?? "",
+		},
 	},
 	appleWebApp: {
 		capable: true,

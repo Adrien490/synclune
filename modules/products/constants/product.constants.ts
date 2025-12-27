@@ -28,6 +28,12 @@ export const PRODUCT_LIST_SELECT = {
 			label: true,
 		},
 	},
+	reviewStats: {
+		select: {
+			averageRating: true,
+			totalCount: true,
+		},
+	},
 	skus: {
 		where: { isActive: true },
 		select: {
@@ -174,6 +180,12 @@ export const GET_PRODUCTS_SELECT = {
 	status: true,
 	createdAt: true,
 	updatedAt: true,
+	reviewStats: {
+		select: {
+			averageRating: true,
+			totalCount: true,
+		},
+	},
 	skus: {
 		where: {
 			isActive: true,
@@ -259,6 +271,7 @@ export const GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY = "created-descending";
 
 export const GET_PRODUCTS_SORT_FIELDS = [
 	"best-selling",
+	"rating-descending",
 	"title-ascending",
 	"title-descending",
 	"price-ascending",
@@ -284,6 +297,7 @@ export const PRODUCT_FILTER_DIALOG_ID = "product-filter-sheet";
 
 export const PRODUCTS_SORT_OPTIONS = {
 	BEST_SELLING: "best-selling",
+	RATING_DESC: "rating-descending",
 	TITLE_ASC: "title-ascending",
 	TITLE_DESC: "title-descending",
 	PRICE_ASC: "price-ascending",
@@ -294,6 +308,7 @@ export const PRODUCTS_SORT_OPTIONS = {
 
 export const PRODUCTS_SORT_LABELS = {
 	[PRODUCTS_SORT_OPTIONS.BEST_SELLING]: "Meilleures ventes",
+	[PRODUCTS_SORT_OPTIONS.RATING_DESC]: "Mieux notés",
 	[PRODUCTS_SORT_OPTIONS.TITLE_ASC]: "Alphabétique (A-Z)",
 	[PRODUCTS_SORT_OPTIONS.TITLE_DESC]: "Alphabétique (Z-A)",
 	[PRODUCTS_SORT_OPTIONS.PRICE_ASC]: "Prix croissant",
