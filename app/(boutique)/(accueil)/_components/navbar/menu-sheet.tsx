@@ -187,26 +187,6 @@ export function MenuSheet({
 							<section aria-labelledby="section-creations" className="mb-4">
 								<SectionHeader id="section-creations">Les créations</SectionHeader>
 								<Stagger stagger={0.02} delay={0.08} y={8} className="space-y-1">
-									{/* Lien "Tous les bijoux" proéminent en premier (Baymard UX) */}
-									<Tap>
-										<SheetClose asChild>
-											<Link
-												href="/produits"
-												className={
-													isMenuItemActive("/produits")
-														? activeLinkClassName
-														: linkClassName
-												}
-												aria-current={
-													isMenuItemActive("/produits")
-														? "page"
-														: undefined
-												}
-											>
-												Tous les bijoux
-											</Link>
-										</SheetClose>
-									</Tap>
 									{productTypes.map((type) => (
 										<Tap key={type.slug}>
 											<SheetClose asChild>
