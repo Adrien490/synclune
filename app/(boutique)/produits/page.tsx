@@ -13,12 +13,10 @@ import { getProducts } from "@/modules/products/data/get-products";
 import type { SortField } from "@/modules/products/data/get-products";
 import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
 import dynamic from "next/dynamic";
-import { ProductFilterSheetSkeleton } from "@/shared/components/skeletons/lazy-loading";
 
 // Lazy loading - filter sheet charge uniquement a l'ouverture
 const ProductFilterSheet = dynamic(
-	() => import("@/modules/products/components/product-filter-sheet").then((mod) => mod.ProductFilterSheet),
-	{ loading: () => <ProductFilterSheetSkeleton /> }
+	() => import("@/modules/products/components/product-filter-sheet").then((mod) => mod.ProductFilterSheet)
 );
 import { ProductFilterTrigger } from "@/modules/products/components/product-filter-trigger";
 import { ProductList } from "@/modules/products/components/product-list";

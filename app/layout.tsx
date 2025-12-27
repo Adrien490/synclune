@@ -22,17 +22,14 @@ import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-st
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
 import dynamic from "next/dynamic";
-import { SkuSelectorDialogSkeleton } from "@/shared/components/skeletons/lazy-loading";
 
 // Lazy loading des composants lourds - charges uniquement a l'ouverture
 const CartSheet = dynamic(
-	() => import("@/modules/cart/components/cart-sheet").then((mod) => mod.CartSheet),
-	{ loading: () => null } // CartSheetSkeleton gere par Suspense
+	() => import("@/modules/cart/components/cart-sheet").then((mod) => mod.CartSheet)
 );
 
 const SkuSelectorDialog = dynamic(
-	() => import("@/modules/cart/components/sku-selector-dialog").then((mod) => mod.SkuSelectorDialog),
-	{ loading: () => <SkuSelectorDialogSkeleton /> }
+	() => import("@/modules/cart/components/sku-selector-dialog").then((mod) => mod.SkuSelectorDialog)
 );
 import { MotionConfig } from "framer-motion";
 import type { Metadata } from "next";
