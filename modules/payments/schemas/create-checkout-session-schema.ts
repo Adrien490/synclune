@@ -6,9 +6,9 @@ import {
 } from "@/shared/constants/countries";
 
 // Schéma d'adresse avec validation du pays
+// Note: fullName est parsé en firstName/lastName côté serveur via parseFullName utils
 const addressSchema = z.object({
-	firstName: z.string().min(1),
-	lastName: z.string().min(1),
+	fullName: z.string().min(2, "Le nom complet doit contenir au moins 2 caractères"),
 	addressLine1: z.string().min(1),
 	addressLine2: z.string().optional(),
 	city: z.string().min(1),

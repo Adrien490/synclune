@@ -10,7 +10,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/shared/components/ui/sheet";
-import ScrollFade from "@/shared/components/ui/scroll-fade";
+import ScrollFade from "@/shared/components/scroll-fade";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag, Truck, ShieldCheck, RotateCcw, Package } from "lucide-react";

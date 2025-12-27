@@ -15,6 +15,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useTransition } from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { PriceRangeInputs } from "./price-range-inputs";
+import { RatingStars } from "@/shared/components/rating-stars";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
@@ -36,6 +37,7 @@ interface FilterFormData {
 	materials: string[];
 	productTypes: string[];
 	priceRange: [number, number];
+	ratingMin: number | null;
 }
 
 export function ProductFilterSheet({
@@ -58,6 +60,7 @@ export function ProductFilterSheet({
 		const types: string[] = [];
 		let priceMin = DEFAULT_PRICE_RANGE[0];
 		let priceMax = DEFAULT_PRICE_RANGE[1];
+		let ratingMin: number | null = null;
 
 		searchParams.forEach((value, key) => {
 			if (key === "color") {
@@ -70,6 +73,9 @@ export function ProductFilterSheet({
 				priceMin = Number(value) || DEFAULT_PRICE_RANGE[0];
 			} else if (key === "priceMax") {
 				priceMax = Number(value) || DEFAULT_PRICE_RANGE[1];
+			} else if (key === "rating") {
+				const val = Number(value);
+				if (val >= 1 && val <= 5) ratingMin = val;
 			}
 		});
 
@@ -78,6 +84,7 @@ export function ProductFilterSheet({
 			materials: [...new Set(materialsFromURL)],
 			productTypes: [...new Set(types)],
 			priceRange: [priceMin, priceMax],
+			ratingMin,
 		};
 	};
 
@@ -104,7 +111,7 @@ export function ProductFilterSheet({
 		const params = new URLSearchParams(searchParams.toString());
 
 		// Nettoyer tous les anciens filtres
-		const filterKeys = ["color", "material", "type", "priceMin", "priceMax"];
+		const filterKeys = ["color", "material", "type", "priceMin", "priceMax", "rating"];
 		filterKeys.forEach((key) => {
 			params.delete(key);
 		});
@@ -151,6 +158,11 @@ export function ProductFilterSheet({
 			params.set("priceMax", formData.priceRange[1].toString());
 		}
 
+		// Notes clients
+		if (formData.ratingMin !== null) {
+			params.set("rating", formData.ratingMin.toString());
+		}
+
 		startTransition(() => {
 			router.push(`${pathname}?${params.toString()}`);
 			// Scroll to top après application des filtres
@@ -165,12 +177,13 @@ export function ProductFilterSheet({
 			materials: [],
 			productTypes: [],
 			priceRange: [DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]],
+			ratingMin: null,
 		};
 
 		form.reset(defaultValues);
 
 		const params = new URLSearchParams(searchParams.toString());
-		const filterKeys = ["color", "material", "type", "priceMin", "priceMax"];
+		const filterKeys = ["color", "material", "type", "priceMin", "priceMax", "rating"];
 		filterKeys.forEach((key) => {
 			params.delete(key);
 		});
@@ -204,6 +217,8 @@ export function ProductFilterSheet({
 				count += 1;
 			} else if (key === "priceMin" || key === "priceMax") {
 				if (key === "priceMin") count += 1;
+			} else if (key === "rating") {
+				count += 1;
 			}
 		});
 
@@ -221,6 +236,9 @@ export function ProductFilterSheet({
 		}
 		if (initialValues.materials.length > 0 && !sections.includes("materials")) {
 			sections.push("materials");
+		}
+		if (initialValues.ratingMin !== null) {
+			sections.push("rating");
 		}
 		if (
 			initialValues.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
@@ -415,6 +433,49 @@ export function ProductFilterSheet({
 							)}
 						</form.Field>
 					)}
+
+					{/* Notes clients */}
+					<form.Field name="ratingMin">
+						{(field) => (
+							<AccordionItem value="rating">
+								<AccordionTrigger className="hover:no-underline">
+									<div className="flex items-center gap-2">
+										<span>Notes clients</span>
+										{field.state.value !== null && (
+											<Badge
+												variant="secondary"
+												className="h-5 px-1.5 text-xs font-semibold"
+											>
+												{field.state.value}+ ★
+											</Badge>
+										)}
+									</div>
+								</AccordionTrigger>
+								<AccordionContent>
+									<div className="space-y-1">
+										{[5, 4, 3, 2, 1].map((stars) => {
+											const isSelected = field.state.value === stars;
+											return (
+												<CheckboxFilterItem
+													key={stars}
+													id={`rating-${stars}`}
+													checked={isSelected}
+													onCheckedChange={(checked) => {
+														field.handleChange(checked ? stars : null);
+													}}
+													indicator={<RatingStars rating={stars} size="sm" />}
+												>
+													{stars === 1
+														? "1 étoile et plus"
+														: `${stars} étoiles et plus`}
+												</CheckboxFilterItem>
+											);
+										})}
+									</div>
+								</AccordionContent>
+							</AccordionItem>
+						)}
+					</form.Field>
 
 					{/* Prix */}
 					<form.Field name="priceRange">

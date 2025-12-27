@@ -8,7 +8,7 @@ import {
 	ResponsiveDialogDescription,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
+} from "@/shared/components/responsive-dialog";
 import {
 	Table,
 	TableBody,

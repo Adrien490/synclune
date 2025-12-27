@@ -11,7 +11,7 @@ import {
 	CarouselNext,
 	CarouselPrevious,
 } from "@/shared/components/ui/carousel";
-import { SectionTitle } from "@/shared/components/ui/section-title";
+import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import Link from "next/link";
 import { use } from "react";

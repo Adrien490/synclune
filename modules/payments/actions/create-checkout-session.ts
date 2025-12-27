@@ -13,6 +13,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import Stripe from "stripe";
 import { createCheckoutSessionSchema } from "@/modules/payments/schemas/create-checkout-session-schema";
+import { parseFullName } from "@/modules/payments/utils/parse-full-name";
 import type { CreateCheckoutSessionData } from "@/modules/payments/types/checkout.types";
 // ALLOWED_SHIPPING_COUNTRIES n'est plus utilisé car shipping_address_collection est désactivé (embedded mode)
 import { getStripeShippingOptions } from "@/modules/orders/constants/stripe-shipping-rates";
@@ -108,6 +109,9 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			};
 		}
 
+		// Parser fullName en firstName/lastName pour Stripe et la base de données
+		const { firstName, lastName } = parseFullName(validatedData.shippingAddress.fullName);
+
 		// 🔴 NOUVEAU : Créer customer Stripe SYSTÉMATIQUEMENT si absent
 		// Obligatoire pour génération automatique de factures
 		if (!stripeCustomerId && finalEmail) {
@@ -122,7 +126,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				const customer = await stripe.customers.create(
 					{
 						email: finalEmail,
-						name: `${validatedData.shippingAddress.firstName} ${validatedData.shippingAddress.lastName}`,
+						name: `${firstName} ${lastName}`.trim(),
 						address: {
 							line1: validatedData.shippingAddress.addressLine1,
 							line2: validatedData.shippingAddress.addressLine2 || undefined,
@@ -421,11 +425,11 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 
 					// === INFORMATIONS CLIENT ===
 					customerEmail: finalEmail || "",
-					customerName: `${validatedData.shippingAddress.firstName} ${validatedData.shippingAddress.lastName}`,
+					customerName: `${firstName} ${lastName}`.trim(),
 
 					// === ADRESSE DE LIVRAISON (SNAPSHOT) ===
-					shippingFirstName: validatedData.shippingAddress.firstName,
-					shippingLastName: validatedData.shippingAddress.lastName,
+					shippingFirstName: firstName,
+					shippingLastName: lastName,
 					shippingAddress1: validatedData.shippingAddress.addressLine1,
 					shippingAddress2: validatedData.shippingAddress.addressLine2 || null,
 					shippingPostalCode: validatedData.shippingAddress.postalCode,

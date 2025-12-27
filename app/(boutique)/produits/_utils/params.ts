@@ -77,6 +77,13 @@ export const parseFilters = (params: ProductSearchParams): ProductFilters => {
 					.filter((m) => m.length > 0)
 					.slice(0, 20);
 			}
+			// Rating filter
+			else if (key === "rating") {
+				const ratingValue = Number(filterValue);
+				if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
+					filters.ratingMin = Math.floor(ratingValue);
+				}
+			}
 			// String fields
 			else if (key === "collectionId") {
 				filters.collectionId = filterValue;

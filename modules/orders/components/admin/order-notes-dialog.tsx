@@ -8,7 +8,7 @@ import {
 	ResponsiveDialogDescription,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
+} from "@/shared/components/responsive-dialog";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useOrderNotes } from "@/modules/orders/hooks/use-order-notes";

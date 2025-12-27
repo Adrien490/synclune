@@ -14,7 +14,7 @@ import {
 	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
+} from "@/shared/components/responsive-dialog";
 import { useAppForm } from "@/shared/components/forms";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";

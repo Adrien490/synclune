@@ -4,7 +4,7 @@ import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
-import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";

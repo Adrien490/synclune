@@ -9,6 +9,7 @@ import {
 import { Separator } from "@/shared/components/ui/separator";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
+import type { ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { Pencil, ShoppingBag, TruckIcon } from "lucide-react";
@@ -16,13 +17,14 @@ import Image from "next/image";
 
 interface CheckoutSummaryProps {
 	cart: NonNullable<GetCartReturn>;
+	selectedCountry?: ShippingCountry;
 }
 
 /**
  * Composant résumé de la commande pour la page checkout
  * Affiche le récapitulatif des articles, frais de port et total
  */
-export function CheckoutSummary({ cart }: CheckoutSummaryProps) {
+export function CheckoutSummary({ cart, selectedCountry = "FR" }: CheckoutSummaryProps) {
 	const { open: openCart } = useSheet("cart");
 
 	// Calculer le nombre total d'articles
@@ -33,8 +35,8 @@ export function CheckoutSummary({ cart }: CheckoutSummaryProps) {
 		return sum + item.priceAtAdd * item.quantity;
 	}, 0);
 
-	// Frais de port
-	const shipping = calculateShipping();
+	// Frais de port (dynamique selon le pays sélectionné)
+	const shipping = calculateShipping(selectedCountry);
 
 	// Total
 	const total = subtotal + shipping;

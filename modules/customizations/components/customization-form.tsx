@@ -2,8 +2,8 @@
 
 import { FieldLabel } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
-import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
-import { ResponsiveSelect, type ResponsiveSelectOption } from "@/shared/components/ui/responsive-select";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
+import { ResponsiveSelect, type ResponsiveSelectOption } from "@/shared/components/responsive-select";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { toast } from "sonner";
 

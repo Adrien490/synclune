@@ -6,7 +6,7 @@ import {
 	ResponsiveDialogContent,
 	ResponsiveDialogDescription,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
+} from "@/shared/components/responsive-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { Heart, Mail, Sparkles, Star } from "lucide-react";
 import { useRouter } from "next/navigation";

@@ -193,6 +193,10 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 		if (params.priceMin || params.priceMax) {
 			count += 1;
 		}
+		// Notes clients
+		if (filters.ratingMin !== undefined) {
+			count += 1;
+		}
 
 		return count;
 	})();

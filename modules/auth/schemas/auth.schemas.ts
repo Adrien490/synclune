@@ -16,30 +16,13 @@ export const callbackURLSchema = z
 	.default("/");
 
 /**
- * Compte le nombre de types de caractères différents
- */
-function countCharacterTypes(password: string): number {
-	let count = 0;
-	if (/[A-Z]/.test(password)) count++;
-	if (/[a-z]/.test(password)) count++;
-	if (/[0-9]/.test(password)) count++;
-	if (/[^A-Za-z0-9]/.test(password)) count++;
-	return count;
-}
-
-/**
  * Schéma de validation pour les nouveaux mots de passe
- * Simplifié selon Baymard Institute pour réduire l'abandon de 18%
- * Exige: 8 caractères + 2 types de caractères différents
+ * Simplifié selon Baymard Institute (6-8 chars suffisent)
  */
 export const newPasswordSchema = z
 	.string()
-	.min(8, "Le mot de passe doit contenir au moins 8 caractères")
-	.max(128, "Le mot de passe ne doit pas dépasser 128 caractères")
-	.refine(
-		(password) => countCharacterTypes(password) >= 2,
-		"Le mot de passe doit contenir au moins 2 types de caractères (lettre, chiffre, symbole)"
-	);
+	.min(6, "Le mot de passe doit contenir au moins 6 caractères")
+	.max(128, "Le mot de passe ne doit pas dépasser 128 caractères");
 
 // ============================================================================
 // CHANGE PASSWORD SCHEMA
@@ -52,11 +35,11 @@ export const changePasswordSchema = z
 			.min(1, "Le mot de passe actuel est requis"),
 		newPassword: z
 			.string()
-			.min(8, "Le nouveau mot de passe doit contenir au moins 8 caractères")
+			.min(6, "Le nouveau mot de passe doit contenir au moins 6 caractères")
 			.max(128, "Le nouveau mot de passe ne doit pas dépasser 128 caractères"),
 		confirmPassword: z
 			.string()
-			.min(8, "Le mot de passe doit contenir au moins 8 caractères")
+			.min(6, "Le mot de passe doit contenir au moins 6 caractères")
 			.max(128, "Le mot de passe ne doit pas dépasser 128 caractères"),
 	})
 	.refine((data) => data.newPassword === data.confirmPassword, {

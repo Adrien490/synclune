@@ -85,8 +85,8 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 						onChangeListenTo: ["currentPassword"],
 						onChange: ({ value, fieldApi }) => {
 							if (!value) return "Le nouveau mot de passe est requis";
-							if (value.length < 8) {
-								return "Le mot de passe doit contenir au moins 8 caractères";
+							if (value.length < 6) {
+								return "Le mot de passe doit contenir au moins 6 caractères";
 							}
 							if (value.length > 128) {
 								return "Le mot de passe ne doit pas dépasser 128 caractères";
@@ -110,7 +110,7 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 								required
 							/>
 							<p className="text-xs text-muted-foreground">
-								Minimum 8 caractères, maximum 128 caractères
+								Minimum 6 caractères, maximum 128 caractères
 							</p>
 						</div>
 					)}
@@ -123,8 +123,8 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 						onChangeListenTo: ["newPassword"],
 						onChange: ({ value, fieldApi }) => {
 							if (!value) return "La confirmation du mot de passe est requise";
-							if (value.length < 8) {
-								return "Le mot de passe doit contenir au moins 8 caractères";
+							if (value.length < 6) {
+								return "Le mot de passe doit contenir au moins 6 caractères";
 							}
 							if (value.length > 128) {
 								return "Le mot de passe ne doit pas dépasser 128 caractères";

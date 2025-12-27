@@ -4,7 +4,7 @@ import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
-import ScrollFade from "@/shared/components/ui/scroll-fade";
+import ScrollFade from "@/shared/components/scroll-fade";
 import { BRAND } from "@/shared/constants/brand";
 import {
 	Sheet,

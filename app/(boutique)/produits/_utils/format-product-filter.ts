@@ -75,6 +75,15 @@ export function createProductFilterFormatter(
 		const key = filter.key;
 		const value = filter.value as string;
 
+		// Gestion du filtre de notes clients
+		if (key === "rating") {
+			const stars = parseInt(value);
+			return {
+				label: "Notes",
+				displayValue: `${stars}+ ★`,
+			};
+		}
+
 		// Gestion des filtres de prix
 		if (key === "priceMin") {
 			const priceMin = searchParams.get("priceMin");

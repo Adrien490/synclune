@@ -9,9 +9,9 @@ import {
 	ResponsiveDialogContent,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
+} from "@/shared/components/responsive-dialog";
 import { Label } from "@/shared/components/ui/label";
-import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useCreateAddress } from "@/modules/addresses/hooks/use-create-address";
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
 import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";

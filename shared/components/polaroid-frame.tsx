@@ -1,3 +1,4 @@
+import { dancingScript } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import type { ReactNode } from "react";
 
@@ -103,8 +104,10 @@ export function PolaroidFrame({
 			{/* Légende manuscrite */}
 			{caption && (
 				<p
-					className="absolute bottom-2 sm:bottom-3 left-0 right-0 text-center text-sm sm:text-base text-gray-600 font-handwriting italic"
-					style={{ fontFamily: "'Dancing Script', cursive" }}
+					className={cn(
+						"absolute bottom-2 sm:bottom-3 left-0 right-0 text-center text-sm sm:text-base text-gray-600 italic",
+						dancingScript.className
+					)}
 				>
 					{caption}
 				</p>

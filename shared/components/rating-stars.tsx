@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Star } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 
@@ -41,6 +42,8 @@ export function RatingStars({
 	className,
 	showRating = false,
 }: RatingStarsProps) {
+	const [hoverRating, setHoverRating] = useState<number | null>(null)
+
 	const handleClick = (star: number) => {
 		if (interactive && onChange) {
 			onChange(star)
@@ -48,9 +51,32 @@ export function RatingStars({
 	}
 
 	const handleKeyDown = (star: number, e: React.KeyboardEvent) => {
-		if (interactive && onChange && (e.key === "Enter" || e.key === " ")) {
-			e.preventDefault()
-			onChange(star)
+		if (!interactive || !onChange) return
+
+		switch (e.key) {
+			case "Enter":
+			case " ":
+				e.preventDefault()
+				onChange(star)
+				break
+			case "ArrowRight":
+			case "ArrowUp":
+				e.preventDefault()
+				if (star < maxRating) {
+					onChange(star + 1)
+					const next = e.currentTarget.nextElementSibling as HTMLButtonElement
+					next?.focus()
+				}
+				break
+			case "ArrowLeft":
+			case "ArrowDown":
+				e.preventDefault()
+				if (star > 1) {
+					onChange(star - 1)
+					const prev = e.currentTarget.previousElementSibling as HTMLButtonElement
+					prev?.focus()
+				}
+				break
 		}
 	}
 
@@ -66,7 +92,8 @@ export function RatingStars({
 		>
 			{Array.from({ length: maxRating }, (_, i) => {
 				const star = i + 1
-				const isFilled = star <= rating
+				const displayRating = interactive ? (hoverRating ?? rating) : rating
+				const isFilled = star <= displayRating
 
 				if (interactive) {
 					return (
@@ -77,11 +104,13 @@ export function RatingStars({
 							aria-checked={star === rating}
 							onClick={() => handleClick(star)}
 							onKeyDown={(e) => handleKeyDown(star, e)}
+							onMouseEnter={() => setHoverRating(star)}
+							onMouseLeave={() => setHoverRating(null)}
 							className={cn(
 								"p-2 min-h-11 min-w-11 flex items-center justify-center rounded-sm",
 								"focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 								"motion-safe:transition-all motion-safe:hover:scale-110",
-								interactive && "cursor-pointer"
+								"cursor-pointer"
 							)}
 							aria-label={`${star} étoile${star > 1 ? "s" : ""}`}
 						>
@@ -116,37 +145,6 @@ export function RatingStars({
 					{rating.toFixed(1)}
 				</span>
 			)}
-		</div>
-	)
-}
-
-/**
- * Affichage compact de la note moyenne
- */
-export function RatingStarsCompact({
-	rating,
-	count,
-	countLabel = "avis",
-	className,
-}: {
-	rating: number
-	count: number
-	countLabel?: string
-	className?: string
-}) {
-	return (
-		<div
-			className={cn("flex items-center gap-1.5", className)}
-			role="img"
-			aria-label={`Note moyenne : ${rating.toFixed(1)} sur 5, basée sur ${count} ${countLabel}`}
-		>
-			<Star className="size-4 fill-amber-400 text-amber-400" aria-hidden="true" />
-			<span className="text-sm font-medium" aria-hidden="true">
-				{rating.toFixed(1)}
-			</span>
-			<span className="text-sm text-muted-foreground" aria-hidden="true">
-				({count} {countLabel})
-			</span>
 		</div>
 	)
 }

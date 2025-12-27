@@ -16,7 +16,7 @@ import {
 	NativeSelect,
 	NativeSelectOptGroup,
 	NativeSelectOption,
-} from "@/shared/components/native-select";
+} from "@/shared/components/ui/native-select";
 import { cn } from "@/shared/utils/cn";
 
 // ============================================================================

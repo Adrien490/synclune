@@ -48,6 +48,8 @@ export function ProductFilterTrigger({ className, variant = "full" }: ProductFil
 				count += 1;
 			} else if (key === "priceMin") {
 				count += 1;
+			} else if (key === "rating") {
+				count += 1;
 			}
 		});
 		return count;

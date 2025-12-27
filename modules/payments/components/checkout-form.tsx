@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
@@ -12,6 +12,7 @@ import { CreditCard, Info, Mail, Shield } from "lucide-react";
 import {
 	SORTED_SHIPPING_COUNTRIES,
 	COUNTRY_NAMES,
+	type ShippingCountry,
 } from "@/shared/constants/countries";
 import Link from "next/link";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
@@ -27,6 +28,7 @@ interface CheckoutFormProps {
 	session: Session | null;
 	addresses: GetUserAddressesReturn | null;
 	onSuccess?: (data: { clientSecret: string; orderId: string; orderNumber: string }) => void;
+	onCountryChange?: (country: ShippingCountry) => void;
 }
 
 /**
@@ -38,6 +40,7 @@ export function CheckoutForm({
 	session,
 	addresses,
 	onSuccess,
+	onCountryChange,
 }: CheckoutFormProps) {
 	const isGuest = !session;
 
@@ -52,6 +55,18 @@ export function CheckoutForm({
 	const [showAddressLine2, setShowAddressLine2] = useState(
 		!!form.state.values.shipping?.addressLine2
 	);
+
+	// Notifier le parent quand le pays change (via ref pour éviter boucle infinie)
+	const lastCountryRef = useRef<ShippingCountry | undefined>(initialCountry as ShippingCountry | undefined);
+	const currentCountry = form.state.values.shipping?.country as ShippingCountry | undefined;
+
+	useEffect(() => {
+		const country = currentCountry || "FR";
+		if (country !== lastCountryRef.current) {
+			lastCountryRef.current = country;
+			onCountryChange?.(country);
+		}
+	}, [currentCountry, onCountryChange]);
 
 	// Calculer le total
 	const subtotal = cart.items.reduce((sum, item) => {
@@ -88,8 +103,7 @@ export function CheckoutForm({
 								type="hidden"
 								name="shippingAddress"
 								value={JSON.stringify({
-									firstName: shippingValues?.firstName || "",
-									lastName: shippingValues?.lastName || "",
+									fullName: shippingValues?.fullName || "",
 									addressLine1: shippingValues?.addressLine1 || "",
 									addressLine2: shippingValues?.addressLine2 || "",
 									city: shippingValues?.city || "",
@@ -143,11 +157,20 @@ export function CheckoutForm({
 											className="text-foreground underline hover:no-underline font-medium"
 											onClick={() => {
 												if (typeof window !== "undefined") {
+													const shipping = form.state.values.shipping as Record<string, string> | undefined;
 													localStorage.setItem(
 														"checkout-form-draft",
 														JSON.stringify({
 															email: form.state.values.email || "",
-															shipping: form.state.values.shipping || {},
+															shipping: {
+																fullName: shipping?.fullName || "",
+																addressLine1: shipping?.addressLine1 || "",
+																addressLine2: shipping?.addressLine2 || "",
+																city: shipping?.city || "",
+																postalCode: shipping?.postalCode || "",
+																country: shipping?.country || "FR",
+																phoneNumber: shipping?.phoneNumber || "",
+															},
 															timestamp: Date.now(),
 														})
 													);
@@ -175,50 +198,28 @@ export function CheckoutForm({
 				</Alert>
 			)}
 
-			{/* Adresse de livraison */}
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-				<form.AppField
-					name="shipping.firstName"
-					validators={{
-						onChange: ({ value }: { value: string }) => {
-							if (!value || value.trim().length < 2) {
-								return "Le prénom doit contenir au moins 2 caractères";
-							}
-						},
-					}}
-				>
-					{(field) => (
-						<field.InputField
-							label="Prénom"
-							required
-							autoComplete="given-name"
-							autoCapitalize="words"
-							autoCorrect="off"
-						/>
-					)}
-				</form.AppField>
-
-				<form.AppField
-					name="shipping.lastName"
-					validators={{
-						onChange: ({ value }: { value: string }) => {
-							if (!value || value.trim().length < 2) {
-								return "Le nom doit contenir au moins 2 caractères";
-							}
-						},
-					}}
-				>
-					{(field) => (
-						<field.InputField
-							label="Nom"
-							required
-							autoComplete="family-name"
-							autoCapitalize="words"
-							autoCorrect="off"
-						/>
-					)}
-				</form.AppField>
-			</div>
+			{/* Nom complet (Baymard: champ unique réduit friction) */}
+			<form.AppField
+				name="shipping.fullName"
+				validators={{
+					onChange: ({ value }: { value: string }) => {
+						if (!value || value.trim().length < 2) {
+							return "Le nom complet doit contenir au moins 2 caractères";
+						}
+					},
+				}}
+			>
+				{(field) => (
+					<field.InputField
+						label="Nom complet"
+						required
+						autoComplete="name"
+						autoCapitalize="words"
+						autoCorrect="off"
+						placeholder="Jean Dupont"
+					/>
+				)}
+			</form.AppField>
 
 			<form.AppField
 				name="shipping.addressLine1"

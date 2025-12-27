@@ -10,7 +10,7 @@ import {
 	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
+} from "@/shared/components/responsive-dialog";
 import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useUpdateProductCollections } from "@/modules/products/hooks/use-update-product-collections";

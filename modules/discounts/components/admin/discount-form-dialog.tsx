@@ -6,9 +6,9 @@ import {
 	ResponsiveDialogContent,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
+} from "@/shared/components/responsive-dialog";
 import { FieldLabel, useAppForm } from "@/shared/components/forms";
-import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { createDiscount } from "@/modules/discounts/actions/create-discount";
 import { updateDiscount } from "@/modules/discounts/actions/update-discount";
 import { useDialog } from "@/shared/providers/dialog-store-provider";

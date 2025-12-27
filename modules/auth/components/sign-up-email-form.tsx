@@ -3,12 +3,11 @@
 import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useSignUpEmail } from "@/modules/auth/hooks/use-sign-up-email";
 import { PasswordStrengthIndicator } from "./password-strength-indicator";
-import { countCharacterTypes } from "../services/password-strength.service";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
@@ -139,14 +138,11 @@ export function SignUpEmailForm() {
 					validators={{
 						onChange: ({ value }: { value: string }) => {
 							if (!value) return "Le mot de passe est requis";
-							if (value.length < 8) {
-								return "Le mot de passe doit contenir au moins 8 caractères";
+							if (value.length < 6) {
+								return "Le mot de passe doit contenir au moins 6 caractères";
 							}
 							if (value.length > 128) {
 								return "Le mot de passe ne doit pas dépasser 128 caractères";
-							}
-							if (countCharacterTypes(value) < 2) {
-								return "Le mot de passe doit contenir au moins 2 types de caractères";
 							}
 							return undefined;
 						},

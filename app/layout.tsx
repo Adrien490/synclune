@@ -4,7 +4,7 @@ import { CookieBanner } from "@/shared/components/cookie-banner";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
-import SystemBanner from "@/shared/components/ui/system-banner";
+import SystemBanner from "@/shared/components/system-banner";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import {
 	BUSINESS_INFO,

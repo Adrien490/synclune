@@ -1,6 +1,6 @@
 import { Fade, Reveal, Stagger } from "@/shared/components/animations";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
-import { PolaroidFrame } from "@/shared/components/ui/polaroid-frame";
+import { PolaroidFrame } from "@/shared/components/polaroid-frame";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
 import { Sparkles } from "lucide-react";

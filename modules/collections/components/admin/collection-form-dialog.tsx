@@ -5,7 +5,7 @@ import {
 	ResponsiveDialogContent,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
+} from "@/shared/components/responsive-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { CreateCollectionForm } from "./create-collection-form";
 import { EditCollectionForm, type EditableCollection } from "./edit-collection-form";

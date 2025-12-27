@@ -16,7 +16,7 @@ import {
 	DialogDescription,
 	DialogTitle,
 } from "@/shared/components/ui/dialog"
-import ScrollFade from "@/shared/components/ui/scroll-fade"
+import ScrollFade from "@/shared/components/scroll-fade"
 import { useAddRecentSearch } from "@/shared/hooks/use-add-recent-search"
 import { useClearRecentSearches } from "@/shared/hooks/use-clear-recent-searches"
 import { useRemoveRecentSearch } from "@/shared/hooks/use-remove-recent-search"

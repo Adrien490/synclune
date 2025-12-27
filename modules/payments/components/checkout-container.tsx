@@ -10,6 +10,7 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart"
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses"
 import type { Session } from "@/modules/auth/lib/auth"
 import type { CreateCheckoutSessionResult } from "../types/checkout.types"
+import type { ShippingCountry } from "@/shared/constants/countries"
 
 interface CheckoutContainerProps {
 	cart: NonNullable<GetCartReturn>
@@ -35,6 +36,7 @@ export function CheckoutContainer({
 		orderId: string
 		orderNumber: string
 	} | null>(null)
+	const [selectedCountry, setSelectedCountry] = useState<ShippingCountry>("FR")
 
 	const handleAddressValidated = (data: CreateCheckoutSessionResult) => {
 		setClientSecret(data.clientSecret)
@@ -58,6 +60,7 @@ export function CheckoutContainer({
 						session={session}
 						addresses={addresses}
 						onSuccess={handleAddressValidated}
+						onCountryChange={setSelectedCountry}
 					/>
 				)}
 
@@ -112,7 +115,7 @@ export function CheckoutContainer({
 
 			{/* Récapitulatif - 1/3 de la largeur */}
 			<div className="lg:col-span-1">
-				<CheckoutSummary cart={cart} />
+				<CheckoutSummary cart={cart} selectedCountry={selectedCountry} />
 			</div>
 		</div>
 	)

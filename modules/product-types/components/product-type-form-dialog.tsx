@@ -7,8 +7,8 @@ import {
 	ResponsiveDialogDescription,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
-import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
+} from "@/shared/components/responsive-dialog";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useCreateProductTypeForm } from "@/modules/product-types/hooks/use-create-product-type-form";
 import { useUpdateProductTypeForm } from "@/modules/product-types/hooks/use-update-product-type-form";
 import { useDialog } from "@/shared/providers/dialog-store-provider";

@@ -6,8 +6,8 @@ import {
 	ResponsiveDialogContent,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
-import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
+} from "@/shared/components/responsive-dialog";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useAppForm } from "@/shared/components/forms";
 import { createMaterial } from "@/modules/materials/actions/create-material";
 import { updateMaterial } from "@/modules/materials/actions/update-material";

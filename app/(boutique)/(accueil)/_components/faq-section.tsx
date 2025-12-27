@@ -7,7 +7,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/shared/components/ui/accordion";
-import { SectionTitle } from "@/shared/components/ui/section-title";
+import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import Script from "next/script";

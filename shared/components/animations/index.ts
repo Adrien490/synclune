@@ -13,45 +13,36 @@ export { Reveal } from "./reveal";
 
 // Gestures & Interactivité
 export { Hover } from "./hover";
-export { Tap } from "./tap";
 export { Pulse } from "./pulse";
+export { Tap } from "./tap";
 
-// AnimatePresence amélioré
-export { Presence } from "./presence";
 
 // Scroll indicator
 export { ScrollIndicator } from "./scroll-indicator";
 
 // Background Animations (effets décoratifs)
-export { LiquidGradient } from "./liquid-gradient";
+export { BubbleDream } from "./bubble-dream";
+export { DecorativeHalo, DecorativeHaloGroup } from "./decorative-halo";
 export { GlitterSparkles } from "./glitter-sparkles";
 export { ParticleSystem } from "./particle-system/index";
-export { DecorativeHalo, DecorativeHaloGroup } from "./decorative-halo";
-export { BubbleDream } from "./bubble-dream";
 
 // Interactive Animations
-export { FloatingBlob, FloatingBlobs } from "./floating-blob";
-export { CursorSparkle } from "./cursor-sparkle";
 export { MagneticWrapper } from "./magnetic-wrapper";
 
 // Types
 export type { FadeProps } from "./fade";
+export type { HoverProps } from "./hover";
+export type { PulseProps } from "./pulse";
+export type { RevealProps } from "./reveal";
+export type { ScrollIndicatorProps } from "./scroll-indicator";
 export type { SlideProps } from "./slide";
 export type { StaggerProps } from "./stagger";
-export type { RevealProps } from "./reveal";
-export type { HoverProps } from "./hover";
 export type { TapProps } from "./tap";
-export type { PulseProps } from "./pulse";
-export type { PresenceProps } from "./presence";
-export type { ScrollIndicatorProps } from "./scroll-indicator";
 
 // Background Animation Types
-export type { LiquidGradientProps } from "./liquid-gradient";
+export type { BubbleDreamProps } from "./bubble-dream";
 export type { GlitterSparklesProps } from "./glitter-sparkles";
 export type {
-	ParticleSystemProps,
-	ParticleShape,
-	AnimationStyle,
+	AnimationStyle, ParticleShape, ParticleSystemProps
 } from "./particle-system/index";
-export type { BubbleDreamProps } from "./bubble-dream";
 

@@ -1,6 +1,6 @@
 import { Stagger } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
-import { SectionTitle } from "@/shared/components/ui/section-title";
+import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";

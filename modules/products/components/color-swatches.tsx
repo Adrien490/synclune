@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
-import { ColorSwatch as AriaColorSwatch } from "@/shared/components/ui/aria-color-swatch";
+import { ColorSwatch as AriaColorSwatch } from "@/shared/components/aria-color-swatch";
 import {
 	Tooltip,
 	TooltipContent,

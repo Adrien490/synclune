@@ -2,7 +2,7 @@
 
 import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "./field-label";
-import { RatingStars } from "@/shared/components/ui/rating-stars";
+import { RatingStars } from "@/shared/components/rating-stars";
 import { useFieldContext } from "@/shared/lib/form-context";
 
 interface RatingFieldProps {

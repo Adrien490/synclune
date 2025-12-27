@@ -1,7 +1,7 @@
 import { Reveal, Stagger } from "@/shared/components/animations";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { Button } from "@/shared/components/ui/button";
-import { SectionTitle } from "@/shared/components/ui/section-title";
+import { SectionTitle } from "@/shared/components/section-title";
 import { IMAGES } from "@/shared/constants/images";
 import { STEP_COLORS } from "@/shared/constants/process-steps";
 import { SECTION_SPACING } from "@/shared/constants/spacing";

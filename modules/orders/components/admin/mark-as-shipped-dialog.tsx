@@ -9,10 +9,10 @@ import {
 	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from "@/shared/components/ui/responsive-dialog";
+} from "@/shared/components/responsive-dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { RequiredFieldsNote } from "@/shared/components/ui/required-fields-note";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import {
 	Select,
 	SelectContent,

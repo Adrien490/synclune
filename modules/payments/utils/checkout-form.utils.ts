@@ -52,6 +52,23 @@ export function getCheckoutFormOptions(
 	// 3. Données utilisateur (session.user) - utilisateur connecté sans adresse
 	// 4. Valeurs vides - nouvel utilisateur invité
 
+	// Construire fullName depuis les données existantes
+	const buildFullName = () => {
+		// Priorité 1: Draft sauvegardé (nouveau format fullName)
+		if (savedDraft?.shipping?.fullName) {
+			return savedDraft.shipping.fullName;
+		}
+		// Priorité 2: Draft sauvegardé (ancien format firstName/lastName)
+		if (savedDraft?.shipping?.firstName || savedDraft?.shipping?.lastName) {
+			return `${savedDraft.shipping.firstName || ""} ${savedDraft.shipping.lastName || ""}`.trim();
+		}
+		// Priorité 3: Adresse par défaut
+		if (defaultAddress?.firstName || defaultAddress?.lastName) {
+			return `${defaultAddress.firstName || ""} ${defaultAddress.lastName || ""}`.trim();
+		}
+		return "";
+	};
+
 	return {
 		defaultValues: {
 			// Email pré-rempli pour les invités (vide), caché pour les connectés
@@ -59,16 +76,9 @@ export function getCheckoutFormOptions(
 				savedDraft?.email ||
 				(isGuest ? "" : session?.user?.email || ""),
 
-			// Adresse de livraison
+			// Adresse de livraison (Baymard: fullName au lieu de firstName/lastName)
 			shipping: {
-				firstName:
-					savedDraft?.shipping?.firstName ||
-					defaultAddress?.firstName ||
-					"",
-				lastName:
-					savedDraft?.shipping?.lastName ||
-					defaultAddress?.lastName ||
-					"",
+				fullName: buildFullName(),
 				addressLine1:
 					savedDraft?.shipping?.addressLine1 ||
 					defaultAddress?.address1 ||

@@ -1,10 +1,10 @@
-import { Fade, FloatingBlobs, ScrollIndicator, Slide } from "@/shared/components/animations";
+import { Fade, ScrollIndicator, Slide } from "@/shared/components/animations";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
+import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
-import { SectionTitle } from "@/shared/components/ui/section-title";
 import { BRAND } from "@/shared/constants/brand";
 import { Heart } from "lucide-react";
 import Link from "next/link";
@@ -20,9 +20,6 @@ export function Hero() {
       itemType="https://schema.org/WebPageElement"
       itemProp="mainContentOfPage"
     >
-
-      {/* Couche 0: Blobs flottants organiques - Effet moderne 2025 */}
-      <FloatingBlobs />
 
       {/* Couche 1: Particules décoratives - Multi-formes bijoux */}
       <ParticleSystem

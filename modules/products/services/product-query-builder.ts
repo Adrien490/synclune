@@ -320,6 +320,15 @@ export function buildProductFilterConditions(
 		}
 	}
 
+	// Rating filter (minimum average rating)
+	if (typeof filters.ratingMin === "number") {
+		conditions.push({
+			reviewStats: {
+				averageRating: { gte: filters.ratingMin },
+			},
+		});
+	}
+
 	return conditions;
 }
 
