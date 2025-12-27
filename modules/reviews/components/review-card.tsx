@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { CheckCircle2 } from "lucide-react"
 
 import MediaLightbox from "@/modules/media/components/media-lightbox"
 import { CardContent } from "@/shared/components/ui/card"
@@ -49,15 +48,9 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 			<CardContent className="py-4 space-y-4">
 				{/* En-tête: nom, date, étoiles */}
 				<div>
-					<div className="flex items-center gap-2">
-						<span className="font-medium text-foreground truncate">
-							{review.user.name || "Anonyme"}
-						</span>
-						<span className="inline-flex items-center gap-1 text-xs text-emerald-600">
-							<CheckCircle2 className="size-3" aria-hidden="true" />
-							Achat vérifié
-						</span>
-					</div>
+					<span className="font-medium text-foreground truncate">
+						{review.user.name || "Anonyme"}
+					</span>
 					<div className="flex items-center gap-2 mt-0.5">
 						<RatingStars rating={review.rating} size="sm" />
 						<span className="text-xs text-muted-foreground">
