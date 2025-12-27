@@ -83,13 +83,6 @@ export default function manifest(): MetadataRoute.Manifest {
 				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
 			},
 			{
-				name: "Panier",
-				short_name: "Panier",
-				description: "Voir mon panier",
-				url: "/panier",
-				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
-			},
-			{
 				name: "Mon Compte",
 				short_name: "Compte",
 				description: "Accéder à mon compte",

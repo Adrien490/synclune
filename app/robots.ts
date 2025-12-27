@@ -15,7 +15,6 @@ export default function robots(): MetadataRoute.Robots {
 					"/api/",
 					"/admin/",
 					"/compte/",
-					"/panier/",
 					"/commandes/",
 					"/favoris/",
 					// SEO: Bloquer les URLs avec filtres pour éviter duplicate content

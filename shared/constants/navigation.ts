@@ -213,7 +213,6 @@ export const footerNavItems = [
 	{ href: "/collections", label: "Les collections" },
 	{ href: "/personnalisation", label: "Personnalisation" },
 	{ href: "/compte", label: "Mon compte" },
-	{ href: "/panier", label: "Panier" },
 ] as const;
 
 // Liens légaux

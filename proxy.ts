@@ -22,7 +22,6 @@ const publicRoutes = [
 	"/collections",
 	"/personnalisation",
 	"/mentions-legales",
-	"/panier",
 	"/newsletter",
 ];
 
