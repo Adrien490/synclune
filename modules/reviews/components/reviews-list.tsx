@@ -9,6 +9,7 @@ import { MessageSquare } from "lucide-react"
 
 import type { ReviewPublic, ProductReviewStatistics } from "../types/review.types"
 import { ReviewCard } from "./review-card"
+import { ReviewPhotosGallery } from "./review-photos-gallery"
 import { ReviewSummary } from "./review-summary"
 
 interface ReviewsListProps {
@@ -61,6 +62,9 @@ export function ReviewsList({
 		<div className="space-y-6">
 			{/* Résumé avec distribution */}
 			<ReviewSummary stats={stats} />
+
+			{/* Galerie photos clients (Baymard) */}
+			<ReviewPhotosGallery reviews={initialReviews} />
 
 			{/* Liste des avis */}
 			<div className="space-y-4" role="feed" aria-label="Liste des avis clients">

@@ -33,6 +33,7 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 
 	return (
 		<article
+			id={`review-${review.id}`}
 			itemScope
 			itemType="https://schema.org/Review"
 			className={cn("overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm", className)}

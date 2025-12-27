@@ -33,8 +33,11 @@ interface CheckoutFormProps {
 }
 
 /**
- * Formulaire de checkout simple (sans wizard)
- * Flux continu sans sections
+ * Formulaire de checkout optimisé mobile (Baymard UX guidelines)
+ * - enterKeyHint pour navigation clavier fluide
+ * - Touch targets ≥44px sur tous les boutons interactifs
+ * - Safe area inset pour iOS (notch/home indicator)
+ * - Placeholders explicites pour réduire la charge cognitive
  */
 export function CheckoutForm({
 	cart,
@@ -102,7 +105,7 @@ export function CheckoutForm({
 	return (
 		<form
 			action={action}
-			className="space-y-6"
+			className="space-y-5 sm:space-y-6"
 			onSubmit={() => void form.handleSubmit()}
 		>
 			{/* Champs cachés */}
@@ -168,9 +171,11 @@ export function CheckoutForm({
 									required
 									inputMode="email"
 									autoComplete="email"
+									enterKeyHint="next"
 									spellCheck={false}
 									autoCorrect="off"
 									autoFocus
+									placeholder="ton@email.com"
 								/>
 								<p className="text-sm text-muted-foreground flex items-start gap-1.5">
 									<Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
@@ -240,6 +245,7 @@ export function CheckoutForm({
 						autoComplete="name"
 						autoCapitalize="words"
 						autoCorrect="off"
+						enterKeyHint="next"
 						placeholder="Jean Dupont"
 					/>
 				)}
@@ -260,6 +266,8 @@ export function CheckoutForm({
 						label="Adresse"
 						required
 						autoComplete="address-line1"
+						enterKeyHint="next"
+						placeholder="12 rue des Fleurs"
 					/>
 				)}
 			</form.AppField>
@@ -271,6 +279,7 @@ export function CheckoutForm({
 							label="Complément d'adresse"
 							placeholder="Appartement, bâtiment, etc."
 							autoComplete="address-line2"
+							enterKeyHint="next"
 						/>
 					)}
 				</form.AppField>
@@ -278,14 +287,14 @@ export function CheckoutForm({
 				<button
 					type="button"
 					aria-expanded={showAddressLine2}
-					className="text-sm text-muted-foreground underline hover:no-underline hover:text-foreground text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+					className="min-h-11 px-3 -mx-3 text-sm text-muted-foreground underline hover:no-underline hover:text-foreground text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
 					onClick={() => setShowAddressLine2(true)}
 				>
-					+ Ajouter un complement d'adresse (appartement, batiment...)
+					+ Ajouter un complément d'adresse
 				</button>
 			)}
 
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<div className="grid grid-cols-2 gap-3 sm:gap-6">
 				<form.AppField
 					name="shipping.postalCode"
 					validators={{
@@ -305,6 +314,8 @@ export function CheckoutForm({
 							pattern="[0-9]*"
 							autoComplete="postal-code"
 							autoCorrect="off"
+							enterKeyHint="next"
+							placeholder="75001"
 						/>
 					)}
 				</form.AppField>
@@ -324,6 +335,8 @@ export function CheckoutForm({
 							label="Ville"
 							required
 							autoComplete="address-level2"
+							enterKeyHint="next"
+							placeholder="Paris"
 						/>
 					)}
 				</form.AppField>
@@ -348,7 +361,7 @@ export function CheckoutForm({
 					)}
 				</form.AppField>
 			) : (
-				<div className="flex items-center justify-between py-2">
+				<div className="flex items-center justify-between min-h-11">
 					<span className="text-sm">
 						Pays : <strong>France</strong>
 						<span className="text-muted-foreground ml-1">(Livraison UE disponible)</span>
@@ -356,7 +369,7 @@ export function CheckoutForm({
 					<button
 						type="button"
 						aria-expanded={showCountrySelect}
-						className="text-sm text-muted-foreground underline hover:no-underline hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+						className="min-h-11 px-3 text-sm text-muted-foreground underline hover:no-underline hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
 						onClick={() => setShowCountrySelect(true)}
 					>
 						Modifier
@@ -372,9 +385,10 @@ export function CheckoutForm({
 							required
 							defaultCountry="FR"
 							placeholder="06 12 34 56 78"
+							enterKeyHint="done"
 						/>
 						<p className="text-sm text-muted-foreground">
-							Utilisé uniquement par le transporteur en cas de problème de livraison (absence, adresse introuvable). Jamais de démarchage.
+							Utilisé uniquement par le transporteur en cas de problème de livraison.
 						</p>
 					</div>
 				)}
@@ -412,8 +426,8 @@ export function CheckoutForm({
 				)}
 			</form.AppField>
 
-			{/* Bouton de paiement - sticky sur mobile */}
-			<div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border/50 py-4 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:py-0 sm:mx-0 space-y-3">
+			{/* Bouton de paiement - sticky sur mobile avec safe-area-inset pour iOS */}
+			<div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border/50 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:py-0 sm:pb-0 sm:mx-0 space-y-3">
 				<Button
 					type="submit"
 					size="lg"

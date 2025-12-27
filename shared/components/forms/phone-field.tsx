@@ -20,6 +20,8 @@ interface PhoneFieldProps {
 	defaultCountry?: Country;
 	className?: string;
 	description?: string;
+	/** Label du bouton Entrée sur clavier mobile (done, next, go, search, send) */
+	enterKeyHint?: "done" | "next" | "go" | "search" | "send";
 }
 
 const CustomInput = forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
@@ -70,6 +72,7 @@ export const PhoneField = ({
 	defaultCountry = "FR",
 	className,
 	description,
+	enterKeyHint,
 }: PhoneFieldProps) => {
 	const field = useFieldContext<string | undefined>();
 
@@ -99,6 +102,7 @@ export const PhoneField = ({
 				aria-describedby={hasError ? `${field.name}-error` : undefined}
 				aria-required={required}
 				className={cn("PhoneInput--synclune", className)}
+				numberInputProps={{ enterKeyHint }}
 			/>
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 			{description && (
