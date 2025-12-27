@@ -35,7 +35,7 @@ export function SelectFilter({
 	options,
 	placeholder = "Sélectionner...",
 	className,
-	maxHeight = 250,
+	maxHeight = 400,
 	noPrefix = false,
 }: SelectFilterProps) {
 	const { value, setFilter, clearFilter, isPending } =

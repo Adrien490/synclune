@@ -38,7 +38,7 @@ export function Hero() {
         <GlitterSparkles count={8} sizeRange={[2, 4]} glowIntensity={0.3} />
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl 2xl:max-w-7xl relative z-10">
         <div className="flex flex-col items-center">
           {/* Contenu centré */}
           <div className="space-y-5 sm:space-y-7 md:space-y-10 flex flex-col items-center">
@@ -55,7 +55,7 @@ export function Hero() {
               >
                 Des bijoux colorés
               </SectionTitle>
-              <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 text-foreground font-normal tracking-tight antialiased max-w-2xl mx-auto">
+              <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 2xl:text-3xl/10 text-foreground font-normal tracking-tight antialiased max-w-2xl 2xl:max-w-3xl mx-auto">
                 <span className="sm:hidden">
                   Faits main pour sublimer votre quotidien{" "}
                 </span>

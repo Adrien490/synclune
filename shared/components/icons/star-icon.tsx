@@ -36,6 +36,7 @@ export function StarIcon({ fillPercentage, size, gradientId }: StarIconProps) {
 			viewBox="0 0 24 24"
 			className={sizeClasses[size]}
 			aria-hidden="true"
+			focusable="false"
 		>
 			{isPartial && (
 				<defs>

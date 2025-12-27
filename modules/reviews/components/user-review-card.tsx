@@ -1,5 +1,3 @@
-"use client"
-
 import Image from "next/image"
 import Link from "next/link"
 import { MessageSquare, ExternalLink } from "lucide-react"
@@ -65,6 +63,7 @@ export function UserReviewCard({ review, className }: UserReviewCardProps) {
 								<Link
 									href={`/creations/${review.product.slug}`}
 									className="font-medium hover:text-primary transition-colors line-clamp-1 flex items-center gap-1"
+									title={review.product.title}
 								>
 									{review.product.title}
 									<ExternalLink className="size-3 shrink-0" aria-hidden="true" />

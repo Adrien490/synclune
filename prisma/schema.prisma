@@ -703,6 +703,7 @@ model Order {
   // Timestamps métier
   @@index([shippedAt, fulfillmentStatus]) // Timeline expéditions
   @@index([paidAt, paymentStatus]) // Rapports comptables
+  @@index([paidAt(sort: Desc), paymentStatus, deletedAt]) // Covering index: requetes popularite/bestsellers
   @@index([fiscalYear, paymentStatus])
 
   // === INDEXES STRIPE (Réconciliation & Support) ===

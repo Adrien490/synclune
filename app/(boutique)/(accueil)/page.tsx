@@ -8,6 +8,7 @@ import { CollectionsSectionSkeleton } from "@/modules/collections/components/col
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
+import { NewsletterSection } from "@/modules/newsletter/components/newsletter-section";
 import { SparklesDivider } from "@/shared/components/section-divider";
 import type { Metadata } from "next";
 import { Suspense } from "react";
@@ -118,6 +119,9 @@ export default async function Page() {
 
 			{/* 6. FAQ - Questions fréquentes avec schema SEO */}
 			<FaqSection />
+
+			{/* 7. Newsletter - Inscription à la newsletter */}
+			<NewsletterSection />
 		</>
 	);
 }

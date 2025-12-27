@@ -16,14 +16,14 @@ interface ReviewsListProps {
 	initialReviews: ReviewPublic[]
 	/** Statistiques du produit */
 	stats: ProductReviewStatistics
-	/** ID du produit (pour charger plus d'avis) */
-	productId: string
-	/** Curseur pour la page suivante */
-	nextCursor?: string | null
-	/** Y a-t-il plus d'avis à charger ? */
-	hasMore: boolean
 	/** Nombre total d'avis */
 	totalCount: number
+	/** ID du produit (pour chargement supplémentaire) */
+	productId?: string
+	/** Curseur pour la pagination */
+	nextCursor?: string | null
+	/** Indique s'il y a plus d'avis à charger */
+	hasMore?: boolean
 }
 
 /**
@@ -34,6 +34,9 @@ export function ReviewsList({
 	initialReviews = [],
 	stats,
 	totalCount,
+	productId: _productId,
+	nextCursor: _nextCursor,
+	hasMore: _hasMore,
 }: ReviewsListProps) {
 	// Aucun avis
 	if (totalCount === 0 || initialReviews.length === 0) {

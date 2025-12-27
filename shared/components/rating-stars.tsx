@@ -23,6 +23,8 @@ interface RatingStarsProps {
 	ariaLabel?: string
 	/** Champ requis (mode interactif) */
 	required?: boolean
+	/** Désactiver les interactions (mode interactif) */
+	disabled?: boolean
 }
 
 /**
@@ -48,6 +50,7 @@ export function RatingStars({
 	showRating = false,
 	ariaLabel,
 	required = false,
+	disabled = false,
 }: RatingStarsProps) {
 	const [hoverRating, setHoverRating] = useState<number | null>(null)
 	const baseId = useId()
@@ -72,7 +75,8 @@ export function RatingStars({
 				e.preventDefault()
 				if (star < maxRating) {
 					onChange(star + 1)
-					const next = e.currentTarget.nextElementSibling as HTMLButtonElement
+					const container = e.currentTarget.parentElement
+					const next = container?.querySelector<HTMLButtonElement>(`[data-star="${star + 1}"]`)
 					next?.focus()
 				}
 				break
@@ -81,7 +85,8 @@ export function RatingStars({
 				e.preventDefault()
 				if (star > 1) {
 					onChange(star - 1)
-					const prev = e.currentTarget.previousElementSibling as HTMLButtonElement
+					const container = e.currentTarget.parentElement
+					const prev = container?.querySelector<HTMLButtonElement>(`[data-star="${star - 1}"]`)
 					prev?.focus()
 				}
 				break
@@ -96,7 +101,7 @@ export function RatingStars({
 
 	return (
 		<div
-			className={cn("flex items-center gap-1 sm:gap-0.5", className)}
+			className={cn("flex items-center gap-0.5", className)}
 			role={interactive ? "radiogroup" : "img"}
 			aria-label={label}
 			aria-required={interactive && required ? true : undefined}
@@ -120,16 +125,20 @@ export function RatingStars({
 							key={star}
 							type="button"
 							role="radio"
+							data-star={star}
 							aria-checked={star === rating}
+							disabled={disabled}
 							onClick={() => handleClick(star)}
 							onKeyDown={(e) => handleKeyDown(star, e)}
-							onMouseEnter={() => setHoverRating(star)}
+							onMouseEnter={() => !disabled && setHoverRating(star)}
 							onMouseLeave={() => setHoverRating(null)}
 							className={cn(
 								"p-2 min-h-11 min-w-11 flex items-center justify-center rounded-sm",
 								"focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-3",
-								"motion-safe:transition-all motion-safe:hover:scale-110",
-								"cursor-pointer"
+								"motion-safe:transition-all",
+								disabled
+									? "cursor-not-allowed opacity-50"
+									: "cursor-pointer motion-safe:hover:scale-110"
 							)}
 							aria-label={`${star} étoile${star > 1 ? "s" : ""}`}
 						>

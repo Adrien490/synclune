@@ -10,6 +10,8 @@ function Card({
 		<div
 			data-slot="card"
 			className={cn(
+				// Container query context pour layouts adaptatifs enfants
+				"@container/card",
 				"bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-md",
 				interactive &&
 					"cursor-pointer transition-shadow hover:shadow-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",

@@ -1845,7 +1845,7 @@ async function main(): Promise<void> {
     }
 
     // 3. Traitement
-    if ([OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(order.status)) {
+    if (([OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED] as OrderStatus[]).includes(order.status)) {
       currentDate = new Date(currentDate);
       currentDate.setHours(currentDate.getHours() + faker.number.int({ min: 1, max: 24 }));
       historyEntries.push({
@@ -1860,9 +1860,9 @@ async function main(): Promise<void> {
     }
 
     // 4. Expédition
-    if ([OrderStatus.SHIPPED, OrderStatus.DELIVERED].includes(order.status)) {
+    if (([OrderStatus.SHIPPED, OrderStatus.DELIVERED] as OrderStatus[]).includes(order.status)) {
       currentDate = new Date(currentDate);
-      currentDate.setDays?.(currentDate.getDate() + faker.number.int({ min: 1, max: 3 }));
+      currentDate.setDate(currentDate.getDate() + faker.number.int({ min: 1, max: 3 }));
       historyEntries.push({
         orderId: order.id,
         action: OrderAction.SHIPPED,

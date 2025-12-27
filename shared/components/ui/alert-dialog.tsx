@@ -38,8 +38,8 @@ function AlertDialogOverlay({
 			data-slot="alert-dialog-overlay"
 			className={cn(
 				"fixed inset-0 z-[80] bg-foreground/50 backdrop-blur-sm",
-				"data-[state=open]:animate-in data-[state=closed]:animate-out",
-				"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
+				"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
 				"duration-200",
 				className
 			)}
@@ -66,10 +66,10 @@ function AlertDialogContent({
 					"shadow-xl",
 					// Padding et espacement
 					"p-6",
-					// Animations fluides
-					"data-[state=open]:animate-in data-[state=closed]:animate-out",
-					"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-					"data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+					// Animations fluides (respecte prefers-reduced-motion)
+					"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
+					"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
+					"motion-safe:data-[state=closed]:zoom-out-95 motion-safe:data-[state=open]:zoom-in-95",
 					"duration-200",
 					className
 				)}

@@ -26,7 +26,7 @@ export function ReviewSummary({
 			{/* Note moyenne */}
 			<div className="flex flex-col items-center justify-center text-center">
 				<h3 id="review-summary-title" className="sr-only">Résumé des avis</h3>
-				<div className="text-5xl font-bold text-foreground" aria-label={`Note moyenne: ${formatRating(stats.averageRating)} sur 5`}>
+				<div className="text-5xl font-bold text-foreground" aria-hidden="true">
 					{formatRating(stats.averageRating)}
 				</div>
 				<div className="mt-2">
@@ -34,7 +34,6 @@ export function ReviewSummary({
 						rating={stats.averageRating}
 						maxRating={REVIEW_CONFIG.MAX_RATING}
 						size="sm"
-						ariaLabel=""
 					/>
 				</div>
 				<div className="text-sm text-muted-foreground mt-1">
@@ -98,7 +97,6 @@ export function ReviewSummaryCompact({
 			<RatingStars
 				rating={stats.averageRating}
 				size="sm"
-				ariaLabel=""
 			/>
 			<span className="font-medium">{formatRating(stats.averageRating)}</span>
 			<span className="text-muted-foreground">

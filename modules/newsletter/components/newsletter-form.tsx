@@ -8,7 +8,7 @@ import { FieldGroup, FieldLabel, FieldSet } from "@/shared/components/ui/field";
 import { EMAIL_REGEX } from "@/shared/constants/validation";
 import { useSubscribeToNewsletter } from "@/modules/newsletter/hooks/use-subscribe-to-newsletter";
 import { ActionStatus } from "@/shared/types/server-action";
-import { Mail, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export function NewsletterForm() {
@@ -96,9 +96,8 @@ export function NewsletterForm() {
 							<div className="space-y-2">
 								<FieldLabel
 									htmlFor={field.name}
-									className="text-sm font-medium flex items-center gap-2"
+									className="text-sm font-medium"
 								>
-									<Mail className="w-4 h-4 text-primary" aria-hidden="true" />
 									Adresse email
 								</FieldLabel>
 								<div className="flex flex-col sm:flex-row gap-3">
