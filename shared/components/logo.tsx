@@ -1,6 +1,6 @@
 import { BRAND } from "@/shared/constants/brand";
 import { cn } from "@/shared/utils/cn";
-import { dancingScript } from "@/shared/styles/fonts";
+import { crimsonPro } from "@/shared/styles/fonts";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -67,9 +67,9 @@ export function Logo({
 			{showText && (
 				<span
 					className={cn(
-						dancingScript.className,
+						crimsonPro.className,
 						textSizeClass,
-						"font-semibold text-foreground tracking-wide",
+						"font-medium text-foreground tracking-wide",
 						textClassName
 					)}
 				>

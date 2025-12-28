@@ -10,10 +10,12 @@ import {
 	BUSINESS_INFO,
 	SEO_DEFAULTS,
 	SITE_URL,
+	getFounderSchema,
 	getLocalBusinessSchema,
 	getOrganizationSchema,
 	getWebSiteSchema,
 } from "@/shared/constants/seo-config";
+import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
 import { crimsonPro, inter, jetBrainsMono } from "@/shared/styles/fonts";
 import { UploadThingSSR } from "@/modules/media/lib/uploadthing/uploadthing-ssr";
@@ -74,6 +76,10 @@ export const metadata: Metadata = {
 	metadataBase: new URL(SITE_URL),
 	alternates: {
 		canonical: "/",
+		languages: {
+			fr: "/",
+			"x-default": "/",
+		},
 	},
 	openGraph: {
 		type: "website",
@@ -164,6 +170,9 @@ export default async function RootLayout({
 	// Dedupliquer l'appel getCart() pour CartSheet et SkuSelectorDialog
 	const cartPromise = getCart();
 
+	// Récupérer les stats globales d'avis pour l'AggregateRating du LocalBusiness
+	const globalReviewStats = await getGlobalReviewStats();
+
 	return (
 		<html lang="fr" data-scroll-behavior="smooth">
 			<head>
@@ -188,7 +197,13 @@ export default async function RootLayout({
 				<script
 					type="application/ld+json"
 					dangerouslySetInnerHTML={{
-						__html: JSON.stringify(getLocalBusinessSchema()),
+						__html: JSON.stringify(getLocalBusinessSchema(globalReviewStats)),
+					}}
+				/>
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(getFounderSchema()),
 					}}
 				/>
 			</head>

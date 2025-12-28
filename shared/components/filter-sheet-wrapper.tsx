@@ -133,7 +133,7 @@ export function FilterSheetWrapper({
 				onKeyDown={handleKeyDown}
 			>
 				<SheetHeader
-					className="px-6 py-5 border-b border-primary/10 bg-gradient-to-r from-background via-primary/[0.02] to-background shrink-0"
+					className="px-6 py-5 border-b border-primary/10 bg-linear-to-r from-background via-primary/[0.02] to-background shrink-0"
 					role="banner"
 					aria-labelledby="filter-sheet-title"
 				>

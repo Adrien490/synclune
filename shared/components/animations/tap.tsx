@@ -18,7 +18,7 @@ export interface TapProps {
 export function Tap({
 	children,
 	className,
-	scale = 0.95,
+	scale = 0.97,
 	duration = 0.1,
 	role,
 }: TapProps) {

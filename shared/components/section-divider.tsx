@@ -106,13 +106,13 @@ export function SparklesDivider({ className }: { className?: string }) {
 			aria-hidden="true"
 			role="presentation"
 		>
-			<div className="h-px w-16 bg-gradient-to-r from-transparent to-primary/30" />
+			<div className="h-px w-16 bg-linear-to-r from-transparent to-primary/30" />
 			<SparkleIcon size={20} className="text-primary/60" />
-			<div className="h-px w-24 bg-gradient-to-r from-primary/30 via-secondary/40 to-primary/30" />
+			<div className="h-px w-24 bg-linear-to-r from-primary/30 via-secondary/40 to-primary/30" />
 			<SparkleIcon size={24} className="text-secondary" />
-			<div className="h-px w-24 bg-gradient-to-r from-primary/30 via-secondary/40 to-primary/30" />
+			<div className="h-px w-24 bg-linear-to-r from-primary/30 via-secondary/40 to-primary/30" />
 			<SparkleIcon size={20} className="text-primary/60" />
-			<div className="h-px w-16 bg-gradient-to-l from-transparent to-primary/30" />
+			<div className="h-px w-16 bg-linear-to-l from-transparent to-primary/30" />
 		</div>
 	);
 }

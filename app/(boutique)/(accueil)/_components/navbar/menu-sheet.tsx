@@ -22,7 +22,7 @@ import { COLLECTION_IMAGE_SIZES, COLLECTION_IMAGE_QUALITY } from "@/modules/coll
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
-import { FolderOpen, Heart, LogOut, Menu, Package, Settings } from "lucide-react";
+import { FolderOpen, Heart, Menu, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -418,12 +418,7 @@ export function MenuSheet({
 													isMenuItemActive("/commandes") ? "page" : undefined
 												}
 											>
-												<Package
-													size={18}
-													className="mr-2 shrink-0"
-													aria-hidden="true"
-												/>
-												<span className="flex-1">Mes commandes</span>
+												Mes commandes
 											</Link>
 										</SheetClose>
 									</Tap>
@@ -435,14 +430,9 @@ export function MenuSheet({
 										<LogoutAlertDialog>
 											<button
 												type="button"
-												className={cn(linkClassName, "w-full")}
+												className={cn(linkClassName, "w-full text-left")}
 											>
-												<LogOut
-													size={18}
-													className="mr-2 shrink-0"
-													aria-hidden="true"
-												/>
-												<span className="flex-1">Déconnexion</span>
+												Déconnexion
 											</button>
 										</LogoutAlertDialog>
 									</Tap>

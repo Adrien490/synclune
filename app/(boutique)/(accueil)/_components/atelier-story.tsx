@@ -2,7 +2,7 @@ import { Fade, Reveal, Stagger } from "@/shared/components/animations";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { PolaroidFrame } from "@/shared/components/polaroid-frame";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
-import { dancingScript } from "@/shared/styles/fonts";
+import { pencerio } from "@/shared/styles/fonts";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -105,7 +105,7 @@ export function AtelierStory() {
 						{/* Signature - taille agrandie sur mobile */}
 						<div className="pt-6">
 							<p
-								className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic`}
+								className={`${pencerio.className} text-2xl md:text-3xl text-foreground italic`}
 							>
 								— Léane
 							</p>

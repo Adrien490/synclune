@@ -192,6 +192,16 @@ export function QuickSearchDialog({
 				<div
 					className="px-4 py-3 bg-background shrink-0"
 					data-pending={isPending ? "" : undefined}
+					onKeyDown={(e) => {
+						// ArrowDown from input focuses first result
+						if (e.key === "ArrowDown" && e.target instanceof HTMLInputElement) {
+							e.preventDefault()
+							const firstFocusable = contentRef.current?.querySelector<HTMLElement>(
+								'button:not([disabled]), a:not([disabled])'
+							)
+							firstFocusable?.focus()
+						}
+					}}
 				>
 					<SearchInput
 						paramName="search"
@@ -200,15 +210,21 @@ export function QuickSearchDialog({
 						placeholder="Rechercher un bijou..."
 						autoFocus
 						onSubmit={handleSubmit}
+						onEscape={close}
 					/>
 				</div>
 
 				{/* Screen reader announcements */}
 				<div role="status" aria-live="polite" className="sr-only">
-					{displayedSearches.length > 0 &&
-						`${displayedSearches.length} recherche${displayedSearches.length > 1 ? "s" : ""} recente${displayedSearches.length > 1 ? "s" : ""}.`}
-					{collections.length > 0 && ` ${collections.length} collection${collections.length > 1 ? "s" : ""}.`}
-					{productTypes.length > 0 && ` ${productTypes.length} categorie${productTypes.length > 1 ? "s" : ""}.`}
+					{isPending
+						? "Recherche en cours..."
+						: <>
+							{displayedSearches.length > 0 &&
+								`${displayedSearches.length} recherche${displayedSearches.length > 1 ? "s" : ""} recente${displayedSearches.length > 1 ? "s" : ""}.`}
+							{collections.length > 0 && ` ${collections.length} collection${collections.length > 1 ? "s" : ""}.`}
+							{productTypes.length > 0 && ` ${productTypes.length} categorie${productTypes.length > 1 ? "s" : ""}.`}
+						</>
+					}
 				</div>
 
 				{/* Content */}
@@ -246,7 +262,7 @@ export function QuickSearchDialog({
 									<Stagger role="list" className="space-y-1" stagger={0.02} delay={0.02} y={8}>
 										{displayedSearches.map((term) => (
 											<div key={term} role="listitem" className="flex items-center gap-1 group/item">
-												<Tap className="flex-1 min-w-0" scale={0.98}>
+												<Tap className="flex-1 min-w-0" scale={0.97}>
 													<button
 														type="button"
 														onClick={() => handleRecentSearch(term)}
@@ -283,7 +299,7 @@ export function QuickSearchDialog({
 									</div>
 									<Stagger role="list" className="grid grid-cols-2 gap-2" stagger={0.02} delay={0.03} y={8}>
 										{collections.map((collection) => (
-											<Tap key={collection.slug} role="listitem" scale={0.98}>
+											<Tap key={collection.slug} role="listitem" scale={0.97}>
 												<Link
 													href={`/collections/${collection.slug}`}
 													onClick={close}
@@ -324,7 +340,7 @@ export function QuickSearchDialog({
 									</div>
 									<Stagger role="list" className="grid grid-cols-2 gap-2" stagger={0.02} delay={0.04} y={8}>
 										{productTypes.map((type) => (
-											<Tap key={type.slug} role="listitem" scale={0.98}>
+											<Tap key={type.slug} role="listitem" scale={0.97}>
 												<Link
 													href={`/produits/${type.slug}`}
 													onClick={close}
@@ -347,7 +363,7 @@ export function QuickSearchDialog({
 									</p>
 									<div className="flex flex-wrap justify-center gap-2">
 										{QUICK_SEARCH_SUGGESTED_LINKS.map((link) => (
-											<Tap key={link.href} scale={0.95}>
+											<Tap key={link.href} scale={0.97}>
 												<Link
 													href={link.href}
 													onClick={close}

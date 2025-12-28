@@ -33,6 +33,8 @@ type SearchInputProps = {
 	ariaLabel?: string
 	/** Callback before search navigation (for side effects like saving recent searches, closing dialogs) */
 	onSubmit?: (term: string) => void
+	/** Callback on Escape key - if provided, always called (even with content). If not provided, clears input first then propagates. */
+	onEscape?: () => void
 }
 
 const sizeStyles = {
@@ -74,6 +76,7 @@ export function SearchInput({
 	className,
 	ariaLabel,
 	onSubmit,
+	onEscape,
 }: SearchInputProps) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const [internalPending, startTransition] = useTransition()
@@ -152,11 +155,18 @@ export function SearchInput({
 	const handleKeyDown = (e: React.KeyboardEvent, currentValue: string) => {
 		if (e.key === "Escape") {
 			e.preventDefault()
-			if (currentValue) {
-				e.stopPropagation() // Empêche la fermeture du dialog parent
+			if (onEscape) {
+				// Parent handles Escape (e.g., close dialog directly)
+				if (currentValue) {
+					form.setFieldValue("search", "")
+				}
+				onEscape()
+			} else if (currentValue) {
+				// Default: clear input first, then let next Escape close dialog
+				e.stopPropagation()
 				handleClear()
 			}
-			// Si pas de valeur, laisse l'event se propager pour fermer le dialog
+			// If no content and no onEscape, let event propagate to close dialog
 		}
 	}
 
@@ -172,7 +182,7 @@ export function SearchInput({
 					"relative flex flex-1 items-center overflow-hidden",
 					"bg-background border border-input",
 					"hover:border-muted-foreground/25",
-					"focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/30",
+					"focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30",
 					"transition-all duration-200",
 					isPending && "opacity-70",
 					styles.container

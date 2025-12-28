@@ -68,11 +68,17 @@ export const SEO_DEFAULTS = {
 	},
 } as const;
 
+export type GlobalReviewStats = {
+	totalReviews: number;
+	averageRating: number;
+};
+
 /**
  * Génère les données structurées LocalBusiness pour le référencement local Nantes
+ * @param reviewStats - Statistiques globales d'avis (optionnel)
  */
-export function getLocalBusinessSchema() {
-	return {
+export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
+	const baseSchema = {
 		"@context": "https://schema.org",
 		"@type": "LocalBusiness",
 		"@id": `${SITE_URL}/#organization`,
@@ -187,6 +193,60 @@ export function getLocalBusinessSchema() {
 					],
 				},
 			],
+		},
+	};
+
+	// Ajouter l'AggregateRating si des avis existent
+	if (reviewStats && reviewStats.totalReviews > 0) {
+		return {
+			...baseSchema,
+			aggregateRating: {
+				"@type": "AggregateRating",
+				ratingValue: reviewStats.averageRating.toFixed(1),
+				reviewCount: reviewStats.totalReviews,
+				bestRating: 5,
+				worstRating: 1,
+			},
+		};
+	}
+
+	return baseSchema;
+}
+
+/**
+ * Génère les données structurées Person pour la créatrice Léane Taddei
+ * Renforce l'E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness)
+ */
+export function getFounderSchema() {
+	return {
+		"@context": "https://schema.org",
+		"@type": "Person",
+		"@id": `${SITE_URL}/#founder`,
+		name: "Léane Taddei",
+		jobTitle: "Créatrice de bijoux artisanaux",
+		description:
+			"Artisan créatrice de bijoux faits main à Nantes. Passionnée par les couleurs et les créations uniques, je conçois chaque pièce avec amour dans mon atelier nantais.",
+		url: SITE_URL,
+		image: `${SITE_URL}/images/leane-taddei.jpg`,
+		sameAs: [
+			BUSINESS_INFO.social.instagram.url,
+			BUSINESS_INFO.social.tiktok.url,
+		],
+		worksFor: {
+			"@id": `${SITE_URL}/#organization`,
+		},
+		knowsAbout: [
+			"Création de bijoux",
+			"Bijoux faits main",
+			"Artisanat",
+			"Design de bijoux",
+			"Bijoux colorés",
+		],
+		address: {
+			"@type": "PostalAddress",
+			addressLocality: BUSINESS_INFO.location.addressLocality,
+			addressRegion: BUSINESS_INFO.location.addressRegion,
+			addressCountry: BUSINESS_INFO.location.countryCode,
 		},
 	};
 }

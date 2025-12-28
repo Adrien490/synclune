@@ -113,44 +113,28 @@ export default function ScrollFade({
       {(axis === "horizontal" || axis === "both") && showLeft && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-0 top-0 h-full w-10 z-10"
-          style={{
-            background:
-              "linear-gradient(to right, var(--background) 0%, transparent 100%)"
-          }}
+          className="pointer-events-none absolute left-0 top-0 h-full w-10 z-10 bg-linear-to-r from-background to-transparent"
         />
       )}
 
       {(axis === "horizontal" || axis === "both") && showRight && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10"
-          style={{
-            background:
-              "linear-gradient(to left, var(--background) 0%, transparent 100%)"
-          }}
+          className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-linear-to-l from-background to-transparent"
         />
       )}
 
       {(axis === "vertical" || axis === "both") && showTop && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute top-0 left-0 w-full h-10 z-10"
-          style={{
-            background:
-              "linear-gradient(to bottom, var(--background) 0%, transparent 100%)"
-          }}
+          className="pointer-events-none absolute top-0 left-0 w-full h-10 z-10 bg-linear-to-b from-background to-transparent"
         />
       )}
 
       {(axis === "vertical" || axis === "both") && showBottom && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 left-0 w-full h-10 z-10"
-          style={{
-            background:
-              "linear-gradient(to top, var(--background) 0%, transparent 100%)"
-          }}
+          className="pointer-events-none absolute bottom-0 left-0 w-full h-10 z-10 bg-linear-to-t from-background to-transparent"
         />
       )}
     </div>

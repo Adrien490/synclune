@@ -1,4 +1,4 @@
-import { dancingScript } from "@/shared/styles/fonts";
+import { pencerio } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import type { ReactNode } from "react";
 
@@ -27,10 +27,10 @@ const tiltClasses: Record<TiltDirection, string> = {
 };
 
 const washiColors: Record<WashiTapeColor, string> = {
-	pink: "bg-gradient-to-r from-pink-200/80 to-pink-300/80",
-	lavender: "bg-gradient-to-r from-purple-200/80 to-purple-300/80",
-	mint: "bg-gradient-to-r from-green-200/80 to-green-300/80",
-	peach: "bg-gradient-to-r from-orange-200/80 to-orange-300/80",
+	pink: "bg-linear-to-r from-pink-200/80 to-pink-300/80",
+	lavender: "bg-linear-to-r from-purple-200/80 to-purple-300/80",
+	mint: "bg-linear-to-r from-green-200/80 to-green-300/80",
+	peach: "bg-linear-to-r from-orange-200/80 to-orange-300/80",
 };
 
 /**
@@ -106,7 +106,7 @@ export function PolaroidFrame({
 				<p
 					className={cn(
 						"absolute bottom-2 sm:bottom-3 left-0 right-0 text-center text-sm sm:text-base text-gray-600 italic",
-						dancingScript.className
+						pencerio.className
 					)}
 				>
 					{caption}
