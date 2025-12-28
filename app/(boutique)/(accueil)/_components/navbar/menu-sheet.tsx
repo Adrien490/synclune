@@ -1,5 +1,7 @@
 "use client";
 
+import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
+import type { Session } from "@/modules/auth/lib/auth";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
@@ -20,13 +22,13 @@ import { COLLECTION_IMAGE_SIZES, COLLECTION_IMAGE_QUALITY } from "@/modules/coll
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
-import { FolderOpen, Heart, Menu, Settings } from "lucide-react";
+import { FolderOpen, Heart, LogOut, Menu, Package, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
 /** HREFs de la zone compte */
-const ACCOUNT_HREFS = ["/compte", "/connexion", "/favoris"] as const;
+const ACCOUNT_HREFS = ["/compte", "/commandes", "/connexion", "/favoris"] as const;
 
 /**
  * Header de section pour les catégories du menu
@@ -70,6 +72,7 @@ interface MenuSheetProps {
 		blurDataUrl?: string | null;
 	}>;
 	isAdmin?: boolean;
+	session?: Session | null;
 }
 
 export function MenuSheet({
@@ -77,6 +80,7 @@ export function MenuSheet({
 	productTypes,
 	collections,
 	isAdmin = false,
+	session,
 }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 	const { wishlistCount } = useBadgeCountsStore();
@@ -398,6 +402,51 @@ export function MenuSheet({
 										</Tap>
 									);
 								})}
+
+								{/* Lien Mes commandes (si connecté) */}
+								{session?.user && (
+									<Tap>
+										<SheetClose asChild>
+											<Link
+												href="/commandes"
+												className={
+													isMenuItemActive("/commandes")
+														? activeLinkClassName
+														: linkClassName
+												}
+												aria-current={
+													isMenuItemActive("/commandes") ? "page" : undefined
+												}
+											>
+												<Package
+													size={18}
+													className="mr-2 shrink-0"
+													aria-hidden="true"
+												/>
+												<span className="flex-1">Mes commandes</span>
+											</Link>
+										</SheetClose>
+									</Tap>
+								)}
+
+								{/* Bouton Déconnexion (si connecté) */}
+								{session?.user && (
+									<Tap>
+										<LogoutAlertDialog>
+											<button
+												type="button"
+												className={cn(linkClassName, "w-full")}
+											>
+												<LogOut
+													size={18}
+													className="mr-2 shrink-0"
+													aria-hidden="true"
+												/>
+												<span className="flex-1">Déconnexion</span>
+											</button>
+										</LogoutAlertDialog>
+									</Tap>
+								)}
 							</Stagger>
 						</section>
 						</nav>

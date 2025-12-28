@@ -68,7 +68,6 @@ export function CollectionGrid({
 							description={collection.description}
 							imageUrl={collection.products[0]?.product?.skus[0]?.images[0]?.url || null}
 							blurDataUrl={collection.products[0]?.product?.skus[0]?.images[0]?.blurDataUrl || null}
-							showDescription={true}
 							index={index}
 						/>
 					</div>

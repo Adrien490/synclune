@@ -25,36 +25,7 @@ interface ProductCareInfoProps {
  */
 export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 	return (
-		<Accordion type="multiple" className="w-full">
-			{/* Section Entretien */}
-			<AccordionItem value="care">
-				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold hover:bg-muted/50 rounded-lg -mx-2 px-2 transition-colors">
-					<div className="flex items-center gap-2">
-						<Droplets className="w-4 h-4 text-primary" aria-hidden="true" />
-						<span>Entretien</span>
-					</div>
-				</AccordionTrigger>
-				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">
-					<p>
-						J'ai passé des heures à créer ton produit (parfois avec quelques galères), alors voici mes conseils pour qu'il dure longtemps :
-					</p>
-					<ul className="space-y-2 list-disc list-inside">
-						<li>Évite l'eau, les parfums et les produits cosmétiques (ça n'aime pas trop)</li>
-						<li>Range-le dans son petit écrin après chaque utilisation</li>
-						<li>Un petit coup de chiffon doux de temps en temps, et c'est nickel</li>
-						{primaryMaterial?.toLowerCase().includes("argent") && (
-							<li>Pour l'argent : un chiffon anti-oxydation, c'est la base</li>
-						)}
-						{primaryMaterial?.toLowerCase().includes("or") && (
-							<li>Pour l'or : de l'eau tiède avec un peu de savon fait l'affaire</li>
-						)}
-					</ul>
-					<p className="text-xs italic">
-						Ton produit a été créé avec passion, prends-en soin et il te le rendra !
-					</p>
-				</AccordionContent>
-			</AccordionItem>
-
+		<Accordion type="multiple" defaultValue={["shipping"]} className="w-full">
 			{/* Section Livraison */}
 			<AccordionItem value="shipping">
 				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold hover:bg-muted/50 rounded-lg -mx-2 px-2 transition-colors">
@@ -100,6 +71,35 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 							</p>
 						</div>
 					</div>
+				</AccordionContent>
+			</AccordionItem>
+
+			{/* Section Entretien */}
+			<AccordionItem value="care">
+				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold hover:bg-muted/50 rounded-lg -mx-2 px-2 transition-colors">
+					<div className="flex items-center gap-2">
+						<Droplets className="w-4 h-4 text-primary" aria-hidden="true" />
+						<span>Entretien</span>
+					</div>
+				</AccordionTrigger>
+				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">
+					<p>
+						J'ai passé des heures à créer ton produit (parfois avec quelques galères), alors voici mes conseils pour qu'il dure longtemps :
+					</p>
+					<ul className="space-y-2 list-disc list-inside">
+						<li>Évite l'eau, les parfums et les produits cosmétiques (ça n'aime pas trop)</li>
+						<li>Range-le dans son petit écrin après chaque utilisation</li>
+						<li>Un petit coup de chiffon doux de temps en temps, et c'est nickel</li>
+						{primaryMaterial?.toLowerCase().includes("argent") && (
+							<li>Pour l'argent : un chiffon anti-oxydation, c'est la base</li>
+						)}
+						{primaryMaterial?.toLowerCase().includes("or") && (
+							<li>Pour l'or : de l'eau tiède avec un peu de savon fait l'affaire</li>
+						)}
+					</ul>
+					<p className="text-xs italic">
+						Ton produit a été créé avec passion, prends-en soin et il te le rendra !
+					</p>
 				</AccordionContent>
 			</AccordionItem>
 		</Accordion>

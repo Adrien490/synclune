@@ -79,7 +79,7 @@ export function Bestsellers({ productsPromise, wishlistProductIdsPromise }: Best
 					))}
 				</Stagger>
 
-				<div className="text-center">
+				<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">
 					<Button
 						asChild
 						size="lg"
@@ -93,7 +93,7 @@ export function Bestsellers({ productsPromise, wishlistProductIdsPromise }: Best
 					<span id="bestsellers-cta-description" className="sr-only">
 						Voir tous les bijoux dans la boutique Synclune
 					</span>
-				</div>
+				</Fade>
 			</div>
 		</section>
 	);

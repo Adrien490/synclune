@@ -89,7 +89,6 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 												description={collection.description}
 												imageUrl={featuredImage?.url || null}
 												blurDataUrl={featuredImage?.blurDataUrl}
-												showDescription={false}
 												index={index}
 												sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CAROUSEL}
 											/>
@@ -118,7 +117,8 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 					</Reveal>
 				</div>
 
-				<div id="collections-cta" className="text-center">
+				<div id="collections-cta">
+					<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">
 					<Button
 						asChild
 						size="lg"
@@ -132,6 +132,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 					<span id="collections-cta-description" className="sr-only">
 						Découvrir toutes les collections
 					</span>
+					</Fade>
 				</div>
 			</div>
 		</section>

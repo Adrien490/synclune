@@ -119,7 +119,8 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 					</Reveal>
 				</div>
 
-				<div id="latest-creations-cta" className="text-center">
+				<div id="latest-creations-cta">
+					<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">
 					<Button
 						asChild
 						size="lg"
@@ -133,6 +134,7 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 					<span id="latest-creations-cta-description" className="sr-only">
 						Voir tous mes bijoux récemment créés dans la boutique Synclune
 					</span>
+					</Fade>
 				</div>
 			</div>
 		</section>

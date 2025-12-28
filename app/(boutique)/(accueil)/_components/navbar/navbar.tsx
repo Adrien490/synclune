@@ -8,6 +8,7 @@ import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { Heart } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
@@ -101,6 +102,7 @@ export async function Navbar() {
 								productTypes={productTypes}
 								collections={menuCollections}
 								isAdmin={userIsAdmin}
+								session={session}
 							/>
 
 							{/* Recherche mobile (juste à droite du menu) */}
@@ -137,18 +139,23 @@ export async function Navbar() {
 						<div className="flex flex-1 items-center justify-end min-w-0">
 							<div className="flex items-center gap-2 sm:gap-3 shrink-0">
 								{/* Icône favoris (visible sur mobile et desktop) */}
-								<Link
-									href="/favoris"
-									className={`inline-flex ${iconButtonClassName}`}
-									aria-label="Accéder à mes favoris"
-								>
-									<Heart
-										size={20}
-										className="transition-transform duration-300 ease-out group-hover:scale-105"
-										aria-hidden="true"
-									/>
-									<WishlistBadge />
-								</Link>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Link
+											href="/favoris"
+											className={`inline-flex ${iconButtonClassName}`}
+											aria-label="Accéder à mes favoris"
+										>
+											<Heart
+												size={20}
+												className="transition-transform duration-300 ease-out group-hover:scale-105"
+												aria-hidden="true"
+											/>
+											<WishlistBadge />
+										</Link>
+									</TooltipTrigger>
+									<TooltipContent className="hidden sm:block">Favoris</TooltipContent>
+								</Tooltip>
 
 								{/* Recherche globale (visible sur desktop seulement) */}
 								<QuickSearchTrigger className="hidden sm:inline-flex" />
