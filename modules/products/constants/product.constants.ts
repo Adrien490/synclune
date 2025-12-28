@@ -317,7 +317,7 @@ export const PRODUCTS_SORT_LABELS = {
 	[PRODUCTS_SORT_OPTIONS.PRICE_ASC]: "Prix croissant",
 	[PRODUCTS_SORT_OPTIONS.PRICE_DESC]: "Prix décroissant",
 	[PRODUCTS_SORT_OPTIONS.CREATED_ASC]: "Plus anciens",
-	[PRODUCTS_SORT_OPTIONS.CREATED_DESC]: "Nouveautés",
+	[PRODUCTS_SORT_OPTIONS.CREATED_DESC]: "Plus récents",
 } as const;
 
 // Aliases pour compatibilité
