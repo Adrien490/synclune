@@ -30,7 +30,7 @@ export function SpellSuggestion({ suggestion }: SpellSuggestionProps) {
 			Vouliez-vous dire :{" "}
 			<Link
 				href={href}
-				className="font-medium text-primary hover:underline underline-offset-4"
+				className="font-medium underline underline-offset-4"
 			>
 				{suggestion}
 			</Link>{" "}
