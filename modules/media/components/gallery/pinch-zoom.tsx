@@ -99,6 +99,7 @@ export function GalleryPinchZoom({
 					className="object-cover pointer-events-none select-none"
 					priority={priority}
 					loading={priority ? "eager" : "lazy"}
+					fetchPriority={priority ? "high" : "auto"}
 					quality={MAIN_IMAGE_QUALITY}
 					sizes="100vw"
 					placeholder={blurDataUrl ? "blur" : "empty"}

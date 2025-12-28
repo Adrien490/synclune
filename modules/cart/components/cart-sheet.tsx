@@ -233,6 +233,36 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										</span>
 									</div>
 
+									{/* Méthodes de paiement acceptées (Baymard: 11% abandons si non visibles) */}
+									<div className="flex items-center justify-center gap-2 py-1">
+										<span className="text-[10px] text-muted-foreground">Paiement :</span>
+										<div className="flex items-center gap-1.5">
+											{/* Visa */}
+											<svg className="h-5 w-auto" viewBox="0 0 48 32" aria-label="Visa">
+												<rect width="48" height="32" rx="4" fill="#1A1F71" />
+												<path d="M19.5 21.5H17L18.75 10.5H21.25L19.5 21.5ZM15.25 10.5L12.85 18.1L12.55 16.65L12.55 16.65L11.65 11.4C11.65 11.4 11.55 10.5 10.4 10.5H6.1L6 10.7C6 10.7 7.3 10.95 8.8 11.85L11 21.5H13.6L17.9 10.5H15.25ZM36 21.5H38.25L36.3 10.5H34.2C33.25 10.5 33 11.2 33 11.2L29.2 21.5H31.8L32.35 19.9H35.5L36 21.5ZM33.05 17.85L34.45 13.85L35.25 17.85H33.05ZM28.85 13.3L29.25 10.75C29.25 10.75 28.1 10.35 26.9 10.35C25.6 10.35 22.6 10.9 22.6 13.55C22.6 16.05 26.1 16.1 26.1 17.4C26.1 18.7 22.95 18.35 21.85 17.45L21.4 20.1C21.4 20.1 22.6 20.65 24.4 20.65C26.2 20.65 28.8 19.7 28.8 17.25C28.8 14.7 25.25 14.45 25.25 13.35C25.25 12.25 27.7 12.45 28.85 13.3Z" fill="white" />
+											</svg>
+											{/* Mastercard */}
+											<svg className="h-5 w-auto" viewBox="0 0 48 32" aria-label="Mastercard">
+												<rect width="48" height="32" rx="4" fill="#1A1F2E" />
+												<circle cx="18" cy="16" r="8" fill="#EB001B" />
+												<circle cx="30" cy="16" r="8" fill="#F79E1B" />
+												<path d="M24 10.5C25.8 12 27 14.3 27 16.9C27 19.5 25.8 21.8 24 23.3C22.2 21.8 21 19.5 21 16.9C21 14.3 22.2 12 24 10.5Z" fill="#FF5F00" />
+											</svg>
+											{/* CB (Carte Bleue) */}
+											<svg className="h-5 w-auto" viewBox="0 0 48 32" aria-label="Carte Bleue">
+												<rect width="48" height="32" rx="4" fill="#0064B3" />
+												<text x="24" y="19" fill="white" fontSize="10" fontWeight="bold" textAnchor="middle">CB</text>
+											</svg>
+											{/* Apple Pay */}
+											<svg className="h-5 w-auto" viewBox="0 0 48 32" aria-label="Apple Pay">
+												<rect width="48" height="32" rx="4" fill="#000" />
+												<path d="M15.5 11.5c.5-.6.8-1.4.7-2.2-.7 0-1.6.5-2.1 1.1-.4.5-.8 1.4-.7 2.2.8.1 1.6-.4 2.1-1.1zm.7 1.2c-1.2-.1-2.2.7-2.8.7-.6 0-1.4-.6-2.4-.6-1.2 0-2.3.7-2.9 1.8-1.3 2.2-.3 5.4.9 7.2.6.9 1.3 1.8 2.3 1.8.9 0 1.2-.6 2.3-.6s1.4.6 2.4.6c1 0 1.6-.9 2.2-1.8.7-1 1-2 1-2-.1 0-1.9-.7-1.9-2.9 0-1.8 1.5-2.7 1.5-2.7-.8-1.2-2.1-1.4-2.6-1.5z" fill="white" />
+												<text x="28" y="19" fill="white" fontSize="7" fontWeight="500">Pay</text>
+											</svg>
+										</div>
+									</div>
+
 									{/* CTAs */}
 									<div className="space-y-2">
 										{hasStockIssues ? (

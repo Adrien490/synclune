@@ -8,19 +8,7 @@ import {
 	SHIPPING_RATES,
 	formatShippingPrice,
 } from "@/modules/orders/constants/shipping-rates";
-import { addBusinessDays, format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Droplets, Package, Truck } from "lucide-react";
-
-/**
- * Calcule la plage de dates de livraison estimée
- */
-function getEstimatedDeliveryDate(minDays: number, maxDays: number): string {
-	const today = new Date();
-	const minDate = addBusinessDays(today, minDays);
-	const maxDate = addBusinessDays(today, maxDays);
-	return `${format(minDate, "d", { locale: fr })}-${format(maxDate, "d MMM", { locale: fr })}`;
-}
 
 interface ProductCareInfoProps {
 	primaryMaterial?: string | null;
@@ -96,13 +84,6 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 								{formatShippingPrice(SHIPPING_RATES.FR.amount)} ·{" "}
 								{SHIPPING_RATES.FR.minDays}-{SHIPPING_RATES.FR.maxDays} jours
 								ouvrés
-							</p>
-							<p className="text-foreground font-medium">
-								Commande aujourd'hui → Reçois d'ici le{" "}
-								{getEstimatedDeliveryDate(
-									SHIPPING_RATES.FR.minDays,
-									SHIPPING_RATES.FR.maxDays
-								)}
 							</p>
 						</div>
 					</div>

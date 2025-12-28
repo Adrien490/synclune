@@ -280,6 +280,7 @@ async function stripAudio(inputPath: string, outputPath: string): Promise<void> 
 		"-i", inputPath,   // Fichier d'entrée
 		"-c:v", "copy",    // Copier le flux vidéo sans re-encoding
 		"-an",             // Supprimer la piste audio
+		"-movflags", "+faststart", // Optimiser pour streaming progressif (moov atom au début)
 		outputPath,        // Fichier de sortie
 	];
 

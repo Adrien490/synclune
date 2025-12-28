@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async headers() {
     return [
+      // Headers de sécurité globaux
       {
         source: "/:path*",
         headers: [
@@ -13,6 +14,27 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
+      // Cache-Control pour assets statiques (JS, CSS) - cache immutable 1 an
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      // Cache-Control pour fonts - cache 1 an
+      {
+        source: "/fonts/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      // Cache-Control pour images locales - cache 1 jour avec revalidation
+      {
+        source: "/images/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
+        ],
+      },
     ];
   },
 
@@ -20,6 +42,10 @@ const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
 
   images: {
+    // Tailles pour srcSet (petites images, thumbnails)
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Breakpoints responsive (images principales)
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     remotePatterns: [
       { protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**" },
       { protocol: "https", hostname: "utfs.io", pathname: "/f/**" },

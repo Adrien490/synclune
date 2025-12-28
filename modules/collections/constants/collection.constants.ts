@@ -47,6 +47,7 @@ export const GET_COLLECTION_SELECT = {
 									id: true,
 									url: true,
 									altText: true,
+									blurDataUrl: true,
 									mediaType: true,
 									isPrimary: true,
 								},

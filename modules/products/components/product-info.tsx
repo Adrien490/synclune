@@ -1,16 +1,12 @@
 import { Badge } from "@/shared/components/ui/badge";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductSku } from "@/modules/products/types/product-services.types";
 import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
-import { formatEuro } from "@/shared/utils/format-euro";
 import { Crown } from "lucide-react";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { ReviewRatingLink } from "@/modules/reviews/components/review-rating-link";
-import { ProductHighlights } from "./product-highlights";
 
 interface ProductInfoProps {
 	product: GetProductReturn;
-	defaultSku: ProductSku;
 	isInWishlist?: boolean;
 	reviewStats?: ProductReviewStatistics;
 }
@@ -19,15 +15,13 @@ interface ProductInfoProps {
  * ProductInfo - Affiche les informations de base du produit
  *
  * Responsabilités :
- * - Titre du produit avec bouton wishlist
- * - Description
+ * - Titre du produit avec bouton wishlist (mobile)
  * - Badge type (catégorie)
- * - Badge collection avec lien
- * - Badge "Créé à la main"
+ * - Note avis cliquable
+ * - Bouton wishlist
  */
 export function ProductInfo({
 	product,
-	defaultSku,
 	isInWishlist,
 	reviewStats,
 }: ProductInfoProps) {
@@ -52,25 +46,6 @@ export function ProductInfo({
 						isInWishlist={isInWishlist ?? false}
 						size="lg"
 					/>
-				</div>
-			</div>
-
-			{/* Prix compact visible sur mobile - above the fold, plus proéminent */}
-			<div className="sm:hidden space-y-1">
-				<div className="flex items-baseline gap-2 flex-wrap">
-					<p className="text-3xl font-bold text-foreground tracking-tight">
-						{formatEuro(defaultSku.priceInclTax)}
-					</p>
-					{defaultSku.compareAtPrice && defaultSku.compareAtPrice > defaultSku.priceInclTax && (
-						<>
-							<span className="text-lg text-muted-foreground line-through font-normal">
-								{formatEuro(defaultSku.compareAtPrice)}
-							</span>
-							<span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-accent text-accent-foreground">
-								-{Math.round(((defaultSku.compareAtPrice - defaultSku.priceInclTax) / defaultSku.compareAtPrice) * 100)}%
-							</span>
-						</>
-					)}
 				</div>
 			</div>
 
@@ -103,22 +78,6 @@ export function ProductInfo({
 					/>
 				</div>
 			</div>
-
-			{/* Highlights produit - scanabilite UX */}
-			<ProductHighlights product={product} />
-
-			{/* Description - max-w-prose pour lisibilité WCAG (80 chars/ligne), leading-relaxed (1.625) */}
-			{product.description && (
-				<div
-					id="product-description"
-					className="text-base tracking-normal antialiased text-muted-foreground leading-relaxed max-w-prose space-y-3"
-					itemProp="description"
-				>
-					{product.description.split("\n").map((line, i) => (
-						<p key={`desc-line-${i}`}>{line || "\u00A0"}</p>
-					))}
-				</div>
-			)}
 		</div>
 	);
 }

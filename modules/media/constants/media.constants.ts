@@ -201,3 +201,35 @@ export const COLOR_PLACEHOLDER_CONFIG = {
 	/** Domaines autorisés pour le téléchargement */
 	allowedDomains: ALLOWED_UPLOADTHING_DOMAINS,
 } as const;
+
+// ============================================================================
+// CONFIGURATION THUMBHASH (STANDARD 2025 - RECOMMANDE)
+// ============================================================================
+
+/**
+ * Configuration pour la génération de ThumbHash placeholders
+ *
+ * ThumbHash est le standard 2025, créé par l'auteur d'esbuild:
+ * - Ultra-compact: ~25 bytes (vs ~200-300 bytes pour plaiceholder)
+ * - Support transparence (alpha channel)
+ * - Encode l'aspect ratio automatiquement
+ * - Meilleure fidélité des couleurs que BlurHash
+ *
+ * @see https://evanw.github.io/thumbhash/
+ */
+export const THUMBHASH_CONFIG = {
+	/** Timeout pour le téléchargement d'image (ms) */
+	downloadTimeout: 30000,
+	/** Taille max des images en octets (20 MB) */
+	maxImageSize: 20 * 1024 * 1024,
+	/** Taille max pour le resize (pixels) - ThumbHash limite à 100x100 */
+	maxSize: 100,
+	/** Nombre de tentatives avant échec */
+	maxRetries: 3,
+	/** Délai de base pour backoff exponentiel (ms) */
+	retryBaseDelay: 1000,
+	/** Pause entre batches (ms) */
+	batchDelay: 500,
+	/** Domaines autorisés pour le téléchargement */
+	allowedDomains: ALLOWED_UPLOADTHING_DOMAINS,
+} as const;

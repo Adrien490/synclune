@@ -20,7 +20,7 @@ import { COLLECTION_IMAGE_SIZES, COLLECTION_IMAGE_QUALITY } from "@/modules/coll
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
-import { ArrowRight, FolderOpen, Heart, Menu, Settings } from "lucide-react";
+import { FolderOpen, Heart, Menu, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -104,11 +104,6 @@ export function MenuSheet({
 	const activeLinkClassName = cn(
 		linkClassName,
 		"bg-primary/12 text-foreground font-semibold border-l-2 border-primary pl-5 shadow-sm"
-	);
-
-	const ctaLinkClassName = cn(
-		"flex items-center gap-2 px-4 py-3 text-sm font-medium text-foreground/70",
-		"hover:text-foreground transition-colors duration-200"
 	);
 
 	return (
@@ -228,12 +223,6 @@ export function MenuSheet({
 											</SheetClose>
 										</Tap>
 									))}
-									<SheetClose asChild>
-										<Link href="/produits" className={ctaLinkClassName}>
-											<ArrowRight className="h-4 w-4" aria-hidden="true" />
-											Voir toutes les créations
-										</Link>
-									</SheetClose>
 								</Stagger>
 							</section>
 						)}
@@ -243,6 +232,26 @@ export function MenuSheet({
 							<section aria-labelledby="section-collections" className="mb-4">
 								<SectionHeader id="section-collections">Dernières collections</SectionHeader>
 								<Stagger stagger={0.02} delay={0.12} y={8} className="space-y-1">
+									{/* Lien "Toutes les collections" proéminent en premier */}
+									<Tap>
+										<SheetClose asChild>
+											<Link
+												href="/collections"
+												className={
+													isMenuItemActive("/collections")
+														? activeLinkClassName
+														: linkClassName
+												}
+												aria-current={
+													isMenuItemActive("/collections")
+														? "page"
+														: undefined
+												}
+											>
+												Toutes les collections
+											</Link>
+										</SheetClose>
+									</Tap>
 									{displayedCollections.map((collection) => (
 										<Tap key={collection.slug}>
 											<SheetClose asChild>
@@ -289,12 +298,6 @@ export function MenuSheet({
 											</SheetClose>
 										</Tap>
 									))}
-									<SheetClose asChild>
-										<Link href="/collections" className={ctaLinkClassName}>
-											<ArrowRight className="h-4 w-4" aria-hidden="true" />
-											Voir toutes les collections
-										</Link>
-									</SheetClose>
 								</Stagger>
 							</section>
 						)}

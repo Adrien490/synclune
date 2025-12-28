@@ -55,7 +55,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 
 	return (
-		<NavigationMenu className="hidden lg:flex" viewport={true} delayDuration={200}>
+		<NavigationMenu className="hidden lg:flex" viewport={true} delayDuration={300}>
 			<NavigationMenuList className="gap-1 transition-all duration-300 group-data-[scrolled=true]:gap-0.5">
 				{navItems.map((item) => {
 					const isActive = isMenuItemActive(item.href);

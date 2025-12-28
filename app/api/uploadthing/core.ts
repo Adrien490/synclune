@@ -3,15 +3,16 @@ import { UploadThingError } from "uploadthing/server";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
-import { generateBlurDataUrlWithRetry } from "@/modules/media/services/generate-blur-data-url";
+import { generateThumbHashWithRetry } from "@/modules/media/services/generate-thumbhash";
 
 /**
- * Génère un blur placeholder avec retry, retourne undefined en cas d'échec
- * Silencieux pour ne pas polluer les logs en production
+ * Génère un ThumbHash placeholder avec retry, retourne undefined en cas d'échec
+ * ThumbHash est le standard 2025 (~25 bytes vs ~200 bytes pour plaiceholder)
  */
 async function generateBlurSafe(url: string): Promise<string | undefined> {
 	try {
-		return await generateBlurDataUrlWithRetry(url);
+		const result = await generateThumbHashWithRetry(url);
+		return result.dataUrl;
 	} catch {
 		return undefined;
 	}

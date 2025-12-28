@@ -2,6 +2,7 @@ import { CollectionCard } from "@/modules/collections/components/collection-card
 import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import { Fade, Reveal } from "@/shared/components/animations";
+import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Carousel,
@@ -11,8 +12,8 @@ import {
 	CarouselNext,
 	CarouselPrevious,
 } from "@/shared/components/ui/carousel";
-import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { Heart } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 
@@ -55,7 +56,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							id="collections-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
-							Je rajoute une petite touche personnelle à chaque création !
+							Je rajoute une petite touche personnelle à chaque création <Heart className="size-4 text-primary" />
 						</p>
 					</Fade>
 				</header>

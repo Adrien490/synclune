@@ -1,9 +1,9 @@
-import { Fade, Stagger } from "@/shared/components/animations";
-import { Button } from "@/shared/components/ui/button";
-import { SectionTitle } from "@/shared/components/section-title";
-import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
+import { Fade, Stagger } from "@/shared/components/animations";
+import { SectionTitle } from "@/shared/components/section-title";
+import { Button } from "@/shared/components/ui/button";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 import Link from "next/link";
 import { use } from "react";
 
@@ -57,7 +57,7 @@ export function Bestsellers({ productsPromise, wishlistProductIdsPromise }: Best
 							id="bestsellers-subtitle"
 							className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto"
 						>
-							Les bijoux que vous adorez le plus
+							Les créations les plus appréciées !
 						</p>
 					</Fade>
 				</header>

@@ -37,6 +37,8 @@ interface SelectFieldProps<T extends string> {
 	clearable?: boolean;
 	/** Classes CSS additionnelles pour le conteneur Field */
 	className?: string;
+	/** HTML autocomplete attribute (pour NativeSelect mobile) */
+	autoComplete?: string;
 }
 
 /**
@@ -73,6 +75,7 @@ export const SelectField = <T extends string>({
 	renderValue,
 	clearable,
 	className,
+	autoComplete,
 }: SelectFieldProps<T>) => {
 	const field = useFieldContext<T | undefined>();
 	const isMobile = useIsMobile();
@@ -104,6 +107,7 @@ export const SelectField = <T extends string>({
 					aria-invalid={hasError}
 					aria-describedby={hasError ? `${field.name}-error` : undefined}
 					aria-required={required}
+					autoComplete={autoComplete}
 					className="w-full"
 				>
 					{placeholder && (
@@ -166,9 +170,9 @@ export const SelectField = <T extends string>({
 								<button
 									type="button"
 									className={cn(
-										"inline-flex items-center justify-center h-6 w-6 ml-1 mr-0.5 shrink-0 rounded-sm",
+										"inline-flex items-center justify-center size-11 -mr-2 shrink-0 rounded-md",
 										"hover:bg-accent hover:text-accent-foreground",
-										"focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
 										"cursor-pointer"
 									)}
 									onPointerDown={(e) => {
@@ -183,7 +187,7 @@ export const SelectField = <T extends string>({
 									}}
 									aria-label="Effacer la sélection"
 								>
-									<X className="h-3.5 w-3.5" />
+									<X className="size-4" />
 								</button>
 							)}
 						</div>

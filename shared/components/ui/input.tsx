@@ -82,7 +82,7 @@ function Input({
 						<button
 							type="button"
 							onClick={onClear}
-							className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2"
+							className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mr-2 flex size-11 items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2"
 							aria-label="Effacer le champ"
 						>
 							<X className="size-4" />

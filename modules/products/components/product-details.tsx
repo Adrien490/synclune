@@ -4,6 +4,7 @@ import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { ProductPriceDisplay } from "./product-price-display";
 import { ProductCharacteristics } from "./product-characteristics";
 import { ProductReassurance } from "./product-reassurance";
+import { ProductHighlights } from "./product-highlights";
 import { AddToCartForm } from "@/modules/cart/components/add-to-cart-form";
 import { ProductCareInfo } from "./product-care-info";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";
@@ -50,7 +51,7 @@ export function ProductDetails({
 
 	return (
 		<div className="space-y-6">
-			{/* 1. Prix du SKU sélectionné - avec animation */}
+			{/* 1. Prix + Réassurance en bloc fluide (style Etsy) */}
 			<AnimatePresence mode="wait">
 				<motion.div
 					key={`price-${currentSku?.id || "no-sku"}`}
@@ -59,23 +60,17 @@ export function ProductDetails({
 					animate="animate"
 					exit="exit"
 					transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+					className="space-y-4"
 				>
 					<ProductPriceDisplay selectedSku={currentSku} product={product} cartsCount={cartsCount} />
+					<ProductReassurance />
 				</motion.div>
 			</AnimatePresence>
 
 			{/* 2. Sélection des variantes */}
 			<VariantSelector product={product} defaultSku={defaultSku} />
 
-			{/* 3. Réassurance AVANT le CTA - réduit l'anxiété d'achat */}
-			<ProductReassurance />
-
-			{/* 4. CTA principal - après réassurance pour confiance maximale */}
-			<AddToCartForm product={product} selectedSku={currentSku} />
-
-			<Separator className="bg-border" />
-
-			{/* 5. Caractéristiques principales - avec animation (DESCEND) */}
+			{/* 3. Caractéristiques principales (avant CTA pour aider le client) */}
 			<AnimatePresence mode="wait">
 				<motion.div
 					key={`chars-${currentSku?.id || "no-sku"}`}
@@ -89,7 +84,28 @@ export function ProductDetails({
 				</motion.div>
 			</AnimatePresence>
 
-			{/* 6. Entretien et livraison (reste en bas) */}
+			{/* 4. CTA principal */}
+			<AddToCartForm product={product} selectedSku={currentSku} />
+
+			<Separator className="bg-border" />
+
+			{/* 5. Highlights produit (après CTA - pattern Etsy) */}
+			<ProductHighlights product={product} />
+
+			{/* 6. Description produit (après CTA - pattern Etsy) */}
+			{product.description && (
+				<div
+					id="product-description"
+					className="text-base tracking-normal antialiased text-muted-foreground leading-relaxed max-w-prose space-y-3"
+					itemProp="description"
+				>
+					{product.description.split("\n").map((line, i) => (
+						<p key={`desc-line-${i}`}>{line || "\u00A0"}</p>
+					))}
+				</div>
+			)}
+
+			{/* 7. Entretien et livraison (reste en bas) */}
 			<ProductCareInfo primaryMaterial={currentSku?.material?.name} />
 		</div>
 	);

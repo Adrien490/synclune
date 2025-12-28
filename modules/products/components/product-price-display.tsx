@@ -1,7 +1,6 @@
 "use client";
 
 import { Badge } from "@/shared/components/ui/badge";
-import { Card, CardContent } from "@/shared/components/ui/card";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
@@ -75,33 +74,31 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 
 	if (!selectedSku) {
 		return (
-			<Card role="region" aria-labelledby="product-price-title" className="transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60">
-				<CardContent className="pt-6 space-y-4">
-					<div className="flex items-baseline gap-3 flex-wrap">
-						{showFromPrefix && (
-							<Badge
-								variant="secondary"
-								className="text-xs font-medium px-2 py-0.5"
-								aria-label="Prix minimum"
-							>
-								À partir de
-							</Badge>
-						)}
-						<p
-							id="product-price-title"
-							className="text-3xl sm:text-2xl font-bold tracking-tight text-foreground"
-							aria-label={priceInfo.minPrice > 0 ? `Prix à partir de ${formatEuro(priceInfo.minPrice)}` : "Prix non disponible"}
+			<div role="region" aria-labelledby="product-price-title" className="space-y-4 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60">
+				<div className="flex items-baseline gap-3 flex-wrap">
+					{showFromPrefix && (
+						<Badge
+							variant="secondary"
+							className="text-xs font-medium px-2 py-0.5"
+							aria-label="Prix minimum"
 						>
-							{priceInfo.minPrice > 0 ? formatEuro(priceInfo.minPrice) : "—"}
-						</p>
-					</div>
-					{priceInfo.hasMultiplePrices && (
-						<p className="text-xs text-muted-foreground" role="status">
-							Sélectionne tes options pour voir le prix exact
-						</p>
+							À partir de
+						</Badge>
 					)}
-				</CardContent>
-			</Card>
+					<p
+						id="product-price-title"
+						className="text-3xl sm:text-2xl font-bold tracking-tight text-foreground"
+						aria-label={priceInfo.minPrice > 0 ? `Prix à partir de ${formatEuro(priceInfo.minPrice)}` : "Prix non disponible"}
+					>
+						{priceInfo.minPrice > 0 ? formatEuro(priceInfo.minPrice) : "—"}
+					</p>
+				</div>
+				{priceInfo.hasMultiplePrices && (
+					<p className="text-xs text-muted-foreground" role="status">
+						Sélectionne tes options pour voir le prix exact
+					</p>
+				)}
+			</div>
 		);
 	}
 
@@ -114,147 +111,145 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 				: "https://schema.org/InStock";
 
 	return (
-		<Card
+		<div
 			role="region"
 			aria-labelledby="product-price-selected"
 			itemScope
 			itemType="https://schema.org/Offer"
 			itemProp="offers"
-			className="border-primary/10 shadow-sm transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
+			className="space-y-3 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
 		>
 			{/* Microdata Schema.org cachées */}
 			<meta itemProp="priceCurrency" content="EUR" />
 			<link itemProp="availability" href={availabilityUrl} />
 
-			<CardContent className="pt-6 space-y-3">
-				<div className="flex items-baseline gap-3 flex-wrap">
-					{/* Prix principal */}
-					<p
-						id="product-price-selected"
-						className="text-3xl sm:text-2xl font-bold tracking-tight text-foreground"
-						itemProp="price"
-						content={String(selectedSku.priceInclTax / 100)}
-						aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ''}`}
-					>
-						{formatEuro(selectedSku.priceInclTax)}
-					</p>
+			<div className="flex items-baseline gap-3 flex-wrap">
+				{/* Prix principal */}
+				<p
+					id="product-price-selected"
+					className="text-3xl sm:text-2xl font-bold tracking-tight text-foreground"
+					itemProp="price"
+					content={String(selectedSku.priceInclTax / 100)}
+					aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ''}`}
+				>
+					{formatEuro(selectedSku.priceInclTax)}
+				</p>
 
-					{/* Prix barré si promotion */}
-					{hasDiscount && (
-						<span className="text-lg text-muted-foreground line-through">
-							<span className="sr-only">Prix initial : </span>
-							{formatEuro(selectedSku.compareAtPrice!)}
-						</span>
-					)}
+				{/* Prix barré si promotion */}
+				{hasDiscount && (
+					<span className="text-lg text-muted-foreground line-through">
+						<span className="sr-only">Prix initial : </span>
+						{formatEuro(selectedSku.compareAtPrice!)}
+					</span>
+				)}
 
-					{/* Badge de réduction */}
-					{hasDiscount && (
-						<span
-							className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-accent text-accent-foreground border border-accent/30"
-							role="status"
-							aria-label={`Réduction de ${discountPercent} pourcent`}
-						>
-							-{discountPercent}%
-						</span>
-					)}
-				</div>
-
-				{/* Badge de disponibilité (en stock, stock limité, rupture) */}
-				<div className="flex items-center gap-2">
-					{stockStatus === "in_stock" && (
-						<Badge
-							variant="secondary"
-							className="text-xs/5 tracking-normal antialiased gap-1.5"
-							role="status"
-							aria-label="Produit en stock"
-						>
-							<CheckCircle className="w-3 h-3" aria-hidden="true" />
-							En stock
-						</Badge>
-					)}
-					{stockStatus === "low_stock" && (
-						<motion.div
-							animate={shouldReduceMotion ? {} : { opacity: [1, 0.7, 1] }}
-							transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-						>
-							<Badge
-								variant="outline"
-								className="text-xs/5 tracking-normal antialiased gap-1.5 border-orange-600 text-orange-800 bg-orange-100 dark:bg-orange-950/70 dark:text-orange-300 dark:border-orange-500 shadow-sm"
-								role="status"
-								aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
-							>
-								<AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
-								<span>
-									<span className="font-bold">Plus que {inventory}</span> en stock !
-								</span>
-							</Badge>
-						</motion.div>
-					)}
-					{stockStatus === "out_of_stock" && (
-						<Badge
-							variant="destructive"
-							className="text-xs/5 tracking-normal antialiased gap-1.5"
-							role="status"
-							aria-label="Produit en rupture de stock"
-						>
-							<AlertCircle className="w-3 h-3" aria-hidden="true" />
-							Rupture de stock
-						</Badge>
-					)}
-				</div>
-
-				{/* Badge "dans X paniers" - FOMO Etsy-style */}
-				{cartsCount !== undefined && cartsCount > 0 && stockStatus !== "out_of_stock" && (
-					<Badge
-						variant="outline"
-						className="text-xs/5 tracking-normal antialiased gap-1.5 border-pink-500/50 text-pink-700 bg-pink-50 dark:bg-pink-950/50 dark:text-pink-300 dark:border-pink-500/30"
+				{/* Badge de réduction */}
+				{hasDiscount && (
+					<span
+						className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-accent text-accent-foreground border border-accent/30"
 						role="status"
-						aria-label={`Actuellement dans ${cartsCount} ${cartsCount === 1 ? "panier" : "paniers"}`}
+						aria-label={`Réduction de ${discountPercent} pourcent`}
 					>
-						<ShoppingBag className="w-3 h-3" aria-hidden="true" />
-						<span>
-							Dans <span className="font-bold">{cartsCount}</span>{" "}
-							{cartsCount === 1 ? "panier" : "paniers"}
-						</span>
+						-{discountPercent}%
+					</span>
+				)}
+			</div>
+
+			{/* Badge de disponibilité (en stock, stock limité, rupture) */}
+			<div className="flex items-center gap-2">
+				{stockStatus === "in_stock" && (
+					<Badge
+						variant="secondary"
+						className="text-xs/5 tracking-normal antialiased gap-1.5"
+						role="status"
+						aria-label="Produit en stock"
+					>
+						<CheckCircle className="w-3 h-3" aria-hidden="true" />
+						En stock
 					</Badge>
 				)}
-
-				{/* Date de livraison estimée */}
-				{stockStatus !== "out_of_stock" && (
-					<div className="text-sm text-muted-foreground pt-1">
-						<span>
-							Recevez d'ici le{" "}
-							<span className="font-medium text-foreground">
-								{format(addBusinessDays(new Date(), SHIPPING_RATES.FR.minDays), "d", { locale: fr })}-
-								{format(addBusinessDays(new Date(), SHIPPING_RATES.FR.maxDays), "d MMM", { locale: fr })}
-							</span>
-						</span>
-					</div>
-				)}
-
-				{/* Message d'économie */}
-				{hasDiscount && (
-					<p className="text-sm text-accent-foreground font-medium" role="status">
-						Économisez {formatEuro(selectedSku.compareAtPrice! - selectedSku.priceInclTax)}
-					</p>
-				)}
-
-				{/* Section rupture de stock avec formulaire de notification */}
-				{stockStatus === "out_of_stock" && (
-					<div className="space-y-3">
-						<div
-							className="text-xs/5 tracking-normal antialiased text-destructive p-2 bg-destructive/10 rounded border border-destructive/20 flex items-start gap-2"
-							role="alert"
+				{stockStatus === "low_stock" && (
+					<motion.div
+						animate={shouldReduceMotion ? {} : { opacity: [1, 0.7, 1] }}
+						transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+					>
+						<Badge
+							variant="outline"
+							className="text-xs/5 tracking-normal antialiased gap-1.5 border-orange-600 text-orange-800 bg-orange-100 dark:bg-orange-950/70 dark:text-orange-300 dark:border-orange-500 shadow-sm"
+							role="status"
+							aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
 						>
-							<Sparkles className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-							<p>Cette petite merveille sera bientôt disponible !</p>
-						</div>
-
-						{/* Formulaire de notification de retour en stock */}
-						<StockNotificationForm skuId={selectedSku.id} />
-					</div>
+							<AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
+							<span>
+								<span className="font-bold">Plus que {inventory}</span> en stock !
+							</span>
+						</Badge>
+					</motion.div>
 				)}
-			</CardContent>
-		</Card>
+				{stockStatus === "out_of_stock" && (
+					<Badge
+						variant="destructive"
+						className="text-xs/5 tracking-normal antialiased gap-1.5"
+						role="status"
+						aria-label="Produit en rupture de stock"
+					>
+						<AlertCircle className="w-3 h-3" aria-hidden="true" />
+						Rupture de stock
+					</Badge>
+				)}
+			</div>
+
+			{/* Badge "dans X paniers" - FOMO Etsy-style */}
+			{cartsCount !== undefined && cartsCount > 0 && stockStatus !== "out_of_stock" && (
+				<Badge
+					variant="outline"
+					className="text-xs/5 tracking-normal antialiased gap-1.5 border-pink-500/50 text-pink-700 bg-pink-50 dark:bg-pink-950/50 dark:text-pink-300 dark:border-pink-500/30"
+					role="status"
+					aria-label={`Actuellement dans ${cartsCount} ${cartsCount === 1 ? "panier" : "paniers"}`}
+				>
+					<ShoppingBag className="w-3 h-3" aria-hidden="true" />
+					<span>
+						Dans <span className="font-bold">{cartsCount}</span>{" "}
+						{cartsCount === 1 ? "panier" : "paniers"}
+					</span>
+				</Badge>
+			)}
+
+			{/* Date de livraison estimée */}
+			{stockStatus !== "out_of_stock" && (
+				<div className="text-sm text-muted-foreground pt-1">
+					<span>
+						Recevez d'ici le{" "}
+						<span className="font-medium text-foreground">
+							{format(addBusinessDays(new Date(), SHIPPING_RATES.FR.minDays), "d", { locale: fr })}-
+							{format(addBusinessDays(new Date(), SHIPPING_RATES.FR.maxDays), "d MMM", { locale: fr })}
+						</span>
+					</span>
+				</div>
+			)}
+
+			{/* Message d'économie */}
+			{hasDiscount && (
+				<p className="text-sm text-accent-foreground font-medium" role="status">
+					Économisez {formatEuro(selectedSku.compareAtPrice! - selectedSku.priceInclTax)}
+				</p>
+			)}
+
+			{/* Section rupture de stock avec formulaire de notification */}
+			{stockStatus === "out_of_stock" && (
+				<div className="space-y-3">
+					<div
+						className="text-xs/5 tracking-normal antialiased text-destructive p-2 bg-destructive/10 rounded border border-destructive/20 flex items-start gap-2"
+						role="alert"
+					>
+						<Sparkles className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+						<p>Cette petite merveille sera bientôt disponible !</p>
+					</div>
+
+					{/* Formulaire de notification de retour en stock */}
+					<StockNotificationForm skuId={selectedSku.id} />
+				</div>
+			)}
+		</div>
 	);
 }

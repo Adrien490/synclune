@@ -36,10 +36,10 @@ export async function generateProductMetadata({
 		? `${(primarySku.priceInclTax / 100).toFixed(2)}€`
 		: "";
 
-	// Construire le titre (avec ou sans prix)
+	// Construire le titre SEO optimisé (< 60 caractères recommandés)
 	const title = price
-		? `${product.title} - ${price} | Bijoux artisanaux Synclune`
-		: `${product.title} | Bijoux artisanaux Synclune`;
+		? `${product.title} à ${price} | Synclune`
+		: `${product.title} | Synclune`;
 
 	// Construire la description avec limite SEO (155 caractères)
 	const rawDescription =

@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense, useRef, useEffectEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import useEmblaCarousel from "embla-carousel-react";
+import { z } from "zod";
 
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "@/shared/hooks";
@@ -31,6 +32,14 @@ import { GallerySlide } from "./slide";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
+// Validation des query params pour éviter injection
+const variantSlugSchema = z.string().regex(/^[a-z0-9-]+$/).max(50).optional();
+const galleryParamsSchema = z.object({
+	color: variantSlugSchema,
+	material: variantSlugSchema,
+	size: z.string().max(20).optional(),
+});
+
 interface GalleryProps {
 	product: GetProductReturn;
 	title: string;
@@ -46,6 +55,54 @@ function GalleryLoadingSkeleton() {
 				/>
 			</div>
 		</SkeletonGroup>
+	);
+}
+
+// Composant réutilisable pour éviter duplication desktop/mobile
+interface GalleryThumbnailListProps {
+	images: ProductMedia[];
+	current: number;
+	thumbnailErrors: Set<string>;
+	title: string;
+	onScrollTo: (index: number) => void;
+	onError: (mediaId: string) => void;
+	variant: "desktop" | "mobile";
+}
+
+function GalleryThumbnailList({
+	images,
+	current,
+	thumbnailErrors,
+	title,
+	onScrollTo,
+	onError,
+	variant,
+}: GalleryThumbnailListProps) {
+	const isDesktop = variant === "desktop";
+
+	return (
+		<div className={isDesktop ? "hidden md:block order-1" : "md:hidden order-3 mt-3"}>
+			<div
+				className={isDesktop ? "flex flex-col gap-2" : "flex flex-wrap gap-2"}
+				role="tablist"
+				aria-label="Vignettes"
+			>
+				{images.map((media, index) => (
+					<GalleryThumbnail
+						key={media.id}
+						media={media}
+						index={index}
+						isActive={index === current}
+						hasError={thumbnailErrors.has(media.id)}
+						title={title}
+						onClick={() => onScrollTo(index)}
+						onError={() => onError(media.id)}
+						className={isDesktop ? "hover:shadow-sm" : "w-14 h-14"}
+						isLCPCandidate={index === 0}
+					/>
+				))}
+			</div>
+		</div>
 	);
 }
 
@@ -81,10 +138,16 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Type de produit pour les ALT descriptifs
 	const productType = product.type?.label;
 
-	// Extraire les params URL pour les variants
-	const colorSlug = searchParams.get("color") || undefined;
-	const materialSlug = searchParams.get("material") || undefined;
-	const size = searchParams.get("size") || undefined;
+	// Extraire et valider les params URL pour les variants
+	const rawParams = {
+		color: searchParams.get("color") || undefined,
+		material: searchParams.get("material") || undefined,
+		size: searchParams.get("size") || undefined,
+	};
+	const validatedParams = galleryParamsSchema.safeParse(rawParams);
+	const { color: colorSlug, material: materialSlug, size } = validatedParams.success
+		? validatedParams.data
+		: { color: undefined, material: undefined, size: undefined };
 
 	// Construire la liste d'images selon les variants
 	const images: ProductMedia[] = buildGallery({
@@ -238,30 +301,21 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 				<div
 					className={cn(
-						"grid gap-3 lg:gap-4",
-						images.length > 1 ? "grid-cols-1 lg:grid-cols-[80px_1fr]" : "grid-cols-1"
+						"grid gap-3 md:gap-4",
+						images.length > 1 ? "grid-cols-1 md:grid-cols-[60px_1fr] lg:grid-cols-[80px_1fr]" : "grid-cols-1"
 					)}
 				>
-					{/* Thumbnails verticales - Desktop uniquement */}
+					{/* Thumbnails verticales - Desktop */}
 					{images.length > 1 && (
-						<div className="hidden lg:block order-1">
-							<div className="flex flex-col gap-2" role="tablist" aria-label="Vignettes">
-								{images.map((media, index) => (
-									<GalleryThumbnail
-										key={media.id}
-										media={media}
-										index={index}
-										isActive={index === current}
-										hasError={thumbnailErrors.has(media.id)}
-										title={title}
-										onClick={() => scrollTo(index)}
-										onError={() => handleThumbnailError(media.id)}
-										className="hover:shadow-sm"
-										isLCPCandidate={index === 0}
-									/>
-								))}
-							</div>
-						</div>
+						<GalleryThumbnailList
+							images={images}
+							current={current}
+							thumbnailErrors={thumbnailErrors}
+							title={title}
+							onScrollTo={scrollTo}
+							onError={handleThumbnailError}
+							variant="desktop"
+						/>
 					)}
 
 					{/* Image principale avec Embla */}
@@ -318,30 +372,17 @@ function GalleryContent({ product, title }: GalleryProps) {
 						</div>
 					</div>
 
-					{/* Vignettes horizontales - Mobile uniquement */}
+					{/* Thumbnails horizontales - Mobile */}
 					{images.length > 1 && (
-						<div className="lg:hidden order-3 mt-3">
-							<div
-								className="flex flex-wrap gap-2"
-								role="tablist"
-								aria-label="Vignettes"
-							>
-								{images.map((media, index) => (
-									<GalleryThumbnail
-										key={media.id}
-										media={media}
-										index={index}
-										isActive={index === current}
-										hasError={thumbnailErrors.has(media.id)}
-										title={title}
-										onClick={() => scrollTo(index)}
-										onError={() => handleThumbnailError(media.id)}
-										className="w-14 h-14"
-										isLCPCandidate={index === 0}
-									/>
-								))}
-							</div>
-						</div>
+						<GalleryThumbnailList
+							images={images}
+							current={current}
+							thumbnailErrors={thumbnailErrors}
+							title={title}
+							onScrollTo={scrollTo}
+							onError={handleThumbnailError}
+							variant="mobile"
+						/>
 					)}
 				</div>
 			</div>

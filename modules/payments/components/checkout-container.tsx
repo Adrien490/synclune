@@ -5,7 +5,8 @@ import { CheckoutForm } from "./checkout-form"
 import { EmbeddedCheckoutWrapper } from "./embedded-checkout"
 import { CheckoutSummary } from "./checkout-summary"
 import { Button } from "@/shared/components/ui/button"
-import { ArrowLeft, CreditCard, Shield } from "lucide-react"
+import { ArrowLeft, CreditCard, Shield, MapPin } from "lucide-react"
+import { cn } from "@/shared/utils/cn"
 import type { GetCartReturn } from "@/modules/cart/data/get-cart"
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses"
 import type { Session } from "@/modules/auth/lib/auth"
@@ -51,10 +52,57 @@ export function CheckoutContainer({
 		// L'utilisateur peut revenir au paiement sans recréer de session
 	}
 
+	const steps = [
+		{ id: "address", label: "Adresse", icon: MapPin },
+		{ id: "payment", label: "Paiement", icon: CreditCard },
+	] as const
+
+	const currentStepIndex = step === "address" ? 0 : 1
+
 	return (
 		<div className="grid lg:grid-cols-3 gap-8">
 			{/* Formulaire - 2/3 de la largeur */}
-			<div className="lg:col-span-2">
+			<div className="lg:col-span-2 space-y-6">
+				{/* Indicateur de progression (Baymard: réduction abandons) */}
+				<nav aria-label="Étapes du paiement" className="mb-2">
+					<ol className="flex items-center gap-2">
+						{steps.map((s, index) => {
+							const Icon = s.icon
+							const isActive = index === currentStepIndex
+							const isCompleted = index < currentStepIndex
+							return (
+								<li key={s.id} className="flex items-center gap-2">
+									<div
+										className={cn(
+											"flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+											isActive && "bg-primary text-primary-foreground",
+											isCompleted && "bg-primary/20 text-primary",
+											!isActive && !isCompleted && "bg-muted text-muted-foreground"
+										)}
+										aria-current={isActive ? "step" : undefined}
+									>
+										<Icon className="w-4 h-4" aria-hidden="true" />
+										<span className="hidden sm:inline">{s.label}</span>
+										<span className="sm:hidden">{index + 1}</span>
+									</div>
+									{index < steps.length - 1 && (
+										<div
+											className={cn(
+												"w-8 h-0.5 rounded-full",
+												isCompleted ? "bg-primary" : "bg-muted"
+											)}
+											aria-hidden="true"
+										/>
+									)}
+								</li>
+							)
+						})}
+					</ol>
+					<p className="sr-only">
+						Étape {currentStepIndex + 1} sur {steps.length} : {steps[currentStepIndex].label}
+					</p>
+				</nav>
+
 				{step === "address" && (
 					<CheckoutForm
 						cart={cart}

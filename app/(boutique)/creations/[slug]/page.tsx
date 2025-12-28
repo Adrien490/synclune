@@ -113,9 +113,12 @@ export default async function ProductPage({
 		}
 	}
 
-	// Construction des breadcrumbs
+	// Construction des breadcrumbs (aligné avec le structured data JSON-LD)
 	const breadcrumbs = [
 		{ label: "Créations", href: "/produits" },
+		...(product.type
+			? [{ label: product.type.label, href: `/produits/${product.type.slug}` }]
+			: []),
 		{ label: product.title, href: `/creations/${product.slug}` },
 	];
 
@@ -174,10 +177,9 @@ export default async function ProductPage({
 
 								{/* Informations et configurateur scrollables */}
 								<section className="space-y-6 lg:min-h-screen">
-									{/* 1. ProductInfo - Infos de base avec bouton wishlist dynamique */}
+									{/* 1. ProductInfo - Badges, note, wishlist (pattern Etsy : contexte rapide) */}
 									<ProductInfo
 										product={product}
-										defaultSku={selectedSku}
 										isInWishlist={isInWishlist}
 										reviewStats={reviewStats}
 									/>

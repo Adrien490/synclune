@@ -92,8 +92,8 @@ export function GallerySlide({
 	const prefersReduced = useReducedMotion();
 
 	// Détection desktop pour rendu conditionnel (évite double image dans DOM)
-	// Breakpoint sm = 640px (Tailwind default)
-	const isDesktop = useMediaQuery("(min-width: 640px)");
+	// Breakpoint md = 768px (cohérent avec la grille thumbnails)
+	const isDesktop = useMediaQuery("(min-width: 768px)");
 
 	// Autoplay vidéo quand active (respect prefers-reduced-motion)
 	useEffect(() => {
@@ -215,8 +215,7 @@ export function GallerySlide({
 	return (
 		<div
 			className="flex-[0_0_100%] min-w-0 h-full relative"
-			role="img"
-			aria-label={alt}
+			role="presentation"
 		>
 			<GalleryPinchZoom
 				src={media.url}

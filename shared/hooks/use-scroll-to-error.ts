@@ -1,6 +1,7 @@
 "use client"
 
-import { ERROR_FIELD_SELECTOR } from "@/shared/constants/form-wizard"
+/** Sélecteur CSS pour trouver les champs en erreur */
+const ERROR_FIELD_SELECTOR = '[data-error="true"], [aria-invalid="true"]'
 
 /**
  * Hook pour scroller vers le premier champ en erreur.

@@ -357,6 +357,7 @@ export function CheckoutForm({
 							required
 							placeholder="Sélectionner un pays"
 							options={countryOptions}
+							autoComplete="country-name"
 						/>
 					)}
 				</form.AppField>
