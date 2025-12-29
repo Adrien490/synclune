@@ -7,7 +7,6 @@ import { FAB_KEYS } from "@/shared/constants/fab";
  */
 export const setFabVisibilitySchema = z.object({
 	key: z.enum([
-		FAB_KEYS.CONTACT_ADRIEN,
 		FAB_KEYS.ADMIN_SPEED_DIAL,
 		FAB_KEYS.STOREFRONT,
 		FAB_KEYS.ADMIN_DASHBOARD,

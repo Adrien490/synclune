@@ -1,16 +1,75 @@
 /**
- * Utilitaires pour le calcul des frais de port
+ * Service de calcul et gestion des frais de port
  *
- * Source unique de verite : @/modules/orders/constants/shipping-rates
+ * Contient toute la logique métier liée au shipping.
+ * Les constantes (tarifs) sont dans @/modules/orders/constants/shipping-rates
  */
 
 import {
-	getShippingRate,
 	SHIPPING_RATES,
 	type ShippingRate,
 } from "@/modules/orders/constants/shipping-rates";
 import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zone.utils";
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
+import type { AllowedShippingCountry } from "../types/order.types";
+
+// ============================================================================
+// RATE LOOKUP
+// ============================================================================
+
+/**
+ * Détermine le tarif de livraison approprié selon le pays de destination
+ *
+ * @param country - Code pays ISO 3166-1 alpha-2 (ex: "FR", "BE")
+ * @returns Tarif de livraison applicable
+ *
+ * @example
+ * ```ts
+ * const rate = getShippingRate("FR")
+ * console.log(rate.amount) // 600 (6.00€)
+ * ```
+ */
+export function getShippingRate(country: string): ShippingRate {
+	if (country === "FR") {
+		return SHIPPING_RATES.FR;
+	}
+
+	// Monaco + tous les autres pays de l'UE
+	return SHIPPING_RATES.EU;
+}
+
+/**
+ * Vérifie si un pays est éligible à la livraison
+ *
+ * @param country - Code pays ISO 3166-1 alpha-2
+ * @returns true si le pays est couvert par nos tarifs de livraison
+ */
+export function isShippingAvailable(
+	country: string
+): country is AllowedShippingCountry {
+	return SHIPPING_COUNTRIES.includes(country as ShippingCountry);
+}
+
+// ============================================================================
+// FORMATTING
+// ============================================================================
+
+/**
+ * Convertit un montant en centimes vers un format lisible en euros
+ *
+ * @param amountInCents - Montant en centimes
+ * @returns Montant formaté (ex: "6,00 €")
+ */
+export function formatShippingPrice(amountInCents: number): string {
+	return new Intl.NumberFormat("fr-FR", {
+		style: "currency",
+		currency: "EUR",
+	}).format(amountInCents / 100);
+}
+
+// ============================================================================
+// CALCULATIONS
+// ============================================================================
 
 /**
  * Calcule les frais de port selon le pays et le code postal de destination

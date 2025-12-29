@@ -4,6 +4,7 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
 import { changePassword } from "../actions/change-password";
+import { NOTIFICATION_AUTO_DISMISS_DELAY_MS } from "@/shared/constants/ui-delays";
 
 interface UseChangePasswordOptions {
 	onSuccess?: () => void;
@@ -20,7 +21,7 @@ export function useChangePassword(options?: UseChangePasswordOptions) {
 					if (options?.onOpenChange) {
 						setTimeout(() => {
 							options.onOpenChange?.(false);
-						}, 2000);
+						}, NOTIFICATION_AUTO_DISMISS_DELAY_MS);
 					}
 				},
 			})

@@ -4,11 +4,8 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/shared/components/ui/accordion";
-import {
-	SHIPPING_RATES,
-	formatShippingPrice,
-} from "@/modules/orders/constants/shipping-rates";
-import { Droplets, Package, Truck } from "lucide-react";
+import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
 
 interface ProductCareInfoProps {
 	primaryMaterial?: string | null;
@@ -29,47 +26,33 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 			{/* Section Livraison */}
 			<AccordionItem value="shipping">
 				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold hover:bg-muted/50 rounded-lg -mx-2 px-2 transition-colors">
-					<div className="flex items-center gap-2">
-						<Truck className="w-4 h-4 text-primary" aria-hidden="true" />
-						<span>Livraison</span>
-					</div>
+					Livraison
 				</AccordionTrigger>
-				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-4">
+				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">
 					{/* Emballage */}
-					<div className="flex items-start gap-3">
-						<Package className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-						<div>
-							<p className="font-medium text-foreground">Emballage soigné</p>
-							<p>Chaque produit arrive dans un joli écrin</p>
-						</div>
+					<div>
+						<p className="font-medium text-foreground">Emballage soigné</p>
+						<p>Chaque produit arrive dans un joli écrin</p>
 					</div>
 
 					{/* France */}
-					<div className="flex items-start gap-3">
-						<Truck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-						<div>
-							<p className="font-medium text-foreground">
-								France métropolitaine
-							</p>
-							<p>
-								{formatShippingPrice(SHIPPING_RATES.FR.amount)} ·{" "}
-								{SHIPPING_RATES.FR.minDays}-{SHIPPING_RATES.FR.maxDays} jours
-								ouvrés
-							</p>
-						</div>
+					<div>
+						<p className="font-medium text-foreground">France métropolitaine</p>
+						<p>
+							{formatShippingPrice(SHIPPING_RATES.FR.amount)} ·{" "}
+							{SHIPPING_RATES.FR.minDays}-{SHIPPING_RATES.FR.maxDays} jours
+							ouvrés
+						</p>
 					</div>
 
 					{/* Europe */}
-					<div className="flex items-start gap-3">
-						<Truck className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-						<div>
-							<p className="font-medium text-foreground">Union Européenne</p>
-							<p>
-								{formatShippingPrice(SHIPPING_RATES.EU.amount)} ·{" "}
-								{SHIPPING_RATES.EU.minDays}-{SHIPPING_RATES.EU.maxDays} jours
-								ouvrés
-							</p>
-						</div>
+					<div>
+						<p className="font-medium text-foreground">Union Européenne</p>
+						<p>
+							{formatShippingPrice(SHIPPING_RATES.EU.amount)} ·{" "}
+							{SHIPPING_RATES.EU.minDays}-{SHIPPING_RATES.EU.maxDays} jours
+							ouvrés
+						</p>
 					</div>
 				</AccordionContent>
 			</AccordionItem>
@@ -77,10 +60,7 @@ export function ProductCareInfo({ primaryMaterial }: ProductCareInfoProps) {
 			{/* Section Entretien */}
 			<AccordionItem value="care">
 				<AccordionTrigger className="text-sm/6 tracking-normal antialiased font-semibold hover:bg-muted/50 rounded-lg -mx-2 px-2 transition-colors">
-					<div className="flex items-center gap-2">
-						<Droplets className="w-4 h-4 text-primary" aria-hidden="true" />
-						<span>Entretien</span>
-					</div>
+					Entretien
 				</AccordionTrigger>
 				<AccordionContent className="text-sm/6 tracking-normal antialiased text-muted-foreground space-y-3">
 					<p>

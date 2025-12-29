@@ -24,7 +24,7 @@ interface UseFabVisibilityOptions {
  * @example
  * ```tsx
  * const { isHidden, toggle, isPending } = useFabVisibility({
- *   key: FAB_KEYS.CONTACT_ADRIEN,
+ *   key: FAB_KEYS.ADMIN_SPEED_DIAL,
  *   initialHidden: false,
  * });
  *

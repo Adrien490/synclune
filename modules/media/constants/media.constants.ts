@@ -329,4 +329,25 @@ export const VIDEO_EVENT_TIMEOUTS = {
 	LOADED_METADATA_MS: 10000,
 	/** Timeout pour l'événement seeked (ms) */
 	SEEKED_MS: 5000,
-} as const;
+} as const
+
+// ============================================================================
+// IMAGE DOWNLOADER CONFIGURATION
+// ============================================================================
+
+/**
+ * Configuration pour le service de telechargement d'images
+ * Utilise dans image-downloader.service.ts
+ */
+export const IMAGE_DOWNLOADER_CONFIG = {
+	/** Timeout pour le telechargement (ms) */
+	DOWNLOAD_TIMEOUT_MS: 30000,
+	/** Taille maximale d'image (bytes) - 20 MB */
+	MAX_IMAGE_SIZE: 20 * 1024 * 1024,
+	/** Nombre maximum de tentatives */
+	MAX_RETRIES: 3,
+	/** Delai de base entre les tentatives (ms) */
+	RETRY_BASE_DELAY_MS: 1000,
+	/** User-Agent pour les requetes */
+	USER_AGENT: "Synclune-ImageDownloader/1.0",
+} as const

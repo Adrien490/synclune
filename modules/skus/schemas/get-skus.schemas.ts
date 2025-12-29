@@ -20,3 +20,5 @@ export const getProductSkusSchema = z.object({
 	search: z.string().max(200).optional(),
 	filters: productSkuFiltersSchema.optional(),
 });
+
+export type GetProductSkusInput = z.infer<typeof getProductSkusSchema>;

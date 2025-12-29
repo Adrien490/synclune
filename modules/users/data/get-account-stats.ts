@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache-tags";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 
 import { CART_SELECT_FOR_COUNT } from "../constants/account-stats.constants";
 import type {

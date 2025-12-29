@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
-import { getOrderInvalidationTags } from "@/modules/orders/constants/cache-tags";
+import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
 import {
@@ -12,10 +12,13 @@ import {
 } from "@/modules/orders/constants/stripe-shipping-rates";
 import type { PostWebhookTask } from "../types/webhook.types";
 import type { SkuValidationResult } from "@/modules/cart/types/sku-validation.types";
+import type {
+	ProcessCheckoutResult,
+	OrderWithItems,
+	OrderItem,
+} from "../types/checkout.types";
 import { getBaseUrl } from "@/shared/constants/urls";
-
-// P1.2: Timeout pour validation stock (évite webhook timeout si DB lente)
-const VALIDATION_TIMEOUT_MS = 5000;
+import { CHECKOUT_VALIDATION_TIMEOUT_MS } from "../constants/webhook.constants";
 
 async function validateWithTimeout(
 	validateFn: () => Promise<SkuValidationResult>,
@@ -26,51 +29,10 @@ async function validateWithTimeout(
 		new Promise<SkuValidationResult>((_, reject) =>
 			setTimeout(
 				() => reject(new Error(`Validation timeout for SKU ${skuId}`)),
-				VALIDATION_TIMEOUT_MS
+				CHECKOUT_VALIDATION_TIMEOUT_MS
 			)
 		),
 	]);
-}
-
-// Types pour les résultats des services
-export interface ProcessCheckoutResult {
-	order: OrderWithItems;
-	tasks: PostWebhookTask[];
-}
-
-interface OrderWithItems {
-	id: string;
-	orderNumber: string;
-	userId: string | null;
-	shippingFirstName: string | null;
-	shippingLastName: string | null;
-	shippingAddress1: string | null;
-	shippingAddress2: string | null;
-	shippingPostalCode: string | null;
-	shippingCity: string | null;
-	shippingCountry: string | null;
-	shippingPhone: string | null;
-	subtotal: number;
-	discountAmount: number;
-	shippingCost: number;
-	taxAmount: number;
-	total: number;
-	items: OrderItem[];
-}
-
-interface OrderItem {
-	productTitle: string | null;
-	skuColor: string | null;
-	skuMaterial: string | null;
-	skuSize: string | null;
-	quantity: number;
-	price: number;
-	skuId: string;
-	sku: {
-		id: string;
-		inventory: number;
-		sku: string;
-	} | null;
 }
 
 /**

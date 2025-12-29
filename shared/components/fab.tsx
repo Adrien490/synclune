@@ -27,11 +27,11 @@ export type { FabProps, FabTooltipContent } from "@/shared/types/fab.types";
  * const [open, setOpen] = useState(false);
  *
  * <Fab
- *   fabKey={FAB_KEYS.CONTACT_ADRIEN}
+ *   fabKey={FAB_KEYS.ADMIN_SPEED_DIAL}
  *   initialHidden={isHidden}
- *   icon={<MessageSquare className="h-6 w-6" />}
- *   tooltip={{ title: "Contacter" }}
- *   ariaLabel="Ouvrir le formulaire de contact"
+ *   icon={<Plus className="h-6 w-6" />}
+ *   tooltip={{ title: "Actions rapides" }}
+ *   ariaLabel="Ouvrir le menu d'actions rapides"
  *   onClick={() => setOpen(true)}
  * />
  *

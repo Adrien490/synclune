@@ -11,18 +11,9 @@
 
 import { delay } from "@/shared/utils/delay";
 import type { DownloadImageOptions, RetryOptions, LogFn } from "../types/image-processing.types";
+import { IMAGE_DOWNLOADER_CONFIG } from "../constants/media.constants";
 
 export type { DownloadImageOptions, RetryOptions, LogFn } from "../types/image-processing.types";
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const DEFAULT_DOWNLOAD_TIMEOUT = 30000;
-const DEFAULT_MAX_IMAGE_SIZE = 20 * 1024 * 1024; // 20 MB
-const DEFAULT_MAX_RETRIES = 3;
-const DEFAULT_RETRY_BASE_DELAY = 1000;
-const DEFAULT_USER_AGENT = "Synclune-ImageDownloader/1.0";
 
 // ============================================================================
 // HELPERS
@@ -87,8 +78,8 @@ export async function withRetry<T>(
 	fn: () => Promise<T>,
 	options: RetryOptions = {}
 ): Promise<T> {
-	const maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
-	const baseDelay = options.baseDelay ?? DEFAULT_RETRY_BASE_DELAY;
+	const maxRetries = options.maxRetries ?? IMAGE_DOWNLOADER_CONFIG.MAX_RETRIES;
+	const baseDelay = options.baseDelay ?? IMAGE_DOWNLOADER_CONFIG.RETRY_BASE_DELAY_MS;
 
 	let lastError: Error | null = null;
 
@@ -128,9 +119,9 @@ export async function downloadImage(
 	url: string,
 	options: DownloadImageOptions = {}
 ): Promise<Buffer> {
-	const timeout = options.downloadTimeout ?? DEFAULT_DOWNLOAD_TIMEOUT;
-	const maxSize = options.maxImageSize ?? DEFAULT_MAX_IMAGE_SIZE;
-	const userAgent = options.userAgent ?? DEFAULT_USER_AGENT;
+	const timeout = options.downloadTimeout ?? IMAGE_DOWNLOADER_CONFIG.DOWNLOAD_TIMEOUT_MS;
+	const maxSize = options.maxImageSize ?? IMAGE_DOWNLOADER_CONFIG.MAX_IMAGE_SIZE;
+	const userAgent = options.userAgent ?? IMAGE_DOWNLOADER_CONFIG.USER_AGENT;
 
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), timeout);

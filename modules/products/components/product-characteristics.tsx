@@ -5,7 +5,6 @@ import {
 	CardHeader,
 } from "@/shared/components/ui/card";
 import type { ProductSku } from "@/modules/products/types/product.types";
-import { Ruler } from "lucide-react";
 
 interface ProductCharacteristicsProps {
 	selectedSku?: ProductSku | null;
@@ -40,9 +39,8 @@ export function ProductCharacteristics({
 			<CardHeader>
 				<h2
 					id="product-characteristics-title"
-					className="text-xs/5 font-semibold uppercase tracking-widest antialiased text-muted-foreground flex items-center gap-2"
+					className="text-xs/5 font-semibold uppercase tracking-widest antialiased text-muted-foreground"
 				>
-					<Ruler className="w-4 h-4 text-primary" aria-hidden="true" />
 					Taille sélectionnée
 				</h2>
 				<CardDescription className="text-sm/6 tracking-normal antialiased">
@@ -58,18 +56,12 @@ export function ProductCharacteristics({
 
 				{sizeInfo.isAdjustable && (
 					<div className="p-3 bg-accent rounded-lg border border-primary/20">
-						<div className="flex items-center gap-2">
-							<Ruler
-								className="w-4 h-4 text-primary"
-								aria-hidden="true"
-							/>
-							<span className="text-sm/6 tracking-normal antialiased font-medium text-accent-foreground">
-								<span className="hidden sm:inline">
-									Taille ajustable -{" "}
-								</span>
-								Convient à la plupart des morphologies
+						<p className="text-sm/6 tracking-normal antialiased font-medium text-accent-foreground">
+							<span className="hidden sm:inline">
+								Taille ajustable -{" "}
 							</span>
-						</div>
+							Convient à la plupart des morphologies
+						</p>
 					</div>
 				)}
 			</CardContent>

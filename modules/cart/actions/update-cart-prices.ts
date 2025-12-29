@@ -6,6 +6,7 @@ import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
+import { getCartWithSkuPrices } from "@/modules/cart/data/get-cart-with-sku-prices";
 
 /**
  * Met à jour les prix snapshot (priceAtAdd) de tous les articles du panier
@@ -33,30 +34,8 @@ export async function updateCartPrices(
 			};
 		}
 
-		// 2. Récupérer le panier avec ses items
-		const cart = await prisma.cart.findFirst({
-			where: userId ? { userId } : { sessionId: sessionId! },
-			include: {
-				items: {
-					include: {
-						sku: {
-							select: {
-								id: true,
-								priceInclTax: true,
-								isActive: true,
-								deletedAt: true,
-								product: {
-									select: {
-										status: true,
-										deletedAt: true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		});
+		// 2. Récupérer le panier avec ses items (via data/)
+		const cart = await getCartWithSkuPrices(userId, sessionId || undefined);
 
 		if (!cart || cart.items.length === 0) {
 			return {

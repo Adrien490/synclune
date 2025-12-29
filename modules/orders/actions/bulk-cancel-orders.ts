@@ -9,6 +9,7 @@ import { revalidatePath, updateTag } from "next/cache";
 
 import { bulkCancelOrdersSchema } from "../schemas/order.schemas";
 import { getOrderInvalidationTags } from "../constants/cache";
+import { getOrdersForBulkCancel } from "../data/get-orders-for-bulk-cancel";
 
 /**
  * Annule plusieurs commandes en masse
@@ -45,25 +46,8 @@ export async function bulkCancelOrders(
 
 		const validatedData = validation.data;
 
-		// Filtrer les commandes éligibles (non annulées)
-		const eligibleOrders = await prisma.order.findMany({
-			where: {
-				id: { in: validatedData.ids },
-				status: { not: OrderStatus.CANCELLED },
-			},
-			select: {
-				id: true,
-				orderNumber: true,
-				userId: true,
-				paymentStatus: true,
-				items: {
-					select: {
-						skuId: true,
-						quantity: true,
-					},
-				},
-			},
-		});
+		// Filtrer les commandes éligibles (via data/)
+		const eligibleOrders = await getOrdersForBulkCancel(validatedData.ids);
 
 		if (eligibleOrders.length === 0) {
 			return {

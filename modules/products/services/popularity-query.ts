@@ -2,28 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-/** Periode de calcul de la popularite en jours */
-const POPULARITY_DAYS = 30;
-
-/** Poids des ventes dans le score de popularite */
-const SALES_WEIGHT = 3;
-
-/** Poids des avis dans le score de popularite */
-const REVIEWS_WEIGHT = 2;
-
-/** Limite par defaut de produits populaires */
-const DEFAULT_POPULARITY_LIMIT = 200;
-
-/** Limite maximale de produits populaires */
-const MAX_POPULARITY_LIMIT = 1000;
-
-/** Timeout de la requete en millisecondes */
-const QUERY_TIMEOUT_MS = 5000;
+import { QUERY_TIMEOUTS, POPULARITY_CONFIG } from "../constants/query.constants";
 
 // ============================================================================
 // TYPES
@@ -60,12 +39,12 @@ type PopularityAggregation = {
  * @returns Liste d'IDs de produits tries par popularite, ou [] en cas d'erreur
  */
 export async function getPopularProductIds(
-	limit: number = DEFAULT_POPULARITY_LIMIT
+	limit: number = POPULARITY_CONFIG.DEFAULT_LIMIT
 ): Promise<string[]> {
 	// Valider et normaliser le parametre limit
 	const safeLimit = Math.min(
-		Math.max(Math.floor(Number(limit)) || DEFAULT_POPULARITY_LIMIT, 1),
-		MAX_POPULARITY_LIMIT
+		Math.max(Math.floor(Number(limit)) || POPULARITY_CONFIG.DEFAULT_LIMIT, 1),
+		POPULARITY_CONFIG.MAX_LIMIT
 	);
 
 	return fetchPopularProductIds(safeLimit);
@@ -94,7 +73,7 @@ async function fetchPopularProductIds(limit: number): Promise<string[]> {
 					WHERE
 						o."paymentStatus" = ${PaymentStatus.PAID}::"PaymentStatus"
 						AND o."deletedAt" IS NULL
-						AND o."paidAt" >= NOW() - make_interval(days => ${POPULARITY_DAYS})
+						AND o."paidAt" >= NOW() - make_interval(days => ${POPULARITY_CONFIG.DAYS})
 						AND oi."productId" IS NOT NULL
 					GROUP BY oi."productId"
 				),
@@ -108,8 +87,8 @@ async function fetchPopularProductIds(limit: number): Promise<string[]> {
 				SELECT
 					p.id AS "productId",
 					(
-						COALESCE(s."totalSales", 0) * ${SALES_WEIGHT} +
-						COALESCE(r."reviewScore", 0) * ${REVIEWS_WEIGHT}
+						COALESCE(s."totalSales", 0) * ${POPULARITY_CONFIG.SALES_WEIGHT} +
+						COALESCE(r."reviewScore", 0) * ${POPULARITY_CONFIG.REVIEWS_WEIGHT}
 					) AS "popularityScore"
 				FROM "Product" p
 				LEFT JOIN sales s ON p.id = s."productId"
@@ -122,7 +101,7 @@ async function fetchPopularProductIds(limit: number): Promise<string[]> {
 				LIMIT ${limit}
 			`,
 			new Promise<never>((_, reject) =>
-				setTimeout(() => reject(new Error("Popularity query timeout")), QUERY_TIMEOUT_MS)
+				setTimeout(() => reject(new Error("Popularity query timeout")), QUERY_TIMEOUTS.POPULARITY_MS)
 			),
 		]);
 

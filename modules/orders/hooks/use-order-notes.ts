@@ -1,13 +1,18 @@
 "use client";
 
-import { useActionState, useRef, useTransition } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import { addOrderNote } from "@/modules/orders/actions/add-order-note";
 import { deleteOrderNote } from "@/modules/orders/actions/delete-order-note";
+import { getOrderNotes } from "@/modules/orders/data/get-order-notes";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import type { ActionState } from "@/shared/types/server-action";
+import type { OrderNoteItem } from "@/modules/orders/types/order-notes.types";
 
 export function useOrderNotes() {
+	const [notes, setNotes] = useState<OrderNoteItem[]>([]);
+	const [fetchError, setFetchError] = useState<string | null>(null);
+	const [isPendingFetch, startFetchTransition] = useTransition();
 	const [isPendingAdd, startAddTransition] = useTransition();
 	const [isPendingDelete, startDeleteTransition] = useTransition();
 	const addSuccessRef = useRef<(() => void) | undefined>(undefined);
@@ -61,12 +66,35 @@ export function useOrderNotes() {
 		});
 	};
 
+	const fetch = (orderId: string) => {
+		setFetchError(null);
+		startFetchTransition(async () => {
+			const result = await getOrderNotes(orderId);
+			if ("error" in result) {
+				setFetchError(result.error);
+			} else {
+				setNotes(result.notes);
+			}
+		});
+	};
+
+	const reset = () => {
+		setNotes([]);
+		setFetchError(null);
+	};
+
 	return {
+		notes,
+		fetchError,
+		fetch,
+		reset,
 		add,
 		remove,
+		isPendingFetch,
 		isPendingAdd: isPendingAdd || isAddActionPending,
 		isPendingDelete: isPendingDelete || isRemoveActionPending,
 		isPending:
+			isPendingFetch ||
 			isPendingAdd ||
 			isPendingDelete ||
 			isAddActionPending ||

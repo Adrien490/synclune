@@ -4,6 +4,13 @@ import { RefundReason } from "@/app/generated/prisma/enums";
 import { createRefund } from "@/modules/refunds/actions/create-refund";
 import type { OrderItemForRefund } from "@/modules/refunds/data/get-order-for-refund";
 import { shouldRestockByDefault } from "@/modules/refunds/utils/refund-utils.browser";
+import {
+	getAvailableQuantity as getAvailableQuantityService,
+	initializeRefundItems,
+	getSelectedItems,
+	calculateRefundAmount,
+	formatItemsForAction,
+} from "@/modules/refunds/services/refund-calculation.service";
 import { useAppForm } from "@/shared/components/forms";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -21,39 +28,18 @@ interface UseCreateRefundFormOptions {
 }
 
 // ============================================================================
-// HELPERS
+// HELPERS (re-exports pour rétrocompatibilité)
 // ============================================================================
 
 /**
- * Alias pour l'export (rétrocompatibilité)
+ * @deprecated Importer depuis @/modules/refunds/services/refund-restock.service
  */
 export const getDefaultRestock = shouldRestockByDefault;
 
 /**
- * Calcule la quantité disponible pour remboursement
+ * @deprecated Importer depuis @/modules/refunds/services/refund-calculation.service
  */
-export function getAvailableQuantity(item: OrderItemForRefund): number {
-	const alreadyRefunded = item.refundItems.reduce(
-		(sum, ri) => sum + ri.quantity,
-		0
-	);
-	return item.quantity - alreadyRefunded;
-}
-
-/**
- * Initialise les items du formulaire
- */
-function initializeItems(
-	orderItems: OrderItemForRefund[],
-	reason: RefundReason
-): RefundItemValue[] {
-	return orderItems.map((item) => ({
-		orderItemId: item.id,
-		quantity: 0,
-		restock: getDefaultRestock(reason),
-		selected: false,
-	}));
-}
+export const getAvailableQuantity = getAvailableQuantityService;
 
 // ============================================================================
 // HOOK
@@ -90,7 +76,7 @@ export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
 			orderId,
 			reason: RefundReason.CUSTOMER_REQUEST as RefundReason,
 			note: "",
-			items: initializeItems(orderItems, RefundReason.CUSTOMER_REQUEST),
+			items: initializeRefundItems(orderItems, RefundReason.CUSTOMER_REQUEST),
 		} as CreateRefundFormValues,
 		transform: useTransform(
 			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),
@@ -104,20 +90,10 @@ export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
 	const reason = useStore(form.store, (s) => s.values.reason);
 	const items = useStore(form.store, (s) => s.values.items);
 
-	// Calculs dérivés
-	const selectedItems = items.filter((item) => item.selected && item.quantity > 0);
-
-	const totalAmount = selectedItems.reduce((sum, item) => {
-		const orderItem = orderItems.find((oi) => oi.id === item.orderItemId);
-		return sum + (orderItem?.price || 0) * item.quantity;
-	}, 0);
-
-	// Items formatés pour l'action
-	const itemsForAction = selectedItems.map((item) => ({
-		orderItemId: item.orderItemId,
-		quantity: item.quantity,
-		restock: item.restock,
-	}));
+	// Calculs dérivés (utilise les services)
+	const selectedItems = getSelectedItems(items);
+	const totalAmount = calculateRefundAmount(selectedItems, orderItems);
+	const itemsForAction = formatItemsForAction(selectedItems);
 
 	return {
 		form,

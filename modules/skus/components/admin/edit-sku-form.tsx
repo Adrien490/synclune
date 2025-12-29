@@ -17,6 +17,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Euro, ImagePlus, Info, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
 
 interface EditProductVariantFormProps {
 	colors: Array<{
@@ -64,7 +65,7 @@ export function EditProductVariantForm({
 			});
 			setTimeout(() => {
 				router.push(`/admin/catalogue/produits/${productSlug}/variantes`);
-			}, 2000);
+			}, FORM_SUCCESS_REDIRECT_DELAY_MS);
 		},
 	});
 

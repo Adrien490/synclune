@@ -25,6 +25,7 @@ import { cn } from "@/shared/utils/cn";
 import { FolderOpen, Heart, Menu, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 /** HREFs de la zone compte */
@@ -83,6 +84,7 @@ export function MenuSheet({
 	session,
 }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
+	const pathname = usePathname();
 	const { wishlistCount } = useBadgeCountsStore();
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -192,12 +194,12 @@ export function MenuSheet({
 											<Link
 												href="/produits"
 												className={
-													isMenuItemActive("/produits")
+													pathname === "/produits"
 														? activeLinkClassName
 														: linkClassName
 												}
 												aria-current={
-													isMenuItemActive("/produits")
+													pathname === "/produits"
 														? "page"
 														: undefined
 												}

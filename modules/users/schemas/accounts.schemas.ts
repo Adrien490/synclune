@@ -119,3 +119,6 @@ export const getAccountsSchema = z.object({
 	sortOrder: z.enum(["asc", "desc"]).default(GET_ACCOUNTS_DEFAULT_SORT_ORDER),
 	filters: accountFiltersSchema.default({}),
 });
+
+export type AccountFilters = z.infer<typeof accountFiltersSchema>;
+export type GetAccountsInput = z.infer<typeof getAccountsSchema>;

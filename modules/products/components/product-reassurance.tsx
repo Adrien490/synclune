@@ -1,26 +1,24 @@
-import { Check } from "lucide-react";
-
 /**
  * ProductReassurance - Infos de confiance style Etsy
  *
  * Composant Server (RSC) pour le contenu statique.
- * Layout fluide avec checks verts, texte naturel et conversationnel.
+ * Layout simple avec puces, texte naturel et conversationnel.
  */
 export function ProductReassurance() {
 	return (
-		<div className="space-y-2 text-sm text-muted-foreground">
-			<div className="flex items-center gap-2">
-				<Check className="w-4 h-4 text-green-600 shrink-0" aria-hidden="true" />
-				<span>Retours et echanges acceptes sous 14 jours</span>
-			</div>
-			<div className="flex items-center gap-2">
-				<Check className="w-4 h-4 text-green-600 shrink-0" aria-hidden="true" />
-				<span>Paiement securise (CB, PayPal)</span>
-			</div>
-			<div className="flex items-center gap-2">
-				<Check className="w-4 h-4 text-green-600 shrink-0" aria-hidden="true" />
-				<span>Expedie depuis la France</span>
-			</div>
-		</div>
+		<ul className="space-y-1.5 text-sm text-muted-foreground">
+			<li className="flex items-center gap-2">
+				<span className="text-muted-foreground/70" aria-hidden="true">•</span>
+				<span>Retours et échanges acceptés sous 14 jours</span>
+			</li>
+			<li className="flex items-center gap-2">
+				<span className="text-muted-foreground/70" aria-hidden="true">•</span>
+				<span>Paiement sécurisé (CB, PayPal)</span>
+			</li>
+			<li className="flex items-center gap-2">
+				<span className="text-muted-foreground/70" aria-hidden="true">•</span>
+				<span>Expédié depuis la France</span>
+			</li>
+		</ul>
 	);
 }

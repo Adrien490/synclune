@@ -1,60 +1,47 @@
 "use client";
 
-import { Fab } from "@/shared/components/fab";
-import { FAB_KEYS } from "@/shared/constants/fab";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/shared/components/ui/dialog";
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/shared/components/ui/tooltip";
+import { cn } from "@/shared/utils/cn";
 import { MessageSquare } from "lucide-react";
-import { useState } from "react";
-import { ContactAdrienForm } from "./contact-adrien-form";
 
 interface AdminSpeedDialProps {
-	/** Etat initial de visibilite (depuis le cookie serveur) */
-	initialHidden?: boolean;
+	email: string;
 }
 
 /**
- * FAB pour contacter Adrien dans l'admin dashboard
+ * Bouton flottant mailto pour contacter Adrien
  */
-export function AdminSpeedDial({ initialHidden = false }: AdminSpeedDialProps) {
-	const [contactDialogOpen, setContactDialogOpen] = useState(false);
-
+export function AdminSpeedDial({ email }: AdminSpeedDialProps) {
 	return (
-		<>
-			<Fab
-				fabKey={FAB_KEYS.CONTACT_ADRIEN}
-				initialHidden={initialHidden}
-				icon={<MessageSquare className="size-6" aria-hidden="true" />}
-				tooltip={{
-					title: "Contacter Adri",
-					description: "Bug, feature ou question",
-				}}
-				ariaLabel="Ouvrir le formulaire de contact"
-				showTooltip="Afficher le bouton contact"
-				hideTooltip="Masquer le bouton contact"
-				onClick={() => setContactDialogOpen(true)}
-			/>
-
-			<Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
-				<DialogContent className="p-6 gap-4 sm:max-w-[525px]">
-					<DialogHeader>
-						<DialogTitle>Contacter Adri</DialogTitle>
-						<DialogDescription>
-							Signale un bug, demande une nouvelle fonctionnalite ou pose une
-							question.
-						</DialogDescription>
-					</DialogHeader>
-					<ContactAdrienForm
-						onSuccess={() => setContactDialogOpen(false)}
-						onCancel={() => setContactDialogOpen(false)}
-					/>
-				</DialogContent>
-			</Dialog>
-		</>
+		<div className="hidden md:block fixed z-45 bottom-6 right-6">
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<a
+						href={`mailto:${email}`}
+						className={cn(
+							"flex items-center justify-center",
+							"size-14 rounded-full",
+							"bg-primary text-primary-foreground",
+							"shadow-lg hover:shadow-xl hover:shadow-primary/25",
+							"hover:bg-primary/90",
+							"active:scale-95 transition-all"
+						)}
+						aria-label="Envoyer un email à Adrien"
+					>
+						<MessageSquare className="size-6" aria-hidden="true" />
+					</a>
+				</TooltipTrigger>
+				<TooltipContent side="left" sideOffset={12}>
+					<p className="font-medium">Contacter Adri</p>
+					<p className="text-xs text-muted-foreground">
+						Bug, feature ou question
+					</p>
+				</TooltipContent>
+			</Tooltip>
+		</div>
 	);
 }

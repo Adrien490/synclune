@@ -2,7 +2,13 @@
  * Anti-replay window en secondes (5 minutes)
  * Stripe recommande une fenêtre de 5 minutes maximum
  */
-export const ANTI_REPLAY_WINDOW_SECONDS = 300;
+export const ANTI_REPLAY_WINDOW_SECONDS = 300
+
+/**
+ * Timeout pour la validation du stock lors du checkout (ms)
+ * Evite le blocage du webhook si la DB est lente
+ */
+export const CHECKOUT_VALIDATION_TIMEOUT_MS = 5000
 
 /**
  * Labels pour les types d'événements (UI admin)

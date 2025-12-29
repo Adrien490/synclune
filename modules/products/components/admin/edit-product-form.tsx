@@ -14,6 +14,7 @@ import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthin
 import { Euro, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
 
 interface EditProductFormProps {
 	product: GetProductReturn;
@@ -46,7 +47,7 @@ export function EditProductForm({
 			});
 			setTimeout(() => {
 				router.push("/admin/catalogue/produits");
-			}, 2000);
+			}, FORM_SUCCESS_REDIRECT_DELAY_MS);
 		},
 	});
 

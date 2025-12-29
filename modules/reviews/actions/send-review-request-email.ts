@@ -14,54 +14,15 @@ import {
 import type { ActionState } from "@/shared/types/server-action"
 
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
+import { getOrderForReviewRequest } from "../data/get-order-for-review-request"
 
 /**
  * Logique metier pour envoyer un email de demande d'avis
  * Utilisee par l'action publique et la fonction interne
  */
 async function executeReviewRequestEmail(orderId: string): Promise<ActionState> {
-	// 1. Recuperer la commande avec les items et les avis existants
-	const order = await prisma.order.findUnique({
-		where: { id: orderId },
-		include: {
-			user: {
-				select: {
-					id: true,
-					name: true,
-					email: true,
-				},
-			},
-			items: {
-				include: {
-					sku: {
-						include: {
-							product: {
-								select: {
-									id: true,
-									title: true,
-									slug: true,
-								},
-							},
-							color: {
-								select: { name: true },
-							},
-							material: {
-								select: { name: true },
-							},
-							images: {
-								where: { isPrimary: true },
-								take: 1,
-								select: { url: true },
-							},
-						},
-					},
-					review: {
-						select: { id: true },
-					},
-				},
-			},
-		},
-	})
+	// 1. Recuperer la commande avec les items et les avis existants (via data/)
+	const order = await getOrderForReviewRequest(orderId)
 
 	if (!order) {
 		return notFound("Commande")

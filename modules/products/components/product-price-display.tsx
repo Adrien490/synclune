@@ -10,7 +10,7 @@ import {
 	hasActiveDiscount,
 	getSchemaOrgAvailabilityUrl,
 } from "@/modules/products/services/product-pricing.service";
-import { AlertCircle, CheckCircle, AlertTriangle, Sparkles, ShoppingBag } from "lucide-react";
+import { AlertCircle, CheckCircle, Sparkles } from "lucide-react";
 import { StockNotificationForm } from "@/modules/stock-notifications/components/stock-notification-form";
 import { motion, useReducedMotion } from "framer-motion";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
@@ -155,14 +155,11 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 					>
 						<Badge
 							variant="outline"
-							className="text-xs/5 tracking-normal antialiased gap-1.5 border-orange-600 text-orange-800 bg-orange-100 dark:bg-orange-950/70 dark:text-orange-300 dark:border-orange-500 shadow-sm"
+							className="text-xs/5 tracking-normal antialiased border-orange-600 text-orange-800 bg-orange-100 dark:bg-orange-950/70 dark:text-orange-300 dark:border-orange-500 shadow-sm"
 							role="status"
 							aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
 						>
-							<AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
-							<span>
-								<span className="font-bold">Plus que {inventory}</span> en stock !
-							</span>
+							<span className="font-bold">Plus que {inventory}</span> en stock !
 						</Badge>
 					</motion.div>
 				)}
@@ -183,15 +180,12 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 			{cartsCount !== undefined && cartsCount > 0 && stockStatus !== "out_of_stock" && (
 				<Badge
 					variant="outline"
-					className="text-xs/5 tracking-normal antialiased gap-1.5 border-pink-500/50 text-pink-700 bg-pink-50 dark:bg-pink-950/50 dark:text-pink-300 dark:border-pink-500/30"
+					className="text-xs/5 tracking-normal antialiased border-pink-500/50 text-pink-700 bg-pink-50 dark:bg-pink-950/50 dark:text-pink-300 dark:border-pink-500/30"
 					role="status"
 					aria-label={`Actuellement dans ${cartsCount} ${cartsCount === 1 ? "panier" : "paniers"}`}
 				>
-					<ShoppingBag className="w-3 h-3" aria-hidden="true" />
-					<span>
-						Dans <span className="font-bold">{cartsCount}</span>{" "}
-						{cartsCount === 1 ? "panier" : "paniers"}
-					</span>
+					Dans <span className="font-bold">{cartsCount}</span>{" "}
+					{cartsCount === 1 ? "panier" : "paniers"}
 				</Badge>
 			)}
 

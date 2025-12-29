@@ -11,6 +11,7 @@ import { useActionState } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { toast } from "sonner";
+import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
 import type { EditableCollection } from "@/modules/collections/types/editable-collection.types";
 
 export type { EditableCollection };
@@ -51,7 +52,7 @@ export function EditCollectionForm({
 					
 					onSuccess?.();
 					if (redirectOnSuccess) {
-						setTimeout(() => router.push("/admin/catalogue/collections"), 2000);
+						setTimeout(() => router.push("/admin/catalogue/collections"), FORM_SUCCESS_REDIRECT_DELAY_MS);
 					}
 				},
 			})

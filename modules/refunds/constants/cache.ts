@@ -5,7 +5,7 @@
  * car les remboursements sont liés aux commandes.
  */
 
-import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache-tags"
+import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache"
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
 
 // ============================================

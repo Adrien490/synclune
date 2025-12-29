@@ -10,6 +10,7 @@ import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { MergeCartsResult } from "../types/cart.types";
+import { getGuestCartForMerge, getUserCartForMerge } from "@/modules/cart/data/get-cart-for-merge";
 
 // Re-export pour retrocompatibilite
 export type { MergeCartsResult } from "../types/cart.types";
@@ -71,36 +72,10 @@ export async function mergeCarts(
 			};
 		}
 
-		// 1. Récupérer les deux paniers
+		// 1. Récupérer les deux paniers (via data/)
 		const [guestCart, userCart] = await Promise.all([
-			prisma.cart.findUnique({
-				where: { sessionId },
-				include: {
-					items: {
-						include: {
-							sku: {
-								select: {
-									id: true,
-									inventory: true,
-									isActive: true,
-									product: {
-										select: {
-											id: true,
-											status: true,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			}),
-			prisma.cart.findUnique({
-				where: { userId },
-				include: {
-					items: true,
-				},
-			}),
+			getGuestCartForMerge(sessionId),
+			getUserCartForMerge(userId),
 		]);
 
 		// 2. Si pas de panier visiteur, rien à faire

@@ -2,6 +2,7 @@
 
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { updateTag } from "next/cache";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
@@ -113,9 +114,6 @@ export async function removeFromCart(
 			message: "Article supprimé du panier",
 		};
 	} catch (e) {
-		return {
-			status: ActionStatus.ERROR,
-			message: e instanceof Error ? e.message : "Une erreur est survenue lors de la suppression",
-		};
+		return handleActionError(e, "Impossible de supprimer l'article du panier");
 	}
 }

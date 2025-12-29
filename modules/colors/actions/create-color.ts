@@ -2,6 +2,7 @@
 
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -73,18 +74,6 @@ export async function createColor(
 			message: "Couleur créée avec succès",
 		};
 	} catch (error) {
-// console.error("Erreur lors de la creation de la couleur:", error);
-
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la creation de la couleur",
-		};
+		return handleActionError(error, "Impossible de créer la couleur");
 	}
 }

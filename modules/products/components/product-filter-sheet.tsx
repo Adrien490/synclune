@@ -16,6 +16,16 @@ import { useEffect, useTransition } from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { PriceRangeInputs } from "./price-range-inputs";
 import { RatingStars } from "@/shared/components/rating-stars";
+import {
+	parseFilterValuesFromURL,
+	buildFilterURL,
+	buildClearFiltersURL,
+	countActiveFilters,
+	getDefaultFilterValues,
+	isProductCategoryPage,
+	getCategorySlugFromPath,
+	type FilterFormData,
+} from "@/modules/products/services/product-filter-params.service";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
@@ -34,16 +44,6 @@ interface FilterSheetProps {
 	activeProductTypeSlug?: string;
 }
 
-interface FilterFormData {
-	colors: string[];
-	materials: string[];
-	productTypes: string[];
-	priceRange: [number, number];
-	ratingMin: number | null;
-	inStockOnly: boolean;
-	onSale: boolean;
-}
-
 export function ProductFilterSheet({
 	colors = [],
 	materials = [],
@@ -52,7 +52,7 @@ export function ProductFilterSheet({
 	activeProductTypeSlug,
 }: FilterSheetProps) {
 	const { isOpen, open, close } = useDialog(PRODUCT_FILTER_DIALOG_ID);
-	const DEFAULT_PRICE_RANGE = [0, maxPriceInEuros];
+	const DEFAULT_PRICE_RANGE: [number, number] = [0, maxPriceInEuros];
 	const pathname = usePathname();
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -60,50 +60,11 @@ export function ProductFilterSheet({
 
 	// Fonction pour calculer les valeurs depuis les paramètres URL
 	const getValuesFromURL = (): FilterFormData => {
-		const colorsFromURL: string[] = [];
-		const materialsFromURL: string[] = [];
-		const types: string[] = [];
-		let priceMin = DEFAULT_PRICE_RANGE[0];
-		let priceMax = DEFAULT_PRICE_RANGE[1];
-		let ratingMin: number | null = null;
-		let inStockOnly = false;
-		let onSale = false;
-
-		// Ajouter le type actif depuis le path segment (page catégorie)
-		if (activeProductTypeSlug) {
-			types.push(activeProductTypeSlug);
-		}
-
-		searchParams.forEach((value, key) => {
-			if (key === "color") {
-				colorsFromURL.push(value);
-			} else if (key === "material") {
-				materialsFromURL.push(value);
-			} else if (key === "type") {
-				types.push(value);
-			} else if (key === "priceMin") {
-				priceMin = Number(value) || DEFAULT_PRICE_RANGE[0];
-			} else if (key === "priceMax") {
-				priceMax = Number(value) || DEFAULT_PRICE_RANGE[1];
-			} else if (key === "rating") {
-				const val = Number(value);
-				if (val >= 1 && val <= 5) ratingMin = val;
-			} else if (key === "stockStatus") {
-				inStockOnly = value === "in_stock";
-			} else if (key === "onSale") {
-				onSale = value === "true" || value === "1";
-			}
+		return parseFilterValuesFromURL({
+			searchParams,
+			activeProductTypeSlug,
+			defaultPriceRange: DEFAULT_PRICE_RANGE,
 		});
-
-		return {
-			colors: [...new Set(colorsFromURL)],
-			materials: [...new Set(materialsFromURL)],
-			productTypes: [...new Set(types)],
-			priceRange: [priceMin, priceMax],
-			ratingMin,
-			inStockOnly,
-			onSale,
-		};
 	};
 
 	const initialValues = getValuesFromURL();
@@ -126,83 +87,17 @@ export function ProductFilterSheet({
 	}, [isOpen, searchParams]);
 
 	// Détecter si on est sur une page catégorie /produits/[type]
-	const isOnCategoryPage = pathname.startsWith("/produits/") && pathname !== "/produits";
-	const currentCategorySlug = isOnCategoryPage ? pathname.split("/produits/")[1]?.split("/")[0] : null;
+	const isOnCategoryPage = isProductCategoryPage(pathname);
+	const currentCategorySlug = getCategorySlugFromPath(pathname);
 
 	const applyFilters = (formData: FilterFormData) => {
-		const params = new URLSearchParams(searchParams.toString());
-
-		// Nettoyer tous les anciens filtres
-		const filterKeys = ["color", "material", "type", "priceMin", "priceMax", "rating", "stockStatus", "onSale"];
-		filterKeys.forEach((key) => {
-			params.delete(key);
+		const { fullUrl } = buildFilterURL({
+			formData,
+			currentSearchParams: searchParams,
+			defaultPriceRange: DEFAULT_PRICE_RANGE,
+			isOnCategoryPage,
+			currentCategorySlug,
 		});
-
-		// Reset cursor pagination (pas de "page" - utilise des curseurs)
-		params.delete("cursor");
-		params.delete("direction");
-
-		// Déterminer le path de destination basé sur les types sélectionnés
-		let targetPath = "/produits";
-		const selectedTypes = formData.productTypes;
-
-		if (selectedTypes.length === 1) {
-			// Un seul type → naviguer vers la page catégorie dédiée
-			targetPath = `/produits/${selectedTypes[0]}`;
-		} else if (selectedTypes.length > 1) {
-			// Multi-types → rester sur /produits avec searchParams
-			selectedTypes.forEach((type) => params.append("type", type));
-		} else if (isOnCategoryPage && currentCategorySlug) {
-			// Aucun type sélectionné mais on est sur une page catégorie → retour à /produits
-			targetPath = "/produits";
-		}
-
-		// Couleurs
-		if (formData.colors.length > 0) {
-			if (formData.colors.length === 1) {
-				params.set("color", formData.colors[0]);
-			} else {
-				formData.colors.forEach((color) => params.append("color", color));
-			}
-		}
-
-		// Matériaux
-		if (formData.materials.length > 0) {
-			if (formData.materials.length === 1) {
-				params.set("material", formData.materials[0]);
-			} else {
-				formData.materials.forEach((material) =>
-					params.append("material", material)
-				);
-			}
-		}
-
-		// Prix
-		if (
-			formData.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
-			formData.priceRange[1] !== DEFAULT_PRICE_RANGE[1]
-		) {
-			params.set("priceMin", formData.priceRange[0].toString());
-			params.set("priceMax", formData.priceRange[1].toString());
-		}
-
-		// Notes clients
-		if (formData.ratingMin !== null) {
-			params.set("rating", formData.ratingMin.toString());
-		}
-
-		// Disponibilité
-		if (formData.inStockOnly) {
-			params.set("stockStatus", "in_stock");
-		}
-
-		// Promotions
-		if (formData.onSale) {
-			params.set("onSale", "true");
-		}
-
-		const queryString = params.toString();
-		const fullUrl = queryString ? `${targetPath}?${queryString}` : targetPath;
 
 		startTransition(() => {
 			router.push(fullUrl);
@@ -213,32 +108,9 @@ export function ProductFilterSheet({
 	};
 
 	const clearAllFilters = () => {
-		const defaultValues: FilterFormData = {
-			colors: [],
-			materials: [],
-			productTypes: [],
-			priceRange: [DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]],
-			ratingMin: null,
-			inStockOnly: false,
-			onSale: false,
-		};
+		form.reset(getDefaultFilterValues(DEFAULT_PRICE_RANGE));
 
-		form.reset(defaultValues);
-
-		const params = new URLSearchParams(searchParams.toString());
-		const filterKeys = ["color", "material", "type", "priceMin", "priceMax", "rating", "stockStatus", "onSale"];
-		filterKeys.forEach((key) => {
-			params.delete(key);
-		});
-
-		// Reset cursor pagination
-		params.delete("cursor");
-		params.delete("direction");
-
-		// Retourner à /produits si on est sur une page catégorie
-		const targetPath = "/produits";
-		const queryString = params.toString();
-		const fullUrl = queryString ? `${targetPath}?${queryString}` : targetPath;
+		const fullUrl = buildClearFiltersURL(searchParams);
 
 		startTransition(() => {
 			router.push(fullUrl);
@@ -249,36 +121,7 @@ export function ProductFilterSheet({
 	};
 
 	// Calculer les filtres actifs depuis l'URL
-	const { hasActiveFilters, activeFiltersCount } = (() => {
-		let count = 0;
-
-		searchParams.forEach((value, key) => {
-			if (["page", "perPage", "sortBy", "search"].includes(key)) {
-				return;
-			}
-
-			if (key === "type") {
-				count += 1;
-			} else if (key === "color") {
-				count += 1;
-			} else if (key === "material") {
-				count += 1;
-			} else if (key === "priceMin" || key === "priceMax") {
-				if (key === "priceMin") count += 1;
-			} else if (key === "rating") {
-				count += 1;
-			} else if (key === "stockStatus") {
-				count += 1;
-			} else if (key === "onSale") {
-				count += 1;
-			}
-		});
-
-		return {
-			hasActiveFilters: count > 0,
-			activeFiltersCount: count,
-		};
-	})();
+	const { hasActiveFilters, activeFiltersCount } = countActiveFilters(searchParams);
 
 	// Determiner les sections ouvertes par defaut (types + sections avec filtres actifs)
 	const defaultOpenSections = (() => {

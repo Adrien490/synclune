@@ -17,6 +17,7 @@ import { Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
 
 interface CreateProductVariantFormProps {
 	colors: Array<{
@@ -65,7 +66,7 @@ export function CreateProductVariantForm({
 				router.push(
 					`/admin/catalogue/produits/${productSlug}/variantes`
 				);
-			}, 2000);
+			}, FORM_SUCCESS_REDIRECT_DELAY_MS);
 		},
 	});
 

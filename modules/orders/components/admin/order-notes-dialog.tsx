@@ -12,8 +12,6 @@ import {
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useOrderNotes } from "@/modules/orders/hooks/use-order-notes";
-import { getOrderNotes } from "@/modules/orders/data/get-order-notes";
-import type { OrderNoteItem } from "@/modules/orders/types/order-notes.types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2, MessageSquarePlus, StickyNote, Trash2 } from "lucide-react";
@@ -28,47 +26,41 @@ type OrderNotesDialogData = {
 
 export function OrderNotesDialog() {
 	const { isOpen, data, close } = useDialog<OrderNotesDialogData>(ORDER_NOTES_DIALOG_ID);
-	const [notes, setNotes] = useState<OrderNoteItem[]>([]);
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 	const [newNote, setNewNote] = useState("");
-	const { add, remove, isPendingAdd, isPendingDelete } = useOrderNotes();
-
-	const loadNotes = async () => {
-		if (!data?.orderId) return;
-
-		setIsLoading(true);
-		setError(null);
-
-		const result = await getOrderNotes(data.orderId);
-
-		if ("error" in result) {
-			setError(result.error);
-		} else {
-			setNotes(result.notes);
-		}
-
-		setIsLoading(false);
-	};
+	const {
+		notes,
+		fetchError,
+		fetch,
+		reset,
+		add,
+		remove,
+		isPendingFetch,
+		isPendingAdd,
+		isPendingDelete,
+	} = useOrderNotes();
 
 	useEffect(() => {
-		if (isOpen && data) {
-			loadNotes();
+		if (isOpen && data?.orderId) {
+			fetch(data.orderId);
 			setNewNote("");
 		}
-	}, [isOpen, data]);
+		if (!isOpen) {
+			reset();
+		}
+	}, [isOpen, data?.orderId]);
 
 	const handleAddNote = () => {
 		if (!data?.orderId || !newNote.trim()) return;
 
 		add(data.orderId, newNote.trim(), () => {
 			setNewNote("");
-			loadNotes();
+			fetch(data.orderId);
 		});
 	};
 
 	const handleDeleteNote = (noteId: string) => {
-		remove(noteId, loadNotes);
+		if (!data?.orderId) return;
+		remove(noteId, () => fetch(data.orderId));
 	};
 
 	return (
@@ -107,12 +99,12 @@ export function OrderNotesDialog() {
 
 				{/* Liste des notes */}
 				<div className="flex-1 overflow-auto space-y-3 py-4">
-					{isLoading ? (
+					{isPendingFetch ? (
 						<div className="flex items-center justify-center py-8">
 							<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
 						</div>
-					) : error ? (
-						<div className="text-center py-8 text-destructive">{error}</div>
+					) : fetchError ? (
+						<div className="text-center py-8 text-destructive">{fetchError}</div>
 					) : notes.length === 0 ? (
 						<div className="text-center py-8 text-muted-foreground">
 							<StickyNote className="h-12 w-12 mx-auto mb-3 opacity-50" />

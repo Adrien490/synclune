@@ -1,13 +1,12 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { productSkuFiltersSchema } from "@/modules/skus/schemas/sku-filters-schema";
+import type { ProductSkuFilters } from "@/modules/skus/schemas/sku-filters-schema";
 
 /**
  * Construit les conditions de filtrage pour la liste des SKUs de produits
  * Logique intégrée directement pour simplicité et maintenabilité
  */
 export const buildFilterConditions = (
-	filters: z.infer<typeof productSkuFiltersSchema>
+	filters: ProductSkuFilters
 ): Prisma.ProductSkuWhereInput[] => {
 	const conditions: Prisma.ProductSkuWhereInput[] = [];
 

@@ -1,7 +1,7 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
-import { AccountStatsCardsSkeleton } from "@/modules/users/components/account-stats-cards";
+import { AccountStatsCardsSkeleton } from "@/modules/users/components/account-stats-cards-skeleton";
 import { RecentOrdersSkeleton } from "@/modules/orders/components/recent-orders-skeleton";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
 

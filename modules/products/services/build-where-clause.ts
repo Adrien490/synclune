@@ -1,13 +1,12 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { getProductSkusSchema } from "@/modules/skus/schemas/get-skus.schemas";
+import type { GetProductSkusInput } from "@/modules/skus/schemas/get-skus.schemas";
 import { buildFilterConditions } from "./build-filter-conditions";
 
 /**
  * Construit la clause WHERE complète pour la récupération des SKUs de produits
  */
 export const buildWhereClause = (
-	params: z.infer<typeof getProductSkusSchema>
+	params: GetProductSkusInput
 ): Prisma.ProductSkuWhereInput => {
 	const whereClause: Prisma.ProductSkuWhereInput = {};
 	const andConditions: Prisma.ProductSkuWhereInput[] = [];

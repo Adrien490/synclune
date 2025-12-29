@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -82,13 +83,7 @@ export async function setFeaturedProduct(
 			message: `"${productCollection.product.title}" est maintenant le produit vedette de "${productCollection.collection.name}".`,
 		};
 	} catch (e) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				e instanceof Error
-					? e.message
-					: "Une erreur est survenue lors de la mise a jour du produit vedette.",
-		};
+		return handleActionError(e, "Impossible de définir le produit vedette");
 	}
 }
 
@@ -153,12 +148,6 @@ export async function removeFeaturedProduct(
 			message: `"${productCollection.product.title}" n'est plus le produit vedette de "${productCollection.collection.name}".`,
 		};
 	} catch (e) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				e instanceof Error
-					? e.message
-					: "Une erreur est survenue lors de la mise a jour du produit vedette.",
-		};
+		return handleActionError(e, "Impossible de retirer le produit vedette");
 	}
 }

@@ -1,8 +1,7 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import {
-	accountFiltersSchema,
-	getAccountsSchema,
+import type {
+	AccountFilters,
+	GetAccountsInput,
 } from "../schemas/accounts.schemas";
 
 // ============================================================================
@@ -10,7 +9,7 @@ import {
 // ============================================================================
 
 export function buildAccountsFilterConditions(
-	filters: z.infer<typeof accountFiltersSchema>
+	filters: AccountFilters
 ): Prisma.AccountWhereInput[] {
 	const conditions: Prisma.AccountWhereInput[] = [];
 	if (!filters) return conditions;
@@ -116,7 +115,7 @@ export function buildAccountsFilterConditions(
 }
 
 export function buildAccountsWhereClause(
-	params: z.infer<typeof getAccountsSchema>
+	params: GetAccountsInput
 ): Prisma.AccountWhereInput {
 	const whereClause: Prisma.AccountWhereInput = {};
 	const filterConditions = buildAccountsFilterConditions(params.filters ?? {});

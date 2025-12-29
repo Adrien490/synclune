@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
@@ -74,12 +75,6 @@ export async function deleteUploadThingFile(
 			},
 		};
 	} catch (error) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de la suppression du fichier",
-		};
+		return handleActionError(error, "Impossible de supprimer le fichier");
 	}
 }

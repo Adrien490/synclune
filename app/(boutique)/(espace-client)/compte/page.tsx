@@ -6,10 +6,8 @@ import {
 } from "@/shared/components/ui/card";
 import { PageHeader } from "@/shared/components/page-header";
 import { ACCOUNT_SECTION_PADDING } from "@/shared/constants/spacing";
-import {
-	AccountStatsCards,
-	AccountStatsCardsSkeleton,
-} from "@/modules/users/components/account-stats-cards";
+import { AccountStatsCards } from "@/modules/users/components/account-stats-cards";
+import { AccountStatsCardsSkeleton } from "@/modules/users/components/account-stats-cards-skeleton";
 import { RecentOrders } from "@/modules/orders/components/recent-orders";
 import { RecentOrdersSkeleton } from "@/modules/orders/components/recent-orders-skeleton";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";

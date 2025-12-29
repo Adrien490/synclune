@@ -4,6 +4,7 @@ import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
@@ -337,12 +338,6 @@ export async function updateProduct(
 			data: updatedProduct,
 		};
 	} catch (e) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				e instanceof Error
-					? e.message
-					: "Une erreur est survenue lors de la modification du produit.",
-		};
+		return handleActionError(e, "Impossible de modifier le produit");
 	}
 }

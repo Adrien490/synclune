@@ -3,8 +3,7 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader
 import { SelectionProvider } from "@/shared/contexts/selection-context";
 import { auth } from "@/modules/auth/lib/auth";
 import { AdminSpeedDial } from "@/modules/dashboard/components/admin-speed-dial";
-import { FAB_KEYS } from "@/shared/constants/fab";
-import { getFabVisibility } from "@/shared/data/get-fab-visibility";
+import { EMAIL_CONTACT } from "@/shared/lib/email-config";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Logo } from "@/shared/components/logo";
@@ -31,12 +30,9 @@ export default async function AdminLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	const [session, isContactFabHidden] = await Promise.all([
-		auth.api.getSession({
-			headers: await import("next/headers").then((m) => m.headers()),
-		}),
-		getFabVisibility(FAB_KEYS.CONTACT_ADRIEN),
-	]);
+	const session = await auth.api.getSession({
+		headers: await import("next/headers").then((m) => m.headers()),
+	});
 
 	// Vérification de sécurité obligatoire
 	if (!session?.user) {
@@ -124,7 +120,7 @@ export default async function AdminLayout({
 					</SelectionProvider>
 				</main>
 			</SidebarInset>
-			<AdminSpeedDial initialHidden={isContactFabHidden} />
+			<AdminSpeedDial email={EMAIL_CONTACT} />
 			<footer className="md:hidden" aria-label="Navigation mobile">
 				<BottomNav />
 			</footer>

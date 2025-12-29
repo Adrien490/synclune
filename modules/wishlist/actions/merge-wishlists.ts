@@ -10,6 +10,7 @@ import { headers } from "next/headers";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { MergeWishlistsResult } from "../types/wishlist.types";
 import { WISHLIST_ERROR_MESSAGES, WISHLIST_INFO_MESSAGES } from "@/modules/wishlist/constants/error-messages";
+import { getGuestWishlistForMerge, getUserWishlistForMerge } from "../data/get-wishlist-for-merge";
 
 // Re-export pour retrocompatibilite
 export type { MergeWishlistsResult } from "../types/wishlist.types";
@@ -77,33 +78,10 @@ export async function mergeWishlists(
 			};
 		}
 
-		// 1. Récupérer les deux wishlists
+		// 1. Récupérer les deux wishlists (via data/)
 		const [guestWishlist, userWishlist] = await Promise.all([
-			prisma.wishlist.findUnique({
-				where: { sessionId },
-				include: {
-					items: {
-						include: {
-							product: {
-								select: {
-									id: true,
-									status: true,
-								},
-							},
-						},
-					},
-				},
-			}),
-			prisma.wishlist.findUnique({
-				where: { userId },
-				include: {
-					items: {
-						select: {
-							productId: true,
-						},
-					},
-				},
-			}),
+			getGuestWishlistForMerge(sessionId),
+			getUserWishlistForMerge(userId),
 		]);
 
 		// 2. Si pas de wishlist visiteur, rien à faire

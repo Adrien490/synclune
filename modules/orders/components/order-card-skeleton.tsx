@@ -38,15 +38,3 @@ export function OrderCardSkeleton() {
 	);
 }
 
-/**
- * Skeleton pour liste de OrderCard
- */
-export function OrdersListSkeleton({ count = 3 }: { count?: number }) {
-	return (
-		<div className="space-y-4">
-			{Array.from({ length: count }).map((_, i) => (
-				<OrderCardSkeleton key={i} />
-			))}
-		</div>
-	);
-}

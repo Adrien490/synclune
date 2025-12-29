@@ -3,8 +3,6 @@
  * Type-safe pour éviter les erreurs de typo
  */
 export const FAB_KEYS = {
-	/** FAB de contact Adrien dans le tableau de bord admin */
-	CONTACT_ADRIEN: "contact-adrien",
 	/** Speed dial admin (actions rapides) - TODO: à implémenter */
 	ADMIN_SPEED_DIAL: "admin-speed-dial",
 	/** FAB pour la boutique (site public) - TODO: à implémenter */

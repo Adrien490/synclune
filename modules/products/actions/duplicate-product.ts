@@ -10,6 +10,7 @@ import { generateSlug } from "@/shared/utils/generate-slug";
 import { duplicateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
 import { generateSkuCode } from "@/modules/skus/services/sku-generation.service";
+import { getProductForDuplication } from "../data/get-product-for-duplication";
 
 /**
  * Server Action pour dupliquer un produit
@@ -43,47 +44,8 @@ export async function duplicateProduct(
 
 		const { productId } = result.data;
 
-		// 4. Recuperer le produit source avec tous ses SKUs et images
-		const sourceProduct = await prisma.product.findUnique({
-			where: { id: productId },
-			select: {
-				id: true,
-				title: true,
-				slug: true,
-				description: true,
-				typeId: true,
-				collections: {
-					select: {
-						collectionId: true,
-						collection: {
-							select: { slug: true },
-						},
-					},
-				},
-				skus: {
-					select: {
-						sku: true,
-						priceInclTax: true,
-						compareAtPrice: true,
-						inventory: true,
-						isActive: true,
-						isDefault: true,
-						colorId: true,
-						materialId: true,
-						size: true,
-						images: {
-							select: {
-								url: true,
-								thumbnailUrl: true,
-								altText: true,
-								mediaType: true,
-								isPrimary: true,
-							},
-						},
-					},
-				},
-			},
-		});
+		// 4. Recuperer le produit source avec tous ses SKUs et images (via data/)
+		const sourceProduct = await getProductForDuplication(productId);
 
 		if (!sourceProduct) {
 			return {

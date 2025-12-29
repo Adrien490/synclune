@@ -618,16 +618,3 @@ export const ADMIN_SKU_UPDATE_PRICE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1), // par minute
 };
 
-// ========================================
-// 📧 CONTACT ADMIN
-// ========================================
-
-/**
- * Limite pour l'envoi de messages au créateur (admin)
- *
- * Stricte car envoie un email
- */
-export const ADMIN_CONTACT_LIMIT: RateLimitConfig = {
-	limit: 5, // 5 emails maximum
-	windowMs: hours(1), // par heure
-};

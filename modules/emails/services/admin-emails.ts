@@ -1,7 +1,6 @@
 import { render } from "@react-email/components"
 import { AdminNewOrderEmail } from "@/emails/admin-new-order-email"
 import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email"
-import { AdminContactEmail } from "@/emails/admin-contact-email"
 import { EMAIL_ADMIN } from "../constants/email.constants"
 import { sendEmail } from "./send-email"
 import type { EmailResult, ShippingAddress, OrderItem } from "../types/email.types"
@@ -114,27 +113,4 @@ export async function sendAdminInvoiceFailedAlert(_params: {
 }): Promise<void> {
 	// Temporairement desactive en attendant la creation du template email
 	// TODO: Activer quand le template sera cree
-}
-
-/**
- * Envoie un email de contact depuis le dashboard admin
- */
-export async function sendAdminContactEmail({
-	senderName,
-	senderEmail,
-	message,
-}: {
-	senderName: string
-	senderEmail: string
-	message: string
-}): Promise<EmailResult> {
-	const html = await render(
-		AdminContactEmail({ senderName, senderEmail, message })
-	)
-	return sendEmail({
-		to: EMAIL_ADMIN,
-		subject: `[Dashboard Synclune] Message de ${senderName}`,
-		html,
-		replyTo: senderEmail,
-	})
 }

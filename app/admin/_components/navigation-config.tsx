@@ -170,7 +170,7 @@ export const navigationData: NavigationData = {
  * - primaryIds : items affichés directement dans la barre
  * - Les autres items sont accessibles via le menu "Plus"
  */
-export const bottomNavConfig = {
+const bottomNavConfig = {
 	primaryIds: ["dashboard", "orders", "products"] as const,
 };
 
@@ -188,7 +188,7 @@ export function getAllNavItems(): NavItem[] {
 /**
  * Récupère un item de navigation par son ID
  */
-export function getNavItemById(id: string): NavItem | undefined {
+function getNavItemById(id: string): NavItem | undefined {
 	return getAllNavItems().find((item) => item.id === id);
 }
 
@@ -201,25 +201,3 @@ export function getBottomNavPrimaryItems(): NavItem[] {
 		.filter((item): item is NavItem => item !== undefined);
 }
 
-/**
- * Récupère les items secondaires du bottom nav (menu "Plus")
- */
-export function getBottomNavSecondaryItems(): NavItem[] {
-	const primaryIds = new Set<string>(bottomNavConfig.primaryIds);
-	return getAllNavItems().filter((item) => !primaryIds.has(item.id));
-}
-
-/**
- * Récupère les groupes de navigation pour le drawer mobile
- * Exclut les items primaires (déjà dans la bottom bar) et les groupes vides
- */
-export function getBottomNavSecondaryGroups(): NavGroup[] {
-	const primaryIds = new Set<string>(bottomNavConfig.primaryIds);
-
-	return navigationData.navGroups
-		.map((group) => ({
-			...group,
-			items: group.items.filter((item) => !primaryIds.has(item.id)),
-		}))
-		.filter((group) => group.items.length > 0);
-}
