@@ -1,4 +1,4 @@
-import type { ProductFiltersSearchParams } from "@/app/(boutique)/produits/page";
+import type { ProductFiltersSearchParams } from "@/app/(boutique)/produits/_utils/types";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { getPublicCollectionSlugs } from "@/modules/collections/data/get-public-collection-slugs";

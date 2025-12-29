@@ -30,6 +30,8 @@ interface FilterSheetProps {
 	materials: MaterialOption[];
 	productTypes?: ProductTypeOption[];
 	maxPriceInEuros: number;
+	/** Type de produit actif (depuis le path segment /produits/[type]) */
+	activeProductTypeSlug?: string;
 }
 
 interface FilterFormData {
@@ -47,6 +49,7 @@ export function ProductFilterSheet({
 	materials = [],
 	productTypes = [],
 	maxPriceInEuros,
+	activeProductTypeSlug,
 }: FilterSheetProps) {
 	const { isOpen, open, close } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const DEFAULT_PRICE_RANGE = [0, maxPriceInEuros];
@@ -65,6 +68,11 @@ export function ProductFilterSheet({
 		let ratingMin: number | null = null;
 		let inStockOnly = false;
 		let onSale = false;
+
+		// Ajouter le type actif depuis le path segment (page catégorie)
+		if (activeProductTypeSlug) {
+			types.push(activeProductTypeSlug);
+		}
 
 		searchParams.forEach((value, key) => {
 			if (key === "color") {
@@ -117,6 +125,10 @@ export function ProductFilterSheet({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isOpen, searchParams]);
 
+	// Détecter si on est sur une page catégorie /produits/[type]
+	const isOnCategoryPage = pathname.startsWith("/produits/") && pathname !== "/produits";
+	const currentCategorySlug = isOnCategoryPage ? pathname.split("/produits/")[1]?.split("/")[0] : null;
+
 	const applyFilters = (formData: FilterFormData) => {
 		const params = new URLSearchParams(searchParams.toString());
 
@@ -130,13 +142,19 @@ export function ProductFilterSheet({
 		params.delete("cursor");
 		params.delete("direction");
 
-		// Types de produits
-		if (formData.productTypes.length > 0) {
-			if (formData.productTypes.length === 1) {
-				params.set("type", formData.productTypes[0]);
-			} else {
-				formData.productTypes.forEach((type) => params.append("type", type));
-			}
+		// Déterminer le path de destination basé sur les types sélectionnés
+		let targetPath = "/produits";
+		const selectedTypes = formData.productTypes;
+
+		if (selectedTypes.length === 1) {
+			// Un seul type → naviguer vers la page catégorie dédiée
+			targetPath = `/produits/${selectedTypes[0]}`;
+		} else if (selectedTypes.length > 1) {
+			// Multi-types → rester sur /produits avec searchParams
+			selectedTypes.forEach((type) => params.append("type", type));
+		} else if (isOnCategoryPage && currentCategorySlug) {
+			// Aucun type sélectionné mais on est sur une page catégorie → retour à /produits
+			targetPath = "/produits";
 		}
 
 		// Couleurs
@@ -183,8 +201,11 @@ export function ProductFilterSheet({
 			params.set("onSale", "true");
 		}
 
+		const queryString = params.toString();
+		const fullUrl = queryString ? `${targetPath}?${queryString}` : targetPath;
+
 		startTransition(() => {
-			router.push(`${pathname}?${params.toString()}`);
+			router.push(fullUrl);
 			// Scroll to top après application des filtres
 			window.scrollTo({ top: 0, behavior: "smooth" });
 		});
@@ -214,8 +235,13 @@ export function ProductFilterSheet({
 		params.delete("cursor");
 		params.delete("direction");
 
+		// Retourner à /produits si on est sur une page catégorie
+		const targetPath = "/produits";
+		const queryString = params.toString();
+		const fullUrl = queryString ? `${targetPath}?${queryString}` : targetPath;
+
 		startTransition(() => {
-			router.push(`${pathname}?${params.toString()}`);
+			router.push(fullUrl);
 			// Scroll to top après effacement des filtres
 			window.scrollTo({ top: 0, behavior: "smooth" });
 		});

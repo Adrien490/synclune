@@ -2,7 +2,8 @@ import { ProductStatus } from "@/app/generated/prisma/client";
 import type { ProductFilters } from "@/modules/products/data/get-products";
 import { productFiltersSchema } from "@/modules/products/data/get-products";
 import { getFirstParam } from "@/shared/utils/params";
-import type { ProductSearchParams } from "../page";
+
+import type { ProductSearchParams } from "./types";
 
 export const parseFilters = (params: ProductSearchParams): ProductFilters => {
 	// Pages publiques : toujours filtrer sur les produits PUBLIC uniquement

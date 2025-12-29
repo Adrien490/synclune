@@ -1,59 +1,21 @@
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { getProductTypes } from "@/modules/product-types/data/get-product-types";
-import { getColors } from "@/modules/colors/data/get-colors";
-import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
-import { getMaxProductPrice } from "@/modules/products/data/get-max-product-price";
-import {
-	GET_PRODUCTS_DEFAULT_PER_PAGE,
-	SORT_LABELS,
-	SORT_OPTIONS,
-} from "@/modules/products/constants/product.constants";
-import { getProducts } from "@/modules/products/data/get-products";
-import type { SortField } from "@/modules/products/data/get-products";
-import { ProductFilterBadges } from "@/modules/products/components/filter-badges";
-import dynamic from "next/dynamic";
 
-// Lazy loading - filter sheet charge uniquement a l'ouverture
-const ProductFilterSheet = dynamic(
-	() => import("@/modules/products/components/product-filter-sheet").then((mod) => mod.ProductFilterSheet)
-);
-import { ProductFilterTrigger } from "@/modules/products/components/product-filter-trigger";
-import { ProductList } from "@/modules/products/components/product-list";
-import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
-import { Toolbar } from "@/shared/components/toolbar";
-import { PageHeader } from "@/shared/components/page-header";
-import { SelectFilter } from "@/shared/components/select-filter";
-import { ClearSearchButton } from "@/shared/components/clear-search-button";
-import { SearchInput } from "@/shared/components/search-input";
-import { BottomActionBar } from "@/modules/products/components/bottom-action-bar";
-import { centsToEuros } from "@/shared/utils/format-euro";
-import { getFirstParam } from "@/shared/utils/params";
+import { ProductCatalog } from "@/modules/products/components/product-catalog";
+
+import type { ProductSearchParams } from "./_utils/types";
 import { parseFilters } from "./_utils/params";
+import {
+	getCatalogData,
+	parsePaginationParams,
+	fetchProducts,
+	countActiveFilters,
+	buildCatalogJsonLd,
+} from "./_utils/catalog";
 
-/**
- * Product filters search params (URL parameters)
- */
-export type ProductFiltersSearchParams = {
-	priceMin?: string;
-	priceMax?: string;
-	inStock?: string;
-	type?: string | string[];
-	material?: string | string[];
-	collectionId?: string;
-	collectionSlug?: string;
-};
-
-/**
- * Complete product search params (base + filters)
- */
-export type ProductSearchParams = {
-	cursor?: string;
-	direction?: "forward" | "backward";
-	perPage?: string;
-	sortBy?: string;
-	search?: string;
-} & ProductFiltersSearchParams;
+// ============================================================================
+// METADATA
+// ============================================================================
 
 const DEFAULT_METADATA = {
 	title: "Tous mes bijoux colorés faits main | Synclune - Nantes",
@@ -67,24 +29,29 @@ type BijouxPageProps = {
 	searchParams: Promise<ProductSearchParams>;
 };
 
-/**
- * Génère les metadata pour la page produits
- */
 export async function generateMetadata({
 	searchParams,
 }: BijouxPageProps): Promise<Metadata> {
 	const searchParamsData = await searchParams;
 
-	// Vérifier si des filtres sont actifs (incluant le type)
+	// Si seul le type est présent, rediriger vers la page catégorie dédiée
+	const typeParam = searchParamsData.type;
+	if (typeParam && !Array.isArray(typeParam)) {
+		// Vérifier qu'il n'y a pas d'autres filtres actifs
+		const otherFilters = Object.keys(searchParamsData).filter(
+			(key) =>
+				!["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(key)
+		);
+		if (otherFilters.length === 0) {
+			// La redirection sera gérée dans le composant page
+			return {};
+		}
+	}
+
+	// Vérifier si des filtres sont actifs
 	const hasActiveFilters = Object.keys(searchParamsData).some(
 		(key) =>
-			![
-				"cursor",
-				"direction",
-				"perPage",
-				"sortBy",
-				"search",
-			].includes(key)
+			!["cursor", "direction", "perPage", "sortBy", "search"].includes(key)
 	);
 
 	return {
@@ -111,223 +78,75 @@ export async function generateMetadata({
 	};
 }
 
-/**
- * Page /produits
- *
- * Affiche tous les produits avec:
- * - Navigation par onglets de types (via search params)
- * - Filtres (couleur, prix, tri)
- * - Recherche
- * - Pagination
- */
+// ============================================================================
+// PAGE
+// ============================================================================
+
 export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const searchParamsData = await searchParams;
 
-	// Récupérer tous les types de bijoux actifs avec au moins 1 produit
-	const productTypesData = await getProductTypes({
-		perPage: 50,
-		sortBy: "label-ascending",
-		filters: {
-			isActive: true,
-			hasProducts: true,
-		},
-	});
-	const productTypes = productTypesData.productTypes;
+	// Redirection SEO: /produits?type=X → /produits/X
+	const typeParam = searchParamsData.type;
+	if (typeParam && !Array.isArray(typeParam)) {
+		// Vérifier qu'il n'y a pas d'autres filtres actifs (sauf pagination/tri)
+		const otherFilters = Object.keys(searchParamsData).filter(
+			(key) =>
+				!["cursor", "direction", "perPage", "sortBy", "search", "type"].includes(key)
+		);
+		if (otherFilters.length === 0) {
+			// Construire l'URL de redirection avec les params de pagination/recherche
+			const redirectParams = new URLSearchParams();
+			if (searchParamsData.search) redirectParams.set("search", searchParamsData.search);
+			if (searchParamsData.sortBy) redirectParams.set("sortBy", searchParamsData.sortBy);
+			if (searchParamsData.cursor) redirectParams.set("cursor", searchParamsData.cursor);
+			if (searchParamsData.direction) redirectParams.set("direction", searchParamsData.direction);
 
-	// Extraction du terme de recherche
-	const searchTerm =
-		typeof searchParamsData.search === "string"
-			? searchParamsData.search
-			: undefined;
+			const queryString = redirectParams.toString();
+			redirect(`/produits/${typeParam}${queryString ? `?${queryString}` : ""}`);
+		}
+	}
 
-	// Récupérer les couleurs, matériaux et prix maximum en parallèle
-	const [colorsData, materials, maxPriceInCents] = await Promise.all([
-		getColors({
-			perPage: 100,
-			sortBy: "name-ascending",
-		}),
-		getMaterialOptions(),
-		getMaxProductPrice(),
-	]);
+	// Récupérer les données du catalogue
+	const { productTypes, colors, materials, maxPriceInEuros } =
+		await getCatalogData();
 
-	const maxPriceInEuros = centsToEuros(maxPriceInCents);
-	const colors = colorsData.colors;
-
-	// Paramètres de pagination et tri
-	const cursor = getFirstParam(searchParamsData.cursor);
-	const direction = (getFirstParam(searchParamsData.direction) || "forward") as
-		| "forward"
-		| "backward";
-	const perPage =
-		Number(getFirstParam(searchParamsData.perPage)) ||
-		GET_PRODUCTS_DEFAULT_PER_PAGE;
-	const sortBy =
-		getFirstParam(searchParamsData.sortBy) || "created-descending";
-
-	// Parser les filtres (le type est déjà géré par parseFilters)
+	// Parser les paramètres
+	const { perPage, searchTerm } = parsePaginationParams(searchParamsData);
 	const filters = parseFilters(searchParamsData);
 
 	// Récupérer les produits
-	const productsPromise = getProducts({
-		cursor,
-		direction,
-		perPage,
-		sortBy: sortBy as SortField,
-		search: searchTerm,
-		filters,
-	});
+	const productsPromise = fetchProducts(searchParamsData);
 
-	// Compter les filtres actifs (pour le badge FAB et hasActiveFilters)
-	const activeFiltersCount = (() => {
-		let count = 0;
-		const params = searchParamsData;
+	// Compter les filtres actifs
+	const activeFiltersCount = countActiveFilters(searchParamsData, filters);
 
-		// Types de produits
-		if (params.type) {
-			count += Array.isArray(params.type) ? params.type.length : 1;
-		}
-		// Couleurs (via parseFilters -> filters.color)
-		if (filters.color && filters.color.length > 0) {
-			count += filters.color.length;
-		}
-		// Materiaux (via parseFilters -> filters.material)
-		if (filters.material && filters.material.length > 0) {
-			count += filters.material.length;
-		}
-		// Prix (compte comme 1 si priceMin ou priceMax defini)
-		if (params.priceMin || params.priceMax) {
-			count += 1;
-		}
-		// Notes clients
-		if (filters.ratingMin !== undefined) {
-			count += 1;
-		}
-
-		return count;
-	})();
-
-	const hasActiveFilters = activeFiltersCount > 0;
-
-	// Configuration de la page (valeurs fixes, les types sont des filtres)
-	const pageTitle = searchTerm ? `Recherche "${searchTerm}"` : "Les créations";
-	const pageDescription =
-		"Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes. Des pièces uniques inspirées de mes passions !";
+	// Breadcrumbs
 	const breadcrumbs = [{ label: "Créations", href: "/produits" }];
 
-	// Sort options for mobile drawer
-	const sortOptions = Object.values(SORT_OPTIONS).map((option) => ({
-		value: option,
-		label: SORT_LABELS[option as keyof typeof SORT_LABELS],
-	}));
-
-	const searchPlaceholder = "Rechercher des bijoux...";
-
-	// JSON-LD structured data pour SEO
-	const jsonLd = {
-		"@context": "https://schema.org",
-		"@type": "CollectionPage",
+	// JSON-LD
+	const jsonLd = buildCatalogJsonLd({
 		name: "Bijoux artisanaux faits main",
-		description: pageDescription,
+		description:
+			"Découvrez toutes mes créations colorées faites main dans mon atelier à Nantes.",
 		url: "https://synclune.fr/produits",
-		breadcrumb: {
-			"@type": "BreadcrumbList",
-			itemListElement: [
-				{
-					"@type": "ListItem",
-					position: 1,
-					name: "Accueil",
-					item: "https://synclune.fr",
-				},
-				{
-					"@type": "ListItem",
-					position: 2,
-					name: "Bijoux",
-				},
-			],
-		},
-		publisher: {
-			"@type": "Organization",
-			name: "Synclune",
-			url: "https://synclune.fr",
-		},
-	};
+		breadcrumbs: [
+			{ name: "Accueil", url: "https://synclune.fr" },
+			{ name: "Bijoux" },
+		],
+	});
 
 	return (
-		<div className="min-h-screen">
-			{/* JSON-LD Structured Data */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-			/>
-
-			<PageHeader
-				title={pageTitle}
-				description={searchTerm ? undefined : pageDescription}
-				breadcrumbs={breadcrumbs}
-				actions={
-					<div className="flex items-center gap-2 md:hidden">
-						<ClearSearchButton />
-					</div>
-				}
-			/>
-
-		
-
-			{/* Section principale avec catalogue */}
-			<section
-				className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16 relative z-10"
-				aria-label="Catalogue des créations"
-			>
-				<div
-					id="product-container"
-					className="group/container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6"
-				>
-					{/* Desktop Toolbar - hidden on mobile */}
-					<Toolbar
-						className="hidden md:flex"
-						search={
-							<SearchInput mode="live" size="sm"
-								paramName="search"
-								placeholder={searchPlaceholder}
-								className="w-full"
-							/>
-						}
-					>
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={Object.values(SORT_OPTIONS).map((option) => ({
-								value: option,
-								label: SORT_LABELS[option as keyof typeof SORT_LABELS],
-							}))}
-							placeholder="Trier par"
-							noPrefix
-						/>
-						<ProductFilterTrigger />
-					</Toolbar>
-
-					{hasActiveFilters && (
-						<ProductFilterBadges colors={colors} materials={materials} productTypes={productTypes} />
-					)}
-
-					<Suspense fallback={<ProductListSkeleton />}>
-						<ProductList productsPromise={productsPromise} perPage={perPage} />
-					</Suspense>
-				</div>
-			</section>
-
-			<ProductFilterSheet
-				colors={colors}
-				materials={materials}
-				productTypes={productTypes.map((t) => ({
-					slug: t.slug,
-					label: t.label,
-				}))}
-				maxPriceInEuros={maxPriceInEuros}
-			/>
-
-			{/* Bottom Action Bar Mobile */}
-			<BottomActionBar sortOptions={sortOptions} />
-		</div>
+		<ProductCatalog
+			productsPromise={productsPromise}
+			perPage={perPage}
+			searchTerm={searchTerm}
+			productTypes={productTypes}
+			colors={colors}
+			materials={materials}
+			maxPriceInEuros={maxPriceInEuros}
+			activeFiltersCount={activeFiltersCount}
+			jsonLd={jsonLd}
+			breadcrumbs={breadcrumbs}
+		/>
 	);
 }
