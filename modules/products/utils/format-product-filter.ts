@@ -11,8 +11,11 @@ interface ProductTypeOption {
 
 // Filtres statiques
 const STATIC_FILTERS = {
-	inStock: {
+	stockStatus: {
 		name: "En stock",
+	},
+	onSale: {
+		name: "En promotion",
 	},
 	search: {
 		name: "Recherche",
