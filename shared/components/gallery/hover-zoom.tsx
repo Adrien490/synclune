@@ -40,8 +40,10 @@ export function GalleryHoverZoom({
 	const rafRef = useRef<number>(0);
 	const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	// Debounced resize listener pour éviter le jank
+	// Debounced resize listener pour éviter le jank (seulement si enabled)
 	useEffect(() => {
+		if (!enabled) return;
+
 		const updateRect = () => {
 			if (containerRef.current) {
 				rectRef.current = containerRef.current.getBoundingClientRect();
@@ -64,7 +66,7 @@ export function GalleryHoverZoom({
 				clearTimeout(resizeTimeoutRef.current);
 			}
 		};
-	}, []);
+	}, [enabled]);
 
 	// RAF-only throttle (plus efficace que Date.now + RAF)
 	const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -109,7 +111,6 @@ export function GalleryHoverZoom({
 	}, []);
 
 	const transitionClass = prefersReduced ? "" : "transition-transform duration-300 ease-out";
-	const opacityTransition = prefersReduced ? "" : "transition-opacity duration-300";
 
 	if (!enabled) {
 		return (
@@ -146,7 +147,7 @@ export function GalleryHoverZoom({
 			<Image
 				ref={imageRef}
 				src={src}
-				alt={`${alt} (zoom disponible au survol)`}
+				alt={alt}
 				fill
 				className={cn("object-cover", transitionClass)}
 				style={{
@@ -161,20 +162,6 @@ export function GalleryHoverZoom({
 				placeholder={blurDataUrl ? "blur" : "empty"}
 				blurDataURL={blurDataUrl}
 			/>
-
-			<div
-				className={cn(
-					"absolute bottom-3 right-3 z-10",
-					"bg-black/60 backdrop-blur-sm text-white",
-					"px-2.5 py-1.5 rounded-full text-xs font-medium",
-					"opacity-0 group-hover/zoom:opacity-100",
-					opacityTransition,
-					"pointer-events-none select-none"
-				)}
-				aria-hidden="true"
-			>
-				Survolez pour zoomer
-			</div>
 		</div>
 	);
 }

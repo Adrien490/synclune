@@ -1,7 +1,6 @@
 "use client";
 
 import { FilterDefinition } from "@/shared/hooks/use-filter";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
@@ -20,7 +19,6 @@ export function FilterBadge({
 	formatFilter,
 	onRemove,
 }: FilterBadgeProps) {
-	const isMobile = useIsMobile();
 	const shouldReduceMotion = useReducedMotion();
 
 	// Formater le filtre si une fonction est fournie
@@ -38,8 +36,6 @@ export function FilterBadge({
 
 	// Suppression optimiste - disparition instantanée du badge
 	const handleRemove = () => {
-		// Pour les tableaux, on ne passe pas de valeur spécifique (supprime la clé entière)
-		// Pour les autres types primitifs, on convertit en string
 		let value: string | undefined;
 
 		if (typeof filter.value === "string") {
@@ -52,7 +48,6 @@ export function FilterBadge({
 		} else if (filter.value instanceof Date) {
 			value = filter.value.toISOString();
 		}
-		// Pour string[] et undefined, on laisse value = undefined
 
 		onRemove(filter.key, value);
 	};
@@ -74,55 +69,12 @@ export function FilterBadge({
 				layout: { type: "spring" as const, stiffness: 500, damping: 35 },
 			};
 
-	// Styles communs du badge
-	const badgeStyles = cn(
-		// Layout
-		"flex items-center gap-1.5",
-		"h-11 sm:h-8",
-		"pl-3 pr-2",
-		// Forme pill cohérente
-		"rounded-full border",
-		// Typographie
-		"text-sm font-medium",
-		// Largeur max
-		"max-w-[280px] sm:max-w-[320px]",
-		// États
-		"transition-all duration-150",
-		"hover:bg-accent hover:border-primary/40",
-		// Focus visible pour accessibilité clavier
-		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-	);
+	// Variants Framer Motion pour l'animation hover desktop
+	const iconVariants = {
+		initial: { width: 0, opacity: 0 },
+		hover: { width: 20, opacity: 1 },
+	};
 
-	const textContent = (
-		<span className="truncate font-medium">
-			{displayValue && displayValue.length > 0 ? displayValue : displayLabel}
-		</span>
-	);
-
-	// Mobile : utiliser un vrai <button> pour l'accessibilité
-	if (isMobile) {
-		return (
-			<motion.button
-				type="button"
-				layoutId={filter.id}
-				{...animationProps}
-				transition={transitionProps}
-				onClick={handleRemove}
-				aria-label={ariaLabelRemove}
-				className={cn(
-					badgeStyles,
-					// Mobile spécifique
-					"cursor-pointer",
-					"active:scale-[0.97]",
-					"active:bg-destructive/10"
-				)}
-			>
-				{textContent}
-			</motion.button>
-		);
-	}
-
-	// Desktop : Badge entierement cliquable avec X visible
 	return (
 		<motion.button
 			type="button"
@@ -131,29 +83,54 @@ export function FilterBadge({
 			transition={transitionProps}
 			onClick={handleRemove}
 			aria-label={ariaLabelRemove}
+			initial="initial"
+			whileHover={shouldReduceMotion ? undefined : "hover"}
 			className={cn(
-				badgeStyles,
-				// Desktop specifique
+				// Layout
+				"flex items-center gap-1.5",
+				"h-11 sm:h-8",
+				"px-3",
+				// Forme pill
+				"rounded-full border",
+				// Typographie
+				"text-sm font-medium",
+				// Largeur max
+				"max-w-[280px] sm:max-w-[320px]",
+				// Etats
 				"cursor-pointer",
-				"group",
-				"active:scale-[0.98]"
+				"transition-all duration-150",
+				"can-hover:hover:bg-accent can-hover:hover:border-primary/40",
+				// Active (mobile)
+				"active:scale-[0.95] sm:active:scale-[0.98]",
+				"active:bg-destructive/15 active:border-destructive/30",
+				// Focus
+				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 			)}
 		>
-			{textContent}
+			{/* Texte */}
+			<span className="truncate font-medium">
+				{displayValue && displayValue.length > 0 ? displayValue : displayLabel}
+			</span>
 
-			{/* Icone X avec hover */}
-			<span
+			{/* Icone X mobile - toujours visible */}
+			<X
+				className="size-3.5 opacity-50 shrink-0 sm:hidden"
 				aria-hidden="true"
+			/>
+
+			{/* Icone X desktop - animation width au hover */}
+			<motion.span
+				aria-hidden="true"
+				variants={iconVariants}
+				transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
 				className={cn(
-					"flex items-center justify-center",
-					"size-5 rounded-full",
-					"bg-muted/50 group-hover:bg-destructive/10",
-					"group-hover:text-destructive",
-					"transition-colors"
+					"hidden sm:flex items-center justify-center",
+					"h-5 overflow-hidden rounded-full",
+					"bg-destructive/10 text-destructive"
 				)}
 			>
-				<X className="size-3" />
-			</span>
+				<X className="size-3 shrink-0" />
+			</motion.span>
 		</motion.button>
 	);
 }

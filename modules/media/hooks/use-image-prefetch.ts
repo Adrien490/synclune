@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { nextImageUrl, MAIN_IMAGE_QUALITY } from "../constants/image-config.constants";
+import {
+	nextImageUrl,
+	MAIN_IMAGE_QUALITY,
+	PREFETCH_SIZE_MOBILE,
+	PREFETCH_SIZE_DESKTOP,
+} from "../constants/image-config.constants";
 
 interface UsePrefetchImagesOptions {
 	/** URLs des images à prefetch */
@@ -39,6 +44,16 @@ const cancelIdleCallbackPolyfill =
 	typeof window !== "undefined" && "cancelIdleCallback" in window
 		? window.cancelIdleCallback
 		: (id: number) => window.clearTimeout(id);
+
+/**
+ * Détermine la taille optimale d'image à précharger selon le viewport
+ * Mobile (<768px): 640px - correspond aux viewports 375-430px
+ * Desktop (>=768px): 1080px - correspond aux viewports desktop
+ */
+function getPrefetchImageSize(): number {
+	if (typeof window === "undefined") return PREFETCH_SIZE_DESKTOP;
+	return window.innerWidth < 768 ? PREFETCH_SIZE_MOBILE : PREFETCH_SIZE_DESKTOP;
+}
 
 /**
  * Hook pour prefetch intelligent des images dans un carousel
@@ -95,8 +110,9 @@ export function usePrefetchImages({
 						)
 					);
 
-					// Comparer avec l'URL Next.js optimisée
-					const optimizedUrl = nextImageUrl(imageUrl, 1080, MAIN_IMAGE_QUALITY);
+					// Comparer avec l'URL Next.js optimisée (taille adaptée au viewport)
+					const prefetchSize = getPrefetchImageSize();
+					const optimizedUrl = nextImageUrl(imageUrl, prefetchSize, MAIN_IMAGE_QUALITY);
 					const existingLink = allGalleryLinks.find((link) => link.href === optimizedUrl);
 					if (existingLink) continue;
 
@@ -104,8 +120,8 @@ export function usePrefetchImages({
 					const link = document.createElement("link");
 					link.rel = "prefetch";
 					link.as = "image";
-					// Utiliser l'URL Next.js optimisée (1080px pour desktop, quality 85)
-					link.href = nextImageUrl(imageUrl, 1080, MAIN_IMAGE_QUALITY);
+					// Utiliser l'URL Next.js optimisée (640px mobile, 1080px desktop)
+					link.href = optimizedUrl;
 					link.dataset.prefetchedBy = "gallery";
 
 					document.head.appendChild(link);
@@ -118,12 +134,13 @@ export function usePrefetchImages({
 					)
 				);
 
-				// Utiliser les URLs optimisées pour le cleanup
+				// Utiliser les URLs optimisées pour le cleanup (même taille que le prefetch)
+				const cleanupPrefetchSize = getPrefetchImageSize();
 				const currentUrls = new Set(
 					indicesToPrefetch
 						.map((i) => imageUrls[i])
 						.filter(Boolean)
-						.map((url) => nextImageUrl(url, 1080, MAIN_IMAGE_QUALITY))
+						.map((url) => nextImageUrl(url, cleanupPrefetchSize, MAIN_IMAGE_QUALITY))
 				);
 
 				for (const link of allPrefetchLinks) {

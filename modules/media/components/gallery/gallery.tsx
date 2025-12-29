@@ -194,11 +194,29 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	const slides = buildLightboxSlides(images, prefersReduced);
 
-	// Connection-aware prefetch range
-	const connection = typeof navigator !== "undefined"
-		? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType
-		: undefined;
-	const prefetchRange = connection === "slow-2g" || connection === "2g" ? PREFETCH_RANGE_SLOW : PREFETCH_RANGE_FAST;
+	// Connection-aware prefetch range avec fallback intelligent
+	// Safari/Firefox ne supportent pas navigator.connection
+	// Fallback: mobile viewport sans connection API = traiter comme connexion modérée
+	const getEffectivePrefetchRange = (): number => {
+		const connection = typeof navigator !== "undefined"
+			? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType
+			: undefined;
+
+		// Si connection API disponible, l'utiliser
+		if (connection) {
+			return connection === "slow-2g" || connection === "2g"
+				? PREFETCH_RANGE_SLOW
+				: PREFETCH_RANGE_FAST;
+		}
+
+		// Fallback: mobile sans connection API = prudent (Safari iOS ~25% trafic FR)
+		if (typeof window !== "undefined" && window.innerWidth < 768) {
+			return PREFETCH_RANGE_SLOW;
+		}
+
+		return PREFETCH_RANGE_FAST;
+	};
+	const prefetchRange = getEffectivePrefetchRange();
 
 	// Prefetch intelligent des images adjacentes (Next.js 16 + React 19)
 	// Extraire les URLs pour éviter de recréer un tableau à chaque render

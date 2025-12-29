@@ -72,7 +72,7 @@ export function GalleryThumbnail({
 						alt={alt}
 						fill
 						className="object-cover"
-						sizes="80px"
+						sizes="(min-width: 768px) 80px, 56px"
 						quality={THUMBNAIL_IMAGE_QUALITY}
 						loading={index < EAGER_LOAD_THUMBNAILS ? "eager" : "lazy"}
 						fetchPriority={isLCPCandidate ? "high" : "auto"}

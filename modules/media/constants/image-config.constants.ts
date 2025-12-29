@@ -29,6 +29,16 @@ export const THUMBNAIL_IMAGE_QUALITY = 65
 export const MAIN_IMAGE_QUALITY = 85
 
 // ============================================
+// PREFETCH
+// ============================================
+
+/** Taille d'image préchargée sur mobile (viewport < 768px) */
+export const PREFETCH_SIZE_MOBILE = 640
+
+/** Taille d'image préchargée sur desktop (viewport >= 768px) */
+export const PREFETCH_SIZE_DESKTOP = 1080
+
+// ============================================
 // CHARGEMENT
 // ============================================
 
