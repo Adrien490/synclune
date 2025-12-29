@@ -1,7 +1,5 @@
 "use client";
 
-import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
 import { FilterDefinition } from "@/shared/hooks/use-filter";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
@@ -37,7 +35,6 @@ export function FilterBadge({
 	const displayValue = formatted?.displayValue || filter.displayValue;
 	const filterDescription = `${displayLabel}${displayValue ? ` ${displayValue}` : ""}`;
 	const ariaLabelRemove = `Supprimer le filtre ${filterDescription}`;
-	const ariaLabelGroup = `Filtre actif : ${filterDescription}`;
 
 	// Suppression optimiste - disparition instantanée du badge
 	const handleRemove = () => {
@@ -125,41 +122,38 @@ export function FilterBadge({
 		);
 	}
 
-	// Desktop : Badge avec bouton X séparé
+	// Desktop : Badge entierement cliquable avec X visible
 	return (
-		<motion.div
+		<motion.button
+			type="button"
 			layoutId={filter.id}
 			{...animationProps}
 			transition={transitionProps}
+			onClick={handleRemove}
+			aria-label={ariaLabelRemove}
+			className={cn(
+				badgeStyles,
+				// Desktop specifique
+				"cursor-pointer",
+				"group",
+				"active:scale-[0.98]"
+			)}
 		>
-			<Badge
-				variant="outline"
-				className={cn(
-					badgeStyles,
-					// Desktop : pas de clic sur le badge, seulement sur X
-					"cursor-default",
-					"pointer-events-none"
-				)}
-				aria-label={ariaLabelGroup}
-			>
-				{textContent}
+			{textContent}
 
-				{/* Bouton X */}
-				<Button
-					variant="ghost"
-					size="icon"
-					onClick={handleRemove}
-					className={cn(
-						"size-6 rounded-full",
-						"hover:bg-destructive/10 hover:text-destructive",
-						"transition-colors",
-						"pointer-events-auto"
-					)}
-					aria-label={ariaLabelRemove}
-				>
-					<X className="size-3.5" />
-				</Button>
-			</Badge>
-		</motion.div>
+			{/* Icone X avec hover */}
+			<span
+				aria-hidden="true"
+				className={cn(
+					"flex items-center justify-center",
+					"size-5 rounded-full",
+					"bg-muted/50 group-hover:bg-destructive/10",
+					"group-hover:text-destructive",
+					"transition-colors"
+				)}
+			>
+				<X className="size-3" />
+			</span>
+		</motion.button>
 	);
 }

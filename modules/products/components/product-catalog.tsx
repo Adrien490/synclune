@@ -164,7 +164,16 @@ export function ProductCatalog({
 					)}
 
 					<Suspense fallback={<ProductListSkeleton />}>
-						<ProductList productsPromise={productsPromise} perPage={perPage} />
+						<ProductList
+							productsPromise={productsPromise}
+							perPage={perPage}
+							searchTerm={searchTerm}
+							baseResetUrl={
+								activeProductType
+									? `/produits/${activeProductType.slug}`
+									: "/produits"
+							}
+						/>
 					</Suspense>
 				</div>
 			</section>

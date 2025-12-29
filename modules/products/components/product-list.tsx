@@ -1,56 +1,42 @@
+import { Suspense } from "react";
+
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
-import { Button } from "@/shared/components/ui/button";
-import {
-	Empty,
-	EmptyContent,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
-import { SearchX } from "lucide-react";
-import Link from "next/link";
 import { use } from "react";
 
 import { SpellSuggestion } from "./spell-suggestion";
+import { NoResultsRecovery, NoResultsRecoverySkeleton } from "./no-results-recovery";
 
 interface ProductListProps {
 	productsPromise: Promise<GetProductsReturn>;
 	perPage: number;
+	/** Terme de recherche actuel */
+	searchTerm?: string;
+	/** URL de base pour reset (defaut: /produits) */
+	baseResetUrl?: string;
 }
 
 export function ProductList({
 	productsPromise,
 	perPage,
+	searchTerm,
+	baseResetUrl = "/produits",
 }: ProductListProps) {
 	const { products, pagination, totalCount, suggestion } = use(productsPromise);
 	const wishlistProductIds = use(getWishlistProductIds());
 
-	// Afficher le composant Empty si aucun produit
+	// Afficher le composant NoResultsRecovery si aucun produit (Baymard UX)
 	if (!products || products.length === 0) {
 		return (
-			<Empty className="mt-4 mb-12 sm:my-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<SearchX className="size-6" />
-					</EmptyMedia>
-					<EmptyTitle>Aucun produit trouvé</EmptyTitle>
-				</EmptyHeader>
-				<EmptyContent className="space-y-3">
-					{suggestion ? (
-						<SpellSuggestion suggestion={suggestion} />
-					) : (
-						<p className="text-sm text-muted-foreground">
-							Essaie d'ajuster tes filtres pour voir plus de créations.
-						</p>
-					)}
-					<Button asChild variant="primary">
-						<Link href="/produits">Effacer les filtres</Link>
-					</Button>
-				</EmptyContent>
-			</Empty>
+			<Suspense fallback={<NoResultsRecoverySkeleton />}>
+				<NoResultsRecovery
+					searchTerm={searchTerm}
+					suggestion={suggestion}
+					baseResetUrl={baseResetUrl}
+				/>
+			</Suspense>
 		);
 	}
 
