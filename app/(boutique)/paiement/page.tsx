@@ -12,7 +12,7 @@ import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckoutContainer } from "@/modules/payments/components/checkout-container";
+import { CheckoutFormWrapper } from "./checkout-form-wrapper";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -64,7 +64,7 @@ export default async function CheckoutPage() {
 						<Alert variant="destructive" className="mb-6">
 							<AlertTriangle className="h-4 w-4" />
 							<AlertTitle>
-								Un petit ajustement est nécessaire 🌸
+								Un petit ajustement est nécessaire
 							</AlertTitle>
 							<AlertDescription className="mt-2 space-y-4">
 								<p className="text-sm">
@@ -114,7 +114,7 @@ export default async function CheckoutPage() {
 
 			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					<CheckoutContainer
+					<CheckoutFormWrapper
 						cart={cart}
 						session={session}
 						addresses={addresses}

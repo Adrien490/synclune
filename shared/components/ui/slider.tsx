@@ -11,6 +11,7 @@ function Slider({
 	value,
 	min = 0,
 	max = 100,
+	"aria-label": ariaLabel,
 	...props
 }: React.ComponentProps<typeof SliderPrimitive.Root>) {
 	const _values = Array.isArray(value)
@@ -18,6 +19,13 @@ function Slider({
 		: Array.isArray(defaultValue)
 			? defaultValue
 			: [min, max];
+
+	const getThumbLabel = (index: number) => {
+		if (_values.length === 1) return ariaLabel || "Curseur";
+		if (index === 0) return "Valeur minimum";
+		if (index === _values.length - 1) return "Valeur maximum";
+		return `Curseur ${index + 1}`;
+	};
 
 	return (
 		<SliderPrimitive.Root
@@ -54,6 +62,7 @@ function Slider({
 				<SliderPrimitive.Thumb
 					data-slot="slider-thumb"
 					key={index}
+					aria-label={getThumbLabel(index)}
 					className={cn(
 						"block size-5 shrink-0 rounded-full",
 						"border-2 border-primary bg-background",

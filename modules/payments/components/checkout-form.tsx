@@ -8,7 +8,7 @@ import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Info, Loader2, Mail } from "lucide-react";
+import { ArrowLeft, CreditCard, Info, Loader2, Mail, Shield } from "lucide-react";
 import {
 	SORTED_SHIPPING_COUNTRIES,
 	COUNTRY_NAMES,
@@ -18,6 +18,8 @@ import Link from "next/link";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
 import { ActionStatus } from "@/shared/types/server-action";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
+import { EmbeddedCheckoutWrapper } from "./embedded-checkout";
+import type { CreateCheckoutSessionResult } from "../types/checkout.types";
 
 // Options pour le select des pays
 const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
@@ -29,30 +31,41 @@ interface CheckoutFormProps {
 	cart: NonNullable<GetCartReturn>;
 	session: Session | null;
 	addresses: GetUserAddressesReturn | null;
-	onSuccess?: (data: { clientSecret: string; orderId: string; orderNumber: string }) => void;
 	onCountryChange?: (country: ShippingCountry) => void;
 	onPostalCodeChange?: (postalCode: string) => void;
 }
 
 /**
- * Formulaire de checkout optimisé mobile (Baymard UX guidelines)
- * - enterKeyHint pour navigation clavier fluide
- * - Touch targets ≥44px sur tous les boutons interactifs
- * - Safe area inset pour iOS (notch/home indicator)
- * - Placeholders explicites pour réduire la charge cognitive
+ * Formulaire de checkout simplifié
+ * Affiche le formulaire d'adresse puis le paiement Stripe inline
  */
 export function CheckoutForm({
 	cart,
 	session,
 	addresses,
-	onSuccess,
 	onCountryChange,
 	onPostalCodeChange,
 }: CheckoutFormProps) {
 	const isGuest = !session;
 
+	// State pour le paiement Stripe
+	const [clientSecret, setClientSecret] = useState<string | null>(null);
+	const [orderInfo, setOrderInfo] = useState<{
+		orderId: string;
+		orderNumber: string;
+	} | null>(null);
+
+	const handleSuccess = (data: CreateCheckoutSessionResult) => {
+		setClientSecret(data.clientSecret);
+		setOrderInfo({ orderId: data.orderId, orderNumber: data.orderNumber });
+	};
+
 	// Form hook
-	const { form, action, isPending, state } = useCheckoutForm({ session, addresses, onSuccess });
+	const { form, action, isPending, state } = useCheckoutForm({
+		session,
+		addresses,
+		onSuccess: handleSuccess,
+	});
 
 	// Progressive disclosure states
 	const initialCountry = form.state.values.shipping?.country;
@@ -73,8 +86,12 @@ export function CheckoutForm({
 	});
 
 	// Notifier le parent quand le pays change
-	const lastCountryRef = useRef<ShippingCountry | undefined>(initialCountry as ShippingCountry | undefined);
-	const currentCountry = form.state.values.shipping?.country as ShippingCountry | undefined;
+	const lastCountryRef = useRef<ShippingCountry | undefined>(
+		initialCountry as ShippingCountry | undefined
+	);
+	const currentCountry = form.state.values.shipping?.country as
+		| ShippingCountry
+		| undefined;
 
 	useEffect(() => {
 		const country = currentCountry || "FR";
@@ -104,6 +121,57 @@ export function CheckoutForm({
 	const shipping = calculateShipping();
 	const total = subtotal + shipping;
 
+	// Si on a le clientSecret, afficher le paiement Stripe
+	if (clientSecret) {
+		return (
+			<div className="space-y-6">
+				{/* Bouton retour */}
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={() => setClientSecret(null)}
+					className="text-muted-foreground hover:text-foreground"
+				>
+					<ArrowLeft className="w-4 h-4 mr-2" />
+					Modifier mon adresse
+				</Button>
+
+				{/* En-tête paiement */}
+				<div className="space-y-2">
+					<h2 className="text-xl font-semibold flex items-center gap-2">
+						<CreditCard className="w-5 h-5" />
+						Paiement sécurisé
+					</h2>
+					<p className="text-sm text-muted-foreground">
+						Finalise ta commande avec Stripe, leader de la sécurité des
+						paiements en ligne.
+					</p>
+				</div>
+
+				{/* Formulaire Stripe Embedded */}
+				<div className="rounded-lg border overflow-hidden">
+					<EmbeddedCheckoutWrapper clientSecret={clientSecret} />
+				</div>
+
+				{/* Message sécurité */}
+				<div className="flex items-start gap-2 p-4 bg-muted/50 rounded-lg border text-sm text-muted-foreground">
+					<Shield className="w-4 h-4 mt-0.5 shrink-0" />
+					<p>
+						Tes informations de paiement sont protégées par le chiffrement SSL.
+						Je n'enregistre jamais tes coordonnées bancaires.
+					</p>
+				</div>
+
+				{/* Info commande */}
+				{orderInfo && (
+					<p className="text-xs text-muted-foreground text-center">
+						Commande n°{orderInfo.orderNumber}
+					</p>
+				)}
+			</div>
+		);
+	}
+
 	return (
 		<form
 			action={action}
@@ -125,7 +193,9 @@ export function CheckoutForm({
 			<form.Subscribe selector={(state) => [state.values]}>
 				{([values]) => {
 					const v = values as Record<string, unknown>;
-					const shippingValues = v?.shipping as Record<string, string> | undefined;
+					const shippingValues = v?.shipping as
+						| Record<string, string>
+						| undefined;
 					return (
 						<>
 							<input
@@ -141,7 +211,13 @@ export function CheckoutForm({
 									phoneNumber: shippingValues?.phoneNumber || "",
 								})}
 							/>
-							{isGuest && <input type="hidden" name="email" value={(v?.email as string) || ""} />}
+							{isGuest && (
+								<input
+									type="hidden"
+									name="email"
+									value={(v?.email as string) || ""}
+								/>
+							)}
 						</>
 					);
 				}}
@@ -193,7 +269,9 @@ export function CheckoutForm({
 											className="text-foreground underline hover:no-underline font-medium"
 											onClick={() => {
 												if (typeof window !== "undefined") {
-													const shipping = form.state.values.shipping as Record<string, string> | undefined;
+													const shipping = form.state.values.shipping as
+														| Record<string, string>
+														| undefined;
 													localStorage.setItem(
 														STORAGE_KEYS.CHECKOUT_FORM_DRAFT,
 														JSON.stringify({
@@ -284,6 +362,7 @@ export function CheckoutForm({
 					{(field) => (
 						<field.InputField
 							label="Complément d'adresse"
+							optional
 							placeholder="Appartement, bâtiment, etc."
 							autoComplete="address-line2"
 							enterKeyHint="next"
@@ -372,7 +451,9 @@ export function CheckoutForm({
 				<div className="flex items-center justify-between min-h-11">
 					<span className="text-sm">
 						Pays : <strong>France</strong>
-						<span className="text-muted-foreground ml-1">(Livraison UE disponible)</span>
+						<span className="text-muted-foreground ml-1">
+							(Livraison UE disponible)
+						</span>
 					</span>
 					<button
 						type="button"
@@ -396,7 +477,8 @@ export function CheckoutForm({
 							enterKeyHint="done"
 						/>
 						<p className="text-sm text-muted-foreground">
-							Utilisé uniquement par le transporteur en cas de problème de livraison.
+							Utilisé uniquement par le transporteur en cas de problème de
+							livraison.
 						</p>
 					</div>
 				)}

@@ -9,12 +9,16 @@ interface TableProps extends React.ComponentProps<"table"> {
 	stickyHeader?: boolean;
 	/** Alterner les couleurs des lignes (zebra striping) */
 	striped?: boolean;
+	/** Caption accessible décrivant le contenu du tableau (WCAG 1.3.1) */
+	caption?: string;
 }
 
 function Table({
 	className,
 	stickyHeader,
 	striped,
+	caption,
+	children,
 	...props
 }: TableProps) {
 	return (
@@ -34,7 +38,10 @@ function Table({
 					className
 				)}
 				{...props}
-			/>
+			>
+				{caption && <TableCaption>{caption}</TableCaption>}
+				{children}
+			</table>
 		</div>
 	);
 }

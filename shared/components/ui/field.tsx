@@ -233,6 +233,8 @@ function FieldError({
 	return (
 		<div
 			role="alert"
+			aria-live="polite"
+			aria-atomic="true"
 			data-slot="field-error"
 			className={cn(
 				"text-destructive text-sm font-normal",

@@ -142,13 +142,14 @@ function SelectScrollUpButton({
 	return (
 		<SelectPrimitive.ScrollUpButton
 			data-slot="select-scroll-up-button"
+			aria-label="Faire défiler vers le haut"
 			className={cn(
 				"flex cursor-default items-center justify-center py-2",
 				className
 			)}
 			{...props}
 		>
-			<ChevronUpIcon className="size-4" />
+			<ChevronUpIcon className="size-4" aria-hidden="true" />
 		</SelectPrimitive.ScrollUpButton>
 	);
 }
@@ -160,13 +161,14 @@ function SelectScrollDownButton({
 	return (
 		<SelectPrimitive.ScrollDownButton
 			data-slot="select-scroll-down-button"
+			aria-label="Faire défiler vers le bas"
 			className={cn(
 				"flex cursor-default items-center justify-center py-2",
 				className
 			)}
 			{...props}
 		>
-			<ChevronDownIcon className="size-4" />
+			<ChevronDownIcon className="size-4" aria-hidden="true" />
 		</SelectPrimitive.ScrollDownButton>
 	);
 }

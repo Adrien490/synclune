@@ -36,6 +36,7 @@ function AlertDialogOverlay({
 	return (
 		<AlertDialogPrimitive.Overlay
 			data-slot="alert-dialog-overlay"
+			aria-hidden="true"
 			className={cn(
 				"fixed inset-0 z-[80] bg-foreground/50 backdrop-blur-sm",
 				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",

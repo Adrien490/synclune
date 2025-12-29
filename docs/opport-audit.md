@@ -67,7 +67,6 @@ Couleurs oklch définies dans `globals.css`:
 
 | Section | Priorité | Justification |
 |---------|----------|---------------|
-| **Bestsellers** | 🔴 Haute | 65% des visiteurs cherchent les "meilleures ventes" |
 | **Social proof** | 🔴 Haute | Avis clients = +270% conversion (Spiegel Research) |
 | **Instagram feed** | 🟡 Moyenne | UGC authentique, preuve sociale visuelle |
 | **Sustainability** | 🟡 Moyenne | 80% Gen Z vérifie avant achat |

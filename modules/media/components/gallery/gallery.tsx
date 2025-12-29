@@ -6,6 +6,7 @@ import useEmblaCarousel from "embla-carousel-react";
 
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "@/shared/hooks";
+import Image from "next/image";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
 import dynamic from "next/dynamic";
@@ -50,6 +51,10 @@ function GalleryLoadingSkeleton() {
 	);
 }
 
+// Constantes pour le nombre max de thumbnails visibles (Baymard UX)
+const MAX_VISIBLE_THUMBNAILS_DESKTOP = 6;
+const MAX_VISIBLE_THUMBNAILS_MOBILE = 5;
+
 // Composant réutilisable pour éviter duplication desktop/mobile
 interface GalleryThumbnailListProps {
 	images: ProductMedia[];
@@ -58,6 +63,7 @@ interface GalleryThumbnailListProps {
 	title: string;
 	onScrollTo: (index: number) => void;
 	onError: (mediaId: string) => void;
+	onOpenLightbox: () => void;
 	variant: "desktop" | "mobile";
 }
 
@@ -68,9 +74,16 @@ function GalleryThumbnailList({
 	title,
 	onScrollTo,
 	onError,
+	onOpenLightbox,
 	variant,
 }: GalleryThumbnailListProps) {
 	const isDesktop = variant === "desktop";
+	const maxVisible = isDesktop ? MAX_VISIBLE_THUMBNAILS_DESKTOP : MAX_VISIBLE_THUMBNAILS_MOBILE;
+	const totalImages = images.length;
+	const hasMoreImages = totalImages > maxVisible;
+	const visibleImages = hasMoreImages ? images.slice(0, maxVisible - 1) : images;
+	const remainingCount = hasMoreImages ? totalImages - (maxVisible - 1) : 0;
+	const lastVisibleMedia = hasMoreImages ? images[maxVisible - 1] : null;
 
 	return (
 		<div className={isDesktop ? "hidden md:block order-1" : "md:hidden order-3 mt-3"}>
@@ -79,7 +92,7 @@ function GalleryThumbnailList({
 				role="tablist"
 				aria-label="Vignettes"
 			>
-				{images.map((media, index) => (
+				{visibleImages.map((media, index) => (
 					<GalleryThumbnail
 						key={media.id}
 						media={media}
@@ -93,6 +106,38 @@ function GalleryThumbnailList({
 						isLCPCandidate={index === 0}
 					/>
 				))}
+				{/* Badge "+X photos" sur la dernière thumbnail quand images tronquées (Baymard UX) */}
+				{hasMoreImages && lastVisibleMedia && (
+					<button
+						type="button"
+						onClick={onOpenLightbox}
+						className={cn(
+							"relative overflow-hidden rounded-xl aspect-square",
+							"border-2 border-border hover:border-primary/50",
+							"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none",
+							"transition-all duration-200 active:scale-95",
+							isDesktop ? "w-full hover:shadow-sm" : "w-14 h-14"
+						)}
+						aria-label={`Voir ${remainingCount} photos supplémentaires`}
+					>
+						{/* Image de fond floutée */}
+						<Image
+							src={lastVisibleMedia.mediaType === "VIDEO" ? (lastVisibleMedia.thumbnailUrl || "") : lastVisibleMedia.url}
+							alt=""
+							fill
+							className="object-cover blur-[2px] brightness-50"
+							sizes="80px"
+							quality={30}
+							loading="lazy"
+						/>
+						{/* Overlay avec compteur */}
+						<div className="absolute inset-0 flex items-center justify-center bg-black/40">
+							<span className="text-white font-semibold text-sm">
+								+{remainingCount}
+							</span>
+						</div>
+					</button>
+				)}
 			</div>
 		</div>
 	);
@@ -306,6 +351,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 							title={title}
 							onScrollTo={scrollTo}
 							onError={handleThumbnailError}
+							onOpenLightbox={open}
 							variant="desktop"
 						/>
 					)}
@@ -373,6 +419,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 							title={title}
 							onScrollTo={scrollTo}
 							onError={handleThumbnailError}
+							onOpenLightbox={open}
 							variant="mobile"
 						/>
 					)}

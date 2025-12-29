@@ -132,6 +132,7 @@ export function PriceRangeInputs({
 					<div className="flex-1">
 						<Input
 							type="number"
+							inputMode="numeric"
 							min={0}
 							max={value[1]}
 							value={minInput}
@@ -145,6 +146,7 @@ export function PriceRangeInputs({
 					<div className="flex-1">
 						<Input
 							type="number"
+							inputMode="numeric"
 							min={value[0]}
 							max={maxPrice}
 							value={maxInput}
