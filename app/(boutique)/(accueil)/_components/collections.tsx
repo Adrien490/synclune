@@ -56,7 +56,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							id="collections-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
-							Je rajoute une petite touche personnelle à chaque création <Heart className="size-4 text-primary" />
+							Je rajoute une petite touche personnelle à chaque création <Heart className="inline size-4 text-primary fill-primary" />
 						</p>
 					</Fade>
 				</header>

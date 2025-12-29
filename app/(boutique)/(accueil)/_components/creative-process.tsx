@@ -1,7 +1,7 @@
 import { Fade, Reveal, Stagger } from "@/shared/components/animations";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
-import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/section-title";
+import { Button } from "@/shared/components/ui/button";
 import { IMAGES } from "@/shared/constants/images";
 import { STEP_COLORS } from "@/shared/constants/process-steps";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
@@ -141,9 +141,8 @@ export function CreativeProcess() {
 						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto">
 							De l'inspiration à la finition
 							<span className="hidden sm:inline">
-								, voici quelques étapes explicatives !
+								, voici quelques étapes !
 							</span>
-							.
 						</p>
 					</Fade>
 				</header>
