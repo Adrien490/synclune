@@ -1,12 +1,18 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import type { ColorSwatch, ProductFromList, SkuFromList } from "./product-list.types";
+import type {
+	StockStatus as SharedStockStatus,
+	ProductStockInfo as SharedProductStockInfo,
+	ProductVariantInfo as SharedProductVariantInfo,
+} from "@/shared/types/product-sku.types";
 
 // Re-export des types depuis product.types.ts (source de vérité)
-export type {
-	ProductSku,
-	ProductType,
-	ProductVariantInfo,
-} from "./product.types";
+export type { ProductSku, ProductType } from "./product.types";
+
+// Re-export depuis shared (évite la dépendance circulaire)
+export type ProductVariantInfo = SharedProductVariantInfo;
+export type StockStatus = SharedStockStatus;
+export type ProductStockInfo = SharedProductStockInfo;
 
 // ============================================================================
 // TYPES SPÉCIFIQUES AUX SERVICES
@@ -49,17 +55,8 @@ export type ProductImage = {
 };
 
 // ============================================================================
-// PRODUCT STOCK
+// PRODUCT STOCK (types exportés en haut du fichier depuis shared)
 // ============================================================================
-
-export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
-
-export type ProductStockInfo = {
-	status: StockStatus;
-	totalInventory: number;
-	availableSkus: number;
-	message: string;
-};
 
 // ============================================================================
 // PRODUCT PRICING (from services/)

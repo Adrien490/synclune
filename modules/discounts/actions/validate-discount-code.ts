@@ -46,15 +46,12 @@ export async function validateDiscountCode(
 				return { valid: false, error: "Format de code invalide" };
 			}
 			if (path === "subtotal") {
-				console.error("[VALIDATE_DISCOUNT] subtotal invalide:", subtotal, "type:", typeof subtotal);
 				return { valid: false, error: "Erreur de calcul du panier" };
 			}
 			if (path === "userId") {
-				console.error("[VALIDATE_DISCOUNT] userId invalide:", userId);
 				// On continue sans userId plutôt que bloquer
 			}
 			if (path === "customerEmail") {
-				console.error("[VALIDATE_DISCOUNT] customerEmail invalide:", customerEmail);
 				// On continue sans email plutôt que bloquer
 			}
 
@@ -166,8 +163,7 @@ export async function validateDiscountCode(
 				discountAmount,
 			},
 		};
-	} catch (error) {
-		console.error("[VALIDATE_DISCOUNT_CODE]", error);
+	} catch {
 		return { valid: false, error: "Erreur lors de la validation du code" };
 	}
 }

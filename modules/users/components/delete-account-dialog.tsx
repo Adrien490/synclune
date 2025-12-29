@@ -14,9 +14,10 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useDeleteAccount } from "@/modules/users/hooks/use-delete-account";
+import { USER_CONSTANTS } from "@/modules/users/constants/profile.constants";
 import { useState } from "react";
 
-const CONFIRMATION_TEXT = "SUPPRIMER";
+const CONFIRMATION_TEXT = USER_CONSTANTS.ACCOUNT_DELETION_CONFIRMATION;
 
 export function DeleteAccountDialog() {
 	const [open, setOpen] = useState(false);

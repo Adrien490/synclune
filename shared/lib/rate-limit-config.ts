@@ -579,3 +579,55 @@ export const ADMIN_USER_LIMITS = {
 	SEND_RESET: ADMIN_USER_SEND_RESET_LIMIT,
 	INVALIDATE_SESSIONS: ADMIN_USER_INVALIDATE_SESSIONS_LIMIT,
 } as const;
+
+// ========================================
+// 📦 STOCK & NOTIFICATIONS
+// ========================================
+
+/**
+ * Limite pour la souscription aux notifications de stock
+ *
+ * Stricte car action anonyme possible (email uniquement)
+ */
+export const STOCK_NOTIFICATION_SUBSCRIBE_LIMIT: RateLimitConfig = {
+	limit: 5, // 5 souscriptions maximum
+	windowMs: hours(1), // par heure
+};
+
+// ========================================
+// 💰 ADMIN SKU OPERATIONS
+// ========================================
+
+/**
+ * Limite pour l'ajustement de stock d'un SKU (admin)
+ *
+ * Modérée pour permettre les ajustements rapides
+ */
+export const ADMIN_SKU_ADJUST_STOCK_LIMIT: RateLimitConfig = {
+	limit: 20, // 20 ajustements maximum
+	windowMs: minutes(1), // par minute
+};
+
+/**
+ * Limite pour la mise à jour de prix d'un SKU (admin)
+ *
+ * Modérée pour permettre les modifications rapides
+ */
+export const ADMIN_SKU_UPDATE_PRICE_LIMIT: RateLimitConfig = {
+	limit: 20, // 20 modifications maximum
+	windowMs: minutes(1), // par minute
+};
+
+// ========================================
+// 📧 CONTACT ADMIN
+// ========================================
+
+/**
+ * Limite pour l'envoi de messages au créateur (admin)
+ *
+ * Stricte car envoie un email
+ */
+export const ADMIN_CONTACT_LIMIT: RateLimitConfig = {
+	limit: 5, // 5 emails maximum
+	windowMs: hours(1), // par heure
+};

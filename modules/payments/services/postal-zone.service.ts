@@ -1,5 +1,5 @@
 /**
- * @deprecated Importer depuis @/modules/orders/utils/postal-zone.utils
+ * @deprecated Importer depuis @/modules/orders/services/shipping-zone.service
  *
  * Ce fichier est conservé pour compatibilité et ré-exporte depuis le nouvel emplacement.
  */
@@ -9,4 +9,4 @@ export {
 	FRENCH_METROPOLITAN_DEPARTMENTS,
 	type ShippingZone,
 	type ShippingZoneResult,
-} from "@/modules/orders/utils/postal-zone.utils";
+} from "@/modules/orders/services/shipping-zone.service";

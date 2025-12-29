@@ -4,6 +4,7 @@ import {
 	directionSchema,
 } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
+import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
 	GET_INVENTORY_DEFAULT_PER_PAGE,
 	GET_INVENTORY_DEFAULT_SORT_BY,
@@ -12,26 +13,15 @@ import {
 } from "../constants/inventory.constants";
 
 // ============================================================================
-// HELPERS
-// ============================================================================
-
-const stringOrStringArray = z
-	.union([
-		z.string().min(1).max(100),
-		z.array(z.string().min(1).max(100)).max(50),
-	])
-	.optional();
-
-// ============================================================================
 // FILTERS SCHEMA
 // ============================================================================
 
 export const stockLevelSchema = z.enum(["critical", "low", "normal", "high"]).optional();
 
 export const inventoryFiltersSchema = z.object({
-	productTypeId: stringOrStringArray,
-	colorId: stringOrStringArray,
-	material: stringOrStringArray,
+	productTypeId: optionalStringOrStringArraySchema,
+	colorId: optionalStringOrStringArraySchema,
+	material: optionalStringOrStringArraySchema,
 	stockLevel: stockLevelSchema,
 	hasActiveReservations: z
 		.union([z.boolean(), z.enum(["true", "false"])])

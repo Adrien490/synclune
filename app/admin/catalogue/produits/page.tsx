@@ -7,6 +7,7 @@ import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { getProducts } from "@/modules/products/data/get-products";
 import { GET_PRODUCTS_SORT_FIELDS } from "@/modules/products/data/get-products";
+import { ADMIN_PRODUCTS_SORT_LABELS } from "@/modules/products/constants/product.constants";
 import { parseProductParams } from "@/modules/products/utils/parse-product-params";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -80,19 +81,6 @@ export const metadata: Metadata = {
 
 type ProductsAdminPageProps = {
 	searchParams: Promise<ProductsSearchParams>;
-};
-
-const SORT_LABELS: Record<string, string> = {
-	"title-ascending": "Titre (A-Z)",
-	"title-descending": "Titre (Z-A)",
-	"price-ascending": "Prix croissant",
-	"price-descending": "Prix décroissant",
-	"created-ascending": "Plus anciens",
-	"created-descending": "Plus récents",
-	createdAt: "Date de création",
-	updatedAt: "Date de mise à jour",
-	title: "Titre",
-	type: "Type",
 };
 
 export default async function ProductsAdminPage({
@@ -179,7 +167,7 @@ export default async function ProductsAdminPage({
 						label="Trier par"
 						options={GET_PRODUCTS_SORT_FIELDS.map((field) => ({
 							value: field,
-							label: SORT_LABELS[field] || field,
+							label: ADMIN_PRODUCTS_SORT_LABELS[field] || field,
 						}))}
 						placeholder="Plus récents"
 						className="w-full sm:min-w-[180px]"

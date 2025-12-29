@@ -1,62 +1,64 @@
-import type { MotionProps, Transition, Variants } from "framer-motion";
-
-/**
- * Base motion props that can be passed to override default animations
- */
-export interface BaseMotionProps {
-	initial?: MotionProps["initial"];
-	animate?: MotionProps["animate"];
-	exit?: MotionProps["exit"];
-	variants?: Variants;
-	transition?: Transition;
-	motionProps?: Omit<
-		MotionProps,
-		"initial" | "animate" | "exit" | "variants" | "transition" | "children"
-	>;
-}
-
-/**
- * Common props shared across animation components
- */
-export interface CommonAnimationProps extends BaseMotionProps {
-	className?: string;
-	duration?: number;
-	delay?: number;
-}
+import type { ReactNode } from "react";
 
 /**
  * Props for Fade component
  */
-export interface FadeProps extends CommonAnimationProps {
+export interface FadeProps {
+	children: ReactNode;
+	className?: string;
+	delay?: number;
+	duration?: number;
 	y?: number;
+	inView?: boolean;
+	once?: boolean;
 }
 
 /**
  * Props for Slide component
  */
-export interface SlideProps extends CommonAnimationProps {
-	direction?: "up" | "down" | "left" | "right";
+export interface SlideProps {
+	children: ReactNode;
+	className?: string;
+	direction?: SlideDirection;
 	distance?: number;
+	delay?: number;
+	duration?: number;
 }
 
 /**
  * Props for Reveal component (whileInView)
  */
-export interface RevealProps extends CommonAnimationProps {
+export interface RevealProps {
+	children: ReactNode;
+	className?: string;
+	delay?: number;
+	duration?: number;
 	y?: number;
 	once?: boolean;
-	amount?: number | "some" | "all";
+	amount?: ViewportAmount;
+	role?: string;
+	/** Data attributes (e.g., data-testid) */
+	[key: `data-${string}`]: string | undefined;
 }
 
 /**
  * Props for Stagger component
  */
-export interface StaggerProps extends BaseMotionProps {
+export interface StaggerProps {
+	children: ReactNode;
 	className?: string;
 	stagger?: number;
-	delayChildren?: number;
-	initial?: "hidden" | false;
-	animate?: "show" | false;
+	delay?: number;
+	y?: number;
+	/** Enable scroll-triggered animation with whileInView */
+	inView?: boolean;
+	/** Only animate once when entering viewport (default: true) */
+	once?: boolean;
+	/** Portion of element that must be visible to trigger (default: 0.2) */
+	amount?: ViewportAmount;
+	role?: string;
+	/** Data attributes (e.g., data-carousel-scroll) */
+	[key: `data-${string}`]: string | undefined;
 }
 
 /**

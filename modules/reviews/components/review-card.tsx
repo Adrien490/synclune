@@ -1,41 +1,22 @@
-"use client"
+import { CardContent } from "@/shared/components/ui/card";
+import { cn } from "@/shared/utils/cn";
+import { formatRelativeDate } from "@/shared/utils/dates";
+import { RatingStars } from "@/shared/components/rating-stars";
+import { ReviewCardGallery } from "./review-card-gallery";
 
-import { useState } from "react"
-import Image from "next/image"
-
-import dynamic from "next/dynamic"
-
-// Lazy loading - lightbox charge uniquement a l'ouverture
-const MediaLightbox = dynamic(
-	() => import("@/modules/media/components/media-lightbox"),
-	{ ssr: false }
-)
-import { CardContent } from "@/shared/components/ui/card"
-import { cn } from "@/shared/utils/cn"
-import { formatRelativeDate } from "@/shared/utils/dates"
-import { RatingStars } from "@/shared/components/rating-stars"
-
-import type { ReviewPublic } from "../types/review.types"
+import type { ReviewPublic } from "../types/review.types";
 
 interface ReviewCardProps {
-	review: ReviewPublic
-	className?: string
+	review: ReviewPublic;
+	className?: string;
 }
 
 /**
- * Carte d'affichage d'un avis client
+ * Carte d'affichage d'un avis client (Server Component)
+ * La galerie photos est extraite dans un Client Component séparé
  */
 export function ReviewCard({ review, className }: ReviewCardProps) {
-	const [lightboxOpen, setLightboxOpen] = useState(false)
-	const [lightboxIndex, setLightboxIndex] = useState(0)
-	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
-
-	const hasMedia = review.medias.length > 0
-
-	const openLightbox = (index: number) => {
-		setLightboxIndex(index)
-		setLightboxOpen(true)
-	}
+	const hasMedia = review.medias.length > 0;
 
 	return (
 		<article
@@ -78,45 +59,8 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 					</p>
 				</div>
 
-				{/* Photos (galerie) */}
-				{hasMedia && (
-					<>
-						<div className="flex gap-2 flex-wrap">
-							{review.medias.map((media, index) => (
-								<button
-									key={media.id}
-									type="button"
-									onClick={() => openLightbox(index)}
-									aria-label={`Voir la photo ${index + 1} de l'avis`}
-									className="relative size-20 md:size-24 rounded-lg overflow-hidden group cursor-zoom-in"
-								>
-									{/* Skeleton shimmer pendant chargement */}
-									{!loadedImages.has(media.id) && (
-										<div className="absolute inset-0 animate-shimmer rounded-lg" />
-									)}
-									<Image
-										src={media.url}
-										alt={media.altText || `Photo ${index + 1}`}
-										fill
-										onLoad={() => setLoadedImages((prev) => new Set(prev).add(media.id))}
-										className={cn(
-											"object-cover motion-safe:transition-all motion-safe:duration-300 motion-safe:group-hover:scale-105",
-											loadedImages.has(media.id) ? "opacity-100" : "opacity-0"
-										)}
-										sizes="(min-width: 768px) 96px, 80px"
-										quality={75}
-									/>
-								</button>
-							))}
-						</div>
-						<MediaLightbox
-							open={lightboxOpen}
-							close={() => setLightboxOpen(false)}
-							slides={review.medias.map((m) => ({ src: m.url }))}
-							index={lightboxIndex}
-						/>
-					</>
-				)}
+				{/* Photos (galerie) - Client Component */}
+				{hasMedia && <ReviewCardGallery medias={review.medias} />}
 
 				{/* Réponse de la marque (si présente) */}
 				{review.response && (
@@ -138,5 +82,5 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 				)}
 			</CardContent>
 		</article>
-	)
+	);
 }

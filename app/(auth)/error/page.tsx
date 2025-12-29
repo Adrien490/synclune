@@ -1,5 +1,6 @@
 import { Logo } from "@/shared/components/logo";
 import { Button } from "@/shared/components/ui/button";
+import { getAuthErrorMessage } from "@/modules/auth/constants/error-messages";
 import { crimsonPro } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { AlertCircle, ArrowLeft } from "lucide-react";
@@ -12,43 +13,13 @@ export const metadata: Metadata = {
 	robots: "noindex, nofollow",
 };
 
-const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
-	unable_to_create_user: {
-		title: "Impossible de créer ton compte",
-		description:
-			"Une erreur est survenue lors de la création de ton compte. Réessaye ou inscris-toi avec une autre méthode.",
-	},
-	user_already_exists: {
-		title: "Compte existant",
-		description:
-			"Un compte avec cette adresse email existe déjà. Connecte-toi ou utilise une autre adresse email.",
-	},
-	invalid_credentials: {
-		title: "Identifiants invalides",
-		description:
-			"L'adresse email ou le mot de passe est incorrect. Réessaye.",
-	},
-	email_not_verified: {
-		title: "Email non vérifié",
-		description:
-			"Vérifie ton adresse email avant de te connecter. Un email de vérification a été envoyé à ton adresse.",
-	},
-	default: {
-		title: "Erreur d'authentification",
-		description:
-			"Une erreur inattendue est survenue. Réessaye ultérieurement.",
-	},
-};
-
 interface ErrorPageProps {
 	searchParams: Promise<{ error?: string }>;
 }
 
 export default async function ErrorPage({ searchParams }: ErrorPageProps) {
 	const params = await searchParams;
-	const errorType = params.error || "default";
-	const errorInfo =
-		ERROR_MESSAGES[errorType] || ERROR_MESSAGES.default;
+	const errorInfo = getAuthErrorMessage(params.error);
 
 	return (
 		<div className="relative">

@@ -15,57 +15,10 @@ import {
 	maybeReduceMotion,
 } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
-import type { FabKey } from "@/shared/constants/fab";
+import type { SpeedDialAction, SpeedDialFabProps } from "@/shared/types/fab.types";
 import Link from "next/link";
 
-interface SpeedDialTooltipContent {
-	/** Titre du tooltip (gras) */
-	title: string;
-	/** Description optionnelle (sous le titre) */
-	description?: string;
-}
-
-export interface SpeedDialAction {
-	/** Identifiant unique de l'action */
-	id: string;
-	/** Icône de l'action */
-	icon: React.ReactNode;
-	/** Label de l'action (affiché dans le tooltip) */
-	label: string;
-	/** Callback au click (pour actions custom comme dialog) */
-	onClick?: () => void;
-	/** Lien de navigation (alternatif à onClick) */
-	href?: string;
-	/** Variante visuelle */
-	variant?: "default" | "secondary";
-}
-
-export interface SpeedDialFabProps {
-	/** Clé du FAB pour la persistance de visibilité */
-	fabKey: FabKey;
-	/** Etat initial de visibilité (depuis le cookie serveur) */
-	initialHidden?: boolean;
-	/** Icône principale du FAB (défaut: Plus) */
-	mainIcon?: React.ReactNode;
-	/** Icône quand ouvert (défaut: X) */
-	openIcon?: React.ReactNode;
-	/** Contenu du tooltip principal */
-	tooltip: SpeedDialTooltipContent;
-	/** Actions disponibles dans le speed dial */
-	actions: SpeedDialAction[];
-	/** Label accessible pour le bouton principal */
-	ariaLabel: string;
-	/** Description accessible (sr-only) */
-	ariaDescription?: string;
-	/** Tooltip pour le bouton "afficher" (mode caché) */
-	showTooltip?: string;
-	/** Tooltip pour le bouton "masquer" */
-	hideTooltip?: string;
-	/** Masquer sur mobile (défaut: true) */
-	hideOnMobile?: boolean;
-	/** Classes CSS additionnelles pour le bouton principal */
-	className?: string;
-}
+export type { SpeedDialAction, SpeedDialFabProps, FabTooltipContent } from "@/shared/types/fab.types";
 
 /**
  * Speed Dial FAB - Menu d'actions rapides flottant

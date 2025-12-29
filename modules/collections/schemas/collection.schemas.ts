@@ -106,7 +106,7 @@ export const createCollectionSchema = z.object({
 });
 
 export const updateCollectionSchema = z.object({
-	id: z.cuid("ID invalide"),
+	id: z.cuid2("ID invalide"),
 	name: collectionNameSchema,
 	slug: collectionSlugSchema,
 	description: collectionDescriptionSchema,
@@ -114,12 +114,12 @@ export const updateCollectionSchema = z.object({
 });
 
 export const updateCollectionStatusSchema = z.object({
-	id: z.cuid("ID invalide"),
+	id: z.cuid2("ID invalide"),
 	status: z.nativeEnum(CollectionStatus),
 });
 
 export const deleteCollectionSchema = z.object({
-	id: z.cuid("ID invalide"),
+	id: z.cuid2("ID invalide"),
 });
 
 export const bulkDeleteCollectionsSchema = z.object({

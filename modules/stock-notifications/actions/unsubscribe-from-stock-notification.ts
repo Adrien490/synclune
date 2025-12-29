@@ -9,6 +9,7 @@ import { auth } from "@/modules/auth/lib/auth";
 import { unsubscribeFromStockNotificationSchema } from "../schemas/stock-notification.schemas";
 import { getStockNotificationInvalidationTags } from "../constants/cache";
 import { getNotificationByToken } from "../data/get-notification-by-token";
+import { getNotificationById } from "../data/get-notification-by-id";
 
 /**
  * Server Action pour se désinscrire d'une notification de retour en stock
@@ -73,7 +74,10 @@ export async function unsubscribeFromStockNotification(
 		// Invalider le cache
 		const tagsToInvalidate = getStockNotificationInvalidationTags(
 			notification.skuId,
-			notification.userId
+			notification.userId,
+			notification.email,
+			notification.unsubscribeToken,
+			notification.id
 		);
 		tagsToInvalidate.forEach((tag) => updateTag(tag));
 
@@ -119,24 +123,8 @@ export async function cancelStockNotification(
 			};
 		}
 
-		// 2. Récupérer la demande de notification avec email
-		const notification = await prisma.stockNotificationRequest.findUnique({
-			where: { id: notificationId },
-			select: {
-				id: true,
-				skuId: true,
-				userId: true,
-				email: true,
-				status: true,
-				sku: {
-					select: {
-						product: {
-							select: { title: true },
-						},
-					},
-				},
-			},
-		});
+		// 2. Récupérer la demande de notification
+		const notification = await getNotificationById(notificationId);
 
 		if (!notification) {
 			return {
@@ -177,7 +165,10 @@ export async function cancelStockNotification(
 		// 6. Invalider le cache
 		const tagsToInvalidate = getStockNotificationInvalidationTags(
 			notification.skuId,
-			notification.userId
+			notification.userId,
+			notification.email,
+			notification.unsubscribeToken,
+			notification.id
 		);
 		tagsToInvalidate.forEach((tag) => updateTag(tag));
 

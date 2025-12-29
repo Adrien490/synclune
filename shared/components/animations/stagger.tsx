@@ -1,25 +1,11 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Children, type ReactNode } from "react";
+import { Children } from "react";
 import { MOTION_CONFIG } from "./motion.config";
+import type { StaggerProps } from "./types";
 
-export interface StaggerProps {
-	children: ReactNode;
-	className?: string;
-	stagger?: number;
-	delay?: number;
-	y?: number;
-	/** Enable scroll-triggered animation with whileInView */
-	inView?: boolean;
-	/** Only animate once when entering viewport (default: true) */
-	once?: boolean;
-	/** Portion of element that must be visible to trigger (default: 0.2) */
-	amount?: number | "some" | "all";
-	role?: string;
-	/** Data attributes (e.g., data-carousel-scroll) */
-	[key: `data-${string}`]: string | undefined;
-}
+export type { StaggerProps };
 
 /**
  * Animation stagger ultra-simple avec support prefers-reduced-motion

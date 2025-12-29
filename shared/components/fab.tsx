@@ -15,43 +15,9 @@ import {
 	maybeReduceMotion,
 } from "@/shared/components/animations/motion.config";
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
-import type { FabKey } from "@/shared/constants/fab";
+import type { FabProps } from "@/shared/types/fab.types";
 
-interface FabTooltipContent {
-	/** Titre du tooltip (gras) */
-	title: string;
-	/** Description optionnelle (sous le titre) */
-	description?: string;
-}
-
-export interface FabProps {
-	/** Clé du FAB pour la persistance de visibilité */
-	fabKey: FabKey;
-	/** Etat initial de visibilité (depuis le cookie serveur) */
-	initialHidden?: boolean;
-	/** Icône à afficher dans le FAB */
-	icon: React.ReactNode;
-	/** Badge optionnel affiché en haut à droite du FAB */
-	badge?: React.ReactNode;
-	/** Contenu du tooltip principal */
-	tooltip: FabTooltipContent;
-	/** Contenu optionnel à afficher à côté du FAB */
-	children?: React.ReactNode;
-	/** Label accessible pour le bouton principal */
-	ariaLabel: string;
-	/** Description accessible (sr-only) */
-	ariaDescription?: string;
-	/** Tooltip pour le bouton "afficher" (mode caché) */
-	showTooltip?: string;
-	/** Tooltip pour le bouton "masquer" */
-	hideTooltip?: string;
-	/** Masquer sur mobile (défaut: true) */
-	hideOnMobile?: boolean;
-	/** Classes CSS additionnelles pour le bouton principal */
-	className?: string;
-	/** Callback appelé au click sur le bouton principal */
-	onClick?: () => void;
-}
+export type { FabProps, FabTooltipContent } from "@/shared/types/fab.types";
 
 /**
  * Floating Action Button générique avec système de visibilité

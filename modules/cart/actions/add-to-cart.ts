@@ -15,6 +15,7 @@ import {
 	getOrCreateCartSessionId,
 } from "@/modules/cart/lib/cart-session";
 import { addToCartSchema } from "../schemas/cart.schemas";
+import { handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour ajouter un article au panier
@@ -228,12 +229,6 @@ export async function addToCart(
 			},
 		};
 	} catch (e) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				e instanceof Error
-					? e.message
-					: "Une erreur est survenue lors de l'ajout au panier",
-		};
+		return handleActionError(e, "Une erreur est survenue lors de l'ajout au panier");
 	}
 }

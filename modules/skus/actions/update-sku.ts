@@ -13,6 +13,7 @@ import {
 	parsePrimaryImageFromForm,
 	parseGalleryMediaFromForm,
 } from "../utils/parse-media-from-form";
+import { handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour mettre à jour une variante de produit (Product SKU)
@@ -304,20 +305,12 @@ export async function updateProductSku(
 			},
 		};
 	} catch (e) {
-		// Error handling
 		if (e instanceof Error && e.message.includes("Unique constraint")) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Un SKU avec ce code existe déjà.",
 			};
 		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				e instanceof Error
-					? e.message
-					: "Une erreur est survenue lors de la mise à jour de la variante. Veuillez réessayer.",
-		};
+		return handleActionError(e, "Une erreur est survenue lors de la mise à jour de la variante.");
 	}
 }

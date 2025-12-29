@@ -4,6 +4,7 @@ import {
 	directionSchema,
 } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
+import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
 	GET_VERIFICATIONS_SORT_FIELDS,
 	GET_VERIFICATIONS_DEFAULT_SORT_BY,
@@ -24,16 +25,9 @@ export const getVerificationSchema = z.object({
 // GET VERIFICATIONS SCHEMA (list)
 // ============================================================================
 
-const stringOrStringArray = z
-	.union([
-		z.string().min(1).max(100),
-		z.array(z.string().min(1).max(100)).max(50),
-	])
-	.optional();
-
 export const verificationFiltersSchema = z
 	.object({
-		identifier: stringOrStringArray,
+		identifier: optionalStringOrStringArraySchema,
 		expiresBefore: z.coerce
 			.date()
 			.min(new Date("2020-01-01"), "Date too old")

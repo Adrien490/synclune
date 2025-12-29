@@ -95,16 +95,16 @@ export const createColorSchema = z.object({
 });
 
 export const updateColorSchema = z.object({
-	id: z.cuid("ID invalide"),
+	id: z.cuid2("ID invalide"),
 	name: colorNameSchema,
 	slug: colorSlugSchema,
 	hex: hexColorSchema,
 });
 
 export const deleteColorSchema = z.object({
-	id: z.cuid("ID invalide"),
+	id: z.cuid2("ID invalide"),
 });
 
 export const bulkDeleteColorsSchema = z.object({
-	ids: z.array(z.cuid("ID invalide")).min(1, "Aucune couleur sélectionnée"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucune couleur sélectionnée"),
 });

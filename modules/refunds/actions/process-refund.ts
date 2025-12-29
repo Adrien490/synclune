@@ -5,13 +5,14 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
 import { processRefundSchema } from "../schemas/refund.schemas";
+import { handleActionError } from "@/shared/lib/actions";
 
 // Type pour le résultat de la query raw
 type RefundLockRow = {
@@ -273,9 +274,6 @@ export async function processRefund(
 			}
 		});
 
-		revalidatePath("/admin/ventes/remboursements");
-		revalidatePath("/admin/ventes/commandes");
-		revalidatePath("/admin/catalogue/inventaire");
 
 		// Invalider le cache d'inventaire si des articles ont été restockés
 		const restockedCount = refundData.items.filter((i) => i.restock).length;
@@ -319,11 +317,6 @@ export async function processRefund(
 					};
 			}
 		}
-
-		console.error("[PROCESS_REFUND]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: REFUND_ERROR_MESSAGES.PROCESS_FAILED,
-		};
+		return handleActionError(error, REFUND_ERROR_MESSAGES.PROCESS_FAILED);
 	}
 }

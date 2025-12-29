@@ -6,6 +6,9 @@ import type {
 	PaymentStatus,
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
+import type { CreateOrderAuditParams } from "../types/order-audit.types";
+
+export type { CreateOrderAuditParams };
 
 // ============================================================================
 // 🔴 ORDER AUDIT TRAIL (Best Practice Stripe 2025 + Conformité FR)
@@ -13,35 +16,6 @@ import type {
 // Trace automatique de toutes les modifications de commande
 // Requis pour conformité légale française (Art. L123-22 Code de Commerce)
 // Conservation 10 ans avec la commande
-
-/**
- * Paramètres pour créer une entrée d'audit
- */
-export interface CreateOrderAuditParams {
-	orderId: string;
-	action: OrderAction;
-
-	// Statuts avant/après (optionnels selon l'action)
-	previousStatus?: OrderStatus;
-	newStatus?: OrderStatus;
-	previousPaymentStatus?: PaymentStatus;
-	newPaymentStatus?: PaymentStatus;
-	previousFulfillmentStatus?: FulfillmentStatus;
-	newFulfillmentStatus?: FulfillmentStatus;
-
-	// Note explicative
-	note?: string;
-
-	// Métadonnées additionnelles (JSON)
-	metadata?: Record<string, unknown>;
-
-	// Auteur de l'action
-	authorId?: string;
-	authorName?: string;
-
-	// Source de l'action
-	source?: "admin" | "webhook" | "system" | "customer";
-}
 
 /**
  * Crée une entrée d'audit pour une commande

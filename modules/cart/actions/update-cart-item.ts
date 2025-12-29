@@ -14,6 +14,7 @@ import {
 	getCartSessionId,
 } from "@/modules/cart/lib/cart-session";
 import { updateCartItemSchema } from "../schemas/cart.schemas";
+import { handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour mettre à jour la quantité d'un article dans le panier
@@ -146,9 +147,6 @@ export async function updateCartItem(
 			message: `Quantité mise à jour (${validatedData.quantity})`,
 		};
 	} catch (e) {
-		return {
-			status: ActionStatus.ERROR,
-			message: e instanceof Error ? e.message : "Une erreur est survenue lors de la mise à jour",
-		};
+		return handleActionError(e, "Une erreur est survenue lors de la mise à jour");
 	}
 }

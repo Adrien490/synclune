@@ -6,11 +6,11 @@ import { Role } from "@/app/generated/prisma/client";
 // ============================================================================
 
 export const deleteUserSchema = z.object({
-	id: z.cuid("ID utilisateur invalide"),
+	id: z.cuid2("ID utilisateur invalide"),
 });
 
 export const bulkDeleteUsersSchema = z.object({
-	ids: z.array(z.cuid("ID invalide")).min(1, "Aucun utilisateur selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne"),
 });
 
 // ============================================================================
@@ -18,11 +18,11 @@ export const bulkDeleteUsersSchema = z.object({
 // ============================================================================
 
 export const suspendUserSchema = z.object({
-	id: z.cuid("ID utilisateur invalide"),
+	id: z.cuid2("ID utilisateur invalide"),
 });
 
 export const bulkSuspendUsersSchema = z.object({
-	ids: z.array(z.cuid("ID invalide")).min(1, "Aucun utilisateur selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne"),
 });
 
 // ============================================================================
@@ -30,11 +30,11 @@ export const bulkSuspendUsersSchema = z.object({
 // ============================================================================
 
 export const restoreUserSchema = z.object({
-	id: z.cuid("ID utilisateur invalide"),
+	id: z.cuid2("ID utilisateur invalide"),
 });
 
 export const bulkRestoreUsersSchema = z.object({
-	ids: z.array(z.cuid("ID invalide")).min(1, "Aucun utilisateur selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne"),
 });
 
 // ============================================================================
@@ -42,11 +42,11 @@ export const bulkRestoreUsersSchema = z.object({
 // ============================================================================
 
 export const changeUserRoleSchema = z.object({
-	id: z.cuid("ID utilisateur invalide"),
+	id: z.cuid2("ID utilisateur invalide"),
 	role: z.enum([Role.USER, Role.ADMIN]),
 });
 
 export const bulkChangeUserRoleSchema = z.object({
-	ids: z.array(z.cuid("ID invalide")).min(1, "Aucun utilisateur selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne"),
 	role: z.enum([Role.USER, Role.ADMIN]),
 });

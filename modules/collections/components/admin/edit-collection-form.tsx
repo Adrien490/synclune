@@ -11,15 +11,9 @@ import { useActionState } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { toast } from "sonner";
+import type { EditableCollection } from "@/modules/collections/types/editable-collection.types";
 
-/** Type minimal pour la collection en édition */
-export interface EditableCollection {
-	id: string;
-	name: string;
-	slug: string;
-	description: string | null;
-	status: CollectionStatus;
-}
+export type { EditableCollection };
 
 interface EditCollectionFormProps {
 	collection: EditableCollection;

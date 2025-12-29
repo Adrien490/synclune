@@ -15,42 +15,9 @@ import {
 } from "@/shared/components/ui/sheet";
 import { cn } from "@/shared/utils/cn";
 import { Filter, Loader2, X } from "lucide-react";
-import { ReactNode } from "react";
+import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
 
-export interface FilterSheetWrapperProps {
-	/** Number of active filters to display in badge */
-	activeFiltersCount?: number;
-	/** Whether there are any active filters */
-	hasActiveFilters?: boolean;
-	/** Callback to clear all filters */
-	onClearAll?: () => void;
-	/** Children (form content) */
-	children: ReactNode;
-	/** Callback when filters are applied */
-	onApply?: () => void;
-	/** Whether the operation is pending */
-	isPending?: boolean;
-	/** Custom trigger button className */
-	triggerClassName?: string;
-	/** Sheet title */
-	title?: string;
-	/** Sheet description (optional subtitle) */
-	description?: string;
-	/** Custom apply button text */
-	applyButtonText?: string;
-	/** Custom cancel button text */
-	cancelButtonText?: string;
-	/** Show cancel button */
-	showCancelButton?: boolean;
-	/** Controlled open state */
-	open?: boolean;
-	/** Callback when open state changes (for controlled mode) */
-	onOpenChange?: (open: boolean) => void;
-	/** Custom trigger element (if not provided, uses default button) */
-	trigger?: ReactNode;
-	/** Hide the default trigger button entirely (for external triggers) */
-	hideTrigger?: boolean;
-}
+export type { FilterSheetWrapperProps };
 
 export function FilterSheetWrapper({
 	activeFiltersCount = 0,

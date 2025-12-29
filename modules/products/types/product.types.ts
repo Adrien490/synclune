@@ -41,28 +41,8 @@ export type ProductCollections = GetProductReturn["collections"];
 export type ProductCollectionItem = ProductCollections[number];
 export type ProductCollection = ProductCollectionItem["collection"];
 
-export type ProductVariantInfo = {
-	availableColors: Array<{
-		id: string;
-		slug?: string;
-		hex?: string;
-		name: string;
-		availableSkus: number;
-	}>;
-	availableMaterials: Array<{
-		name: string;
-		availableSkus: number;
-	}>;
-	availableSizes: Array<{
-		size: string;
-		availableSkus: number;
-	}>;
-	priceRange: {
-		min: number;
-		max: number;
-	};
-	totalStock: number;
-};
+// Re-export depuis shared (évite la dépendance circulaire avec skus)
+export type { ProductVariantInfo } from "@/shared/types/product-sku.types";
 
 // ============================================================================
 // TYPES - PRODUCT LIST (Liste avec pagination)

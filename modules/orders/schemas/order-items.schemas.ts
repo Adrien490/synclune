@@ -4,6 +4,7 @@ import {
 	directionSchema,
 } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
+import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
 	GET_ORDER_ITEMS_DEFAULT_PER_PAGE,
 	GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE,
@@ -13,25 +14,14 @@ import {
 } from "../constants/order-items.constants";
 
 // ============================================================================
-// HELPERS
-// ============================================================================
-
-const stringOrStringArray = z
-	.union([
-		z.string().min(1).max(100),
-		z.array(z.string().min(1).max(100)).max(50),
-	])
-	.optional();
-
-// ============================================================================
 // FILTERS SCHEMA
 // ============================================================================
 
 export const orderItemFiltersSchema = z
 	.object({
-		orderId: stringOrStringArray,
-		productId: stringOrStringArray,
-		skuId: stringOrStringArray,
+		orderId: optionalStringOrStringArraySchema,
+		productId: optionalStringOrStringArraySchema,
+		skuId: optionalStringOrStringArraySchema,
 		priceMin: z.number().int().nonnegative().max(10000000).optional(),
 		priceMax: z.number().int().nonnegative().max(10000000).optional(),
 		quantityMin: z.number().int().nonnegative().max(1000).optional(),

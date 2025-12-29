@@ -1,52 +1,6 @@
-"use client";
+import type { InstagramIconProps } from "@/shared/types/icons.types";
 
-/**
- * Logo Instagram - Version minimaliste
- *
- * **Adaptation automatique au thème :**
- * - Utilise `currentColor` pour hériter la couleur du parent
- * - S'adapte automatiquement light/dark mode
- * - Aucune configuration nécessaire
- *
- * **Accessibilité WCAG 2.1 AA :**
- * - Support `decorative` pour éviter duplication si texte adjacent
- * - Label descriptif pour lecteurs d'écran
- *
- * @example
- * ```tsx
- * // ✅ Simple - hérite la couleur du parent
- * <div className="text-primary">
- *   <InstagramIcon size={24} />
- * </div>
- *
- * // ✅ Avec classe Tailwind
- * <InstagramIcon className="text-primary hover:text-primary/80" />
- *
- * // ✅ Footer social links
- * <a href="https://instagram.com/synclune" className="text-foreground hover:text-primary">
- *   <InstagramIcon decorative />
- *   <span className="sr-only">Suivre sur Instagram</span>
- * </a>
- * ```
- */
-export interface InstagramIconProps {
-	/** Classes Tailwind additionnelles */
-	className?: string;
-	/**
-	 * Taille en pixels (défaut: 24)
-	 * @default 24
-	 */
-	size?: number;
-	/**
-	 * Label pour lecteurs d'écran (défaut: "Suivre sur Instagram")
-	 */
-	ariaLabel?: string;
-	/**
-	 * Masquer aux lecteurs d'écran si l'icône est purement décorative
-	 * @default false
-	 */
-	decorative?: boolean;
-}
+export type { InstagramIconProps };
 
 export function InstagramIcon({
 	className = "",

@@ -1,3 +1,7 @@
+import type { StarIconProps } from "@/shared/types/icons.types";
+
+export type { StarIconProps };
+
 // Chemin SVG de l'étoile (Lucide star path)
 const STAR_PATH = "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
 
@@ -5,12 +9,6 @@ const sizeClasses = {
 	sm: "size-[18px]",
 	md: "size-5",
 	lg: "size-6",
-}
-
-export interface StarIconProps {
-	fillPercentage: number
-	size: "sm" | "md" | "lg"
-	gradientId: string
 }
 
 /**

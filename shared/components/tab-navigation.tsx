@@ -14,12 +14,9 @@ import {
 	DrawerBody,
 } from "@/shared/components/ui/drawer";
 import { cn } from "@/shared/utils/cn";
+import type { TabNavigationItem } from "@/shared/types/component.types";
 
-export interface TabNavigationItem {
-	label: string;
-	value: string;
-	href: string;
-}
+export type { TabNavigationItem };
 
 interface TabNavigationProps {
 	items: TabNavigationItem[];

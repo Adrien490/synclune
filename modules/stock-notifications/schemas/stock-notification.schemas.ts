@@ -11,7 +11,7 @@ import { createPerPageSchema } from "@/shared/utils/pagination";
  */
 export const subscribeToStockNotificationSchema = z.object({
 	/** ID du SKU concerné */
-	skuId: z.cuid("Identifiant de produit invalide"),
+	skuId: z.cuid2("Identifiant de produit invalide"),
 
 	/** Email du demandeur */
 	email: z
@@ -41,7 +41,7 @@ export type SubscribeToStockNotificationInput = z.infer<
  */
 export const unsubscribeFromStockNotificationSchema = z.object({
 	/** Token de désinscription unique */
-	token: z.cuid("Token de désinscription invalide"),
+	token: z.cuid2("Token de désinscription invalide"),
 });
 
 export type UnsubscribeFromStockNotificationInput = z.infer<
@@ -57,7 +57,7 @@ export type UnsubscribeFromStockNotificationInput = z.infer<
  */
 export const notifyStockAvailableSchema = z.object({
 	/** ID du SKU qui est de retour en stock */
-	skuId: z.cuid("Identifiant de SKU invalide"),
+	skuId: z.cuid2("Identifiant de SKU invalide"),
 
 	/** Quantité disponible en stock */
 	availableQuantity: z.number().int().min(1, "Le stock doit être positif"),
@@ -95,7 +95,7 @@ export type GetPendingNotificationsInput = z.infer<
  * Schema pour annuler plusieurs notifications en masse (admin)
  */
 export const bulkCancelStockNotificationsSchema = z.object({
-	ids: z.array(z.cuid()).min(1, "Au moins une notification doit être sélectionnée"),
+	ids: z.array(z.cuid2()).min(1, "Au moins une notification doit être sélectionnée"),
 });
 
 export type BulkCancelStockNotificationsInput = z.infer<
@@ -106,7 +106,7 @@ export type BulkCancelStockNotificationsInput = z.infer<
  * Schema pour supprimer définitivement plusieurs notifications (RGPD)
  */
 export const bulkDeleteStockNotificationsSchema = z.object({
-	ids: z.array(z.cuid()).min(1, "Au moins une notification doit être sélectionnée"),
+	ids: z.array(z.cuid2()).min(1, "Au moins une notification doit être sélectionnée"),
 });
 
 export type BulkDeleteStockNotificationsInput = z.infer<

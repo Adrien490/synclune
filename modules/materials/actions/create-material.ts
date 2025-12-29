@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -72,16 +73,6 @@ export async function createMaterial(
 			message: "Matériau créé avec succès",
 		};
 	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la creation du materiau",
-		};
+		return handleActionError(error, "Une erreur est survenue lors de la création du matériau");
 	}
 }

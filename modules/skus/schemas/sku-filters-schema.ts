@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 
 import {
 	SKU_FILTERS_MIN_DATE,
@@ -6,23 +7,16 @@ import {
 	SKU_FILTERS_MAX_PRICE_CENTS,
 } from "../constants/sku.constants";
 
-const stringOrStringArray = z
-	.union([
-		z.string().min(1).max(100),
-		z.array(z.string().min(1).max(100)).max(50),
-	])
-	.optional();
-
 export const productSkuFiltersSchema = z
 	.object({
 		// Filtres recommandés
-		productId: stringOrStringArray, // Fortement recommandé
-		colorId: stringOrStringArray,
-		materialId: stringOrStringArray, // Filtre par ID de matériau
-		material: stringOrStringArray, // Filtre par nom de matériau (legacy)
+		productId: optionalStringOrStringArraySchema, // Fortement recommandé
+		colorId: optionalStringOrStringArraySchema,
+		materialId: optionalStringOrStringArraySchema, // Filtre par ID de matériau
+		material: optionalStringOrStringArraySchema, // Filtre par nom de matériau (legacy)
 
 		// Filtres de base
-		sku: stringOrStringArray, // Pour recherche de préfixe
+		sku: optionalStringOrStringArraySchema, // Pour recherche de préfixe
 		isActive: z.boolean().optional(),
 		isDefault: z.boolean().optional(),
 
@@ -38,7 +32,7 @@ export const productSkuFiltersSchema = z
 		stockStatus: z.enum(["all", "in_stock", "low_stock", "out_of_stock"]).optional(),
 
 		// Filtres de taille
-		size: stringOrStringArray,
+		size: optionalStringOrStringArraySchema,
 
 		// Filtres temporels
 		createdAfter: z.coerce

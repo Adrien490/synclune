@@ -7,6 +7,8 @@ export const USER_CONSTANTS = {
 	MIN_NAME_LENGTH: 2,
 	MAX_IMAGE_SIZE: 5 * 1024 * 1024, // 5 Mo
 	ALLOWED_IMAGE_TYPES: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+	/** Texte de confirmation pour suppression de compte (RGPD) */
+	ACCOUNT_DELETION_CONFIRMATION: "SUPPRIMER",
 } as const;
 
 export const USER_ERROR_MESSAGES = {

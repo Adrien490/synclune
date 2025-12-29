@@ -69,3 +69,18 @@ export const NEWSLETTER_BATCH_SIZE = 100;
  * Utilisé pour respecter les limites de rate limiting de Resend
  */
 export const NEWSLETTER_MAX_CONCURRENT_SENDS = 10;
+
+// ============================================================================
+// BULK OPERATIONS LIMITS
+// ============================================================================
+
+/**
+ * Limites pour les opérations bulk sur les abonnés
+ * Protège contre les DoS et les abus
+ */
+export const BULK_OPERATIONS = {
+	/** Nombre maximum d'IDs dans une opération bulk */
+	MAX_IDS: 1000,
+	/** Longueur max du JSON des IDs (~1000 CUID2 IDs) */
+	MAX_JSON_LENGTH: 30000,
+} as const;

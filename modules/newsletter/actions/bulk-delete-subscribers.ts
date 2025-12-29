@@ -6,12 +6,8 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
-
+import { BULK_OPERATIONS } from "../constants/subscriber.constants";
 import { bulkDeleteSubscribersSchema } from "../schemas/subscriber.schemas";
-
-// Limite de sécurité pour éviter DoS
-const MAX_BULK_IDS = 1000;
-const MAX_JSON_LENGTH = 30000; // ~1000 CUID2 IDs
 
 /**
  * Server Action ADMIN pour supprimer définitivement plusieurs abonnés en masse (RGPD)
@@ -34,10 +30,10 @@ export async function bulkDeleteSubscribers(
 			};
 		}
 
-		if (idsRaw.length > MAX_JSON_LENGTH) {
+		if (idsRaw.length > BULK_OPERATIONS.MAX_JSON_LENGTH) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: `Données trop volumineuses (max ${MAX_JSON_LENGTH} caractères)`,
+				message: `Données trop volumineuses (max ${BULK_OPERATIONS.MAX_JSON_LENGTH} caractères)`,
 			};
 		}
 
@@ -52,10 +48,10 @@ export async function bulkDeleteSubscribers(
 		}
 
 		// Vérification limite
-		if (ids.length > MAX_BULK_IDS) {
+		if (ids.length > BULK_OPERATIONS.MAX_IDS) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: `Maximum ${MAX_BULK_IDS} abonnés par opération`,
+				message: `Maximum ${BULK_OPERATIONS.MAX_IDS} abonnés par opération`,
 			};
 		}
 

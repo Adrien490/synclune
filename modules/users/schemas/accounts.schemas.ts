@@ -4,6 +4,7 @@ import {
 	directionSchema,
 } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
+import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
 	GET_ACCOUNTS_DEFAULT_PER_PAGE,
 	GET_ACCOUNTS_MAX_RESULTS_PER_PAGE,
@@ -11,17 +12,6 @@ import {
 	GET_ACCOUNTS_DEFAULT_SORT_ORDER,
 	GET_ACCOUNTS_SORT_FIELDS,
 } from "../constants/accounts.constants";
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-const stringOrStringArray = z
-	.union([
-		z.string().min(1).max(100),
-		z.array(z.string().min(1).max(100)).max(50),
-	])
-	.optional();
 
 // ============================================================================
 // GET ACCOUNT SCHEMA
@@ -37,10 +27,10 @@ export const getAccountSchema = z.object({
 
 export const accountFiltersSchema = z
 	.object({
-		userId: stringOrStringArray,
-		providerId: stringOrStringArray,
-		accountId: stringOrStringArray,
-		scope: stringOrStringArray,
+		userId: optionalStringOrStringArraySchema,
+		providerId: optionalStringOrStringArraySchema,
+		accountId: optionalStringOrStringArraySchema,
+		scope: optionalStringOrStringArraySchema,
 		hasAccessToken: z.boolean().optional(),
 		hasRefreshToken: z.boolean().optional(),
 		hasPassword: z.boolean().optional(),

@@ -1,4 +1,7 @@
 import { memo } from "react";
+import type { HeartIconProps } from "@/shared/types/icons.types";
+
+export type { HeartIconProps };
 
 /**
  * Icône de cœur pour favoris/wishlist
@@ -54,37 +57,6 @@ import { memo } from "react";
  * </Card>
  * ```
  */
-export interface HeartIconProps {
-	/** Classes Tailwind additionnelles */
-	className?: string;
-	/**
-	 * Taille en pixels (défaut: 24)
-	 * @default 24
-	 * @minimum 16 - En dessous de 16px, sparkles dorés invisibles
-	 */
-	size?: number;
-	/**
-	 * Label pour lecteurs d'écran
-	 * Par défaut, change automatiquement selon variant :
-	 * - outline : "Ajouter aux favoris"
-	 * - filled : "Retirer des favoris"
-	 */
-	ariaLabel?: string;
-	/**
-	 * Style visuel de l'icône
-	 * - `outline` : Non favori (défaut)
-	 * - `filled` : Favori ajouté (avec sparkles dorés)
-	 * @default "outline"
-	 */
-	variant?: "outline" | "filled";
-	/**
-	 * Masquer aux lecteurs d'écran si l'icône est purement décorative
-	 * Utiliser `true` si texte adjacent déjà descriptif
-	 * @default false
-	 */
-	decorative?: boolean;
-}
-
 export const HeartIcon = memo(function HeartIcon({
 	className = "",
 	size = 24,

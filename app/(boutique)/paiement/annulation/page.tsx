@@ -8,7 +8,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
-import { AlertCircle, CreditCard, Info, ShoppingBag, XCircle } from "lucide-react";
+import { getCheckoutCancelMessage } from "@/modules/payments/constants/checkout-cancel-messages";
+import { Info, ShoppingBag } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -41,44 +42,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 	const orderId = params.order_id;
 	const reason = params.reason;
 
-	// 🔴 CORRECTION : Messages d'erreur spécifiques par type d'erreur Stripe
-	const errorMessages: Record<string, { title: string; description: string; icon: typeof XCircle }> = {
-		card_declined: {
-			title: "Carte refusée",
-			description: "Ta carte bancaire a été refusée par ta banque. Vérifie tes informations ou utilise une autre carte.",
-			icon: CreditCard,
-		},
-		expired_card: {
-			title: "Carte expirée",
-			description: "Ta carte bancaire a expiré. Utilise une carte valide.",
-			icon: CreditCard,
-		},
-		insufficient_funds: {
-			title: "Fonds insuffisants",
-			description: "Ton compte ne dispose pas de fonds suffisants pour effectuer cette transaction. Vérifie ton solde ou utilise une autre carte.",
-			icon: CreditCard,
-		},
-		authentication_failed: {
-			title: "Authentification échouée",
-			description: "L'authentification 3D Secure a échoué. Réessaye ou contacte ta banque.",
-			icon: XCircle,
-		},
-		processing_error: {
-			title: "Erreur de traitement",
-			description: "Une erreur s'est produite lors du traitement de ton paiement. Réessaye dans quelques instants.",
-			icon: XCircle,
-		},
-		canceled: {
-			title: "Paiement annulé",
-			description: "Tu as annulé le processus de paiement. Aucun montant n'a été débité de ton compte.",
-			icon: AlertCircle,
-		},
-	};
-
-	const errorInfo = reason && errorMessages[reason]
-		? errorMessages[reason]
-		: errorMessages.canceled;
-
+	const errorInfo = getCheckoutCancelMessage(reason);
 	const ErrorIcon = errorInfo.icon;
 	return (
 		<div className="min-h-screen">

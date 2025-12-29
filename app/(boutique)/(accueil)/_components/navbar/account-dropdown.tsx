@@ -1,3 +1,5 @@
+"use client";
+
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import type { Session } from "@/modules/auth/lib/auth";
 import {

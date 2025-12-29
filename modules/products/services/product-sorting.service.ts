@@ -18,7 +18,7 @@ import type {
 	SkuFromList,
 	ColorSwatch,
 } from "@/modules/products/types/product-list.types";
-import type { ProductStockInfo, StockStatus } from "@/modules/skus/types/sku-selection.types";
+import type { ProductStockInfo, StockStatus } from "@/shared/types/product-sku.types";
 import {
 	getPrimarySkuForList,
 	getStockInfoForList,
@@ -382,7 +382,7 @@ export type {
 export type {
 	StockStatus,
 	ProductStockInfo,
-} from "@/modules/skus/types/sku-selection.types";
+} from "@/shared/types/product-sku.types";
 
 // Fonctions de sélection SKU
 export {

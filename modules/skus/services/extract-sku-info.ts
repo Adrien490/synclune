@@ -1,12 +1,17 @@
-import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { slugify } from "@/shared/utils/generate-slug";
-import type { ProductSku, ProductVariantInfo } from "@/modules/products/types/product-services.types";
+import type {
+	BaseProductSku,
+	ProductVariantInfo,
+} from "@/shared/types/product-sku.types";
 
 /**
  * Extrait les informations complètes sur les variantes disponibles
  */
-export function extractVariantInfo(product: GetProductReturn): ProductVariantInfo {
-	const activeSkus = product.skus?.filter((sku: ProductSku) => sku.isActive) || [];
+export function extractVariantInfo<
+	TSku extends BaseProductSku,
+	TProduct extends { skus?: TSku[] | null }
+>(product: TProduct): ProductVariantInfo {
+	const activeSkus = product.skus?.filter((sku: TSku) => sku.isActive) || [];
 
 	// Couleurs disponibles
 	const colorMap = new Map<

@@ -28,14 +28,11 @@ import { filterCompatibleSkus as filterCompatibleSkusService } from "@/modules/s
 import { slugify } from "@/shared/utils/generate-slug";
 import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
 
-export const SKU_SELECTOR_DIALOG_ID = "sku-selector";
+import type { SkuSelectorDialogData } from "../types/dialog-data.types";
 
-export type SkuSelectorDialogData = {
-	product: Product;
-	/** Couleur pré-sélectionnée depuis les swatches de la ProductCard */
-	preselectedColor?: string | null;
-	[key: string]: unknown;
-};
+export type { SkuSelectorDialogData };
+
+export const SKU_SELECTOR_DIALOG_ID = "sku-selector";
 
 interface SkuSelectorDialogProps {
 	/** Promise du panier pour vérifier les quantités disponibles */

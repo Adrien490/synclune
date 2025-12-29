@@ -15,4 +15,4 @@ export const COLLECTION_STATUS_COLORS = {
 	ARCHIVED: "#6b7280", // gray
 } as const;
 
-export type CollectionStatusKey = keyof typeof COLLECTION_STATUS_LABELS;
+export type { CollectionStatusKey } from "../types/collection-status.types";

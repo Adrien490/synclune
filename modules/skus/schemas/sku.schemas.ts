@@ -1,5 +1,11 @@
 import { z } from "zod"
 import { isAllowedMediaDomain } from "@/shared/lib/media-validation"
+import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media.constants"
+import {
+	TEXT_LIMITS,
+	ARRAY_LIMITS,
+	PRICE_LIMITS,
+} from "@/shared/constants/validation-limits"
 
 // ============================================================================
 // MAIN SCHEMA
@@ -34,15 +40,10 @@ const imageSchema = z
 			.optional()
 			.nullable(),
 		blurDataUrl: z.string().optional().nullable(), // Base64 blur placeholder pour les images
-		altText: z.string().max(200).optional().nullable(),
+		altText: z.string().max(TEXT_LIMITS.MEDIA_ALT_TEXT.max).optional().nullable(),
 		mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
 	})
 	.nullable();
-
-/**
- * Extensions video supportees pour validation
- */
-const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".avi"] as const;
 
 /**
  * Verifie si une URL est une video basee sur son extension
@@ -61,14 +62,14 @@ const baseSkuFieldsSchema = z.object({
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
 		.positive({ error: "Le prix doit être positif" })
-		.max(999999.99, { error: "Le prix ne peut pas depasser 999999.99 eur" }),
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur` }),
 
 	// Prix compare (optionnel, pour afficher prix barre)
 	compareAtPriceEuros: z.coerce
 		.number()
 		.positive({ error: "Le prix compare doit être positif" })
-		.max(999999.99, {
-			error: "Le prix compare ne peut pas depasser 999999.99 eur",
+		.max(PRICE_LIMITS.MAX_EUR, {
+			error: `Le prix compare ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur`,
 		})
 		.optional()
 		.or(z.literal(""))
@@ -88,13 +89,13 @@ const baseSkuFieldsSchema = z.object({
 	// Optional fields
 	colorId: z.string().optional().or(z.literal("")),
 	materialId: z.string().optional().or(z.literal("")),
-	size: z.string().max(50).optional().or(z.literal("")),
+	size: z.string().max(TEXT_LIMITS.SKU_SIZE.max).optional().or(z.literal("")),
 
 	// Medias (images et videos)
 	primaryImage: imageSchema.optional(),
 	galleryMedia: z
 		.array(imageSchema)
-		.max(5, { error: "Maximum 5 médias dans la galerie" })
+		.max(ARRAY_LIMITS.SKU_GALLERY_MEDIA, { error: `Maximum ${ARRAY_LIMITS.SKU_GALLERY_MEDIA} médias dans la galerie` })
 		.default([])
 		.transform((arr) => arr.filter((item): item is NonNullable<typeof item> => item !== null)),
 });

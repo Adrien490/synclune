@@ -1,3 +1,5 @@
+"use client";
+
 import { UserDropdown } from "@/app/admin/_components/user-dropdown";
 import { DashboardBreadcrumb } from "@/app/admin/_components/dashboard-breadcrumb";
 import { Button } from "@/shared/components/ui/button";

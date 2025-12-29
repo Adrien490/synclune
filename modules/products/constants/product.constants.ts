@@ -323,3 +323,18 @@ export const PRODUCTS_SORT_LABELS = {
 // Aliases pour compatibilité
 export const SORT_OPTIONS = PRODUCTS_SORT_OPTIONS;
 export const SORT_LABELS = PRODUCTS_SORT_LABELS;
+
+// ============================================================================
+// ADMIN SORT LABELS
+// ============================================================================
+
+/**
+ * Labels de tri pour l'admin (inclut des options supplémentaires)
+ */
+export const ADMIN_PRODUCTS_SORT_LABELS: Record<string, string> = {
+	...PRODUCTS_SORT_LABELS,
+	createdAt: "Date de création",
+	updatedAt: "Date de mise à jour",
+	title: "Titre",
+	type: "Type",
+};

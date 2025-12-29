@@ -4,6 +4,7 @@ import {
 	directionSchema,
 } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
+import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
 	GET_SESSIONS_DEFAULT_PER_PAGE,
 	GET_SESSIONS_DEFAULT_SORT_BY,
@@ -11,17 +12,6 @@ import {
 	GET_SESSIONS_MAX_RESULTS_PER_PAGE,
 	GET_SESSIONS_SORT_FIELDS,
 } from "../constants/session.constants";
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-const stringOrStringArray = z
-	.union([
-		z.string().min(1).max(100),
-		z.array(z.string().min(1).max(100)).max(50),
-	])
-	.optional();
 
 // ============================================================================
 // GET SESSION SCHEMA
@@ -37,7 +27,7 @@ export const getSessionSchema = z.object({
 
 export const sessionFiltersSchema = z
 	.object({
-		userId: stringOrStringArray,
+		userId: optionalStringOrStringArraySchema,
 		createdAfter: z.coerce
 			.date()
 			.min(new Date("2020-01-01"), "Date too old")
@@ -66,7 +56,7 @@ export const sessionFiltersSchema = z
 			.optional(),
 		isExpired: z.boolean().optional(),
 		isActive: z.boolean().optional(),
-		ipAddress: stringOrStringArray,
+		ipAddress: optionalStringOrStringArraySchema,
 		hasIpAddress: z.boolean().optional(),
 		hasUserAgent: z.boolean().optional(),
 	})

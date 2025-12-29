@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const updateNotesSchema = z.object({
-	requestId: z.cuid(),
+	requestId: z.cuid2(),
 	notes: z
 		.string()
 		.max(2000, "Les notes ne peuvent pas depasser 2000 caracteres")

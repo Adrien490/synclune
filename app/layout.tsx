@@ -1,10 +1,13 @@
+import { CartSheetSkeleton } from "@/modules/cart/components/cart-sheet-skeleton";
+import { getCart } from "@/modules/cart/data/get-cart";
+import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
+import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
-import SystemBanner from "@/shared/components/system-banner";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import {
 	BUSINESS_INFO,
@@ -15,15 +18,18 @@ import {
 	getOrganizationSchema,
 	getWebSiteSchema,
 } from "@/shared/constants/seo-config";
-import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
-import { crimsonPro, inter, jetBrainsMono } from "@/shared/styles/fonts";
-import { UploadThingSSR } from "@/modules/media/lib/uploadthing/uploadthing-ssr";
+import { SerwistProvider } from "@/shared/lib/serwist-client";
 import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
+import { crimsonPro, inter, jetBrainsMono } from "@/shared/styles/fonts";
+import { MotionConfig } from "framer-motion";
+import type { Metadata } from "next";
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
+import "./globals.css";
 
 // Lazy loading des composants lourds - charges uniquement a l'ouverture
 const CartSheet = dynamic(
@@ -33,13 +39,6 @@ const CartSheet = dynamic(
 const SkuSelectorDialog = dynamic(
 	() => import("@/modules/cart/components/sku-selector-dialog").then((mod) => mod.SkuSelectorDialog)
 );
-import { MotionConfig } from "framer-motion";
-import type { Metadata } from "next";
-import { Suspense } from "react";
-import "./globals.css";
-import { getCart } from "@/modules/cart/data/get-cart";
-import { CartSheetSkeleton } from "@/modules/cart/components/cart-sheet-skeleton";
-import { SerwistProvider } from "@/shared/lib/serwist-client";
 
 export const metadata: Metadata = {
 	title: {
@@ -211,12 +210,6 @@ export default async function RootLayout({
 				className={`${inter.variable} ${inter.className} ${crimsonPro.variable} ${jetBrainsMono.variable} antialiased`}
 			>
 				<SerwistProvider swUrl="/serwist/sw.js">
-					<SystemBanner
-					text="Mode Developpement"
-					color="bg-orange-500"
-					size="sm"
-					show={process.env.NODE_ENV === "development"}
-				/>
 				<SkipLink />
 				<IconSprite />
 				<Suspense fallback={null}>

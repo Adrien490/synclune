@@ -5,7 +5,7 @@ import { z } from "zod";
 // ============================================================================
 
 export const addToCartSchema = z.object({
-	skuId: z.cuid("ID SKU invalide"),
+	skuId: z.cuid2("ID SKU invalide"),
 	quantity: z.number().int().min(1, "Quantité minimale: 1").max(10, "Quantité maximale: 10").default(1),
 });
 
@@ -17,7 +17,7 @@ export const addToCartSchema = z.object({
  * Schéma de validation pour la mise à jour d'un item
  */
 export const updateCartItemSchema = z.object({
-	cartItemId: z.cuid("ID de l'article invalide"),
+	cartItemId: z.cuid2("ID de l'article invalide"),
 	quantity: z
 		.number()
 		.int()
@@ -29,7 +29,7 @@ export const updateCartItemSchema = z.object({
  * Schéma de validation pour la suppression d'un item
  */
 export const removeFromCartSchema = z.object({
-	cartItemId: z.cuid("ID de l'article invalide"),
+	cartItemId: z.cuid2("ID de l'article invalide"),
 });
 
 // ============================================================================

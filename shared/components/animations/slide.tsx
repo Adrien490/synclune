@@ -1,17 +1,10 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { type ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
+import type { SlideProps } from "./types";
 
-export interface SlideProps {
-	children: ReactNode;
-	className?: string;
-	direction?: "up" | "down" | "left" | "right";
-	distance?: number;
-	delay?: number;
-	duration?: number;
-}
+export type { SlideProps };
 
 /**
  * Animation slide simple avec support prefers-reduced-motion

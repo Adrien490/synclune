@@ -3,6 +3,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_SKU_ADJUST_STOCK_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
@@ -24,8 +25,8 @@ export async function adjustSkuStock(
 
 		const adjustment = parseInt(adjustmentRaw, 10);
 
-		// 0. Rate limiting (20 requêtes par minute)
-		const rateLimit = await enforceRateLimitForCurrentUser({ limit: 20, windowMs: 60000 });
+		// 0. Rate limiting
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_ADJUST_STOCK_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 1. Vérification admin

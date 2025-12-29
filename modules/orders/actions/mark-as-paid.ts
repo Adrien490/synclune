@@ -10,12 +10,13 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsPaidSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { handleActionError } from "@/shared/lib/actions";
 
 /**
  * Marque une commande comme payée manuellement
@@ -167,7 +168,6 @@ export async function markAsPaid(
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
-		revalidatePath("/admin/ventes/commandes");
 
 		const stockMessage = !stockAlreadyReserved && order.items.length > 0
 			? ` Stock décrémenté pour ${order.items.length} article(s).`
@@ -178,23 +178,6 @@ export async function markAsPaid(
 			message: `Commande ${order.orderNumber} marquée comme payée. Prête pour préparation.${stockMessage}`,
 		};
 	} catch (error) {
-		console.error("[MARK_AS_PAID]", error);
-
-		// Retourner le message d'erreur spécifique si c'est une erreur de stock/SKU
-		if (error instanceof Error && (
-			error.message.includes("Stock insuffisant") ||
-			error.message.includes("SKU introuvable") ||
-			error.message.includes("plus disponible")
-		)) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: ORDER_ERROR_MESSAGES.MARK_AS_PAID_FAILED,
-		};
+		return handleActionError(error, ORDER_ERROR_MESSAGES.MARK_AS_PAID_FAILED);
 	}
 }

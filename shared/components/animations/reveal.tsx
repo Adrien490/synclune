@@ -1,26 +1,16 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { type ReactNode, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { MOTION_CONFIG } from "./motion.config";
+import type { RevealProps } from "./types";
+
+export type { RevealProps };
 
 // useSyncExternalStore pour détecter le montage client sans useEffect
 const subscribeNoop = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
-
-export interface RevealProps {
-	children: ReactNode;
-	className?: string;
-	delay?: number;
-	duration?: number;
-	y?: number;
-	once?: boolean;
-	amount?: number | "some" | "all";
-	role?: string;
-	/** Data attributes (e.g., data-testid) */
-	[key: `data-${string}`]: string | undefined;
-}
 
 /**
  * Animation reveal avec whileInView (scroll-triggered)

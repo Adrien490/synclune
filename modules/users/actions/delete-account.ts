@@ -105,13 +105,8 @@ export async function deleteAccount(): Promise<ActionState> {
 		if (stripeCustomerId) {
 			try {
 				await stripe.customers.del(stripeCustomerId);
-			} catch (stripeError) {
-				// Log l'erreur mais ne fait pas échouer la suppression
-				// Le client Stripe sera orphelin mais le compte est supprimé
-				console.error(
-					"[DELETE_ACCOUNT] Erreur suppression client Stripe:",
-					stripeError
-				);
+			} catch {
+				// Erreur silencieuse - le client Stripe sera orphelin mais le compte est supprimé
 			}
 		}
 

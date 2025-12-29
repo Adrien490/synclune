@@ -4,14 +4,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { ORDERS_CACHE_TAGS } from "../constants/cache-tags";
-
-export type OrderNoteItem = {
-	id: string;
-	content: string;
-	authorId: string;
-	authorName: string;
-	createdAt: Date;
-};
+import type { OrderNoteItem } from "../types/order-notes.types";
 
 /**
  * Récupère les notes d'une commande (ADMIN)

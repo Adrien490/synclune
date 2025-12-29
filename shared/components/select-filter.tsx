@@ -12,21 +12,11 @@ import {
 import { cn } from "@/shared/utils/cn"
 import { ArrowUpDown, X } from "lucide-react"
 import { useSelectFilter } from "@/shared/hooks/use-select-filter"
-
 import type { FilterOption } from "@/shared/types/pagination.types"
+import type { SelectFilterProps } from "@/shared/types/component.types"
 
 export type { FilterOption } from "@/shared/types/pagination.types"
-
-export interface SelectFilterProps {
-	filterKey: string;
-	label: string;
-	options: FilterOption[];
-	placeholder?: string;
-	className?: string;
-	maxHeight?: number;
-	/** Si true, utilise filterKey directement sans préfixe "filter_" dans l'URL */
-	noPrefix?: boolean;
-}
+export type { SelectFilterProps };
 
 export function SelectFilter({
 	filterKey,

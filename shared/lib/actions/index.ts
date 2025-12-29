@@ -28,7 +28,7 @@ export { validateInput, validateFormData } from "./validation";
 export { enforceRateLimit } from "./rate-limit";
 
 // Error handling helpers
-export { handleActionError } from "./errors";
+export { handleActionError, BusinessError } from "./errors";
 
 // Response helpers
 export {

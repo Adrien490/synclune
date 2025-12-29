@@ -31,9 +31,9 @@ export type ReviewMediaInput = z.infer<typeof reviewMediaSchema>
  * Schéma de validation pour la création d'un avis
  */
 export const createReviewSchema = z.object({
-	productId: z.cuid("ID de produit invalide"),
+	productId: z.cuid2("ID de produit invalide"),
 
-	orderItemId: z.cuid("ID de commande invalide"),
+	orderItemId: z.cuid2("ID de commande invalide"),
 
 	rating: z.coerce
 		.number()
@@ -70,7 +70,7 @@ export type CreateReviewInput = z.infer<typeof createReviewSchema>
  * Schéma de validation pour la modification d'un avis
  */
 export const updateReviewSchema = z.object({
-	id: z.cuid("ID d'avis invalide"),
+	id: z.cuid2("ID d'avis invalide"),
 
 	rating: z.coerce
 		.number()
@@ -107,7 +107,7 @@ export type UpdateReviewInput = z.infer<typeof updateReviewSchema>
  * Schéma de validation pour la suppression d'un avis
  */
 export const deleteReviewSchema = z.object({
-	id: z.cuid("ID d'avis invalide"),
+	id: z.cuid2("ID d'avis invalide"),
 })
 
 export type DeleteReviewInput = z.infer<typeof deleteReviewSchema>
@@ -120,7 +120,7 @@ export type DeleteReviewInput = z.infer<typeof deleteReviewSchema>
  * Schéma pour masquer/afficher un avis
  */
 export const moderateReviewSchema = z.object({
-	id: z.cuid("ID d'avis invalide"),
+	id: z.cuid2("ID d'avis invalide"),
 })
 
 export type ModerateReviewInput = z.infer<typeof moderateReviewSchema>
@@ -129,7 +129,7 @@ export type ModerateReviewInput = z.infer<typeof moderateReviewSchema>
  * Schéma pour masquer plusieurs avis en masse
  */
 export const bulkHideReviewsSchema = z.object({
-	ids: z.array(z.cuid("ID d'avis invalide")).min(1, "Sélectionnez au moins un avis"),
+	ids: z.array(z.cuid2("ID d'avis invalide")).min(1, "Sélectionnez au moins un avis"),
 })
 
 export type BulkHideReviewsInput = z.infer<typeof bulkHideReviewsSchema>
@@ -142,7 +142,7 @@ export type BulkHideReviewsInput = z.infer<typeof bulkHideReviewsSchema>
  * Schéma de validation pour la création d'une réponse admin
  */
 export const createReviewResponseSchema = z.object({
-	reviewId: z.cuid("ID d'avis invalide"),
+	reviewId: z.cuid2("ID d'avis invalide"),
 
 	content: z
 		.string()
@@ -157,7 +157,7 @@ export type CreateReviewResponseInput = z.infer<typeof createReviewResponseSchem
  * Schéma de validation pour la modification d'une réponse admin
  */
 export const updateReviewResponseSchema = z.object({
-	id: z.cuid("ID de réponse invalide"),
+	id: z.cuid2("ID de réponse invalide"),
 
 	content: z
 		.string()
@@ -172,7 +172,7 @@ export type UpdateReviewResponseInput = z.infer<typeof updateReviewResponseSchem
  * Schéma de validation pour la suppression d'une réponse admin
  */
 export const deleteReviewResponseSchema = z.object({
-	id: z.cuid("ID de réponse invalide"),
+	id: z.cuid2("ID de réponse invalide"),
 })
 
 export type DeleteReviewResponseInput = z.infer<typeof deleteReviewResponseSchema>
@@ -187,8 +187,8 @@ export type DeleteReviewResponseInput = z.infer<typeof deleteReviewResponseSchem
 export const reviewFiltersSchema = z.object({
 	status: z.enum(["PUBLISHED", "HIDDEN"]).optional(),
 	rating: z.coerce.number().int().min(1).max(5).optional(),
-	productId: z.cuid().optional(),
-	userId: z.cuid().optional(),
+	productId: z.cuid2().optional(),
+	userId: z.cuid2().optional(),
 	hasResponse: z.coerce.boolean().optional(),
 	dateFrom: stringOrDateSchema,
 	dateTo: stringOrDateSchema,
@@ -222,8 +222,8 @@ export type GetReviewsAdminInput = z.infer<typeof getReviewsAdminSchema>
  * Schéma de validation pour les paramètres de requête storefront
  */
 export const getProductReviewsSchema = z.object({
-	productId: z.cuid("ID de produit invalide"),
-	cursor: z.cuid().optional(),
+	productId: z.cuid2("ID de produit invalide"),
+	cursor: z.cuid2().optional(),
 	perPage: z.coerce
 		.number()
 		.min(1)

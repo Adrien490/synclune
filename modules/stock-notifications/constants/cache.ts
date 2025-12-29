@@ -23,6 +23,9 @@ export const STOCK_NOTIFICATIONS_CACHE_TAGS = {
 
 	/** Demande de notification par token */
 	BY_TOKEN: (token: string) => `stock-notifications-token-${token}`,
+
+	/** Demande de notification par ID */
+	BY_ID: (id: string) => `stock-notifications-id-${id}`,
 } as const;
 
 // Re-exports pour retrocompatibilite

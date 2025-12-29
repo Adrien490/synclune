@@ -2,7 +2,8 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { getClientIp } from "@/shared/lib/rate-limit";
-import { enforceRateLimit } from "@/shared/lib/actions";
+import { enforceRateLimit, handleActionError } from "@/shared/lib/actions";
+import { STOCK_NOTIFICATION_SUBSCRIBE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { headers } from "next/headers";
@@ -26,10 +27,10 @@ export async function subscribeToStockNotification(
 		const ipAddress = (await getClientIp(headersList)) || "unknown";
 
 		// Rate limiting: 5 souscriptions par heure par IP (in-memory, non stocké en base)
-		const rateLimitCheck = enforceRateLimit(`stock-notification:${ipAddress}`, {
-			limit: 5,
-			windowMs: 60 * 60 * 1000, // 1 heure
-		});
+		const rateLimitCheck = enforceRateLimit(
+			`stock-notification:${ipAddress}`,
+			STOCK_NOTIFICATION_SUBSCRIBE_LIMIT
+		);
 		if ("error" in rateLimitCheck) return rateLimitCheck.error;
 
 		// Vérifier si l'utilisateur est connecté
@@ -157,10 +158,6 @@ export async function subscribeToStockNotification(
 			message: `Parfait ! Nous vous préviendrons par email dès que "${sku.product.title}" sera de nouveau disponible.`,
 		};
 	} catch (error) {
-		console.error("[subscribeToStockNotification] Error:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue. Veuillez réessayer plus tard.",
-		};
+		return handleActionError(error, "Une erreur est survenue. Veuillez réessayer plus tard.");
 	}
 }

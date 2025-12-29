@@ -105,17 +105,9 @@ export async function sendCustomizationRequest(
 
 			if (!emailResult.success) {
 				adminEmailFailed = true;
-				console.error(
-					`[CustomizationRequest] Email admin non envoyé pour la demande ${customizationRequest.id}:`,
-					emailResult.error
-				);
 			}
-		} catch (emailError) {
+		} catch {
 			adminEmailFailed = true;
-			console.error(
-				`[CustomizationRequest] Erreur envoi email admin pour la demande ${customizationRequest.id}:`,
-				emailError
-			);
 		}
 
 		// 8. Envoyer l'email de confirmation au client
@@ -127,17 +119,9 @@ export async function sendCustomizationRequest(
 				details: validatedData.details,
 			});
 
-			if (!confirmationResult.success) {
-				console.error(
-					`[CustomizationRequest] Email confirmation non envoyé pour la demande ${customizationRequest.id}:`,
-					confirmationResult.error
-				);
-			}
-		} catch (confirmationError) {
-			console.error(
-				`[CustomizationRequest] Erreur envoi email confirmation pour la demande ${customizationRequest.id}:`,
-				confirmationError
-			);
+			// Silence - email confirmation non critique
+		} catch {
+			// Silence - email confirmation non critique
 		}
 
 		// 9. Invalider le cache admin
@@ -150,7 +134,6 @@ export async function sendCustomizationRequest(
 			{ id: customizationRequest.id }
 		);
 	} catch (e) {
-		console.error("[CustomizationRequest] Erreur:", e);
 		return handleActionError(e, "Une erreur est survenue lors de l'envoi de votre demande.");
 	}
 }

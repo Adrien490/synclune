@@ -1,15 +1,6 @@
 "use client";
 
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
 import { useDeleteMaterial } from "@/modules/materials/hooks/use-delete-material";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 
@@ -29,47 +20,23 @@ export function DeleteMaterialAlertDialog() {
 		},
 	});
 
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) {
-			deleteDialog.close();
-		}
-	};
-
 	return (
-		<AlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
-				<form action={action}>
-					<input
-						type="hidden"
-						name="id"
-						value={deleteDialog.data?.materialId ?? ""}
-					/>
-
-					<AlertDialogHeader>
-						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-						<AlertDialogDescription>
-							Êtes-vous sûr de vouloir supprimer le matériau{" "}
-							<strong>&quot;{deleteDialog.data?.materialName}&quot;</strong> ?
-							<br />
-							<br />
-							<span className="text-destructive font-medium">
-								Cette action est irréversible.
-							</span>
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction
-							type="submit"
-							disabled={isPending}
-						>
-							{isPending ? "Suppression..." : "Supprimer"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+		<DeleteConfirmationDialog<DeleteMaterialData>
+			dialogId={DELETE_MATERIAL_DIALOG_ID}
+			action={action}
+			isPending={isPending}
+			hiddenFields={[{ name: "id", dataKey: "materialId" }]}
+			description={(data) => (
+				<>
+					Êtes-vous sûr de vouloir supprimer le matériau{" "}
+					<strong>&quot;{data?.materialName}&quot;</strong> ?
+					<br />
+					<br />
+					<span className="text-destructive font-medium">
+						Cette action est irréversible.
+					</span>
+				</>
+			)}
+		/>
 	);
 }

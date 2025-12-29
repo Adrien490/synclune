@@ -1,6 +1,6 @@
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import type { Metadata } from "next";
-import { OfflineActions } from "./offline-actions";
+import { OfflineActions } from "./_components/offline-actions";
 
 export const metadata: Metadata = {
 	title: "Hors ligne",

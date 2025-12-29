@@ -5,6 +5,7 @@ import {
 	directionSchema,
 } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
+import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
 	GET_PRODUCTS_DEFAULT_SORT_BY,
@@ -15,17 +16,13 @@ import {
 	isAllowedMediaDomain,
 	ALLOWED_MEDIA_DOMAINS,
 } from "@/shared/lib/media-validation";
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-const stringOrStringArray = z
-	.union([
-		z.string().min(1).max(100),
-		z.array(z.string().min(1).max(100)).max(50),
-	])
-	.optional();
+import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media.constants";
+import {
+	TEXT_LIMITS,
+	ARRAY_LIMITS,
+	PRICE_LIMITS,
+	DATE_LIMITS,
+} from "@/shared/constants/validation-limits";
 
 // ============================================================================
 // SINGLE PRODUCT SCHEMA
@@ -51,22 +48,22 @@ export const productFiltersSchema = z
 		stockStatus: z.enum(["in_stock", "out_of_stock"]).optional(),
 		onSale: z.boolean().optional(),
 		ratingMin: z.number().int().min(1).max(5).optional(),
-		collectionId: stringOrStringArray,
-		collectionSlug: stringOrStringArray,
-		priceMin: z.number().int().nonnegative().max(1000000).optional(),
-		priceMax: z.number().int().nonnegative().max(1000000).optional(),
+		collectionId: optionalStringOrStringArraySchema,
+		collectionSlug: optionalStringOrStringArraySchema,
+		priceMin: z.number().int().nonnegative().max(PRICE_LIMITS.FILTER_MAX_CENTS).optional(),
+		priceMax: z.number().int().nonnegative().max(PRICE_LIMITS.FILTER_MAX_CENTS).optional(),
 		createdAfter: z.coerce
 			.date()
-			.min(new Date("2020-01-01"))
+			.min(DATE_LIMITS.FILTERS_MIN)
 			.max(new Date())
 			.optional(),
-		createdBefore: z.coerce.date().min(new Date("2020-01-01")).optional(),
+		createdBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).optional(),
 		updatedAfter: z.coerce
 			.date()
-			.min(new Date("2020-01-01"))
+			.min(DATE_LIMITS.FILTERS_MIN)
 			.max(new Date())
 			.optional(),
-		updatedBefore: z.coerce.date().min(new Date("2020-01-01")).optional(),
+		updatedBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).optional(),
 	})
 	.refine((data) => {
 		if (data.priceMin && data.priceMax) {
@@ -107,7 +104,7 @@ export const getProductsSchema = z.object({
 	direction: directionSchema,
 	perPage: createPerPageSchema(GET_PRODUCTS_DEFAULT_PER_PAGE, GET_PRODUCTS_MAX_RESULTS_PER_PAGE),
 	sortBy: productSortBySchema.default(GET_PRODUCTS_DEFAULT_SORT_BY),
-	search: z.string().max(200).optional(),
+	search: z.string().max(TEXT_LIMITS.PRODUCT_SEARCH.max).optional(),
 	filters: productFiltersSchema.default({}),
 	status: z
 		.enum([ProductStatus.PUBLIC, ProductStatus.DRAFT, ProductStatus.ARCHIVED])
@@ -146,7 +143,7 @@ const imageSchema = z.object({
 		.optional()
 		.nullable(),
 	blurDataUrl: z.string().optional(),
-	altText: z.string().max(200).optional(),
+	altText: z.string().max(TEXT_LIMITS.MEDIA_ALT_TEXT.max).optional(),
 	mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
 });
 
@@ -156,13 +153,13 @@ const initialSkuSchema = z.object({
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
 		.positive({ error: "Le prix doit être positif" })
-		.max(999999.99, { error: "Le prix ne peut pas depasser 999999.99 eur" }),
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur` }),
 
 	// Prix compare (optionnel, pour afficher prix barre)
 	compareAtPriceEuros: z.coerce
 		.number()
 		.positive({ error: "Le prix compare doit être positif" })
-		.max(999999.99, { error: "Le prix compare ne peut pas depasser 999999.99 eur" })
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix compare ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur` })
 		.optional()
 		.or(z.literal(""))
 		.transform(val => val === "" ? undefined : val),
@@ -181,12 +178,12 @@ const initialSkuSchema = z.object({
 	// Optional fields
 	colorId: z.string().optional().or(z.literal("")),
 	materialId: z.string().optional().or(z.literal("")),
-	size: z.string().max(50).optional().or(z.literal("")),
+	size: z.string().max(TEXT_LIMITS.SKU_SIZE.max).optional().or(z.literal("")),
 
 	// Medias (images et videos) - premier = principal
 	media: z
 		.array(imageSchema)
-		.max(6, { message: "Maximum 6 médias" })
+		.max(ARRAY_LIMITS.SKU_MEDIA, { message: `Maximum ${ARRAY_LIMITS.SKU_MEDIA} médias` })
 		.refine(
 			(media) => new Set(media.map((m) => m.url)).size === media.length,
 			{ message: "Les URLs de médias doivent être uniques" }
@@ -212,13 +209,13 @@ const defaultSkuSchema = z.object({
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
 		.positive({ error: "Le prix doit être positif" })
-		.max(999999.99, { error: "Le prix ne peut pas depasser 999999.99 eur" }),
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur` }),
 
 	// Prix compare (optionnel, pour afficher prix barre)
 	compareAtPriceEuros: z.coerce
 		.number()
 		.positive({ error: "Le prix compare doit être positif" })
-		.max(999999.99, { error: "Le prix compare ne peut pas depasser 999999.99 eur" })
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix compare ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur` })
 		.optional()
 		.or(z.literal(""))
 		.transform(val => val === "" ? undefined : val),
@@ -236,12 +233,12 @@ const defaultSkuSchema = z.object({
 	// Optional fields
 	colorId: z.string().optional().or(z.literal("")),
 	materialId: z.string().optional().or(z.literal("")),
-	size: z.string().max(50).optional().or(z.literal("")),
+	size: z.string().max(TEXT_LIMITS.SKU_SIZE.max).optional().or(z.literal("")),
 
 	// Medias (images et videos) - premier = principal
 	media: z
 		.array(imageSchema)
-		.max(6, { message: "Maximum 6 médias" })
+		.max(ARRAY_LIMITS.SKU_MEDIA, { message: `Maximum ${ARRAY_LIMITS.SKU_MEDIA} médias` })
 		.refine(
 			(media) => new Set(media.map((m) => m.url)).size === media.length,
 			{ message: "Les URLs de médias doivent être uniques" }
@@ -268,14 +265,14 @@ export const createProductSchema = z
 		// Product fields
 		title: z
 			.string({ error: "Le titre du produit est requis" })
-			.min(2, { error: "Le titre doit contenir au moins 2 caracteres" })
-			.max(200, { error: "Le titre ne peut pas depasser 200 caracteres" })
+			.min(TEXT_LIMITS.PRODUCT_TITLE.min, { error: `Le titre doit contenir au moins ${TEXT_LIMITS.PRODUCT_TITLE.min} caracteres` })
+			.max(TEXT_LIMITS.PRODUCT_TITLE.max, { error: `Le titre ne peut pas depasser ${TEXT_LIMITS.PRODUCT_TITLE.max} caracteres` })
 			.trim(),
 
 		description: z
 			.string()
-			.max(500, {
-				error: "La description ne peut pas depasser 500 caracteres",
+			.max(TEXT_LIMITS.PRODUCT_DESCRIPTION.max, {
+				error: `La description ne peut pas depasser ${TEXT_LIMITS.PRODUCT_DESCRIPTION.max} caracteres`,
 			})
 			.trim()
 			.optional()
@@ -291,7 +288,7 @@ export const createProductSchema = z
 		// Collections (many-to-many)
 		collectionIds: z
 			.array(z.cuid2({ message: "ID collection invalide" }))
-			.max(10, { error: "Un produit ne peut appartenir qu'a 10 collections maximum" })
+			.max(ARRAY_LIMITS.PRODUCT_COLLECTIONS, { error: `Un produit ne peut appartenir qu'a ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum` })
 			.optional()
 			.default([]),
 
@@ -314,11 +311,7 @@ export const createProductSchema = z
 			if (!mediaType) {
 				// Si pas de mediaType specifie, verifier l'extension de l'URL
 				const url = firstMedia.url.toLowerCase();
-				return !(
-					url.endsWith(".mp4") ||
-					url.endsWith(".webm") ||
-					url.endsWith(".mov")
-				);
+				return !VIDEO_EXTENSIONS.some(ext => url.endsWith(ext));
 			}
 			return mediaType === "IMAGE";
 		},
@@ -337,14 +330,14 @@ export const updateProductSchema = z
 		// Product fields (modifiables)
 		title: z
 			.string({ error: "Le titre du produit est requis" })
-			.min(2, { error: "Le titre doit contenir au moins 2 caracteres" })
-			.max(200, { error: "Le titre ne peut pas depasser 200 caracteres" })
+			.min(TEXT_LIMITS.PRODUCT_TITLE.min, { error: `Le titre doit contenir au moins ${TEXT_LIMITS.PRODUCT_TITLE.min} caracteres` })
+			.max(TEXT_LIMITS.PRODUCT_TITLE.max, { error: `Le titre ne peut pas depasser ${TEXT_LIMITS.PRODUCT_TITLE.max} caracteres` })
 			.trim(),
 
 		description: z
 			.string()
-			.max(500, {
-				error: "La description ne peut pas depasser 500 caracteres",
+			.max(TEXT_LIMITS.PRODUCT_DESCRIPTION.max, {
+				error: `La description ne peut pas depasser ${TEXT_LIMITS.PRODUCT_DESCRIPTION.max} caracteres`,
 			})
 			.trim()
 			.optional()
@@ -360,7 +353,7 @@ export const updateProductSchema = z
 		// Collections (many-to-many)
 		collectionIds: z
 			.array(z.cuid2({ message: "ID collection invalide" }))
-			.max(10, { error: "Un produit ne peut appartenir qu'a 10 collections maximum" })
+			.max(ARRAY_LIMITS.PRODUCT_COLLECTIONS, { error: `Un produit ne peut appartenir qu'a ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum` })
 			.optional()
 			.default([]),
 
@@ -383,11 +376,7 @@ export const updateProductSchema = z
 			if (!mediaType) {
 				// Si pas de mediaType specifie, verifier l'extension de l'URL
 				const url = firstMedia.url.toLowerCase();
-				return !(
-					url.endsWith(".mp4") ||
-					url.endsWith(".webm") ||
-					url.endsWith(".mov")
-				);
+				return !VIDEO_EXTENSIONS.some(ext => url.endsWith(ext));
 			}
 			return mediaType === "IMAGE";
 		},

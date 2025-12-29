@@ -1,14 +1,9 @@
 /**
  * Types pour la sélection et le calcul de stock des SKUs
+ *
+ * NOTE: Ces types sont maintenant définis dans shared/types/product-sku.types.ts
+ * pour éviter la dépendance circulaire avec le module products.
+ * Ce fichier ré-exporte pour rétrocompatibilité.
  */
 
-/** Statut de stock simplifié */
-export type StockStatus = "in_stock" | "out_of_stock";
-
-/** Informations de stock d'un produit */
-export type ProductStockInfo = {
-	status: StockStatus;
-	totalInventory: number;
-	availableSkus: number;
-	message: string;
-};
+export type { StockStatus, ProductStockInfo } from "@/shared/types/product-sku.types";

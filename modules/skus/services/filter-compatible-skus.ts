@@ -7,8 +7,7 @@
  */
 
 import { slugify } from "@/shared/utils/generate-slug";
-import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductSku } from "@/modules/products/types/product-services.types";
+import type { BaseProductSku, BaseProductDetailed } from "@/shared/types/product-sku.types";
 import type { VariantSelectors } from "../types/sku.types";
 
 export type { VariantSelectors } from "../types/sku.types";
@@ -26,7 +25,7 @@ export type { VariantSelectors } from "../types/sku.types";
  * @returns true si la couleur correspond ou si aucune couleur n'est sélectionnée
  */
 export function matchColor(
-	sku: ProductSku,
+	sku: BaseProductSku,
 	selectors: Pick<VariantSelectors, "colorSlug" | "colorHex" | "colorId">
 ): boolean {
 	const { colorSlug, colorHex, colorId } = selectors;
@@ -61,7 +60,7 @@ export function matchColor(
  * @returns true si le matériau correspond ou si aucun matériau n'est sélectionné
  */
 export function matchMaterial(
-	sku: ProductSku,
+	sku: BaseProductSku,
 	selectors: Pick<VariantSelectors, "material" | "materialSlug">
 ): boolean {
 	const { material, materialSlug } = selectors;
@@ -88,7 +87,7 @@ export function matchMaterial(
  * @returns true si la taille correspond ou si aucune taille n'est sélectionnée
  */
 export function matchSize(
-	sku: ProductSku,
+	sku: BaseProductSku,
 	selectors: Pick<VariantSelectors, "size">
 ): boolean {
 	const { size } = selectors;
@@ -107,7 +106,7 @@ export function matchSize(
  * @returns true si toutes les variantes correspondent
  */
 export function matchSkuVariants(
-	sku: ProductSku,
+	sku: BaseProductSku,
 	selectors: VariantSelectors
 ): boolean {
 	return (
@@ -133,13 +132,13 @@ export function matchSkuVariants(
  * @param selectedVariants - Sélecteurs de variantes partiels
  * @returns Liste des SKUs compatibles
  */
-export function filterCompatibleSkus(
-	product: GetProductReturn,
-	selectedVariants: VariantSelectors
-): ProductSku[] {
+export function filterCompatibleSkus<
+	TSku extends BaseProductSku,
+	TProduct extends { skus?: TSku[] | null }
+>(product: TProduct, selectedVariants: VariantSelectors): TSku[] {
 	if (!product.skus) return [];
 
-	return product.skus.filter((sku: ProductSku) => {
+	return product.skus.filter((sku: TSku) => {
 		// Critères de base: actif et en stock
 		if (!sku.isActive || sku.inventory <= 0) return false;
 

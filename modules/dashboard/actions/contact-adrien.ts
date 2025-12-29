@@ -2,6 +2,7 @@
 
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { ADMIN_CONTACT_LIMIT } from "@/shared/lib/rate-limit-config";
 import {
 	validateFormData,
 	handleActionError,
@@ -24,11 +25,8 @@ export async function contactAdrien(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limiting - 5 emails par heure
-		const rateCheck = await enforceRateLimitForCurrentUser({
-			limit: 5,
-			windowMs: 60 * 60 * 1000, // 1 heure
-		});
+		// 1. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_CONTACT_LIMIT);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Vérifier l'authentification

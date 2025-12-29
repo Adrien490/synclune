@@ -2,10 +2,12 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { addOrderNoteSchema } from "../schemas/order.schemas";
+import { handleActionError } from "@/shared/lib/actions";
+import { getOrderInvalidationTags } from "../constants/cache";
+import { updateTag } from "next/cache";
 
 /**
  * Server Action ADMIN pour ajouter une note interne à une commande
@@ -52,18 +54,13 @@ export async function addOrderNote(
 		});
 
 		// 6. Invalider le cache
-		revalidatePath("/admin/ventes/commandes");
-		revalidatePath(`/admin/ventes/commandes/${orderId}`);
+		getOrderInvalidationTags().forEach(tag => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,
 			message: "Note ajoutée",
 		};
 	} catch (error) {
-		console.error("[ADD_ORDER_NOTE] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue",
-		};
+		return handleActionError(error, "Une erreur est survenue");
 	}
 }

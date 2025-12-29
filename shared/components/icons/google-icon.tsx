@@ -1,26 +1,6 @@
-"use client";
+import type { GoogleIconProps } from "@/shared/types/icons.types";
 
-/**
- * Logo Google - Version couleur officielle
- */
-export interface GoogleIconProps {
-	/** Classes Tailwind additionnelles */
-	className?: string;
-	/**
-	 * Taille en pixels (defaut: 24)
-	 * @default 24
-	 */
-	size?: number;
-	/**
-	 * Label pour lecteurs d'ecran
-	 */
-	ariaLabel?: string;
-	/**
-	 * Masquer aux lecteurs d'ecran si l'icone est purement decorative
-	 * @default false
-	 */
-	decorative?: boolean;
-}
+export type { GoogleIconProps };
 
 export function GoogleIcon({
 	className = "",

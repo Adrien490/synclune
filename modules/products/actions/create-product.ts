@@ -12,6 +12,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { createProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
+import { handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour creer un produit
@@ -30,19 +31,12 @@ export async function createProduct(
 		// Helper pour parser JSON de maniere safe avec logging en dev
 		const parseJSON = <T>(
 			value: FormDataEntryValue | null,
-			fallback: T,
-			fieldName?: string
+			fallback: T
 		): T => {
 			if (value && typeof value === "string") {
 				try {
 					return JSON.parse(value);
-				} catch (e) {
-					if (process.env.NODE_ENV === "development") {
-						console.warn(
-							`[createProduct.parseJSON] Échec du parsing JSON pour ${fieldName || "champ inconnu"}:`,
-							e
-						);
-					}
+				} catch {
 					return fallback;
 				}
 			}
@@ -53,8 +47,7 @@ export async function createProduct(
 		// Parse media from form: initialSku.media is sent as JSON array
 		const media = parseJSON<unknown[]>(
 			formData.get("initialSku.media"),
-			[],
-			"initialSku.media"
+			[]
 		);
 
 		const rawData = {
@@ -63,8 +56,7 @@ export async function createProduct(
 			typeId: formData.get("typeId") || "",
 			collectionIds: parseJSON<string[]>(
 				formData.get("collectionIds"),
-				[],
-				"collectionIds"
+				[]
 			),
 			status: formData.get("status") || "PUBLIC",
 			initialSku: {
@@ -291,20 +283,13 @@ export async function createProduct(
 			data: product,
 		};
 	} catch (e) {
-		// Error handling
+		// Gestion spéciale des contraintes d'unicité (slug)
 		if (e instanceof Error && e.message.includes("Unique constraint")) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Une erreur technique est survenue (slug duplique). Veuillez reessayer.",
 			};
 		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				e instanceof Error
-					? e.message
-					: "Une erreur est survenue lors de la creation du produit. Veuillez reessayer.",
-		};
+		return handleActionError(e, "Une erreur est survenue lors de la creation du produit.");
 	}
 }

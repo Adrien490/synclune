@@ -13,6 +13,7 @@ import {
 	parsePrimaryImageFromForm,
 	parseGalleryMediaFromForm,
 } from "../utils/parse-media-from-form";
+import { BusinessError, handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour creer une variante de produit (Product SKU)
@@ -112,7 +113,7 @@ export async function createProductSku(
 				select: { id: true, title: true },
 			});
 			if (!product) {
-				throw new Error("Le produit specifie n'existe pas.");
+				throw new BusinessError("Le produit spécifié n'existe pas.");
 			}
 
 			// Validate color if provided
@@ -122,7 +123,7 @@ export async function createProductSku(
 					select: { id: true },
 				});
 				if (!color) {
-					throw new Error("La couleur specifiee n'existe pas.");
+					throw new BusinessError("La couleur spécifiée n'existe pas.");
 				}
 			}
 
@@ -133,7 +134,7 @@ export async function createProductSku(
 					select: { id: true, name: true },
 				});
 				if (!material) {
-					throw new Error("Le materiau specifie n'existe pas.");
+					throw new BusinessError("Le matériau spécifié n'existe pas.");
 				}
 			}
 
@@ -154,15 +155,15 @@ export async function createProductSku(
 
 			if (existingCombination) {
 				const variantDetails = [
-					normalizedColorId ? `couleur specifiee` : null,
+					normalizedColorId ? `couleur spécifiée` : null,
 					normalizedSize ? `taille "${normalizedSize}"` : null,
-					normalizedMaterialId ? `materiau specifie` : null,
+					normalizedMaterialId ? `matériau spécifié` : null,
 				]
 					.filter(Boolean)
 					.join(", ");
 
-				throw new Error(
-					`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe deja pour ce produit (Réf: ${existingCombination.sku}). Veuillez modifier au moins une variante.`
+				throw new BusinessError(
+					`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe déjà pour ce produit (Réf: ${existingCombination.sku}). Veuillez modifier au moins une variante.`
 				);
 			}
 
@@ -276,20 +277,12 @@ export async function createProductSku(
 			},
 		};
 	} catch (e) {
-		// Error handling
 		if (e instanceof Error && e.message.includes("Unique constraint")) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Un SKU avec ce code existe deja.",
+				message: "Un SKU avec ce code existe déjà.",
 			};
 		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				e instanceof Error
-					? e.message
-					: "Une erreur est survenue lors de la creation de la variante. Veuillez reessayer.",
-		};
+		return handleActionError(e, "Une erreur est survenue lors de la creation de la variante.");
 	}
 }

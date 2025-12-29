@@ -5,6 +5,7 @@ import { CheckoutForm } from "./checkout-form"
 import { EmbeddedCheckoutWrapper } from "./embedded-checkout"
 import { CheckoutSummary } from "./checkout-summary"
 import { Button } from "@/shared/components/ui/button"
+import { ErrorBoundary } from "@/shared/components/error-boundary"
 import { ArrowLeft, CreditCard, Shield, MapPin } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import type { GetCartReturn } from "@/modules/cart/data/get-cart"
@@ -104,14 +105,19 @@ export function CheckoutContainer({
 				</nav>
 
 				{step === "address" && (
-					<CheckoutForm
-						cart={cart}
-						session={session}
-						addresses={addresses}
-						onSuccess={handleAddressValidated}
-						onCountryChange={setSelectedCountry}
-						onPostalCodeChange={setPostalCode}
-					/>
+					<ErrorBoundary
+						errorMessage="Impossible de charger le formulaire d'adresse"
+						className="p-8 rounded-lg border bg-muted/50"
+					>
+						<CheckoutForm
+							cart={cart}
+							session={session}
+							addresses={addresses}
+							onSuccess={handleAddressValidated}
+							onCountryChange={setSelectedCountry}
+							onPostalCodeChange={setPostalCode}
+						/>
+					</ErrorBoundary>
 				)}
 
 				{step === "payment" && clientSecret && (

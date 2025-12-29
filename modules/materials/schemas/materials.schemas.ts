@@ -82,7 +82,7 @@ export const createMaterialSchema = z.object({
 });
 
 export const updateMaterialSchema = z.object({
-	id: z.cuid("ID invalide"),
+	id: z.cuid2("ID invalide"),
 	name: materialNameSchema,
 	slug: materialSlugSchema,
 	description: materialDescriptionSchema,
@@ -90,19 +90,19 @@ export const updateMaterialSchema = z.object({
 });
 
 export const deleteMaterialSchema = z.object({
-	id: z.cuid("ID invalide"),
+	id: z.cuid2("ID invalide"),
 });
 
 export const bulkDeleteMaterialsSchema = z.object({
-	ids: z.array(z.cuid("ID invalide")).min(1, "Aucun materiau selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun materiau selectionne"),
 });
 
 export const toggleMaterialStatusSchema = z.object({
-	id: z.cuid("ID invalide"),
+	id: z.cuid2("ID invalide"),
 	isActive: z.boolean(),
 });
 
 export const bulkToggleMaterialStatusSchema = z.object({
-	ids: z.array(z.cuid("ID invalide")).min(1, "Aucun materiau selectionne"),
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun materiau selectionne"),
 	isActive: z.boolean(),
 });

@@ -1,18 +1,10 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { type ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
+import type { FadeProps } from "./types";
 
-export interface FadeProps {
-	children: ReactNode;
-	className?: string;
-	delay?: number;
-	duration?: number;
-	y?: number;
-	inView?: boolean;
-	once?: boolean;
-}
+export type { FadeProps };
 
 /**
  * Animation Fade simple avec mouvement vertical

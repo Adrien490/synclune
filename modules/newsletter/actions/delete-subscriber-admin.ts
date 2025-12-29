@@ -7,6 +7,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 import { subscriberIdSchema } from "../schemas/subscriber.schemas";
 import { getNewsletterInvalidationTags } from "../constants/cache";
+import { handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action ADMIN pour supprimer définitivement un abonné newsletter
@@ -55,10 +56,6 @@ export async function deleteSubscriberAdmin(subscriberId: string): Promise<Actio
 			message: `${email} a été supprimé définitivement`,
 		};
 	} catch (error) {
-		console.error("[DELETE_SUBSCRIBER_ADMIN] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: error instanceof Error ? error.message : "Une erreur est survenue",
-		};
+		return handleActionError(error, "Une erreur est survenue");
 	}
 }

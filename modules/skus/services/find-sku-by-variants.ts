@@ -1,5 +1,4 @@
-import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductSku } from "@/modules/products/types/product-services.types";
+import type { BaseProductSku } from "@/shared/types/product-sku.types";
 import { matchSkuVariants, type VariantSelectors } from "./filter-compatible-skus";
 
 /**
@@ -12,15 +11,15 @@ import { matchSkuVariants, type VariantSelectors } from "./filter-compatible-sku
  * @param variants - Sélecteurs de variantes (couleur, matériau, taille)
  * @returns Le SKU correspondant ou null si non trouvé
  */
-export function findSkuByVariants(
-	product: GetProductReturn,
-	variants: VariantSelectors
-): ProductSku | null {
+export function findSkuByVariants<
+	TSku extends BaseProductSku,
+	TProduct extends { skus?: TSku[] | null }
+>(product: TProduct, variants: VariantSelectors): TSku | null {
 	if (!product.skus) return null;
 
 	return (
 		product.skus.find(
-			(sku: ProductSku) => sku.isActive && matchSkuVariants(sku, variants)
+			(sku: TSku) => sku.isActive && matchSkuVariants(sku, variants)
 		) || null
 	);
 }

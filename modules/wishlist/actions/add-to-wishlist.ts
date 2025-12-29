@@ -23,6 +23,7 @@ import {
 	WISHLIST_ERROR_MESSAGES,
 	WISHLIST_SUCCESS_MESSAGES,
 } from "@/modules/wishlist/constants/error-messages";
+import { handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour ajouter un article à la wishlist
@@ -180,10 +181,6 @@ export async function addToWishlist(
 			},
 		};
 	} catch (e) {
-		console.error('[ADD_TO_WISHLIST] Error:', e);
-		return {
-			status: ActionStatus.ERROR,
-			message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
-		};
+		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 	}
 }

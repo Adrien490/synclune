@@ -25,6 +25,7 @@ import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zon
 import { getInvoiceFooter } from "@/shared/lib/stripe";
 import { getValidImageUrl } from "@/modules/payments/utils/validate-image-url";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
+import { BusinessError, handleActionError } from "@/shared/lib/actions";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -270,26 +271,26 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				`;
 
 				if (currentSkuRows.length === 0) {
-					throw new Error(`Produit introuvable : ${sku.product.title}`);
+					throw new BusinessError(`Produit introuvable : ${sku.product.title}`);
 				}
 
 				const currentSku = currentSkuRows[0];
 
 				if (!currentSku.isActive) {
-					throw new Error(
-						`Le produit ${currentSku.productTitle} n'est plus disponible (SKU inactif)`
+					throw new BusinessError(
+						`Le produit ${currentSku.productTitle} n'est plus disponible`
 					);
 				}
 
 				if (currentSku.productStatus !== "PUBLIC") {
-					throw new Error(
-						`Le produit ${currentSku.productTitle} n'est plus disponible (statut: ${currentSku.productStatus})`
+					throw new BusinessError(
+						`Le produit ${currentSku.productTitle} n'est plus disponible`
 					);
 				}
 
 				if (currentSku.inventory < cartItem.quantity) {
-					throw new Error(
-						`Stock insuffisant pour ${currentSku.productTitle} (${cartItem.quantity} demandé, ${currentSku.inventory} disponible)`
+					throw new BusinessError(
+						`Stock insuffisant pour ${currentSku.productTitle}`
 					);
 				}
 			}
@@ -339,7 +340,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				`;
 
 				if (discountRows.length === 0) {
-					throw new Error(DISCOUNT_ERROR_MESSAGES.NOT_FOUND);
+					throw new BusinessError(DISCOUNT_ERROR_MESSAGES.NOT_FOUND);
 				}
 
 				const discount = discountRows[0];
@@ -365,7 +366,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				);
 
 				if (!eligibility.eligible) {
-					throw new Error(eligibility.error || "Code promo invalide");
+					throw new BusinessError(eligibility.error || "Code promo invalide");
 				}
 
 				// Préparer les items pour le calcul avec exclusion articles soldés
@@ -591,21 +592,6 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			},
 		};
 	} catch (error) {
-// console.error("[CREATE_CHECKOUT_SESSION]", error);
-
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					error.message ||
-					"Une erreur est survenue lors de la création de la session de paiement.",
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				"Une erreur est survenue lors de la création de la session de paiement.",
-		};
+		return handleActionError(error, "Une erreur est survenue lors de la création de la session de paiement.");
 	}
 };

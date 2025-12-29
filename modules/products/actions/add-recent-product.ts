@@ -39,9 +39,8 @@ export async function addRecentProduct(
 				if (Array.isArray(parsed)) {
 					products = parsed
 				}
-			} catch (parseError) {
-				// Cookie corrompu - reset silencieux mais loggé
-				console.error("[addRecentProduct] Cookie corrompu, reset:", parseError)
+			} catch {
+				// Cookie corrompu - reset silencieux
 			}
 		}
 

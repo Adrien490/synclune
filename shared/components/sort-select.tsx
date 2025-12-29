@@ -14,19 +14,9 @@ import type { SortOption } from "@/shared/types/sort.types";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
 import { useId, useRef } from "react";
+import type { SortSelectProps } from "@/shared/types/component.types";
 
-export type { SortOption };
-
-export interface SortSelectProps {
-	label: string;
-	options: SortOption[];
-	placeholder?: string;
-	className?: string;
-	/** Maximum height for dropdown in pixels */
-	maxHeight?: number;
-	/** Show label outside of select instead of inside */
-	externalLabel?: boolean;
-}
+export type { SortOption, SortSelectProps };
 
 export function SortSelect({
 	label,

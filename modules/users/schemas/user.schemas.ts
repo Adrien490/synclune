@@ -5,6 +5,7 @@ import {
 	directionSchema,
 } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
+import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
 	GET_USERS_DEFAULT_PER_PAGE,
 	GET_USERS_DEFAULT_SORT_BY,
@@ -12,17 +13,7 @@ import {
 	GET_USERS_MAX_RESULTS_PER_PAGE,
 	GET_USERS_SORT_FIELDS,
 } from "../constants/user.constants";
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-const stringOrStringArray = z
-	.union([
-		z.string().min(1).max(100),
-		z.array(z.string().min(1).max(100)).max(50),
-	])
-	.optional();
+import { DATE_LIMITS, TEXT_LIMITS } from "@/shared/constants/validation-limits";
 
 const roleSchema = z
 	.union([z.enum([Role.USER, Role.ADMIN]), z.array(z.enum([Role.USER, Role.ADMIN]))])
@@ -42,29 +33,29 @@ export const getUserSchema = z.object({
 
 export const userFiltersSchema = z
 	.object({
-		name: stringOrStringArray,
-		email: stringOrStringArray,
+		name: optionalStringOrStringArraySchema,
+		email: optionalStringOrStringArraySchema,
 		role: roleSchema,
 		emailVerified: z.boolean().optional(),
 		hasStripeCustomer: z.boolean().optional(),
 		hasImage: z.boolean().optional(),
 		createdAfter: z.coerce
 			.date()
-			.min(new Date("2020-01-01"), "Date too old")
+			.min(DATE_LIMITS.FILTERS_MIN, "Date too old")
 			.max(new Date(), "Date cannot be in the future")
 			.optional(),
 		createdBefore: z.coerce
 			.date()
-			.min(new Date("2020-01-01"), "Date too old")
+			.min(DATE_LIMITS.FILTERS_MIN, "Date too old")
 			.optional(),
 		updatedAfter: z.coerce
 			.date()
-			.min(new Date("2020-01-01"), "Date too old")
+			.min(DATE_LIMITS.FILTERS_MIN, "Date too old")
 			.max(new Date(), "Date cannot be in the future")
 			.optional(),
 		updatedBefore: z.coerce
 			.date()
-			.min(new Date("2020-01-01"), "Date too old")
+			.min(DATE_LIMITS.FILTERS_MIN, "Date too old")
 			.optional(),
 		hasOrders: z.boolean().optional(),
 		hasSessions: z.boolean().optional(),
@@ -104,7 +95,7 @@ export const getUsersSchema = z.object({
 	search: z
 		.string()
 		.trim()
-		.max(255, { message: "Search term too long" })
+		.max(TEXT_LIMITS.USER_SEARCH.max, { message: "Search term too long" })
 		.optional(),
 	cursor: cursorSchema,
 	direction: directionSchema,
@@ -150,8 +141,8 @@ export const deleteAccountSchema = z.object({
 	confirmation: z
 		.string()
 		.refine(
-			(val) => val === "SUPPRIMER",
-			"Veuillez saisir SUPPRIMER pour confirmer"
+			(val) => val === USER_CONSTANTS.ACCOUNT_DELETION_CONFIRMATION,
+			`Veuillez saisir ${USER_CONSTANTS.ACCOUNT_DELETION_CONFIRMATION} pour confirmer`
 		),
 });
 

@@ -1,41 +1,8 @@
 import { crimsonPro } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
-import { type ReactNode } from "react";
+import type { SectionTitleProps } from "@/shared/types/component.types";
 
-export interface SectionTitleProps {
-	children: ReactNode;
-	id?: string;
-	className?: string;
-	/**
-	 * Niveau de titre sémantique
-	 * @default "h2"
-	 */
-	as?: "h1" | "h2" | "h3";
-	/**
-	 * Variante de taille
-	 * @default "default"
-	 */
-	size?: "hero" | "default" | "small";
-	/**
-	 * Alignement du texte
-	 * @default "center"
-	 */
-	align?: "left" | "center" | "right";
-	/**
-	 * Graisse de la police
-	 * @default "semibold"
-	 */
-	weight?: "light" | "normal" | "medium" | "semibold";
-	/**
-	 * Utiliser l'italique (Fraunces italic)
-	 * @default false
-	 */
-	italic?: boolean;
-	/**
-	 * Schema.org itemProp attribute
-	 */
-	itemProp?: string;
-}
+export type { SectionTitleProps };
 
 const sizeVariants = {
 	hero: "text-4xl sm:text-5xl lg:text-7xl leading-tight",

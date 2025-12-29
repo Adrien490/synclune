@@ -11,10 +11,5 @@ export type ProductFromList = GetProductsReturn["products"][0];
 /** SKU tel que retourné dans ProductFromList */
 export type SkuFromList = ProductFromList["skus"][0];
 
-/** Type pour les pastilles couleur sur ProductCard */
-export type ColorSwatch = {
-	slug: string;
-	hex: string;
-	name: string;
-	inStock: boolean;
-};
+// Re-export ColorSwatch depuis shared pour rétrocompatibilité
+export type { ColorSwatch } from "@/shared/types/product-sku.types";

@@ -56,8 +56,8 @@ export const signUpEmail = async (
 				"Une erreur est survenue lors de l'inscription. Si cet email est déjà utilisé, essayez de vous connecter."
 			);
 		}
-	} catch (err) {
-		const errorMessage = err instanceof Error ? err.message : "Une erreur inattendue est survenue";
-		return error(errorMessage);
+	} catch {
+		// Message generique pour eviter l'exposition d'erreurs techniques
+		return error("Une erreur inattendue est survenue. Veuillez réessayer.");
 	}
 };

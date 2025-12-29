@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { Metadata } from "next";
 import { connection } from "next/server";
 
-import { KpiCard } from "@/modules/dashboard/components/kpi-card";
+import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
 import { RevenueChart } from "@/modules/dashboard/components/revenue-chart";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
@@ -14,11 +14,8 @@ import {
 	ListSkeleton,
 } from "@/modules/dashboard/components/skeletons";
 
-import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
 import { fetchDashboardRevenueChart } from "@/modules/dashboard/data/get-revenue-chart";
 import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-orders";
-
-import { Euro, ShoppingBag, Receipt } from "lucide-react";
 
 export const metadata: Metadata = {
 	title: "Tableau de bord - Administration",
@@ -104,67 +101,6 @@ export default async function AdminDashboardPage() {
 				</div>
 			</div>
 		</>
-	);
-}
-
-/**
- * Composant async pour les 3 KPIs
- */
-async function DashboardKpis() {
-	const kpis = await fetchDashboardKpis();
-
-	const formatCurrency = (amount: number) =>
-		new Intl.NumberFormat("fr-FR", {
-			style: "currency",
-			currency: "EUR",
-			maximumFractionDigits: 0,
-		}).format(amount);
-
-	return (
-		<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-			{/* CA du mois */}
-			<KpiCard
-				title="CA du mois"
-				value={formatCurrency(kpis.monthlyRevenue.amount)}
-				numericValue={kpis.monthlyRevenue.amount}
-				suffix=" €"
-				evolution={kpis.monthlyRevenue.evolution}
-				comparisonLabel="vs mois dernier"
-				icon={<Euro className="h-4 w-4" />}
-				size="featured"
-				priority="critical"
-				href="/admin/ventes/commandes?paymentStatus=PAID"
-				tooltip="Chiffre d'affaires total des commandes payées ce mois"
-			/>
-
-			{/* Commandes du mois */}
-			<KpiCard
-				title="Commandes"
-				value={kpis.monthlyOrders.count.toString()}
-				numericValue={kpis.monthlyOrders.count}
-				evolution={kpis.monthlyOrders.evolution}
-				comparisonLabel="vs mois dernier"
-				icon={<ShoppingBag className="h-4 w-4" />}
-				size="featured"
-				priority="critical"
-				href="/admin/ventes/commandes"
-				tooltip="Nombre de commandes payées ce mois"
-			/>
-
-			{/* Panier moyen */}
-			<KpiCard
-				title="Panier moyen"
-				value={formatCurrency(kpis.averageOrderValue.amount)}
-				numericValue={kpis.averageOrderValue.amount}
-				suffix=" €"
-				evolution={kpis.averageOrderValue.evolution}
-				comparisonLabel="vs mois dernier"
-				icon={<Receipt className="h-4 w-4" />}
-				size="featured"
-				priority="operational"
-				tooltip="Valeur moyenne des commandes ce mois"
-			/>
-		</div>
 	);
 }
 

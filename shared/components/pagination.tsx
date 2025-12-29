@@ -18,13 +18,9 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { usePagination } from "@/shared/hooks/use-pagination";
 import { getPaginationItems } from "@/shared/utils/get-pagination-items";
+import type { PaginationProps } from "@/shared/types/component.types";
 
-export interface PaginationProps {
-	total: number;
-	pageCount: number;
-	page: number;
-	perPage: number;
-}
+export type { PaginationProps };
 
 export function Pagination({
 	total,

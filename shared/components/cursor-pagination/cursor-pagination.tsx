@@ -15,26 +15,12 @@ import {
 	ChevronsLeft,
 	Loader2,
 } from "lucide-react";
-import type { RefObject } from "react";
 import { Button } from "../ui/button";
 import { PER_PAGE_OPTIONS } from "./pagination";
 import { useCursorPagination } from "@/shared/hooks/use-cursor-pagination";
+import type { CursorPaginationProps } from "@/shared/types/component.types";
 
-export interface CursorPaginationProps {
-	perPage: number;
-	hasNextPage: boolean;
-	hasPreviousPage: boolean;
-	currentPageSize: number;
-	nextCursor: string | null;
-	prevCursor: string | null;
-	/** Options personnalisées pour le nombre d'éléments par page */
-	perPageOptions?: readonly number[] | number[];
-	/**
-	 * Ref vers l'élément qui doit recevoir le focus après navigation
-	 * Améliore l'accessibilité clavier en ramenant le focus au bon endroit
-	 */
-	focusTargetRef?: RefObject<HTMLElement | null>;
-}
+export type { CursorPaginationProps };
 
 export function CursorPagination({
 	perPage,

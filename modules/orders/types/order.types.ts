@@ -138,16 +138,3 @@ export interface CreateOrderAuditParams {
 	userId?: string
 }
 
-// ============================================================================
-// TYPES - ORDER NOTES (from data/)
-// ============================================================================
-
-export interface OrderNoteItem {
-	id: string
-	content: string
-	createdAt: Date
-	createdBy: {
-		id: string
-		name: string | null
-	}
-}

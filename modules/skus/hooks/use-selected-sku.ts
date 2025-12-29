@@ -3,8 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
-import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductSku } from "@/modules/products/types/product-services.types";
+import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
 interface UseSelectedSkuOptions {
 	product: GetProductReturn;
@@ -25,7 +24,7 @@ function isSkuAvailable(sku: ProductSku | undefined | null): boolean {
 /**
  * Trouve le premier SKU disponible dans une liste
  */
-function findFirstAvailableSku(skus: ProductSku[]): ProductSku | null {
+function findFirstAvailableSku(skus: readonly ProductSku[]): ProductSku | null {
 	return skus.find(isSkuAvailable) ?? null;
 }
 
@@ -46,7 +45,7 @@ export function useSelectedSku({
 }: UseSelectedSkuOptions): UseSelectedSkuReturn {
 	const searchParams = useSearchParams();
 
-	const selectedSku = (() => {
+	const selectedSku = ((): ProductSku | null => {
 		const urlVariants = {
 			colorSlug: searchParams.get("color") ?? undefined,
 			materialSlug: searchParams.get("material") ?? undefined,
@@ -62,11 +61,12 @@ export function useSelectedSku({
 		}
 
 		// Chercher le SKU exact correspondant aux params URL
-		const exactSku = findSkuByVariants(product, urlVariants);
+		// Note: les fonctions génériques retournent le type de base mais les données sont du bon type
+		const exactSku = findSkuByVariants(product, urlVariants) as ProductSku | null;
 		if (exactSku) return exactSku;
 
 		// Chercher parmi les SKUs compatibles
-		const compatibleSkus = filterCompatibleSkus(product, urlVariants);
+		const compatibleSkus = filterCompatibleSkus(product, urlVariants) as ProductSku[];
 
 		// Preferer un SKU disponible parmi les compatibles
 		const availableCompatible = findFirstAvailableSku(compatibleSkus);

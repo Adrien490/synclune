@@ -12,10 +12,8 @@ import {
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useOrderNotes } from "@/modules/orders/hooks/use-order-notes";
-import {
-	getOrderNotes,
-	type OrderNoteItem,
-} from "@/modules/orders/data/get-order-notes";
+import { getOrderNotes } from "@/modules/orders/data/get-order-notes";
+import type { OrderNoteItem } from "@/modules/orders/types/order-notes.types";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2, MessageSquarePlus, StickyNote, Trash2 } from "lucide-react";

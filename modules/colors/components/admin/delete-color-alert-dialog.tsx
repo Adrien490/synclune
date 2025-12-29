@@ -1,15 +1,6 @@
 "use client";
 
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
 import { useDeleteColor } from "@/modules/colors/hooks/use-delete-color";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 
@@ -29,47 +20,23 @@ export function DeleteColorAlertDialog() {
 		},
 	});
 
-	const handleOpenChange = (open: boolean) => {
-		if (!open && !isPending) {
-			deleteDialog.close();
-		}
-	};
-
 	return (
-		<AlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
-				<form action={action}>
-					<input
-						type="hidden"
-						name="id"
-						value={deleteDialog.data?.colorId ?? ""}
-					/>
-
-					<AlertDialogHeader>
-						<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-						<AlertDialogDescription>
-							Es-tu sûr(e) de vouloir supprimer la couleur{" "}
-							<strong>&quot;{deleteDialog.data?.colorName}&quot;</strong> ?
-							<br />
-							<br />
-							<span className="text-destructive font-medium">
-								Cette action est irréversible.
-							</span>
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction
-							type="submit"
-							disabled={isPending}
-						>
-							{isPending ? "Suppression..." : "Supprimer"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+		<DeleteConfirmationDialog<DeleteColorData>
+			dialogId={DELETE_COLOR_DIALOG_ID}
+			action={action}
+			isPending={isPending}
+			hiddenFields={[{ name: "id", dataKey: "colorId" }]}
+			description={(data) => (
+				<>
+					Es-tu sûr(e) de vouloir supprimer la couleur{" "}
+					<strong>&quot;{data?.colorName}&quot;</strong> ?
+					<br />
+					<br />
+					<span className="text-destructive font-medium">
+						Cette action est irréversible.
+					</span>
+				</>
+			)}
+		/>
 	);
 }
