@@ -1,6 +1,6 @@
 "use client";
 
-import { createProductFilterFormatter } from "@/app/(boutique)/produits/_utils/format-product-filter";
+import { createProductFilterFormatter } from "@/modules/products/utils/format-product-filter";
 import { FilterBadges } from "@/shared/components/filter-badges";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";

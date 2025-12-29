@@ -33,7 +33,7 @@ import {
 	XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useDeleteUser } from "@/modules/users/hooks/use-delete-user";
 import { useSuspendUser } from "@/modules/users/hooks/use-suspend-user";
 import { useRestoreUser } from "@/modules/users/hooks/use-restore-user";
@@ -54,28 +54,28 @@ interface UsersRowActionsProps {
 }
 
 export function UsersRowActions({ user }: UsersRowActionsProps) {
-	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-	const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
-	const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
-	const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
-	const [demoteDialogOpen, setDemoteDialogOpen] = useState(false);
+	const deleteDialog = useDialog(`delete-user-${user.id}`);
+	const suspendDialog = useDialog(`suspend-user-${user.id}`);
+	const restoreDialog = useDialog(`restore-user-${user.id}`);
+	const promoteDialog = useDialog(`promote-user-${user.id}`);
+	const demoteDialog = useDialog(`demote-user-${user.id}`);
 
 	const { action: deleteAction, isPending: isDeletePending } = useDeleteUser({
-		onSuccess: () => setDeleteDialogOpen(false),
+		onSuccess: () => deleteDialog.close(),
 	});
 
 	const { action: suspendAction, isPending: isSuspendPending } = useSuspendUser({
-		onSuccess: () => setSuspendDialogOpen(false),
+		onSuccess: () => suspendDialog.close(),
 	});
 
 	const { action: restoreAction, isPending: isRestorePending } = useRestoreUser({
-		onSuccess: () => setRestoreDialogOpen(false),
+		onSuccess: () => restoreDialog.close(),
 	});
 
 	const { action: changeRoleAction, isPending: isChangeRolePending } = useChangeUserRole({
 		onSuccess: () => {
-			setPromoteDialogOpen(false);
-			setDemoteDialogOpen(false);
+			promoteDialog.close();
+			demoteDialog.close();
 		},
 	});
 
@@ -150,14 +150,14 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 								</DropdownMenuSubTrigger>
 								<DropdownMenuSubContent>
 									<DropdownMenuItem
-										onClick={() => setPromoteDialogOpen(true)}
+										onClick={() => promoteDialog.open()}
 										disabled={isAdmin}
 									>
 										<CheckCircle2 className="mr-2 h-4 w-4" />
 										Promouvoir admin
 									</DropdownMenuItem>
 									<DropdownMenuItem
-										onClick={() => setDemoteDialogOpen(true)}
+										onClick={() => demoteDialog.open()}
 										disabled={!isAdmin}
 									>
 										<XCircle className="mr-2 h-4 w-4" />
@@ -169,7 +169,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							{!isSuspended ? (
 								<DropdownMenuItem
 									className="flex items-center cursor-pointer"
-									onClick={() => setSuspendDialogOpen(true)}
+									onClick={() => suspendDialog.open()}
 								>
 									<XCircle className="mr-2 h-4 w-4" />
 									Suspendre
@@ -177,7 +177,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							) : (
 								<DropdownMenuItem
 									className="flex items-center cursor-pointer"
-									onClick={() => setRestoreDialogOpen(true)}
+									onClick={() => restoreDialog.open()}
 								>
 									<RotateCcw className="mr-2 h-4 w-4" />
 									Lever la suspension
@@ -185,7 +185,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							)}
 							<DropdownMenuItem
 								className="flex items-center cursor-pointer text-destructive focus:text-destructive"
-								onClick={() => setDeleteDialogOpen(true)}
+								onClick={() => deleteDialog.open()}
 							>
 								<Trash2 className="mr-2 h-4 w-4" />
 								Supprimer
@@ -197,7 +197,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
 								className="flex items-center cursor-pointer"
-								onClick={() => setRestoreDialogOpen(true)}
+								onClick={() => restoreDialog.open()}
 							>
 								<RotateCcw className="mr-2 h-4 w-4" />
 								Restaurer
@@ -208,7 +208,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			</DropdownMenu>
 
 			{/* Delete Dialog */}
-			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+			<AlertDialog open={deleteDialog.isOpen} onOpenChange={(open) => open ? deleteDialog.open() : deleteDialog.close()}>
 				<AlertDialogContent>
 					<form action={deleteAction}>
 						<input type="hidden" name="id" value={user.id} />
@@ -248,7 +248,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			</AlertDialog>
 
 			{/* Suspend Dialog */}
-			<AlertDialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
+			<AlertDialog open={suspendDialog.isOpen} onOpenChange={(open) => open ? suspendDialog.open() : suspendDialog.close()}>
 				<AlertDialogContent>
 					<form action={suspendAction}>
 						<input type="hidden" name="id" value={user.id} />
@@ -285,7 +285,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			</AlertDialog>
 
 			{/* Restore Dialog */}
-			<AlertDialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+			<AlertDialog open={restoreDialog.isOpen} onOpenChange={(open) => open ? restoreDialog.open() : restoreDialog.close()}>
 				<AlertDialogContent>
 					<form action={restoreAction}>
 						<input type="hidden" name="id" value={user.id} />
@@ -322,7 +322,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			</AlertDialog>
 
 			{/* Promote to Admin Dialog */}
-			<AlertDialog open={promoteDialogOpen} onOpenChange={setPromoteDialogOpen}>
+			<AlertDialog open={promoteDialog.isOpen} onOpenChange={(open) => open ? promoteDialog.open() : promoteDialog.close()}>
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
@@ -364,7 +364,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 			</AlertDialog>
 
 			{/* Demote to User Dialog */}
-			<AlertDialog open={demoteDialogOpen} onOpenChange={setDemoteDialogOpen}>
+			<AlertDialog open={demoteDialog.isOpen} onOpenChange={(open) => open ? demoteDialog.open() : demoteDialog.close()}>
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />

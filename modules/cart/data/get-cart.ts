@@ -4,6 +4,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_CART_SELECT } from "../constants/cart";
+import { CART_CACHE_TAGS } from "../constants/cache";
 import type { GetCartReturn, Cart, CartItem } from "../types/cart.types";
 
 // Re-export pour compatibilité
@@ -40,14 +41,7 @@ export async function fetchCart(
 ): Promise<GetCartReturn> {
 	"use cache: private";
 	cacheLife("cart");
-
-	cacheTag(
-		userId
-			? `cart-user-${userId}`
-			: sessionId
-				? `cart-session-${sessionId}`
-				: "cart-anonymous"
-	);
+	cacheTag(CART_CACHE_TAGS.CART(userId, sessionId));
 
 	if (!userId && !sessionId) {
 		return null;

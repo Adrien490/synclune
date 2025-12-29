@@ -26,8 +26,10 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "sonner";
-import { GalleryErrorBoundary } from "@/modules/media/components/gallery";
+import { ErrorBoundary } from "@/shared/components/error-boundary";
 import dynamic from "next/dynamic";
+import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
+import { UI_DELAYS } from "@/modules/media/constants/media.constants";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
 const MediaLightbox = dynamic(
@@ -91,7 +93,7 @@ export function MediaUploadGrid({
 	// Afficher le hint long-press pour les nouveaux utilisateurs sur mobile (une seule fois)
 	useEffect(() => {
 		if (typeof window === "undefined") return;
-		const hasSeenHint = localStorage.getItem("media-upload-hint-seen");
+		const hasSeenHint = localStorage.getItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN);
 		if (hasSeenHint) return;
 
 		// Afficher le hint seulement s'il y a au moins 2 médias
@@ -99,8 +101,8 @@ export function MediaUploadGrid({
 			setShowLongPressHint(true);
 			const timer = setTimeout(() => {
 				setShowLongPressHint(false);
-				localStorage.setItem("media-upload-hint-seen", "true");
-			}, 4000);
+				localStorage.setItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN, "true");
+			}, UI_DELAYS.HINT_DISAPPEAR_MS);
 			return () => clearTimeout(timer);
 		}
 	}, [hasMultipleMedia]);
@@ -109,13 +111,13 @@ export function MediaUploadGrid({
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {
-				distance: 8,
+				distance: UI_DELAYS.DRAG_ACTIVATION_DISTANCE_PX,
 			},
 		}),
 		useSensor(TouchSensor, {
 			activationConstraint: {
-				delay: 250, // Long press 250ms pour mobile
-				tolerance: 5, // Tolérance mouvement 5px
+				delay: UI_DELAYS.LONG_PRESS_ACTIVATION_MS,
+				tolerance: UI_DELAYS.LONG_PRESS_TOLERANCE_PX,
 			},
 		}),
 		useSensor(KeyboardSensor, {
@@ -328,8 +330,8 @@ export function MediaUploadGridWithErrorBoundary(
 	props: MediaUploadGridProps
 ) {
 	return (
-		<GalleryErrorBoundary>
+		<ErrorBoundary errorMessage="Impossible de charger la grille de medias">
 			<MediaUploadGrid {...props} />
-		</GalleryErrorBoundary>
+		</ErrorBoundary>
 	);
 }

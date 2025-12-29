@@ -2,17 +2,13 @@
 
 import { Logo } from "@/shared/components/logo";
 import { Button } from "@/shared/components/ui/button";
+import type { ErrorPageProps } from "@/shared/types/error.types";
 import { crimsonPro } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
-interface ErrorProps {
-	error: Error & { digest?: string };
-	reset: () => void;
-}
-
-export default function ResendVerificationError({ reset }: ErrorProps) {
+export default function ResendVerificationError({ reset }: ErrorPageProps) {
 	return (
 		<div className="relative">
 			{/* Lien retour */}

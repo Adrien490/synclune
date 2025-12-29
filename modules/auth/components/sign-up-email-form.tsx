@@ -7,7 +7,7 @@ import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useSignUpEmail } from "@/modules/auth/hooks/use-sign-up-email";
-import { PasswordStrengthIndicator } from "./password-strength-indicator";
+import { PasswordStrengthIndicator } from "@/shared/components/forms/password-strength-indicator";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 

@@ -9,7 +9,7 @@ import {
 	SHIPPING_RATES,
 	type ShippingRate,
 } from "@/modules/orders/constants/shipping-rates";
-import { getShippingZoneFromPostalCode } from "@/modules/payments/services/postal-zone.service";
+import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zone.utils";
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
 
 /**
@@ -80,53 +80,6 @@ export function getShippingInfo(
 	}
 
 	return getShippingRate(countryCode);
-}
-
-/**
- * Formatte les delais de livraison en texte lisible
- *
- * @param countryCode - Code pays
- * @param postalCode - Code postal optionnel pour détecter la Corse
- * @returns Texte formatte du delai de livraison
- *
- * @example
- * ```typescript
- * formatDeliveryTime("FR");          // "2 a 3 jours ouvres"
- * formatDeliveryTime("FR", "20000"); // "4 a 7 jours ouvres" (Corse)
- * formatDeliveryTime("BE");          // "4 a 7 jours ouvres"
- * ```
- */
-export function formatDeliveryTime(
-	countryCode: ShippingCountry = "FR",
-	postalCode?: string
-): string {
-	try {
-		const rate = getShippingInfo(countryCode, postalCode);
-		const { minDays, maxDays } = rate;
-
-		if (minDays === maxDays) {
-			return `${minDays} jour${minDays > 1 ? "s" : ""} ouvre${minDays > 1 ? "s" : ""}`;
-		}
-
-		return `${minDays} a ${maxDays} jours ouvres`;
-	} catch {
-		return "Non disponible";
-	}
-}
-
-/**
- * Retourne la liste des codes pays actuellement supportes
- *
- * @returns Tableau de codes pays ISO 3166-1 alpha-2
- *
- * @example
- * ```typescript
- * const countries = getAllowedCountries();
- * console.log(countries); // ["FR", "BE", "DE", "ES", ...]
- * ```
- */
-export function getAllowedCountries(): ShippingCountry[] {
-	return [...SHIPPING_COUNTRIES];
 }
 
 /**

@@ -1,5 +1,3 @@
-import { mergeCarts } from "@/modules/cart/actions/merge-carts";
-import { mergeWishlists } from "@/modules/wishlist/actions/merge-wishlists";
 import { LEGAL_VERSIONS } from "@/shared/constants/legal-versions";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/modules/emails/services/auth-emails";
 import { prisma } from "@/shared/lib/prisma";
@@ -246,9 +244,10 @@ export const auth = betterAuth({
 			// Récupérer le cookie de session visiteur du panier
 			const cartSessionId = ctx.getCookie("cart_session");
 
-			// 🛒 MERGE DU PANIER
+			// 🛒 MERGE DU PANIER (import dynamique pour éviter le cycle de dépendances)
 			if (cartSessionId) {
 				try {
+					const { mergeCarts } = await import("@/modules/cart/actions/merge-carts");
 					const cartResult = await mergeCarts(
 						newSession.user.id,
 						cartSessionId
@@ -266,10 +265,11 @@ export const auth = betterAuth({
 				}
 			}
 
-			// ❤️ MERGE DE LA WISHLIST
+			// ❤️ MERGE DE LA WISHLIST (import dynamique pour éviter le cycle de dépendances)
 			const wishlistSessionId = ctx.getCookie("wishlist_session");
 			if (wishlistSessionId) {
 				try {
+					const { mergeWishlists } = await import("@/modules/wishlist/actions/merge-wishlists");
 					const wishlistResult = await mergeWishlists(
 						newSession.user.id,
 						wishlistSessionId

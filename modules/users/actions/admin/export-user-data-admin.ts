@@ -1,18 +1,16 @@
 "use server";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
-	requireAdmin,
-	enforceRateLimitForCurrentUser,
 	success,
 	notFound,
 	handleActionError,
 } from "@/shared/lib/actions";
+import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { UserDataExport } from "../export-user-data";
-
-// Rate limit: 10 requêtes par minute
-const EXPORT_ADMIN_RATE_LIMIT = { limit: 10, windowMs: 60 * 1000 };
 
 /**
  * Server Action ADMIN pour exporter les données d'un utilisateur (RGPD)
@@ -23,7 +21,7 @@ const EXPORT_ADMIN_RATE_LIMIT = { limit: 10, windowMs: 60 * 1000 };
 export async function exportUserDataAdmin(userId: string): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(EXPORT_ADMIN_RATE_LIMIT);
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.EXPORT_DATA);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Vérification admin

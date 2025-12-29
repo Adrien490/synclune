@@ -1,78 +1,17 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
-import { z } from "zod";
-import { Prisma, RefundStatus } from "@/app/generated/prisma/client";
 import { cacheLife, cacheTag } from "next/cache";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
+import { GET_ORDER_FOR_REFUND_SELECT } from "../constants/refund.constants";
+import { getOrderForRefundSchema } from "../schemas/refund.schemas";
+import type {
+	GetOrderForRefundParams,
+	OrderForRefund,
+} from "../types/refund.types";
 
-// ============================================================================
-// SCHEMA
-// ============================================================================
-
-export const getOrderForRefundSchema = z.object({
-	orderId: z.cuid2(),
-});
-
-// ============================================================================
-// SELECT
-// ============================================================================
-
-export const GET_ORDER_FOR_REFUND_SELECT = {
-	id: true,
-	orderNumber: true,
-	customerEmail: true,
-	customerName: true,
-	total: true,
-	paymentStatus: true,
-	stripePaymentIntentId: true,
-	stripeChargeId: true,
-	items: {
-		select: {
-			id: true,
-			productTitle: true,
-			productImageUrl: true,
-			skuColor: true,
-			skuMaterial: true,
-			skuSize: true,
-			skuImageUrl: true,
-			price: true,
-			quantity: true,
-			skuId: true,
-			refundItems: {
-				where: {
-					refund: {
-						status: {
-							in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
-						},
-					},
-				},
-				select: {
-					quantity: true,
-				},
-			},
-		},
-	},
-	refunds: {
-		where: {
-			status: RefundStatus.COMPLETED,
-		},
-		select: {
-			amount: true,
-		},
-	},
-} as const satisfies Prisma.OrderSelect;
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export type GetOrderForRefundParams = z.infer<typeof getOrderForRefundSchema>;
-
-export type OrderForRefund = Prisma.OrderGetPayload<{
-	select: typeof GET_ORDER_FOR_REFUND_SELECT;
-}>;
-
-export type OrderItemForRefund = OrderForRefund["items"][0];
+// Re-export for backward compatibility
+export { getOrderForRefundSchema };
+export type { GetOrderForRefundParams, OrderForRefund, OrderItemForRefund } from "../types/refund.types";
 
 // ============================================================================
 // MAIN FUNCTION

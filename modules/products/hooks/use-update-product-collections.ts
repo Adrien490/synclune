@@ -1,9 +1,10 @@
 "use client";
 
-import { useTransition } from "react";
-import { toast } from "sonner";
+import { useActionState, useTransition } from "react";
 import { updateProductCollections } from "@/modules/products/actions/update-product-collections";
-import { ActionStatus } from "@/shared/types/server-action";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import type { ActionState } from "@/shared/types/server-action";
 
 interface UseUpdateProductCollectionsOptions {
 	onSuccess?: () => void;
@@ -13,36 +14,50 @@ interface UseUpdateProductCollectionsOptions {
 /**
  * Hook admin pour mettre à jour les collections d'un produit
  */
-export function useUpdateProductCollections(options?: UseUpdateProductCollectionsOptions) {
+export function useUpdateProductCollections(
+	options?: UseUpdateProductCollectionsOptions
+) {
 	const [isPending, startTransition] = useTransition();
 
-	const update = (productId: string, productTitle: string, collectionIds: string[]) => {
-		startTransition(async () => {
-			const toastId = toast.loading(`Mise à jour des collections de ${productTitle}...`);
-
-			try {
-				const result = await updateProductCollections(productId, collectionIds);
-				toast.dismiss(toastId);
-
-				if (result.status === ActionStatus.SUCCESS) {
-					toast.success(result.message);
+	const [, formAction, isActionPending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) => {
+				const collectionIds = formData.getAll("collectionIds") as string[];
+				return updateProductCollections(
+					formData.get("productId") as string,
+					collectionIds
+				);
+			},
+			createToastCallbacks({
+				loadingMessage: "Mise à jour des collections...",
+				onSuccess: () => {
 					options?.onSuccess?.();
-				} else {
-					toast.error(result.message);
-					options?.onError?.(result.message);
-				}
-			} catch (error) {
-				toast.dismiss(toastId);
-				const message =
-					error instanceof Error ? error.message : "Erreur lors de la mise à jour";
-				toast.error(message);
-				options?.onError?.(message);
-			}
+				},
+				onError: (result) => {
+					if (result.message) {
+						options?.onError?.(result.message);
+					}
+				},
+			})
+		),
+		undefined
+	);
+
+	const update = (
+		productId: string,
+		_productTitle: string,
+		collectionIds: string[]
+	) => {
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("productId", productId);
+			collectionIds.forEach((id) => formData.append("collectionIds", id));
+			formAction(formData);
 		});
 	};
 
 	return {
 		update,
-		isPending,
+		isPending: isPending || isActionPending,
 	};
 }

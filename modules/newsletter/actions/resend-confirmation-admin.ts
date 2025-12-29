@@ -2,7 +2,7 @@
 
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { sendNewsletterConfirmationEmail } from "@/modules/emails/services/newsletter-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -62,10 +62,18 @@ export async function resendConfirmationAdmin(subscriberId: string): Promise<Act
 		// 5. Envoyer l'email de confirmation
 		const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
 
-		await sendNewsletterConfirmationEmail({
-			to: subscriber.email,
-			confirmationUrl,
-		});
+		try {
+			await sendNewsletterConfirmationEmail({
+				to: subscriber.email,
+				confirmationUrl,
+			});
+		} catch (emailError) {
+			console.error("[RESEND_CONFIRMATION_ADMIN] Échec envoi email:", emailError);
+			return {
+				status: ActionStatus.ERROR,
+				message: "Token régénéré mais échec de l'envoi de l'email. Veuillez réessayer.",
+			};
+		}
 
 		return {
 			status: ActionStatus.SUCCESS,
@@ -75,7 +83,7 @@ export async function resendConfirmationAdmin(subscriberId: string): Promise<Act
 		console.error("[RESEND_CONFIRMATION_ADMIN] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: error instanceof Error ? error.message : "Une erreur est survenue",
+			message: "Impossible de renvoyer l'email de confirmation",
 		};
 	}
 }

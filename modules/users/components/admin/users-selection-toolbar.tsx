@@ -34,7 +34,7 @@ import {
 	Trash2,
 	XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 interface UsersSelectionToolbarProps {
 	userIds: string[];
@@ -42,37 +42,37 @@ interface UsersSelectionToolbarProps {
 
 export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 	const { selectedItems, clearSelection } = useSelectionContext();
-	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-	const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
-	const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
-	const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
-	const [demoteDialogOpen, setDemoteDialogOpen] = useState(false);
+	const deleteDialog = useDialog("bulk-delete-users");
+	const suspendDialog = useDialog("bulk-suspend-users");
+	const restoreDialog = useDialog("bulk-restore-users");
+	const promoteDialog = useDialog("bulk-promote-users");
+	const demoteDialog = useDialog("bulk-demote-users");
 
 	const { action: deleteAction, isPending: isDeletePending } = useBulkDeleteUsers({
 		onSuccess: () => {
-			setDeleteDialogOpen(false);
+			deleteDialog.close();
 			clearSelection();
 		},
 	});
 
 	const { action: suspendAction, isPending: isSuspendPending } = useBulkSuspendUsers({
 		onSuccess: () => {
-			setSuspendDialogOpen(false);
+			suspendDialog.close();
 			clearSelection();
 		},
 	});
 
 	const { action: restoreAction, isPending: isRestorePending } = useBulkRestoreUsers({
 		onSuccess: () => {
-			setRestoreDialogOpen(false);
+			restoreDialog.close();
 			clearSelection();
 		},
 	});
 
 	const { action: changeRoleAction, isPending: isChangeRolePending } = useBulkChangeUserRole({
 		onSuccess: () => {
-			setPromoteDialogOpen(false);
-			setDemoteDialogOpen(false);
+			promoteDialog.close();
+			demoteDialog.close();
 			clearSelection();
 		},
 	});
@@ -101,28 +101,28 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 								Changer le role
 							</DropdownMenuSubTrigger>
 							<DropdownMenuSubContent>
-								<DropdownMenuItem onClick={() => setPromoteDialogOpen(true)}>
+								<DropdownMenuItem onClick={() => promoteDialog.open()}>
 									<CheckCircle2 className="h-4 w-4" />
 									Promouvoir admin
 								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => setDemoteDialogOpen(true)}>
+								<DropdownMenuItem onClick={() => demoteDialog.open()}>
 									<XCircle className="h-4 w-4" />
 									Retrograder utilisateur
 								</DropdownMenuItem>
 							</DropdownMenuSubContent>
 						</DropdownMenuSub>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => setSuspendDialogOpen(true)}>
+						<DropdownMenuItem onClick={() => suspendDialog.open()}>
 							<XCircle className="h-4 w-4" />
 							Suspendre
 						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => setRestoreDialogOpen(true)}>
+						<DropdownMenuItem onClick={() => restoreDialog.open()}>
 							<RotateCcw className="h-4 w-4" />
 							Restaurer
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
-							onClick={() => setDeleteDialogOpen(true)}
+							onClick={() => deleteDialog.open()}
 							variant="destructive"
 						>
 							<Trash2 className="h-4 w-4" />
@@ -133,7 +133,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 			</SelectionToolbar>
 
 			{/* Delete Dialog */}
-			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+			<AlertDialog open={deleteDialog.isOpen} onOpenChange={(open) => open ? deleteDialog.open() : deleteDialog.close()}>
 				<AlertDialogContent>
 					<form action={deleteAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -177,7 +177,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 			</AlertDialog>
 
 			{/* Suspend Dialog */}
-			<AlertDialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
+			<AlertDialog open={suspendDialog.isOpen} onOpenChange={(open) => open ? suspendDialog.open() : suspendDialog.close()}>
 				<AlertDialogContent>
 					<form action={suspendAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -218,7 +218,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 			</AlertDialog>
 
 			{/* Restore Dialog */}
-			<AlertDialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+			<AlertDialog open={restoreDialog.isOpen} onOpenChange={(open) => open ? restoreDialog.open() : restoreDialog.close()}>
 				<AlertDialogContent>
 					<form action={restoreAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -259,7 +259,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 			</AlertDialog>
 
 			{/* Promote to Admin Dialog */}
-			<AlertDialog open={promoteDialogOpen} onOpenChange={setPromoteDialogOpen}>
+			<AlertDialog open={promoteDialog.isOpen} onOpenChange={(open) => open ? promoteDialog.open() : promoteDialog.close()}>
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -304,7 +304,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 			</AlertDialog>
 
 			{/* Demote to User Dialog */}
-			<AlertDialog open={demoteDialogOpen} onOpenChange={setDemoteDialogOpen}>
+			<AlertDialog open={demoteDialog.isOpen} onOpenChange={(open) => open ? demoteDialog.open() : demoteDialog.close()}>
 				<AlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />

@@ -4,7 +4,7 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/components/cursor-pagination/pagination";
-import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import { cacheDefault } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
 import {
@@ -73,7 +73,7 @@ export async function fetchVerifications(
 	params: GetVerificationsParams
 ): Promise<GetVerificationsReturn> {
 	"use cache";
-	cacheDashboard();
+	cacheDefault();
 
 	const sortOrder = (params.sortOrder ||
 		GET_VERIFICATIONS_DEFAULT_SORT_ORDER) as Prisma.SortOrder;

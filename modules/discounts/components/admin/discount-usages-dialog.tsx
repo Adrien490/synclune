@@ -21,7 +21,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import {
 	getDiscountUsages,
 	type DiscountUsageItem,
-} from "@/modules/discounts/actions/admin/get-discount-usages";
+} from "@/modules/discounts/data/admin/get-discount-usages";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ExternalLink, Loader2, Receipt } from "lucide-react";

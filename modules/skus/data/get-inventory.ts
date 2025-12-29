@@ -1,5 +1,3 @@
-"use server";
-
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { redirect } from "next/navigation";
 import {
@@ -9,22 +7,11 @@ import {
 } from "../constants/sku.constants";
 import { getProductSkusSchema } from "../schemas/get-skus.schemas";
 import type { GetProductSkusReturn } from "../types/skus.types";
-import { fetchProductSkus } from "../utils/fetch-skus";
-import type { ProductSkuFilters } from "../schemas/sku-filters-schema";
+import type { GetInventoryParams } from "../types/sku.types";
+import { fetchProductSkus } from "./fetch-skus";
 
 export type { GetProductSkusReturn };
-
-/**
- * Paramètres pour la récupération de l'inventaire global
- */
-export interface GetInventoryParams {
-	cursor?: string;
-	direction?: "forward" | "backward";
-	perPage?: number;
-	sortBy?: string;
-	search?: string;
-	filters?: Partial<ProductSkuFilters>;
-}
+export type { GetInventoryParams } from "../types/sku.types";
 
 /**
  * Récupère l'inventaire global (tous les SKUs de tous les produits)

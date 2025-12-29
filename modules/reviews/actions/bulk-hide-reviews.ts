@@ -2,8 +2,8 @@
 
 import { updateTag } from "next/cache"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
+import { requireAdmin } from "@/modules/auth/lib/require-auth"
 import {
-	requireAdmin,
 	success,
 	error,
 	validationError,
@@ -14,7 +14,7 @@ import type { ActionState } from "@/shared/types/server-action"
 import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
 import { bulkHideReviewsSchema } from "../schemas/review.schemas"
-import { updateProductReviewStats } from "../utils/stats.utils"
+import { updateProductReviewStats } from "../services/review-stats.service"
 
 /**
  * Masque plusieurs avis en masse

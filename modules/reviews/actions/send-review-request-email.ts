@@ -3,8 +3,8 @@
 import { prisma } from "@/shared/lib/prisma"
 import { sendReviewRequestEmail } from "@/modules/emails/services/review-emails"
 import { SITE_URL } from "@/shared/constants/seo-config"
+import { requireAdmin } from "@/modules/auth/lib/require-auth"
 import {
-	requireAdmin,
 	success,
 	notFound,
 	error,

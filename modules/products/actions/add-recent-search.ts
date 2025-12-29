@@ -2,14 +2,14 @@
 
 import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
-import { success, error, handleActionError } from "@/shared/lib/actions"
+import { success, handleActionError, validateInput } from "@/shared/lib/actions"
 import type { ActionState } from "@/shared/types/server-action"
 import {
 	RECENT_SEARCHES_COOKIE_NAME,
 	RECENT_SEARCHES_COOKIE_MAX_AGE,
 	RECENT_SEARCHES_MAX_ITEMS,
-	RECENT_SEARCHES_MIN_LENGTH,
 } from "../constants/recent-searches"
+import { addRecentSearchSchema } from "../schemas/recent-searches.schemas"
 import { getRecentSearchesInvalidationTags } from "../constants/cache"
 
 /**
@@ -21,12 +21,15 @@ export async function addRecentSearch(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const term = (formData.get("term") as string)?.trim().toLowerCase()
+		const validation = validateInput(addRecentSearchSchema, {
+			term: formData.get("term"),
+		})
 
-		// Validation
-		if (!term || term.length < RECENT_SEARCHES_MIN_LENGTH) {
-			return error("Terme de recherche trop court")
+		if ("error" in validation) {
+			return validation.error
 		}
+
+		const { term } = validation.data
 
 		const cookieStore = await cookies()
 		const existingCookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME)
@@ -39,8 +42,9 @@ export async function addRecentSearch(
 				if (Array.isArray(parsed)) {
 					searches = parsed
 				}
-			} catch {
-				// Ignore les erreurs
+			} catch (parseError) {
+				// Cookie corrompu - reset silencieux mais loggé
+				console.error("[addRecentSearch] Cookie corrompu, reset:", parseError)
 			}
 		}
 
@@ -63,7 +67,7 @@ export async function addRecentSearch(
 		const tags = getRecentSearchesInvalidationTags()
 		tags.forEach((tag) => updateTag(tag))
 
-		return success("Recherche ajoutee", { searches: updated })
+		return success("Recherche ajoutée", { searches: updated })
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de l'ajout")
 	}

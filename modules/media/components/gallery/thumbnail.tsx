@@ -2,7 +2,7 @@
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import { MediaErrorFallback } from "@/modules/media/components/media-error-fallback";
-import { VideoPlayBadge } from "@/modules/media/components/video-play-badge";
+import { VideoPlayBadge } from "@/shared/components/ui/video-play-badge";
 import {
 	THUMBNAIL_IMAGE_QUALITY,
 	EAGER_LOAD_THUMBNAILS,

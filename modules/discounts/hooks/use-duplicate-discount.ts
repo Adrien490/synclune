@@ -1,9 +1,10 @@
 "use client";
 
-import { useTransition } from "react";
-import { toast } from "sonner";
+import { useActionState, useTransition } from "react";
 import { duplicateDiscount } from "@/modules/discounts/actions/admin/duplicate-discount";
-import { ActionStatus } from "@/shared/types/server-action";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import type { ActionState } from "@/shared/types/server-action";
 
 interface UseDuplicateDiscountOptions {
 	onSuccess?: (data: { id: string; code: string }) => void;
@@ -16,35 +17,37 @@ interface UseDuplicateDiscountOptions {
 export function useDuplicateDiscount(options?: UseDuplicateDiscountOptions) {
 	const [isPending, startTransition] = useTransition();
 
-	const duplicate = (discountId: string, discountCode: string) => {
-		startTransition(async () => {
-			const toastId = toast.loading(`Duplication de ${discountCode}...`);
-
-			try {
-				const result = await duplicateDiscount(discountId);
-				toast.dismiss(toastId);
-
-				if (result.status === ActionStatus.SUCCESS) {
-					toast.success(result.message);
+	const [, formAction, isActionPending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) =>
+				duplicateDiscount(formData.get("discountId") as string),
+			createToastCallbacks({
+				loadingMessage: "Duplication en cours...",
+				onSuccess: (result) => {
 					if (result.data) {
 						options?.onSuccess?.(result.data as { id: string; code: string });
 					}
-				} else {
-					toast.error(result.message);
-					options?.onError?.(result.message);
-				}
-			} catch (error) {
-				toast.dismiss(toastId);
-				const message =
-					error instanceof Error ? error.message : "Erreur lors de la duplication";
-				toast.error(message);
-				options?.onError?.(message);
-			}
+				},
+				onError: (result) => {
+					if (result.message) {
+						options?.onError?.(result.message);
+					}
+				},
+			})
+		),
+		undefined
+	);
+
+	const duplicate = (discountId: string, _discountCode: string) => {
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("discountId", discountId);
+			formAction(formData);
 		});
 	};
 
 	return {
 		duplicate,
-		isPending,
+		isPending: isPending || isActionPending,
 	};
 }

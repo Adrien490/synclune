@@ -30,7 +30,7 @@ import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 // Local components
 import { ProductRowActions } from "./product-row-actions";
 import { ProductsSelectionToolbar } from "./products-selection-toolbar";
-import { ProductsTableSelectionCell } from "./products-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 // =============================================================================
 // Constants
@@ -149,9 +149,9 @@ export async function ProductsDataTable({
 									className="w-10 sm:w-[5%] lg:w-[4%]"
 									aria-label="Sélection de produits"
 								>
-									<ProductsTableSelectionCell
+									<TableSelectionCell
 										type="header"
-										productIds={productIds}
+										itemIds={productIds}
 									/>
 								</TableHead>
 								<TableHead className="hidden sm:table-cell w-[12%] lg:w-[8%]">
@@ -190,10 +190,10 @@ export async function ProductsDataTable({
 								return (
 									<TableRow key={product.id}>
 										<TableCell>
-											<ProductsTableSelectionCell
+											<TableSelectionCell
 												type="row"
-												productId={product.id}
-												productTitle={product.title}
+												itemId={product.id}
+												ariaLabel={`Selectionner ${product.title}`}
 											/>
 										</TableCell>
 										<TableCell className="hidden sm:table-cell py-3">

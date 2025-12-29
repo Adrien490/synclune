@@ -1,4 +1,8 @@
 import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
+import type { BadgeVariant } from "@/shared/types/badge.types";
+
+// Re-export pour compatibilité
+export type { BadgeVariant };
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 	PENDING: "En attente",
@@ -15,8 +19,6 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
 	DELIVERED: "#10b981", // green-500
 	CANCELLED: "#ef4444", // red-500
 };
-
-export type BadgeVariant = "default" | "secondary" | "destructive" | "success" | "warning" | "outline";
 
 export const ORDER_STATUS_VARIANTS: Record<OrderStatus, BadgeVariant> = {
 	PENDING: "warning",

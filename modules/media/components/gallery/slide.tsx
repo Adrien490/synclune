@@ -8,7 +8,7 @@ import { useMediaQuery, useReducedMotion } from "@/shared/hooks";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import { GALLERY_ZOOM_LEVEL, VIDEO_LOAD_TIMEOUT } from "@/modules/media/constants/gallery.constants";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
-import { GalleryHoverZoom } from "./hover-zoom";
+import { GalleryHoverZoom } from "@/shared/components/gallery/hover-zoom";
 import { GalleryPinchZoom } from "./pinch-zoom";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 
@@ -206,6 +206,7 @@ export function GallerySlide({
 					blurDataUrl={media.blurDataUrl}
 					zoomLevel={GALLERY_ZOOM_LEVEL}
 					priority={index === 0}
+					quality={MAIN_IMAGE_QUALITY}
 				/>
 			</div>
 		);

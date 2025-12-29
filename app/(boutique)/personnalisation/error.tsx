@@ -1,20 +1,10 @@
 "use client"
 
-import { useEffect } from "react"
 import { Button } from "@/shared/components/ui/button"
+import type { ErrorPageProps } from "@/shared/types/error.types"
 import { AlertCircle } from "lucide-react"
 
-export default function PersonnalisationError({
-	error,
-	reset,
-}: {
-	error: Error & { digest?: string }
-	reset: () => void
-}) {
-	useEffect(() => {
-		console.error("[Personnalisation] Erreur:", error)
-	}, [error])
-
+export default function PersonnalisationError({ reset }: ErrorPageProps) {
 	return (
 		<div className="min-h-screen flex items-center justify-center px-4">
 			<div className="text-center max-w-md space-y-4">

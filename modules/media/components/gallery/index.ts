@@ -1,10 +1,13 @@
-export { GalleryCounter } from "./counter";
-export { GalleryDots } from "./dots";
-export { GalleryNavigation } from "./navigation";
-export { GalleryZoomButton } from "./zoom-button";
+// Re-export generic primitives from shared
+export { GalleryCounter } from "@/shared/components/gallery/counter";
+export { GalleryDots } from "@/shared/components/gallery/dots";
+export { GalleryNavigation } from "@/shared/components/gallery/navigation";
+export { GalleryZoomButton } from "@/shared/components/gallery/zoom-button";
+export { GalleryHoverZoom } from "@/shared/components/gallery/hover-zoom";
+export { ErrorBoundary } from "@/shared/components/error-boundary";
+
+// Media-specific components
 export { GallerySlide } from "./slide";
-export { GalleryErrorBoundary } from "./error-boundary";
 export { GalleryThumbnail } from "./thumbnail";
-export { GalleryHoverZoom } from "./hover-zoom";
 
 export { Gallery } from "./gallery";

@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/shared/lib/actions/auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";

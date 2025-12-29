@@ -107,10 +107,6 @@ export function EditProductVariantForm({
 						}
 					</form.Subscribe>
 
-					<form.AppForm>
-						<form.FormErrorDisplay />
-					</form.AppForm>
-
 					{/* La variante */}
 					<div className="space-y-6">
 							{/* Caractéristiques */}

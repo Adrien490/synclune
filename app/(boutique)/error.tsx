@@ -1,21 +1,11 @@
 "use client"
 
-import { useEffect } from "react"
 import { ParticleSystem } from "@/shared/components/animations/particle-system"
 import { Button } from "@/shared/components/ui/button"
+import type { ErrorPageProps } from "@/shared/types/error.types"
 import Link from "next/link"
 
-export default function BoutiqueError({
-	error,
-	reset,
-}: {
-	error: Error & { digest?: string }
-	reset: () => void
-}) {
-	useEffect(() => {
-		console.error("Erreur boutique:", error)
-	}, [error])
-
+export default function BoutiqueError({ error, reset }: ErrorPageProps) {
 	return (
 		<main
 			className="relative min-h-screen bg-linear-to-br from-background via-primary/5 to-secondary/10 flex items-center justify-center px-4"

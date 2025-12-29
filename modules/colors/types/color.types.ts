@@ -1,63 +1,65 @@
+/**
+ * Types pour le module colors
+ *
+ * @module modules/colors/types
+ */
+
 import { Prisma } from "@/app/generated/prisma/client";
-import { z } from "zod";
-import { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
-import {
+import type { z } from "zod";
+import type {
+	colorFiltersSchema,
+	getColorsSchema,
+	getColorSchema,
+} from "../schemas/color.schemas";
+import type {
 	GET_COLORS_SELECT,
 	GET_COLOR_SELECT,
 } from "../constants/color.constants";
-import {
-	getColorsSchema,
-	getColorSchema,
-	createColorSchema,
-	updateColorSchema,
-	deleteColorSchema,
-	bulkDeleteColorsSchema,
-} from "../schemas/color.schemas";
+import type { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
 
 // ============================================================================
-// INFERRED TYPES FROM SCHEMAS
+// COLOR OPTIONS (pour selects/filtres)
 // ============================================================================
 
-export type ColorFilters = z.infer<
-	typeof import("../schemas/color.schemas").colorFiltersSchema
->;
+/** Option de couleur pour les selects/filtres */
+export interface ColorOption {
+	id: string;
+	name: string;
+	hex: string;
+}
 
 // ============================================================================
-// FUNCTION TYPES - LIST
+// GET COLORS TYPES
 // ============================================================================
 
+/** Paramètres validés pour getColors */
+export type GetColorsParams = z.infer<typeof getColorsSchema>;
+
+/** Paramètres d'entrée pour getColors (avant validation) */
 export type GetColorsParamsInput = z.input<typeof getColorsSchema>;
 
-export type GetColorsParams = z.output<typeof getColorsSchema>;
+/** Filtres pour getColors */
+export type ColorFilters = z.infer<typeof colorFiltersSchema>;
 
-export type GetColorsReturn = {
-	colors: Array<Prisma.ColorGetPayload<{ select: typeof GET_COLORS_SELECT }>>;
-	pagination: PaginationInfo;
-};
-
-// ============================================================================
-// FUNCTION TYPES - SINGLE
-// ============================================================================
-
-export type GetColorParams = z.infer<typeof getColorSchema>;
-
-export type GetColorReturn = Prisma.ColorGetPayload<{
-	select: typeof GET_COLOR_SELECT;
-}>;
-
-// ============================================================================
-// ENTITY TYPES
-// ============================================================================
-
+/** Couleur avec count de SKUs */
 export type Color = Prisma.ColorGetPayload<{
 	select: typeof GET_COLORS_SELECT;
 }>;
 
+/** Retour de getColors */
+export interface GetColorsReturn {
+	colors: Color[];
+	pagination: PaginationInfo;
+}
+
 // ============================================================================
-// MUTATION TYPES
+// GET COLOR TYPES
 // ============================================================================
 
-export type CreateColorInput = z.infer<typeof createColorSchema>;
-export type UpdateColorInput = z.infer<typeof updateColorSchema>;
-export type DeleteColorInput = z.infer<typeof deleteColorSchema>;
-export type BulkDeleteColorsInput = z.infer<typeof bulkDeleteColorsSchema>;
+/** Paramètres pour getColor */
+export type GetColorParams = z.infer<typeof getColorSchema>;
+
+/** Retour de getColor */
+export type GetColorReturn = Prisma.ColorGetPayload<{
+	select: typeof GET_COLOR_SELECT;
+}>;

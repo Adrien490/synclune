@@ -14,7 +14,7 @@ import { Button } from "@/shared/components/ui/button";
 import { formatDateShort } from "@/shared/utils/dates";
 import { RotateCcw, ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
-import { formatCurrency } from "./helpers";
+import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderRefundsCardProps } from "./types";
 
 function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" {
@@ -80,7 +80,7 @@ export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCa
 											{REFUND_STATUS_LABELS[refund.status as RefundStatus] || refund.status}
 										</Badge>
 										<span className="text-sm font-medium">
-											{formatCurrency(refund.amount)}
+											{formatEuro(refund.amount)}
 										</span>
 									</div>
 									<div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">

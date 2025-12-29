@@ -2,7 +2,7 @@ import { prisma } from "@/shared/lib/prisma"
 import { cacheProductReviewStats } from "../constants/cache"
 import { REVIEW_STATS_SELECT } from "../constants/review.constants"
 import type { ReviewStats, ProductReviewStatistics } from "../types/review.types"
-import { formatReviewStats } from "../utils/stats.utils"
+import { formatReviewStats } from "../services/review-stats.service"
 
 /**
  * Récupère les statistiques brutes d'un produit

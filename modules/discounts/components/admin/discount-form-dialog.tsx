@@ -133,10 +133,6 @@ export function DiscountFormDialog() {
 						<input type="hidden" name="id" value={discount.id} />
 					)}
 
-					<form.AppForm>
-						<form.FormErrorDisplay />
-					</form.AppForm>
-
 					<RequiredFieldsNote />
 
 					<div className="space-y-6">
@@ -145,14 +141,23 @@ export function DiscountFormDialog() {
 							name="code"
 							validators={{
 								onChange: ({ value }) => {
-									if (!value || value.length < 3) {
+									// Transforme en majuscules pour cohérence avec le serveur
+									const upperValue = value?.toUpperCase() ?? "";
+									if (!upperValue || upperValue.length < 3) {
 										return "Le code doit contenir au moins 3 caractères";
 									}
-									if (value.length > 30) {
+									if (upperValue.length > 30) {
 										return "Le code ne peut pas dépasser 30 caractères";
 									}
-									if (!/^[A-Z0-9-]+$/i.test(value)) {
+									if (!/^[A-Z0-9-]+$/.test(upperValue)) {
 										return "Le code ne peut contenir que des lettres, chiffres et tirets";
+									}
+									return undefined;
+								},
+								// Transform value on blur to uppercase
+								onBlur: ({ value, fieldApi }) => {
+									if (value) {
+										fieldApi.setValue(value.toUpperCase());
 									}
 									return undefined;
 								},

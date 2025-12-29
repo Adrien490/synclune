@@ -3,6 +3,7 @@
 import { auth } from "@/modules/auth/lib/auth";
 import { checkArcjetProtection } from "@/modules/auth/utils/arcjet-protection";
 import { error, success, validateInput } from "@/shared/lib/actions";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { resendVerificationEmailSchema } from "../schemas/auth.schemas";
@@ -34,7 +35,7 @@ export const resendVerificationEmail = async (
 			await auth.api.sendVerificationEmail({
 				body: {
 					email,
-					callbackURL: `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"}/verifier-email`,
+					callbackURL: buildUrl(ROUTES.AUTH.VERIFY_EMAIL),
 				},
 			});
 

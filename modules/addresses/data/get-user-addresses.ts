@@ -3,6 +3,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_USER_ADDRESSES_DEFAULT_SELECT } from "../constants/user-addresses.constants";
+import { ADDRESSES_CACHE_TAGS } from "../constants/cache";
 import type {
 	GetUserAddressesReturn,
 	UserAddress,
@@ -53,7 +54,7 @@ export async function fetchUserAddresses(
 ): Promise<GetUserAddressesReturn> {
 	"use cache: private";
 	cacheLife("cart");
-	cacheTag(`addresses-user-${userId}`);
+	cacheTag(ADDRESSES_CACHE_TAGS.USER_ADDRESSES(userId));
 
 	const addresses = await prisma.address.findMany({
 		where: {

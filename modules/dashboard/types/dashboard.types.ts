@@ -2,6 +2,43 @@ import { OrderStatus, PaymentStatus, FulfillmentStatus, DiscountType } from "@/a
 import type { LucideIcon } from "lucide-react";
 
 // ============================================================================
+// TYPES - SERVICE INPUTS (from services/)
+// ============================================================================
+
+/**
+ * Type d'alerte de stock
+ */
+export type StockAlertType = "out_of_stock" | "low_stock";
+
+/**
+ * Données brutes d'un SKU pour classification
+ */
+export interface SkuForStockAlert {
+	id: string;
+	sku: string;
+	inventory: number;
+	product: {
+		title: string;
+	};
+}
+
+/**
+ * Données brutes d'une commande pour transformation
+ */
+export interface OrderForTransform {
+	id: string;
+	orderNumber: string;
+	createdAt: Date;
+	status: OrderStatus;
+	paymentStatus: PaymentStatus;
+	total: number;
+	user: {
+		name: string | null;
+		email: string;
+	} | null;
+}
+
+// ============================================================================
 // TYPES - KPIs
 // ============================================================================
 

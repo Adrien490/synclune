@@ -1,15 +1,9 @@
 import { prisma } from "@/shared/lib/prisma";
 import { cacheColors } from "../constants/cache";
+import type { ColorOption } from "../types/color.types";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export type ColorOption = {
-	id: string;
-	name: string;
-	hex: string;
-};
+// Re-export pour compatibilité
+export type { ColorOption };
 
 // ============================================================================
 // MAIN FUNCTION

@@ -1,21 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
+import type { ErrorPageProps } from "@/shared/types/error.types";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
-export default function ProductsError({
-	error,
-	reset,
-}: {
-	error: Error & { digest?: string };
-	reset: () => void;
-}) {
-	useEffect(() => {
-		console.error("Erreur produits:", error);
-	}, [error]);
-
+export default function ProductsError({ error, reset }: ErrorPageProps) {
 	return (
 		<div
 			className="flex items-center justify-center min-h-[60vh] p-6"

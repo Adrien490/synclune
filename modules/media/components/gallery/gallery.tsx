@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense, useRef, useEffectEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import useEmblaCarousel from "embla-carousel-react";
-import { z } from "zod";
 
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "@/shared/hooks";
@@ -16,29 +15,22 @@ const MediaLightbox = dynamic(
 	() => import("@/modules/media/components/media-lightbox"),
 	{ ssr: false }
 );
-import { useLightbox } from "@/modules/media/hooks/use-lightbox";
+import { useLightbox } from "@/shared/hooks";
 import { usePrefetchImages } from "@/modules/media/hooks/use-image-prefetch";
 import { usePrefetchVideos } from "@/modules/media/hooks/use-video-prefetch";
 import { buildGallery } from "@/modules/media/services/gallery-builder.service";
 import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
 import { PREFETCH_RANGE_SLOW, PREFETCH_RANGE_FAST } from "@/modules/media/constants/gallery.constants";
-import { GalleryErrorBoundary } from "./error-boundary";
+import { galleryParamsSchema } from "@/modules/media/schemas/gallery-params.schema";
+import { GalleryCounter } from "@/shared/components/gallery/counter";
+import { GalleryNavigation } from "@/shared/components/gallery/navigation";
+import { GalleryZoomButton } from "@/shared/components/gallery/zoom-button";
+import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { GalleryThumbnail } from "./thumbnail";
-import { GalleryCounter } from "./counter";
-import { GalleryNavigation } from "./navigation";
-import { GalleryZoomButton } from "./zoom-button";
 import { GallerySlide } from "./slide";
 
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
-
-// Validation des query params pour éviter injection
-const variantSlugSchema = z.string().regex(/^[a-z0-9-]+$/).max(50).optional();
-const galleryParamsSchema = z.object({
-	color: variantSlugSchema,
-	material: variantSlugSchema,
-	size: z.string().max(20).optional(),
-});
 
 interface GalleryProps {
 	product: GetProductReturn;
@@ -108,11 +100,11 @@ function GalleryThumbnailList({
 
 export function Gallery(props: GalleryProps) {
 	return (
-		<GalleryErrorBoundary>
+		<ErrorBoundary errorMessage="Impossible de charger la galerie">
 			<Suspense fallback={<GalleryLoadingSkeleton />}>
 				<GalleryContent {...props} />
 			</Suspense>
-		</GalleryErrorBoundary>
+		</ErrorBoundary>
 	);
 }
 

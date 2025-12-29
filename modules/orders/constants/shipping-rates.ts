@@ -10,29 +10,15 @@ import {
 	SHIPPING_COUNTRIES,
 	type ShippingCountry,
 } from "@/shared/constants/countries";
+import type { ShippingCarrier, ShippingRate, AllowedShippingCountry } from "../types/order.types";
+
+// Re-export pour compatibilité
+export type { ShippingCarrier, ShippingRate, AllowedShippingCountry };
 
 export const SHIPPING_CARRIERS = {
 	STANDARD: "standard",
 	EXPRESS: "express",
 } as const;
-
-export type ShippingCarrier =
-	(typeof SHIPPING_CARRIERS)[keyof typeof SHIPPING_CARRIERS];
-
-export interface ShippingRate {
-	/** Montant en centimes (ex: 600 = 6.00€) */
-	amount: number;
-	/** Nom affiché au client */
-	displayName: string;
-	/** Code du transporteur */
-	carrier: ShippingCarrier;
-	/** Délai minimum en jours ouvrés */
-	minDays: number;
-	/** Délai maximum en jours ouvrés */
-	maxDays: number;
-	/** Pays couverts par ce tarif */
-	countries: readonly string[];
-}
 
 /**
  * Tarifs de livraison France/Monaco et Union Européenne
@@ -77,8 +63,6 @@ export const SHIPPING_RATES = {
  * Utilise la source de vérité centralisée depuis @/shared/constants/countries
  */
 export const ALLOWED_SHIPPING_COUNTRIES = SHIPPING_COUNTRIES;
-
-export type AllowedShippingCountry = ShippingCountry;
 
 /**
  * Détermine le tarif de livraison approprié selon le pays de destination

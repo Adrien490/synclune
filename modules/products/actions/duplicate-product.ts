@@ -2,13 +2,14 @@
 
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { duplicateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
+import { generateSkuCode } from "@/modules/skus/services/sku-generation.service";
 
 /**
  * Server Action pour dupliquer un produit
@@ -21,13 +22,8 @@ export async function duplicateProduct(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Acces non autorise. Droits administrateur requis.",
-			};
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		// 2. Extraction des donnees du FormData
 		const rawData = {
@@ -136,7 +132,7 @@ export async function duplicateProduct(
 			// Dupliquer tous les SKUs
 			for (const sourceSku of sourceProduct.skus) {
 				// Generer un nouveau SKU unique
-				const newSkuValue = `SKU-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+				const newSkuValue = generateSkuCode();
 
 				// Creer le nouveau SKU
 				const createdSku = await tx.productSku.create({

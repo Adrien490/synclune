@@ -23,7 +23,7 @@ export const CART_ERROR_MESSAGES = {
 	QUANTITY_MIN: "La quantité minimale est de 1",
 	QUANTITY_MAX: "Quantité maximale : 99 par article. Pour une commande en gros, contactez-nous.",
 	QUANTITY_EXCEEDS_STOCK: (_available: number) =>
-		"Quantite demandee superieure au stock disponible",
+		"Quantité demandée supérieure au stock disponible",
 
 	// Erreurs de panier
 	CART_EXPIRED: "Votre panier a expiré. Veuillez ajouter vos articles à nouveau",

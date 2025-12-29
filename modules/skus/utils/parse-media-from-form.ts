@@ -2,13 +2,9 @@
  * Types et utilitaires pour parser les medias depuis FormData
  */
 
-export interface ParsedMedia {
-	url: string;
-	thumbnailUrl?: string | null;
-	blurDataUrl?: string;
-	altText?: string;
-	mediaType?: "IMAGE" | "VIDEO";
-}
+import type { ParsedMedia } from "../types/sku.types";
+
+export type { ParsedMedia } from "../types/sku.types";
 
 /**
  * Parse une image primaire depuis FormData

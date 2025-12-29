@@ -94,3 +94,96 @@ export interface NotifyStockAvailableResult {
 	failedNotifications: number;
 	notificationIds: string[];
 }
+
+// ============================================================================
+// ADMIN TYPES
+// ============================================================================
+
+/**
+ * Filtres pour la liste admin des notifications
+ */
+export interface StockNotificationAdminFilters {
+	status?: StockNotificationStatus;
+	search?: string;
+}
+
+/**
+ * Paramètres pour récupérer les notifications admin
+ */
+export interface GetStockNotificationsAdminParams {
+	cursor?: string;
+	direction?: "forward" | "backward";
+	perPage?: number;
+	sortBy?: string;
+	filters?: StockNotificationAdminFilters;
+}
+
+/**
+ * Notification de stock formatée pour l'admin
+ */
+export interface StockNotificationAdmin {
+	id: string;
+	email: string;
+	status: StockNotificationStatus;
+	createdAt: Date;
+	notifiedAt: Date | null;
+	sku: {
+		id: string;
+		sku: string;
+		inventory: number;
+		priceInclTax: number;
+		color: { name: string; hex: string } | null;
+		material: { id: string; name: string } | null;
+		size: string | null;
+		images: { url: string; blurDataUrl: string | null; isPrimary: boolean }[];
+		product: {
+			id: string;
+			slug: string;
+			title: string;
+		};
+	};
+	user: {
+		id: string;
+		name: string | null;
+		email: string;
+	} | null;
+}
+
+/**
+ * Retour de la fonction getStockNotificationsAdmin
+ */
+export interface GetStockNotificationsAdminReturn {
+	notifications: StockNotificationAdmin[];
+	pagination: {
+		nextCursor: string | null;
+		prevCursor: string | null;
+		hasNextPage: boolean;
+		hasPreviousPage: boolean;
+	};
+}
+
+/**
+ * Statistiques des notifications pour l'admin
+ */
+export interface StockNotificationsStats {
+	totalPending: number;
+	notifiedThisMonth: number;
+	skusWithPendingRequests: number;
+}
+
+// ============================================================================
+// EXPORT TYPES (RGPD)
+// ============================================================================
+
+/**
+ * Données exportées pour les notifications de stock (RGPD Art. 20)
+ */
+export interface StockNotificationExport {
+	email: string;
+	status: string;
+	productTitle: string;
+	productSlug: string;
+	variant: string | null;
+	createdAt: string;
+	notifiedAt: string | null;
+}

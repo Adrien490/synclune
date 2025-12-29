@@ -2,9 +2,9 @@
 
 import { updateTag } from "next/cache"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
+import { requireAuth } from "@/modules/auth/lib/require-auth"
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers"
 import {
-	requireAuth,
-	enforceRateLimitForCurrentUser,
 	success,
 	notFound,
 	forbidden,
@@ -17,7 +17,7 @@ import type { ActionState } from "@/shared/types/server-action"
 import { getReviewInvalidationTags } from "../constants/cache"
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
 import { deleteReviewSchema } from "../schemas/review.schemas"
-import { updateProductReviewStats } from "../utils/stats.utils"
+import { updateProductReviewStats } from "../services/review-stats.service"
 
 /**
  * Supprime un avis (soft delete pour conformité RGPD)

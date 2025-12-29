@@ -5,9 +5,9 @@ import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-it
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import dynamic from "next/dynamic";
+import { AmountRangeInputs } from "./amount-range-inputs";
 
 // Lazy load Calendar pour améliorer les performances mobile (TTI)
 const Calendar = dynamic(
@@ -25,7 +25,6 @@ import {
 	PopoverTrigger,
 } from "@/shared/components/ui/popover";
 import { Separator } from "@/shared/components/ui/separator";
-import { Slider } from "@/shared/components/ui/slider";
 import {
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
@@ -35,7 +34,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useTransition } from "react";
 
 interface OrdersFilterSheetProps {
 	className?: string;
@@ -54,134 +53,6 @@ interface FilterFormData {
 
 const MAX_PRICE = 10000; // 100€ in cents
 const DEFAULT_PRICE_RANGE = [0, MAX_PRICE];
-
-/**
- * Composant interne pour gerer les inputs de montant avec etat local
- * Les valeurs internes sont en centimes, affichees en euros
- */
-function AmountRangeInputs({
-	value,
-	onChange,
-	maxPrice,
-}: {
-	value: [number, number];
-	onChange: (value: [number, number]) => void;
-	maxPrice: number;
-}) {
-	// Etat local en euros pour permettre l'edition libre
-	const [minInput, setMinInput] = useState(String(Math.round(value[0] / 100)));
-	const [maxInput, setMaxInput] = useState(String(Math.round(value[1] / 100)));
-
-	// Synchroniser l'etat local quand la valeur externe change (ex: slider)
-	useEffect(() => {
-		setMinInput(String(Math.round(value[0] / 100)));
-	}, [value[0]]);
-
-	useEffect(() => {
-		setMaxInput(String(Math.round(value[1] / 100)));
-	}, [value[1]]);
-
-	const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const inputValue = e.target.value;
-		setMinInput(inputValue);
-
-		const numValue = Number(inputValue);
-		if (!isNaN(numValue) && inputValue !== "") {
-			// Convertir en centimes et appliquer les contraintes
-			const centsValue = numValue * 100;
-			const constrainedValue = Math.min(Math.max(0, centsValue), value[1]);
-			onChange([constrainedValue, value[1]]);
-		}
-	};
-
-	const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const inputValue = e.target.value;
-		setMaxInput(inputValue);
-
-		const numValue = Number(inputValue);
-		if (!isNaN(numValue) && inputValue !== "") {
-			// Convertir en centimes et appliquer les contraintes
-			const centsValue = numValue * 100;
-			const constrainedValue = Math.max(Math.min(maxPrice, centsValue), value[0]);
-			onChange([value[0], constrainedValue]);
-		}
-	};
-
-	const handleMinBlur = () => {
-		const numValue = Number(minInput);
-		if (isNaN(numValue) || minInput === "") {
-			setMinInput(String(Math.round(value[0] / 100)));
-		} else {
-			const centsValue = numValue * 100;
-			const constrainedValue = Math.min(Math.max(0, centsValue), value[1]);
-			setMinInput(String(Math.round(constrainedValue / 100)));
-			if (constrainedValue !== value[0]) {
-				onChange([constrainedValue, value[1]]);
-			}
-		}
-	};
-
-	const handleMaxBlur = () => {
-		const numValue = Number(maxInput);
-		if (isNaN(numValue) || maxInput === "") {
-			setMaxInput(String(Math.round(value[1] / 100)));
-		} else {
-			const centsValue = numValue * 100;
-			const constrainedValue = Math.max(Math.min(maxPrice, centsValue), value[0]);
-			setMaxInput(String(Math.round(constrainedValue / 100)));
-			if (constrainedValue !== value[1]) {
-				onChange([value[0], constrainedValue]);
-			}
-		}
-	};
-
-	return (
-		<fieldset className="space-y-3">
-			<legend className="font-medium text-sm text-foreground">Montant (€)</legend>
-			<div className="space-y-4">
-				{/* data-vaul-no-drag empeche le drawer de capturer le drag du slider */}
-				<div data-vaul-no-drag>
-					<Slider
-						value={value}
-						onValueChange={(newValue) => onChange([newValue[0], newValue[1]])}
-						max={maxPrice}
-						min={0}
-						step={100}
-						className="w-full"
-					/>
-				</div>
-				<div className="flex items-center gap-3">
-					<div className="flex-1">
-						<Input
-							type="number"
-							min={0}
-							max={Math.round(value[1] / 100)}
-							value={minInput}
-							onChange={handleMinChange}
-							onBlur={handleMinBlur}
-							className="h-10 text-sm"
-							aria-label="Montant minimum"
-						/>
-					</div>
-					<span className="text-muted-foreground shrink-0">—</span>
-					<div className="flex-1">
-						<Input
-							type="number"
-							min={Math.round(value[0] / 100)}
-							max={Math.round(maxPrice / 100)}
-							value={maxInput}
-							onChange={handleMaxChange}
-							onBlur={handleMaxBlur}
-							className="h-10 text-sm"
-							aria-label="Montant maximum"
-						/>
-					</div>
-					<span className="text-muted-foreground text-sm shrink-0">€</span>
-				</div>
-			</div>
-		</fieldset>
-	);
-}
 
 export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 	const router = useRouter();

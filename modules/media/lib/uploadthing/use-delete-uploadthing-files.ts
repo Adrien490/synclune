@@ -3,7 +3,7 @@
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState } from "react";
-import { deleteUploadThingFiles } from "./delete-uploadthing-files";
+import { deleteUploadThingFiles } from "@/modules/media/actions/delete-uploadthing-files";
 
 interface UseDeleteUploadThingFilesOptions {
 	onSuccess?: (message: string) => void;

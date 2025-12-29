@@ -1,17 +1,12 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin, enforceRateLimitForCurrentUser } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
-
-const updatePriceSchema = z.object({
-	skuId: z.string().min(1),
-	priceInclTax: z.number().int().min(1, "Le prix doit être supérieur à 0"),
-	compareAtPrice: z.number().int().min(0).nullable().optional(),
-});
+import { updateSkuPriceSchema } from "../schemas/sku.schemas";
 
 /**
  * Server Action ADMIN pour modifier rapidement le prix d'un SKU
@@ -34,7 +29,7 @@ export async function updateSkuPrice(
 		if ("error" in adminCheck) return adminCheck.error;
 
 		// 2. Validation
-		const validation = updatePriceSchema.safeParse({
+		const validation = updateSkuPriceSchema.safeParse({
 			skuId,
 			priceInclTax,
 			compareAtPrice,
@@ -90,7 +85,7 @@ export async function updateSkuPrice(
 		console.error("[UPDATE_SKU_PRICE] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: error instanceof Error ? error.message : "Une erreur est survenue",
+			message: "Impossible de mettre à jour le prix",
 		};
 	}
 }

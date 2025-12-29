@@ -20,7 +20,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useTransition } from "react";
+import { useTransition } from "react";
 import { toast } from "sonner";
 
 import { ADDRESS_DIALOG_ID } from "../constants/dialog.constants";
@@ -43,6 +43,33 @@ export function AddressFormDialog({
 	const { isOpen, close, data } =
 		useDialog<AddressDialogData>(ADDRESS_DIALOG_ID);
 	const address = data?.address;
+
+	return (
+		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
+			<ResponsiveDialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+				{/* Key pattern: remount form when address changes */}
+				<AddressFormContent
+					key={address?.id ?? "new"}
+					address={address}
+					addressSuggestions={addressSuggestions}
+					onClose={close}
+				/>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
+	);
+}
+
+interface AddressFormContentProps {
+	address?: UserAddress;
+	addressSuggestions: SearchAddressResult[];
+	onClose: () => void;
+}
+
+function AddressFormContent({
+	address,
+	addressSuggestions,
+	onClose,
+}: AddressFormContentProps) {
 	const mode = address ? "edit" : "create";
 
 	// Next.js navigation hooks
@@ -53,86 +80,50 @@ export function AddressFormDialog({
 	// Transition pour la navigation
 	const [isPendingAddress, startAddressTransition] = useTransition();
 
-	// TanStack Form setup avec validation Zod
+	// TanStack Form setup avec validation Zod - defaultValues basées sur l'address
 	const form = useAppForm({
-		defaultValues: addressFormDefaultValues,
+		defaultValues: address
+			? {
+					firstName: address.firstName,
+					lastName: address.lastName,
+					address1: address.address1,
+					address2: address.address2 ?? undefined,
+					postalCode: address.postalCode,
+					city: address.city,
+					country: address.country,
+					phone: address.phone,
+				}
+			: addressFormDefaultValues,
 		validators: {
 			onChange: addressFormSchema,
 		},
 	});
 
-	// Reset form values when address data changes
-	useEffect(() => {
-		if (address) {
-			form.reset({
-				firstName: address.firstName,
-				lastName: address.lastName,
-				address1: address.address1,
-				address2: address.address2 ?? "",
-				postalCode: address.postalCode,
-				city: address.city,
-				country: address.country,
-				phone: address.phone,
-			});
-		} else {
-			form.reset({
-				firstName: "",
-				lastName: "",
-				address1: "",
-				address2: "",
-				postalCode: "",
-				city: "",
-				country: "FR",
-				phone: "",
-			});
-		}
-	}, [address, form]);
-
-	// Address hooks with success callback to close dialog and reset form
+	// Address hooks with success callback to close dialog
 	const createHook = useCreateAddress({
-		onSuccess: () => {
-			close();
-			form.reset();
-		},
+		onSuccess: onClose,
 	});
 
 	const updateHook = useUpdateAddress(address?.id ?? "", {
-		onSuccess: () => {
-			close();
-		},
+		onSuccess: onClose,
 	});
 
 	const { action, isPending, state } =
 		mode === "create" ? createHook : updateHook;
 
 	return (
-		<ResponsiveDialog
-			open={isOpen}
-			onOpenChange={(open) => {
-				if (!open) {
-					if (isPending) {
-						// Show feedback to user if trying to close during submit
-						toast.info("Enregistrement en cours, veuillez patienter...", {
-							duration: 2000,
-						});
-					} else {
-						close();
-					}
-				}
-			}}
-		>
-			<ResponsiveDialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-				<ResponsiveDialogHeader className="shrink-0">
-					<ResponsiveDialogTitle>
-						{mode === "create" ? "Ajouter une adresse" : "Modifier l'adresse"}
-					</ResponsiveDialogTitle>
-				</ResponsiveDialogHeader>
+		<>
+			<ResponsiveDialogHeader className="shrink-0">
+				<ResponsiveDialogTitle>
+					{mode === "create" ? "Ajouter une adresse" : "Modifier l'adresse"}
+				</ResponsiveDialogTitle>
+			</ResponsiveDialogHeader>
 
-				<form
-					action={action}
-					className="flex flex-col flex-1 min-h-0"
-					onSubmit={() => form.handleSubmit()}
-				>
+			<form
+				action={action}
+				className="flex flex-col flex-1 min-h-0"
+				onSubmit={() => form.handleSubmit()}
+			>
 					{/* Contenu scrollable */}
 					<div className="flex-1 overflow-y-auto space-y-6 pr-2">
 					{/* Success message */}
@@ -363,21 +354,20 @@ export function AddressFormDialog({
 					{/* Fin du contenu scrollable */}
 
 					{/* Footer fixe */}
-					<div className="shrink-0 flex justify-end pt-4 border-t mt-4">
-						<form.Subscribe selector={(state) => [state.canSubmit]}>
-							{([canSubmit]) => (
-								<Button disabled={!canSubmit || isPending} type="submit">
-									{isPending
-										? "Enregistrement..."
-										: mode === "create"
-											? "Ajouter"
-											: "Enregistrer"}
-								</Button>
-							)}
-						</form.Subscribe>
-					</div>
-				</form>
-			</ResponsiveDialogContent>
-		</ResponsiveDialog>
+				<div className="shrink-0 flex justify-end pt-4 border-t mt-4">
+					<form.Subscribe selector={(state) => [state.canSubmit]}>
+						{([canSubmit]) => (
+							<Button disabled={!canSubmit || isPending} type="submit">
+								{isPending
+									? "Enregistrement..."
+									: mode === "create"
+										? "Ajouter"
+										: "Enregistrer"}
+							</Button>
+						)}
+					</form.Subscribe>
+				</div>
+			</form>
+		</>
 	);
 }

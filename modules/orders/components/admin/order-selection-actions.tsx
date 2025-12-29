@@ -28,26 +28,26 @@ import {
 	Trash2,
 	XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { BULK_DELETE_ORDERS_DIALOG_ID } from "./bulk-delete-orders-alert-dialog";
 
 export function OrderSelectionActions() {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_ORDERS_DIALOG_ID);
 
-	const [deliveredDialogOpen, setDeliveredDialogOpen] = useState(false);
-	const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+	const deliveredDialog = useDialog("bulk-mark-delivered");
+	const cancelDialog = useDialog("bulk-cancel-orders");
 
 	const { action: markAsDeliveredAction, isPending: isDeliveredPending } = useBulkMarkAsDelivered({
 		onSuccess: () => {
-			setDeliveredDialogOpen(false);
+			deliveredDialog.close();
 			clearSelection();
 		},
 	});
 
 	const { action: cancelOrdersAction, isPending: isCancelPending } = useBulkCancelOrders({
 		onSuccess: () => {
-			setCancelDialogOpen(false);
+			cancelDialog.close();
 			clearSelection();
 		},
 	});
@@ -72,12 +72,12 @@ export function OrderSelectionActions() {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-[200px]">
-					<DropdownMenuItem onClick={() => setDeliveredDialogOpen(true)}>
+					<DropdownMenuItem onClick={() => deliveredDialog.open()}>
 						<CheckCircle2 className="h-4 w-4" />
 						Marquer livrées
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={() => setCancelDialogOpen(true)}>
+					<DropdownMenuItem onClick={() => cancelDialog.open()}>
 						<XCircle className="h-4 w-4" />
 						Annuler
 					</DropdownMenuItem>
@@ -93,7 +93,7 @@ export function OrderSelectionActions() {
 			</DropdownMenu>
 
 			{/* Mark as Delivered Dialog */}
-			<AlertDialog open={deliveredDialogOpen} onOpenChange={setDeliveredDialogOpen}>
+			<AlertDialog open={deliveredDialog.isOpen} onOpenChange={(open) => open ? deliveredDialog.open() : deliveredDialog.close()}>
 				<AlertDialogContent>
 					<form action={markAsDeliveredAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
@@ -133,7 +133,7 @@ export function OrderSelectionActions() {
 			</AlertDialog>
 
 			{/* Cancel Orders Dialog */}
-			<AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+			<AlertDialog open={cancelDialog.isOpen} onOpenChange={(open) => open ? cancelDialog.open() : cancelDialog.close()}>
 				<AlertDialogContent>
 					<form action={cancelOrdersAction}>
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />

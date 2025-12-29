@@ -1,31 +1,24 @@
-"use client";
+"use client"
+
+import { createContext, useContext, useRef, useEffect } from "react"
+import { useStore } from "zustand"
 
 import {
-	type ReactNode,
-	createContext,
-	useContext,
-	useRef,
-	useEffect,
-} from "react";
-import { useStore } from "zustand";
-
-import {
-	type CookieConsentStore,
 	createCookieConsentStore,
 	CURRENT_POLICY_VERSION,
-} from "@/shared/stores/cookie-consent-store";
+} from "@/shared/stores/cookie-consent-store"
+import type {
+	CookieConsentStore,
+	CookieConsentStoreProviderProps,
+} from "@/shared/types/store.types"
 
 export type CookieConsentStoreApi = ReturnType<
 	typeof createCookieConsentStore
->;
+>
 
 export const CookieConsentStoreContext = createContext<
 	CookieConsentStoreApi | undefined
->(undefined);
-
-export interface CookieConsentStoreProviderProps {
-	children: ReactNode;
-}
+>(undefined)
 
 export const CookieConsentStoreProvider = ({
 	children,

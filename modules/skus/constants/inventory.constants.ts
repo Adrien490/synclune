@@ -1,24 +1,11 @@
 import { Prisma } from "@/app/generated/prisma/client";
 
 // ============================================================================
-// STOCK THRESHOLD CONSTANTS
+// STOCK THRESHOLD CONSTANTS (re-exported from shared/)
 // ============================================================================
 
-/**
- * Seuils de stock centralisés pour tout le module SKUs.
- * Ces valeurs sont utilisées pour :
- * - Filtrage dans l'inventaire admin (critical, low, normal, high)
- * - Affichage d'alertes sur la boutique
- * - Alertes stock dans le dashboard admin
- */
-export const STOCK_THRESHOLDS = {
-	/** Stock critique : <= CRITICAL (alertes urgentes, 1 seul item) */
-	CRITICAL: 1,
-	/** Stock bas : <= LOW (alertes préventives, 1-3 items) */
-	LOW: 3,
-	/** Stock normal max : <= NORMAL_MAX */
-	NORMAL_MAX: 50,
-} as const;
+// Re-export pour compatibilité - les constantes canoniques sont dans shared/constants/cache-tags
+export { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 
 // ============================================================================

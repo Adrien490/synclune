@@ -14,43 +14,16 @@
 import sharp from "sharp";
 import { rgbaToThumbHash, thumbHashToDataURL } from "thumbhash";
 import { THUMBHASH_CONFIG } from "../constants/media.constants";
+import type {
+	GenerateThumbHashOptions,
+	ThumbHashLogFn,
+	ThumbHashResult,
+} from "../types/image-processing.types";
 import { isValidUploadThingUrl } from "../utils/validate-media-file";
-import {
-	downloadImage,
-	truncateUrl,
-	withRetry,
-	type LogFn,
-} from "./image-downloader.service";
+import { downloadImage, truncateUrl, withRetry } from "./image-downloader.service";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export type ThumbHashLogFn = LogFn;
-
-export interface GenerateThumbHashOptions {
-	/** Timeout pour le telechargement (ms) */
-	downloadTimeout?: number;
-	/** Taille max de l'image (octets) */
-	maxImageSize?: number;
-	/** Taille max pour le resize (pixels, max 100) */
-	maxSize?: number;
-	/** Valider que l'URL est un domaine UploadThing */
-	validateDomain?: boolean;
-	/** Fonction de log personnalisee (defaut: console.warn) */
-	logWarning?: ThumbHashLogFn;
-}
-
-export interface ThumbHashResult {
-	/** Hash binaire encode en base64 (~25 bytes) */
-	hash: string;
-	/** Data URL compatible avec Next.js Image blurDataURL */
-	dataUrl: string;
-	/** Largeur de l'image analysee */
-	width: number;
-	/** Hauteur de l'image analysee */
-	height: number;
-}
+// Re-export types for backwards compatibility
+export type { GenerateThumbHashOptions, ThumbHashLogFn, ThumbHashResult };
 
 // ============================================================================
 // HELPERS
@@ -240,14 +213,3 @@ export async function generateThumbHashFromBuffer(
 	return { hash, dataUrl, width, height };
 }
 
-/**
- * Convertit un hash base64 en data URL
- * Utile pour recuperer le dataUrl depuis un hash stocke en DB
- *
- * @param hashBase64 - Hash ThumbHash encode en base64
- * @returns Data URL compatible avec Next.js Image blurDataURL
- */
-export function thumbHashToBlurDataUrl(hashBase64: string): string {
-	const hashBytes = new Uint8Array(Buffer.from(hashBase64, "base64"));
-	return thumbHashToDataURL(hashBytes);
-}

@@ -1,8 +1,7 @@
 "use server";
 
 import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { getSession } from "@/modules/auth/lib/get-current-session";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
@@ -13,6 +12,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { cancelOrderSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
  * Annule une commande
@@ -30,18 +30,9 @@ export async function cancelOrder(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
-
-		// Récupérer les infos de l'admin pour l'audit trail
-		const session = await getSession();
-		const adminId = session?.user?.id;
-		const adminName = session?.user?.name || "Admin";
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
 		const reason = formData.get("reason") as string | null;
@@ -138,8 +129,8 @@ export async function cancelOrder(
 				previousPaymentStatus: order.paymentStatus,
 				newPaymentStatus: newPaymentStatus,
 				note: reason || undefined,
-				authorId: adminId,
-				authorName: adminName,
+				authorId: adminUser.id,
+				authorName: adminUser.name || "Admin",
 				source: "admin",
 				metadata: {
 					stockRestored: shouldRestoreStock,
@@ -154,24 +145,29 @@ export async function cancelOrder(
 		revalidatePath("/admin/catalogue/inventaire");
 
 		// Envoyer l'email de confirmation d'annulation au client
+		let emailSent = false;
 		if (order.customerEmail) {
 			const customerFirstName =
 				order.customerName?.split(" ")[0] ||
 				order.shippingFirstName ||
 				"Client";
 
-			const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000";
-			const orderDetailsUrl = `${baseUrl}/compte/commandes/${order.orderNumber}`;
+			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 
-			await sendCancelOrderConfirmationEmail({
-				to: order.customerEmail,
-				orderNumber: order.orderNumber,
-				customerName: customerFirstName,
-				orderTotal: order.total,
-				reason: reason || undefined,
-				wasRefunded: newPaymentStatus === PaymentStatus.REFUNDED,
-				orderDetailsUrl,
-			});
+			try {
+				await sendCancelOrderConfirmationEmail({
+					to: order.customerEmail,
+					orderNumber: order.orderNumber,
+					customerName: customerFirstName,
+					orderTotal: order.total,
+					reason: reason || undefined,
+					wasRefunded: newPaymentStatus === PaymentStatus.REFUNDED,
+					orderDetailsUrl,
+				});
+				emailSent = true;
+			} catch (emailError) {
+				console.error("[CANCEL_ORDER] Échec envoi email:", emailError);
+			}
 		}
 
 		const refundMessage =
@@ -185,7 +181,7 @@ export async function cancelOrder(
 				? " Stock non restauré (commande déjà payée/traitée)."
 				: "";
 
-		const emailMessage = order.customerEmail ? " Email envoyé au client." : "";
+		const emailMessage = emailSent ? " Email envoyé au client." : order.customerEmail ? " (Échec envoi email)" : "";
 
 		return {
 			status: ActionStatus.SUCCESS,

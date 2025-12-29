@@ -1,24 +1,13 @@
 import { extractVariantInfo } from "@/modules/skus/services/extract-sku-info";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
+import type { VariantSelection, UseVariantValidationReturn } from "../types/sku.types";
 
-interface VariantSelection {
-	color: string | null;
-	material: string | null;
-	size: string | null;
-}
+export type { UseVariantValidationReturn } from "../types/sku.types";
 
 interface UseVariantValidationOptions {
 	product: GetProductReturn;
 	selection: VariantSelection;
-}
-
-export interface UseVariantValidationReturn {
-	validationErrors: string[];
-	isValid: boolean;
-	requiresColor: boolean;
-	requiresMaterial: boolean;
-	requiresSize: boolean;
 }
 
 /**

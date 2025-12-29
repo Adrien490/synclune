@@ -2,20 +2,10 @@
 
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
+import type { ErrorPageProps } from "@/shared/types/error.types";
 import { AlertCircle, RefreshCw } from "lucide-react";
-import { useEffect } from "react";
 
-export default function InscriptionError({
-	error,
-	reset,
-}: {
-	error: Error & { digest?: string };
-	reset: () => void;
-}) {
-	useEffect(() => {
-		console.error("Inscription error:", error);
-	}, [error]);
-
+export default function InscriptionError({ reset }: ErrorPageProps) {
 	return (
 		<div className="min-h-screen flex items-center justify-center px-4">
 			<div className="w-full max-w-md space-y-6 text-center">

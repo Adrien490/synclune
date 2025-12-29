@@ -1,4 +1,3 @@
-import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
@@ -10,9 +9,9 @@ import {
 	SORT_LABELS,
 	SORT_OPTIONS,
 } from "@/modules/newsletter/data/get-subscribers";
+import { getNewsletterStats } from "@/modules/newsletter/data/get-newsletter-stats";
 import { RefreshNewsletterButton } from "@/modules/newsletter/components/admin/refresh-newsletter-button";
 import { SendNewsletterEmailForm } from "@/modules/newsletter/components/admin/send-newsletter-email-form";
-import { prisma } from "@/shared/lib/prisma";
 import { getFirstParam } from "@/shared/utils/params";
 import { Mail, Users } from "lucide-react";
 import { Suspense } from "react";
@@ -26,23 +25,6 @@ export const metadata: Metadata = {
 
 interface NewsletterPageProps {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;
-}
-
-async function getNewsletterStats() {
-	const [totalSubscribers, activeSubscribers] = await Promise.all([
-		prisma.newsletterSubscriber.count(),
-		prisma.newsletterSubscriber.count({
-			where: {
-				status: NewsletterStatus.CONFIRMED,
-			},
-		}),
-	]);
-
-	return {
-		totalSubscribers,
-		activeSubscribers,
-		inactiveSubscribers: totalSubscribers - activeSubscribers,
-	};
 }
 
 export default async function NewsletterPage({

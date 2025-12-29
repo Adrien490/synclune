@@ -3,18 +3,16 @@
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
+import { requireAuth } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
-	requireAuth,
-	enforceRateLimitForCurrentUser,
 	validateInput,
 	success,
 	handleActionError,
 } from "@/shared/lib/actions";
+import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateProfileSchema } from "../schemas/user.schemas";
 import { getCurrentUserInvalidationTags } from "../constants/cache";
-
-// Rate limit: 10 requêtes par minute
-const UPDATE_PROFILE_RATE_LIMIT = { limit: 10, windowMs: 60 * 1000 };
 
 /**
  * Server Action pour mettre à jour le profil utilisateur
@@ -32,7 +30,7 @@ export async function updateProfile(
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(UPDATE_PROFILE_RATE_LIMIT);
+		const rateCheck = await enforceRateLimitForCurrentUser(USER_LIMITS.UPDATE_PROFILE);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Vérification de l'authentification

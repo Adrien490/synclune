@@ -195,6 +195,15 @@ export async function cancelOrder(_: ActionState | undefined, formData: FormData
 
 Le module `webhooks/` suit un pattern different car les webhooks Stripe sont des handlers internes (pas des Server Actions). Les fichiers dans `webhooks/services/` contiennent de la logique transactionnelle complete (lecture + mutation) pour garantir l'atomicite des operations critiques.
 
+### Exception: Reads de validation dans actions/
+
+Les requetes de lecture dans `actions/` sont acceptees pour:
+- Verifications d'existence avant mutation (`findUnique` pour valider qu'un record existe)
+- Verifications d'unicite (`findFirst` pour eviter les doublons de nom/code)
+- Recuperation de donnees pour operations bulk (`findMany` avant update/delete groupe)
+
+Ces reads sont atomiques avec la mutation et ne beneficieraient pas du cache (donnees potentiellement stales entre lecture et ecriture).
+
 ## Prisma Patterns
 
 ```typescript

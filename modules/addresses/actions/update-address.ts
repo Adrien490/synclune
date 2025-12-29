@@ -1,13 +1,14 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { getCurrentUser } from "@/modules/users/data/get-current-user";
+import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { addressSchema } from "@/shared/schemas/address-schema";
 import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
+import { handleActionError } from "@/shared/lib/actions";
 
 export async function updateAddress(
 	addressId: string,
@@ -15,14 +16,9 @@ export async function updateAddress(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const user = await getCurrentUser();
-
-		if (!user) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ADDRESS_ERROR_MESSAGES.NOT_AUTHENTICATED,
-			};
-		}
+		const auth = await requireAuth();
+		if ("error" in auth) return auth.error;
+		const { user } = auth;
 
 		const existingAddress = await prisma.address.findFirst({
 			where: { id: addressId, userId: user.id },
@@ -68,12 +64,7 @@ export async function updateAddress(
 			status: ActionStatus.SUCCESS,
 			message: "Adresse modifiée avec succès",
 		};
-	} catch (error) {
-// console.error("Error updating address:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error ? error.message : ADDRESS_ERROR_MESSAGES.UPDATE_FAILED,
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la modification de l'adresse");
 	}
 }

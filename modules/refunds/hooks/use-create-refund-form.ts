@@ -9,24 +9,10 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
+import type { RefundItemValue, CreateRefundFormValues } from "../types/refund.types";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export interface RefundItemValue {
-	orderItemId: string;
-	quantity: number;
-	restock: boolean;
-	selected: boolean;
-}
-
-export interface CreateRefundFormValues {
-	orderId: string;
-	reason: RefundReason;
-	note: string;
-	items: RefundItemValue[];
-}
+// Re-export types for backwards compatibility
+export type { RefundItemValue, CreateRefundFormValues };
 
 interface UseCreateRefundFormOptions {
 	orderId: string;

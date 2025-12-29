@@ -1,5 +1,6 @@
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import {
+	ApplePayIcon,
 	CBIcon,
 	MastercardIcon,
 	PayPalIcon,
@@ -190,6 +191,7 @@ export function Footer() {
 						<MastercardIcon className="text-muted-foreground" />
 						<CBIcon className="text-muted-foreground" />
 						<PayPalIcon className="text-muted-foreground" />
+						<ApplePayIcon className="text-muted-foreground" />
 					</div>
 				</div>
 

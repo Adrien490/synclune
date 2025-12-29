@@ -18,7 +18,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import { Bell } from "lucide-react";
 import { StockNotificationsRowActions } from "./stock-notifications-row-actions";
 import { StockNotificationsSelectionToolbar } from "./stock-notifications-selection-toolbar";
-import { StockNotificationsTableSelectionCell } from "./stock-notifications-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 import type {
 	GetStockNotificationsAdminReturn,
 	StockNotificationAdmin,
@@ -72,7 +72,7 @@ export async function StockNotificationsDataTable({
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">
-									<StockNotificationsTableSelectionCell type="header" notificationIds={notificationIds} />
+									<TableSelectionCell type="header" itemIds={notificationIds} />
 								</TableHead>
 								<TableHead className="w-[22%]">Produit</TableHead>
 								<TableHead className="w-[13%]">Variante</TableHead>
@@ -130,7 +130,7 @@ function StockNotificationRow({
 		<TableRow>
 			{/* Sélection */}
 			<TableCell>
-				<StockNotificationsTableSelectionCell type="row" notificationId={notification.id} />
+				<TableSelectionCell type="row" itemId={notification.id} />
 			</TableCell>
 			{/* Produit */}
 			<TableCell>

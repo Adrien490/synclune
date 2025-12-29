@@ -1,30 +1,15 @@
-"use client";
+"use client"
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useOptimistic, useTransition } from "react"
 
-export type FilterValue = string | string[] | number | boolean | Date;
+import type {
+	FilterDefinition,
+	FilterValue,
+	UseFilterOptions,
+} from "@/shared/types/hook.types"
 
-export interface FilterDefinition {
-	id: string; // Unique identifier for the filter (key + value)
-	key: string;
-	value?: FilterValue;
-	label: string;
-	displayValue?: string;
-}
-
-interface UseFilterOptions {
-	/**
-	 * Préfixe pour les paramètres de filtre dans l'URL
-	 * @default "filter_"
-	 */
-	filterPrefix?: string;
-	/**
-	 * Préserver la page actuelle lors de l'application des filtres
-	 * @default false (remet à la page 1)
-	 */
-	preservePage?: boolean;
-}
+export type { FilterValue, FilterDefinition, UseFilterOptions } from "@/shared/types/hook.types"
 
 export function useFilter(options: UseFilterOptions = {}) {
 	const { filterPrefix = "filter_", preservePage = false } = options;

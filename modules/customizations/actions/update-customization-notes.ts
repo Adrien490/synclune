@@ -5,8 +5,8 @@ import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
-	requireAdmin,
 	validateInput,
 	handleActionError,
 } from "@/shared/lib/actions";

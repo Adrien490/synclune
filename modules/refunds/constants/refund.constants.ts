@@ -89,6 +89,55 @@ export const GET_REFUND_SELECT = {
 } as const satisfies Prisma.RefundSelect;
 
 // ============================================================================
+// SELECT DEFINITIONS - ORDER FOR REFUND
+// ============================================================================
+
+export const GET_ORDER_FOR_REFUND_SELECT = {
+	id: true,
+	orderNumber: true,
+	customerEmail: true,
+	customerName: true,
+	total: true,
+	paymentStatus: true,
+	stripePaymentIntentId: true,
+	stripeChargeId: true,
+	items: {
+		select: {
+			id: true,
+			productTitle: true,
+			productImageUrl: true,
+			skuColor: true,
+			skuMaterial: true,
+			skuSize: true,
+			skuImageUrl: true,
+			price: true,
+			quantity: true,
+			skuId: true,
+			refundItems: {
+				where: {
+					refund: {
+						status: {
+							in: ["PENDING", "APPROVED", "COMPLETED"],
+						},
+					},
+				},
+				select: {
+					quantity: true,
+				},
+			},
+		},
+	},
+	refunds: {
+		where: {
+			status: "COMPLETED",
+		},
+		select: {
+			amount: true,
+		},
+	},
+} as const satisfies Prisma.OrderSelect;
+
+// ============================================================================
 // LABELS (FRANÇAIS)
 // ============================================================================
 

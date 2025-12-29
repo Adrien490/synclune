@@ -1,5 +1,6 @@
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import type { Metadata } from "next";
+import { PRODUCTION_URL } from "@/shared/constants/urls";
 
 /**
  * Tronque une description à une longueur maximale pour le SEO.
@@ -49,11 +50,11 @@ export async function generateProductMetadata({
 
 	// URL canonique et complète
 	const canonicalUrl = `/creations/${slug}`;
-	const fullUrl = `https://synclune.fr/creations/${slug}`;
+	const fullUrl = `${PRODUCTION_URL}/creations/${slug}`;
 
 	// Image du produit pour OpenGraph (première image du SKU principal)
 	const mainImage = primarySku?.images?.[0];
-	const imageUrl = mainImage?.url || "https://synclune.fr/opengraph-image";
+	const imageUrl = mainImage?.url || `${PRODUCTION_URL}/opengraph-image`;
 
 	// Keywords dynamiques basés sur les attributs du produit
 	const dynamicKeywords: string[] = [

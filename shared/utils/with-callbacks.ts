@@ -1,44 +1,10 @@
-import { ActionState, ActionStatus } from "@/shared/types/server-action";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { isRedirectError } from "next/dist/client/components/redirect-error"
 
-/**
- * Fonction d'ordre supérieur qui enveloppe une server action avec des callbacks lifecycle
- *
- * Permet d'ajouter des callbacks (onStart, onEnd, onSuccess, onError) autour d'une
- * server action pour gérer les états de chargement, succès et erreur.
- *
- * @template T - Type du résultat de l'action (défaut: ActionState)
- * @template R - Type de la référence retournée par onStart (ex: ID du toast)
- * @param fn - La server action à envelopper
- * @param callbacks - Les callbacks à exécuter aux différentes étapes du lifecycle
- * @returns Une nouvelle fonction compatible avec useActionState
- *
- * @example
- * ```typescript
- * const [state, action, isPending] = useActionState(
- *   withCallbacks(myServerAction, createToastCallbacks({
- *     loadingMessage: "Chargement..."
- *   })),
- *   undefined
- * );
- * ```
- */
+import { ActionStatus } from "@/shared/types/server-action"
+import type { ActionState } from "@/shared/types/server-action"
+import type { Callbacks } from "@/shared/types/callback.types"
 
-/**
- * Callbacks pour le lifecycle d'une server action
- * @template T - Type du résultat de l'action
- * @template R - Type de la référence retournée par onStart (ex: ID du toast)
- */
-export type Callbacks<T, R = unknown> = {
-	/** Appelé au démarrage de l'action, retourne une référence optionnelle */
-	onStart?: () => R;
-	/** Appelé à la fin de l'action avec la référence de onStart */
-	onEnd?: (reference: R) => void;
-	/** Appelé si l'action réussit (status === SUCCESS) */
-	onSuccess?: (result: T) => void;
-	/** Appelé si l'action échoue (status !== SUCCESS) */
-	onError?: (result: T) => void;
-};
+export type { Callbacks } from "@/shared/types/callback.types"
 
 export const withCallbacks = <
 	T extends ActionState | unknown = ActionState,

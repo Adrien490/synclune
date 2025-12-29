@@ -1,11 +1,19 @@
-import { prisma } from "@/shared/lib/prisma";
+import { getDiscountUsageCounts } from "../data/get-discount-usage-counts";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
-import type { DiscountValidation, DiscountApplicationContext } from "../types/discount.types";
+import type {
+	DiscountValidation,
+	DiscountApplicationContext,
+	EligibilityCheckResult,
+} from "../types/discount.types";
 
-export type EligibilityCheckResult = {
-	eligible: boolean;
-	error?: string;
-};
+export type { EligibilityCheckResult } from "../types/discount.types";
+
+// Re-export des fonctions de validation pure depuis services/
+export {
+	isDiscountCurrentlyValid,
+	getDiscountStatus,
+	type DiscountStatus,
+} from "../services/discount-validation.service";
 
 /**
  * Vérifie toutes les conditions d'éligibilité d'un code promo
@@ -47,78 +55,28 @@ export async function checkDiscountEligibility(
 
 	// 5. Vérifier le nombre max d'utilisations par utilisateur
 	if (discount.maxUsagePerUser) {
-		if (userId) {
-			// Utilisateur connecté : vérifier par userId
-			const userUsageCount = await prisma.discountUsage.count({
-				where: {
-					discountId: discount.id,
-					userId: userId,
-				},
-			});
+		const { userCount, emailCount } = await getDiscountUsageCounts({
+			discountId: discount.id,
+			userId,
+			customerEmail,
+		});
 
-			if (userUsageCount >= discount.maxUsagePerUser) {
-				return {
-					eligible: false,
-					error: DISCOUNT_ERROR_MESSAGES.USER_MAX_USAGE_REACHED,
-				};
-			}
-		} else if (customerEmail) {
-			// Guest checkout : vérifier par email via les commandes
-			// On cherche les commandes avec cet email qui ont utilisé ce discount
-			const emailUsageCount = await prisma.discountUsage.count({
-				where: {
-					discountId: discount.id,
-					order: {
-						customerEmail: customerEmail,
-					},
-				},
-			});
+		if (userId && userCount >= discount.maxUsagePerUser) {
+			return {
+				eligible: false,
+				error: DISCOUNT_ERROR_MESSAGES.USER_MAX_USAGE_REACHED,
+			};
+		}
 
-			if (emailUsageCount >= discount.maxUsagePerUser) {
-				return {
-					eligible: false,
-					error: DISCOUNT_ERROR_MESSAGES.USER_MAX_USAGE_REACHED,
-				};
-			}
+		if (!userId && customerEmail && emailCount >= discount.maxUsagePerUser) {
+			return {
+				eligible: false,
+				error: DISCOUNT_ERROR_MESSAGES.USER_MAX_USAGE_REACHED,
+			};
 		}
 		// Si ni userId ni customerEmail, on ne peut pas vérifier - on laisse passer
 		// (sera vérifié au moment du paiement avec l'email de la commande)
 	}
 
 	return { eligible: true };
-}
-
-/**
- * Vérifie si un discount est actuellement valide (sans contexte utilisateur)
- * Utilisé pour l'affichage dans l'admin
- */
-export function isDiscountCurrentlyValid(discount: DiscountValidation): boolean {
-	if (!discount.isActive) return false;
-
-	if (
-		discount.maxUsageCount &&
-		discount.usageCount >= discount.maxUsageCount
-	) {
-		return false;
-	}
-
-	return true;
-}
-
-/**
- * Retourne le statut textuel d'un discount
- */
-export function getDiscountStatus(
-	discount: DiscountValidation
-): "active" | "inactive" | "exhausted" {
-	if (!discount.isActive) return "inactive";
-
-	if (
-		discount.maxUsageCount &&
-		discount.usageCount >= discount.maxUsageCount
-	) {
-		return "exhausted";
-	}
-
-	return "active";
 }

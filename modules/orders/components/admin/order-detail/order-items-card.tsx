@@ -7,7 +7,7 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
-import { formatCurrency } from "./helpers";
+import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderItemsCardProps } from "./types";
 
 export function OrderItemsCard({
@@ -74,11 +74,11 @@ export function OrderItemsCard({
 								{/* Price */}
 								<div className="text-right shrink-0">
 									<p className="font-medium">
-										{formatCurrency(item.price * item.quantity)}
+										{formatEuro(item.price * item.quantity)}
 									</p>
 									{item.quantity > 1 && (
 										<p className="text-sm text-muted-foreground">
-											{formatCurrency(item.price)} / unité
+											{formatEuro(item.price)} / unité
 										</p>
 									)}
 								</div>
@@ -93,30 +93,30 @@ export function OrderItemsCard({
 				<div className="space-y-2">
 					<div className="flex justify-between text-sm">
 						<span className="text-muted-foreground">Sous-total</span>
-						<span>{formatCurrency(subtotal)}</span>
+						<span>{formatEuro(subtotal)}</span>
 					</div>
 					{discountAmount > 0 && (
 						<div className="flex justify-between text-sm text-emerald-600">
 							<span>Réduction</span>
-							<span>-{formatCurrency(discountAmount)}</span>
+							<span>-{formatEuro(discountAmount)}</span>
 						</div>
 					)}
 					<div className="flex justify-between text-sm">
 						<span className="text-muted-foreground">Livraison</span>
 						<span>
-							{shippingCost === 0 ? "Gratuite" : formatCurrency(shippingCost)}
+							{shippingCost === 0 ? "Gratuite" : formatEuro(shippingCost)}
 						</span>
 					</div>
 					{taxAmount > 0 && (
 						<div className="flex justify-between text-sm">
 							<span className="text-muted-foreground">TVA</span>
-							<span>{formatCurrency(taxAmount)}</span>
+							<span>{formatEuro(taxAmount)}</span>
 						</div>
 					)}
 					<Separator />
 					<div className="flex justify-between font-semibold text-lg">
 						<span>Total</span>
-						<span>{formatCurrency(total)}</span>
+						<span>{formatEuro(total)}</span>
 					</div>
 				</div>
 			</CardContent>

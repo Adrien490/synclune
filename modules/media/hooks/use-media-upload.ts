@@ -3,75 +3,25 @@
 import { useRef, useState } from "react";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { toast } from "sonner";
+import type {
+	UseMediaUploadOptions,
+	MediaUploadResult,
+	UploadProgress,
+	UseMediaUploadReturn,
+	VideoThumbnailResult,
+} from "../types/hooks.types";
 import {
 	generateVideoThumbnail,
 	isThumbnailGenerationSupported,
-	type VideoThumbnailResult,
 } from "./use-video-thumbnail";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export interface UseMediaUploadOptions {
-	/** Taille max pour les images en bytes (defaut: 16MB) */
-	maxSizeImage?: number;
-	/** Taille max pour les videos en bytes (defaut: 512MB) */
-	maxSizeVideo?: number;
-	/** Nombre max de fichiers (defaut: 10) */
-	maxFiles?: number;
-	/** Concurrence max pour les uploads de videos (defaut: 2) */
-	videoConcurrency?: number;
-	/** Callback appele apres un upload reussi */
-	onSuccess?: (results: MediaUploadResult[]) => void;
-	/** Callback appele en cas d'erreur */
-	onError?: (error: Error) => void;
-	/** Callback appele avec la progression */
-	onProgress?: (progress: UploadProgress) => void;
-}
-
-export interface MediaUploadResult {
-	/** URL du fichier uploade */
-	url: string;
-	/** Type de media */
-	mediaType: "IMAGE" | "VIDEO";
-	/** Nom original du fichier */
-	fileName: string;
-	/** Blur placeholder en base64 (images et videos) */
-	blurDataUrl?: string;
-	/** URL du thumbnail (videos uniquement) */
-	thumbnailUrl?: string;
-}
-
-export interface UploadProgress {
-	/** Nombre total de fichiers */
-	total: number;
-	/** Nombre de fichiers uploades */
-	completed: number;
-	/** Fichier en cours d'upload */
-	current?: string;
-	/** Phase actuelle */
-	phase: "validating" | "generating-thumbnails" | "uploading" | "done";
-}
-
-export interface UseMediaUploadReturn {
-	/** Upload plusieurs fichiers avec validation */
-	upload: (files: File[]) => Promise<MediaUploadResult[]>;
-	/** Upload un seul fichier */
-	uploadSingle: (file: File) => Promise<MediaUploadResult | null>;
-	/** Valider des fichiers sans les uploader */
-	validateFiles: (files: File[]) => File[];
-	/** Annuler l'upload en cours */
-	cancel: () => void;
-	/** Indique si un upload est en cours */
-	isUploading: boolean;
-	/** Progression actuelle */
-	progress: UploadProgress | null;
-	/** Utilitaire pour determiner le type de media */
-	getMediaType: (file: File) => "IMAGE" | "VIDEO";
-	/** Utilitaire pour verifier si un fichier est trop gros */
-	isOversized: (file: File) => boolean;
-}
+// Re-export types for backwards compatibility
+export type {
+	UseMediaUploadOptions,
+	MediaUploadResult,
+	UploadProgress,
+	UseMediaUploadReturn,
+};
 
 // ============================================================================
 // CONSTANTS

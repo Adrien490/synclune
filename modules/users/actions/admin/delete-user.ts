@@ -1,24 +1,21 @@
 "use server";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
+import { requireAdmin, requireAuth } from "@/modules/auth/lib/require-auth";
 import {
-	requireAdmin,
-	requireAuth,
-	enforceRateLimitForCurrentUser,
 	validateInput,
 	success,
 	error,
 	notFound,
 	handleActionError,
 } from "@/shared/lib/actions";
+import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { USERS_CACHE_TAGS } from "../../constants/cache";
-
-// Rate limit: 10 requêtes par minute
-const DELETE_USER_RATE_LIMIT = { limit: 10, windowMs: 60 * 1000 };
 
 export async function deleteUser(
 	_prevState: unknown,
@@ -26,7 +23,7 @@ export async function deleteUser(
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(DELETE_USER_RATE_LIMIT);
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.DELETE_USER);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Verification des droits admin

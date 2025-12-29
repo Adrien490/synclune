@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailSchema } from "@/shared/schemas/email.schemas";
 
 // ============================================================================
 // SHARED SCHEMAS
@@ -58,12 +59,7 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 // ============================================================================
 
 export const signInEmailSchema = z.object({
-	email: z
-		.string()
-		.min(1, "L'email est requis")
-		.email("Vérifie le format de ton email (ex: nom@domaine.com)")
-		.toLowerCase()
-		.trim(),
+	email: emailSchema,
 	password: z.string().min(1, { message: "Le mot de passe est requis" }),
 	callbackURL: callbackURLSchema,
 });
@@ -115,12 +111,7 @@ export type SignUpEmailInput = z.infer<typeof signUpEmailSchema>;
 // ============================================================================
 
 export const requestPasswordResetSchema = z.object({
-	email: z
-		.string()
-		.min(1, "L'email est requis")
-		.email("Vérifie le format de ton email (ex: nom@domaine.com)")
-		.toLowerCase()
-		.trim(),
+	email: emailSchema,
 });
 
 export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
@@ -149,12 +140,7 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 // ============================================================================
 
 export const resendVerificationEmailSchema = z.object({
-	email: z
-		.string()
-		.min(1, "L'email est requis")
-		.email("Vérifie le format de ton email (ex: nom@domaine.com)")
-		.toLowerCase()
-		.trim(),
+	email: emailSchema,
 });
 
 export type ResendVerificationEmailInput = z.infer<typeof resendVerificationEmailSchema>;

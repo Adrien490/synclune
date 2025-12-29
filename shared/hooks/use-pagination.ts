@@ -1,19 +1,11 @@
-"use client";
+"use client"
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { type RefObject, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation"
+import { useTransition } from "react"
 
-export type PaginationState = {
-	total: number;
-	pageCount: number;
-	page: number;
-	perPage: number;
-};
+import type { UsePaginationOptions } from "@/shared/types/hook.types"
 
-export interface UsePaginationOptions {
-	/** Ref pour focus management après pagination */
-	focusTargetRef?: RefObject<HTMLElement | null>;
-}
+export type { PaginationState, UsePaginationOptions } from "@/shared/types/hook.types"
 
 export function usePagination(options?: UsePaginationOptions) {
 	const router = useRouter();

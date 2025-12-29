@@ -16,7 +16,7 @@ import { Gem } from "lucide-react";
 import { use } from "react";
 import { MaterialsRowActions } from "@/modules/materials/components/materials-row-actions";
 import { MaterialsSelectionToolbar } from "@/modules/materials/components/materials-selection-toolbar";
-import { MaterialsTableSelectionCell } from "@/modules/materials/components/materials-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface MaterialsDataTableProps {
 	materialsPromise: Promise<GetMaterialsReturn>;
@@ -46,7 +46,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 						<TableHeader>
 							<TableRow>
 								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
-									<MaterialsTableSelectionCell type="header" materialIds={materialIds} />
+									<TableSelectionCell type="header" itemIds={materialIds} />
 								</TableHead>
 								<TableHead
 									key="name"
@@ -98,7 +98,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 								return (
 									<TableRow key={material.id}>
 										<TableCell role="gridcell">
-											<MaterialsTableSelectionCell type="row" materialId={material.id} />
+											<TableSelectionCell type="row" itemId={material.id} />
 										</TableCell>
 										<TableCell role="gridcell">
 										<div className="overflow-hidden">

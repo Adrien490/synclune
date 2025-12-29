@@ -1,9 +1,10 @@
 "use client";
 
-import { useTransition } from "react";
-import { toast } from "sonner";
+import { useActionState, useTransition } from "react";
 import { updateSkuPrice } from "@/modules/skus/actions/update-sku-price";
-import { ActionStatus } from "@/shared/types/server-action";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import type { ActionState } from "@/shared/types/server-action";
 
 interface UseUpdateSkuPriceOptions {
 	onSuccess?: () => void;
@@ -16,34 +17,53 @@ interface UseUpdateSkuPriceOptions {
 export function useUpdateSkuPrice(options?: UseUpdateSkuPriceOptions) {
 	const [isPending, startTransition] = useTransition();
 
-	const updatePrice = (skuId: string, skuName: string, priceInclTax: number, compareAtPrice?: number | null) => {
-		startTransition(async () => {
-			const formattedPrice = (priceInclTax / 100).toFixed(2);
-			const toastId = toast.loading(`Mise à jour du prix de ${skuName} à ${formattedPrice}€...`);
-
-			try {
-				const result = await updateSkuPrice(skuId, priceInclTax, compareAtPrice);
-				toast.dismiss(toastId);
-
-				if (result.status === ActionStatus.SUCCESS) {
-					toast.success(result.message);
+	const [, formAction, isActionPending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) => {
+				const compareAtPriceRaw = formData.get("compareAtPrice");
+				const compareAtPrice = compareAtPriceRaw
+					? Number(compareAtPriceRaw)
+					: null;
+				return updateSkuPrice(
+					formData.get("skuId") as string,
+					Number(formData.get("priceInclTax")),
+					compareAtPrice
+				);
+			},
+			createToastCallbacks({
+				loadingMessage: "Mise à jour du prix...",
+				onSuccess: () => {
 					options?.onSuccess?.();
-				} else {
-					toast.error(result.message);
-					options?.onError?.(result.message);
-				}
-			} catch (error) {
-				toast.dismiss(toastId);
-				const message =
-					error instanceof Error ? error.message : "Erreur lors de la mise à jour";
-				toast.error(message);
-				options?.onError?.(message);
+				},
+				onError: (result) => {
+					if (result.message) {
+						options?.onError?.(result.message);
+					}
+				},
+			})
+		),
+		undefined
+	);
+
+	const updatePrice = (
+		skuId: string,
+		_skuName: string,
+		priceInclTax: number,
+		compareAtPrice?: number | null
+	) => {
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("skuId", skuId);
+			formData.append("priceInclTax", String(priceInclTax));
+			if (compareAtPrice != null) {
+				formData.append("compareAtPrice", String(compareAtPrice));
 			}
+			formAction(formData);
 		});
 	};
 
 	return {
 		updatePrice,
-		isPending,
+		isPending: isPending || isActionPending,
 	};
 }

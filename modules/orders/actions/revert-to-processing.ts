@@ -4,8 +4,7 @@ import {
 	OrderStatus,
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { getSession } from "@/modules/auth/lib/get-current-session";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { sendRevertShippingNotificationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
@@ -16,6 +15,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { revertToProcessingSchema } from "../schemas/order.schemas";
 import { createOrderAudit } from "../utils/order-audit";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
  * Annule l'expédition et remet la commande en préparation
@@ -33,18 +33,9 @@ export async function revertToProcessing(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
-
-		// Récupérer les infos de l'admin pour l'audit trail
-		const session = await getSession();
-		const adminId = session?.user?.id;
-		const adminName = session?.user?.name || "Admin";
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
 		const reason = formData.get("reason") as string;
@@ -115,8 +106,8 @@ export async function revertToProcessing(
 			previousFulfillmentStatus: order.fulfillmentStatus,
 			newFulfillmentStatus: FulfillmentStatus.PROCESSING,
 			note: result.data.reason,
-			authorId: adminId,
-			authorName: adminName,
+			authorId: adminUser.id,
+			authorName: adminUser.name || "Admin",
 			source: "admin",
 			metadata: {
 				previousTrackingNumber: order.trackingNumber,
@@ -135,8 +126,7 @@ export async function revertToProcessing(
 				order.shippingFirstName ||
 				"Client";
 
-			const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000";
-			const orderDetailsUrl = `${baseUrl}/compte/commandes/${order.orderNumber}`;
+			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 
 			await sendRevertShippingNotificationEmail({
 				to: order.customerEmail,

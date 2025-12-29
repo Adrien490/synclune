@@ -1,5 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import { cacheDefault } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_VERIFICATION_SELECT } from "../constants/verification.constants";
@@ -65,7 +65,7 @@ export async function fetchVerification(
 	params: GetVerificationParams
 ): Promise<GetVerificationReturn | null> {
 	"use cache";
-	cacheDashboard();
+	cacheDefault();
 
 	try {
 		const verification = await prisma.verification.findUnique({

@@ -4,6 +4,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
+import { filterUnavailableItems } from "@/modules/cart/services/item-availability.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
@@ -41,6 +42,7 @@ export async function removeUnavailableItems(
 				items: {
 					select: {
 						id: true,
+						skuId: true,
 						quantity: true,
 						sku: {
 							select: {
@@ -71,17 +73,8 @@ export async function removeUnavailableItems(
 			};
 		}
 
-		// 3. Identifier les items indisponibles
-		// ⚠️ AUDIT FIX: Inclure les SKU/produits soft-deleted comme indisponibles
-		const unavailableItems = cart.items.filter((item) => {
-			const isOutOfStock = item.sku.inventory < item.quantity;
-			const isInactive = !item.sku.isActive;
-			const isNotPublic = item.sku.product.status !== "PUBLIC";
-			const isSkuDeleted = item.sku.deletedAt !== null;
-			const isProductDeleted = item.sku.product.deletedAt !== null;
-
-			return isOutOfStock || isInactive || isNotPublic || isSkuDeleted || isProductDeleted;
-		});
+		// 3. Identifier les items indisponibles via le service
+		const unavailableItems = filterUnavailableItems(cart.items);
 
 		if (unavailableItems.length === 0) {
 			return {

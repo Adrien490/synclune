@@ -26,6 +26,15 @@ import {
 export type DiscountFilters = z.infer<typeof discountFiltersSchema>;
 
 // ============================================================================
+// SERVICE TYPES (from services/)
+// ============================================================================
+
+/**
+ * Statut possible d'un code promo
+ */
+export type DiscountStatus = "active" | "inactive" | "exhausted";
+
+// ============================================================================
 // ENTITY TYPES
 // ============================================================================
 
@@ -125,4 +134,48 @@ export type AppliedDiscount = {
 	type: DiscountType;
 	value: number;
 	discountAmount: number; // Montant de la réduction en centimes
+};
+
+// ============================================================================
+// ELIGIBILITY CHECK TYPES
+// ============================================================================
+
+/**
+ * Résultat de vérification d'éligibilité
+ */
+export type EligibilityCheckResult = {
+	eligible: boolean;
+	error?: string;
+};
+
+// ============================================================================
+// CALCULATION TYPES
+// ============================================================================
+
+/**
+ * Paramètres pour calculer le montant de réduction
+ */
+export type CalculateDiscountParams = {
+	type: DiscountType;
+	value: number;
+	subtotal: number; // En centimes (hors frais de port)
+};
+
+/**
+ * Item du panier pour le calcul de réduction avec exclusion articles soldés
+ */
+export type CartItemForDiscount = {
+	priceInclTax: number; // Prix unitaire en centimes
+	quantity: number;
+	compareAtPrice: number | null; // Si non-null, l'article est soldé
+};
+
+/**
+ * Paramètres pour calculer la réduction avec exclusion des articles soldés
+ */
+export type CalculateDiscountWithExclusionParams = {
+	type: DiscountType;
+	value: number;
+	cartItems: CartItemForDiscount[];
+	excludeSaleItems: boolean;
 };

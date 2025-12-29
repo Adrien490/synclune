@@ -146,9 +146,9 @@ export async function cancelStockNotification(
 		}
 
 		// 3. Vérifier ownership ou admin
-		const isOwner =
-			notification.userId === session.user.id ||
-			notification.email.toLowerCase() === session.user.email?.toLowerCase();
+		// Note: On vérifie uniquement par userId pour éviter les edge cases
+		// où un utilisateur change d'email et un autre reprend l'ancien email
+		const isOwner = notification.userId === session.user.id;
 		const isAdmin = session.user.role === "ADMIN";
 
 		if (!isOwner && !isAdmin) {

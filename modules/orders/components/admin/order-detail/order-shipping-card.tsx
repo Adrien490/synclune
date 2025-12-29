@@ -11,9 +11,9 @@ import {
 } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { getCarrierLabel, type Carrier } from "@/modules/orders/services/carrier.service";
+import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { UPDATE_TRACKING_DIALOG_ID } from "../update-tracking-dialog";
-import { CopyButton } from "./copy-button";
+import { CopyButton } from "@/shared/components/copy-button";
 import type { OrderShippingCardProps } from "./types";
 
 export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCardProps) {

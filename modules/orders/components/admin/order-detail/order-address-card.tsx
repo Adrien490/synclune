@@ -5,7 +5,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
-import { CopyButton } from "./copy-button";
+import { CopyButton } from "@/shared/components/copy-button";
 import type { OrderAddressCardProps } from "./types";
 
 export function OrderAddressCard({ order }: OrderAddressCardProps) {

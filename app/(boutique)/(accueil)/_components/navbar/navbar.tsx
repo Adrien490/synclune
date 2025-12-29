@@ -13,7 +13,7 @@ import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { BadgeCountsStoreProvider } from "@/shared/stores/badge-counts-store-provider";
-import { QuickSearchDialog, QuickSearchTrigger } from "@/shared/components/quick-search-dialog";
+import { QuickSearchDialog, QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
 import { AccountDropdown } from "./account-dropdown";
 import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";

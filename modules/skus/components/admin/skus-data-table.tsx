@@ -26,7 +26,7 @@ import Link from "next/link";
 import { ProductSkuActiveToggle } from "./sku-active-toggle";
 import { ProductSkuRowActions } from "./sku-row-actions";
 import { ProductVariantsSelectionToolbar } from "./skus-selection-toolbar";
-import { ProductVariantsTableSelectionCell } from "./skus-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface ProductVariantsDataTableProps {
 	skusPromise: Promise<GetProductSkusReturn>;
@@ -86,9 +86,9 @@ export async function ProductVariantsDataTable({
 									className="w-12"
 									aria-label="Sélection de variantes"
 								>
-									<ProductVariantsTableSelectionCell
+									<TableSelectionCell
 										type="header"
-										variantIds={variantIds}
+										itemIds={variantIds}
 									/>
 								</TableHead>
 								<TableHead
@@ -156,9 +156,9 @@ export async function ProductVariantsDataTable({
 								return (
 									<TableRow key={sku.id}>
 										<TableCell role="gridcell">
-											<ProductVariantsTableSelectionCell
+											<TableSelectionCell
 												type="row"
-												variantId={sku.id}
+												itemId={sku.id}
 											/>
 										</TableCell>
 										<TableCell

@@ -1,6 +1,6 @@
 "use server";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -21,13 +21,8 @@ export async function bulkDeleteSubscribers(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		const idsRaw = formData.get("ids");
 

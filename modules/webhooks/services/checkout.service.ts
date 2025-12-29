@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
-import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
+import { getOrderInvalidationTags } from "@/modules/orders/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/modules/orders/constants/stripe-shipping-rates";
 import type { PostWebhookTask } from "../types/webhook.types";
 import type { SkuValidationResult } from "@/modules/cart/types/sku-validation.types";
+import { getBaseUrl } from "@/shared/constants/urls";
 
 // P1.2: Timeout pour validation stock (évite webhook timeout si DB lente)
 const VALIDATION_TIMEOUT_MS = 5000;
@@ -244,7 +245,7 @@ export function buildPostCheckoutTasks(
 	session: Stripe.Checkout.Session
 ): PostWebhookTask[] {
 	const tasks: PostWebhookTask[] = [];
-	const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
+	const baseUrl = getBaseUrl();
 
 	// 1. Invalider les caches (panier, commandes user, stats compte)
 	const cacheTags: string[] = [];

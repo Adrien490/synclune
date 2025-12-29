@@ -3,7 +3,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton"
 import { getReviews } from "../data/get-reviews"
 import { getProductReviewStats } from "../data/get-product-review-stats"
 import { ReviewsList } from "./reviews-list"
-import { ReviewSummaryCompact } from "./review-summary"
+import { ReviewSummaryCompact } from "./review-summary-compact"
 import type { ReviewPublic } from "../types/review.types"
 
 interface ProductReviewsSectionProps {

@@ -39,11 +39,9 @@ export async function addRecentProduct(
 				if (Array.isArray(parsed)) {
 					products = parsed
 				}
-			} catch (e) {
-				// Log en dev, silencieux en prod (cookie corrompu = reset)
-				if (process.env.NODE_ENV === "development") {
-					console.error("[RecentProducts] Erreur parsing cookie:", e)
-				}
+			} catch (parseError) {
+				// Cookie corrompu - reset silencieux mais loggé
+				console.error("[addRecentProduct] Cookie corrompu, reset:", parseError)
 			}
 		}
 
@@ -70,7 +68,7 @@ export async function addRecentProduct(
 		const tags = getRecentProductsInvalidationTags()
 		tags.forEach((tag) => updateTag(tag))
 
-		return success("Produit ajoute", { products: updated })
+		return success("Produit ajouté", { products: updated })
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de l'ajout")
 	}

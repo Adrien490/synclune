@@ -10,7 +10,6 @@ import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, Plus, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef, useEffect, useState, useEffectEvent } from "react";
-import { toast } from "sonner";
 import {
 	MOTION_CONFIG,
 	maybeReduceMotion,
@@ -157,7 +156,7 @@ export function SpeedDialFab({
 	);
 
 	// Hook pour toggle la visibilité du FAB
-	const { isHidden, toggle, isPending, isError } = useFabVisibility({
+	const { isHidden, toggle, isPending } = useFabVisibility({
 		key: fabKey,
 		initialHidden,
 		onToggle: (newHiddenState) => {
@@ -188,13 +187,6 @@ export function SpeedDialFab({
 			});
 		},
 	});
-
-	// Feedback utilisateur en cas d'erreur
-	useEffect(() => {
-		if (isError) {
-			toast.error("Erreur lors de la modification");
-		}
-	}, [isError]);
 
 	// Classes de base pour la visibilité mobile
 	const visibilityClass = hideOnMobile ? "hidden md:block" : "block";

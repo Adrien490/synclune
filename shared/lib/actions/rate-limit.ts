@@ -3,17 +3,16 @@
  *
  * Wrappers autour du système de rate limiting qui retournent
  * des ActionState pour simplifier l'usage dans les actions.
+ *
+ * NOTE: Les helpers qui nécessitent l'authentification (getRateLimitId, enforceRateLimitForCurrentUser)
+ * sont dans @/modules/auth/lib/rate-limit-helpers
  */
 
 import {
 	checkRateLimit,
-	getClientIp,
-	getRateLimitIdentifier,
 	type RateLimitConfig,
 } from "@/shared/lib/rate-limit";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { headers } from "next/headers";
 
 /**
  * Applique un rate limit sur une action
@@ -52,50 +51,5 @@ export function enforceRateLimit(
 	return { success: true };
 }
 
-/**
- * Obtient un identifiant de rate limit pour l'utilisateur/session/IP courant
- *
- * @returns L'identifiant de rate limit
- *
- * @example
- * ```ts
- * const rateLimitId = await getRateLimitId();
- * const rateCheck = enforceRateLimit(rateLimitId, CART_LIMITS.ADD);
- * ```
- */
-export async function getRateLimitId(): Promise<string> {
-	try {
-		const session = await getSession();
-		const userId = session?.user?.id;
-
-		if (userId) {
-			return getRateLimitIdentifier(userId, null, null);
-		}
-	} catch {
-		// Session non disponible, utiliser IP
-	}
-
-	const headersList = await headers();
-	const ipAddress = await getClientIp(headersList);
-
-	return getRateLimitIdentifier(null, null, ipAddress);
-}
-
-/**
- * Applique un rate limit automatiquement pour l'utilisateur courant
- *
- * @param limit - Configuration du rate limit
- * @returns success: true ou une erreur ActionState
- *
- * @example
- * ```ts
- * const rateCheck = await enforceRateLimitForCurrentUser(CART_LIMITS.ADD);
- * if ("error" in rateCheck) return rateCheck.error;
- * ```
- */
-export async function enforceRateLimitForCurrentUser(
-	limit: RateLimitConfig
-): Promise<{ success: true } | { error: ActionState }> {
-	const identifier = await getRateLimitId();
-	return enforceRateLimit(identifier, limit);
-}
+// NOTE: getRateLimitId et enforceRateLimitForCurrentUser ont été déplacés vers
+// @/modules/auth/lib/rate-limit-helpers car ils dépendent de l'authentification

@@ -1,24 +1,21 @@
 "use server";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
+import { requireAdmin, requireAuth } from "@/modules/auth/lib/require-auth";
 import {
-	requireAdmin,
-	requireAuth,
-	enforceRateLimitForCurrentUser,
 	validateInput,
 	success,
 	error,
 	notFound,
 	handleActionError,
 } from "@/shared/lib/actions";
+import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { changeUserRoleSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-
-// Rate limit: 20 requêtes par minute
-const CHANGE_ROLE_RATE_LIMIT = { limit: 20, windowMs: 60 * 1000 };
 
 export async function changeUserRole(
 	_prevState: unknown,
@@ -26,7 +23,7 @@ export async function changeUserRole(
 ): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(CHANGE_ROLE_RATE_LIMIT);
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Verification des droits admin

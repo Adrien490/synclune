@@ -26,7 +26,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { ClearSearchButton } from "@/shared/components/clear-search-button";
 import { SearchInput } from "@/shared/components/search-input";
-import { BottomActionBar } from "@/shared/components/bottom-action-bar";
+import { BottomActionBar } from "@/modules/products/components/bottom-action-bar";
 import { centsToEuros } from "@/shared/utils/format-euro";
 import { getFirstParam } from "@/shared/utils/params";
 import { parseFilters } from "./_utils/params";

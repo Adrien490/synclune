@@ -17,3 +17,11 @@ export const getUserAddressesSchema = z.object({}).optional();
 export const fetchUserAddressesSchema = z.object({
 	userId: z.string().trim().min(1),
 });
+
+// ============================================================================
+// ADDRESS ID SCHEMA (pour delete/setDefault)
+// ============================================================================
+
+export const addressIdSchema = z.object({
+	addressId: z.cuid2({ message: "ID d'adresse invalide" }),
+});

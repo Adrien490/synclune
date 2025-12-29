@@ -3,7 +3,7 @@ import { cn } from "@/shared/utils/cn"
 import { RatingStars } from "@/shared/components/rating-stars"
 import { REVIEW_CONFIG } from "../constants/review.constants"
 import type { ProductReviewStatistics } from "../types/review.types"
-import { formatRating } from "../utils/stats.utils"
+import { formatRating } from "@/shared/utils/rating-utils"
 
 interface ReviewSummaryProps {
 	stats: ProductReviewStatistics
@@ -21,7 +21,7 @@ export function ReviewSummary({
 		<section
 			role="region"
 			aria-labelledby="review-summary-title"
-			className={cn("flex flex-col sm:flex-row gap-6 sm:gap-10", className)}
+			className={cn("flex flex-col sm:flex-row gap-6 sm:gap-10 max-w-2xl", className)}
 		>
 			{/* Note moyenne */}
 			<div className="flex flex-col items-center justify-center text-center">
@@ -75,33 +75,5 @@ export function ReviewSummary({
 				))}
 			</div>
 		</section>
-	)
-}
-
-/**
- * Version compacte du résumé (pour header section)
- */
-export function ReviewSummaryCompact({
-	stats,
-	className,
-}: {
-	stats: ProductReviewStatistics
-	className?: string
-}) {
-	if (stats.totalCount === 0) {
-		return null
-	}
-
-	return (
-		<div className={cn("flex items-center gap-2", className)} aria-label={`Note moyenne: ${formatRating(stats.averageRating)} sur 5, ${stats.totalCount} avis`}>
-			<RatingStars
-				rating={stats.averageRating}
-				size="sm"
-			/>
-			<span className="font-medium">{formatRating(stats.averageRating)}</span>
-			<span className="text-muted-foreground">
-				({stats.totalCount} avis)
-			</span>
-		</div>
 	)
 }

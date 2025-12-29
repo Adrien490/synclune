@@ -4,6 +4,7 @@
 
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
+import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 
 /**
  * Génère les options du formulaire de checkout avec pré-remplissage dynamique
@@ -20,19 +21,19 @@ export function getCheckoutFormOptions(
 	let savedDraft = null;
 	if (typeof window !== "undefined") {
 		try {
-			const draft = localStorage.getItem("checkout-form-draft");
+			const draft = localStorage.getItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
 			if (draft) {
 				savedDraft = JSON.parse(draft);
 				// Vérifier que le draft n'est pas trop vieux (1h max)
 				const ONE_HOUR = 60 * 60 * 1000;
 				if (Date.now() - (savedDraft.timestamp || 0) > ONE_HOUR) {
-					localStorage.removeItem("checkout-form-draft");
+					localStorage.removeItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
 					savedDraft = null;
 				}
 			}
 		} catch (error) {
 			// En cas d'erreur de parsing, ignorer et nettoyer
-			localStorage.removeItem("checkout-form-draft");
+			localStorage.removeItem(STORAGE_KEYS.CHECKOUT_FORM_DRAFT);
 			savedDraft = null;
 		}
 	}

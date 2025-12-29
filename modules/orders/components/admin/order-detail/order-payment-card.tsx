@@ -8,7 +8,7 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
-import { CopyButton } from "./copy-button";
+import { CopyButton } from "@/shared/components/copy-button";
 import type { OrderPaymentCardProps } from "./types";
 
 export function OrderPaymentCard({ order }: OrderPaymentCardProps) {

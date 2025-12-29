@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { PageHeader } from "@/shared/components/page-header";
+import type { ErrorPageProps } from "@/shared/types/error.types";
 import { Heart, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import {
@@ -13,16 +13,7 @@ import {
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
 
-interface ErrorProps {
-	error: Error & { digest?: string };
-	reset: () => void;
-}
-
-export default function WishlistError({ error, reset }: ErrorProps) {
-	useEffect(() => {
-		console.error("[WISHLIST_ERROR]", error);
-	}, [error]);
-
+export default function WishlistError({ reset }: ErrorPageProps) {
 	return (
 		<div className="min-h-screen">
 			<PageHeader

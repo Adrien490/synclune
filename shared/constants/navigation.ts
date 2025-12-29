@@ -1,67 +1,18 @@
-import type { Session } from "@/modules/auth/lib/auth";
+import type { MinimalSession } from "@/shared/types/session.types"
+import type { NavItemChild, NavItemWithChildren } from "@/shared/types/navigation.types"
+
+export type {
+	NavCategory,
+	IconName,
+	NavItemChild,
+	NavItemWithChildren,
+	NavItem,
+} from "@/shared/types/navigation.types"
 
 /**
  * Constantes pour limiter les items affichés dans les menus
  */
-export const MAX_COLLECTIONS_IN_MENU = 3;
-
-/**
- * Catégories d'items de navigation pour le menu mobile
- */
-export type NavCategory = "discovery" | "transaction";
-
-/**
- * Navigation constants - Restructuré selon les recommandations Nielsen Norman Group
- *
- * Principes appliqués:
- * - Navigation desktop visible (pas de hamburger sur desktop)
- * - 3 clics maximum pour atteindre un produit
- * - Hiérarchie claire avec accordéons pour les sous-catégories
- * - Icônes + labels pour meilleure compréhension
- * - Personnalisation en évidence (différenciateur artisan)
- */
-
-// Types d'icônes disponibles (mapping côté client)
-export type IconName =
-	| "home"
-	| "gem"
-	| "sparkles"
-	| "shopping-cart"
-	| "user"
-	| "folder-open"
-	| "heart"
-	| "log-in"
-	| "info"
-	| "layout-dashboard";
-
-// Types pour la navigation
-export type NavItemChild = {
-	href: string;
-	label: string;
-	badge?: string | number;
-	icon?: IconName;
-	description?: string | null;
-	imageUrl?: string | null;
-	blurDataUrl?: string | null;
-};
-
-export type NavItemWithChildren = {
-	href: string;
-	label: string;
-	children?: NavItemChild[];
-	icon?: IconName;
-	/**
-	 * Pour desktop: si true, affiche un dropdown au hover
-	 * Pour mobile: si true, affiche un collapsible
-	 */
-	hasDropdown?: boolean;
-};
-
-export type NavItem = {
-	href: string;
-	label: string;
-	icon?: IconName;
-};
+export const MAX_COLLECTIONS_IN_MENU = 3
 
 /**
  * Collections disponibles - À synchroniser avec votre base de données
@@ -120,7 +71,7 @@ export const desktopNavItems = [
  * @returns Items de navigation filtrés et adaptés avec support des children
  */
 export function getMobileNavItems(
-	session: Session | null,
+	session: MinimalSession | null,
 	productTypes?: Array<{ slug: string; label: string }>,
 	collections?: Array<{ slug: string; label: string; description?: string | null; imageUrl?: string | null; blurDataUrl?: string | null }>,
 	isAdmin?: boolean

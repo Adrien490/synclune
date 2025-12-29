@@ -1,28 +1,20 @@
-"use client";
+"use client"
 
-import {
-	type ReactNode,
-	createContext,
-	useContext,
-	useRef,
-} from "react";
-import { useStore } from "zustand";
+import { createContext, useContext, useRef } from "react"
+import { useStore } from "zustand"
 
-import {
-	type AlertDialogData,
-	type AlertDialogStore,
-	createAlertDialogStore,
-} from "@/shared/stores/alert-dialog-store";
+import { createAlertDialogStore } from "@/shared/stores/alert-dialog-store"
+import type {
+	AlertDialogData,
+	AlertDialogStore,
+	AlertDialogStoreProviderProps,
+} from "@/shared/types/store.types"
 
-export type AlertDialogStoreApi = ReturnType<typeof createAlertDialogStore>;
+export type AlertDialogStoreApi = ReturnType<typeof createAlertDialogStore>
 
 export const AlertDialogStoreContext = createContext<
 	AlertDialogStoreApi | undefined
->(undefined);
-
-export interface AlertDialogStoreProviderProps {
-	children: ReactNode;
-}
+>(undefined)
 
 export const AlertDialogStoreProvider = ({
 	children,

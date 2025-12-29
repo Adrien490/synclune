@@ -4,7 +4,6 @@ import { fieldContext, formContext } from "@/shared/lib/form-context";
 import { createFormHook } from "@tanstack/react-form";
 import { AutocompleteField } from "./autocomplete-field";
 import { CheckboxField } from "./checkbox-field";
-import { FormErrorDisplay } from "./form-error-display";
 import { FormScrollOnError } from "./form-scroll-on-error";
 import { InputField } from "./input-field";
 import { InputGroupField } from "./input-group-field";
@@ -15,14 +14,12 @@ import { RadioGroupField } from "./radio-group-field";
 import { RatingField } from "./rating-field";
 import { SelectField } from "./select-field";
 import { TextareaField } from "./textarea-field";
-import { TextareaGroupField } from "./textarea-group-field";
 
 // Export field and form contexts
 export { useFieldContext, useFormContext } from "@/shared/lib/form-context";
 
 // Export UI components (helpers)
 export { FieldLabel } from "./field-label";
-export { FormFooter } from "./form-footer";
 
 // Export filter components
 export { CheckboxFilterItem } from "./checkbox-filter-item";
@@ -43,10 +40,8 @@ export const { useAppForm } = createFormHook({
 		RatingField,
 		SelectField,
 		TextareaField,
-		TextareaGroupField,
 	},
 	formComponents: {
-		FormErrorDisplay,
 		FormScrollOnError,
 	},
 });

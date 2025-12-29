@@ -1,4 +1,12 @@
 import type { PrismaClient } from "@/app/generated/prisma/client";
+import {
+	DIACRITICS_PATTERN,
+	FRENCH_LIGATURES,
+	NON_ALPHANUMERIC_PATTERN,
+	MULTIPLE_DASHES_PATTERN,
+	LEADING_TRAILING_DASHES_PATTERN,
+	SLUG_MAX_LENGTH,
+} from "@/shared/constants/slug-patterns";
 
 /**
  * Type pour le client Prisma ou un client de transaction
@@ -47,10 +55,9 @@ export async function generateSlug(
 	const baseSlug = slugify(value);
 
 	// Tronquer si trop long (garde de la place pour le suffixe)
-	const maxLength = 70;
 	const truncatedSlug =
-		baseSlug.length > maxLength
-			? baseSlug.substring(0, maxLength).replace(/-+$/, "")
+		baseSlug.length > SLUG_MAX_LENGTH
+			? baseSlug.substring(0, SLUG_MAX_LENGTH).replace(/-+$/, "")
 			: baseSlug;
 
 	// Vérifier l'unicité et ajouter un suffixe si nécessaire
@@ -123,18 +130,18 @@ export function slugify(input: string): string {
 			// Normalisation NFD pour séparer les caractères de leurs accents
 			.normalize("NFD")
 			// Suppression des diacritiques (accents)
-			.replace(/[\u0300-\u036f]/g, "")
+			.replace(DIACRITICS_PATTERN, "")
 			// Conversion en minuscules
 			.toLowerCase()
 			// Remplacement des caractères spéciaux français
-			.replace(/[œ]/g, "oe")
-			.replace(/[æ]/g, "ae")
-			.replace(/[ç]/g, "c")
+			.replace(FRENCH_LIGATURES.OE, "oe")
+			.replace(FRENCH_LIGATURES.AE, "ae")
+			.replace(FRENCH_LIGATURES.C_CEDILLA, "c")
 			// Remplacement des espaces et caractères non-alphanumériques par des tirets
-			.replace(/[^a-z0-9]+/g, "-")
+			.replace(NON_ALPHANUMERIC_PATTERN, "-")
 			// Suppression des tirets multiples
-			.replace(/-+/g, "-")
+			.replace(MULTIPLE_DASHES_PATTERN, "-")
 			// Suppression des tirets en début et fin
-			.replace(/^-+|-+$/g, "")
+			.replace(LEADING_TRAILING_DASHES_PATTERN, "")
 	);
 }

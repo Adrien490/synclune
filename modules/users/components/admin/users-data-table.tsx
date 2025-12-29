@@ -16,7 +16,7 @@ import { use } from "react";
 import Link from "next/link";
 import { UsersRowActions } from "./users-row-actions";
 import { UsersSelectionToolbar } from "./users-selection-toolbar";
-import { UsersTableSelectionCell } from "./users-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface UsersDataTableProps {
 	usersPromise: Promise<GetUsersReturn>;
@@ -54,7 +54,7 @@ export function UsersDataTable({ usersPromise, perPage }: UsersDataTableProps) {
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">
-									<UsersTableSelectionCell type="header" userIds={userIds} />
+									<TableSelectionCell type="header" itemIds={userIds} />
 								</TableHead>
 								<TableHead className="w-[25%]">
 									Nom
@@ -87,7 +87,7 @@ export function UsersDataTable({ usersPromise, perPage }: UsersDataTableProps) {
 										className={user.deletedAt ? "opacity-50" : undefined}
 									>
 										<TableCell>
-											<UsersTableSelectionCell type="row" userId={user.id} />
+											<TableSelectionCell type="row" itemId={user.id} />
 										</TableCell>
 										<TableCell>
 											<div className="overflow-hidden">

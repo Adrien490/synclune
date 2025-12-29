@@ -9,15 +9,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/shared/components/ui/select";
+import { useSortSelect } from "@/shared/hooks/use-sort-select";
+import type { SortOption } from "@/shared/types/sort.types";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
 import { useId, useRef } from "react";
-import { useSortSelect } from "@/shared/hooks/use-sort-select";
 
-export type SortOption = {
-	value: string;
-	label: string;
-};
+export type { SortOption };
 
 export interface SortSelectProps {
 	label: string;

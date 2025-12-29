@@ -24,7 +24,7 @@ import { ReceiptText } from "lucide-react";
 import Link from "next/link";
 import { RefundRowActions } from "./refund-row-actions";
 import { RefundsSelectionToolbar } from "./refunds-selection-toolbar";
-import { RefundsTableSelectionCell } from "./refunds-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 export interface RefundsDataTableProps {
 	refundsPromise: Promise<GetRefundsReturn>;
@@ -57,7 +57,7 @@ export async function RefundsDataTable({
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">
-									<RefundsTableSelectionCell type="header" refundIds={refundIds} />
+									<TableSelectionCell type="header" itemIds={refundIds} />
 								</TableHead>
 								<TableHead className="w-[15%]">
 									Commande
@@ -89,7 +89,7 @@ export async function RefundsDataTable({
 								{refunds.map((refund) => (
 								<TableRow key={refund.id}>
 									<TableCell>
-										<RefundsTableSelectionCell type="row" refundId={refund.id} />
+										<TableSelectionCell type="row" itemId={refund.id} />
 									</TableCell>
 									<TableCell>
 									<Link

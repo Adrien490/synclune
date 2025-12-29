@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
+import { usePulseOnChange } from "@/shared/hooks";
 
 /**
  * Badge wishlist - Client Component avec optimistic UI
@@ -16,18 +16,7 @@ import { cn } from "@/shared/utils/cn";
  */
 export function WishlistBadge() {
 	const count = useBadgeCountsStore((state) => state.wishlistCount);
-	const prevCountRef = useRef(count);
-	const [shouldPulse, setShouldPulse] = useState(false);
-
-	// Détection du changement de count pour déclencher l'animation pulse
-	useEffect(() => {
-		if (prevCountRef.current !== count && count > 0) {
-			setShouldPulse(true);
-			const timer = setTimeout(() => setShouldPulse(false), 300);
-			return () => clearTimeout(timer);
-		}
-		prevCountRef.current = count;
-	}, [count]);
+	const shouldPulse = usePulseOnChange(count);
 
 	// Validation défensive
 	if (!count || count <= 0) {

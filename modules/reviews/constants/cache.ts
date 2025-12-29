@@ -16,6 +16,9 @@ export const REVIEWS_CACHE_TAGS = {
 	/** Statistiques agrégées d'un produit */
 	STATS: (productId: string) => `reviews-stats-${productId}`,
 
+	/** Statistiques globales (tous les avis du site) */
+	GLOBAL_STATS: "global-review-stats",
+
 	/** Liste des avis d'un utilisateur (espace client) */
 	USER: (userId: string) => `reviews-user-${userId}`,
 

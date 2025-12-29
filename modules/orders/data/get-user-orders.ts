@@ -1,9 +1,7 @@
-"use server";
-
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getUserOrdersSchema } from "../schemas/user-orders.schemas";
 import type { GetUserOrdersParams, GetUserOrdersReturn } from "../types/user-orders.types";
-import { fetchUserOrders } from "../utils/fetch-user-orders";
+import { fetchUserOrders } from "./fetch-user-orders";
 
 /**
  * Récupère les commandes de l'utilisateur connecté

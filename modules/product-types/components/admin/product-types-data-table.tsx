@@ -16,7 +16,7 @@ import Link from "next/link";
 import { ProductTypeActiveToggle } from "./product-type-active-toggle";
 import { ProductTypeRowActions } from "./product-type-row-actions";
 import { ProductTypesSelectionToolbar } from "./product-types-selection-toolbar";
-import { ProductTypesTableSelectionCell } from "./product-types-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface ProductTypesDataTableProps {
 	productTypesPromise: Promise<GetProductTypesReturn>;
@@ -53,9 +53,9 @@ export async function ProductTypesDataTable({
 						<TableHeader>
 							<TableRow>
 								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
-									<ProductTypesTableSelectionCell
+									<TableSelectionCell
 										type="header"
-										productTypeIds={productTypeIds}
+										itemIds={productTypeIds}
 									/>
 								</TableHead>
 								<TableHead
@@ -108,9 +108,9 @@ export async function ProductTypesDataTable({
 								return (
 									<TableRow key={productType.id}>
 										<TableCell role="gridcell">
-											<ProductTypesTableSelectionCell
+											<TableSelectionCell
 												type="row"
-												productTypeId={productType.id}
+												itemId={productType.id}
 											/>
 										</TableCell>
 										<TableCell role="gridcell">

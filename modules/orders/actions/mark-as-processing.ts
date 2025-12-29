@@ -5,8 +5,7 @@ import {
 	PaymentStatus,
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { getSession } from "@/modules/auth/lib/get-current-session";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -33,18 +32,9 @@ export async function markAsProcessing(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
-
-		// Récupérer les infos de l'admin pour l'audit trail
-		const session = await getSession();
-		const adminId = session?.user?.id;
-		const adminName = session?.user?.name || "Admin";
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
 		const sendEmail = formData.get("sendEmail") as string | null;
@@ -132,8 +122,8 @@ export async function markAsProcessing(
 			newStatus: OrderStatus.PROCESSING,
 			previousFulfillmentStatus: order.fulfillmentStatus,
 			newFulfillmentStatus: FulfillmentStatus.PROCESSING,
-			authorId: adminId,
-			authorName: adminName,
+			authorId: adminUser.id,
+			authorName: adminUser.name || "Admin",
 			source: "admin",
 		});
 

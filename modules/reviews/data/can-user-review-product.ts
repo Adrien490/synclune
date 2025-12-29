@@ -1,3 +1,4 @@
+import { cacheReviewableProducts } from "../constants/cache"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
 import type { CanReviewResult } from "../types/review.types"
 
@@ -17,6 +18,9 @@ export async function canUserReviewProduct(
 	userId: string,
 	productId: string
 ): Promise<CanReviewResult> {
+	"use cache"
+	cacheReviewableProducts(userId)
+
 	// 1. Vérifier s'il a déjà laissé un avis
 	const existingReview = await prisma.productReview.findUnique({
 		where: {
@@ -105,6 +109,9 @@ export async function canUserEditReview(
 	userId: string,
 	reviewId: string
 ): Promise<boolean> {
+	"use cache"
+	cacheReviewableProducts(userId)
+
 	const review = await prisma.productReview.findFirst({
 		where: {
 			id: reviewId,

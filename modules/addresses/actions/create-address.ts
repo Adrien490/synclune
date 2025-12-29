@@ -1,13 +1,13 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { getCurrentUser } from "@/modules/users/data/get-current-user";
+import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { addressSchema } from "@/shared/schemas/address-schema";
-import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
+import { handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour créer une nouvelle adresse
@@ -19,14 +19,9 @@ export async function createAddress(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification de l'authentification
-		const user = await getCurrentUser();
-
-		if (!user) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ADDRESS_ERROR_MESSAGES.NOT_AUTHENTICATED,
-			};
-		}
+		const auth = await requireAuth();
+		if ("error" in auth) return auth.error;
+		const { user } = auth;
 
 		// 2. Extraction des données du FormData
 		const rawData = {
@@ -77,14 +72,7 @@ export async function createAddress(
 				? "Adresse ajoutée et définie comme adresse par défaut"
 				: "Adresse ajoutée avec succès",
 		};
-	} catch (error) {
-// console.error("Error creating address:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: ADDRESS_ERROR_MESSAGES.CREATE_FAILED,
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la création de l'adresse");
 	}
 }

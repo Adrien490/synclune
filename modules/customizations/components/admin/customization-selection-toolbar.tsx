@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
 	CheckCircle,
 	Clock,
@@ -8,6 +7,7 @@ import {
 	MoreVertical,
 	XCircle,
 } from "lucide-react";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import type { CustomizationRequestStatus } from "../../types/customization.types";
 import {
@@ -35,13 +35,11 @@ import { CUSTOMIZATION_STATUS_LABELS } from "../../constants/status.constants";
 
 export function CustomizationSelectionToolbar() {
 	const { selectedItems, clearSelection } = useSelectionContext();
-	const [dialogOpen, setDialogOpen] = useState(false);
-	const [targetStatus, setTargetStatus] =
-		useState<CustomizationRequestStatus | null>(null);
+	const statusDialog = useDialog<{ targetStatus: CustomizationRequestStatus }>("bulk-customization-status");
 
 	const { action, isPending } = useBulkUpdateCustomizationStatus({
 		onSuccess: () => {
-			setDialogOpen(false);
+			statusDialog.close();
 			clearSelection();
 		},
 	});
@@ -49,9 +47,10 @@ export function CustomizationSelectionToolbar() {
 	if (selectedItems.length === 0) return null;
 
 	const handleOpenDialog = (status: CustomizationRequestStatus) => {
-		setTargetStatus(status);
-		setDialogOpen(true);
+		statusDialog.open({ targetStatus: status });
 	};
+
+	const targetStatus = statusDialog.data?.targetStatus ?? null;
 
 	const handleSubmit = (formData: FormData) => {
 		if (!targetStatus) return;
@@ -105,7 +104,7 @@ export function CustomizationSelectionToolbar() {
 			</SelectionToolbar>
 
 			{/* Confirmation Dialog */}
-			<AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+			<AlertDialog open={statusDialog.isOpen} onOpenChange={(open) => open ? statusDialog.open() : statusDialog.close()}>
 				<AlertDialogContent>
 					<form action={handleSubmit}>
 						<AlertDialogHeader>

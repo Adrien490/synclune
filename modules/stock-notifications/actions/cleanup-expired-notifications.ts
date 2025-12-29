@@ -3,7 +3,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { STOCK_NOTIFICATIONS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";

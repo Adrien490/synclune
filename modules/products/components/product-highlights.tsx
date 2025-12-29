@@ -1,5 +1,5 @@
 import type { GetProductReturn } from "../types/product.types";
-import { generateHighlights } from "../utils/generate-highlights";
+import { generateHighlights } from "../services/product-highlights.service";
 
 interface ProductHighlightsProps {
 	product: GetProductReturn;

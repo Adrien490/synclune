@@ -10,7 +10,6 @@ import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef, useEffect } from "react";
-import { toast } from "sonner";
 import {
 	MOTION_CONFIG,
 	maybeReduceMotion,
@@ -119,7 +118,7 @@ export function Fab({
 	);
 
 	// Hook pour toggle la visibilité
-	const { isHidden, toggle, isPending, isError } = useFabVisibility({
+	const { isHidden, toggle, isPending } = useFabVisibility({
 		key: fabKey,
 		initialHidden,
 		onToggle: (newHiddenState) => {
@@ -147,12 +146,6 @@ export function Fab({
 			});
 		},
 	});
-
-	// Feedback utilisateur en cas d'erreur
-	useEffect(() => {
-		if (!isError) return;
-		toast.error("Erreur lors de la modification");
-	}, [isError]);
 
 	// Handler ESC pour masquer le FAB
 	useEffect(() => {

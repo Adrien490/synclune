@@ -4,6 +4,7 @@ import {
 	cursorSchema,
 	directionSchema,
 } from "@/shared/constants/pagination";
+import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
 	GET_REFUNDS_DEFAULT_PER_PAGE,
@@ -31,28 +32,8 @@ export const refundFiltersSchema = z.object({
 		.union([z.enum(RefundReason), z.array(z.enum(RefundReason))])
 		.optional(),
 	orderId: z.cuid2().optional(),
-	createdAfter: z
-		.union([z.string(), z.date()])
-		.transform((val) => {
-			if (val instanceof Date) return val;
-			if (typeof val === "string") {
-				const date = new Date(val);
-				return isNaN(date.getTime()) ? undefined : date;
-			}
-			return undefined;
-		})
-		.optional(),
-	createdBefore: z
-		.union([z.string(), z.date()])
-		.transform((val) => {
-			if (val instanceof Date) return val;
-			if (typeof val === "string") {
-				const date = new Date(val);
-				return isNaN(date.getTime()) ? undefined : date;
-			}
-			return undefined;
-		})
-		.optional(),
+	createdAfter: stringOrDateSchema,
+	createdBefore: stringOrDateSchema,
 });
 
 // ============================================================================
@@ -168,4 +149,15 @@ export const bulkApproveRefundsSchema = z.object({
 export const bulkRejectRefundsSchema = z.object({
 	ids: z.array(z.cuid2()).min(1, "Au moins un remboursement doit être sélectionné"),
 	reason: z.string().max(500).optional(),
+});
+
+// ============================================================================
+// GET ORDER FOR REFUND SCHEMA
+// ============================================================================
+
+/**
+ * Schema pour récupérer une commande avec les infos nécessaires pour créer un remboursement
+ */
+export const getOrderForRefundSchema = z.object({
+	orderId: z.cuid2(),
 });

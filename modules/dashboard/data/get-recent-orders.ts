@@ -2,6 +2,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import { transformRecentOrders } from "../services/recent-orders-transformer.service";
 
 import {
 	GET_DASHBOARD_RECENT_ORDERS_SELECT,
@@ -60,15 +61,6 @@ export async function fetchDashboardRecentOrders(): Promise<GetRecentOrdersRetur
 	});
 
 	return {
-		orders: orders.map((order) => ({
-			id: order.id,
-			orderNumber: order.orderNumber,
-			createdAt: order.createdAt,
-			status: order.status,
-			paymentStatus: order.paymentStatus,
-			total: order.total,
-			customerName: order.user?.name || "Invité",
-			customerEmail: order.user?.email || "",
-		})),
+		orders: transformRecentOrders(orders),
 	};
 }

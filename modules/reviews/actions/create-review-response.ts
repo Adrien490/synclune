@@ -2,8 +2,8 @@
 
 import { updateTag } from "next/cache"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth"
 import {
-	requireAdminWithUser,
 	success,
 	notFound,
 	error,
@@ -16,6 +16,7 @@ import type { ActionState } from "@/shared/types/server-action"
 import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
 import { createReviewResponseSchema } from "../schemas/review.schemas"
+import { buildUrl, ROUTES } from "@/shared/constants/urls"
 
 /**
  * Crée une réponse admin à un avis
@@ -101,7 +102,6 @@ export async function createReviewResponse(
 
 		// 6. Envoyer l'email de notification au client
 		if (review.user.email) {
-			const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"
 			await sendReviewResponseEmail({
 				to: review.user.email,
 				customerName: review.user.name?.split(" ")[0] || "Cliente",
@@ -109,7 +109,7 @@ export async function createReviewResponse(
 				reviewContent: review.content,
 				responseContent: content,
 				responseAuthorName: user.name || "Équipe Synclune",
-				productUrl: `${baseUrl}/creations/${review.product.slug}`,
+				productUrl: buildUrl(ROUTES.SHOP.PRODUCT(review.product.slug)),
 			})
 		}
 

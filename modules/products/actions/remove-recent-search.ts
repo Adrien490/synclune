@@ -2,12 +2,13 @@
 
 import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
-import { success, error, handleActionError } from "@/shared/lib/actions"
+import { success, handleActionError, validateInput } from "@/shared/lib/actions"
 import type { ActionState } from "@/shared/types/server-action"
 import {
 	RECENT_SEARCHES_COOKIE_NAME,
 	RECENT_SEARCHES_COOKIE_MAX_AGE,
 } from "../constants/recent-searches"
+import { removeRecentSearchSchema } from "../schemas/recent-searches.schemas"
 import { getRecentSearchesInvalidationTags } from "../constants/cache"
 
 /**
@@ -18,11 +19,15 @@ export async function removeRecentSearch(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const term = (formData.get("term") as string)?.trim().toLowerCase()
+		const validation = validateInput(removeRecentSearchSchema, {
+			term: formData.get("term"),
+		})
 
-		if (!term) {
-			return error("Terme manquant")
+		if ("error" in validation) {
+			return validation.error
 		}
+
+		const { term } = validation.data
 
 		const cookieStore = await cookies()
 		const existingCookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME)

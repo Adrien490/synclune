@@ -72,24 +72,6 @@ export const ajNewsletter = arcjet({
 });
 
 /**
- * Instance Arcjet pour la validation d'emails
- *
- * 📧 Validation avancée des emails :
- * - Détection emails jetables/temporaires (base de données maintenue par Arcjet)
- * - Vérification MX records (le domaine accepte-t-il les emails ?)
- * - Détection typos courantes
- *
- * Note : Nécessite un compte Arcjet payant pour validation complète
- */
-export const ajEmailValidation = arcjet({
-	key: process.env.ARCJET_KEY!,
-	rules: [
-		// Pas de règles ici, on utilise juste les fonctions de validation
-		// validateEmail() sera utilisée dans le schéma Zod
-	],
-});
-
-/**
  * Instance Arcjet pour la confirmation d'inscription newsletter
  *
  * 🔐 Protection contre le brute-force des tokens de confirmation :

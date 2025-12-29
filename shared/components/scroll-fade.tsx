@@ -12,6 +12,15 @@ interface ScrollFadeProps {
   axis?: ScrollAxis;
 }
 
+interface ScrollInfo {
+  scrollLeft: number;
+  scrollTop: number;
+  scrollWidth: number;
+  scrollHeight: number;
+  clientWidth: number;
+  clientHeight: number;
+}
+
 export default function ScrollFade({
   children,
   className,
@@ -21,41 +30,39 @@ export default function ScrollFade({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  const [showLeft, setShowLeft] = useState(false);
-  const [showRight, setShowRight] = useState(false);
-  const [showTop, setShowTop] = useState(false);
-  const [showBottom, setShowBottom] = useState(false);
+  const [scrollInfo, setScrollInfo] = useState<ScrollInfo>({
+    scrollLeft: 0,
+    scrollTop: 0,
+    scrollWidth: 0,
+    scrollHeight: 0,
+    clientWidth: 0,
+    clientHeight: 0,
+  });
 
-  const checkScroll = () => {
+  // Variables calculées au lieu de useState
+  const showLeft = (axis === "horizontal" || axis === "both") && scrollInfo.scrollLeft > 0;
+  const showRight = (axis === "horizontal" || axis === "both") &&
+    Math.ceil(scrollInfo.scrollLeft + scrollInfo.clientWidth) < Math.floor(scrollInfo.scrollWidth - 1);
+  const showTop = (axis === "vertical" || axis === "both") && scrollInfo.scrollTop > 0;
+  const showBottom = (axis === "vertical" || axis === "both") &&
+    Math.ceil(scrollInfo.scrollTop + scrollInfo.clientHeight) < Math.floor(scrollInfo.scrollHeight - 1);
+
+  const updateScrollInfo = () => {
     const el = containerRef.current;
     if (!el) return;
 
-    const {
-      scrollLeft,
-      scrollTop,
-      scrollWidth,
-      scrollHeight,
-      clientWidth,
-      clientHeight
-    } = el;
-
-    if (axis === "horizontal" || axis === "both") {
-      setShowLeft(scrollLeft > 0);
-      setShowRight(
-        Math.ceil(scrollLeft + clientWidth) < Math.floor(scrollWidth - 1)
-      );
-    }
-
-    if (axis === "vertical" || axis === "both") {
-      setShowTop(scrollTop > 0);
-      setShowBottom(
-        Math.ceil(scrollTop + clientHeight) < Math.floor(scrollHeight - 1)
-      );
-    }
+    setScrollInfo({
+      scrollLeft: el.scrollLeft,
+      scrollTop: el.scrollTop,
+      scrollWidth: el.scrollWidth,
+      scrollHeight: el.scrollHeight,
+      clientWidth: el.clientWidth,
+      clientHeight: el.clientHeight,
+    });
   };
 
   useLayoutEffect(() => {
-    requestAnimationFrame(checkScroll);
+    requestAnimationFrame(updateScrollInfo);
   }, [axis]);
 
   useEffect(() => {
@@ -65,21 +72,19 @@ export default function ScrollFade({
     // Feature check pour anciens navigateurs
     if (typeof ResizeObserver === "undefined") return;
 
-    const onScroll = () => checkScroll();
-    container.addEventListener("scroll", onScroll, { passive: true });
+    container.addEventListener("scroll", updateScrollInfo, { passive: true });
 
-    const ro = new ResizeObserver(() => checkScroll());
+    const ro = new ResizeObserver(updateScrollInfo);
     if (contentRef.current) ro.observe(contentRef.current);
     ro.observe(container);
 
-    const onResize = () => checkScroll();
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", updateScrollInfo);
 
-    const raf = requestAnimationFrame(checkScroll);
+    const raf = requestAnimationFrame(updateScrollInfo);
 
     return () => {
-      container.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
+      container.removeEventListener("scroll", updateScrollInfo);
+      window.removeEventListener("resize", updateScrollInfo);
       ro.disconnect();
       cancelAnimationFrame(raf);
     };

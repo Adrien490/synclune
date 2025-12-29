@@ -1,13 +1,31 @@
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { isAdmin } from "@/modules/auth/utils/guards";
 
 import { cacheCustomizationDetail } from "../constants/cache";
 import type { CustomizationRequestDetail } from "../types/customization.types";
 
 // ============================================================================
-// DATA FUNCTION
+// MAIN FUNCTION
 // ============================================================================
 
+/**
+ * Récupère une demande de personnalisation par son ID
+ * Réservé aux administrateurs (defense in depth)
+ */
 export async function getCustomizationRequest(
+	id: string
+): Promise<CustomizationRequestDetail | null> {
+	const admin = await isAdmin();
+	if (!admin) return null;
+
+	return fetchCustomizationRequest(id);
+}
+
+// ============================================================================
+// FETCH FUNCTION (CACHED)
+// ============================================================================
+
+async function fetchCustomizationRequest(
 	id: string
 ): Promise<CustomizationRequestDetail | null> {
 	"use cache";

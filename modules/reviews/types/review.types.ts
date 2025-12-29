@@ -319,6 +319,15 @@ export interface ReviewResponseAdmin {
 // ============================================================================
 
 /**
+ * Statistiques globales d'avis pour tout le site
+ * Utilisé pour l'AggregateRating dans le schema LocalBusiness
+ */
+export interface GlobalReviewStats {
+	totalReviews: number
+	averageRating: number
+}
+
+/**
  * Distribution des notes pour le graphique
  */
 export interface RatingDistribution {

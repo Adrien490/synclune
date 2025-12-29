@@ -1,15 +1,8 @@
 import { prisma } from "@/shared/lib/prisma";
 import { cacheMaterials } from "../constants/cache";
+import type { MaterialOption } from "../types/materials.types";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export type MaterialOption = {
-	id: string;
-	name: string;
-	slug: string;
-};
+export type { MaterialOption } from "../types/materials.types";
 
 // ============================================================================
 // MAIN FUNCTION

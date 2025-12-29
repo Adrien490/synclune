@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { Separator } from "@/shared/components/ui/separator";
 import { getProductBySlug } from "@/modules/products/data/get-product";
+import { getPublicProductSlugs } from "@/modules/products/data/get-public-product-slugs";
 import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
 import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
@@ -16,7 +17,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { ProductDetails } from "@/modules/products/components/product-details";
 import { Gallery } from "@/modules/media/components/gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
-import { StickyCartCTA } from "@/shared/components/sticky-cart-cta";
+import { StickyCartCTA } from "@/modules/products/components/sticky-cart-cta";
 
 import { RelatedProducts } from "@/modules/products/components/related-products";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
@@ -30,11 +31,7 @@ import { ProductReviewsSection, ProductReviewsSectionSkeleton } from "@/modules/
 
 // Pre-genere les chemins des produits publics au build time
 export async function generateStaticParams() {
-	const { prisma } = await import("@/shared/lib/prisma");
-	const products = await prisma.product.findMany({
-		where: { status: "PUBLIC" },
-		select: { slug: true },
-	});
+	const products = await getPublicProductSlugs();
 	return products.map((p) => ({ slug: p.slug }));
 }
 

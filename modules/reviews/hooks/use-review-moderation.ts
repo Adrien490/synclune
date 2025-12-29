@@ -1,37 +1,43 @@
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { toast } from "sonner"
-import { moderateReview } from "../actions/moderate-review"
+import { useActionState, useTransition } from "react";
+import { moderateReview } from "../actions/moderate-review";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import type { ActionState } from "@/shared/types/server-action";
 
 interface UseReviewModerationOptions {
-	onSuccess?: () => void
+	onSuccess?: () => void;
 }
 
 /**
  * Hook pour les actions de modération d'un avis
  */
 export function useReviewModeration(options?: UseReviewModerationOptions) {
-	const [isPending, startTransition] = useTransition()
+	const [isPending, startTransition] = useTransition();
+
+	const [, formAction, isActionPending] = useActionState(
+		withCallbacks(
+			moderateReview,
+			createToastCallbacks({
+				onSuccess: () => {
+					options?.onSuccess?.();
+				},
+			})
+		),
+		undefined
+	);
 
 	const toggleStatus = (reviewId: string) => {
-		startTransition(async () => {
-			const formData = new FormData()
-			formData.append("id", reviewId)
-
-			const result = await moderateReview(undefined, formData)
-
-			if (result && "error" in result && typeof result.error === "string") {
-				toast.error(result.error)
-			} else if (result && "message" in result && typeof result.message === "string") {
-				toast.success(result.message)
-				options?.onSuccess?.()
-			}
-		})
-	}
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("id", reviewId);
+			formAction(formData);
+		});
+	};
 
 	return {
 		toggleStatus,
-		isPending,
-	}
+		isPending: isPending || isActionPending,
+	};
 }

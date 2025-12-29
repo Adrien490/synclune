@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -19,13 +19,8 @@ export async function bulkArchiveProducts(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Acces non autorise. Droits administrateur requis.",
-			};
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		// 2. Extraction des donnees du FormData
 		const productIdsRaw = formData.get("productIds") as string;

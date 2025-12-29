@@ -5,7 +5,7 @@ import type {
 	SearchAddressReturn,
 } from "../types/search-address.types";
 import { buildApiUrl } from "../services/address-api.service";
-import { transformCompletionResult } from "../services/address-transform.service";
+import { transformCompletionResult } from "./address-transform.utils";
 
 /**
  * Récupère les suggestions d'adresses depuis l'API d'autocomplétion de l'IGN

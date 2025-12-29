@@ -1,35 +1,17 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
-import type { MediaType } from "@/app/generated/prisma/client";
 
 import { GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
 import { getProductSkuSchema } from "../schemas/sku.schemas";
 import type {
 	GetProductSkuParams,
 	GetProductSkuReturn,
+	SkuWithImages,
 } from "../types/sku.types";
 import { cacheSkuDetail } from "../constants/cache";
 
 // Re-export pour compatibilité
-export type { GetProductSkuParams, GetProductSkuReturn } from "../types/sku.types";
-
-/**
- * Type pour SKU avec images (pour édition)
- * Inclut toutes les données nécessaires au formulaire de modification
- */
-export type SkuWithImages = GetProductSkuReturn & {
-	images: Array<{
-		id: string;
-		url: string;
-		thumbnailUrl: string | null;
-		blurDataUrl: string | null;
-		altText: string | null;
-		mediaType: MediaType;
-		isPrimary: boolean;
-	}>;
-	compareAtPrice: number | null;
-	materialId: string | null;
-};
+export type { GetProductSkuParams, GetProductSkuReturn, SkuWithImages } from "../types/sku.types";
 
 // ============================================================================
 // MAIN FUNCTIONS

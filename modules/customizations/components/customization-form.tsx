@@ -61,10 +61,6 @@ export function CustomizationForm({
 				)}
 			</form.Subscribe>
 
-			<form.AppForm>
-				<form.FormErrorDisplay />
-			</form.AppForm>
-
 			<RequiredFieldsNote />
 
 			{/* Type de bijou (optionnel) */}

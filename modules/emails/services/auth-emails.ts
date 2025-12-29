@@ -4,6 +4,7 @@ import { PasswordResetEmail } from "@/emails/password-reset-email"
 import { PasswordChangedEmail } from "@/emails/password-changed-email"
 import { EMAIL_SUBJECTS } from "../constants/email.constants"
 import { sendEmail } from "./send-email"
+import { buildUrl, ROUTES } from "@/shared/constants/urls"
 import type { EmailResult } from "../types/email.types"
 
 /**
@@ -49,7 +50,7 @@ export async function sendPasswordChangedEmail({
 	changeDate: string
 	ipAddress?: string
 }): Promise<EmailResult> {
-	const resetUrl = `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"}/mot-de-passe-oublie`
+	const resetUrl = buildUrl(ROUTES.AUTH.FORGOT_PASSWORD)
 	const html = await render(
 		PasswordChangedEmail({ userName, changeDate, resetUrl })
 	)

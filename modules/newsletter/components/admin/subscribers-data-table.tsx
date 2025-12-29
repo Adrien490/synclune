@@ -17,7 +17,7 @@ import { CheckCircle2, Clock, Mail, XCircle } from "lucide-react";
 import { NEWSLETTER_STATUS_LABELS } from "@/modules/newsletter/constants/newsletter-status.constants";
 import { SubscriberRowActions } from "./subscriber-row-actions";
 import { SubscribersSelectionToolbar } from "./subscribers-selection-toolbar";
-import { SubscribersTableSelectionCell } from "./subscribers-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 export interface SubscribersDataTableProps {
 	subscribersPromise: Promise<GetSubscribersReturn>;
@@ -50,7 +50,7 @@ export async function SubscribersDataTable({
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">
-									<SubscribersTableSelectionCell type="header" subscriberIds={subscriberIds} />
+									<TableSelectionCell type="header" itemIds={subscriberIds} />
 								</TableHead>
 								<TableHead className="w-[35%] sm:w-[30%]">Email</TableHead>
 								<TableHead className="w-[15%] sm:w-[15%]">Statut</TableHead>
@@ -63,7 +63,7 @@ export async function SubscribersDataTable({
 							{subscribers.map((subscriber) => (
 								<TableRow key={subscriber.id}>
 									<TableCell>
-										<SubscribersTableSelectionCell type="row" subscriberId={subscriber.id} />
+										<TableSelectionCell type="row" itemId={subscriber.id} />
 									</TableCell>
 									<TableCell className="font-medium">
 										<span>{subscriber.email}</span>

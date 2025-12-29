@@ -53,3 +53,19 @@ export const SORT_LABELS = {
 export const GET_NEWSLETTER_STATUS_DEFAULT_SELECT = {
 	status: true,
 } as const satisfies Prisma.NewsletterSubscriberSelect;
+
+// ============================================================================
+// BATCH PROCESSING CONFIGURATION
+// ============================================================================
+
+/**
+ * Nombre d'abonnés à traiter par batch (curseur pagination)
+ * Utilisé pour éviter la surcharge mémoire lors d'envois massifs
+ */
+export const NEWSLETTER_BATCH_SIZE = 100;
+
+/**
+ * Nombre maximum d'emails envoyés simultanément
+ * Utilisé pour respecter les limites de rate limiting de Resend
+ */
+export const NEWSLETTER_MAX_CONCURRENT_SENDS = 10;

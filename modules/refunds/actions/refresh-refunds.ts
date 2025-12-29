@@ -1,10 +1,10 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache-tags";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export async function refreshRefunds(
@@ -12,14 +12,8 @@ export async function refreshRefunds(
 	_formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé. Droits administrateur requis.",
-			};
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);

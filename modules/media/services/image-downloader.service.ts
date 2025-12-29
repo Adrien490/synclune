@@ -10,29 +10,9 @@
  */
 
 import { delay } from "@/shared/utils/delay";
+import type { DownloadImageOptions, RetryOptions, LogFn } from "../types/image-processing.types";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export interface DownloadImageOptions {
-	/** Timeout pour le telechargement (ms) */
-	downloadTimeout?: number;
-	/** Taille max de l'image (octets) */
-	maxImageSize?: number;
-	/** User-Agent personnalise */
-	userAgent?: string;
-}
-
-export interface RetryOptions {
-	/** Nombre max de tentatives */
-	maxRetries?: number;
-	/** Delai de base pour backoff exponentiel (ms) */
-	baseDelay?: number;
-}
-
-/** Fonction de log pour les avertissements */
-export type LogFn = (message: string, data?: Record<string, unknown>) => void;
+export type { DownloadImageOptions, RetryOptions, LogFn } from "../types/image-processing.types";
 
 // ============================================================================
 // CONSTANTS

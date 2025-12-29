@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 
-import { useLightbox } from "@/modules/media/hooks/use-lightbox"
+import { useLightbox } from "@/shared/hooks"
 import dynamic from "next/dynamic"
 
 // Lazy loading - lightbox charge uniquement a l'ouverture

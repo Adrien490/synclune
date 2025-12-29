@@ -2,7 +2,7 @@
 
 import { markAsShipped } from "@/modules/orders/actions/mark-as-shipped";
 import { useAppForm } from "@/shared/components/forms";
-import type { Carrier } from "@/modules/orders/services/carrier.service";
+import type { Carrier } from "@/modules/orders/utils/carrier.utils";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";

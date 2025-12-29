@@ -2,8 +2,8 @@
 
 import { updateTag } from "next/cache"
 import { prisma, notDeleted } from "@/shared/lib/prisma"
+import { requireAdmin } from "@/modules/auth/lib/require-auth"
 import {
-	requireAdmin,
 	success,
 	notFound,
 	validationError,

@@ -1,27 +1,9 @@
-import { ActionState } from "@/shared/types/server-action";
-import { toast } from "sonner";
+import { toast } from "sonner"
 
-/**
- * Options de configuration pour createToastCallbacks
- * @template T - Type du résultat de l'action (défaut: ActionState)
- */
-export type CreateToastCallbacksOptions<T = ActionState> = {
-	/** Message affiché pendant le chargement (toast.loading) */
-	loadingMessage?: string;
-	/** Afficher un toast de succès (défaut: true) */
-	showSuccessToast?: boolean;
-	/** Afficher un toast d'erreur (défaut: true) */
-	showErrorToast?: boolean;
-	/** Callback personnalisé appelé en cas de succès */
-	onSuccess?: (result: T) => void;
-	/** Callback personnalisé appelé en cas d'erreur */
-	onError?: (result: T) => void;
-	/** Bouton d'action dans le toast de succès */
-	successAction?: {
-		label: string;
-		onClick: () => void;
-	};
-};
+import type { ActionState } from "@/shared/types/server-action"
+import type { CreateToastCallbacksOptions } from "@/shared/types/callback.types"
+
+export type { CreateToastCallbacksOptions } from "@/shared/types/callback.types"
 
 /**
  * Type guard pour vérifier si une valeur contient un message

@@ -12,6 +12,17 @@ import {
 } from "../schemas/subscriber.schemas";
 
 // ============================================================================
+// TYPES - NEWSLETTER STATS
+// ============================================================================
+
+/** Statistiques de la newsletter pour le dashboard admin */
+export interface NewsletterStats {
+	totalSubscribers: number;
+	activeSubscribers: number;
+	inactiveSubscribers: number;
+}
+
+// ============================================================================
 // TYPES - SINGLE SUBSCRIBER
 // ============================================================================
 

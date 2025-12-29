@@ -1,7 +1,7 @@
 "use client";
 
 import { RefundReason } from "@/app/generated/prisma/browser";
-import type { OrderForRefund, OrderItemForRefund } from "@/modules/refunds/data/get-order-for-refund";
+import type { OrderForRefund } from "@/modules/refunds/data/get-order-for-refund";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Card,
@@ -10,9 +10,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
-import { Checkbox } from "@/shared/components/ui/checkbox";
-import { Input } from "@/shared/components/ui/input";
-import { Label } from "@/shared/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -24,15 +21,15 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useStore } from "@tanstack/react-form-nextjs";
 import { ArrowLeft, Package, RotateCcw } from "lucide-react";
-import Image from "next/image";
+import { formatEuro } from "@/shared/utils/format-euro";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { memo } from "react";
 import {
 	useCreateRefundForm,
 	getDefaultRestock,
 	getAvailableQuantity,
 } from "@/modules/refunds/hooks/use-create-refund-form";
+import { RefundItemRow } from "./refund-item-row";
 
 // ============================================================================
 // TYPES
@@ -51,14 +48,6 @@ const REFUND_REASON_LABELS: Record<RefundReason, string> = {
 	FRAUD: "Fraude",
 	OTHER: "Autre",
 };
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-function formatCurrency(amount: number): string {
-	return (amount / 100).toFixed(2) + " €";
-}
 
 // ============================================================================
 // COMPONENT
@@ -310,16 +299,16 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 									<span className="text-muted-foreground">
 										Montant du remboursement
 									</span>
-									<span className="font-medium">{formatCurrency(totalAmount)}</span>
+									<span className="font-medium">{formatEuro(totalAmount)}</span>
 								</div>
 								<Separator />
 								<div className="flex justify-between text-sm">
 									<span className="text-muted-foreground">Déjà remboursé</span>
-									<span>{formatCurrency(alreadyRefunded)}</span>
+									<span>{formatEuro(alreadyRefunded)}</span>
 								</div>
 								<div className="flex justify-between text-sm">
 									<span className="text-muted-foreground">Max remboursable</span>
-									<span>{formatCurrency(maxRefundable)}</span>
+									<span>{formatEuro(maxRefundable)}</span>
 								</div>
 								{totalAmount > maxRefundable && (
 									<p className="text-xs text-destructive">
@@ -340,7 +329,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 							) : (
 								<>
 									<RotateCcw className="h-4 w-4" />
-									Créer la demande ({formatCurrency(totalAmount)})
+									Créer la demande ({formatEuro(totalAmount)})
 								</>
 							)}
 						</Button>
@@ -355,167 +344,3 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 		</div>
 	);
 }
-
-// ============================================================================
-// SUB-COMPONENT: RefundItemRow
-// ============================================================================
-
-interface RefundItemRowProps {
-	orderItem: OrderItemForRefund;
-	itemState:
-		| {
-				orderItemId: string;
-				quantity: number;
-				restock: boolean;
-				selected: boolean;
-		  }
-		| undefined;
-	isPending: boolean;
-	onToggle: (orderItemId: string, checked: boolean) => void;
-	onQuantityChange: (orderItemId: string, quantity: number) => void;
-	onRestockToggle: (orderItemId: string, checked: boolean) => void;
-}
-
-const RefundItemRow = memo(function RefundItemRow({
-	orderItem,
-	itemState,
-	isPending,
-	onToggle,
-	onQuantityChange,
-	onRestockToggle,
-}: RefundItemRowProps) {
-	const available = getAvailableQuantity(orderItem);
-	const variant = [orderItem.skuColor, orderItem.skuSize, orderItem.skuMaterial]
-		.filter(Boolean)
-		.join(" / ");
-
-	// Item entièrement remboursé
-	if (available === 0) {
-		return (
-			<div className="flex items-center gap-4 py-3 border-b last:border-0 opacity-50">
-				<div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border bg-muted">
-					{orderItem.skuImageUrl || orderItem.productImageUrl ? (
-						<Image
-							src={orderItem.skuImageUrl || orderItem.productImageUrl || ""}
-							alt={orderItem.productTitle}
-							fill
-							sizes="48px"
-							quality={80}
-							className="object-cover"
-						/>
-					) : (
-						<div className="flex h-full w-full items-center justify-center">
-							<Package className="h-4 w-4 text-muted-foreground" />
-						</div>
-					)}
-				</div>
-				<div className="flex-1 min-w-0">
-					<p className="font-medium truncate text-sm">{orderItem.productTitle}</p>
-					{variant && <p className="text-xs text-muted-foreground">{variant}</p>}
-				</div>
-				<p className="text-sm text-muted-foreground">Entièrement remboursé</p>
-			</div>
-		);
-	}
-
-	return (
-		<div className="flex items-start gap-4 py-3 border-b last:border-0">
-			{/* Checkbox */}
-			<Checkbox
-				id={`item-${orderItem.id}`}
-				checked={itemState?.selected || false}
-				onCheckedChange={(checked) => onToggle(orderItem.id, checked === true)}
-				disabled={isPending}
-				className="mt-1"
-				aria-label={`Sélectionner ${orderItem.productTitle} pour remboursement`}
-			/>
-
-			{/* Image */}
-			<div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border bg-muted">
-				{orderItem.skuImageUrl || orderItem.productImageUrl ? (
-					<Image
-						src={orderItem.skuImageUrl || orderItem.productImageUrl || ""}
-						alt={orderItem.productTitle}
-						fill
-						sizes="48px"
-						quality={80}
-						className="object-cover"
-					/>
-				) : (
-					<div className="flex h-full w-full items-center justify-center">
-						<Package className="h-4 w-4 text-muted-foreground" />
-					</div>
-				)}
-			</div>
-
-			{/* Details */}
-			<div className="flex-1 min-w-0 space-y-2">
-				<div>
-					<Label
-						htmlFor={`item-${orderItem.id}`}
-						className="font-medium text-sm cursor-pointer"
-					>
-						{orderItem.productTitle}
-					</Label>
-					{variant && (
-						<p className="text-xs text-muted-foreground">{variant}</p>
-					)}
-					<p className="text-xs text-muted-foreground">
-						{formatCurrency(orderItem.price)} • Max {available} dispo
-					</p>
-				</div>
-
-				{/* Quantity + Restock when selected */}
-				{itemState?.selected && (
-					<div className="flex items-center gap-4">
-						<div className="flex items-center gap-2">
-							<Label htmlFor={`qty-${orderItem.id}`} className="text-xs">
-								Qté:
-							</Label>
-							<Input
-								id={`qty-${orderItem.id}`}
-								type="number"
-								min={1}
-								max={available}
-								value={itemState.quantity}
-								onChange={(e) =>
-									onQuantityChange(orderItem.id, parseInt(e.target.value) || 0)
-								}
-								className="w-16 h-8 text-sm"
-								disabled={isPending}
-							/>
-						</div>
-						<div className="flex items-center gap-2">
-							<Checkbox
-								id={`restock-${orderItem.id}`}
-								checked={itemState.restock}
-								onCheckedChange={(checked) =>
-									onRestockToggle(orderItem.id, checked === true)
-								}
-								disabled={isPending}
-								aria-label={`Restocker ${orderItem.productTitle}`}
-							/>
-							<Label
-								htmlFor={`restock-${orderItem.id}`}
-								className="text-xs cursor-pointer"
-							>
-								Restocker
-							</Label>
-						</div>
-					</div>
-				)}
-			</div>
-
-			{/* Price */}
-			{itemState?.selected && itemState.quantity > 0 && (
-				<div className="text-right shrink-0">
-					<p className="font-medium text-sm">
-						{formatCurrency(orderItem.price * itemState.quantity)}
-					</p>
-				</div>
-			)}
-		</div>
-	);
-});
-
-RefundItemRow.displayName = "RefundItemRow";

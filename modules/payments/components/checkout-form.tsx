@@ -8,7 +8,7 @@ import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { CreditCard, Info, Mail, Shield } from "lucide-react";
+import { Info, Loader2, Mail } from "lucide-react";
 import {
 	SORTED_SHIPPING_COUNTRIES,
 	COUNTRY_NAMES,
@@ -16,6 +16,8 @@ import {
 } from "@/shared/constants/countries";
 import Link from "next/link";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
+import { ActionStatus } from "@/shared/types/server-action";
+import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 
 // Options pour le select des pays
 const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
@@ -50,7 +52,7 @@ export function CheckoutForm({
 	const isGuest = !session;
 
 	// Form hook
-	const { form, action, isPending } = useCheckoutForm({ session, addresses, onSuccess });
+	const { form, action, isPending, state } = useCheckoutForm({ session, addresses, onSuccess });
 
 	// Progressive disclosure states
 	const initialCountry = form.state.values.shipping?.country;
@@ -145,9 +147,14 @@ export function CheckoutForm({
 				}}
 			</form.Subscribe>
 
-			<form.AppForm>
-				<form.FormErrorDisplay />
-			</form.AppForm>
+			{/* Message d'erreur */}
+			{state?.status !== ActionStatus.SUCCESS &&
+				state?.message &&
+				state.message !== "Données invalides" && (
+					<Alert variant="destructive" role="alert" aria-live="assertive">
+						<AlertDescription>{state.message}</AlertDescription>
+					</Alert>
+				)}
 
 			{/* Email (guests uniquement) */}
 			{isGuest && (
@@ -188,7 +195,7 @@ export function CheckoutForm({
 												if (typeof window !== "undefined") {
 													const shipping = form.state.values.shipping as Record<string, string> | undefined;
 													localStorage.setItem(
-														"checkout-form-draft",
+														STORAGE_KEYS.CHECKOUT_FORM_DRAFT,
 														JSON.stringify({
 															email: form.state.values.email || "",
 															shipping: {
@@ -427,25 +434,25 @@ export function CheckoutForm({
 				)}
 			</form.AppField>
 
-			{/* Bouton de paiement - sticky sur mobile avec safe-area-inset pour iOS */}
-			<div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border/50 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:py-0 sm:pb-0 sm:mx-0 space-y-3">
-				<Button
-					type="submit"
-					size="lg"
-					className="w-full text-base h-14 relative overflow-hidden group"
-					disabled={isPending}
-				>
-					<CreditCard className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
-					{isPending ? "Validation..." : `Continuer vers le paiement · ${formatEuro(total)}`}
-					<span className="absolute inset-0 bg-linear-to-r from-accent/0 via-accent/20 to-accent/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-				</Button>
-
-				{/* Message sécurité condensé */}
-				<p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
-					<Shield className="w-3.5 h-3.5" />
-					Paiement sécurisé par Stripe
-				</p>
-			</div>
+			<form.Subscribe selector={(s) => [s.canSubmit]}>
+				{([canSubmit]) => (
+					<Button
+						type="submit"
+						className="w-full"
+						disabled={!canSubmit || isPending}
+						aria-busy={isPending}
+					>
+						{isPending ? (
+							<>
+								<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+								<span>Validation...</span>
+							</>
+						) : (
+							`Continuer vers le paiement · ${formatEuro(total)}`
+						)}
+					</Button>
+				)}
+			</form.Subscribe>
 		</form>
 	);
 }

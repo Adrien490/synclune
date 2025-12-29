@@ -1,31 +1,12 @@
-import { createStore } from "zustand/vanilla";
+import { createStore } from "zustand/vanilla"
 
-/**
- * Type pour les données contextuelles d'un AlertDialog
- * Peut être étendu selon les besoins (ex: itemId, itemName, etc.)
- */
-export type AlertDialogData = {
-	itemId?: string;
-	itemName?: string;
-	action?: () => void | Promise<void>;
-	[key: string]: unknown;
-};
+import type {
+	AlertDialogData,
+	AlertDialogState,
+	AlertDialogStore,
+} from "@/shared/types/store.types"
 
-export type AlertDialogState = {
-	alertDialogs: Record<string, { isOpen: boolean; data?: AlertDialogData }>;
-};
-
-export type AlertDialogActions = {
-	openAlertDialog: (dialogId: string, data?: AlertDialogData) => void;
-	closeAlertDialog: (dialogId: string) => void;
-	isAlertDialogOpen: (dialogId: string) => boolean;
-	getAlertDialogData: <T extends AlertDialogData = AlertDialogData>(
-		dialogId: string,
-	) => T | undefined;
-	clearAlertDialogData: (dialogId: string) => void;
-};
-
-export type AlertDialogStore = AlertDialogState & AlertDialogActions;
+export type { AlertDialogData, AlertDialogState, AlertDialogActions, AlertDialogStore } from "@/shared/types/store.types"
 
 export const defaultInitState: AlertDialogState = {
 	alertDialogs: {},

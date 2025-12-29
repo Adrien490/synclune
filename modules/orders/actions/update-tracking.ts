@@ -4,12 +4,12 @@ import {
 	OrderStatus,
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { sendTrackingUpdateEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCarrierLabel, getTrackingUrl, toShippingCarrierEnum, type Carrier } from "@/modules/orders/services/carrier.service";
+import { getCarrierLabel, getTrackingUrl, toShippingCarrierEnum, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { revalidatePath, updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -30,13 +30,8 @@ export async function updateTracking(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		const id = formData.get("id") as string;
 		const trackingNumber = formData.get("trackingNumber") as string;

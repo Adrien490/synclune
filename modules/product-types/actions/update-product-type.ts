@@ -1,11 +1,12 @@
 "use server";
 
-import { getCurrentUser } from "@/modules/users/data/get-current-user";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
+import { handleActionError } from "@/shared/lib/actions";
 
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { updateProductTypeSchema } from "../schemas/product-type.schemas";
@@ -16,22 +17,8 @@ export async function updateProductType(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification de l'authentification et des droits admin
-		const user = await getCurrentUser();
-
-		if (!user) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Vous devez etre connecte pour effectuer cette action",
-			};
-		}
-
-		if (user.role !== "ADMIN") {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					"Seuls les administrateurs peuvent modifier des types de produits",
-			};
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		// 2. Extraire les donnees du FormData
 		const rawData = {
@@ -111,20 +98,7 @@ export async function updateProductType(
 			status: ActionStatus.SUCCESS,
 			message: "Type de produit modifié avec succès",
 		};
-	} catch (error) {
-// console.error("Erreur lors de la modification du type de produit:", error);
-
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				"Une erreur est survenue lors de la modification du type de produit",
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la modification du type de produit");
 	}
 }

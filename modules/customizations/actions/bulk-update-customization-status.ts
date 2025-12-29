@@ -6,8 +6,8 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
-	requireAdmin,
 	validateInput,
 	handleActionError,
 } from "@/shared/lib/actions";

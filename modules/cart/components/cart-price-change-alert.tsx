@@ -5,6 +5,10 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { Button } from "@/shared/components/ui/button";
 import { useUpdateCartPrices } from "@/modules/cart/hooks/use-update-cart-prices";
 import { RefreshCw } from "lucide-react";
+import {
+	detectPriceChanges,
+	isPriceIncrease,
+} from "@/modules/cart/services/cart-pricing-calculator.service";
 
 interface CartPriceChangeAlertProps {
 	items: NonNullable<GetCartReturn>["items"];
@@ -20,20 +24,9 @@ interface CartPriceChangeAlertProps {
 export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 	const { action, isPending } = useUpdateCartPrices();
 
-	// Calcul direct des changements de prix
-	const { itemsWithPriceChange, itemsWithPriceDecrease, totalSavings } = (() => {
-		const changed = items.filter(
-			(item) => item.priceAtAdd !== item.sku.priceInclTax
-		);
-		const decreased = changed.filter(
-			(item) => item.sku.priceInclTax < item.priceAtAdd
-		);
-		const savings = decreased.reduce(
-			(sum, item) => sum + (item.priceAtAdd - item.sku.priceInclTax) * item.quantity,
-			0
-		);
-		return { itemsWithPriceChange: changed, itemsWithPriceDecrease: decreased, totalSavings: savings };
-	})();
+	// Calcul des changements de prix via le service
+	const { itemsWithPriceChange, itemsWithPriceDecrease, totalSavings } =
+		detectPriceChanges(items);
 
 	if (itemsWithPriceChange.length === 0) {
 		return null;
@@ -55,17 +48,17 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 			</p>
 			<ul className="list-disc list-inside space-y-0.5 text-blue-600/90 dark:text-blue-400/90">
 				{itemsWithPriceChange.map((item) => {
-					const priceIncrease = item.sku.priceInclTax > item.priceAtAdd;
+					const priceIncreased = isPriceIncrease(item);
 					return (
 						<li key={item.id} className="line-clamp-1">
 							{item.sku.product.title}:{" "}
 							<span className="line-through">{formatEuro(item.priceAtAdd)}</span> →{" "}
 							<span
-								className={priceIncrease ? "font-semibold text-orange-600" : "font-semibold text-green-600"}
+								className={priceIncreased ? "font-semibold text-orange-600" : "font-semibold text-green-600"}
 							>
 								{formatEuro(item.sku.priceInclTax)}
 							</span>
-							{priceIncrease ? (
+							{priceIncreased ? (
 								<span role="img" aria-label="prix en hausse"> 📈</span>
 							) : (
 								<span role="img" aria-label="prix en baisse"> 📉</span>

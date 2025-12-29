@@ -3,15 +3,10 @@
 import { PageHeader } from "@/shared/components/page-header"
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert"
 import { Button } from "@/shared/components/ui/button"
+import type { ErrorPageProps } from "@/shared/types/error.types"
 import { AlertTriangle, RefreshCw } from "lucide-react"
 
-export default function CheckoutError({
-	error,
-	reset,
-}: {
-	error: Error & { digest?: string }
-	reset: () => void
-}) {
+export default function CheckoutError({ error, reset }: ErrorPageProps) {
 	return (
 		<div className="min-h-screen">
 			<PageHeader title="Erreur" />

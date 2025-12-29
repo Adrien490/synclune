@@ -1,26 +1,15 @@
 import { DiscountType } from "@/app/generated/prisma/client";
+import type {
+	CalculateDiscountParams,
+	CalculateDiscountWithExclusionParams,
+	CartItemForDiscount,
+} from "../types/discount.types";
 
-export type CalculateDiscountParams = {
-	type: DiscountType;
-	value: number;
-	subtotal: number; // En centimes (hors frais de port)
-};
-
-/**
- * Item du panier pour le calcul de réduction avec exclusion articles soldés
- */
-export type CartItemForDiscount = {
-	priceInclTax: number; // Prix unitaire en centimes
-	quantity: number;
-	compareAtPrice: number | null; // Si non-null, l'article est soldé
-};
-
-export type CalculateDiscountWithExclusionParams = {
-	type: DiscountType;
-	value: number;
-	cartItems: CartItemForDiscount[];
-	excludeSaleItems: boolean;
-};
+export type {
+	CalculateDiscountParams,
+	CartItemForDiscount,
+	CalculateDiscountWithExclusionParams,
+} from "../types/discount.types";
 
 /**
  * Calcule le montant de la réduction en centimes
@@ -61,31 +50,6 @@ export function calculateDiscountAmount({
 	// FIXED_AMOUNT: La valeur est déjà en centimes
 	// Ne peut pas être supérieur au subtotal du panier
 	return Math.min(value, subtotal);
-}
-
-/**
- * Formate la valeur du discount pour affichage
- *
- * @example
- * formatDiscountValue("PERCENTAGE", 20) // => "20%"
- * formatDiscountValue("FIXED_AMOUNT", 1000) // => "10,00 €"
- */
-export function formatDiscountValue(type: DiscountType, value: number): string {
-	if (type === DiscountType.PERCENTAGE) {
-		return `${value}%`;
-	}
-	return `${(value / 100).toFixed(2).replace(".", ",")} €`;
-}
-
-/**
- * Génère le libellé descriptif du discount
- *
- * @example
- * getDiscountLabel("PERCENTAGE", 20) // => "-20%"
- * getDiscountLabel("FIXED_AMOUNT", 1000) // => "-10,00 €"
- */
-export function getDiscountLabel(type: DiscountType, value: number): string {
-	return `-${formatDiscountValue(type, value)}`;
 }
 
 /**

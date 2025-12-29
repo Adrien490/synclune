@@ -15,7 +15,7 @@ import { Palette } from "lucide-react";
 import { use } from "react";
 import { ColorsRowActions } from "@/modules/colors/components/colors-row-actions";
 import { ColorsSelectionToolbar } from "@/modules/colors/components/colors-selection-toolbar";
-import { ColorsTableSelectionCell } from "@/modules/colors/components/colors-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface ColorsDataTableProps {
 	colorsPromise: Promise<GetColorsReturn>;
@@ -45,7 +45,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 						<TableHeader>
 							<TableRow>
 								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
-									<ColorsTableSelectionCell type="header" colorIds={colorIds} />
+									<TableSelectionCell type="header" itemIds={colorIds} />
 								</TableHead>
 								<TableHead
 									key="preview"
@@ -89,7 +89,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 								return (
 									<TableRow key={color.id}>
 										<TableCell role="gridcell">
-											<ColorsTableSelectionCell type="row" colorId={color.id} />
+											<TableSelectionCell type="row" itemId={color.id} />
 										</TableCell>
 										<TableCell role="gridcell" className="hidden md:table-cell">
 										<div

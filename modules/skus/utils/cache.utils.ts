@@ -7,20 +7,9 @@
 import { cacheLife, cacheTag, updateTag } from "next/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import type { SkuDataForInvalidation } from "../types/sku.types";
 
-// ============================================
-// TYPES
-// ============================================
-
-/**
- * Type pour les données SKU nécessaires à l'invalidation bulk
- */
-export interface SkuDataForInvalidation {
-	id: string;
-	sku: string;
-	productId: string;
-	product: { slug: string };
-}
+export type { SkuDataForInvalidation } from "../types/sku.types";
 
 // ============================================
 // CACHE CONFIGURATION HELPERS

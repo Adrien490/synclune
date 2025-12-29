@@ -2,7 +2,8 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
-import type { StockAlertItem, GetStockAlertsReturn } from "../types/dashboard.types";
+import { transformSkusToStockAlerts } from "../services/stock-alert-classifier.service";
+import type { GetStockAlertsReturn } from "../types/dashboard.types";
 
 // Re-export pour compatibilité
 export type { StockAlertItem, GetStockAlertsReturn } from "../types/dashboard.types";
@@ -73,15 +74,7 @@ export async function fetchDashboardStockAlerts(
 		prisma.productSku.count({ where: whereClause }),
 	]);
 
-	const alerts = skus.map((sku) => ({
-		skuId: sku.id,
-		sku: sku.sku,
-		productTitle: sku.product.title,
-		inventory: sku.inventory,
-		alertType: (sku.inventory === 0 ? "out_of_stock" : "low_stock") as
-			| "out_of_stock"
-			| "low_stock",
-	}));
+	const alerts = transformSkusToStockAlerts(skus);
 
 	return { alerts, totalCount };
 }

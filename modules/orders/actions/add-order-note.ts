@@ -1,17 +1,11 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAuth } from "@/shared/lib/actions";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { z } from "zod";
-
-const addOrderNoteSchema = z.object({
-	orderId: z.cuid(),
-	content: z.string().min(1, "La note ne peut pas être vide").max(5000, "Note trop longue (max 5000 caractères)"),
-});
+import { addOrderNoteSchema } from "../schemas/order.schemas";
 
 /**
  * Server Action ADMIN pour ajouter une note interne à une commande
@@ -21,22 +15,11 @@ export async function addOrderNote(
 	content: string
 ): Promise<ActionState> {
 	try {
-		// 1. Vérification authentification
-		const auth = await requireAuth();
-		if ("error" in auth) {
-			return auth.error;
-		}
+		// 1. Vérification authentification et admin
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
 
-		// 2. Vérification admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.FORBIDDEN,
-				message: "Accès réservé aux administrateurs",
-			};
-		}
-
-		// 3. Validation des entrées
+		// 2. Validation des entrées
 		const validation = addOrderNoteSchema.safeParse({ orderId, content });
 		if (!validation.success) {
 			return {

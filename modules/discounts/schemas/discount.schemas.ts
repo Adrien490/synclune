@@ -153,3 +153,15 @@ export const bulkDeleteDiscountsSchema = z.object({
 export const toggleDiscountStatusSchema = z.object({
 	id: z.cuid("ID invalide"),
 });
+
+// ============================================================================
+// BULK TOGGLE STATUS SCHEMA
+// ============================================================================
+
+/**
+ * Schema pour activer/désactiver plusieurs codes promo en masse
+ */
+export const bulkToggleDiscountStatusSchema = z.object({
+	ids: z.array(z.cuid2()).min(1, "Au moins un code doit être sélectionné"),
+	isActive: z.boolean(),
+});

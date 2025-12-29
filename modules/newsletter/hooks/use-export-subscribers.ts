@@ -1,6 +1,11 @@
-import { ActionStatus } from "@/shared/types/server-action";
-import { useActionState } from "react";
+"use client";
+
+import { useActionState, useTransition } from "react";
 import { exportSubscribers } from "@/modules/newsletter/actions/export-subscribers";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import type { ActionState } from "@/shared/types/server-action";
+import { useFileDownload } from "@/shared/hooks";
 
 /**
  * Hook personnalisé pour exporter les abonnés newsletter
@@ -8,48 +13,48 @@ import { exportSubscribers } from "@/modules/newsletter/actions/export-subscribe
  * Gère l'état de l'action et le téléchargement automatique du CSV
  */
 export function useExportSubscribers() {
-	const [state, action, isPending] = useActionState(exportSubscribers, {
-		status: ActionStatus.INITIAL,
-		message: "",
-	});
+	const [isPending, startTransition] = useTransition();
+	const { downloadCSV } = useFileDownload();
+
+	const [state, formAction, isActionPending] = useActionState(
+		withCallbacks(
+			exportSubscribers,
+			createToastCallbacks({
+				loadingMessage: "Export en cours...",
+				onSuccess: (result) => {
+					if (
+						result.data &&
+						typeof result.data === "object" &&
+						"csv" in result.data &&
+						"filename" in result.data
+					) {
+						const { csv, filename } = result.data as {
+							csv: string;
+							filename: string;
+						};
+						downloadCSV(csv, filename);
+					}
+				},
+			})
+		),
+		undefined
+	);
 
 	/**
-	 * Fonction helper pour déclencher le téléchargement du CSV
-	 * à partir des données base64 retournées par l'action
+	 * Exporte les abonnés et déclenche le téléchargement automatique au succès
 	 */
-	const downloadCSV = (csvBase64: string, filename: string) => {
-		try {
-			// Décoder base64
-			const csvContent = atob(csvBase64);
-
-			// Créer un Blob
-			const blob = new Blob([csvContent], {
-				type: "text/csv;charset=utf-8;",
-			});
-
-			// Créer un lien de téléchargement
-			const link = document.createElement("a");
-			const url = URL.createObjectURL(blob);
-
-			link.setAttribute("href", url);
-			link.setAttribute("download", filename);
-			link.style.visibility = "hidden";
-
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-
-			// Libérer la mémoire
-			URL.revokeObjectURL(url);
-		} catch (error) {
-			// console.error("Erreur lors du téléchargement du CSV:", error);
-		}
+	const handleExport = (status: "all" | "active" | "inactive") => {
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("status", status);
+			formData.append("format", "csv");
+			formAction(formData);
+		});
 	};
 
 	return {
-		action,
-		isPending,
-		state,
-		downloadCSV,
+		handleExport,
+		isPending: isPending || isActionPending,
+		state: state as ActionState | undefined,
 	};
 }

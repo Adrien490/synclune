@@ -1,6 +1,7 @@
 import { CollectionStatus, ProductStatus } from "@/app/generated/prisma/client";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import type { Metadata } from "next";
+import { PRODUCTION_URL } from "@/shared/constants/urls";
 
 /**
  * Extrait l'image du produit vedette (ou le premier produit PUBLIC) pour OpenGraph
@@ -62,7 +63,7 @@ export async function generateCollectionMetadata({
 		collection.description ||
 		`Découvrez la collection ${collection.name} de Synclune - Des bijoux colorés et originaux faits main avec amour.`;
 	const canonicalUrl = `/collections/${slug}`;
-	const fullUrl = `https://synclune.fr/collections/${slug}`;
+	const fullUrl = `${PRODUCTION_URL}/collections/${slug}`;
 
 	// Extraire l'image du produit vedette pour OpenGraph
 	const featuredImage = getFeaturedProductImage(collection.products);

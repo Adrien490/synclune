@@ -3,9 +3,8 @@
 import { Button } from "@/shared/components/ui/button";
 import { Loader2, Mail } from "lucide-react";
 import { useResendVerificationEmail } from "@/modules/auth/hooks/use-resend-verification-email";
-import { useState, useEffect, useRef } from "react";
-import { toast } from "sonner";
-import { ActionStatus } from "@/shared/types/server-action";
+import { useState, useEffect } from "react";
+import { getResendVerificationCooldownKey } from "@/shared/constants/storage-keys";
 
 interface ResendVerificationButtonProps {
 	email: string;
@@ -21,7 +20,7 @@ const COOLDOWN_DURATION = 60;
 export function ResendVerificationButton({
 	email,
 }: ResendVerificationButtonProps) {
-	const COOLDOWN_KEY = `resend-cooldown-${email}`;
+	const COOLDOWN_KEY = getResendVerificationCooldownKey(email);
 
 	// Initialize cooldown from localStorage (survives page refresh)
 	const [cooldown, setCooldown] = useState(() => {
@@ -37,49 +36,32 @@ export function ResendVerificationButton({
 		return 0;
 	});
 
-	const { action, isPending, state } = useResendVerificationEmail();
+	// Démarrer le cooldown au succès via callback du hook
+	const startCooldown = () => {
+		localStorage.setItem(COOLDOWN_KEY, Date.now().toString());
+		setCooldown(COOLDOWN_DURATION);
+	};
 
-	// Ref pour tracker si on a déjà traité ce state (évite double toast)
-	const lastProcessedStateRef = useRef<typeof state>(null);
+	const { action, isPending } = useResendVerificationEmail({
+		onSuccess: startCooldown,
+	});
 
-	// UN SEUL useEffect qui gère:
-	// 1. Les toasts success/error
-	// 2. Le démarrage du cooldown (après success OU au mount si cooldown > 0)
+	// Timer du cooldown (séparé, une seule responsabilité)
 	useEffect(() => {
-		// Gérer les toasts (seulement si le state a changé)
-		if (state && state !== lastProcessedStateRef.current) {
-			lastProcessedStateRef.current = state;
+		if (cooldown <= 0) return;
 
-			if (state.status === ActionStatus.SUCCESS) {
-				toast.success(state.message || "Email de vérification envoyé");
-				// Store start time in localStorage
-				localStorage.setItem(COOLDOWN_KEY, Date.now().toString());
-				// Start cooldown
-				setCooldown(COOLDOWN_DURATION);
-			} else if (
-				state.status === ActionStatus.ERROR ||
-				state.status === ActionStatus.VALIDATION_ERROR
-			) {
-				toast.error(state.message || "Erreur lors de l'envoi");
-			}
-		}
+		const interval = setInterval(() => {
+			setCooldown((prev) => {
+				if (prev <= 1) {
+					localStorage.removeItem(COOLDOWN_KEY);
+					return 0;
+				}
+				return prev - 1;
+			});
+		}, 1000);
 
-		// Gérer l'interval du cooldown (si cooldown > 0)
-		if (cooldown > 0) {
-			const interval = setInterval(() => {
-				setCooldown((prev) => {
-					if (prev <= 1) {
-						clearInterval(interval);
-						localStorage.removeItem(COOLDOWN_KEY);
-						return 0;
-					}
-					return prev - 1;
-				});
-			}, 1000);
-
-			return () => clearInterval(interval);
-		}
-	}, [cooldown, state, COOLDOWN_KEY]);
+		return () => clearInterval(interval);
+	}, [cooldown > 0, COOLDOWN_KEY]);
 
 	const handleResend = () => {
 		const formData = new FormData();

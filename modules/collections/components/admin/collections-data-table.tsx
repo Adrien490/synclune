@@ -22,7 +22,7 @@ import { AlertTriangle, FolderOpen, Star } from "lucide-react";
 import Link from "next/link";
 import { CollectionRowActions } from "./collection-row-actions";
 import { CollectionsSelectionToolbar } from "./collections-selection-toolbar";
-import { CollectionsTableSelectionCell } from "./collections-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 import { CreateCollectionButton } from "./create-collection-button";
 
 // Labels et styles pour les badges de statut
@@ -80,9 +80,9 @@ export async function CollectionsDataTable({
 						<TableHeader>
 							<TableRow>
 								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
-									<CollectionsTableSelectionCell
+									<TableSelectionCell
 										type="header"
-										collectionIds={collectionIds}
+										itemIds={collectionIds}
 									/>
 								</TableHead>
 								<TableHead
@@ -140,9 +140,9 @@ export async function CollectionsDataTable({
 								return (
 									<TableRow key={collection.id}>
 										<TableCell role="gridcell">
-											<CollectionsTableSelectionCell
+											<TableSelectionCell
 												type="row"
-												collectionId={collection.id}
+												itemId={collection.id}
 											/>
 										</TableCell>
 										<TableCell role="gridcell">

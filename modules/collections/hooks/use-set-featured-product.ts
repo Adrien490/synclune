@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { toast } from "sonner";
-import { ActionStatus } from "@/shared/types/server-action";
+import { useActionState, useTransition } from "react";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import type { ActionState } from "@/shared/types/server-action";
 import {
 	removeFeaturedProduct,
 	setFeaturedProduct,
@@ -17,31 +18,61 @@ export function useSetFeaturedProduct(options?: UseSetFeaturedProductOptions) {
 	const [isPending, startTransition] = useTransition();
 	const router = useRouter();
 
+	const [, setFeaturedAction, isSetPending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) =>
+				setFeaturedProduct(
+					formData.get("collectionId") as string,
+					formData.get("productId") as string
+				),
+			createToastCallbacks({
+				onSuccess: () => {
+					router.refresh();
+					options?.onSuccess?.();
+				},
+			})
+		),
+		undefined
+	);
+
+	const [, removeFeaturedAction, isRemovePending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) =>
+				removeFeaturedProduct(
+					formData.get("collectionId") as string,
+					formData.get("productId") as string
+				),
+			createToastCallbacks({
+				onSuccess: () => {
+					router.refresh();
+					options?.onSuccess?.();
+				},
+			})
+		),
+		undefined
+	);
+
 	const setFeatured = (collectionId: string, productId: string) => {
-		startTransition(async () => {
-			const result = await setFeaturedProduct(collectionId, productId);
-			if (result.status === ActionStatus.SUCCESS) {
-				toast.success(result.message);
-				router.refresh();
-				options?.onSuccess?.();
-			} else {
-				toast.error(result.message);
-			}
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("collectionId", collectionId);
+			formData.append("productId", productId);
+			setFeaturedAction(formData);
 		});
 	};
 
 	const removeFeatured = (collectionId: string, productId: string) => {
-		startTransition(async () => {
-			const result = await removeFeaturedProduct(collectionId, productId);
-			if (result.status === ActionStatus.SUCCESS) {
-				toast.success(result.message);
-				router.refresh();
-				options?.onSuccess?.();
-			} else {
-				toast.error(result.message);
-			}
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("collectionId", collectionId);
+			formData.append("productId", productId);
+			removeFeaturedAction(formData);
 		});
 	};
 
-	return { setFeatured, removeFeatured, isPending };
+	return {
+		setFeatured,
+		removeFeatured,
+		isPending: isPending || isSetPending || isRemovePending,
+	};
 }

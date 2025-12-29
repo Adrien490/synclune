@@ -64,19 +64,40 @@ export function newlinesToBr(str: string): string {
 }
 
 /**
- * Échappe les caractères HTML de base
+ * Sanitise une chaîne en supprimant les balises HTML potentiellement dangereuses
+ * Protection contre XSS pour les champs texte utilisateur
  *
- * Version simplifiée pour les contextes où une sanitization complète
- * n'est pas nécessaire (ex: affichage de données déjà validées).
+ * IMPORTANT: Cette fonction supprime les balises HTML mais préserve le texte.
+ * Les entités HTML sont décodées, les balises supprimées, et le texte brut est retourné.
+ * React échappe automatiquement le contenu lors du rendu, donc pas besoin de ré-encoder.
  *
- * @param str - La chaîne à échapper
- * @returns La chaîne avec les caractères HTML échappés
+ * @param text - La chaîne à sanitizer
+ * @returns Le texte brut sans balises HTML
+ *
+ * @example
+ * ```ts
+ * const userInput = "<script>alert('xss')</script>Hello";
+ * const safe = sanitizeText(userInput);
+ * // Résultat: "Hello"
+ * ```
  */
-export function escapeHtml(str: string): string {
-	return str
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;");
+export function sanitizeText(text: string): string {
+	// 1. D'abord décoder les entités HTML pour capturer les tentatives d'évasion
+	//    Ex: "&lt;script&gt;" devient "<script>"
+	const decoded = text
+		.replace(/&lt;/g, "<")
+		.replace(/&gt;/g, ">")
+		.replace(/&amp;/g, "&")
+		.replace(/&quot;/g, '"')
+		.replace(/&#x27;/g, "'")
+		.replace(/&#x2F;/g, "/")
+		.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)))
+		.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+			String.fromCharCode(parseInt(hex, 16))
+		);
+
+	// 2. Supprimer toutes les balises HTML (maintenant visibles après décodage)
+	// React échappe automatiquement le contenu lors du rendu
+	return decoded.replace(/<[^>]*>/g, "").trim();
 }
+

@@ -1,17 +1,12 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin, enforceRateLimitForCurrentUser } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
-
-const adjustStockSchema = z.object({
-	skuId: z.string().min(1),
-	adjustment: z.number().int(), // Positif pour ajouter, négatif pour retirer
-	reason: z.string().optional(), // Raison de l'ajustement (pour traçabilité)
-});
+import { adjustSkuStockSchema } from "../schemas/sku.schemas";
 
 /**
  * Server Action ADMIN pour ajuster le stock d'un SKU
@@ -38,7 +33,7 @@ export async function adjustSkuStock(
 		if ("error" in adminCheck) return adminCheck.error;
 
 		// 2. Validation
-		const validation = adjustStockSchema.safeParse({
+		const validation = adjustSkuStockSchema.safeParse({
 			skuId,
 			adjustment,
 			reason: reason || undefined,
@@ -102,7 +97,7 @@ export async function adjustSkuStock(
 		console.error("[ADJUST_SKU_STOCK] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: error instanceof Error ? error.message : "Une erreur est survenue",
+			message: "Impossible d'ajuster le stock",
 		};
 	}
 }

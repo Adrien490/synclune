@@ -63,3 +63,16 @@ export type UpdateMaterialInput = z.infer<typeof updateMaterialSchema>;
 export type DeleteMaterialInput = z.infer<typeof deleteMaterialSchema>;
 export type BulkDeleteMaterialsInput = z.infer<typeof bulkDeleteMaterialsSchema>;
 export type ToggleMaterialStatusInput = z.infer<typeof toggleMaterialStatusSchema>;
+
+// ============================================================================
+// OPTIONS TYPES (for selects/filters)
+// ============================================================================
+
+/**
+ * Matériau simplifié pour les selects/filtres
+ */
+export type MaterialOption = {
+	id: string;
+	name: string;
+	slug: string;
+};

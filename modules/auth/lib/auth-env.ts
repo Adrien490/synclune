@@ -1,86 +1,87 @@
 /**
- * Validation des variables d'environnement pour le module Auth
+ * Configuration d'authentification
  *
- * Ce fichier valide les variables d'environnement critiques au démarrage
- * pour éviter les erreurs silencieuses en production.
+ * Ce fichier centralise les configurations liees a l'authentification
+ * pour permettre une maintenance plus facile.
  */
 
-export function validateAuthEnvironment(): void {
-	if (process.env.NODE_ENV !== "production") {
-		return;
-	}
+// ============================================
+// CONFIGURATION MOT DE PASSE
+// ============================================
 
-	if (!process.env.STRIPE_SECRET_KEY) {
-		throw new Error("STRIPE_SECRET_KEY est requis en production");
-	}
-
-	if (!process.env.BETTER_AUTH_SECRET) {
-		throw new Error("BETTER_AUTH_SECRET est requis en production");
-	}
-
-	// Valider la longueur minimale du secret (32 caractères pour une entropie suffisante)
-	if (process.env.BETTER_AUTH_SECRET.length < 32) {
-		throw new Error("BETTER_AUTH_SECRET doit avoir au moins 32 caractères");
-	}
-
-	if (!process.env.BETTER_AUTH_URL) {
-		throw new Error("BETTER_AUTH_URL est requis en production");
-	}
-}
-
-/**
- * Configuration des règles de rate limiting par endpoint
- */
-export const AUTH_RATE_LIMIT_RULES = {
-	// Login: 5 tentatives par 15 minutes
-	"/sign-in/email": {
-		window: 15 * 60,
-		max: 5,
-	},
-	// Signup: 3 inscriptions par heure
-	"/sign-up/email": {
-		window: 60 * 60,
-		max: 3,
-	},
-	// Password reset request: 3 demandes par heure
-	"/forget-password": {
-		window: 60 * 60,
-		max: 3,
-	},
-	// Password reset: 3 tentatives par heure
-	"/reset-password": {
-		window: 60 * 60,
-		max: 3,
-	},
-	// Email verification: 5 envois par heure
-	"/send-verification-email": {
-		window: 60 * 60,
-		max: 5,
-	},
-	// Change password: 3 changements par heure
-	"/change-password": {
-		window: 60 * 60,
-		max: 3,
-	},
-} as const;
-
-/**
- * Configuration des sessions
- */
-export const AUTH_SESSION_CONFIG = {
-	expiresIn: 60 * 60 * 24 * 7, // 7 jours
-	updateAge: 60 * 60 * 24, // 24 heures
-	cookieCache: {
-		enabled: true,
-		maxAge: 5 * 60, // 5 minutes
-	},
-} as const;
-
-/**
- * Configuration des tokens de réinitialisation de mot de passe
- */
 export const AUTH_PASSWORD_CONFIG = {
-	resetTokenExpiresIn: 15 * 60, // 15 minutes (OWASP best practice)
+	/** Duree de validite du token de reinitialisation (en secondes) - 1 heure */
+	resetTokenExpiresIn: 3600,
+	/** Longueur minimale du mot de passe */
 	minLength: 8,
+	/** Longueur maximale du mot de passe */
 	maxLength: 128,
 } as const;
+
+// ============================================
+// CONFIGURATION SESSION
+// ============================================
+
+export const AUTH_SESSION_CONFIG = {
+	/** Duree de la session (en secondes) - 7 jours */
+	expiresIn: 60 * 60 * 24 * 7,
+	/** Duree avant rafraichissement automatique (en secondes) - 1 jour */
+	updateAge: 60 * 60 * 24,
+	/** Configuration du cache cookie pour optimiser les performances */
+	cookieCache: {
+		enabled: true,
+		maxAge: 60 * 5, // 5 minutes
+	},
+} as const;
+
+// ============================================
+// REGLES DE RATE LIMITING
+// ============================================
+
+export const AUTH_RATE_LIMIT_RULES = {
+	"/sign-in/email": {
+		window: 60,
+		max: 5,
+	},
+	"/sign-up/email": {
+		window: 60,
+		max: 3,
+	},
+	"/forget-password": {
+		window: 60,
+		max: 3,
+	},
+	"/reset-password": {
+		window: 60,
+		max: 5,
+	},
+	"/verify-email": {
+		window: 60,
+		max: 5,
+	},
+} as const;
+
+// ============================================
+// VALIDATION ENVIRONNEMENT
+// ============================================
+
+/**
+ * Valide que les variables d'environnement requises sont presentes
+ * @throws Error si une variable critique est manquante
+ */
+export function validateAuthEnvironment(): void {
+	const requiredEnvVars = [
+		"BETTER_AUTH_SECRET",
+		"BETTER_AUTH_URL",
+	];
+
+	const missing = requiredEnvVars.filter(
+		(envVar) => !process.env[envVar]
+	);
+
+	if (missing.length > 0 && process.env.NODE_ENV === "production") {
+		throw new Error(
+			`Variables d'environnement manquantes pour l'authentification: ${missing.join(", ")}`
+		);
+	}
+}

@@ -1,16 +1,11 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
+import type { ErrorPageProps } from "@/shared/types/error.types";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
-export default function AuthError({
-	error,
-	reset,
-}: {
-	error: Error & { digest?: string };
-	reset: () => void;
-}) {
+export default function AuthError({ error, reset }: ErrorPageProps) {
 	return (
 		<div className="min-h-screen flex items-center justify-center px-4">
 			<div className="w-full max-w-md text-center space-y-6">

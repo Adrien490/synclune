@@ -456,3 +456,126 @@ export const ADMIN_LIMITS = {
 	TESTIMONIAL_DELETE: ADMIN_TESTIMONIAL_DELETE_LIMIT,
 	TESTIMONIAL_BULK_DELETE: ADMIN_TESTIMONIAL_BULK_DELETE_LIMIT,
 } as const;
+
+// ========================================
+// 👤 UTILISATEURS (USER ACCOUNT)
+// ========================================
+
+/**
+ * Limite pour la suppression de compte (droit à l'oubli RGPD)
+ *
+ * TRÈS STRICT : Action irréversible et sensible
+ * Protège contre les suppressions accidentelles multiples
+ */
+export const USER_DELETE_ACCOUNT_LIMIT: RateLimitConfig = {
+	limit: 3, // 3 suppressions maximum
+	windowMs: hours(1), // par heure
+};
+
+/**
+ * Limite pour l'export de données personnelles (portabilité RGPD)
+ *
+ * STRICT : Action intensive en ressources
+ * Protège contre le spam d'export
+ */
+export const USER_EXPORT_DATA_LIMIT: RateLimitConfig = {
+	limit: 5, // 5 exports maximum
+	windowMs: hours(1), // par heure
+};
+
+/**
+ * Limite pour la mise à jour du profil
+ *
+ * Modérée car action fréquente et légitime
+ */
+export const USER_UPDATE_PROFILE_LIMIT: RateLimitConfig = {
+	limit: 10, // 10 modifications maximum
+	windowMs: minutes(1), // par minute
+};
+
+/**
+ * Toutes les limites du compte utilisateur
+ */
+export const USER_LIMITS = {
+	DELETE_ACCOUNT: USER_DELETE_ACCOUNT_LIMIT,
+	EXPORT_DATA: USER_EXPORT_DATA_LIMIT,
+	UPDATE_PROFILE: USER_UPDATE_PROFILE_LIMIT,
+} as const;
+
+// ========================================
+// 👤 ADMINISTRATION UTILISATEURS (ADMIN USER)
+// ========================================
+
+/**
+ * Limite pour les opérations bulk admin sur utilisateurs
+ *
+ * STRICT : Actions en masse potentiellement dangereuses
+ * (suspend, delete, restore, change role en bulk)
+ */
+export const ADMIN_USER_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
+	limit: 5, // 5 opérations bulk maximum
+	windowMs: minutes(1), // par minute
+};
+
+/**
+ * Limite pour les opérations unitaires admin fréquentes
+ *
+ * Plus permissif car actions unitaires
+ * (change role, suspend, restore)
+ */
+export const ADMIN_USER_SINGLE_OPERATIONS_LIMIT: RateLimitConfig = {
+	limit: 20, // 20 opérations maximum
+	windowMs: minutes(1), // par minute
+};
+
+/**
+ * Limite pour la suppression d'utilisateur (admin)
+ *
+ * Modérée car action importante mais pas irréversible (soft delete)
+ */
+export const ADMIN_USER_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10, // 10 suppressions maximum
+	windowMs: minutes(1), // par minute
+};
+
+/**
+ * Limite pour l'export de données utilisateur (admin)
+ *
+ * Modérée car action intensive mais nécessaire
+ */
+export const ADMIN_USER_EXPORT_DATA_LIMIT: RateLimitConfig = {
+	limit: 10, // 10 exports maximum
+	windowMs: minutes(1), // par minute
+};
+
+/**
+ * Limite pour l'envoi d'email de reset password (admin)
+ *
+ * Modérée pour éviter le spam d'emails
+ */
+export const ADMIN_USER_SEND_RESET_LIMIT: RateLimitConfig = {
+	limit: 10, // 10 envois maximum
+	windowMs: minutes(1), // par minute
+};
+
+/**
+ * Limite pour l'invalidation de sessions (admin)
+ *
+ * Modérée car action de sécurité
+ */
+export const ADMIN_USER_INVALIDATE_SESSIONS_LIMIT: RateLimitConfig = {
+	limit: 10, // 10 invalidations maximum
+	windowMs: minutes(1), // par minute
+};
+
+/**
+ * Toutes les limites admin utilisateurs
+ */
+export const ADMIN_USER_LIMITS = {
+	BULK_OPERATIONS: ADMIN_USER_BULK_OPERATIONS_LIMIT,
+	SINGLE_OPERATIONS: ADMIN_USER_SINGLE_OPERATIONS_LIMIT,
+	DELETE_USER: ADMIN_USER_DELETE_LIMIT,
+	EXPORT_DATA: ADMIN_USER_EXPORT_DATA_LIMIT,
+	SEND_RESET: ADMIN_USER_SEND_RESET_LIMIT,
+	INVALIDATE_SESSIONS: ADMIN_USER_INVALIDATE_SESSIONS_LIMIT,
+} as const;

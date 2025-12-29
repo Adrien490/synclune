@@ -1,14 +1,15 @@
-import { isValidPhoneNumber } from "react-phone-number-input";
 import { z } from "zod";
 import {
 	SHIPPING_COUNTRIES,
 	COUNTRY_ERROR_MESSAGE,
 } from "@/shared/constants/countries";
+import { emailOptionalSchema } from "@/shared/schemas/email.schemas";
+import { phoneSchema } from "@/shared/schemas/phone.schemas";
 
-// Schéma d'adresse avec validation du pays
-// Note: fullName est parsé en firstName/lastName côté serveur via parseFullName utils
+// Schema d'adresse avec validation du pays
+// Note: fullName est parse en firstName/lastName cote serveur via parseFullName utils
 const addressSchema = z.object({
-	fullName: z.string().min(2, "Le nom complet doit contenir au moins 2 caractères"),
+	fullName: z.string().min(2, "Le nom complet doit contenir au moins 2 caracteres"),
 	addressLine1: z.string().min(1),
 	addressLine2: z.string().optional(),
 	city: z.string().min(1),
@@ -16,13 +17,10 @@ const addressSchema = z.object({
 	country: z.enum(SHIPPING_COUNTRIES, {
 		message: COUNTRY_ERROR_MESSAGE,
 	}),
-	phoneNumber: z
-		.string()
-		.min(1, "Le numéro de téléphone est requis")
-		.refine(isValidPhoneNumber, { message: "Numéro de téléphone invalide" }),
+	phoneNumber: phoneSchema,
 });
 
-// Schéma de validation pour la création de session Stripe Checkout
+// Schema de validation pour la creation de session Stripe Checkout
 export const createCheckoutSessionSchema = z.object({
 	cartItems: z
 		.array(
@@ -33,7 +31,7 @@ export const createCheckoutSessionSchema = z.object({
 		)
 		.min(1, "Le panier doit contenir au moins un article"),
 	shippingAddress: addressSchema,
-	email: z.email("Vérifie le format de ton email (ex: nom@domaine.com)").optional(), // Requis si guest
+	email: emailOptionalSchema, // Requis si guest
 	discountCode: z.string().max(30).optional(), // Code promo optionnel
 });
 

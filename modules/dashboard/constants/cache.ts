@@ -5,8 +5,9 @@
  * utiliser SHARED_CACHE_TAGS depuis @/shared/constants/cache-tags
  */
 
-import { cacheLife, cacheTag } from "next/cache"
+import { cacheTag } from "next/cache"
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags"
+import { cacheDefault } from "@/shared/lib/cache"
 import { DASHBOARD_PERIODS } from "../schemas/dashboard.schemas"
 
 // ============================================
@@ -82,12 +83,10 @@ export const DASHBOARD_CACHE_TAGS = {
 /**
  * Configure le cache pour les données du dashboard
  * @param tag - Tag de cache optionnel (utiliser DASHBOARD_CACHE_TAGS ou SHARED_CACHE_TAGS)
+ * @deprecated Utiliser cacheDefault depuis @/shared/lib/cache pour éviter les cycles
  */
 export function cacheDashboard(tag?: string) {
-	cacheLife("dashboard")
-	if (tag) {
-		cacheTag(tag)
-	}
+	cacheDefault(tag)
 }
 
 // ============================================

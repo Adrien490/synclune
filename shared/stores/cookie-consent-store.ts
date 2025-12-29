@@ -1,12 +1,19 @@
-import { createStore } from "zustand/vanilla";
-import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
+import { createStore } from "zustand/vanilla"
+import { persist, createJSONStorage, type StateStorage } from "zustand/middleware"
+
+import type {
+	CookieConsentState,
+	CookieConsentStore,
+} from "@/shared/types/store.types"
+
+export type { CookieConsentState, CookieConsentActions, CookieConsentStore } from "@/shared/types/store.types"
 
 /**
  * Calculate months difference between two dates (replaces date-fns for bundle size)
  */
 function getMonthsDifference(later: Date, earlier: Date): number {
 	return (later.getFullYear() - earlier.getFullYear()) * 12
-		+ (later.getMonth() - earlier.getMonth());
+		+ (later.getMonth() - earlier.getMonth())
 }
 
 // Noop storage pour le SSR (quand localStorage n'est pas disponible)
@@ -14,41 +21,7 @@ const noopStorage: StateStorage = {
 	getItem: () => null,
 	setItem: () => {},
 	removeItem: () => {},
-};
-
-/**
- * État du store - simplifié à accepter/refuser
- */
-export interface CookieConsentState {
-	// true = cookies acceptés, false = refusés, null = pas encore choisi
-	accepted: boolean | null;
-	// Banner affiché ou non
-	bannerVisible: boolean;
-	// Date du consentement
-	consentDate: string | null;
-	// Version de la politique (pour forcer re-consentement si maj)
-	policyVersion: number;
-	// Indique si le store a été hydraté depuis localStorage
-	_hasHydrated: boolean;
 }
-
-/**
- * Actions disponibles
- */
-export interface CookieConsentActions {
-	// Accepter les cookies
-	acceptCookies: () => void;
-	// Refuser les cookies
-	rejectCookies: () => void;
-	// Afficher le banner
-	showBanner: () => void;
-	// Masquer le banner
-	hideBanner: () => void;
-	// Réinitialiser (pour révocation)
-	resetConsent: () => void;
-}
-
-export type CookieConsentStore = CookieConsentState & CookieConsentActions;
 
 /**
  * Version actuelle de la politique de cookies

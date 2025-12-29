@@ -1,22 +1,21 @@
-"use client";
+"use client"
 
-import { Button } from "@/shared/components/ui/button";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import { Button } from "@/shared/components/ui/button"
+import { ScrollArea } from "@/shared/components/ui/scroll-area"
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "@/shared/components/ui/select";
-import { cn } from "@/shared/utils/cn";
-import { ArrowUpDown, X } from "lucide-react";
-import { useSelectFilter } from "@/shared/hooks/use-select-filter";
+} from "@/shared/components/ui/select"
+import { cn } from "@/shared/utils/cn"
+import { ArrowUpDown, X } from "lucide-react"
+import { useSelectFilter } from "@/shared/hooks/use-select-filter"
 
-export type FilterOption = {
-	value: string;
-	label: string;
-};
+import type { FilterOption } from "@/shared/types/pagination.types"
+
+export type { FilterOption } from "@/shared/types/pagination.types"
 
 export interface SelectFilterProps {
 	filterKey: string;

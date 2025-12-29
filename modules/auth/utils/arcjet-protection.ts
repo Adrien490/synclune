@@ -1,8 +1,7 @@
-"use server";
-
 import { ajAuth } from "@/shared/lib/arcjet";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { getBaseUrl } from "@/shared/constants/urls";
 
 /**
  * Vérifie la protection Arcjet (Shield + Bot Detection + Rate Limiting)
@@ -16,7 +15,7 @@ export async function checkArcjetProtection(
 	endpoint: string,
 	headersList: Headers
 ): Promise<ActionState | null> {
-	const request = new Request(`https://synclune.fr${endpoint}`, {
+	const request = new Request(`${getBaseUrl()}${endpoint}`, {
 		method: "POST",
 		headers: headersList,
 	});

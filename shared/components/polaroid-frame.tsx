@@ -1,4 +1,4 @@
-import { pencerio } from "@/shared/styles/fonts";
+import { dancingScript } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import type { ReactNode } from "react";
 
@@ -106,7 +106,7 @@ export function PolaroidFrame({
 				<p
 					className={cn(
 						"absolute bottom-2 sm:bottom-3 left-0 right-0 text-center text-sm sm:text-base text-gray-600 italic",
-						pencerio.className
+						dancingScript.className
 					)}
 				>
 					{caption}

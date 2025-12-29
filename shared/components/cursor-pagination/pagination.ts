@@ -1,35 +1,25 @@
+import type {
+	CursorPaginationParams,
+	CursorPaginationResult,
+	PaginationInfo,
+} from "@/shared/types/pagination.types"
+
+export type { CursorPaginationParams, PaginationInfo, CursorPaginationResult } from "@/shared/types/pagination.types"
+
 /**
  * Default number of items per page
  */
-export const DEFAULT_PER_PAGE = 20;
+export const DEFAULT_PER_PAGE = 20
 
 /**
  * Available options for items per page
  */
-export const PER_PAGE_OPTIONS = [20, 50, 100, 200] as const;
+export const PER_PAGE_OPTIONS = [20, 50, 100, 200] as const
 
 /**
  * Default direction for cursor pagination
  */
-export const DEFAULT_DIRECTION = "forward" as const;
-
-export interface CursorPaginationParams {
-	cursor?: string;
-	direction?: "forward" | "backward";
-	take: number;
-}
-
-export interface PaginationInfo {
-	nextCursor: string | null;
-	prevCursor: string | null;
-	hasNextPage: boolean;
-	hasPreviousPage: boolean;
-}
-
-export interface CursorPaginationResult<T> {
-	items: T[];
-	pagination: PaginationInfo;
-}
+export const DEFAULT_DIRECTION = "forward" as const
 
 /**
  * Helper to build cursor-based pagination for Prisma queries

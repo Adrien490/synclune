@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { EMAIL_FROM, EMAIL_ADMIN } from "@/shared/lib/email-config";
+import { getBaseUrl, EXTERNAL_URLS } from "@/shared/constants/urls";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -23,8 +24,8 @@ export async function sendWebhookFailedAlert({
 	error,
 }: WebhookFailedAlertParams): Promise<{ success: boolean; error?: unknown }> {
 	try {
-		const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "https://synclune.fr";
-		const stripeDashboardUrl = `https://dashboard.stripe.com/webhooks`;
+		const baseUrl = getBaseUrl();
+		const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.WEBHOOKS;
 
 		// Email simple en HTML (pas de template React pour les alertes techniques)
 		const html = `

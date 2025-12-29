@@ -1,24 +1,19 @@
-"use client";
+"use client"
 
-import {
-	type ReactNode,
-	createContext,
-	useContext,
-	useRef,
-} from "react";
-import { useStore } from "zustand";
+import { createContext, useContext, useRef } from "react"
+import { useStore } from "zustand"
 
-import { type DialogStore, createDialogStore } from "@/shared/stores/dialog-store";
+import { createDialogStore } from "@/shared/stores/dialog-store"
+import type {
+	DialogStore,
+	DialogStoreProviderProps,
+} from "@/shared/types/store.types"
 
-export type DialogStoreApi = ReturnType<typeof createDialogStore>;
+export type DialogStoreApi = ReturnType<typeof createDialogStore>
 
 export const DialogStoreContext = createContext<DialogStoreApi | undefined>(
 	undefined
-);
-
-export interface DialogStoreProviderProps {
-	children: ReactNode;
-}
+)
 
 export const DialogStoreProvider = ({ children }: DialogStoreProviderProps) => {
 	const storeRef = useRef<DialogStoreApi | null>(null);

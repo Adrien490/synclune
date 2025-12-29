@@ -3,7 +3,13 @@
 import { Badge } from "@/shared/components/ui/badge";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
+import {
+	calculatePriceInfo,
+	determineStockStatus,
+	calculateDiscountPercent,
+	hasActiveDiscount,
+	getSchemaOrgAvailabilityUrl,
+} from "@/modules/products/services/product-pricing.service";
 import { AlertCircle, CheckCircle, AlertTriangle, Sparkles, ShoppingBag } from "lucide-react";
 import { StockNotificationForm } from "@/modules/stock-notifications/components/stock-notification-form";
 import { motion, useReducedMotion } from "framer-motion";
@@ -31,46 +37,25 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 	const shouldReduceMotion = useReducedMotion();
 
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
-	const priceInfo = (() => {
-		if (!product || !product.skus || product.skus.length === 0) {
-			return { minPrice: 0, hasMultiplePrices: false };
-		}
-
-		const activePrices = product.skus
-			.filter(sku => sku.isActive)
-			.map(sku => sku.priceInclTax);
-
-		if (activePrices.length === 0) {
-			return { minPrice: 0, hasMultiplePrices: false };
-		}
-
-		const minPrice = Math.min(...activePrices);
-		const maxPrice = Math.max(...activePrices);
-		const hasMultiplePrices = minPrice !== maxPrice;
-
-		return { minPrice, hasMultiplePrices };
-	})();
+	const priceInfo = calculatePriceInfo(product?.skus);
 
 	// Déterminer si on affiche "À partir de"
 	const showFromPrefix = priceInfo.hasMultiplePrices && !selectedSku;
 
 	// Calculer la réduction si promotion
-	const hasDiscount = selectedSku?.compareAtPrice &&
-		selectedSku.compareAtPrice > selectedSku.priceInclTax;
+	const hasDiscount = hasActiveDiscount(
+		selectedSku?.compareAtPrice,
+		selectedSku?.priceInclTax ?? 0
+	);
 
-	const discountPercent = hasDiscount
-		? Math.round(((selectedSku.compareAtPrice! - selectedSku.priceInclTax) / selectedSku.compareAtPrice!) * 100)
-		: 0;
+	const discountPercent = calculateDiscountPercent(
+		selectedSku?.compareAtPrice,
+		selectedSku?.priceInclTax ?? 0
+	);
 
 	// Calculer le stock status (en stock, stock limité, ou rupture)
-	const inventory = selectedSku?.inventory || 0;
-	const isAvailable = selectedSku ? inventory > 0 && selectedSku.isActive : false;
-	const stockStatus =
-		!selectedSku?.isActive || inventory === 0
-			? "out_of_stock"
-			: inventory <= STOCK_THRESHOLDS.LOW
-				? "low_stock"
-				: "in_stock";
+	const inventory = selectedSku?.inventory ?? 0;
+	const stockStatus = determineStockStatus(inventory, selectedSku?.isActive);
 
 	if (!selectedSku) {
 		return (
@@ -103,12 +88,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 	}
 
 	// URL Schema.org pour la disponibilité
-	const availabilityUrl =
-		stockStatus === "out_of_stock"
-			? "https://schema.org/OutOfStock"
-			: stockStatus === "low_stock"
-				? "https://schema.org/LimitedAvailability"
-				: "https://schema.org/InStock";
+	const availabilityUrl = getSchemaOrgAvailabilityUrl(stockStatus);
 
 	return (
 		<div

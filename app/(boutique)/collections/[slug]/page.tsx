@@ -1,6 +1,7 @@
 import type { ProductFiltersSearchParams } from "@/app/(boutique)/produits/page";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
+import { getPublicCollectionSlugs } from "@/modules/collections/data/get-public-collection-slugs";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
 import type { SortField } from "@/modules/products/data/get-products";
@@ -27,11 +28,7 @@ export type CollectionSearchParams = {
 
 // Pre-genere les chemins des collections publiques au build time
 export async function generateStaticParams() {
-	const { prisma } = await import("@/shared/lib/prisma");
-	const collections = await prisma.collection.findMany({
-		where: { status: "PUBLIC" },
-		select: { slug: true },
-	});
+	const collections = await getPublicCollectionSlugs();
 	return collections.map((c) => ({ slug: c.slug }));
 }
 

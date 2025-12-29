@@ -1,9 +1,6 @@
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
-import {
-	matchSkuVariants,
-	type VariantSelectors,
-} from "../utils/match-sku-variants";
+import { matchSkuVariants, type VariantSelectors } from "./filter-compatible-skus";
 
 /**
  * Trouve un SKU par combinaison de variantes

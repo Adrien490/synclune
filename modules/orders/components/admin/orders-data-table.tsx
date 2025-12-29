@@ -22,7 +22,7 @@ import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { OrderRowActions } from "./order-row-actions";
 import { OrdersSelectionToolbar } from "./orders-selection-toolbar";
-import { OrdersTableSelectionCell } from "./orders-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 export interface OrdersDataTableProps {
 	ordersPromise: Promise<GetOrdersReturn>;
@@ -52,7 +52,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">
-									<OrdersTableSelectionCell type="header" orderIds={orderIds} />
+									<TableSelectionCell type="header" itemIds={orderIds} />
 								</TableHead>
 								<TableHead className="w-[25%] sm:w-[20%]">
 									Commande
@@ -82,7 +82,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 								return (
 									<TableRow key={order.id}>
 										<TableCell>
-											<OrdersTableSelectionCell type="row" orderId={order.id} />
+											<TableSelectionCell type="row" itemId={order.id} />
 										</TableCell>
 										<TableCell>
 											<Link

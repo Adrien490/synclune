@@ -1,6 +1,10 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
+import {
+	buildRevenueMap,
+	fillMissingDates,
+} from "../services/revenue-chart-builder.service";
 
 import type {
 	RevenueDataPoint,
@@ -66,23 +70,9 @@ export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartRetur
 		ORDER BY date ASC
 	`;
 
-	// Créer un map avec les résultats DB
-	const revenueMap = new Map<string, number>();
-	for (const row of revenueRows) {
-		revenueMap.set(row.date, Number(row.revenue));
-	}
-
-	// Remplir les jours sans revenus avec 0
-	const data: RevenueDataPoint[] = [];
-	for (let i = 0; i < 30; i++) {
-		const date = new Date(thirtyDaysAgo);
-		date.setDate(date.getDate() + i);
-		const dateKey = date.toISOString().split("T")[0];
-		data.push({
-			date: dateKey,
-			revenue: revenueMap.get(dateKey) || 0,
-		});
-	}
+	// Transformer les résultats en série temporelle continue
+	const revenueMap = buildRevenueMap(revenueRows);
+	const data = fillMissingDates(revenueMap, thirtyDaysAgo, 30);
 
 	return { data };
 }

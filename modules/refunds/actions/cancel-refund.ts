@@ -1,8 +1,7 @@
 "use server";
 
 import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -24,13 +23,9 @@ export async function cancelRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
 
@@ -75,9 +70,6 @@ export async function cancelRefund(
 			};
 		}
 
-		// Récupérer la session pour l'historique
-		const session = await getSession();
-
 		// Soft delete : marquer comme CANCELLED au lieu de supprimer
 		// (Conformité comptable Art. L123-22 Code de Commerce - conservation 10 ans)
 		await prisma.$transaction(async (tx) => {
@@ -93,7 +85,7 @@ export async function cancelRefund(
 				data: {
 					refundId: id,
 					action: RefundAction.CANCELLED,
-					authorId: session?.user?.id,
+					authorId: adminUser.id,
 				},
 			});
 		});

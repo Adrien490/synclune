@@ -2,10 +2,9 @@
  * Utilitaires géométriques pour les gestes touch
  */
 
-export interface Point {
-	x: number;
-	y: number;
-}
+import type { Point } from "@/shared/types/utility.types"
+
+export type { Point } from "@/shared/types/utility.types"
 
 /**
  * Calcule la distance euclidienne entre 2 points touch

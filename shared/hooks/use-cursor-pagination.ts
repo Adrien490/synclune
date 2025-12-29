@@ -1,31 +1,12 @@
-"use client";
+"use client"
 
-import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useTransition, useEffectEvent, type RefObject } from "react";
+import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useRef, useTransition, useEffectEvent } from "react"
 
-export interface UseCursorPaginationProps {
-	nextCursor: string | null;
-	prevCursor: string | null;
-	/**
-	 * Callback appelé après chaque navigation pour gérer le focus
-	 * Par défaut, scroll vers le haut de la page
-	 */
-	onNavigate?: () => void;
-	/**
-	 * Ref vers l'élément qui doit recevoir le focus après navigation
-	 * Améliore l'accessibilité en permettant aux utilisateurs de clavier/screen reader
-	 * de reprendre la navigation depuis le bon endroit
-	 */
-	focusTargetRef?: RefObject<HTMLElement | null>;
-	/**
-	 * Active les raccourcis clavier pour la pagination
-	 * Alt+ArrowLeft = Page précédente
-	 * Alt+ArrowRight = Page suivante
-	 * @default true
-	 */
-	enableKeyboardShortcuts?: boolean;
-}
+import type { UseCursorPaginationProps } from "@/shared/types/hook.types"
+
+export type { UseCursorPaginationProps } from "@/shared/types/hook.types"
 
 /**
  * Hook pour gérer la pagination avec cursor (Best Practices 2025)

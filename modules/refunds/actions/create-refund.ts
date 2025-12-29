@@ -1,7 +1,6 @@
 "use server";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { getSession } from "@/modules/auth/lib/get-current-session";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -27,13 +26,9 @@ export async function createRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		// Parser les données du formulaire
 		const orderId = formData.get("orderId") as string;
@@ -175,9 +170,6 @@ export async function createRefund(
 			};
 		}
 
-		// Récupérer l'ID de l'admin
-		const session = await getSession();
-
 		// Créer le remboursement avec ses items et l'historique
 		const refund = await prisma.refund.create({
 			data: {
@@ -185,7 +177,7 @@ export async function createRefund(
 				amount: totalAmount,
 				reason: result.data.reason,
 				note: result.data.note,
-				createdBy: session?.user?.id,
+				createdBy: adminUser.id,
 				items: {
 					create: validatedItems.map((item) => ({
 						orderItemId: item.orderItemId,
@@ -197,7 +189,7 @@ export async function createRefund(
 				history: {
 					create: {
 						action: RefundAction.CREATED,
-						authorId: session?.user?.id,
+						authorId: adminUser.id,
 						note: `Demande de remboursement créée pour ${(totalAmount / 100).toFixed(2)} €`,
 					},
 				},

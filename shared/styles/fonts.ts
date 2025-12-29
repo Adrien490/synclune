@@ -1,5 +1,4 @@
-import { Crimson_Pro, Inter, JetBrains_Mono } from "next/font/google";
-import localFont from "next/font/local";
+import { Crimson_Pro, Inter, Dancing_Script, JetBrains_Mono } from "next/font/google";
 
 // Crimson Pro - Serif élégante pour titres de bijoux
 // Police classique et raffinée, parfaite pour bijoux haut de gamme
@@ -36,10 +35,11 @@ export const jetBrainsMono = JetBrains_Mono({
 	variable: "--font-mono", // Variable CSS pour les prix et codes
 });
 
-// Pencerio - Police cursive élégante pour signatures manuscrites
-// Style hairline délicat, parfait pour l'humanisation artisanale
-export const pencerio = localFont({
-	src: "../../public/fonts/pencerio/Pencerio-Hairline.woff2",
+// Dancing Script - Police cursive élégante pour signatures manuscrites
+// Douce et authentique, parfaite pour l'humanisation artisanale
+export const dancingScript = Dancing_Script({
+	subsets: ["latin"],
 	display: "swap",
+	weight: ["400", "500", "600", "700"], // Regular à Bold
 	variable: "--font-cursive", // Variable CSS pour les signatures
 });

@@ -1,7 +1,7 @@
-import { getOrderNotes } from "@/modules/orders/actions/get-order-notes";
-import { getOrderRefunds } from "@/modules/orders/actions/get-order-refunds";
+import { getOrderNotes } from "@/modules/orders/data/get-order-notes";
+import { getOrderRefunds } from "@/modules/orders/data/get-order-refunds";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
-import { getOrderPermissions } from "@/modules/orders/utils/order-permissions";
+import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
 
 import { OrderHeader } from "./order-header";
 import { OrderProgressStepper } from "../order-progress-stepper";

@@ -1,10 +1,10 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
+import { REVIEWS_CACHE_TAGS } from "../constants/cache";
+import type { GlobalReviewStats } from "../types/review.types";
 
-export type GlobalReviewStats = {
-	totalReviews: number;
-	averageRating: number;
-};
+// Re-export pour compatibilité
+export type { GlobalReviewStats };
 
 /**
  * Récupère les statistiques globales d'avis pour tout le site
@@ -15,7 +15,7 @@ export type GlobalReviewStats = {
 export async function getGlobalReviewStats(): Promise<GlobalReviewStats> {
 	"use cache";
 	cacheLife("reference");
-	cacheTag("global-review-stats");
+	cacheTag(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
 
 	const result = await prisma.productReviewStats.aggregate({
 		_sum: {

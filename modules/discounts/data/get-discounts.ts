@@ -17,6 +17,7 @@ import {
 	DISCOUNTS_SORT_LABELS,
 } from "../constants/discount.constants";
 import { getDiscountsSchema, discountFiltersSchema, discountSortBySchema } from "../schemas/discount.schemas";
+import { buildDiscountWhereClause } from "../services/discount-query-builder";
 import type { GetDiscountsParams, GetDiscountsReturn } from "../types/discount.types";
 
 // Re-export pour compatibilité
@@ -36,47 +37,6 @@ export type {
 // Aliases pour compatibilité
 export { DISCOUNTS_SORT_LABELS as SORT_LABELS } from "../constants/discount.constants";
 export { DISCOUNTS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/discount.constants";
-
-// ============================================================================
-// QUERY BUILDER
-// ============================================================================
-
-function buildDiscountWhereClause(
-	params: GetDiscountsParams
-): Prisma.DiscountWhereInput {
-	const where: Prisma.DiscountWhereInput = {};
-	const AND: Prisma.DiscountWhereInput[] = [];
-
-	// Recherche textuelle
-	if (params.search) {
-		AND.push({
-			code: { contains: params.search, mode: "insensitive" },
-		});
-	}
-
-	// Filtre par type
-	if (params.filters?.type) {
-		AND.push({ type: params.filters.type });
-	}
-
-	// Filtre par statut actif
-	if (params.filters?.isActive !== undefined) {
-		AND.push({ isActive: params.filters.isActive });
-	}
-
-	// Filtre par utilisation
-	if (params.filters?.hasUsages !== undefined) {
-		AND.push({
-			usageCount: params.filters.hasUsages ? { gt: 0 } : { equals: 0 },
-		});
-	}
-
-	if (AND.length > 0) {
-		where.AND = AND;
-	}
-
-	return where;
-}
 
 // ============================================================================
 // MAIN FUNCTIONS

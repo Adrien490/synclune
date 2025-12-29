@@ -1,6 +1,6 @@
 "use server";
 
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";

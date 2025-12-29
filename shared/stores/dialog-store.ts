@@ -1,29 +1,12 @@
-import { createStore } from "zustand/vanilla";
+import { createStore } from "zustand/vanilla"
 
-/**
- * Type pour les données contextuelles d'un Dialog
- * Peut être étendu selon les besoins
- */
-export type DialogData = {
-	[key: string]: unknown;
-};
+import type {
+	DialogData,
+	DialogState,
+	DialogStore,
+} from "@/shared/types/store.types"
 
-export type DialogState = {
-	dialogs: Record<string, { isOpen: boolean; data?: DialogData }>;
-};
-
-export type DialogActions = {
-	openDialog: (dialogId: string, data?: DialogData) => void;
-	closeDialog: (dialogId: string) => void;
-	toggleDialog: (dialogId: string) => void;
-	isDialogOpen: (dialogId: string) => boolean;
-	getDialogData: <T extends DialogData = DialogData>(
-		dialogId: string
-	) => T | undefined;
-	clearDialogData: (dialogId: string) => void;
-};
-
-export type DialogStore = DialogState & DialogActions;
+export type { DialogData, DialogState, DialogActions, DialogStore } from "@/shared/types/store.types"
 
 export const defaultInitState: DialogState = {
 	dialogs: {},

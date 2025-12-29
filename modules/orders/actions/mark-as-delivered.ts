@@ -4,8 +4,7 @@ import {
 	OrderStatus,
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { getSession } from "@/modules/auth/lib/get-current-session";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
 import { scheduleReviewRequestEmail } from "@/modules/webhooks/services/review-request.service";
@@ -17,6 +16,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsDeliveredSchema } from "../schemas/order.schemas";
 import { createOrderAudit } from "../utils/order-audit";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
  * Marque une commande comme livrée
@@ -35,18 +35,9 @@ export async function markAsDelivered(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
-
-		// Récupérer les infos de l'admin pour l'audit trail
-		const session = await getSession();
-		const adminId = session?.user?.id;
-		const adminName = session?.user?.name || "Admin";
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
 		const sendEmail = formData.get("sendEmail") as string | null;
@@ -119,8 +110,8 @@ export async function markAsDelivered(
 			newStatus: OrderStatus.DELIVERED,
 			previousFulfillmentStatus: order.fulfillmentStatus,
 			newFulfillmentStatus: FulfillmentStatus.DELIVERED,
-			authorId: adminId,
-			authorName: adminName,
+			authorId: adminUser.id,
+			authorName: adminUser.name || "Admin",
 			source: "admin",
 			metadata: {
 				deliveryDate: deliveryDate.toISOString(),
@@ -134,6 +125,7 @@ export async function markAsDelivered(
 		revalidatePath(`/compte/commandes/${order.orderNumber}`);
 
 		// Envoyer l'email de confirmation de livraison au client
+		let emailSent = false;
 		if (result.data.sendEmail && order.customerEmail) {
 			// Extraire le prénom du customerName ou utiliser shippingFirstName
 			const customerFirstName =
@@ -150,27 +142,35 @@ export async function markAsDelivered(
 			});
 
 			// URL vers la page de détail de la commande
-			const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000";
-			const orderDetailsUrl = `${baseUrl}/compte/commandes/${order.orderNumber}`;
+			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
 
-			await sendDeliveryConfirmationEmail({
-				to: order.customerEmail,
-				orderNumber: order.orderNumber,
-				customerName: customerFirstName,
-				deliveryDate: deliveryDateStr,
-				orderDetailsUrl,
-			});
+			try {
+				await sendDeliveryConfirmationEmail({
+					to: order.customerEmail,
+					orderNumber: order.orderNumber,
+					customerName: customerFirstName,
+					deliveryDate: deliveryDateStr,
+					orderDetailsUrl,
+				});
+				emailSent = true;
+			} catch (emailError) {
+				console.error("[MARK_AS_DELIVERED] Échec envoi email livraison:", emailError);
+			}
 		}
 
 		// Planifier l'envoi de l'email de demande d'avis
 		// (ne bloque pas le flux principal en cas d'erreur)
-		await scheduleReviewRequestEmail(id);
+		try {
+			await scheduleReviewRequestEmail(id);
+		} catch (reviewEmailError) {
+			console.error("[MARK_AS_DELIVERED] Échec planification email avis:", reviewEmailError);
+		}
 
-		const emailSent = result.data.sendEmail ? " Email envoyé au client." : "";
+		const emailMessage = emailSent ? " Email envoyé au client." : result.data.sendEmail ? " (Échec envoi email)" : "";
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} marquée comme livrée.${emailSent}`,
+			message: `Commande ${order.orderNumber} marquée comme livrée.${emailMessage}`,
 		};
 	} catch (error) {
 		console.error("[MARK_AS_DELIVERED]", error);

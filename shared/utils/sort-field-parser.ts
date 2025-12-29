@@ -5,10 +5,9 @@
  * Ex: "createdAt-desc", "price-asc", "rating-desc"
  */
 
-export interface ParsedSortField {
-	field: string
-	direction: "asc" | "desc"
-}
+import type { ParsedSortField } from "@/shared/types/utility.types"
+
+export type { ParsedSortField } from "@/shared/types/utility.types"
 
 /**
  * Vérifie si l'input sortBy est valide

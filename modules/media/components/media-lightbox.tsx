@@ -9,6 +9,7 @@ import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/counter.css";
 
 import type { Slide } from "yet-another-react-lightbox";
+import { LIGHTBOX_CONFIG, UI_DELAYS } from "@/modules/media/constants/media.constants";
 
 interface MediaLightboxProps {
 	open: boolean;
@@ -51,17 +52,17 @@ export default function MediaLightbox({
 					}}
 					plugins={[Zoom, Counter, Video]}
 					zoom={{
-						maxZoomPixelRatio: 3,
-						zoomInMultiplier: 2,
-						doubleTapDelay: 300,
-						doubleClickDelay: 300,
-						doubleClickMaxStops: 2,
-						keyboardMoveDistance: 50,
-						wheelZoomDistanceFactor: 100,
-						pinchZoomDistanceFactor: 100,
+						maxZoomPixelRatio: LIGHTBOX_CONFIG.MAX_ZOOM_PIXEL_RATIO,
+						zoomInMultiplier: LIGHTBOX_CONFIG.ZOOM_IN_MULTIPLIER,
+						doubleTapDelay: UI_DELAYS.DOUBLE_TAP_DELAY_MS,
+						doubleClickDelay: UI_DELAYS.DOUBLE_CLICK_DELAY_MS,
+						doubleClickMaxStops: LIGHTBOX_CONFIG.DOUBLE_CLICK_MAX_STOPS,
+						keyboardMoveDistance: LIGHTBOX_CONFIG.KEYBOARD_MOVE_DISTANCE,
+						wheelZoomDistanceFactor: LIGHTBOX_CONFIG.WHEEL_ZOOM_DISTANCE_FACTOR,
+						pinchZoomDistanceFactor: LIGHTBOX_CONFIG.PINCH_ZOOM_DISTANCE_FACTOR,
 						scrollToZoom: true,
 					}}
-					counter={{ container: { style: { top: "unset", bottom: 16 } } }}
+					counter={{ container: { style: { top: "unset", bottom: LIGHTBOX_CONFIG.COUNTER_BOTTOM_OFFSET } } }}
 					video={{
 						autoPlay: true,
 						controls: false,
@@ -69,13 +70,13 @@ export default function MediaLightbox({
 						loop: true,
 						muted: true,
 					}}
-					animation={{ fade: 350, swipe: 300 }}
-					carousel={{ finite: false, preload: 2 }}
+					animation={{ fade: UI_DELAYS.ANIMATION_FADE_MS, swipe: UI_DELAYS.ANIMATION_SWIPE_MS }}
+					carousel={{ finite: false, preload: LIGHTBOX_CONFIG.CAROUSEL_PRELOAD }}
 					controller={{ closeOnBackdropClick: true, aria: true }}
 					styles={{
 						container: {
-							backgroundColor: "rgba(0, 0, 0, 0.95)",
-							backdropFilter: "blur(20px)",
+							backgroundColor: `rgba(0, 0, 0, ${LIGHTBOX_CONFIG.BACKDROP_OPACITY})`,
+							backdropFilter: `blur(${LIGHTBOX_CONFIG.BACKDROP_BLUR}px)`,
 						},
 						button: {
 							filter: "none",

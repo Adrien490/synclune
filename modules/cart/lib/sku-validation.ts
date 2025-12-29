@@ -1,5 +1,3 @@
-"use server";
-
 import { prisma } from "@/shared/lib/prisma";
 import { z } from "zod";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
@@ -9,20 +7,7 @@ import type {
 	SkuDetailsResult,
 	BatchSkuValidationResult,
 } from "@/modules/cart/types/sku-validation.types";
-
-// Schéma de validation
-const validateSkuSchema = z.object({
-	skuId: z.string().min(1, CART_ERROR_MESSAGES.SKU_NOT_FOUND),
-	quantity: z
-		.number()
-		.int()
-		.min(1, CART_ERROR_MESSAGES.QUANTITY_MIN)
-		.max(99, CART_ERROR_MESSAGES.QUANTITY_MAX),
-});
-
-const getSkuDetailsSchema = z.object({
-	skuId: z.string().min(1, CART_ERROR_MESSAGES.SKU_NOT_FOUND),
-});
+import { validateSkuSchema, getSkuDetailsSchema } from "@/modules/cart/schemas/cart.schemas";
 
 // Action: Valider un SKU et son stock
 export async function validateSkuAndStock(input: {

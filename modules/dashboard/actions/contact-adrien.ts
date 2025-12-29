@@ -1,9 +1,9 @@
 "use server";
 
+import { requireAuth } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
-	requireAuth,
 	validateFormData,
-	enforceRateLimitForCurrentUser,
 	handleActionError,
 } from "@/shared/lib/actions";
 import { forbidden, success } from "@/shared/lib/actions/responses";

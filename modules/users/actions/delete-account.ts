@@ -6,16 +6,14 @@ import { stripe } from "@/shared/lib/stripe";
 import type { ActionState } from "@/shared/types/server-action";
 import { auth } from "@/modules/auth/lib/auth";
 import { headers } from "next/headers";
+import { requireAuth } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
-	requireAuth,
-	enforceRateLimitForCurrentUser,
 	success,
 	error,
 	handleActionError,
 } from "@/shared/lib/actions";
-
-// Rate limit: 3 requêtes par heure (action sensible RGPD)
-const DELETE_ACCOUNT_RATE_LIMIT = { limit: 3, windowMs: 60 * 60 * 1000 };
+import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 
 /**
  * Server Action pour supprimer le compte utilisateur (droit à l'oubli RGPD)
@@ -31,7 +29,7 @@ const DELETE_ACCOUNT_RATE_LIMIT = { limit: 3, windowMs: 60 * 60 * 1000 };
 export async function deleteAccount(): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(DELETE_ACCOUNT_RATE_LIMIT);
+		const rateCheck = await enforceRateLimitForCurrentUser(USER_LIMITS.DELETE_ACCOUNT);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Vérification de l'authentification

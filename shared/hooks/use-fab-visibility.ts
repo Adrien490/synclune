@@ -5,6 +5,7 @@ import { setFabVisibility } from "@/shared/actions/set-fab-visibility";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { ActionStatus } from "@/shared/types/server-action";
 import type { FabKey } from "@/shared/constants/fab";
+import { toast } from "sonner";
 
 interface UseFabVisibilityOptions {
 	/** Clé du FAB (type-safe) */
@@ -55,6 +56,7 @@ export function useFabVisibility(options: UseFabVisibilityOptions) {
 			onError: () => {
 				// Rollback de l'état optimiste en cas d'erreur
 				setOptimisticHidden(initialHidden);
+				toast.error("Erreur lors de la modification");
 			},
 		}),
 		undefined

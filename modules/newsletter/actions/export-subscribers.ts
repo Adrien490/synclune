@@ -1,7 +1,7 @@
 "use server";
 
 import { NewsletterStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { exportSubscribersSchema } from "@/modules/newsletter/schemas/newsletter.schemas";

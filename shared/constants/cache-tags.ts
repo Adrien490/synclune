@@ -49,6 +49,43 @@ export const SHARED_CACHE_TAGS = {
 	 * Utilisé par : products, skus, stock-notifications
 	 */
 	ADMIN_INVENTORY_LIST: "admin-inventory-list",
+
+	/**
+	 * Liste des produits (cross-module)
+	 *
+	 * Utilisé par : products, collections, skus
+	 * Ce tag est partagé pour éviter les cycles de dépendances entre modules
+	 */
+	PRODUCTS_LIST: "products-list",
+
+	/**
+	 * Liste des SKUs (cross-module)
+	 *
+	 * Utilisé par : skus, dashboard
+	 */
+	SKUS_LIST: "skus-list",
+} as const;
+
+// ============================================
+// STOCK THRESHOLDS (cross-module)
+// ============================================
+
+/**
+ * Seuils de stock centralisés.
+ * Ces valeurs sont utilisées pour :
+ * - Filtrage dans l'inventaire admin (critical, low, normal, high)
+ * - Affichage d'alertes sur la boutique
+ * - Alertes stock dans le dashboard admin
+ *
+ * Partagé entre modules pour éviter les cycles skus ↔ dashboard
+ */
+export const STOCK_THRESHOLDS = {
+	/** Stock critique : <= CRITICAL (alertes urgentes, 1 seul item) */
+	CRITICAL: 1,
+	/** Stock bas : <= LOW (alertes préventives, 1-3 items) */
+	LOW: 3,
+	/** Stock normal max : <= NORMAL_MAX */
+	NORMAL_MAX: 50,
 } as const;
 
 // ============================================
@@ -90,3 +127,30 @@ export function getAdminCustomersTags(): string[] {
 
 export type SharedCacheTagKey = keyof typeof SHARED_CACHE_TAGS;
 export type SharedCacheTagValue = (typeof SHARED_CACHE_TAGS)[SharedCacheTagKey];
+
+// ============================================
+// SESSION CACHE TAGS (évite cycle auth ↔ users)
+// ============================================
+
+/**
+ * Tags de cache pour les sessions utilisateur
+ *
+ * Centralisé ici pour éviter le cycle de dépendances auth ↔ users.
+ * Ces tags sont utilisés par :
+ * - auth: pour invalider la session lors du logout
+ * - users: pour invalider les sessions lors de modifications
+ */
+export const SESSION_CACHE_TAGS = {
+	/** Session de l'utilisateur courant */
+	SESSION: (userId: string) => `session-${userId}`,
+	/** Sessions actives d'un utilisateur */
+	SESSIONS: (userId: string) => `sessions-user-${userId}`,
+} as const;
+
+/**
+ * Tags à invalider lors de la modification de la session de l'utilisateur
+ * (connexion, déconnexion, rafraîchissement de session)
+ */
+export function getSessionInvalidationTags(userId: string): string[] {
+	return [SESSION_CACHE_TAGS.SESSION(userId)];
+}

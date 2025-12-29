@@ -92,36 +92,51 @@ export async function sendCustomizationRequest(
 		});
 
 		// 7. Envoyer l'email de notification à l'admin
-		const emailResult = await sendCustomizationRequestEmail({
-			firstName: validatedData.firstName,
-			lastName: validatedData.lastName,
-			email: validatedData.email,
-			phone: validatedData.phone || undefined,
-			productTypeLabel: validatedData.productTypeLabel,
-			details: validatedData.details,
-		});
+		let adminEmailFailed = false;
+		try {
+			const emailResult = await sendCustomizationRequestEmail({
+				firstName: validatedData.firstName,
+				lastName: validatedData.lastName,
+				email: validatedData.email,
+				phone: validatedData.phone || undefined,
+				productTypeLabel: validatedData.productTypeLabel,
+				details: validatedData.details,
+			});
 
-		if (!emailResult.success) {
-			// La demande est enregistrée, mais l'email n'a pas été envoyé
-			// On log l'erreur mais on ne fait pas échouer la requête
+			if (!emailResult.success) {
+				adminEmailFailed = true;
+				console.error(
+					`[CustomizationRequest] Email admin non envoyé pour la demande ${customizationRequest.id}:`,
+					emailResult.error
+				);
+			}
+		} catch (emailError) {
+			adminEmailFailed = true;
 			console.error(
-				`[CustomizationRequest] Email admin non envoyé pour la demande ${customizationRequest.id}:`,
-				emailResult.error
+				`[CustomizationRequest] Erreur envoi email admin pour la demande ${customizationRequest.id}:`,
+				emailError
 			);
 		}
 
 		// 8. Envoyer l'email de confirmation au client
-		const confirmationResult = await sendCustomizationConfirmationEmail({
-			firstName: validatedData.firstName,
-			email: validatedData.email,
-			productTypeLabel: validatedData.productTypeLabel,
-			details: validatedData.details,
-		});
+		try {
+			const confirmationResult = await sendCustomizationConfirmationEmail({
+				firstName: validatedData.firstName,
+				email: validatedData.email,
+				productTypeLabel: validatedData.productTypeLabel,
+				details: validatedData.details,
+			});
 
-		if (!confirmationResult.success) {
+			if (!confirmationResult.success) {
+				console.error(
+					`[CustomizationRequest] Email confirmation non envoyé pour la demande ${customizationRequest.id}:`,
+					confirmationResult.error
+				);
+			}
+		} catch (confirmationError) {
 			console.error(
-				`[CustomizationRequest] Email confirmation non envoyé pour la demande ${customizationRequest.id}:`,
-				confirmationResult.error
+				`[CustomizationRequest] Erreur envoi email confirmation pour la demande ${customizationRequest.id}:`,
+				confirmationError
 			);
 		}
 

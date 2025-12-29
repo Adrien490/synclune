@@ -1,3 +1,6 @@
+import { Prisma } from "@/app/generated/prisma/client";
+import type { ColorSwatch, ProductFromList, SkuFromList } from "./product-list.types";
+
 // Re-export des types depuis product.types.ts (source de vérité)
 export type {
 	ProductSku,
@@ -59,6 +62,23 @@ export type ProductStockInfo = {
 };
 
 // ============================================================================
+// PRODUCT PRICING (from services/)
+// ============================================================================
+
+export interface PriceInfo {
+	minPrice: number;
+	maxPrice: number;
+	hasMultiplePrices: boolean;
+}
+
+export interface SkuForPricing {
+	isActive: boolean;
+	priceInclTax: number;
+	compareAtPrice?: number | null;
+	inventory?: number;
+}
+
+// ============================================================================
 // PRODUCT JEWELRY
 // ============================================================================
 
@@ -69,3 +89,53 @@ export type JewelryDimensions = {
 	// Informations dérivées
 	requiresSize: boolean;
 };
+
+// ============================================================================
+// PRODUCT HIGHLIGHTS
+// ============================================================================
+
+/**
+ * Highlight produit pour améliorer la scanabilité
+ */
+export type ProductHighlight = {
+	id: string;
+	label: string;
+	description: string;
+	priority: number;
+};
+
+// ============================================================================
+// SEARCH TYPES
+// ============================================================================
+
+/**
+ * Résultat de la recherche hybride (fuzzy + exact)
+ */
+export type SearchResult = {
+	/** IDs de produits triés par pertinence (fuzzy search) */
+	fuzzyIds: string[] | null;
+	/** Conditions de recherche exacte (SKU, couleurs, etc.) */
+	exactConditions: Prisma.ProductWhereInput[];
+};
+
+// ============================================================================
+// PRODUCT CARD DATA
+// ============================================================================
+
+/**
+ * Données combinées pour ProductCard (optimisé O(n))
+ */
+export interface ProductCardData {
+	defaultSku: SkuFromList | null;
+	price: number;
+	compareAtPrice: number | null;
+	stockInfo: ProductStockInfo;
+	primaryImage: {
+		id: string;
+		url: string;
+		alt?: string;
+		mediaType: "IMAGE";
+		blurDataUrl?: string;
+	};
+	colors: ColorSwatch[];
+}

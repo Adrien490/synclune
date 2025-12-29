@@ -16,18 +16,16 @@
  * ```
  */
 
-// Authentication helpers
-export { requireAuth, requireAdmin, requireAdminWithUser } from "./auth";
+// Authentication helpers - MOVED to @/modules/auth/lib/require-auth
+// Import directly: import { requireAuth, requireAdmin, requireAdminWithUser } from "@/modules/auth/lib/require-auth"
 
 // Validation helpers
 export { validateInput, validateFormData } from "./validation";
 
 // Rate limiting helpers
-export {
-	enforceRateLimit,
-	getRateLimitId,
-	enforceRateLimitForCurrentUser,
-} from "./rate-limit";
+// NOTE: enforceRateLimit est la seule fonction native de shared/
+// Pour getRateLimitId et enforceRateLimitForCurrentUser, importer depuis @/modules/auth/lib/rate-limit-helpers
+export { enforceRateLimit } from "./rate-limit";
 
 // Error handling helpers
 export { handleActionError } from "./errors";

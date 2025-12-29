@@ -2,9 +2,14 @@
  * Helpers de cache pour le module Users
  *
  * Constantes: voir constants/cache.ts
+ * Note: getSessionInvalidationTags est maintenant dans @/shared/constants/cache-tags
  */
 
 import { cacheLife, cacheTag } from "next/cache";
+import {
+	getSessionInvalidationTags as getSessionInvalidationTagsShared,
+	SESSION_CACHE_TAGS,
+} from "@/shared/constants/cache-tags";
 import { USERS_CACHE_TAGS } from "../constants/cache";
 
 // ============================================
@@ -25,10 +30,11 @@ export function cacheCurrentUser(userId: string) {
  * Configure le cache pour les sessions d'un utilisateur
  * - Utilisé pour : /account/security, gestion des sessions actives
  * - Durée : 1min fraîche, 30s revalidation, 5min expiration
+ * @deprecated Utiliser cacheDefault(SESSION_CACHE_TAGS.SESSIONS(userId)) depuis @/shared
  */
 export function cacheUserSessions(userId: string) {
 	cacheLife("dashboard");
-	cacheTag(USERS_CACHE_TAGS.SESSIONS(userId));
+	cacheTag(SESSION_CACHE_TAGS.SESSIONS(userId));
 }
 
 /**
@@ -55,16 +61,17 @@ export function getCurrentUserInvalidationTags(userId: string): string[] {
 /**
  * Tags à invalider lors de la modification de la session de l'utilisateur
  * (connexion, déconnexion, rafraîchissement de session)
+ * @deprecated Utiliser getSessionInvalidationTags depuis @/shared/constants/cache-tags
  */
 export function getSessionInvalidationTags(userId: string): string[] {
-	return [USERS_CACHE_TAGS.SESSION(userId)];
+	return getSessionInvalidationTagsShared(userId);
 }
 
 /**
  * Tags à invalider lors de la modification des sessions d'un utilisateur
  */
 export function getUserSessionsInvalidationTags(userId: string): string[] {
-	return [USERS_CACHE_TAGS.SESSIONS(userId)];
+	return [SESSION_CACHE_TAGS.SESSIONS(userId)];
 }
 
 /**

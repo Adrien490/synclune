@@ -5,7 +5,6 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache";
-import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
 
@@ -54,7 +53,7 @@ export function getCollectionInvalidationTags(collectionSlug: string): string[] 
 		COLLECTIONS_CACHE_TAGS.COUNTS,
 		COLLECTIONS_CACHE_TAGS.DETAIL(collectionSlug),
 		COLLECTIONS_CACHE_TAGS.PRODUCTS(collectionSlug),
-		PRODUCTS_CACHE_TAGS.LIST,
+		SHARED_CACHE_TAGS.PRODUCTS_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
 }

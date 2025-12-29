@@ -1,11 +1,12 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath, updateTag } from "next/cache";
 import { generateSlug } from "@/shared/utils/generate-slug";
+import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
 import { getColorInvalidationTags } from "../constants/cache";
 
 /**
@@ -34,30 +35,23 @@ export async function duplicateColor(colorId: string): Promise<ActionState> {
 			};
 		}
 
-		// 3. Generer un nouveau nom unique
-		let newName = `${original.name} (copie)`;
-		let suffix = 1;
-
-		// Verifier si le nom existe deja et incrementer le suffixe si necessaire
-		while (true) {
-			const existing = await prisma.color.findFirst({
-				where: { name: newName },
-			});
-
-			if (!existing) break;
-
-			suffix++;
-			newName = `${original.name} (copie ${suffix})`;
-
-			// Securite: eviter boucle infinie
-			if (suffix > 100) {
-				return {
-					status: ActionStatus.ERROR,
-					message:
-						"Impossible de generer un nom unique. Supprimez certaines copies.",
-				};
+		// 3. Generer un nouveau nom unique via le service
+		const nameResult = await generateUniqueReadableName(
+			original.name,
+			async (name) => {
+				const existing = await prisma.color.findFirst({ where: { name } });
+				return existing !== null;
 			}
+		);
+
+		if (!nameResult.success) {
+			return {
+				status: ActionStatus.ERROR,
+				message: nameResult.error ?? "Impossible de générer un nom unique",
+			};
 		}
+
+		const newName = nameResult.name!;
 
 		// 4. Generer un slug unique
 		const slug = await generateSlug(prisma, "color", newName);
@@ -83,11 +77,10 @@ export async function duplicateColor(colorId: string): Promise<ActionState> {
 			data: { id: duplicate.id, name: duplicate.name },
 		};
 	} catch (error) {
-		// console.error("[DUPLICATE_COLOR] Erreur:", error);
+		console.error("[DUPLICATE_COLOR] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error ? error.message : "Une erreur est survenue",
+			message: "Impossible de dupliquer la couleur",
 		};
 	}
 }

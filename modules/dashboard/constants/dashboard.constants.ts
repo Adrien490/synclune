@@ -79,13 +79,6 @@ export const DASHBOARD_RECENT_ORDERS_LIMIT = 5;
 export const DASHBOARD_TOP_PRODUCTS_LIMIT = 5;
 export const DASHBOARD_STOCK_ALERTS_LIMIT = 10;
 
-// ============================================================================
-// CURRENCY
-// ============================================================================
-
-/**
- * Diviseur pour convertir les montants en centimes vers les euros
- * Les montants sont stockes en centimes dans la base de donnees
- */
-export const CURRENCY_DIVISOR = 100;
+// Note: CURRENCY_DIVISOR has been moved to shared/constants/currency.ts
+// Import from there: import { CURRENCY_DIVISOR } from "@/shared/constants/currency";
 

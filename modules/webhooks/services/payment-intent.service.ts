@@ -2,13 +2,11 @@ import Stripe from "stripe";
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
+import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import type { PaymentFailureDetails } from "../types/webhook.types";
 
-// Types pour les résultats des services
-export interface PaymentFailureDetails {
-	code: string | null;
-	declineCode: string | null;
-	message: string | null;
-}
+// Re-export types for backwards compatibility
+export type { PaymentFailureDetails };
 
 /**
  * Met à jour une commande comme payée (via payment_intent.succeeded)
@@ -191,8 +189,8 @@ export async function sendRefundFailureAlert(
 			return;
 		}
 
-		const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
-		const dashboardUrl = `${baseUrl}/dashboard/orders/${orderId}`;
+		const baseUrl = getBaseUrl();
+		const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(orderId)}`;
 
 		await sendAdminRefundFailedAlert({
 			orderNumber: order.orderNumber,

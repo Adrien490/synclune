@@ -230,3 +230,27 @@ export const updateProductSkuSchema = baseSkuFieldsSchema
 	})
 	.refine(refinePrimaryImageNotVideo, PRIMARY_IMAGE_ERROR)
 	.refine(refineCompareAtPrice, COMPARE_PRICE_ERROR);
+
+// ============================================================================
+// QUICK UPDATE SCHEMAS (Admin dialogs)
+// ============================================================================
+
+/**
+ * Schema pour la mise à jour rapide du prix d'un SKU
+ * Utilisé dans le dialog de modification rapide de prix
+ */
+export const updateSkuPriceSchema = z.object({
+	skuId: z.string().min(1),
+	priceInclTax: z.number().int().min(1, "Le prix doit être supérieur à 0"),
+	compareAtPrice: z.number().int().min(0).nullable().optional(),
+});
+
+/**
+ * Schema pour l'ajustement de stock d'un SKU
+ * Utilisé dans le dialog d'ajustement de stock
+ */
+export const adjustSkuStockSchema = z.object({
+	skuId: z.string().min(1),
+	adjustment: z.number().int(), // Positif pour ajouter, négatif pour retirer
+	reason: z.string().optional(), // Raison de l'ajustement (pour traçabilité)
+});

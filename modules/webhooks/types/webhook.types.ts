@@ -1,7 +1,44 @@
+import type { RefundStatus } from "@/app/generated/prisma/client";
 import type { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import type { sendAdminNewOrderEmail, sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import type { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import type { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
+
+// ============================================================================
+// SERVICE RESULT TYPES
+// ============================================================================
+
+/** Résultat de la synchronisation des remboursements Stripe */
+export interface RefundSyncResult {
+	processed: boolean;
+	isFullyRefunded: boolean;
+	totalRefunded: number;
+}
+
+/** Enregistrement de remboursement avec ses relations */
+export interface RefundRecord {
+	id: string;
+	status: RefundStatus;
+	amount: number;
+	orderId: string;
+	order: {
+		id: string;
+		orderNumber: string;
+		customerEmail: string | null;
+		stripePaymentIntentId: string | null;
+	};
+}
+
+/** Détails d'un échec de paiement Stripe */
+export interface PaymentFailureDetails {
+	code: string | null;
+	declineCode: string | null;
+	message: string | null;
+}
+
+// ============================================================================
+// WEBHOOK TASK TYPES
+// ============================================================================
 
 /**
  * Tâches à exécuter après la réponse 200 via after()

@@ -7,7 +7,7 @@ import { createDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 
 import { getDiscountInvalidationTags } from "../constants/cache";
 
@@ -21,13 +21,8 @@ export async function createDiscount(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		// 2. Extraction des données
 		const rawData = {

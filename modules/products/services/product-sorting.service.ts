@@ -182,21 +182,9 @@ export function getAvailabilityForList(product: ProductFromList): string {
 // HELPER COMBINÉ POUR PRODUCTCARD (OPTIMISÉ O(n))
 // ============================================================================
 
-/** Type de retour pour getProductCardData */
-export interface ProductCardData {
-	defaultSku: SkuFromList | null;
-	price: number;
-	compareAtPrice: number | null;
-	stockInfo: ProductStockInfo;
-	primaryImage: {
-		id: string;
-		url: string;
-		alt?: string;
-		mediaType: "IMAGE";
-		blurDataUrl?: string;
-	};
-	colors: ColorSwatch[];
-}
+import type { ProductCardData } from "../types/product-services.types";
+
+export type { ProductCardData } from "../types/product-services.types";
 
 /**
  * Récupère toutes les données nécessaires à ProductCard en une seule passe.
@@ -411,4 +399,4 @@ export {
 	getVariantCountForList,
 	hasMultipleVariants,
 	getPriceRangeForList,
-} from "./product-variant-display";
+} from "./product-variant-display.service";

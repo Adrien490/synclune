@@ -1,8 +1,9 @@
 import { cacheTag } from "next/cache";
 
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { getRateLimitId } from "@/modules/auth/lib/rate-limit-helpers";
 import { prisma } from "@/shared/lib/prisma";
-import { getSortDirection } from "@/shared/utils/sort-direction";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 
 import {
 	GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY,
@@ -11,10 +12,12 @@ import {
 	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
 	GET_PRODUCTS_SELECT,
 } from "../constants/product.constants";
+import { SEARCH_RATE_LIMITS } from "../constants/search.constants";
 import type { GetProductsParams, GetProductsReturn, Product } from "../types/product.types";
 import {
 	buildProductWhereClause,
 	buildSearchConditions,
+	buildExactSearchConditions,
 	type SearchResult,
 } from "../services/product-query-builder";
 import { getBestsellerIds } from "../services/bestseller-query";
@@ -23,6 +26,7 @@ import {
 	getSpellSuggestion,
 	SUGGESTION_THRESHOLD_RESULTS,
 } from "../services/spell-suggestion";
+import { sortProducts, orderByIds } from "../services/product-list-sorting.service";
 import { cacheProducts, PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { serializeProduct } from "../utils/serialize-product";
 
@@ -66,13 +70,35 @@ export async function getProducts(
 		params = { ...params, sortBy: GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY };
 	}
 
-	// Exécuter la recherche fuzzy AVANT le cache
-	// Cela permet de cacher les résultats basés sur les IDs trouvés
+	// Executer la recherche fuzzy AVANT le cache
+	// Cela permet de cacher les resultats bases sur les IDs trouves
 	let searchResult: SearchResult | undefined;
 	if (params.search) {
-		searchResult = await buildSearchConditions(params.search, {
-			status: params.status,
-		});
+		// Rate limiting: protege contre le scraping et les abus
+		let useExactOnly = false;
+		try {
+			const rateLimitId = await getRateLimitId();
+			const isAuthenticated = rateLimitId.startsWith("user:");
+			const limits = isAuthenticated
+				? SEARCH_RATE_LIMITS.authenticated
+				: SEARCH_RATE_LIMITS.guest;
+
+			const rateLimitResult = checkRateLimit(`search:${rateLimitId}`, limits);
+			if (!rateLimitResult.success) {
+				// Fallback silencieux: utilise recherche exacte seulement
+				console.warn("[search] Rate limit exceeded:", {
+					identifier: rateLimitId,
+					retryAfter: rateLimitResult.retryAfter,
+				});
+				useExactOnly = true;
+			}
+		} catch {
+			// En cas d'erreur rate limit, continuer sans bloquer
+		}
+
+		searchResult = useExactOnly
+			? buildExactSearchConditions(params.search)
+			: await buildSearchConditions(params.search, { status: params.status });
 	}
 
 	// Récupérer les IDs des bestsellers si tri par meilleures ventes demandé
@@ -116,84 +142,6 @@ export async function getProducts(
 	}
 
 	return result;
-}
-
-/**
- * Calcule le prix minimum d'un produit à partir de ses SKUs actifs
- */
-function getMinPrice(product: Product): number {
-	const activePrices = product.skus
-		.filter((sku) => sku.isActive)
-		.map((sku) => sku.priceInclTax);
-
-	return activePrices.length > 0 ? Math.min(...activePrices) : Infinity;
-}
-
-/**
- * Récupère la note moyenne d'un produit
- */
-function getAverageRating(product: Product): number {
-	if (!product.reviewStats) return 0;
-	const rating = product.reviewStats.averageRating;
-	return typeof rating === "number" ? rating : Number(rating);
-}
-
-
-/**
- * Trie les produits selon le critère demandé
- */
-function sortProducts(products: Product[], sortBy: string): Product[] {
-	const direction = getSortDirection(sortBy);
-	const multiplier = direction === "asc" ? 1 : -1;
-
-	return [...products].sort((a, b) => {
-		if (sortBy.startsWith("title-")) {
-			return multiplier * a.title.localeCompare(b.title, "fr");
-		}
-
-		if (sortBy.startsWith("price-")) {
-			const priceA = getMinPrice(a);
-			const priceB = getMinPrice(b);
-			return multiplier * (priceA - priceB);
-		}
-
-		if (sortBy.startsWith("created-")) {
-			const dateA = new Date(a.createdAt).getTime();
-			const dateB = new Date(b.createdAt).getTime();
-			return multiplier * (dateA - dateB);
-		}
-
-		if (sortBy.startsWith("rating-")) {
-			const ratingA = getAverageRating(a);
-			const ratingB = getAverageRating(b);
-			// Tri secondaire par nombre d'avis pour départager les égalités
-			if (ratingA === ratingB) {
-				const countA = a.reviewStats?.totalCount ?? 0;
-				const countB = b.reviewStats?.totalCount ?? 0;
-				return multiplier * (countA - countB);
-			}
-			return multiplier * (ratingA - ratingB);
-		}
-
-		// Par défaut : plus récents en premier
-		return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-	});
-}
-
-/**
- * Préserve l'ordre des produits selon une liste d'IDs ordonnés
- * Utilisé pour maintenir l'ordre de pertinence de la recherche fuzzy
- */
-function orderByIds<T extends { id: string }>(
-	items: T[],
-	orderedIds: string[]
-): T[] {
-	const orderMap = new Map(orderedIds.map((id, index) => [id, index]));
-	return [...items].sort((a, b) => {
-		const orderA = orderMap.get(a.id) ?? Infinity;
-		const orderB = orderMap.get(b.id) ?? Infinity;
-		return orderA - orderB;
-	});
 }
 
 /**

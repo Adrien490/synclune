@@ -26,9 +26,6 @@ export { DecorativeHalo, DecorativeHaloGroup } from "./decorative-halo";
 export { GlitterSparkles } from "./glitter-sparkles";
 export { ParticleSystem } from "./particle-system/index";
 
-// Interactive Animations
-export { MagneticWrapper } from "./magnetic-wrapper";
-
 // Types
 export type { FadeProps } from "./fade";
 export type { HoverProps } from "./hover";

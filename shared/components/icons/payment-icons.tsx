@@ -152,3 +152,46 @@ export function PayPalIcon({ className = "" }: PaymentIconProps) {
 		</svg>
 	);
 }
+
+export function ApplePayIcon({ className = "" }: PaymentIconProps) {
+	return (
+		<svg
+			width="32"
+			height="20"
+			viewBox="0 0 32 20"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+			className={className}
+			role="img"
+			aria-label="Apple Pay"
+		>
+			<title>Apple Pay</title>
+			<rect
+				x="0.5"
+				y="0.5"
+				width="31"
+				height="19"
+				rx="2.5"
+				fill="white"
+				stroke="currentColor"
+				strokeOpacity="0.2"
+			/>
+			<path
+				d="M9.5 7.5C9.8 7.1 10 6.5 9.9 6C9.4 6 8.8 6.3 8.5 6.7C8.2 7 8 7.6 8.1 8.1C8.6 8.2 9.2 7.9 9.5 7.5ZM9.9 8.3C9.2 8.3 8.6 8.7 8.2 8.7C7.8 8.7 7.3 8.3 6.7 8.3C5.8 8.4 5 8.9 4.5 9.7C3.6 11.3 4.2 13.7 5.1 15C5.5 15.6 6 16.3 6.7 16.3C7.3 16.3 7.5 15.9 8.2 15.9C8.9 15.9 9.1 16.3 9.8 16.3C10.5 16.3 10.9 15.6 11.3 15C11.8 14.3 12 13.6 12 13.6C12 13.6 10.8 13.1 10.8 11.7C10.8 10.5 11.8 10 11.8 10C11.4 9.3 10.6 8.3 9.9 8.3Z"
+				fill="currentColor"
+				fillOpacity="0.7"
+			/>
+			<text
+				x="17"
+				y="13"
+				fontSize="6"
+				fontWeight="500"
+				fill="currentColor"
+				fillOpacity="0.6"
+				fontFamily="system-ui"
+			>
+				Pay
+			</text>
+		</svg>
+	);
+}

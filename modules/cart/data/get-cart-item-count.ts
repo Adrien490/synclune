@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { prisma } from "@/shared/lib/prisma";
+import { CART_CACHE_TAGS } from "../constants/cache";
 
 // ============================================================================
 // TYPES
@@ -48,14 +49,7 @@ export async function fetchCartItemCount(
 ): Promise<GetCartItemCountReturn> {
 	"use cache: private";
 	cacheLife("cart");
-
-	cacheTag(
-		userId
-			? `cart-count-user-${userId}`
-			: sessionId
-				? `cart-count-session-${sessionId}`
-				: "cart-count-anonymous"
-	);
+	cacheTag(CART_CACHE_TAGS.COUNT(userId, sessionId));
 
 	if (!userId && !sessionId) {
 		return 0;

@@ -17,7 +17,7 @@ import { DiscountType } from "@/app/generated/prisma/client";
 import { Ticket } from "lucide-react";
 import { DiscountRowActions } from "./discount-row-actions";
 import { DiscountsSelectionToolbar } from "./discounts-selection-toolbar";
-import { DiscountsTableSelectionCell } from "./discounts-table-selection-cell";
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 import { CreateDiscountButton } from "./create-discount-button";
 import { formatEuro } from "@/shared/utils/format-euro";
 
@@ -75,9 +75,9 @@ export async function DiscountsDataTable({
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[5%]">
-									<DiscountsTableSelectionCell
+									<TableSelectionCell
 										type="header"
-										discountIds={discountIds}
+										itemIds={discountIds}
 									/>
 								</TableHead>
 								<TableHead className="w-[20%]">
@@ -107,9 +107,9 @@ export async function DiscountsDataTable({
 								{discounts.map((discount) => (
 									<TableRow key={discount.id}>
 										<TableCell>
-											<DiscountsTableSelectionCell
+											<TableSelectionCell
 												type="row"
-												discountId={discount.id}
+												itemId={discount.id}
 											/>
 										</TableCell>
 										<TableCell>

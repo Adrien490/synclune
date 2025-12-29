@@ -1,6 +1,6 @@
 "use server";
 
-import { requireAdmin } from "@/shared/lib/actions/auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { bulkDeactivateSkusSchema } from "../schemas/sku.schemas";

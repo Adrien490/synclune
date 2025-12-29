@@ -2,22 +2,21 @@
 
 import {
 	OrderStatus,
-	PaymentStatus,
 	FulfillmentStatus,
 } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { getSession } from "@/modules/auth/lib/get-current-session";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCarrierLabel, getTrackingUrl, toShippingCarrierEnum, type Carrier } from "@/modules/orders/services/carrier.service";
+import { getCarrierLabel, getTrackingUrl, toShippingCarrierEnum, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { revalidatePath, updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsShippedSchema } from "../schemas/order.schemas";
 import { createOrderAudit } from "../utils/order-audit";
+import { canMarkAsShipped } from "../services/order-status-validation.service";
 
 /**
  * Marque une commande comme expédiée
@@ -37,18 +36,9 @@ export async function markAsShipped(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
-
-		// Récupérer les infos de l'admin pour l'audit trail
-		const session = await getSession();
-		const adminId = session?.user?.id;
-		const adminName = session?.user?.name || "Admin";
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
 		const trackingNumber = formData.get("trackingNumber") as string;
@@ -100,27 +90,17 @@ export async function markAsShipped(
 			};
 		}
 
-		// Vérifier si déjà expédiée
-		if (order.status === OrderStatus.SHIPPED || order.status === OrderStatus.DELIVERED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.ALREADY_SHIPPED,
+		// Validation métier via le service
+		const shipValidation = canMarkAsShipped(order);
+		if (!shipValidation.canShip) {
+			const errorMessages: Record<string, string> = {
+				already_shipped: ORDER_ERROR_MESSAGES.ALREADY_SHIPPED,
+				cancelled: ORDER_ERROR_MESSAGES.CANNOT_SHIP_CANCELLED,
+				unpaid: ORDER_ERROR_MESSAGES.CANNOT_SHIP_UNPAID,
 			};
-		}
-
-		// Vérifier si annulée
-		if (order.status === OrderStatus.CANCELLED) {
 			return {
 				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_SHIP_CANCELLED,
-			};
-		}
-
-		// Vérifier si payée
-		if (order.paymentStatus !== PaymentStatus.PAID) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_SHIP_UNPAID,
+				message: errorMessages[shipValidation.reason],
 			};
 		}
 
@@ -151,8 +131,8 @@ export async function markAsShipped(
 			newStatus: OrderStatus.SHIPPED,
 			previousFulfillmentStatus: order.fulfillmentStatus,
 			newFulfillmentStatus: FulfillmentStatus.SHIPPED,
-			authorId: adminId,
-			authorName: adminName,
+			authorId: adminUser.id,
+			authorName: adminUser.name || "Admin",
 			source: "admin",
 			metadata: {
 				trackingNumber: result.data.trackingNumber,
@@ -167,6 +147,7 @@ export async function markAsShipped(
 		revalidatePath("/admin/ventes/commandes");
 
 		// Envoyer l'email de confirmation d'expédition au client
+		let emailSent = false;
 		if (result.data.sendEmail && order.customerEmail) {
 			const carrierLabel = getCarrierLabel(carrierValue);
 
@@ -176,31 +157,36 @@ export async function markAsShipped(
 				order.shippingFirstName ||
 				"Client";
 
-			await sendShippingConfirmationEmail({
-				to: order.customerEmail,
-				orderNumber: order.orderNumber,
-				customerName: customerFirstName,
-				trackingNumber: result.data.trackingNumber,
-				trackingUrl: finalTrackingUrl,
-				carrierLabel,
-				shippingAddress: {
-					firstName: order.shippingFirstName || "",
-					lastName: order.shippingLastName || "",
-					address1: order.shippingAddress1 || "",
-					address2: order.shippingAddress2,
-					postalCode: order.shippingPostalCode || "",
-					city: order.shippingCity || "",
-					country: order.shippingCountry || "France",
-				},
-				estimatedDelivery: "3-5 jours ouvrés",
-			});
+			try {
+				await sendShippingConfirmationEmail({
+					to: order.customerEmail,
+					orderNumber: order.orderNumber,
+					customerName: customerFirstName,
+					trackingNumber: result.data.trackingNumber,
+					trackingUrl: finalTrackingUrl,
+					carrierLabel,
+					shippingAddress: {
+						firstName: order.shippingFirstName || "",
+						lastName: order.shippingLastName || "",
+						address1: order.shippingAddress1 || "",
+						address2: order.shippingAddress2,
+						postalCode: order.shippingPostalCode || "",
+						city: order.shippingCity || "",
+						country: order.shippingCountry || "France",
+					},
+					estimatedDelivery: "3-5 jours ouvrés",
+				});
+				emailSent = true;
+			} catch (emailError) {
+				console.error("[MARK_AS_SHIPPED] Échec envoi email:", emailError);
+			}
 		}
 
-		const emailSent = result.data.sendEmail ? " Email envoyé au client." : "";
+		const emailMessage = emailSent ? " Email envoyé au client." : result.data.sendEmail ? " (Échec envoi email)" : "";
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} expédiée. Numéro de suivi : ${result.data.trackingNumber}.${emailSent}`,
+			message: `Commande ${order.orderNumber} expédiée. Numéro de suivi : ${result.data.trackingNumber}.${emailMessage}`,
 		};
 	} catch (error) {
 		console.error("[MARK_AS_SHIPPED]", error);

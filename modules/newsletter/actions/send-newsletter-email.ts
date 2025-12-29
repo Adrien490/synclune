@@ -3,15 +3,15 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { sendNewsletterEmail as sendEmail } from "@/modules/emails/services/newsletter-emails";
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { sanitizeForEmail, newlinesToBr } from "@/shared/lib/sanitize";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { sendNewsletterEmailSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 import { NEWSLETTER_BASE_URL } from "@/modules/newsletter/constants/urls.constants";
-
-// Configuration batching pour éviter surcharge mémoire
-const BATCH_SIZE = 100;
-const MAX_CONCURRENT_SENDS = 10;
+import {
+	NEWSLETTER_BATCH_SIZE,
+	NEWSLETTER_MAX_CONCURRENT_SENDS,
+} from "@/modules/newsletter/constants/subscriber.constants";
 
 export async function sendNewsletterEmail(
 	_previousState: ActionState | undefined,
@@ -72,15 +72,15 @@ export async function sendNewsletterEmail(
 					email: true,
 					unsubscribeToken: true,
 				},
-				take: BATCH_SIZE,
+				take: NEWSLETTER_BATCH_SIZE,
 				orderBy: { id: "asc" },
 			});
 
 			if (subscribers.length === 0) break;
 
-			// Traiter le batch en chunks de MAX_CONCURRENT_SENDS
-			for (let i = 0; i < subscribers.length; i += MAX_CONCURRENT_SENDS) {
-				const chunk = subscribers.slice(i, i + MAX_CONCURRENT_SENDS);
+			// Traiter le batch en chunks de NEWSLETTER_MAX_CONCURRENT_SENDS
+			for (let i = 0; i < subscribers.length; i += NEWSLETTER_MAX_CONCURRENT_SENDS) {
+				const chunk = subscribers.slice(i, i + NEWSLETTER_MAX_CONCURRENT_SENDS);
 
 				const sendPromises = chunk.map((subscriber) => {
 					const unsubscribeUrl = `${NEWSLETTER_BASE_URL}/newsletter/unsubscribe?token=${subscriber.unsubscribeToken}`;

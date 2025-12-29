@@ -1,6 +1,6 @@
 "use server";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
@@ -15,13 +15,8 @@ export async function bulkDeactivateProductTypes(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification des droits admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé. Droits administrateur requis.",
-			};
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		const rawData = {
 			ids: formData.get("ids") as string,

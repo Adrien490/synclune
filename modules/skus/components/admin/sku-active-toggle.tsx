@@ -1,6 +1,8 @@
 "use client";
 
-import { Switch } from "@/shared/components/ui/switch";
+import { useOptimistic, useTransition } from "react";
+
+import { ActiveToggle } from "@/shared/components/active-toggle";
 import { useUpdateProductSkuStatus } from "@/modules/skus/hooks/use-update-sku-status";
 import { useRouter } from "next/navigation";
 
@@ -16,6 +18,8 @@ export function ProductSkuActiveToggle({
 	isDefault,
 }: ProductSkuActiveToggleProps) {
 	const router = useRouter();
+	const [optimisticIsActive, setOptimisticIsActive] = useOptimistic(isActive);
+	const [isTransitionPending, startTransition] = useTransition();
 
 	const { isPending, toggleStatus } = useUpdateProductSkuStatus({
 		onSuccess: () => {
@@ -24,31 +28,33 @@ export function ProductSkuActiveToggle({
 	});
 
 	const handleToggle = (checked: boolean) => {
-		// Empêcher la désactivation de la variante principale
+		// Empecher la desactivation de la variante principale
 		if (isDefault && !checked) {
 			return;
 		}
 
-		toggleStatus(skuId, checked);
+		startTransition(() => {
+			// Mise a jour optimistic immediate
+			setOptimisticIsActive(checked);
+			// Appel serveur
+			toggleStatus(skuId, checked);
+		});
 	};
 
+	const isDefaultAndActive = isDefault && optimisticIsActive;
+
 	return (
-		<Switch
-			checked={isActive}
-			onCheckedChange={handleToggle}
-			disabled={isPending || (isDefault && isActive)}
-			aria-label={
-				isDefault && isActive
-					? "La variante principale ne peut pas être désactivée"
-					: isActive
-						? "Désactiver la variante"
-						: "Activer la variante"
+		<ActiveToggle
+			isActive={optimisticIsActive}
+			onToggle={handleToggle}
+			isPending={isPending || isTransitionPending}
+			disabled={isDefaultAndActive}
+			activeLabel={
+				isDefaultAndActive
+					? "La variante principale ne peut pas etre desactivee"
+					: "Desactiver la variante"
 			}
-			title={
-				isDefault && isActive
-					? "La variante principale ne peut pas être désactivée"
-					: undefined
-			}
+			inactiveLabel="Activer la variante"
 		/>
 	);
 }

@@ -1,23 +1,12 @@
-import { createStore } from "zustand/vanilla";
+import { createStore } from "zustand/vanilla"
 
-/**
- * Identifiants des sheets disponibles
- * Extensible pour futurs sheets
- */
-export type SheetId = "cart";
+import type {
+	SheetId,
+	SheetState,
+	SheetStore,
+} from "@/shared/types/store.types"
 
-export type SheetState = {
-	openSheet: SheetId | null;
-};
-
-export type SheetActions = {
-	open: (sheetId: SheetId) => void;
-	close: () => void;
-	toggle: (sheetId: SheetId) => void;
-	isOpen: (sheetId: SheetId) => boolean;
-};
-
-export type SheetStore = SheetState & SheetActions;
+export type { SheetId, SheetState, SheetActions, SheetStore } from "@/shared/types/store.types"
 
 export const defaultInitState: SheetState = {
 	openSheet: null,

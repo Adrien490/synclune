@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath, updateTag } from "next/cache";
@@ -83,11 +83,10 @@ export async function duplicateMaterial(materialId: string): Promise<ActionState
 			data: { id: duplicate.id, name: duplicate.name },
 		};
 	} catch (error) {
-		// console.error("[DUPLICATE_MATERIAL] Erreur:", error);
+		console.error("[DUPLICATE_MATERIAL] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error ? error.message : "Une erreur est survenue",
+			message: "Impossible de dupliquer le matériau",
 		};
 	}
 }

@@ -67,7 +67,7 @@ export function ReviewsList({
 			<ReviewPhotosGallery reviews={initialReviews} />
 
 			{/* Liste des avis */}
-			<div className="space-y-4" role="feed" aria-label="Liste des avis clients">
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4" role="feed" aria-label="Liste des avis clients">
 				{initialReviews.map((review, index) => (
 					<div
 						key={review.id}

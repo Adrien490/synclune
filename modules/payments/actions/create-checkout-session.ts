@@ -8,6 +8,7 @@ import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
+import { generateOrderNumber } from "@/modules/orders/services/order-generation.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
@@ -20,9 +21,10 @@ import { getShippingOptionsForAddress } from "@/modules/orders/constants/stripe-
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { checkDiscountEligibility } from "@/modules/discounts/utils/check-discount-eligibility";
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/services/discount-calculation.service";
-import { getShippingZoneFromPostalCode } from "@/modules/payments/services/postal-zone.service";
+import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zone.utils";
 import { getInvoiceFooter } from "@/shared/lib/stripe";
 import { getValidImageUrl } from "@/modules/payments/utils/validate-image-url";
+import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -215,7 +217,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 
 			lineItems.push({
 				price_data: {
-					currency: "EUR",
+					currency: DEFAULT_CURRENCY,
 					product_data: {
 						name: productName,
 						images: imageUrl ? [imageUrl] : undefined,
@@ -293,10 +295,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 			}
 
 			// 8b. Générer numéro de commande
-			const orderNumber = `CMD-${Date.now()}-${Math.random()
-				.toString(36)
-				.slice(2, 6)
-				.toUpperCase()}`;
+			const orderNumber = generateOrderNumber();
 
 			const shippingZoneInfo = getShippingZoneFromPostalCode(
 				validatedData.shippingAddress.postalCode
@@ -422,7 +421,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 					shippingCost,
 					taxAmount,
 					total,
-					currency: "EUR",
+					currency: DEFAULT_CURRENCY,
 
 					// === INFORMATIONS CLIENT ===
 					customerEmail: finalEmail || "",

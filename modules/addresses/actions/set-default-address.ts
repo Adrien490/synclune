@@ -1,34 +1,32 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { getCurrentUser } from "@/modules/users/data/get-current-user";
+import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
+import { validateInput, handleActionError } from "@/shared/lib/actions";
+import { addressIdSchema } from "../schemas/user-addresses.schemas";
 
 export async function setDefaultAddress(
 	_prev: ActionState | undefined,
 	formData: FormData
 ): Promise<ActionState> {
-	const addressId = formData.get("addressId") as string;
+	const validation = validateInput(addressIdSchema, {
+		addressId: formData.get("addressId"),
+	});
 
-	if (!addressId) {
-		return {
-			status: ActionStatus.ERROR,
-			message: "ID d'adresse manquant",
-		};
+	if ("error" in validation) {
+		return validation.error;
 	}
-	try {
-		const user = await getCurrentUser();
 
-		if (!user) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ADDRESS_ERROR_MESSAGES.NOT_AUTHENTICATED,
-			};
-		}
+	const { addressId } = validation.data;
+	try {
+		const auth = await requireAuth();
+		if ("error" in auth) return auth.error;
+		const { user } = auth;
 
 		const existingAddress = await prisma.address.findFirst({
 			where: { id: addressId, userId: user.id },
@@ -60,12 +58,7 @@ export async function setDefaultAddress(
 			status: ActionStatus.SUCCESS,
 			message: "Adresse par défaut modifiée",
 		};
-	} catch (error) {
-// console.error("Error setting default address:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error ? error.message : ADDRESS_ERROR_MESSAGES.SET_DEFAULT_FAILED,
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors du changement d'adresse par défaut");
 	}
 }

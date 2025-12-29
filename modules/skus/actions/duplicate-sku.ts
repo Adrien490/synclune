@@ -1,10 +1,11 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
+import { generateUniqueTechnicalName } from "@/shared/services/unique-name-generator.service";
 
 /**
  * Server Action ADMIN pour dupliquer un SKU (variante produit)
@@ -39,27 +40,23 @@ export async function duplicateSku(skuId: string): Promise<ActionState> {
 			};
 		}
 
-		// 3. Générer un nouveau code SKU unique
-		let newSku = `${original.sku}-COPY`;
-		let suffix = 1;
-
-		while (true) {
-			const existing = await prisma.productSku.findUnique({
-				where: { sku: newSku },
-			});
-
-			if (!existing) break;
-
-			suffix++;
-			newSku = `${original.sku}-COPY-${suffix}`;
-
-			if (suffix > 100) {
-				return {
-					status: ActionStatus.ERROR,
-					message: "Impossible de générer un code SKU unique. Supprimez certaines copies.",
-				};
+		// 3. Générer un nouveau code SKU unique via le service
+		const skuResult = await generateUniqueTechnicalName(
+			original.sku,
+			async (sku) => {
+				const existing = await prisma.productSku.findUnique({ where: { sku } });
+				return existing !== null;
 			}
+		);
+
+		if (!skuResult.success) {
+			return {
+				status: ActionStatus.ERROR,
+				message: skuResult.error ?? "Impossible de générer un code SKU unique",
+			};
 		}
+
+		const newSku = skuResult.name!;
 
 		// 4. Créer la copie du SKU
 		const duplicate = await prisma.productSku.create({
@@ -102,7 +99,7 @@ export async function duplicateSku(skuId: string): Promise<ActionState> {
 		console.error("[DUPLICATE_SKU] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: error instanceof Error ? error.message : "Une erreur est survenue",
+			message: "Impossible de dupliquer la variante",
 		};
 	}
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import { useSyncExternalStore } from "react";
 
 type Platform = "mac" | "windows" | "linux" | "unknown";
@@ -31,14 +33,9 @@ function getPlatform(): Platform {
 
 /**
  * Hook pour detecter la plateforme de l'utilisateur
- *
- * @returns La plateforme detectee ("mac" | "windows" | "linux" | "unknown")
- *
- * @example
- * const platform = usePlatform()
- * const shortcut = platform === "mac" ? "⌘K" : "Ctrl+K"
+ * @internal Utilisé uniquement par useIsMac
  */
-export function usePlatform(): Platform {
+function usePlatform(): Platform {
 	return useSyncExternalStore(
 		// Subscribe: la plateforme ne change pas, donc pas de listener
 		() => () => {},

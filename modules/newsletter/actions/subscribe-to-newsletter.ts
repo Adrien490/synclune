@@ -5,7 +5,7 @@ import { getClientIp } from "@/shared/lib/rate-limit";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { subscribeToNewsletterSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
-import { subscribeToNewsletterInternal } from "@/modules/newsletter/utils/subscribe-to-newsletter-internal";
+import { subscribeToNewsletterInternal } from "./subscribe-to-newsletter-internal";
 
 export async function subscribeToNewsletter(
 	_previousState: ActionState | undefined,

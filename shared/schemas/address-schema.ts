@@ -1,10 +1,16 @@
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { z } from "zod";
-import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "@/modules/addresses/constants/address.constants";
+import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "@/shared/constants/address.constants";
 import { SHIPPING_COUNTRIES, COUNTRY_ERROR_MESSAGE } from "../constants/countries";
 
 /**
- * Schéma de validation pour une adresse
+ * Schéma de validation pour une adresse (côté SERVEUR)
+ * Applique .trim() sur tous les champs texte et valide le pays
+ *
+ * Note: Pour la validation côté client (formulaires), utilisez addressFormSchema
+ * dans modules/addresses/schemas/address-form.schema.ts
+ *
+ * @see modules/addresses/schemas/address-form.schema.ts pour le schema formulaire
  */
 export const addressSchema = z.object({
 	firstName: z

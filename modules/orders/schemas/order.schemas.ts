@@ -8,6 +8,7 @@ import {
 	cursorSchema,
 	directionSchema,
 } from "@/shared/constants/pagination";
+import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
 	GET_ORDERS_DEFAULT_PER_PAGE,
@@ -53,28 +54,8 @@ export const orderFiltersSchema = z
 		fulfillmentStatus: fulfillmentStatusSchema,
 		totalMin: z.coerce.number().int().nonnegative().max(10000000).optional(),
 		totalMax: z.coerce.number().int().nonnegative().max(10000000).optional(),
-		createdAfter: z
-			.union([z.string(), z.date()])
-			.transform((val) => {
-				if (val instanceof Date) return val;
-				if (typeof val === "string") {
-					const date = new Date(val);
-					return isNaN(date.getTime()) ? undefined : date;
-				}
-				return undefined;
-			})
-			.optional(),
-		createdBefore: z
-			.union([z.string(), z.date()])
-			.transform((val) => {
-				if (val instanceof Date) return val;
-				if (typeof val === "string") {
-					const date = new Date(val);
-					return isNaN(date.getTime()) ? undefined : date;
-				}
-				return undefined;
-			})
-			.optional(),
+		createdAfter: stringOrDateSchema,
+		createdBefore: stringOrDateSchema,
 		showDeleted: z
 			.union([z.boolean(), z.enum(["true", "false"])])
 			.optional()
@@ -426,4 +407,37 @@ export const bulkMarkAsDeliveredSchema = z.object({
 export const bulkCancelOrdersSchema = z.object({
 	ids: z.array(z.cuid2()).min(1, "Au moins une commande doit être sélectionnée"),
 	reason: z.string().max(500).optional(),
+});
+
+// ============================================================================
+// ORDER NOTES SCHEMA
+// ============================================================================
+
+/**
+ * Schema pour l'ajout d'une note interne à une commande
+ * Réservé aux administrateurs
+ */
+export const addOrderNoteSchema = z.object({
+	orderId: z.cuid2({ message: "ID commande invalide" }),
+	content: z.string().min(1, "La note ne peut pas être vide").max(5000, "Note trop longue (max 5000 caractères)"),
+});
+
+/**
+ * Schema pour la suppression d'une note de commande
+ * Réservé aux administrateurs
+ */
+export const deleteOrderNoteSchema = z.object({
+	noteId: z.cuid2({ message: "ID note invalide" }),
+});
+
+// ============================================================================
+// GET ORDER BY ID SCHEMA
+// ============================================================================
+
+/**
+ * Schema pour récupérer une commande par son ID
+ * Utilisé par la couche data
+ */
+export const getOrderByIdSchema = z.object({
+	id: z.cuid2(),
 });

@@ -1,21 +1,11 @@
 import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
 import type { GetProductsParams, ProductFilters } from "../types/product.types";
+import type { SearchResult } from "../types/product-services.types";
 
-import { FUZZY_MIN_LENGTH, SEARCH_RATE_LIMITS } from "../constants/search.constants";
+import { FUZZY_MIN_LENGTH } from "../constants/search.constants";
 import { fuzzySearchProductIds } from "./fuzzy-search";
-import { getRateLimitId } from "@/shared/lib/actions/rate-limit";
-import { checkRateLimit } from "@/shared/lib/rate-limit";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export type SearchResult = {
-	/** IDs de produits triés par pertinence (fuzzy search) */
-	fuzzyIds: string[] | null;
-	/** Conditions de recherche exacte (SKU, couleurs, etc.) */
-	exactConditions: Prisma.ProductWhereInput[];
-};
+export type { SearchResult } from "../types/product-services.types";
 
 // ============================================================================
 // PRODUCT SEARCH BUILDER
@@ -24,14 +14,14 @@ export type SearchResult = {
 /**
  * Construit les conditions de recherche hybride (fuzzy + exact)
  *
- * - >= 3 caractères : fuzzy sur title/description + exact sur autres champs
- * - < 3 caractères : exact seulement sur tous les champs
+ * - >= 3 caracteres : fuzzy sur title/description + exact sur autres champs
+ * - < 3 caracteres : exact seulement sur tous les champs
  *
- * Protection rate limiting intégrée (30 req/min auth, 15 req/min guest)
+ * Note: Le rate limiting doit etre gere au niveau data/ (get-products.ts)
  *
  * @param search - Terme de recherche
  * @param options - Options (status pour filtrer les produits)
- * @returns Résultat de recherche avec IDs fuzzy et conditions exactes
+ * @returns Resultat de recherche avec IDs fuzzy et conditions exactes
  */
 export async function buildSearchConditions(
 	search: string,
@@ -39,31 +29,6 @@ export async function buildSearchConditions(
 ): Promise<SearchResult> {
 	const term = search.trim();
 	if (!term) return { fuzzyIds: null, exactConditions: [] };
-
-	// Rate limiting: protège contre le scraping et les abus
-	try {
-		const rateLimitId = await getRateLimitId();
-		const isAuthenticated = rateLimitId.startsWith("user:");
-		const limits = isAuthenticated
-			? SEARCH_RATE_LIMITS.authenticated
-			: SEARCH_RATE_LIMITS.guest;
-
-		const rateLimitResult = checkRateLimit(`search:${rateLimitId}`, limits);
-		if (!rateLimitResult.success) {
-			// Fallback silencieux: retourne recherche exacte seulement
-			// L'utilisateur verra moins de résultats mais pas d'erreur visible
-			console.warn("[search] Rate limit exceeded:", {
-				identifier: rateLimitId,
-				retryAfter: rateLimitResult.retryAfter,
-			});
-			return {
-				fuzzyIds: null,
-				exactConditions: buildFullExactSearchConditions(term),
-			};
-		}
-	} catch {
-		// En cas d'erreur rate limit, continuer sans bloquer
-	}
 
 	// Recherche courte (< 3 chars) : exact seulement sur tous les champs
 	if (term.length < FUZZY_MIN_LENGTH) {
@@ -82,6 +47,19 @@ export async function buildSearchConditions(
 	const exactConditions = buildRelatedFieldsSearchConditions(term);
 
 	return { fuzzyIds, exactConditions };
+}
+
+/**
+ * Version exacte seulement (fallback si rate limit depasse)
+ * Exportee pour etre utilisee par le data layer
+ */
+export function buildExactSearchConditions(search: string): SearchResult {
+	const term = search.trim();
+	if (!term) return { fuzzyIds: null, exactConditions: [] };
+	return {
+		fuzzyIds: null,
+		exactConditions: buildFullExactSearchConditions(term),
+	};
 }
 
 /**

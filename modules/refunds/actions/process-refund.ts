@@ -1,8 +1,7 @@
 "use server";
 
 import { Prisma, PaymentStatus, RefundAction, RefundStatus } from "@/app/generated/prisma/client";
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -57,13 +56,9 @@ export async function processRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
 
@@ -74,9 +69,6 @@ export async function processRefund(
 				message: result.error.issues[0]?.message || "ID invalide",
 			};
 		}
-
-		// Récupérer la session pour l'historique
-		const session = await getSession();
 
 		// ========================================================================
 		// ÉTAPE 1: Verrouillage atomique et validation (FOR UPDATE)
@@ -145,7 +137,7 @@ export async function processRefund(
 				data: {
 					refundId: id,
 					action: RefundAction.PROCESSED,
-					authorId: session?.user?.id,
+					authorId: adminUser.id,
 					note: "Envoi vers Stripe en cours",
 				},
 			});
@@ -186,7 +178,7 @@ export async function processRefund(
 					data: {
 						refundId: id,
 						action: RefundAction.FAILED,
-						authorId: session?.user?.id,
+						authorId: adminUser.id,
 						note: `Échec Stripe: ${stripeResult.error || "Erreur inconnue"}`,
 					},
 				});
@@ -214,7 +206,7 @@ export async function processRefund(
 					data: {
 						refundId: id,
 						action: RefundAction.PROCESSED,
-						authorId: session?.user?.id,
+						authorId: adminUser.id,
 						note: `Remboursement Stripe en attente de confirmation (${stripeResult.refundId})`,
 					},
 				});
@@ -247,7 +239,7 @@ export async function processRefund(
 				data: {
 					refundId: id,
 					action: RefundAction.COMPLETED,
-					authorId: session?.user?.id,
+					authorId: adminUser.id,
 					note: `Remboursement Stripe confirmé: ${stripeResult.refundId}`,
 				},
 			});

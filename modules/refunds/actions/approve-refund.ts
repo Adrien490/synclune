@@ -1,14 +1,14 @@
 "use server";
 
 import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
 
 import { sendRefundApprovedEmail } from "@/modules/emails/services/refund-emails";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { approveRefundSchema } from "../schemas/refund.schemas";
@@ -22,13 +22,9 @@ export async function approveRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.UNAUTHORIZED,
-				message: "Accès non autorisé",
-			};
-		}
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const id = formData.get("id") as string;
 
@@ -86,9 +82,6 @@ export async function approveRefund(
 			};
 		}
 
-		// Récupérer la session pour l'historique
-		const session = await getSession();
-
 		// Mettre à jour le statut et créer l'entrée d'historique
 		await prisma.$transaction(async (tx) => {
 			await tx.refund.update({
@@ -102,7 +95,7 @@ export async function approveRefund(
 				data: {
 					refundId: id,
 					action: RefundAction.APPROVED,
-					authorId: session?.user?.id,
+					authorId: adminUser.id,
 				},
 			});
 		});
@@ -113,7 +106,7 @@ export async function approveRefund(
 		if (refund.order.user?.email) {
 			try {
 				const isPartialRefund = refund.amount < refund.order.total;
-				const orderDetailsUrl = `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000"}/mon-compte/commandes/${refund.order.id}`;
+				const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.id));
 
 				await sendRefundApprovedEmail({
 					to: refund.order.user.email,

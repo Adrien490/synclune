@@ -6,15 +6,9 @@ import { updateTag } from "next/cache";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { isAdmin } from "@/modules/auth/utils/guards";
-import { z } from "zod";
-
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { getDiscountInvalidationTags } from "../constants/cache";
-
-const bulkToggleDiscountStatusSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins un code doit être sélectionné"),
-	isActive: z.boolean(),
-});
+import { bulkToggleDiscountStatusSchema } from "../schemas/discount.schemas";
 
 /**
  * Active ou désactive plusieurs codes promo en masse
@@ -25,10 +19,8 @@ export async function bulkToggleDiscountStatus(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return { status: ActionStatus.UNAUTHORIZED, message: "Accès non autorisé" };
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		const idsRaw = formData.getAll("ids");
 		const isActiveRaw = formData.get("isActive");

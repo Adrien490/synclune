@@ -5,64 +5,25 @@ import {
 	buildCursorPagination,
 	processCursorResults,
 } from "@/shared/components/cursor-pagination/pagination";
-import { getSortDirection } from "@/shared/utils/sort-direction";
 import { STOCK_NOTIFICATIONS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import {
+	buildStockNotificationWhereClause,
+	buildStockNotificationOrderBy,
+} from "../services/stock-notifications-query-builder";
+import type {
+	GetStockNotificationsAdminParams,
+	GetStockNotificationsAdminReturn,
+	StockNotificationsStats,
+} from "../types/stock-notification.types";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-export interface StockNotificationAdminFilters {
-	status?: StockNotificationStatus;
-	search?: string;
-}
-
-export interface GetStockNotificationsAdminParams {
-	cursor?: string;
-	direction?: "forward" | "backward";
-	perPage?: number;
-	sortBy?: string;
-	filters?: StockNotificationAdminFilters;
-}
-
-export interface StockNotificationAdmin {
-	id: string;
-	email: string;
-	status: StockNotificationStatus;
-	createdAt: Date;
-	notifiedAt: Date | null;
-	sku: {
-		id: string;
-		sku: string;
-		inventory: number;
-		priceInclTax: number;
-		color: { name: string; hex: string } | null;
-		material: { id: string; name: string } | null;
-		size: string | null;
-		images: { url: string; blurDataUrl: string | null; isPrimary: boolean }[];
-		product: {
-			id: string;
-			slug: string;
-			title: string;
-		};
-	};
-	user: {
-		id: string;
-		name: string | null;
-		email: string;
-	} | null;
-}
-
-export interface GetStockNotificationsAdminReturn {
-	notifications: StockNotificationAdmin[];
-	pagination: {
-		nextCursor: string | null;
-		prevCursor: string | null;
-		hasNextPage: boolean;
-		hasPreviousPage: boolean;
-	};
-}
+export type {
+	StockNotificationAdminFilters,
+	GetStockNotificationsAdminParams,
+	StockNotificationAdmin,
+	GetStockNotificationsAdminReturn,
+	StockNotificationsStats,
+} from "../types/stock-notification.types";
 
 // ============================================================================
 // CONSTANTS
@@ -148,58 +109,14 @@ export async function getStockNotificationsAdmin(
 	cacheTag(STOCK_NOTIFICATIONS_CACHE_TAGS.PENDING_LIST);
 
 	try {
-		const { cursor, direction, sortBy, filters } = params;
+		const { cursor, direction, sortBy } = params;
 		const perPage = Math.min(
 			Math.max(1, params.perPage || DEFAULT_PER_PAGE),
 			MAX_PER_PAGE
 		);
 
-		// Build where clause
-		// ⚠️ AUDIT FIX: Filtre deletedAt sur la notification elle-même + utilisateurs soft-deleted
-		const where: Prisma.StockNotificationRequestWhereInput = {
-			deletedAt: null, // Exclure les notifications soft-deleted
-			OR: [
-				{ user: null }, // Visiteurs anonymes
-				{ user: { deletedAt: null } }, // Utilisateurs actifs
-			],
-		};
-
-		if (filters?.status) {
-			where.status = filters.status;
-		}
-
-		if (filters?.search) {
-			where.AND = [
-				{
-					OR: [
-						{ email: { contains: filters.search, mode: "insensitive" } },
-						{
-							sku: {
-								product: {
-									title: { contains: filters.search, mode: "insensitive" },
-								},
-							},
-						},
-					],
-				},
-			];
-		}
-
-		// Build order by
-		const sortDirection = getSortDirection(sortBy || "created-descending");
-		let orderBy: Prisma.StockNotificationRequestOrderByWithRelationInput[] = [
-			{ createdAt: sortDirection },
-			{ id: "asc" },
-		];
-
-		if (sortBy?.startsWith("status-")) {
-			orderBy = [{ status: sortDirection }, { id: "asc" }];
-		} else if (sortBy?.startsWith("product-")) {
-			orderBy = [
-				{ sku: { product: { title: sortDirection } } },
-				{ id: "asc" },
-			];
-		}
+		const where = buildStockNotificationWhereClause(params);
+		const orderBy = buildStockNotificationOrderBy(sortBy);
 
 		// Pagination
 		const cursorConfig = buildCursorPagination({
@@ -243,12 +160,6 @@ export async function getStockNotificationsAdmin(
 // ============================================================================
 // STATS
 // ============================================================================
-
-export interface StockNotificationsStats {
-	totalPending: number;
-	notifiedThisMonth: number;
-	skusWithPendingRequests: number;
-}
 
 /**
  * Récupère les statistiques pour l'admin

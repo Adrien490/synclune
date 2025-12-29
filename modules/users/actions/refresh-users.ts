@@ -2,7 +2,8 @@
 
 import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdmin, success, handleActionError } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { success, handleActionError } from "@/shared/lib/actions";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export async function refreshUsers(

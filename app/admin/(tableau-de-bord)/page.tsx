@@ -6,7 +6,7 @@ import { connection } from "next/server";
 import { KpiCard } from "@/modules/dashboard/components/kpi-card";
 import { RevenueChart } from "@/modules/dashboard/components/revenue-chart";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
-import { DashboardErrorBoundary } from "@/modules/dashboard/components/dashboard-error-boundary";
+import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
 import {
 	KpisSkeleton,
@@ -37,7 +37,7 @@ export default async function AdminDashboardPage() {
 
 			<div className="space-y-6">
 				{/* 3 KPIs en grille */}
-				<DashboardErrorBoundary
+				<ErrorBoundary
 					fallback={
 						<ChartError
 							title="Erreur de chargement"
@@ -56,11 +56,11 @@ export default async function AdminDashboardPage() {
 					>
 						<DashboardKpis />
 					</Suspense>
-				</DashboardErrorBoundary>
+				</ErrorBoundary>
 
 				{/* Graphique revenus 30j + Commandes récentes */}
 				<div className="grid gap-6 lg:grid-cols-2">
-					<DashboardErrorBoundary
+					<ErrorBoundary
 						fallback={
 							<ChartError
 								title="Erreur de chargement"
@@ -79,9 +79,9 @@ export default async function AdminDashboardPage() {
 						>
 							<RevenueChartWrapper />
 						</Suspense>
-					</DashboardErrorBoundary>
+					</ErrorBoundary>
 
-					<DashboardErrorBoundary
+					<ErrorBoundary
 						fallback={
 							<ChartError
 								title="Erreur de chargement"
@@ -100,7 +100,7 @@ export default async function AdminDashboardPage() {
 						>
 							<RecentOrdersWrapper />
 						</Suspense>
-					</DashboardErrorBoundary>
+					</ErrorBoundary>
 				</div>
 			</div>
 		</>

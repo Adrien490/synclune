@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CheckCircle2, Download, Loader2 } from "lucide-react";
-import { useEffect } from "react";
 import { useExportSubscribers } from "@/modules/newsletter/hooks/use-export-subscribers";
 
 /**
@@ -25,31 +24,7 @@ import { useExportSubscribers } from "@/modules/newsletter/hooks/use-export-subs
  * Télécharge automatiquement le CSV au succès
  */
 export function ExportSubscribersButton() {
-	const { action, isPending, state, downloadCSV } = useExportSubscribers();
-
-	// Télécharger automatiquement le CSV au succès
-	useEffect(() => {
-		if (
-			state.status === ActionStatus.SUCCESS &&
-			state.data &&
-			typeof state.data === "object" &&
-			"csv" in state.data &&
-			"filename" in state.data
-		) {
-			const { csv, filename } = state.data as {
-				csv: string;
-				filename: string;
-			};
-			downloadCSV(csv, filename);
-		}
-	}, [state.status, state.data, downloadCSV]);
-
-	const handleExport = (status: "all" | "active" | "inactive") => {
-		const formData = new FormData();
-		formData.append("status", status);
-		formData.append("format", "csv");
-		action(formData);
-	};
+	const { handleExport, isPending, state } = useExportSubscribers();
 
 	return (
 		<DropdownMenu>
@@ -64,7 +39,7 @@ export function ExportSubscribersButton() {
 							<Loader2 className="w-4 h-4 mr-2 animate-spin" />
 							Export en cours...
 						</>
-					) : state.status === ActionStatus.SUCCESS ? (
+					) : state?.status === ActionStatus.SUCCESS ? (
 						<>
 							<CheckCircle2 className="w-4 h-4 mr-2 text-secondary-foreground" />
 							Exporté

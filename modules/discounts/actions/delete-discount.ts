@@ -7,7 +7,7 @@ import { deleteDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 
 import { getDiscountInvalidationTags } from "../constants/cache";
 
@@ -23,10 +23,8 @@ export async function deleteDiscount(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await isAdmin();
-		if (!admin) {
-			return { status: ActionStatus.UNAUTHORIZED, message: "Accès non autorisé" };
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		const id = formData.get("id") as string;
 

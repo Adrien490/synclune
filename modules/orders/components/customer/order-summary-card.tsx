@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Receipt } from "lucide-react";
@@ -15,13 +16,6 @@ interface OrderSummaryCardProps {
 		currency: string;
 	};
 }
-
-const formatPrice = (priceInCents: number) => {
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: "EUR",
-	}).format(priceInCents / 100);
-};
 
 export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 	return (
@@ -51,12 +45,12 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 				<div className="space-y-2 text-sm">
 					<div className="flex justify-between">
 						<span className="text-muted-foreground">Sous-total</span>
-						<span>{formatPrice(order.subtotal)}</span>
+						<span>{formatEuro(order.subtotal)}</span>
 					</div>
 					{order.discountAmount > 0 && (
 						<div className="flex justify-between text-green-600">
 							<span>Réduction</span>
-							<span>-{formatPrice(order.discountAmount)}</span>
+							<span>-{formatEuro(order.discountAmount)}</span>
 						</div>
 					)}
 					<div className="flex justify-between">
@@ -64,7 +58,7 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 						<span>
 							{order.shippingCost === 0
 								? "Offerte"
-								: formatPrice(order.shippingCost)}
+								: formatEuro(order.shippingCost)}
 						</span>
 					</div>
 				</div>
@@ -74,7 +68,7 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 				{/* Total */}
 				<div className="flex justify-between items-center">
 					<span className="font-semibold">Total</span>
-					<span className="text-lg font-bold">{formatPrice(order.total)}</span>
+					<span className="text-lg font-bold">{formatEuro(order.total)}</span>
 				</div>
 			</CardContent>
 		</Card>

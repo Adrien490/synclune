@@ -11,6 +11,10 @@ import {
 	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
 	GET_PRODUCTS_SORT_FIELDS,
 } from "../constants/product.constants";
+import {
+	isAllowedMediaDomain,
+	ALLOWED_MEDIA_DOMAINS,
+} from "@/shared/lib/media-validation";
 
 // ============================================================================
 // HELPERS
@@ -116,45 +120,27 @@ export const getProductsSchema = z.object({
 // ============================================================================
 
 /**
- * Domaines autorises pour les URLs de medias (securite)
- * Seuls les fichiers uploades via UploadThing sont acceptes
+ * Helper pour validation des URLs de medias
+ * Utilise la fonction centralisee avec tous les domaines autorises
  */
-const ALLOWED_MEDIA_DOMAINS = [
-	"utfs.io",
-	"ufs.sh",
-	"uploadthing.com",
-	"uploadthing-prod.s3.us-west-2.amazonaws.com",
-];
-
-/**
- * Verifie si une URL provient d'un domaine autorise
- */
-const isAllowedMediaDomain = (url: string): boolean => {
-	try {
-		const hostname = new URL(url).hostname;
-		return ALLOWED_MEDIA_DOMAINS.some(
-			(domain) => hostname === domain || hostname.endsWith(`.${domain}`)
-		);
-	} catch {
-		return false;
-	}
-};
+const validateMediaUrl = (url: string): boolean =>
+	isAllowedMediaDomain(url, ALLOWED_MEDIA_DOMAINS);
 
 /**
  * Schema pour un media (image ou video)
- * Securise: n'accepte que les URLs provenant d'UploadThing
+ * Securise: n'accepte que les URLs provenant de domaines autorises
  */
 const imageSchema = z.object({
 	url: z
 		.string()
 		.url({ message: "L'URL du media doit être valide" })
-		.refine(isAllowedMediaDomain, {
-			message: "L'URL du média doit provenir d'un domaine autorisé (UploadThing)",
+		.refine(validateMediaUrl, {
+			message: "L'URL du média doit provenir d'un domaine autorisé",
 		}),
 	thumbnailUrl: z
 		.string()
 		.url()
-		.refine(isAllowedMediaDomain, {
+		.refine(validateMediaUrl, {
 			message: "L'URL de la miniature doit provenir d'un domaine autorisé",
 		})
 		.optional()
@@ -220,7 +206,7 @@ const initialSkuSchema = z.object({
 
 // Schema pour SKU par defaut (pour update)
 const defaultSkuSchema = z.object({
-	skuId: z.cuid({ error: "ID SKU invalide" }),
+	skuId: z.cuid2({ message: "ID SKU invalide" }),
 
 	// Prix en euros (sera converti en centimes cote serveur)
 	priceInclTaxEuros: z.coerce
@@ -304,7 +290,7 @@ export const createProductSchema = z
 
 		// Collections (many-to-many)
 		collectionIds: z
-			.array(z.cuid())
+			.array(z.cuid2({ message: "ID collection invalide" }))
 			.max(10, { error: "Un produit ne peut appartenir qu'a 10 collections maximum" })
 			.optional()
 			.default([]),
@@ -346,7 +332,7 @@ export const createProductSchema = z
 export const updateProductSchema = z
 	.object({
 		// Product ID (required for update)
-		productId: z.cuid({ error: "ID produit invalide" }),
+		productId: z.cuid2({ message: "ID produit invalide" }),
 
 		// Product fields (modifiables)
 		title: z
@@ -373,7 +359,7 @@ export const updateProductSchema = z
 
 		// Collections (many-to-many)
 		collectionIds: z
-			.array(z.cuid())
+			.array(z.cuid2({ message: "ID collection invalide" }))
 			.max(10, { error: "Un produit ne peut appartenir qu'a 10 collections maximum" })
 			.optional()
 			.default([]),

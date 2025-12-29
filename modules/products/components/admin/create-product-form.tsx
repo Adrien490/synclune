@@ -119,10 +119,6 @@ export function CreateProductForm({
 			</form.Subscribe>
 
 			<div className="space-y-6">
-				<form.AppForm>
-					<form.FormErrorDisplay />
-				</form.AppForm>
-
 				{/* Visuels */}
 				<form.Field
 						name="initialSku.media"
@@ -358,23 +354,13 @@ export function CreateProductForm({
 								}}
 							>
 								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel optional>Description</FieldLabel>
-										<field.TextareaGroupField rows={3}>
-											<InputGroupAddon align="block-end">
-												<InputGroupText
-													className={cn(
-														"text-xs ml-auto",
-														(field.state.value?.length || 0) > 500
-															? "text-destructive"
-															: "text-muted-foreground"
-													)}
-												>
-													{field.state.value?.length || 0} / 500 caractères
-												</InputGroupText>
-											</InputGroupAddon>
-										</field.TextareaGroupField>
-									</div>
+									<field.TextareaField
+										label="Description"
+										optional
+										rows={3}
+										maxLength={500}
+										showCounter
+									/>
 								)}
 							</form.AppField>
 

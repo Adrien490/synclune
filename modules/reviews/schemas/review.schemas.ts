@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { isAllowedMediaDomain } from "@/shared/lib/media-validation"
+import { stringOrDateSchema } from "@/shared/schemas/date.schemas"
 import { REVIEW_CONFIG } from "../constants/review.constants"
 
 // ============================================================================
@@ -189,14 +190,8 @@ export const reviewFiltersSchema = z.object({
 	productId: z.cuid().optional(),
 	userId: z.cuid().optional(),
 	hasResponse: z.coerce.boolean().optional(),
-	dateFrom: z
-		.union([z.string(), z.date()])
-		.optional()
-		.transform((val) => (val ? new Date(val) : undefined)),
-	dateTo: z
-		.union([z.string(), z.date()])
-		.optional()
-		.transform((val) => (val ? new Date(val) : undefined)),
+	dateFrom: stringOrDateSchema,
+	dateTo: stringOrDateSchema,
 })
 
 export type ReviewFilters = z.infer<typeof reviewFiltersSchema>

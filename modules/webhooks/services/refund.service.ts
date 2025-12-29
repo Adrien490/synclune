@@ -3,26 +3,11 @@ import { PaymentStatus, RefundStatus, RefundAction, CurrencyCode } from "@/app/g
 import { prisma } from "@/shared/lib/prisma";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
+import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import type { RefundSyncResult, RefundRecord } from "../types/webhook.types";
 
-// Types pour les résultats des services
-export interface RefundSyncResult {
-	processed: boolean;
-	isFullyRefunded: boolean;
-	totalRefunded: number;
-}
-
-export interface RefundRecord {
-	id: string;
-	status: RefundStatus;
-	amount: number;
-	orderId: string;
-	order: {
-		id: string;
-		orderNumber: string;
-		customerEmail: string | null;
-		stripePaymentIntentId: string | null;
-	};
-}
+// Re-export types for backwards compatibility
+export type { RefundSyncResult, RefundRecord };
 
 /**
  * Synchronise les remboursements Stripe avec la base de données
@@ -144,8 +129,8 @@ export async function sendRefundConfirmation(
 	reason: string
 ): Promise<void> {
 	try {
-		const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
-		const orderDetailsUrl = `${baseUrl}/mon-compte/commandes/${orderNumber}`;
+		const baseUrl = getBaseUrl();
+		const orderDetailsUrl = `${baseUrl}${ROUTES.ACCOUNT.ORDER_DETAIL(orderNumber)}`;
 
 		await sendRefundConfirmationEmail({
 			to: customerEmail,
@@ -301,7 +286,7 @@ export async function sendRefundFailedAlert(
 	failureReason: string
 ): Promise<void> {
 	try {
-		const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL || "https://synclune.fr";
+		const baseUrl = getBaseUrl();
 		const dashboardUrl = `${baseUrl}/admin/ventes/remboursements`;
 
 		await sendAdminRefundFailedAlert({

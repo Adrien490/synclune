@@ -15,7 +15,7 @@ import { useOrderNotes } from "@/modules/orders/hooks/use-order-notes";
 import {
 	getOrderNotes,
 	type OrderNoteItem,
-} from "@/modules/orders/actions/get-order-notes";
+} from "@/modules/orders/data/get-order-notes";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2, MessageSquarePlus, StickyNote, Trash2 } from "lucide-react";

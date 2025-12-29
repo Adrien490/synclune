@@ -4,6 +4,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
 import { generateThumbHashWithRetry } from "@/modules/media/services/generate-thumbhash";
+import { UPLOAD_LIMITS } from "@/modules/media/constants/upload-limits";
 
 /**
  * Génère un ThumbHash placeholder avec retry, retourne undefined en cas d'échec
@@ -109,11 +110,11 @@ export const ourFileRouter = {
 				throw new UploadThingError("Seuls les administrateurs peuvent uploader des photos de témoignages");
 			}
 
-			// 2. Rate limiting (5 uploads/minute)
+			// 2. Rate limiting
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
 			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
-			const rateLimit = checkRateLimit(rateLimitId, { limit: 5, windowMs: 60000 });
+			const rateLimit = checkRateLimit(rateLimitId, UPLOAD_LIMITS.TESTIMONIAL);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
@@ -158,11 +159,11 @@ export const ourFileRouter = {
 				throw new UploadThingError("Seuls les administrateurs peuvent uploader des médias de catalogue");
 			}
 
-			// 2. Rate limiting (10 uploads/minute pour catalogue)
+			// 2. Rate limiting
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
 			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
-			const rateLimit = checkRateLimit(rateLimitId, { limit: 10, windowMs: 60000 });
+			const rateLimit = checkRateLimit(rateLimitId, UPLOAD_LIMITS.CATALOG);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
@@ -230,7 +231,7 @@ export const ourFileRouter = {
 			// 1. Authentification optionnelle
 			const session = await getSession();
 
-			// 2. Rate limiting STRICT pour endpoint public (3 uploads/10min par IP)
+			// 2. Rate limiting STRICT pour endpoint public
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
 			const rateLimitId = getRateLimitIdentifier(
@@ -238,10 +239,7 @@ export const ourFileRouter = {
 				null,
 				clientIp
 			);
-			const rateLimit = checkRateLimit(rateLimitId, {
-				limit: 3,
-				windowMs: 10 * 60 * 1000, // 10 minutes
-			});
+			const rateLimit = checkRateLimit(rateLimitId, UPLOAD_LIMITS.CONTACT_ATTACHMENT);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
@@ -298,11 +296,11 @@ export const ourFileRouter = {
 				throw new UploadThingError("Vous devez être connecté pour ajouter des photos à votre avis");
 			}
 
-			// 2. Rate limiting (5 uploads/minute)
+			// 2. Rate limiting
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
 			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
-			const rateLimit = checkRateLimit(rateLimitId, { limit: 5, windowMs: 60000 });
+			const rateLimit = checkRateLimit(rateLimitId, UPLOAD_LIMITS.REVIEW_MEDIA);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(

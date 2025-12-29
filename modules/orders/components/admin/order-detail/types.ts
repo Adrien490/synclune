@@ -1,5 +1,5 @@
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
-import type { OrderRefundItem } from "@/modules/orders/actions/get-order-refunds";
+import type { OrderRefundItem } from "@/modules/orders/data/get-order-refunds";
 import type {
 	OrderStatus,
 	PaymentStatus,

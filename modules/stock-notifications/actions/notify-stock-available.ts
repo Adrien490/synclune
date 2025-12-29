@@ -4,7 +4,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { sendBackInStockEmail } from "@/modules/emails/services/stock-emails";
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { getNotifyStockInvalidationTags } from "../constants/cache";
 import {
@@ -13,6 +13,7 @@ import {
 	STOCK_NOTIFICATION_EMAIL_CONCURRENCY,
 	STOCK_NOTIFICATION_WITH_SKU_SELECT,
 } from "../constants/stock-notification.constants";
+import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import type { NotifyStockAvailableResult } from "../types/stock-notification.types";
 
 /**
@@ -115,8 +116,8 @@ export async function notifyStockAvailable(
 		result.totalNotifications = pendingNotifications.length;
 
 		// Construire les URLs
-		const baseUrl = process.env.BETTER_AUTH_URL || "https://synclune.fr";
-		const productUrl = `${baseUrl}/creations/${sku.product.slug}`;
+		const baseUrl = getBaseUrl();
+		const productUrl = `${baseUrl}${ROUTES.SHOP.PRODUCT(sku.product.slug)}`;
 		const skuImageUrl = sku.images[0]?.url || null;
 
 		// Collecter les IDs des notifications réussies pour batch update

@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/shared/lib/actions";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath, updateTag } from "next/cache";
@@ -104,7 +104,7 @@ export async function updateProductCollections(
 		console.error("[UPDATE_PRODUCT_COLLECTIONS] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: error instanceof Error ? error.message : "Une erreur est survenue",
+			message: "Impossible de mettre à jour les collections du produit",
 		};
 	}
 }

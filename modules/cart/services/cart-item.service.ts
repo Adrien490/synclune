@@ -1,4 +1,17 @@
+/**
+ * Service de calcul des propriétés d'un item du panier
+ *
+ * Ce module contient les fonctions pures pour :
+ * - Calculer le sous-total d'un item
+ * - Vérifier la disponibilité (stock, statut)
+ * - Calculer les réductions
+ */
+
 import type { CartItem } from "../types/cart.types";
+
+// ============================================================================
+// CALCULS DE PRIX
+// ============================================================================
 
 /**
  * Calcule le sous-total d'un item (prix * quantité)
@@ -6,6 +19,10 @@ import type { CartItem } from "../types/cart.types";
 export function getCartItemSubtotal(item: CartItem): number {
 	return item.priceAtAdd * item.quantity;
 }
+
+// ============================================================================
+// VÉRIFICATIONS DE DISPONIBILITÉ
+// ============================================================================
 
 /**
  * Vérifie si l'item est en rupture de stock
@@ -28,6 +45,10 @@ export function hasCartItemIssue(item: CartItem): boolean {
 	return isCartItemOutOfStock(item) || isCartItemInactive(item);
 }
 
+// ============================================================================
+// CALCULS DE RÉDUCTION
+// ============================================================================
+
 /**
  * Vérifie si l'item a une réduction
  */
@@ -46,6 +67,10 @@ export function getCartItemDiscountPercent(item: CartItem): number {
 		((item.sku.compareAtPrice - item.priceAtAdd) / item.sku.compareAtPrice) * 100
 	);
 }
+
+// ============================================================================
+// ACCESSEURS
+// ============================================================================
 
 /**
  * Récupère l'image principale du SKU

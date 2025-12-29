@@ -1,5 +1,3 @@
-"use server";
-
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { z } from "zod";
 import {
@@ -8,7 +6,7 @@ import {
 } from "../constants/sku.constants";
 import { getProductSkusSchema } from "../schemas/get-skus.schemas";
 import { GetProductSkusParams, GetProductSkusReturn } from "../types/skus.types";
-import { fetchProductSkus } from "../utils/fetch-skus";
+import { fetchProductSkus } from "./fetch-skus";
 
 /**
  * Action serveur pour récupérer les SKUs de produits (admin uniquement)

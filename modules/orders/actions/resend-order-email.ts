@@ -1,7 +1,7 @@
 "use server";
 
 import { OrderStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	sendOrderConfirmationEmail,
@@ -11,7 +11,8 @@ import {
 import { sendReviewRequestEmailInternal } from "@/modules/reviews/actions/send-review-request-email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { getCarrierLabel, type Carrier } from "@/modules/orders/services/carrier.service";
+import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { ResendEmailType } from "../types/email.types";
 
 // Re-export du type pour compatibilité
@@ -26,13 +27,8 @@ export async function resendOrderEmail(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
-		const admin = await isAdmin();
-		if (!admin) {
-			return {
-				status: ActionStatus.FORBIDDEN,
-				message: "Accès réservé aux administrateurs",
-			};
-		}
+		const admin = await requireAdmin();
+		if ("error" in admin) return admin.error;
 
 		// 2. Récupérer la commande avec toutes les données nécessaires
 		const order = await prisma.order.findUnique({
@@ -59,7 +55,6 @@ export async function resendOrderEmail(
 		}
 
 		// 3. Vérifier que l'email peut être envoyé selon le type
-		const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000";
 
 		switch (emailType) {
 			case "confirmation": {
@@ -83,7 +78,7 @@ export async function resendOrderEmail(
 						city: order.shippingCity,
 						country: order.shippingCountry,
 					},
-					trackingUrl: `${baseUrl}/mon-compte/commandes/${order.id}`,
+					trackingUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.id)),
 					orderId: order.id,
 				});
 
@@ -176,7 +171,7 @@ export async function resendOrderEmail(
 					orderNumber: order.orderNumber,
 					customerName: order.customerName.split(" ")[0] || "Client",
 					deliveryDate,
-					orderDetailsUrl: `${baseUrl}/mon-compte/commandes/${order.id}`,
+					orderDetailsUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.id)),
 				});
 
 				if (!result.success) {

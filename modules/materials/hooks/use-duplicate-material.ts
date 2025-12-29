@@ -1,9 +1,10 @@
 "use client";
 
-import { useTransition } from "react";
-import { toast } from "sonner";
+import { useActionState, useTransition } from "react";
 import { duplicateMaterial } from "@/modules/materials/actions/duplicate-material";
-import { ActionStatus } from "@/shared/types/server-action";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import type { ActionState } from "@/shared/types/server-action";
 
 interface UseDuplicateMaterialOptions {
 	onSuccess?: (data: { id: string; name: string }) => void;
@@ -16,37 +17,37 @@ interface UseDuplicateMaterialOptions {
 export function useDuplicateMaterial(options?: UseDuplicateMaterialOptions) {
 	const [isPending, startTransition] = useTransition();
 
-	const duplicate = (materialId: string, materialName: string) => {
-		startTransition(async () => {
-			const toastId = toast.loading(`Duplication de ${materialName}...`);
-
-			try {
-				const result = await duplicateMaterial(materialId);
-				toast.dismiss(toastId);
-
-				if (result.status === ActionStatus.SUCCESS) {
-					toast.success(result.message);
+	const [, formAction, isActionPending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) =>
+				duplicateMaterial(formData.get("materialId") as string),
+			createToastCallbacks({
+				loadingMessage: "Duplication en cours...",
+				onSuccess: (result) => {
 					if (result.data) {
 						options?.onSuccess?.(result.data as { id: string; name: string });
 					}
-				} else {
-					toast.error(result.message);
-					options?.onError?.(result.message);
-				}
-			} catch (error) {
-				toast.dismiss(toastId);
-				const message =
-					error instanceof Error
-						? error.message
-						: "Erreur lors de la duplication";
-				toast.error(message);
-				options?.onError?.(message);
-			}
+				},
+				onError: (result) => {
+					if (result.message) {
+						options?.onError?.(result.message);
+					}
+				},
+			})
+		),
+		undefined
+	);
+
+	const duplicate = (materialId: string, _materialName: string) => {
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("materialId", materialId);
+			formAction(formData);
 		});
 	};
 
 	return {
 		duplicate,
-		isPending,
+		isPending: isPending || isActionPending,
 	};
 }

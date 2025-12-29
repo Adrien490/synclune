@@ -1,13 +1,13 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
-import type { CartValidationIssue, ValidateCartResult } from "../types/cart.types";
+import { validateCartItems } from "../services/item-availability.service";
+import type { ValidateCartResult } from "../types/cart.types";
 
 // Re-export pour retrocompatibilite
 export type { CartValidationIssue, ValidateCartResult } from "../types/cart.types";
@@ -99,83 +99,8 @@ export async function validateCart(): Promise<ValidateCartResult> {
 			};
 		}
 
-		// 2. Valider chaque item
-		const issues: CartValidationIssue[] = [];
-
-		for (const item of cart.items) {
-			// 2a. Vérifier que le SKU existe (ne devrait jamais arriver avec les contraintes DB)
-			if (!item.sku) {
-				issues.push({
-					cartItemId: item.id,
-					skuId: item.skuId,
-					productTitle: "Produit supprimé",
-					issueType: "DELETED",
-					message: CART_ERROR_MESSAGES.PRODUCT_DELETED,
-				});
-				continue;
-			}
-
-			// 2b. Vérifier les soft deletes (SKU ou Product supprimé)
-			if (item.sku.deletedAt || item.sku.product.deletedAt) {
-				issues.push({
-					cartItemId: item.id,
-					skuId: item.skuId,
-					productTitle: item.sku.product.title,
-					issueType: "DELETED",
-					message: CART_ERROR_MESSAGES.PRODUCT_DELETED,
-				});
-				continue;
-			}
-
-			// 2c. Vérifier l'activation du SKU
-			if (!item.sku.isActive) {
-				issues.push({
-					cartItemId: item.id,
-					skuId: item.skuId,
-					productTitle: item.sku.product.title,
-					issueType: "INACTIVE",
-					message: CART_ERROR_MESSAGES.SKU_INACTIVE,
-				});
-				continue;
-			}
-
-			// 2d. Vérifier le statut du produit
-			if (item.sku.product.status !== "PUBLIC") {
-				issues.push({
-					cartItemId: item.id,
-					skuId: item.skuId,
-					productTitle: item.sku.product.title,
-					issueType: "NOT_PUBLIC",
-					message: CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
-				});
-				continue;
-			}
-
-			// 2e. Vérifier le stock
-			if (item.sku.inventory === 0) {
-				issues.push({
-					cartItemId: item.id,
-					skuId: item.skuId,
-					productTitle: item.sku.product.title,
-					issueType: "OUT_OF_STOCK",
-					message: CART_ERROR_MESSAGES.OUT_OF_STOCK,
-					availableStock: 0,
-				});
-				continue;
-			}
-
-			if (item.sku.inventory < item.quantity) {
-				issues.push({
-					cartItemId: item.id,
-					skuId: item.skuId,
-					productTitle: item.sku.product.title,
-					issueType: "INSUFFICIENT_STOCK",
-					message: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(item.sku.inventory),
-					availableStock: item.sku.inventory,
-				});
-				continue;
-			}
-		}
+		// 2. Valider chaque item via le service
+		const issues = validateCartItems(cart.items);
 
 		// 3. Retourner le résultat
 		return {

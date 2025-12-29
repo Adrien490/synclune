@@ -2,20 +2,18 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
+import { requireAuth } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
-	requireAuth,
-	enforceRateLimitForCurrentUser,
 	success,
 	notFound,
 	handleActionError,
 } from "@/shared/lib/actions";
+import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { UserDataExport } from "../types/rgpd.types";
 
 // Re-export pour retrocompatibilite
 export type { UserDataExport } from "../types/rgpd.types";
-
-// Rate limit: 5 requêtes par heure (action intensive)
-const EXPORT_DATA_RATE_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
 
 /**
  * Server Action pour exporter les données utilisateur (droit à la portabilité RGPD)
@@ -26,7 +24,7 @@ const EXPORT_DATA_RATE_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
 export async function exportUserData(): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(EXPORT_DATA_RATE_LIMIT);
+		const rateCheck = await enforceRateLimitForCurrentUser(USER_LIMITS.EXPORT_DATA);
 		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2. Vérification de l'authentification

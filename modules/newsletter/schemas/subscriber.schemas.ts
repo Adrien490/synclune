@@ -4,6 +4,7 @@ import {
 	cursorSchema,
 	directionSchema,
 } from "@/shared/constants/pagination";
+import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { SORT_OPTIONS } from "../constants/subscriber.constants";
 
@@ -19,28 +20,8 @@ export const subscriberFiltersSchema = z
 		status: z
 			.enum(newsletterStatusValues)
 			.optional(),
-		subscribedAfter: z
-			.union([z.string(), z.date()])
-			.transform((val) => {
-				if (val instanceof Date) return val;
-				if (typeof val === "string") {
-					const date = new Date(val);
-					return isNaN(date.getTime()) ? undefined : date;
-				}
-				return undefined;
-			})
-			.optional(),
-		subscribedBefore: z
-			.union([z.string(), z.date()])
-			.transform((val) => {
-				if (val instanceof Date) return val;
-				if (typeof val === "string") {
-					const date = new Date(val);
-					return isNaN(date.getTime()) ? undefined : date;
-				}
-				return undefined;
-			})
-			.optional(),
+		subscribedAfter: stringOrDateSchema,
+		subscribedBefore: stringOrDateSchema,
 	})
 	.refine((data) => {
 		if (data.subscribedAfter && data.subscribedBefore) {

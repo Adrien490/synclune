@@ -3,17 +3,12 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheOrdersDashboard } from "../constants/cache";
 import { z } from "zod";
-
 import { GET_ORDER_SELECT } from "../constants/order.constants";
 import type { GetOrderReturn } from "../types/order.types";
+import { getOrderByIdSchema } from "../schemas/order.schemas";
 
-// ============================================================================
-// SCHEMA
-// ============================================================================
-
-export const getOrderByIdSchema = z.object({
-	id: z.cuid2(),
-});
+// Re-export for backward compatibility
+export { getOrderByIdSchema };
 
 export type GetOrderByIdParams = z.infer<typeof getOrderByIdSchema>;
 

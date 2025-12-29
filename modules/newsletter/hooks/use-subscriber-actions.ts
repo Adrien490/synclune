@@ -1,41 +1,17 @@
 "use client";
 
-import { useTransition } from "react";
-import { toast } from "sonner";
+import { useActionState, useTransition } from "react";
 import { unsubscribeSubscriberAdmin } from "@/modules/newsletter/actions/unsubscribe-subscriber-admin";
 import { resubscribeSubscriberAdmin } from "@/modules/newsletter/actions/resubscribe-subscriber-admin";
 import { resendConfirmationAdmin } from "@/modules/newsletter/actions/resend-confirmation-admin";
 import { deleteSubscriberAdmin } from "@/modules/newsletter/actions/delete-subscriber-admin";
-import { ActionState, ActionStatus } from "@/shared/types/server-action";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import type { ActionState } from "@/shared/types/server-action";
 
 interface UseSubscriberActionsOptions {
 	onSuccess?: () => void;
 	onError?: (message: string) => void;
-}
-
-/**
- * Helper interne pour exécuter une action admin avec gestion des toasts
- */
-async function executeWithToast(
-	action: () => Promise<ActionState>,
-	errorFallback: string,
-	options?: UseSubscriberActionsOptions
-): Promise<void> {
-	try {
-		const result = await action();
-
-		if (result.status === ActionStatus.SUCCESS) {
-			toast.success(result.message);
-			options?.onSuccess?.();
-		} else {
-			toast.error(result.message);
-			options?.onError?.(result.message);
-		}
-	} catch (error) {
-		const message = error instanceof Error ? error.message : errorFallback;
-		toast.error(message);
-		options?.onError?.(message);
-	}
 }
 
 /**
@@ -44,44 +20,83 @@ async function executeWithToast(
 export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 	const [isPending, startTransition] = useTransition();
 
+	const callbacks = createToastCallbacks({
+		onSuccess: () => {
+			options?.onSuccess?.();
+		},
+		onError: (result) => {
+			if (result.message) {
+				options?.onError?.(result.message);
+			}
+		},
+	});
+
+	const [, unsubscribeAction, isUnsubscribePending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) =>
+				unsubscribeSubscriberAdmin(formData.get("subscriberId") as string),
+			callbacks
+		),
+		undefined
+	);
+
+	const [, resubscribeAction, isResubscribePending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) =>
+				resubscribeSubscriberAdmin(formData.get("subscriberId") as string),
+			callbacks
+		),
+		undefined
+	);
+
+	const [, resendAction, isResendPending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) =>
+				resendConfirmationAdmin(formData.get("subscriberId") as string),
+			callbacks
+		),
+		undefined
+	);
+
+	const [, deleteAction, isDeletePending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) =>
+				deleteSubscriberAdmin(formData.get("subscriberId") as string),
+			callbacks
+		),
+		undefined
+	);
+
 	const unsubscribe = (subscriberId: string) => {
-		startTransition(() =>
-			executeWithToast(
-				() => unsubscribeSubscriberAdmin(subscriberId),
-				"Erreur lors du désabonnement",
-				options
-			)
-		);
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("subscriberId", subscriberId);
+			unsubscribeAction(formData);
+		});
 	};
 
 	const resubscribe = (subscriberId: string) => {
-		startTransition(() =>
-			executeWithToast(
-				() => resubscribeSubscriberAdmin(subscriberId),
-				"Erreur lors du réabonnement",
-				options
-			)
-		);
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("subscriberId", subscriberId);
+			resubscribeAction(formData);
+		});
 	};
 
 	const resendConfirmation = (subscriberId: string) => {
-		startTransition(() =>
-			executeWithToast(
-				() => resendConfirmationAdmin(subscriberId),
-				"Erreur lors de l'envoi",
-				options
-			)
-		);
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("subscriberId", subscriberId);
+			resendAction(formData);
+		});
 	};
 
 	const deleteSubscriber = (subscriberId: string) => {
-		startTransition(() =>
-			executeWithToast(
-				() => deleteSubscriberAdmin(subscriberId),
-				"Erreur lors de la suppression",
-				options
-			)
-		);
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("subscriberId", subscriberId);
+			deleteAction(formData);
+		});
 	};
 
 	return {
@@ -89,6 +104,11 @@ export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 		resubscribe,
 		resendConfirmation,
 		deleteSubscriber,
-		isPending,
+		isPending:
+			isPending ||
+			isUnsubscribePending ||
+			isResubscribePending ||
+			isResendPending ||
+			isDeletePending,
 	};
 }

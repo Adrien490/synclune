@@ -1,10 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
-import { toast } from "sonner";
+import { useActionState, useRef, useTransition } from "react";
 import { exportUserDataAdmin } from "@/modules/users/actions/admin/export-user-data-admin";
 import type { UserDataExport } from "@/modules/users/actions/export-user-data";
-import { ActionStatus } from "@/shared/types/server-action";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import type { ActionState } from "@/shared/types/server-action";
+import { useFileDownload } from "@/shared/hooks";
 
 interface UseExportUserDataAdminOptions {
 	onSuccess?: (data: UserDataExport) => void;
@@ -14,52 +16,53 @@ interface UseExportUserDataAdminOptions {
 /**
  * Hook admin pour exporter les données d'un utilisateur (RGPD)
  */
-export function useExportUserDataAdmin(options?: UseExportUserDataAdminOptions) {
+export function useExportUserDataAdmin(
+	options?: UseExportUserDataAdminOptions
+) {
 	const [isPending, startTransition] = useTransition();
+	const { downloadJSON } = useFileDownload();
+	const userNameRef = useRef("");
+
+	const [, formAction, isActionPending] = useActionState(
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) =>
+				exportUserDataAdmin(formData.get("userId") as string),
+			createToastCallbacks({
+				loadingMessage: "Export des données en cours...",
+				onSuccess: (result) => {
+					if (result.data) {
+						const data = result.data as UserDataExport;
+						const safeName = userNameRef.current
+							.replace(/\s+/g, "-")
+							.toLowerCase();
+						downloadJSON(
+							data,
+							`synclune-donnees-${safeName}-${new Date().toISOString().split("T")[0]}.json`
+						);
+						options?.onSuccess?.(data);
+					}
+				},
+				onError: (result) => {
+					if (result.message) {
+						options?.onError?.(result.message);
+					}
+				},
+			})
+		),
+		undefined
+	);
 
 	const exportData = (userId: string, userName: string) => {
-		startTransition(async () => {
-			const toastId = toast.loading("Export des données en cours...");
-
-			try {
-				const result = await exportUserDataAdmin(userId);
-
-				toast.dismiss(toastId);
-
-				if (result.status === ActionStatus.SUCCESS && result.data) {
-					const data = result.data as UserDataExport;
-
-					// Créer et télécharger le fichier JSON
-					const blob = new Blob([JSON.stringify(data, null, 2)], {
-						type: "application/json",
-					});
-					const url = URL.createObjectURL(blob);
-					const link = document.createElement("a");
-					link.href = url;
-					link.download = `synclune-donnees-${userName.replace(/\s+/g, "-").toLowerCase()}-${new Date().toISOString().split("T")[0]}.json`;
-					document.body.appendChild(link);
-					link.click();
-					document.body.removeChild(link);
-					URL.revokeObjectURL(url);
-
-					toast.success("Données exportées avec succès");
-					options?.onSuccess?.(data);
-				} else {
-					toast.error(result.message);
-					options?.onError?.(result.message);
-				}
-			} catch (error) {
-				toast.dismiss(toastId);
-				const message =
-					error instanceof Error ? error.message : "Erreur lors de l'export";
-				toast.error(message);
-				options?.onError?.(message);
-			}
+		userNameRef.current = userName;
+		startTransition(() => {
+			const formData = new FormData();
+			formData.append("userId", userId);
+			formAction(formData);
 		});
 	};
 
 	return {
 		exportData,
-		isPending,
+		isPending: isPending || isActionPending,
 	};
 }
