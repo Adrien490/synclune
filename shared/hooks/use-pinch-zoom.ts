@@ -1,286 +1,466 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback, type RefObject, type KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useEffectEvent, type RefObject } from "react";
+import { getDistance, getCenter, clampPosition, getZoomToPointPosition, type Point } from "@/shared/utils/touch-geometry";
 
-interface PinchZoomConfig {
+// ============================================
+// TYPES
+// ============================================
+
+export interface PinchZoomConfig {
+	/** Échelle minimum (défaut: 1) */
 	minScale: number;
+	/** Échelle maximum (défaut: 3) */
 	maxScale: number;
+	/** Échelle appliquée au double-tap (défaut: 2) */
 	doubleTapScale: number;
+	/** Délai pour détecter un double-tap en ms (défaut: 300) */
 	doubleTapDelay: number;
+	/** Incrément de zoom au clavier (défaut: 0.5) */
 	keyboardZoomStep: number;
+	/** Incrément de pan au clavier en px (défaut: 50) */
 	keyboardPanStep: number;
+	/** Distance minimale en px avant d'invalider un double-tap (défaut: 10) */
 	moveThreshold: number;
 }
 
-interface UsePinchZoomOptions {
+export interface UsePinchZoomOptions {
+	/** Ref du container DOM */
 	containerRef: RefObject<HTMLDivElement | null>;
-	isActive: boolean;
+	/** Si true, le zoom est actif (reset automatique si false) */
+	isActive?: boolean;
+	/** Callback appelé sur tap simple (ex: ouvrir lightbox) */
 	onTap?: () => void;
-	config: PinchZoomConfig;
+	/** Configuration personnalisée */
+	config?: Partial<PinchZoomConfig>;
 }
 
-interface Position {
-	x: number;
-	y: number;
-}
-
-interface UsePinchZoomReturn {
+export interface UsePinchZoomReturn {
+	/** Niveau de zoom actuel */
 	scale: number;
-	position: Position;
+	/** Position de pan actuelle */
+	position: Point;
+	/** true si zoomé (scale > minScale) */
 	isZoomed: boolean;
+	/** true si l'utilisateur interagit (pinch/pan en cours) */
 	isInteracting: boolean;
-	handleKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
+	/** Réinitialiser zoom et position */
+	reset: () => void;
+	/** Zoomer d'un pas */
+	zoomIn: () => void;
+	/** Dézoomer d'un pas */
+	zoomOut: () => void;
+	/** Handler clavier à attacher au container */
+	handleKeyDown: (e: React.KeyboardEvent) => void;
 }
+
+// ============================================
+// DEFAULTS
+// ============================================
+
+const DEFAULT_CONFIG: PinchZoomConfig = {
+	minScale: 1,
+	maxScale: 3,
+	doubleTapScale: 2,
+	doubleTapDelay: 300,
+	keyboardZoomStep: 0.5,
+	keyboardPanStep: 50,
+	moveThreshold: 10,
+};
+
+// ============================================
+// HOOK
+// ============================================
 
 /**
- * Hook pour gerer le pinch-to-zoom sur mobile
+ * Hook réutilisable pour pinch-to-zoom sur mobile et desktop
  *
- * Fonctionnalites:
- * - Pinch pour zoomer (1x -> max)
- * - Double-tap pour toggle zoom / reset
- * - Pan quand zoome
- * - Support clavier complet
+ * Fonctionnalités:
+ * - Pinch pour zoomer
+ * - Double-tap pour toggle zoom
+ * - Pan quand zoomé
+ * - Support clavier complet (+/-/flèches/Escape)
+ *
+ * @example
+ * ```tsx
+ * const containerRef = useRef<HTMLDivElement>(null);
+ * const { scale, position, isZoomed, handleKeyDown } = usePinchZoom({
+ *   containerRef,
+ *   onTap: () => openLightbox(),
+ * });
+ * ```
  */
 export function usePinchZoom({
 	containerRef,
-	isActive,
+	isActive = true,
 	onTap,
-	config,
+	config: configOverride,
 }: UsePinchZoomOptions): UsePinchZoomReturn {
-	const [scale, setScale] = useState(1);
-	const [position, setPosition] = useState<Position>({ x: 0, y: 0 });
+	const config = { ...DEFAULT_CONFIG, ...configOverride };
+
+	// États réactifs (déclenchent re-render)
+	const [scale, setScale] = useState<number>(config.minScale);
+	const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
 	const [isInteracting, setIsInteracting] = useState(false);
 
-	// Refs pour le tracking du geste
+	// Refs pour tracking touch (pas de re-render)
 	const initialDistance = useRef(0);
-	const initialScale = useRef(1);
+	const initialScale = useRef<number>(config.minScale);
+	const initialPosition = useRef<Point>({ x: 0, y: 0 });
+	const lastTouchCenter = useRef<Point>({ x: 0, y: 0 });
+	const startTouchCenter = useRef<Point>({ x: 0, y: 0 });
 	const lastTapTime = useRef(0);
-	const startPosition = useRef<Position>({ x: 0, y: 0 });
-	const lastPosition = useRef<Position>({ x: 0, y: 0 });
+	const isPinching = useRef(false);
+	const isPanning = useRef(false);
 	const hasMoved = useRef(false);
+	const tapTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	const isZoomed = scale > 1;
+	const isZoomed = scale > config.minScale;
 
-	// Reset quand l'element devient inactif
+	// Reset au changement de slide/désactivation
 	useEffect(() => {
 		if (!isActive) {
-			setScale(1);
+			setScale(config.minScale);
 			setPosition({ x: 0, y: 0 });
+			setIsInteracting(false);
 		}
-	}, [isActive]);
+	}, [isActive, config.minScale]);
 
-	// Calcule la distance entre deux points touch
-	const getDistance = (touch1: Touch, touch2: Touch): number => {
-		const dx = touch1.clientX - touch2.clientX;
-		const dy = touch1.clientY - touch2.clientY;
-		return Math.sqrt(dx * dx + dy * dy);
+	// Cleanup timeout
+	useEffect(() => {
+		return () => {
+			if (tapTimeout.current) {
+				clearTimeout(tapTimeout.current);
+			}
+		};
+	}, []);
+
+	const reset = () => {
+		setScale(config.minScale);
+		setPosition({ x: 0, y: 0 });
 	};
 
-	// Limite la position pour garder l'image visible
-	const clampPosition = useCallback(
-		(pos: Position, currentScale: number): Position => {
-			if (currentScale <= 1) return { x: 0, y: 0 };
+	const zoomIn = () => {
+		const newScale = Math.min(config.maxScale, scale + config.keyboardZoomStep);
+		setScale(newScale);
+		setPosition(clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null));
+	};
 
-			const container = containerRef.current;
-			if (!container) return pos;
-
-			const rect = container.getBoundingClientRect();
-			const maxOffset = (rect.width * (currentScale - 1)) / 2;
-
-			return {
-				x: Math.max(-maxOffset, Math.min(maxOffset, pos.x)),
-				y: Math.max(-maxOffset, Math.min(maxOffset, pos.y)),
-			};
-		},
-		[containerRef]
-	);
-
-	// Gestion du double-tap
-	const handleDoubleTap = useCallback(() => {
-		if (isZoomed) {
-			// Reset zoom
-			setScale(1);
+	const zoomOut = () => {
+		const newScale = Math.max(config.minScale, scale - config.keyboardZoomStep);
+		setScale(newScale);
+		if (newScale === config.minScale) {
 			setPosition({ x: 0, y: 0 });
 		} else {
-			// Zoom a doubleTapScale
-			setScale(config.doubleTapScale);
+			setPosition(clampPosition(position, newScale, containerRef.current?.getBoundingClientRect() ?? null));
 		}
-	}, [isZoomed, config.doubleTapScale]);
+	};
 
-	// Gestion du clavier
-	const handleKeyDown = useCallback(
-		(e: KeyboardEvent<HTMLDivElement>) => {
-			switch (e.key) {
-				case "+":
-				case "=":
-					e.preventDefault();
-					setScale((s) => Math.min(config.maxScale, s + config.keyboardZoomStep));
-					break;
-				case "-":
-					e.preventDefault();
-					setScale((s) => {
-						const newScale = Math.max(config.minScale, s - config.keyboardZoomStep);
-						if (newScale <= 1) setPosition({ x: 0, y: 0 });
-						return newScale;
-					});
-					break;
-				case "ArrowLeft":
-					if (isZoomed) {
-						e.preventDefault();
-						setPosition((p) =>
-							clampPosition({ x: p.x + config.keyboardPanStep, y: p.y }, scale)
-						);
-					}
-					break;
-				case "ArrowRight":
-					if (isZoomed) {
-						e.preventDefault();
-						setPosition((p) =>
-							clampPosition({ x: p.x - config.keyboardPanStep, y: p.y }, scale)
-						);
-					}
-					break;
-				case "ArrowUp":
-					if (isZoomed) {
-						e.preventDefault();
-						setPosition((p) =>
-							clampPosition({ x: p.x, y: p.y + config.keyboardPanStep }, scale)
-						);
-					}
-					break;
-				case "ArrowDown":
-					if (isZoomed) {
-						e.preventDefault();
-						setPosition((p) =>
-							clampPosition({ x: p.x, y: p.y - config.keyboardPanStep }, scale)
-						);
-					}
-					break;
-				case "Escape":
-					e.preventDefault();
-					setScale(1);
-					setPosition({ x: 0, y: 0 });
-					break;
-				case "Enter":
-					e.preventDefault();
-					if (!isZoomed && onTap) {
-						onTap();
-					}
-					break;
-			}
-		},
-		[isZoomed, scale, config, clampPosition, onTap]
-	);
+	// Keyboard handler
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		const rect = containerRef.current?.getBoundingClientRect() ?? null;
 
-	// Setup des event listeners touch
-	useEffect(() => {
-		const container = containerRef.current;
-		if (!container || !isActive) return;
-
-		const handleTouchStart = (e: TouchEvent) => {
-			setIsInteracting(true);
-			hasMoved.current = false;
-
-			if (e.touches.length === 2) {
-				// Pinch start
-				initialDistance.current = getDistance(e.touches[0], e.touches[1]);
-				initialScale.current = scale;
-			} else if (e.touches.length === 1) {
-				// Pan ou tap start
-				startPosition.current = {
-					x: e.touches[0].clientX,
-					y: e.touches[0].clientY,
-				};
-				lastPosition.current = position;
-			}
-		};
-
-		const handleTouchMove = (e: TouchEvent) => {
-			if (e.touches.length === 2) {
-				// Pinch
+		switch (e.key) {
+			case "+":
+			case "=":
+			case "*": // Numpad
 				e.preventDefault();
-				const currentDistance = getDistance(e.touches[0], e.touches[1]);
-				const scaleFactor = currentDistance / initialDistance.current;
-				const newScale = Math.min(
-					config.maxScale,
-					Math.max(config.minScale, initialScale.current * scaleFactor)
-				);
-				setScale(newScale);
+				zoomIn();
+				break;
+
+			case "-":
+				e.preventDefault();
+				zoomOut();
+				break;
+
+			case "0":
+			case "Escape":
+				e.preventDefault();
+				reset();
+				break;
+
+			case "ArrowLeft":
+				if (isZoomed) {
+					e.preventDefault();
+					setPosition(clampPosition(
+						{ x: position.x + config.keyboardPanStep, y: position.y },
+						scale,
+						rect
+					));
+				}
+				break;
+
+			case "ArrowRight":
+				if (isZoomed) {
+					e.preventDefault();
+					setPosition(clampPosition(
+						{ x: position.x - config.keyboardPanStep, y: position.y },
+						scale,
+						rect
+					));
+				}
+				break;
+
+			case "ArrowUp":
+				if (isZoomed) {
+					e.preventDefault();
+					setPosition(clampPosition(
+						{ x: position.x, y: position.y + config.keyboardPanStep },
+						scale,
+						rect
+					));
+				}
+				break;
+
+			case "ArrowDown":
+				if (isZoomed) {
+					e.preventDefault();
+					setPosition(clampPosition(
+						{ x: position.x, y: position.y - config.keyboardPanStep },
+						scale,
+						rect
+					));
+				}
+				break;
+
+			case "Enter":
+			case " ":
+				if (!isZoomed) {
+					e.preventDefault();
+					onTap?.();
+				}
+				break;
+		}
+	};
+
+	// Début du toucher
+	const handleTouchStart = useEffectEvent((e: TouchEvent) => {
+		hasMoved.current = false;
+		setIsInteracting(true);
+
+		if (e.touches.length === 2) {
+			// Début du pinch
+			isPinching.current = true;
+			isPanning.current = false;
+			initialDistance.current = getDistance(e.touches);
+			initialScale.current = scale;
+			const center = getCenter(e.touches);
+			lastTouchCenter.current = center;
+			startTouchCenter.current = center;
+			initialPosition.current = { ...position };
+		} else if (e.touches.length === 1) {
+			const touchPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+			startTouchCenter.current = touchPoint;
+			if (isZoomed) {
+				// Début du pan
+				isPanning.current = true;
+				lastTouchCenter.current = touchPoint;
+				initialPosition.current = { ...position };
+			}
+		}
+	});
+
+	// Mouvement tactile
+	const handleTouchMove = useEffectEvent((e: TouchEvent) => {
+		const rect = containerRef.current?.getBoundingClientRect() ?? null;
+
+		if (e.touches.length === 2 && isPinching.current) {
+			// Zoom par pinch
+			e.preventDefault();
+
+			const center = getCenter(e.touches);
+			if (!rect) return;
+
+			// Calculer la distance totale depuis le début du geste
+			const totalDistance = Math.hypot(
+				center.x - startTouchCenter.current.x,
+				center.y - startTouchCenter.current.y
+			);
+
+			// Ne marquer comme "moved" que si la distance dépasse le threshold
+			if (totalDistance > config.moveThreshold) {
 				hasMoved.current = true;
-			} else if (e.touches.length === 1 && isZoomed) {
-				// Pan
-				e.preventDefault();
-				const deltaX = e.touches[0].clientX - startPosition.current.x;
-				const deltaY = e.touches[0].clientY - startPosition.current.y;
+			}
 
-				if (
-					Math.abs(deltaX) > config.moveThreshold ||
-					Math.abs(deltaY) > config.moveThreshold
-				) {
-					hasMoved.current = true;
+			const newDistance = getDistance(e.touches);
+			const ratio = newDistance / initialDistance.current;
+			const newScale = Math.min(config.maxScale, Math.max(config.minScale, initialScale.current * ratio));
+
+			// Point focal en coordonnées relatives au centre du container
+			const focalX = center.x - rect.left - rect.width / 2;
+			const focalY = center.y - rect.top - rect.height / 2;
+
+			// Position qui maintient le point focal fixe pendant le zoom
+			// Formule: newPos = focal - (focal - oldPos) * (newScale / oldScale)
+			const scaleRatio = scale > 0 ? newScale / scale : 1;
+			const newPosition = clampPosition(
+				{
+					x: focalX - (focalX - position.x) * scaleRatio,
+					y: focalY - (focalY - position.y) * scaleRatio,
+				},
+				newScale,
+				rect
+			);
+
+			setScale(newScale);
+			setPosition(newPosition);
+		} else if (e.touches.length === 1 && isPanning.current && isZoomed) {
+			// Déplacement
+			e.preventDefault();
+
+			const touch = e.touches[0];
+			// Calculer la distance totale depuis le début du geste
+			const totalDistance = Math.hypot(
+				touch.clientX - startTouchCenter.current.x,
+				touch.clientY - startTouchCenter.current.y
+			);
+
+			// Ne marquer comme "moved" que si la distance dépasse le threshold
+			if (totalDistance > config.moveThreshold) {
+				hasMoved.current = true;
+			}
+
+			const deltaX = touch.clientX - lastTouchCenter.current.x;
+			const deltaY = touch.clientY - lastTouchCenter.current.y;
+
+			const newPosition = clampPosition(
+				{
+					x: initialPosition.current.x + deltaX,
+					y: initialPosition.current.y + deltaY,
+				},
+				scale,
+				rect
+			);
+
+			setPosition(newPosition);
+		} else if (e.touches.length === 1 && !isZoomed) {
+			// Tracking du mouvement pour single tap (non zoomé)
+			const touch = e.touches[0];
+			const totalDistance = Math.hypot(
+				touch.clientX - startTouchCenter.current.x,
+				touch.clientY - startTouchCenter.current.y
+			);
+
+			if (totalDistance > config.moveThreshold) {
+				hasMoved.current = true;
+			}
+		}
+	});
+
+	// Fin du toucher
+	const handleTouchEnd = useEffectEvent((e: TouchEvent) => {
+		const wasPinching = isPinching.current;
+		const wasPanning = isPanning.current;
+
+		isPinching.current = false;
+		isPanning.current = false;
+		setIsInteracting(false);
+
+		// Restaurer le focus pour les utilisateurs clavier/voix (accessibilité)
+		if (containerRef.current && e.touches.length === 0) {
+			containerRef.current.focus();
+		}
+
+		// Reset si scale < min
+		if (scale < config.minScale) {
+			setScale(config.minScale);
+			setPosition({ x: 0, y: 0 });
+			return;
+		}
+
+		// Reset position si scale = min
+		if (scale === config.minScale) {
+			setPosition({ x: 0, y: 0 });
+		}
+
+		// Détection double-tap
+		if (e.touches.length === 0 && !wasPinching && !hasMoved.current) {
+			const now = Date.now();
+			const timeSinceLastTap = now - lastTapTime.current;
+
+			if (timeSinceLastTap < config.doubleTapDelay && timeSinceLastTap > 0) {
+				// Double-tap détecté
+				e.preventDefault();
+				lastTapTime.current = 0;
+
+				if (tapTimeout.current) {
+					clearTimeout(tapTimeout.current);
+					tapTimeout.current = null;
 				}
 
-				const newPosition = clampPosition(
-					{
-						x: lastPosition.current.x + deltaX,
-						y: lastPosition.current.y + deltaY,
-					},
-					scale
-				);
-				setPosition(newPosition);
-			}
-		};
-
-		const handleTouchEnd = (e: TouchEvent) => {
-			setIsInteracting(false);
-
-			// Detection du tap/double-tap (seulement si pas de mouvement)
-			if (e.touches.length === 0 && !hasMoved.current) {
-				const now = Date.now();
-				const timeSinceLastTap = now - lastTapTime.current;
-
-				if (timeSinceLastTap < config.doubleTapDelay) {
-					// Double tap
-					handleDoubleTap();
-					lastTapTime.current = 0;
+				if (isZoomed) {
+					reset();
 				} else {
-					// Single tap - attendre pour voir si double-tap
-					lastTapTime.current = now;
-					setTimeout(() => {
-						if (lastTapTime.current === now && !isZoomed && onTap) {
-							onTap();
+					// Zoom vers le point tapé
+					const touch = e.changedTouches[0];
+					const rect = containerRef.current?.getBoundingClientRect();
+
+					if (touch && rect) {
+						const newPosition = getZoomToPointPosition(
+							{ x: touch.clientX, y: touch.clientY },
+							rect,
+							config.doubleTapScale
+						);
+						setScale(config.doubleTapScale);
+						setPosition(newPosition);
+					} else {
+						setScale(config.doubleTapScale);
+					}
+				}
+			} else {
+				lastTapTime.current = now;
+
+				// Single tap après délai → callback onTap
+				if (!isZoomed && !wasPanning) {
+					tapTimeout.current = setTimeout(() => {
+						if (Date.now() - lastTapTime.current >= config.doubleTapDelay) {
+							onTap?.();
 						}
 					}, config.doubleTapDelay);
 				}
 			}
-		};
+		}
+	});
 
-		container.addEventListener("touchstart", handleTouchStart, { passive: true });
-		container.addEventListener("touchmove", handleTouchMove, { passive: false });
-		container.addEventListener("touchend", handleTouchEnd, { passive: true });
+	// Attacher les event listeners
+	useEffect(() => {
+		const container = containerRef.current;
+		if (!container) return;
+
+		const options: AddEventListenerOptions = { passive: false };
+
+		container.addEventListener("touchstart", handleTouchStart, options);
+		container.addEventListener("touchmove", handleTouchMove, options);
+		container.addEventListener("touchend", handleTouchEnd, options);
 
 		return () => {
 			container.removeEventListener("touchstart", handleTouchStart);
 			container.removeEventListener("touchmove", handleTouchMove);
 			container.removeEventListener("touchend", handleTouchEnd);
 		};
-	}, [
-		containerRef,
-		isActive,
-		isZoomed,
-		scale,
-		position,
-		config,
-		clampPosition,
-		handleDoubleTap,
-		onTap,
-	]);
+	}, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+	// Reclamper la position lors d'un changement de taille (orientation, resize)
+	useEffect(() => {
+		if (scale <= config.minScale) return;
+
+		const handleResize = () => {
+			const rect = containerRef.current?.getBoundingClientRect() ?? null;
+			setPosition((prev) => clampPosition(prev, scale, rect));
+		};
+
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, [scale, config.minScale]);
 
 	return {
 		scale,
 		position,
 		isZoomed,
 		isInteracting,
+		reset,
+		zoomIn,
+		zoomOut,
 		handleKeyDown,
 	};
 }
