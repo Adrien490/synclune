@@ -55,7 +55,7 @@ export async function getAccountStats(): Promise<GetAccountStatsReturn> {
  * @returns Les statistiques du compte
  */
 export async function fetchAccountStats(userId: string): Promise<AccountStats> {
-	"use cache";
+	"use cache: private";
 	cacheLife("userOrders");
 	cacheTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId));
 

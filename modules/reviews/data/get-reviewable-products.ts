@@ -29,7 +29,7 @@ export async function getReviewableProducts(): Promise<ReviewableProduct[]> {
 async function fetchReviewableProducts(
 	userId: string
 ): Promise<ReviewableProduct[]> {
-	"use cache";
+	"use cache: private";
 	cacheLife("session");
 	cacheTag(REVIEWS_CACHE_TAGS.REVIEWABLE(userId));
 

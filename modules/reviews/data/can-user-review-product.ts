@@ -18,7 +18,7 @@ export async function canUserReviewProduct(
 	userId: string,
 	productId: string
 ): Promise<CanReviewResult> {
-	"use cache"
+	"use cache: private";
 	cacheReviewableProducts(userId)
 
 	// 1. Vérifier s'il a déjà laissé un avis
@@ -109,7 +109,7 @@ export async function canUserEditReview(
 	userId: string,
 	reviewId: string
 ): Promise<boolean> {
-	"use cache"
+	"use cache: private";
 	cacheReviewableProducts(userId)
 
 	const review = await prisma.productReview.findFirst({

@@ -28,7 +28,7 @@ export async function getUserReviews(): Promise<ReviewUser[]> {
  * Separee pour eviter l'incompatibilite cookies/headers avec "use cache"
  */
 async function fetchUserReviews(userId: string): Promise<ReviewUser[]> {
-	"use cache";
+	"use cache: private";
 	cacheLife("session");
 	cacheTag(REVIEWS_CACHE_TAGS.USER(userId));
 
