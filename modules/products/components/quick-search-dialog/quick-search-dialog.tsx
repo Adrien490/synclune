@@ -1,9 +1,9 @@
 "use client"
 
-import { ChevronRight, Clock, Filter, Layers, Search, Sparkles, X } from "lucide-react"
+import { ChevronRight, Clock, Layers, Search, Sparkles, X } from "lucide-react"
 import Link from "next/link"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useRef, useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { useRef, useTransition } from "react"
 import { toast } from "sonner"
 
 import { Stagger } from "@/shared/components/animations/stagger"
@@ -20,10 +20,6 @@ import ScrollFade from "@/shared/components/scroll-fade"
 import { useAddRecentSearch } from "@/modules/products/hooks/use-add-recent-search"
 import { useClearRecentSearches } from "@/modules/products/hooks/use-clear-recent-searches"
 import { useRemoveRecentSearch } from "@/modules/products/hooks/use-remove-recent-search"
-import {
-	isProductCategoryPage,
-	getCategorySlugFromPath,
-} from "@/modules/products/services/product-filter-params.service"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { cn } from "@/shared/utils/cn"
 
@@ -44,35 +40,7 @@ export function QuickSearchDialog({
 }: QuickSearchDialogProps) {
 	const { isOpen, close } = useDialog(QUICK_SEARCH_DIALOG_ID)
 	const router = useRouter()
-	const pathname = usePathname()
-	const searchParams = useSearchParams()
 	const [isPending, startTransition] = useTransition()
-
-	// Search Within: detect current category context (Baymard UX - 94% miss this)
-	const [isSearchWithinActive, setIsSearchWithinActive] = useState(true)
-
-	// Detect if user is on a product category page
-	const isOnCategoryPage = isProductCategoryPage(pathname)
-	const currentCategorySlug = getCategorySlugFromPath(pathname)
-	const currentCategory = currentCategorySlug
-		? productTypes.find((t) => t.slug === currentCategorySlug)
-		: null
-
-	// Detect if user is on a collection page
-	const isOnCollectionPage = pathname.startsWith("/collections/") && pathname !== "/collections"
-	const currentCollectionSlug = isOnCollectionPage
-		? pathname.split("/collections/")[1]?.split("/")[0]
-		: null
-	const currentCollection = currentCollectionSlug
-		? collections.find((c) => c.slug === currentCollectionSlug)
-		: null
-
-	// Current scope info (category or collection)
-	const currentScope = currentCategory
-		? { type: "category" as const, slug: currentCategorySlug!, label: currentCategory.label, basePath: `/produits/${currentCategorySlug}` }
-		: currentCollection
-		? { type: "collection" as const, slug: currentCollectionSlug!, label: currentCollection.name, basePath: `/collections/${currentCollectionSlug}` }
-		: null
 
 	const { add } = useAddRecentSearch({
 		onError: () => toast.error("Erreur lors de l'enregistrement"),
@@ -87,8 +55,7 @@ export function QuickSearchDialog({
 	})
 
 	const displayedSearches = searches.slice(0, RECENT_SEARCHES_MAX_ITEMS)
-	const hasContent =
-		searches.length > 0 || collections.length > 0 || productTypes.length > 0 || currentScope !== null
+	const hasContent = searches.length > 0 || collections.length > 0 || productTypes.length > 0
 
 	const contentRef = useRef<HTMLDivElement>(null)
 
@@ -139,37 +106,15 @@ export function QuickSearchDialog({
 		}
 	}
 
-	// Get the search base URL depending on scope
-	const getSearchUrl = (term: string, useScope: boolean) => {
-		const params = new URLSearchParams()
-		params.set("search", term)
-
-		if (useScope && currentScope) {
-			// Scoped search: stay in current category/collection
-			return `${currentScope.basePath}?${params.toString()}`
-		}
-		// Global search: go to /produits
-		return `/produits?${params.toString()}`
-	}
-
 	const handleSubmit = (term: string) => {
 		add(term)
-
-		// If scope is active and we have a current scope, navigate to scoped URL
-		if (isSearchWithinActive && currentScope) {
-			startTransition(() => {
-				router.push(getSearchUrl(term, true))
-				close()
-			})
-		} else {
-			// Navigation to /produits is handled by SearchInput component
-			close()
-		}
+		// Navigation to /produits is handled by SearchInput component
+		close()
 	}
 
-	const handleRecentSearch = (term: string, useScope: boolean = false) => {
+	const handleRecentSearch = (term: string) => {
 		startTransition(() => {
-			router.push(getSearchUrl(term, useScope && isSearchWithinActive))
+			router.push(`/produits?search=${encodeURIComponent(term)}`)
 			close()
 		})
 	}
@@ -218,10 +163,7 @@ export function QuickSearchDialog({
 							Rechercher
 						</DialogTitle>
 						<DialogDescription className="sr-only">
-							{isSearchWithinActive && currentScope
-								? `Recherchez dans ${currentScope.label} ou parcourez les collections et categories.`
-								: "Recherchez un bijou par nom ou parcourez les collections et categories."
-							}
+							Recherchez un bijou par nom ou parcourez les collections et categories.
 						</DialogDescription>
 
 						<Button
@@ -258,11 +200,7 @@ export function QuickSearchDialog({
 						paramName="search"
 						mode="submit"
 						size="md"
-						placeholder={
-							isSearchWithinActive && currentScope
-								? `Rechercher dans ${currentScope.label}...`
-								: "Rechercher un bijou..."
-						}
+						placeholder="Rechercher un bijou..."
 						autoFocus
 						onSubmit={handleSubmit}
 						onEscape={close}
@@ -274,9 +212,8 @@ export function QuickSearchDialog({
 					{isPending
 						? "Recherche en cours..."
 						: <>
-							{isSearchWithinActive && currentScope && `Recherche dans ${currentScope.label} activee.`}
 							{displayedSearches.length > 0 &&
-								` ${displayedSearches.length} recherche${displayedSearches.length > 1 ? "s" : ""} recente${displayedSearches.length > 1 ? "s" : ""}.`}
+								`${displayedSearches.length} recherche${displayedSearches.length > 1 ? "s" : ""} recente${displayedSearches.length > 1 ? "s" : ""}.`}
 							{collections.length > 0 && ` ${collections.length} collection${collections.length > 1 ? "s" : ""}.`}
 							{productTypes.length > 0 && ` ${productTypes.length} categorie${productTypes.length > 1 ? "s" : ""}.`}
 						</>
@@ -296,70 +233,6 @@ export function QuickSearchDialog({
 				>
 					<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
 						<div className="px-4 py-4 space-y-6">
-							{/* Search Within Current Scope (Baymard: 94% miss this) */}
-							{currentScope && (
-								<section aria-labelledby="search-within-heading">
-									<div className="flex items-center justify-between mb-3">
-										<h2 id="search-within-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2">
-											<Filter className="size-5" aria-hidden="true" />
-											Recherche rapide
-										</h2>
-									</div>
-									<Stagger role="list" className="space-y-2" stagger={0.02} delay={0.01} y={8}>
-										{/* Toggle for scoped vs global search */}
-										<div role="listitem" className="flex items-center gap-2">
-											<Tap className="flex-1 min-w-0" scale={0.97}>
-												<button
-													type="button"
-													onClick={() => setIsSearchWithinActive(true)}
-													disabled={isPending}
-													className={cn(
-														"w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50",
-														isSearchWithinActive
-															? "bg-primary/10 border-2 border-primary/30 font-semibold text-foreground"
-															: "bg-muted/40 hover:bg-muted border border-transparent hover:border-border font-medium"
-													)}
-													aria-pressed={isSearchWithinActive}
-												>
-													<span className="flex-1">
-														Rechercher dans{" "}
-														<span className="text-primary">{currentScope.label}</span>
-													</span>
-													{isSearchWithinActive && (
-														<span className="text-xs text-primary font-medium px-2 py-0.5 rounded-full bg-primary/10">
-															Actif
-														</span>
-													)}
-												</button>
-											</Tap>
-										</div>
-										<div role="listitem" className="flex items-center gap-2">
-											<Tap className="flex-1 min-w-0" scale={0.97}>
-												<button
-													type="button"
-													onClick={() => setIsSearchWithinActive(false)}
-													disabled={isPending}
-													className={cn(
-														"w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50",
-														!isSearchWithinActive
-															? "bg-primary/10 border-2 border-primary/30 font-semibold text-foreground"
-															: "bg-muted/40 hover:bg-muted border border-transparent hover:border-border font-medium"
-													)}
-													aria-pressed={!isSearchWithinActive}
-												>
-													<span className="flex-1">Rechercher dans tous les bijoux</span>
-													{!isSearchWithinActive && (
-														<span className="text-xs text-primary font-medium px-2 py-0.5 rounded-full bg-primary/10">
-															Actif
-														</span>
-													)}
-												</button>
-											</Tap>
-										</div>
-									</Stagger>
-								</section>
-							)}
-
 							{/* Recent Searches */}
 							{displayedSearches.length > 0 && (
 								<section aria-labelledby="recent-searches-heading">
@@ -385,18 +258,12 @@ export function QuickSearchDialog({
 												<Tap className="flex-1 min-w-0" scale={0.97}>
 													<button
 														type="button"
-														onClick={() => handleRecentSearch(term, true)}
+														onClick={() => handleRecentSearch(term)}
 														disabled={isPending}
 														className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted transition-all text-left font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
 													>
 														<Search className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
 														<span className="flex-1 truncate">{term}</span>
-														{/* Show scope indicator when active */}
-														{isSearchWithinActive && currentScope && (
-															<span className="text-xs text-muted-foreground shrink-0">
-																dans {currentScope.label}
-															</span>
-														)}
 													</button>
 												</Tap>
 												<button

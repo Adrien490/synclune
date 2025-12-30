@@ -84,33 +84,17 @@ export function Bestsellers({ productsPromise, wishlistProductIdsPromise }: Best
 
 				{/* Baymard UX: Featured products → Category link (43% des sites oublient) */}
 				<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">
-					<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center">
-						<Button
-							asChild
-							size="lg"
-							className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
-							aria-describedby="bestsellers-cta-description"
-						>
-							<Link href="/produits">
-								Voir toute la boutique
-							</Link>
-						</Button>
-						<Button
-							asChild
-							size="lg"
-							variant="outline"
-							className="hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
-							aria-describedby="bestsellers-all-cta-description"
-						>
-							<Link href="/produits?sortBy=best-selling">
-								Tous les best-sellers
-							</Link>
-						</Button>
-					</div>
+					<Button
+						asChild
+						size="lg"
+						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+						aria-describedby="bestsellers-cta-description"
+					>
+						<Link href="/produits?sortBy=best-selling">
+							Voir tous les best-sellers
+						</Link>
+					</Button>
 					<span id="bestsellers-cta-description" className="sr-only">
-						Voir tous les bijoux dans la boutique Synclune
-					</span>
-					<span id="bestsellers-all-cta-description" className="sr-only">
 						Voir la liste complète des bijoux les plus vendus
 					</span>
 				</Fade>

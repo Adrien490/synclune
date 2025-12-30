@@ -1,6 +1,5 @@
 import { Card } from "@/shared/components/ui/card";
 import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
-import { josefinSans } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { Gem } from "lucide-react";
 import Image from "next/image";
@@ -30,7 +29,7 @@ interface CollectionCardProps {
  * - Blur placeholder pour CLS optimise
  * - Preload above-fold (index < 4)
  * - Schema.org Collection avec wrapper article
- * - Typography Crimson Pro uniformisee
+ * - Typography uniforme avec le reste du site
  * - Quality 85 pour images premium
  * - Hover effects harmonises avec ProductCard
  */
@@ -117,13 +116,12 @@ export function CollectionCard({
 
 					{/* Contenu avec padding responsive */}
 					<div className="space-y-2 p-4 sm:p-5 lg:p-6">
-						{/* Titre avec Crimson Pro uniformise */}
+						{/* Titre */}
 						<HeadingTag
 							id={titleId}
 							className={cn(
-								josefinSans.className,
 								"line-clamp-2 overflow-hidden text-foreground",
-								"text-lg/7 sm:text-xl/7 tracking-normal break-words",
+								"text-base/6 tracking-normal break-words",
 							)}
 							itemProp="name"
 						>
