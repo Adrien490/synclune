@@ -52,7 +52,7 @@ export function GalleryDots({ current, total, onSelect }: GalleryDotsProps) {
 								!prefersReduced && "transition-all duration-200",
 								i === current
 									? "bg-white w-2.5 h-2.5"
-									: "bg-white/50 w-2 h-2"
+									: "bg-white/80 w-2 h-2"
 							)}
 						/>
 					</button>

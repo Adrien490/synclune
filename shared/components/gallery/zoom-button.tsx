@@ -26,7 +26,7 @@ export function GalleryZoomButton({ onOpen }: GalleryZoomButtonProps) {
 			)}
 			aria-label="Zoomer l'image en plein écran"
 		>
-			<ZoomIn className="w-5 h-5" />
+			<ZoomIn className="w-5 h-5" aria-hidden="true" />
 		</button>
 	);
 }

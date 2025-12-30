@@ -1,9 +1,12 @@
-import { Progress } from "@/shared/components/ui/progress"
 import { cn } from "@/shared/utils/cn"
 import { RatingStars } from "@/shared/components/rating-stars"
 import { REVIEW_CONFIG } from "../constants/review.constants"
 import type { ProductReviewStatistics } from "../types/review.types"
 import { formatRating } from "@/shared/utils/rating-utils"
+import { RatingDistribution } from "./rating-distribution"
+
+/** Seuil minimum d'avis pour afficher la distribution (Baymard) */
+const MIN_REVIEWS_FOR_DISTRIBUTION = 5
 
 interface ReviewSummaryProps {
 	stats: ProductReviewStatistics
@@ -11,12 +14,16 @@ interface ReviewSummaryProps {
 }
 
 /**
- * Résumé des avis avec note moyenne et distribution
+ * Résumé des avis avec note moyenne et distribution cliquable
+ * Baymard: La distribution est le feature le plus utilisé de la section avis
+ * Note: Cacher la distribution si < 5 avis pour éviter la sur-interprétation
  */
 export function ReviewSummary({
 	stats,
 	className,
 }: ReviewSummaryProps) {
+	const showDistribution = stats.totalCount >= MIN_REVIEWS_FOR_DISTRIBUTION
+
 	return (
 		<section
 			role="region"
@@ -24,7 +31,7 @@ export function ReviewSummary({
 			className={cn("flex flex-col sm:flex-row gap-6 sm:gap-10 max-w-2xl", className)}
 		>
 			{/* Note moyenne */}
-			<div className="flex flex-col items-center justify-center text-center">
+			<div className="flex flex-col items-center justify-center text-center shrink-0">
 				<h3 id="review-summary-title" className="sr-only">Résumé des avis</h3>
 				<div className="text-5xl font-bold text-foreground" aria-hidden="true">
 					{formatRating(stats.averageRating)}
@@ -41,39 +48,12 @@ export function ReviewSummary({
 				</div>
 			</div>
 
-			{/* Distribution */}
-			<div className="flex-1 space-y-2">
-				{stats.distribution.map(({ rating, count, percentage }) => (
-					<div
-						key={rating}
-						className="flex items-center gap-2 w-full flex-nowrap"
-					>
-						{/* Label (étoiles) */}
-						<span className="text-sm font-medium w-16 whitespace-nowrap text-left text-muted-foreground">
-							{rating} étoile{rating > 1 ? "s" : ""}
-						</span>
-
-						{/* Barre de progression */}
-						<div className="flex-1 min-w-0">
-							<Progress
-								value={percentage}
-								className="h-2"
-								aria-label={`${rating} étoile${rating > 1 ? "s" : ""}: ${percentage}%`}
-							/>
-						</div>
-
-						{/* Pourcentage */}
-						<span className="text-sm w-10 text-right text-muted-foreground">
-							{percentage}%
-						</span>
-
-						{/* Nombre d'avis */}
-						<span className="text-xs text-muted-foreground w-12 text-right hidden sm:inline">
-							({count})
-						</span>
-					</div>
-				))}
-			</div>
+			{/* Distribution cliquable (Baymard: 90% des users cliquent pour filtrer) */}
+			{showDistribution && (
+				<div className="flex-1">
+					<RatingDistribution distribution={stats.distribution} />
+				</div>
+			)}
 		</section>
 	)
 }

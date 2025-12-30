@@ -12,15 +12,18 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
 	const { action, isPending, isLoggedOut } = useLogout();
 
 	return (
-		<span
+		<button
+			type="button"
 			className={cn(className)}
 			data-pending={isPending || isLoggedOut ? "" : undefined}
+			disabled={isPending || isLoggedOut}
+			aria-busy={isPending}
 			onClick={() => {
 				if (isPending || isLoggedOut) return;
 				action(new FormData());
 			}}
 		>
 			{children}
-		</span>
+		</button>
 	);
 }

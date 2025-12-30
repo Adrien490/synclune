@@ -5,7 +5,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/shared/components/ui/empty"
-import { MessageSquare } from "lucide-react"
+import { Filter, MessageSquare } from "lucide-react"
 
 import type { ReviewPublic, ProductReviewStatistics } from "../types/review.types"
 import { ReviewCard } from "./review-card"
@@ -25,6 +25,8 @@ interface ReviewsListProps {
 	nextCursor?: string | null
 	/** Indique s'il y a plus d'avis à charger */
 	hasMore?: boolean
+	/** Filtre par note actif */
+	ratingFilter?: number
 }
 
 /**
@@ -38,9 +40,12 @@ export function ReviewsList({
 	productId: _productId,
 	nextCursor: _nextCursor,
 	hasMore: _hasMore,
+	ratingFilter,
 }: ReviewsListProps) {
-	// Aucun avis
-	if (totalCount === 0 || initialReviews.length === 0) {
+	const isFiltered = ratingFilter !== undefined
+
+	// Aucun avis (sans filtre)
+	if (stats.totalCount === 0) {
 		return (
 			<Empty className="py-12">
 				<EmptyHeader>
@@ -58,13 +63,44 @@ export function ReviewsList({
 		)
 	}
 
+	// Aucun avis avec le filtre actif
+	if (isFiltered && initialReviews.length === 0) {
+		return (
+			<div className="space-y-6">
+				{/* Résumé avec distribution (toujours afficher pour pouvoir changer de filtre) */}
+				<ReviewSummary stats={stats} />
+
+				<Empty className="py-12">
+					<EmptyHeader>
+						<EmptyMedia variant="icon">
+							<Filter className="size-6" aria-hidden="true" />
+						</EmptyMedia>
+						<EmptyTitle>Aucun avis à {ratingFilter} étoile{ratingFilter > 1 ? "s" : ""}</EmptyTitle>
+					</EmptyHeader>
+					<EmptyContent>
+						<p className="text-sm text-muted-foreground">
+							Essayez de sélectionner une autre note dans la distribution ci-dessus.
+						</p>
+					</EmptyContent>
+				</Empty>
+			</div>
+		)
+	}
+
 	return (
 		<div className="space-y-6">
-			{/* Résumé avec distribution */}
+			{/* Résumé avec distribution cliquable */}
 			<ReviewSummary stats={stats} />
 
-			{/* Galerie photos clients (Baymard) */}
-			<ReviewPhotosGallery reviews={initialReviews} />
+			{/* Indicateur de filtre actif */}
+			{isFiltered && (
+				<p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+					{totalCount} avis à {ratingFilter} étoile{ratingFilter > 1 ? "s" : ""} sur {stats.totalCount} au total
+				</p>
+			)}
+
+			{/* Galerie photos clients (Baymard) - seulement si pas filtré ou avis avec photos */}
+			{!isFiltered && <ReviewPhotosGallery reviews={initialReviews} />}
 
 			{/* Liste des avis */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4" role="feed" aria-label="Liste des avis clients">

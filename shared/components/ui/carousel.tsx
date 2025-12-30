@@ -307,8 +307,8 @@ function CarouselPrevious({
 				"hover:bg-primary/90 hover:scale-105",
 				// Focus visible (keyboard accessibility)
 				"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-				// Disabled states
-				"disabled:opacity-30 disabled:pointer-events-none disabled:cursor-not-allowed",
+				// Disabled states (opacity-60 pour contraste WCAG AA)
+				"disabled:opacity-60 disabled:pointer-events-none disabled:cursor-not-allowed",
 				// Smooth transitions
 				"transition-all duration-300",
 				className
@@ -356,8 +356,8 @@ function CarouselNext({
 				"hover:bg-primary/90 hover:scale-105",
 				// Focus visible (keyboard accessibility)
 				"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-				// Disabled states
-				"disabled:opacity-30 disabled:pointer-events-none disabled:cursor-not-allowed",
+				// Disabled states (opacity-60 pour contraste WCAG AA)
+				"disabled:opacity-60 disabled:pointer-events-none disabled:cursor-not-allowed",
 				// Smooth transitions
 				"transition-all duration-300",
 				className
@@ -443,7 +443,7 @@ function CarouselDots({
 								"motion-safe:transition-all motion-safe:duration-150 ease-out",
 								index === selectedIndex
 									? "h-2.5 w-8 sm:h-3 sm:w-10 bg-primary shadow-md"
-									: "h-2.5 w-2.5 sm:h-3 sm:w-3 bg-muted-foreground/50 hover:bg-muted-foreground/70"
+									: "h-2.5 w-2.5 sm:h-3 sm:w-3 bg-muted-foreground/70 hover:bg-muted-foreground/90"
 							)}
 						/>
 					</button>

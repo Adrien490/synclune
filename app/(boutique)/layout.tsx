@@ -12,12 +12,11 @@ export default async function ShopLayout({
 }: ShopLayoutProps) {
 	return (
 		<>
-			<Suspense fallback={<NavbarSkeleton />}>
-				<Navbar />
-			</Suspense>
+				<Suspense fallback={<NavbarSkeleton />}>
+					<Navbar />
+				</Suspense>
 			<main
 				id="main-content"
-				role="main"
 				aria-label="Contenu principal"
 				className="min-h-screen"
 			>

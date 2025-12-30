@@ -1,6 +1,5 @@
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import {
-	ApplePayIcon,
 	CBIcon,
 	MastercardIcon,
 	PayPalIcon,
@@ -184,16 +183,15 @@ export function Footer() {
 				</div>
 
 				{/* Paiement sécurisé */}
-				<div className="flex flex-col items-center gap-3 pt-8 border-t border-border">
-					<p className="text-sm text-muted-foreground">Paiement sécurisé</p>
-					<div className="flex items-center gap-4">
-						<VisaIcon className="text-muted-foreground" />
-						<MastercardIcon className="text-muted-foreground" />
-						<CBIcon className="text-muted-foreground" />
-						<PayPalIcon className="text-muted-foreground" />
-						<ApplePayIcon className="text-muted-foreground" />
-					</div>
-				</div>
+				<section className="flex flex-col items-center gap-3 pt-8 border-t border-border" aria-labelledby="footer-payment-title">
+					<h3 id="footer-payment-title" className="text-sm text-muted-foreground">Paiement sécurisé</h3>
+					<ul className="flex items-center gap-4" aria-label="Moyens de paiement acceptés">
+						<li><VisaIcon className="text-muted-foreground" /></li>
+						<li><MastercardIcon className="text-muted-foreground" /></li>
+						<li><CBIcon className="text-muted-foreground" /></li>
+						<li><PayPalIcon className="text-muted-foreground" /></li>
+					</ul>
+				</section>
 
 				{/* Copyright + Liens légaux */}
 				<div className="flex flex-col items-center gap-4 pt-6">

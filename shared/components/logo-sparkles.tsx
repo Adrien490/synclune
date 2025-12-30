@@ -83,9 +83,23 @@ export function LogoSparkles({ children, className }: LogoSparklesProps) {
 		requestAnimationFrame(animate);
 	};
 
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			handleClick(e as unknown as React.MouseEvent);
+		}
+	};
+
 	return (
 		<>
-			<div onClick={handleClick} className={className}>
+			<div
+				onClick={handleClick}
+				onKeyDown={handleKeyDown}
+				role="button"
+				tabIndex={0}
+				aria-label="Déclencher l'animation sparkles"
+				className={className}
+			>
 				{children}
 			</div>
 

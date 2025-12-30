@@ -63,28 +63,24 @@ export function Bestsellers({ productsPromise, wishlistProductIdsPromise }: Best
 					</Fade>
 				</header>
 
-				<ul
-					role="list"
-					className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
-					aria-label="Liste des meilleures ventes"
-				>
 					<Stagger
-						stagger={0.08}
-						y={25}
-						inView
-						once={true}
-					>
-						{products.map((product, index) => (
-							<li key={product.id}>
-								<ProductCard
-									product={product}
-									index={index}
-									isInWishlist={wishlistProductIds.has(product.id)}
-								/>
-							</li>
-						))}
-					</Stagger>
-				</ul>
+					className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
+					role="list"
+					aria-label="Liste des meilleures ventes"
+					stagger={0.08}
+					y={25}
+					inView
+					once={true}
+				>
+					{products.map((product, index) => (
+						<ProductCard
+							key={product.id}
+							product={product}
+							index={index}
+							isInWishlist={wishlistProductIds.has(product.id)}
+						/>
+					))}
+				</Stagger>
 
 				{/* Baymard UX: Featured products → Category link (43% des sites oublient) */}
 				<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">

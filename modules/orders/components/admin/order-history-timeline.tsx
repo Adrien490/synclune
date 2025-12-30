@@ -48,54 +48,62 @@ interface OrderHistoryTimelineProps {
 	history: OrderHistoryEntry[];
 }
 
-// Mapping action → icône + couleur + label
+// Mapping action → icône + couleur + label + symbole (accessibilité: pas couleur seule)
 const ACTION_CONFIG: Record<
 	OrderAction,
-	{ icon: typeof Clock; color: string; label: string }
+	{ icon: typeof Clock; color: string; label: string; symbol: string }
 > = {
-	CREATED: { icon: Clock, color: "text-blue-500", label: "Commande créée" },
-	PAID: { icon: CreditCard, color: "text-green-500", label: "Paiement reçu" },
+	CREATED: { icon: Clock, color: "text-blue-500", label: "Commande créée", symbol: "⏱" },
+	PAID: { icon: CreditCard, color: "text-green-500", label: "Paiement reçu", symbol: "✓" },
 	PROCESSING: {
 		icon: Package,
 		color: "text-yellow-500",
 		label: "En préparation",
+		symbol: "⚙",
 	},
-	SHIPPED: { icon: Truck, color: "text-purple-500", label: "Expédiée" },
+	SHIPPED: { icon: Truck, color: "text-purple-500", label: "Expédiée", symbol: "→" },
 	DELIVERED: {
 		icon: CheckCircle2,
 		color: "text-green-600",
 		label: "Livrée",
+		symbol: "✓✓",
 	},
-	CANCELLED: { icon: XCircle, color: "text-red-500", label: "Annulée" },
+	CANCELLED: { icon: XCircle, color: "text-red-500", label: "Annulée", symbol: "✗" },
 	RETURNED: {
 		icon: RotateCcw,
 		color: "text-orange-500",
 		label: "Retournée",
+		symbol: "↩",
 	},
 	STATUS_REVERTED: {
 		icon: RotateCcw,
 		color: "text-amber-500",
 		label: "Statut annulé",
+		symbol: "↶",
 	},
 	NOTE_ADDED: {
 		icon: FileText,
 		color: "text-gray-500",
 		label: "Note ajoutée",
+		symbol: "+",
 	},
 	NOTE_DELETED: {
 		icon: FileText,
 		color: "text-gray-400",
 		label: "Note supprimée",
+		symbol: "−",
 	},
 	TRACKING_UPDATED: {
 		icon: Truck,
 		color: "text-blue-400",
 		label: "Suivi mis à jour",
+		symbol: "📍",
 	},
 	MANUAL_EDIT: {
 		icon: Edit,
 		color: "text-gray-600",
 		label: "Modification manuelle",
+		symbol: "✎",
 	},
 };
 
@@ -173,8 +181,10 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 											"absolute left-0 w-8 h-8 rounded-full bg-background border-2 flex items-center justify-center",
 											config.color
 										)}
+										aria-label={config.label}
 									>
-										<Icon className="w-4 h-4" />
+										<Icon className="w-4 h-4" aria-hidden="true" />
+										<span className="sr-only">{config.symbol}</span>
 									</div>
 
 									{/* Contenu */}

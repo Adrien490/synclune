@@ -69,7 +69,7 @@ function Slider({
 						"shadow-md hover:shadow-lg",
 						"ring-ring/50 transition-all duration-150",
 						"hover:ring-4 hover:scale-110",
-						"focus-visible:ring-4 focus-visible:outline-hidden",
+						"focus-visible:ring-4 focus-visible:outline-none",
 						"active:scale-95",
 						"disabled:pointer-events-none disabled:opacity-50"
 					)}

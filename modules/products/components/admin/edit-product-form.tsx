@@ -164,7 +164,7 @@ export function EditProductForm({
 						>
 							{(field) => (
 								<div className="space-y-2">
-									<FieldLabel required>Titre du bijou</FieldLabel>
+									<FieldLabel htmlFor={field.name} required>Titre du bijou</FieldLabel>
 									<field.InputField label="" required />
 									<p className="text-xs text-muted-foreground">
 										⚠️ Le slug restera inchangé pour préserver les liens SEO
@@ -200,7 +200,7 @@ export function EditProductForm({
 							<form.AppField name="typeId">
 								{(field) => (
 									<div className="space-y-2">
-										<FieldLabel optional>Type de bijou</FieldLabel>
+										<FieldLabel htmlFor={field.name} optional>Type de bijou</FieldLabel>
 										<field.SelectField
 											label=""
 											options={productTypes.map((type) => ({
@@ -241,7 +241,7 @@ export function EditProductForm({
 						<form.AppField name="defaultSku.colorId">
 							{(field) => (
 								<div className="space-y-2">
-									<FieldLabel optional>Couleur</FieldLabel>
+									<FieldLabel htmlFor={field.name} optional>Couleur</FieldLabel>
 									<field.SelectField
 										label=""
 										options={colors.map((color) => ({
@@ -292,7 +292,7 @@ export function EditProductForm({
 							<form.AppField name="defaultSku.materialId">
 								{(field) => (
 									<div className="space-y-2">
-										<FieldLabel optional>Matériau</FieldLabel>
+										<FieldLabel htmlFor={field.name} optional>Matériau</FieldLabel>
 										<field.SelectField
 											label=""
 											options={materials.map((m) => ({
@@ -320,7 +320,7 @@ export function EditProductForm({
 						<form.AppField name="status">
 							{(field) => (
 								<div className="space-y-2">
-									<FieldLabel required>Statut</FieldLabel>
+									<FieldLabel htmlFor={field.name} required>Statut</FieldLabel>
 									<field.RadioGroupField
 										label=""
 										options={[
@@ -414,7 +414,7 @@ export function EditProductForm({
 						<form.AppField name="defaultSku.isActive">
 							{(field) => (
 								<div className="space-y-2">
-									<FieldLabel required>Statut du SKU</FieldLabel>
+									<FieldLabel htmlFor={field.name} required>Statut du SKU</FieldLabel>
 									<field.RadioGroupField
 										label=""
 										options={[

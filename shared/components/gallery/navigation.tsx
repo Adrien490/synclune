@@ -32,7 +32,7 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 				onClick={onPrev}
 				aria-label="Image précédente"
 			>
-				<ChevronLeft className="size-5" />
+				<ChevronLeft className="size-5" aria-hidden="true" />
 			</Button>
 			<Button
 				variant="ghost"
@@ -49,7 +49,7 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 				onClick={onNext}
 				aria-label="Image suivante"
 			>
-				<ChevronRight className="size-5" />
+				<ChevronRight className="size-5" aria-hidden="true" />
 			</Button>
 		</>
 	);

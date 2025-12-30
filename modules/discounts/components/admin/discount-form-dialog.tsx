@@ -165,7 +165,7 @@ export function DiscountFormDialog() {
 						>
 							{(field) => (
 								<div className="space-y-2">
-									<FieldLabel required>Code</FieldLabel>
+									<FieldLabel htmlFor={field.name} required>Code</FieldLabel>
 									<field.InputField
 										label=""
 										type="text"
@@ -183,7 +183,7 @@ export function DiscountFormDialog() {
 							<form.AppField name="type">
 								{(field) => (
 									<div className="space-y-2">
-										<FieldLabel required>Type de réduction</FieldLabel>
+										<FieldLabel htmlFor={field.name} required>Type de réduction</FieldLabel>
 										<field.SelectField
 											label=""
 											placeholder="Choisir un type"
@@ -213,7 +213,7 @@ export function DiscountFormDialog() {
 							>
 								{(field) => (
 									<div className="space-y-2">
-										<FieldLabel required>Valeur</FieldLabel>
+										<FieldLabel htmlFor={field.name} required>Valeur</FieldLabel>
 										<field.InputField
 											label=""
 											type="number"
@@ -233,7 +233,7 @@ export function DiscountFormDialog() {
 						<form.AppField name="minOrderAmount">
 							{(field) => (
 								<div className="space-y-2">
-									<FieldLabel optional>Montant minimum de commande</FieldLabel>
+									<FieldLabel htmlFor={field.name} optional>Montant minimum de commande</FieldLabel>
 									<field.InputField
 										label=""
 										type="number"
@@ -254,7 +254,7 @@ export function DiscountFormDialog() {
 							<form.AppField name="maxUsageCount">
 								{(field) => (
 									<div className="space-y-2">
-										<FieldLabel optional>Utilisations max (total)</FieldLabel>
+										<FieldLabel htmlFor={field.name} optional>Utilisations max (total)</FieldLabel>
 										<field.InputField
 											label=""
 											type="number"
@@ -270,7 +270,7 @@ export function DiscountFormDialog() {
 							<form.AppField name="maxUsagePerUser">
 								{(field) => (
 									<div className="space-y-2">
-										<FieldLabel optional>Utilisations max par client</FieldLabel>
+										<FieldLabel htmlFor={field.name} optional>Utilisations max par client</FieldLabel>
 										<field.InputField
 											label=""
 											type="number"

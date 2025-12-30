@@ -9,6 +9,8 @@ import type { ReviewPublic } from "../types/review.types"
 interface ProductReviewsSectionProps {
 	productId: string
 	productSlug: string
+	/** Filtre par note (1-5), passé depuis les searchParams de la page */
+	ratingFilter?: number
 }
 
 /**
@@ -18,13 +20,23 @@ interface ProductReviewsSectionProps {
 export async function ProductReviewsSection({
 	productId,
 	productSlug,
+	ratingFilter,
 }: ProductReviewsSectionProps) {
 	// Charger les avis et stats en parallèle
+	// Le filtre s'applique aux avis mais pas aux stats (pour garder la distribution complète)
 	const [reviewsData, stats] = await Promise.all([
-		getReviews({ productId, perPage: 10 }),
+		getReviews({
+			productId,
+			perPage: 10,
+			filterRating: ratingFilter,
+		}),
 		getProductReviewStats(productId),
 	])
 	const reviews = (reviewsData?.reviews ?? []) as ReviewPublic[]
+
+	// Nombre d'avis filtrés vs total
+	const isFiltered = ratingFilter !== undefined
+	const filteredCount = reviewsData.totalCount
 
 	return (
 		<section
@@ -61,7 +73,8 @@ export async function ProductReviewsSection({
 				productId={productId}
 				nextCursor={reviewsData.pagination.nextCursor}
 				hasMore={reviewsData.pagination.hasNextPage}
-				totalCount={reviewsData.totalCount}
+				totalCount={isFiltered ? filteredCount : reviewsData.totalCount}
+				ratingFilter={ratingFilter}
 			/>
 		</section>
 	)

@@ -102,6 +102,8 @@ export const ColorPicker = ({
 		>
 			<div
 				data-slot="color-picker"
+				role="group"
+				aria-label="Sélecteur de couleur"
 				className={cn("flex size-full flex-col gap-4", className)}
 				{...props}
 			/>

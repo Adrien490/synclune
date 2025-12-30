@@ -193,24 +193,57 @@ export type { ProductCardData } from "../types/product-services.types";
  * Réduit la complexité de O(5n) à O(n) pour les produits avec beaucoup de SKUs.
  *
  * @param product - Produit avec ses SKUs
+ * @param activeColorSlug - Slug de la couleur filtrée (Baymard: thumbnail dynamique)
  * @returns Toutes les données formatées pour ProductCard
  *
  * @example
  * ```tsx
- * const { defaultSku, price, compareAtPrice, stockInfo, primaryImage, colors } =
- *   getProductCardData(product);
+ * // Sans filtre couleur
+ * const data = getProductCardData(product);
+ *
+ * // Avec filtre couleur actif (thumbnail s'adapte)
+ * const data = getProductCardData(product, "or");
  * ```
  */
-export function getProductCardData(product: ProductFromList): ProductCardData {
+export function getProductCardData(
+	product: ProductFromList,
+	activeColorSlug?: string
+): ProductCardData {
 	const skus = product.skus ?? [];
 
-	// === 1. Trouver le SKU principal (même logique que getPrimarySkuForList) ===
+	// === 1. Trouver le SKU principal ===
 	let defaultSku: SkuFromList | null = null;
 
-	// Priorité 1: SKU avec isDefault = true
-	defaultSku = skus.find((sku) => sku.isActive && sku.isDefault) ?? null;
+	// NOUVEAU (Baymard): Si un filtre couleur est actif, prioriser cette couleur
+	// Cela garantit que le thumbnail correspond à la recherche de l'utilisateur
+	if (activeColorSlug) {
+		// Priorité 1a: SKU de la couleur filtrée en stock
+		const colorSkuInStock = skus.find(
+			(sku) =>
+				sku.isActive &&
+				sku.color?.slug === activeColorSlug &&
+				sku.inventory > 0
+		);
+		if (colorSkuInStock) {
+			defaultSku = colorSkuInStock;
+		} else {
+			// Priorité 1b: SKU de la couleur filtrée (même hors stock)
+			const colorSku = skus.find(
+				(sku) => sku.isActive && sku.color?.slug === activeColorSlug
+			);
+			if (colorSku) {
+				defaultSku = colorSku;
+			}
+		}
+	}
 
-	// Priorité 2: SKU en stock, trié par prix ASC
+	// Fallback: logique standard si pas de filtre couleur ou couleur non trouvée
+	if (!defaultSku) {
+		// Priorité 2: SKU avec isDefault = true
+		defaultSku = skus.find((sku) => sku.isActive && sku.isDefault) ?? null;
+	}
+
+	// Priorité 3: SKU en stock, trié par prix ASC
 	if (!defaultSku) {
 		const inStockSkus = skus
 			.filter((sku) => sku.isActive && sku.inventory > 0)
@@ -218,7 +251,7 @@ export function getProductCardData(product: ProductFromList): ProductCardData {
 		defaultSku = inStockSkus[0] ?? null;
 	}
 
-	// Priorité 3: Premier SKU actif
+	// Priorité 4: Premier SKU actif
 	if (!defaultSku) {
 		defaultSku = skus.find((sku) => sku.isActive) ?? skus[0] ?? null;
 	}

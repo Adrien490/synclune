@@ -90,6 +90,32 @@ export function fetchProducts(
 }
 
 /**
+ * Extrait le slug de la couleur filtrée si une seule est sélectionnée
+ * Utilisé pour adapter les thumbnails (Baymard UX: 54% des sites ne le font pas)
+ *
+ * @returns Le slug de la couleur si une seule est active, undefined sinon
+ */
+export function getActiveColorSlug(
+	searchParamsData: ProductSearchParams
+): string | undefined {
+	const colorParam = searchParamsData.color;
+
+	if (!colorParam) return undefined;
+
+	// Si c'est un tableau avec un seul élément
+	if (Array.isArray(colorParam)) {
+		return colorParam.length === 1 ? colorParam[0] : undefined;
+	}
+
+	// Si c'est une string (peut contenir des virgules pour multi-select)
+	if (colorParam.includes(",")) {
+		return undefined; // Plusieurs couleurs sélectionnées
+	}
+
+	return colorParam;
+}
+
+/**
  * Compte le nombre de filtres actifs
  */
 export function countActiveFilters(

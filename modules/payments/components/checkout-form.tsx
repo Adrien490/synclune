@@ -8,7 +8,13 @@ import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { ArrowLeft, CreditCard, Info, Loader2, Mail, Shield } from "lucide-react";
+import { CreditCard, Info, Loader2, Lock, Mail, Shield } from "lucide-react";
+import {
+	VisaIcon,
+	MastercardIcon,
+	CBIcon,
+} from "@/shared/components/icons/payment-icons";
+import { StripeWordmark } from "./stripe-wordmark";
 import {
 	SORTED_SHIPPING_COUNTRIES,
 	COUNTRY_NAMES,
@@ -19,6 +25,7 @@ import { useCheckoutForm } from "../hooks/use-checkout-form";
 import { ActionStatus } from "@/shared/types/server-action";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 import { EmbeddedCheckoutWrapper } from "./embedded-checkout";
+import { AddressSummary, type SubmittedAddress } from "./address-summary";
 import type { CreateCheckoutSessionResult } from "../types/checkout.types";
 
 // Options pour le select des pays
@@ -54,10 +61,46 @@ export function CheckoutForm({
 		orderId: string;
 		orderNumber: string;
 	} | null>(null);
+	const [submittedAddress, setSubmittedAddress] =
+		useState<SubmittedAddress | null>(null);
+
+	// Référence pour capturer les valeurs du formulaire avant soumission
+	const formValuesRef = useRef<{
+		email?: string;
+		shipping?: {
+			fullName: string;
+			addressLine1: string;
+			addressLine2?: string;
+			city: string;
+			postalCode: string;
+			country: string;
+			phoneNumber: string;
+		};
+	} | null>(null);
 
 	const handleSuccess = (data: CreateCheckoutSessionResult) => {
 		setClientSecret(data.clientSecret);
 		setOrderInfo({ orderId: data.orderId, orderNumber: data.orderNumber });
+
+		// Capturer l'adresse soumise pour l'afficher dans le résumé
+		if (formValuesRef.current?.shipping) {
+			const shipping = formValuesRef.current.shipping;
+			setSubmittedAddress({
+				fullName: shipping.fullName,
+				addressLine1: shipping.addressLine1,
+				addressLine2: shipping.addressLine2 || undefined,
+				city: shipping.city,
+				postalCode: shipping.postalCode,
+				country: (shipping.country || "FR") as ShippingCountry,
+				phoneNumber: shipping.phoneNumber,
+				email: isGuest ? formValuesRef.current.email : undefined,
+			});
+		}
+	};
+
+	const handleEdit = () => {
+		setClientSecret(null);
+		// On garde submittedAddress pour pré-remplir si besoin
 	};
 
 	// Form hook
@@ -121,45 +164,71 @@ export function CheckoutForm({
 	const shipping = calculateShipping();
 	const total = subtotal + shipping;
 
-	// Si on a le clientSecret, afficher le paiement Stripe
-	if (clientSecret) {
+	// Si on a le clientSecret, afficher le résumé + paiement Stripe
+	if (clientSecret && submittedAddress) {
 		return (
 			<div className="space-y-6">
-				{/* Bouton retour */}
-				<Button
-					variant="ghost"
-					size="sm"
-					onClick={() => setClientSecret(null)}
-					className="text-muted-foreground hover:text-foreground"
-				>
-					<ArrowLeft className="w-4 h-4 mr-2" />
-					Modifier mon adresse
-				</Button>
+				{/* Résumé de l'adresse de livraison (Baymard: toujours visible) */}
+				<AddressSummary address={submittedAddress} onEdit={handleEdit} />
 
 				{/* En-tête paiement */}
 				<div className="space-y-2">
-					<h2 className="text-xl font-semibold flex items-center gap-2">
-						<CreditCard className="w-5 h-5" />
-						Paiement sécurisé
-					</h2>
-					<p className="text-sm text-muted-foreground">
+					<div className="flex items-center gap-2">
+						<div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+							2
+						</div>
+						<h2 className="text-lg font-semibold flex items-center gap-2">
+							<CreditCard className="w-5 h-5" />
+							Paiement sécurisé
+						</h2>
+					</div>
+					<p className="text-sm text-muted-foreground pl-8">
 						Finalise ta commande avec Stripe, leader de la sécurité des
 						paiements en ligne.
 					</p>
 				</div>
 
-				{/* Formulaire Stripe Embedded */}
-				<div className="rounded-lg border overflow-hidden">
-					<EmbeddedCheckoutWrapper clientSecret={clientSecret} />
+				{/* Icônes cartes bancaires acceptées (Baymard: +11% confiance) */}
+				<div className="flex items-center justify-center gap-3">
+					<span className="text-xs text-muted-foreground">Cartes acceptées</span>
+					<div className="flex items-center gap-2">
+						<VisaIcon className="h-5 w-auto" />
+						<MastercardIcon className="h-5 w-auto" />
+						<CBIcon className="h-5 w-auto" />
+					</div>
 				</div>
 
-				{/* Message sécurité */}
-				<div className="flex items-start gap-2 p-4 bg-muted/50 rounded-lg border text-sm text-muted-foreground">
-					<Shield className="w-4 h-4 mt-0.5 shrink-0" />
-					<p>
-						Tes informations de paiement sont protégées par le chiffrement SSL.
-						Je n'enregistre jamais tes coordonnées bancaires.
-					</p>
+				{/* Zone paiement sécurisée - fond distinct (Baymard: +37% confiance perçue) */}
+				<div className="rounded-xl border-2 border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20 overflow-hidden shadow-sm">
+					{/* Bandeau sécurité */}
+					<div className="flex items-center justify-center gap-2 px-4 py-2 bg-green-100/80 dark:bg-green-900/30 border-b border-green-200 dark:border-green-900">
+						<Lock className="w-3.5 h-3.5 text-green-700 dark:text-green-400" />
+						<span className="text-xs font-medium text-green-700 dark:text-green-400">
+							Zone de paiement sécurisée
+						</span>
+					</div>
+
+					{/* Formulaire Stripe Embedded */}
+					<div className="bg-background">
+						<EmbeddedCheckoutWrapper clientSecret={clientSecret} />
+					</div>
+				</div>
+
+				{/* Message sécurité + Logo Stripe */}
+				<div className="space-y-3">
+					<div className="flex items-start gap-2 p-4 bg-muted/50 rounded-lg border text-sm text-muted-foreground">
+						<Shield className="w-4 h-4 mt-0.5 shrink-0" />
+						<p>
+							Tes informations de paiement sont protégées par le chiffrement SSL
+							et 3D Secure. Je n'enregistre jamais tes coordonnées bancaires.
+						</p>
+					</div>
+
+					{/* Powered by Stripe (Baymard: badge tiers reconnu) */}
+					<div className="flex items-center justify-center gap-2 text-muted-foreground">
+						<span className="text-xs">Propulsé par</span>
+						<StripeWordmark className="h-5 w-auto opacity-60" />
+					</div>
 				</div>
 
 				{/* Info commande */}
@@ -176,8 +245,32 @@ export function CheckoutForm({
 		<form
 			action={action}
 			className="space-y-5 sm:space-y-6"
-			onSubmit={() => void form.handleSubmit()}
+			onSubmit={() => {
+				// Capturer les valeurs avant soumission pour le résumé
+				formValuesRef.current = {
+					email: form.state.values.email as string | undefined,
+					shipping: form.state.values.shipping as {
+						fullName: string;
+						addressLine1: string;
+						addressLine2?: string;
+						city: string;
+						postalCode: string;
+						country: string;
+						phoneNumber: string;
+					},
+				};
+				void form.handleSubmit();
+			}}
 		>
+			{/* Scroll automatique vers le premier champ en erreur (Baymard: visibilité erreurs mobile) */}
+			<form.FormScrollOnError />
+
+			{/* Légende champs obligatoires (Baymard: 94% des sites échouent à clarifier) */}
+			<p className="text-sm text-muted-foreground">
+				Les champs marqués d'un <span className="text-destructive">*</span> sont
+				obligatoires.
+			</p>
+
 			{/* Champs cachés */}
 			<input
 				type="hidden"
@@ -516,6 +609,7 @@ export function CheckoutForm({
 				)}
 			</form.AppField>
 
+			{/* Baymard: Cadenas sur CTA renforce la sécurité perçue pour achats premium */}
 			<form.Subscribe selector={(s) => [s.canSubmit]}>
 				{([canSubmit]) => (
 					<Button
@@ -530,7 +624,10 @@ export function CheckoutForm({
 								<span>Validation...</span>
 							</>
 						) : (
-							`Continuer vers le paiement · ${formatEuro(total)}`
+							<>
+								<Lock className="size-4" aria-hidden="true" />
+								<span>Paiement sécurisé · {formatEuro(total)}</span>
+							</>
 						)}
 					</Button>
 				)}

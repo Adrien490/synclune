@@ -34,8 +34,8 @@ export function SignUpEmailForm() {
 	const form = useAppForm({
 		defaultValues: {
 			email: "",
+			confirmEmail: "",
 			password: "",
-			confirmPassword: "",
 			name: "",
 			termsAccepted: false,
 		},
@@ -127,9 +127,39 @@ export function SignUpEmailForm() {
 								required
 							/>
 							<p className="text-xs text-muted-foreground">
-								Utilise uniquement pour la confirmation de compte et les notifications de commande
+								Utilisé uniquement pour la confirmation de compte et les notifications de commande
 							</p>
 						</div>
+					)}
+				</form.AppField>
+
+				<form.AppField
+					name="confirmEmail"
+					validators={{
+						onChangeListenTo: ["email"],
+						onChange: ({ value, fieldApi }) => {
+							if (!value) return "La confirmation de l'email est requise";
+							if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+								return "Format d'email invalide";
+							}
+							const email = fieldApi.form.getFieldValue("email");
+							if (value !== email) {
+								return "Les emails ne correspondent pas";
+							}
+							return undefined;
+						},
+					}}
+				>
+					{(field) => (
+						<field.InputField
+							label="Confirmer l'email"
+							type="email"
+							inputMode="email"
+							autoComplete="email"
+							spellCheck={false}
+							disabled={isPending}
+							required
+						/>
 					)}
 				</form.AppField>
 
@@ -163,29 +193,6 @@ export function SignUpEmailForm() {
 					)}
 				</form.AppField>
 
-				<form.AppField
-					name="confirmPassword"
-					validators={{
-						onChangeListenTo: ["password"],
-						onChange: ({ value, fieldApi }) => {
-							if (!value) return "La confirmation du mot de passe est requise";
-							const password = fieldApi.form.getFieldValue("password");
-							if (value !== password) {
-								return "Les mots de passe ne correspondent pas";
-							}
-							return undefined;
-						},
-					}}
-				>
-					{(field) => (
-						<field.PasswordInputField
-							label="Confirmer le mot de passe"
-							autoComplete="new-password"
-							disabled={isPending}
-							required
-						/>
-					)}
-				</form.AppField>
 			</div>
 
 			{/* Checkbox consentement RGPD */}

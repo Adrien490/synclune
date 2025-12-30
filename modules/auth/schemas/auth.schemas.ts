@@ -86,10 +86,8 @@ export type SignInSocialInput = z.infer<typeof signInSocialSchema>;
 export const signUpEmailSchema = z
 	.object({
 		email: z.email({ message: "Vérifie le format de ton email (ex: nom@domaine.com)" }),
+		confirmEmail: z.email({ message: "Vérifie le format de ton email" }),
 		password: newPasswordSchema,
-		confirmPassword: z
-			.string()
-			.min(1, { message: "La confirmation du mot de passe est requise" }),
 		name: z
 			.string()
 			.min(2, { message: "Le prénom doit contenir au moins 2 caractères" })
@@ -99,9 +97,9 @@ export const signUpEmailSchema = z
 		}),
 		callbackURL: callbackURLSchema.optional(),
 	})
-	.refine((data) => data.password === data.confirmPassword, {
-		message: "Les mots de passe ne correspondent pas",
-		path: ["confirmPassword"],
+	.refine((data) => data.email === data.confirmEmail, {
+		message: "Les emails ne correspondent pas",
+		path: ["confirmEmail"],
 	});
 
 export type SignUpEmailInput = z.infer<typeof signUpEmailSchema>;

@@ -121,7 +121,7 @@ export function CreateProductVariantForm({
 								<form.AppField name="colorId">
 									{(field) => (
 										<div className="space-y-2">
-											<FieldLabel optional>Couleur</FieldLabel>
+											<FieldLabel htmlFor={field.name} optional>Couleur</FieldLabel>
 											<field.SelectField
 												label=""
 												options={colors.map((color) => ({
@@ -170,7 +170,7 @@ export function CreateProductVariantForm({
 									<form.AppField name="materialId">
 										{(field) => (
 											<div className="space-y-2">
-												<FieldLabel optional>Matériau</FieldLabel>
+												<FieldLabel htmlFor={field.name} optional>Matériau</FieldLabel>
 												<field.SelectField
 													label=""
 													options={materials.map((material) => ({
@@ -199,7 +199,7 @@ export function CreateProductVariantForm({
 									<form.AppField name="isActive">
 										{(field) => (
 											<div className="space-y-2">
-												<FieldLabel required>Statut</FieldLabel>
+												<FieldLabel htmlFor={field.name} required>Statut</FieldLabel>
 												<field.RadioGroupField
 													label=""
 													options={[

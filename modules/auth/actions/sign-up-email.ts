@@ -27,8 +27,8 @@ export const signUpEmail = async (
 		// Validation des données
 		const rawData = {
 			email: formData.get("email") as string,
+			confirmEmail: formData.get("confirmEmail") as string,
 			password: formData.get("password") as string,
-			confirmPassword: formData.get("confirmPassword") as string,
 			name: formData.get("name") as string,
 			termsAccepted: formData.get("termsAccepted") === "true",
 		};

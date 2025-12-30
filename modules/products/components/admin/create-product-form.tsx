@@ -338,7 +338,7 @@ export function CreateProductForm({
 							>
 								{(field) => (
 									<div className="space-y-2">
-										<FieldLabel required>Titre du bijou</FieldLabel>
+										<FieldLabel htmlFor={field.name} required>Titre du bijou</FieldLabel>
 										<field.InputField label="" required />
 									</div>
 								)}
@@ -368,7 +368,7 @@ export function CreateProductForm({
 								<form.AppField name="typeId">
 									{(field) => (
 										<div className="space-y-2">
-											<FieldLabel optional>Type de bijou</FieldLabel>
+											<FieldLabel htmlFor={field.name} optional>Type de bijou</FieldLabel>
 											<field.SelectField
 												label=""
 												options={productTypes.map((t) => ({
@@ -439,7 +439,7 @@ export function CreateProductForm({
 							<form.AppField name="initialSku.colorId">
 								{(field) => (
 									<div className="space-y-2">
-										<FieldLabel optional>Couleur</FieldLabel>
+										<FieldLabel htmlFor={field.name} optional>Couleur</FieldLabel>
 										<field.SelectField
 											label=""
 											options={colors.map((c) => ({
@@ -489,7 +489,7 @@ export function CreateProductForm({
 								<form.AppField name="initialSku.materialId">
 									{(field) => (
 										<div className="space-y-2">
-											<FieldLabel optional>Matériau</FieldLabel>
+											<FieldLabel htmlFor={field.name} optional>Matériau</FieldLabel>
 											<field.SelectField
 												label=""
 												options={materials.map((m) => ({

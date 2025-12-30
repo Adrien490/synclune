@@ -12,7 +12,7 @@ import Link from "next/link";
 export function Hero() {
   return (
     <section
-      id="main-content"
+      id="hero-section"
       role="region"
       aria-labelledby="hero-title"
       className="relative min-h-[calc(85dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"

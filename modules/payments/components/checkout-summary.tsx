@@ -12,7 +12,12 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
-import { Pencil, ShoppingBag, TruckIcon } from "lucide-react";
+import { Pencil, Shield, ShoppingBag, TruckIcon } from "lucide-react";
+import {
+	VisaIcon,
+	MastercardIcon,
+	CBIcon,
+} from "@/shared/components/icons/payment-icons";
 import Image from "next/image";
 
 interface CheckoutSummaryProps {
@@ -171,11 +176,20 @@ export function CheckoutSummary({ cart, selectedCountry = "FR", postalCode }: Ch
 					</div>
 				</div>
 
-				{/* Message sécurité */}
-				<div className="p-3 bg-primary/5 border border-primary/10 rounded-lg">
-					<p className="text-xs text-center text-muted-foreground">
-						🔒 Paiement sécurisé via Stripe
-					</p>
+				{/* Badges de confiance (Baymard: icônes CB + message sécurité) */}
+				<div className="space-y-3 pt-2">
+					{/* Icônes cartes acceptées */}
+					<div className="flex items-center justify-center gap-2">
+						<VisaIcon className="h-5 w-auto text-muted-foreground" />
+						<MastercardIcon className="h-5 w-auto text-muted-foreground" />
+						<CBIcon className="h-5 w-auto text-muted-foreground" />
+					</div>
+
+					{/* Message sécurité */}
+					<div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+						<Shield className="w-3.5 h-3.5 text-green-600" />
+						<span>Paiement 100% sécurisé</span>
+					</div>
 				</div>
 			</CardContent>
 		</Card>

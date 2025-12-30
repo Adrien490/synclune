@@ -227,9 +227,9 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-semibold">
+              <h3 className="text-lg sm:text-xl font-medium">
                 6.1 Transferts de données hors UE
-              </h2>
+              </h3>
               <p>
                 Certains de nos prestataires techniques sont situés en dehors de
                 l'Union Européenne :
@@ -259,12 +259,13 @@ export default async function PrivacyPolicyPage() {
                 7. Durée de conservation
               </h2>
               <table className="w-full border-collapse border border-gray-300 dark:border-gray-700">
+                <caption className="sr-only">Durée de conservation des différents types de données personnelles</caption>
                 <thead>
                   <tr className="bg-gray-100 dark:bg-gray-800">
-                    <th className="border border-gray-300 dark:border-gray-700 p-3 text-left">
+                    <th scope="col" className="border border-gray-300 dark:border-gray-700 p-3 text-left">
                       Type de données
                     </th>
-                    <th className="border border-gray-300 dark:border-gray-700 p-3 text-left">
+                    <th scope="col" className="border border-gray-300 dark:border-gray-700 p-3 text-left">
                       Durée de conservation
                     </th>
                   </tr>

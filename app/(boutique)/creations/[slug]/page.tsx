@@ -40,6 +40,7 @@ type ProductSearchParams = Promise<{
 	color?: string;
 	material?: string;
 	size?: string;
+	ratingFilter?: string;
 }>;
 
 export default async function ProductPage({
@@ -217,6 +218,7 @@ export default async function ProductPage({
 								<ProductReviewsSection
 									productId={product.id}
 									productSlug={product.slug}
+									ratingFilter={urlParams.ratingFilter ? parseInt(urlParams.ratingFilter, 10) : undefined}
 								/>
 							</Suspense>
 						</article>
