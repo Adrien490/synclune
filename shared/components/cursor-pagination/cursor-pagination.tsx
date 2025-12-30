@@ -165,7 +165,7 @@ export function CursorPagination({
 						aria-label="Retour au début"
 					>
 						{isPending && !isFirstPage ? (
-							<Loader2 className="size-5 md:size-4 animate-spin" />
+							<Loader2 className="size-5 md:size-4 motion-safe:animate-spin" />
 						) : (
 							<ChevronsLeft className="size-5 md:size-4" />
 						)}
