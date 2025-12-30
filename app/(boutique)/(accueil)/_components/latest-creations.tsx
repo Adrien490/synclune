@@ -58,10 +58,11 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 			</a>
 
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+				{/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
 						<SectionTitle id="latest-creations-title">
-							Nouveautés de l'atelier
+							Nouveaux bijoux
 						</SectionTitle>
 					</Fade>
 					<Fade y={10} delay={0.1} duration={0.6}>
@@ -69,7 +70,7 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 							id="latest-creations-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
-							Tout juste sorties de l'atelier
+							Tout juste sortis de l'atelier
 						</p>
 					</Fade>
 				</header>
@@ -128,11 +129,11 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 						aria-describedby="latest-creations-cta-description"
 					>
 						<Link href="/produits?sortBy=created-descending">
-							Voir toutes mes créations
+							Voir tous les nouveaux bijoux
 						</Link>
 					</Button>
 					<span id="latest-creations-cta-description" className="sr-only">
-						Voir tous mes bijoux récemment créés dans la boutique Synclune
+						Découvrir tous les bijoux récemment créés dans la boutique Synclune
 					</span>
 					</Fade>
 				</div>

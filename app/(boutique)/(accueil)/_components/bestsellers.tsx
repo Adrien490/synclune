@@ -44,11 +44,12 @@ export function Bestsellers({ productsPromise, wishlistProductIdsPromise }: Best
 			aria-describedby="bestsellers-subtitle"
 		>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+				{/* Baymard UX: Full scope label - "Bijoux les plus vendus" au lieu de "Meilleures ventes" */}
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
 						<div className="flex items-center justify-center gap-2 mb-2">
 							<SectionTitle id="bestsellers-title">
-								Meilleures ventes
+								Bijoux les plus vendus
 							</SectionTitle>
 						</div>
 					</Fade>
@@ -57,41 +58,64 @@ export function Bestsellers({ productsPromise, wishlistProductIdsPromise }: Best
 							id="bestsellers-subtitle"
 							className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto"
 						>
-							Les créations les plus appréciées !
+							Les créations les plus appréciées par mes clientes
 						</p>
 					</Fade>
 				</header>
 
-				<Stagger
+				<ul
+					role="list"
 					className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
-					stagger={0.08}
-					y={25}
-					inView
-					once={true}
+					aria-label="Liste des meilleures ventes"
 				>
-					{products.map((product, index) => (
-						<ProductCard
-							key={product.id}
-							product={product}
-							index={index}
-							isInWishlist={wishlistProductIds.has(product.id)}
-						/>
-					))}
-				</Stagger>
-
-				<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">
-					<Button
-						asChild
-						size="lg"
-						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
-						aria-describedby="bestsellers-cta-description"
+					<Stagger
+						stagger={0.08}
+						y={25}
+						inView
+						once={true}
 					>
-						<Link href="/produits">
-							Voir toute la boutique
-						</Link>
-					</Button>
+						{products.map((product, index) => (
+							<li key={product.id}>
+								<ProductCard
+									product={product}
+									index={index}
+									isInWishlist={wishlistProductIds.has(product.id)}
+								/>
+							</li>
+						))}
+					</Stagger>
+				</ul>
+
+				{/* Baymard UX: Featured products → Category link (43% des sites oublient) */}
+				<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">
+					<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center">
+						<Button
+							asChild
+							size="lg"
+							className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+							aria-describedby="bestsellers-cta-description"
+						>
+							<Link href="/produits">
+								Voir toute la boutique
+							</Link>
+						</Button>
+						<Button
+							asChild
+							size="lg"
+							variant="outline"
+							className="hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+							aria-describedby="bestsellers-all-cta-description"
+						>
+							<Link href="/produits?sortBy=best-selling">
+								Tous les best-sellers
+							</Link>
+						</Button>
+					</div>
 					<span id="bestsellers-cta-description" className="sr-only">
 						Voir tous les bijoux dans la boutique Synclune
+					</span>
+					<span id="bestsellers-all-cta-description" className="sr-only">
+						Voir la liste complète des bijoux les plus vendus
 					</span>
 				</Fade>
 			</div>

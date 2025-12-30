@@ -126,8 +126,8 @@ export function getMobileNavItems(
 		bijouxItem,
 		collectionsItem,
 
-		// ⭐ MEILLEURES VENTES - Social proof
-		{ href: "/produits?sortBy=best-selling", label: "Meilleures ventes", icon: "sparkles" },
+		// ⭐ MEILLEURES VENTES - Social proof (Baymard: full scope label)
+		{ href: "/produits?sortBy=best-selling", label: "Bijoux les plus vendus", icon: "sparkles" },
 
 		// ✨ PERSONNALISER - Service différenciateur
 		{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
@@ -137,8 +137,8 @@ export function getMobileNavItems(
 			? { href: "/compte", label: "Mon compte", icon: "user" }
 			: { href: "/connexion", label: "Se connecter", icon: "log-in" },
 
-		// ❤️ FAVORIS - Accessible à tous
-		{ href: "/favoris", label: "Favoris", icon: "heart" },
+		// ❤️ FAVORIS - Accessible à tous (Baymard: full scope label)
+		{ href: "/favoris", label: "Mes favoris", icon: "heart" },
 	];
 
 	// 🛠️ ADMIN - Tableau de bord (uniquement pour les administrateurs)
