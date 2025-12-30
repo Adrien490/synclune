@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useTransition } from "react"
+import { useEffect, useRef, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import { Search, X } from "lucide-react"
@@ -92,6 +92,17 @@ export function SearchInput({
 	const form = useAppForm({
 		defaultValues: { search: initialValue },
 	})
+
+	// Sync form with URL params on navigation (live mode only)
+	useEffect(() => {
+		if (mode === "live") {
+			const urlValue = searchParams.get(paramName) || ""
+			const currentValue = form.getFieldValue("search")
+			if (urlValue !== currentValue) {
+				form.setFieldValue("search", urlValue)
+			}
+		}
+	}, [mode, searchParams, paramName, form])
 
 	const handleSearch = (searchValue: string) => {
 		const trimmed = searchValue.trim()

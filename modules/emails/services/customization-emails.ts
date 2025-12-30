@@ -10,7 +10,6 @@ import type { EmailResult } from "../types/email.types"
  */
 export async function sendCustomizationRequestEmail({
 	firstName,
-	lastName,
 	email,
 	phone,
 	productTypeLabel,
@@ -18,7 +17,6 @@ export async function sendCustomizationRequestEmail({
 	inspirationProducts,
 }: {
 	firstName: string
-	lastName: string
 	email: string
 	phone?: string
 	productTypeLabel: string
@@ -28,7 +26,6 @@ export async function sendCustomizationRequestEmail({
 	const html = await render(
 		CustomizationRequestEmail({
 			firstName,
-			lastName,
 			email,
 			phone,
 			productTypeLabel,
@@ -38,7 +35,7 @@ export async function sendCustomizationRequestEmail({
 	)
 	return sendEmail({
 		to: EMAIL_ADMIN,
-		subject: `${EMAIL_SUBJECTS.CUSTOMIZATION_REQUEST} - ${firstName} ${lastName}`,
+		subject: `${EMAIL_SUBJECTS.CUSTOMIZATION_REQUEST} - ${firstName}`,
 		html,
 		replyTo: email,
 	})

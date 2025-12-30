@@ -13,7 +13,6 @@ import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 
 interface CustomizationRequestEmailProps {
 	firstName: string;
-	lastName: string;
 	email: string;
 	phone?: string;
 	productTypeLabel: string;
@@ -23,19 +22,17 @@ interface CustomizationRequestEmailProps {
 
 export const CustomizationRequestEmail = ({
 	firstName,
-	lastName,
 	email,
 	phone,
 	productTypeLabel,
 	details,
 	inspirationProducts,
 }: CustomizationRequestEmailProps) => {
-	const fullName = `${firstName} ${lastName}`;
 
 	return (
 		<Html>
 			<Head />
-			<Preview>Demande de personnalisation de {fullName}</Preview>
+			<Preview>Demande de personnalisation de {firstName}</Preview>
 			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
 				<Container style={EMAIL_STYLES.container}>
 					{/* Header */}
@@ -65,7 +62,7 @@ export const CustomizationRequestEmail = ({
 									marginBottom: "8px",
 								}}
 							>
-								<Text style={EMAIL_STYLES.text.small}>Nom</Text>
+								<Text style={EMAIL_STYLES.text.small}>Prénom</Text>
 								<Text
 									style={{
 										margin: 0,
@@ -73,7 +70,7 @@ export const CustomizationRequestEmail = ({
 										color: EMAIL_COLORS.text.primary,
 									}}
 								>
-									{fullName}
+									{firstName}
 								</Text>
 							</div>
 							<div
@@ -200,7 +197,6 @@ export const CustomizationRequestEmail = ({
 
 CustomizationRequestEmail.PreviewProps = {
 	firstName: "Marie",
-	lastName: "Dupont",
 	email: "marie.dupont@example.com",
 	phone: "+33612345678",
 	productTypeLabel: "Collier",

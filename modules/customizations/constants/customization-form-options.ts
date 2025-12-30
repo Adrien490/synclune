@@ -5,7 +5,6 @@ export const customizationFormOpts = {
 	defaultValues: {
 		// Informations personnelles
 		firstName: "",
-		lastName: "",
 		email: "",
 		phone: "",
 

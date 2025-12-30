@@ -118,19 +118,18 @@ export function CustomizationForm({
 				)}
 			</form.AppField>
 
-			{/* Nom et prénom */}
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-				<form.AppField
-					name="firstName"
-					validators={{
-						onChange: ({ value }: { value: string }) => {
-							if (!value || value.trim().length < 2) {
-								return "Le prénom doit contenir au moins 2 caractères";
-							}
-						},
-					}}
-				>
-					{(field) => (
+			{/* Prénom */}
+			<form.AppField
+				name="firstName"
+				validators={{
+					onChange: ({ value }: { value: string }) => {
+						if (!value || value.trim().length < 2) {
+							return "Le prénom doit contenir au moins 2 caractères";
+						}
+					},
+				}}
+			>
+				{(field) => (
 					<field.InputField
 						label="Prénom"
 						required
@@ -139,29 +138,7 @@ export function CustomizationForm({
 						autoCorrect="off"
 					/>
 				)}
-				</form.AppField>
-
-				<form.AppField
-					name="lastName"
-					validators={{
-						onChange: ({ value }: { value: string }) => {
-							if (!value || value.trim().length < 2) {
-								return "Le nom doit contenir au moins 2 caractères";
-							}
-						},
-					}}
-				>
-					{(field) => (
-					<field.InputField
-						label="Nom"
-						required
-						autoComplete="family-name"
-						autoCapitalize="words"
-						autoCorrect="off"
-					/>
-				)}
-				</form.AppField>
-			</div>
+			</form.AppField>
 
 			{/* Email */}
 			<form.AppField

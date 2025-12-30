@@ -18,12 +18,6 @@ export const customizationSchema = z
 			.max(50, { message: "Le prénom ne peut pas dépasser 50 caractères" })
 			.trim(),
 
-		lastName: z
-			.string({ message: "Le nom est requis" })
-			.min(2, { message: "Le nom doit contenir au moins 2 caractères" })
-			.max(50, { message: "Le nom ne peut pas dépasser 50 caractères" })
-			.trim(),
-
 		email: z
 			.string({ message: "L'adresse email est requise" })
 			.email({ message: "Vérifie le format de ton email (ex: nom@domaine.com)" })

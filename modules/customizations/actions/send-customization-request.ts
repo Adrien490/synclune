@@ -48,7 +48,6 @@ export async function sendCustomizationRequest(
 		// 2. Extraction des données du FormData
 		const rawData = {
 			firstName: formData.get("firstName") as string,
-			lastName: formData.get("lastName") as string,
 			email: formData.get("email") as string,
 			phone: (formData.get("phone") as string) || "",
 			productTypeLabel: (formData.get("productTypeLabel") as string) || "",
@@ -82,7 +81,6 @@ export async function sendCustomizationRequest(
 		const customizationRequest = await prisma.customizationRequest.create({
 			data: {
 				firstName: validatedData.firstName,
-				lastName: validatedData.lastName,
 				email: validatedData.email,
 				phone: validatedData.phone || null,
 				productTypeLabel: validatedData.productTypeLabel,
@@ -96,7 +94,6 @@ export async function sendCustomizationRequest(
 		try {
 			const emailResult = await sendCustomizationRequestEmail({
 				firstName: validatedData.firstName,
-				lastName: validatedData.lastName,
 				email: validatedData.email,
 				phone: validatedData.phone || undefined,
 				productTypeLabel: validatedData.productTypeLabel,
