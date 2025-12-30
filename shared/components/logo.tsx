@@ -69,7 +69,7 @@ export function Logo({
 					className={cn(
 						josefinSans.className,
 						textSizeClass,
-						"font-light text-foreground tracking-wide",
+						"font-normal text-foreground tracking-wide",
 						textClassName
 					)}
 				>
