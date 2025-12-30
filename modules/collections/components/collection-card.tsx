@@ -27,6 +27,8 @@ interface CollectionCardProps {
 	sizes?: string;
 	/** Niveau de heading pour hierarchie a11y (defaut: h3) */
 	headingLevel?: "h2" | "h3" | "h4";
+	/** Nombre de produits dans la collection (UX e-commerce) */
+	productCount?: number;
 }
 
 /**
@@ -53,6 +55,7 @@ export function CollectionCard({
 	index,
 	sizes = COLLECTION_IMAGE_SIZES.COLLECTION_CARD,
 	headingLevel: HeadingTag = "h3",
+	productCount,
 }: CollectionCardProps) {
 	const titleId = `collection-title-${slug}-${index ?? 0}`;
 	const isAboveFold = index !== undefined && index < 4;
@@ -80,13 +83,17 @@ export function CollectionCard({
 						"relative overflow-hidden rounded-xl bg-card",
 						// COHÉRENCE ProductCard: border-2 transparent
 						"border-2 border-transparent shadow-sm",
-						"transition-transform duration-300 ease-out",
+						"transition-all duration-300 ease-out",
+						// Motion-reduce: désactiver transforms, garder transitions couleurs
+						"motion-reduce:transition-colors",
 						// COHÉRENCE ProductCard: border-primary/40
 						"motion-safe:can-hover:hover:border-primary/40",
 						// COHÉRENCE ProductCard: shadow oklch pastel
 						"motion-safe:can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
 						// COHÉRENCE ProductCard: transform subtil (version plus douce)
 						"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01]",
+						// Active state pour feedback tactile immédiat sur mobile
+						"active:scale-[0.98] active:shadow-sm",
 						// COHÉRENCE ProductCard: focus state
 						"focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
 						// COHÉRENCE ProductCard: GPU optimization
@@ -109,10 +116,9 @@ export function CollectionCard({
 					) : (
 						<div
 							className="relative aspect-square overflow-hidden bg-muted rounded-t-xl flex items-center justify-center"
-							role="img"
-							aria-label={`Image non disponible pour la collection ${name}`}
+							aria-label={`Aucune image pour la collection ${name}`}
 						>
-							<Gem className="w-12 h-12 text-primary/40" />
+							<Gem className="w-12 h-12 text-primary/40" aria-hidden="true" />
 						</div>
 					)}
 
@@ -149,6 +155,13 @@ export function CollectionCard({
 								itemProp="description"
 							>
 								{description}
+							</p>
+						)}
+
+						{/* Compteur de produits (UX e-commerce) */}
+						{productCount !== undefined && productCount > 0 && (
+							<p className="mt-2 text-xs text-muted-foreground">
+								{productCount} article{productCount > 1 ? "s" : ""}
 							</p>
 						)}
 					</div>

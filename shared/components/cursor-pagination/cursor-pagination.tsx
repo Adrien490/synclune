@@ -47,7 +47,7 @@ export function CursorPagination({
 	// Message pour les screen readers
 	const ariaLiveMessage = (() => {
 		if (isPending) return "Chargement des résultats...";
-		if (currentPageSize === 0) return "Aucun résultat trouvé.";
+		if (currentPageSize === 0) return "Aucun résultat.";
 
 		const parts = [
 			`Affichage de ${currentPageSize} résultat${currentPageSize > 1 ? "s" : ""} sur cette page.`,
@@ -196,6 +196,8 @@ export function CursorPagination({
 
 						<div
 							className="px-3 text-xs sm:text-sm bg-muted/50 min-w-[80px] sm:min-w-[100px] text-center flex items-center justify-center h-12 md:h-9"
+							role="status"
+							aria-current="page"
 						>
 							<span className="font-medium text-foreground">
 								{!hasPreviousPage && !hasNextPage

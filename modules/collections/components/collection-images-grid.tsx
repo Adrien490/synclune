@@ -120,24 +120,38 @@ export function CollectionImagesGrid({
 				/>
 			</div>
 
-			{/* 3 petites images à droite */}
-			{[1, 2, 3].map((i) => (
-				<div
-					key={i}
-					className={cn(
-						"relative aspect-square overflow-hidden bg-muted",
-						// Cacher la 4ème sur mobile (grid 2x2)
-						i === 3 && "hidden sm:block",
-					)}
-				>
-					<CollectionImage
-						image={images[i]}
-						collectionName={collectionName}
-						index={i}
-						sizes="(max-width: 640px) 25vw, 15vw"
-					/>
-				</div>
-			))}
+			{/* 3 petites images à droite (2 sur mobile, 3 sur desktop) */}
+			{[1, 2, 3].map((i) => {
+				// Image 4 (index 3) : non rendue sur mobile pour économiser la bande passante
+				// Sur desktop : rendue normalement avec loading="lazy"
+				const isImage4 = i === 3;
+				// Images 2-3 above-fold si la collection est above-fold (améliore LCP)
+				const isSecondaryAboveFold = isAboveFold && !isImage4;
+
+				return (
+					<div
+						key={i}
+						className={cn(
+							"relative aspect-square overflow-hidden bg-muted",
+							// Image 4 visible uniquement sur desktop (sm+)
+							isImage4 && "hidden sm:block",
+						)}
+					>
+						{/*
+						 * Optimisation perf: images 2-3 chargées sur tous devices
+						 * Image 4: hidden + loading="lazy" = pas de chargement sur mobile
+						 * (le navigateur ne charge pas les images lazy non visibles)
+						 */}
+						<CollectionImage
+							image={images[i]}
+							collectionName={collectionName}
+							index={i}
+							isAboveFold={isSecondaryAboveFold}
+							sizes={isImage4 ? "(max-width: 640px) 0px, 15vw" : "(max-width: 640px) 25vw, 15vw"}
+						/>
+					</div>
+				);
+			})}
 		</div>
 	);
 }
@@ -156,10 +170,15 @@ function CollectionImage({
 	isAboveFold?: boolean;
 	sizes: string;
 }) {
+	// Alt text: utiliser celui fourni, sinon générer un descriptif contextuel
+	const altText =
+		image.alt ||
+		`Aperçu produit ${index + 1} de la collection ${collectionName}`;
+
 	return (
 		<Image
 			src={image.url}
-			alt={image.alt || `${collectionName} - Produit ${index + 1}`}
+			alt={altText}
 			fill
 			className={cn(
 				"object-cover",

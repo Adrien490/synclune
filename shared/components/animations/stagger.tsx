@@ -1,9 +1,17 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { Children } from "react";
+import { Children, isValidElement, type ReactNode, type Key } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 import type { StaggerProps } from "./types";
+
+/** Extraire une key stable de l'enfant ou utiliser l'index comme fallback */
+function getStableKey(child: ReactNode, index: number): Key {
+	if (isValidElement(child) && child.key != null) {
+		return child.key;
+	}
+	return index;
+}
 
 export type { StaggerProps };
 
@@ -68,7 +76,7 @@ export function Stagger({
 				{...rest}
 			>
 				{childrenArray.map((child, index) => (
-					<motion.div key={index} variants={itemVariants}>
+					<motion.div key={getStableKey(child, index)} variants={itemVariants}>
 						{child}
 					</motion.div>
 				))}
@@ -86,7 +94,7 @@ export function Stagger({
 			{...rest}
 		>
 			{childrenArray.map((child, index) => (
-				<motion.div key={index} variants={itemVariants}>
+				<motion.div key={getStableKey(child, index)} variants={itemVariants}>
 					{child}
 				</motion.div>
 			))}

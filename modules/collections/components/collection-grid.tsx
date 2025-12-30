@@ -79,6 +79,7 @@ export function CollectionGrid({
 								description={collection.description}
 								images={images}
 								index={index}
+								productCount={collection._count.products}
 							/>
 						</div>
 					);
