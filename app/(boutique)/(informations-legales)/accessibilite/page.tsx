@@ -66,7 +66,7 @@ export default async function AccessibilityPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-slate dark:prose-invert max-w-prose space-y-6">
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">État de conformité</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">État de conformité</h2>
               <p>
                 Ce site web est en <strong>conformité partielle</strong> avec
                 les directives <strong>WCAG 2.1 niveau AA</strong> (Web Content
@@ -76,7 +76,7 @@ export default async function AccessibilityPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 Fonctionnalités d'accessibilité implémentées
               </h2>
               <p>Notre site intègre les fonctionnalités suivantes :</p>
@@ -153,7 +153,7 @@ export default async function AccessibilityPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">Raccourcis clavier</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">Raccourcis clavier</h2>
               <p>Les raccourcis clavier suivants sont disponibles :</p>
 
               <div className="overflow-x-auto">
@@ -221,7 +221,7 @@ export default async function AccessibilityPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 Technologies d'assistance compatibles
               </h2>
               <p>
@@ -247,7 +247,7 @@ export default async function AccessibilityPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 Limitations connues et améliorations en cours
               </h2>
               <p>Nous travaillons activement sur les points suivants :</p>
@@ -270,7 +270,7 @@ export default async function AccessibilityPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 Signaler un problème d'accessibilité
               </h2>
               <p>
@@ -304,7 +304,7 @@ export default async function AccessibilityPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">Références et normes</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">Références et normes</h2>
               <p>Ce site respecte les normes suivantes :</p>
 
               <ul className="space-y-2 ml-4">

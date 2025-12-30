@@ -158,7 +158,7 @@ export function ProductCard({
 				>
 					<h3
 						id={titleId}
-						className="font-sans text-foreground text-base sm:text-lg break-words"
+						className="font-sans text-foreground text-base sm:text-lg tracking-normal break-words"
 						itemProp="name"
 					>
 						{title}

@@ -3,6 +3,7 @@ import { SearchX } from "lucide-react";
 
 import { getProducts } from "@/modules/products/data/get-products";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
+import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -40,25 +41,27 @@ export async function NoResultsRecovery({
 	suggestion,
 	baseResetUrl = "/produits",
 }: NoResultsRecoveryProps) {
-	// Fetch en parallele les produits populaires et les categories
-	const [popularResult, productTypesResult] = await Promise.all([
-		getProducts({
-			perPage: 4,
-			sortBy: "popular",
-			filters: {
-				status: "PUBLIC",
-				stockStatus: "in_stock",
-			},
-		}),
-		getProductTypes({
-			perPage: 20,
-			sortBy: "label-ascending",
-			filters: {
-				isActive: true,
-				hasProducts: true,
-			},
-		}),
-	]);
+	// Fetch en parallele les produits populaires, categories et wishlist
+	const [popularResult, productTypesResult, wishlistProductIds] =
+		await Promise.all([
+			getProducts({
+				perPage: 4,
+				sortBy: "popular",
+				filters: {
+					status: "PUBLIC",
+					stockStatus: "in_stock",
+				},
+			}),
+			getProductTypes({
+				perPage: 20,
+				sortBy: "label-ascending",
+				filters: {
+					isActive: true,
+					hasProducts: true,
+				},
+			}),
+			getWishlistProductIds(),
+		]);
 
 	const popularProducts = popularResult.products;
 	const productTypes = productTypesResult.productTypes;
@@ -73,14 +76,14 @@ export async function NoResultsRecovery({
 					</EmptyMedia>
 					<EmptyTitle>
 						{searchTerm
-							? `Aucun resultat pour "${searchTerm}"`
-							: "Aucun produit ne correspond a vos criteres"}
+							? `Aucun résultat pour "${searchTerm}"`
+							: "Aucun produit ne correspond à vos critères"}
 					</EmptyTitle>
 					<EmptyDescription>
 						{suggestion ? (
 							<SuggestionLink suggestion={suggestion} />
 						) : (
-							"Essayez de modifier vos filtres ou explorez nos creations populaires ci-dessous."
+							"Essayez de modifier vos filtres ou explorez nos créations populaires ci-dessous."
 						)}
 					</EmptyDescription>
 				</EmptyHeader>
@@ -103,7 +106,7 @@ export async function NoResultsRecovery({
 						id="popular-products-heading"
 						className="text-lg font-semibold text-center"
 					>
-						Nos creations populaires
+						Nos créations populaires
 					</h2>
 					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
 						{popularProducts.map((product, index) => (
@@ -111,7 +114,7 @@ export async function NoResultsRecovery({
 								key={product.id}
 								product={product}
 								index={index}
-								isInWishlist={false}
+								isInWishlist={wishlistProductIds.has(product.id)}
 							/>
 						))}
 					</div>
@@ -125,7 +128,7 @@ export async function NoResultsRecovery({
 						id="categories-heading"
 						className="text-lg font-semibold text-center"
 					>
-						Explorer par categorie
+						Explorer par catégorie
 					</h2>
 					<div className="flex flex-wrap justify-center gap-2">
 						{productTypes.map((type) => (

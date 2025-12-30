@@ -31,7 +31,7 @@ export function ProductInfo({
 			<div className="flex items-start justify-between gap-4 sm:hidden">
 				<div className="flex-1 space-y-2">
 					<h1
-						className="text-3xl/10 font-bold tracking-tight text-foreground line-clamp-2"
+						className="text-3xl/10 font-medium tracking-normal text-foreground line-clamp-2"
 						itemProp="name"
 					>
 						{product.title}

@@ -123,7 +123,7 @@ export function CollectionCard({
 							className={cn(
 								josefinSans.className,
 								"line-clamp-2 overflow-hidden text-foreground",
-								"text-lg/7 sm:text-xl/7 tracking-tight break-words",
+								"text-lg/7 sm:text-xl/7 tracking-normal break-words",
 							)}
 							itemProp="name"
 						>

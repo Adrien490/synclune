@@ -1,13 +1,26 @@
 import type { CSSProperties } from "react";
-import type { Transition } from "motion/react";
+import type { Easing, Transition } from "motion/react";
 import { MOTION_CONFIG } from "../motion.config";
 import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
 
+/**
+ * Générateur pseudo-aléatoire déterministe (mulberry32)
+ * Meilleure distribution que Math.sin() - pas de patterns visibles
+ */
+function mulberry32(seed: number): () => number {
+	return () => {
+		seed |= 0;
+		seed = (seed + 0x6d2b79f5) | 0;
+		let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
+}
+
 /** Générateur pseudo-aléatoire déterministe (seeded) */
 export function seededRandom(seed: number): number {
-	const x = Math.sin(seed) * 10000;
-	return x - Math.floor(x);
+	return mulberry32(seed)();
 }
 
 /** Cache pour la memoization des particules générées */
@@ -157,12 +170,21 @@ export function getSvgConfig(shape: ParticleShape) {
 	return null;
 }
 
-/** Retourne la transition Framer Motion */
+/** Easings variés pour un mouvement plus organique */
+const PARTICLE_EASINGS: Easing[] = [
+	[0.4, 0, 0.2, 1], // easeInOut
+	[0, 0, 0.2, 1], // easeOut
+	[0.4, 0, 1, 1], // easeIn
+	[0.33, 1, 0.68, 1], // easeOutCubic
+];
+
+/** Retourne la transition Framer Motion avec easing varié et repeatDelay */
 export function getTransition(particle: Particle): Transition {
 	return {
 		duration: particle.duration,
 		delay: particle.delay,
-		ease: MOTION_CONFIG.easing.easeInOut,
+		ease: PARTICLE_EASINGS[particle.id % PARTICLE_EASINGS.length],
 		repeat: Infinity,
+		repeatDelay: particle.delay * 0.2,
 	};
 }

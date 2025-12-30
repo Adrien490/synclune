@@ -69,7 +69,7 @@ export default async function CookiesPage() {
 
             {/* Gestion des préférences - Composant client */}
             <section className="space-y-6 not-prose">
-              <h2 className="text-2xl font-semibold text-foreground">
+              <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
                 Gérer mes préférences
               </h2>
               <CookiePreferences />
@@ -77,7 +77,7 @@ export default async function CookiesPage() {
 
             {/* Qu'est-ce qu'un cookie */}
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 Qu'est-ce qu'un cookie ?
               </h2>
               <p>
@@ -90,11 +90,11 @@ export default async function CookiesPage() {
 
             {/* Cookies utilisés */}
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 Quels cookies et stockages utilisons-nous ?
               </h2>
 
-              <h3 className="text-xl font-medium">
+              <h3 className="text-lg sm:text-xl font-medium">
                 Cookies techniques (toujours actifs)
               </h3>
               <p>
@@ -144,7 +144,7 @@ export default async function CookiesPage() {
                 </li>
               </ul>
 
-              <h3 className="text-xl font-medium mt-6">
+              <h3 className="text-lg sm:text-xl font-medium mt-6">
                 Stockage local (LocalStorage)
               </h3>
               <p>
@@ -177,7 +177,7 @@ export default async function CookiesPage() {
                 </li>
               </ul>
 
-              <h3 className="text-xl font-medium mt-6">
+              <h3 className="text-lg sm:text-xl font-medium mt-6">
                 Cookies et traceurs optionnels
               </h3>
               <p>
@@ -197,7 +197,7 @@ export default async function CookiesPage() {
 
             {/* Comment supprimer les cookies */}
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 Comment supprimer les cookies de mon navigateur ?
               </h2>
               <p>
@@ -230,7 +230,7 @@ export default async function CookiesPage() {
 
             {/* En savoir plus */}
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">En savoir plus</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">En savoir plus</h2>
               <p>
                 Pour plus d'informations sur la gestion de vos données
                 personnelles, consultez notre{" "}

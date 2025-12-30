@@ -1,11 +1,19 @@
 "use client";
 
+import { cn } from "@/shared/utils/cn";
 import { motion } from "motion/react";
 import { ANIMATION_PRESETS } from "./constants";
 import type { Particle, ParticleSetProps } from "./types";
 import { getShapeStyles, getSvgConfig, getTransition, isSvgShape } from "./utils";
 
-/** Rendu d'une particule unique */
+/**
+ * Rendu d'une particule unique
+ *
+ * Note: L'approche `animate` prop + `repeat: Infinity` est optimale ici car
+ * Framer Motion utilise WAAPI (Web Animations API) sous le capot, évitant
+ * les re-renders React. useMotionValue serait pertinent pour des animations
+ * réactives (scroll/mouse) mais pas pour ces animations infinies décoratives.
+ */
 function renderParticle(
 	p: Particle,
 	animated: boolean,
@@ -28,7 +36,7 @@ function renderParticle(
 			return (
 				<motion.span
 					key={p.id}
-					className="absolute will-change-[transform,opacity]"
+					className={cn("absolute", animated && "will-change-[transform,opacity]")}
 					style={{ ...baseStyle, opacity: p.opacity, transform: "translateZ(0)" }}
 					animate={ANIMATION_PRESETS[animationStyle](p)}
 					transition={getTransition(p)}
@@ -52,7 +60,7 @@ function renderParticle(
 		return (
 			<motion.span
 				key={p.id}
-				className="absolute will-change-[transform,opacity]"
+				className={cn("absolute", animated && "will-change-[transform,opacity]")}
 				style={{ ...baseStyle, transform: "translateZ(0)", ...shapeStyles }}
 				animate={ANIMATION_PRESETS[animationStyle](p)}
 				transition={getTransition(p)}

@@ -67,7 +67,7 @@ export default async function MentionsLegalesPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-slate dark:prose-invert max-w-prose space-y-6">
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">1. Éditeur du site</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">1. Éditeur du site</h2>
               <p>
                 <strong>Raison sociale :</strong> TADDEI LEANE
                 <br />
@@ -117,7 +117,7 @@ export default async function MentionsLegalesPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 2. Directeur de la publication
               </h2>
               <p>
@@ -128,8 +128,8 @@ export default async function MentionsLegalesPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">3. Hébergement</h2>
-              <h3 className="text-xl font-medium">3.1 Site internet</h3>
+              <h2 className="text-xl sm:text-2xl font-semibold">3. Hébergement</h2>
+              <h3 className="text-lg sm:text-xl font-medium">3.1 Site internet</h3>
               <p>
                 <strong>Vercel Inc.</strong>
                 <br />
@@ -150,7 +150,7 @@ export default async function MentionsLegalesPage() {
                 </a>
               </p>
 
-              <h3 className="text-xl font-medium">3.2 Base de données</h3>
+              <h3 className="text-lg sm:text-xl font-medium">3.2 Base de données</h3>
               <p>
                 <strong>Neon (Neon Postgres)</strong>
                 <br />
@@ -167,7 +167,7 @@ export default async function MentionsLegalesPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 4. Propriété intellectuelle
               </h2>
               <p>
@@ -193,7 +193,7 @@ export default async function MentionsLegalesPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 5. Données personnelles
               </h2>
               <p>
@@ -211,7 +211,7 @@ export default async function MentionsLegalesPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">6. Cookies</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">6. Cookies</h2>
               <p>
                 Le site utilise des cookies techniques nécessaires à son
                 fonctionnement (gestion du panier, session utilisateur). Ces
@@ -228,7 +228,7 @@ export default async function MentionsLegalesPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">7. Responsabilité</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">7. Responsabilité</h2>
               <p>
                 Synclune s'efforce d'assurer l'exactitude et la mise à jour des
                 informations diffusées sur ce site, dont elle se réserve le
@@ -247,7 +247,7 @@ export default async function MentionsLegalesPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">8. Liens hypertextes</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">8. Liens hypertextes</h2>
               <p>
                 Le site peut contenir des liens hypertextes vers d'autres sites.
                 Synclune n'exerce aucun contrôle sur ces sites et décline toute
@@ -256,7 +256,7 @@ export default async function MentionsLegalesPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">9. Droit applicable</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">9. Droit applicable</h2>
               <p>
                 Les présentes mentions légales sont régies par le droit
                 français. En cas de litige et à défaut d'accord amiable, le
@@ -266,7 +266,7 @@ export default async function MentionsLegalesPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">10. Contact</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">10. Contact</h2>
               <p>
                 Pour toute question relative aux mentions légales, vous pouvez
                 nous contacter :

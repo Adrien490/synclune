@@ -102,7 +102,7 @@ export default async function LegalPage() {
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 					{/* Introduction */}
 					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg mb-8">
-						<h2 className="text-2xl font-semibold text-charcoal mb-4">
+						<h2 className="text-xl sm:text-2xl font-semibold text-charcoal mb-4">
 							Transparence et conformité
 						</h2>
 						<p className="text-base/7 tracking-normal antialiased text-muted-foreground">
@@ -144,7 +144,7 @@ export default async function LegalPage() {
 
 					{/* Informations rapides */}
 					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg mb-8">
-						<h2 className="text-xl font-semibold text-charcoal mb-6">
+						<h2 className="text-lg sm:text-xl font-semibold text-charcoal mb-6">
 							Informations essentielles
 						</h2>
 						<div className="grid md:grid-cols-2 gap-6">

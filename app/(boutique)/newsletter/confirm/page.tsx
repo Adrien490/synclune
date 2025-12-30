@@ -34,7 +34,7 @@ export default async function ConfirmPage({ searchParams }: ConfirmPageProps) {
 						{/* Message d'accueil */}
 						<div className="text-center space-y-4">
 							<div className="text-6xl">✨</div>
-							<h2 className="text-2xl font-serif text-foreground">
+							<h2 className="text-xl sm:text-2xl font-display text-foreground">
 								Plus qu'un clic pour me rejoindre !
 							</h2>
 							<p className="text-muted-foreground">

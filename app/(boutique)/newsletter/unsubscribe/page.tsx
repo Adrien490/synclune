@@ -37,7 +37,7 @@ export default async function UnsubscribePage({
 						{/* Message empathique */}
 						<div className="text-center space-y-4">
 							<div className="text-6xl">💔</div>
-							<h2 className="text-2xl font-serif text-foreground">
+							<h2 className="text-xl sm:text-2xl font-display text-foreground">
 								Vous allez nous manquer...
 							</h2>
 							<p className="text-muted-foreground">

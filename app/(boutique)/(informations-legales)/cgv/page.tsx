@@ -53,7 +53,7 @@ export default async function CGVPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-slate dark:prose-invert max-w-prose space-y-6">
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 1. Objet et champ d'application
               </h2>
               <p>
@@ -72,8 +72,8 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">2. Produits</h2>
-              <h3 className="text-xl font-medium">2.1 Caractéristiques</h3>
+              <h2 className="text-xl sm:text-2xl font-semibold">2. Produits</h2>
+              <h3 className="text-lg sm:text-xl font-medium">2.1 Caractéristiques</h3>
               <p>
                 Les produits proposés sont des bijoux artisanaux fabriqués à la
                 main. Les caractéristiques essentielles de chaque produit sont
@@ -86,7 +86,7 @@ export default async function CGVPage() {
                 liées à la nature artisanale de la fabrication.
               </p>
 
-              <h3 className="text-xl font-medium">2.2 Disponibilité</h3>
+              <h3 className="text-lg sm:text-xl font-medium">2.2 Disponibilité</h3>
               <p>
                 Nos offres sont valables tant qu'elles sont visibles sur le
                 site, dans la limite des stocks disponibles. En cas
@@ -97,7 +97,7 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">3. Prix</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">3. Prix</h2>
               <p>
                 Les prix de nos produits sont indiqués en{" "}
                 <strong>euros (EUR)</strong>, TVA non applicable (art. 293 B du
@@ -116,10 +116,10 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 4. Commande et paiement
               </h2>
-              <h3 className="text-xl font-medium">4.1 Processus de commande</h3>
+              <h3 className="text-lg sm:text-xl font-medium">4.1 Processus de commande</h3>
               <ol className="list-decimal list-inside space-y-2 ml-4">
                 <li>Sélection du(des) produit(s) et ajout au panier</li>
                 <li>Vérification du panier et validation</li>
@@ -128,7 +128,7 @@ export default async function CGVPage() {
                 <li>Vérification et confirmation de la commande</li>
               </ol>
 
-              <h3 className="text-xl font-medium">4.2 Paiement</h3>
+              <h3 className="text-lg sm:text-xl font-medium">4.2 Paiement</h3>
               <p>
                 Le paiement est effectué par <strong>carte bancaire</strong> via
                 notre prestataire de paiement sécurisé <strong>Stripe</strong>.
@@ -139,7 +139,7 @@ export default async function CGVPage() {
                 paiement est entièrement sécurisé (norme PCI-DSS niveau 1).
               </p>
 
-              <h3 className="text-xl font-medium">
+              <h3 className="text-lg sm:text-xl font-medium">
                 4.3 Confirmation de commande
               </h3>
               <p>
@@ -149,14 +149,14 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">5. Livraison</h2>
-              <h3 className="text-xl font-medium">5.1 Zone de livraison</h3>
+              <h2 className="text-xl sm:text-2xl font-semibold">5. Livraison</h2>
+              <h3 className="text-lg sm:text-xl font-medium">5.1 Zone de livraison</h3>
               <p>
                 Les livraisons sont effectuées en{" "}
                 <strong>France métropolitaine et Union Européenne</strong>.
               </p>
 
-              <h3 className="text-xl font-medium">
+              <h3 className="text-lg sm:text-xl font-medium">
                 5.2 Transporteur et délais
               </h3>
               <p>
@@ -173,7 +173,7 @@ export default async function CGVPage() {
                 sommes versées.
               </p>
 
-              <h3 className="text-xl font-medium">5.3 Modalités</h3>
+              <h3 className="text-lg sm:text-xl font-medium">5.3 Modalités</h3>
               <p>
                 La livraison est effectuée à l'adresse indiquée lors de la
                 commande. Il appartient au client de vérifier l'exactitude de
@@ -187,7 +187,7 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 6. Droit de rétractation
               </h2>
               <p>
@@ -198,7 +198,7 @@ export default async function CGVPage() {
                 avoir à justifier de motifs ni à payer de pénalité.
               </p>
 
-              <h3 className="text-xl font-medium">
+              <h3 className="text-lg sm:text-xl font-medium">
                 6.1 Formulaire de rétractation
               </h3>
               <p>
@@ -211,7 +211,7 @@ export default async function CGVPage() {
                 autre moyen écrit (email, courrier).
               </p>
 
-              <h3 className="text-xl font-medium">
+              <h3 className="text-lg sm:text-xl font-medium">
                 6.2 Exercice du droit de rétractation
               </h3>
               <p>
@@ -228,7 +228,7 @@ export default async function CGVPage() {
                 <p>44100 Nantes, France</p>
               </div>
 
-              <h3 className="text-xl font-medium">6.3 Retour des produits</h3>
+              <h3 className="text-lg sm:text-xl font-medium">6.3 Retour des produits</h3>
               <p>
                 Vous disposez d'un délai de <strong>14 jours</strong> à compter
                 de la notification de votre décision de rétractation pour nous
@@ -240,7 +240,7 @@ export default async function CGVPage() {
                 accessoires éventuels. Les frais de retour sont à votre charge.
               </p>
 
-              <h3 className="text-xl font-medium">6.4 Remboursement</h3>
+              <h3 className="text-lg sm:text-xl font-medium">6.4 Remboursement</h3>
               <p>
                 Nous procéderons au remboursement dans un délai de{" "}
                 <strong>14 jours</strong> suivant la réception du produit
@@ -249,7 +249,7 @@ export default async function CGVPage() {
                 de votre part pour un autre moyen de paiement.
               </p>
 
-              <h3 className="text-xl font-medium">6.5 Exceptions</h3>
+              <h3 className="text-lg sm:text-xl font-medium">6.5 Exceptions</h3>
               <p>
                 Conformément à l'article L221-28 du Code de la consommation, le
                 droit de rétractation ne s'applique pas aux bijoux personnalisés
@@ -258,9 +258,9 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">7. Garanties légales</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">7. Garanties légales</h2>
 
-              <h3 className="text-xl font-medium">
+              <h3 className="text-lg sm:text-xl font-medium">
                 7.1 Garantie légale de conformité
               </h3>
               <p>
@@ -323,7 +323,7 @@ export default async function CGVPage() {
                 </p>
               </div>
 
-              <h3 className="text-xl font-medium mt-6">
+              <h3 className="text-lg sm:text-xl font-medium mt-6">
                 7.2 Garantie légale des vices cachés
               </h3>
               <p>
@@ -361,7 +361,7 @@ export default async function CGVPage() {
                 </p>
               </div>
 
-              <h3 className="text-xl font-medium mt-6">
+              <h3 className="text-lg sm:text-xl font-medium mt-6">
                 7.3 Mise en œuvre des garanties
               </h3>
               <p>
@@ -380,7 +380,7 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">8. Responsabilité</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">8. Responsabilité</h2>
               <p>
                 Synclune ne saurait être tenue responsable de l'inexécution du
                 contrat en cas de :
@@ -395,7 +395,7 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 9. Propriété intellectuelle
               </h2>
               <p>
@@ -407,7 +407,7 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 10. Données personnelles
               </h2>
               <p>
@@ -422,11 +422,11 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 11. Règlement des litiges et médiation
               </h2>
 
-              <h3 className="text-xl font-medium">11.1 Règlement amiable</h3>
+              <h3 className="text-lg sm:text-xl font-medium">11.1 Règlement amiable</h3>
               <p>
                 En cas de litige, nous nous engageons à rechercher une solution
                 amiable avant toute action judiciaire. Vous pouvez nous
@@ -437,7 +437,7 @@ export default async function CGVPage() {
                 pour toute réclamation.
               </p>
 
-              <h3 className="text-xl font-medium">
+              <h3 className="text-lg sm:text-xl font-medium">
                 11.2 Médiation de la consommation
               </h3>
               <p>
@@ -492,7 +492,7 @@ export default async function CGVPage() {
                 au recours judiciaire.
               </p>
 
-              <h3 className="text-xl font-medium">
+              <h3 className="text-lg sm:text-xl font-medium">
                 11.3 Droit applicable et juridiction
               </h3>
               <p>
@@ -505,7 +505,7 @@ export default async function CGVPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">12. Contact</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">12. Contact</h2>
               <p>
                 Pour toute question relative aux présentes CGV, vous pouvez nous
                 contacter :

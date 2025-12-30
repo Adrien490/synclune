@@ -49,7 +49,7 @@ export default async function PrivacyPolicyPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-slate dark:prose-invert max-w-prose space-y-6">
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">1. Introduction</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">1. Introduction</h2>
               <p>
                 La présente Politique de Confidentialité décrit comment{" "}
                 <strong>Synclune</strong> collecte, utilise et protège vos
@@ -59,7 +59,7 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 2. Responsable du traitement
               </h2>
               <p>
@@ -85,8 +85,8 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">3. Données collectées</h2>
-              <h3 className="text-xl font-medium">
+              <h2 className="text-xl sm:text-2xl font-semibold">3. Données collectées</h2>
+              <h3 className="text-lg sm:text-xl font-medium">
                 3.1 Lors de la création d'un compte
               </h3>
               <ul className="list-disc list-inside ml-4 space-y-2">
@@ -95,7 +95,7 @@ export default async function PrivacyPolicyPage() {
                 <li>Mot de passe (haché et sécurisé)</li>
               </ul>
 
-              <h3 className="text-xl font-medium">3.2 Lors d'une commande</h3>
+              <h3 className="text-lg sm:text-xl font-medium">3.2 Lors d'une commande</h3>
               <ul className="list-disc list-inside ml-4 space-y-2">
                 <li>Adresse de livraison (nom, adresse postale, téléphone)</li>
                 <li>Historique de commandes</li>
@@ -104,7 +104,7 @@ export default async function PrivacyPolicyPage() {
                 </li>
               </ul>
 
-              <h3 className="text-xl font-medium">
+              <h3 className="text-lg sm:text-xl font-medium">
                 3.3 Navigation sur le site
               </h3>
               <ul className="list-disc list-inside ml-4 space-y-2">
@@ -113,7 +113,7 @@ export default async function PrivacyPolicyPage() {
                 <li>Données de navigation (pages visitées, durée)</li>
               </ul>
 
-              <h3 className="text-xl font-medium">3.4 Paiement</h3>
+              <h3 className="text-lg sm:text-xl font-medium">3.4 Paiement</h3>
               <p>
                 <strong>
                   Aucune donnée bancaire n'est stockée sur nos serveurs.
@@ -122,7 +122,7 @@ export default async function PrivacyPolicyPage() {
                 <strong>Stripe</strong>, certifié PCI-DSS niveau 1.
               </p>
 
-              <h3 className="text-xl font-medium">3.5 Newsletter</h3>
+              <h3 className="text-lg sm:text-xl font-medium">3.5 Newsletter</h3>
               <p>
                 Lors de votre inscription à notre newsletter avec validation par
                 double opt-in, nous collectons :
@@ -148,7 +148,7 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 4. Finalités du traitement
               </h2>
               <p>Vos données sont utilisées pour :</p>
@@ -181,7 +181,7 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">5. Base légale</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">5. Base légale</h2>
               <ul className="list-disc list-inside ml-4 space-y-2">
                 <li>
                   <strong>Exécution du contrat :</strong> traitement des
@@ -203,7 +203,7 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 6. Destinataires des données
               </h2>
               <p>Vos données peuvent être transmises à :</p>
@@ -227,7 +227,7 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 6.1 Transferts de données hors UE
               </h2>
               <p>
@@ -255,7 +255,7 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 7. Durée de conservation
               </h2>
               <table className="w-full border-collapse border border-gray-300 dark:border-gray-700">
@@ -333,7 +333,7 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">8. Vos droits (RGPD)</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">8. Vos droits (RGPD)</h2>
               <p>Conformément au RGPD, vous disposez des droits suivants :</p>
               <ul className="list-disc list-inside ml-4 space-y-2">
                 <li>
@@ -388,10 +388,10 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl sm:text-2xl font-semibold">
                 9. Cookies et stockages locaux
               </h2>
-              <h3 className="text-xl font-medium">
+              <h3 className="text-lg sm:text-xl font-medium">
                 9.1 Cookies strictement nécessaires
               </h3>
               <p>
@@ -427,7 +427,7 @@ export default async function PrivacyPolicyPage() {
                 </li>
               </ul>
 
-              <h3 className="text-xl font-medium mt-4">
+              <h3 className="text-lg sm:text-xl font-medium mt-4">
                 9.2 Stockage local (LocalStorage)
               </h3>
               <p>
@@ -453,7 +453,7 @@ export default async function PrivacyPolicyPage() {
                 </li>
               </ul>
 
-              <h3 className="text-xl font-medium mt-4">
+              <h3 className="text-lg sm:text-xl font-medium mt-4">
                 9.3 Cookies optionnels (avec consentement)
               </h3>
               <p>
@@ -468,7 +468,7 @@ export default async function PrivacyPolicyPage() {
                 </li>
               </ul>
 
-              <h3 className="text-xl font-medium mt-4">
+              <h3 className="text-lg sm:text-xl font-medium mt-4">
                 9.4 Gestion des cookies
               </h3>
               <p>
@@ -484,7 +484,7 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">10. Sécurité</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">10. Sécurité</h2>
               <p>Nous mettons en œuvre les mesures de sécurité suivantes :</p>
               <ul className="list-disc list-inside ml-4 space-y-2">
                 <li>Chiffrement HTTPS (SSL/TLS)</li>
@@ -496,7 +496,7 @@ export default async function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">11. Contact</h2>
+              <h2 className="text-xl sm:text-2xl font-semibold">11. Contact</h2>
               <p>
                 Pour toute question relative à la protection de vos données
                 personnelles :

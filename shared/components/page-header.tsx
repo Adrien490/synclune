@@ -230,7 +230,7 @@ export function PageHeader({
 						<h1
 							id={breadcrumbs.length > 0 ? undefined : "page-title"}
 							className={cn(
-								"text-2xl sm:text-3xl font-display font-medium text-foreground tracking-normal break-words",
+								"text-2xl sm:text-3xl lg:text-4xl font-display font-medium text-foreground tracking-normal break-words",
 								breadcrumbs.length > 0 && "hidden sm:block"
 							)}
 						>

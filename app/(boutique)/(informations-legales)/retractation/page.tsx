@@ -82,7 +82,7 @@ export default async function RetractationPage() {
 
               {/* Formulaire type */}
               <div className="bg-muted/30 border rounded-lg p-6 md:p-8 space-y-6">
-                <h2 className="text-2xl font-semibold m-0">
+                <h2 className="text-xl sm:text-2xl font-semibold m-0">
                   Formulaire type de rétractation
                 </h2>
 
@@ -197,7 +197,7 @@ export default async function RetractationPage() {
 
               {/* Modalités de retour */}
               <div className="space-y-4">
-                <h2 className="text-2xl font-semibold">
+                <h2 className="text-xl sm:text-2xl font-semibold">
                   Modalités de retour des articles
                 </h2>
 
@@ -245,7 +245,7 @@ export default async function RetractationPage() {
 
               {/* Exceptions */}
               <div className="space-y-4">
-                <h2 className="text-2xl font-semibold">
+                <h2 className="text-xl sm:text-2xl font-semibold">
                   Exceptions au droit de rétractation
                 </h2>
                 <p>
@@ -266,7 +266,7 @@ export default async function RetractationPage() {
 
               {/* Informations complémentaires */}
               <div className="space-y-4">
-                <h2 className="text-2xl font-semibold">
+                <h2 className="text-xl sm:text-2xl font-semibold">
                   Informations complémentaires
                 </h2>
 
