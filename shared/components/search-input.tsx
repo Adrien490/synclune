@@ -270,8 +270,8 @@ export function SearchInput({
 				</form.AppField>
 			</div>
 
-			{/* Submit button (only in submit mode) */}
-			{mode === "submit" && (
+			{/* Submit button */}
+			{mode === "submit" ? (
 				<form.Subscribe
 					selector={(state) => state.values.search}
 					children={(search) => (
@@ -289,6 +289,11 @@ export function SearchInput({
 						</Button>
 					)}
 				/>
+			) : (
+				/* Bouton submit sr-only pour accessibilité clavier en mode live */
+				<button type="submit" className="sr-only">
+					Rechercher
+				</button>
 			)}
 
 			{/* Live region for screen readers */}

@@ -21,6 +21,10 @@ interface CollectionImagesGridProps {
  * - 2 images : 2 colonnes égales
  * - 3 images : 1 grande + 2 petites
  * - 4 images : Bento Grid (1 grande + 3 petites)
+ *
+ * MICRO-INTERACTIONS:
+ * - Stagger delay: images zooment en cascade au hover
+ * - Tap feedback: scale-down + brightness sur mobile
  */
 export function CollectionImagesGrid({
 	images,
@@ -39,6 +43,7 @@ export function CollectionImagesGrid({
 					index={0}
 					isAboveFold={isAboveFold}
 					sizes="(max-width: 640px) 100vw, 50vw"
+					staggerIndex={0}
 				/>
 			</div>
 		);
@@ -56,6 +61,7 @@ export function CollectionImagesGrid({
 							index={i}
 							isAboveFold={isAboveFold && i === 0}
 							sizes="(max-width: 640px) 50vw, 25vw"
+							staggerIndex={i}
 						/>
 					</div>
 				))}
@@ -75,6 +81,7 @@ export function CollectionImagesGrid({
 						index={0}
 						isAboveFold={isAboveFold}
 						sizes="(max-width: 640px) 50vw, 33vw"
+						staggerIndex={0}
 					/>
 				</div>
 				{/* 2 petites images */}
@@ -85,6 +92,7 @@ export function CollectionImagesGrid({
 							collectionName={collectionName}
 							index={i}
 							sizes="(max-width: 640px) 50vw, 25vw"
+							staggerIndex={i}
 						/>
 					</div>
 				))}
@@ -117,6 +125,7 @@ export function CollectionImagesGrid({
 					index={0}
 					isAboveFold={isAboveFold}
 					sizes="(max-width: 640px) 50vw, 33vw"
+					staggerIndex={0}
 				/>
 			</div>
 
@@ -148,6 +157,7 @@ export function CollectionImagesGrid({
 							index={i}
 							isAboveFold={isSecondaryAboveFold}
 							sizes={isImage4 ? "(max-width: 640px) 0px, 15vw" : "(max-width: 640px) 25vw, 15vw"}
+							staggerIndex={i}
 						/>
 					</div>
 				);
@@ -156,24 +166,36 @@ export function CollectionImagesGrid({
 	);
 }
 
-/** Composant Image réutilisable avec hover effect */
+/** Délais progressifs pour effet de vague au hover */
+const STAGGER_DELAYS = [
+	"delay-0",
+	"delay-[50ms]",
+	"delay-[75ms]",
+	"delay-[100ms]",
+] as const;
+
+/** Composant Image réutilisable avec hover effect et stagger */
 function CollectionImage({
 	image,
 	collectionName,
 	index,
 	isAboveFold = false,
 	sizes,
+	staggerIndex = 0,
 }: {
 	image: CollectionImage;
 	collectionName: string;
 	index: number;
 	isAboveFold?: boolean;
 	sizes: string;
+	staggerIndex?: number;
 }) {
 	// Alt text: utiliser celui fourni, sinon générer un descriptif contextuel
 	const altText =
 		image.alt ||
 		`Aperçu produit ${index + 1} de la collection ${collectionName}`;
+
+	const delayClass = STAGGER_DELAYS[staggerIndex] || "delay-0";
 
 	return (
 		<Image
@@ -183,7 +205,11 @@ function CollectionImage({
 			className={cn(
 				"object-cover",
 				"transition-transform duration-300 ease-out",
+				delayClass,
+				// Desktop: hover zoom avec stagger
 				"motion-safe:can-hover:group-hover:scale-[1.08]",
+				// Mobile: tap feedback
+				"active:scale-[0.97] active:brightness-95",
 			)}
 			sizes={sizes}
 			priority={isAboveFold}

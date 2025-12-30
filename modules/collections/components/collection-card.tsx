@@ -74,7 +74,7 @@ export function CollectionCard({
 				href={`/collections/${slug}`}
 				className={cn(
 					"group block min-w-0",
-					"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-xl",
+					"focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:rounded-xl",
 				)}
 				aria-labelledby={titleId}
 			>

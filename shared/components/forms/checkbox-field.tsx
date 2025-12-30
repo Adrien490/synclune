@@ -10,6 +10,8 @@ import { ReactNode } from "react";
 
 interface CheckboxFieldProps extends React.ComponentProps<typeof Checkbox> {
 	label?: ReactNode;
+	/** Label accessible pour les lecteurs d'écran (utilisé quand le label visuel contient du HTML complexe) */
+	"aria-label"?: string;
 }
 
 export const CheckboxField = ({

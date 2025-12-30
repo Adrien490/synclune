@@ -78,6 +78,7 @@ export function NewsletterForm() {
 				)}
 
 			<FieldSet>
+				<legend className="sr-only">Inscription à la newsletter</legend>
 				<FieldGroup className="space-y-4">
 					{/* Email field - Using field composition pattern */}
 					<form.AppField
@@ -169,6 +170,7 @@ export function NewsletterForm() {
 											</Link>
 										</span>
 									}
+									aria-label="J'accepte de recevoir la newsletter et j'ai lu la Politique de confidentialité"
 									disabled={isPending || isSuccess}
 									required
 								/>

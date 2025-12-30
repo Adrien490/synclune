@@ -95,6 +95,7 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 											product={product}
 											index={index}
 											isInWishlist={wishlistProductIds.has(product.id)}
+											sectionId="latest"
 										/>
 									</CarouselItem>
 								))}

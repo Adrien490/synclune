@@ -15,6 +15,8 @@ interface ProductCardProps {
 	index?: number;
 	/** Indique si le produit est dans la wishlist */
 	isInWishlist?: boolean;
+	/** Identifiant de section pour des IDs uniques (ex: "bestsellers", "latest") */
+	sectionId?: string;
 }
 
 /**
@@ -37,6 +39,7 @@ export function ProductCard({
 	product,
 	index,
 	isInWishlist = false,
+	sectionId,
 }: ProductCardProps) {
 	const { slug, title, type } = product;
 	const productType = type?.label;
@@ -47,9 +50,10 @@ export function ProductCard({
 
 	const { status: stockStatus, message: stockMessage, totalInventory: inventory } = stockInfo;
 
-	// Génération ID unique pour aria-labelledby
-	const sanitizedSlug = slug.replace(/[^a-z0-9-]/gi, "");
-	const titleId = `product-title-${sanitizedSlug}`;
+	// Génération ID unique pour aria-labelledby (combine sectionId + product.id)
+	const titleId = sectionId
+		? `product-title-${sectionId}-${product.id}`
+		: `product-title-${product.id}`;
 
 	// Badge urgency (stock bas mais pas rupture)
 	const showUrgencyBadge =
