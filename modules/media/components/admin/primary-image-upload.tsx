@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useEffect } from "react";

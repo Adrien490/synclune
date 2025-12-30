@@ -1,6 +1,6 @@
 import { Card } from "@/shared/components/ui/card";
 import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
-import { crimsonPro } from "@/shared/styles/fonts";
+import { josefinSans } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { Gem } from "lucide-react";
 import Image from "next/image";
@@ -121,7 +121,7 @@ export function CollectionCard({
 						<HeadingTag
 							id={titleId}
 							className={cn(
-								crimsonPro.className,
+								josefinSans.className,
 								"line-clamp-2 overflow-hidden text-foreground",
 								"text-lg/7 sm:text-xl/7 tracking-tight break-words",
 							)}

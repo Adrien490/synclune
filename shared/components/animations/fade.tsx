@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { MOTION_CONFIG } from "./motion.config";
 import type { FadeProps } from "./types";
 
@@ -53,7 +53,7 @@ export function Fade({
 				transition: {
 					duration: shouldReduceMotion ? 0 : duration,
 					delay: shouldReduceMotion ? 0 : delay,
-					ease: [0.4, 0, 0.2, 1] as const,
+					ease: MOTION_CONFIG.easing.easeInOut,
 				},
 		  }
 		: {
@@ -63,7 +63,7 @@ export function Fade({
 				transition: {
 					duration: shouldReduceMotion ? 0 : duration,
 					delay: shouldReduceMotion ? 0 : delay,
-					ease: [0.4, 0, 0.2, 1] as const,
+					ease: MOTION_CONFIG.easing.easeInOut,
 				},
 		  };
 

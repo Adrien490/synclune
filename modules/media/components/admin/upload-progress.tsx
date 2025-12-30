@@ -2,7 +2,7 @@
 
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "@/shared/utils/cn";
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "motion/react";
 import { Check, Loader2 } from "lucide-react";
 
 interface UploadProgressProps {

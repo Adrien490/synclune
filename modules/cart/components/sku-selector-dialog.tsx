@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, use } from "react";
 import type { GetCartReturn } from "@/modules/cart/types/cart.types";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Minus, Plus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";

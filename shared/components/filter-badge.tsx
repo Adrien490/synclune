@@ -2,7 +2,7 @@
 
 import { FilterDefinition } from "@/shared/hooks/use-filter";
 import { cn } from "@/shared/utils/cn";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 
 interface FilterBadgeProps {

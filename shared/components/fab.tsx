@@ -8,7 +8,7 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, X } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRef, useEffect } from "react";
 import {
 	MOTION_CONFIG,
@@ -79,7 +79,7 @@ export function Fab({
 	const prefersReducedMotion = useReducedMotion();
 	const reducedMotion = prefersReducedMotion ?? false;
 	const transition = maybeReduceMotion(
-		MOTION_CONFIG.easing.springSnappy,
+		MOTION_CONFIG.spring.snappy,
 		reducedMotion
 	);
 
@@ -213,7 +213,7 @@ export function Fab({
 										"focus-visible:opacity-100",
 										"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
 										"focus-visible:outline-none",
-										"transition-all duration-200",
+										"motion-safe:transition-[opacity,background-color] motion-safe:duration-normal",
 										isPending && "cursor-wait md:opacity-100"
 									)}
 									aria-label={hideTooltip}

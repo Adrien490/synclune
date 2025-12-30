@@ -2,7 +2,7 @@
 
 import { useOptimistic, useRef, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, X } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";

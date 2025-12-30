@@ -1,7 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { type ReactNode } from "react";
+import { MOTION_CONFIG } from "./motion.config";
 
 export interface HoverProps {
 	children: ReactNode;
@@ -43,7 +44,7 @@ export function Hover({
 			}
 			transition={{
 				duration,
-				ease: "easeOut",
+				ease: MOTION_CONFIG.easing.easeOut,
 			}}
 		>
 			{children}

@@ -1,7 +1,7 @@
 import { SignInSocialForm } from "@/modules/auth/components/sign-in-social-form";
 import { Logo } from "@/shared/components/logo";
 import { SignUpEmailForm } from "@/modules/auth/components/sign-up-email-form";
-import { crimsonPro } from "@/shared/styles/fonts";
+import { josefinSans } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
@@ -52,7 +52,7 @@ export default function SignupPage() {
 							<h1
 								className={cn(
 									"text-3xl font-semibold text-foreground",
-									crimsonPro.className
+									josefinSans.className
 								)}
 							>
 								Inscription

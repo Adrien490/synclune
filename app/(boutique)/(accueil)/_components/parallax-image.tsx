@@ -6,7 +6,7 @@ import {
 	useTransform,
 	useReducedMotion,
 	useInView,
-} from "framer-motion";
+} from "motion/react";
 import Image from "next/image";
 import type { RefObject } from "react";
 import { useRef, useSyncExternalStore } from "react";

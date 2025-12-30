@@ -24,8 +24,8 @@ import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
-import { crimsonPro, inter, jetBrainsMono } from "@/shared/styles/fonts";
-import { MotionConfig } from "framer-motion";
+import { josefinSans, inter, jetBrainsMono } from "@/shared/styles/fonts";
+import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
@@ -207,7 +207,7 @@ export default async function RootLayout({
 				/>
 			</head>
 			<body
-				className={`${inter.variable} ${inter.className} ${crimsonPro.variable} ${jetBrainsMono.variable} antialiased`}
+				className={`${inter.variable} ${inter.className} ${josefinSans.variable} ${jetBrainsMono.variable} antialiased`}
 			>
 				<SerwistProvider swUrl="/serwist/sw.js">
 				<SkipLink />
@@ -215,36 +215,38 @@ export default async function RootLayout({
 				<Suspense fallback={null}>
 					<UploadThingSSR />
 				</Suspense>
-				<MotionConfig
-					transition={{
-						duration: MOTION_CONFIG.duration.normal,
-						ease: MOTION_CONFIG.easing.easeOut,
-					}}
-				>
-					<Suspense fallback={null}>
-						<CookieConsentStoreProvider>
-							<ConditionalAnalytics />
-							<NavigationGuardProvider>
-								<DialogStoreProvider>
-									<SheetStoreProvider>
-										<AlertDialogStoreProvider>
-											{children}
+				<LazyMotion features={domAnimation}>
+					<MotionConfig
+						transition={{
+							duration: MOTION_CONFIG.duration.normal,
+							ease: MOTION_CONFIG.easing.easeOut,
+						}}
+					>
+						<Suspense fallback={null}>
+							<CookieConsentStoreProvider>
+								<ConditionalAnalytics />
+								<NavigationGuardProvider>
+									<DialogStoreProvider>
+										<SheetStoreProvider>
+											<AlertDialogStoreProvider>
+												{children}
 
-											<Suspense fallback={<CartSheetSkeleton />}>
-												<CartSheet cartPromise={cartPromise} />
-											</Suspense>
-											<Suspense fallback={null}>
-												<SkuSelectorDialog cartPromise={cartPromise} />
-											</Suspense>
-										</AlertDialogStoreProvider>
-									</SheetStoreProvider>
-								</DialogStoreProvider>
-								<UnsavedChangesDialog />
-							</NavigationGuardProvider>
-							<CookieBanner />
-						</CookieConsentStoreProvider>
-					</Suspense>
-				</MotionConfig>
+												<Suspense fallback={<CartSheetSkeleton />}>
+													<CartSheet cartPromise={cartPromise} />
+												</Suspense>
+												<Suspense fallback={null}>
+													<SkuSelectorDialog cartPromise={cartPromise} />
+												</Suspense>
+											</AlertDialogStoreProvider>
+										</SheetStoreProvider>
+									</DialogStoreProvider>
+									<UnsavedChangesDialog />
+								</NavigationGuardProvider>
+								<CookieBanner />
+							</CookieConsentStoreProvider>
+						</Suspense>
+					</MotionConfig>
+				</LazyMotion>
 					<AppToaster />
 				</SerwistProvider>
 			</body>

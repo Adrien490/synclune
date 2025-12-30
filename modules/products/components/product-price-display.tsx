@@ -12,7 +12,7 @@ import {
 } from "@/modules/products/services/product-pricing.service";
 import { AlertCircle, CheckCircle, Sparkles } from "lucide-react";
 import { StockNotificationForm } from "@/modules/stock-notifications/components/stock-notification-form";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { addBusinessDays, format } from "date-fns";
 import { fr } from "date-fns/locale";

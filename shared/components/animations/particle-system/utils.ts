@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { Transition } from "framer-motion";
+import type { Transition } from "motion/react";
 import { MOTION_CONFIG } from "../motion.config";
 import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";

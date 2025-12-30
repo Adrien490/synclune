@@ -13,7 +13,7 @@ import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { Euro, ImagePlus, Info, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";

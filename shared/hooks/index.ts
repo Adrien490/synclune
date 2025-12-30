@@ -33,4 +33,4 @@ export { usePulseOnChange } from "./use-pulse-on-change"
 export { usePinchZoom } from "./use-pinch-zoom"
 
 // Accessibility hooks (re-exported from framer-motion)
-export { useReducedMotion } from "framer-motion"
+export { useReducedMotion } from "motion/react"

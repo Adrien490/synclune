@@ -48,7 +48,7 @@ export function Hero() {
                 as="h1"
                 size="hero"
                 align="center"
-                weight="light"
+                weight="normal"
                 id="hero-title"
                 className="text-foreground"
                 itemProp="headline"

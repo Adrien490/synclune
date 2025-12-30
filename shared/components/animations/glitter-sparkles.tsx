@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useReducedMotion, useInView } from "framer-motion";
+import { motion, useReducedMotion, useInView } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 import { seededRandom } from "./particle-system/utils";
 

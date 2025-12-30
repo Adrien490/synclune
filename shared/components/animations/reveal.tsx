@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { useSyncExternalStore } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 import type { RevealProps } from "./types";
@@ -48,7 +48,7 @@ export function Reveal({
 			transition={{
 				duration: shouldReduceMotion ? 0 : duration,
 				delay: shouldReduceMotion ? 0 : delay,
-				ease: "easeOut",
+				ease: MOTION_CONFIG.easing.easeOut,
 			}}
 			{...rest}
 		>

@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useFilter, type FilterDefinition } from "@/shared/hooks/use-filter";
 import { FilterBadge } from "@/shared/components/filter-badge";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "motion/react";
 import {
 	FILTER_LABELS,
 	formatPrice,

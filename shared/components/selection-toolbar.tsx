@@ -2,7 +2,7 @@
 
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { Button } from "@/shared/components/ui/button";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { X } from "lucide-react";
 import { ReactNode } from "react";

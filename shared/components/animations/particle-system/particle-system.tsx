@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { useInView, useReducedMotion } from "framer-motion";
+import { useInView, useReducedMotion } from "motion/react";
 import { useRef } from "react";
 import { DEFAULT_COLORS } from "./constants";
 import { ParticleSet } from "./particle-set";

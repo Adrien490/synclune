@@ -1,7 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { type ReactNode } from "react";
+import { MOTION_CONFIG } from "./motion.config";
 
 export interface TapProps {
 	children: ReactNode;
@@ -38,7 +39,7 @@ export function Tap({
 			}
 			transition={{
 				duration,
-				ease: "easeInOut",
+				ease: MOTION_CONFIG.easing.easeInOut,
 			}}
 		>
 			{children}

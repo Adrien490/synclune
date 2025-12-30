@@ -6,7 +6,7 @@ import {
 	useReducedMotion,
 	useScroll,
 	useTransform,
-} from "framer-motion";
+} from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 

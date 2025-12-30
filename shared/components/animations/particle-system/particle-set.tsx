@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ANIMATION_PRESETS } from "./constants";
 import type { Particle, ParticleSetProps } from "./types";
 import { getShapeStyles, getSvgConfig, getTransition, isSvgShape } from "./utils";

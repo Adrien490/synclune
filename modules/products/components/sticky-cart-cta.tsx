@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button } from "@/shared/components/ui/button";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";

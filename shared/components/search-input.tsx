@@ -2,7 +2,7 @@
 
 import { useRef, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
+import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import { Search, X } from "lucide-react"
 
 import { useAppForm } from "@/shared/components/forms"

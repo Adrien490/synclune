@@ -1,7 +1,7 @@
 import { Logo } from "@/shared/components/logo";
 import { Button } from "@/shared/components/ui/button";
 import { getAuthErrorMessage } from "@/modules/auth/constants/error-messages";
-import { crimsonPro } from "@/shared/styles/fonts";
+import { josefinSans } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -60,7 +60,7 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
 							<h1
 								className={cn(
 									"text-3xl font-semibold text-foreground",
-									crimsonPro.className
+									josefinSans.className
 								)}
 							>
 								{errorInfo.title}

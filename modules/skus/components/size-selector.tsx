@@ -16,7 +16,7 @@ const SizeGuideDialog = dynamic(
 );
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { Check } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 
 interface SizeSelectorProps {
 	sizes: Size[];

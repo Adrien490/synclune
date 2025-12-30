@@ -7,7 +7,7 @@ import {
 import { Button } from "./ui/button";
 import { Cookie } from "lucide-react";
 import Link from "next/link";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { FocusScope } from "@radix-ui/react-focus-scope";
 import { useEffect, useRef } from "react";
 

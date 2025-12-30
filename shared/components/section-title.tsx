@@ -1,4 +1,4 @@
-import { crimsonPro } from "@/shared/styles/fonts";
+import { josefinSans } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import type { SectionTitleProps } from "@/shared/types/component.types";
 
@@ -27,7 +27,7 @@ const weightVariants = {
  * Composant de titre de section unifié pour l'application Synclune
  *
  * Style cohérent avec:
- * - Font display (serif élégante)
+ * - Font display (Josefin Sans - sans-serif géométrique)
  * - Italique + uppercase + tracking-wider
  * - Font-weight semibold
  * - Progression responsive harmonisée
@@ -55,7 +55,7 @@ export function SectionTitle({
 	as: Component = "h2",
 	size = "default",
 	align = "center",
-	weight = "semibold",
+	weight = "normal",
 	italic = false,
 	itemProp,
 }: SectionTitleProps) {
@@ -64,8 +64,8 @@ export function SectionTitle({
 			id={id}
 			itemProp={itemProp}
 			className={cn(
-				// Police Crimson Pro - Serif élégante
-				crimsonPro.className,
+				// Police Josefin Sans - Sans-serif géométrique élégante
+				josefinSans.className,
 				// Style de base unifié
 				"text-foreground tracking-wide",
 				// Graisse

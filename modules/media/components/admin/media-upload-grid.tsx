@@ -20,7 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { snapCenterToCursor, restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "motion/react";
 import { Play } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";

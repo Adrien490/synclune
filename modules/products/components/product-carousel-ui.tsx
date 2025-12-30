@@ -16,7 +16,7 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import Autoplay from "embla-carousel-autoplay";
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "motion/react";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";

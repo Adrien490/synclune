@@ -1,13 +1,11 @@
-import { Crimson_Pro, Inter, Dancing_Script, JetBrains_Mono } from "next/font/google";
+import { Inter, Dancing_Script, JetBrains_Mono, Josefin_Sans } from "next/font/google";
 
-// Crimson Pro - Serif élégante pour titres de bijoux
-// Police classique et raffinée, parfaite pour bijoux haut de gamme
-// Caractère intemporel avec une touche de luxe
-// Optimisé : Seulement 500 (medium) et 600 (semibold) + italic pour réduire LCP
-export const crimsonPro = Crimson_Pro({
+// Josefin Sans - Sans-serif géométrique élégante pour titres
+// Design moderne et épuré, parfait pour une marque de bijoux contemporaine
+// Police variable supportant les poids de 100 à 700
+export const josefinSans = Josefin_Sans({
 	subsets: ["latin"],
 	display: "swap",
-	weight: ["500", "600"], // Medium et Semibold uniquement (utilisés dans Hero et titres)
 	style: ["normal", "italic"],
 	variable: "--font-display", // Variable CSS pour les titres
 	preload: true, // Preload pour LCP optimization

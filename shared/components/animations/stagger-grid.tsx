@@ -1,36 +1,53 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { Children } from "react";
+import type { ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
-import type { StaggerProps } from "./types";
 
-export type { StaggerProps };
+export interface StaggerGridProps {
+	children: ReactNode;
+	className?: string;
+	/** Stagger delay between items (default: 0.06) */
+	stagger?: number;
+	/** Initial delay before first item (default: 0) */
+	delay?: number;
+	/** Y offset for entrance animation (default: 20) */
+	y?: number;
+	/** Scale factor for entrance (default: 0.95) */
+	scale?: number;
+	/** Enable scroll-triggered animation */
+	inView?: boolean;
+	/** Only animate once when entering viewport */
+	once?: boolean;
+	/** Portion of element visible to trigger (default: 0.1) */
+	amount?: number;
+	/** HTML role attribute */
+	role?: string;
+	/** Data attributes */
+	[key: `data-${string}`]: string | undefined;
+}
 
 /**
- * Animation stagger ultra-simple avec support prefers-reduced-motion
- * Chaque enfant reçoit un delay croissant
- * Supporte whileInView pour animations au scroll
- *
- * Note: willChange retiré pour meilleure performance GPU.
- * Framer Motion optimise déjà les animations avec transform et opacity.
+ * Wrapper pour grilles avec animation stagger
+ * Chaque enfant direct apparaît en cascade avec scale + fade
+ * Idéal pour grilles de produits, collections, etc.
+ * Respecte prefers-reduced-motion
  */
-export function Stagger({
+export function StaggerGrid({
 	children,
 	className,
 	stagger = MOTION_CONFIG.stagger.normal,
 	delay = 0,
 	y = 20,
-	inView = false,
+	scale = 0.95,
+	inView = true,
 	once = true,
-	amount = 0.2,
+	amount = 0.1,
 	role,
 	...rest
-}: StaggerProps) {
+}: StaggerGridProps) {
 	const shouldReduceMotion = useReducedMotion();
-	const childrenArray = Children.toArray(children);
 
-	// Variants pour gérer les animations avec ou sans inView
 	const containerVariants = {
 		hidden: {},
 		visible: {
@@ -45,16 +62,20 @@ export function Stagger({
 		hidden: {
 			opacity: shouldReduceMotion ? 1 : 0,
 			y: shouldReduceMotion ? 0 : y,
+			scale: shouldReduceMotion ? 1 : scale,
 		},
 		visible: {
 			opacity: 1,
 			y: 0,
+			scale: 1,
 			transition: {
-				duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.normal,
+				duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.slow,
 				ease: MOTION_CONFIG.easing.easeOut,
 			},
 		},
 	};
+
+	const childrenArray = Array.isArray(children) ? children : [children];
 
 	if (inView) {
 		return (

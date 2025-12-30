@@ -1,7 +1,7 @@
 "use client";
 
 import { useOptimistic } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
 import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";

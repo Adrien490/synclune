@@ -13,8 +13,15 @@ export { Reveal } from "./reveal";
 
 // Gestures & Interactivité
 export { Hover } from "./hover";
+export { HoverScale } from "./hover-scale";
 export { Pulse } from "./pulse";
 export { Tap } from "./tap";
+
+// Form animations
+export { ErrorShake } from "./error-shake";
+
+// Grid animations
+export { StaggerGrid } from "./stagger-grid";
 
 
 // Scroll indicator
@@ -27,12 +34,15 @@ export { GlitterSparkles } from "./glitter-sparkles";
 export { ParticleSystem } from "./particle-system/index";
 
 // Types
+export type { ErrorShakeProps } from "./error-shake";
 export type { FadeProps } from "./fade";
 export type { HoverProps } from "./hover";
+export type { HoverScaleProps } from "./hover-scale";
 export type { PulseProps } from "./pulse";
 export type { RevealProps } from "./reveal";
 export type { ScrollIndicatorProps } from "./scroll-indicator";
 export type { SlideProps } from "./slide";
+export type { StaggerGridProps } from "./stagger-grid";
 export type { StaggerProps } from "./stagger";
 export type { TapProps } from "./tap";
 

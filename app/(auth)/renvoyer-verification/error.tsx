@@ -3,7 +3,7 @@
 import { Logo } from "@/shared/components/logo";
 import { Button } from "@/shared/components/ui/button";
 import type { ErrorPageProps } from "@/shared/types/error.types";
-import { crimsonPro } from "@/shared/styles/fonts";
+import { josefinSans } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
@@ -39,7 +39,7 @@ export default function ResendVerificationError({ reset }: ErrorPageProps) {
 					</div>
 
 					<div className="space-y-3">
-						<h1 className={cn("text-3xl font-semibold text-foreground", crimsonPro.className)}>
+						<h1 className={cn("text-3xl font-semibold text-foreground", josefinSans.className)}>
 							Une erreur est survenue
 						</h1>
 						<p className="text-muted-foreground">

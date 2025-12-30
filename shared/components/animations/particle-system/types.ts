@@ -1,4 +1,4 @@
-import type { TargetAndTransition } from "framer-motion";
+import type { TargetAndTransition } from "motion/react";
 
 /** Formes des particules */
 export type ParticleShape =

@@ -18,7 +18,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
-import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { AlertCircleIcon, ArrowLeftIcon, SearchIcon } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import Image from "next/image";

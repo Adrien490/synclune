@@ -1,13 +1,13 @@
-import { Suspense } from "react";
+import { Suspense, use } from "react";
 
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
+import { Stagger } from "@/shared/components/animations";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
-import { use } from "react";
 
-import { SpellSuggestion } from "./spell-suggestion";
 import { NoResultsRecovery, NoResultsRecoverySkeleton } from "./no-results-recovery";
+import { SpellSuggestion } from "./spell-suggestion";
 
 interface ProductListProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -62,13 +62,20 @@ export function ProductList({
 				</p>
 			</div>
 
-			{/* Grille des produits - réaction au data-pending des filtres */}
-			<div
-				tabIndex={-1}
+			{/* Grille des produits avec animation stagger */}
+			<Stagger
+				role="list"
+				aria-label="Liste des produits"
 				className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8 outline-none motion-safe:transition-all motion-safe:duration-200 motion-reduce:transition-none group-has-[[data-pending]]/container:blur-[1px] group-has-[[data-pending]]/container:scale-[0.99] group-has-[[data-pending]]/container:pointer-events-none"
+				stagger={0.04}
+				delay={0.05}
+				y={16}
+				inView
+				once
+				amount={0.1}
 			>
 				{products.map((product, index) => (
-					<div key={product.id} className="product-item">
+					<div key={product.id} role="listitem" className="product-item">
 						<ProductCard
 							product={product}
 							index={index}
@@ -76,7 +83,7 @@ export function ProductList({
 						/>
 					</div>
 				))}
-			</div>
+			</Stagger>
 			<div className="flex justify-end mt-8 lg:mt-12">
 				<CursorPagination
 					perPage={perPage}

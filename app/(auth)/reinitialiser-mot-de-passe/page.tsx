@@ -1,6 +1,6 @@
 import { Logo } from "@/shared/components/logo";
 import { ResetPasswordForm } from "@/modules/auth/components/reset-password-form";
-import { crimsonPro } from "@/shared/styles/fonts";
+import { josefinSans } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -63,7 +63,7 @@ export default async function ResetPasswordPage({
 							<h1
 								className={cn(
 									"text-3xl font-semibold text-foreground",
-									crimsonPro.className
+									josefinSans.className
 								)}
 							>
 								Réinitialiser le mot de passe

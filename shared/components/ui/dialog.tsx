@@ -83,7 +83,13 @@ function DialogContent({
 			<DialogPrimitive.Content
 				data-slot="dialog-content"
 				className={cn(
-					"bg-background motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0 motion-safe:data-[state=closed]:zoom-out-95 motion-safe:data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-[70] grid w-full translate-x-[-50%] translate-y-[-50%] rounded-xl shadow-lg duration-200",
+					"bg-background fixed top-[50%] left-[50%] z-[70] grid w-full translate-x-[-50%] translate-y-[-50%] rounded-xl shadow-lg",
+					// Animations avec scale + slide-in-from-bottom
+					"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
+					"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
+					"motion-safe:data-[state=closed]:zoom-out-95 motion-safe:data-[state=open]:zoom-in-95",
+					"motion-safe:data-[state=closed]:slide-out-to-top-[2%] motion-safe:data-[state=open]:slide-in-from-bottom-[2%]",
+					"motion-safe:duration-200",
 					!hasMaxWidth && "max-w-[90%] sm:max-w-lg",
 					className
 				)}
@@ -135,7 +141,7 @@ function DialogTitle({
 	return (
 		<DialogPrimitive.Title
 			data-slot="dialog-title"
-			className={cn("text-xl leading-none font-semibold font-display", className)}
+			className={cn("text-xl leading-none font-medium font-display", className)}
 			{...props}
 		/>
 	);

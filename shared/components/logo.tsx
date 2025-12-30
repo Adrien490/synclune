@@ -1,6 +1,6 @@
 import { BRAND } from "@/shared/constants/brand";
 import { cn } from "@/shared/utils/cn";
-import { crimsonPro } from "@/shared/styles/fonts";
+import { josefinSans } from "@/shared/styles/fonts";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -67,9 +67,9 @@ export function Logo({
 			{showText && (
 				<span
 					className={cn(
-						crimsonPro.className,
+						josefinSans.className,
 						textSizeClass,
-						"font-medium text-foreground tracking-wide",
+						"font-light text-foreground tracking-wide",
 						textClassName
 					)}
 				>

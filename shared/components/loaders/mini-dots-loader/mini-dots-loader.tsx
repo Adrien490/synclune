@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { bgColorClass, loaderAnimations, sizeClasses } from "./constants";
 import { MiniDotsLoaderProps } from "./types";
 

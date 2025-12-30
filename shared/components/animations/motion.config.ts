@@ -1,14 +1,15 @@
-import type { Transition } from "framer-motion";
+import type { Transition } from "motion/react";
 
 /**
  * Default animation configuration values
  */
 export const MOTION_CONFIG = {
-	// Default durations in seconds
+	// Default durations in seconds - aligned with CSS variables
 	duration: {
-		fast: 0.4,
-		normal: 0.4,
-		slow: 0.6,
+		fast: 0.15, // 150ms - matches --duration-fast
+		normal: 0.2, // 200ms - matches --duration-normal
+		slow: 0.3, // 300ms - matches --duration-slow
+		slower: 0.5, // 500ms - matches --duration-slower
 		collapse: 0.28,
 	},
 
@@ -21,22 +22,6 @@ export const MOTION_CONFIG = {
 
 	// Common easing functions
 	easing: {
-		// Spring-based easings for natural movement
-		spring: {
-			type: "spring" as const,
-			damping: 25,
-			stiffness: 120,
-			mass: 0.8,
-		},
-
-		// Snappy spring for quick UI elements (FAB, toggles)
-		springSnappy: {
-			type: "spring" as const,
-			damping: 35,
-			stiffness: 500,
-			mass: 0.3,
-		},
-
 		// Tween-based easings for precise control
 		easeInOut: [0.25, 0.1, 0.25, 1],
 		easeOut: [0, 0, 0.2, 1],
@@ -44,6 +29,33 @@ export const MOTION_CONFIG = {
 
 		// Collapse specific easing
 		collapse: [0.25, 0.1, 0.25, 1],
+	},
+
+	// Spring presets - centralized for consistency
+	spring: {
+		// Natural movement - default for most animations
+		gentle: {
+			type: "spring" as const,
+			damping: 25,
+			stiffness: 120,
+			mass: 0.8,
+		},
+
+		// Snappy spring for quick UI elements (FAB, toggles)
+		snappy: {
+			type: "spring" as const,
+			damping: 35,
+			stiffness: 500,
+			mass: 0.3,
+		},
+
+		// Bouncy spring for selectors, cards
+		bouncy: {
+			type: "spring" as const,
+			damping: 15,
+			stiffness: 400,
+			mass: 0.5,
+		},
 	},
 
 	// Default distances and transforms

@@ -77,7 +77,7 @@ export function PageHeader({
 					<div className="min-w-0 flex-1 space-y-3">
 						<h1
 							id="page-title"
-							className="text-3xl lg:text-4xl font-display font-semibold tracking-wide text-foreground break-words"
+							className="text-3xl lg:text-4xl font-display font-medium tracking-wide text-foreground break-words"
 							title={title}
 						>
 							{title}
@@ -142,7 +142,7 @@ export function PageHeader({
 								</Link>
 								<h1
 									id="page-title"
-									className="text-2xl font-display font-semibold text-foreground tracking-normal truncate flex-1 min-w-0"
+									className="text-2xl font-display font-medium text-foreground tracking-normal truncate flex-1 min-w-0"
 								>
 									{title}
 								</h1>
@@ -230,7 +230,7 @@ export function PageHeader({
 						<h1
 							id={breadcrumbs.length > 0 ? undefined : "page-title"}
 							className={cn(
-								"text-2xl sm:text-3xl font-display font-semibold text-foreground tracking-normal break-words",
+								"text-2xl sm:text-3xl font-display font-medium text-foreground tracking-normal break-words",
 								breadcrumbs.length > 0 && "hidden sm:block"
 							)}
 						>

@@ -9,7 +9,7 @@ import {
 	useSpring,
 	useTransform,
 } from "motion/react"
-import { memo, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 
 /**
  * Configuration spring optimisee pour l'animation de nombres
@@ -50,7 +50,7 @@ interface AnimatedNumberProps {
 	onAnimationComplete?: () => void
 }
 
-export const AnimatedNumber = memo(function AnimatedNumber({
+export function AnimatedNumber({
 	value,
 	startValue = 0,
 	direction = "up",
@@ -127,7 +127,7 @@ export const AnimatedNumber = memo(function AnimatedNumber({
 			{display}
 		</motion.span>
 	)
-})
+}
 
 // Alias pour compatibilite avec l'ancien composant
 export const NumberTicker = AnimatedNumber

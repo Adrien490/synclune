@@ -8,7 +8,7 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, Plus, X } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRef, useEffect, useState, useEffectEvent } from "react";
 import {
 	MOTION_CONFIG,
@@ -104,7 +104,7 @@ export function SpeedDialFab({
 	const prefersReducedMotion = useReducedMotion();
 	const reducedMotion = prefersReducedMotion ?? false;
 	const transition = maybeReduceMotion(
-		MOTION_CONFIG.easing.springSnappy,
+		MOTION_CONFIG.spring.snappy,
 		reducedMotion
 	);
 
@@ -239,7 +239,7 @@ export function SpeedDialFab({
 									"focus-visible:opacity-100",
 									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
 									"focus-visible:outline-none",
-									"transition-all duration-200",
+									"motion-safe:transition-[opacity,background-color] motion-safe:duration-normal",
 									isPending && "cursor-wait opacity-100"
 								)}
 								aria-label={hideTooltip}
@@ -302,7 +302,7 @@ export function SpeedDialFab({
 													"size-12 rounded-full shadow-lg",
 													"hover:shadow-xl hover:scale-105",
 													"active:scale-95",
-													"transition-transform duration-200"
+													"motion-safe:transition-transform motion-safe:duration-normal"
 												)}
 												role="menuitem"
 											>
@@ -319,7 +319,7 @@ export function SpeedDialFab({
 													"size-12 rounded-full shadow-lg",
 													"hover:shadow-xl hover:scale-105",
 													"active:scale-95",
-													"transition-transform duration-200"
+													"motion-safe:transition-transform motion-safe:duration-normal"
 												)}
 												onClick={() => handleActionClick(action)}
 												role="menuitem"
@@ -362,8 +362,8 @@ export function SpeedDialFab({
 									"flex items-center justify-center",
 									"size-14 p-0",
 									"hover:shadow-xl hover:shadow-primary/25",
-									"transition-all duration-200",
 									"active:scale-95",
+									"motion-safe:transition-[box-shadow,background-color] motion-safe:duration-normal",
 									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 									"focus-visible:outline-none",
 									className

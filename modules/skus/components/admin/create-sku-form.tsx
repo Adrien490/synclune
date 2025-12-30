@@ -12,7 +12,7 @@ import { useCreateProductSkuForm } from "@/modules/skus/hooks/use-create-sku-for
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";

@@ -1,7 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { type ReactNode } from "react";
+import { MOTION_CONFIG } from "./motion.config";
 
 export interface PulseProps {
 	children: ReactNode;
@@ -40,7 +41,7 @@ export function Pulse({
 				duration,
 				repeat,
 				delay,
-				ease: "easeInOut",
+				ease: MOTION_CONFIG.easing.easeInOut,
 			}}
 		>
 			{children}
