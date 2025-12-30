@@ -60,18 +60,29 @@ export function CollectionGrid({
 				stagger={0.05}
 				delay={0.1}
 			>
-				{collections.map((collection, index) => (
-					<div key={collection.id} role="listitem">
-						<CollectionCard
-							slug={collection.slug}
-							name={collection.name}
-							description={collection.description}
-							imageUrl={collection.products[0]?.product?.skus[0]?.images[0]?.url || null}
-							blurDataUrl={collection.products[0]?.product?.skus[0]?.images[0]?.blurDataUrl || null}
-							index={index}
-						/>
-					</div>
-				))}
+				{collections.map((collection, index) => {
+					// Extraire les images des 4 premiers produits pour le Bento Grid
+					const images = collection.products
+						.map((p) => p.product?.skus[0]?.images[0])
+						.filter(Boolean)
+						.map((img) => ({
+							url: img!.url,
+							blurDataUrl: img!.blurDataUrl,
+							alt: img!.altText,
+						}));
+
+					return (
+						<div key={collection.id} role="listitem">
+							<CollectionCard
+								slug={collection.slug}
+								name={collection.name}
+								description={collection.description}
+								images={images}
+								index={index}
+							/>
+						</div>
+					);
+				})}
 			</Stagger>
 
 			{/* Pagination */}

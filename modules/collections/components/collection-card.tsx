@@ -1,15 +1,25 @@
-import { Card } from "@/shared/components/ui/card";
 import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
 import { cn } from "@/shared/utils/cn";
 import { Gem } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { CollectionImagesGrid } from "./collection-images-grid";
+
+interface CollectionImage {
+	url: string;
+	blurDataUrl?: string | null;
+	alt?: string | null;
+}
 
 interface CollectionCardProps {
 	slug: string;
 	name: string;
 	description: string | null;
-	imageUrl: string | null;
+	/** Images multiples pour Bento Grid (prioritaire) */
+	images?: CollectionImage[];
+	/** @deprecated Utiliser images[] à la place */
+	imageUrl?: string | null;
+	/** @deprecated Utiliser images[] à la place */
 	blurDataUrl?: string | null;
 	showDescription?: boolean;
 	index?: number;
@@ -20,23 +30,23 @@ interface CollectionCardProps {
 }
 
 /**
- * Card de collection avec image, titre et description optionnelle
+ * Card de collection - Design coherent avec ProductCard
  *
- * OPTIMISATIONS APPLIQUEES:
- * - Composant Card shadcn/ui pour coherence design system
- * - can-hover: pour hover desktop uniquement (evite etats coinces sur mobile)
- * - motion-safe: pour respect prefers-reduced-motion (WCAG 2.3.3)
- * - Blur placeholder pour CLS optimise
- * - Preload above-fold (index < 4)
- * - Schema.org Collection avec wrapper article
- * - Typography uniforme avec le reste du site
- * - Quality 85 pour images premium
- * - Hover effects harmonises avec ProductCard
+ * Meme hover effect que ProductCard + personnalite distincte:
+ * - Titre centre avec ligne decorative + sparkle
+ * - Transform plus subtil (-translate-y-1.5 vs -translate-y-2)
+ *
+ * OPTIMISATIONS:
+ * - can-hover + motion-safe (WCAG 2.3.3)
+ * - Shadow oklch pastel + will-change-transform
+ * - Blur placeholder + preload above-fold
+ * - Schema.org Collection
  */
 export function CollectionCard({
 	slug,
 	name,
 	description,
+	images,
 	imageUrl,
 	blurDataUrl,
 	showDescription = false,
@@ -44,12 +54,16 @@ export function CollectionCard({
 	sizes = COLLECTION_IMAGE_SIZES.COLLECTION_CARD,
 	headingLevel: HeadingTag = "h3",
 }: CollectionCardProps) {
-	// Generation ID unique pour aria-labelledby (RSC compatible)
-	// Inclut index pour eviter collisions si meme collection affichee 2x
 	const titleId = `collection-title-${slug}-${index ?? 0}`;
-
-	// Preload above-fold images (4 premieres)
 	const isAboveFold = index !== undefined && index < 4;
+
+	// Support legacy props (imageUrl/blurDataUrl) en les convertissant en images[]
+	const displayImages: CollectionImage[] =
+		images && images.length > 0
+			? images
+			: imageUrl
+				? [{ url: imageUrl, blurDataUrl, alt: null }]
+				: [];
 
 	return (
 		<article itemScope itemType="https://schema.org/Collection">
@@ -57,71 +71,71 @@ export function CollectionCard({
 				href={`/collections/${slug}`}
 				className={cn(
 					"group block min-w-0",
-					"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-lg",
-					"transition-all duration-300 ease-out",
+					"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-xl",
 				)}
 				aria-labelledby={titleId}
 			>
-				<Card
+				<div
 					className={cn(
-						"collection-card overflow-hidden",
-						// Supprimer le padding par defaut de Card (py-6)
-						"p-0",
-						// Border renforcee (2px comme ProductCard)
-						"border-2 border-transparent",
-						"motion-safe:can-hover:hover:border-primary/30",
-						// Focus-within pour navigation clavier (harmonise avec ProductCard)
-						"focus-within:border-primary/30 focus-within:shadow-lg focus-within:shadow-primary/10",
-						// Shadow harmonisee avec ProductCard
-						"shadow-sm",
-						"motion-safe:can-hover:hover:shadow-xl motion-safe:can-hover:hover:shadow-primary/15",
-						// Animations hover avec can-hover (desktop uniquement) + motion-safe (WCAG 2.3.3)
-						"transition-all duration-300 ease-out",
+						"relative overflow-hidden rounded-xl bg-card",
+						// COHÉRENCE ProductCard: border-2 transparent
+						"border-2 border-transparent shadow-sm",
+						"transition-transform duration-300 ease-out",
+						// COHÉRENCE ProductCard: border-primary/40
+						"motion-safe:can-hover:hover:border-primary/40",
+						// COHÉRENCE ProductCard: shadow oklch pastel
+						"motion-safe:can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
+						// COHÉRENCE ProductCard: transform subtil (version plus douce)
 						"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01]",
-						// Etat active pour feedback tactile
-						"motion-safe:active:scale-[0.98] motion-safe:active:translate-y-0",
-						// GPU optimization pour animations fluides
+						// COHÉRENCE ProductCard: focus state
+						"focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
+						// COHÉRENCE ProductCard: GPU optimization
 						"will-change-transform",
 					)}
 				>
-					{/* SEO: URL de la collection (absolue pour Schema.org) */}
-					<meta itemProp="url" content={`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://synclune.fr"}/collections/${slug}`} />
+					{/* SEO: URL de la collection */}
+					<meta
+						itemProp="url"
+						content={`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://synclune.fr"}/collections/${slug}`}
+					/>
 
-					{/* Image */}
-					<div className="collection-card-media relative aspect-square overflow-hidden bg-muted">
-						{imageUrl ? (
-							<Image
-								src={imageUrl}
-								alt={`Collection ${name}`}
-								fill
-								className="object-cover rounded-t-lg transition-transform duration-300 ease-out motion-safe:can-hover:group-hover:scale-[1.08]"
-								loading={isAboveFold ? undefined : "lazy"}
-								priority={isAboveFold}
-								placeholder={blurDataUrl ? "blur" : "empty"}
-								blurDataURL={blurDataUrl || undefined}
-								quality={85}
-								sizes={sizes}
-								itemProp="image"
-							/>
-						) : (
-							<div
-								className="flex h-full items-center justify-center bg-muted"
-								role="img"
-								aria-label={`Image non disponible pour la collection ${name}`}
-							>
-								<Gem className="w-12 h-12 text-primary/40" />
-							</div>
-						)}
-					</div>
+					{/* Images Bento Grid */}
+					{displayImages.length > 0 ? (
+						<CollectionImagesGrid
+							images={displayImages}
+							collectionName={name}
+							isAboveFold={isAboveFold}
+						/>
+					) : (
+						<div
+							className="relative aspect-square overflow-hidden bg-muted rounded-t-xl flex items-center justify-center"
+							role="img"
+							aria-label={`Image non disponible pour la collection ${name}`}
+						>
+							<Gem className="w-12 h-12 text-primary/40" />
+						</div>
+					)}
 
-					{/* Contenu avec padding responsive */}
-					<div className="space-y-2 p-4 sm:p-5 lg:p-6">
-						{/* Titre */}
+					{/* Titre avec elements decoratifs */}
+					<div className="px-4 pb-4 sm:px-5 sm:pb-5 text-center">
+						{/* Ligne decorative - utilise scale au lieu de width pour animation composable */}
+						<div
+							className={cn(
+								"w-12 h-px mx-auto mb-3",
+								"bg-gradient-to-r from-transparent via-primary/40 to-transparent",
+								"transition-[transform,opacity] duration-300 origin-center",
+								"scale-x-[0.67]",
+								"motion-safe:can-hover:group-hover:scale-x-100 motion-safe:can-hover:group-hover:via-primary/60",
+							)}
+							aria-hidden="true"
+						/>
+
 						<HeadingTag
 							id={titleId}
 							className={cn(
-								"line-clamp-2 overflow-hidden text-foreground",
-								"text-base/6 tracking-normal break-words",
+								"line-clamp-2 break-words",
+								"text-base sm:text-lg tracking-wide",
+								"text-foreground",
 							)}
 							itemProp="name"
 						>
@@ -131,14 +145,14 @@ export function CollectionCard({
 						{/* Description optionnelle */}
 						{showDescription && description && (
 							<p
-								className="text-sm/6 tracking-normal line-clamp-3 break-words text-foreground/70 transition-colors duration-300 ease-out motion-safe:can-hover:group-hover:text-foreground/90"
+								className="mt-2 text-sm/6 line-clamp-2 break-words text-muted-foreground"
 								itemProp="description"
 							>
 								{description}
 							</p>
 						)}
 					</div>
-				</Card>
+				</div>
 			</Link>
 		</article>
 	);

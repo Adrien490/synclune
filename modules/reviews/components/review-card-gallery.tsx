@@ -56,7 +56,7 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 							fill
 							onLoad={() => setLoadedImages((prev) => new Set(prev).add(media.id))}
 							className={cn(
-								"object-cover motion-safe:transition-all motion-safe:duration-300 motion-safe:group-hover:scale-105",
+								"object-cover motion-safe:transition-[transform,opacity] motion-safe:duration-300 motion-safe:group-hover:scale-105",
 								loadedImages.has(media.id) ? "opacity-100" : "opacity-0"
 							)}
 							sizes="(min-width: 768px) 96px, 80px"

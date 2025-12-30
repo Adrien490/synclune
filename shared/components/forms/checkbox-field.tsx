@@ -51,7 +51,7 @@ export const CheckboxField = ({
 					<FieldLabel htmlFor={field.name}>
 						{label}
 						{required && (
-							<span className="text-destructive ml-1" aria-label="requis">
+							<span className="text-destructive ml-1" aria-hidden="true">
 								*
 							</span>
 						)}

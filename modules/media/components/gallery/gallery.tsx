@@ -256,8 +256,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const scrollNext = () => emblaApi?.scrollNext();
 	const scrollTo = (index: number) => emblaApi?.scrollTo(index);
 
-	// Classes de transition conditionnelles
-	const transitionClass = prefersReduced ? "" : "transition-all duration-300";
+	// Classes de transition conditionnelles (composables uniquement: transform, opacity)
+	const transitionClass = prefersReduced ? "" : "transition-[transform,opacity] duration-300";
 
 	// Cas limite : aucune image
 	if (!images.length) {

@@ -178,6 +178,8 @@ export function GallerySlide({
 					aria-label={`Vidéo ${title}`}
 				>
 					<source src={media.url} type="video/mp4" />
+					{/* Track vide pour satisfaire WCAG - vidéos produits sans audio */}
+					<track kind="captions" srcLang="fr" label="Français" default />
 				</video>
 			</div>
 		);

@@ -73,10 +73,15 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 						>
 							<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
 								{collections.map((collection, index) => {
-									// Le produit featured (ou le plus recent si aucun featured)
-									// est en premier grace a orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }]
-									const featuredProduct = collection.products[0];
-									const featuredImage = featuredProduct?.product?.skus?.[0]?.images?.[0];
+									// Extraire les images des 4 premiers produits pour le Bento Grid
+									const images = collection.products
+										.map((p) => p.product?.skus?.[0]?.images?.[0])
+										.filter(Boolean)
+										.map((img) => ({
+											url: img!.url,
+											blurDataUrl: img!.blurDataUrl,
+											alt: img!.altText,
+										}));
 
 									return (
 										<CarouselItem
@@ -87,8 +92,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 												slug={collection.slug}
 												name={collection.name}
 												description={collection.description}
-												imageUrl={featuredImage?.url || null}
-												blurDataUrl={featuredImage?.blurDataUrl}
+												images={images}
 												index={index}
 												sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CAROUSEL}
 											/>

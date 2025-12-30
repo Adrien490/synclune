@@ -80,8 +80,8 @@ export function CartItemQuantitySelector({
 	}
 
 	return (
-		<div aria-label="Modifier la quantite">
-			<ButtonGroup aria-label="Quantite">
+		<div aria-label="Modifier la quantité">
+			<ButtonGroup aria-label="Quantité">
 				<Button
 					type="button"
 					variant="outline"
@@ -91,8 +91,8 @@ export function CartItemQuantitySelector({
 					disabled={isInactive || isLoading || optimisticQuantity <= 1}
 					aria-label={
 						optimisticQuantity <= 1
-							? "Quantite minimale atteinte"
-							: "Diminuer la quantite"
+							? "Quantité minimale atteinte"
+							: "Diminuer la quantité"
 					}
 				>
 					<Minus className="size-4" aria-hidden="true" />
@@ -110,7 +110,7 @@ export function CartItemQuantitySelector({
 					onBlur={handleBlur}
 					disabled={isInactive || isLoading}
 					className="min-h-0 h-11 w-14 text-center text-base px-0 py-0"
-					aria-label={`Quantite, entre 1 et ${maxQuantity}`}
+					aria-label={`Quantité, entre 1 et ${maxQuantity}`}
 					aria-valuemin={1}
 					aria-valuemax={maxQuantity}
 					aria-valuenow={optimisticQuantity}
@@ -125,8 +125,8 @@ export function CartItemQuantitySelector({
 					disabled={isInactive || isLoading || optimisticQuantity >= maxQuantity}
 					aria-label={
 						optimisticQuantity >= maxQuantity
-							? "Quantite maximale atteinte"
-							: "Augmenter la quantite"
+							? "Quantité maximale atteinte"
+							: "Augmenter la quantité"
 					}
 				>
 					<Plus className="size-4" aria-hidden="true" />

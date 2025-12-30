@@ -84,8 +84,8 @@ export const GET_COLLECTIONS_SELECT = {
 						where: { isActive: true },
 						select: {
 							images: {
-								where: { isPrimary: true },
 								select: { url: true, altText: true, blurDataUrl: true },
+								orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
 								take: 1,
 							},
 						},
@@ -96,7 +96,7 @@ export const GET_COLLECTIONS_SELECT = {
 			},
 		},
 		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
-		take: 1,
+		take: 4, // 4 produits pour le Bento Grid
 	},
 	_count: {
 		select: {

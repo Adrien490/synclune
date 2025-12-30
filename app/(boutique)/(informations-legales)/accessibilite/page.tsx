@@ -133,6 +133,16 @@ export default async function AccessibilityPage() {
                     description:
                       "Balisage Schema.org pour une meilleure compréhension du contenu par les assistants vocaux.",
                   },
+                  {
+                    title: "Annonces dynamiques (live regions)",
+                    description:
+                      "Les mises à jour du panier, erreurs de formulaire et changements d'état sont annoncés automatiquement aux lecteurs d'écran.",
+                  },
+                  {
+                    title: "Respect des préférences de mouvement",
+                    description:
+                      "Les animations sont désactivées automatiquement si vous avez activé « prefers-reduced-motion » dans votre système.",
+                  },
                 ].map((item, index) => (
                   <div
                     key={index}
@@ -206,13 +216,38 @@ export default async function AccessibilityPage() {
                       </td>
                     </tr>
                     <tr>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2 border-b">
                         Accéder au contenu principal
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2 border-b">
                         <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">
                           Tab (depuis le haut de page)
                         </kbd>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-2 border-b">
+                        Navigation dans la galerie photos
+                      </td>
+                      <td className="px-4 py-2 border-b">
+                        <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">
+                          ← →
+                        </kbd>{" "}
+                        ou{" "}
+                        <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">
+                          Début / Fin
+                        </kbd>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-2">
+                        Modifier une quantité
+                      </td>
+                      <td className="px-4 py-2">
+                        <kbd className="px-2 py-1 bg-muted rounded text-sm font-mono">
+                          + / -
+                        </kbd>{" "}
+                        ou saisie directe
                       </td>
                     </tr>
                   </tbody>

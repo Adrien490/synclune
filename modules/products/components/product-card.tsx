@@ -65,7 +65,7 @@ export function ProductCard({
 			aria-labelledby={titleId}
 			className={cn(
 				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent gap-4",
-				"transition-all duration-300 ease-out",
+				"transition-transform duration-300 ease-out",
 				// Glow pastel + shadow enrichi
 				"shadow-sm",
 				"can-hover:hover:border-primary/40",
@@ -118,7 +118,7 @@ export function ProductCard({
 					fill
 					className={cn(
 						"object-cover rounded-lg",
-						"transition-all duration-300 ease-out",
+						"transition-transform duration-300 ease-out",
 						"motion-safe:can-hover:group-hover:scale-[1.08]"
 					)}
 					placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
@@ -129,12 +129,12 @@ export function ProductCard({
 					itemProp="image"
 				/>
 
-				{/* Link overlay pour rendre l'image cliquable */}
+				{/* Link overlay pour rendre l'image cliquable (décoratif, exclu de l'accessibilité) */}
 				<Link
 					href={productUrl}
-					aria-label={`Voir ${title}`}
 					className="absolute inset-0 z-10"
 					tabIndex={-1}
+					aria-hidden="true"
 				/>
 
 				{/* Bouton d'ajout au panier - Desktop (client island) */}
@@ -176,6 +176,7 @@ export function ProductCard({
 						<Link
 							href={productUrl}
 							className="underline underline-offset-4 hover:text-foreground transition-colors"
+							aria-label={`${colors.length} couleurs disponibles pour ${title}`}
 						>
 							{colors.length} couleurs disponibles
 						</Link>

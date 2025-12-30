@@ -12,7 +12,8 @@ interface GalleryNavigationProps {
 
 export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 	const prefersReduced = useReducedMotion();
-	const transitionClass = prefersReduced ? "" : "transition-all duration-300";
+	// Utilise uniquement les propriétés composables (transform, opacity)
+	const transitionClass = prefersReduced ? "" : "transition-[transform,opacity] duration-300";
 	const scaleClass = prefersReduced ? "" : "hover:scale-105 active:scale-95";
 
 	return (

@@ -405,15 +405,17 @@ function CarouselDots({
 		<div
 			data-slot="carousel-dots"
 			className={cn("flex flex-col items-center gap-1 pt-4", className)}
-			role="tablist"
-			aria-label="Navigation du carousel"
 			{...props}
 		>
-			{/* Screen reader live announcement */}
+			{/* Screen reader live announcement - must be outside tablist */}
 			<div aria-live="polite" aria-atomic="true" className="sr-only">
 				Diapositive {selectedIndex + 1} sur {scrollSnaps.length}
 			</div>
-			<div className="flex justify-center">
+			<div
+				className="flex justify-center"
+				role="tablist"
+				aria-label="Navigation du carousel"
+			>
 				{scrollSnaps.map((_, index) => (
 					<button
 						key={index}

@@ -72,6 +72,8 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 								src={primaryImage.url}
 								type={getVideoMimeType(primaryImage.url)}
 							/>
+							{/* Track vide pour WCAG - vidéos produits sans audio */}
+							<track kind="captions" srcLang="fr" label="Français" default />
 							<p id={`video-desc-${item.id}`} className="sr-only">
 								Video de presentation du bijou {item.sku.product.title}. La video
 								est en lecture automatique et sans son.

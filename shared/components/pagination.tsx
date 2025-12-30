@@ -130,10 +130,14 @@ export function Pagination({
 					</Button>
 
 					{/* Affichage de page X/Y au lieu des numéros sur mobile */}
-					<div className="inline sm:hidden px-2 text-sm bg-background/50 rounded-md">
-						<span className="font-medium">{page}</span>
-						<span className="text-muted-foreground mx-1">/</span>
-						<span>{pageCount}</span>
+					<div
+						className="inline sm:hidden px-2 text-sm bg-background/50 rounded-md"
+						aria-label={`Page ${page} sur ${pageCount}`}
+						role="status"
+					>
+						<span className="font-medium" aria-hidden="true">{page}</span>
+						<span className="text-muted-foreground mx-1" aria-hidden="true">/</span>
+						<span aria-hidden="true">{pageCount}</span>
 					</div>
 
 					{/* Pages et points de suspension pour desktop */}

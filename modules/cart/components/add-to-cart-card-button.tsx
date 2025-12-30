@@ -108,8 +108,8 @@ export function AddToCartCardButton({
 								"size-11 rounded-full",
 								"bg-transparent",
 								"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
-								// Desktop: pleine largeur avec fond primary opaque
-								"sm:w-full sm:h-auto sm:rounded-none sm:py-3 sm:px-4",
+								// Desktop: pleine largeur avec fond primary opaque + min-h-11 (WCAG 2.5.5)
+								"sm:w-full sm:min-h-11 sm:h-auto sm:rounded-none sm:py-3 sm:px-4",
 								"sm:bg-primary sm:text-primary-foreground",
 								"sm:shadow-lg sm:shadow-black/20",
 								// Active/hover desktop - feedback visuel clair
