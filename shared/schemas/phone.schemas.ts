@@ -1,4 +1,4 @@
-import { isValidPhoneNumber } from "react-phone-number-input";
+import { isValidPhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
 
 // ============================================================================
@@ -15,7 +15,7 @@ export const PHONE_ERROR_MESSAGES = {
 
 /**
  * Schema telephone avec validation internationale
- * Utilise react-phone-number-input pour la validation
+ * Utilise libphonenumber-js pour la validation (SSR-compatible)
  */
 export const phoneSchema = z
 	.string()

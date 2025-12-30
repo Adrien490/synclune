@@ -1,4 +1,4 @@
-import { isValidPhoneNumber } from "react-phone-number-input";
+import { isValidPhoneNumber } from "libphonenumber-js";
 import { z } from "zod";
 import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
 import { SHIPPING_COUNTRIES, COUNTRY_ERROR_MESSAGE } from "@/shared/constants/countries";

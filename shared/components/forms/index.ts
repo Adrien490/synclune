@@ -4,7 +4,6 @@ import { fieldContext, formContext } from "@/shared/lib/form-context";
 import { createFormHook } from "@tanstack/react-form";
 import { AutocompleteField } from "./autocomplete-field";
 import { CheckboxField } from "./checkbox-field";
-import { FormScrollOnError } from "./form-scroll-on-error";
 import { InputField } from "./input-field";
 import { InputGroupField } from "./input-group-field";
 import { MultiSelectField } from "./multi-select-field";
@@ -41,7 +40,5 @@ export const { useAppForm } = createFormHook({
 		SelectField,
 		TextareaField,
 	},
-	formComponents: {
-		FormScrollOnError,
-	},
+	formComponents: {},
 });

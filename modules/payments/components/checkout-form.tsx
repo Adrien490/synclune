@@ -262,9 +262,6 @@ export function CheckoutForm({
 				void form.handleSubmit();
 			}}
 		>
-			{/* Scroll automatique vers le premier champ en erreur (Baymard: visibilité erreurs mobile) */}
-			<form.FormScrollOnError />
-
 			{/* Légende champs obligatoires (Baymard: 94% des sites échouent à clarifier) */}
 			<p className="text-sm text-muted-foreground">
 				Les champs marqués d'un <span className="text-destructive">*</span> sont
