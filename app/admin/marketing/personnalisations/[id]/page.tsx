@@ -48,7 +48,7 @@ export default async function CustomizationDetailPage({
 		<>
 			<PageHeader
 				variant="compact"
-				title={`${request.firstName} ${request.lastName}`}
+				title={request.firstName}
 			/>
 
 			<div className="mb-6">
@@ -74,9 +74,9 @@ export default async function CustomizationDetailPage({
 						<CardContent className="space-y-4">
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 								<div>
-									<p className="text-sm text-muted-foreground">Nom complet</p>
+									<p className="text-sm text-muted-foreground">Prénom</p>
 									<p className="font-medium">
-										{request.firstName} {request.lastName}
+										{request.firstName}
 									</p>
 								</div>
 								<div>

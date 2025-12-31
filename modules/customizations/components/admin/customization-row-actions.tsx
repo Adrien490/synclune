@@ -38,7 +38,6 @@ interface CustomizationRowActionsProps {
 	request: {
 		id: string;
 		firstName: string;
-		lastName: string;
 		email: string;
 		status: CustomizationRequestStatus;
 		adminNotes: string | null;
@@ -65,7 +64,7 @@ export function CustomizationRowActions({
 	const notesDialog = useDialog(UPDATE_NOTES_DIALOG_ID);
 	const { action, isPending } = useUpdateCustomizationStatus();
 
-	const clientName = `${request.firstName} ${request.lastName}`;
+	const clientName = request.firstName;
 
 	const handleStatusChange = (newStatus: CustomizationRequestStatus) => {
 		if (newStatus === request.status) return;

@@ -41,7 +41,6 @@ async function fetchCustomizationRequest(
 			createdAt: true,
 			updatedAt: true,
 			firstName: true,
-			lastName: true,
 			email: true,
 			phone: true,
 			productTypeLabel: true,

@@ -2238,7 +2238,6 @@ async function main(): Promise<void> {
       await prisma.customizationRequest.create({
         data: {
           firstName: faker.person.firstName(),
-          lastName: faker.person.lastName(),
           email: faker.internet.email().toLowerCase(),
           phone: sampleBoolean(0.6) ? faker.helpers.replaceSymbols("+33 # ## ## ## ##") : null,
           productTypeId: productType.id,

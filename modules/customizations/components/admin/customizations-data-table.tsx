@@ -79,7 +79,7 @@ export function CustomizationsDataTable({
 									<TableCell>
 										<div className="space-y-0.5">
 											<p className="font-medium">
-												{request.firstName} {request.lastName}
+												{request.firstName}
 											</p>
 											<p className="text-sm text-muted-foreground">
 												{request.email}
@@ -114,7 +114,6 @@ export function CustomizationsDataTable({
 											request={{
 												id: request.id,
 												firstName: request.firstName,
-												lastName: request.lastName,
 												email: request.email,
 												status: request.status,
 												adminNotes: request.adminNotes,

@@ -30,7 +30,6 @@ export interface CustomizationRequestListItem {
 	id: string;
 	createdAt: Date;
 	firstName: string;
-	lastName: string;
 	email: string;
 	phone: string | null;
 	productTypeLabel: string;
@@ -51,7 +50,6 @@ export interface CustomizationRequestDetail {
 	createdAt: Date;
 	updatedAt: Date;
 	firstName: string;
-	lastName: string;
 	email: string;
 	phone: string | null;
 	productTypeLabel: string;

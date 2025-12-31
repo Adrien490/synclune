@@ -47,7 +47,6 @@ export async function getCustomizationRequests({
 		...(filters?.search && {
 			OR: [
 				{ firstName: { contains: filters.search, mode: "insensitive" as const } },
-				{ lastName: { contains: filters.search, mode: "insensitive" as const } },
 				{ email: { contains: filters.search, mode: "insensitive" as const } },
 			],
 		}),
@@ -79,7 +78,6 @@ export async function getCustomizationRequests({
 			id: true,
 			createdAt: true,
 			firstName: true,
-			lastName: true,
 			email: true,
 			phone: true,
 			productTypeLabel: true,
