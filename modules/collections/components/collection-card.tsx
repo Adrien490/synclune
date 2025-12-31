@@ -1,7 +1,7 @@
 import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
+import { Reveal } from "@/shared/components/animations/reveal";
 import { cn } from "@/shared/utils/cn";
 import { Gem } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { CollectionImagesGrid } from "./collection-images-grid";
 
@@ -106,13 +106,15 @@ export function CollectionCard({
 						content={`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://synclune.fr"}/collections/${slug}`}
 					/>
 
-					{/* Images Bento Grid */}
+					{/* Images Bento Grid avec animation scroll */}
 					{displayImages.length > 0 ? (
-						<CollectionImagesGrid
-							images={displayImages}
-							collectionName={name}
-							isAboveFold={isAboveFold}
-						/>
+						<Reveal y={8} once amount={0.2}>
+							<CollectionImagesGrid
+								images={displayImages}
+								collectionName={name}
+								isAboveFold={isAboveFold}
+							/>
+						</Reveal>
 					) : (
 						<div
 							className="relative aspect-square overflow-hidden bg-muted rounded-t-xl flex items-center justify-center"

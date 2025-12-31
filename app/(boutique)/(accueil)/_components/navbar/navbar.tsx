@@ -60,12 +60,17 @@ export async function Navbar() {
 		label: t.label,
 	}));
 
-	// Collections avec imageUrl et blurDataUrl pour les menus (produit vedette)
+	// Collections avec images[] pour les menus (Bento Grid - jusqu'à 4 images)
 	const menuCollections = collectionsData.collections.map((c) => ({
 		slug: c.slug,
 		label: c.name,
-		imageUrl: c.products[0]?.product?.skus[0]?.images[0]?.url ?? null,
-		blurDataUrl: c.products[0]?.product?.skus[0]?.images[0]?.blurDataUrl ?? null,
+		images: c.products
+			.slice(0, 4)
+			.map((p) => {
+				const image = p.product?.skus[0]?.images[0];
+				return image ? { url: image.url, blurDataUrl: image.blurDataUrl, alt: image.altText } : null;
+			})
+			.filter((img): img is { url: string; blurDataUrl: string | null; alt: string | null } => img !== null),
 	}));
 
 	// Générer les items de navigation mobile en fonction de la session et statut admin

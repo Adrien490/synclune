@@ -18,11 +18,11 @@ import {
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
-import { COLLECTION_IMAGE_SIZES, COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-sizes.constants";
+import { COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-sizes.constants";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
-import { FolderOpen, Heart, Menu, Settings } from "lucide-react";
+import { Gem, Heart, Menu, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -46,6 +46,81 @@ function SectionHeader({ children, id }: { children: React.ReactNode; id?: strin
 }
 
 /**
+ * Mini-grid pour afficher les images de collection dans le menu mobile
+ * Adapté à la taille 48x48 (size-12) avec layout similaire à CollectionImagesGrid
+ */
+function CollectionMiniGrid({
+	images,
+	collectionName,
+}: {
+	images: CollectionImage[];
+	collectionName: string;
+}) {
+	const count = images.length;
+
+	// 1 image: pleine taille
+	if (count === 1) {
+		return (
+			<div className="size-12 rounded-lg overflow-hidden bg-muted shrink-0">
+				<Image
+					src={images[0].url}
+					alt={images[0].alt || `Image de la collection ${collectionName}`}
+					width={48}
+					height={48}
+					className="size-full object-cover"
+					sizes="48px"
+					quality={COLLECTION_IMAGE_QUALITY}
+					placeholder={images[0].blurDataUrl ? "blur" : "empty"}
+					blurDataURL={images[0].blurDataUrl ?? undefined}
+				/>
+			</div>
+		);
+	}
+
+	// 2 images: 2 colonnes
+	if (count === 2) {
+		return (
+			<div className="size-12 rounded-lg overflow-hidden bg-muted shrink-0 grid grid-cols-2 gap-px">
+				{images.slice(0, 2).map((image, i) => (
+					<Image
+						key={i}
+						src={image.url}
+						alt={image.alt || `Image ${i + 1} de la collection ${collectionName}`}
+						width={24}
+						height={48}
+						className="w-full h-12 object-cover"
+						sizes="24px"
+						quality={COLLECTION_IMAGE_QUALITY}
+						placeholder={image.blurDataUrl ? "blur" : "empty"}
+						blurDataURL={image.blurDataUrl ?? undefined}
+					/>
+				))}
+			</div>
+		);
+	}
+
+	// 3-4 images: grille 2x2
+	return (
+		<div className="size-12 rounded-lg overflow-hidden bg-muted shrink-0 grid grid-cols-2 grid-rows-2 gap-px">
+			{images.slice(0, 4).map((image, i) => (
+				<Image
+					key={i}
+					src={image.url}
+					alt={image.alt || `Image ${i + 1} de la collection ${collectionName}`}
+					width={24}
+					height={24}
+					className="size-full object-cover"
+					sizes="24px"
+					quality={COLLECTION_IMAGE_QUALITY}
+					placeholder={image.blurDataUrl ? "blur" : "empty"}
+					blurDataURL={image.blurDataUrl ?? undefined}
+				/>
+			))}
+		</div>
+	);
+}
+
+/**
  * Composant Menu Sheet pour la navigation mobile
  *
  * Architecture:
@@ -63,14 +138,19 @@ function SectionHeader({ children, id }: { children: React.ReactNode; id?: strin
  * - Navigation au clavier
  * - Focus visible
  */
+interface CollectionImage {
+	url: string;
+	blurDataUrl?: string | null;
+	alt?: string | null;
+}
+
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
 	productTypes?: Array<{ slug: string; label: string }>;
 	collections?: Array<{
 		slug: string;
 		label: string;
-		imageUrl?: string | null;
-		blurDataUrl?: string | null;
+		images: CollectionImage[];
 	}>;
 	isAdmin?: boolean;
 	session?: Session | null;
@@ -279,24 +359,17 @@ export function MenuSheet({
 															: undefined
 													}
 												>
-													{collection.imageUrl ? (
-														<Image
-															src={collection.imageUrl}
-															alt={`Image de la collection ${collection.label}`}
-															width={48}
-															height={48}
-															className="size-12 rounded-lg object-cover shrink-0"
-															sizes={COLLECTION_IMAGE_SIZES.MENU_MOBILE}
-															quality={COLLECTION_IMAGE_QUALITY}
-															placeholder={collection.blurDataUrl ? "blur" : "empty"}
-															blurDataURL={collection.blurDataUrl ?? undefined}
+													{collection.images.length > 0 ? (
+														<CollectionMiniGrid
+															images={collection.images}
+															collectionName={collection.label}
 														/>
 													) : (
 														<div
 															className="size-12 rounded-lg bg-muted flex items-center justify-center shrink-0"
 															aria-hidden="true"
 														>
-															<FolderOpen className="h-5 w-5 text-muted-foreground" />
+															<Gem className="h-5 w-5 text-primary/40" />
 														</div>
 													)}
 													<span>{collection.label}</span>

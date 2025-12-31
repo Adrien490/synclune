@@ -1,4 +1,5 @@
 import { cn } from "@/shared/utils/cn";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import Image from "next/image";
 
 interface CollectionImage {
@@ -33,10 +34,17 @@ export function CollectionImagesGrid({
 }: CollectionImagesGridProps) {
 	const count = images.length;
 
+	// Aria label pour accessibilité
+	const ariaLabel = `Aperçu de ${count} produit${count > 1 ? "s" : ""} de la collection ${collectionName}`;
+
 	// 1 image : pleine largeur
 	if (count === 1) {
 		return (
-			<div className="relative aspect-square overflow-hidden rounded-t-xl bg-muted">
+			<div
+				role="group"
+				aria-label={ariaLabel}
+				className="relative aspect-square overflow-hidden rounded-t-xl bg-muted"
+			>
 				<CollectionImage
 					image={images[0]}
 					collectionName={collectionName}
@@ -52,7 +60,11 @@ export function CollectionImagesGrid({
 	// 2 images : 2 colonnes égales
 	if (count === 2) {
 		return (
-			<div className="grid grid-cols-2 gap-0.5 overflow-hidden rounded-t-xl">
+			<div
+				role="group"
+				aria-label={ariaLabel}
+				className="grid grid-cols-2 gap-0.5 overflow-hidden rounded-t-xl"
+			>
 				{images.map((image, i) => (
 					<div key={i} className="relative aspect-square overflow-hidden bg-muted">
 						<CollectionImage
@@ -72,7 +84,11 @@ export function CollectionImagesGrid({
 	// 3 images : 1 grande à gauche + 2 petites à droite
 	if (count === 3) {
 		return (
-			<div className="grid grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-t-xl">
+			<div
+				role="group"
+				aria-label={ariaLabel}
+				className="grid grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-t-xl"
+			>
 				{/* Grande image - span 2 rows */}
 				<div className="relative row-span-2 overflow-hidden bg-muted">
 					<CollectionImage
@@ -103,6 +119,8 @@ export function CollectionImagesGrid({
 	// 4+ images : Bento Grid
 	return (
 		<div
+			role="group"
+			aria-label={ariaLabel}
 			className={cn(
 				"grid gap-0.5 overflow-hidden rounded-t-xl",
 				// Mobile : 2x2
@@ -166,12 +184,12 @@ export function CollectionImagesGrid({
 	);
 }
 
-/** Délais progressifs pour effet de vague au hover */
+/** Délais progressifs pour effet de vague au hover - alignés avec MOTION_CONFIG */
 const STAGGER_DELAYS = [
 	"delay-0",
-	"delay-[50ms]",
-	"delay-[75ms]",
-	"delay-[100ms]",
+	`delay-[${MOTION_CONFIG.stagger.fast * 1000}ms]`, // 40ms
+	`delay-[${MOTION_CONFIG.stagger.normal * 1000}ms]`, // 60ms
+	`delay-[${MOTION_CONFIG.stagger.slow * 1000}ms]`, // 100ms
 ] as const;
 
 /** Composant Image réutilisable avec hover effect et stagger */
@@ -193,7 +211,7 @@ function CollectionImage({
 	// Alt text: utiliser celui fourni, sinon générer un descriptif contextuel
 	const altText =
 		image.alt ||
-		`Aperçu produit ${index + 1} de la collection ${collectionName}`;
+		`Bijou artisanal ${index + 1} de la collection ${collectionName}`;
 
 	const delayClass = STAGGER_DELAYS[staggerIndex] || "delay-0";
 
@@ -208,8 +226,8 @@ function CollectionImage({
 				delayClass,
 				// Desktop: hover zoom avec stagger
 				"motion-safe:can-hover:group-hover:scale-[1.08]",
-				// Mobile: tap feedback
-				"active:scale-[0.97] active:brightness-95",
+				// Mobile: tap feedback enrichi (cohérence ProductCard)
+				"active:scale-[0.97] active:brightness-95 active:saturate-110",
 			)}
 			sizes={sizes}
 			priority={isAboveFold}
