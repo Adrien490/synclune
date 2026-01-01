@@ -78,6 +78,7 @@ export function FilterBadge({
 	return (
 		<motion.button
 			type="button"
+			layout
 			{...animationProps}
 			transition={transitionProps}
 			onClick={handleRemove}

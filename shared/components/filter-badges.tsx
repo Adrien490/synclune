@@ -127,7 +127,7 @@ export function FilterBadges({
 				{label}
 			</span>
 
-			<AnimatePresence>
+			<AnimatePresence mode="popLayout">
 				{displayedFilters.map((filter) => (
 					<FilterBadge
 						key={filter.id}
@@ -141,6 +141,7 @@ export function FilterBadges({
 				{hasMoreFilters && (
 					<motion.div
 						key="show-more-button"
+						layout
 						initial={shouldReduceMotion ? false : { opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
@@ -180,6 +181,7 @@ export function FilterBadges({
 				{activeFilters.length >= 1 && (
 					<motion.div
 						key="clear-all-button"
+						layout
 						initial={shouldReduceMotion ? false : { opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
