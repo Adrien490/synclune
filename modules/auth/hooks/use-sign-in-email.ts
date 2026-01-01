@@ -15,6 +15,7 @@ export function useSignInEmail(options?: UseSignInEmailOptions) {
 			signInEmail,
 			createToastCallbacks({
 				showSuccessToast: false,
+				showErrorToast: false,
 				onSuccess: options?.onSuccess,
 			})
 		),

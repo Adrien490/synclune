@@ -11,7 +11,7 @@ import { cn } from "@/shared/utils/cn";
 import { PREFETCH_RANGE_FAST, PREFETCH_RANGE_SLOW } from "@/modules/media/constants/gallery.constants";
 import { usePrefetchImages } from "@/modules/media/hooks/use-image-prefetch";
 import { usePrefetchVideos } from "@/modules/media/hooks/use-video-prefetch";
-import { galleryParamsSchema } from "@/modules/media/schemas/gallery-params.schema";
+import { parseGalleryParams } from "@/modules/media/schemas/gallery-params.schema";
 import { buildGallery } from "@/modules/media/services/gallery-builder.service";
 import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
@@ -131,15 +131,11 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const productType = product.type?.label;
 
 	// Extraire et valider les params URL pour les variants
-	const rawParams = {
+	const { color: colorSlug, material: materialSlug, size } = parseGalleryParams({
 		color: searchParams.get("color") || undefined,
 		material: searchParams.get("material") || undefined,
 		size: searchParams.get("size") || undefined,
-	};
-	const validatedParams = galleryParamsSchema.safeParse(rawParams);
-	const { color: colorSlug, material: materialSlug, size } = validatedParams.success
-		? validatedParams.data
-		: { color: undefined, material: undefined, size: undefined };
+	});
 
 	// Construire la liste d'images selon les variants
 	const images: ProductMedia[] = buildGallery({

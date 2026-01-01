@@ -20,6 +20,7 @@ export function useLogout(options?: UseLogoutOptions) {
 			logout,
 			createToastCallbacks({
 				showSuccessToast: false,
+				showErrorToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 					// Redirection après un court délai pour feedback visuel

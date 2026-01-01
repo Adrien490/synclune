@@ -14,6 +14,8 @@ export function useResendVerificationEmail(options?: UseResendVerificationEmailO
 		withCallbacks(
 			resendVerificationEmail,
 			createToastCallbacks({
+				showSuccessToast: false,
+				showErrorToast: false,
 				onSuccess: options?.onSuccess,
 			})
 		),

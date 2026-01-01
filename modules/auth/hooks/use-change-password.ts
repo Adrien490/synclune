@@ -16,6 +16,8 @@ export function useChangePassword(options?: UseChangePasswordOptions) {
 		withCallbacks(
 			changePassword,
 			createToastCallbacks({
+				showSuccessToast: false,
+				showErrorToast: false,
 				onSuccess: () => {
 					options?.onSuccess?.();
 					if (options?.onOpenChange) {

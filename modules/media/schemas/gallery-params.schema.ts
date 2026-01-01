@@ -1,23 +1,50 @@
-import { z } from "zod";
-
 // ============================================================================
 // GALLERY URL PARAMS VALIDATION
 // ============================================================================
+// NOTE: Validation sans Zod pour éviter les erreurs HMR Turbopack dans les
+// composants client. Zod v4 n'est pas compatible avec "use client" + Turbopack.
+
+export interface GalleryParams {
+	color?: string;
+	material?: string;
+	size?: string;
+}
+
+const VARIANT_SLUG_REGEX = /^[a-z0-9-]+$/;
+const MAX_SLUG_LENGTH = 50;
+const MAX_SIZE_LENGTH = 20;
 
 /**
- * Schema de validation pour un slug de variante
- * Utilisé pour valider les paramètres URL color/material
+ * Valide un slug de variante (color/material)
  */
-export const variantSlugSchema = z.string().regex(/^[a-z0-9-]+$/).max(50).optional();
+function validateVariantSlug(value: string | undefined): string | undefined {
+	if (!value) return undefined;
+	if (value.length > MAX_SLUG_LENGTH) return undefined;
+	if (!VARIANT_SLUG_REGEX.test(value)) return undefined;
+	return value;
+}
 
 /**
- * Schema de validation pour les paramètres de galerie
- * Valide les query params pour éviter les injections
+ * Valide un paramètre size
  */
-export const galleryParamsSchema = z.object({
-	color: variantSlugSchema,
-	material: variantSlugSchema,
-	size: z.string().max(20).optional(),
-});
+function validateSize(value: string | undefined): string | undefined {
+	if (!value) return undefined;
+	if (value.length > MAX_SIZE_LENGTH) return undefined;
+	return value;
+}
 
-export type GalleryParams = z.infer<typeof galleryParamsSchema>;
+/**
+ * Valide les paramètres de galerie (query params URL)
+ * Retourne les valeurs validées ou undefined pour les valeurs invalides
+ */
+export function parseGalleryParams(params: {
+	color?: string;
+	material?: string;
+	size?: string;
+}): GalleryParams {
+	return {
+		color: validateVariantSlug(params.color),
+		material: validateVariantSlug(params.material),
+		size: validateSize(params.size),
+	};
+}

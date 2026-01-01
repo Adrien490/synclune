@@ -15,6 +15,7 @@ export function useSignInSocial(options?: UseSignInSocialOptions) {
 			signInSocial,
 			createToastCallbacks({
 				showSuccessToast: false,
+				showErrorToast: false,
 				onSuccess: options?.onSuccess,
 			})
 		),

@@ -14,6 +14,8 @@ export function useRequestPasswordReset(options?: UseRequestPasswordResetOptions
 		withCallbacks(
 			requestPasswordReset,
 			createToastCallbacks({
+				showSuccessToast: false,
+				showErrorToast: false,
 				onSuccess: options?.onSuccess,
 			})
 		),
