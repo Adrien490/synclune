@@ -193,18 +193,24 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 								>
 									<div className="px-6 py-4 space-y-3">
 										<AnimatePresence mode="popLayout" initial={false}>
-											{optimisticCart.items.map((item) => (
+											{optimisticCart?.items.map((item) => (
 												<motion.div
 													key={item.id}
 													layout
-													initial={{ opacity: 0, height: 0 }}
-													animate={{ opacity: 1, height: "auto" }}
-													exit={{ opacity: 0, height: 0 }}
-													transition={{
-														duration: shouldReduceMotion ? 0 : 0.2,
-														ease: [0, 0, 0.2, 1],
-													}}
-													className="overflow-hidden"
+													initial={{ opacity: 0, height: 0, scale: 0.95 }}
+													animate={{ opacity: 1, height: "auto", scale: 1 }}
+													exit={{ opacity: 0, height: 0, scale: 0.95 }}
+													transition={
+														shouldReduceMotion
+															? { duration: 0 }
+															: {
+																	type: "spring",
+																	stiffness: 400,
+																	damping: 30,
+																	mass: 1,
+																}
+													}
+													className="overflow-hidden origin-top"
 												>
 													<CartSheetItemRow item={item} onClose={close} />
 												</motion.div>
@@ -212,7 +218,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 										</AnimatePresence>
 
 										{/* Alerte changement de prix */}
-										<CartPriceChangeAlert items={optimisticCart.items} />
+										{optimisticCart && <CartPriceChangeAlert items={optimisticCart.items} />}
 									</div>
 								</ScrollFade>
 							</div>
@@ -278,7 +284,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 									<div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground pt-1">
 										<span className="flex items-center gap-1">
 											<ShieldCheck className="w-3 h-3 text-green-600" />
-											Paiement sécurisé
+											Paiement securise
 										</span>
 										<span className="flex items-center gap-1">
 											<RotateCcw className="w-3 h-3 text-blue-600" />

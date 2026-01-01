@@ -9,7 +9,7 @@ import type {
 } from "@/modules/products/types/product.types";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Loader2 } from "lucide-react";
 
 interface AddToCartFormProps {
 	product: GetProductReturn;
@@ -99,7 +99,10 @@ export function AddToCartForm({
 				size="lg"
 			>
 				{isPending ? (
-					<span>Ajout en cours...</span>
+					<span className="inline-flex items-center gap-2">
+						<Loader2 size={18} className="animate-spin" aria-hidden="true" />
+						<span>Ajout en cours...</span>
+					</span>
 				) : !isAvailable ? (
 					<span>Indisponible</span>
 				) : !selectedSku ? (

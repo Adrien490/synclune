@@ -17,8 +17,8 @@ interface UseAddToCartOptions {
  * Hook pour ajouter un article au panier
  * Compatible avec useActionState de React 19
  *
- * Pas de toast de succès (optimistic UI via badge suffit).
- * Toast d'erreur uniquement en cas de problème.
+ * Sheet s'ouvre uniquement apres confirmation serveur.
+ * Toast d'erreur uniquement en cas de probleme.
  */
 export const useAddToCart = (options?: UseAddToCartOptions) => {
 	// Store pour optimistic UI du badge navbar
@@ -39,7 +39,7 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 			createToastCallbacks({
 				showSuccessToast: false,
 				onSuccess: (result: unknown) => {
-					// Ouvrir le cart sheet apres ajout reussi
+					// Ouvrir le sheet APRES confirmation serveur
 					if (shouldOpenSheet) {
 						openSheet("cart");
 					}
@@ -54,7 +54,8 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 					}
 				},
 				onError: () => {
-					// Rollback du badge navbar avec la quantité réelle
+					// Rollback du badge navbar avec la quantite reelle
+					// Sheet ne s'ouvre PAS en cas d'erreur
 					adjustCart(-pendingQuantityRef.current);
 				},
 			})
@@ -67,7 +68,7 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 		pendingQuantityRef.current = quantity;
 
 		startTransition(() => {
-			// Mise à jour optimistic du badge navbar avec la quantité réelle
+			// Mise a jour optimistic du badge navbar avec la quantite reelle
 			adjustCart(quantity);
 			formAction(formData);
 		});
