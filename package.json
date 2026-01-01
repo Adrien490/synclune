@@ -125,6 +125,7 @@
 		"@types/nodemailer": "^7.0.4",
 		"@types/react": "^19.2.7",
 		"@types/react-dom": "^19.2.3",
+		"babel-plugin-react-compiler": "^1.0.0",
 		"baseline-browser-mapping": "^2.9.11",
 		"embla-carousel": "^8.6.0",
 		"esbuild-wasm": "^0.27.2",

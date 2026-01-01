@@ -2,6 +2,10 @@ import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  reactStrictMode: true,
+  reactCompiler: true,
+
   async headers() {
     return [
       {
@@ -19,9 +23,7 @@ const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
 
   images: {
-    // Tailles pour srcSet (petites images, thumbnails)
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Breakpoints responsive (images principales)
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     remotePatterns: [
       { protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**" },
@@ -29,9 +31,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "ufs.sh", pathname: "/f/**" },
       { protocol: "https", hostname: "uploadthing.com", pathname: "/**" },
       { protocol: "https", hostname: "uploadthing-prod.s3.us-west-2.amazonaws.com", pathname: "/**" },
-      { protocol: "https", hostname: "picsum.photos", pathname: "/**" },
       { protocol: "https", hostname: "avatars.githubusercontent.com", pathname: "/**" },
-      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
     ],
     formats: ["image/avif", "image/webp"],
     qualities: [65, 75, 80, 85, 90],
