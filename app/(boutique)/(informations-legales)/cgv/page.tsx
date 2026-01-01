@@ -2,6 +2,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
 	title: "Conditions Générales de Vente | Synclune",
@@ -203,9 +204,9 @@ export default async function CGVPage() {
               </h3>
               <p>
                 Vous pouvez utiliser le{" "}
-                <a href="/retractation" className="underline font-medium">
+                <Link href="/retractation" className="underline font-medium">
                   formulaire type de rétractation
-                </a>{" "}
+                </Link>{" "}
                 mis à votre disposition, bien que cela ne soit pas obligatoire.
                 Vous pouvez également nous notifier votre décision par tout
                 autre moyen écrit (email, courrier).
@@ -414,9 +415,9 @@ export default async function CGVPage() {
                 Les données collectées sont nécessaires au traitement de votre
                 commande. Pour en savoir plus sur la gestion de vos données
                 personnelles, consultez notre{" "}
-                <a href="/confidentialite" className="underline">
+                <Link href="/confidentialite" className="underline">
                   Politique de Confidentialité
-                </a>
+                </Link>
                 .
               </p>
             </section>

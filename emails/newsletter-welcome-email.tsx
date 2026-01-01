@@ -12,10 +12,12 @@ import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 
 interface NewsletterWelcomeEmailProps {
 	email: string;
+	unsubscribeUrl: string;
 }
 
 export const NewsletterWelcomeEmail = ({
 	email,
+	unsubscribeUrl,
 }: NewsletterWelcomeEmailProps) => {
 	return (
 		<Html>
@@ -64,6 +66,14 @@ export const NewsletterWelcomeEmail = ({
 						}}
 					>
 						<Text style={EMAIL_STYLES.text.tiny}>
+							<a
+								href={unsubscribeUrl}
+								style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}
+							>
+								Se désinscrire
+							</a>
+						</Text>
+						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "12px" }}>
 							© {new Date().getFullYear()} Synclune
 						</Text>
 					</Section>
@@ -75,6 +85,7 @@ export const NewsletterWelcomeEmail = ({
 
 NewsletterWelcomeEmail.PreviewProps = {
 	email: "example@email.com",
+	unsubscribeUrl: "https://synclune.fr/newsletter/unsubscribe?token=abc123",
 } as NewsletterWelcomeEmailProps;
 
 export default NewsletterWelcomeEmail;

@@ -2,6 +2,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
 	title: "Politique de Confidentialité | Synclune",
@@ -475,9 +476,9 @@ export default async function PrivacyPolicyPage() {
               <p>
                 Vous pouvez gérer vos préférences de cookies optionnels à tout
                 moment sur notre{" "}
-                <a href="/cookies" className="underline">
+                <Link href="/cookies" className="underline">
                   page de gestion des cookies
-                </a>
+                </Link>
                 . Pour les cookies techniques essentiels, vous pouvez les
                 bloquer via les paramètres de votre navigateur, mais cela
                 pourrait affecter le fonctionnement du site.

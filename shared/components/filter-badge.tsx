@@ -53,20 +53,20 @@ export function FilterBadge({
 	};
 
 	// Animation props conditionnelles pour prefers-reduced-motion
+	// Opacity seulement - pas de scale pour éviter le flickering avec AnimatePresence
 	const animationProps = shouldReduceMotion
 		? {}
 		: {
-				initial: { opacity: 0, scale: 0.92 },
-				animate: { opacity: 1, scale: 1 },
-				exit: { opacity: 0, scale: 0.92 },
+				initial: { opacity: 0 },
+				animate: { opacity: 1 },
+				exit: { opacity: 0 },
 			};
 
 	const transitionProps = shouldReduceMotion
-		? { layout: { duration: 0 } }
+		? { duration: 0 }
 		: {
 				duration: 0.15,
 				ease: [0.25, 0.1, 0.25, 1] as const,
-				layout: { type: "spring" as const, stiffness: 500, damping: 35 },
 			};
 
 	// Variants Framer Motion pour l'animation hover desktop
@@ -78,12 +78,10 @@ export function FilterBadge({
 	return (
 		<motion.button
 			type="button"
-			layoutId={filter.id}
 			{...animationProps}
 			transition={transitionProps}
 			onClick={handleRemove}
 			aria-label={ariaLabelRemove}
-			initial="initial"
 			whileHover={shouldReduceMotion ? undefined : "hover"}
 			className={cn(
 				// Layout
@@ -98,7 +96,7 @@ export function FilterBadge({
 				"max-w-[280px] sm:max-w-[320px]",
 				// Etats
 				"cursor-pointer",
-				"transition-all duration-150",
+				"transition-colors duration-150",
 				"can-hover:hover:bg-accent can-hover:hover:border-primary/40",
 				// Active (mobile)
 				"active:scale-[0.95] sm:active:scale-[0.98]",
@@ -122,6 +120,7 @@ export function FilterBadge({
 			<motion.span
 				aria-hidden="true"
 				variants={iconVariants}
+				initial="initial"
 				transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
 				className={cn(
 					"hidden sm:flex items-center justify-center",

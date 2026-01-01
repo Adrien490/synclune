@@ -10,7 +10,7 @@ import { getProducts } from "@/modules/products/data/get-products";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { SparklesDivider } from "@/shared/components/section-divider";
 import type { Metadata } from "next";
-import { NewsletterSection } from "@/modules/newsletter/components/newsletter-section";
+// import { NewsletterSection } from "@/modules/newsletter/components/newsletter-section";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
@@ -129,7 +129,8 @@ export default async function Page() {
 			<FaqSection />
 
 			{/* 7. Newsletter - Inscription à la newsletter */}
-			<NewsletterSection />
+			{/* TODO: Réactiver la newsletter plus tard */}
+			{/* <NewsletterSection /> */}
 		</>
 	);
 }

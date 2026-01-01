@@ -49,9 +49,11 @@ export async function sendNewsletterConfirmationEmail({
  */
 export async function sendNewsletterWelcomeEmail({
 	to,
+	unsubscribeUrl,
 }: {
 	to: string
+	unsubscribeUrl: string
 }): Promise<EmailResult> {
-	const html = await render(NewsletterWelcomeEmail({ email: to }))
+	const html = await render(NewsletterWelcomeEmail({ email: to, unsubscribeUrl }))
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.NEWSLETTER_WELCOME, html })
 }

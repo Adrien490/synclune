@@ -127,7 +127,7 @@ export function FilterBadges({
 				{label}
 			</span>
 
-			<AnimatePresence mode="popLayout">
+			<AnimatePresence>
 				{displayedFilters.map((filter) => (
 					<FilterBadge
 						key={filter.id}
@@ -141,14 +141,10 @@ export function FilterBadges({
 				{hasMoreFilters && (
 					<motion.div
 						key="show-more-button"
-						initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.9 }}
-						animate={{ opacity: 1, scale: 1 }}
-						exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
-						transition={
-							shouldReduceMotion
-								? { duration: 0 }
-								: { duration: 0.15, ease: "easeOut" }
-						}
+						initial={shouldReduceMotion ? false : { opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
 					>
 						<Button
 							variant="outline"
@@ -184,14 +180,10 @@ export function FilterBadges({
 				{activeFilters.length >= 1 && (
 					<motion.div
 						key="clear-all-button"
-						initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.9 }}
-						animate={{ opacity: 1, scale: 1 }}
-						exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
-						transition={
-							shouldReduceMotion
-								? { duration: 0 }
-								: { duration: 0.15, ease: "easeOut" }
-						}
+						initial={shouldReduceMotion ? false : { opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
 					>
 						<Button
 							variant="ghost"

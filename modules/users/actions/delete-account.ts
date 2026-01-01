@@ -1,6 +1,6 @@
 "use server";
 
-import { AccountStatus } from "@/app/generated/prisma/client";
+import { AccountStatus, OrderStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe } from "@/shared/lib/stripe";
 import type { ActionState } from "@/shared/types/server-action";
@@ -39,10 +39,27 @@ export async function deleteAccount(): Promise<ActionState> {
 		const user = userAuth.user;
 
 		const userId = user.id;
+
+		// 3. Vérifier qu'il n'y a pas de commandes en cours
+		const pendingOrders = await prisma.order.count({
+			where: {
+				userId,
+				status: {
+					in: [OrderStatus.PENDING, OrderStatus.PROCESSING, OrderStatus.SHIPPED],
+				},
+			},
+		});
+
+		if (pendingOrders > 0) {
+			return error(
+				`Vous avez ${pendingOrders} commande(s) en cours. Veuillez attendre leur livraison avant de supprimer votre compte.`
+			);
+		}
+
 		const anonymizedEmail = `deleted_${userId.slice(0, 8)}@synclune.local`;
 		const stripeCustomerId = user.stripeCustomerId;
 
-		// 2. Transaction pour garantir l'intégrité des données
+		// 4. Transaction pour garantir l'intégrité des données
 		await prisma.$transaction(async (tx) => {
 			// 2.1 Anonymiser les commandes (conserver pour comptabilité)
 			await tx.order.updateMany({

@@ -3,6 +3,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
 	title: "Mentions Légales | Synclune",
@@ -203,9 +204,9 @@ export default async function MentionsLegalesPage() {
               <p>
                 Pour en savoir plus sur la collecte et le traitement de vos
                 données, consultez notre{" "}
-                <a href="/confidentialite" className="underline">
+                <Link href="/confidentialite" className="underline">
                   Politique de Confidentialité
-                </a>
+                </Link>
                 .
               </p>
             </section>
@@ -220,9 +221,9 @@ export default async function MentionsLegalesPage() {
               </p>
               <p>
                 Pour plus d'informations, consultez notre{" "}
-                <a href="/cookies" className="underline">
+                <Link href="/cookies" className="underline">
                   Politique de gestion des cookies
-                </a>
+                </Link>
                 .
               </p>
             </section>

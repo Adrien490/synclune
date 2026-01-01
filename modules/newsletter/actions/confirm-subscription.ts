@@ -10,6 +10,7 @@ import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 import { confirmationTokenSchema } from "../schemas/newsletter.schemas";
+import { NEWSLETTER_BASE_URL } from "../constants/urls.constants";
 
 export async function confirmSubscription(
 	_previousState: ActionState | undefined,
@@ -130,7 +131,8 @@ export async function confirmSubscription(
 		// Envoyer l'email de bienvenue après confirmation
 		// Note : Envoi en arrière-plan, ne bloque pas la réponse si échec
 		try {
-			await sendNewsletterWelcomeEmail({ to: subscriber.email });
+			const unsubscribeUrl = `${NEWSLETTER_BASE_URL}/newsletter/unsubscribe?token=${subscriber.unsubscribeToken}`;
+			await sendNewsletterWelcomeEmail({ to: subscriber.email, unsubscribeUrl });
 		} catch (error) {
 			// Log l'erreur mais ne pas bloquer la confirmation
 			// L'utilisateur est bien inscrit même si l'email de bienvenue échoue
