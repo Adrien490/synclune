@@ -1,11 +1,8 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
-import { headers } from "next/headers";
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
+import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { validateCartItems } from "../services/item-availability.service";
 import type { ValidateCartResult } from "../types/cart.types";
 
@@ -34,26 +31,18 @@ export type { CartValidationIssue, ValidateCartResult } from "../types/cart.type
  */
 export async function validateCart(): Promise<ValidateCartResult> {
 	try {
-		// 0a. Recuperer les identifiants de session/utilisateur
-		const session = await getSession();
-		const userId = session?.user?.id;
-		const sessionId = await getCartSessionId();
-
-		// 0b. Rate limiting uniforme avec les autres actions cart
-		const headersList = await headers();
-		const ipAddress = await getClientIp(headersList);
-		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress);
-		const rateLimit = checkRateLimit(rateLimitId, CART_LIMITS.VALIDATE);
-
-		if (!rateLimit.success) {
+		// 0a. Rate limiting + récupération contexte
+		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.VALIDATE);
+		if (!rateLimitResult.success) {
 			return {
 				isValid: false,
 				issues: [],
 				rateLimited: true,
 			};
 		}
+		const { userId, sessionId } = rateLimitResult.context;
 
-		// 0c. Vérifier qu'on a au moins un identifiant (userId ou sessionId)
+		// 0b. Vérifier qu'on a au moins un identifiant (userId ou sessionId)
 		if (!userId && !sessionId) {
 			return {
 				isValid: false,

@@ -7,7 +7,7 @@ import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { updateProductSku } from "@/modules/skus/actions/update-sku";
 import type { SkuWithImages } from "@/modules/skus/data/get-sku";
-import { getUpdateProductSkuFormOpts } from "@/modules/skus/constants/update-sku-form-options";
+import { getUpdateProductSkuFormOpts } from "@/modules/skus/utils/form-options";
 
 interface UseUpdateProductSkuFormOptions {
 	sku: SkuWithImages;

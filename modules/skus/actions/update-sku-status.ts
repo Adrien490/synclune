@@ -6,7 +6,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateProductSkuStatusSchema } from "../schemas/sku.schemas";
-import { getSkuInvalidationTags } from "../constants/cache";
+import { getSkuInvalidationTags } from "../utils/cache.utils";
 
 /**
  * Server Action pour mettre a jour le statut actif/inactif d'un SKU

@@ -2,7 +2,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { STOCK_THRESHOLDS } from "../constants/inventory.constants";
+import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import type { GetSkuStockReturn } from "../types/sku-stock.types";
 
 // Re-export pour compatibilité

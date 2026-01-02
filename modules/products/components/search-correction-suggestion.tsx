@@ -3,17 +3,17 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-interface SpellSuggestionProps {
+interface SearchCorrectionSuggestionProps {
 	suggestion: string;
 }
 
 /**
- * Affiche une suggestion de correction orthographique
+ * Affiche une suggestion de correction de recherche
  * "Vouliez-vous dire : [suggestion] ?"
  *
  * Le lien conserve tous les filtres actuels en ne remplaçant que le terme de recherche
  */
-export function SpellSuggestion({ suggestion }: SpellSuggestionProps) {
+export function SearchCorrectionSuggestion({ suggestion }: SearchCorrectionSuggestionProps) {
 	const searchParams = useSearchParams();
 
 	// Construire l'URL avec le terme suggéré tout en conservant les autres params

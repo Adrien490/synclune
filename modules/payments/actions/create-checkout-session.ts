@@ -1,7 +1,7 @@
 "use server";
 
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { getSkuDetails } from "@/modules/cart/lib/sku-validation";
+import { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";

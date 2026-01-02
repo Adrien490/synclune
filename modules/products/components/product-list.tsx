@@ -5,8 +5,8 @@ import { GetProductsReturn } from "@/modules/products/data/get-products";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 
-import { NoResultsRecovery, NoResultsRecoverySkeleton } from "./no-results-recovery";
-import { SpellSuggestion } from "./spell-suggestion";
+import { SearchFallbackSuggestions, SearchFallbackSuggestionsSkeleton } from "./search-fallback-suggestions";
+import { SearchCorrectionSuggestion } from "./search-correction-suggestion";
 
 interface ProductListProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -26,11 +26,11 @@ export function ProductList({
 	const { products, pagination, totalCount, suggestion } = use(productsPromise);
 	const wishlistProductIds = use(getWishlistProductIds());
 
-	// Afficher le composant NoResultsRecovery si aucun produit (Baymard UX)
+	// Afficher les suggestions de repli si aucun produit (Baymard UX)
 	if (!products || products.length === 0) {
 		return (
-			<Suspense fallback={<NoResultsRecoverySkeleton />}>
-				<NoResultsRecovery
+			<Suspense fallback={<SearchFallbackSuggestionsSkeleton />}>
+				<SearchFallbackSuggestions
 					searchTerm={searchTerm}
 					suggestion={suggestion}
 					baseResetUrl={baseResetUrl}
@@ -46,7 +46,7 @@ export function ProductList({
 		<div className="space-y-6">
 			{/* Suggestion de correction si peu de résultats */}
 			{suggestion && (
-				<SpellSuggestion suggestion={suggestion} />
+				<SearchCorrectionSuggestion suggestion={suggestion} />
 			)}
 
 			{/* Compteur de résultats - annoncé aux lecteurs d'écran lors des changements */}

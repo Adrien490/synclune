@@ -1,5 +1,5 @@
 import { FALLBACK_PRODUCT_IMAGE } from "@/modules/media/constants/product-fallback-image.constants";
-import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
+import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 

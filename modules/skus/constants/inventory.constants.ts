@@ -1,25 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 
 // ============================================================================
-// STOCK THRESHOLD CONSTANTS
-// ============================================================================
-
-/**
- * @deprecated Importer directement depuis "@/shared/constants/cache-tags"
- * Ce re-export est conservé pour la rétrocompatibilité mais sera supprimé
- * dans une future version.
- *
- * @example
- * // ❌ Ancien import (deprecated)
- * import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
- *
- * // ✅ Nouvel import recommandé
- * import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
- */
-export { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
-
-
-// ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
 

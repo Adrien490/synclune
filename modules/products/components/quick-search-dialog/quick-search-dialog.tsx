@@ -18,7 +18,7 @@ import {
 } from "@/shared/components/ui/dialog"
 import ScrollFade from "@/shared/components/scroll-fade"
 import { useAddRecentSearch } from "@/modules/products/hooks/use-add-recent-search"
-import { useClearRecentSearches } from "@/modules/products/hooks/use-clear-recent-searches"
+import { useClearRecentSearches } from "@/modules/products/hooks/use-clear-recent-search"
 import { useRemoveRecentSearch } from "@/modules/products/hooks/use-remove-recent-search"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { cn } from "@/shared/utils/cn"

@@ -1,5 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
+import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import { transformSkusToStockAlerts } from "../services/stock-alert-classifier.service";

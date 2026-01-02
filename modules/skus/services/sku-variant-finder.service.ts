@@ -1,5 +1,5 @@
 import type { BaseProductSku } from "@/shared/types/product-sku.types";
-import { matchSkuVariants, type VariantSelectors } from "./filter-compatible-skus";
+import { matchSkuVariants, type VariantSelectors } from "./sku-filter.service";
 
 /**
  * Trouve un SKU par combinaison de variantes

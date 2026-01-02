@@ -15,7 +15,7 @@ import { ProductFilterBadges } from "@/modules/products/components/filter-badges
 import { ProductFilterTrigger } from "@/modules/products/components/product-filter-trigger";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
-import { BottomActionBar } from "@/modules/products/components/bottom-action-bar";
+import { ProductSortBar } from "@/modules/products/components/product-sort-bar";
 
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
@@ -190,7 +190,7 @@ export function ProductCatalog({
 			/>
 
 			{/* Bottom Action Bar Mobile */}
-			<BottomActionBar sortOptions={sortOptions} />
+			<ProductSortBar sortOptions={sortOptions} />
 		</div>
 	);
 }

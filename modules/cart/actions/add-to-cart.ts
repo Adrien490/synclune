@@ -1,19 +1,14 @@
 "use server";
 
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { headers } from "next/headers";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
-import {
-	getCartExpirationDate,
-	getOrCreateCartSessionId,
-} from "@/modules/cart/lib/cart-session";
+import { getCartExpirationDate, getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
+import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { addToCartSchema } from "../schemas/cart.schemas";
 import { handleActionError } from "@/shared/lib/actions";
 
@@ -46,12 +41,12 @@ export async function addToCart(
 
 		const validatedData = result.data;
 
-		// 3. Rate limiting (protection anti-spam)
-		const session = await getSession();
-		let userId: string | undefined = session?.user?.id;
-		let sessionId: string | null = null;
-		const headersList = await headers();
-		const ipAddress = await getClientIp(headersList);
+		// 3. Rate limiting + récupération contexte
+		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.ADD, { createSessionIfMissing: true });
+		if (!rateLimitResult.success) {
+			return rateLimitResult.errorState;
+		}
+		let { userId, sessionId } = rateLimitResult.context;
 
 		// 4. Vérifier que l'userId existe dans la base de données
 		// Si l'userId n'existe pas, traiter comme un utilisateur non connecté
@@ -62,31 +57,12 @@ export async function addToCart(
 			});
 
 			if (!userExists) {
-				// Traiter comme un utilisateur non connecté
 				userId = undefined;
+				sessionId = await getOrCreateCartSessionId();
 			}
 		}
 
-		// 5. Créer sessionId uniquement si pas d'userId valide (évite double création)
-		if (!userId) {
-			sessionId = await getOrCreateCartSessionId();
-		}
-
-		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-		const rateLimit = checkRateLimit(rateLimitId, CART_LIMITS.ADD);
-
-		if (!rateLimit.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message: rateLimit.error || "Trop de requêtes. Veuillez réessayer plus tard.",
-				data: {
-					retryAfter: rateLimit.retryAfter,
-					reset: rateLimit.reset,
-				},
-			};
-		}
-
-		// 5b. Vérifier que sessionId est bien défini pour les visiteurs
+		// 5. Vérifier que sessionId est bien défini pour les visiteurs
 		if (!userId && !sessionId) {
 			return {
 				status: ActionStatus.ERROR,

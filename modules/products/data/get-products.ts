@@ -35,9 +35,6 @@ export {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
 	GET_PRODUCTS_DEFAULT_SORT_BY,
 	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
-	GET_PRODUCTS_SORT_FIELDS,
-	SORT_LABELS,
-	SORT_OPTIONS,
 } from "../constants/product.constants";
 export { productFiltersSchema, productSortBySchema } from "../schemas/product.schemas";
 export type {

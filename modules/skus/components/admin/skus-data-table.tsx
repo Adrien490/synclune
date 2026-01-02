@@ -18,7 +18,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
-import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
+import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { Package } from "lucide-react";
 import Image from "next/image";

@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
-import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
+import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";

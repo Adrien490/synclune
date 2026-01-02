@@ -8,7 +8,7 @@ import type {
 	GetProductSkuReturn,
 	SkuWithImages,
 } from "../types/sku.types";
-import { cacheSkuDetail } from "../constants/cache";
+import { cacheSkuDetail } from "../utils/cache.utils";
 
 // Re-export pour compatibilité
 export type { GetProductSkuParams, GetProductSkuReturn, SkuWithImages } from "../types/sku.types";

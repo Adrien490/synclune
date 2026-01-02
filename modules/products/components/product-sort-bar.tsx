@@ -11,7 +11,7 @@ import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.c
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { cn } from "@/shared/utils/cn";
 
-interface BottomActionBarProps {
+interface ProductSortBarProps {
 	/** Options de tri disponibles */
 	sortOptions: SortOption[];
 	/** Classes CSS additionnelles */
@@ -56,7 +56,7 @@ function ActiveBadge({ count, showDot = false }: ActiveBadgeProps) {
 }
 
 /**
- * Barre d'actions fixe en bas pour mobile.
+ * Barre d'actions fixe en bas pour mobile (tri, recherche, filtres).
  *
  * Affiche 3 boutons:
  * - Recherche (ouvre QuickSearchDialog)
@@ -71,7 +71,7 @@ function ActiveBadge({ count, showDot = false }: ActiveBadgeProps) {
  * - Live region pour annoncer les changements d'état
  * - Touch targets 72px minimum (WCAG 2.5.8)
  */
-export function BottomActionBar({ sortOptions, className }: BottomActionBarProps) {
+export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) {
 	const [sortOpen, setSortOpen] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState(0);
 	const { open: openSearch } = useDialog(QUICK_SEARCH_DIALOG_ID);

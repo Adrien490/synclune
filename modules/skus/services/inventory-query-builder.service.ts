@@ -3,7 +3,7 @@ import type {
 	GetSkuStocksParams,
 	InventoryFilters,
 } from "../types/inventory.types";
-import { STOCK_THRESHOLDS } from "../constants/inventory.constants";
+import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 // ============================================================================
 // INVENTORY QUERY BUILDER UTILS

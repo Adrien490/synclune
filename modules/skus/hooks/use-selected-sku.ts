@@ -1,8 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { findSkuByVariants } from "@/modules/skus/services/find-sku-by-variants";
-import { filterCompatibleSkus } from "@/modules/skus/services/filter-compatible-skus";
+import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
+import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
 interface UseSelectedSkuOptions {

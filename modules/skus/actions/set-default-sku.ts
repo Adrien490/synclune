@@ -5,7 +5,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
-import { getSkuInvalidationTags } from "../constants/cache";
+import { getSkuInvalidationTags } from "../utils/cache.utils";
 
 /**
  * Set a SKU as the default SKU for its product

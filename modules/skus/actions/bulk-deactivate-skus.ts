@@ -4,7 +4,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { bulkDeactivateSkusSchema } from "../schemas/sku.schemas";
-import { collectBulkInvalidationTags, invalidateTags } from "../constants/cache";
+import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 
 export async function bulkDeactivateSkus(
 	prevState: ActionState | undefined,

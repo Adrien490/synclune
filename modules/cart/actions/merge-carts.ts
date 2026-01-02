@@ -4,11 +4,10 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";
-import { batchValidateSkusForMerge } from "@/modules/cart/lib/sku-validation";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { batchValidateSkusForMerge } from "@/modules/cart/services/sku-validation.service";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
-import { headers } from "next/headers";
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import { checkMergeCartsRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import type { MergeCartsResult } from "../types/cart.types";
 import { getGuestCartForMerge, getUserCartForMerge } from "@/modules/cart/data/get-cart-for-merge";
 
@@ -46,16 +45,12 @@ export async function mergeCarts(
 			};
 		}
 
-		// 0b. Rate limiting uniforme avec les autres actions cart (avec IP fallback)
-		const headersList = await headers();
-		const ipAddress = await getClientIp(headersList);
-		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-		const rateLimit = checkRateLimit(rateLimitId, CART_LIMITS.MERGE);
-
-		if (!rateLimit.success) {
+		// 0b. Rate limiting uniforme avec les autres actions cart
+		const rateLimitResult = await checkMergeCartsRateLimit(userId, sessionId, CART_LIMITS.MERGE);
+		if (!rateLimitResult.success) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Trop de requêtes. Veuillez réessayer plus tard.",
+				message: rateLimitResult.errorState.message,
 			};
 		}
 

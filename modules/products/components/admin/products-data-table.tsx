@@ -25,7 +25,7 @@ import {
 
 // Module imports
 import { GetProductsReturn } from "@/modules/products/data/get-products";
-import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
+import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 // Local components
 import { ProductRowActions } from "./product-row-actions";

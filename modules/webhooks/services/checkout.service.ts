@@ -4,7 +4,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { validateSkuAndStock } from "@/modules/cart/lib/sku-validation";
+import { validateSkuAndStock } from "@/modules/cart/services/sku-validation.service";
 import {
 	getShippingRateName,
 	getShippingMethodFromRate,

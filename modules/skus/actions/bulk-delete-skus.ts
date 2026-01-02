@@ -5,7 +5,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { bulkDeleteSkusSchema } from "../schemas/sku.schemas";
-import { collectBulkInvalidationTags, invalidateTags } from "../constants/cache";
+import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 
 const utapi = new UTApi();
 

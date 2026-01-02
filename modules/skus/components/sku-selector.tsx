@@ -9,7 +9,7 @@ import {
 } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 import { Sparkles } from "lucide-react";
-import { extractVariantInfo } from "@/modules/skus/services/extract-sku-info";
+import { extractVariantInfo } from "@/modules/skus/services/sku-info-extraction.service";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { useSearchParams } from "next/navigation";

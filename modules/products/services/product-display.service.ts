@@ -150,25 +150,9 @@ export function getPrimaryPriceForList(product: ProductFromList): {
  * Les médias principaux sont UNIQUEMENT des images (jamais de vidéos)
  */
 export function getPrimaryImageForList(product: ProductFromList): ExtractedImage {
-	// Priorité 1: Image du SKU principal
 	const primarySku = getPrimarySkuForList<SkuFromList, ProductFromList>(product);
-	if (primarySku) {
-		const image = extractImageFromSku(primarySku, product.title);
-		if (image) return image;
-	}
-
-	// Priorité 2: Image de n'importe quel SKU actif
 	const activeSkus = product.skus?.filter((s) => s.isActive) ?? [];
-	for (const sku of activeSkus) {
-		const image = extractImageFromSku(sku, product.title);
-		if (image) return image;
-	}
-
-	// Fallback final: Image SVG de placeholder
-	return {
-		...FALLBACK_PRODUCT_IMAGE,
-		alt: truncateAltText(`${product.title} - ${FALLBACK_PRODUCT_IMAGE.alt}`),
-	};
+	return getPrimaryImageFromSku(primarySku, product, activeSkus);
 }
 
 /**

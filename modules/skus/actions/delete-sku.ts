@@ -7,7 +7,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { UTApi } from "uploadthing/server";
-import { getSkuInvalidationTags } from "../constants/cache";
+import { getSkuInvalidationTags } from "../utils/cache.utils";
 
 const utapi = new UTApi();
 

@@ -18,7 +18,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 
 import { NoResultsFilters } from "./no-results-filters";
 
-interface NoResultsRecoveryProps {
+interface SearchFallbackSuggestionsProps {
 	/** Terme de recherche actuel (pour l'echo) */
 	searchTerm?: string;
 	/** Suggestion de correction orthographique */
@@ -28,7 +28,7 @@ interface NoResultsRecoveryProps {
 }
 
 /**
- * Composant Server de recuperation pour les pages sans resultats (Baymard UX)
+ * Composant Server affichant des suggestions de repli pour les pages sans resultats (Baymard UX)
  *
  * Fetch ses propres donnees:
  * - Produits populaires (4 best-sellers)
@@ -36,11 +36,11 @@ interface NoResultsRecoveryProps {
  *
  * @see https://baymard.com/blog/no-results-page
  */
-export async function NoResultsRecovery({
+export async function SearchFallbackSuggestions({
 	searchTerm,
 	suggestion,
 	baseResetUrl = "/produits",
-}: NoResultsRecoveryProps) {
+}: SearchFallbackSuggestionsProps) {
 	// Fetch en parallele les produits populaires, categories et wishlist
 	const [popularResult, productTypesResult, wishlistProductIds] =
 		await Promise.all([
@@ -170,7 +170,7 @@ function SuggestionLink({ suggestion }: { suggestion: string }) {
 /**
  * Skeleton pour le streaming Suspense
  */
-export function NoResultsRecoverySkeleton() {
+export function SearchFallbackSuggestionsSkeleton() {
 	return (
 		<div className="space-y-8 mt-4 mb-12 sm:my-12">
 			{/* Header skeleton */}
