@@ -76,3 +76,14 @@ export type UpdateCollectionInput = z.infer<typeof updateCollectionSchema>;
 export type DeleteCollectionInput = z.infer<typeof deleteCollectionSchema>;
 export type BulkDeleteCollectionsInput = z.infer<typeof bulkDeleteCollectionsSchema>;
 export type UpdateCollectionStatusInput = z.infer<typeof updateCollectionStatusSchema>;
+
+// ============================================================================
+// UI COMPONENT TYPES
+// ============================================================================
+
+/** Image pour les cards et grilles de collection */
+export interface CollectionImage {
+	url: string;
+	blurDataUrl?: string | null;
+	alt?: string | null;
+}

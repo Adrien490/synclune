@@ -116,23 +116,7 @@ export type SearchResult = {
 };
 
 // ============================================================================
-// PRODUCT CARD DATA
+// PRODUCT CARD DATA (re-export depuis product.types.ts - source de vérité)
 // ============================================================================
 
-/**
- * Données combinées pour ProductCard (optimisé O(n))
- */
-export interface ProductCardData {
-	defaultSku: SkuFromList | null;
-	price: number;
-	compareAtPrice: number | null;
-	stockInfo: ProductStockInfo;
-	primaryImage: {
-		id: string;
-		url: string;
-		alt?: string;
-		mediaType: "IMAGE";
-		blurDataUrl?: string;
-	};
-	colors: ColorSwatch[];
-}
+export type { ProductCardData } from "./product.types";

@@ -1,4 +1,3 @@
-import { memo } from "react";
 import type { HeartIconProps } from "@/shared/types/icons.types";
 
 export type { HeartIconProps };
@@ -57,7 +56,7 @@ export type { HeartIconProps };
  * </Card>
  * ```
  */
-export const HeartIcon = memo(function HeartIcon({
+export function HeartIcon({
 	className = "",
 	size = 24,
 	ariaLabel,
@@ -109,7 +108,4 @@ export const HeartIcon = memo(function HeartIcon({
 			)}
 		</svg>
 	);
-});
-
-// Display name pour React DevTools et debugging
-HeartIcon.displayName = "HeartIcon";
+}

@@ -3,7 +3,7 @@ import type { GetProductsParams, ProductFilters } from "../types/product.types";
 import type { SearchResult } from "../types/product-services.types";
 
 import { FUZZY_MIN_LENGTH } from "../constants/search.constants";
-import { fuzzySearchProductIds } from "./fuzzy-search";
+import { fuzzySearchProductIds } from "../data/fuzzy-search";
 
 export type { SearchResult } from "../types/product-services.types";
 

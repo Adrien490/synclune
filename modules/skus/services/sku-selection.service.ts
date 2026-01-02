@@ -55,36 +55,72 @@ export function computeStockFromSkus<T extends { inventory: number }>(
 }
 
 /**
+ * Options pour la sélection du SKU principal
+ */
+export interface GetPrimarySkuOptions {
+	/**
+	 * Slug de la couleur préférée (Baymard: thumbnail dynamique selon filtre)
+	 * Si spécifié, priorise les SKUs de cette couleur.
+	 */
+	preferredColorSlug?: string;
+}
+
+/**
  * Récupère le SKU principal pour les listes (logique de sélection intelligente)
  *
  * Ordre de priorité :
- * 1. SKU avec isDefault = true et actif
- * 2. Premier SKU en stock, trié par prix croissant
- * 3. Premier SKU actif
- * 4. Premier SKU (fallback)
+ * 1. (Si preferredColorSlug) SKU de la couleur préférée en stock
+ * 2. (Si preferredColorSlug) SKU de la couleur préférée (même hors stock)
+ * 3. SKU avec isDefault = true et actif
+ * 4. Premier SKU en stock, trié par prix croissant
+ * 5. Premier SKU actif
+ * 6. Premier SKU (fallback)
+ *
+ * @param product - Produit avec ses SKUs
+ * @param options - Options de sélection (couleur préférée, etc.)
  */
 export function getPrimarySkuForList<
 	TSku extends BaseSkuForList,
 	TProduct extends { skus?: TSku[] | null }
->(product: TProduct): TSku | null {
+>(product: TProduct, options?: GetPrimarySkuOptions): TSku | null {
 	if (!product.skus || product.skus.length === 0) {
 		return null;
 	}
 
-	// 1. SKU avec isDefault = true
+	const { preferredColorSlug } = options ?? {};
+
+	// 1. Si couleur préférée spécifiée, prioriser cette couleur (Baymard pattern)
+	if (preferredColorSlug) {
+		// 1a. SKU de la couleur préférée en stock
+		const colorSkuInStock = product.skus.find(
+			(sku) =>
+				sku.isActive &&
+				sku.color?.slug === preferredColorSlug &&
+				sku.inventory > 0
+		);
+		if (colorSkuInStock) return colorSkuInStock;
+
+		// 1b. SKU de la couleur préférée (même hors stock)
+		const colorSku = product.skus.find(
+			(sku) => sku.isActive && sku.color?.slug === preferredColorSlug
+		);
+		if (colorSku) return colorSku;
+	}
+
+	// 2. SKU avec isDefault = true
 	const defaultFlagSku = product.skus.find(
 		(sku) => sku.isActive && sku.isDefault
 	);
 	if (defaultFlagSku) return defaultFlagSku;
 
-	// 2. SKU en stock, trié par priceInclTax ASC
+	// 3. SKU en stock, trié par priceInclTax ASC
 	const inStockSkus = product.skus
 		.filter((sku) => sku.isActive && sku.inventory > 0)
 		.sort((a, b) => a.priceInclTax - b.priceInclTax);
 
 	if (inStockSkus.length > 0) return inStockSkus[0];
 
-	// 3. Premier SKU actif
+	// 4. Premier SKU actif
 	const activeSku = product.skus.find((sku) => sku.isActive);
 	return activeSku || product.skus[0];
 }

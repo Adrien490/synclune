@@ -96,3 +96,43 @@ export type ToggleProductStatusInput = z.infer<typeof toggleProductStatusSchema>
 export type BulkDeleteProductsInput = z.infer<typeof bulkDeleteProductsSchema>;
 export type BulkArchiveProductsInput = z.infer<typeof bulkArchiveProductsSchema>;
 export type BulkChangeProductStatusInput = z.infer<typeof bulkChangeProductStatusSchema>;
+
+// ============================================================================
+// PRODUCT CARD DATA (centralisé ici comme source de vérité)
+// ============================================================================
+
+import type { ColorSwatch, SkuFromList } from "./product-list.types";
+import type { ProductStockInfo } from "@/shared/types/product-sku.types";
+
+/**
+ * Données combinées pour ProductCard (optimisé O(n))
+ *
+ * Ce type est utilisé par getProductCardData() dans product-display.service.ts
+ * et représente toutes les informations nécessaires pour afficher une carte produit.
+ */
+export interface ProductCardData {
+	/** SKU principal sélectionné (peut être null si aucun SKU actif) */
+	defaultSku: SkuFromList | null;
+	/** Prix TTC en centimes */
+	price: number;
+	/** Prix barré (compareAtPrice) en centimes ou null */
+	compareAtPrice: number | null;
+	/** Informations de stock agrégées */
+	stockInfo: ProductStockInfo;
+	/** Image principale du produit */
+	primaryImage: {
+		id: string;
+		url: string;
+		alt?: string;
+		mediaType: "IMAGE";
+		blurDataUrl?: string;
+	};
+	/** Couleurs disponibles pour les swatches */
+	colors: ColorSwatch[];
+	/**
+	 * Indique si le produit a un SKU actif valide.
+	 * false signifie que le produit ne devrait pas être affiché
+	 * ou qu'un warning devrait être montré à l'admin.
+	 */
+	hasValidSku: boolean;
+}

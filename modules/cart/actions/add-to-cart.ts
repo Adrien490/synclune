@@ -49,23 +49,9 @@ export async function addToCart(
 		// 3. Rate limiting (protection anti-spam)
 		const session = await getSession();
 		let userId: string | undefined = session?.user?.id;
-		let sessionId: string | null = !userId ? await getOrCreateCartSessionId() : null;
+		let sessionId: string | null = null;
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
-
-		const rateLimitId = getRateLimitIdentifier(userId, sessionId || null, ipAddress);
-		const rateLimit = checkRateLimit(rateLimitId, CART_LIMITS.ADD);
-
-		if (!rateLimit.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message: rateLimit.error || "Trop de requêtes. Veuillez réessayer plus tard.",
-				data: {
-					retryAfter: rateLimit.retryAfter,
-					reset: rateLimit.reset,
-				},
-			};
-		}
 
 		// 4. Vérifier que l'userId existe dans la base de données
 		// Si l'userId n'existe pas, traiter comme un utilisateur non connecté
@@ -78,8 +64,26 @@ export async function addToCart(
 			if (!userExists) {
 				// Traiter comme un utilisateur non connecté
 				userId = undefined;
-				sessionId = await getOrCreateCartSessionId();
 			}
+		}
+
+		// 5. Créer sessionId uniquement si pas d'userId valide (évite double création)
+		if (!userId) {
+			sessionId = await getOrCreateCartSessionId();
+		}
+
+		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
+		const rateLimit = checkRateLimit(rateLimitId, CART_LIMITS.ADD);
+
+		if (!rateLimit.success) {
+			return {
+				status: ActionStatus.ERROR,
+				message: rateLimit.error || "Trop de requêtes. Veuillez réessayer plus tard.",
+				data: {
+					retryAfter: rateLimit.retryAfter,
+					reset: rateLimit.reset,
+				},
+			};
 		}
 
 		// 5b. Vérifier que sessionId est bien défini pour les visiteurs

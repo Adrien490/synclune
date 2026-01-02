@@ -1,12 +1,11 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { memo, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useColorPicker } from "./color-picker";
 import type { ColorPickerSelectionProps } from "./types";
 
-export const ColorPickerSelection = memo(
-	({ className, ...props }: ColorPickerSelectionProps) => {
+export function ColorPickerSelection({ className, ...props }: ColorPickerSelectionProps) {
 		const containerRef = useRef<HTMLDivElement>(null);
 		const [isDragging, setIsDragging] = useState(false);
 		const [positionX, setPositionX] = useState(0);
@@ -139,7 +138,4 @@ export const ColorPickerSelection = memo(
 				/>
 			</div>
 		);
-	}
-);
-
-ColorPickerSelection.displayName = "ColorPickerSelection";
+}

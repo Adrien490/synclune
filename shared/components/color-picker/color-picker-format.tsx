@@ -3,7 +3,7 @@
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/shared/utils/cn";
 import Color from "color";
-import { memo, type ComponentProps } from "react";
+import type { ComponentProps } from "react";
 import { useColorPicker } from "./color-picker";
 import type { ColorPickerFormatProps } from "./types";
 
@@ -31,8 +31,7 @@ function PercentageInput({ className, ...props }: PercentageInputProps) {
 	);
 }
 
-export const ColorPickerFormat = memo(
-	({ className, ...props }: ColorPickerFormatProps) => {
+export function ColorPickerFormat({ className, ...props }: ColorPickerFormatProps) {
 		const { hue, saturation, lightness, alpha, mode } = useColorPicker();
 		const color = Color.hsl(hue, saturation, lightness, alpha / 100);
 
@@ -156,7 +155,4 @@ export const ColorPickerFormat = memo(
 		}
 
 		return null;
-	}
-);
-
-ColorPickerFormat.displayName = "ColorPickerFormat";
+}

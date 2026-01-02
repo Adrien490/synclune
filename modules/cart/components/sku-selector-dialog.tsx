@@ -23,7 +23,7 @@ import type { Product } from "@/modules/products/types/product.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
-import { getPrimaryImageForList } from "@/modules/products/services/product-sorting.service";
+import { getPrimaryImageForList } from "@/modules/products/services/product-display.service";
 import { filterCompatibleSkus as filterCompatibleSkusService } from "@/modules/skus/services/filter-compatible-skus";
 import { slugify } from "@/shared/utils/generate-slug";
 import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";

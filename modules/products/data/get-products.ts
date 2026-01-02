@@ -20,12 +20,12 @@ import {
 	buildExactSearchConditions,
 	type SearchResult,
 } from "../services/product-query-builder";
-import { getBestsellerIds } from "../services/bestseller-query";
-import { getPopularProductIds } from "../services/popularity-query";
+import { getBestsellerIds } from "./bestseller-query";
+import { getPopularProductIds } from "./popularity-query";
 import {
 	getSpellSuggestion,
 	SUGGESTION_THRESHOLD_RESULTS,
-} from "../services/spell-suggestion";
+} from "./spell-suggestion";
 import { sortProducts, orderByIds } from "../services/product-list-sorting.service";
 import { cacheProducts, PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { serializeProduct } from "../utils/serialize-product";

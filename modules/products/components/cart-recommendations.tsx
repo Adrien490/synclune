@@ -1,6 +1,6 @@
 import { ProductCard } from "@/modules/products/components/product-card";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
-import { getPrimarySkuForList } from "@/modules/products/services/product-sorting.service";
+import { getPrimarySkuForList } from "@/modules/skus/services/sku-selection.service";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { Reveal, Stagger } from "@/shared/components/animations";
 import { Separator } from "@/shared/components/ui/separator";

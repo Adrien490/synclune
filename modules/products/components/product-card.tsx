@@ -2,12 +2,11 @@ import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
 import { IMAGE_SIZES, PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
-import { STOCK_THRESHOLDS } from "@/modules/skus/constants/inventory.constants";
 import { ProductPrice } from "./product-price";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
 import type { Product } from "@/modules/products/types/product.types";
-import { getProductCardData } from "@/modules/products/services/product-sorting.service";
+import { getProductCardData } from "@/modules/products/services/product-display.service";
 
 interface ProductCardProps {
 	product: Product;
@@ -55,12 +54,8 @@ export function ProductCard({
 		? `product-title-${sectionId}-${product.id}`
 		: `product-title-${product.id}`;
 
-	// Badge urgency (stock bas mais pas rupture)
-	const showUrgencyBadge =
-		stockStatus === "in_stock" &&
-		typeof inventory === "number" &&
-		inventory > 0 &&
-		inventory <= STOCK_THRESHOLDS.LOW;
+	// Badge urgency (stock bas mais pas rupture) - utilise le status low_stock du service
+	const showUrgencyBadge = stockStatus === "low_stock";
 
 	const productUrl = `/creations/${slug}`;
 
@@ -70,6 +65,8 @@ export function ProductCard({
 			className={cn(
 				"product-card grid relative overflow-hidden bg-card rounded-lg group border-2 border-transparent gap-4",
 				"transition-transform duration-300 ease-out",
+				// Motion-reduce: desactiver transforms, garder transitions couleurs (WCAG 2.3.3)
+				"motion-reduce:transition-colors",
 				// Glow pastel + shadow enrichi
 				"shadow-sm",
 				"can-hover:hover:border-primary/40",
@@ -102,9 +99,9 @@ export function ProductCard({
 					<div
 						role="status"
 						aria-label={`Stock limité : plus que ${inventory} exemplaire${inventory && inventory > 1 ? "s" : ""} disponible${inventory && inventory > 1 ? "s" : ""}`}
-						className="absolute top-2.5 left-2.5 bg-amber-500 text-white px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-medium z-20 shadow-md"
+						className="absolute top-2.5 left-2.5 bg-amber-600 text-white px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-medium z-20 shadow-md"
 					>
-						Plus que {inventory} !
+						{stockMessage}
 					</div>
 				)}
 
@@ -142,7 +139,7 @@ export function ProductCard({
 				/>
 
 				{/* Bouton d'ajout au panier - Desktop (client island) */}
-				{defaultSku && stockStatus === "in_stock" && (
+				{defaultSku && stockStatus !== "out_of_stock" && (
 					<AddToCartCardButton
 						skuId={defaultSku.id}
 						productTitle={title}
@@ -197,6 +194,17 @@ export function ProductCard({
 					<meta itemProp="name" content="Synclune" />
 				</div>
 
+				{/* Description et SKU pour Schema.org (SEO Rich Snippets) */}
+				{product.description && (
+					<meta
+						itemProp="description"
+						content={product.description.slice(0, 200)}
+					/>
+				)}
+				{defaultSku?.sku && (
+					<meta itemProp="sku" content={defaultSku.sku} />
+				)}
+
 				{/* Prix */}
 				<div itemProp="offers" itemScope itemType="https://schema.org/Offer">
 					<meta itemProp="priceCurrency" content="EUR" />
@@ -214,7 +222,7 @@ export function ProductCard({
 				</div>
 
 				{/* Bouton d'ajout au panier - Mobile (client island) */}
-				{defaultSku && stockStatus === "in_stock" && (
+				{defaultSku && stockStatus !== "out_of_stock" && (
 					<AddToCartCardButton
 						skuId={defaultSku.id}
 						productTitle={title}

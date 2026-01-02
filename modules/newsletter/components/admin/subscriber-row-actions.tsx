@@ -27,7 +27,7 @@ import {
 	Trash2,
 	UserCheck,
 } from "lucide-react";
-import { memo, useState } from "react";
+import { useState } from "react";
 import { useSubscriberActions } from "@/modules/newsletter/hooks/use-subscriber-actions";
 
 interface SubscriberRowActionsProps {
@@ -39,7 +39,7 @@ interface SubscriberRowActionsProps {
 	};
 }
 
-export const SubscriberRowActions = memo(function SubscriberRowActions({
+export function SubscriberRowActions({
 	subscriber,
 }: SubscriberRowActionsProps) {
 	const [unsubscribeDialogOpen, setUnsubscribeDialogOpen] = useState(false);
@@ -221,4 +221,4 @@ export const SubscriberRowActions = memo(function SubscriberRowActions({
 			</AlertDialog>
 		</>
 	);
-});
+}
