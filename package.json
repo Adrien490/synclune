@@ -91,7 +91,7 @@
 		"react-dom": "19.2.3",
 		"react-email": "^5.1.1",
 		"react-phone-number-input": "^3.4.14",
-		"react-resizable-panels": "^4.1.1",
+		"react-resizable-panels": "^4.2.0",
 		"recharts": "3.6.0",
 		"resend": "^6.6.0",
 		"rough-notation": "^0.5.1",
@@ -107,7 +107,7 @@
 		"vaul": "^1.1.2",
 		"xlsx": "^0.18.5",
 		"yet-another-react-lightbox": "^3.28.0",
-		"zod": "^4.3.2",
+		"zod": "^4.3.4",
 		"zustand": "^5.0.9"
 	},
 	"devDependencies": {

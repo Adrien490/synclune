@@ -45,11 +45,8 @@ export function getVideoMimeType(url: string): string {
 	const extensionMatch = url.toLowerCase().match(/\.(\w+)(?:\?|#|$)/);
 	const extension = extensionMatch?.[1];
 
-	// Warning si pas d'extension detectee (URLs CDN sans extension)
+	// URLs CDN sans extension (ex: UploadThing) - fallback vers mp4
 	if (!extension) {
-		console.warn(
-			`[Media] Impossible de detecter le type MIME pour l'URL: ${url.substring(0, 100)}... - fallback vers video/mp4`
-		);
 		return "video/mp4";
 	}
 
