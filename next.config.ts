@@ -2,10 +2,7 @@ import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  poweredByHeader: false,
   cacheComponents: true,
-  reactCompiler: true,
-  reactStrictMode: true,
 
   async headers() {
     return [
