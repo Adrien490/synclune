@@ -14,6 +14,16 @@ export function AtelierStory() {
 			itemScope
 			itemType="https://schema.org/Article"
 		>
+			{/* SEO: Métadonnées Article */}
+			<meta
+				itemProp="headline"
+				content="L'histoire de Léane, créatrice de bijoux artisanaux Synclune"
+			/>
+			<meta itemProp="datePublished" content="2024-01-01" />
+			<meta
+				itemProp="mainEntityOfPage"
+				content="https://synclune.fr/#atelier-story"
+			/>
 
 			{/* Titre descriptif pour SEO et lecteurs d'ecran */}
 			<h2 id="atelier-story-title" className="sr-only">
@@ -34,6 +44,8 @@ export function AtelierStory() {
 					itemProp="address"
 					content="Nantes, Loire-Atlantique, France"
 				/>
+				<meta itemProp="image" content="/images/leane-portrait.jpg" />
+				<link itemProp="sameAs" href="https://instagram.com/synclune" />
 			</div>
 
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -96,9 +108,20 @@ export function AtelierStory() {
 								n'existe qu'en quelques exemplaires (parfois moins de dix).
 							</p>
 							{/* Citation finale mise en valeur avec blockquote */}
-							<blockquote className="relative pl-6 border-l-2 border-primary/70 text-foreground font-medium text-left">
+							<blockquote
+								className="relative pl-6 border-l-2 border-primary/70 text-foreground font-medium text-left"
+								cite="https://synclune.fr"
+							>
 								<p>Tout est fait à la main !</p>
-								<p>Je mets du cœur à chaque création, j'espère que ça vous plaira <span role="img" aria-label="coeur rouge">❤️</span></p>
+								<p>
+									Je mets du cœur à chaque création, j'espère que ça vous plaira{" "}
+									<span role="img" aria-label="coeur rouge">
+										❤️
+									</span>
+								</p>
+								<footer className="mt-2 text-sm font-normal text-muted-foreground not-italic">
+									<cite>— Léane, fondatrice de Synclune</cite>
+								</footer>
 							</blockquote>
 						</Stagger>
 
@@ -148,7 +171,7 @@ export function AtelierStory() {
 						<div className="text-center">
 							<Link
 								href="/personnalisation"
-								className="inline-block py-3 px-4 -mx-4 text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+								className="inline-block min-h-11 py-3 px-4 -mx-4 text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
 							>
 								Discuter d'un projet personnalisé →
 							</Link>

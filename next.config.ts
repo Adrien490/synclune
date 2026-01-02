@@ -3,8 +3,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  reactStrictMode: true,
+  cacheComponents: true,
   reactCompiler: true,
+  reactStrictMode: true,
 
   async headers() {
     return [
@@ -19,8 +20,20 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "esbuild-wasm"],
+  serverExternalPackages: [
+    "@prisma/client",
+    "@prisma/adapter-neon",
+    "esbuild-wasm",
+  ],
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+
+  transpilePackages: ["framer-motion"],
+
+  turbopack: {
+    resolveAlias: {
+      "motion/react": "framer-motion",
+    },
+  },
 
   images: {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -30,14 +43,21 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
       { protocol: "https", hostname: "ufs.sh", pathname: "/f/**" },
       { protocol: "https", hostname: "uploadthing.com", pathname: "/**" },
-      { protocol: "https", hostname: "uploadthing-prod.s3.us-west-2.amazonaws.com", pathname: "/**" },
-      { protocol: "https", hostname: "avatars.githubusercontent.com", pathname: "/**" },
+      {
+        protocol: "https",
+        hostname: "uploadthing-prod.s3.us-west-2.amazonaws.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+        pathname: "/**",
+      },
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
     ],
     formats: ["image/avif", "image/webp"],
     qualities: [65, 75, 80, 85, 90],
   },
-
-  cacheComponents: true,
 
   cacheLife: {
     products: { stale: 900, revalidate: 300, expire: 21600 },
