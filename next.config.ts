@@ -1,4 +1,3 @@
-import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -17,18 +16,9 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  serverExternalPackages: [
-    "@prisma/client",
-    "@prisma/adapter-neon",
-    "esbuild-wasm",
-  ],
-  pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
-
-  transpilePackages: ["framer-motion"],
+  serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon"],
 
   images: {
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     remotePatterns: [
       { protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**" },
       { protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
@@ -46,8 +36,6 @@ const nextConfig: NextConfig = {
       },
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
     ],
-    formats: ["image/avif", "image/webp"],
-    qualities: [65, 75, 80, 85, 90],
   },
 
   cacheLife: {
@@ -64,6 +52,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withMDX = createMDX({ extension: /\.(md|mdx)$/ });
-
-export default withMDX(nextConfig);
+export default nextConfig;

@@ -385,7 +385,7 @@ export function CheckoutForm({
 										</Link>{" "}
 										pour accéder à tes adresses enregistrées
 									</span>
-								</p>
+								</div>
 							</div>
 						)}
 					</form.AppField>
@@ -601,7 +601,7 @@ export function CheckoutForm({
 							>
 								conditions générales de vente
 							</Link>
-						</p>
+						</div>
 					</div>
 				)}
 			</form.AppField>
