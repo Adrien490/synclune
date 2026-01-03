@@ -115,8 +115,7 @@ export async function fuzzySearchProductIds(
 		const results = await Promise.race([queryPromise, timeoutPromise]);
 
 		return results.map((r) => r.productId);
-	} catch (error) {
-		console.error("[fuzzy-search] Error:", { term: searchTerm, error });
-		return []; // Fallback: recherche exacte prendra le relais
+	} catch {
+		return []; // Fallback silencieux: recherche exacte prendra le relais
 	}
 }

@@ -5,7 +5,6 @@ import { CookieBanner } from "@/shared/components/cookie-banner";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
-import { StructuredData } from "@/shared/components/structured-data";
 import { StructuredDataAsync } from "@/shared/components/structured-data-async";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
@@ -45,10 +44,6 @@ export default async function RootLayout({
 				<link rel="preconnect" href="https://utfs.io" crossOrigin="anonymous" />
 				<link rel="dns-prefetch" href="https://x1ain1wpub.ufs.sh" />
 				<link rel="preconnect" href="https://x1ain1wpub.ufs.sh" crossOrigin="anonymous" />
-				{/* Structured Data - SEO (non-bloquant via Suspense) */}
-				<Suspense fallback={<StructuredData />}>
-					<StructuredDataAsync />
-				</Suspense>
 			</head>
 			<body
 				className={`${inter.variable} ${inter.className} ${josefinSans.variable} ${jetBrainsMono.variable} antialiased`}
@@ -75,6 +70,10 @@ export default async function RootLayout({
 						</Suspense>
 					</RootProviders>
 					<AppToaster />
+					{/* JSON-LD global - placé dans body comme recommandé par Next.js */}
+					<Suspense fallback={null}>
+						<StructuredDataAsync />
+					</Suspense>
 				</SerwistProvider>
 			</body>
 		</html>

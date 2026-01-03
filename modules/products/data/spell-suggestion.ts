@@ -166,11 +166,7 @@ export async function getSpellSuggestion(
 			similarity: Number(best.similarity),
 			source: best.source as SpellSuggestion["source"],
 		};
-	} catch (error) {
-		console.error("[SpellSuggestion] Database error:", {
-			term: term.substring(0, 50),
-			error: error instanceof Error ? error.message : String(error),
-		});
+	} catch {
 		return null;
 	}
 }

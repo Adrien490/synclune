@@ -12,7 +12,7 @@ interface StructuredDataProps {
 
 /**
  * Composant consolidant tous les schemas JSON-LD en un seul script.
- * Valide selon schema.org (array de schemas).
+ * Utilise le format @graph standard pour combiner plusieurs schemas.
  */
 export function StructuredData({ reviewStats }: StructuredDataProps) {
 	const schemas = [
@@ -22,11 +22,20 @@ export function StructuredData({ reviewStats }: StructuredDataProps) {
 		getFounderSchema(),
 	];
 
+	// Transformer en format @graph (supprimer @context de chaque schema)
+	const graphSchemas = schemas.map(({ "@context": _, ...rest }) => rest);
+
+	const jsonLd = {
+		"@context": "https://schema.org",
+		"@graph": graphSchemas,
+	};
+
 	return (
 		<script
 			type="application/ld+json"
 			dangerouslySetInnerHTML={{
-				__html: JSON.stringify(schemas),
+				// Sanitization XSS recommandée par Next.js
+				__html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
 			}}
 		/>
 	);
