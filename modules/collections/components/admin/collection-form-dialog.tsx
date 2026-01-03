@@ -3,6 +3,7 @@
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
@@ -36,6 +37,11 @@ export function CollectionFormDialog() {
 					<ResponsiveDialogTitle>
 						{isUpdateMode ? "Modifier la collection" : "Créer une collection"}
 					</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
+						{isUpdateMode
+							? "Modifiez les informations de la collection"
+							: "Créez une nouvelle collection de produits"}
+					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
 				{isUpdateMode && collection ? (

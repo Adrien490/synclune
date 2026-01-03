@@ -4,6 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
@@ -102,6 +103,11 @@ export function MaterialFormDialog() {
 					<ResponsiveDialogTitle>
 						{isUpdateMode ? "Modifier le matériau" : "Créer un matériau"}
 					</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
+						{isUpdateMode
+							? "Modifiez les informations du matériau"
+							: "Ajoutez un nouveau matériau au catalogue"}
+					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
 				<form

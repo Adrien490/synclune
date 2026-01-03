@@ -4,6 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
@@ -119,6 +120,11 @@ export function DiscountFormDialog() {
 					<ResponsiveDialogTitle>
 						{isUpdateMode ? "Modifier le code promo" : "Créer un code promo"}
 					</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
+						{isUpdateMode
+							? "Modifiez les paramètres du code promo existant"
+							: "Configurez un nouveau code promo pour vos clients"}
+					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
 				<form

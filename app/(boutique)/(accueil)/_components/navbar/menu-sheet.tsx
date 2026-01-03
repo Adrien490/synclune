@@ -200,6 +200,10 @@ export function MenuSheet({
 					className="relative -ml-3 inline-flex items-center justify-center size-11 rounded-xl lg:hidden bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-all duration-300 ease-out hover:scale-105 active:scale-95 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
 					aria-label="Ouvrir le menu de navigation"
 					aria-controls="mobile-menu-synclune"
+					onFocus={(e) => {
+						// Blur when sheet is open to avoid aria-hidden conflict
+						if (isOpen) e.currentTarget.blur();
+					}}
 				>
 					<Menu
 						size={20}

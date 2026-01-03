@@ -136,6 +136,7 @@ export function ProductCard({
 					className="absolute inset-0 z-10"
 					tabIndex={-1}
 					aria-hidden="true"
+					onFocus={(e) => e.currentTarget.blur()}
 				/>
 
 				{/* Bouton d'ajout au panier - Desktop (client island) */}

@@ -8,7 +8,6 @@ export const josefinSans = Josefin_Sans({
 	display: "swap",
 	style: ["normal", "italic"],
 	variable: "--font-display", // Variable CSS pour les titres
-	preload: true, // Preload pour LCP optimization
 });
 
 // Inter - Sans-serif moderne et polyvalente pour corps de texte et UI
@@ -20,7 +19,6 @@ export const inter = Inter({
 	display: "swap",
 	weight: ["300", "400", "600"], // Light, Regular, Semibold (UI + Hero)
 	variable: "--font-sans", // Variable CSS pour le texte principal
-	preload: true, // Preload pour LCP optimization
 });
 
 // JetBrains Mono - Monospace moderne pour prix et codes

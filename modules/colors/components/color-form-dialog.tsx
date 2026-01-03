@@ -12,6 +12,7 @@ import {
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
@@ -108,6 +109,11 @@ export function ColorFormDialog() {
 					<ResponsiveDialogTitle>
 						{isUpdateMode ? "Modifier la couleur" : "Créer une couleur"}
 					</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
+						{isUpdateMode
+							? "Modifiez le nom ou le code couleur"
+							: "Ajoutez une nouvelle couleur au catalogue"}
+					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
 				<form

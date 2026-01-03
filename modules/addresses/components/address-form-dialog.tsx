@@ -7,6 +7,7 @@ import { Button } from "@/shared/components/ui/button";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
@@ -117,6 +118,11 @@ function AddressFormContent({
 				<ResponsiveDialogTitle>
 					{mode === "create" ? "Ajouter une adresse" : "Modifier l'adresse"}
 				</ResponsiveDialogTitle>
+				<ResponsiveDialogDescription>
+					{mode === "create"
+						? "Ajoutez une nouvelle adresse de livraison"
+						: "Modifiez les informations de cette adresse"}
+				</ResponsiveDialogDescription>
 			</ResponsiveDialogHeader>
 
 			<form
