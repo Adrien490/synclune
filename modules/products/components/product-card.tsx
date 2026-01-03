@@ -174,7 +174,7 @@ export function ProductCard({
 
 				{/* Indicateur couleurs avec lien */}
 				{colors.length > 1 && (
-					<p className="text-xs sm:text-sm text-muted-foreground">
+					<div className="text-xs sm:text-sm text-muted-foreground">
 						<Link
 							href={productUrl}
 							className="underline underline-offset-4 hover:text-foreground transition-colors"

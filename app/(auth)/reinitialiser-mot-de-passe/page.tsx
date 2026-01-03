@@ -128,14 +128,14 @@ export default async function ResetPasswordPage({
 									Demander un nouveau lien
 								</Link>
 							)}
-							<p className="text-sm text-muted-foreground">
+							<div className="text-sm text-muted-foreground">
 								<Link
 									href="/connexion"
 									className="font-medium underline"
 								>
 									Retour à la connexion
 								</Link>
-							</p>
+							</div>
 						</div>
 					</div>
 				</div>

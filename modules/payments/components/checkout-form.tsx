@@ -350,7 +350,7 @@ export function CheckoutForm({
 									autoFocus
 									placeholder="ton@email.com"
 								/>
-								<p className="text-sm text-muted-foreground flex items-start gap-1.5">
+								<div className="text-sm text-muted-foreground flex items-start gap-1.5">
 									<Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
 									<span>
 										Tu as déjà un compte ?{" "}
@@ -591,7 +591,7 @@ export function CheckoutForm({
 							label="J'accepte les conditions générales de vente"
 							required
 						/>
-						<p className="text-sm text-muted-foreground ml-8">
+						<div className="text-sm text-muted-foreground ml-8">
 							Consultez nos{" "}
 							<Link
 								href="/cgv"

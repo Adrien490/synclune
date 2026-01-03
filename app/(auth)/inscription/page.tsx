@@ -86,12 +86,12 @@ export default function SignupPage() {
 
 						{/* Lien vers la connexion */}
 						<div className="text-center pt-4 border-t">
-							<p className="text-sm text-muted-foreground">
+							<div className="text-sm text-muted-foreground">
 								Tu as déjà un compte ?{" "}
 								<Link href="/connexion" className="font-medium underline">
 									Connecte-toi
 								</Link>
-							</p>
+							</div>
 						</div>
 					</div>
 				</div>

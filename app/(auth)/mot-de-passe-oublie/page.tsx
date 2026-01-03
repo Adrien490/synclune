@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
 
 						{/* Lien vers la connexion */}
 						<div className="text-center pt-4 border-t">
-							<p className="text-sm text-muted-foreground">
+							<div className="text-sm text-muted-foreground">
 								Tu te souviens de ton mot de passe ?{" "}
 								<Link
 									href="/connexion"
@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
 								>
 									Connecte-toi
 								</Link>
-							</p>
+							</div>
 						</div>
 					</div>
 				</div>

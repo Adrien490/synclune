@@ -88,12 +88,12 @@ export default function LoginPage() {
 
 						{/* Lien vers l'inscription */}
 						<div className="text-center pt-4 border-t">
-							<p className="text-sm text-muted-foreground">
+							<div className="text-sm text-muted-foreground">
 								Première visite ?{" "}
 								<Link href="/inscription" className="font-medium underline">
 									Crée ton compte
 								</Link>
-							</p>
+							</div>
 						</div>
 					</div>
 				</div>

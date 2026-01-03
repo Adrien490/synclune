@@ -1,4 +1,4 @@
 export async function CopyrightYear() {
 	"use cache"
-	return <>{new Date().getFullYear()}</>
+	return <span suppressHydrationWarning>{new Date().getFullYear()}</span>
 }

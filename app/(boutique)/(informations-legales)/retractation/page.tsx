@@ -101,12 +101,12 @@ export default async function RetractationPage() {
                     <p>77 Boulevard du Tertre</p>
                     <p>44100 Nantes</p>
                     <p>France</p>
-                    <p className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-2">
                       <Mail className="h-4 w-4" />
                       <a href={`mailto:${contactEmail}`} className="underline">
                         {contactEmail}
                       </a>
-                    </p>
+                    </div>
                   </div>
 
                   <div className="pt-4 border-t space-y-6">
@@ -282,7 +282,7 @@ export default async function RetractationPage() {
                   </div>
                 </div>
 
-                <p className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   Pour toute question concernant l'exercice de votre droit de
                   rétractation, n'hésitez pas à nous contacter à{" "}
                   <a href={`mailto:${contactEmail}`} className="underline">
@@ -290,7 +290,7 @@ export default async function RetractationPage() {
                   </a>
                   . Nous nous engageons à vous répondre dans les meilleurs
                   délais.
-                </p>
+                </div>
               </div>
             </section>
 
