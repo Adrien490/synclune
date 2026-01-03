@@ -30,8 +30,12 @@ import { generateStructuredData } from "@/modules/products/utils/seo/generate-st
 import { ProductReviewsSection, ProductReviewsSectionSkeleton } from "@/modules/reviews/components/product-reviews-section";
 
 // Pre-genere les chemins des produits publics au build time
+// Next.js 16 avec Cache Components requiert au moins un résultat
 export async function generateStaticParams() {
 	const products = await getPublicProductSlugs();
+	if (products.length === 0) {
+		return [{ slug: "__placeholder__" }];
+	}
 	return products.map((p) => ({ slug: p.slug }));
 }
 

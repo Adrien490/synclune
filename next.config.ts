@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "esbuild-wasm"],
 
   images: {
+    qualities: [75, 80, 85, 90],
     remotePatterns: [
       { protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**" },
       { protocol: "https", hostname: "utfs.io", pathname: "/f/**" },

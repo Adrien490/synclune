@@ -25,7 +25,7 @@ import { cn } from "@/shared/utils/cn"
 
 import { RECENT_SEARCHES_MAX_ITEMS } from "@/modules/products/constants/recent-searches"
 
-import { QUICK_SEARCH_DIALOG_ID, QUICK_SEARCH_SUGGESTED_LINKS } from "./constants"
+import { QUICK_SEARCH_DIALOG_ID } from "./constants"
 
 interface QuickSearchDialogProps {
 	recentSearches?: string[]
@@ -351,22 +351,9 @@ export function QuickSearchDialog({
 							{!hasContent && (
 								<Stagger className="text-center py-8" role="status" stagger={0.03} delay={0.05} y={10}>
 									<Search className="size-10 text-muted-foreground/20 mx-auto mb-4" aria-hidden="true" />
-									<p className="text-sm text-muted-foreground mb-6">
+									<p className="text-sm text-muted-foreground">
 										Trouvez votre prochain bijou
 									</p>
-									<div className="flex flex-wrap justify-center gap-2">
-										{QUICK_SEARCH_SUGGESTED_LINKS.map((link) => (
-											<Tap key={link.href} scale={0.97}>
-												<Link
-													href={link.href}
-													onClick={close}
-													className="inline-flex items-center px-4 py-2 min-h-11 rounded-full bg-muted/40 hover:bg-muted border border-transparent hover:border-border transition-all text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-												>
-													{link.label}
-												</Link>
-											</Tap>
-										))}
-									</div>
 								</Stagger>
 							)}
 						</div>

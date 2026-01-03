@@ -27,8 +27,13 @@ export type CollectionSearchParams = {
 } & Omit<ProductFiltersSearchParams, "collectionId" | "collectionSlug">;
 
 // Pre-genere les chemins des collections publiques au build time
+// Next.js 16 avec Cache Components requiert au moins un résultat
 export async function generateStaticParams() {
 	const collections = await getPublicCollectionSlugs();
+	if (collections.length === 0) {
+		// Fallback pour satisfaire Next.js 16 - sera géré par notFound() au runtime
+		return [{ slug: "__placeholder__" }];
+	}
 	return collections.map((c) => ({ slug: c.slug }));
 }
 

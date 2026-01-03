@@ -21,6 +21,7 @@ import {
 
 /**
  * Génère les paramètres statiques pour toutes les pages catégorie
+ * Next.js 16 avec Cache Components requiert au moins un résultat
  */
 export async function generateStaticParams() {
 	const { productTypes } = await getProductTypes({
@@ -30,6 +31,10 @@ export async function generateStaticParams() {
 			hasProducts: true,
 		},
 	});
+
+	if (productTypes.length === 0) {
+		return [{ productTypeSlug: "__placeholder__" }];
+	}
 
 	return productTypes.map((type) => ({
 		productTypeSlug: type.slug,

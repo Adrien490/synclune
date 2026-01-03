@@ -13,10 +13,6 @@ interface CollectionCardProps {
   description: string | null;
   /** Images multiples pour Bento Grid (prioritaire) */
   images?: CollectionImage[];
-  /** @deprecated Utiliser images[] à la place */
-  imageUrl?: string | null;
-  /** @deprecated Utiliser images[] à la place */
-  blurDataUrl?: string | null;
   showDescription?: boolean;
   index?: number;
   /** Custom sizes pour contextes differents (grid vs carousel) */
@@ -45,8 +41,7 @@ export function CollectionCard({
   name,
   description,
   images,
-  imageUrl,
-  blurDataUrl,
+
   showDescription = false,
   index,
   sizes = COLLECTION_IMAGE_SIZES.COLLECTION_CARD,
@@ -61,11 +56,7 @@ export function CollectionCard({
   // Support legacy props (imageUrl/blurDataUrl) en les convertissant en images[]
   // Validation: imageUrl doit etre non-vide apres trim
   const displayImages: CollectionImage[] =
-    images && images.length > 0
-      ? images
-      : imageUrl?.trim()
-        ? [{ url: imageUrl, blurDataUrl, alt: null }]
-        : [];
+    images && images.length > 0 ? images : [];
 
   return (
     <article itemScope itemType="https://schema.org/Collection">
