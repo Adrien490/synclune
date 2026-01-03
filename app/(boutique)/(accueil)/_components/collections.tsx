@@ -44,7 +44,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 			>
 				Passer au bouton Explorer
 			</a>
-			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
 						<SectionTitle id="collections-title">

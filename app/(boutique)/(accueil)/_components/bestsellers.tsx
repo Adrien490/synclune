@@ -43,7 +43,7 @@ export function Bestsellers({ productsPromise, wishlistProductIdsPromise }: Best
 			aria-labelledby="bestsellers-title"
 			aria-describedby="bestsellers-subtitle"
 		>
-			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Baymard UX: Full scope label - "Bijoux les plus vendus" au lieu de "Meilleures ventes" */}
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
