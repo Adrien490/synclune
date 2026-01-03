@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon"],
+  serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "esbuild-wasm"],
 
   images: {
     remotePatterns: [

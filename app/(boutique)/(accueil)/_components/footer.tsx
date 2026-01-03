@@ -153,7 +153,7 @@ export function Footer() {
 							<a
 								href={`mailto:${BRAND.contact.email}`}
 								itemProp="email"
-								className="inline-flex items-center px-3 py-2 min-h-11 text-sm/6 antialiased font-medium text-foreground hover:bg-accent rounded-lg transition-colors duration-200 break-words focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+								className="inline-flex items-center px-3 py-2 min-h-11 text-sm/6 antialiased font-medium text-foreground hover:bg-accent rounded-lg transition-colors duration-200 wrap-break-words focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
 								aria-label="Envoyer un email à Synclune"
 							>
 								{BRAND.contact.email}

@@ -349,7 +349,7 @@ textarea {
    ======================================================================== */
 @layer utilities {
 	/* Gradient Hero avec couleurs logo */
-	.bg-gradient-organic {
+	.bg-linear-organic {
 		background: linear-gradient(
 			to bottom right,
 			oklch(0.8593 0.097 340.78 / 0.2) 0%,

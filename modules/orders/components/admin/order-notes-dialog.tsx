@@ -118,7 +118,7 @@ export function OrderNotesDialog() {
 							>
 								<div className="flex items-start justify-between gap-2">
 									<div className="flex-1 min-w-0">
-										<p className="text-sm whitespace-pre-wrap break-words">
+										<p className="text-sm whitespace-pre-wrap wrap-break-words">
 											{note.content}
 										</p>
 										<div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">

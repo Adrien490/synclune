@@ -77,13 +77,13 @@ export function PageHeader({
 					<div className="min-w-0 flex-1 space-y-3">
 						<h1
 							id="page-title"
-							className="text-3xl lg:text-4xl font-display font-medium tracking-wide text-foreground break-words"
+							className="text-3xl lg:text-4xl font-display font-medium tracking-wide text-foreground wrap-break-words"
 							title={title}
 						>
 							{title}
 						</h1>
 						{description && (
-							<p className="text-base lg:text-lg font-sans text-muted-foreground leading-relaxed max-w-prose break-words">
+							<p className="text-base lg:text-lg font-sans text-muted-foreground leading-relaxed max-w-prose wrap-break-words">
 								{description}
 							</p>
 						)}
@@ -230,7 +230,7 @@ export function PageHeader({
 						<h1
 							id={breadcrumbs.length > 0 ? undefined : "page-title"}
 							className={cn(
-								"text-2xl sm:text-3xl lg:text-4xl font-display font-medium text-foreground tracking-normal break-words",
+								"text-2xl sm:text-3xl lg:text-4xl font-display font-medium text-foreground tracking-normal wrap-break-words",
 								breadcrumbs.length > 0 && "hidden sm:block"
 							)}
 						>
@@ -239,7 +239,7 @@ export function PageHeader({
 
 						{/* Description optionnelle */}
 						{description && (
-							<p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl break-words">
+							<p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl wrap-break-words">
 								{description}
 							</p>
 						)}
