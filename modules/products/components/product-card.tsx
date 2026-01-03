@@ -182,7 +182,7 @@ export function ProductCard({
 						>
 							{colors.length} couleurs disponibles
 						</Link>
-					</p>
+					</div>
 				)}
 
 				{/* Brand Schema.org (Synclune) */}
