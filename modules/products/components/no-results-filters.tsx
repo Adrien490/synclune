@@ -1,20 +1,27 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useFilter, type FilterDefinition } from "@/shared/hooks/use-filter";
 import { FilterBadge } from "@/shared/components/filter-badge";
+import { Button } from "@/shared/components/ui/button";
 import { AnimatePresence } from "motion/react";
 import {
 	FILTER_LABELS,
 	formatPrice,
 } from "@/modules/products/constants/filter-labels.constants";
 
+interface NoResultsFiltersProps {
+	/** URL de reset des filtres */
+	resetUrl?: string;
+}
+
 /**
  * Affiche les filtres actifs dans le NoResultsRecovery
  * Client Component pour la gestion des URL params
  */
-export function NoResultsFilters() {
+export function NoResultsFilters({ resetUrl = "/produits" }: NoResultsFiltersProps) {
 	const searchParams = useSearchParams();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const {
@@ -96,6 +103,11 @@ export function NoResultsFilters() {
 					/>
 				))}
 			</AnimatePresence>
+
+			{/* Bouton reset */}
+			<Button asChild variant="primary">
+				<Link href={resetUrl}>Effacer les filtres</Link>
+			</Button>
 		</div>
 	);
 }

@@ -12,7 +12,6 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 	EmptyDescription,
-	EmptyContent,
 } from "@/shared/components/ui/empty";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
@@ -88,15 +87,8 @@ export async function SearchFallbackSuggestions({
 					</EmptyDescription>
 				</EmptyHeader>
 
-				<EmptyContent className="space-y-4">
-					{/* Filtres actifs avec suppression individuelle (Client Component) */}
-					<NoResultsFilters />
-
-					{/* Bouton reset */}
-					<Button asChild variant="primary">
-						<Link href={baseResetUrl}>Effacer les filtres</Link>
-					</Button>
-				</EmptyContent>
+				{/* Filtres actifs avec suppression individuelle et bouton reset (Client Component) */}
+				<NoResultsFilters resetUrl={baseResetUrl} />
 			</Empty>
 
 			{/* Produits populaires */}
