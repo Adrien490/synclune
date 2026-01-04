@@ -14,12 +14,7 @@ html {
 	/* Breakpoint personnalisé pour très petits écrans (iPhone SE, etc.) */
 	--breakpoint-xs: 375px;
 
-	--font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
 	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
-	--font-display: "Crimson Pro", serif;
-	--font-mono:
-		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
-		Courier New, monospace;
 
 	--blur-1: 1px;
 	--blur-2: 2px;
@@ -851,11 +846,6 @@ textarea {
 	--sidebar-accent-foreground: oklch(0.92 0.005 270);
 	--sidebar-border: oklch(0.8593 0.097 340.78 / 0.2); /* Bordure rose dark */
 	--sidebar-ring: oklch(0.8593 0.097 340.78);
-	--font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
-	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
-	--font-mono:
-		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
-		Courier New, monospace;
 	--shadow-color: 0 0% 0%;
 	--letter-spacing: 0em;
 	--spacing: 0.25rem;
