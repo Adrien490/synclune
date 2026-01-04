@@ -214,6 +214,26 @@ export function MediaUploadGrid({
 		});
 	};
 
+	// WCAG 2.5.7: Alternatives au drag pour réordonner
+	const handleMoveUp = (index: number) => {
+		if (index <= 0) return;
+		const newMedia = arrayMove(media, index, index - 1);
+		// Empêcher une vidéo en première position
+		if (newMedia[0]?.mediaType === "VIDEO") {
+			toast.error("La première position doit être une image, pas une vidéo.");
+			return;
+		}
+		onChange(newMedia);
+		setAnnouncement(`Média déplacé en position ${index}.`);
+	};
+
+	const handleMoveDown = (index: number) => {
+		if (index >= media.length - 1) return;
+		const newMedia = arrayMove(media, index, index + 1);
+		onChange(newMedia);
+		setAnnouncement(`Média déplacé en position ${index + 2}.`);
+	};
+
 	const canAddMore = media.length < maxItems;
 
 	return (
@@ -261,6 +281,9 @@ export function MediaUploadGrid({
 									onImageLoaded={handleImageLoaded}
 									onOpenLightbox={openLightbox}
 									onOpenDeleteDialog={() => handleOpenDeleteDialog(index)}
+									onMoveUp={() => handleMoveUp(index)}
+									onMoveDown={() => handleMoveDown(index)}
+									totalCount={media.length}
 								/>
 							);
 						})}

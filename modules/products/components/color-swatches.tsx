@@ -33,10 +33,10 @@ interface ColorSwatchesProps {
 }
 
 const sizeClasses = {
-	xs: "size-4", // 16px - décoratif uniquement
-	sm: "size-5", // 20px - compact pour cards
-	md: "size-7", // 28px - WCAG 2.5.5 avec espacement ≥16px = 44px total
-	lg: "size-9 sm:size-7", // 36px mobile → 28px desktop (responsive)
+	xs: "size-6", // 24px - WCAG 2.5.8 minimum pour éléments interactifs
+	sm: "size-7", // 28px - compact pour cards (WCAG conforme)
+	md: "size-8", // 32px - WCAG 2.5.5 avec espacement ≥12px = 44px total
+	lg: "size-10 sm:size-8", // 40px mobile → 32px desktop (responsive)
 };
 
 /**

@@ -16,7 +16,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { Expand, GripVertical, MoreVertical, Play, Star, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Expand, GripVertical, MoreVertical, Play, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
 import type { MediaItem } from "./media-upload-grid";
 
@@ -31,6 +31,12 @@ export interface SortableMediaItemProps {
 	onImageLoaded: (url: string) => void;
 	onOpenLightbox: (index: number) => void;
 	onOpenDeleteDialog: () => void;
+	/** WCAG 2.5.7: Alternative au drag pour monter l'élément */
+	onMoveUp?: () => void;
+	/** WCAG 2.5.7: Alternative au drag pour descendre l'élément */
+	onMoveDown?: () => void;
+	/** Nombre total d'éléments (pour déterminer si on peut descendre) */
+	totalCount?: number;
 }
 
 export function SortableMediaItem({
@@ -44,7 +50,12 @@ export function SortableMediaItem({
 	onImageLoaded,
 	onOpenLightbox,
 	onOpenDeleteDialog,
+	onMoveUp,
+	onMoveDown,
+	totalCount = 1,
 }: SortableMediaItemProps) {
+	const canMoveUp = index > 0 && onMoveUp;
+	const canMoveDown = index < totalCount - 1 && onMoveDown;
 	const {
 		attributes,
 		listeners,
@@ -307,6 +318,26 @@ export function SortableMediaItem({
 							<Expand className="h-4 w-4" />
 							Agrandir
 						</DropdownMenuItem>
+						{/* WCAG 2.5.7: Alternatives au drag */}
+						{(canMoveUp || canMoveDown) && <DropdownMenuSeparator />}
+						{canMoveUp && (
+							<DropdownMenuItem
+								onClick={onMoveUp}
+								className="gap-2 py-2.5"
+							>
+								<ArrowUp className="h-4 w-4" />
+								Déplacer vers le haut
+							</DropdownMenuItem>
+						)}
+						{canMoveDown && (
+							<DropdownMenuItem
+								onClick={onMoveDown}
+								className="gap-2 py-2.5"
+							>
+								<ArrowDown className="h-4 w-4" />
+								Déplacer vers le bas
+							</DropdownMenuItem>
+						)}
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
 							variant="destructive"

@@ -1,6 +1,6 @@
 import { getOrderById } from "@/modules/orders/data/get-order-by-id";
 import { notFound } from "next/navigation";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { OrderDetailPage as OrderDetail } from "@/modules/orders/components/admin/order-detail";
 import Link from "next/link";
