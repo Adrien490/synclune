@@ -63,10 +63,11 @@ export async function getReviewOwnership(
 	cacheLife("session")
 	cacheTag(REVIEWS_CACHE_TAGS.USER(userId))
 
-	return prisma.productReview.findFirst({
+	const review = await prisma.productReview.findFirst({
 		where: {
 			id: reviewId,
 			userId,
+			productId: { not: null }, // Exclure les avis orphelins (produit archivé)
 			...notDeleted,
 		},
 		select: {
@@ -75,4 +76,9 @@ export async function getReviewOwnership(
 			userId: true,
 		},
 	})
+
+	// Type guard pour garantir que productId et userId ne sont pas null
+	if (!review || !review.productId || !review.userId) return null
+
+	return review as { id: string; productId: string; userId: string }
 }

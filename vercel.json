@@ -1,0 +1,61 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-carts",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-wishlists",
+      "schedule": "30 2 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-sessions",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-stock-notifications",
+      "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/sync-async-payments",
+      "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/cron/retry-webhooks",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/reconcile-refunds",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/abandoned-orders",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/review-request-emails",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/process-scheduled-discounts",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/process-account-deletions",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-newsletter",
+      "schedule": "0 6 * * 0"
+    },
+    {
+      "path": "/api/cron/cleanup-webhook-events",
+      "schedule": "0 7 1 * *"
+    },
+    {
+      "path": "/api/cron/hard-delete-retention",
+      "schedule": "0 8 1 * *"
+    }
+  ]
+}

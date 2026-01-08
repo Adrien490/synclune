@@ -67,7 +67,8 @@ export const AUTH_RATE_LIMIT_RULES = {
 
 /**
  * Valide que les variables d'environnement requises sont presentes
- * @throws Error si une variable critique est manquante
+ * @throws Error en production si une variable critique est manquante
+ * @logs Warning en dev/test si une variable critique est manquante
  */
 export function validateAuthEnvironment(): void {
 	const requiredEnvVars = [
@@ -79,9 +80,14 @@ export function validateAuthEnvironment(): void {
 		(envVar) => !process.env[envVar]
 	);
 
-	if (missing.length > 0 && process.env.NODE_ENV === "production") {
-		throw new Error(
-			`Variables d'environnement manquantes pour l'authentification: ${missing.join(", ")}`
-		);
+	if (missing.length > 0) {
+		const message = `Variables d'environnement manquantes pour l'authentification: ${missing.join(", ")}`;
+
+		if (process.env.NODE_ENV === "production") {
+			throw new Error(message);
+		}
+
+		// Warning en dev/test pour detecter les problemes tot
+		console.warn(`[AUTH] ${message}`);
 	}
 }

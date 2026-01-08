@@ -44,6 +44,7 @@ async function fetchWishlistProductIds(
 	const wishlistItems = await prisma.wishlistItem.findMany({
 		where: {
 			wishlist: userId ? { userId } : { sessionId },
+			productId: { not: null }, // Exclure les items dont le produit a été archivé
 			product: {
 				status: "PUBLIC",
 			},
@@ -51,5 +52,6 @@ async function fetchWishlistProductIds(
 		select: { productId: true },
 	});
 
-	return new Set(wishlistItems.map((item) => item.productId));
+	// Filtrer les nulls (ne devrait pas arriver avec le where ci-dessus, mais TypeScript l'exige)
+	return new Set(wishlistItems.map((item) => item.productId).filter((id): id is string => id !== null));
 }

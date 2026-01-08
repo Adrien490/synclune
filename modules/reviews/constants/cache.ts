@@ -92,21 +92,26 @@ export function cacheReviewsAdmin() {
 
 /**
  * Tags à invalider lors de la création/modification/suppression d'un avis
+ * Note: productId peut être null si le produit a été archivé
  */
 export function getReviewInvalidationTags(
-	productId: string,
+	productId: string | null,
 	userId: string,
 	reviewId?: string
 ): string[] {
 	const tags: string[] = [
-		REVIEWS_CACHE_TAGS.PRODUCT(productId),
-		REVIEWS_CACHE_TAGS.STATS(productId),
 		REVIEWS_CACHE_TAGS.USER(userId),
 		REVIEWS_CACHE_TAGS.REVIEWABLE(userId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		// Les avis impactent le tri par popularité
 		PRODUCTS_CACHE_TAGS.POPULAR,
 	]
+
+	// Ajouter les tags produit seulement si le produit existe encore
+	if (productId) {
+		tags.push(REVIEWS_CACHE_TAGS.PRODUCT(productId))
+		tags.push(REVIEWS_CACHE_TAGS.STATS(productId))
+	}
 
 	if (reviewId) {
 		tags.push(REVIEWS_CACHE_TAGS.DETAIL(reviewId))
@@ -118,17 +123,24 @@ export function getReviewInvalidationTags(
 /**
  * Tags à invalider lors de la modération admin (hide/unhide)
  * Ne touche pas le cache utilisateur
+ * Note: productId peut être null si le produit a été archivé
  */
 export function getReviewModerationTags(
-	productId: string,
+	productId: string | null,
 	reviewId: string
 ): string[] {
-	return [
-		REVIEWS_CACHE_TAGS.PRODUCT(productId),
-		REVIEWS_CACHE_TAGS.STATS(productId),
+	const tags = [
 		REVIEWS_CACHE_TAGS.DETAIL(reviewId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		// La modération impacte le tri par popularité
 		PRODUCTS_CACHE_TAGS.POPULAR,
 	]
+
+	// Ajouter les tags produit seulement si le produit existe encore
+	if (productId) {
+		tags.push(REVIEWS_CACHE_TAGS.PRODUCT(productId))
+		tags.push(REVIEWS_CACHE_TAGS.STATS(productId))
+	}
+
+	return tags
 }

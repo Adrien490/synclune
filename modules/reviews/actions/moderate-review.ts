@@ -73,7 +73,10 @@ export async function moderateReview(
 			})
 
 			// Recalculer les stats (car seuls les PUBLISHED comptent)
-			await updateProductReviewStats(tx, review.productId)
+			// Seulement si le produit existe encore
+			if (review.productId) {
+				await updateProductReviewStats(tx, review.productId)
+			}
 		})
 
 		// 5. Invalider le cache

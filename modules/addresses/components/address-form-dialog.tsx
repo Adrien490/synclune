@@ -222,7 +222,8 @@ function AddressFormContent({
 								<div className="space-y-2">
 									<Label htmlFor={field.name}>
 										Adresse
-										<span className="text-destructive ml-1">*</span>
+										<span className="text-destructive ml-1" aria-hidden="true">*</span>
+										<span className="sr-only">(requis)</span>
 									</Label>
 									<Autocomplete<SearchAddressResult>
 										name={field.name}
@@ -260,11 +261,16 @@ function AddressFormContent({
 										noResultsMessage="Aucune adresse trouvée"
 										minQueryLength={3}
 										debounceMs={0}
+										aria-required="true"
+										aria-invalid={field.state.meta.errors.length > 0}
+										aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
 									/>
 									{field.state.meta.errors.length > 0 && (
 										<p
+											id={`${field.name}-error`}
 											className="text-sm text-destructive font-medium"
 											role="alert"
+											aria-live="assertive"
 										>
 											{field.state.meta.errors.join(", ")}
 										</p>

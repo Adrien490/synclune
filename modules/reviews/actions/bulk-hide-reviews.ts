@@ -62,7 +62,8 @@ export async function bulkHideReviews(
 		}
 
 		// 4. Masquer tous les avis et recalculer les stats
-		const productIds = [...new Set(reviews.map((r) => r.productId))]
+		// Filtrer les productIds null (produits archivés)
+		const productIds = [...new Set(reviews.map((r) => r.productId).filter((id): id is string => id !== null))]
 
 		await prisma.$transaction(async (tx) => {
 			// Masquer tous les avis
@@ -74,7 +75,7 @@ export async function bulkHideReviews(
 				data: { status: "HIDDEN" },
 			})
 
-			// Recalculer les stats pour chaque produit affecté
+			// Recalculer les stats pour chaque produit affecté (seulement ceux qui existent encore)
 			for (const productId of productIds) {
 				await updateProductReviewStats(tx, productId)
 			}

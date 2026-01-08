@@ -18,11 +18,11 @@ export const callbackURLSchema = z
 
 /**
  * Schéma de validation pour les nouveaux mots de passe
- * Simplifié selon Baymard Institute (6-8 chars suffisent)
+ * Aligné sur AUTH_PASSWORD_CONFIG.minLength (8 caractères)
  */
 export const newPasswordSchema = z
 	.string()
-	.min(6, "Le mot de passe doit contenir au moins 6 caractères")
+	.min(8, "Le mot de passe doit contenir au moins 8 caractères")
 	.max(128, "Le mot de passe ne doit pas dépasser 128 caractères");
 
 // ============================================================================
@@ -36,11 +36,11 @@ export const changePasswordSchema = z
 			.min(1, "Le mot de passe actuel est requis"),
 		newPassword: z
 			.string()
-			.min(6, "Le nouveau mot de passe doit contenir au moins 6 caractères")
+			.min(8, "Le nouveau mot de passe doit contenir au moins 8 caractères")
 			.max(128, "Le nouveau mot de passe ne doit pas dépasser 128 caractères"),
 		confirmPassword: z
 			.string()
-			.min(6, "Le mot de passe doit contenir au moins 6 caractères")
+			.min(8, "Le mot de passe doit contenir au moins 8 caractères")
 			.max(128, "Le mot de passe ne doit pas dépasser 128 caractères"),
 	})
 	.refine((data) => data.newPassword === data.confirmPassword, {
@@ -85,8 +85,8 @@ export type SignInSocialInput = z.infer<typeof signInSocialSchema>;
 
 export const signUpEmailSchema = z
 	.object({
-		email: z.email({ message: "Vérifie le format de ton email (ex: nom@domaine.com)" }),
-		confirmEmail: z.email({ message: "Vérifie le format de ton email" }),
+		email: z.email({ message: "Vérifie le format de ton email (ex: nom@domaine.com)" }).transform((e) => e.toLowerCase()),
+		confirmEmail: z.email({ message: "Vérifie le format de ton email" }).transform((e) => e.toLowerCase()),
 		password: newPasswordSchema,
 		name: z
 			.string()

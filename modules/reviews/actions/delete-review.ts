@@ -89,8 +89,10 @@ export async function deleteReview(
 				data: { deletedAt: new Date() },
 			})
 
-			// Mettre à jour les statistiques du produit
-			await updateProductReviewStats(tx, existingReview.productId)
+			// Mettre à jour les statistiques du produit (si le produit existe encore)
+			if (existingReview.productId) {
+				await updateProductReviewStats(tx, existingReview.productId)
+			}
 		})
 
 		// 6. Invalider le cache

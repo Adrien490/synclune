@@ -22,6 +22,8 @@ export async function handleCheckoutSessionCompleted(
 	}
 
 	// Récupérer l'ID de commande depuis les metadata
+	// Priorité: metadata.orderId (standard) puis client_reference_id (fallback legacy)
+	// Les deux sont définis lors de la création de la session checkout pour compatibilité
 	const orderId = session.metadata?.orderId || session.client_reference_id;
 
 	if (!orderId) {

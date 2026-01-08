@@ -9,6 +9,21 @@ import type { RefundSyncResult, RefundRecord } from "../types/webhook.types";
 // Re-export types for backwards compatibility
 export type { RefundSyncResult, RefundRecord };
 
+/** Valeurs valides de CurrencyCode */
+const VALID_CURRENCY_CODES: Set<string> = new Set(Object.values(CurrencyCode));
+
+/**
+ * Valide et retourne un CurrencyCode, avec fallback sur EUR si invalide
+ */
+function validateCurrencyCode(currency: string | undefined | null): CurrencyCode {
+	const normalized = currency?.toUpperCase() || "EUR";
+	if (VALID_CURRENCY_CODES.has(normalized)) {
+		return normalized as CurrencyCode;
+	}
+	console.warn(`⚠️ [WEBHOOK] Unknown currency code: ${currency}, defaulting to EUR`);
+	return CurrencyCode.EUR;
+}
+
 /**
  * Synchronise les remboursements Stripe avec la base de données
  * Gère les remboursements via l'app et via Dashboard Stripe
@@ -19,6 +34,15 @@ export async function syncStripeRefunds(
 	orderId: string
 ): Promise<void> {
 	const stripeRefunds = charge.refunds?.data || [];
+
+	// ⚠️ AUDIT FIX: Batch toutes les opérations pour éviter N+1 queries
+	// Collecter les opérations à effectuer
+	type RefundOperation =
+		| { type: "updateStatus"; id: string }
+		| { type: "linkRefund"; id: string; stripeRefundId: string; status: RefundStatus }
+		| { type: "upsertDashboard"; stripeRefundId: string; amount: number; currency: string; status: RefundStatus };
+
+	const operations: RefundOperation[] = [];
 
 	for (const stripeRefund of stripeRefunds) {
 		if (!stripeRefund.id) continue;
@@ -33,11 +57,7 @@ export async function syncStripeRefunds(
 				existingRefund.status !== RefundStatus.COMPLETED &&
 				stripeRefund.status === "succeeded"
 			) {
-				await prisma.refund.update({
-					where: { id: existingRefund.id },
-					data: { status: RefundStatus.COMPLETED },
-				});
-				console.log(`✅ [WEBHOOK] Refund ${existingRefund.id} marked as COMPLETED`);
+				operations.push({ type: "updateStatus", id: existingRefund.id });
 			}
 		} else {
 			// Nouveau remboursement - peut venir de l'app ou du Dashboard Stripe
@@ -45,43 +65,76 @@ export async function syncStripeRefunds(
 
 			if (refundId) {
 				// Remboursement créé via notre app - le lier
-				await prisma.refund.update({
-					where: { id: refundId },
-					data: {
-						stripeRefundId: stripeRefund.id,
-						status: stripeRefund.status === "succeeded"
-							? RefundStatus.COMPLETED
-							: RefundStatus.PENDING,
-						processedAt: new Date(),
-					},
+				operations.push({
+					type: "linkRefund",
+					id: refundId,
+					stripeRefundId: stripeRefund.id,
+					status: stripeRefund.status === "succeeded"
+						? RefundStatus.COMPLETED
+						: RefundStatus.PENDING,
 				});
-				console.log(`✅ [WEBHOOK] Linked existing refund ${refundId} to Stripe refund ${stripeRefund.id}`);
 			} else {
 				// Remboursement fait depuis Stripe Dashboard - upsert pour idempotence
-				await prisma.refund.upsert({
-					where: { stripeRefundId: stripeRefund.id },
-					create: {
-						orderId,
-						stripeRefundId: stripeRefund.id,
-						amount: stripeRefund.amount || 0,
-						currency: (stripeRefund.currency?.toUpperCase() || "EUR") as CurrencyCode,
-						reason: "OTHER",
-						status: stripeRefund.status === "succeeded"
-							? RefundStatus.COMPLETED
-							: RefundStatus.PENDING,
-						note: "Remboursement effectué via Dashboard Stripe",
-						processedAt: new Date(),
-					},
-					update: {
-						status: stripeRefund.status === "succeeded"
-							? RefundStatus.COMPLETED
-							: RefundStatus.PENDING,
-						processedAt: new Date(),
-					},
+				operations.push({
+					type: "upsertDashboard",
+					stripeRefundId: stripeRefund.id,
+					amount: stripeRefund.amount || 0,
+					currency: stripeRefund.currency || "EUR",
+					status: stripeRefund.status === "succeeded"
+						? RefundStatus.COMPLETED
+						: RefundStatus.PENDING,
 				});
-				console.log(`⚠️ [WEBHOOK] Upserted refund record for Stripe Dashboard refund ${stripeRefund.id}`);
 			}
 		}
+	}
+
+	// Exécuter toutes les opérations en parallèle
+	if (operations.length > 0) {
+		const now = new Date();
+
+		await Promise.all(
+			operations.map((op) => {
+				switch (op.type) {
+					case "updateStatus":
+						console.log(`✅ [WEBHOOK] Refund ${op.id} marked as COMPLETED`);
+						return prisma.refund.update({
+							where: { id: op.id },
+							data: { status: RefundStatus.COMPLETED },
+						});
+
+					case "linkRefund":
+						console.log(`✅ [WEBHOOK] Linked existing refund ${op.id} to Stripe refund ${op.stripeRefundId}`);
+						return prisma.refund.update({
+							where: { id: op.id },
+							data: {
+								stripeRefundId: op.stripeRefundId,
+								status: op.status,
+								processedAt: now,
+							},
+						});
+
+					case "upsertDashboard":
+						console.log(`⚠️ [WEBHOOK] Upserted refund record for Stripe Dashboard refund ${op.stripeRefundId}`);
+						return prisma.refund.upsert({
+							where: { stripeRefundId: op.stripeRefundId },
+							create: {
+								orderId,
+								stripeRefundId: op.stripeRefundId,
+								amount: op.amount,
+								currency: validateCurrencyCode(op.currency),
+								reason: "OTHER",
+								status: op.status,
+								note: "Remboursement effectué via Dashboard Stripe",
+								processedAt: now,
+							},
+							update: {
+								status: op.status,
+								processedAt: now,
+							},
+						});
+				}
+			})
+		);
 	}
 }
 
@@ -210,7 +263,7 @@ export async function findRefundByStripeId(
 /**
  * Mappe le statut Stripe vers notre statut RefundStatus
  */
-export function mapStripeRefundStatus(stripeStatus: string | undefined): RefundStatus {
+export function mapStripeRefundStatus(stripeStatus: string | undefined | null): RefundStatus {
 	const statusMap: Record<string, RefundStatus> = {
 		succeeded: RefundStatus.COMPLETED,
 		pending: RefundStatus.APPROVED,

@@ -53,7 +53,7 @@ export async function fetchUserAddresses(
 	userId: string
 ): Promise<GetUserAddressesReturn> {
 	"use cache: private";
-	cacheLife("cart");
+	cacheLife("dashboard");
 	cacheTag(ADDRESSES_CACHE_TAGS.USER_ADDRESSES(userId));
 
 	const addresses = await prisma.address.findMany({

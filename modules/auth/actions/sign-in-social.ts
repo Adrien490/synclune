@@ -54,7 +54,7 @@ export const signInSocial = async (
 			throw err;
 		}
 
-		const errorMessage = err instanceof Error ? err.message : "Une erreur inattendue est survenue";
-		return error(errorMessage);
+		// Message générique pour éviter l'exposition d'erreurs techniques
+		return error("Une erreur est survenue lors de la connexion. Veuillez réessayer.");
 	}
 };

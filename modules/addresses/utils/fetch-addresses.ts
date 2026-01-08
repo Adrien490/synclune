@@ -45,11 +45,16 @@ export async function fetchAddresses(
 			limit: params.maximumResponses || 5,
 		};
 	} catch (error) {
-		// Gestion des erreurs
-		if (error instanceof Error) {
-			throw new Error(`Erreur lors de la recherche d'adresse: ${error.message}`);
-		}
+		// Log l'erreur pour debugging mais retourne un résultat vide pour ne pas bloquer l'UI
+		const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
+		console.error(`[ADDRESS-SEARCH] Erreur API BAN: ${errorMessage}`);
 
-		throw new Error("Une erreur inconnue s'est produite lors de la recherche");
+		// Retourne un résultat vide plutôt que de throw
+		// L'utilisateur peut toujours saisir son adresse manuellement
+		return {
+			addresses: [],
+			query: params.text,
+			limit: params.maximumResponses || 5,
+		};
 	}
 }

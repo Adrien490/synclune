@@ -10,53 +10,76 @@ import { handleAsyncPaymentSucceeded, handleAsyncPaymentFailed } from "../handle
 type EventHandler = (event: Stripe.Event) => Promise<WebhookHandlerResult | null>;
 
 /**
+ * Type helpers pour extraire les données d'événements Stripe
+ * NOTE: Stripe SDK ne fournit pas de type narrowing basé sur event.type
+ * Ces assertions sont nécessaires et sûres car Stripe garantit le type par événement
+ * @see https://stripe.com/docs/api/events/types
+ */
+function getCheckoutSession(event: Stripe.Event): Stripe.Checkout.Session {
+	return event.data.object as Stripe.Checkout.Session;
+}
+
+function getPaymentIntent(event: Stripe.Event): Stripe.PaymentIntent {
+	return event.data.object as Stripe.PaymentIntent;
+}
+
+function getCharge(event: Stripe.Event): Stripe.Charge {
+	return event.data.object as Stripe.Charge;
+}
+
+function getRefund(event: Stripe.Event): Stripe.Refund {
+	return event.data.object as Stripe.Refund;
+}
+
+/**
  * Registry des handlers par type d'événement
  * Chaque handler reçoit l'événement Stripe et retourne optionnellement des tâches post-webhook
+ * Les extracteurs (getCheckoutSession, etc.) documentent le type attendu par événement
  */
 const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	// === CHECKOUT ===
 	"checkout.session.completed": async (e) =>
-		handleCheckoutSessionCompleted(e.data.object as Stripe.Checkout.Session),
+		handleCheckoutSessionCompleted(getCheckoutSession(e)),
 	"checkout.session.expired": async (e) => {
-		await handleCheckoutSessionExpired(e.data.object as Stripe.Checkout.Session);
+		await handleCheckoutSessionExpired(getCheckoutSession(e));
 		return null;
 	},
 
 	// === PAYMENT INTENT ===
 	"payment_intent.succeeded": async (e) => {
-		await handlePaymentSuccess(e.data.object as Stripe.PaymentIntent);
+		await handlePaymentSuccess(getPaymentIntent(e));
 		return null;
 	},
 	"payment_intent.payment_failed": async (e) => {
-		await handlePaymentFailure(e.data.object as Stripe.PaymentIntent);
+		await handlePaymentFailure(getPaymentIntent(e));
 		return null;
 	},
 	"payment_intent.canceled": async (e) => {
-		await handlePaymentCanceled(e.data.object as Stripe.PaymentIntent);
+		await handlePaymentCanceled(getPaymentIntent(e));
 		return null;
 	},
 
 	// === REFUND ===
 	"charge.refunded": async (e) =>
-		handleChargeRefunded(e.data.object as Stripe.Charge),
+		handleChargeRefunded(getCharge(e)),
 	"refund.created": async (e) => {
-		await handleRefundUpdated(e.data.object as Stripe.Refund);
+		await handleRefundUpdated(getRefund(e));
 		return null;
 	},
 	"refund.updated": async (e) => {
-		await handleRefundUpdated(e.data.object as Stripe.Refund);
+		await handleRefundUpdated(getRefund(e));
 		return null;
 	},
 	"refund.failed": async (e) => {
-		await handleRefundFailed(e.data.object as Stripe.Refund);
+		await handleRefundFailed(getRefund(e));
 		return null;
 	},
 
 	// === ASYNC PAYMENT (SEPA, Sofort, etc.) ===
 	"checkout.session.async_payment_succeeded": async (e) =>
-		handleAsyncPaymentSucceeded(e.data.object as Stripe.Checkout.Session),
+		handleAsyncPaymentSucceeded(getCheckoutSession(e)),
 	"checkout.session.async_payment_failed": async (e) => {
-		await handleAsyncPaymentFailed(e.data.object as Stripe.Checkout.Session);
+		await handleAsyncPaymentFailed(getCheckoutSession(e));
 		return null;
 	},
 };

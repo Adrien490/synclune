@@ -398,14 +398,12 @@ model ProductSku {
   @@unique([productId, colorId, size, materialId])
   // Indexes optimisés pour requêtes fréquentes
   @@index([productId, isActive, inventory]) // Stock actif par produit, couvre aussi [productId, isActive]
-  @@index([isActive, inventory, updatedAt(sort: Desc)])
+  @@index([isActive, inventory(sort: Asc), updatedAt(sort: Desc)]) // Stock alerts (low inventory first)
   @@index([isActive, priceInclTax])
   @@index([productId, isDefault])
   @@index([colorId, isActive]) // Filtrage catalogue par couleur
   @@index([materialId, isActive]) // Filtrage catalogue par matériau
-  @@index([deletedAt])
-  @@index([productId, isActive, deletedAt])
-  @@index([isActive, inventory, priceInclTax]) // Covering index calcul valeur stock
+  @@index([productId, isActive, deletedAt]) // Soft delete + product queries (couvre deletedAt seul)
 }
 
 model SkuMedia {
@@ -506,14 +504,16 @@ model WishlistItem {
   wishlistId String
   wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  // ⚠️ SetNull permet l'archivage produit sans bloquer les wishlists existantes
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete (RGPD - Art. L123-22 Code de Commerce : 10 ans)
 
   // Un produit ne peut être ajouté qu'une seule fois par wishlist
+  // Note: Contrainte unique sur champ nullable - validation métier côté applicatif
   @@unique([wishlistId, productId])
   @@index([wishlistId])
   @@index([productId])
@@ -689,14 +689,11 @@ model Order {
 
   // === INDEXES OPTIMISÉS ===
   @@index([userId])
-  // Statuts (index composites uniquement)
-  @@index([status, id])
-  @@index([paymentStatus, id])
-  @@index([fulfillmentStatus, id])
   // Chronologique
   @@index([userId, createdAt(sort: Desc)])
-  @@index([userId, paymentStatus, createdAt(sort: Desc)]) // Covering index "Mes commandes"
+  @@index([userId, paymentStatus, deletedAt, createdAt(sort: Desc)]) // Covering index "Mes commandes" avec soft-delete
   @@index([status, createdAt])
+  @@index([paymentStatus, paidAt, deletedAt]) // KPIs Dashboard (revenue, order count aggregates)
   @@index([customerEmail]) // Recherche support client
   @@index([deletedAt]) // Soft delete filter
   @@index([deletedAt, status, createdAt]) // Index composite pour listings admin (soft-delete + status)
@@ -750,12 +747,16 @@ model OrderHistory {
   /// Timestamp de l'action
   createdAt DateTime @default(now())
 
+  // === SOFT DELETE (Conformité légale - Conservation 10 ans avec la commande) ===
+  deletedAt DateTime?
+
   // === INDEXES ===
   // Note: @@index([orderId]) supprimé (couvert par composite)
   @@index([orderId, createdAt(sort: Desc)])
   @@index([action])
   @@index([authorId])
   @@index([createdAt(sort: Desc)])
+  @@index([deletedAt])
 }
 
 model OrderItem {
@@ -806,6 +807,7 @@ model OrderItem {
   @@index([productId])
   @@index([skuId])
   @@index([productId, orderId]) // Analytics top produits
+  @@index([productId, createdAt(sort: Desc)]) // Calcul bestsellers / popularité produits
 }
 
 /// Notes internes sur les commandes (visibles uniquement par les admins)
@@ -909,7 +911,7 @@ model Refund {
   @@index([createdAt(sort: Desc)])
   @@index([status, createdAt]) // Couvre aussi status seul
   @@index([status, processedAt]) // Dashboard: stats remboursements par periode
-  @@index([deletedAt])
+  @@index([deletedAt, status, createdAt(sort: Desc)]) // Dashboard admin listing (soft-delete + status + pagination)
 }
 
 model RefundItem {
@@ -957,7 +959,11 @@ model RefundHistory {
 
   createdAt DateTime @default(now())
 
+  // === SOFT DELETE (Conformité légale - Conservation 10 ans avec le remboursement) ===
+  deletedAt DateTime?
+
   @@index([refundId, createdAt]) // Couvre aussi refundId seul
+  @@index([deletedAt])
 }
 
 // ============================================================================
@@ -1029,7 +1035,7 @@ model DiscountUsage {
 
   @@index([orderId])
   @@index([discountId, userId]) // Pour vérifier usage par utilisateur, couvre aussi discountId seul
-  @@index([userId, discountId, deletedAt]) // Vérification limite par user avec soft-delete, couvre aussi userId seul
+  @@index([userId, createdAt(sort: Desc)]) // Historique usage par user
   @@index([deletedAt])
 }
 
@@ -1159,12 +1165,14 @@ model ProductReview {
   // === RELATIONS PRINCIPALES ===
   // Produit concerné (relation vers Product, pas ProductSku)
   // Les avis sont au niveau produit, pas variante
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  // ⚠️ SetNull permet l'archivage produit sans bloquer (avis conservé, productId devient null)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   // Auteur de l'avis (acheteur vérifié)
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  // ⚠️ SetNull pour conformité RGPD (anonymisation utilisateur possible)
+  userId String?
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Preuve d'achat : OrderItem du PREMIER achat ayant permis de laisser l'avis
   // Ce champ ne change pas lors des mises à jour de l'avis (même si rachat ultérieur)
@@ -1192,6 +1200,8 @@ model ProductReview {
   // === CONTRAINTES ===
   // Un utilisateur ne peut laisser qu'un seul avis par produit
   // S'il rachète le produit, il peut modifier son avis existant
+  // Note: Contrainte unique sur champs nullable - PostgreSQL permet plusieurs (NULL, NULL)
+  // La validation métier est faite côté applicatif pour les avis actifs
   @@unique([userId, productId])
 
   // === INDEXES ===

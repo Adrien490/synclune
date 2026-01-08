@@ -204,8 +204,6 @@ export const auth = betterAuth({
 
 			// 🔴 CORRECTION : Handler global pour tous les événements Stripe (monitoring)
 			onEvent: async (event) => {
-				// Logger tous les événements Stripe pour faciliter le debugging
-// console.log(`[STRIPE EVENT] ${event.type} (ID: ${event.id})`);
 
 				// TODO: Optionnel - Envoyer à un système de monitoring
 				// if (process.env.NODE_ENV === "production") {

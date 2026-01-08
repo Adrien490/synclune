@@ -20,6 +20,68 @@ import type {
 import { getBaseUrl } from "@/shared/constants/urls";
 import { CHECKOUT_VALIDATION_TIMEOUT_MS } from "../constants/webhook.constants";
 
+/**
+ * Mappe un order Prisma vers OrderWithItems
+ * Évite les type assertions dangereuses (as unknown as)
+ */
+function mapToOrderWithItems(order: {
+	id: string;
+	orderNumber: string;
+	userId: string | null;
+	shippingFirstName: string | null;
+	shippingLastName: string | null;
+	shippingAddress1: string | null;
+	shippingAddress2: string | null;
+	shippingPostalCode: string | null;
+	shippingCity: string | null;
+	shippingCountry: string | null;
+	shippingPhone: string | null;
+	subtotal: number;
+	discountAmount: number;
+	shippingCost: number;
+	taxAmount: number;
+	total: number;
+	items: Array<{
+		productTitle: string | null;
+		skuColor: string | null;
+		skuMaterial: string | null;
+		skuSize: string | null;
+		quantity: number;
+		price: number;
+		skuId: string;
+		sku: { id: string; inventory: number; sku: string } | null;
+	}>;
+}): OrderWithItems {
+	return {
+		id: order.id,
+		orderNumber: order.orderNumber,
+		userId: order.userId,
+		shippingFirstName: order.shippingFirstName,
+		shippingLastName: order.shippingLastName,
+		shippingAddress1: order.shippingAddress1,
+		shippingAddress2: order.shippingAddress2,
+		shippingPostalCode: order.shippingPostalCode,
+		shippingCity: order.shippingCity,
+		shippingCountry: order.shippingCountry,
+		shippingPhone: order.shippingPhone,
+		subtotal: order.subtotal,
+		discountAmount: order.discountAmount,
+		shippingCost: order.shippingCost,
+		taxAmount: order.taxAmount,
+		total: order.total,
+		items: order.items.map((item) => ({
+			productTitle: item.productTitle,
+			skuColor: item.skuColor,
+			skuMaterial: item.skuMaterial,
+			skuSize: item.skuSize,
+			quantity: item.quantity,
+			price: item.price,
+			skuId: item.skuId,
+			sku: item.sku,
+		})),
+	};
+}
+
 async function validateWithTimeout(
 	validateFn: () => Promise<SkuValidationResult>,
 	skuId: string
@@ -110,7 +172,7 @@ export async function processOrderTransaction(
 		// 2. Vérifier l'idempotence - Si déjà traité, on skip
 		if (order.paymentStatus === "PAID") {
 			console.log(`⚠️  [WEBHOOK] Order ${orderId} already processed, skipping`);
-			return order as unknown as OrderWithItems;
+			return mapToOrderWithItems(order);
 		}
 
 		// 3. Re-validation de tous les items AVANT de marquer comme PAID
@@ -195,7 +257,7 @@ export async function processOrderTransaction(
 
 		console.log("✅ [WEBHOOK] Order processed successfully:", order.orderNumber);
 
-		return order as unknown as OrderWithItems;
+		return mapToOrderWithItems(order);
 	});
 }
 

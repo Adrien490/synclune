@@ -14,9 +14,11 @@ import {
  * NOTE: Ce handler ne gère pas les emails car checkout.session.completed le fait déjà
  */
 export async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-	const orderId = paymentIntent.metadata.order_id;
+	const orderId = paymentIntent.metadata?.order_id;
 
 	if (!orderId) {
+		// Log pour debugging - pas d'erreur car certains PaymentIntent n'ont pas d'order_id (ex: paiements hors checkout)
+		console.warn(`⚠️ [WEBHOOK] payment_intent.succeeded without order_id in metadata (PI: ${paymentIntent.id})`);
 		return;
 	}
 

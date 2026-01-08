@@ -11,12 +11,29 @@ export type { PaymentFailureDetails };
 /**
  * Met à jour une commande comme payée (via payment_intent.succeeded)
  * NOTE: Ce handler ne gère pas les emails car checkout.session.completed le fait déjà
+ * Idempotent: si la commande est déjà PAID, l'opération est ignorée
  */
 export async function markOrderAsPaid(
 	orderId: string,
 	paymentIntentId: string
 ): Promise<void> {
 	await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+		// Vérification d'idempotence
+		const order = await tx.order.findUnique({
+			where: { id: orderId },
+			select: { paymentStatus: true },
+		});
+
+		if (!order) {
+			console.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsPaid`);
+			return;
+		}
+
+		if (order.paymentStatus === "PAID") {
+			console.log(`⏭️ [WEBHOOK] Order ${orderId} already marked as PAID, skipping`);
+			return;
+		}
+
 		await tx.order.update({
 			where: { id: orderId },
 			data: {
@@ -26,6 +43,8 @@ export async function markOrderAsPaid(
 				paidAt: new Date(),
 			},
 		});
+
+		console.log(`✅ [WEBHOOK] Order ${orderId} marked as PAID via payment_intent.succeeded`);
 	});
 }
 
@@ -77,17 +96,26 @@ export async function restoreStockForOrder(
 		return { shouldRestore: false, itemCount: 0 };
 	}
 
-	// Restaurer le stock dans une transaction
+	// Restaurer le stock dans une transaction (batch pour éviter N+1)
+	// Grouper les quantités par skuId au cas où plusieurs items ont le même SKU
+	const stockUpdates = new Map<string, number>();
+	for (const item of order.items) {
+		const current = stockUpdates.get(item.skuId) || 0;
+		stockUpdates.set(item.skuId, current + item.quantity);
+	}
+
 	await prisma.$transaction(async (tx) => {
-		for (const item of order.items) {
-			await tx.productSku.update({
-				where: { id: item.skuId },
-				data: {
-					inventory: { increment: item.quantity },
-					isActive: true,
-				},
-			});
-		}
+		await Promise.all(
+			Array.from(stockUpdates.entries()).map(([skuId, quantity]) =>
+				tx.productSku.update({
+					where: { id: skuId },
+					data: {
+						inventory: { increment: quantity },
+						isActive: true,
+					},
+				})
+			)
+		);
 	});
 
 	console.log(`📦 [WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`);

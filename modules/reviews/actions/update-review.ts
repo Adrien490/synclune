@@ -121,7 +121,10 @@ export async function updateReview(
 			}
 
 			// Mettre à jour les statistiques du produit (la note a pu changer)
-			await updateProductReviewStats(tx, existingReview.productId)
+			// Seulement si le produit existe encore
+			if (existingReview.productId) {
+				await updateProductReviewStats(tx, existingReview.productId)
+			}
 
 			return updatedReview
 		})

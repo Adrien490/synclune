@@ -82,6 +82,11 @@ export async function createReviewResponse(
 			return notFound("Avis")
 		}
 
+		// Vérifier que l'avis n'est pas orphelin (produit/user supprimé)
+		if (!review.productId || !review.user || !review.product) {
+			return error("Impossible de répondre à cet avis (produit ou utilisateur supprimé)")
+		}
+
 		if (review.response) {
 			return error(REVIEW_ERROR_MESSAGES.RESPONSE_ALREADY_EXISTS)
 		}

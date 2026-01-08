@@ -123,6 +123,12 @@ export async function mergeWishlists(
 		// 5. Fusionner les items dans une transaction atomique
 		await prisma.$transaction(async (tx) => {
 			for (const guestItem of guestWishlist.items) {
+				// Skip les items orphelins (produit archivé/supprimé)
+				if (!guestItem.productId || !guestItem.product) {
+					skippedCount++;
+					continue;
+				}
+
 				// Skip les produits non publics
 				if (guestItem.product.status !== "PUBLIC") {
 					skippedCount++;

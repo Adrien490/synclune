@@ -121,10 +121,12 @@ export async function exportUserData(): Promise<ActionState> {
 				},
 			})),
 			wishlist:
-				user.wishlist?.items.map((item) => ({
-					productTitle: item.product.title,
-					addedAt: item.createdAt.toISOString(),
-				})) ?? [],
+				user.wishlist?.items
+					.filter((item) => item.product !== null) // Exclure les items orphelins
+					.map((item) => ({
+						productTitle: item.product!.title,
+						addedAt: item.createdAt.toISOString(),
+					})) ?? [],
 			discountUsages: user.discountUsages.map((usage) => ({
 				code: usage.discount.code,
 				amountApplied: usage.amountApplied / 100, // Convertir centimes en euros
