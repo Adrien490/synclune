@@ -1,7 +1,6 @@
 import { verifyCronRequest, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
 import { processScheduledDiscounts } from "@/modules/cron/services/process-scheduled-discounts.service";
 
-export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 export async function GET() {

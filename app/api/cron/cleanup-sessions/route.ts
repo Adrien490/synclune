@@ -1,7 +1,6 @@
 import { verifyCronRequest, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
 import { cleanupExpiredSessions } from "@/modules/cron/services/cleanup-sessions.service";
 
-export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 export async function GET() {

@@ -1,7 +1,6 @@
 import { verifyCronRequest, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
 import { reconcilePendingRefunds } from "@/modules/cron/services/reconcile-refunds.service";
 
-export const dynamic = "force-dynamic";
 export const maxDuration = 60; // 1 minute max
 
 export async function GET() {
