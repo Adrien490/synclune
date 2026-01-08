@@ -77,9 +77,11 @@ export function MediaUploadGrid({
 	// État du lightbox (null = fermé, number = index ouvert)
 	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-	// État du drag actif pour DragOverlay (index pour O(1) lookup)
+	// Etat du drag actif pour DragOverlay (index pour O(1) lookup)
 	const [activeIndex, setActiveIndex] = useState<number | null>(null);
-	const activeMedia = activeIndex !== null ? media[activeIndex] : null;
+	// Verification bounds: activeIndex pourrait etre hors limites si media change pendant drag
+	const activeMedia =
+		activeIndex !== null && activeIndex < media.length ? media[activeIndex] : null;
 
 	// État pour les annonces accessibilité (aria-live)
 	const [announcement, setAnnouncement] = useState<string>("");

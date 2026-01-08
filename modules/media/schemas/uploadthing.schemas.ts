@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file";
 
 // ============================================================================
 // UPLOADTHING SCHEMAS
@@ -6,8 +7,14 @@ import { z } from "zod";
 
 /**
  * Schema URL pour les fichiers UploadThing
+ * Valide que l'URL est bien formee et provient d'un domaine UploadThing autorise
  */
-const uploadThingUrlSchema = z.string().url({ message: "URL du fichier invalide" });
+const uploadThingUrlSchema = z
+	.string()
+	.url({ message: "URL du fichier invalide" })
+	.refine(isValidUploadThingUrl, {
+		message: "L'URL doit provenir d'un domaine UploadThing autorise (HTTPS)",
+	});
 
 /**
  * Schema pour supprimer un fichier UploadThing

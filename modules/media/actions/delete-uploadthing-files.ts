@@ -6,28 +6,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { deleteUploadThingFilesSchema } from "@/modules/media/schemas/uploadthing.schemas";
-
-const utapi = new UTApi();
-
-/**
- * Extrait la clé du fichier depuis une URL UploadThing
- * @param url - URL complète du fichier (ex: https://utfs.io/f/abc123.png)
- * @returns La clé du fichier (ex: abc123.png)
- */
-function extractFileKeyFromUrl(url: string): string {
-	try {
-		// Format UploadThing: https://utfs.io/f/{fileKey}
-		// ou https://uploadthing-prod.s3.us-west-2.amazonaws.com/{fileKey}
-		const urlObj = new URL(url);
-		const parts = urlObj.pathname.split("/");
-		// La clé est le dernier segment du path
-		return parts[parts.length - 1];
-	} catch {
-		// Si l'URL est invalide, on retourne l'URL telle quelle
-		// UTApi peut gérer les URLs complètes
-		return url;
-	}
-}
+import { extractFileKeysFromUrls } from "@/modules/media/utils/extract-file-key";
 
 /**
  * Server Action pour supprimer un ou plusieurs fichiers d'UploadThing
@@ -42,12 +21,31 @@ export async function deleteUploadThingFiles(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraction des données du FormData avec parsing JSON sécurisé
+		// 2. Extraction des donnees du FormData avec parsing JSON securise
+		const fileUrlsRaw = formData.get("fileUrls");
+
+		if (fileUrlsRaw === null || fileUrlsRaw === undefined) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "Les URLs de fichiers sont requises",
+			};
+		}
+
+		if (typeof fileUrlsRaw !== "string") {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "Les URLs de fichiers doivent etre un JSON string",
+			};
+		}
+
 		let parsedFileUrls: unknown;
 		try {
-			const fileUrlsRaw = formData.get("fileUrls");
-			parsedFileUrls = JSON.parse(fileUrlsRaw as string);
-		} catch {
+			parsedFileUrls = JSON.parse(fileUrlsRaw);
+		} catch (error) {
+			console.error(
+				"[deleteUploadThingFiles] JSON parse failed:",
+				error instanceof Error ? error.message : String(error)
+			);
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
 				message: "Format JSON invalide pour les URLs de fichiers",
@@ -67,13 +65,28 @@ export async function deleteUploadThingFiles(
 
 		const { fileUrls } = result.data;
 
-		// 3. Extraire les clés des URLs
-		const fileKeys = fileUrls.map(extractFileKeyFromUrl);
+		// 4. Extraire les cles des URLs avec gestion d'erreur
+		const { keys: fileKeys, failedUrls } = extractFileKeysFromUrls(fileUrls);
 
-		// 4. Supprimer les fichiers via UTApi
+		if (fileKeys.length === 0) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "Impossible d'extraire les cles des fichiers depuis les URLs",
+			};
+		}
+
+		if (failedUrls.length > 0) {
+			console.warn(
+				`[deleteUploadThingFiles] ${failedUrls.length} URL(s) n'ont pas pu etre extraites:`,
+				failedUrls
+			);
+		}
+
+		// 5. Supprimer les fichiers via UTApi (instanciation par requete)
+		const utapi = new UTApi();
 		await utapi.deleteFiles(fileKeys);
 
-		// 5. Success
+		// 6. Success
 		return {
 			status: ActionStatus.SUCCESS,
 			message: `${fileKeys.length} fichier(s) supprimé(s)`,

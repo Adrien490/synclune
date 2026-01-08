@@ -8,15 +8,17 @@ import Image from "next/image";
 import { useRef, useEffect } from "react";
 import { MediaTypeBadge } from "@/shared/components/ui/media-type-badge";
 import { DELETE_PRIMARY_IMAGE_DIALOG_ID } from "./delete-primary-image-alert-dialog";
+import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media.constants";
 
 /**
- * Détecte le type de média à partir de l'URL si non fourni
+ * Detecte le type de media a partir de l'URL si non fourni
+ * Utilise VIDEO_EXTENSIONS de la config centralisee
  */
 function detectMediaTypeFromUrl(url?: string): "IMAGE" | "VIDEO" | undefined {
 	if (!url) return undefined;
-	const extension = url.toLowerCase().match(/\.(\w+)(?:\?|#|$)/)?.[1];
-	const videoExtensions = ["mp4", "webm", "ogg", "ogv", "mov", "avi", "mkv"];
-	if (extension && videoExtensions.includes(extension)) {
+	const lowerUrl = url.toLowerCase();
+	// Utilise les extensions video de la config centralisee
+	if (VIDEO_EXTENSIONS.some((ext) => lowerUrl.includes(ext))) {
 		return "VIDEO";
 	}
 	return "IMAGE";

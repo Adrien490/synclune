@@ -138,6 +138,12 @@ export async function downloadImage(
 			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 		}
 
+		// Verifier le Content-Type (securite: eviter de telecharger du HTML/JSON)
+		const contentType = response.headers.get("content-type");
+		if (!contentType?.startsWith("image/")) {
+			throw new Error(`Content-Type invalide: ${contentType || "absent"} (image/* attendu)`);
+		}
+
 		// Verifier la taille avant telechargement complet
 		const contentLength = response.headers.get("content-length");
 		if (contentLength && parseInt(contentLength, 10) > maxSize) {

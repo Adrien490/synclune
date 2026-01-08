@@ -190,21 +190,28 @@ export function isValidCuid(id: string): boolean {
 }
 
 /**
- * Valide qu'une URL provient d'un domaine UploadThing autorisé
+ * Valide qu'une URL provient d'un domaine UploadThing autorise
+ * - Enforce HTTPS uniquement
  * - Accepte les domaines exacts (utfs.io, uploadthing.com, ufs.sh)
  * - Accepte les sous-domaines (*.ufs.sh, *.uploadthing.com)
  */
 export function isValidUploadThingUrl(url: string): boolean {
 	try {
 		const parsed = new URL(url);
+
+		// Securite: Enforce HTTPS uniquement
+		if (parsed.protocol !== "https:") {
+			return false;
+		}
+
 		const hostname = parsed.hostname;
 
-		// Vérification exacte
+		// Verification exacte
 		if (UPLOADTHING_EXACT_HOSTS.has(hostname)) {
 			return true;
 		}
 
-		// Vérification des sous-domaines autorisés
+		// Verification des sous-domaines autorises
 		return UPLOADTHING_ALLOWED_SUFFIXES.some((suffix) => hostname.endsWith(suffix));
 	} catch {
 		return false;

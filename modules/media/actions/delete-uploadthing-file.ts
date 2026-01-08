@@ -6,28 +6,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { deleteUploadThingFileSchema } from "@/modules/media/schemas/uploadthing.schemas";
-
-const utapi = new UTApi();
-
-/**
- * Extrait la clé du fichier depuis une URL UploadThing
- * @param url - URL complète du fichier (ex: https://utfs.io/f/abc123.png)
- * @returns La clé du fichier (ex: abc123.png)
- */
-function extractFileKeyFromUrl(url: string): string {
-	try {
-		// Format UploadThing: https://utfs.io/f/{fileKey}
-		// ou https://uploadthing-prod.s3.us-west-2.amazonaws.com/{fileKey}
-		const urlObj = new URL(url);
-		const parts = urlObj.pathname.split("/");
-		// La clé est le dernier segment du path
-		return parts[parts.length - 1];
-	} catch {
-		// Si l'URL est invalide, on retourne l'URL telle quelle
-		// UTApi peut gérer les URLs complètes
-		return url;
-	}
-}
+import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
 
 /**
  * Server Action pour supprimer un fichier d'UploadThing
@@ -60,10 +39,17 @@ export async function deleteUploadThingFile(
 
 		const { fileUrl } = result.data;
 
-		// 3. Extraire la clé de l'URL
+		// 3. Extraire la cle de l'URL
 		const fileKey = extractFileKeyFromUrl(fileUrl);
+		if (!fileKey) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "Impossible d'extraire la cle du fichier depuis l'URL",
+			};
+		}
 
-		// 4. Supprimer le fichier via UTApi
+		// 4. Supprimer le fichier via UTApi (instanciation par requete)
+		const utapi = new UTApi();
 		await utapi.deleteFiles(fileKey);
 
 		// 5. Success
