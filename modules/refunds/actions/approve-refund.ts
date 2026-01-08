@@ -5,7 +5,9 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 import { sendRefundApprovedEmail } from "@/modules/emails/services/refund-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
@@ -100,7 +102,8 @@ export async function approveRefund(
 			});
 		});
 
-		revalidatePath("/admin/ventes/remboursements");
+		updateTag(ORDERS_CACHE_TAGS.LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 		// Envoyer l'email de notification au client (non bloquant)
 		if (refund.order.user?.email) {

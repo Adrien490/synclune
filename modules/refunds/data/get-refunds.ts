@@ -43,17 +43,22 @@ export type {
 export async function getRefunds(
 	params: GetRefundsParams
 ): Promise<GetRefundsReturn> {
-	try {
-		const validation = getRefundsSchema.safeParse(params);
+	const validation = getRefundsSchema.safeParse(params);
 
-		if (!validation.success) {
-			throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
-		}
-
-		return fetchRefunds(validation.data);
-	} catch (error) {
-		throw error;
+	if (!validation.success) {
+		console.error("[GET_REFUNDS] Invalid parameters:", validation.error.issues);
+		return {
+			refunds: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+		};
 	}
+
+	return fetchRefunds(validation.data);
 }
 
 /**

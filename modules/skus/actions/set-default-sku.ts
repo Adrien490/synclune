@@ -4,6 +4,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 
@@ -32,7 +33,7 @@ export async function setDefaultSku(
 		if (!skuId) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
-				message: "Missing SKU ID",
+				message: "ID de variante manquant",
 			};
 		}
 
@@ -54,15 +55,15 @@ export async function setDefaultSku(
 
 		if (!skuData) {
 			return {
-				status: ActionStatus.ERROR,
-				message: "SKU not found",
+				status: ActionStatus.NOT_FOUND,
+				message: "Variante non trouvée",
 			};
 		}
 
 		if (!skuData.isActive) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Cannot set an inactive SKU as default",
+				message: "Impossible de définir une variante inactive par défaut",
 			};
 		}
 
@@ -91,16 +92,9 @@ export async function setDefaultSku(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: "Default SKU updated successfully",
+			message: "Variante par défaut mise à jour avec succès",
 		};
-	} catch (error) {
-// console.error("[SET_DEFAULT_SKU]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "An error occurred while updating the default SKU",
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la mise à jour de la variante par défaut");
 	}
 }

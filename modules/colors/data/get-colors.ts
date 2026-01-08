@@ -113,7 +113,11 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 
 		return { colors: items, pagination };
 	} catch (error) {
-		const baseReturn = {
+		if (error instanceof Error) {
+			console.error(`[getColors] ${error.name}: ${error.message}`);
+		}
+
+		return {
 			colors: [],
 			pagination: {
 				nextCursor: null,
@@ -121,15 +125,7 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
-			error:
-				process.env.NODE_ENV === "development"
-					? error instanceof Error
-						? error.message
-						: "Unknown error"
-					: "Failed to fetch colors",
 		};
-
-		return baseReturn as GetColorsReturn & { error: string };
 	}
 }
 

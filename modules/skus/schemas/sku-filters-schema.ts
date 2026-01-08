@@ -64,24 +64,24 @@ export const productSkuFiltersSchema = z
 			return data.priceMin <= data.priceMax;
 		}
 		return true;
-	}, "priceMin must be less than or equal to priceMax")
+	}, "Le prix minimum doit être inférieur ou égal au prix maximum")
 	.refine((data) => {
 		if (data.inventoryMin && data.inventoryMax) {
 			return data.inventoryMin <= data.inventoryMax;
 		}
 		return true;
-	}, "inventoryMin must be less than or equal to inventoryMax")
+	}, "Le stock minimum doit être inférieur ou égal au stock maximum")
 	.refine((data) => {
 		if (data.createdAfter && data.createdBefore) {
 			return data.createdAfter <= data.createdBefore;
 		}
 		return true;
-	}, "createdAfter must be before or equal to createdBefore")
+	}, "La date de début doit être antérieure ou égale à la date de fin")
 	.refine((data) => {
 		if (data.updatedAfter && data.updatedBefore) {
 			return data.updatedAfter <= data.updatedBefore;
 		}
 		return true;
-	}, "updatedAfter must be before or equal to updatedBefore");
+	}, "La date de début doit être antérieure ou égale à la date de fin");
 
 export type ProductSkuFilters = z.infer<typeof productSkuFiltersSchema>;

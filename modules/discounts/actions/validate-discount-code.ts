@@ -4,7 +4,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { validateDiscountCodeSchema } from "../schemas/discount.schemas";
 import { GET_DISCOUNT_VALIDATION_SELECT, DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import { calculateDiscountAmount } from "../services/discount-calculation.service";
-import { checkDiscountEligibility } from "../utils/check-discount-eligibility";
+import { checkDiscountEligibility } from "../services/discount-eligibility.service";
 import type { ValidateDiscountCodeReturn, DiscountApplicationContext } from "../types/discount.types";
 
 /**

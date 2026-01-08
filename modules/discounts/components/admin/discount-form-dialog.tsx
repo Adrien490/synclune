@@ -130,7 +130,6 @@ export function DiscountFormDialog() {
 				<form
 					action={action}
 					className="flex flex-col flex-1 min-h-0"
-					onSubmit={() => form.handleSubmit()}
 				>
 					{/* Contenu scrollable */}
 					<div className="flex-1 overflow-y-auto space-y-6 pr-2">

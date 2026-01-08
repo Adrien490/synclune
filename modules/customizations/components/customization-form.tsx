@@ -221,6 +221,7 @@ export function CustomizationForm({
 							disabled={!canSubmit || isPending}
 							size="lg"
 							className="w-full sm:w-auto sm:min-w-[220px] relative overflow-hidden group"
+							aria-busy={isPending}
 						>
 							{isPending ? (
 								"Envoi en cours..."

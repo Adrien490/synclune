@@ -3,6 +3,7 @@
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { bulkActivateSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 
@@ -61,11 +62,7 @@ export async function bulkActivateSkus(
 			status: ActionStatus.SUCCESS,
 			message: `${ids.length} variante(s) activée(s) avec succès`,
 		};
-	} catch (error) {
-// console.error("[bulkActivateSkus]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible d'activer les variantes",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible d'activer les variantes");
 	}
 }

@@ -39,7 +39,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 	return (
 		<Card>
 			<CardContent>
-				<ColorsSelectionToolbar colorIds={colorIds} />
+				<ColorsSelectionToolbar />
 				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des couleurs" className="min-w-full table-fixed">
 						<TableHeader>

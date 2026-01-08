@@ -12,9 +12,17 @@ import { getNewsletterInvalidationTags } from "../constants/cache";
 /**
  * Server Action ADMIN pour désabonner un abonné newsletter
  */
-export async function unsubscribeSubscriberAdmin(subscriberId: string): Promise<ActionState> {
+export async function unsubscribeSubscriberAdmin(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
 	try {
-		// 1. Validation de l'entrée
+		// 1. Vérification admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2. Validation de l'entrée
+		const subscriberId = formData.get("subscriberId");
 		const validation = subscriberIdSchema.safeParse({ subscriberId });
 		if (!validation.success) {
 			return {
@@ -23,13 +31,11 @@ export async function unsubscribeSubscriberAdmin(subscriberId: string): Promise<
 			};
 		}
 
-		// 2. Vérification admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const validatedId = validation.data.subscriberId;
 
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
-			where: { id: subscriberId },
+			where: { id: validatedId },
 			select: { id: true, email: true, status: true },
 		});
 
@@ -49,7 +55,7 @@ export async function unsubscribeSubscriberAdmin(subscriberId: string): Promise<
 
 		// 4. Désabonner
 		await prisma.newsletterSubscriber.update({
-			where: { id: subscriberId },
+			where: { id: validatedId },
 			data: {
 				status: NewsletterStatus.UNSUBSCRIBED,
 				unsubscribedAt: new Date(),
@@ -67,7 +73,7 @@ export async function unsubscribeSubscriberAdmin(subscriberId: string): Promise<
 		console.error("[UNSUBSCRIBE_SUBSCRIBER_ADMIN] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: error instanceof Error ? error.message : "Une erreur est survenue",
+			message: "Une erreur est survenue",
 		};
 	}
 }

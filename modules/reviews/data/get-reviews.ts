@@ -141,6 +141,7 @@ async function fetchReviews(
 			totalCount,
 		}
 	} catch (error) {
+		console.error("[GET_REVIEWS]", error)
 		return {
 			reviews: [],
 			pagination: {

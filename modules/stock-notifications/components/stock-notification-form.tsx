@@ -66,17 +66,14 @@ export function StockNotificationForm({ skuId }: StockNotificationFormProps) {
 		);
 	}
 
-	// Handler pour déclencher l'optimistic update
-	const handleSubmit = () => {
-		startTransition(() => {
-			setOptimisticSubscribed(true);
-		});
-	};
-
 	return (
 		<form
-			action={action}
-			onSubmit={handleSubmit}
+			action={(formData) => {
+				startTransition(() => {
+					setOptimisticSubscribed(true);
+				});
+				action(formData);
+			}}
 			className="space-y-3 p-3 bg-muted/30 rounded-lg border"
 			data-pending={isPending ? "" : undefined}
 			aria-busy={isPending}
@@ -140,6 +137,7 @@ export function StockNotificationForm({ skuId }: StockNotificationFormProps) {
 				size="sm"
 				className="w-full"
 				disabled={isPending || !consent}
+				aria-busy={isPending}
 			>
 				<Bell className="w-3 h-3 mr-1.5" aria-hidden="true" />
 				<span>{isPending ? "Inscription..." : "M'alerter"}</span>

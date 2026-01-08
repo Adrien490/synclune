@@ -1,9 +1,11 @@
 "use server";
 
+import { revalidatePath, updateTag } from "next/cache";
+
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
 
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { bulkDeleteProductTypesSchema } from "../schemas/product-type.schemas";
@@ -110,11 +112,7 @@ export async function bulkDeleteProductTypes(
 			status: ActionStatus.SUCCESS,
 			message,
 		};
-	} catch (error) {
-		console.error("[BULK_DELETE_PRODUCT_TYPES]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la suppression",
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la suppression");
 	}
 }

@@ -7,6 +7,7 @@ import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { getCartWithSkuPrices } from "@/modules/cart/data/get-cart-with-sku-prices";
+import { handleActionError } from "@/shared/lib/actions";
 
 /**
  * Met à jour les prix snapshot (priceAtAdd) de tous les articles du panier
@@ -86,10 +87,6 @@ export async function updateCartPrices(
 			},
 		};
 	} catch (e) {
-		console.error("[updateCartPrices] Erreur:", e);
-		return {
-			status: ActionStatus.ERROR,
-			message: e instanceof Error ? e.message : "Erreur lors de la mise à jour des prix",
-		};
+		return handleActionError(e, "Erreur lors de la mise a jour des prix");
 	}
 }

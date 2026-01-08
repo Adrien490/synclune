@@ -62,7 +62,7 @@ export async function resendOrderEmail(
 				const result = await sendOrderConfirmationEmail({
 					to: order.customerEmail,
 					orderNumber: order.orderNumber,
-					customerName: order.customerName.split(" ")[0] || "Client",
+					customerName: (order.customerName ?? "").split(" ")[0] || "Client",
 					items: order.items,
 					subtotal: order.subtotal,
 					discount: order.discountAmount,
@@ -116,7 +116,7 @@ export async function resendOrderEmail(
 				const result = await sendShippingConfirmationEmail({
 					to: order.customerEmail,
 					orderNumber: order.orderNumber,
-					customerName: order.customerName.split(" ")[0] || "Client",
+					customerName: (order.customerName ?? "").split(" ")[0] || "Client",
 					trackingNumber: order.trackingNumber,
 					trackingUrl: order.trackingUrl,
 					carrierLabel,
@@ -169,7 +169,7 @@ export async function resendOrderEmail(
 				const result = await sendDeliveryConfirmationEmail({
 					to: order.customerEmail,
 					orderNumber: order.orderNumber,
-					customerName: order.customerName.split(" ")[0] || "Client",
+					customerName: (order.customerName ?? "").split(" ")[0] || "Client",
 					deliveryDate,
 					orderDetailsUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.id)),
 				});

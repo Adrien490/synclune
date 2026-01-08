@@ -21,11 +21,7 @@ export function SendNewsletterEmailForm() {
 	});
 
 	return (
-		<form
-			action={action}
-			className="space-y-6"
-			onSubmit={() => form.handleSubmit()}
-		>
+		<form action={action} className="space-y-6">
 			{/* Success message using Alert component */}
 			{state?.status === ActionStatus.SUCCESS && state.message && (
 				<Alert>

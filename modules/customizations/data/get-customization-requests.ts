@@ -40,58 +40,71 @@ export async function getCustomizationRequests({
 	"use cache";
 	cacheCustomizationList();
 
-	// Build where clause
-	const where = {
-		...notDeleted,
-		...(filters?.status && { status: filters.status }),
-		...(filters?.search && {
-			OR: [
-				{ firstName: { contains: filters.search, mode: "insensitive" as const } },
-				{ email: { contains: filters.search, mode: "insensitive" as const } },
-			],
-		}),
-	};
+	try {
+		// Build where clause
+		const where = {
+			...notDeleted,
+			...(filters?.status && { status: filters.status }),
+			...(filters?.search && {
+				OR: [
+					{ firstName: { contains: filters.search, mode: "insensitive" as const } },
+					{ email: { contains: filters.search, mode: "insensitive" as const } },
+				],
+			}),
+		};
 
-	// Build orderBy
-	const orderBy =
-		sortBy === CUSTOMIZATION_SORT_OPTIONS.OLDEST
-			? { createdAt: "asc" as const }
-			: sortBy === CUSTOMIZATION_SORT_OPTIONS.STATUS
-				? [{ status: "asc" as const }, { createdAt: "desc" as const }]
-				: { createdAt: "desc" as const };
+		// Build orderBy
+		const orderBy =
+			sortBy === CUSTOMIZATION_SORT_OPTIONS.OLDEST
+				? { createdAt: "asc" as const }
+				: sortBy === CUSTOMIZATION_SORT_OPTIONS.STATUS
+					? [{ status: "asc" as const }, { createdAt: "desc" as const }]
+					: { createdAt: "desc" as const };
 
-	// Validate and constrain perPage
-	const take = Math.min(Math.max(1, perPage), MAX_RESULTS_PER_PAGE);
+		// Validate and constrain perPage
+		const take = Math.min(Math.max(1, perPage), MAX_RESULTS_PER_PAGE);
 
-	// Build cursor config using shared helper
-	const cursorConfig = buildCursorPagination({
-		cursor,
-		direction,
-		take,
-	});
+		// Build cursor config using shared helper
+		const cursorConfig = buildCursorPagination({
+			cursor,
+			direction,
+			take,
+		});
 
-	const items = await prisma.customizationRequest.findMany({
-		where,
-		orderBy,
-		...cursorConfig,
-		select: {
-			id: true,
-			createdAt: true,
-			firstName: true,
-			email: true,
-			phone: true,
-			productTypeLabel: true,
-			status: true,
-			adminNotes: true,
-			respondedAt: true,
-			_count: {
-				select: {
-					inspirationProducts: true,
+		const items = await prisma.customizationRequest.findMany({
+			where,
+			orderBy,
+			...cursorConfig,
+			select: {
+				id: true,
+				createdAt: true,
+				firstName: true,
+				email: true,
+				phone: true,
+				productTypeLabel: true,
+				status: true,
+				adminNotes: true,
+				respondedAt: true,
+				_count: {
+					select: {
+						inspirationProducts: true,
+					},
 				},
 			},
-		},
-	});
+		});
 
-	// Process results using shared helper
-	return processCursorResults(items, take, direction, cursor);
+		// Process results using shared helper
+		return processCursorResults(items, take, direction, cursor);
+	} catch (error) {
+		console.error("[GET_CUSTOMIZATION_REQUESTS]", error);
+		return {
+			items: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+		};
+	}
 }

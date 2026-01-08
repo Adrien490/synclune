@@ -70,8 +70,11 @@ export async function unsubscribeFromNewsletter(
 		// Si un token est fourni, l'utiliser pour trouver l'abonné (plus sécurisé)
 		let existingSubscriber;
 		if (validatedToken) {
-			existingSubscriber = await prisma.newsletterSubscriber.findUnique({
-				where: { unsubscribeToken: validatedToken },
+			existingSubscriber = await prisma.newsletterSubscriber.findFirst({
+				where: {
+					unsubscribeToken: validatedToken,
+					deletedAt: null,
+				},
 			});
 
 			// Vérifier que l'email correspond au token (sécurité)
@@ -87,8 +90,11 @@ export async function unsubscribeFromNewsletter(
 			}
 		} else {
 			// Fallback : recherche par email uniquement (moins sécurisé mais fonctionnel)
-			existingSubscriber = await prisma.newsletterSubscriber.findUnique({
-				where: { email: validatedEmail },
+			existingSubscriber = await prisma.newsletterSubscriber.findFirst({
+				where: {
+					email: validatedEmail,
+					deletedAt: null,
+				},
 			});
 		}
 

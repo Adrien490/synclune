@@ -1,11 +1,13 @@
 "use server";
 
+import { revalidatePath, updateTag } from "next/cache";
+
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
-import { revalidatePath, updateTag } from "next/cache";
 
 import { getMaterialInvalidationTags } from "../constants/cache";
 import { updateMaterialSchema } from "../schemas/materials.schemas";
@@ -98,17 +100,7 @@ export async function updateMaterial(
 			status: ActionStatus.SUCCESS,
 			message: "Matériau modifié avec succès",
 		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la modification du materiau",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de modifier le materiau");
 	}
 }

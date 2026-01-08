@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useActionState, useTransition } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import type { ActionState } from "@/shared/types/server-action";
 import {
 	removeFeaturedProduct,
 	setFeaturedProduct,
@@ -15,16 +14,12 @@ interface UseSetFeaturedProductOptions {
 }
 
 export function useSetFeaturedProduct(options?: UseSetFeaturedProductOptions) {
-	const [isPending, startTransition] = useTransition();
 	const router = useRouter();
+	const [isPending, startTransition] = useTransition();
 
-	const [, setFeaturedAction, isSetPending] = useActionState(
+	const [, setFeaturedAction] = useActionState(
 		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				setFeaturedProduct(
-					formData.get("collectionId") as string,
-					formData.get("productId") as string
-				),
+			setFeaturedProduct,
 			createToastCallbacks({
 				onSuccess: () => {
 					router.refresh();
@@ -35,13 +30,9 @@ export function useSetFeaturedProduct(options?: UseSetFeaturedProductOptions) {
 		undefined
 	);
 
-	const [, removeFeaturedAction, isRemovePending] = useActionState(
+	const [, removeFeaturedAction] = useActionState(
 		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				removeFeaturedProduct(
-					formData.get("collectionId") as string,
-					formData.get("productId") as string
-				),
+			removeFeaturedProduct,
 			createToastCallbacks({
 				onSuccess: () => {
 					router.refresh();
@@ -73,6 +64,6 @@ export function useSetFeaturedProduct(options?: UseSetFeaturedProductOptions) {
 	return {
 		setFeatured,
 		removeFeatured,
-		isPending: isPending || isSetPending || isRemovePending,
+		isPending,
 	};
 }

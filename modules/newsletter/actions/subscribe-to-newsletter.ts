@@ -4,8 +4,10 @@ import { ajNewsletter } from "@/shared/lib/arcjet";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
+import { updateTag } from "next/cache";
 import { subscribeToNewsletterSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 import { subscribeToNewsletterInternal } from "./subscribe-to-newsletter-internal";
+import { getNewsletterInvalidationTags } from "../constants/cache";
 
 export async function subscribeToNewsletter(
 	_previousState: ActionState | undefined,
@@ -91,6 +93,9 @@ export async function subscribeToNewsletter(
 				message: internalResult.message,
 			};
 		}
+
+		// Invalider le cache (nouvelle inscription)
+		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

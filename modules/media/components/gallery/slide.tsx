@@ -108,7 +108,7 @@ export function GallerySlide({
 		} else {
 			videoRef.current.pause();
 		}
-	}, [isActive, prefersReduced, videoState]);
+	}, [isActive, prefersReduced, videoState, media.url]);
 
 	// Reset state si l'URL change
 	useEffect(() => {

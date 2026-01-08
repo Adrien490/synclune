@@ -106,3 +106,7 @@ export const bulkToggleMaterialStatusSchema = z.object({
 	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun materiau selectionne"),
 	isActive: z.boolean(),
 });
+
+export const duplicateMaterialSchema = z.object({
+	materialId: z.cuid2("ID de materiau invalide"),
+});

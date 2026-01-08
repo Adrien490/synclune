@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // SELECT DEFINITIONS
@@ -103,7 +103,7 @@ export const GET_COLLECTIONS_SELECT = {
 			products: {
 				where: {
 					product: {
-						status: "PUBLIC",
+						status: ProductStatus.PUBLIC,
 					},
 				},
 			},

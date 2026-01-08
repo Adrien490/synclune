@@ -7,21 +7,37 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
+import { setFeaturedProductSchema } from "../schemas/collection.schemas";
 
 /**
  * Server Action pour definir un produit comme "vedette" dans une collection
  * Un seul produit peut etre featured par collection
  */
 export async function setFeaturedProduct(
-	collectionId: string,
-	productId: string
+	_prevState: ActionState | undefined,
+	formData: FormData
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Verifier que l'association ProductCollection existe
+		// 2. Validation des donnees
+		const validation = setFeaturedProductSchema.safeParse({
+			collectionId: formData.get("collectionId"),
+			productId: formData.get("productId"),
+		});
+
+		if (!validation.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: validation.error.issues[0]?.message || "Donnees invalides",
+			};
+		}
+
+		const { collectionId, productId } = validation.data;
+
+		// 3. Verifier que l'association ProductCollection existe
 		const productCollection = await prisma.productCollection.findUnique({
 			where: {
 				productId_collectionId: {
@@ -46,7 +62,7 @@ export async function setFeaturedProduct(
 			};
 		}
 
-		// 3. Transaction: retirer l'ancien featured et definir le nouveau
+		// 4. Transaction: retirer l'ancien featured et definir le nouveau
 		await prisma.$transaction([
 			// Retirer le featured actuel de la collection
 			prisma.productCollection.updateMany({
@@ -72,7 +88,7 @@ export async function setFeaturedProduct(
 			}),
 		]);
 
-		// 4. Invalider le cache de la collection
+		// 5. Invalider le cache de la collection
 		const collectionTags = getCollectionInvalidationTags(
 			productCollection.collection.slug
 		);
@@ -91,15 +107,30 @@ export async function setFeaturedProduct(
  * Server Action pour retirer le statut "vedette" d'un produit dans une collection
  */
 export async function removeFeaturedProduct(
-	collectionId: string,
-	productId: string
+	_prevState: ActionState | undefined,
+	formData: FormData
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Verifier que l'association ProductCollection existe
+		// 2. Validation des donnees
+		const validation = setFeaturedProductSchema.safeParse({
+			collectionId: formData.get("collectionId"),
+			productId: formData.get("productId"),
+		});
+
+		if (!validation.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: validation.error.issues[0]?.message || "Donnees invalides",
+			};
+		}
+
+		const { collectionId, productId } = validation.data;
+
+		// 3. Verifier que l'association ProductCollection existe
 		const productCollection = await prisma.productCollection.findUnique({
 			where: {
 				productId_collectionId: {
@@ -124,7 +155,7 @@ export async function removeFeaturedProduct(
 			};
 		}
 
-		// 3. Retirer le statut featured
+		// 4. Retirer le statut featured
 		await prisma.productCollection.update({
 			where: {
 				productId_collectionId: {
@@ -137,7 +168,7 @@ export async function removeFeaturedProduct(
 			},
 		});
 
-		// 4. Invalider le cache de la collection
+		// 5. Invalider le cache de la collection
 		const collectionTags = getCollectionInvalidationTags(
 			productCollection.collection.slug
 		);

@@ -29,11 +29,7 @@ export function UnsubscribeForm({
 	});
 
 	return (
-		<form
-			action={action}
-			className="space-y-6"
-			onSubmit={() => form.handleSubmit()}
-		>
+		<form action={action} className="space-y-6">
 			{/* Success message using Alert component */}
 			{state?.status === ActionStatus.SUCCESS && state.message && (
 				<div className="space-y-4">

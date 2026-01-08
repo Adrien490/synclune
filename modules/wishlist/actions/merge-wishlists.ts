@@ -164,7 +164,8 @@ export async function mergeWishlists(
 				skippedItems: skippedCount,
 			},
 		};
-	} catch {
+	} catch (e) {
+		console.error("[MERGE_WISHLISTS]", e);
 		return {
 			status: ActionStatus.ERROR,
 			message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,

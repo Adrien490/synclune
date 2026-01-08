@@ -82,8 +82,8 @@ export const DASHBOARD_CACHE_TAGS = {
 
 /**
  * Configure le cache pour les données du dashboard
+ * Utilise cacheDefault avec le profil "dashboard" (1min fraîche, 30s revalidation, 5min expiration)
  * @param tag - Tag de cache optionnel (utiliser DASHBOARD_CACHE_TAGS ou SHARED_CACHE_TAGS)
- * @deprecated Utiliser cacheDefault depuis @/shared/lib/cache pour éviter les cycles
  */
 export function cacheDashboard(tag?: string) {
 	cacheDefault(tag)

@@ -1,6 +1,5 @@
 "use client";
 
-import { startTransition } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { useRemoveUnavailableItems } from "@/modules/cart/hooks/use-remove-unavailable-items";
 
@@ -15,24 +14,21 @@ interface RemoveUnavailableItemsButtonProps {
 export function RemoveUnavailableItemsButton({
 	itemsCount,
 }: RemoveUnavailableItemsButtonProps) {
-	const { action: removeUnavailableAction, isPending: isRemovingUnavailable } =
-		useRemoveUnavailableItems();
+	const { action, isPending } = useRemoveUnavailableItems();
 
 	const handleRemoveUnavailable = () => {
-		startTransition(() => {
-			removeUnavailableAction(new FormData());
-		});
+		action(new FormData());
 	};
 
 	return (
 		<Button
 			onClick={handleRemoveUnavailable}
-			disabled={isRemovingUnavailable}
+			disabled={isPending}
 			size="sm"
 			variant="destructive"
 			className="w-full text-xs h-9"
 		>
-			{isRemovingUnavailable
+			{isPending
 				? "Suppression en cours..."
 				: `Retirer les articles indisponibles (${itemsCount})`}
 		</Button>

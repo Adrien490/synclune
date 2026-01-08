@@ -45,7 +45,10 @@ async function fetchColor(
 		});
 
 		return color;
-	} catch {
+	} catch (error) {
+		if (error instanceof Error) {
+			console.error(`[getColorBySlug] ${error.name}: ${error.message}`);
+		}
 		return null;
 	}
 }

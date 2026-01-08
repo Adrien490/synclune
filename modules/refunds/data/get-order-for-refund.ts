@@ -58,7 +58,7 @@ async function fetchOrderForRefund(
 
 		return order;
 	} catch (error) {
-		console.error("fetchOrderForRefund error:", error);
+		console.error("[GET_ORDER_FOR_REFUND]", error);
 		return null;
 	}
 }

@@ -62,14 +62,19 @@ export async function fuzzySearchProductIds(
 
 		// Configurer le seuil de similarité pour cette session
 		// L'opérateur % retourne TRUE si similarity > pg_trgm.similarity_threshold
-		// Note: SET ne supporte pas les prepared statements dans PostgreSQL,
-		// donc on valide strictement le threshold avant interpolation
+		//
+		// SECURITY NOTE: Utilisation de $executeRawUnsafe
+		// -------------------------------------------------
+		// PostgreSQL ne supporte pas les prepared statements pour les commandes SET.
+		// L'interpolation directe est nécessaire mais sécurisée car:
+		// 1. La valeur est convertie en Number() (pas de string injection)
+		// 2. Math.max(0, Math.min(1, ...)) borne la valeur entre 0 et 1
+		// 3. Number.isFinite() rejette NaN et Infinity
+		// Résultat: seul un float valide entre 0.0 et 1.0 peut être interpolé
 		const safeThreshold = Math.max(0, Math.min(1, Number(threshold)));
 		if (!Number.isFinite(safeThreshold)) {
 			return [];
 		}
-		// SECURITY: $executeRawUnsafe car SET ne supporte pas les prepared statements
-		// Le threshold est validé numériquement ci-dessus (pas d'injection possible)
 		await prisma.$executeRawUnsafe(
 			`SET pg_trgm.similarity_threshold = ${safeThreshold}`
 		);

@@ -90,7 +90,6 @@ function MarkAsShippedFormContent({
 			<form
 				action={action}
 				className="space-y-6"
-				onSubmit={() => form.handleSubmit()}
 			>
 				{/* Hidden fields */}
 				<input type="hidden" name="id" value={orderId} />

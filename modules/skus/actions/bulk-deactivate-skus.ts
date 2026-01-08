@@ -3,6 +3,7 @@
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { bulkDeactivateSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 
@@ -71,11 +72,7 @@ export async function bulkDeactivateSkus(
 			status: ActionStatus.SUCCESS,
 			message: `${ids.length} variante(s) désactivée(s) avec succès`,
 		};
-	} catch (error) {
-// console.error("[bulkDeactivateSkus]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible de désactiver les variantes",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de désactiver les variantes");
 	}
 }

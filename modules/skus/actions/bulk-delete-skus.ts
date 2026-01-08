@@ -3,6 +3,7 @@
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { UTApi } from "uploadthing/server";
 import { bulkDeleteSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
@@ -130,11 +131,7 @@ export async function bulkDeleteSkus(
 			status: ActionStatus.SUCCESS,
 			message: `${ids.length} variante(s) supprimée(s) avec succès`,
 		};
-	} catch (error) {
-// console.error("[bulkDeleteSkus]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible de supprimer les variantes",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de supprimer les variantes");
 	}
 }

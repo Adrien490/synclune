@@ -5,7 +5,9 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { rejectRefundSchema } from "../schemas/refund.schemas";
@@ -103,7 +105,8 @@ export async function rejectRefund(
 			});
 		});
 
-		revalidatePath("/admin/ventes/remboursements");
+		updateTag(ORDERS_CACHE_TAGS.LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 		return {
 			status: ActionStatus.SUCCESS,

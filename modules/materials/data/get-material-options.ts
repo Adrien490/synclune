@@ -35,7 +35,8 @@ async function fetchMaterialOptions(): Promise<MaterialOption[]> {
 		});
 
 		return materials;
-	} catch {
+	} catch (error) {
+		console.error("[GET_MATERIAL_OPTIONS]", error);
 		return [];
 	}
 }

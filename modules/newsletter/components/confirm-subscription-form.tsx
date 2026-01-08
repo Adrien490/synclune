@@ -31,11 +31,7 @@ export function ConfirmSubscriptionForm({
 	});
 
 	return (
-		<form
-			action={action}
-			className="space-y-6"
-			onSubmit={() => form.handleSubmit()}
-		>
+		<form action={action} className="space-y-6">
 			<FieldSet>
 				{/* Champ token caché */}
 				<input type="hidden" name="token" value={defaultToken || ""} />

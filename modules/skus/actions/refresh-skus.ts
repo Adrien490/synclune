@@ -4,6 +4,7 @@ import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
@@ -31,17 +32,7 @@ export async function refreshSkus(
 			status: ActionStatus.SUCCESS,
 			message: "Variantes rafraîchies",
 		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors du rafraîchissement",
-		};
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors du rafraîchissement");
 	}
 }

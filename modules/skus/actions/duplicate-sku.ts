@@ -4,11 +4,14 @@ import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { handleActionError } from "@/shared/lib/actions";
 import { generateUniqueTechnicalName } from "@/shared/services/unique-name-generator.service";
+import { getSkuInvalidationTags } from "../utils/cache.utils";
+import { updateTag } from "next/cache";
 
 /**
  * Server Action ADMIN pour dupliquer un SKU (variante produit)
+ * Compatible avec useActionState de React 19
  *
  * Crée une copie du SKU avec:
  * - Un nouveau code SKU (original + -COPY ou -COPY-N)
@@ -16,13 +19,26 @@ import { generateUniqueTechnicalName } from "@/shared/services/unique-name-gener
  * - inventory à 0
  * - isActive à false (pour éviter activation accidentelle)
  */
-export async function duplicateSku(skuId: string): Promise<ActionState> {
+export async function duplicateSku(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Récupérer le SKU original avec ses médias
+		// 2. Extraction du skuId depuis FormData
+		const skuId = formData.get("skuId") as string;
+
+		if (!skuId) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "ID de variante manquant",
+			};
+		}
+
+		// 3. Récupérer le SKU original avec ses médias
 		const original = await prisma.productSku.findUnique({
 			where: { id: skuId },
 			include: {
@@ -40,7 +56,7 @@ export async function duplicateSku(skuId: string): Promise<ActionState> {
 			};
 		}
 
-		// 3. Générer un nouveau code SKU unique via le service
+		// 4. Générer un nouveau code SKU unique via le service
 		const skuResult = await generateUniqueTechnicalName(
 			original.sku,
 			async (sku) => {
@@ -58,7 +74,7 @@ export async function duplicateSku(skuId: string): Promise<ActionState> {
 
 		const newSku = skuResult.name!;
 
-		// 4. Créer la copie du SKU
+		// 5. Créer la copie du SKU
 		const duplicate = await prisma.productSku.create({
 			data: {
 				sku: newSku,
@@ -84,22 +100,21 @@ export async function duplicateSku(skuId: string): Promise<ActionState> {
 			},
 		});
 
-		// 5. Revalider les pages concernées
-		if (original.product?.slug) {
-			revalidatePath(`/admin/catalogue/produits/${original.product.slug}/variantes`);
-		}
-		revalidatePath("/admin/catalogue/inventaire");
+		// 6. Invalider le cache avec les tags appropriés
+		const tags = getSkuInvalidationTags(
+			duplicate.sku,
+			original.productId,
+			original.product?.slug,
+			duplicate.id
+		);
+		tags.forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,
 			message: `Variante dupliquée: ${duplicate.sku}`,
 			data: { id: duplicate.id, sku: duplicate.sku },
 		};
-	} catch (error) {
-		console.error("[DUPLICATE_SKU] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible de dupliquer la variante",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de dupliquer la variante");
 	}
 }

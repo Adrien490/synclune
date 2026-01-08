@@ -1,10 +1,11 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { revalidatePath, updateTag } from "next/cache";
 
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
 
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { deleteProductTypeSchema } from "../schemas/product-type.schemas";
@@ -75,11 +76,7 @@ export async function deleteProductType(
 			status: ActionStatus.SUCCESS,
 			message: "Type de produit supprimé avec succès",
 		};
-	} catch (error) {
-// console.error("[DELETE_PRODUCT_TYPE]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la suppression",
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la suppression");
 	}
 }

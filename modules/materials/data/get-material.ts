@@ -64,7 +64,8 @@ async function fetchMaterial(
 		});
 
 		return material;
-	} catch {
+	} catch (error) {
+		console.error("[GET_MATERIAL]", error);
 		return null;
 	}
 }

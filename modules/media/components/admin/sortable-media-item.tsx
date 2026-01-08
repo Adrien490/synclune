@@ -141,7 +141,9 @@ export function SortableMediaItem({
 									if (e.currentTarget.readyState === 0) {
 										e.currentTarget.load();
 									}
-									void e.currentTarget.play();
+									e.currentTarget.play().catch(() => {
+										// Ignorer les erreurs d'autoplay (ex: user hasn't interacted yet)
+									});
 								}}
 								onMouseLeave={(e) => {
 									e.currentTarget.pause();

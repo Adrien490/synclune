@@ -1,12 +1,16 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
+import { revalidatePath, updateTag } from "next/cache";
+
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
+import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
 import { generateSlug } from "@/shared/utils/generate-slug";
+
 import { getMaterialInvalidationTags } from "../constants/cache";
+import { duplicateMaterialSchema } from "../schemas/materials.schemas";
 
 /**
  * Server Action ADMIN pour dupliquer un materiau
@@ -16,13 +20,31 @@ import { getMaterialInvalidationTags } from "../constants/cache";
  * - Un nouveau slug genere automatiquement
  * - isActive a false (pour eviter activation accidentelle)
  */
-export async function duplicateMaterial(materialId: string): Promise<ActionState> {
+export async function duplicateMaterial(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
 	try {
 		// 1. Verification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Recuperer le materiau original
+		// 2. Validation des donnees
+		const rawData = {
+			materialId: formData.get("materialId") as string,
+		};
+
+		const result = duplicateMaterialSchema.safeParse(rawData);
+		if (!result.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: result.error.issues[0]?.message || "Donnees invalides",
+			};
+		}
+
+		const { materialId } = result.data;
+
+		// 3. Recuperer le materiau original
 		const original = await prisma.material.findUnique({
 			where: { id: materialId },
 		});
@@ -34,7 +56,7 @@ export async function duplicateMaterial(materialId: string): Promise<ActionState
 			};
 		}
 
-		// 3. Generer un nouveau nom unique
+		// 4. Generer un nouveau nom unique
 		let newName = `${original.name} (copie)`;
 		let suffix = 1;
 
@@ -59,10 +81,10 @@ export async function duplicateMaterial(materialId: string): Promise<ActionState
 			}
 		}
 
-		// 4. Generer un slug unique
+		// 5. Generer un slug unique
 		const slug = await generateSlug(prisma, "material", newName);
 
-		// 5. Creer la copie
+		// 6. Creer la copie
 		const duplicate = await prisma.material.create({
 			data: {
 				name: newName,
@@ -72,7 +94,7 @@ export async function duplicateMaterial(materialId: string): Promise<ActionState
 			},
 		});
 
-		// 6. Revalider
+		// 7. Revalider
 		revalidatePath("/admin/catalogue/materiaux");
 		const tags = getMaterialInvalidationTags(duplicate.slug);
 		tags.forEach((tag) => updateTag(tag));
@@ -82,11 +104,7 @@ export async function duplicateMaterial(materialId: string): Promise<ActionState
 			message: `Materiau duplique: ${duplicate.name}`,
 			data: { id: duplicate.id, name: duplicate.name },
 		};
-	} catch (error) {
-		console.error("[DUPLICATE_MATERIAL] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible de dupliquer le matériau",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de dupliquer le materiau");
 	}
 }

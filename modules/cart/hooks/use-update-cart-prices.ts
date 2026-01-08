@@ -22,5 +22,9 @@ export function useUpdateCartPrices() {
 		undefined
 	);
 
-	return { state, action, isPending };
+	return {
+		state,
+		action,
+		isPending,
+	};
 }

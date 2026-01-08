@@ -1,10 +1,11 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { revalidatePath, updateTag } from "next/cache";
 
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
 
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { toggleProductTypeStatusSchema } from "../schemas/product-type.schemas";
@@ -23,7 +24,15 @@ export async function toggleProductTypeStatus(
 			isActive: formData.get("isActive") === "true",
 		};
 
-		const { productTypeId, isActive } = toggleProductTypeStatusSchema.parse(rawData);
+		const result = toggleProductTypeStatusSchema.safeParse(rawData);
+		if (!result.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: result.error.issues[0]?.message || "Données invalides",
+			};
+		}
+
+		const { productTypeId, isActive } = result.data;
 
 		// Mettre a jour le statut
 		await prisma.productType.update({
@@ -38,11 +47,7 @@ export async function toggleProductTypeStatus(
 			status: ActionStatus.SUCCESS,
 			message: `Type ${isActive ? "activé" : "désactivé"} avec succès`,
 		};
-	} catch (error) {
-// console.error("[toggleProductTypeStatus]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible de modifier le statut",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de modifier le statut");
 	}
 }

@@ -180,7 +180,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 				</div>
 			</div>
 
-			<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
+			<form action={action} className="space-y-6">
 				{/* Hidden fields */}
 				<input type="hidden" name="orderId" value={order.id} />
 				<input type="hidden" name="reason" value={reason} />

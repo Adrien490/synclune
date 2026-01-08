@@ -8,7 +8,7 @@ import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export async function refreshNewsletter(
-	_prevState: unknown,
+	_prevState: ActionState | undefined,
 	_formData: FormData
 ): Promise<ActionState> {
 	try {

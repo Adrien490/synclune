@@ -1,13 +1,17 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
+import { revalidatePath, updateTag } from "next/cache";
+
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
+import { prisma } from "@/shared/lib/prisma";
+import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
 import { generateSlug } from "@/shared/utils/generate-slug";
-import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
+
 import { getColorInvalidationTags } from "../constants/cache";
+import { duplicateColorSchema } from "../schemas/color.schemas";
 
 /**
  * Server Action ADMIN pour dupliquer une couleur
@@ -17,13 +21,31 @@ import { getColorInvalidationTags } from "../constants/cache";
  * - Un nouveau slug genere automatiquement
  * - isActive a false (pour eviter activation accidentelle)
  */
-export async function duplicateColor(colorId: string): Promise<ActionState> {
+export async function duplicateColor(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
 	try {
 		// 1. Verification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Recuperer la couleur originale
+		// 2. Validation des donnees
+		const rawData = {
+			colorId: formData.get("colorId") as string,
+		};
+
+		const result = duplicateColorSchema.safeParse(rawData);
+		if (!result.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: result.error.issues[0]?.message || "Donnees invalides",
+			};
+		}
+
+		const { colorId } = result.data;
+
+		// 3. Recuperer la couleur originale
 		const original = await prisma.color.findUnique({
 			where: { id: colorId },
 		});
@@ -35,7 +57,7 @@ export async function duplicateColor(colorId: string): Promise<ActionState> {
 			};
 		}
 
-		// 3. Generer un nouveau nom unique via le service
+		// 4. Generer un nouveau nom unique via le service
 		const nameResult = await generateUniqueReadableName(
 			original.name,
 			async (name) => {
@@ -53,10 +75,10 @@ export async function duplicateColor(colorId: string): Promise<ActionState> {
 
 		const newName = nameResult.name!;
 
-		// 4. Generer un slug unique
+		// 5. Generer un slug unique
 		const slug = await generateSlug(prisma, "color", newName);
 
-		// 5. Creer la copie
+		// 6. Creer la copie
 		const duplicate = await prisma.color.create({
 			data: {
 				name: newName,
@@ -66,7 +88,7 @@ export async function duplicateColor(colorId: string): Promise<ActionState> {
 			},
 		});
 
-		// 6. Revalider
+		// 7. Revalider
 		revalidatePath("/admin/catalogue/couleurs");
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
@@ -76,11 +98,7 @@ export async function duplicateColor(colorId: string): Promise<ActionState> {
 			message: `Couleur dupliquee: ${duplicate.name}`,
 			data: { id: duplicate.id, name: duplicate.name },
 		};
-	} catch (error) {
-		console.error("[DUPLICATE_COLOR] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible de dupliquer la couleur",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de dupliquer la couleur");
 	}
 }

@@ -9,13 +9,23 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { randomUUID } from "crypto";
 import { subscriberIdSchema } from "../schemas/subscriber.schemas";
 import { NEWSLETTER_BASE_URL } from "../constants/urls.constants";
+import { updateTag } from "next/cache";
+import { getNewsletterInvalidationTags } from "../constants/cache";
 
 /**
  * Server Action ADMIN pour renvoyer l'email de confirmation newsletter
  */
-export async function resendConfirmationAdmin(subscriberId: string): Promise<ActionState> {
+export async function resendConfirmationAdmin(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
 	try {
-		// 1. Validation de l'entrée
+		// 1. Vérification admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2. Validation de l'entrée
+		const subscriberId = formData.get("subscriberId");
 		const validation = subscriberIdSchema.safeParse({ subscriberId });
 		if (!validation.success) {
 			return {
@@ -24,13 +34,11 @@ export async function resendConfirmationAdmin(subscriberId: string): Promise<Act
 			};
 		}
 
-		// 2. Vérification admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const validatedId = validation.data.subscriberId;
 
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
-			where: { id: subscriberId },
+			where: { id: validatedId },
 			select: { id: true, email: true, status: true },
 		});
 
@@ -52,7 +60,7 @@ export async function resendConfirmationAdmin(subscriberId: string): Promise<Act
 		const confirmationToken = randomUUID();
 
 		await prisma.newsletterSubscriber.update({
-			where: { id: subscriberId },
+			where: { id: validatedId },
 			data: {
 				confirmationToken,
 				confirmationSentAt: new Date(),
@@ -74,6 +82,9 @@ export async function resendConfirmationAdmin(subscriberId: string): Promise<Act
 				message: "Token régénéré mais échec de l'envoi de l'email. Veuillez réessayer.",
 			};
 		}
+
+		// 6. Invalider le cache
+		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

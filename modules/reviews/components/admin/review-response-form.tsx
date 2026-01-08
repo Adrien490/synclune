@@ -65,7 +65,7 @@ export function ReviewResponseForm({
 		}
 	}
 
-	const isValid = content.trim().length >= REVIEW_CONFIG.MIN_CONTENT_LENGTH
+	const isValid = content.trim().length >= REVIEW_CONFIG.MIN_RESPONSE_LENGTH
 
 	return (
 		<form onSubmit={handleSubmit} className={cn("space-y-4", className)}>
@@ -81,14 +81,14 @@ export function ReviewResponseForm({
 					rows={4}
 					maxLength={REVIEW_CONFIG.MAX_RESPONSE_LENGTH}
 					disabled={isPending}
-					aria-invalid={content.length > 0 && content.length < REVIEW_CONFIG.MIN_CONTENT_LENGTH}
+					aria-invalid={content.length > 0 && content.length < REVIEW_CONFIG.MIN_RESPONSE_LENGTH}
 					aria-describedby="response-error response-counter"
 				/>
 				<div className="flex justify-between text-xs text-muted-foreground">
 					<span id="response-error" role="alert" aria-live="polite">
-						{content.length > 0 && content.length < REVIEW_CONFIG.MIN_CONTENT_LENGTH && (
+						{content.length > 0 && content.length < REVIEW_CONFIG.MIN_RESPONSE_LENGTH && (
 							<span className="text-destructive">
-								Minimum {REVIEW_CONFIG.MIN_CONTENT_LENGTH} caractères
+								Minimum {REVIEW_CONFIG.MIN_RESPONSE_LENGTH} caractères
 							</span>
 						)}
 					</span>

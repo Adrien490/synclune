@@ -47,7 +47,7 @@ export async function ProductTypesDataTable({
 	return (
 		<Card>
 			<CardContent>
-				<ProductTypesSelectionToolbar productTypeIds={productTypeIds} />
+				<ProductTypesSelectionToolbar />
 				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des types de produits" className="min-w-full table-fixed">
 						<TableHeader>

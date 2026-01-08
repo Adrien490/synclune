@@ -1,13 +1,12 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { updateTag, revalidatePath } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
-import { revalidatePath } from "next/cache";
-import { ZodError } from "zod";
 
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { updateCollectionSchema } from "../schemas/collection.schemas";
@@ -21,60 +20,64 @@ export async function updateCollection(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraire les donnees du FormData
-		const rawData = {
+		// 2. Extraire et valider les donnees
+		const validation = updateCollectionSchema.safeParse({
 			id: formData.get("id"),
 			name: formData.get("name"),
 			slug: formData.get("slug"),
 			description: formData.get("description") || null,
 			status: formData.get("status"),
-		};
-
-		// Valider les donnees
-		const validatedData = updateCollectionSchema.parse(rawData);
-
-		// Verifier que la collection existe
-		const existingCollection = await prisma.collection.findUnique({
-			where: { id: validatedData.id },
 		});
 
-		if (!existingCollection) {
+		if (!validation.success) {
 			return {
-				status: ActionStatus.ERROR,
-				message: "Cette collection n'existe pas",
+				status: ActionStatus.VALIDATION_ERROR,
+				message: validation.error.issues[0]?.message || "Donnees invalides",
 			};
 		}
 
-		// Verifier l'unicite du nom (sauf si c'est le meme)
-		if (validatedData.name !== existingCollection.name) {
-			const nameExists = await prisma.collection.findFirst({
-				where: { name: validatedData.name },
+		const validatedData = validation.data;
+
+		// 3. Transaction pour garantir l'atomicite
+		const slug = await prisma.$transaction(async (tx) => {
+			// Verifier que la collection existe
+			const existingCollection = await tx.collection.findUnique({
+				where: { id: validatedData.id },
 			});
 
-			if (nameExists) {
-				return {
-					status: ActionStatus.ERROR,
-					message:
-						"Ce nom de collection existe deja. Veuillez en choisir un autre.",
-				};
+			if (!existingCollection) {
+				throw new Error("NOT_FOUND");
 			}
-		}
 
-		// Generer un nouveau slug si le nom a change
-		const slug =
-			validatedData.name !== existingCollection.name
-				? await generateSlug(prisma, "collection", validatedData.name)
-				: existingCollection.slug;
+			// Verifier l'unicite du nom (sauf si c'est le meme)
+			if (validatedData.name !== existingCollection.name) {
+				const nameExists = await tx.collection.findFirst({
+					where: { name: validatedData.name },
+				});
 
-		// Mettre a jour la collection
-		await prisma.collection.update({
-			where: { id: validatedData.id },
-			data: {
-				name: validatedData.name,
-				slug,
-				description: validatedData.description,
-				status: validatedData.status,
-			},
+				if (nameExists) {
+					throw new Error("NAME_EXISTS");
+				}
+			}
+
+			// Generer un nouveau slug si le nom a change
+			const newSlug =
+				validatedData.name !== existingCollection.name
+					? await generateSlug(tx, "collection", validatedData.name)
+					: existingCollection.slug;
+
+			// Mettre a jour la collection
+			await tx.collection.update({
+				where: { id: validatedData.id },
+				data: {
+					name: validatedData.name,
+					slug: newSlug,
+					description: validatedData.description,
+					status: validatedData.status,
+				},
+			});
+
+			return newSlug;
 		});
 
 		// Revalider les pages concernees et invalider le cache
@@ -86,29 +89,22 @@ export async function updateCollection(
 			status: ActionStatus.SUCCESS,
 			message: "Collection modifiée avec succès",
 		};
-	} catch (error) {
-// console.error("Erreur lors de la modification de la collection:", error);
-
-		if (error instanceof ZodError) {
-			// Formater les erreurs Zod de maniere lisible
-			const firstError = error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
+	} catch (e) {
+		// Gerer les erreurs metier de la transaction
+		if (e instanceof Error) {
+			if (e.message === "NOT_FOUND") {
+				return {
+					status: ActionStatus.NOT_FOUND,
+					message: "Cette collection n'existe pas",
+				};
+			}
+			if (e.message === "NAME_EXISTS") {
+				return {
+					status: ActionStatus.ERROR,
+					message: "Ce nom de collection existe deja. Veuillez en choisir un autre.",
+				};
+			}
 		}
-
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				"Une erreur est survenue lors de la modification de la collection",
-		};
+		return handleActionError(e, "Erreur lors de la modification de la collection");
 	}
 }

@@ -6,6 +6,10 @@
 
 import type { RefundReason } from "@/app/generated/prisma/enums";
 import { shouldRestockByDefault } from "@/modules/refunds/utils/refund-utils.browser";
+import type { RefundItemValue } from "../types/refund.types";
+
+// Re-export pour retro-compatibilite
+export type { RefundItemValue } from "../types/refund.types";
 
 // ============================================================================
 // TYPES
@@ -16,13 +20,6 @@ export interface OrderItemForRefundCalc {
 	quantity: number;
 	price: number;
 	refundItems: { quantity: number }[];
-}
-
-export interface RefundItemValue {
-	orderItemId: string;
-	quantity: number;
-	restock: boolean;
-	selected: boolean;
 }
 
 // ============================================================================

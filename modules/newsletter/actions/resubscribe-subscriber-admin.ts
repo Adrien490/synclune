@@ -12,9 +12,17 @@ import { getNewsletterInvalidationTags } from "../constants/cache";
 /**
  * Server Action ADMIN pour réabonner un abonné newsletter désactivé
  */
-export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<ActionState> {
+export async function resubscribeSubscriberAdmin(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
 	try {
-		// 1. Validation de l'entrée
+		// 1. Vérification admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2. Validation de l'entrée
+		const subscriberId = formData.get("subscriberId");
 		const validation = subscriberIdSchema.safeParse({ subscriberId });
 		if (!validation.success) {
 			return {
@@ -23,13 +31,11 @@ export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<
 			};
 		}
 
-		// 2. Vérification admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const validatedId = validation.data.subscriberId;
 
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
-			where: { id: subscriberId },
+			where: { id: validatedId },
 			select: { id: true, email: true, status: true, confirmedAt: true },
 		});
 
@@ -56,7 +62,7 @@ export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<
 		}
 
 		await prisma.newsletterSubscriber.update({
-			where: { id: subscriberId },
+			where: { id: validatedId },
 			data: {
 				status: NewsletterStatus.CONFIRMED,
 				unsubscribedAt: null,
@@ -74,7 +80,7 @@ export async function resubscribeSubscriberAdmin(subscriberId: string): Promise<
 		console.error("[RESUBSCRIBE_SUBSCRIBER_ADMIN] Erreur:", error);
 		return {
 			status: ActionStatus.ERROR,
-			message: error instanceof Error ? error.message : "Une erreur est survenue",
+			message: "Une erreur est survenue",
 		};
 	}
 }

@@ -5,6 +5,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { toggleProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../constants/cache";
@@ -198,13 +199,7 @@ export async function toggleProductStatus(
 				warning: warningMessage,
 			},
 		};
-	} catch (error) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors du changement de statut.",
-		};
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors du changement de statut");
 	}
 }

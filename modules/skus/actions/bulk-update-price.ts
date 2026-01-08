@@ -3,6 +3,7 @@
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { bulkUpdatePriceSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 
@@ -144,11 +145,7 @@ export async function bulkUpdatePrice(
 			status: ActionStatus.SUCCESS,
 			message: `Prix ${modeLabel} pour ${skusData.length} variante(s)`,
 		};
-	} catch (error) {
-		// console.error("[bulkUpdatePrice]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible de modifier les prix",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de modifier les prix");
 	}
 }

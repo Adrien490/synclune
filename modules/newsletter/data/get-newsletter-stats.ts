@@ -17,18 +17,27 @@ export async function getNewsletterStats(): Promise<NewsletterStats> {
 	cacheLife("dashboard");
 	cacheTag(NEWSLETTER_CACHE_TAGS.LIST);
 
-	const [totalSubscribers, activeSubscribers] = await Promise.all([
-		prisma.newsletterSubscriber.count(),
-		prisma.newsletterSubscriber.count({
-			where: {
-				status: NewsletterStatus.CONFIRMED,
-			},
-		}),
-	]);
+	try {
+		const [totalSubscribers, activeSubscribers] = await Promise.all([
+			prisma.newsletterSubscriber.count(),
+			prisma.newsletterSubscriber.count({
+				where: {
+					status: NewsletterStatus.CONFIRMED,
+				},
+			}),
+		]);
 
-	return {
-		totalSubscribers,
-		activeSubscribers,
-		inactiveSubscribers: totalSubscribers - activeSubscribers,
-	};
+		return {
+			totalSubscribers,
+			activeSubscribers,
+			inactiveSubscribers: totalSubscribers - activeSubscribers,
+		};
+	} catch (error) {
+		console.error("[GET_NEWSLETTER_STATS]", error);
+		return {
+			totalSubscribers: 0,
+			activeSubscribers: 0,
+			inactiveSubscribers: 0,
+		};
+	}
 }

@@ -15,6 +15,7 @@ import type { ActionState } from "@/shared/types/server-action"
 
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
 import { getOrderForReviewRequest } from "../data/get-order-for-review-request"
+import { sendReviewRequestEmailSchema } from "../schemas/review.schemas"
 
 /**
  * Logique metier pour envoyer un email de demande d'avis
@@ -141,11 +142,21 @@ export async function sendReviewRequestEmailAction(
 		const adminCheck = await requireAdmin()
 		if ("error" in adminCheck) return adminCheck.error
 
-		// 2. Extraire l'orderId du FormData
-		const orderId = formData.get("orderId") as string
-		if (!orderId) {
-			return validationError("orderId: L'identifiant de commande est requis")
+		// 2. Extraire et valider l'orderId
+		const rawData = {
+			orderId: formData.get("orderId"),
 		}
+
+		const validation = sendReviewRequestEmailSchema.safeParse(rawData)
+		if (!validation.success) {
+			const firstError = validation.error.issues?.[0]
+			const errorPath = firstError?.path.join(".")
+			return validationError(
+				errorPath ? `${errorPath}: ${firstError.message}` : firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA
+			)
+		}
+
+		const { orderId } = validation.data
 
 		// 3. Executer la logique metier
 		return await executeReviewRequestEmail(orderId)

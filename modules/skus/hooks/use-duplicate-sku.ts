@@ -4,7 +4,6 @@ import { useActionState, useTransition } from "react";
 import { duplicateSku } from "@/modules/skus/actions/duplicate-sku";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import type { ActionState } from "@/shared/types/server-action";
 
 interface UseDuplicateSkuOptions {
 	onSuccess?: (data: { id: string; sku: string }) => void;
@@ -17,10 +16,9 @@ interface UseDuplicateSkuOptions {
 export function useDuplicateSku(options?: UseDuplicateSkuOptions) {
 	const [isPending, startTransition] = useTransition();
 
-	const [, formAction, isActionPending] = useActionState(
+	const [, formAction] = useActionState(
 		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				duplicateSku(formData.get("skuId") as string),
+			duplicateSku,
 			createToastCallbacks({
 				loadingMessage: "Duplication en cours...",
 				onSuccess: (result) => {
@@ -48,6 +46,6 @@ export function useDuplicateSku(options?: UseDuplicateSkuOptions) {
 
 	return {
 		duplicate,
-		isPending: isPending || isActionPending,
+		isPending,
 	};
 }

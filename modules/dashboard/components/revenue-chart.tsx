@@ -15,7 +15,7 @@ import {
 	ChartTooltipContent,
 	type ChartConfig,
 } from "@/shared/components/ui/chart";
-import type { GetDashboardRevenueChartReturn, RevenueDataPoint } from "@/modules/dashboard/data/get-revenue-chart";
+import type { GetRevenueChartReturn, RevenueDataPoint } from "@/modules/dashboard/data/get-revenue-chart";
 import { use } from "react";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import { ChartEmpty } from "./chart-empty";
@@ -23,7 +23,7 @@ import { ChartScrollContainer } from "./chart-scroll-container";
 import { CHART_STYLES } from "../constants/chart-styles";
 
 interface RevenueChartProps {
-	chartDataPromise: Promise<GetDashboardRevenueChartReturn>;
+	chartDataPromise: Promise<GetRevenueChartReturn>;
 }
 
 /**
@@ -70,7 +70,8 @@ export function RevenueChart({ chartDataPromise }: RevenueChartProps) {
 						</span>
 						<ChartScrollContainer>
 							<ChartContainer config={chartConfig} className={`${CHART_STYLES.height.responsive} w-full`}>
-								<LineChart accessibilityLayer
+								<LineChart
+								accessibilityLayer
 								data={chartData}
 								margin={{ top: 5, right: 10, bottom: 5, left: -10 }}
 							>

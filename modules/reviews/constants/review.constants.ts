@@ -26,6 +26,8 @@ export const REVIEW_CONFIG = {
 	MAX_PER_PAGE: 50,
 	/** Longueur max de la réponse admin */
 	MAX_RESPONSE_LENGTH: 1000,
+	/** Longueur min de la réponse admin */
+	MIN_RESPONSE_LENGTH: 20,
 } as const
 
 // ============================================

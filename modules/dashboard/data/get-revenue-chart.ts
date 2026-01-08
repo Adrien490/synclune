@@ -1,4 +1,3 @@
-import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
 import {
@@ -17,25 +16,9 @@ export type {
 	GetRevenueChartReturn,
 } from "../types/dashboard.types";
 
-// Alias pour compatibilité avec les imports existants
-export type GetDashboardRevenueChartReturn = GetRevenueChartReturn;
-
 // ============================================================================
-// MAIN FUNCTIONS
+// MAIN FUNCTION
 // ============================================================================
-
-/**
- * Action serveur pour récupérer les données de revenus des 30 derniers jours
- */
-export async function getRevenueChart(): Promise<GetRevenueChartReturn> {
-	const admin = await isAdmin();
-
-	if (!admin) {
-		throw new Error("Admin access required");
-	}
-
-	return await fetchDashboardRevenueChart();
-}
 
 // Type pour le résultat de la requête SQL
 type RevenueRow = {

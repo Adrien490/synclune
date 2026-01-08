@@ -7,7 +7,6 @@ import { resendConfirmationAdmin } from "@/modules/newsletter/actions/resend-con
 import { deleteSubscriberAdmin } from "@/modules/newsletter/actions/delete-subscriber-admin";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import type { ActionState } from "@/shared/types/server-action";
 
 interface UseSubscriberActionsOptions {
 	onSuccess?: () => void;
@@ -31,39 +30,23 @@ export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 		},
 	});
 
-	const [, unsubscribeAction, isUnsubscribePending] = useActionState(
-		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				unsubscribeSubscriberAdmin(formData.get("subscriberId") as string),
-			callbacks
-		),
+	const [, unsubscribeAction] = useActionState(
+		withCallbacks(unsubscribeSubscriberAdmin, callbacks),
 		undefined
 	);
 
-	const [, resubscribeAction, isResubscribePending] = useActionState(
-		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				resubscribeSubscriberAdmin(formData.get("subscriberId") as string),
-			callbacks
-		),
+	const [, resubscribeAction] = useActionState(
+		withCallbacks(resubscribeSubscriberAdmin, callbacks),
 		undefined
 	);
 
-	const [, resendAction, isResendPending] = useActionState(
-		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				resendConfirmationAdmin(formData.get("subscriberId") as string),
-			callbacks
-		),
+	const [, resendAction] = useActionState(
+		withCallbacks(resendConfirmationAdmin, callbacks),
 		undefined
 	);
 
-	const [, deleteAction, isDeletePending] = useActionState(
-		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				deleteSubscriberAdmin(formData.get("subscriberId") as string),
-			callbacks
-		),
+	const [, deleteAction] = useActionState(
+		withCallbacks(deleteSubscriberAdmin, callbacks),
 		undefined
 	);
 
@@ -104,11 +87,6 @@ export function useSubscriberActions(options?: UseSubscriberActionsOptions) {
 		resubscribe,
 		resendConfirmation,
 		deleteSubscriber,
-		isPending:
-			isPending ||
-			isUnsubscribePending ||
-			isResubscribePending ||
-			isResendPending ||
-			isDeletePending,
+		isPending,
 	};
 }

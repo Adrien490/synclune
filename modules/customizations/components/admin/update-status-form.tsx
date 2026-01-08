@@ -55,7 +55,13 @@ export function UpdateStatusForm({
 	);
 
 	return (
-		<div className="space-y-3">
+		<form
+			onSubmit={(e) => {
+				e.preventDefault();
+				handleSubmit();
+			}}
+			className="space-y-3"
+		>
 			<div className="space-y-2">
 				<Label htmlFor="status">Changer le statut</Label>
 				<Select
@@ -76,12 +82,13 @@ export function UpdateStatusForm({
 				</Select>
 			</div>
 			<Button
-				onClick={handleSubmit}
+				type="submit"
 				disabled={isPending || selectedStatus === currentStatus}
 				className="w-full"
+				aria-busy={isPending}
 			>
 				{isPending ? "Mise à jour..." : "Mettre à jour"}
 			</Button>
-		</div>
+		</form>
 	);
 }

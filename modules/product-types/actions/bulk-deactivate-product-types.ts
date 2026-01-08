@@ -1,10 +1,11 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { revalidatePath, updateTag } from "next/cache";
 
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
 
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { bulkDeactivateProductTypesSchema } from "../schemas/product-type.schemas";
@@ -22,14 +23,15 @@ export async function bulkDeactivateProductTypes(
 			ids: formData.get("ids") as string,
 		};
 
-		const { ids } = bulkDeactivateProductTypesSchema.parse(rawData);
-
-		if (ids.length === 0) {
+		const result = bulkDeactivateProductTypesSchema.safeParse(rawData);
+		if (!result.success || result.data.ids.length === 0) {
 			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun type selectionne",
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "Au moins un type doit être sélectionné",
 			};
 		}
+
+		const { ids } = result.data;
 
 		// Verifier qu'aucun type systeme n'est selectionne
 		const systemTypes = await prisma.productType.findMany({
@@ -66,11 +68,7 @@ export async function bulkDeactivateProductTypes(
 			status: ActionStatus.SUCCESS,
 			message: `${ids.length} type(s) désactivé(s) avec succès`,
 		};
-	} catch (error) {
-// console.error("[bulkDeactivateProductTypes]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible de désactiver les types",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de désactiver les types");
 	}
 }

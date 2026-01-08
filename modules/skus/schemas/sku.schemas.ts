@@ -62,14 +62,14 @@ const baseSkuFieldsSchema = z.object({
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
 		.positive({ error: "Le prix doit être positif" })
-		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur` }),
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` }),
 
 	// Prix compare (optionnel, pour afficher prix barre)
 	compareAtPriceEuros: z.coerce
 		.number()
-		.positive({ error: "Le prix compare doit être positif" })
+		.positive({ error: "Le prix comparé doit être positif" })
 		.max(PRICE_LIMITS.MAX_EUR, {
-			error: `Le prix compare ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur`,
+			error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €`,
 		})
 		.optional()
 		.or(z.literal(""))
@@ -128,7 +128,7 @@ const PRIMARY_IMAGE_ERROR = {
 };
 
 const COMPARE_PRICE_ERROR = {
-	message: "Le prix compare doit être superieur ou egal au prix de vente",
+	message: "Le prix comparé doit être supérieur ou égal au prix de vente",
 	path: ["compareAtPriceEuros"],
 };
 
@@ -239,11 +239,21 @@ export const updateProductSkuSchema = baseSkuFieldsSchema
 /**
  * Schema pour la mise à jour rapide du prix d'un SKU
  * Utilisé dans le dialog de modification rapide de prix
+ * Note: Les prix sont en EUROS (convertis en centimes côté serveur)
  */
 export const updateSkuPriceSchema = z.object({
 	skuId: z.string().min(1),
-	priceInclTax: z.number().int().min(1, "Le prix doit être supérieur à 0"),
-	compareAtPrice: z.number().int().min(0).nullable().optional(),
+	priceInclTaxEuros: z.coerce
+		.number()
+		.positive({ error: "Le prix doit être supérieur à 0" })
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` }),
+	compareAtPriceEuros: z.coerce
+		.number()
+		.positive({ error: "Le prix comparé doit être positif" })
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` })
+		.optional()
+		.or(z.literal(""))
+		.transform((val) => (val === "" ? undefined : val)),
 });
 
 /**

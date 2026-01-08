@@ -1,11 +1,14 @@
 "use server";
 
 import { updateTag } from "next/cache";
+
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { MATERIALS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+
+import { MATERIALS_CACHE_TAGS } from "../constants/cache";
 
 export async function refreshMaterials(
 	_prevState: unknown,
@@ -22,17 +25,7 @@ export async function refreshMaterials(
 			status: ActionStatus.SUCCESS,
 			message: "Matériaux rafraîchis",
 		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors du rafraîchissement",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de rafraichir les materiaux");
 	}
 }

@@ -147,6 +147,7 @@ export async function fetchWishlist(
 			totalCount,
 		};
 	} catch (error) {
+		console.error("[GET_WISHLIST]", error);
 		return {
 			items: [],
 			pagination: {

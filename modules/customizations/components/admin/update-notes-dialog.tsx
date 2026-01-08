@@ -70,6 +70,7 @@ export function UpdateNotesDialog() {
 						onChange={(e) => setNotes(e.target.value)}
 						className="min-h-[150px] resize-none"
 						maxLength={2000}
+						aria-label="Notes internes pour la demande"
 					/>
 					<p className="mt-2 text-xs text-muted-foreground text-right">
 						{notes.length}/2000 caractères
@@ -80,7 +81,7 @@ export function UpdateNotesDialog() {
 					<Button variant="outline" onClick={close} disabled={isPending}>
 						Annuler
 					</Button>
-					<Button onClick={handleSubmit} disabled={isPending || !hasChanges}>
+					<Button onClick={handleSubmit} disabled={isPending || !hasChanges} aria-busy={isPending}>
 						{isPending ? "Enregistrement..." : "Enregistrer"}
 					</Button>
 				</ResponsiveDialogFooter>

@@ -41,7 +41,11 @@ export async function createReviewResponse(
 
 		const validation = createReviewResponseSchema.safeParse(rawData)
 		if (!validation.success) {
-			return validationError(validation.error.issues[0]?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA)
+			const firstError = validation.error.issues?.[0]
+			const errorPath = firstError?.path.join(".")
+			return validationError(
+				errorPath ? `${errorPath}: ${firstError.message}` : firstError?.message || REVIEW_ERROR_MESSAGES.INVALID_DATA
+			)
 		}
 
 		const { reviewId, content } = validation.data

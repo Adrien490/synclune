@@ -6,8 +6,10 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_ADJUST_STOCK_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { handleActionError } from "@/shared/lib/actions";
+import { updateTag } from "next/cache";
 import { adjustSkuStockSchema } from "../schemas/sku.schemas";
+import { getInventoryInvalidationTags } from "../utils/cache.utils";
 
 /**
  * Server Action ADMIN pour ajuster le stock d'un SKU
@@ -49,7 +51,13 @@ export async function adjustSkuStock(
 		// 3. Vérifier que le SKU existe
 		const sku = await prisma.productSku.findUnique({
 			where: { id: skuId },
-			select: { id: true, sku: true, inventory: true, productId: true },
+			select: {
+				id: true,
+				sku: true,
+				inventory: true,
+				productId: true,
+				product: { select: { slug: true } },
+			},
 		});
 
 		if (!sku) {
@@ -79,9 +87,9 @@ export async function adjustSkuStock(
 			},
 		});
 
-		// 7. Revalider les pages concernées
-		revalidatePath("/admin/catalogue/inventaire");
-		// La page produit sera revalidée via la relation productId si nécessaire
+		// 6. Invalider le cache avec les tags appropriés
+		const tags = getInventoryInvalidationTags(sku.product.slug, sku.productId, [sku.id]);
+		tags.forEach((tag) => updateTag(tag));
 
 		const adjustmentText = adjustment > 0 ? `+${adjustment}` : `${adjustment}`;
 		return {
@@ -94,11 +102,7 @@ export async function adjustSkuStock(
 				adjustment,
 			},
 		};
-	} catch (error) {
-		console.error("[ADJUST_SKU_STOCK] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible d'ajuster le stock",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible d'ajuster le stock");
 	}
 }

@@ -1,11 +1,11 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { updateTag, revalidatePath } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
 
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { bulkDeleteCollectionsSchema } from "../schemas/collection.schemas";
@@ -19,11 +19,19 @@ export async function bulkDeleteCollections(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraire les IDs du FormData
-		const idsString = formData.get("ids");
-		const ids = idsString ? JSON.parse(idsString as string) : [];
+		// 2. Extraire et parser les IDs du FormData
+		let ids: unknown;
+		try {
+			const idsString = formData.get("ids") as string;
+			ids = idsString ? JSON.parse(idsString) : [];
+		} catch {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "Format JSON invalide pour les IDs",
+			};
+		}
 
-		// Valider les donnees
+		// 3. Valider les donnees
 		const validation = bulkDeleteCollectionsSchema.safeParse({ ids });
 
 		if (!validation.success) {
@@ -86,17 +94,7 @@ export async function bulkDeleteCollections(
 			status: ActionStatus.SUCCESS,
 			message,
 		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la suppression des collections",
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la suppression des collections");
 	}
 }

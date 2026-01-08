@@ -50,14 +50,13 @@ export function UpdatePriceDialog() {
 		e.preventDefault();
 		if (!data) return;
 
-		const priceInCents = Math.round(parseFloat(price) * 100);
-		const compareAtPriceInCents = compareAtPrice
-			? Math.round(parseFloat(compareAtPrice) * 100)
-			: null;
+		const priceInEuros = parseFloat(price);
+		const compareAtPriceInEuros = compareAtPrice ? parseFloat(compareAtPrice) : null;
 
-		if (isNaN(priceInCents) || priceInCents <= 0) return;
+		if (isNaN(priceInEuros) || priceInEuros <= 0) return;
 
-		updatePrice(data.skuId, data.skuName, priceInCents, compareAtPriceInCents);
+		// Le hook et l'action attendent des euros (conversion en centimes côté serveur)
+		updatePrice(data.skuId, data.skuName, priceInEuros, compareAtPriceInEuros);
 	};
 
 	const priceValue = parseFloat(price) || 0;

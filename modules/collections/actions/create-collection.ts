@@ -1,13 +1,12 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { updateTag, revalidatePath } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
-import { revalidatePath } from "next/cache";
-import { ZodError } from "zod";
 
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { createCollectionSchema } from "../schemas/collection.schemas";
@@ -21,15 +20,21 @@ export async function createCollection(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraire les donnees du FormData
-		const rawData = {
+		// 2. Extraire et valider les donnees
+		const validation = createCollectionSchema.safeParse({
 			name: formData.get("name"),
 			description: formData.get("description") || null,
 			status: formData.get("status") || undefined,
-		};
+		});
 
-		// Valider les donnees
-		const validatedData = createCollectionSchema.parse(rawData);
+		if (!validation.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: validation.error.issues[0]?.message || "Donnees invalides",
+			};
+		}
+
+		const validatedData = validation.data;
 
 		// Verifier l'unicite du nom
 		const existingName = await prisma.collection.findFirst({
@@ -68,28 +73,7 @@ export async function createCollection(
 				collectionStatus: validatedData.status,
 			},
 		};
-	} catch (error) {
-// console.error("Erreur lors de la creation de la collection:", error);
-
-		if (error instanceof ZodError) {
-			// Formater les erreurs Zod de maniere lisible
-			const firstError = error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la creation de la collection",
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la creation de la collection");
 	}
 }

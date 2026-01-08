@@ -4,12 +4,14 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 import { RefundAction } from "@/app/generated/prisma/client";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createRefundSchema } from "../schemas/refund.schemas";
-import { shouldRestockByDefault } from "../utils/refund-utils";
+import { shouldRestockByDefault } from "../services/refund-restock.service";
 
 /**
  * Crée un remboursement (statut PENDING)
@@ -199,8 +201,8 @@ export async function createRefund(
 			},
 		});
 
-		revalidatePath("/admin/ventes/remboursements");
-		revalidatePath("/admin/ventes/commandes");
+		updateTag(ORDERS_CACHE_TAGS.LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 		return {
 			status: ActionStatus.SUCCESS,

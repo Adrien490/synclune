@@ -1,8 +1,12 @@
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheCollections } from "../utils/cache.utils";
 import type { CollectionOption } from "../types/collection.types";
 
 export type { CollectionOption };
+
+/** Statuts de collection actifs (non archivées) */
+const COLLECTION_ACTIVE_STATUSES = [CollectionStatus.DRAFT, CollectionStatus.PUBLIC] as const;
 
 // ============================================================================
 // MAIN FUNCTION
@@ -25,7 +29,7 @@ async function fetchCollectionOptions(): Promise<CollectionOption[]> {
 
 	try {
 		const collections = await prisma.collection.findMany({
-			where: { status: { in: ["DRAFT", "PUBLIC"] } },
+			where: { status: { in: [...COLLECTION_ACTIVE_STATUSES] } },
 			select: {
 				id: true,
 				name: true,

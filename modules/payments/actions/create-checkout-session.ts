@@ -19,7 +19,7 @@ import type { CreateCheckoutSessionData } from "@/modules/payments/types/checkou
 // ALLOWED_SHIPPING_COUNTRIES n'est plus utilisé car shipping_address_collection est désactivé (embedded mode)
 import { getShippingOptionsForAddress } from "@/modules/orders/constants/stripe-shipping-rates";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
-import { checkDiscountEligibility } from "@/modules/discounts/utils/check-discount-eligibility";
+import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
 import { calculateDiscountWithExclusion, type CartItemForDiscount } from "@/modules/discounts/services/discount-calculation.service";
 import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zone.utils";
 import { getInvoiceFooter } from "@/shared/lib/stripe";

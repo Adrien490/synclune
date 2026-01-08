@@ -4,7 +4,6 @@ import { useActionState, useTransition } from "react";
 import { duplicateMaterial } from "@/modules/materials/actions/duplicate-material";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import type { ActionState } from "@/shared/types/server-action";
 
 interface UseDuplicateMaterialOptions {
 	onSuccess?: (data: { id: string; name: string }) => void;
@@ -17,10 +16,9 @@ interface UseDuplicateMaterialOptions {
 export function useDuplicateMaterial(options?: UseDuplicateMaterialOptions) {
 	const [isPending, startTransition] = useTransition();
 
-	const [, formAction, isActionPending] = useActionState(
+	const [, formAction] = useActionState(
 		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				duplicateMaterial(formData.get("materialId") as string),
+			duplicateMaterial,
 			createToastCallbacks({
 				loadingMessage: "Duplication en cours...",
 				onSuccess: (result) => {
@@ -38,7 +36,7 @@ export function useDuplicateMaterial(options?: UseDuplicateMaterialOptions) {
 		undefined
 	);
 
-	const duplicate = (materialId: string, _materialName: string) => {
+	const duplicate = (materialId: string) => {
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("materialId", materialId);
@@ -48,6 +46,6 @@ export function useDuplicateMaterial(options?: UseDuplicateMaterialOptions) {
 
 	return {
 		duplicate,
-		isPending: isPending || isActionPending,
+		isPending,
 	};
 }

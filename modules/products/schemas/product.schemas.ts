@@ -153,13 +153,13 @@ const initialSkuSchema = z.object({
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
 		.positive({ error: "Le prix doit être positif" })
-		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur` }),
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` }),
 
 	// Prix compare (optionnel, pour afficher prix barre)
 	compareAtPriceEuros: z.coerce
 		.number()
-		.positive({ error: "Le prix compare doit être positif" })
-		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix compare ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur` })
+		.positive({ error: "Le prix comparé doit être positif" })
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` })
 		.optional()
 		.or(z.literal(""))
 		.transform(val => val === "" ? undefined : val),
@@ -196,7 +196,7 @@ const initialSkuSchema = z.object({
 		return data.compareAtPriceEuros >= data.priceInclTaxEuros;
 	},
 	{
-		message: "Le prix compare doit être superieur ou egal au prix de vente",
+		message: "Le prix comparé doit être supérieur ou égal au prix de vente",
 		path: ["compareAtPriceEuros"],
 	}
 );
@@ -209,13 +209,13 @@ const defaultSkuSchema = z.object({
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
 		.positive({ error: "Le prix doit être positif" })
-		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur` }),
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` }),
 
 	// Prix compare (optionnel, pour afficher prix barre)
 	compareAtPriceEuros: z.coerce
 		.number()
-		.positive({ error: "Le prix compare doit être positif" })
-		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix compare ne peut pas depasser ${PRICE_LIMITS.MAX_EUR} eur` })
+		.positive({ error: "Le prix comparé doit être positif" })
+		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` })
 		.optional()
 		.or(z.literal(""))
 		.transform(val => val === "" ? undefined : val),
@@ -251,7 +251,7 @@ const defaultSkuSchema = z.object({
 		return data.compareAtPriceEuros >= data.priceInclTaxEuros;
 	},
 	{
-		message: "Le prix compare doit être superieur ou egal au prix de vente",
+		message: "Le prix comparé doit être supérieur ou égal au prix de vente",
 		path: ["compareAtPriceEuros"],
 	}
 );
@@ -414,5 +414,15 @@ export const bulkChangeProductStatusSchema = z.object({
 	productIds: z
 		.array(z.string().min(1))
 		.min(1, "Au moins un produit doit être sélectionné"),
-	targetStatus: z.enum(["DRAFT", "PUBLIC"]),
+	targetStatus: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]),
+});
+
+export const updateProductCollectionsSchema = z.object({
+	productId: z.cuid2({ message: "ID produit invalide" }),
+	collectionIds: z
+		.array(z.cuid2({ message: "ID collection invalide" }))
+		.max(ARRAY_LIMITS.PRODUCT_COLLECTIONS, {
+			error: `Un produit ne peut appartenir qu'à ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum`,
+		})
+		.default([]),
 });

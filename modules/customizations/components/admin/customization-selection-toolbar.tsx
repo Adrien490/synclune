@@ -128,7 +128,7 @@ export function CustomizationSelectionToolbar() {
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Annuler
 							</AlertDialogCancel>
-							<Button type="submit" disabled={isPending}>
+							<Button type="submit" disabled={isPending} aria-busy={isPending}>
 								{isPending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />

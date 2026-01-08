@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
@@ -41,13 +42,20 @@ export async function deleteUploadThingFiles(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraction des données du FormData
-		const rawData = {
-			fileUrls: JSON.parse(formData.get("fileUrls") as string) as string[],
-		};
+		// 2. Extraction des données du FormData avec parsing JSON sécurisé
+		let parsedFileUrls: unknown;
+		try {
+			const fileUrlsRaw = formData.get("fileUrls");
+			parsedFileUrls = JSON.parse(fileUrlsRaw as string);
+		} catch {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "Format JSON invalide pour les URLs de fichiers",
+			};
+		}
 
 		// 3. Validation avec Zod
-		const result = deleteUploadThingFilesSchema.safeParse(rawData);
+		const result = deleteUploadThingFilesSchema.safeParse({ fileUrls: parsedFileUrls });
 
 		if (!result.success) {
 			const firstError = result.error.issues[0];
@@ -73,13 +81,7 @@ export async function deleteUploadThingFiles(
 				deletedCount: fileKeys.length,
 			},
 		};
-	} catch (error) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de la suppression des fichiers",
-		};
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de la suppression des fichiers");
 	}
 }

@@ -13,9 +13,17 @@ import { handleActionError } from "@/shared/lib/actions";
  * Server Action ADMIN pour supprimer définitivement un abonné newsletter
  * ATTENTION: Suppression définitive des données (RGPD droit à l'effacement)
  */
-export async function deleteSubscriberAdmin(subscriberId: string): Promise<ActionState> {
+export async function deleteSubscriberAdmin(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
 	try {
-		// 1. Validation de l'entrée
+		// 1. Vérification admin
+		const adminCheck = await requireAdmin();
+		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2. Validation de l'entrée
+		const subscriberId = formData.get("subscriberId");
 		const validation = subscriberIdSchema.safeParse({ subscriberId });
 		if (!validation.success) {
 			return {
@@ -24,13 +32,11 @@ export async function deleteSubscriberAdmin(subscriberId: string): Promise<Actio
 			};
 		}
 
-		// 2. Vérification admin
-		const adminCheck = await requireAdmin();
-		if ("error" in adminCheck) return adminCheck.error;
+		const validatedId = validation.data.subscriberId;
 
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
-			where: { id: subscriberId },
+			where: { id: validatedId },
 			select: { id: true, email: true },
 		});
 
@@ -45,7 +51,7 @@ export async function deleteSubscriberAdmin(subscriberId: string): Promise<Actio
 
 		// 4. Supprimer définitivement
 		await prisma.newsletterSubscriber.delete({
-			where: { id: subscriberId },
+			where: { id: validatedId },
 		});
 
 		// 5. Invalider le cache

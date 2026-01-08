@@ -1,4 +1,3 @@
-import { isAdmin } from "@/modules/auth/utils/guards";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
@@ -19,25 +18,9 @@ export type {
 	GetRecentOrdersReturn,
 } from "../types/dashboard.types";
 
-// Alias pour compatibilité avec les imports existants
-export type GetDashboardRecentOrdersReturn = GetRecentOrdersReturn;
-
 // ============================================================================
-// MAIN FUNCTIONS
+// MAIN FUNCTION
 // ============================================================================
-
-/**
- * Action serveur pour récupérer les 5 dernières commandes
- */
-export async function getRecentOrders(): Promise<GetRecentOrdersReturn> {
-	const admin = await isAdmin();
-
-	if (!admin) {
-		throw new Error("Admin access required");
-	}
-
-	return await fetchDashboardRecentOrders();
-}
 
 /**
  * Récupère les 5 dernières commandes depuis la DB avec cache

@@ -4,7 +4,6 @@ import { useActionState, useTransition } from "react";
 import { updateProductCollections } from "@/modules/products/actions/update-product-collections";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import type { ActionState } from "@/shared/types/server-action";
 
 interface UseUpdateProductCollectionsOptions {
 	onSuccess?: () => void;
@@ -19,15 +18,9 @@ export function useUpdateProductCollections(
 ) {
 	const [isPending, startTransition] = useTransition();
 
-	const [, formAction, isActionPending] = useActionState(
+	const [, formAction] = useActionState(
 		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) => {
-				const collectionIds = formData.getAll("collectionIds") as string[];
-				return updateProductCollections(
-					formData.get("productId") as string,
-					collectionIds
-				);
-			},
+			updateProductCollections,
 			createToastCallbacks({
 				loadingMessage: "Mise à jour des collections...",
 				onSuccess: () => {
@@ -51,13 +44,13 @@ export function useUpdateProductCollections(
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("productId", productId);
-			collectionIds.forEach((id) => formData.append("collectionIds", id));
+			formData.append("collectionIds", JSON.stringify(collectionIds));
 			formAction(formData);
 		});
 	};
 
 	return {
 		update,
-		isPending: isPending || isActionPending,
+		isPending,
 	};
 }

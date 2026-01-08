@@ -108,3 +108,7 @@ export const deleteColorSchema = z.object({
 export const bulkDeleteColorsSchema = z.object({
 	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucune couleur sélectionnée"),
 });
+
+export const duplicateColorSchema = z.object({
+	colorId: z.cuid2("ID de couleur invalide"),
+});

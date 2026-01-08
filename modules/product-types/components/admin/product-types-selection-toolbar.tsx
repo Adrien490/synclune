@@ -17,11 +17,7 @@ import { BULK_DELETE_PRODUCT_TYPES_DIALOG_ID } from "./bulk-delete-product-types
 import { CheckCircle2, MoreVertical, Trash2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
-interface ProductTypesSelectionToolbarProps {
-	productTypeIds: string[];
-}
-
-export function ProductTypesSelectionToolbar({}: ProductTypesSelectionToolbarProps) {
+export function ProductTypesSelectionToolbar() {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_PRODUCT_TYPES_DIALOG_ID);
 

@@ -134,3 +134,8 @@ export const bulkArchiveCollectionsSchema = z.object({
 		.min(1, "Au moins une collection doit être sélectionnée"),
 	targetStatus: z.enum([CollectionStatus.ARCHIVED, CollectionStatus.PUBLIC, CollectionStatus.DRAFT]),
 });
+
+export const setFeaturedProductSchema = z.object({
+	collectionId: z.cuid2("ID de collection invalide"),
+	productId: z.cuid2("ID de produit invalide"),
+});

@@ -6,7 +6,7 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
-import { customizationFormOpts } from "../constants/customization-form-options";
+import { CUSTOMIZATION_FORM_OPTIONS } from "../constants/customization-form-options";
 import { sendCustomizationRequest } from "../actions/send-customization-request";
 
 interface UseCustomizationFormOptions {
@@ -35,7 +35,7 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 	);
 
 	const form = useAppForm({
-		...customizationFormOpts,
+		...CUSTOMIZATION_FORM_OPTIONS,
 		// Merge server state with form state for validation errors
 		// Note: Le cast est nécessaire car TanStack Form attend FormState, pas ActionState
 		transform: useTransform(

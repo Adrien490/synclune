@@ -1,11 +1,11 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { updateTag, revalidatePath } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
 
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { deleteCollectionSchema } from "../schemas/collection.schemas";
@@ -19,13 +19,19 @@ export async function deleteCollection(
 		const admin = await requireAdmin();
 		if ("error" in admin) return admin.error;
 
-		// 2. Extraire les donnees du FormData
-		const rawData = {
+		// 2. Extraire et valider les donnees
+		const validation = deleteCollectionSchema.safeParse({
 			id: formData.get("id"),
-		};
+		});
 
-		// Valider les donnees
-		const validatedData = deleteCollectionSchema.parse(rawData);
+		if (!validation.success) {
+			return {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: validation.error.issues[0]?.message || "Donnees invalides",
+			};
+		}
+
+		const validatedData = validation.data;
 
 		// Verifier que la collection existe
 		const existingCollection = await prisma.collection.findUnique({
@@ -70,20 +76,7 @@ export async function deleteCollection(
 			status: ActionStatus.SUCCESS,
 			message,
 		};
-	} catch (error) {
-// console.error("Erreur lors de la suppression de la collection:", error);
-
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				"Une erreur est survenue lors de la suppression de la collection",
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la suppression de la collection");
 	}
 }

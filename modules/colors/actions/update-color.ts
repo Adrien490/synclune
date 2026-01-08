@@ -1,12 +1,13 @@
 "use server";
 
+import { revalidatePath, updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
-import { revalidatePath, updateTag } from "next/cache";
 
 import { getColorInvalidationTags } from "../constants/cache";
 import { updateColorSchema } from "../schemas/color.schemas";
@@ -93,19 +94,7 @@ export async function updateColor(
 			status: ActionStatus.SUCCESS,
 			message: "Couleur modifiée avec succès",
 		};
-	} catch (error) {
-// console.error("Erreur lors de la modification de la couleur:", error);
-
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la modification de la couleur",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de modifier la couleur");
 	}
 }

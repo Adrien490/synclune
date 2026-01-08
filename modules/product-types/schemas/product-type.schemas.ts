@@ -96,7 +96,7 @@ export const deleteProductTypeSchema = z.object({
 });
 
 export const toggleProductTypeStatusSchema = z.object({
-	productTypeId: z.string(),
+	productTypeId: z.cuid2("ID de type de produit invalide"),
 	isActive: z.boolean(),
 });
 
@@ -108,7 +108,7 @@ export const bulkActivateProductTypesSchema = z.object({
 		} catch {
 			return [];
 		}
-	}),
+	}).pipe(z.array(z.cuid2("ID invalide"))),
 });
 
 export const bulkDeactivateProductTypesSchema = z.object({
@@ -119,7 +119,7 @@ export const bulkDeactivateProductTypesSchema = z.object({
 		} catch {
 			return [];
 		}
-	}),
+	}).pipe(z.array(z.cuid2("ID invalide"))),
 });
 
 export const bulkDeleteProductTypesSchema = z.object({
@@ -130,5 +130,5 @@ export const bulkDeleteProductTypesSchema = z.object({
 		} catch {
 			return [];
 		}
-	}),
+	}).pipe(z.array(z.cuid2("ID invalide"))),
 });

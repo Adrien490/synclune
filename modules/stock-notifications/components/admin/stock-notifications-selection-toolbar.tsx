@@ -113,7 +113,7 @@ export function StockNotificationsSelectionToolbar({}: StockNotificationsSelecti
 							<AlertDialogCancel type="button" disabled={isPending}>
 								Fermer
 							</AlertDialogCancel>
-							<Button type="submit" disabled={isPending}>
+							<Button type="submit" disabled={isPending} aria-busy={isPending}>
 								{isCancelPending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -158,6 +158,7 @@ export function StockNotificationsSelectionToolbar({}: StockNotificationsSelecti
 							<Button
 								type="submit"
 								disabled={isPending}
+								aria-busy={isPending}
 							>
 								{isDeletePending ? (
 									<>

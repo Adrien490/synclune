@@ -22,11 +22,7 @@ import { useBulkDeleteColors } from "@/modules/colors/hooks/use-bulk-delete-colo
 import { Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-interface ColorsSelectionToolbarProps {
-	colorIds: string[];
-}
-
-export function ColorsSelectionToolbar({}: ColorsSelectionToolbarProps) {
+export function ColorsSelectionToolbar() {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 

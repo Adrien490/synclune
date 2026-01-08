@@ -4,7 +4,6 @@ import { useActionState, useTransition } from "react";
 import { duplicateColor } from "@/modules/colors/actions/duplicate-color";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import type { ActionState } from "@/shared/types/server-action";
 
 interface UseDuplicateColorOptions {
 	onSuccess?: (data: { id: string; name: string }) => void;
@@ -17,10 +16,9 @@ interface UseDuplicateColorOptions {
 export function useDuplicateColor(options?: UseDuplicateColorOptions) {
 	const [isPending, startTransition] = useTransition();
 
-	const [, formAction, isActionPending] = useActionState(
+	const [, formAction] = useActionState(
 		withCallbacks(
-			async (_prev: ActionState | undefined, formData: FormData) =>
-				duplicateColor(formData.get("colorId") as string),
+			duplicateColor,
 			createToastCallbacks({
 				loadingMessage: "Duplication en cours...",
 				onSuccess: (result) => {
@@ -38,7 +36,7 @@ export function useDuplicateColor(options?: UseDuplicateColorOptions) {
 		undefined
 	);
 
-	const duplicate = (colorId: string, _colorName: string) => {
+	const duplicate = (colorId: string) => {
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("colorId", colorId);
@@ -48,6 +46,6 @@ export function useDuplicateColor(options?: UseDuplicateColorOptions) {
 
 	return {
 		duplicate,
-		isPending: isPending || isActionPending,
+		isPending,
 	};
 }

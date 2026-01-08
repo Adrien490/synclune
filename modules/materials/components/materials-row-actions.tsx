@@ -71,7 +71,7 @@ export function MaterialsRowActions({
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" className="h-11 w-11 p-0 active:scale-95 transition-transform" aria-label="Actions">
+				<Button variant="ghost" size="sm" className="h-11 w-11 p-0 motion-safe:active:scale-95 motion-safe:transition-transform" aria-label={`Actions pour ${materialName}`}>
 					<MoreVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
@@ -81,7 +81,7 @@ export function MaterialsRowActions({
 					Éditer
 				</DropdownMenuItem>
 				<DropdownMenuItem
-					onClick={() => duplicate(materialId, materialName)}
+					onClick={() => duplicate(materialId)}
 					disabled={isDuplicating}
 				>
 					<Copy className="h-4 w-4" />

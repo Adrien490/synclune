@@ -24,11 +24,7 @@ import { useBulkToggleMaterialStatus } from "@/modules/materials/hooks/use-bulk-
 import { CheckCircle2, Loader2, MoreVertical, Trash2, XCircle } from "lucide-react";
 import { useState } from "react";
 
-interface MaterialsSelectionToolbarProps {
-	materialIds: string[];
-}
-
-export function MaterialsSelectionToolbar({}: MaterialsSelectionToolbarProps) {
+export function MaterialsSelectionToolbar() {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [activateDialogOpen, setActivateDialogOpen] = useState(false);

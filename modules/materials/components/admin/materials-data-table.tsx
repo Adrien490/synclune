@@ -40,7 +40,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 	return (
 		<Card>
 			<CardContent>
-				<MaterialsSelectionToolbar materialIds={materialIds} />
+				<MaterialsSelectionToolbar />
 				<TableScrollContainer>
 					<Table role="table" aria-label="Liste des matériaux" className="min-w-full table-fixed">
 						<TableHeader>

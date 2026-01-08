@@ -6,6 +6,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { UTApi } from "uploadthing/server";
 import { bulkDeleteProductsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
@@ -187,13 +188,7 @@ export async function bulkDeleteProducts(
 				productIds: validatedProductIds,
 			},
 		};
-	} catch (error) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de la suppression des produits.",
-		};
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de la suppression des produits");
 	}
 }

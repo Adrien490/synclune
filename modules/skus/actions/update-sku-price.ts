@@ -6,19 +6,23 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_UPDATE_PRICE_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath } from "next/cache";
+import { handleActionError } from "@/shared/lib/actions";
+import { updateTag } from "next/cache";
 import { updateSkuPriceSchema } from "../schemas/sku.schemas";
+import { getSkuInvalidationTags } from "../utils/cache.utils";
 
 /**
  * Server Action ADMIN pour modifier rapidement le prix d'un SKU
+ * Compatible avec useActionState (signature FormData)
  *
- * @param priceInclTax - Prix en centimes (ex: 3000 = 30€)
- * @param compareAtPrice - Prix barré optionnel en centimes
+ * @param formData - FormData avec:
+ *   - skuId: ID du SKU
+ *   - priceInclTaxEuros: Prix en euros (ex: 30.00)
+ *   - compareAtPriceEuros: Prix barré optionnel en euros
  */
 export async function updateSkuPrice(
-	skuId: string,
-	priceInclTax: number,
-	compareAtPrice?: number | null
+	_prevState: ActionState | undefined,
+	formData: FormData
 ): Promise<ActionState> {
 	try {
 		// 0. Rate limiting
@@ -29,12 +33,17 @@ export async function updateSkuPrice(
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Validation
+		// 2. Extraire et valider les données
+		const skuId = formData.get("skuId") as string;
+		const priceInclTaxEuros = formData.get("priceInclTaxEuros") as string;
+		const compareAtPriceEuros = formData.get("compareAtPriceEuros") as string | null;
+
 		const validation = updateSkuPriceSchema.safeParse({
 			skuId,
-			priceInclTax,
-			compareAtPrice,
+			priceInclTaxEuros,
+			compareAtPriceEuros: compareAtPriceEuros || "",
 		});
+
 		if (!validation.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
@@ -45,7 +54,13 @@ export async function updateSkuPrice(
 		// 3. Vérifier que le SKU existe
 		const sku = await prisma.productSku.findUnique({
 			where: { id: skuId },
-			select: { id: true, sku: true, priceInclTax: true, productId: true },
+			select: {
+				id: true,
+				sku: true,
+				priceInclTax: true,
+				productId: true,
+				product: { select: { slug: true } },
+			},
 		});
 
 		if (!sku) {
@@ -55,38 +70,35 @@ export async function updateSkuPrice(
 			};
 		}
 
-		// 4. Mettre à jour le prix
-		const updateData: { priceInclTax: number; compareAtPrice?: number | null } = {
-			priceInclTax,
-		};
+		// 4. Convertir euros → centimes
+		const priceInclTaxCents = Math.round(validation.data.priceInclTaxEuros * 100);
+		const compareAtPriceCents = validation.data.compareAtPriceEuros
+			? Math.round(validation.data.compareAtPriceEuros * 100)
+			: null;
 
-		if (compareAtPrice !== undefined) {
-			updateData.compareAtPrice = compareAtPrice;
-		}
-
+		// 5. Mettre à jour le prix
 		await prisma.productSku.update({
 			where: { id: skuId },
-			data: updateData,
+			data: {
+				priceInclTax: priceInclTaxCents,
+				compareAtPrice: compareAtPriceCents,
+			},
 		});
 
-		// 5. Revalider les pages concernées
-		revalidatePath("/admin/catalogue/inventaire");
+		// 6. Invalider le cache avec les tags appropriés
+		const tags = getSkuInvalidationTags(sku.sku, sku.productId, sku.product.slug, sku.id);
+		tags.forEach((tag) => updateTag(tag));
 
-		const formattedPrice = (priceInclTax / 100).toFixed(2);
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Prix de ${sku.sku} mis à jour: ${formattedPrice}€`,
+			message: `Prix de ${sku.sku} mis à jour: ${validation.data.priceInclTaxEuros.toFixed(2)} €`,
 			data: {
 				skuId: sku.id,
 				previousPrice: sku.priceInclTax,
-				newPrice: priceInclTax,
+				newPrice: priceInclTaxCents,
 			},
 		};
-	} catch (error) {
-		console.error("[UPDATE_SKU_PRICE] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible de mettre à jour le prix",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de mettre à jour le prix");
 	}
 }

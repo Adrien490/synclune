@@ -8,7 +8,6 @@ import { CollectionsSectionSkeleton } from "@/modules/collections/components/col
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
-import { SparklesDivider } from "@/shared/components/section-divider";
 import type { Metadata } from "next";
 // import { NewsletterSection } from "@/modules/newsletter/components/newsletter-section";
 import dynamic from "next/dynamic";
@@ -116,8 +115,6 @@ export default async function Page() {
 				/>
 			</Suspense>
 
-			{/* Séparateur décoratif girly */}
-			<SparklesDivider />
 
 			{/* 4. AtelierStory - Storytelling intimiste de Léane (après engagement produit) */}
 			<AtelierStory />

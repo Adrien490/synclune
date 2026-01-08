@@ -8,7 +8,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
-import type { GetDashboardRecentOrdersReturn, RecentOrderItem } from "@/modules/dashboard/data/get-recent-orders";
+import type { GetRecentOrdersReturn, RecentOrderItem } from "@/modules/dashboard/data/get-recent-orders";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
@@ -21,7 +21,7 @@ import {
 import { CHART_STYLES } from "../constants/chart-styles";
 
 interface RecentOrdersListProps {
-	listDataPromise: Promise<GetDashboardRecentOrdersReturn>;
+	listDataPromise: Promise<GetRecentOrdersReturn>;
 }
 
 export function RecentOrdersList({ listDataPromise }: RecentOrdersListProps) {

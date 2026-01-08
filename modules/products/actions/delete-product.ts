@@ -6,6 +6,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { deleteProductSchema } from "../schemas/product.schemas";
 import { UTApi } from "uploadthing/server";
 import { getProductInvalidationTags } from "../constants/cache";
@@ -160,13 +161,7 @@ export async function deleteProduct(
 				slug: existingProduct.slug,
 			},
 		};
-	} catch (error) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de la suppression du produit.",
-		};
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de la suppression du produit");
 	}
 }

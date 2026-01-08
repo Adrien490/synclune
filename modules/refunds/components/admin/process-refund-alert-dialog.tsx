@@ -75,7 +75,7 @@ export function ProcessRefundAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending ? "Traitement..." : "Traiter le remboursement"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

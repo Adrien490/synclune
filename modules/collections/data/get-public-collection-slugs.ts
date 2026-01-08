@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { CollectionStatus } from "@/app/generated/prisma/client";
 
 import { prisma } from "@/shared/lib/prisma";
 import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
@@ -14,7 +15,7 @@ export async function getPublicCollectionSlugs(): Promise<{ slug: string }[]> {
 	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);
 
 	const collections = await prisma.collection.findMany({
-		where: { status: "PUBLIC" },
+		where: { status: CollectionStatus.PUBLIC },
 		select: { slug: true },
 	});
 

@@ -35,7 +35,10 @@ async function fetchColorOptions(): Promise<ColorOption[]> {
 		});
 
 		return colors;
-	} catch {
+	} catch (error) {
+		if (error instanceof Error) {
+			console.error(`[getColorOptions] ${error.name}: ${error.message}`);
+		}
 		return [];
 	}
 }

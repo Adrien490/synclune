@@ -177,6 +177,15 @@ export const deleteReviewResponseSchema = z.object({
 
 export type DeleteReviewResponseInput = z.infer<typeof deleteReviewResponseSchema>
 
+/**
+ * Schema de validation pour l'envoi d'email de demande d'avis
+ */
+export const sendReviewRequestEmailSchema = z.object({
+	orderId: z.cuid2("ID de commande invalide"),
+})
+
+export type SendReviewRequestEmailInput = z.infer<typeof sendReviewRequestEmailSchema>
+
 // ============================================================================
 // FILTERS SCHEMA (Admin)
 // ============================================================================

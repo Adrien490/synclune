@@ -5,6 +5,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionState, ActionStatus } from "@/shared/types/server-action";
 import { exportSubscribersSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
+import { NEWSLETTER_STATUS_LABELS } from "../constants/newsletter-status.constants";
 
 /**
  * Export des abonnés newsletter au format CSV
@@ -82,7 +83,7 @@ export async function exportSubscribers(
 
 		const csvRows = subscribers
 			.map((s) => {
-				const statusLabel = s.status === NewsletterStatus.CONFIRMED ? "Confirmé" : s.status === NewsletterStatus.PENDING ? "En attente" : "Désabonné";
+				const statusLabel = NEWSLETTER_STATUS_LABELS[s.status];
 				const subscribedAt = s.subscribedAt.toISOString().split("T")[0];
 				const consentTimestamp = s.consentTimestamp
 					.toISOString()

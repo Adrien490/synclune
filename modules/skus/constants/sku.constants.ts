@@ -17,6 +17,7 @@ export const GET_PRODUCT_SKU_SELECT = {
 			id: true,
 			name: true,
 			hex: true,
+			slug: true,
 		},
 	},
 	materialId: true,
@@ -115,12 +116,14 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 			id: true,
 			name: true,
 			hex: true,
+			slug: true,
 		},
 	},
 	material: {
 		select: {
 			id: true,
 			name: true,
+			slug: true,
 		},
 	},
 

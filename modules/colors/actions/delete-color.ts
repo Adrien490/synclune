@@ -1,11 +1,12 @@
 "use server";
 
+import { revalidatePath, updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
 
 import { getColorInvalidationTags } from "../constants/cache";
 import { deleteColorSchema } from "../schemas/color.schemas";
@@ -79,19 +80,7 @@ export async function deleteColor(
 			status: ActionStatus.SUCCESS,
 			message: "Couleur supprimée avec succès",
 		};
-	} catch (error) {
-// console.error("Erreur lors de la suppression de la couleur:", error);
-
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la suppression de la couleur",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible de supprimer la couleur");
 	}
 }

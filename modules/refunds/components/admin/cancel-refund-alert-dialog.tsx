@@ -71,7 +71,7 @@ export function CancelRefundAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Fermer
 						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending}>
+						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending ? "Annulation..." : "Annuler la demande"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

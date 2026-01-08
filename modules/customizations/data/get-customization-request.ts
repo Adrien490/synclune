@@ -31,53 +31,58 @@ async function fetchCustomizationRequest(
 	"use cache";
 	cacheCustomizationDetail(id);
 
-	const request = await prisma.customizationRequest.findFirst({
-		where: {
-			id,
-			...notDeleted,
-		},
-		select: {
-			id: true,
-			createdAt: true,
-			updatedAt: true,
-			firstName: true,
-			email: true,
-			phone: true,
-			productTypeLabel: true,
-			productType: {
-				select: {
-					id: true,
-					label: true,
-					slug: true,
-				},
+	try {
+		const request = await prisma.customizationRequest.findFirst({
+			where: {
+				id,
+				...notDeleted,
 			},
-			details: true,
-			status: true,
-			adminNotes: true,
-			respondedAt: true,
-			inspirationProducts: {
-				select: {
-					id: true,
-					title: true,
-					slug: true,
-					skus: {
-						where: { isDefault: true },
-						take: 1,
-						select: {
-							id: true,
-							images: {
-								where: { isPrimary: true },
-								take: 1,
-								select: {
-									url: true,
+			select: {
+				id: true,
+				createdAt: true,
+				updatedAt: true,
+				firstName: true,
+				email: true,
+				phone: true,
+				productTypeLabel: true,
+				productType: {
+					select: {
+						id: true,
+						label: true,
+						slug: true,
+					},
+				},
+				details: true,
+				status: true,
+				adminNotes: true,
+				respondedAt: true,
+				inspirationProducts: {
+					select: {
+						id: true,
+						title: true,
+						slug: true,
+						skus: {
+							where: { isDefault: true },
+							take: 1,
+							select: {
+								id: true,
+								images: {
+									where: { isPrimary: true },
+									take: 1,
+									select: {
+										url: true,
+									},
 								},
 							},
 						},
 					},
 				},
 			},
-		},
-	});
+		});
 
-	return request;
+		return request;
+	} catch (error) {
+		console.error("[GET_CUSTOMIZATION_REQUEST]", error);
+		return null;
+	}
 }

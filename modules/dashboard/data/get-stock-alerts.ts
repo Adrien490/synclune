@@ -1,4 +1,3 @@
-import { isAdmin } from "@/modules/auth/utils/guards";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
@@ -7,31 +6,10 @@ import type { GetStockAlertsReturn } from "../types/dashboard.types";
 
 // Re-export pour compatibilité
 export type { StockAlertItem, GetStockAlertsReturn } from "../types/dashboard.types";
-export type GetDashboardStockAlertsReturn = GetStockAlertsReturn;
 
 // ============================================================================
-// MAIN FUNCTIONS
+// MAIN FUNCTION
 // ============================================================================
-
-/**
- * Action serveur pour recuperer les alertes stock
- * Ruptures (inventory = 0) + faible stock (inventory <= STOCK_THRESHOLDS.LOW)
- *
- * @param skip - Nombre d'alertes a ignorer (pagination)
- * @param take - Nombre d'alertes a retourner (pagination)
- */
-export async function getStockAlerts(
-	skip: number = 0,
-	take: number = 10
-): Promise<GetStockAlertsReturn> {
-	const admin = await isAdmin();
-
-	if (!admin) {
-		throw new Error("Admin access required");
-	}
-
-	return fetchDashboardStockAlerts(skip, take);
-}
 
 /**
  * Recupere les alertes stock depuis la DB avec cache

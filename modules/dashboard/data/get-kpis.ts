@@ -1,4 +1,3 @@
-import { isAdmin } from "@/modules/auth/utils/guards";
 import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/modules/dashboard/constants/cache";
@@ -7,9 +6,6 @@ import type { GetKpisReturn } from "../types/dashboard.types";
 
 // Re-export pour compatibilité
 export type { GetKpisReturn } from "../types/dashboard.types";
-
-// Alias pour compatibilité avec les imports existants
-export type GetDashboardKpisReturn = GetKpisReturn;
 
 // ============================================================================
 // INTERNAL FETCH FUNCTIONS
@@ -192,21 +188,8 @@ async function fetchOutOfStockProducts() {
 }
 
 // ============================================================================
-// MAIN FUNCTIONS
+// MAIN FUNCTION
 // ============================================================================
-
-/**
- * Action serveur pour récupérer les KPIs du dashboard admin
- */
-export async function getKpis(): Promise<GetKpisReturn> {
-	const admin = await isAdmin();
-
-	if (!admin) {
-		throw new Error("Admin access required");
-	}
-
-	return await fetchDashboardKpis();
-}
 
 /**
  * Récupère les KPIs essentiels du dashboard avec cache

@@ -3,6 +3,7 @@
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { bulkAdjustStockSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 
@@ -114,11 +115,7 @@ export async function bulkAdjustStock(
 			status: ActionStatus.SUCCESS,
 			message: `Stock ${modeLabel} ${valueLabel} pour ${skusData.length} variante(s)`,
 		};
-	} catch (error) {
-		// console.error("[bulkAdjustStock]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible d'ajuster le stock",
-		};
+	} catch (e) {
+		return handleActionError(e, "Impossible d'ajuster le stock");
 	}
 }
