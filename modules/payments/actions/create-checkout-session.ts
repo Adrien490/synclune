@@ -158,11 +158,19 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 // console.log(`✅ [CHECKOUT] User ${userId} updated with stripeCustomerId`);
 				}
 			} catch (error) {
-// console.error("❌ [CHECKOUT] Error creating Stripe customer:", error);
-				return {
-					status: ActionStatus.ERROR,
-					message: "Échec de création du profil client. Veuillez réessayer.",
-				};
+				// Distinguer erreurs permanentes (email invalide) vs transitoires (réseau)
+				if (error instanceof Stripe.errors.StripeInvalidRequestError) {
+					// Erreur permanente : email invalide, données incorrectes
+					return {
+						status: ActionStatus.VALIDATION_ERROR,
+						message: "Email invalide pour la création du profil client.",
+						validationErrors: { email: ["Email invalide ou non accepté par Stripe"] },
+					};
+				}
+				// Erreur transitoire (réseau, timeout) : continuer sans customer Stripe
+				// Le checkout fonctionnera mais sans customer_id pré-rempli
+				// Le customer sera créé par Stripe automatiquement si nécessaire
+				stripeCustomerId = null;
 			}
 		}
 
@@ -507,7 +515,9 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 
 		const baseUrl = process.env.NEXT_PUBLIC_BETTER_AUTH_URL || process.env.BETTER_AUTH_URL;
 
-		const checkoutSession = await stripe.checkout.sessions.create(
+		let checkoutSession: Stripe.Checkout.Session;
+		try {
+			checkoutSession = await stripe.checkout.sessions.create(
 			{
 				mode: "payment",
 				ui_mode: "embedded", // ✅ EMBEDDED CHECKOUT - Formulaire intégré sur le site
@@ -581,12 +591,42 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				idempotencyKey,
 			}
 		);
+		} catch (stripeError) {
+			// 🔴 CLEANUP : Supprimer l'order orphelin si création session Stripe échoue
+			// L'order a été créé mais le paiement est impossible sans session
+			await prisma.order.delete({
+				where: { id: order.id },
+			});
+			// Annuler l'usage du code promo si applicable
+			if (validatedData.discountCode) {
+				await prisma.discount.updateMany({
+					where: { code: validatedData.discountCode.toUpperCase() },
+					data: { usageCount: { decrement: 1 } },
+				});
+				await prisma.discountUsage.deleteMany({
+					where: { orderId: order.id },
+				});
+			}
+			// Re-throw pour que handleActionError le traite
+			throw stripeError;
+		}
+
+		// Vérifier que Stripe a bien retourné un client_secret (requis pour embedded mode)
+		if (!checkoutSession.client_secret) {
+			throw new BusinessError("Session Stripe créée sans client_secret. Veuillez réessayer.");
+		}
+
+		// Invalider le cache du panier après création de commande réussie
+		updateTag("cart-list");
+		if (userId) {
+			updateTag(`cart-${userId}`);
+		}
 
 		return {
 			status: ActionStatus.SUCCESS,
 			message: "Session de paiement créée avec succès.",
 			data: {
-				clientSecret: checkoutSession.client_secret!, // ✅ EMBEDDED MODE : clientSecret pour initialiser le formulaire
+				clientSecret: checkoutSession.client_secret, // ✅ EMBEDDED MODE : clientSecret pour initialiser le formulaire
 				orderId: order.id,
 				orderNumber: order.orderNumber,
 			},
