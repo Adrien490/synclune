@@ -25,19 +25,17 @@ export async function cleanupExpiredCarts(): Promise<{
 	console.log(`[CRON:cleanup-carts] Deleted ${deleteResult.count} expired carts`);
 
 	// 2. Nettoyer les CartItems orphelins (au cas où la cascade n'a pas fonctionné)
-	const orphanedItems = await prisma.cartItem.deleteMany({
-		where: {
-			cartId: {
-				notIn: (await prisma.cart.findMany({ select: { id: true } })).map(
-					(c) => c.id
-				),
-			},
-		},
-	});
+	// Utilise SQL direct pour éviter de charger tous les IDs en mémoire
+	const orphanedItemsCount = await prisma.$executeRaw`
+		DELETE FROM "CartItem" ci
+		WHERE NOT EXISTS (
+			SELECT 1 FROM "Cart" c WHERE c.id = ci."cartId"
+		)
+	`;
 
-	if (orphanedItems.count > 0) {
+	if (orphanedItemsCount > 0) {
 		console.log(
-			`[CRON:cleanup-carts] Cleaned up ${orphanedItems.count} orphaned cart items`
+			`[CRON:cleanup-carts] Cleaned up ${orphanedItemsCount} orphaned cart items`
 		);
 	}
 
@@ -45,6 +43,6 @@ export async function cleanupExpiredCarts(): Promise<{
 
 	return {
 		deletedCount: deleteResult.count,
-		orphanedItemsCount: orphanedItems.count,
+		orphanedItemsCount: Number(orphanedItemsCount),
 	};
 }

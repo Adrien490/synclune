@@ -27,19 +27,17 @@ export async function cleanupExpiredWishlists(): Promise<{
 	);
 
 	// 2. Nettoyer les WishlistItems orphelins (au cas où la cascade n'a pas fonctionné)
-	const orphanedItems = await prisma.wishlistItem.deleteMany({
-		where: {
-			wishlistId: {
-				notIn: (
-					await prisma.wishlist.findMany({ select: { id: true } })
-				).map((w) => w.id),
-			},
-		},
-	});
+	// Utilise SQL direct pour éviter de charger tous les IDs en mémoire
+	const orphanedItemsCount = await prisma.$executeRaw`
+		DELETE FROM "WishlistItem" wi
+		WHERE NOT EXISTS (
+			SELECT 1 FROM "Wishlist" w WHERE w.id = wi."wishlistId"
+		)
+	`;
 
-	if (orphanedItems.count > 0) {
+	if (orphanedItemsCount > 0) {
 		console.log(
-			`[CRON:cleanup-wishlists] Cleaned up ${orphanedItems.count} orphaned wishlist items`
+			`[CRON:cleanup-wishlists] Cleaned up ${orphanedItemsCount} orphaned wishlist items`
 		);
 	}
 
@@ -47,6 +45,6 @@ export async function cleanupExpiredWishlists(): Promise<{
 
 	return {
 		deletedCount: deleteResult.count,
-		orphanedItemsCount: orphanedItems.count,
+		orphanedItemsCount: Number(orphanedItemsCount),
 	};
 }
