@@ -147,8 +147,8 @@ const imageSchema = z.object({
 	mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
 });
 
-// Schema pour SKU initial (matching form structure)
-const initialSkuSchema = z.object({
+// Schema de base pour SKU (champs communs)
+const baseSkuFields = {
 	// Prix en euros (sera converti en centimes cote serveur)
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
@@ -173,7 +173,6 @@ const initialSkuSchema = z.object({
 
 	// Boolean fields: normalized in server action before validation
 	isActive: z.coerce.boolean().default(true),
-	isDefault: z.coerce.boolean().default(true),
 
 	// Optional fields
 	colorId: z.string().optional().or(z.literal("")),
@@ -189,72 +188,33 @@ const initialSkuSchema = z.object({
 			{ message: "Les URLs de médias doivent être uniques" }
 		)
 		.default([]),
-}).refine(
-	(data) => {
-		// Verifier que compareAtPrice >= priceInclTax si present
-		if (!data.compareAtPriceEuros) return true;
-		return data.compareAtPriceEuros >= data.priceInclTaxEuros;
-	},
-	{
-		message: "Le prix comparé doit être supérieur ou égal au prix de vente",
-		path: ["compareAtPriceEuros"],
-	}
-);
+};
 
-// Schema pour SKU par defaut (pour update)
+// Refinement pour validation compareAtPrice >= priceInclTax
+const skuPriceRefinement = <T extends { compareAtPriceEuros?: number; priceInclTaxEuros: number }>(
+	data: T
+) => {
+	if (!data.compareAtPriceEuros) return true;
+	return data.compareAtPriceEuros >= data.priceInclTaxEuros;
+};
+
+// Schema pour SKU initial (creation de produit)
+const initialSkuSchema = z.object({
+	...baseSkuFields,
+	isDefault: z.coerce.boolean().default(true),
+}).refine(skuPriceRefinement, {
+	message: "Le prix comparé doit être supérieur ou égal au prix de vente",
+	path: ["compareAtPriceEuros"],
+});
+
+// Schema pour SKU par defaut (update de produit)
 const defaultSkuSchema = z.object({
 	skuId: z.cuid2({ message: "ID SKU invalide" }),
-
-	// Prix en euros (sera converti en centimes cote serveur)
-	priceInclTaxEuros: z.coerce
-		.number({ error: "Le prix est requis" })
-		.positive({ error: "Le prix doit être positif" })
-		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` }),
-
-	// Prix compare (optionnel, pour afficher prix barre)
-	compareAtPriceEuros: z.coerce
-		.number()
-		.positive({ error: "Le prix comparé doit être positif" })
-		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` })
-		.optional()
-		.or(z.literal(""))
-		.transform(val => val === "" ? undefined : val),
-
-	// Inventory: normalized in server action before validation
-	inventory: z.coerce
-		.number()
-		.int({ error: "L'inventaire doit être un entier" })
-		.nonnegative({ error: "L'inventaire doit être positif ou nul" })
-		.default(0),
-
-	// Boolean fields: normalized in server action before validation
-	isActive: z.coerce.boolean().default(true),
-
-	// Optional fields
-	colorId: z.string().optional().or(z.literal("")),
-	materialId: z.string().optional().or(z.literal("")),
-	size: z.string().max(TEXT_LIMITS.SKU_SIZE.max).optional().or(z.literal("")),
-
-	// Medias (images et videos) - premier = principal
-	media: z
-		.array(imageSchema)
-		.max(ARRAY_LIMITS.SKU_MEDIA, { message: `Maximum ${ARRAY_LIMITS.SKU_MEDIA} médias` })
-		.refine(
-			(media) => new Set(media.map((m) => m.url)).size === media.length,
-			{ message: "Les URLs de médias doivent être uniques" }
-		)
-		.default([]),
-}).refine(
-	(data) => {
-		// Verifier que compareAtPrice >= priceInclTax si present
-		if (!data.compareAtPriceEuros) return true;
-		return data.compareAtPriceEuros >= data.priceInclTaxEuros;
-	},
-	{
-		message: "Le prix comparé doit être supérieur ou égal au prix de vente",
-		path: ["compareAtPriceEuros"],
-	}
-);
+	...baseSkuFields,
+}).refine(skuPriceRefinement, {
+	message: "Le prix comparé doit être supérieur ou égal au prix de vente",
+	path: ["compareAtPriceEuros"],
+});
 
 // ============================================================================
 // MUTATION SCHEMAS
@@ -412,7 +372,7 @@ export const bulkArchiveProductsSchema = z.object({
 
 export const bulkChangeProductStatusSchema = z.object({
 	productIds: z
-		.array(z.string().min(1))
+		.array(z.cuid2({ message: "ID produit invalide" }))
 		.min(1, "Au moins un produit doit être sélectionné"),
 	targetStatus: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]),
 });

@@ -203,6 +203,7 @@ export async function createProductSku(
 					product: {
 						select: {
 							title: true,
+							slug: true,
 						},
 					},
 					color: {
@@ -252,19 +253,13 @@ export async function createProductSku(
 			: `Variante créée avec succès pour "${productSku.product.title}".`;
 
 		// 9. Invalidate cache (immediate visibility for admin)
-		const product = await prisma.product.findUnique({
-			where: { id: validatedData.productId },
-			select: { slug: true },
-		});
-		if (product) {
-			const tags = getSkuInvalidationTags(
-				productSku.sku,
-				validatedData.productId,
-				product.slug,
-				productSku.id // Invalide aussi le cache stock temps réel
-			);
-			tags.forEach(tag => updateTag(tag));
-		}
+		const tags = getSkuInvalidationTags(
+			productSku.sku,
+			validatedData.productId,
+			productSku.product.slug,
+			productSku.id // Invalide aussi le cache stock temps réel
+		);
+		tags.forEach(tag => updateTag(tag));
 
 		// 10. Success - Return ActionState format
 		return {

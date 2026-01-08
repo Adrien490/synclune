@@ -13,7 +13,7 @@ import {
 	parsePrimaryImageFromForm,
 	parseGalleryMediaFromForm,
 } from "../utils/parse-media-from-form";
-import { handleActionError } from "@/shared/lib/actions";
+import { BusinessError, handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour mettre à jour une variante de produit (Product SKU)
@@ -130,7 +130,7 @@ export async function updateProductSku(
 			});
 
 			if (!existingSku) {
-				throw new Error("Le SKU spécifié n'existe pas.");
+				throw new BusinessError("Le SKU spécifié n'existe pas.");
 			}
 
 			const previousInventory = existingSku.inventory;
@@ -142,7 +142,7 @@ export async function updateProductSku(
 					select: { id: true },
 				});
 				if (!color) {
-					throw new Error("La couleur spécifiée n'existe pas.");
+					throw new BusinessError("La couleur spécifiée n'existe pas.");
 				}
 			}
 
@@ -153,7 +153,7 @@ export async function updateProductSku(
 					select: { id: true },
 				});
 				if (!material) {
-					throw new Error("Le matériau spécifié n'existe pas.");
+					throw new BusinessError("Le matériau spécifié n'existe pas.");
 				}
 			}
 
@@ -182,7 +182,7 @@ export async function updateProductSku(
 					.filter(Boolean)
 					.join(", ");
 
-				throw new Error(
+				throw new BusinessError(
 					`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe déjà pour ce produit (Réf: ${existingCombination.sku}). Veuillez modifier au moins une variante.`
 				);
 			}

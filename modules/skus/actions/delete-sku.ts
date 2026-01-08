@@ -10,8 +10,6 @@ import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { UTApi } from "uploadthing/server";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 
-const utapi = new UTApi();
-
 /**
  * Extrait la cle du fichier depuis une URL UploadThing
  * @param url - URL complete du fichier (ex: https://utfs.io/f/abc123.png)
@@ -29,6 +27,22 @@ function extractFileKeyFromUrl(url: string): string {
 		// Si l'URL est invalide, on retourne l'URL telle quelle
 		// UTApi peut gerer les URLs completes
 		return url;
+	}
+}
+
+/**
+ * Supprime des fichiers UploadThing de maniere securisee
+ * Instancie UTApi par requete pour eviter le partage de tokens entre workers
+ */
+async function deleteUploadThingFiles(urls: string[]): Promise<void> {
+	if (urls.length === 0) return;
+	try {
+		const utapi = new UTApi();
+		const fileKeys = urls.map(extractFileKeyFromUrl);
+		await utapi.deleteFiles(fileKeys);
+	} catch {
+		// Log l'erreur mais ne bloque pas la suppression du SKU
+		// Les fichiers orphelins seront nettoyes par un cron job ulterieur
 	}
 }
 
@@ -203,17 +217,8 @@ export async function deleteProductSku(
 
 		// 10. Supprimer les fichiers UploadThing AVANT la suppression du SKU
 		// (pour eviter les medias orphelins en cas d'echec de la transaction DB)
-		if (existingSku.images.length > 0) {
-			try {
-				const fileKeys = existingSku.images.map((img) => extractFileKeyFromUrl(img.url));
-				await utapi.deleteFiles(fileKeys);
-// console.log(`[DELETE_SKU] ${fileKeys.length} fichier(s) UploadThing supprime(s) pour SKU ${existingSku.sku}`);
-			} catch (uploadthingError) {
-				// Log l'erreur mais ne bloque pas la suppression du SKU
-				// Les fichiers orphelins seront nettoyes par un cron job ulterieur
-// console.error(`[DELETE_SKU] Erreur suppression fichiers UploadThing pour SKU ${existingSku.sku}:`, uploadthingError);
-			}
-		}
+		const imageUrls = existingSku.images.map((img) => img.url);
+		await deleteUploadThingFiles(imageUrls);
 
 		// 11. Supprimer la variante
 		// Les entrees SkuMedia seront supprimees automatiquement grace a onDelete: Cascade dans le schema Prisma

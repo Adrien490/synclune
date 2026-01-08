@@ -9,6 +9,9 @@ export async function GET() {
 
 	try {
 		const result = await syncAsyncPayments();
+		if (!result) {
+			return cronError("STRIPE_SECRET_KEY not configured");
+		}
 		return cronSuccess({
 			job: "sync-async-payments",
 			checked: result.checked,

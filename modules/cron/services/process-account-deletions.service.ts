@@ -94,9 +94,10 @@ export async function processAccountDeletions(): Promise<{
 					where: { userId: user.id },
 				});
 
-				// Note: On ne supprime PAS les commandes (Order)
-				// ni les remboursements (Refund) - conservation légale 10 ans
-				// Les commandes sont anonymisées via l'email du user (userId devient null)
+				// Note: On ne supprime PAS les commandes (Order) ni les remboursements (Refund)
+				// Conservation légale 10 ans (Art. L123-22 Code de Commerce)
+				// userId reste dans Order pour traçabilité, mais les données personnelles
+				// du user sont anonymisées (email, nom, adresse IP, etc.)
 			});
 
 			console.log(

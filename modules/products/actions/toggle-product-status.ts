@@ -9,6 +9,7 @@ import { handleActionError } from "@/shared/lib/actions";
 import { toggleProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../constants/cache";
+import { validateProductForPublication } from "../services/product-validation.service";
 
 /**
  * Server Action pour basculer le statut d'un produit
@@ -56,9 +57,9 @@ export async function toggleProductStatus(
 				description: true,
 				collections: { select: { collection: { select: { slug: true } } } },
 				skus: {
-					where: { isActive: true },
 					select: {
 						id: true,
+						isActive: true,
 						inventory: true,
 						images: {
 							where: { isPrimary: true },
@@ -97,41 +98,11 @@ export async function toggleProductStatus(
 
 		// 5.5. Validation metier : Un produit PUBLIC doit avoir au moins 1 SKU actif avec stock
 		if (newStatus === "PUBLIC") {
-			// Validation: titre requis
-			if (!existingProduct.title || existingProduct.title.trim().length === 0) {
+			const validation = validateProductForPublication(existingProduct);
+			if (!validation.isValid) {
 				return {
 					status: ActionStatus.VALIDATION_ERROR,
-					message:
-						"Impossible de publier ce produit car le titre est vide. Veuillez renseigner un titre.",
-				};
-			}
-
-			// Validation: au moins 1 SKU actif
-			if (existingProduct.skus.length === 0) {
-				return {
-					status: ActionStatus.VALIDATION_ERROR,
-					message:
-						"Impossible de publier ce produit car il n'a aucun SKU actif. Veuillez activer au moins un SKU avant de publier.",
-				};
-			}
-
-			// Validation: au moins 1 SKU actif avec stock
-			const hasStock = existingProduct.skus.some(sku => sku.inventory > 0);
-			if (!hasStock) {
-				return {
-					status: ActionStatus.VALIDATION_ERROR,
-					message:
-						"Impossible de publier ce produit car aucun SKU actif n'a de stock. Veuillez ajouter du stock a au moins une variante.",
-				};
-			}
-
-			// Validation: au moins 1 SKU actif avec image principale
-			const hasImage = existingProduct.skus.some(sku => sku.images.length > 0);
-			if (!hasImage) {
-				return {
-					status: ActionStatus.VALIDATION_ERROR,
-					message:
-						"Impossible de publier ce produit car aucun SKU actif n'a d'image principale. Veuillez ajouter une image a au moins une variante.",
+					message: validation.errorMessage!,
 				};
 			}
 		}

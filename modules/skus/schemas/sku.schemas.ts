@@ -139,9 +139,7 @@ const COMPARE_PRICE_ERROR = {
 export const createProductSkuSchema = baseSkuFieldsSchema
 	.extend({
 		// Product ID (required - on cree un SKU pour un produit existant)
-		productId: z
-			.string({ error: "Le produit est requis" })
-			.min(1, { error: "Le produit est requis" }),
+		productId: z.cuid2({ message: "ID produit invalide" }),
 
 		// SKU - optional, sera auto-genere si non fourni
 		sku: z.string().optional().or(z.literal("")),
@@ -150,69 +148,60 @@ export const createProductSkuSchema = baseSkuFieldsSchema
 	.refine(refineCompareAtPrice, COMPARE_PRICE_ERROR);
 
 export const deleteProductSkuSchema = z.object({
-	skuId: z.string(),
+	skuId: z.cuid2({ message: "ID SKU invalide" }),
 });
 
 export const updateProductSkuStatusSchema = z.object({
-	skuId: z.string(),
+	skuId: z.cuid2({ message: "ID SKU invalide" }),
 	isActive: z.boolean(),
 });
 
-export const bulkActivateSkusSchema = z.object({
-	ids: z.string().transform((str) => {
-		try {
-			const parsed = JSON.parse(str);
-			return Array.isArray(parsed) ? parsed : [];
-		} catch {
-			return [];
+/**
+ * Helper pour parser et valider un tableau d'IDs depuis JSON
+ * Rejette explicitement les erreurs au lieu de retourner un tableau vide
+ */
+const parseJsonIdsArray = z.string().transform((str, ctx) => {
+	try {
+		const parsed = JSON.parse(str);
+		if (!Array.isArray(parsed)) {
+			ctx.addIssue({ code: "custom", message: "Format invalide: tableau attendu" });
+			return z.NEVER;
 		}
-	}),
+		// Valider que chaque element est un CUID2 valide
+		const cuid2Regex = /^[a-z0-9]{24,}$/;
+		for (const id of parsed) {
+			if (typeof id !== "string" || !cuid2Regex.test(id)) {
+				ctx.addIssue({ code: "custom", message: "ID invalide dans le tableau" });
+				return z.NEVER;
+			}
+		}
+		return parsed as string[];
+	} catch {
+		ctx.addIssue({ code: "custom", message: "JSON invalide" });
+		return z.NEVER;
+	}
+});
+
+export const bulkActivateSkusSchema = z.object({
+	ids: parseJsonIdsArray,
 });
 
 export const bulkDeactivateSkusSchema = z.object({
-	ids: z.string().transform((str) => {
-		try {
-			const parsed = JSON.parse(str);
-			return Array.isArray(parsed) ? parsed : [];
-		} catch {
-			return [];
-		}
-	}),
+	ids: parseJsonIdsArray,
 });
 
 export const bulkDeleteSkusSchema = z.object({
-	ids: z.string().transform((str) => {
-		try {
-			const parsed = JSON.parse(str);
-			return Array.isArray(parsed) ? parsed : [];
-		} catch {
-			return [];
-		}
-	}),
+	ids: parseJsonIdsArray,
 });
 
 export const bulkAdjustStockSchema = z.object({
-	ids: z.string().transform((str) => {
-		try {
-			const parsed = JSON.parse(str);
-			return Array.isArray(parsed) ? parsed : [];
-		} catch {
-			return [];
-		}
-	}),
+	ids: parseJsonIdsArray,
 	mode: z.enum(["relative", "absolute"]),
 	value: z.coerce.number().int(),
 });
 
 export const bulkUpdatePriceSchema = z.object({
-	ids: z.string().transform((str) => {
-		try {
-			const parsed = JSON.parse(str);
-			return Array.isArray(parsed) ? parsed : [];
-		} catch {
-			return [];
-		}
-	}),
+	ids: parseJsonIdsArray,
 	mode: z.enum(["percentage", "absolute"]),
 	value: z.coerce.number(),
 	updateCompareAtPrice: z.coerce.boolean().default(false),
@@ -225,9 +214,7 @@ export const bulkUpdatePriceSchema = z.object({
 export const updateProductSkuSchema = baseSkuFieldsSchema
 	.extend({
 		// SKU ID (required - on modifie un SKU existant)
-		skuId: z
-			.string({ error: "L'ID du SKU est requis" })
-			.min(1, { error: "L'ID du SKU est requis" }),
+		skuId: z.cuid2({ message: "ID SKU invalide" }),
 	})
 	.refine(refinePrimaryImageNotVideo, PRIMARY_IMAGE_ERROR)
 	.refine(refineCompareAtPrice, COMPARE_PRICE_ERROR);
@@ -242,7 +229,7 @@ export const updateProductSkuSchema = baseSkuFieldsSchema
  * Note: Les prix sont en EUROS (convertis en centimes côté serveur)
  */
 export const updateSkuPriceSchema = z.object({
-	skuId: z.string().min(1),
+	skuId: z.cuid2({ message: "ID SKU invalide" }),
 	priceInclTaxEuros: z.coerce
 		.number()
 		.positive({ error: "Le prix doit être supérieur à 0" })
@@ -261,7 +248,7 @@ export const updateSkuPriceSchema = z.object({
  * Utilisé dans le dialog d'ajustement de stock
  */
 export const adjustSkuStockSchema = z.object({
-	skuId: z.string().min(1),
+	skuId: z.cuid2({ message: "ID SKU invalide" }),
 	adjustment: z.number().int(), // Positif pour ajouter, négatif pour retirer
 	reason: z.string().optional(), // Raison de l'ajustement (pour traçabilité)
 });

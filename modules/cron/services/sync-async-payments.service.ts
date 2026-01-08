@@ -1,12 +1,13 @@
-import Stripe from "stripe";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { getStripeClient } from "@/shared/lib/stripe";
 import {
 	markOrderAsPaid,
 	markOrderAsFailed,
 	extractPaymentFailureDetails,
 	restoreStockForOrder,
 } from "@/modules/webhooks/services/payment-intent.service";
+import { BATCH_SIZE_MEDIUM, THRESHOLDS } from "@/modules/cron/constants/limits";
 
 /**
  * Service de synchronisation des paiements asynchrones
@@ -19,23 +20,27 @@ export async function syncAsyncPayments(): Promise<{
 	checked: number;
 	updated: number;
 	errors: number;
-}> {
+} | null> {
 	console.log("[CRON:sync-async-payments] Starting async payment sync...");
 
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+	const stripe = getStripeClient();
+	if (!stripe) {
+		console.error("[CRON:sync-async-payments] STRIPE_SECRET_KEY not configured");
+		return null;
+	}
 
 	// Trouver les commandes avec paiement PENDING depuis plus d'1h et moins de 7 jours
 	// (au-delà de 7 jours, les paiements async échouent généralement)
-	const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-	const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+	const minAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MIN_AGE_MS);
+	const maxAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MAX_AGE_MS);
 
 	const pendingOrders = await prisma.order.findMany({
 		where: {
 			paymentStatus: PaymentStatus.PENDING,
 			stripePaymentIntentId: { not: null },
 			createdAt: {
-				gte: sevenDaysAgo,
-				lt: oneHourAgo,
+				gte: maxAge,
+				lt: minAge,
 			},
 			deletedAt: null,
 		},
@@ -45,6 +50,7 @@ export async function syncAsyncPayments(): Promise<{
 			stripePaymentIntentId: true,
 			paymentStatus: true,
 		},
+		take: BATCH_SIZE_MEDIUM,
 	});
 
 	console.log(

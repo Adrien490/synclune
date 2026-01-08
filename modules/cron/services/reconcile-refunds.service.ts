@@ -1,11 +1,12 @@
-import Stripe from "stripe";
 import { RefundStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { getStripeClient } from "@/shared/lib/stripe";
 import {
 	mapStripeRefundStatus,
 	updateRefundStatus,
 	markRefundAsFailed,
 } from "@/modules/webhooks/services/refund.service";
+import { BATCH_SIZE_MEDIUM, THRESHOLDS } from "@/modules/cron/constants/limits";
 
 /**
  * Service de réconciliation des remboursements pending
@@ -18,20 +19,24 @@ export async function reconcilePendingRefunds(): Promise<{
 	checked: number;
 	updated: number;
 	errors: number;
-}> {
+} | null> {
 	console.log("[CRON:reconcile-refunds] Starting refund reconciliation...");
 
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+	const stripe = getStripeClient();
+	if (!stripe) {
+		console.error("[CRON:reconcile-refunds] STRIPE_SECRET_KEY not configured");
+		return null;
+	}
 
 	// Trouver les remboursements APPROVED avec un stripeRefundId
 	// traités il y a plus d'1h (laisser le temps aux webhooks)
-	const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+	const minAge = new Date(Date.now() - THRESHOLDS.REFUND_RECONCILE_MIN_AGE_MS);
 
 	const pendingRefunds = await prisma.refund.findMany({
 		where: {
 			status: RefundStatus.APPROVED,
 			stripeRefundId: { not: null },
-			processedAt: { lt: oneHourAgo },
+			processedAt: { lt: minAge },
 			deletedAt: null,
 		},
 		select: {
@@ -44,6 +49,7 @@ export async function reconcilePendingRefunds(): Promise<{
 				},
 			},
 		},
+		take: BATCH_SIZE_MEDIUM,
 	});
 
 	console.log(

@@ -4,10 +4,36 @@ import Stripe from "stripe";
  * Instance Stripe centralisée pour toute l'application
  * Utilise automatiquement la version API compatible avec le SDK Stripe (v20.x)
  * - maxNetworkRetries: 2 pour retry automatique en cas d'erreur réseau
+ *
+ * Note: Cette instance suppose que STRIPE_SECRET_KEY est défini.
+ * Pour les contextes où la clé pourrait manquer (cron jobs), utiliser getStripeClient().
  */
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  maxNetworkRetries: 2,
+	maxNetworkRetries: 2,
 });
+
+/**
+ * Récupère une instance Stripe de manière sécurisée
+ * Retourne null si STRIPE_SECRET_KEY n'est pas défini
+ *
+ * Usage recommandé pour les cron jobs et contextes où la clé pourrait manquer:
+ * ```ts
+ * const stripe = getStripeClient();
+ * if (!stripe) {
+ *   return cronError("STRIPE_SECRET_KEY not configured");
+ * }
+ * ```
+ */
+export function getStripeClient(): Stripe | null {
+	const secretKey = process.env.STRIPE_SECRET_KEY;
+	if (!secretKey) {
+		console.error("[Stripe] STRIPE_SECRET_KEY environment variable is not set");
+		return null;
+	}
+	return new Stripe(secretKey, {
+		maxNetworkRetries: 2,
+	});
+}
 
 /**
  * Récupère les informations légales du vendeur depuis les variables d'environnement

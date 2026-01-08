@@ -1,10 +1,14 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { getStripeClient } from "@/shared/lib/stripe";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
-
-const MAX_RETRY_ATTEMPTS = 3;
+import {
+	BATCH_SIZE_SMALL,
+	MAX_WEBHOOK_RETRY_ATTEMPTS,
+	THRESHOLDS,
+} from "@/modules/cron/constants/limits";
 
 /**
  * Service de retry des webhooks échoués
@@ -19,23 +23,27 @@ export async function retryFailedWebhooks(): Promise<{
 	succeeded: number;
 	permanentlyFailed: number;
 	errors: number;
-}> {
+} | null> {
 	console.log("[CRON:retry-webhooks] Starting failed webhook retry...");
 
-	const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+	const stripe = getStripeClient();
+	if (!stripe) {
+		console.error("[CRON:retry-webhooks] STRIPE_SECRET_KEY not configured");
+		return null;
+	}
 
-	// Trouver les webhooks FAILED avec moins de MAX_RETRY_ATTEMPTS tentatives
+	// Trouver les webhooks FAILED avec moins de MAX_WEBHOOK_RETRY_ATTEMPTS tentatives
 	// et traités il y a plus de 30 minutes (éviter les retries trop fréquents)
-	const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+	const minAge = new Date(Date.now() - THRESHOLDS.WEBHOOK_RETRY_MIN_AGE_MS);
 
 	const failedEvents = await prisma.webhookEvent.findMany({
 		where: {
 			status: WebhookEventStatus.FAILED,
-			attempts: { lt: MAX_RETRY_ATTEMPTS },
-			processedAt: { lt: thirtyMinutesAgo },
+			attempts: { lt: MAX_WEBHOOK_RETRY_ATTEMPTS },
+			processedAt: { lt: minAge },
 		},
 		orderBy: { receivedAt: "asc" },
-		take: 10, // Limiter pour éviter timeout
+		take: BATCH_SIZE_SMALL,
 	});
 
 	console.log(
@@ -119,14 +127,12 @@ export async function retryFailedWebhooks(): Promise<{
 
 			// Vérifier si on a atteint le max de tentatives
 			const newAttempts = webhookEvent.attempts + 1;
-			const isPermanentlyFailed = newAttempts >= MAX_RETRY_ATTEMPTS;
+			const isPermanentlyFailed = newAttempts >= MAX_WEBHOOK_RETRY_ATTEMPTS;
 
 			await prisma.webhookEvent.update({
 				where: { id: webhookEvent.id },
 				data: {
-					status: isPermanentlyFailed
-						? WebhookEventStatus.FAILED
-						: WebhookEventStatus.FAILED,
+					status: WebhookEventStatus.FAILED,
 					errorMessage,
 					processedAt: new Date(),
 				},
@@ -139,7 +145,7 @@ export async function retryFailedWebhooks(): Promise<{
 				permanentlyFailed++;
 			} else {
 				console.warn(
-					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} retry failed (attempt ${newAttempts}/${MAX_RETRY_ATTEMPTS})`
+					`[CRON:retry-webhooks] Event ${webhookEvent.stripeEventId} retry failed (attempt ${newAttempts}/${MAX_WEBHOOK_RETRY_ATTEMPTS})`
 				);
 				errors++;
 			}

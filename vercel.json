@@ -22,16 +22,8 @@
       "schedule": "0 */4 * * *"
     },
     {
-      "path": "/api/cron/retry-webhooks",
-      "schedule": "*/30 * * * *"
-    },
-    {
       "path": "/api/cron/reconcile-refunds",
       "schedule": "0 */6 * * *"
-    },
-    {
-      "path": "/api/cron/abandoned-orders",
-      "schedule": "0 4 * * *"
     },
     {
       "path": "/api/cron/review-request-emails",

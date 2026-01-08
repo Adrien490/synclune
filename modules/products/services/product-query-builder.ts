@@ -1,4 +1,5 @@
 import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
+import { notDeleted } from "@/shared/lib/prisma";
 import type { GetProductsParams, ProductFilters } from "../types/product.types";
 import type { SearchResult } from "../types/product-services.types";
 
@@ -372,10 +373,10 @@ export function buildProductWhereClause(
 	const andConditions: Prisma.ProductWhereInput[] = [];
 	const filters = params.filters ?? {};
 
-	// ⚠️ AUDIT FIX: Exclure les produits soft-deleted par défaut
+	// Exclure les produits soft-deleted par défaut
 	// Pour l'admin, utiliser includeDeleted: true dans les params
 	if (!params.includeDeleted) {
-		andConditions.push({ deletedAt: null });
+		andConditions.push({ ...notDeleted });
 	}
 
 	// Si un statut est spécifié, filtrer par ce statut

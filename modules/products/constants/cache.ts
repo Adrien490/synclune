@@ -5,6 +5,16 @@
  */
 
 // ============================================
+// CACHE PROFILES (definis dans next.config.ts)
+// ============================================
+// - products:        stale=15min, revalidate=5min, expire=6h   (listes produits)
+// - productDetail:   stale=15min, revalidate=5min, expire=6h   (detail produit/SKU)
+// - reference:       stale=7j, revalidate=24h, expire=30j      (prix max, donnees stables)
+// - dashboard:       stale=1min, revalidate=30s, expire=5min   (compteurs admin)
+// - relatedProducts: stale=30min, revalidate=10min, expire=3h  (produits similaires)
+// - skuStock:        stale=30s, revalidate=15s, expire=1min    (stock temps reel)
+
+// ============================================
 // CACHE TAGS
 // ============================================
 

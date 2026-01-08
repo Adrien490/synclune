@@ -143,13 +143,13 @@ export async function processAbandonedOrders(): Promise<{
 		`[CRON:abandoned-orders] Found ${ordersForReminder.length} orders for reminder`
 	);
 
-	for (const order of ordersForReminder) {
-		// TODO: Implémenter l'email de relance panier abandonné
-		// Pour l'instant, on log simplement les commandes qui nécessiteraient un rappel
+	// TODO: Implémenter l'email de relance panier abandonné
+	// Les commandes identifiées sont loggées mais aucun email n'est envoyé
+	// remindersSent reste à 0 jusqu'à l'implémentation de l'email
+	if (ordersForReminder.length > 0) {
 		console.log(
-			`[CRON:abandoned-orders] Order ${order.orderNumber} would receive reminder (email not yet implemented)`
+			`[CRON:abandoned-orders] ${ordersForReminder.length} orders would receive reminder (email not yet implemented)`
 		);
-		remindersSent++;
 	}
 
 	console.log(

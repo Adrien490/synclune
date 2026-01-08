@@ -11,8 +11,6 @@ import { UTApi } from "uploadthing/server";
 import { bulkDeleteProductsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
 
-const utapi = new UTApi();
-
 /**
  * Extrait la cle du fichier depuis une URL UploadThing
  */
@@ -23,6 +21,21 @@ function extractFileKeyFromUrl(url: string): string {
 		return parts[parts.length - 1];
 	} catch {
 		return url;
+	}
+}
+
+/**
+ * Supprime des fichiers UploadThing de maniere securisee
+ * Instancie UTApi par requete pour eviter le partage de tokens entre workers
+ */
+async function deleteUploadThingFiles(urls: string[]): Promise<void> {
+	if (urls.length === 0) return;
+	try {
+		const utapi = new UTApi();
+		const fileKeys = urls.map(extractFileKeyFromUrl);
+		await utapi.deleteFiles(fileKeys);
+	} catch {
+		// Ignore - ne bloque pas la suppression des produits
 	}
 }
 
@@ -143,15 +156,7 @@ export async function bulkDeleteProducts(
 		const allImageUrls = existingProducts.flatMap((product) =>
 			product.skus.flatMap((sku) => sku.images.map((img) => img.url))
 		);
-
-		if (allImageUrls.length > 0) {
-			try {
-				const fileKeys = allImageUrls.map(extractFileKeyFromUrl);
-				await utapi.deleteFiles(fileKeys);
-			} catch (uploadthingError) {
-				// Ignore - ne bloque pas la suppression des produits
-			}
-		}
+		await deleteUploadThingFiles(allImageUrls);
 
 		// 7. Supprimer les produits dans une transaction
 		await prisma.$transaction(async (tx) => {

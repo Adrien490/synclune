@@ -13,6 +13,7 @@ import { generateSlug } from "@/shared/utils/generate-slug";
 import { createProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
 import { handleActionError } from "@/shared/lib/actions";
+import { validatePublicProductCreation } from "../services/product-validation.service";
 
 /**
  * Server Action pour creer un produit
@@ -89,15 +90,14 @@ export async function createProduct(
 		const validatedData = result.data;
 
 		// 3.5. Validation metier : Produit PUBLIC doit avoir un SKU actif
-		if (
-			validatedData.status === "PUBLIC" &&
-			!validatedData.initialSku.isActive
-		) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message:
-					"Impossible de creer un produit PUBLIC avec un SKU inactif. Veuillez activer le SKU ou creer le produit en DRAFT.",
-			};
+		if (validatedData.status === "PUBLIC") {
+			const validation = validatePublicProductCreation(validatedData.initialSku);
+			if (!validation.isValid) {
+				return {
+					status: ActionStatus.VALIDATION_ERROR,
+					message: validation.errorMessage!,
+				};
+			}
 		}
 
 		// 4. Normalize empty strings to null for optional foreign keys

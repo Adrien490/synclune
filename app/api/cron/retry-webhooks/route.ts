@@ -9,6 +9,9 @@ export async function GET() {
 
 	try {
 		const result = await retryFailedWebhooks();
+		if (!result) {
+			return cronError("STRIPE_SECRET_KEY not configured");
+		}
 		return cronSuccess({
 			job: "retry-webhooks",
 			found: result.found,
