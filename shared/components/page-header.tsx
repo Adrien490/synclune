@@ -77,7 +77,7 @@ export function PageHeader({
 					<div className="min-w-0 flex-1 space-y-3">
 						<h1
 							id="page-title"
-							className="text-3xl lg:text-4xl font-display font-medium tracking-wide text-foreground wrap-break-words"
+							className="text-2xl sm:text-3xl lg:text-4xl font-display font-medium tracking-wide text-foreground wrap-break-words"
 							title={title}
 						>
 							{title}
@@ -140,12 +140,12 @@ export function PageHeader({
 								>
 									<ChevronLeft className="size-5" />
 								</Link>
-								<h1
-									id="page-title"
+								<span
+									aria-hidden="true"
 									className="text-2xl font-display font-medium text-foreground tracking-normal truncate flex-1 min-w-0"
 								>
 									{title}
-								</h1>
+								</span>
 								{/* Actions mobile - alignées à droite */}
 								{actions && (
 									<div className="shrink-0 ml-auto">{actions}</div>
@@ -226,9 +226,9 @@ export function PageHeader({
 							</nav>
 						)}
 
-						{/* Titre principal - SEO: toujours un h1 visible par les crawlers */}
+						{/* Titre principal - SEO: h1 unique toujours présent dans le DOM */}
 						<h1
-							id={breadcrumbs.length > 0 ? undefined : "page-title"}
+							id="page-title"
 							className={cn(
 								"text-2xl sm:text-3xl lg:text-4xl font-display font-medium text-foreground tracking-normal wrap-break-words",
 								breadcrumbs.length > 0 && "hidden sm:block"
@@ -239,7 +239,7 @@ export function PageHeader({
 
 						{/* Description optionnelle */}
 						{description && (
-							<p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl wrap-break-words">
+							<p className="mt-1 sm:mt-2 text-base text-muted-foreground max-w-2xl wrap-break-words">
 								{description}
 							</p>
 						)}
