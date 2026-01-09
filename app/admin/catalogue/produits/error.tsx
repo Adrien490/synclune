@@ -19,7 +19,7 @@ export default function ProductsError({ error, reset }: ErrorPageProps) {
 						aria-hidden="true"
 					/>
 				</div>
-				<h2 className="text-2xl font-semibold">
+				<h2 className="text-xl sm:text-2xl font-semibold">
 					Erreur lors du chargement des produits
 				</h2>
 				<p className="mt-3 text-muted-foreground">

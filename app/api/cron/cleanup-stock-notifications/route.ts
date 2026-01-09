@@ -1,5 +1,5 @@
 import { verifyCronRequest, cronSuccess, cronError } from "@/modules/cron/lib/verify-cron";
-import { cleanupExpiredNotifications } from "@/modules/stock-notifications/actions/cleanup-expired-notifications";
+import { cleanupExpiredStockNotifications } from "@/modules/cron/services/cleanup-stock-notifications.service";
 
 export const maxDuration = 30;
 
@@ -8,8 +8,7 @@ export async function GET() {
 	if (unauthorized) return unauthorized;
 
 	try {
-		// Réutilise la fonction existante
-		const result = await cleanupExpiredNotifications();
+		const result = await cleanupExpiredStockNotifications();
 		return cronSuccess({
 			job: "cleanup-stock-notifications",
 			expiredCount: result.expiredCount,

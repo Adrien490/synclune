@@ -161,7 +161,7 @@ export function BottomNav({ className }: BottomNavigationProps) {
 							className="h-5 w-5 shrink-0"
 							aria-hidden="true"
 						/>
-						<span className="text-[13px] font-medium leading-none">Menu</span>
+						<span className="text-sm font-medium leading-none">Menu</span>
 					</button>
 				</div>
 			</nav>

@@ -40,7 +40,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 					</TooltipTrigger>
 					<TooltipContent side="right" sideOffset={8}>
 						<span>Basculer le menu</span>
-						<kbd className="ml-2 inline-flex items-center gap-0.5 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+						<kbd className="ml-2 inline-flex items-center gap-0.5 rounded border bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
 							<span className="text-xs">⌘</span>B
 						</kbd>
 					</TooltipContent>

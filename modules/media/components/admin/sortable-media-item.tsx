@@ -198,7 +198,7 @@ export function SortableMediaItem({
 			{/* Badge principal */}
 			{isPrimary && (
 				<div className="absolute bottom-2 left-2 sm:top-2 sm:bottom-auto sm:left-2 z-10 pointer-events-none">
-					<div className="flex items-center gap-1 bg-amber-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-md">
+					<div className="flex items-center gap-1 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 rounded shadow-md">
 						<Star className="w-3 h-3" fill="currentColor" aria-hidden="true" />
 						<span className="sm:hidden">1</span>
 						<span className="hidden sm:inline">Principal</span>

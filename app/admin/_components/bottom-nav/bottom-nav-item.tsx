@@ -27,7 +27,7 @@ export function BottomNavItem({ item, isActive }: BottomNavItemProps) {
 		>
 			{isActive && <ActiveIndicator />}
 			<Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-			<span className="text-[13px] leading-none">
+			<span className="text-sm leading-none">
 				{item.shortTitle || item.title}
 			</span>
 		</Link>

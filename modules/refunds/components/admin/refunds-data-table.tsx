@@ -110,7 +110,7 @@ export async function RefundsDataTable({
 												{refund.order.customerName || refund.order.customerEmail}
 											</span>
 											{refund.order.customerName && (
-												<span className="text-xs text-muted-foreground truncate block">
+												<span className="text-sm text-muted-foreground truncate block">
 													{refund.order.customerEmail}
 												</span>
 											)}

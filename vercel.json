@@ -31,7 +31,7 @@
     },
     {
       "path": "/api/cron/process-scheduled-discounts",
-      "schedule": "0 * * * *"
+      "schedule": "0 0,12 * * *"
     },
     {
       "path": "/api/cron/process-account-deletions",

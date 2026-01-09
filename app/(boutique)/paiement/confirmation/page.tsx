@@ -89,7 +89,7 @@ export default async function CheckoutSuccessPage({
 						<CardContent className="space-y-6">
 							{/* Récapitulatif de la commande */}
 							<div className="bg-muted/50 rounded-lg p-4 space-y-3">
-								<h3 className="font-semibold text-sm">Récapitulatif</h3>
+								<h3 className="font-semibold text-base">Récapitulatif</h3>
 								<div className="space-y-2 text-sm">
 									<div className="flex justify-between">
 										<span className="text-muted-foreground">Sous-total</span>
@@ -110,7 +110,7 @@ export default async function CheckoutSuccessPage({
 
 							{/* Adresse de livraison */}
 							<div className="bg-muted/50 rounded-lg p-4 space-y-2">
-								<h3 className="font-semibold text-sm">Adresse de livraison</h3>
+								<h3 className="font-semibold text-base">Adresse de livraison</h3>
 								<div className="text-sm text-muted-foreground">
 									<p className="font-medium text-foreground">
 										{order.shippingFirstName} {order.shippingLastName}

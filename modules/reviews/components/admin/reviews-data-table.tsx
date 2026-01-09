@@ -80,7 +80,7 @@ export async function ReviewsDataTable({
 											<p className="text-sm font-medium truncate">
 												{review.user.name || "Anonyme"}
 											</p>
-											<p className="text-xs text-muted-foreground truncate">
+											<p className="text-sm text-muted-foreground truncate">
 												{review.user.email}
 											</p>
 										</div>

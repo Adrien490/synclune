@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
 					{/* Header */}
 					<div className="text-center space-y-7">
 						<div className="space-y-3">
-							<h1 className={cn("text-3xl font-semibold text-foreground", josefinSans.className)}>
+							<h1 className={cn("text-2xl sm:text-3xl font-semibold text-foreground", josefinSans.className)}>
 								Mot de passe oublié ?
 							</h1>
 							<p className="text-muted-foreground">

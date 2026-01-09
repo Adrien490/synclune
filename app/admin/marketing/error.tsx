@@ -16,7 +16,7 @@ export default function MarketingError({ error, reset }: ErrorPageProps) {
 				<div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
 					<AlertTriangle className="h-7 w-7 text-destructive" aria-hidden="true" />
 				</div>
-				<h2 className="text-2xl font-semibold">Erreur marketing</h2>
+				<h2 className="text-xl sm:text-2xl font-semibold">Erreur marketing</h2>
 				<p className="mt-3 text-muted-foreground">
 					Impossible de charger cette section. Veuillez réessayer.
 				</p>

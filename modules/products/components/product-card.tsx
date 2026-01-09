@@ -89,7 +89,7 @@ export function ProductCard({
 					<div
 						role="status"
 						aria-label={stockMessage}
-						className="absolute top-2.5 left-2.5 bg-foreground/80 text-background px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-medium z-20 shadow-md backdrop-blur-sm"
+						className="absolute top-2.5 left-2.5 bg-foreground/80 text-background px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md backdrop-blur-sm"
 					>
 						{stockMessage}
 					</div>
@@ -99,7 +99,7 @@ export function ProductCard({
 					<div
 						role="status"
 						aria-label={`Stock limité : plus que ${inventory} exemplaire${inventory && inventory > 1 ? "s" : ""} disponible${inventory && inventory > 1 ? "s" : ""}`}
-						className="absolute top-2.5 left-2.5 bg-amber-600 text-white px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-medium z-20 shadow-md"
+						className="absolute top-2.5 left-2.5 bg-amber-600 text-white px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md"
 					>
 						{stockMessage}
 					</div>
