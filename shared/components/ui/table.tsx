@@ -24,8 +24,12 @@ function Table({
 	return (
 		<div
 			data-slot="table-container"
+			role="region"
+			aria-label={caption || "Tableau de données"}
+			tabIndex={0}
 			className={cn(
 				"relative w-full overflow-x-auto scroll-smooth",
+				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 				stickyHeader && "max-h-[70vh] overflow-y-auto"
 			)}
 		>

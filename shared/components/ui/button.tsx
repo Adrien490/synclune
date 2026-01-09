@@ -42,16 +42,23 @@ function Button({
 	variant,
 	size,
 	asChild = false,
+	"aria-label": ariaLabel,
 	...props
 }: React.ComponentProps<"button"> &
 	VariantProps<typeof buttonVariants> & {
 		asChild?: boolean;
 	}) {
+	// Warning dev pour boutons icon-only sans label (WCAG 4.1.2)
+	if (process.env.NODE_ENV === "development" && size === "icon" && !ariaLabel) {
+		console.warn("[Button] aria-label requis pour les boutons icon-only");
+	}
+
 	const Comp = asChild ? Slot : "button";
 
 	return (
 		<Comp
 			data-slot="button"
+			aria-label={ariaLabel}
 			className={cn(buttonVariants({ variant, size, className }))}
 			{...props}
 		/>

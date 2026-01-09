@@ -176,11 +176,15 @@ export function GallerySlide({
 					onPlaying={() => setVideoState("ready")}
 					onError={() => setVideoState("error")}
 					aria-label={`Vidéo ${title}`}
+					aria-describedby={`video-desc-${index}`}
 				>
 					<source src={media.url} type="video/mp4" />
 					{/* Track vide pour satisfaire WCAG - vidéos produits sans audio */}
 					<track kind="captions" srcLang="fr" label="Français" default />
 				</video>
+				<span id={`video-desc-${index}`} className="sr-only">
+					Vidéo de démonstration du produit sans audio
+				</span>
 			</div>
 		);
 	}

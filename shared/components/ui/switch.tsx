@@ -8,13 +8,20 @@ import { cn } from "@/shared/utils/cn";
 function Switch({
 	className,
 	"aria-label": ariaLabel,
+	"aria-labelledby": ariaLabelledBy,
 	...props
 }: React.ComponentProps<typeof SwitchPrimitive.Root>) {
+	// Warning dev si pas de label accessible (WCAG 4.1.2)
+	if (process.env.NODE_ENV === "development" && !ariaLabel && !ariaLabelledBy) {
+		console.warn("[Switch] aria-label ou aria-labelledby requis pour l'accessibilité");
+	}
+
 	return (
 		<span className="inline-flex items-center justify-center min-h-11 min-w-11">
 			<SwitchPrimitive.Root
 				data-slot="switch"
 				aria-label={ariaLabel}
+				aria-labelledby={ariaLabelledBy}
 				className={cn(
 					"peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:border-ring focus-visible:ring-ring/50 dark:data-[state=unchecked]:bg-input/80 inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
 					className

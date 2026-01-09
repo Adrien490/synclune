@@ -5,15 +5,21 @@ import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
 
+interface SliderProps extends React.ComponentProps<typeof SliderPrimitive.Root> {
+	/** Formateur de valeur pour les lecteurs d'ecran (ex: "50 euros" au lieu de "50") */
+	formatValue?: (value: number) => string;
+}
+
 function Slider({
 	className,
 	defaultValue,
 	value,
 	min = 0,
 	max = 100,
+	formatValue,
 	"aria-label": ariaLabel,
 	...props
-}: React.ComponentProps<typeof SliderPrimitive.Root>) {
+}: SliderProps) {
 	const _values = Array.isArray(value)
 		? value
 		: Array.isArray(defaultValue)
@@ -25,6 +31,15 @@ function Slider({
 		if (index === 0) return "Valeur minimum";
 		if (index === _values.length - 1) return "Valeur maximum";
 		return `Curseur ${index + 1}`;
+	};
+
+	// aria-valuetext pour contexte lecteur d'ecran (WCAG 4.1.2)
+	const getThumbAriaValueText = (index: number) => {
+		const currentValue = _values[index];
+		if (formatValue) {
+			return formatValue(currentValue);
+		}
+		return `${currentValue} sur ${max}`;
 	};
 
 	return (
@@ -63,6 +78,7 @@ function Slider({
 					data-slot="slider-thumb"
 					key={index}
 					aria-label={getThumbLabel(index)}
+					aria-valuetext={getThumbAriaValueText(index)}
 					className={cn(
 						"block size-5 shrink-0 rounded-full",
 						"border-2 border-primary bg-background",
