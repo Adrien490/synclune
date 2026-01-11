@@ -119,9 +119,6 @@ export function AtelierStory() {
 										❤️
 									</span>
 								</p>
-								<footer className="mt-2 text-sm font-normal text-muted-foreground not-italic">
-									<cite>— Léane, fondatrice de Synclune</cite>
-								</footer>
 							</blockquote>
 						</Stagger>
 
