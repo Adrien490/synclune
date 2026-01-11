@@ -238,17 +238,6 @@ export function SignUpEmailForm() {
 				)}
 			</form.AppField>
 
-			{/* Hidden field pour le formulaire */}
-			<form.Subscribe selector={(state) => state.values.termsAccepted}>
-				{(termsAccepted) => (
-					<input
-						type="hidden"
-						name="termsAccepted"
-						value={termsAccepted ? "true" : "false"}
-					/>
-				)}
-			</form.Subscribe>
-
 			<form.Subscribe selector={(state) => [state.canSubmit]}>
 				{([canSubmit]) => (
 					<Button

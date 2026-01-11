@@ -33,7 +33,6 @@ export const CheckboxField = ({
 			<div className="flex items-start gap-3">
 				<Checkbox
 					disabled={disabled}
-					name={field.name}
 					id={field.name}
 					checked={checked ?? field.state.value ?? false}
 					onCheckedChange={(checked) => {
@@ -48,6 +47,11 @@ export const CheckboxField = ({
 					aria-required={required}
 					className={cn("mt-1", className)}
 					{...props}
+				/>
+				<input
+					type="hidden"
+					name={field.name}
+					value={field.state.value ? "true" : "false"}
 				/>
 				{label && (
 					<FieldLabel htmlFor={field.name}>
