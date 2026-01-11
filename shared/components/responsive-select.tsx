@@ -58,6 +58,10 @@ interface ResponsiveSelectProps {
 	size?: "sm" | "default";
 	className?: string;
 	triggerClassName?: string;
+	// Accessibilité
+	id?: string;
+	"aria-invalid"?: boolean;
+	"aria-describedby"?: string;
 }
 
 function ResponsiveSelect({
@@ -72,6 +76,9 @@ function ResponsiveSelect({
 	size = "default",
 	className,
 	triggerClassName,
+	id,
+	"aria-invalid": ariaInvalid,
+	"aria-describedby": ariaDescribedby,
 }: ResponsiveSelectProps) {
 	const isMobile = useIsMobile();
 
@@ -79,6 +86,7 @@ function ResponsiveSelect({
 	if (isMobile) {
 		return (
 			<NativeSelect
+				id={id}
 				value={value}
 				defaultValue={defaultValue}
 				onChange={(e) => onValueChange?.(e.target.value)}
@@ -87,6 +95,8 @@ function ResponsiveSelect({
 				required={required}
 				size={size}
 				className={cn("w-full", className, triggerClassName)}
+				aria-invalid={ariaInvalid}
+				aria-describedby={ariaDescribedby}
 			>
 				{placeholder && (
 					<NativeSelectOption value="" disabled>
@@ -130,7 +140,13 @@ function ResponsiveSelect({
 			name={name}
 			required={required}
 		>
-			<SelectTrigger size={size} className={cn(className, triggerClassName)}>
+			<SelectTrigger
+				id={id}
+				size={size}
+				className={cn(className, triggerClassName)}
+				aria-invalid={ariaInvalid}
+				aria-describedby={ariaDescribedby}
+			>
 				<SelectValue placeholder={placeholder} />
 			</SelectTrigger>
 			<SelectContent>

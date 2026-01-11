@@ -64,11 +64,28 @@ export async function sendCustomizationRequest(
 
 		// 4. Vérification honeypot (anti-spam)
 		if (validatedData.website && validatedData.website.trim() !== "") {
+			// Log pour monitoring (sans exposer au client)
+			console.warn("[SECURITY] Honeypot triggered", {
+				ip: ipAddress,
+				email: validatedData.email,
+				timestamp: new Date().toISOString(),
+			});
 			// On retourne un succès pour ne pas alerter le bot
 			return success("Votre demande a bien été envoyée.");
 		}
 
-		// 5. Trouver le productTypeId correspondant au label (optionnel)
+		// 5. Rate limiting par email (protection contre spam multi-IP)
+		const emailRateLimitId = `customization:email:${validatedData.email.toLowerCase()}`;
+		const emailRateLimit = checkRateLimit(emailRateLimitId, {
+			limit: 5,
+			windowMs: 24 * 60 * 60 * 1000, // 5 demandes par email par 24h
+		});
+
+		if (!emailRateLimit.success) {
+			return error("Trop de demandes pour cette adresse email. Réessaie demain.");
+		}
+
+		// 6. Trouver le productTypeId correspondant au label (optionnel)
 		const productType = await prisma.productType.findFirst({
 			where: {
 				label: validatedData.productTypeLabel,
@@ -77,7 +94,7 @@ export async function sendCustomizationRequest(
 			select: { id: true },
 		});
 
-		// 6. Créer la demande en base de données
+		// 7. Créer la demande en base de données
 		const customizationRequest = await prisma.customizationRequest.create({
 			data: {
 				firstName: validatedData.firstName,
@@ -89,43 +106,49 @@ export async function sendCustomizationRequest(
 			},
 		});
 
-		// 7. Envoyer l'email de notification à l'admin
-		let adminEmailFailed = false;
+		// 8. Sanitize email pour éviter l'injection de headers SMTP
+		const sanitizedEmail = validatedData.email.replace(/[\r\n]/g, "");
+
+		// 9. Envoyer l'email de notification à l'admin
 		try {
 			const emailResult = await sendCustomizationRequestEmail({
 				firstName: validatedData.firstName,
-				email: validatedData.email,
+				email: sanitizedEmail,
 				phone: validatedData.phone || undefined,
 				productTypeLabel: validatedData.productTypeLabel,
 				details: validatedData.details,
 			});
 
 			if (!emailResult.success) {
-				adminEmailFailed = true;
+				console.error("[EMAIL] Admin notification failed", {
+					requestId: customizationRequest.id,
+					error: emailResult.error,
+				});
 			}
-		} catch {
-			adminEmailFailed = true;
+		} catch (emailError) {
+			console.error("[EMAIL] Admin notification exception", {
+				requestId: customizationRequest.id,
+				error: emailError,
+			});
 		}
 
-		// 8. Envoyer l'email de confirmation au client
+		// 10. Envoyer l'email de confirmation au client
 		try {
-			const confirmationResult = await sendCustomizationConfirmationEmail({
+			await sendCustomizationConfirmationEmail({
 				firstName: validatedData.firstName,
-				email: validatedData.email,
+				email: sanitizedEmail,
 				productTypeLabel: validatedData.productTypeLabel,
 				details: validatedData.details,
 			});
-
-			// Silence - email confirmation non critique
 		} catch {
 			// Silence - email confirmation non critique
 		}
 
-		// 9. Invalider le cache admin
+		// 11. Invalider le cache admin
 		const tags = getCustomizationInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		// 10. Success
+		// 12. Success
 		return success(
 			"Votre demande de personnalisation a bien été envoyée. Nous vous répondrons dans les plus brefs délais.",
 			{ id: customizationRequest.id }

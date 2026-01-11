@@ -1,4 +1,7 @@
-import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
+import {
+	ABOVE_FOLD_THRESHOLD,
+	COLLECTION_IMAGE_SIZES,
+} from "@/modules/collections/constants/image-sizes.constants";
 import { Reveal } from "@/shared/components/animations/reveal";
 import { buildUrl } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
@@ -48,18 +51,17 @@ export function CollectionCard({
   headingLevel: HeadingTag = "h3",
   productCount,
 }: CollectionCardProps) {
-  const titleId = `collection-title-${slug}-${index ?? 0}`;
-  const descId = `collection-desc-${slug}-${index ?? 0}`;
-  const isAboveFold = index !== undefined && index < 4;
+  const uniqueSuffix = `${slug}-${index ?? 0}`;
+  const titleId = `collection-title-${uniqueSuffix}`;
+  const descId = `collection-desc-${uniqueSuffix}`;
+  const isAboveFold = index !== undefined && index < ABOVE_FOLD_THRESHOLD;
   const hasDescription = showDescription && description;
 
-  // Support legacy props (imageUrl/blurDataUrl) en les convertissant en images[]
-  // Validation: imageUrl doit etre non-vide apres trim
   const displayImages: CollectionImage[] =
     images && images.length > 0 ? images : [];
 
   return (
-    <article itemScope itemType="https://schema.org/Collection">
+    <article itemScope itemType="https://schema.org/CollectionPage">
       <Link
         href={`/collections/${slug}`}
         className={cn(
@@ -91,8 +93,14 @@ export function CollectionCard({
             "will-change-transform",
           )}
         >
-          {/* SEO: URL de la collection */}
+          {/* SEO: Metadata schema.org */}
           <link itemProp="url" href={buildUrl(`/collections/${slug}`)} />
+          {productCount !== undefined && (
+            <meta itemProp="numberOfItems" content={String(productCount)} />
+          )}
+          {displayImages[0] && (
+            <meta itemProp="primaryImageOfPage" content={displayImages[0].url} />
+          )}
 
           {/* Images Bento Grid avec animation scroll */}
           {displayImages.length > 0 ? (
@@ -107,9 +115,12 @@ export function CollectionCard({
             <div
               role="img"
               className="relative aspect-square overflow-hidden bg-muted rounded-t-xl flex items-center justify-center"
-              aria-label={`Aucune image pour la collection ${name}`}
+              aria-label={`Collection ${name} - Aucune image disponible`}
             >
               <Gem className="w-12 h-12 text-primary/40" aria-hidden="true" />
+              <span className="sr-only">
+                Aucune image disponible pour cette collection
+              </span>
             </div>
           )}
 
@@ -154,7 +165,7 @@ export function CollectionCard({
 
             {/* Compteur de produits (UX e-commerce) - contraste WCAG ameliore */}
             {productCount !== undefined && productCount > 0 && (
-              <p className="mt-2 text-xs text-foreground/60">
+              <p role="status" className="mt-2 text-xs text-foreground/60">
                 {productCount} article{productCount > 1 ? "s" : ""}
               </p>
             )}

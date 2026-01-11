@@ -61,7 +61,6 @@ export function CollectionGrid({
 				delay={0.1}
 			>
 				{collections.map((collection, index) => {
-					// Extraire les images des 4 premiers produits pour le Bento Grid
 					const images = collection.products
 						.map((p) => p.product?.skus[0]?.images[0])
 						.filter(Boolean)

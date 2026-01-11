@@ -38,16 +38,16 @@ export const customizationSchema = z
 
 		// Détails de la personnalisation
 		details: z
-			.string({ message: "Les détails de votre projet sont requis" })
+			.string({ message: "Les détails de ton projet sont requis" })
 			.min(20, { message: "Les détails doivent contenir au moins 20 caractères" })
 			.max(2000, { message: "Les détails ne peuvent pas dépasser 2000 caractères" })
 			.trim(),
 
 		// Consentements
 		rgpdConsent: z
-			.boolean({ message: "Vous devez accepter la politique de confidentialité" })
+			.boolean({ message: "Tu dois accepter la politique de confidentialité" })
 			.refine((val) => val === true, {
-				message: "Vous devez accepter la politique de confidentialité pour continuer",
+				message: "Tu dois accepter la politique de confidentialité pour continuer",
 			}),
 
 		// Anti-spam (honeypot)

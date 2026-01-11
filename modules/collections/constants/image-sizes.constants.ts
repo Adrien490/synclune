@@ -29,3 +29,9 @@ export const COLLECTION_IMAGE_SIZES = {
  * Balance entre qualite visuelle et taille du fichier
  */
 export const COLLECTION_IMAGE_QUALITY = 85;
+
+/**
+ * Seuil pour detection above-the-fold
+ * Les images avec index < ce seuil sont preloadees avec priority
+ */
+export const ABOVE_FOLD_THRESHOLD = 4;

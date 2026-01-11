@@ -73,7 +73,6 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 						>
 							<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
 								{collections.map((collection, index) => {
-									// Extraire les images des 4 premiers produits pour le Bento Grid
 									const images = collection.products
 										.map((p) => p.product?.skus?.[0]?.images?.[0])
 										.filter(Boolean)

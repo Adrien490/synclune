@@ -4,7 +4,7 @@ import { useAppForm } from "@/shared/components/forms";
 import type { ActionState } from "@/shared/types/server-action";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
+import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { CUSTOMIZATION_FORM_OPTIONS } from "../constants/customization-form-options";
 import { sendCustomizationRequest } from "../actions/send-customization-request";
@@ -44,14 +44,10 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 		),
 	});
 
-	// Subscribe to form errors for display
-	const formErrors = useStore(form.store, (formState) => formState.errors);
-
 	return {
 		form,
 		state,
 		action,
 		isPending,
-		formErrors,
 	};
 };
