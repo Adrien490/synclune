@@ -192,7 +192,7 @@ export const SelectField = <T extends string>({
 							)}
 						</div>
 					</SelectTrigger>
-					<SelectContent className="max-h-[300px] overflow-y-auto">
+					<SelectContent className="max-h-75 overflow-y-auto">
 						{options.map((option) => (
 							<SelectItem key={option.value} value={option.value}>
 								{renderOption ? renderOption(option) : option.label}

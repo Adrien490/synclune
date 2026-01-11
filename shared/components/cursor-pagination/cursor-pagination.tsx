@@ -195,7 +195,7 @@ export function CursorPagination({
 						</Button>
 
 						<div
-							className="px-3 text-xs sm:text-sm bg-muted/50 min-w-[80px] sm:min-w-[100px] text-center flex items-center justify-center h-12 md:h-9"
+							className="px-3 text-xs sm:text-sm bg-muted/50 min-w-20 sm:min-w-25 text-center flex items-center justify-center h-12 md:h-9"
 							role="status"
 							aria-current="page"
 						>

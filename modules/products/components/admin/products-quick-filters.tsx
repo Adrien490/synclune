@@ -138,7 +138,7 @@ export function ProductsQuickFilters({ className }: ProductsQuickFiltersProps) {
 					variant="outline"
 					disabled={isPending}
 					className={cn(
-						"min-h-[40px] sm:min-h-[44px] gap-2 text-sm font-medium border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 transition-all duration-200",
+						"min-h-10 sm:min-h-11 gap-2 text-sm font-medium border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 transition-all duration-200",
 						className
 					)}
 				>

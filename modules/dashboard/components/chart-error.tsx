@@ -45,7 +45,7 @@ export function ChartError({
 					<h3 className="text-base font-semibold text-foreground mb-1">
 						{title}
 					</h3>
-					<p className="text-sm text-muted-foreground mb-4 max-w-[280px]">
+					<p className="text-sm text-muted-foreground mb-4 max-w-70">
 						{description}
 					</p>
 					{onRetry && (
@@ -53,7 +53,7 @@ export function ChartError({
 							variant="outline"
 							size="sm"
 							onClick={onRetry}
-							className="gap-2 h-10 min-w-[120px]"
+							className="gap-2 h-10 min-w-30"
 						>
 							<RotateCcw className="w-4 h-4" aria-hidden="true" />
 							Reessayer

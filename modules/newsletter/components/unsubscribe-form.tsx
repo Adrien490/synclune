@@ -48,9 +48,10 @@ export function UnsubscribeForm({
 				</div>
 			)}
 
-			{/* Error message using Alert component */}
+			{/* Error message using Alert component (ignore validation errors - handled by field validators) */}
 			{state?.status !== ActionStatus.SUCCESS &&
 				state?.status !== ActionStatus.INITIAL &&
+				state?.status !== ActionStatus.VALIDATION_ERROR &&
 				state?.message && (
 					<Alert variant="destructive">
 						<XCircle />

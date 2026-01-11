@@ -31,10 +31,10 @@ export default function ProductsListLoading() {
 					<Skeleton className="h-10 w-full sm:max-w-md" />
 
 					{/* Sort */}
-					<Skeleton className="h-10 w-full sm:min-w-[180px] sm:max-w-[200px]" />
+					<Skeleton className="h-10 w-full sm:min-w-45 sm:max-w-50" />
 
 					{/* Filter button */}
-					<Skeleton className="h-10 w-[100px]" />
+					<Skeleton className="h-10 w-25" />
 				</div>
 			</Toolbar>
 

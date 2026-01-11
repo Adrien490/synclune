@@ -235,7 +235,7 @@ export default async function ProductVariantsPage({
 							label,
 						}))}
 						placeholder="Plus recents"
-						className="w-full sm:min-w-[180px]"
+						className="w-full sm:min-w-45"
 						noPrefix
 					/>
 					<RefreshSkusButton productId={product.id} />

@@ -179,7 +179,7 @@ export function CreateProductForm({
 															{uploadProgress.completed} / {uploadProgress.total} fichier(s)
 														</p>
 														{uploadProgress.current && (
-															<p className="text-xs text-muted-foreground/70 truncate max-w-[200px]">
+															<p className="text-xs text-muted-foreground/70 truncate max-w-50">
 																{uploadProgress.current}
 															</p>
 														)}
@@ -417,7 +417,7 @@ export function CreateProductForm({
 												type="button"
 												variant="ghost"
 												size="icon"
-												className="h-8 w-8 min-h-[44px] min-w-[44px] -m-2 hover:bg-transparent"
+												className="h-8 w-8 min-h-11 min-w-11 -m-2 hover:bg-transparent"
 												aria-label="Plus d'informations sur les attributs de la variante"
 											>
 												<Info className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />

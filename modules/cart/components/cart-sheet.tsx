@@ -142,7 +142,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 									<EmptyTitle>Ton panier est vide !</EmptyTitle>
 								</EmptyHeader>
 								<EmptyContent>
-									<p className="text-muted-foreground max-w-[280px]">
+									<p className="text-muted-foreground max-w-70">
 										Tu peux aller jeter un oeil à mes créations si tu le souhaites 😁
 									</p>
 									<Button

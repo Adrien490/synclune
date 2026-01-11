@@ -32,7 +32,7 @@ interface TabNavigationProps {
 
 /** Classes de base pour les pills */
 const PILL_BASE =
-	"inline-flex items-center justify-center gap-1.5 h-12 md:h-11 min-w-[44px] px-4 rounded-full text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+	"inline-flex items-center justify-center gap-1.5 h-12 md:h-11 min-w-11 px-4 rounded-full text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 /**
  * Composant de navigation par onglets

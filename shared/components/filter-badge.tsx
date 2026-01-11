@@ -94,7 +94,7 @@ export function FilterBadge({
 				// Typographie
 				"text-sm font-medium",
 				// Largeur max
-				"max-w-[280px] sm:max-w-[320px]",
+				"max-w-70 sm:max-w-80",
 				// Etats
 				"cursor-pointer",
 				"transition-colors duration-150",

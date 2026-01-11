@@ -27,7 +27,7 @@ export default function SignupPage() {
 			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
 				<Link
 					href="/"
-					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group min-h-[44px] min-w-[44px] -ml-2 pl-2"
+					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 group min-h-11 min-w-11 -ml-2 pl-2"
 				>
 					<ArrowLeft
 						size={16}

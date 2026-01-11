@@ -114,14 +114,14 @@ export default async function NotificationsStockPage({
 					label="Statut"
 					options={statusOptions}
 					placeholder="Tous les statuts"
-					className="w-full sm:min-w-[160px]"
+					className="w-full sm:min-w-40"
 				/>
 				<SelectFilter
 					filterKey="sortBy"
 					label="Trier par"
 					options={SORT_OPTIONS_FOR_SELECT}
 					placeholder="Date (recent)"
-					className="w-full sm:min-w-[160px]"
+					className="w-full sm:min-w-40"
 					noPrefix
 				/>
 			</Toolbar>

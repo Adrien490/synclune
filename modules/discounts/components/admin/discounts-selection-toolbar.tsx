@@ -79,7 +79,7 @@ export function DiscountsSelectionToolbar({
 						<MoreVertical className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-[200px]">
+				<DropdownMenuContent align="end" className="w-50">
 					<DropdownMenuItem onClick={() => handleBulkToggle(true)} disabled={isPending}>
 						<Power className="h-4 w-4" />
 						Activer

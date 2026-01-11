@@ -126,7 +126,7 @@ export default async function OrdersAdminPage({
 							label,
 						}))}
 						placeholder="Plus récentes"
-						className="w-full sm:min-w-[180px]"
+						className="w-full sm:min-w-45"
 						noPrefix
 					/>
 					<OrdersFilterSheet />

@@ -86,10 +86,10 @@ export function SortSelect({
 						id={selectId}
 						ref={triggerRef}
 						className={cn(
-							"min-h-[40px] sm:min-h-[44px]",
+							"min-h-10 sm:min-h-11",
 							"overflow-hidden",
 							"hover:shadow-sm hover:-translate-y-px transition-all duration-150",
-							value ? "pr-[72px] sm:pr-[80px]" : "pr-10"
+							value ? "pr-18 sm:pr-20" : "pr-10"
 						)}
 						aria-label={!externalLabel ? label : undefined}
 					>

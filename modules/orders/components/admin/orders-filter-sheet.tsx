@@ -14,7 +14,7 @@ const Calendar = dynamic(
 	() => import("@/shared/components/ui/calendar").then((mod) => mod.Calendar),
 	{
 		loading: () => (
-			<div className="h-[280px] w-full animate-pulse bg-muted rounded-md" />
+			<div className="h-70 w-full animate-pulse bg-muted rounded-md" />
 		),
 		ssr: false,
 	}

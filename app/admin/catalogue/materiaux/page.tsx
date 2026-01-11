@@ -92,7 +92,7 @@ export default async function MaterialsAdminPage({
 							label,
 						}))}
 						placeholder="Position"
-						className="w-full sm:min-w-[180px]"
+						className="w-full sm:min-w-45"
 						noPrefix
 					/>
 					<MaterialsFilterSheet />

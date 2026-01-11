@@ -44,7 +44,7 @@ function BreadcrumbLink({
 	return (
 		<Comp
 			data-slot="breadcrumb-link"
-			className={cn("hover:text-foreground transition-colors truncate max-w-[120px] sm:max-w-none", className)}
+			className={cn("hover:text-foreground transition-colors truncate max-w-30 sm:max-w-none", className)}
 			{...props}
 		/>
 	);

@@ -5,12 +5,12 @@ export default function ResendVerificationLoading() {
 		<div className="relative">
 			{/* Lien retour skeleton */}
 			<div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
-				<Skeleton className="h-[44px] w-[180px]" />
+				<Skeleton className="h-11 w-45" />
 			</div>
 
 			{/* Logo skeleton */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-				<Skeleton className="h-[44px] w-[44px] rounded-full" />
+				<Skeleton className="h-11 w-11 rounded-full" />
 			</div>
 
 			{/* Contenu principal */}

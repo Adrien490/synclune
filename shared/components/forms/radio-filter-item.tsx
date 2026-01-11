@@ -31,7 +31,7 @@ export function RadioFilterItem({
 		<label
 			htmlFor={id}
 			className={cn(
-				"flex items-start gap-3 py-2.5 px-3 -mx-3 rounded-lg cursor-pointer min-h-[44px]",
+				"flex items-start gap-3 py-2.5 px-3 -mx-3 rounded-lg cursor-pointer min-h-11",
 				"transition-colors duration-150",
 				"hover:bg-accent/50",
 				"focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",

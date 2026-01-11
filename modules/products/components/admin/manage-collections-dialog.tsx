@@ -102,7 +102,7 @@ export function ManageCollectionsDialog() {
 								<p>Aucune collection disponible</p>
 							</div>
 						) : (
-							<div className="space-y-3 max-h-[300px] overflow-y-auto">
+							<div className="space-y-3 max-h-75 overflow-y-auto">
 								{collections.map((collection) => (
 									<div
 										key={collection.id}

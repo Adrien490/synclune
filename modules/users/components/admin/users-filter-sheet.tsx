@@ -301,7 +301,7 @@ export function UsersFilterSheet() {
 					{/* Inclure supprimés - Switch toggle */}
 					<form.Field name="includeDeleted">
 						{(field) => (
-							<div className="flex items-center justify-between min-h-[44px]">
+							<div className="flex items-center justify-between min-h-11">
 								<Label
 									htmlFor="includeDeleted"
 									className="text-sm font-medium"

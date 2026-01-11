@@ -24,11 +24,11 @@ const kpiCardVariants = cva(
 		variants: {
 			size: {
 				/** KPIs principaux - CA mois, Commandes mois */
-				featured: "min-h-[180px]",
+				featured: "min-h-45",
 				/** KPIs standards - CA jour, Panier moyen */
-				default: "min-h-[140px]",
+				default: "min-h-35",
 				/** KPIs compacts - Alertes, compteurs */
-				compact: "min-h-[100px]",
+				compact: "min-h-25",
 			},
 			priority: {
 				/** Metriques business critiques */

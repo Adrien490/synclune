@@ -596,7 +596,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 											multiSelectVariants({ variant }),
 											customStyle?.gradient && "text-white border-transparent",
 											responsiveSettings.compactMode && "text-xs px-1.5 py-0.5",
-											isMobile && "max-w-[120px] truncate",
+											isMobile && "max-w-30 truncate",
 											singleLine && "shrink-0 whitespace-nowrap",
 											"[&>svg]:pointer-events-auto"
 										)}
@@ -699,7 +699,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 										</div>
 									</Badge>
 								</TooltipTrigger>
-								<TooltipContent side="bottom" className="max-w-[200px]">
+								<TooltipContent side="bottom" className="max-w-50">
 									<ul className="text-xs space-y-0.5">
 										{selectedValues
 											.slice(responsiveSettings.maxCount)
@@ -1095,7 +1095,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																</div>
 															</Badge>
 														</TooltipTrigger>
-														<TooltipContent side="bottom" className="max-w-[200px]">
+														<TooltipContent side="bottom" className="max-w-50">
 															<ul className="text-xs space-y-0.5">
 																{overflowItems.map((opt) => (
 																	<li key={opt!.value}>{opt!.label}</li>
@@ -1161,7 +1161,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 						aria-multiselectable="true"
 						aria-label="Options disponibles"
 						className={cn(
-							"w-auto p-0 min-w-[300px]",
+							"w-auto p-0 min-w-75",
 							popoverAnimationClass,
 							popoverClassName
 						)}

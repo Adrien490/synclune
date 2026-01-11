@@ -142,7 +142,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 
 	// Style commun pour les boutons
 	const buttonClassName = cn(
-		"flex-1 min-w-[72px] flex flex-col items-center justify-center gap-1",
+		"flex-1 min-w-18 flex flex-col items-center justify-center gap-1",
 		"h-full min-h-14", // 56px - Material Design 3 touch target
 		"text-muted-foreground hover:text-foreground",
 		"transition-colors duration-200",

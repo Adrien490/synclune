@@ -707,7 +707,7 @@ export function EditProductForm({
 											isPending ||
 											isMediaUploading
 										}
-										className="min-w-[160px]"
+										className="min-w-40"
 									>
 										{isPending
 											? "Enregistrement..."

@@ -85,7 +85,7 @@ export function SubscribersSelectionToolbar({}: SubscribersSelectionToolbarProps
 							<MoreVertical className="h-4 w-4" />
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-[200px]">
+					<DropdownMenuContent align="end" className="w-50">
 						<DropdownMenuItem onClick={() => setResubscribeDialogOpen(true)}>
 							<UserCheck className="h-4 w-4" />
 							Réabonner

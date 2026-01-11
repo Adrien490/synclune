@@ -159,7 +159,7 @@ export default async function ReviewsAdminPage({
 					label="Trier par"
 					options={sortOptions}
 					placeholder="Plus récents"
-					className="w-full sm:min-w-[180px]"
+					className="w-full sm:min-w-45"
 					noPrefix
 				/>
 			</Toolbar>

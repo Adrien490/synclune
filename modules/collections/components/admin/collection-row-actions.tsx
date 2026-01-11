@@ -93,7 +93,7 @@ export function CollectionRowActions({
 					<MoreVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-[200px]">
+			<DropdownMenuContent align="end" className="w-50">
 				{/* Voir - Page collection publique */}
 				<DropdownMenuItem asChild>
 					<Link href={`/collections/${collectionSlug}`} target="_blank">

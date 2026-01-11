@@ -15,7 +15,7 @@ export const navItemStyles = {
 		sharedItemStyles.layout,
 		sharedItemStyles.transition,
 		sharedItemStyles.focusRing,
-		"gap-1 px-3 py-2 min-w-[64px] min-h-[48px]"
+		"gap-1 px-3 py-2 min-w-16 min-h-12"
 	),
 	active: "text-foreground font-semibold",
 	inactive:
@@ -28,7 +28,7 @@ export const panelItemStyles = {
 		sharedItemStyles.transition,
 		sharedItemStyles.focusRing,
 		// Touch targets ameliores pour WCAG AAA (min 44x44, ici 76x76)
-		"gap-1.5 py-3 px-2 min-h-[76px] min-w-[76px] rounded-xl",
+		"gap-1.5 py-3 px-2 min-h-19 min-w-19 rounded-xl",
 		// Reset pour que les boutons s'alignent comme les liens
 		"border-0 bg-transparent appearance-none cursor-pointer"
 	),

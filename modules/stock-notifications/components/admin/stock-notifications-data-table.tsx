@@ -156,7 +156,7 @@ function StockNotificationRow({
 					)}
 					<Link
 						href={`/admin/catalogue/produits/${sku.product.slug}/modifier`}
-						className="font-medium hover:underline truncate max-w-[180px]"
+						className="font-medium hover:underline truncate max-w-45"
 					>
 						{sku.product.title}
 					</Link>

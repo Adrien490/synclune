@@ -83,7 +83,7 @@ export default async function CustomerOrdersPage({
 							})
 						)}
 						placeholder="Plus récentes"
-						className="w-full sm:w-[200px]"
+						className="w-full sm:w-50"
 					/>
 				}
 			/>

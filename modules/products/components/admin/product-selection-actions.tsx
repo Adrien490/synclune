@@ -149,7 +149,7 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 					<MoreVerticalIcon className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-[200px]">
+			<DropdownMenuContent align="end" className="w-50">
 				{/* Export CSV - Toujours disponible */}
 				<DropdownMenuItem onClick={handleExportCSV}>
 					<FileDown className="h-4 w-4" />

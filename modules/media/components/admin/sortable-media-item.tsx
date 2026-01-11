@@ -312,7 +312,7 @@ export function SortableMediaItem({
 							<MoreVertical className="h-5 w-5 text-white" />
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="min-w-[160px]">
+					<DropdownMenuContent align="end" className="min-w-40">
 						<DropdownMenuItem
 							onClick={() => onOpenLightbox(index)}
 							className="gap-2 py-2.5"

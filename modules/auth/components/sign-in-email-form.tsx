@@ -19,12 +19,12 @@ export function SignInEmailForm() {
 	const { action, isPending, state } = useSignInEmail();
 	const errorRef = useRef<HTMLDivElement>(null);
 
-	// Focus sur l'erreur quand elle apparaît
+	// Focus sur l'erreur quand elle apparaît (ignore validation errors)
 	useEffect(() => {
 		if (
 			state?.message &&
 			state.status !== ActionStatus.SUCCESS &&
-			state.message !== "Données invalides"
+			state.status !== ActionStatus.VALIDATION_ERROR
 		) {
 			errorRef.current?.focus();
 		}
@@ -48,10 +48,10 @@ export function SignInEmailForm() {
 			{/* Indication des champs obligatoires */}
 			<RequiredFieldsNote />
 
-			{/* Error message - Skip validation errors */}
+			{/* Error message - Skip validation errors (handled by field validators) */}
 			{state?.status !== ActionStatus.SUCCESS &&
-				state?.message &&
-				state.message !== "Données invalides" && (
+				state?.status !== ActionStatus.VALIDATION_ERROR &&
+				state?.message && (
 					<Alert ref={errorRef} variant="destructive" tabIndex={-1} role="alert" aria-live="assertive">
 						<AlertDescription>{state.message}</AlertDescription>
 					</Alert>

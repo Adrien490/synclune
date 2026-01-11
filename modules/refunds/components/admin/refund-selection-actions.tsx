@@ -61,7 +61,7 @@ export function RefundSelectionActions() {
 						<MoreVertical className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-[200px]">
+				<DropdownMenuContent align="end" className="w-50">
 					<DropdownMenuItem onClick={() => setApproveDialogOpen(true)}>
 						<CheckCircle2 className="h-4 w-4" />
 						Approuver

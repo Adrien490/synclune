@@ -20,7 +20,7 @@ export function ChangePasswordDialog({
 }: ChangePasswordDialogProps) {
 	return (
 		<ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-			<ResponsiveDialogContent className="sm:max-w-[500px]">
+			<ResponsiveDialogContent className="sm:max-w-125">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>Changer le mot de passe</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>

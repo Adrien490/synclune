@@ -243,7 +243,7 @@ export function CustomizationForm({
 							type="submit"
 							disabled={!canSubmit || isPending}
 							size="lg"
-							className="w-full sm:w-auto sm:min-w-[220px] relative overflow-hidden group"
+							className="w-full sm:w-auto sm:min-w-55 relative overflow-hidden group"
 							aria-busy={isPending}
 						>
 							{isPending ? (

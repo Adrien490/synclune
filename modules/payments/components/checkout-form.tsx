@@ -313,10 +313,10 @@ export function CheckoutForm({
 				}}
 			</form.Subscribe>
 
-			{/* Message d'erreur */}
+			{/* Message d'erreur (ignore validation errors - handled by field validators) */}
 			{state?.status !== ActionStatus.SUCCESS &&
-				state?.message &&
-				state.message !== "Données invalides" && (
+				state?.status !== ActionStatus.VALIDATION_ERROR &&
+				state?.message && (
 					<Alert variant="destructive" role="alert" aria-live="assertive">
 						<AlertDescription>{state.message}</AlertDescription>
 					</Alert>

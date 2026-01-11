@@ -80,7 +80,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 
 	if (products.length === 0) {
 		return (
-			<div className="relative h-full min-h-[320px] sm:min-h-[400px] lg:min-h-[480px] rounded-2xl bg-muted flex flex-col items-center justify-center gap-3">
+			<div className="relative h-full min-h-80 sm:min-h-100 lg:min-h-120 rounded-2xl bg-muted flex flex-col items-center justify-center gap-3">
 				{/* R7: Icône SVG au lieu d'emoji */}
 				<div className="size-12 rounded-full bg-muted-foreground/10 flex items-center justify-center">
 					<Sparkles
@@ -126,7 +126,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 							<CarouselItem key={product.id} className="h-full">
 								<Link
 									href={`/creations/${product.slug}`}
-									className="block relative h-full min-h-[320px] sm:min-h-[400px] lg:min-h-[480px] rounded-2xl overflow-hidden shadow-2xl group"
+									className="block relative h-full min-h-80 sm:min-h-100 lg:min-h-120 rounded-2xl overflow-hidden shadow-2xl group"
 								>
 									<Image
 										src={product.image.url}
@@ -244,7 +244,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 								</TooltipTrigger>
 								<TooltipContent
 									side="top"
-									className="hidden sm:block max-w-[200px]"
+									className="hidden sm:block max-w-50"
 								>
 									<p className="text-sm font-medium truncate">{product.title}</p>
 									<p className="text-xs text-muted-foreground">

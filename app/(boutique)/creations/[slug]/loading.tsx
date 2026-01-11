@@ -143,7 +143,7 @@ export default function ProductDetailLoading() {
 													{Array.from({ length: 4 }).map((_, i) => (
 														<Skeleton
 															key={i}
-															className="h-[52px] w-[52px] sm:h-11 sm:w-11 rounded-full bg-muted/40"
+															className="h-13 w-13 sm:h-11 sm:w-11 rounded-full bg-muted/40"
 														/>
 													))}
 												</div>

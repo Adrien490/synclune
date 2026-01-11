@@ -65,7 +65,7 @@ export function UpdatePriceDialog() {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<ResponsiveDialogContent className="sm:max-w-[400px]">
+			<ResponsiveDialogContent className="sm:max-w-100">
 				<form onSubmit={handleSubmit}>
 					<ResponsiveDialogHeader>
 						<ResponsiveDialogTitle>Modifier le prix</ResponsiveDialogTitle>

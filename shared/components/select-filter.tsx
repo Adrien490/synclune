@@ -63,9 +63,9 @@ export function SelectFilter({
 				>
 					<SelectTrigger
 						className={cn(
-							"flex-1 h-[44px]!",
+							"flex-1 h-11!",
 							// Mobile: icône seule, Desktop: largeur normale
-							"w-11 sm:w-auto sm:min-w-[180px]",
+							"w-11 sm:w-auto sm:min-w-45",
 							// Masquer le ChevronDown sur mobile
 							"[&>[data-slot=select-icon]]:hidden sm:[&>[data-slot=select-icon]]:flex"
 						)}

@@ -20,7 +20,7 @@ export default function BijouxHubLoading() {
 								<Skeleton className="h-10 w-full rounded-md" />
 							</div>
 							<div className="flex flex-row items-center gap-2 shrink-0">
-								<Skeleton className="h-11 w-[180px] rounded-md" />
+								<Skeleton className="h-11 w-45 rounded-md" />
 								<Skeleton className="h-11 w-[90px] rounded-md" />
 							</div>
 						</div>

@@ -93,7 +93,7 @@ export function ProductSkuRowActions({
 					<span className="sr-only">Ouvrir le menu d'actions</span>
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-[180px]">
+			<DropdownMenuContent align="end" className="w-45">
 				{/* Modifier */}
 				<DropdownMenuItem asChild>
 					<Link

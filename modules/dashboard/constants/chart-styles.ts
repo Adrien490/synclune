@@ -16,13 +16,13 @@ export const CHART_STYLES = {
   /** Hauteurs standardisees pour les charts */
   height: {
     /** Hauteur par defaut pour les charts principaux */
-    default: "h-[300px]",
+    default: "h-75",
     /** Hauteur compacte pour les charts secondaires */
     compact: "h-[250px]",
     /** Hauteur responsive (220px sm, 250px md, 300px lg) */
-    responsive: "h-[220px] sm:h-[250px] md:h-[300px]",
+    responsive: "h-55 sm:h-[250px] md:h-75",
     /** Hauteur compacte responsive */
-    compactResponsive: "h-[180px] sm:h-[200px] md:h-[250px]",
+    compactResponsive: "h-45 sm:h-50 md:h-[250px]",
     /** Hauteur fluide avec clamp() pour adaptation continue */
     fluid: "h-[clamp(200px,40vw,300px)]",
     /** Hauteur pour pie charts (carre contraint) */
@@ -32,7 +32,7 @@ export const CHART_STYLES = {
   /** Styles specifiques pour pie charts */
   pie: {
     /** Container pour centrer et limiter la taille */
-    container: "w-full max-w-[300px] mx-auto",
+    container: "w-full max-w-75 mx-auto",
   },
 
   /** Padding standardise pour les cards */
@@ -62,7 +62,7 @@ export const CHART_STYLES = {
   /** Touch targets WCAG - minimum 44px (h-11 = 44px) */
   touchTarget: {
     /** Bouton minimal WCAG compliant */
-    button: "h-11 min-w-[44px]",
+    button: "h-11 min-w-11",
     /** Icon button WCAG compliant */
     iconButton: "h-11 w-11",
   },
@@ -98,7 +98,7 @@ export const CHART_STYLES = {
     /** Container scroll horizontal mobile */
     scrollContainer: "overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible",
     /** Largeur minimum pour scroll */
-    minChartWidth: "min-w-[500px] md:min-w-0",
+    minChartWidth: "min-w-125 md:min-w-0",
   },
 } as const
 

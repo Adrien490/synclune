@@ -146,7 +146,7 @@ export function EditCollectionForm({
 						<Button
 							type="submit"
 							disabled={!canSubmit || isPending}
-							className="min-w-[140px]"
+							className="min-w-35"
 						>
 							{isPending ? "Enregistrement..." : "Enregistrer"}
 						</Button>

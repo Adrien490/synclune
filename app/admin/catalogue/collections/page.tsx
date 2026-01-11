@@ -137,7 +137,7 @@ export default async function CollectionsAdminPage({
 							label,
 						}))}
 						placeholder="Position"
-						className="w-full sm:min-w-[180px]"
+						className="w-full sm:min-w-45"
 						noPrefix
 					/>
 					<CollectionsFilterSheet />

@@ -109,14 +109,14 @@ export default async function CustomizationsPage({
 							label: opt.label,
 						}))}
 						placeholder="Tous les statuts"
-						className="w-full sm:min-w-[160px]"
+						className="w-full sm:min-w-40"
 					/>
 					<SelectFilter
 						filterKey="sortBy"
 						label="Trier par"
 						options={sortOptions}
 						placeholder="Plus récentes"
-						className="w-full sm:min-w-[160px]"
+						className="w-full sm:min-w-40"
 						noPrefix
 					/>
 				</Toolbar>

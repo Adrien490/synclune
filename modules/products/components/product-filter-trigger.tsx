@@ -84,7 +84,7 @@ export function ProductFilterTrigger({ className, variant = "full" }: ProductFil
 			variant="outline"
 			onClick={() => open()}
 			className={cn(
-				"relative h-[44px] px-3 gap-2",
+				"relative h-11 px-3 gap-2",
 				"border-border/60 hover:border-border hover:bg-accent/50 transition-all duration-200",
 				hasActiveFilters && "border-primary/30 bg-primary/5",
 				className

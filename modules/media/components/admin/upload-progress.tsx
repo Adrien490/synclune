@@ -101,7 +101,7 @@ export function UploadProgress({
 			aria-live="polite"
 			aria-busy={!isComplete}
 			className={cn(
-				"flex flex-col items-center gap-4 sm:gap-3 w-full max-w-[240px] sm:max-w-[200px]",
+				"flex flex-col items-center gap-4 sm:gap-3 w-full max-w-60 sm:max-w-50",
 				className
 			)}
 		>

@@ -58,7 +58,7 @@ export function FilterSheetWrapper({
 		<Button
 			variant="outline"
 			className={cn(
-				"relative gap-2 text-sm font-medium min-h-[44px] px-4 border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 transition-all duration-200",
+				"relative gap-2 text-sm font-medium min-h-11 px-4 border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 transition-all duration-200",
 				activeFiltersCount > 0 &&
 					"border-primary/50 bg-primary/5 shadow-sm shadow-primary/10",
 				triggerClassName
@@ -96,7 +96,7 @@ export function FilterSheetWrapper({
 			)}
 
 			<SheetContent
-				className="w-full sm:w-[400px] md:w-[440px] p-0 flex flex-col h-full"
+				className="w-full sm:w-100 md:w-110 p-0 flex flex-col h-full"
 				onKeyDown={handleKeyDown}
 			>
 				<SheetHeader
@@ -121,7 +121,7 @@ export function FilterSheetWrapper({
 								variant="ghost"
 								size="sm"
 								onClick={onClearAll}
-								className="text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0 min-h-[36px] transition-colors"
+								className="text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0 min-h-9 transition-colors"
 								aria-label="Effacer tous les filtres"
 							>
 								<X className="w-3 h-3 mr-1" aria-hidden="true" />

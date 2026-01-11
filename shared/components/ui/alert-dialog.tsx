@@ -60,7 +60,7 @@ function AlertDialogContent({
 				data-slot="alert-dialog-content"
 				className={cn(
 					// Position et taille
-					"fixed top-[50%] left-[50%] z-[80] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] sm:max-w-[420px]",
+					"fixed top-1/2 left-1/2 z-[80] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 sm:max-w-105",
 					// Apparence - fond solide avec bordure rose subtile
 					"bg-card",
 					"border border-primary/20 rounded-xl",

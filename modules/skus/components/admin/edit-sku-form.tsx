@@ -736,7 +736,7 @@ export function EditProductVariantForm({
 												isPrimaryImageUploading ||
 												isGalleryUploading
 											}
-											className="min-w-[160px]"
+											className="min-w-40"
 										>
 											{form.state.isSubmitting
 												? "Mise à jour..."

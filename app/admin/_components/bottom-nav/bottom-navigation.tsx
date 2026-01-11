@@ -143,7 +143,7 @@ export function BottomNav({ className }: BottomNavigationProps) {
 						type="button"
 						onClick={toggleDrawer}
 						className={cn(
-							"flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-[64px] min-h-[48px] relative",
+							"flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg min-w-16 min-h-12 relative",
 							"motion-safe:transition-colors motion-safe:transition-transform",
 							"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
 							isMenuItemActive || isOpen

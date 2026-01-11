@@ -106,7 +106,7 @@ export function ProductRowActions({
 					<MoreVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-[200px]">
+			<DropdownMenuContent align="end" className="w-50">
 				{/* ACTIONS COMMUNES À TOUS LES BIJOUX */}
 
 				{/* Voir - Page détails produit */}

@@ -169,7 +169,7 @@ export default async function ProductsAdminPage({
 							label: ADMIN_PRODUCTS_SORT_LABELS[field] || field,
 						}))}
 						placeholder="Plus récents"
-						className="w-full sm:min-w-[180px]"
+						className="w-full sm:min-w-45"
 						noPrefix
 					/>
 					<ProductsFilterSheet

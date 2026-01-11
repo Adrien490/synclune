@@ -190,7 +190,7 @@ export function DashboardBreadcrumb() {
 								<BreadcrumbItem className="min-w-0">
 									{segment.isCurrentPage ? (
 										<BreadcrumbPage
-											className="max-w-[180px] truncate"
+											className="max-w-45 truncate"
 											title={segment.label}
 										>
 											{segment.label}
@@ -198,7 +198,7 @@ export function DashboardBreadcrumb() {
 									) : (
 										<BreadcrumbLink
 											href={segment.href}
-											className="max-w-[140px] truncate"
+											className="max-w-35 truncate"
 											title={segment.label}
 										>
 											{segment.label}

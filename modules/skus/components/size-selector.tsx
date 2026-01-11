@@ -145,7 +145,7 @@ export function SizeSelector({
 							onKeyDown={(e) => handleKeyDown(e, index)}
 							disabled={!isAvailable}
 							className={cn(
-								"relative p-3 sm:p-2.5 min-h-[52px] sm:min-h-[44px] flex items-center justify-center text-center rounded-xl sm:rounded-lg border-2 transition-all",
+								"relative p-3 sm:p-2.5 min-h-13 sm:min-h-11 flex items-center justify-center text-center rounded-xl sm:rounded-lg border-2 transition-all",
 								"hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]",
 								isSelected
 									? "border-primary bg-primary/5"

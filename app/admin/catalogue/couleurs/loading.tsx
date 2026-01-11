@@ -25,7 +25,7 @@ export default function ColorsLoading() {
 				{/* Toolbar skeleton */}
 				<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
 					<Skeleton className="h-10 flex-1 sm:max-w-md" />
-					<Skeleton className="h-10 w-full sm:w-[180px]" />
+					<Skeleton className="h-10 w-full sm:w-45" />
 					<Skeleton className="h-10 w-10" />
 					<Skeleton className="h-10 w-10" />
 				</div>

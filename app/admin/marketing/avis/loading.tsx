@@ -57,7 +57,7 @@ export default function ReviewsAdminLoading() {
 					<Skeleton className="h-10 w-full sm:max-w-md" />
 					<Skeleton className="h-10 w-[150px]" />
 					<Skeleton className="h-10 w-[150px]" />
-					<Skeleton className="h-10 w-[180px]" />
+					<Skeleton className="h-10 w-45" />
 				</div>
 			</Toolbar>
 

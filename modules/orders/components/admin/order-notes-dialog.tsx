@@ -65,7 +65,7 @@ export function OrderNotesDialog() {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<ResponsiveDialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+			<ResponsiveDialogContent className="sm:max-w-150 max-h-[80vh] flex flex-col">
 				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle>Notes internes</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
@@ -79,7 +79,7 @@ export function OrderNotesDialog() {
 						placeholder="Ajouter une note..."
 						value={newNote}
 						onChange={(e) => setNewNote(e.target.value)}
-						className="min-h-[80px] resize-none"
+						className="min-h-20 resize-none"
 					/>
 					<div className="flex justify-end">
 						<Button

@@ -191,7 +191,7 @@ export function AdjustStockDialog() {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<ResponsiveDialogContent className="sm:max-w-[400px]">
+			<ResponsiveDialogContent className="sm:max-w-100">
 				{data && (
 					<AdjustStockFormContent
 						skuId={data.skuId}

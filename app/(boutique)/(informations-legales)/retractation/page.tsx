@@ -120,19 +120,19 @@ export default async function RetractationPage() {
                     <div className="space-y-2">
                       <p>
                         <strong>Commandé le (*) :</strong>{" "}
-                        <span className="inline-block min-w-[200px] border-b border-dashed border-muted-foreground/30">
+                        <span className="inline-block min-w-50 border-b border-dashed border-muted-foreground/30">
                           &nbsp;
                         </span>
                       </p>
                       <p>
                         <strong>Reçu le (*) :</strong>{" "}
-                        <span className="inline-block min-w-[200px] border-b border-dashed border-muted-foreground/30">
+                        <span className="inline-block min-w-50 border-b border-dashed border-muted-foreground/30">
                           &nbsp;
                         </span>
                       </p>
                       <p>
                         <strong>Numéro de commande :</strong>{" "}
-                        <span className="inline-block min-w-[200px] border-b border-dashed border-muted-foreground/30">
+                        <span className="inline-block min-w-50 border-b border-dashed border-muted-foreground/30">
                           &nbsp;
                         </span>
                       </p>
@@ -167,7 +167,7 @@ export default async function RetractationPage() {
 
                     <p>
                       <strong>Téléphone :</strong>{" "}
-                      <span className="inline-block min-w-[200px] border-b border-dashed border-muted-foreground/30">
+                      <span className="inline-block min-w-50 border-b border-dashed border-muted-foreground/30">
                         &nbsp;
                       </span>
                     </p>
@@ -183,7 +183,7 @@ export default async function RetractationPage() {
 
                     <p>
                       <strong>Date :</strong>{" "}
-                      <span className="inline-block min-w-[200px] border-b border-dashed border-muted-foreground/30">
+                      <span className="inline-block min-w-50 border-b border-dashed border-muted-foreground/30">
                         &nbsp;
                       </span>
                     </p>

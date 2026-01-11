@@ -111,10 +111,10 @@ export default function NewsletterLoading() {
 							<Skeleton className="h-10 w-full sm:max-w-md" />
 
 							{/* Sort */}
-							<Skeleton className="h-10 w-full sm:min-w-[180px] sm:max-w-[200px]" />
+							<Skeleton className="h-10 w-full sm:min-w-45 sm:max-w-50" />
 
 							{/* Export button */}
-							<Skeleton className="h-10 w-[120px]" />
+							<Skeleton className="h-10 w-30" />
 						</div>
 					</Toolbar>
 

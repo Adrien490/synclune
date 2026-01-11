@@ -85,7 +85,7 @@ export function CollectionProductsList({
 					<TableHeader>
 						<TableRow>
 							<TableHead className="w-[50px]">Vedette</TableHead>
-							<TableHead className="w-[80px]">Image</TableHead>
+							<TableHead className="w-20">Image</TableHead>
 							<TableHead>Produit</TableHead>
 							<TableHead className="hidden sm:table-cell">Statut</TableHead>
 							<TableHead className="hidden md:table-cell text-right">

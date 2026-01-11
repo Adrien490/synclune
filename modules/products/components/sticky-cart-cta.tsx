@@ -186,7 +186,7 @@ export function StickyCartCTA({
 							disabled={!canAddToCart || isPending}
 							aria-busy={isPending}
 							className={cn(
-								"shrink-0 min-w-[160px]",
+								"shrink-0 min-w-40",
 								"shadow-md",
 								"active:scale-[0.98]",
 								"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"

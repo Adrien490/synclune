@@ -54,7 +54,7 @@ export function UpdateNotesDialog() {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<ResponsiveDialogContent className="sm:max-w-[500px]">
+			<ResponsiveDialogContent className="sm:max-w-125">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>Notes internes</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>

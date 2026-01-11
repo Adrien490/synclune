@@ -138,7 +138,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 	if (!product) {
 		return (
 			<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-				<ResponsiveDialogContent className="sm:max-w-[520px]">
+				<ResponsiveDialogContent className="sm:max-w-130">
 					<ResponsiveDialogHeader>
 						<Skeleton className="h-6 w-40" />
 						<Skeleton className="h-4 w-32 mt-1" />
@@ -243,7 +243,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-			<ResponsiveDialogContent className="group/sku-selector sm:max-w-[520px] sm:max-h-[85vh]">
+			<ResponsiveDialogContent className="group/sku-selector sm:max-w-130 sm:max-h-[85vh]">
 				<ResponsiveDialogHeader className="shrink-0">
 					<ResponsiveDialogTitle>Choisir une variante</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
@@ -504,7 +504,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																	onClick={() => field.handleChange(color.slug)}
 																	disabled={!isAvailable || isPending}
 																	className={cn(
-																		"relative flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
+																		"relative flex items-center gap-2 px-4 py-3 min-h-11 rounded-lg border-2 transition-all",
 																		"hover:shadow-sm active:scale-[0.98]",
 																		"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 																		"disabled:cursor-not-allowed",
@@ -580,7 +580,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																	onClick={() => field.handleChange(material.slug)}
 																	disabled={!isAvailable || isPending}
 																	className={cn(
-																		"relative flex items-center justify-between px-4 py-3 min-h-[44px] rounded-lg border-2 transition-all",
+																		"relative flex items-center justify-between px-4 py-3 min-h-11 rounded-lg border-2 transition-all",
 																		"hover:shadow-sm active:scale-[0.98]",
 																		"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 																		"disabled:cursor-not-allowed",
@@ -653,7 +653,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																	onClick={() => field.handleChange(size)}
 																	disabled={!isAvailable || isPending}
 																	className={cn(
-																		"relative flex items-center justify-center px-2 py-3 min-h-[44px] rounded-lg border-2 transition-all",
+																		"relative flex items-center justify-center px-2 py-3 min-h-11 rounded-lg border-2 transition-all",
 																		"hover:shadow-sm active:scale-[0.98]",
 																		"focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
 																		"disabled:cursor-not-allowed",

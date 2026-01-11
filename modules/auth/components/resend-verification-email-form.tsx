@@ -19,12 +19,13 @@ export function ResendVerificationEmailForm({
 	const { action, isPending, state } = useResendVerificationEmail();
 	const errorRef = useRef<HTMLDivElement>(null);
 
-	// Focus sur l'erreur quand elle apparaît
+	// Focus sur l'erreur quand elle apparaît (ignore validation errors)
 	useEffect(() => {
 		if (
 			state?.message &&
 			state.status !== ActionStatus.SUCCESS &&
-			state.status !== ActionStatus.INITIAL
+			state.status !== ActionStatus.INITIAL &&
+			state.status !== ActionStatus.VALIDATION_ERROR
 		) {
 			errorRef.current?.focus();
 		}
@@ -51,9 +52,10 @@ export function ResendVerificationEmailForm({
 				</Alert>
 			)}
 
-			{/* Message d'erreur */}
+			{/* Message d'erreur (ignore validation errors - handled by field validators) */}
 			{state?.status !== ActionStatus.SUCCESS &&
 				state?.status !== ActionStatus.INITIAL &&
+				state?.status !== ActionStatus.VALIDATION_ERROR &&
 				state?.message && (
 					<Alert
 						ref={errorRef}

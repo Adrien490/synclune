@@ -27,7 +27,7 @@ export function CursorPaginationSkeleton() {
 					<Skeleton className="h-12 w-12 md:h-9 md:w-9 rounded-r-none" />
 
 					{/* Indicateur de page */}
-					<Skeleton className="h-12 md:h-9 min-w-[80px] sm:min-w-[100px] rounded-none" />
+					<Skeleton className="h-12 md:h-9 min-w-20 sm:min-w-25 rounded-none" />
 
 					{/* Bouton suivant */}
 					<Skeleton className="h-12 w-12 md:h-9 md:w-9 rounded-l-none" />

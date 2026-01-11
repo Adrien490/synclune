@@ -84,7 +84,7 @@ function DrawerHandle({
     <DrawerPrimitive.Handle
       data-slot="drawer-handle"
       className={cn(
-        "mx-auto mt-4 h-1.5 w-[100px] shrink-0 rounded-full bg-primary/20",
+        "mx-auto mt-4 h-1.5 w-25 shrink-0 rounded-full bg-primary/20",
         "cursor-grab active:cursor-grabbing",
         // Zone tactile étendue (44px min pour accessibilité)
         "before:absolute before:-inset-x-4 before:-inset-y-5 before:content-['']",

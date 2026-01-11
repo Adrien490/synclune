@@ -95,7 +95,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<MoreVertical className="h-4 w-4" />
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-[200px]">
+					<DropdownMenuContent align="end" className="w-50">
 						<DropdownMenuSub>
 							<DropdownMenuSubTrigger>
 								Changer le role

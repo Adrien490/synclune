@@ -67,7 +67,7 @@ export function DiscountUsagesDialog() {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
-			<ResponsiveDialogContent className="sm:max-w-[700px]">
+			<ResponsiveDialogContent className="sm:max-w-175">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>Utilisations du code promo</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>

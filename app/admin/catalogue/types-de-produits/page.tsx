@@ -132,7 +132,7 @@ export default async function ProductTypesAdminPage({
 							label,
 						}))}
 						placeholder="Label (A-Z)"
-						className="w-full sm:min-w-[180px]"
+						className="w-full sm:min-w-45"
 						noPrefix
 					/>
 					<ProductTypesFilterSheet />

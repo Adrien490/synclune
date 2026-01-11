@@ -756,7 +756,7 @@ export function CreateProductVariantForm({
 												isPrimaryImageUploading ||
 												isGalleryUploading
 											}
-											className="min-w-[160px]"
+											className="min-w-40"
 										>
 											{form.state.isSubmitting
 												? "Création..."
