@@ -202,7 +202,17 @@ export function CustomizationForm({
 			</form.AppField>
 
 			{/* Consentement RGPD */}
-			<form.AppField name="rgpdConsent">
+			<form.AppField
+				name="rgpdConsent"
+				validators={{
+					onChange: ({ value }) => {
+						if (!value) {
+							return "Tu dois accepter la politique de confidentialité pour continuer";
+						}
+						return undefined;
+					},
+				}}
+			>
 				{(field) => (
 					<div className="space-y-1">
 						<field.CheckboxField
