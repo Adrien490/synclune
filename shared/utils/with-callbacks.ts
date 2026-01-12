@@ -34,12 +34,22 @@ export const withCallbacks = <
 			) {
 				callbacks.onSuccess?.(result);
 			}
+			// Appel du callback de warning si l'action a retourné un warning
+			else if (
+				result &&
+				typeof result === "object" &&
+				"status" in result &&
+				result.status === ActionStatus.WARNING
+			) {
+				callbacks.onWarning?.(result);
+			}
 			// Appel du callback d'erreur pour tous les autres cas
 			else if (
 				result &&
 				typeof result === "object" &&
 				"status" in result &&
-				result.status !== ActionStatus.SUCCESS
+				result.status !== ActionStatus.SUCCESS &&
+				result.status !== ActionStatus.WARNING
 			) {
 				callbacks.onError?.(result);
 			}

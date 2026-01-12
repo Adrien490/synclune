@@ -17,10 +17,14 @@ export type CreateToastCallbacksOptions<T = ActionState> = {
 	loadingMessage?: string
 	/** Afficher un toast de succès (défaut: true) */
 	showSuccessToast?: boolean
+	/** Afficher un toast de warning (défaut: true) */
+	showWarningToast?: boolean
 	/** Afficher un toast d'erreur (défaut: true) */
 	showErrorToast?: boolean
 	/** Callback personnalisé appelé en cas de succès */
 	onSuccess?: (result: T) => void
+	/** Callback personnalisé appelé en cas de warning */
+	onWarning?: (result: T) => void
 	/** Callback personnalisé appelé en cas d'erreur */
 	onError?: (result: T) => void
 	/** Bouton d'action dans le toast de succès */
@@ -46,6 +50,8 @@ export type Callbacks<T, R = unknown> = {
 	onEnd?: (reference: R) => void
 	/** Appelé si l'action réussit (status === SUCCESS) */
 	onSuccess?: (result: T) => void
-	/** Appelé si l'action échoue (status !== SUCCESS) */
+	/** Appelé si l'action retourne un warning (status === WARNING) */
+	onWarning?: (result: T) => void
+	/** Appelé si l'action échoue (status !== SUCCESS && status !== WARNING) */
 	onError?: (result: T) => void
 }

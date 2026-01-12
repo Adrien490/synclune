@@ -48,8 +48,10 @@ export const createToastCallbacks = <
 	const {
 		loadingMessage,
 		showSuccessToast = true,
+		showWarningToast = true,
 		showErrorToast = true,
 		onSuccess: customOnSuccess,
+		onWarning: customOnWarning,
 		onError: customOnError,
 		successAction,
 	} = options;
@@ -80,6 +82,15 @@ export const createToastCallbacks = <
 				} else {
 					toast.success(result.message);
 				}
+			}
+		},
+		onWarning: (result: T) => {
+			// Call custom warning callback if provided
+			customOnWarning?.(result);
+
+			// Default toast behavior - use warning toast
+			if (showWarningToast && hasMessage(result)) {
+				toast.warning(result.message);
 			}
 		},
 		onError: (result: T) => {

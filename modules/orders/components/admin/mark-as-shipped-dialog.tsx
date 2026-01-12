@@ -27,7 +27,7 @@ import {
 	type Carrier,
 } from "@/modules/orders/utils/carrier.utils";
 import { useStore } from "@tanstack/react-form";
-import { Mail, Truck } from "lucide-react";
+import { Link2, Mail, Truck } from "lucide-react";
 import { useMarkAsShippedForm } from "@/modules/orders/hooks/use-mark-as-shipped-form";
 
 export const MARK_AS_SHIPPED_DIALOG_ID = "mark-as-shipped";
@@ -59,18 +59,41 @@ function MarkAsShippedFormContent({
 	const carrier = useStore(form.store, (state) => state.values.carrier);
 	const trackingUrl = useStore(form.store, (state) => state.values.trackingUrl);
 	const sendEmail = useStore(form.store, (state) => state.values.sendEmail);
+	const customUrlMode = useStore(form.store, (state) => state.values.customUrlMode);
+
+	// L'URL est editable si mode custom ou si carrier = "autre"
+	const isUrlEditable = customUrlMode || carrier === "autre";
 
 	// Auto-détection du transporteur directement dans onChange (pas de useEffect)
 	const handleTrackingNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
 		form.setFieldValue("trackingNumber", value);
 
-		// Auto-détecter si numéro >= 8 caractères
-		if (value.length >= 8) {
+		// Auto-détecter si numéro >= 8 caractères et mode auto
+		if (value.length >= 8 && !customUrlMode) {
 			const detection = detectCarrierAndUrl(value);
 			form.setFieldValue("carrier", detection.carrier);
 			if (detection.url) {
 				form.setFieldValue("trackingUrl", detection.url);
+			}
+		}
+	};
+
+	// Gestion du changement de carrier
+	const handleCarrierChange = (value: Carrier) => {
+		form.setFieldValue("carrier", value);
+
+		// Re-générer l'URL si pas en mode custom
+		if (!customUrlMode && trackingNumber.length >= 8) {
+			// Utiliser l'URL du carrier sélectionné manuellement
+			if (value !== "autre") {
+				const { url } = detectCarrierAndUrl(trackingNumber);
+				if (url) {
+					form.setFieldValue("trackingUrl", url);
+				}
+			} else {
+				// Carrier "autre" = pas d'URL auto
+				form.setFieldValue("trackingUrl", "");
 			}
 		}
 	};
@@ -123,7 +146,7 @@ function MarkAsShippedFormContent({
 						<Label htmlFor="carrier">Transporteur</Label>
 						<Select
 							value={carrier}
-							onValueChange={(value) => form.setFieldValue("carrier", value as Carrier)}
+							onValueChange={(value) => handleCarrierChange(value as Carrier)}
 							disabled={isPending}
 							name="carrier"
 						>
@@ -138,25 +161,55 @@ function MarkAsShippedFormContent({
 								))}
 							</SelectContent>
 						</Select>
-						{trackingNumber.length >= 8 && (
+						{trackingNumber.length >= 8 && !customUrlMode && carrier !== "autre" && (
 							<p className="text-xs text-emerald-600">
 								Détecté automatiquement : {CARRIERS.find((c) => c.value === carrier)?.label}
 							</p>
 						)}
 					</div>
 
-					{/* Tracking URL (read-only, auto-generated) */}
-					{trackingUrl && (
-						<div className="space-y-2">
-							<Label htmlFor="trackingUrlDisplay">URL de suivi (générée)</Label>
-							<Input
-								id="trackingUrlDisplay"
-								value={trackingUrl}
-								readOnly
-								className="bg-muted text-muted-foreground text-sm"
-							/>
+					{/* Tracking URL */}
+					<div className="space-y-2">
+						<Label htmlFor="trackingUrlDisplay">
+							URL de suivi {isUrlEditable ? "" : "(générée)"}
+						</Label>
+						<Input
+							id="trackingUrlDisplay"
+							value={trackingUrl}
+							onChange={(e) => form.setFieldValue("trackingUrl", e.target.value)}
+							readOnly={!isUrlEditable}
+							placeholder={isUrlEditable ? "https://..." : ""}
+							className={!isUrlEditable ? "bg-muted text-muted-foreground text-sm" : ""}
+							disabled={isPending}
+						/>
+						{carrier === "autre" && !trackingUrl && (
+							<p className="text-xs text-amber-600">
+								Saisissez l'URL de suivi manuellement pour ce transporteur
+							</p>
+						)}
+					</div>
+
+					{/* Custom URL Mode Checkbox */}
+					<div className="flex items-start space-x-3 rounded-lg border p-3 bg-muted/20">
+						<Checkbox
+							id="customUrlMode"
+							checked={customUrlMode}
+							onCheckedChange={(checked) => form.setFieldValue("customUrlMode", checked === true)}
+							disabled={isPending}
+						/>
+						<div className="space-y-1 leading-none">
+							<Label
+								htmlFor="customUrlMode"
+								className="flex items-center gap-2 cursor-pointer text-sm"
+							>
+								<Link2 className="h-4 w-4" />
+								URL personnalisée
+							</Label>
+							<p className="text-xs text-muted-foreground">
+								Saisir manuellement l'URL de suivi
+							</p>
 						</div>
-					)}
+					</div>
 
 					{/* Send Email Checkbox */}
 					<div className="flex items-start space-x-3 rounded-lg border p-4 bg-muted/30">

@@ -2,6 +2,7 @@
 
 export enum ActionStatus {
 	SUCCESS = "success",
+	WARNING = "warning",
 	ERROR = "error",
 	UNAUTHORIZED = "unauthorized",
 	VALIDATION_ERROR = "validation_error",

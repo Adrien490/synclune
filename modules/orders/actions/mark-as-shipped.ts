@@ -182,8 +182,15 @@ export async function markAsShipped(
 			}
 		}
 
-		const emailMessage = emailSent ? " Email envoyé au client." : result.data.sendEmail ? " (Échec envoi email)" : "";
+		// Si l'email devait être envoyé mais a échoué, retourner un warning
+		if (result.data.sendEmail && !emailSent) {
+			return {
+				status: ActionStatus.WARNING,
+				message: `Commande ${order.orderNumber} expédiée. Numéro de suivi : ${result.data.trackingNumber}. ATTENTION: L'email n'a pas pu être envoyé au client.`,
+			};
+		}
 
+		const emailMessage = emailSent ? " Email envoyé au client." : "";
 		return {
 			status: ActionStatus.SUCCESS,
 			message: `Commande ${order.orderNumber} expédiée. Numéro de suivi : ${result.data.trackingNumber}.${emailMessage}`,

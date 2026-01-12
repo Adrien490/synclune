@@ -18,20 +18,23 @@ interface UseMarkAsShippedFormOptions {
  * Utilise TanStack Form avec Next.js App Router
  */
 export const useMarkAsShippedForm = (options: UseMarkAsShippedFormOptions) => {
+	const handleComplete = (result: unknown) => {
+		if (
+			result &&
+			typeof result === "object" &&
+			"message" in result &&
+			typeof result.message === "string"
+		) {
+			options.onSuccess?.(result.message);
+		}
+	};
+
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			markAsShipped,
 			createToastCallbacks({
-				onSuccess: (result: unknown) => {
-					if (
-						result &&
-						typeof result === "object" &&
-						"message" in result &&
-						typeof result.message === "string"
-					) {
-						options.onSuccess?.(result.message);
-					}
-				},
+				onSuccess: handleComplete,
+				onWarning: handleComplete, // Fermer le dialog aussi en cas de warning
 			})
 		),
 		undefined
@@ -44,6 +47,7 @@ export const useMarkAsShippedForm = (options: UseMarkAsShippedFormOptions) => {
 			trackingUrl: "",
 			carrier: "colissimo" as Carrier,
 			sendEmail: true,
+			customUrlMode: false,
 		},
 		transform: useTransform(
 			(baseForm) => mergeForm(baseForm, (state as unknown) ?? {}),

@@ -116,6 +116,7 @@ export async function updateTracking(
 		revalidatePath(`/compte/commandes/${order.orderNumber}`);
 
 		// Envoyer l'email de mise à jour du suivi au client
+		let emailSent = false;
 		if (result.data.sendEmail && order.customerEmail) {
 			const carrierLabel = getCarrierLabel(carrierValue);
 
@@ -135,31 +136,43 @@ export async function updateTracking(
 				  })
 				: "3-5 jours ouvrés";
 
-			await sendTrackingUpdateEmail({
-				to: order.customerEmail,
-				orderNumber: order.orderNumber,
-				customerName: customerFirstName,
-				trackingNumber: result.data.trackingNumber,
-				trackingUrl: finalTrackingUrl,
-				carrierLabel,
-				shippingAddress: {
-					firstName: order.shippingFirstName || "",
-					lastName: order.shippingLastName || "",
-					address1: order.shippingAddress1 || "",
-					address2: order.shippingAddress2,
-					postalCode: order.shippingPostalCode || "",
-					city: order.shippingCity || "",
-					country: order.shippingCountry || "France",
-				},
-				estimatedDelivery: estimatedDeliveryStr,
-			});
+			try {
+				await sendTrackingUpdateEmail({
+					to: order.customerEmail,
+					orderNumber: order.orderNumber,
+					customerName: customerFirstName,
+					trackingNumber: result.data.trackingNumber,
+					trackingUrl: finalTrackingUrl,
+					carrierLabel,
+					shippingAddress: {
+						firstName: order.shippingFirstName || "",
+						lastName: order.shippingLastName || "",
+						address1: order.shippingAddress1 || "",
+						address2: order.shippingAddress2,
+						postalCode: order.shippingPostalCode || "",
+						city: order.shippingCity || "",
+						country: order.shippingCountry || "France",
+					},
+					estimatedDelivery: estimatedDeliveryStr,
+				});
+				emailSent = true;
+			} catch (emailError) {
+				console.error("[UPDATE_TRACKING] Echec envoi email:", emailError);
+			}
 		}
 
-		const emailSent = result.data.sendEmail ? " Email envoyé au client." : "";
+		// Si l'email devait être envoyé mais a échoué, retourner un warning
+		if (result.data.sendEmail && !emailSent) {
+			return {
+				status: ActionStatus.WARNING,
+				message: `Suivi mis à jour. Nouveau numéro : ${result.data.trackingNumber}. ATTENTION: L'email n'a pas pu être envoyé au client.`,
+			};
+		}
 
+		const emailMessage = emailSent ? " Email envoyé au client." : "";
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Suivi mis à jour. Nouveau numéro : ${result.data.trackingNumber}.${emailSent}`,
+			message: `Suivi mis à jour. Nouveau numéro : ${result.data.trackingNumber}.${emailMessage}`,
 		};
 	} catch (error) {
 		console.error("[UPDATE_TRACKING]", error);

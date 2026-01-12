@@ -3,6 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ExternalLink, Package, Truck } from "lucide-react";
+import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 
 interface OrderTrackingProps {
 	order: {
@@ -34,7 +35,9 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 					{order.shippingCarrier && (
 						<div className="flex items-center gap-2">
 							<Package className="h-4 w-4 text-muted-foreground" />
-							<span className="text-sm font-medium">{order.shippingCarrier}</span>
+							<span className="text-sm font-medium">
+								{getCarrierLabel(order.shippingCarrier.toLowerCase() as Carrier)}
+							</span>
 						</div>
 					)}
 					<div className="flex items-center gap-2">

@@ -259,6 +259,28 @@ export const markAsPaidSchema = z.object({
 });
 
 // ============================================================================
+// CARRIER ENUM
+// ============================================================================
+
+/**
+ * Enum Zod pour les transporteurs
+ * Doit correspondre au type Carrier dans types/carrier.types.ts
+ */
+export const carrierEnum = z.enum([
+	"colissimo",
+	"lettre_suivie",
+	"mondial_relay",
+	"chronopost",
+	"dpd",
+	"gls",
+	"dhl",
+	"ups",
+	"fedex",
+	"relais_colis",
+	"autre",
+]);
+
+// ============================================================================
 // MARK AS SHIPPED SCHEMA
 // ============================================================================
 
@@ -270,7 +292,7 @@ export const markAsShippedSchema = z.object({
 	id: z.cuid2(),
 	trackingNumber: z.string().min(1, "Le numéro de suivi est requis").max(100),
 	trackingUrl: z.string().url().optional().or(z.literal("")),
-	carrier: z.string().max(100).optional(),
+	carrier: carrierEnum.optional(),
 	sendEmail: z
 		.union([z.boolean(), z.enum(["true", "false"])])
 		.optional()
@@ -293,8 +315,14 @@ export const updateTrackingSchema = z.object({
 	id: z.cuid2(),
 	trackingNumber: z.string().min(1, "Le numéro de suivi est requis").max(100),
 	trackingUrl: z.string().url().optional().or(z.literal("")),
-	carrier: z.string().max(100).optional(),
-	estimatedDelivery: z.coerce.date().optional(),
+	carrier: carrierEnum.optional(),
+	estimatedDelivery: z.coerce
+		.date()
+		.refine(
+			(date) => date > new Date(),
+			"La date de livraison estimée doit être dans le futur"
+		)
+		.optional(),
 	sendEmail: z
 		.union([z.boolean(), z.enum(["true", "false"])])
 		.optional()

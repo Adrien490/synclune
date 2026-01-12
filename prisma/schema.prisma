@@ -207,6 +207,11 @@ enum ShippingCarrier {
   CHRONOPOST
   MONDIAL_RELAY
   DPD
+  GLS
+  DHL
+  UPS
+  FEDEX
+  RELAIS_COLIS
   OTHER
 }
 

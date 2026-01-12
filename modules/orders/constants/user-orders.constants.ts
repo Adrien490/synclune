@@ -12,6 +12,7 @@ export const GET_USER_ORDERS_SELECT = {
 	status: true,
 	paymentStatus: true,
 	fulfillmentStatus: true,
+	shippingCarrier: true,
 	trackingNumber: true,
 	trackingUrl: true,
 	shippedAt: true,
