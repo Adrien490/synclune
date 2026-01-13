@@ -71,6 +71,22 @@ export const MOTION_CONFIG = {
 		once: true,
 		amount: 0.2,
 	},
+
+	// Background animation presets
+	background: {
+		blob: {
+			cycle: 20, // 20s CSS animation cycle
+			fadeIn: 1.5, // Framer Motion fade-in duration
+			stagger: 0.2, // Delay between blobs
+		},
+		sparkle: {
+			durationRange: [2, 4] as readonly [number, number],
+			delayMax: 3,
+		},
+		scrollIndicator: {
+			duration: 1.5,
+		},
+	},
 } as const;
 
 /**

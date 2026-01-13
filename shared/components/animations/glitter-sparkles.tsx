@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { motion, useReducedMotion, useInView } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 import { seededRandom } from "./particle-system/utils";
+import { MOTION_CONFIG } from "./motion.config";
 
 // ============================================================================
 // TYPES
@@ -55,15 +56,16 @@ const SPARKLE_COLORS = [
 /**
  * Configuration par défaut
  * Optimisé pour les performances : -50% particules desktop, -40% mobile
+ * Durées synchronisées avec MOTION_CONFIG.background.sparkle
  */
 const DEFAULT_CONFIG = {
 	COUNT_DESKTOP: 25, // Réduit de 50 → 25 pour fluidité +30%
 	COUNT_MOBILE: 12, // Réduit de 20 → 12 pour performance mobile
 	SIZE_MIN: 2,
 	SIZE_MAX: 6,
-	DURATION_MIN: 2,
-	DURATION_MAX: 4,
-	DELAY_MAX: 3,
+	DURATION_MIN: MOTION_CONFIG.background.sparkle.durationRange[0],
+	DURATION_MAX: MOTION_CONFIG.background.sparkle.durationRange[1],
+	DELAY_MAX: MOTION_CONFIG.background.sparkle.delayMax,
 	GLOW_MULTIPLIER: 2,
 } as const;
 
@@ -158,7 +160,7 @@ const SparkleSet = ({
 						duration: sparkle.duration,
 						delay: sparkle.delay,
 						repeat: Infinity,
-						ease: "easeInOut",
+						ease: MOTION_CONFIG.easing.easeInOut,
 					}}
 				/>
 			))}

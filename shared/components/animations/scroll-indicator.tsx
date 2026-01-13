@@ -11,6 +11,7 @@ import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@/shared/utils/cn";
+import { MOTION_CONFIG } from "./motion.config";
 
 export interface ScrollIndicatorProps {
 	/** ID de l'élément cible vers lequel scroller */
@@ -89,9 +90,9 @@ export function ScrollIndicator({
 				shouldReduceMotion
 					? undefined
 					: {
-							duration: 1.5,
+							duration: MOTION_CONFIG.background.scrollIndicator.duration,
 							repeat: Infinity,
-							ease: "easeInOut",
+							ease: MOTION_CONFIG.easing.easeInOut,
 						}
 			}
 		>

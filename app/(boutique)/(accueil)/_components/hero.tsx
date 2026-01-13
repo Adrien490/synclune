@@ -1,7 +1,6 @@
 import { Fade, ScrollIndicator } from "@/shared/components/animations";
-import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
+import { AuroraBackground } from "./aurora-background";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
@@ -20,23 +19,8 @@ export function Hero() {
       itemType="https://schema.org/WebPageElement"
       itemProp="mainContentOfPage"
     >
-
-      {/* Couche 1: Particules décoratives - Désactivées sur mobile pour INP */}
-      <div className="hidden md:block">
-        <ParticleSystem
-          count={4}
-          shape={["diamond", "crescent", "circle", "heart"]}
-          colors={["var(--secondary)", "oklch(0.9 0.1 80)", "var(--primary)"]}
-          opacity={[0.2, 0.45]}
-          blur={[4, 16]}
-          size={[25, 70]}
-        />
-      </div>
-
-      {/* Couche 2: Glitter Sparkles - Désactivées sur mobile pour INP */}
-      <div className="hidden md:block">
-        <GlitterSparkles count={8} sizeRange={[2, 4]} glowIntensity={0.3} />
-      </div>
+      {/* Background Aurora animé */}
+      <AuroraBackground />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl 2xl:max-w-7xl relative z-10">
         <div className="flex flex-col items-center">

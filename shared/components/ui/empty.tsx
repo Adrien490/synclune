@@ -7,6 +7,7 @@ const emptyVariants = cva(
 		variants: {
 			variant: {
 				default: "border border-dashed border-border",
+				borderless: "",
 			},
 			size: {
 				sm: "gap-4 p-4 xs:p-5 md:p-6",
@@ -29,11 +30,13 @@ function Empty({
 	variant = "default",
 	size = "default",
 	role = "status",
+	"aria-live": ariaLive = "polite",
 	...props
 }: EmptyProps) {
 	return (
 		<div
 			role={role}
+			aria-live={ariaLive}
 			data-slot="empty"
 			data-variant={variant}
 			data-size={size}
@@ -57,7 +60,7 @@ function EmptyHeader({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const emptyMediaVariants = cva(
-	"flex shrink-0 items-center justify-center mb-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 transition-all duration-300 animate-sparkle-pulse",
+	"flex shrink-0 items-center justify-center mb-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 transition-all duration-300 motion-safe:animate-sparkle-pulse",
 	{
 		variants: {
 			variant: {
@@ -80,7 +83,7 @@ function EmptyMedia({
 	return (
 		<div
 			aria-hidden="true"
-			data-slot="empty-icon"
+			data-slot="empty-media"
 			data-variant={variant}
 			className={cn(emptyMediaVariants({ variant, className }))}
 			{...props}

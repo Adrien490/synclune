@@ -134,7 +134,7 @@ export function CartSheet({ cartPromise }: CartSheetProps) {
 
 					{!hasItems ? (
 						<div className="flex-1 min-h-0 flex flex-col px-6 py-8" role="status">
-							<Empty className="flex-1 border-0">
+							<Empty variant="borderless" className="flex-1">
 								<EmptyHeader>
 									<EmptyMedia variant="icon">
 										<ShoppingBag className="size-6" />
