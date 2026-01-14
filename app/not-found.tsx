@@ -1,11 +1,11 @@
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
+import { ParticleBackground } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
 import Link from "next/link";
 
 export default function NotFound() {
 	return (
 		<main className="relative min-h-screen bg-linear-to-br from-background via-primary/5 to-secondary/10 flex items-center justify-center px-4">
-			<ParticleSystem
+			<ParticleBackground
 				count={8}
 				shape={["heart", "diamond", "circle"]}
 				animationStyle="drift"

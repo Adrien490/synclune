@@ -5,7 +5,7 @@ import { useInView, useReducedMotion } from "motion/react";
 import { useRef } from "react";
 import { DEFAULT_COLORS } from "./constants";
 import { ParticleSet } from "./particle-set";
-import type { ParticleSystemProps } from "./types";
+import type { ParticleBackgroundProps } from "./types";
 import { generateParticles } from "./utils";
 
 /**
@@ -20,17 +20,17 @@ import { generateParticles } from "./utils";
  *
  * @example
  * // Défaut (couleurs primary/secondary/pastel)
- * <ParticleSystem />
+ * <ParticleBackground />
  *
  * @example
  * // Multi-formes : mix diamants et cercles
- * <ParticleSystem
+ * <ParticleBackground
  *   shape={["diamond", "circle"]}
  *   colors={["var(--secondary)", "oklch(0.9 0.1 80)"]}
  *   blur={[4, 15]}
  * />
  */
-export function ParticleSystem({
+export function ParticleBackground({
 	count = 6,
 	size = [8, 64],
 	opacity = [0.1, 0.4],
@@ -40,7 +40,7 @@ export function ParticleSystem({
 	className,
 	animationStyle = "float",
 	depthParallax = true,
-}: ParticleSystemProps) {
+}: ParticleBackgroundProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
 	const isInView = useInView(containerRef, { margin: "-100px" });

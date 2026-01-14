@@ -6,8 +6,8 @@ import { SidebarMenuButton } from "@/shared/components/ui/sidebar";
 import { isRouteActive } from "@/shared/lib/navigation";
 
 interface NavMainClientProps {
-	url: string;
-	children: React.ReactNode;
+  url: string;
+  children: React.ReactNode;
 }
 
 /**
@@ -15,16 +15,16 @@ interface NavMainClientProps {
  * Séparé du Server Component NavMain pour permettre usePathname()
  */
 export function NavMainClient({ url, children }: NavMainClientProps) {
-	const pathname = usePathname();
+  const pathname = usePathname();
 
-	// Déterminer si le lien est actif
-	const isActive = isRouteActive(pathname, url);
+  // Déterminer si le lien est actif
+  const isActive = isRouteActive(pathname, url);
 
-	return (
-		<SidebarMenuButton asChild isActive={isActive} className="h-9">
-			<Link href={url} aria-current={isActive ? "page" : undefined}>
-				{children}
-			</Link>
-		</SidebarMenuButton>
-	);
+  return (
+    <SidebarMenuButton asChild isActive={isActive} className="h-9">
+      <Link href={url} aria-current={isActive ? "page" : undefined}>
+        {children}
+      </Link>
+    </SidebarMenuButton>
+  );
 }

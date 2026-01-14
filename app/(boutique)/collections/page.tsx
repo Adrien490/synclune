@@ -1,6 +1,6 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { PageHeader } from "@/shared/components/page-header";
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
+import { ParticleBackground } from "@/shared/components/animations";
 import { CollectionGrid } from "@/modules/collections/components/collection-grid";
 import { CollectionGridSkeleton } from "@/modules/collections/components/collection-grid-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
@@ -96,7 +96,7 @@ export default async function CollectionsPage({
 			/>
 
 			{/* Background décoratif - Particules pour ambiance bijoux */}
-			<ParticleSystem className="fixed inset-0 z-0" />
+			<ParticleBackground className="fixed inset-0 z-0" />
 
 			<PageHeader
 				title="Les collections"

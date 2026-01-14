@@ -31,7 +31,7 @@ export { ScrollIndicator } from "./scroll-indicator";
 export { BubbleDream } from "./bubble-dream";
 export { DecorativeHalo, DecorativeHaloGroup } from "./decorative-halo";
 export { GlitterSparkles } from "./glitter-sparkles";
-export { ParticleSystem } from "./particle-system/index";
+export { ParticleBackground } from "./particle-background/index";
 
 // Types
 export type { ErrorShakeProps } from "./error-shake";
@@ -50,6 +50,6 @@ export type { TapProps } from "./tap";
 export type { BubbleDreamProps } from "./bubble-dream";
 export type { GlitterSparklesProps } from "./glitter-sparkles";
 export type {
-	AnimationStyle, ParticleShape, ParticleSystemProps
-} from "./particle-system/index";
+	AnimationStyle, ParticleBackgroundProps, ParticleShape
+} from "./particle-background/index";
 

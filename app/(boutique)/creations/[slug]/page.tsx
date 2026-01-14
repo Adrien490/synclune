@@ -2,7 +2,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
+import { ParticleBackground } from "@/shared/components/animations";
 import { Separator } from "@/shared/components/ui/separator";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getPublicProductSlugs } from "@/modules/products/data/get-public-product-slugs";
@@ -155,7 +155,7 @@ export default async function ProductPage({
 			/>
 
 			{/* Particules précieuses pour pages produits */}
-			<ParticleSystem count={8} size={[12, 80]} className="fixed inset-0 z-0" />
+			<ParticleBackground count={8} size={[12, 80]} className="fixed inset-0 z-0" />
 
 			<div className="relative z-10">
 				<PageHeader title={product.title} breadcrumbs={breadcrumbs} className="hidden sm:block" />

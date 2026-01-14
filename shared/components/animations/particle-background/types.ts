@@ -13,8 +13,8 @@ export type ParticleShape =
 /** Styles d'animation */
 export type AnimationStyle = "float" | "drift";
 
-/** Props du composant ParticleSystem */
-export interface ParticleSystemProps {
+/** Props du composant ParticleBackground */
+export interface ParticleBackgroundProps {
 	/** Nombre de particules (défaut: 6, mobile: divisé par 2) */
 	count?: number;
 	/** Taille min/max en pixels (défaut: [8, 64]) */

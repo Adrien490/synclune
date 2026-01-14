@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { useCookieConsentStore } from "@/shared/providers/cookie-consent-store-provider";
-import { useOptimistic } from "react";
+import { startTransition, useOptimistic } from "react";
 
 export function CookiePreferences() {
 	const accepted = useCookieConsentStore((state) => state.accepted);
@@ -12,12 +12,16 @@ export function CookiePreferences() {
 	const [optimisticSaved, setOptimisticSaved] = useOptimistic(false);
 
 	const handleAccept = () => {
-		setOptimisticSaved(true);
+		startTransition(() => {
+			setOptimisticSaved(true);
+		});
 		acceptCookies();
 	};
 
 	const handleReject = () => {
-		setOptimisticSaved(true);
+		startTransition(() => {
+			setOptimisticSaved(true);
+		});
 		rejectCookies();
 	};
 

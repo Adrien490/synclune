@@ -1,10 +1,10 @@
 // Main component
-export { ParticleSystem } from "./particle-system";
+export { ParticleBackground } from "./particle-background";
 
 // Types
 export type {
 	AnimationStyle,
 	Particle,
+	ParticleBackgroundProps,
 	ParticleShape,
-	ParticleSystemProps,
 } from "./types";

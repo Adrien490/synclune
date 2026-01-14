@@ -1,6 +1,6 @@
 "use client"
 
-import { ParticleSystem } from "@/shared/components/animations/particle-system"
+import { ParticleBackground } from "@/shared/components/animations"
 import { Button } from "@/shared/components/ui/button"
 import type { ErrorPageProps } from "@/shared/types/error.types"
 import Link from "next/link"
@@ -12,7 +12,7 @@ export default function BoutiqueError({ error, reset }: ErrorPageProps) {
 			role="alert"
 			aria-live="assertive"
 		>
-			<ParticleSystem
+			<ParticleBackground
 				count={6}
 				shape={["diamond", "circle"]}
 				animationStyle="drift"

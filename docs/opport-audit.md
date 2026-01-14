@@ -40,7 +40,7 @@ shared/components/animations/
 ├── stagger.tsx           ✅ Utilisé
 ├── reveal.tsx            ✅ Utilisé
 ├── glitter-sparkles.tsx  ✅ Utilisé (Hero)
-├── particle-system.tsx   ✅ Utilisé (Hero)
+├── particle-background.tsx ✅ Utilisé (Hero)
 ├── floating-blob.tsx     ✅ Ajouté récemment
 ├── cursor-sparkle.tsx    ✅ Ajouté récemment
 └── magnetic-wrapper.tsx  ✅ Ajouté récemment

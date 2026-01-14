@@ -1,4 +1,4 @@
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
+import { ParticleBackground } from "@/shared/components/animations";
 import type { Metadata } from "next";
 import { OfflineActions } from "./_components/offline-actions";
 
@@ -14,7 +14,7 @@ export default function OfflinePage() {
 			role="alert"
 			aria-live="polite"
 		>
-			<ParticleSystem
+			<ParticleBackground
 				count={6}
 				shape={["diamond", "circle", "crescent"]}
 				animationStyle="drift"

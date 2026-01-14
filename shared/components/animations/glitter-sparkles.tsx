@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion, useReducedMotion, useInView } from "motion/react";
 import { cn } from "@/shared/utils/cn";
-import { seededRandom } from "./particle-system/utils";
+import { seededRandom } from "./particle-background/utils";
 import { MOTION_CONFIG } from "./motion.config";
 
 // ============================================================================

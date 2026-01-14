@@ -1,5 +1,4 @@
-import { Fade, Reveal, Stagger } from "@/shared/components/animations";
-import { ParticleSystem } from "@/shared/components/animations/particle-system";
+import { Fade, ParticleBackground, Reveal, Stagger } from "@/shared/components/animations";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { IMAGES } from "@/shared/constants/images";
@@ -121,7 +120,7 @@ export function CreativeProcess() {
 			</a>
 
 			<div className="absolute inset-0" aria-hidden="true">
-				<ParticleSystem
+				<ParticleBackground
 					count={6}
 					shape="diamond"
 					colors={["var(--secondary)", "oklch(0.95 0.06 70)", "oklch(0.97 0.03 80)"]}

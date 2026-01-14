@@ -3,7 +3,7 @@
 import { cn } from "@/shared/utils/cn";
 import { motion, useInView, useReducedMotion } from "motion/react";
 import { useRef } from "react";
-import { seededRandom } from "./particle-system/utils";
+import { seededRandom } from "./particle-background/utils";
 
 // ============================================================================
 // TYPES

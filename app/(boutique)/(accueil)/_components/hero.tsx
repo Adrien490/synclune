@@ -1,6 +1,5 @@
-import { Fade, ScrollIndicator } from "@/shared/components/animations";
+import { Fade, ParticleBackground, ScrollIndicator } from "@/shared/components/animations";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
-import { AuroraBackground } from "./aurora-background";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
@@ -19,8 +18,22 @@ export function Hero() {
       itemType="https://schema.org/WebPageElement"
       itemProp="mainContentOfPage"
     >
-      {/* Background Aurora animé */}
-      <AuroraBackground />
+      {/* Background particules - Desktop uniquement */}
+      <div className="absolute inset-0 -z-10" aria-hidden="true">
+        <div className="hidden md:block absolute inset-0">
+          <ParticleBackground
+            shape={["heart", "pearl"]}
+            colors={["var(--primary)", "var(--secondary)"]}
+            count={6}
+            size={[40, 80]}
+            opacity={[0.2, 0.35]}
+            blur={[8, 18]}
+            animationStyle="drift"
+            depthParallax={true}
+          />
+        </div>
+        <div className="absolute inset-0 bg-background/20" />
+      </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl 2xl:max-w-7xl relative z-10">
         <div className="flex flex-col items-center">
@@ -94,7 +107,7 @@ export function Hero() {
                     href={BRAND.social.instagram.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-accent motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
                   >
                     <InstagramIcon decorative size={20} className="text-foreground" />
@@ -103,7 +116,7 @@ export function Hero() {
                     href={BRAND.social.tiktok.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-primary/10 motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-accent motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
                   >
                     <TikTokIcon decorative size={20} className="text-foreground" />
