@@ -29,12 +29,21 @@ export function Footer() {
 			itemScope
 			itemType="https://schema.org/Organization"
 		>
+			{/* Organization structured data - SEO */}
+			<meta itemProp="name" content={BRAND.name} />
+			<meta itemProp="url" content={BRAND.website.url} />
+			<link itemProp="logo" href={`${BRAND.website.url}${BRAND.logo.url}`} />
+			<meta itemProp="description" content={BRAND.description} />
+
 			{/* Contenu sr-only pour voice search */}
 			<p className="sr-only">
 				Footer du site de Synclune, créatrice de bijoux faits main avec amour.
 				Retrouvez les coordonnées de contact, navigation du site et informations
 				légales.
 			</p>
+
+			{/* Titre sr-only pour hiérarchie des headings */}
+			<h2 className="sr-only">Informations et liens utiles</h2>
 
 			{/* Masque flou en haut pour transition douce (réduit sur mobile) */}
 			<div
@@ -81,7 +90,7 @@ export function Footer() {
 									rel="noopener noreferrer"
 									prefetch={false}
 									className="inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-colors duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
-									aria-label="Suivre Synclune sur Instagram (ouvre dans un nouvel onglet)"
+									aria-label="Suivre Synclune sur Instagram"
 								>
 									<InstagramIcon
 										decorative
@@ -101,7 +110,7 @@ export function Footer() {
 									rel="noopener noreferrer"
 									prefetch={false}
 									className="inline-flex items-center gap-3 px-3 py-2 min-h-11 rounded-lg transition-colors duration-200 hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
-									aria-label="Suivre Synclune sur TikTok (ouvre dans un nouvel onglet)"
+									aria-label="Suivre Synclune sur TikTok"
 								>
 									<TikTokIcon
 										decorative
@@ -139,8 +148,8 @@ export function Footer() {
 					</nav>
 
 					{/* Colonne 4: Contact */}
-					<div className="order-4 sm:order-3 lg:order-3">
-						<h3 className="text-base/6 font-medium antialiased text-foreground mb-4">
+					<section aria-labelledby="footer-contact-title" className="order-4 sm:order-3 lg:order-3">
+						<h3 id="footer-contact-title" className="text-base/6 font-medium antialiased text-foreground mb-4">
 							Contact
 						</h3>
 						<div
@@ -149,6 +158,8 @@ export function Footer() {
 							itemType="https://schema.org/ContactPoint"
 							className="space-y-3"
 						>
+							<meta itemProp="contactType" content="customer service" />
+							<meta itemProp="availableLanguage" content="French" />
 							{/* Email - CTA principal avec style proéminent */}
 							<a
 								href={`mailto:${BRAND.contact.email}`}
@@ -179,17 +190,18 @@ export function Footer() {
 								</div>
 							</div>
 						</div>
-					</div>
+					</section>
 				</div>
 
 				{/* Paiement sécurisé */}
 				<section className="flex flex-col items-center gap-3 pt-8 border-t border-border" aria-labelledby="footer-payment-title">
 					<h3 id="footer-payment-title" className="text-sm text-muted-foreground">Paiement sécurisé</h3>
+					<meta itemProp="paymentAccepted" content="Visa, Mastercard, CB, PayPal" />
 					<ul className="flex items-center gap-4" aria-label="Moyens de paiement acceptés">
-						<li><VisaIcon className="text-muted-foreground" /></li>
-						<li><MastercardIcon className="text-muted-foreground" /></li>
-						<li><CBIcon className="text-muted-foreground" /></li>
-						<li><PayPalIcon className="text-muted-foreground" /></li>
+						<li><VisaIcon aria-label="Visa accepté" className="text-muted-foreground" /></li>
+						<li><MastercardIcon aria-label="Mastercard accepté" className="text-muted-foreground" /></li>
+						<li><CBIcon aria-label="Carte Bancaire acceptée" className="text-muted-foreground" /></li>
+						<li><PayPalIcon aria-label="PayPal accepté" className="text-muted-foreground" /></li>
 					</ul>
 				</section>
 

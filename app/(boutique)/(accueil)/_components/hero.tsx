@@ -130,8 +130,8 @@ export function Hero() {
 
       {/* Indicateur de scroll - Best practice UX 2025 */}
       <ScrollIndicator
-        targetId="latest-creations"
-        ariaLabel="Voir les dernières créations"
+        targetIds={["bestsellers", "latest-creations", "collections", "atelier-story"]}
+        ariaLabel="Voir la suite"
         className="hidden sm:block"
       />
     </section>

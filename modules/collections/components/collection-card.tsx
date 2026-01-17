@@ -13,10 +13,8 @@ import { CollectionImagesGrid } from "./collection-images-grid";
 interface CollectionCardProps {
   slug: string;
   name: string;
-  description: string | null;
   /** Images multiples pour Bento Grid (prioritaire) */
   images?: CollectionImage[];
-  showDescription?: boolean;
   index?: number;
   /** Custom sizes pour contextes differents (grid vs carousel) */
   sizes?: string;
@@ -42,10 +40,7 @@ interface CollectionCardProps {
 export function CollectionCard({
   slug,
   name,
-  description,
   images,
-
-  showDescription = false,
   index,
   sizes = COLLECTION_IMAGE_SIZES.COLLECTION_CARD,
   headingLevel: HeadingTag = "h3",
@@ -53,9 +48,7 @@ export function CollectionCard({
 }: CollectionCardProps) {
   const uniqueSuffix = `${slug}-${index ?? 0}`;
   const titleId = `collection-title-${uniqueSuffix}`;
-  const descId = `collection-desc-${uniqueSuffix}`;
   const isAboveFold = index !== undefined && index < ABOVE_FOLD_THRESHOLD;
-  const hasDescription = showDescription && description;
 
   const displayImages: CollectionImage[] =
     images && images.length > 0 ? images : [];
@@ -69,7 +62,6 @@ export function CollectionCard({
           "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:rounded-xl",
         )}
         aria-labelledby={titleId}
-        aria-describedby={hasDescription ? descId : undefined}
       >
         <div
           className={cn(
@@ -151,17 +143,6 @@ export function CollectionCard({
             >
               {name}
             </HeadingTag>
-
-            {/* Description optionnelle - contraste WCAG ameliore */}
-            {hasDescription && (
-              <p
-                id={descId}
-                className="mt-2 text-sm/6 line-clamp-2 wrap-break-words text-foreground/70"
-                itemProp="description"
-              >
-                {description}
-              </p>
-            )}
 
             {/* Compteur de produits (UX e-commerce) - contraste WCAG ameliore */}
             {productCount !== undefined && productCount > 0 && (

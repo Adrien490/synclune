@@ -9,44 +9,14 @@ import Link from "next/link";
 export function AtelierStory() {
 	return (
 		<section
+			id="atelier-story"
 			className={`relative overflow-hidden bg-background ${SECTION_SPACING.spacious}`}
 			aria-labelledby="atelier-story-title"
-			itemScope
-			itemType="https://schema.org/Article"
 		>
-			{/* SEO: Métadonnées Article */}
-			<meta
-				itemProp="headline"
-				content="L'histoire de Léane, créatrice de bijoux artisanaux Synclune"
-			/>
-			<meta itemProp="datePublished" content="2024-01-01" />
-			<meta
-				itemProp="mainEntityOfPage"
-				content="https://synclune.fr/#atelier-story"
-			/>
-
 			{/* Titre descriptif pour SEO et lecteurs d'ecran */}
 			<h2 id="atelier-story-title" className="sr-only">
 				L'histoire de Léane, créatrice de bijoux artisanaux Synclune à Nantes
 			</h2>
-
-			{/* Microdata Schema.org pour l'artisan */}
-			<div
-				itemScope
-				itemType="https://schema.org/Person"
-				itemProp="author"
-				className="hidden"
-			>
-				<meta itemProp="name" content="Léane Taddei" />
-				<meta itemProp="jobTitle" content="Créatrice de bijoux artisanaux" />
-				<meta itemProp="worksFor" content="Synclune" />
-				<meta
-					itemProp="address"
-					content="Nantes, Loire-Atlantique, France"
-				/>
-				<meta itemProp="image" content="/images/leane-portrait.jpg" />
-				<link itemProp="sameAs" href="https://instagram.com/synclune" />
-			</div>
 
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Photo ambiance principale - hauteur reduite sur mobile pour meilleur flow */}
@@ -107,29 +77,27 @@ export function AtelierStory() {
 								choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il
 								n'existe qu'en quelques exemplaires (parfois moins de dix).
 							</p>
-							{/* Citation finale mise en valeur avec blockquote */}
-							<blockquote
-								className="relative pl-6 border-l-2 border-primary/70 text-foreground font-medium text-left"
-								cite="https://synclune.fr"
-							>
-								<p>Tout est fait à la main !</p>
-								<p>
-									Je mets du cœur à chaque création, j'espère que ça vous plaira{" "}
-									<span role="img" aria-label="coeur rouge">
-										❤️
-									</span>
-								</p>
-							</blockquote>
+							{/* Citation finale mise en valeur avec figure/blockquote */}
+							<figure className="relative">
+								<blockquote
+									className="pl-6 border-l-2 border-primary/70 text-foreground font-medium text-left"
+									cite="https://synclune.fr"
+								>
+									<p>Tout est fait à la main !</p>
+									<p>
+										Je mets du cœur à chaque création, j'espère que ça vous plaira{" "}
+										<span role="img" aria-label="coeur rouge">
+											❤️
+										</span>
+									</p>
+								</blockquote>
+								<figcaption
+									className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic pt-6 text-center`}
+								>
+									<cite className="not-italic">— Léane</cite>
+								</figcaption>
+							</figure>
 						</Stagger>
-
-						{/* Signature - taille agrandie sur mobile */}
-						<div className="pt-6">
-							<p
-								className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic`}
-							>
-								— Léane
-							</p>
-						</div>
 					</div>
 				</Fade>
 
@@ -168,7 +136,8 @@ export function AtelierStory() {
 						<div className="text-center">
 							<Link
 								href="/personnalisation"
-								className="inline-block min-h-11 py-3 px-4 -mx-4 text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+								className="inline-block min-h-12 py-3 px-6 text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+								title="Créez un bijou unique sur-mesure avec Léane"
 							>
 								Discuter d'un projet personnalisé →
 							</Link>

@@ -70,15 +70,41 @@ export function sortProducts(products: Product[], sortBy: string): Product[] {
 /**
  * Préserve l'ordre des produits selon une liste d'IDs ordonnés
  * Utilisé pour maintenir l'ordre de pertinence de la recherche fuzzy
+ *
+ * @param items - Liste des items à trier
+ * @param orderedIds - Liste des IDs dans l'ordre souhaité
+ * @param fallbackSort - Fonction de tri pour les items non présents dans orderedIds
  */
 export function orderByIds<T extends { id: string }>(
 	items: T[],
-	orderedIds: string[]
+	orderedIds: string[],
+	fallbackSort?: (a: T, b: T) => number
 ): T[] {
 	const orderMap = new Map(orderedIds.map((id, index) => [id, index]));
 	return [...items].sort((a, b) => {
 		const orderA = orderMap.get(a.id) ?? Infinity;
 		const orderB = orderMap.get(b.id) ?? Infinity;
-		return orderA - orderB;
+
+		// Si au moins un est dans la liste ordonnée, utiliser l'ordre
+		if (orderA !== Infinity || orderB !== Infinity) {
+			return orderA - orderB;
+		}
+
+		// Si les deux sont hors liste, utiliser le tri fallback
+		if (fallbackSort) {
+			return fallbackSort(a, b);
+		}
+		return 0;
 	});
+}
+
+/**
+ * Tri par date de création décroissante (plus récent en premier)
+ * Utilisé comme fallback pour les produits sans données de tri
+ */
+export function sortByCreatedAtDesc<T extends { createdAt: Date | string }>(
+	a: T,
+	b: T
+): number {
+	return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 }

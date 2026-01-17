@@ -14,8 +14,8 @@ import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "./motion.config";
 
 export interface ScrollIndicatorProps {
-	/** ID de l'élément cible vers lequel scroller */
-	targetId: string;
+	/** ID(s) des éléments cibles - utilise le premier trouvé dans le DOM */
+	targetIds: string | string[];
 	/** Label accessible pour le bouton */
 	ariaLabel?: string;
 	/** Classe CSS additionnelle */
@@ -37,12 +37,12 @@ export interface ScrollIndicatorProps {
  * @example
  * ```tsx
  * <section className="relative min-h-screen">
- *   <ScrollIndicator targetId="next-section" className="hidden sm:block" />
+ *   <ScrollIndicator targetIds={["section-a", "section-b"]} className="hidden sm:block" />
  * </section>
  * ```
  */
 export function ScrollIndicator({
-	targetId,
+	targetIds,
 	ariaLabel = "Voir la suite",
 	className,
 }: ScrollIndicatorProps) {
@@ -59,9 +59,13 @@ export function ScrollIndicator({
 	});
 
 	const handleClick = () => {
-		const target = document.getElementById(targetId);
-		if (target) {
-			target.scrollIntoView({ behavior: "smooth" });
+		const ids = Array.isArray(targetIds) ? targetIds : [targetIds];
+		for (const id of ids) {
+			const target = document.getElementById(id);
+			if (target) {
+				target.scrollIntoView({ behavior: "smooth" });
+				return;
+			}
 		}
 	};
 

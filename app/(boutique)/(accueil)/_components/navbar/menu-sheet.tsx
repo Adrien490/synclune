@@ -19,6 +19,7 @@ import {
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
 import { COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-sizes.constants";
+import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
@@ -138,12 +139,6 @@ function CollectionMiniGrid({
  * - Navigation au clavier
  * - Focus visible
  */
-interface CollectionImage {
-	url: string;
-	blurDataUrl?: string | null;
-	alt?: string | null;
-}
-
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
 	productTypes?: Array<{ slug: string; label: string }>;

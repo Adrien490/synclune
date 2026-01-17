@@ -7,9 +7,10 @@
 
 interface PaymentIconProps {
 	className?: string;
+	"aria-label"?: string;
 }
 
-export function VisaIcon({ className = "" }: PaymentIconProps) {
+export function VisaIcon({ className = "", "aria-label": ariaLabel = "Visa" }: PaymentIconProps) {
 	return (
 		<svg
 			width="32"
@@ -19,7 +20,7 @@ export function VisaIcon({ className = "" }: PaymentIconProps) {
 			xmlns="http://www.w3.org/2000/svg"
 			className={className}
 			role="img"
-			aria-label="Visa"
+			aria-label={ariaLabel}
 		>
 			<title>Visa</title>
 			<rect
@@ -41,7 +42,7 @@ export function VisaIcon({ className = "" }: PaymentIconProps) {
 	);
 }
 
-export function MastercardIcon({ className = "" }: PaymentIconProps) {
+export function MastercardIcon({ className = "", "aria-label": ariaLabel = "Mastercard" }: PaymentIconProps) {
 	return (
 		<svg
 			width="32"
@@ -51,7 +52,7 @@ export function MastercardIcon({ className = "" }: PaymentIconProps) {
 			xmlns="http://www.w3.org/2000/svg"
 			className={className}
 			role="img"
-			aria-label="Mastercard"
+			aria-label={ariaLabel}
 		>
 			<title>Mastercard</title>
 			<rect
@@ -75,7 +76,7 @@ export function MastercardIcon({ className = "" }: PaymentIconProps) {
 	);
 }
 
-export function CBIcon({ className = "" }: PaymentIconProps) {
+export function CBIcon({ className = "", "aria-label": ariaLabel = "Carte Bancaire" }: PaymentIconProps) {
 	return (
 		<svg
 			width="32"
@@ -85,7 +86,7 @@ export function CBIcon({ className = "" }: PaymentIconProps) {
 			xmlns="http://www.w3.org/2000/svg"
 			className={className}
 			role="img"
-			aria-label="Carte Bancaire"
+			aria-label={ariaLabel}
 		>
 			<title>Carte Bancaire</title>
 			<rect
@@ -116,7 +117,7 @@ export function CBIcon({ className = "" }: PaymentIconProps) {
 	);
 }
 
-export function PayPalIcon({ className = "" }: PaymentIconProps) {
+export function PayPalIcon({ className = "", "aria-label": ariaLabel = "PayPal" }: PaymentIconProps) {
 	return (
 		<svg
 			width="32"
@@ -126,7 +127,7 @@ export function PayPalIcon({ className = "" }: PaymentIconProps) {
 			xmlns="http://www.w3.org/2000/svg"
 			className={className}
 			role="img"
-			aria-label="PayPal"
+			aria-label={ariaLabel}
 		>
 			<title>PayPal</title>
 			<rect
@@ -153,7 +154,7 @@ export function PayPalIcon({ className = "" }: PaymentIconProps) {
 	);
 }
 
-export function ApplePayIcon({ className = "" }: PaymentIconProps) {
+export function ApplePayIcon({ className = "", "aria-label": ariaLabel = "Apple Pay" }: PaymentIconProps) {
 	return (
 		<svg
 			width="32"
@@ -163,7 +164,7 @@ export function ApplePayIcon({ className = "" }: PaymentIconProps) {
 			xmlns="http://www.w3.org/2000/svg"
 			className={className}
 			role="img"
-			aria-label="Apple Pay"
+			aria-label={ariaLabel}
 		>
 			<title>Apple Pay</title>
 			<rect

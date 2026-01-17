@@ -59,7 +59,7 @@ export function PolaroidFrame({
 	className,
 }: PolaroidFrameProps) {
 	return (
-		<div
+		<figure
 			className={cn(
 				"relative bg-white p-2 sm:p-3 pb-10 sm:pb-12 rounded-sm shadow-lg",
 				"transition-transform duration-300 hover:scale-[1.02]",
@@ -103,14 +103,14 @@ export function PolaroidFrame({
 
 			{/* Légende manuscrite */}
 			{caption && (
-				<p
+				<figcaption
 					className={cn(
 						"absolute bottom-2 sm:bottom-3 left-0 right-0 text-center text-sm sm:text-base text-gray-600 italic",
 						dancingScript.className
 					)}
 				>
 					{caption}
-				</p>
+				</figcaption>
 			)}
 
 			{/* Effet de bord légèrement usé */}
@@ -121,6 +121,6 @@ export function PolaroidFrame({
 				}}
 				aria-hidden="true"
 			/>
-		</div>
+		</figure>
 	);
 }

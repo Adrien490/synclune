@@ -1,9 +1,11 @@
 import { cacheTag } from "next/cache";
+import { z } from "zod";
 
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getRateLimitId } from "@/modules/auth/lib/rate-limit-helpers";
 import { prisma } from "@/shared/lib/prisma";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
+import { getProductsSchema } from "../schemas/product.schemas";
 
 import {
 	GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY,
@@ -26,7 +28,7 @@ import {
 	getSpellSuggestion,
 	SUGGESTION_THRESHOLD_RESULTS,
 } from "./spell-suggestion";
-import { sortProducts, orderByIds } from "../services/product-list-sorting.service";
+import { sortProducts, orderByIds, sortByCreatedAtDesc } from "../services/product-list-sorting.service";
 import { cacheProducts, PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { serializeProduct } from "../utils/serialize-product";
 
@@ -60,85 +62,106 @@ export async function getProducts(
 	params: GetProductsParams,
 	options?: { isAdmin?: boolean }
 ): Promise<GetProductsReturn> {
-	const admin = options?.isAdmin ?? (await isAdmin());
+	try {
+		// Validation des paramètres d'entrée
+		const validation = getProductsSchema.safeParse(params);
 
-	// Admin: utiliser le tri par défaut admin si aucun tri explicite fourni
-	if (admin && !hasSortByInput(params?.sortBy)) {
-		params = { ...params, sortBy: GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY };
-	}
+		if (!validation.success) {
+			throw new Error(
+				"Invalid parameters: " + JSON.stringify(validation.error.issues)
+			);
+		}
 
-	// Executer la recherche fuzzy AVANT le cache
-	// Cela permet de cacher les resultats bases sur les IDs trouves
-	let searchResult: SearchResult | undefined;
-	if (params.search) {
-		// Rate limiting: protege contre le scraping et les abus
-		let useExactOnly = false;
-		try {
-			const rateLimitId = await getRateLimitId();
-			const isAuthenticated = rateLimitId.startsWith("user:");
-			const limits = isAuthenticated
-				? SEARCH_RATE_LIMITS.authenticated
-				: SEARCH_RATE_LIMITS.guest;
+		let validatedParams = validation.data as GetProductsParams;
+		const admin = options?.isAdmin ?? (await isAdmin());
 
-			const rateLimitResult = checkRateLimit(`search:${rateLimitId}`, limits);
-			if (!rateLimitResult.success) {
-				// Fallback silencieux: utilise recherche exacte seulement
-				console.warn("[search] Rate limit exceeded:", {
-					identifier: rateLimitId,
-					retryAfter: rateLimitResult.retryAfter,
-				});
-				useExactOnly = true;
+		// Admin: utiliser le tri par défaut admin si aucun tri explicite fourni
+		if (admin && !hasSortByInput(validatedParams?.sortBy)) {
+			validatedParams = { ...validatedParams, sortBy: GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY };
+		}
+
+		// Executer la recherche fuzzy AVANT le cache
+		// Cela permet de cacher les resultats bases sur les IDs trouves
+		let searchResult: SearchResult | undefined;
+		let rateLimited = false;
+
+		if (validatedParams.search) {
+			// Rate limiting: protege contre le scraping et les abus
+			let useExactOnly = false;
+			try {
+				const rateLimitId = await getRateLimitId();
+				const isAuthenticated = rateLimitId.startsWith("user:");
+				const limits = isAuthenticated
+					? SEARCH_RATE_LIMITS.authenticated
+					: SEARCH_RATE_LIMITS.guest;
+
+				const rateLimitResult = checkRateLimit(`search:${rateLimitId}`, limits);
+				if (!rateLimitResult.success) {
+					// Fallback: utilise recherche exacte seulement
+					console.warn("[search] Rate limit exceeded:", {
+						identifier: rateLimitId,
+						retryAfter: rateLimitResult.retryAfter,
+					});
+					useExactOnly = true;
+					rateLimited = true;
+				}
+			} catch {
+				// En cas d'erreur rate limit, continuer sans bloquer
 			}
-		} catch {
-			// En cas d'erreur rate limit, continuer sans bloquer
+
+			searchResult = useExactOnly
+				? buildExactSearchConditions(validatedParams.search)
+				: await buildSearchConditions(validatedParams.search, { status: validatedParams.status });
 		}
 
-		searchResult = useExactOnly
-			? buildExactSearchConditions(params.search)
-			: await buildSearchConditions(params.search, { status: params.status });
-	}
-
-	// Récupérer les IDs des bestsellers si tri par meilleures ventes demandé
-	// Exécuté AVANT le cache pour inclure les IDs dans la clé de cache
-	// Limite optimisée selon perPage pour éviter de récupérer trop de données
-	let bestsellerIds: string[] | undefined;
-	if (params.sortBy === "best-selling") {
-		const bestsellerLimit = Math.min(
-			Math.max(params.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE, 50),
-			GET_PRODUCTS_MAX_RESULTS_PER_PAGE
-		);
-		bestsellerIds = await getBestsellerIds(bestsellerLimit);
-	}
-
-	// Récupérer les IDs des produits populaires si tri par popularité demandé
-	let popularIds: string[] | undefined;
-	if (params.sortBy === "popular") {
-		const popularLimit = Math.min(
-			Math.max(params.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE, 50),
-			GET_PRODUCTS_MAX_RESULTS_PER_PAGE
-		);
-		popularIds = await getPopularProductIds(popularLimit);
-	}
-
-	// Récupérer les produits
-	const result = await fetchProducts(params, searchResult, bestsellerIds, popularIds);
-
-	// Proposer une suggestion si peu ou pas de résultats avec une recherche active
-	// Ne pas suggérer pour les admins (ils recherchent souvent des SKU/ID)
-	if (
-		params.search &&
-		!admin &&
-		result.totalCount <= SUGGESTION_THRESHOLD_RESULTS
-	) {
-		const suggestion = await getSpellSuggestion(params.search, {
-			status: params.status,
-		});
-		if (suggestion) {
-			return { ...result, suggestion: suggestion.term };
+		// Récupérer les IDs des bestsellers si tri par meilleures ventes demandé
+		// Exécuté AVANT le cache pour inclure les IDs dans la clé de cache
+		// Limite optimisée selon perPage pour éviter de récupérer trop de données
+		let bestsellerIds: string[] | undefined;
+		if (validatedParams.sortBy === "best-selling") {
+			const bestsellerLimit = Math.min(
+				Math.max(validatedParams.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE, 50),
+				GET_PRODUCTS_MAX_RESULTS_PER_PAGE
+			);
+			bestsellerIds = await getBestsellerIds(bestsellerLimit);
 		}
-	}
 
-	return result;
+		// Récupérer les IDs des produits populaires si tri par popularité demandé
+		let popularIds: string[] | undefined;
+		if (validatedParams.sortBy === "popular") {
+			const popularLimit = Math.min(
+				Math.max(validatedParams.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE, 50),
+				GET_PRODUCTS_MAX_RESULTS_PER_PAGE
+			);
+			popularIds = await getPopularProductIds(popularLimit);
+		}
+
+		// Récupérer les produits
+		const result = await fetchProducts(validatedParams, searchResult, bestsellerIds, popularIds);
+
+		// Proposer une suggestion si peu ou pas de résultats avec une recherche active
+		// Ne pas suggérer pour les admins (ils recherchent souvent des SKU/ID)
+		if (
+			validatedParams.search &&
+			!admin &&
+			result.totalCount <= SUGGESTION_THRESHOLD_RESULTS
+		) {
+			const suggestion = await getSpellSuggestion(validatedParams.search, {
+				status: validatedParams.status,
+			});
+			if (suggestion) {
+				return { ...result, suggestion: suggestion.term, rateLimited };
+			}
+		}
+
+		return rateLimited ? { ...result, rateLimited } : result;
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			throw new Error("Invalid parameters");
+		}
+
+		throw error;
+	}
 }
 
 /**
@@ -172,8 +195,11 @@ async function fetchProducts(
 	try {
 		const where = buildProductWhereClause(params, searchResult);
 
-		// Récupérer tous les produits correspondant aux filtres
-		// Le tri et la pagination sont faits en JS pour supporter le tri par prix
+		// NOTE: Tous les produits sont chargés puis triés/paginés en JS car:
+		// - Le tri par prix nécessite MIN() sur les SKUs (impossible en Prisma)
+		// - Le tri fuzzy préserve l'ordre de pertinence des IDs pré-calculés
+		// - Les bestsellers/popular utilisent des IDs pré-calculés
+		// Pour un catalogue >10,000 produits, envisager la dénormalisation de minPrice.
 		const allProducts = await prisma.product.findMany({
 			where,
 			select: GET_PRODUCTS_SELECT,
@@ -192,16 +218,16 @@ async function fetchProducts(
 		let sortedProducts: Product[];
 		if (hasFuzzyResults && params.sortBy === GET_PRODUCTS_DEFAULT_SORT_BY) {
 			// Tri par pertinence (préserve l'ordre de la recherche fuzzy)
-			sortedProducts = orderByIds(allProducts as Product[], fuzzyIds);
+			sortedProducts = orderByIds(allProducts, fuzzyIds);
 		} else if (params.sortBy === "best-selling" && hasBestsellerResults) {
-			// Tri par meilleures ventes (préserve l'ordre des ventes)
-			sortedProducts = orderByIds(allProducts as Product[], bestsellerIds);
+			// Tri par meilleures ventes, fallback par date de création pour les produits sans ventes
+			sortedProducts = orderByIds(allProducts, bestsellerIds, sortByCreatedAtDesc);
 		} else if (params.sortBy === "popular" && hasPopularResults) {
-			// Tri par popularité (ventes + avis combinés)
-			sortedProducts = orderByIds(allProducts as Product[], popularIds);
+			// Tri par popularité, fallback par date de création pour les produits sans score
+			sortedProducts = orderByIds(allProducts, popularIds, sortByCreatedAtDesc);
 		} else {
 			// Tri selon le critère demandé par l'utilisateur
-			sortedProducts = sortProducts(allProducts as Product[], params.sortBy);
+			sortedProducts = sortProducts(allProducts, params.sortBy);
 		}
 
 		// Filtrer les produits en promotion si demandé

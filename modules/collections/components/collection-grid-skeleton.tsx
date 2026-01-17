@@ -19,12 +19,8 @@ export function CollectionGridSkeleton() {
 								<Skeleton className="h-6 w-3/4" />
 							</div>
 
-							{/* Description skeleton - 3 lines (line-clamp-3) */}
-							<div className="space-y-2">
-								<Skeleton className="h-4 w-full" />
-								<Skeleton className="h-4 w-full" />
-								<Skeleton className="h-4 w-2/3" />
-							</div>
+							{/* Product count skeleton */}
+							<Skeleton className="h-4 w-16" />
 						</div>
 					</div>
 				))}

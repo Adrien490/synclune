@@ -92,7 +92,7 @@ export function Bestsellers({ productsPromise, wishlistProductIdsPromise }: Best
 						aria-describedby="bestsellers-cta-description"
 					>
 						<Link href="/produits?sortBy=best-selling">
-							Voir tous les best-sellers
+							Voir plus
 						</Link>
 					</Button>
 					<span id="bestsellers-cta-description" className="sr-only">

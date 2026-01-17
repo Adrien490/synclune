@@ -1,3 +1,4 @@
+import { COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-sizes.constants";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import type { CollectionImage } from "../types/collection.types";
@@ -9,6 +10,9 @@ const STAGGER_DELAYS = [
 	"delay-[60ms]",
 	"delay-[100ms]",
 ] as const;
+
+/** Quality reduite pour images secondaires */
+const SECONDARY_IMAGE_QUALITY = 75;
 
 interface CollectionImageItemProps {
 	image: CollectionImage;
@@ -65,7 +69,7 @@ export function CollectionImageItem({
 			loading={isAboveFold ? undefined : "lazy"}
 			placeholder={image.blurDataUrl ? "blur" : "empty"}
 			blurDataURL={image.blurDataUrl || undefined}
-			quality={index === 0 ? 85 : 75}
+			quality={index === 0 ? COLLECTION_IMAGE_QUALITY : SECONDARY_IMAGE_QUALITY}
 		/>
 	);
 }

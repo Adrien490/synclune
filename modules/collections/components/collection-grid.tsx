@@ -75,9 +75,9 @@ export function CollectionGrid({
 							<CollectionCard
 								slug={collection.slug}
 								name={collection.name}
-								description={collection.description}
 								images={images}
 								index={index}
+								headingLevel="h2"
 								productCount={collection._count.products}
 							/>
 						</div>

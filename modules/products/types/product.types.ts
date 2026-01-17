@@ -70,6 +70,8 @@ export type GetProductsReturn = {
 	totalCount: number;
 	/** Suggestion de correction orthographique quand peu/pas de résultats */
 	suggestion?: string;
+	/** Indique si le rate limit a été atteint (fallback vers recherche exacte) */
+	rateLimited?: boolean;
 };
 
 export type Product = Prisma.ProductGetPayload<{

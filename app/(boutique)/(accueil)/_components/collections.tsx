@@ -33,6 +33,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 
 	return (
 		<section
+			id="collections"
 			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
 			aria-labelledby="collections-title"
 			aria-describedby="collections-subtitle"
@@ -68,7 +69,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 								align: "center",
 								containScroll: "trimSnaps",
 							}}
-							className="w-full"
+							className="w-full group"
 							aria-label="Carousel de collections"
 						>
 							<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
@@ -90,7 +91,6 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 											<CollectionCard
 												slug={collection.slug}
 												name={collection.name}
-												description={collection.description}
 												images={images}
 												index={index}
 												sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CAROUSEL}
@@ -104,11 +104,11 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							{showArrows && (
 								<>
 									<CarouselPrevious
-										className="hidden md:flex left-4 top-[40%]"
+										className="hidden md:flex left-4 top-[40%] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
 										aria-label="Voir les collections précédentes"
 									/>
 									<CarouselNext
-										className="hidden md:flex right-4 top-[40%]"
+										className="hidden md:flex right-4 top-[40%] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
 										aria-label="Voir les collections suivantes"
 									/>
 								</>
