@@ -69,7 +69,7 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 								align: "center",
 								containScroll: "trimSnaps",
 							}}
-							className="w-full group"
+							className="w-full group/carousel"
 							aria-label="Carousel de collections"
 						>
 							<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
@@ -104,11 +104,11 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 							{showArrows && (
 								<>
 									<CarouselPrevious
-										className="hidden md:flex left-4 top-[40%] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+										className="hidden md:flex left-4 top-[40%] opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
 										aria-label="Voir les collections précédentes"
 									/>
 									<CarouselNext
-										className="hidden md:flex right-4 top-[40%] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+										className="hidden md:flex right-4 top-[40%] opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
 										aria-label="Voir les collections suivantes"
 									/>
 								</>

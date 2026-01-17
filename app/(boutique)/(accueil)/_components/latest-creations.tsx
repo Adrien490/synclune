@@ -82,7 +82,7 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 								align: "start",
 								containScroll: "trimSnaps",
 							}}
-							className="w-full"
+							className="w-full group/carousel"
 							aria-label="Carousel des dernières créations"
 						>
 							<CarouselContent className="-ml-3 sm:-ml-4 lg:-ml-6 py-4" showFade>
@@ -105,11 +105,11 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 							{showArrows && (
 								<>
 									<CarouselPrevious
-										className="hidden md:flex left-4 top-[40%]"
+										className="hidden md:flex left-4 top-[40%] opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
 										aria-label="Voir les créations précédentes"
 									/>
 									<CarouselNext
-										className="hidden md:flex right-4 top-[40%]"
+										className="hidden md:flex right-4 top-[40%] opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
 										aria-label="Voir les créations suivantes"
 									/>
 								</>
