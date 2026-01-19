@@ -77,34 +77,12 @@ export function AtelierStory() {
 								choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il
 								n'existe qu'en quelques exemplaires (parfois moins de dix).
 							</p>
-							{/* Citation finale mise en valeur avec fond pastel */}
-							<figure className="relative mt-6 -mx-4 sm:mx-0">
-								<blockquote
-									className="relative px-6 py-5 bg-muted/40 rounded-xl border border-primary/10 text-foreground font-medium text-left shadow-sm"
-									cite="https://synclune.fr"
-								>
-									<Sparkles
-										className="absolute -top-2 -left-2 w-5 h-5 text-primary/60"
-										aria-hidden="true"
-									/>
-									<p className="text-base sm:text-lg">Tout est fait à la main !</p>
-									<p className="text-base sm:text-lg mt-2">
-										Je mets du cœur à chaque création, j'espère que ça vous plaira{" "}
-										<span role="img" aria-label="coeur rouge">
-											❤️
-										</span>
-									</p>
-									<Sparkles
-										className="absolute -bottom-2 -right-2 w-5 h-5 text-secondary/60"
-										aria-hidden="true"
-									/>
-								</blockquote>
-								<figcaption
-									className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic pt-6 text-center`}
-								>
-									<cite className="not-italic">— Léane</cite>
-								</figcaption>
-							</figure>
+							{/* Signature */}
+							<p
+								className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic pt-4 text-center`}
+							>
+								— Léane
+							</p>
 						</Stagger>
 					</div>
 				</Fade>
