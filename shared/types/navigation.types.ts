@@ -22,6 +22,13 @@ export type IconName =
 	| "info"
 	| "layout-dashboard"
 
+/** Image pour mega menu collections */
+export type NavItemImage = {
+	url: string
+	blurDataUrl: string | null
+	alt: string | null
+}
+
 /**
  * Item enfant de navigation (sous-menu)
  */
@@ -33,7 +40,14 @@ export type NavItemChild = {
 	description?: string | null
 	imageUrl?: string | null
 	blurDataUrl?: string | null
+	/** Images multiples pour mega menu collections (bento grid) */
+	images?: NavItemImage[]
 }
+
+/**
+ * Type de dropdown pour mega menu desktop
+ */
+export type DropdownType = "creations" | "collections"
 
 /**
  * Item de navigation avec enfants possibles
@@ -48,6 +62,8 @@ export type NavItemWithChildren = {
 	 * Pour mobile: si true, affiche un collapsible
 	 */
 	hasDropdown?: boolean
+	/** Type de mega menu (creations = grille types, collections = bento images) */
+	dropdownType?: DropdownType
 }
 
 /**

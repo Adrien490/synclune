@@ -97,7 +97,7 @@ export function PolaroidFrame({
 			)}
 
 			{/* Contenu de l'image */}
-			<div className="relative aspect-[4/3] overflow-hidden bg-muted">
+			<div className="relative aspect-4/3 overflow-hidden bg-muted">
 				{children}
 			</div>
 

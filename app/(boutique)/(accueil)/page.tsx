@@ -1,5 +1,3 @@
-import { Bestsellers } from "@/app/(boutique)/(accueil)/_components/bestsellers";
-import { BestsellersSkeleton } from "@/app/(boutique)/(accueil)/_components/bestsellers-skeleton";
 import { Collections } from "@/app/(boutique)/(accueil)/_components/collections";
 import { LatestCreations } from "@/app/(boutique)/(accueil)/_components/latest-creations";
 import { LatestCreationsSkeleton } from "@/app/(boutique)/(accueil)/_components/latest-creations-skeleton";
@@ -7,7 +5,9 @@ import { CollectionStatus } from "@/app/generated/prisma/client";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
+import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
+import { StructuredData } from "@/shared/components/structured-data";
 import type { Metadata } from "next";
 // import { NewsletterSection } from "@/modules/newsletter/components/newsletter-section";
 import dynamic from "next/dynamic";
@@ -58,31 +58,18 @@ export const metadata: Metadata = {
 
 
 export default async function Page() {
-	// Dedupliquer l'appel getWishlistProductIds() pour Bestsellers et LatestCreations
+	// Fetch les stats d'avis pour les schemas SEO
+	const reviewStats = await getGlobalReviewStats();
+	// Promise pour le streaming des wishlist IDs
 	const wishlistIdsPromise = getWishlistProductIds();
 
 	return (
 		<>
+			{/* Schemas JSON-LD pour SEO (LocalBusiness, Organization, WebSite, Founder) */}
+			<StructuredData reviewStats={reviewStats} />
 
 			{/* 1. Hero - Capture d'attention + Positionnement de marque */}
 			<Hero />
-
-			{/* 1.5. Bestsellers - Les bijoux les plus vendus (preuve sociale) */}
-			<Suspense fallback={<BestsellersSkeleton />}>
-				<Bestsellers
-					productsPromise={getProducts(
-						{
-							perPage: 8,
-							sortBy: "best-selling",
-							filters: {
-								status: "PUBLIC",
-							},
-						},
-						{ isAdmin: false }
-					)}
-					wishlistProductIdsPromise={wishlistIdsPromise}
-				/>
-			</Suspense>
 
 			{/* 2. Latest Creations - Product-first approach: 8 nouveautés */}
 			<Suspense fallback={<LatestCreationsSkeleton productsCount={8} />}>

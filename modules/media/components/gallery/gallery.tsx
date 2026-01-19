@@ -42,7 +42,7 @@ function GalleryLoadingSkeleton() {
 		<SkeletonGroup label="Chargement de la galerie">
 			<div className="w-full">
 				<Skeleton
-					className="aspect-3/4 sm:aspect-[4/5] rounded-3xl w-full"
+					className="aspect-3/4 sm:aspect-4/5 rounded-3xl w-full"
 					variant="shimmer"
 				/>
 			</div>
@@ -259,7 +259,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 	if (!images.length) {
 		return (
 			<div className="gallery-empty">
-				<div className="relative aspect-3/4 sm:aspect-[4/5] rounded-3xl bg-linear-card p-8 flex items-center justify-center overflow-hidden">
+				<div className="relative aspect-3/4 sm:aspect-4/5 rounded-3xl bg-linear-card p-8 flex items-center justify-center overflow-hidden">
 					<div
 						className={cn(
 							"absolute inset-0 bg-linear-organic opacity-10 rounded-3xl",
@@ -328,7 +328,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 					<div className="gallery-main relative group order-2">
 						<div
 							className={cn(
-								"relative aspect-3/4 sm:aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl",
+								"relative aspect-3/4 sm:aspect-4/5 overflow-hidden rounded-2xl sm:rounded-3xl",
 								"bg-linear-organic border-0 sm:border-2 sm:border-border",
 								"shadow-md sm:shadow-lg hover:shadow-lg",
 								transitionClass

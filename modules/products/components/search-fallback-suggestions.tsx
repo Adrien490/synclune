@@ -30,7 +30,7 @@ interface SearchFallbackSuggestionsProps {
  * Composant Server affichant des suggestions de repli pour les pages sans resultats (Baymard UX)
  *
  * Fetch ses propres donnees:
- * - Produits populaires (4 best-sellers)
+ * - Dernieres creations (4 produits les plus recents)
  * - Types de produits pour navigation
  *
  * @see https://baymard.com/blog/no-results-page
@@ -40,12 +40,12 @@ export async function SearchFallbackSuggestions({
 	suggestion,
 	baseResetUrl = "/produits",
 }: SearchFallbackSuggestionsProps) {
-	// Fetch en parallele les produits populaires, categories et wishlist
-	const [popularResult, productTypesResult, wishlistProductIds] =
+	// Fetch en parallele les dernieres creations, categories et wishlist
+	const [latestResult, productTypesResult, wishlistProductIds] =
 		await Promise.all([
 			getProducts({
 				perPage: 4,
-				sortBy: "popular",
+				sortBy: "created-descending",
 				filters: {
 					status: "PUBLIC",
 					stockStatus: "in_stock",
@@ -62,7 +62,7 @@ export async function SearchFallbackSuggestions({
 			getWishlistProductIds(),
 		]);
 
-	const popularProducts = popularResult.products;
+	const latestProducts = latestResult.products;
 	const productTypes = productTypesResult.productTypes;
 
 	return (
@@ -82,7 +82,7 @@ export async function SearchFallbackSuggestions({
 						{suggestion ? (
 							<SuggestionLink suggestion={suggestion} />
 						) : (
-							"Essayez de modifier vos filtres ou explorez nos créations populaires ci-dessous."
+							"Essayez de modifier vos filtres ou explorez nos dernières créations ci-dessous."
 						)}
 					</EmptyDescription>
 				</EmptyHeader>
@@ -91,17 +91,17 @@ export async function SearchFallbackSuggestions({
 				<NoResultsFilters resetUrl={baseResetUrl} />
 			</Empty>
 
-			{/* Produits populaires */}
-			{popularProducts.length > 0 && (
-				<section aria-labelledby="popular-products-heading" className="space-y-4">
+			{/* Dernières créations */}
+			{latestProducts.length > 0 && (
+				<section aria-labelledby="latest-products-heading" className="space-y-4">
 					<h2
-						id="popular-products-heading"
+						id="latest-products-heading"
 						className="text-lg font-semibold text-center"
 					>
-						Nos créations populaires
+						Nos dernières créations
 					</h2>
 					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-						{popularProducts.map((product, index) => (
+						{latestProducts.map((product, index) => (
 							<ProductCard
 								key={product.id}
 								product={product}

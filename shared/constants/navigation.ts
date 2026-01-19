@@ -31,16 +31,11 @@ export const COLLECTIONS_MENU_ITEMS: NavItemChild[] = [
  * Navigation desktop - Toujours visible sur écran ≥1024px
  *
  * Structure optimisée pour bijouterie artisanale:
- * Niveau 1: Les créations, Les collections, Personnalisation
+ * Niveau 1: Les créations (mega menu), Les collections (mega menu), Personnalisation
  */
 export const desktopNavItems = [
-	{ href: "/produits", label: "Les créations", icon: "gem" },
-	{
-		href: "/collections",
-		label: "Les collections",
-		icon: "folder-open",
-		hasDropdown: false,
-	},
+	{ href: "/produits", label: "Les créations", icon: "gem", hasDropdown: true },
+	{ href: "/collections", label: "Les collections", icon: "folder-open", hasDropdown: true },
 	{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
 ] as const;
 
@@ -117,7 +112,7 @@ export function getMobileNavItems(
 			: COLLECTIONS_MENU_ITEMS, // Fallback sur les collections statiques
 	};
 
-	// Flow optimisé: Accueil → Créations → Collections → Meilleures ventes → Personnaliser → Compte → Tableau de bord (admin)
+	// Flow optimisé: Accueil → Créations → Collections → Personnaliser → Compte → Tableau de bord (admin)
 	const items: NavItemWithChildren[] = [
 		// 🏠 ACCUEIL - Retour à la page d'accueil
 		{ href: "/", label: "Accueil", icon: "home" },
@@ -125,9 +120,6 @@ export function getMobileNavItems(
 		// 💎 DÉCOUVRIR - Créations en premier
 		bijouxItem,
 		collectionsItem,
-
-		// ⭐ MEILLEURES VENTES - Social proof (Baymard: full scope label)
-		{ href: "/produits?sortBy=best-selling", label: "Bijoux les plus vendus", icon: "sparkles" },
 
 		// ✨ PERSONNALISER - Service différenciateur
 		{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
@@ -149,13 +141,73 @@ export function getMobileNavItems(
 	return items;
 }
 
+/** Type pour les images de collections dans le mega menu */
+type CollectionImage = {
+	url: string;
+	blurDataUrl: string | null;
+	alt: string | null;
+};
+
+/** Type pour les collections dans le mega menu */
+type MegaMenuCollection = {
+	slug: string;
+	label: string;
+	images: CollectionImage[];
+};
+
 /**
- * Génère les items de navigation desktop
+ * Génère les items de navigation desktop avec mega menus
  *
- * @returns Items de navigation desktop
+ * @param productTypes - Types de produits actifs (Bagues, Colliers, etc.)
+ * @param collections - Collections avec images pour le mega menu
+ * @returns Items de navigation desktop avec children pour mega menus
  */
-export function getDesktopNavItems(): NavItemWithChildren[] {
-	return desktopNavItems as unknown as NavItemWithChildren[];
+export function getDesktopNavItems(
+	productTypes?: Array<{ slug: string; label: string }>,
+	collections?: MegaMenuCollection[]
+): NavItemWithChildren[] {
+	// Mega menu "Les créations" avec types de produits
+	const creationsItem: NavItemWithChildren = {
+		href: "/produits",
+		label: "Les créations",
+		icon: "gem",
+		hasDropdown: true,
+		dropdownType: "creations",
+		children: productTypes
+			? [
+					{ href: "/produits", label: "Toutes les créations", icon: "gem" },
+					...productTypes.map((type) => ({
+						href: `/produits/${type.slug}`,
+						label: type.label,
+					})),
+			  ]
+			: undefined,
+	};
+
+	// Mega menu "Les collections" avec images
+	const collectionsItem: NavItemWithChildren = {
+		href: "/collections",
+		label: "Les collections",
+		icon: "folder-open",
+		hasDropdown: true,
+		dropdownType: "collections",
+		children: collections
+			? [
+					{ href: "/collections", label: "Toutes les collections", icon: "folder-open" },
+					...collections.map((collection) => ({
+						href: `/collections/${collection.slug}`,
+						label: collection.label,
+						images: collection.images,
+					})),
+			  ]
+			: undefined,
+	};
+
+	return [
+		creationsItem,
+		collectionsItem,
+		{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
+	];
 }
 
 // Footer - Navigation simple (labels harmonisés avec le header)

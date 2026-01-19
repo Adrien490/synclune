@@ -1,4 +1,3 @@
-import { cacheTag } from "next/cache";
 import { z } from "zod";
 
 import { isAdmin } from "@/modules/auth/utils/guards";
@@ -22,14 +21,12 @@ import {
 	buildExactSearchConditions,
 	type SearchResult,
 } from "../services/product-query-builder";
-import { getBestsellerIds } from "./bestseller-query";
-import { getPopularProductIds } from "./popularity-query";
 import {
 	getSpellSuggestion,
 	SUGGESTION_THRESHOLD_RESULTS,
 } from "./spell-suggestion";
-import { sortProducts, orderByIds, sortByCreatedAtDesc } from "../services/product-list-sorting.service";
-import { cacheProducts, PRODUCTS_CACHE_TAGS } from "../constants/cache";
+import { sortProducts, orderByIds } from "../services/product-list-sorting.service";
+import { cacheProducts } from "../constants/cache";
 import { serializeProduct } from "../utils/serialize-product";
 
 // Re-export pour compatibilité
@@ -114,30 +111,8 @@ export async function getProducts(
 				: await buildSearchConditions(validatedParams.search, { status: validatedParams.status });
 		}
 
-		// Récupérer les IDs des bestsellers si tri par meilleures ventes demandé
-		// Exécuté AVANT le cache pour inclure les IDs dans la clé de cache
-		// Limite optimisée selon perPage pour éviter de récupérer trop de données
-		let bestsellerIds: string[] | undefined;
-		if (validatedParams.sortBy === "best-selling") {
-			const bestsellerLimit = Math.min(
-				Math.max(validatedParams.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE, 50),
-				GET_PRODUCTS_MAX_RESULTS_PER_PAGE
-			);
-			bestsellerIds = await getBestsellerIds(bestsellerLimit);
-		}
-
-		// Récupérer les IDs des produits populaires si tri par popularité demandé
-		let popularIds: string[] | undefined;
-		if (validatedParams.sortBy === "popular") {
-			const popularLimit = Math.min(
-				Math.max(validatedParams.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE, 50),
-				GET_PRODUCTS_MAX_RESULTS_PER_PAGE
-			);
-			popularIds = await getPopularProductIds(popularLimit);
-		}
-
 		// Récupérer les produits
-		const result = await fetchProducts(validatedParams, searchResult, bestsellerIds, popularIds);
+		const result = await fetchProducts(validatedParams, searchResult);
 
 		// Proposer une suggestion si peu ou pas de résultats avec une recherche active
 		// Ne pas suggérer pour les admins (ils recherchent souvent des SKU/ID)
@@ -170,27 +145,13 @@ export async function getProducts(
  *
  * @param params - Paramètres de recherche
  * @param searchResult - Résultat de la recherche fuzzy (optionnel)
- * @param bestsellerIds - IDs des produits triés par ventes (optionnel)
- * @param popularIds - IDs des produits triés par popularité (optionnel)
  */
 async function fetchProducts(
 	params: GetProductsParams,
-	searchResult?: SearchResult,
-	bestsellerIds?: string[],
-	popularIds?: string[]
+	searchResult?: SearchResult
 ): Promise<GetProductsReturn> {
 	"use cache";
 	cacheProducts();
-
-	// Tag spécifique pour les bestsellers (invalidé après paiement)
-	if (bestsellerIds !== undefined) {
-		cacheTag(PRODUCTS_CACHE_TAGS.BESTSELLERS);
-	}
-
-	// Tag spécifique pour la popularité (invalidé après paiement ou nouvel avis)
-	if (popularIds !== undefined) {
-		cacheTag(PRODUCTS_CACHE_TAGS.POPULAR);
-	}
 
 	try {
 		const where = buildProductWhereClause(params, searchResult);
@@ -207,24 +168,14 @@ async function fetchProducts(
 
 		// Trier les produits :
 		// - Si recherche fuzzy active avec résultats → tri par pertinence (défaut)
-		// - Si tri best-selling avec résultats → tri par ventes
-		// - Si tri popular avec résultats → tri par popularité
 		// - Sinon → tri selon le critère demandé
 		const fuzzyIds = searchResult?.fuzzyIds;
 		const hasFuzzyResults = fuzzyIds && fuzzyIds.length > 0;
-		const hasBestsellerResults = bestsellerIds && bestsellerIds.length > 0;
-		const hasPopularResults = popularIds && popularIds.length > 0;
 
 		let sortedProducts: Product[];
 		if (hasFuzzyResults && params.sortBy === GET_PRODUCTS_DEFAULT_SORT_BY) {
 			// Tri par pertinence (préserve l'ordre de la recherche fuzzy)
 			sortedProducts = orderByIds(allProducts, fuzzyIds);
-		} else if (params.sortBy === "best-selling" && hasBestsellerResults) {
-			// Tri par meilleures ventes, fallback par date de création pour les produits sans ventes
-			sortedProducts = orderByIds(allProducts, bestsellerIds, sortByCreatedAtDesc);
-		} else if (params.sortBy === "popular" && hasPopularResults) {
-			// Tri par popularité, fallback par date de création pour les produits sans score
-			sortedProducts = orderByIds(allProducts, popularIds, sortByCreatedAtDesc);
 		} else {
 			// Tri selon le critère demandé par l'utilisateur
 			sortedProducts = sortProducts(allProducts, params.sortBy);

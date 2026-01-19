@@ -23,7 +23,7 @@ export function AtelierStory() {
 				<Reveal y={20} duration={0.6} once>
 					<div className="mb-8 sm:mb-12">
 						<PlaceholderImage
-							className="aspect-[3/2] sm:aspect-[16/9] max-h-[50vh] sm:max-h-none"
+							className="aspect-3/2 sm:aspect-video max-h-[50vh] sm:max-h-none"
 							label="Atelier de création Synclune à Nantes - Léane travaillant sur ses bijoux artisanaux"
 						/>
 					</div>

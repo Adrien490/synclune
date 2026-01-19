@@ -9,8 +9,8 @@ export function WishlistGridSkeleton() {
 				{Array.from({ length: 8 }).map((_, i) => (
 					<div key={i} className="wishlist-item">
 						<article className="relative overflow-hidden bg-card rounded-lg p-4 border-2 border-transparent shadow-sm">
-							{/* Image avec aspect-[4/5] ratio */}
-							<div className="relative aspect-[4/5] overflow-hidden rounded-md bg-muted">
+							{/* Image avec aspect-4/5 ratio */}
+							<div className="relative aspect-4/5 overflow-hidden rounded-md bg-muted">
 								<Skeleton className="absolute inset-0" />
 							</div>
 

@@ -1,13 +1,5 @@
-import { Fade, Reveal } from "@/shared/components/animations";
+import { Fade, Stagger } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
-import {
-	Carousel,
-	CarouselContent,
-	CarouselDots,
-	CarouselItem,
-	CarouselNext,
-	CarouselPrevious,
-} from "@/shared/components/ui/carousel";
 import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { ProductCard } from "@/modules/products/components/product-card";
@@ -21,13 +13,10 @@ interface LatestCreationsProps {
 }
 
 /**
- * Section Dernières Créations - Carousel des bijoux les plus récents
+ * Section Dernières Créations - Grille des bijoux les plus récents
  *
  * Pattern : Server Component qui accepte une Promise pour le streaming
  * Permet le rendu progressif avec React Suspense
- *
- * Le carousel evoque un flux continu de nouvelles creations, renforce
- * l'image d'un atelier actif et encourage l'exploration
  *
  * @param productsPromise - Promise contenant les produits récents
  */
@@ -40,8 +29,6 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 		return null;
 	}
 
-	const showArrows = products.length > 4;
-
 	return (
 		<section
 			id="latest-creations"
@@ -49,14 +36,6 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 			aria-labelledby="latest-creations-title"
 			aria-describedby="latest-creations-subtitle"
 		>
-			{/* Skip link pour navigation clavier - sauter le carousel */}
-			<a
-				href="#latest-creations-cta"
-				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-background focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-ring focus:text-foreground"
-			>
-				Passer au bouton Voir toutes mes créations
-			</a>
-
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
 				<header className="mb-8 text-center lg:mb-12">
@@ -75,54 +54,27 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 					</Fade>
 				</header>
 
-				<div className="mb-8 lg:mb-12">
-					<Reveal delay={0.2} duration={0.8} y={20} once={true}>
-						<Carousel
-							opts={{
-								align: "start",
-								containScroll: "trimSnaps",
-							}}
-							className="w-full group/carousel"
-							aria-label="Carousel des dernières créations"
-						>
-							<CarouselContent className="-ml-3 sm:-ml-4 lg:-ml-6 py-4" showFade>
-								{products.map((product, index) => (
-									<CarouselItem
-										key={product.id}
-										className="pl-3 sm:pl-4 lg:pl-6 basis-[clamp(160px,45vw,200px)] sm:basis-1/3 lg:basis-1/4"
-									>
-										<ProductCard
-											product={product}
-											index={index}
-											isInWishlist={wishlistProductIds.has(product.id)}
-											sectionId="latest"
-										/>
-									</CarouselItem>
-								))}
-							</CarouselContent>
+				<Stagger
+					className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
+					role="list"
+					aria-label="Liste des dernières créations"
+					stagger={0.08}
+					y={25}
+					inView
+					once={true}
+				>
+					{products.map((product, index) => (
+						<ProductCard
+							key={product.id}
+							product={product}
+							index={index}
+							isInWishlist={wishlistProductIds.has(product.id)}
+							sectionId="latest"
+						/>
+					))}
+				</Stagger>
 
-							{/* Flèches de navigation - Desktop uniquement */}
-							{showArrows && (
-								<>
-									<CarouselPrevious
-										className="hidden md:flex left-4 top-[40%] opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
-										aria-label="Voir les créations précédentes"
-									/>
-									<CarouselNext
-										className="hidden md:flex right-4 top-[40%] opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
-										aria-label="Voir les créations suivantes"
-									/>
-								</>
-							)}
-
-							{/* Dots - Mobile uniquement */}
-							<CarouselDots className="md:hidden" />
-						</Carousel>
-					</Reveal>
-				</div>
-
-				<div id="latest-creations-cta">
-					<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">
+				<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">
 					<Button
 						asChild
 						size="lg"
@@ -136,8 +88,7 @@ export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: 
 					<span id="latest-creations-cta-description" className="sr-only">
 						Découvrir tous les bijoux récemment créés dans la boutique Synclune
 					</span>
-					</Fade>
-				</div>
+				</Fade>
 			</div>
 		</section>
 	);

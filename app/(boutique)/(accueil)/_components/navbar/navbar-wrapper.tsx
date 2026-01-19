@@ -9,17 +9,25 @@ interface NavbarWrapperProps {
 
 /**
  * Wrapper client de la Navbar avec effet de scroll (glass effect)
+ *
+ * Features:
+ * - Glass effect au scroll avec backdrop-blur
+ * - Fixed white background (no dark mode)
+ * - data-scrolled pour animations enfants
+ * - Safe area pour les appareils avec notch
  */
 export function NavbarWrapper({ children }: NavbarWrapperProps) {
 	const isScrolled = useIsScrolled(20);
+
 	return (
 		<header
+			data-scrolled={isScrolled}
 			className={cn(
-				"fixed top-0 inset-x-0 z-40",
+				"group fixed top-0 inset-x-0 z-40",
 				"transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out",
 				"border-b pt-[env(safe-area-inset-top)]",
 				isScrolled
-					? "bg-white/95 [@supports(backdrop-filter:blur(4px))]:backdrop-blur-sm border-border/60 shadow-lg"
+					? "bg-white/95 backdrop-blur-md border-gray-200 shadow-lg shadow-black/5"
 					: "bg-transparent border-transparent"
 			)}
 		>

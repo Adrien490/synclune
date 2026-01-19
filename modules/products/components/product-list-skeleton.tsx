@@ -31,7 +31,7 @@ export function ProductListSkeleton() {
 							)}
 							style={{ animationDelay: `${i * 50}ms`, animationFillMode: "backwards" }}
 						>
-							{/* Image avec aspect-[4/5] ratio */}
+							{/* Image avec aspect-4/5 ratio */}
 							<div className="product-card-media relative aspect-square sm:aspect-4/5 overflow-hidden bg-muted rounded-lg">
 								<Skeleton className="absolute inset-0 rounded-lg" />
 							</div>

@@ -16,7 +16,7 @@ export function CartRecommendationsSkeleton({ limit = 4 }: { limit?: number }) {
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
 				{[...Array(limit)].map((_, index) => (
 					<div key={index} className="bg-card rounded-lg shadow-sm overflow-hidden">
-						<div className="aspect-[4/5] bg-muted animate-pulse" />
+						<div className="aspect-4/5 bg-muted animate-pulse" />
 						<div className="p-3 space-y-2">
 							<div className="h-5 bg-muted animate-pulse rounded" />
 							<div className="h-4 w-16 bg-muted animate-pulse rounded" />

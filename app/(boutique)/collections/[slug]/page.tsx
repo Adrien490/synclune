@@ -76,7 +76,7 @@ export default async function CollectionPage({
 	const perPage =
 		Number(getFirstParam(searchParamsData.perPage)) ||
 		GET_PRODUCTS_DEFAULT_PER_PAGE;
-	const sortBy = getFirstParam(searchParamsData.sortBy) || "best-selling";
+	const sortBy = getFirstParam(searchParamsData.sortBy) || "created-descending";
 
 	// Créer une Promise pour les produits (comme products/page.tsx)
 	const productsPromise = getProducts({

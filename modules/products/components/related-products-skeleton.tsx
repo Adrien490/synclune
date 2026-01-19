@@ -60,7 +60,7 @@ export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
  *
  * Structure exacte de ProductCard (full-bleed):
  * - article avec rounded-lg, shadow-sm, bg-white (SANS p-4)
- * - Image : aspect-[4/5], full-bleed avec rounded-t-lg
+ * - Image : aspect-4/5, full-bleed avec rounded-t-lg
  * - Contenu : flex flex-col gap-2 p-4
  *   - Titre : line-clamp-2, text-lg (2 lignes)
  *   - Prix : text-sm (1 ligne)
@@ -70,8 +70,8 @@ export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
 function ProductCardSkeleton() {
 	return (
 		<div className="product-card-skeleton bg-white rounded-lg shadow-sm overflow-hidden">
-			{/* Image - aspect-[4/5] full-bleed avec rounded-t-lg */}
-			<div className="aspect-[4/5] bg-muted animate-pulse" />
+			{/* Image - aspect-4/5 full-bleed avec rounded-t-lg */}
+			<div className="aspect-4/5 bg-muted animate-pulse" />
 
 			{/* Contenu - p-4 flex flex-col gap-2 comme ProductCard */}
 			<div className="flex flex-col gap-2 p-4">

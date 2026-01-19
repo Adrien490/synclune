@@ -3,7 +3,6 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache"
-import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache"
 
 // ============================================
 // CACHE TAGS
@@ -103,8 +102,6 @@ export function getReviewInvalidationTags(
 		REVIEWS_CACHE_TAGS.USER(userId),
 		REVIEWS_CACHE_TAGS.REVIEWABLE(userId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
-		// Les avis impactent le tri par popularité
-		PRODUCTS_CACHE_TAGS.POPULAR,
 	]
 
 	// Ajouter les tags produit seulement si le produit existe encore
@@ -132,8 +129,6 @@ export function getReviewModerationTags(
 	const tags = [
 		REVIEWS_CACHE_TAGS.DETAIL(reviewId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
-		// La modération impacte le tri par popularité
-		PRODUCTS_CACHE_TAGS.POPULAR,
 	]
 
 	// Ajouter les tags produit seulement si le produit existe encore

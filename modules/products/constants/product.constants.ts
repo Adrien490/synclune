@@ -270,8 +270,6 @@ export const GET_PRODUCTS_DEFAULT_SORT_BY = "created-descending";
 export const GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY = "created-descending";
 
 export const GET_PRODUCTS_SORT_FIELDS = [
-	"best-selling",
-	"popular",
 	"rating-descending",
 	"title-ascending",
 	"title-descending",
@@ -297,8 +295,6 @@ export const PRODUCT_FILTER_DIALOG_ID = "product-filter-sheet";
 // ============================================================================
 
 export const PRODUCTS_SORT_OPTIONS = {
-	BEST_SELLING: "best-selling",
-	POPULAR: "popular",
 	RATING_DESC: "rating-descending",
 	TITLE_ASC: "title-ascending",
 	TITLE_DESC: "title-descending",
@@ -309,8 +305,6 @@ export const PRODUCTS_SORT_OPTIONS = {
 } as const;
 
 export const PRODUCTS_SORT_LABELS = {
-	[PRODUCTS_SORT_OPTIONS.BEST_SELLING]: "Meilleures ventes",
-	[PRODUCTS_SORT_OPTIONS.POPULAR]: "Populaires",
 	[PRODUCTS_SORT_OPTIONS.RATING_DESC]: "Mieux notés",
 	[PRODUCTS_SORT_OPTIONS.TITLE_ASC]: "Alphabétique (A-Z)",
 	[PRODUCTS_SORT_OPTIONS.TITLE_DESC]: "Alphabétique (Z-A)",

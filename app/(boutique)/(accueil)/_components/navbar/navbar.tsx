@@ -76,8 +76,8 @@ export async function Navbar() {
 	// Générer les items de navigation mobile en fonction de la session et statut admin
 	const mobileNavItems = getMobileNavItems(session, productTypes, menuCollections, userIsAdmin);
 
-	// Générer les items de navigation desktop
-	const desktopNavItems = getDesktopNavItems();
+	// Générer les items de navigation desktop avec mega menus
+	const desktopNavItems = getDesktopNavItems(productTypes, menuCollections);
 
 	return (
 		<BadgeCountsStoreProvider

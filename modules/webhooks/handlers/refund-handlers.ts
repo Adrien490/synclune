@@ -1,6 +1,5 @@
 import Stripe from "stripe";
 import { prisma } from "@/shared/lib/prisma";
-import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import {
 	syncStripeRefunds,
 	updateOrderPaymentStatus,
@@ -16,7 +15,6 @@ import type { WebhookHandlerResult } from "../types/webhook.types";
 /**
  * Gère les remboursements (charge.refunded)
  * Synchronise les remboursements Stripe avec la base de données
- * Invalide le cache des bestsellers car le remboursement affecte le classement
  */
 export async function handleChargeRefunded(charge: Stripe.Charge): Promise<WebhookHandlerResult> {
 	console.log(`💰 [WEBHOOK] Charge refunded: ${charge.id}`);
@@ -92,11 +90,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			);
 		}
 
-		// 6. Invalider le cache des classements (le remboursement change les tris)
-		return {
-			success: true,
-			tasks: [{ type: "INVALIDATE_CACHE", tags: [PRODUCTS_CACHE_TAGS.BESTSELLERS, PRODUCTS_CACHE_TAGS.POPULAR] }],
-		};
+		return { success: true };
 	} catch (error) {
 		console.error(`❌ [WEBHOOK] Error handling charge refunded:`, error);
 		return { success: false };

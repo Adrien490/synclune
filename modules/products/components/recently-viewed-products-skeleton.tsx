@@ -38,8 +38,8 @@ export function RecentlyViewedProductsSkeleton({
 function ProductCardSkeleton() {
 	return (
 		<div className="product-card-skeleton bg-white rounded-lg shadow-sm overflow-hidden">
-			{/* Image - aspect-[4/5] full-bleed avec rounded-t-lg */}
-			<div className="aspect-[4/5] bg-muted animate-pulse" />
+			{/* Image - aspect-4/5 full-bleed avec rounded-t-lg */}
+			<div className="aspect-4/5 bg-muted animate-pulse" />
 
 			{/* Contenu - p-4 flex flex-col gap-2 comme ProductCard */}
 			<div className="flex flex-col gap-2 p-4">
