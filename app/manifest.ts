@@ -83,6 +83,20 @@ export default function manifest(): MetadataRoute.Manifest {
 				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
 			},
 			{
+				name: "Collections",
+				short_name: "Collections",
+				description: "Parcourir nos collections",
+				url: "/collections",
+				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+			},
+			{
+				name: "Personnalisation",
+				short_name: "Sur mesure",
+				description: "Créer votre bijou sur mesure",
+				url: "/personnalisation",
+				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+			},
+			{
 				name: "Mon Compte",
 				short_name: "Compte",
 				description: "Accéder à mon compte",
