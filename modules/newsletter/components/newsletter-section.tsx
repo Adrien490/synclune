@@ -68,7 +68,7 @@ export function NewsletterSection() {
 							Pas de spam, promis. Désinscription en un clic.
 						</p>
 						<p className={`${dancingScript.className} mt-2 text-lg text-foreground/60 italic`}>
-							À très vite dans ta boîte mail !
+							Bye !
 						</p>
 					</div>
 				</Fade>

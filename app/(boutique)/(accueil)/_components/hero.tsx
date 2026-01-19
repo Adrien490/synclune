@@ -31,10 +31,10 @@ export function Hero() {
               "oklch(0.75 0.12 280)", // Lavande
               "oklch(0.82 0.14 160)", // Menthe
             ]}
-            count={8}
+            count={10}
             size={[40, 80]}
-            opacity={[0.2, 0.4]}
-            blur={[8, 18]}
+            opacity={[0.25, 0.45]}
+            blur={[5, 14]}
             animationStyle="drift"
             depthParallax={true}
           />
