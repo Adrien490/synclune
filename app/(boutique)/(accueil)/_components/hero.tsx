@@ -59,7 +59,7 @@ export function Hero() {
               >
                 <LayoutTextFlip
                   text="Des bijoux"
-                  words={["colorés", "uniques", "audacieux"]}
+                  words={["colorés", "uniques", "joyeux"]}
                   duration={3000}
                 />
               </SectionTitle>
