@@ -8,8 +8,8 @@ import Link from "next/link";
 import { use } from "react";
 
 interface LatestCreationsProps {
-	productsPromise: Promise<GetProductsReturn>;
-	wishlistProductIdsPromise: Promise<Set<string>>;
+  productsPromise: Promise<GetProductsReturn>;
+  wishlistProductIdsPromise: Promise<Set<string>>;
 }
 
 /**
@@ -20,76 +20,82 @@ interface LatestCreationsProps {
  *
  * @param productsPromise - Promise contenant les produits récents
  */
-export function LatestCreations({ productsPromise, wishlistProductIdsPromise }: LatestCreationsProps) {
-	const { products } = use(productsPromise);
-	const wishlistProductIds = use(wishlistProductIdsPromise);
+export function LatestCreations({
+  productsPromise,
+  wishlistProductIdsPromise,
+}: LatestCreationsProps) {
+  const { products } = use(productsPromise);
+  const wishlistProductIds = use(wishlistProductIdsPromise);
 
-	// Si aucun produit, ne pas afficher la section
-	if (products.length === 0) {
-		return null;
-	}
+  // Si aucun produit, ne pas afficher la section
+  if (products.length === 0) {
+    return null;
+  }
 
-	return (
-		<section
-			id="latest-creations"
-			className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
-			aria-labelledby="latest-creations-title"
-			aria-describedby="latest-creations-subtitle"
-		>
-			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-				{/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
-				<header className="mb-8 text-center lg:mb-12">
-					<Fade y={20} duration={0.6}>
-						<SectionTitle id="latest-creations-title">
-							Nouveaux bijoux
-						</SectionTitle>
-					</Fade>
-					<Fade y={10} delay={0.1} duration={0.6}>
-						<p
-							id="latest-creations-subtitle"
-							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
-						>
-							Tout juste sortis de l'atelier
-						</p>
-					</Fade>
-				</header>
-
-				<Stagger
-					className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
-					role="list"
-					aria-label="Liste des dernières créations"
-					stagger={0.08}
-					y={25}
-					inView
-					once={true}
-				>
-					{products.map((product, index) => (
-						<ProductCard
-							key={product.id}
-							product={product}
-							index={index}
-							isInWishlist={wishlistProductIds.has(product.id)}
-							sectionId="latest"
-						/>
-					))}
-				</Stagger>
-
-				<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">
-					<Button
-						asChild
-						size="lg"
-						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
-						aria-describedby="latest-creations-cta-description"
-					>
-						<Link href="/produits?sortBy=created-descending">
-							Voir tous les nouveaux bijoux
-						</Link>
-					</Button>
-					<span id="latest-creations-cta-description" className="sr-only">
-						Découvrir tous les bijoux récemment créés dans la boutique Synclune
-					</span>
-				</Fade>
-			</div>
-		</section>
-	);
+  return (
+    <section
+      id="latest-creations"
+      className={`relative overflow-hidden bg-background ${SECTION_SPACING.section}`}
+      aria-labelledby="latest-creations-title"
+      aria-describedby="latest-creations-subtitle"
+    >
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        {/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
+        <header className="mb-8 text-center lg:mb-12">
+          <Fade y={20} duration={0.6}>
+            <SectionTitle id="latest-creations-title">
+              Nouvelles créations
+            </SectionTitle>
+          </Fade>
+          <Fade y={10} delay={0.1} duration={0.6}>
+            <p
+              id="latest-creations-subtitle"
+              className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
+            >
+              Tout juste sorties de l'atelier et réalisées avec amour !
+            </p>
+          </Fade>
+        </header>
+        <Stagger
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
+          stagger={0.08}
+          y={25}
+          inView
+          once={true}
+        >
+          {products.map((product, index) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              index={index}
+              isInWishlist={wishlistProductIds.has(product.id)}
+              sectionId="latest"
+            />
+          ))}
+        </Stagger>
+        <Fade
+          y={15}
+          delay={0.3}
+          duration={0.5}
+          inView
+          once
+          className="text-center"
+        >
+          <Button
+            asChild
+            size="lg"
+            className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+            aria-describedby="latest-creations-cta-description"
+          >
+            <Link href="/produits?sortBy=created-descending">
+              Voir tous les nouveaux bijoux
+            </Link>
+          </Button>
+          <span id="latest-creations-cta-description" className="sr-only">
+            Découvrir tous les bijoux récemment créés dans la boutique Synclune
+          </span>
+        </Fade>
+      </div>
+    </section>
+  );
 }
