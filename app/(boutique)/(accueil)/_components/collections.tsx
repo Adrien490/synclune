@@ -88,13 +88,21 @@ export function Collections({ collectionsPromise }: CollectionsProps) {
 											key={collection.id}
 											className="pl-4 sm:pl-6 basis-[clamp(200px,72vw,280px)] md:basis-1/3 lg:basis-1/4"
 										>
-											<CollectionCard
-												slug={collection.slug}
-												name={collection.name}
-												images={images}
-												index={index}
-												sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CAROUSEL}
-											/>
+											<div className="relative">
+												<CollectionCard
+													slug={collection.slug}
+													name={collection.name}
+													images={images}
+													index={index}
+													sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CAROUSEL}
+												/>
+												{/* Description sous la card */}
+												{collection.description && (
+													<p className="mt-2 text-xs text-muted-foreground text-center line-clamp-2 px-2">
+														{collection.description}
+													</p>
+												)}
+											</div>
 										</CarouselItem>
 									);
 								})}

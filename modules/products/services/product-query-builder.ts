@@ -265,6 +265,11 @@ export function buildProductFilterConditions(
 		}
 	}
 
+	// Filter by specific slugs (for curated selections)
+	if (filters.slugs !== undefined && filters.slugs.length > 0) {
+		conditions.push({ slug: { in: filters.slugs } });
+	}
+
 	// Validation bounds: prix doit etre >= 0
 	const validPriceMin =
 		typeof filters.priceMin === "number" && filters.priceMin >= 0

@@ -28,14 +28,14 @@ interface ProcessStep {
 	iconHoverClass: string;
 }
 
-// Étapes du processus créatif - données statiques
+// Étapes du processus créatif - données statiques enrichies
 const processSteps: ProcessStep[] = [
 	{
 		id: "idea",
 		icon: <Lightbulb className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "D'abord, une idée",
 		description:
-			"L'idée naît souvent de mon quotidien. J'essaye de ne pas me forcer à avoir une idée, mais plutôt laisser l'inspiration venir d'elle même !",
+			"L'idée naît souvent de mon quotidien : une couleur aperçue dans la rue, un motif sur un tissu, ou même un rêve ! J'essaye de ne pas me forcer, mais plutôt de laisser l'inspiration venir d'elle-même.",
 		color: STEP_COLORS.secondary,
 		iconHoverClass: "group-hover:[&_svg]:text-yellow-500 group-hover:[&_svg]:drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]",
 	},
@@ -44,7 +44,7 @@ const processSteps: ProcessStep[] = [
 		icon: <Pencil className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "Le dessin et la peinture",
 		description:
-			"Je dessine mes motifs sur du plastique fou, puis je passe à la peinture. C'est minutieux et ça demande de la concentration, mais j'adore cette étape !",
+			"Je dessine mes motifs sur du plastique fou, puis je passe à la peinture acrylique. C'est l'étape la plus minutieuse : chaque trait compte, chaque couleur est choisie avec soin.",
 		color: STEP_COLORS.accent,
 		iconHoverClass: "group-hover:[&_svg]:rotate-[-15deg]",
 	},
@@ -53,7 +53,7 @@ const processSteps: ProcessStep[] = [
 		icon: <Hammer className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "La cuisson et l'assemblage",
 		description:
-			"Cuisson au four, vernissage, montage sur les supports... Parfois il y a des surprises (le plastique fou, c'est pas toujours prévisible), mais ça fait partie du charme de l'artisanat",
+			"Cuisson au four (le plastique rétrécit de 7 fois !), vernissage pour protéger les couleurs, puis montage sur les supports. Parfois le résultat surprend, mais ça fait partie du charme artisanal !",
 		color: STEP_COLORS.secondary,
 		iconHoverClass: "group-hover:[&_svg]:translate-y-[-2px] group-hover:[&_svg]:rotate-[-8deg]",
 	},
@@ -62,7 +62,7 @@ const processSteps: ProcessStep[] = [
 		icon: <CheckCircle className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
 		title: "La touche finale",
 		description:
-			"Je polis, je vérifie chaque détail... (Bon, je suis un peu perfectionniste !) Et voilà, c'est prêt !",
+			"Je polis, je vérifie chaque détail, j'assemble les perles... Bon, je suis un peu perfectionniste ! Puis emballage avec amour dans sa jolie pochette.",
 		color: STEP_COLORS.accent,
 		iconHoverClass: "group-hover:[&_svg]:scale-110",
 	},

@@ -50,6 +50,8 @@ export const productFiltersSchema = z
 		ratingMin: z.number().int().min(1).max(5).optional(),
 		collectionId: optionalStringOrStringArraySchema,
 		collectionSlug: optionalStringOrStringArraySchema,
+		/** Filter by specific product slugs (for curated selections) */
+		slugs: z.array(z.string().min(1)).max(20).optional(),
 		priceMin: z.number().int().nonnegative().max(PRICE_LIMITS.FILTER_MAX_CENTS).optional(),
 		priceMax: z.number().int().nonnegative().max(PRICE_LIMITS.FILTER_MAX_CENTS).optional(),
 		createdAfter: z.coerce

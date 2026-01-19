@@ -77,19 +77,27 @@ export function AtelierStory() {
 								choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il
 								n'existe qu'en quelques exemplaires (parfois moins de dix).
 							</p>
-							{/* Citation finale mise en valeur avec figure/blockquote */}
-							<figure className="relative">
+							{/* Citation finale mise en valeur avec fond pastel */}
+							<figure className="relative mt-6 -mx-4 sm:mx-0">
 								<blockquote
-									className="pl-6 border-l-2 border-primary/70 text-foreground font-medium text-left"
+									className="relative px-6 py-5 bg-muted/40 rounded-xl border border-primary/10 text-foreground font-medium text-left shadow-sm"
 									cite="https://synclune.fr"
 								>
-									<p>Tout est fait à la main !</p>
-									<p>
+									<Sparkles
+										className="absolute -top-2 -left-2 w-5 h-5 text-primary/60"
+										aria-hidden="true"
+									/>
+									<p className="text-base sm:text-lg">Tout est fait à la main !</p>
+									<p className="text-base sm:text-lg mt-2">
 										Je mets du cœur à chaque création, j'espère que ça vous plaira{" "}
 										<span role="img" aria-label="coeur rouge">
 											❤️
 										</span>
 									</p>
+									<Sparkles
+										className="absolute -bottom-2 -right-2 w-5 h-5 text-secondary/60"
+										aria-hidden="true"
+									/>
 								</blockquote>
 								<figcaption
 									className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic pt-6 text-center`}
@@ -101,11 +109,17 @@ export function AtelierStory() {
 					</div>
 				</Fade>
 
-				{/* Photos secondaires + CTA - delay 0.3s pour sequence naturelle */}
+				{/* Galerie de polaroids enrichie - 4 photos avec stagger */}
 				<Reveal y={25} delay={0.3} duration={0.6} once>
 					<div className="mt-12 sm:mt-16 space-y-8">
-						{/* Photos en grid 2 colonnes - Style Polaroid */}
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto">
+						{/* Photos en grid - Style Polaroid scrapbook */}
+						<Stagger
+							stagger={0.1}
+							y={20}
+							inView
+							once
+							className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto"
+						>
 							<PolaroidFrame
 								tilt="left"
 								caption="Les mains dans les perles !"
@@ -130,7 +144,31 @@ export function AtelierStory() {
 									label="Perles et matériaux colorés utilisés pour la création"
 								/>
 							</PolaroidFrame>
-						</div>
+							<PolaroidFrame
+								tilt="left"
+								caption="L'inspiration du jour"
+								washiTape
+								washiColor="mint"
+								washiPosition="top-left"
+							>
+								<PlaceholderImage
+									className="w-full h-full"
+									label="Carnet d'inspiration avec croquis de bijoux"
+								/>
+							</PolaroidFrame>
+							<PolaroidFrame
+								tilt="right"
+								caption="Mon coin créatif"
+								washiTape
+								washiColor="peach"
+								washiPosition="top-right"
+							>
+								<PlaceholderImage
+									className="w-full h-full"
+									label="Vue de l'atelier de création Synclune"
+								/>
+							</PolaroidFrame>
+						</Stagger>
 
 						{/* CTA vers personnalisation */}
 						<div className="text-center">

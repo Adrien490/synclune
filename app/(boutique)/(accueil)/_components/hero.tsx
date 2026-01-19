@@ -6,6 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { BRAND } from "@/shared/constants/brand";
 import { Heart } from "lucide-react";
 import Link from "next/link";
+import { RotatingTagline } from "./rotating-tagline";
 
 export function Hero() {
   return (
@@ -23,10 +24,16 @@ export function Hero() {
         <div className="hidden md:block absolute inset-0">
           <ParticleBackground
             shape={["heart", "pearl"]}
-            colors={["var(--primary)", "var(--secondary)"]}
-            count={6}
+            colors={[
+              "var(--primary)",
+              "var(--secondary)",
+              "oklch(0.78 0.15 340)", // Rose vif
+              "oklch(0.75 0.12 280)", // Lavande
+              "oklch(0.82 0.14 160)", // Menthe
+            ]}
+            count={8}
             size={[40, 80]}
-            opacity={[0.2, 0.35]}
+            opacity={[0.2, 0.4]}
             blur={[8, 18]}
             animationStyle="drift"
             depthParallax={true}
@@ -50,7 +57,7 @@ export function Hero() {
                 className="text-foreground"
                 itemProp="headline"
               >
-                Des bijoux colorés
+                <RotatingTagline />
               </SectionTitle>
               <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 2xl:text-3xl/10 text-foreground font-normal tracking-tight antialiased max-w-2xl 2xl:max-w-3xl mx-auto">
                 <span className="sm:hidden">
@@ -128,9 +135,9 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Indicateur de scroll - Best practice UX 2025 */}
+      {/* Indicateur de scroll */}
       <ScrollIndicator
-        targetIds={["bestsellers", "latest-creations", "collections", "atelier-story"]}
+        targetIds={["value-proposition", "coups-de-coeur", "latest-creations", "collections"]}
         ariaLabel="Voir la suite"
         className="hidden sm:block"
       />
