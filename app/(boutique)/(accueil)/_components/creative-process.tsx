@@ -18,6 +18,10 @@ const ScrollProgressLine = dynamic(() =>
 	import("./scroll-progress-line").then((mod) => mod.ScrollProgressLine)
 );
 
+const CreativeProcessParallax = dynamic(() =>
+	import("./creative-process-parallax").then((mod) => mod.CreativeProcessParallax)
+);
+
 interface ProcessStep {
 	id: string;
 	icon: React.ReactNode;
@@ -119,6 +123,7 @@ export function CreativeProcess() {
 				Aller au bouton de contact
 			</a>
 
+			{/* Couche 1: Particules décoratives */}
 			<div className="absolute inset-0" aria-hidden="true">
 				<ParticleBackground
 					count={6}
@@ -128,6 +133,9 @@ export function CreativeProcess() {
 					blur={[15, 45]}
 				/>
 			</div>
+
+			{/* Couche 2: Parallax multicouches (Tendance 2026: 3D depth + parallax layering) */}
+			<CreativeProcessParallax />
 
 			<div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<header className="text-center mb-12 lg:mb-16">

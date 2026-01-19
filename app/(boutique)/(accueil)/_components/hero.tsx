@@ -3,10 +3,10 @@ import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
+import { LayoutTextFlip } from "@/shared/components/ui/layout-text-flip";
 import { BRAND } from "@/shared/constants/brand";
 import { Heart } from "lucide-react";
 import Link from "next/link";
-import { RotatingTagline } from "./rotating-tagline";
 
 export function Hero() {
   return (
@@ -57,7 +57,11 @@ export function Hero() {
                 className="text-foreground"
                 itemProp="headline"
               >
-                <RotatingTagline />
+                <LayoutTextFlip
+                  text="Des bijoux"
+                  words={["colorés", "uniques", "audacieux"]}
+                  duration={3000}
+                />
               </SectionTitle>
               <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 2xl:text-3xl/10 text-foreground font-normal tracking-tight antialiased max-w-2xl 2xl:max-w-3xl mx-auto">
                 <span className="sm:hidden">

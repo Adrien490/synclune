@@ -591,6 +591,19 @@ textarea {
 		}
 	}
 
+	/* Animation draw-line pour SVG dessinés à la main (Tendance 2026: Hand-drawn aesthetic) */
+	@keyframes draw-line {
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
+
+	.hand-drawn-underline {
+		stroke-dasharray: 200;
+		stroke-dashoffset: 200;
+		animation: draw-line 0.8s ease-out forwards;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.animate-sparkle-pulse,
 		.animate-wave {
@@ -601,6 +614,12 @@ textarea {
 		.animate-shimmer {
 			animation: none;
 			background: var(--accent);
+		}
+
+		/* Hand-drawn: afficher directement sans animation */
+		.hand-drawn-underline {
+			animation: none;
+			stroke-dashoffset: 0;
 		}
 	}
 

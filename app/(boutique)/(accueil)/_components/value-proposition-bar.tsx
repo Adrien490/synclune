@@ -8,6 +8,8 @@ interface ValuePillar {
 	icon: React.ReactNode;
 	title: string;
 	subtitle: string;
+	/** Glow coloré au hover (Tendance 2026: Micro-interactions 2.0 + ambient glow) */
+	glowClass: string;
 }
 
 const valuePillars: ValuePillar[] = [
@@ -15,21 +17,25 @@ const valuePillars: ValuePillar[] = [
 		icon: <Paintbrush className="w-6 h-6" aria-hidden="true" />,
 		title: "Fait main",
 		subtitle: "Chaque pièce est unique",
+		glowClass: "group-hover:shadow-[0_0_25px_oklch(0.86_0.1_341/0.4)]",
 	},
 	{
 		icon: <MapPin className="w-6 h-6" aria-hidden="true" />,
 		title: "Créé à Nantes",
 		subtitle: "Artisanat local 44",
+		glowClass: "group-hover:shadow-[0_0_25px_oklch(0.75_0.12_280/0.35)]",
 	},
 	{
 		icon: <Sparkles className="w-6 h-6" aria-hidden="true" />,
 		title: "Couleurs vibrantes",
 		subtitle: "Des bijoux qui vous ressemblent",
+		glowClass: "group-hover:shadow-[0_0_25px_oklch(0.82_0.14_160/0.4)]",
 	},
 	{
 		icon: <Heart className="w-6 h-6" aria-hidden="true" />,
 		title: "Avec amour",
 		subtitle: "De mon atelier à votre boîte",
+		glowClass: "group-hover:shadow-[0_0_25px_oklch(0.92_0.09_86/0.5)]",
 	},
 ];
 
@@ -70,12 +76,13 @@ export function ValuePropositionBar() {
 							key={pillar.title}
 							className="group flex flex-col items-center text-center gap-3 p-4 rounded-xl transition-all duration-300 hover:bg-card/80"
 						>
-							{/* Icône avec animation hover */}
+							{/* Icône avec animation hover + glow coloré */}
 							<div
 								className={cn(
 									"flex items-center justify-center w-12 h-12 rounded-full bg-card shadow-sm transition-all duration-300",
 									"border border-border/30 text-foreground/70",
-									"group-hover:scale-110 group-hover:shadow-md group-hover:text-foreground"
+									"group-hover:scale-110 group-hover:text-foreground",
+									pillar.glowClass
 								)}
 							>
 								{pillar.icon}
