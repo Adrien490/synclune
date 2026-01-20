@@ -3,6 +3,7 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -95,13 +96,7 @@ export async function updateCollectionStatus(
 				newStatus: status,
 			},
 		};
-	} catch (error) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors du changement de statut.",
-		};
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la mise à jour du statut");
 	}
 }

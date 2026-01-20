@@ -111,6 +111,41 @@ export const GET_COLLECTIONS_SELECT = {
 	},
 } as const satisfies Prisma.CollectionSelect;
 
+export const GET_COLLECTIONS_PREVIEW_SELECT = {
+	id: true,
+	slug: true,
+	name: true,
+	status: true,
+	createdAt: true,
+	products: {
+		select: {
+			product: {
+				select: {
+					skus: {
+						where: { isActive: true },
+						select: {
+							images: {
+								select: { url: true, blurDataUrl: true },
+								orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+								take: 1,
+							},
+						},
+						orderBy: [{ isDefault: "desc" }],
+						take: 1,
+					},
+				},
+			},
+		},
+		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
+		take: 1,
+	},
+	_count: {
+		select: {
+			products: true,
+		},
+	},
+} as const satisfies Prisma.CollectionSelect;
+
 // ============================================================================
 // PAGINATION & SORTING
 // ============================================================================

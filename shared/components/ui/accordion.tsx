@@ -25,24 +25,45 @@ function AccordionItem({
 	);
 }
 
+interface AccordionTriggerProps
+	extends React.ComponentProps<typeof AccordionPrimitive.Trigger> {
+	headingLevel?: 2 | 3 | 4 | 5 | 6;
+}
+
 function AccordionTrigger({
 	className,
 	children,
+	headingLevel,
 	...props
-}: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
+}: AccordionTriggerProps) {
+	const HeadingTag = headingLevel
+		? (`h${headingLevel}` as "h2" | "h3" | "h4" | "h5" | "h6")
+		: null;
+
+	const triggerContent = (
+		<AccordionPrimitive.Trigger
+			data-slot="accordion-trigger"
+			className={cn(
+				"focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-center justify-between gap-4 rounded-md py-4 min-h-11 text-left text-sm font-medium outline-none hover:underline active:bg-muted/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
+				className
+			)}
+			{...props}
+		>
+			{children}
+			<ChevronDownIcon
+				className="text-muted-foreground pointer-events-none size-4 shrink-0 transition-transform duration-200"
+				aria-hidden="true"
+			/>
+		</AccordionPrimitive.Trigger>
+	);
+
 	return (
-		<AccordionPrimitive.Header className="flex">
-			<AccordionPrimitive.Trigger
-				data-slot="accordion-trigger"
-				className={cn(
-					"focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-center justify-between gap-4 rounded-md py-4 min-h-11 text-left text-sm font-medium outline-none hover:underline active:bg-muted/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
-					className
-				)}
-				{...props}
-			>
-				{children}
-				<ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 transition-transform duration-200" aria-hidden="true" />
-			</AccordionPrimitive.Trigger>
+		<AccordionPrimitive.Header className="flex" asChild={!!HeadingTag}>
+			{HeadingTag ? (
+				<HeadingTag className="m-0 font-normal">{triggerContent}</HeadingTag>
+			) : (
+				triggerContent
+			)}
 		</AccordionPrimitive.Header>
 	);
 }
