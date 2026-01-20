@@ -22,6 +22,7 @@ export function NewsletterSection() {
 			aria-describedby="newsletter-subtitle"
 			className={cn(
 				"relative overflow-hidden bg-muted/20",
+				"mask-t-from-90% mask-t-to-100% mask-b-from-90% mask-b-to-100%",
 				SECTION_SPACING.section
 			)}
 		>
