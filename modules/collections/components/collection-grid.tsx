@@ -80,6 +80,11 @@ export function CollectionGrid({
 								headingLevel="h2"
 								productCount={collection._count.products}
 							/>
+							{collection.description && (
+								<p className="mt-2 text-xs text-muted-foreground text-center line-clamp-2 px-2">
+									{collection.description}
+								</p>
+							)}
 						</div>
 					);
 				})}
