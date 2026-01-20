@@ -2,11 +2,14 @@
 
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import type { Session } from "@/modules/auth/lib/auth";
+import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-search-dialog/constants";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import ScrollFade from "@/shared/components/scroll-fade";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
+import { Badge } from "@/shared/components/ui/badge";
 import { BRAND } from "@/shared/constants/brand";
 import {
 	Sheet,
@@ -22,8 +25,9 @@ import { COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
-import { Gem, Heart, Menu, Settings } from "lucide-react";
+import { Flame, Gem, HelpCircle, Heart, Mail, Menu, Palette, Search, Settings, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -43,6 +47,91 @@ function SectionHeader({ children, id }: { children: React.ReactNode; id?: strin
 		>
 			{children}
 		</h3>
+	);
+}
+
+/**
+ * Helper pour extraire les initiales d'un nom
+ */
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.map((part) => part[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
+
+/**
+ * Header personnalisé pour l'utilisateur connecté
+ * Affiche un message de bienvenue avec avatar et compteurs rapides
+ */
+function UserHeader({
+	session,
+	wishlistCount,
+	cartCount,
+	onClose,
+}: {
+	session: Session;
+	wishlistCount: number;
+	cartCount: number;
+	onClose: () => void;
+}) {
+	const firstName = session.user.name?.split(" ")[0] || "vous";
+
+	return (
+		<div className="px-4 py-4 bg-primary/5 rounded-xl mb-4">
+			<SheetClose asChild>
+				<Link
+					href="/compte"
+					className="flex items-center gap-3 group"
+					onClick={onClose}
+				>
+					<Avatar className="size-11 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+						{session.user.image && (
+							<AvatarImage src={session.user.image} alt={session.user.name || "Avatar"} />
+						)}
+						<AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+							{session.user.name ? getInitials(session.user.name) : "U"}
+						</AvatarFallback>
+					</Avatar>
+					<div className="flex-1 min-w-0">
+						<p className="text-base font-semibold text-foreground truncate">
+							Bonjour {firstName}
+						</p>
+						<p className="text-sm text-muted-foreground">
+							{wishlistCount > 0 && (
+								<span>{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}</span>
+							)}
+							{wishlistCount > 0 && cartCount > 0 && <span> • </span>}
+							{cartCount > 0 && (
+								<span>{cartCount} article{cartCount > 1 ? "s" : ""}</span>
+							)}
+							{wishlistCount === 0 && cartCount === 0 && (
+								<span>Mon espace personnel</span>
+							)}
+						</p>
+					</div>
+				</Link>
+			</SheetClose>
+		</div>
+	);
+}
+
+/**
+ * Barre de recherche simplifiée qui ouvre le dialog de recherche
+ */
+function SearchBar({ onOpenSearch }: { onOpenSearch: () => void }) {
+	return (
+		<button
+			type="button"
+			onClick={onOpenSearch}
+			className="w-full flex items-center gap-3 px-4 py-3 mb-4 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+			aria-label="Ouvrir la recherche"
+		>
+			<Search className="size-5 shrink-0" aria-hidden="true" />
+			<span className="text-base">Que cherchez-vous ?</span>
+		</button>
 	);
 }
 
@@ -139,6 +228,9 @@ function CollectionMiniGrid({
  * - Navigation au clavier
  * - Focus visible
  */
+/** Nombre de jours pour considérer une collection comme "nouvelle" */
+const NEW_COLLECTION_DAYS = 30;
+
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
 	productTypes?: Array<{ slug: string; label: string }>;
@@ -146,9 +238,21 @@ interface MenuSheetProps {
 		slug: string;
 		label: string;
 		images: CollectionImage[];
+		createdAt?: Date;
 	}>;
 	isAdmin?: boolean;
 	session?: Session | null;
+}
+
+/**
+ * Vérifie si une collection est "nouvelle" (créée il y a moins de 30 jours)
+ */
+function isNewCollection(createdAt?: Date): boolean {
+	if (!createdAt) return false;
+	const now = new Date();
+	const diffMs = now.getTime() - new Date(createdAt).getTime();
+	const diffDays = diffMs / (1000 * 60 * 60 * 24);
+	return diffDays <= NEW_COLLECTION_DAYS;
 }
 
 export function MenuSheet({
@@ -160,8 +264,9 @@ export function MenuSheet({
 }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 	const pathname = usePathname();
-	const { wishlistCount } = useBadgeCountsStore();
+	const { wishlistCount, cartCount } = useBadgeCountsStore();
 	const [isOpen, setIsOpen] = useState(false);
+	const { open: openSearch } = useDialog(QUICK_SEARCH_DIALOG_ID);
 
 	// Séparer les items en zones
 	const homeItem = navItems.find((item) => item.href === "/");
@@ -170,6 +275,13 @@ export function MenuSheet({
 	const accountItems = navItems.filter((item) =>
 		ACCOUNT_HREFS.includes(item.href as (typeof ACCOUNT_HREFS)[number])
 	);
+
+	// Handler pour ouvrir la recherche et fermer le menu
+	const handleOpenSearch = () => {
+		setIsOpen(false);
+		// Petit délai pour laisser l'animation de fermeture du menu commencer
+		setTimeout(() => openSearch(), 150);
+	};
 
 	// Limites d'affichage
 	const displayedCollections = collections?.slice(0, MAX_COLLECTIONS_IN_MENU);
@@ -239,34 +351,93 @@ export function MenuSheet({
 								isOpen ? "opacity-100" : "opacity-0"
 							)}
 						>
-						{/* Accueil */}
-						{homeItem && (
-							<Stagger stagger={0.025} delay={0.05} y={10} className="mb-4">
+						{/* Header utilisateur personnalisé (si connecté) */}
+						{session?.user ? (
+							<Stagger stagger={0.025} delay={0.03} y={10}>
+								<UserHeader
+									session={session}
+									wishlistCount={wishlistCount}
+									cartCount={cartCount}
+									onClose={() => setIsOpen(false)}
+								/>
+							</Stagger>
+						) : (
+							<Stagger stagger={0.025} delay={0.03} y={10} className="mb-4">
 								<Tap>
 									<SheetClose asChild>
 										<Link
-											href={homeItem.href}
-											className={
-												isMenuItemActive(homeItem.href)
-													? activeLinkClassName
-													: linkClassName
-											}
-											aria-current={
-												isMenuItemActive(homeItem.href) ? "page" : undefined
-											}
+											href="/connexion"
+											className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
 										>
-											{homeItem.label}
+											Se connecter
 										</Link>
 									</SheetClose>
 								</Tap>
 							</Stagger>
 						)}
 
+						{/* Barre de recherche */}
+						<Stagger stagger={0.025} delay={0.05} y={10}>
+							<SearchBar onOpenSearch={handleOpenSearch} />
+						</Stagger>
+
+						{/* Section Découvrir - Accueil + Meilleures ventes */}
+						<section aria-labelledby="section-discover" className="mb-4">
+							<SectionHeader id="section-discover">Découvrir</SectionHeader>
+							<Stagger stagger={0.02} delay={0.07} y={8} className="space-y-1">
+								{homeItem && (
+									<Tap>
+										<SheetClose asChild>
+											<Link
+												href={homeItem.href}
+												className={
+													isMenuItemActive(homeItem.href)
+														? activeLinkClassName
+														: linkClassName
+												}
+												aria-current={
+													isMenuItemActive(homeItem.href) ? "page" : undefined
+												}
+											>
+												{homeItem.label}
+											</Link>
+										</SheetClose>
+									</Tap>
+								)}
+								{bestsellerItem && (
+									<Tap>
+										<SheetClose asChild>
+											<Link
+												href={bestsellerItem.href}
+												className={cn(
+													isMenuItemActive(bestsellerItem.href)
+														? activeLinkClassName
+														: linkClassName,
+													"justify-between"
+												)}
+												aria-current={
+													isMenuItemActive(bestsellerItem.href) ? "page" : undefined
+												}
+											>
+												<span className="flex items-center gap-2">
+													<Flame className="size-4 text-orange-500" aria-hidden="true" />
+													{bestsellerItem.label}
+												</span>
+												<Badge variant="warning" className="text-[10px] px-1.5 py-0">
+													Top
+												</Badge>
+											</Link>
+										</SheetClose>
+									</Tap>
+								)}
+							</Stagger>
+						</section>
+
 						{/* Section Les créations (productTypes) */}
 						{productTypes && productTypes.length > 0 && (
 							<section aria-labelledby="section-creations" className="mb-4">
-								<SectionHeader id="section-creations">Les créations</SectionHeader>
-								<Stagger stagger={0.02} delay={0.08} y={8} className="space-y-1">
+								<SectionHeader id="section-creations">Nos créations</SectionHeader>
+								<Stagger stagger={0.02} delay={0.09} y={8} className="space-y-1">
 									{/* Lien "Tous les bijoux" proéminent en premier (Baymard UX) */}
 									<Tap>
 										<SheetClose asChild>
@@ -312,11 +483,11 @@ export function MenuSheet({
 							</section>
 						)}
 
-						{/* Section Dernières collections */}
+						{/* Section Collections */}
 						{displayedCollections && displayedCollections.length > 0 && (
 							<section aria-labelledby="section-collections" className="mb-4">
-								<SectionHeader id="section-collections">Dernières collections</SectionHeader>
-								<Stagger stagger={0.02} delay={0.12} y={8} className="space-y-1">
+								<SectionHeader id="section-collections">Collections</SectionHeader>
+								<Stagger stagger={0.02} delay={0.11} y={8} className="space-y-1">
 									{/* Lien "Toutes les collections" proéminent en premier */}
 									<Tap>
 										<SheetClose asChild>
@@ -337,97 +508,95 @@ export function MenuSheet({
 											</Link>
 										</SheetClose>
 									</Tap>
-									{displayedCollections.map((collection) => (
-										<Tap key={collection.slug}>
-											<SheetClose asChild>
-												<Link
-													href={`/collections/${collection.slug}`}
-													className={cn(
-														isMenuItemActive(
-															`/collections/${collection.slug}`
-														)
-															? activeLinkClassName
-															: linkClassName,
-														"gap-3"
-													)}
-													aria-current={
-														isMenuItemActive(
-															`/collections/${collection.slug}`
-														)
-															? "page"
-															: undefined
-													}
-												>
-													{collection.images.length > 0 ? (
-														<CollectionMiniGrid
-															images={collection.images}
-															collectionName={collection.label}
-														/>
-													) : (
-														<div
-															className="size-12 rounded-lg bg-muted flex items-center justify-center shrink-0"
-															aria-hidden="true"
-														>
-															<Gem className="h-5 w-5 text-primary/40" />
-														</div>
-													)}
-													<span>{collection.label}</span>
-												</Link>
-											</SheetClose>
-										</Tap>
-									))}
+									{displayedCollections.map((collection) => {
+										const isNew = isNewCollection(collection.createdAt);
+										return (
+											<Tap key={collection.slug}>
+												<SheetClose asChild>
+													<Link
+														href={`/collections/${collection.slug}`}
+														className={cn(
+															isMenuItemActive(
+																`/collections/${collection.slug}`
+															)
+																? activeLinkClassName
+																: linkClassName,
+															"gap-3"
+														)}
+														aria-current={
+															isMenuItemActive(
+																`/collections/${collection.slug}`
+															)
+																? "page"
+																: undefined
+														}
+													>
+														{collection.images.length > 0 ? (
+															<CollectionMiniGrid
+																images={collection.images}
+																collectionName={collection.label}
+															/>
+														) : (
+															<div
+																className="size-12 rounded-lg bg-muted flex items-center justify-center shrink-0"
+																aria-hidden="true"
+															>
+																<Gem className="h-5 w-5 text-primary/40" />
+															</div>
+														)}
+														<span className="flex-1">{collection.label}</span>
+														{isNew && (
+															<Badge variant="success" className="text-[10px] px-1.5 py-0">
+																Nouveau
+															</Badge>
+														)}
+													</Link>
+												</SheetClose>
+											</Tap>
+										);
+									})}
 								</Stagger>
 							</section>
 						)}
 
-						{/* Meilleures ventes */}
-						{bestsellerItem && (
-							<Stagger stagger={0.025} delay={0.14} y={10} className="mb-4">
-								<Tap>
-									<SheetClose asChild>
-										<Link
-											href={bestsellerItem.href}
-											className={
-												isMenuItemActive(bestsellerItem.href)
-													? activeLinkClassName
-													: linkClassName
-											}
-											aria-current={
-												isMenuItemActive(bestsellerItem.href)
-													? "page"
-													: undefined
-											}
-										>
-											{bestsellerItem.label}
-										</Link>
-									</SheetClose>
-								</Tap>
-							</Stagger>
-						)}
-
-						{/* Personnalisation */}
+						{/* Section Sur mesure */}
 						{personalizationItem && (
-							<Stagger stagger={0.025} delay={0.16} y={10} className="mb-4">
-								<Tap>
-									<SheetClose asChild>
-										<Link
-											href={personalizationItem.href}
-											className={
-												isMenuItemActive(personalizationItem.href)
-													? activeLinkClassName
-													: linkClassName
-											}
-											aria-current={
-												isMenuItemActive(personalizationItem.href)
-													? "page"
-													: undefined
-											}
-										>
-											{personalizationItem.label}
-										</Link>
-									</SheetClose>
-								</Tap>
-							</Stagger>
+							<section aria-labelledby="section-custom" className="mb-4">
+								<SectionHeader id="section-custom">Sur mesure</SectionHeader>
+								<Stagger stagger={0.02} delay={0.13} y={8}>
+									<Tap>
+										<SheetClose asChild>
+											<Link
+												href={personalizationItem.href}
+												className={cn(
+													isMenuItemActive(personalizationItem.href)
+														? "bg-primary/12 border-l-2 border-primary shadow-sm"
+														: "hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent",
+													"flex items-start gap-3 px-4 py-3 rounded-lg transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 group"
+												)}
+												aria-current={
+													isMenuItemActive(personalizationItem.href)
+														? "page"
+														: undefined
+												}
+											>
+												<div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+													<Palette className="size-5 text-primary" aria-hidden="true" />
+												</div>
+												<div className="flex-1 min-w-0">
+													<p className="text-base font-medium text-foreground">
+														{personalizationItem.label}
+													</p>
+													<p className="text-sm text-muted-foreground mt-0.5">
+														Créez votre bijou unique
+													</p>
+												</div>
+												<Sparkles className="size-4 text-primary/60 shrink-0 mt-1" aria-hidden="true" />
+											</Link>
+										</SheetClose>
+									</Tap>
+								</Stagger>
+							</section>
 						)}
 
 						{/* Séparateur décoratif */}
@@ -445,37 +614,41 @@ export function MenuSheet({
 						</div>
 
 						{/* Zone compte */}
-						<section aria-label="Mon compte">
-							<Stagger stagger={0.025} delay={0.2} y={10} className="space-y-1">
-								{accountItems.map((item) => {
-									const isActive = isMenuItemActive(item.href);
-									const showWishlistBadge =
-										item.href === "/favoris" && wishlistCount > 0;
+						<section aria-labelledby="section-account">
+							<SectionHeader id="section-account">Mon compte</SectionHeader>
+							<Stagger stagger={0.025} delay={0.15} y={10} className="space-y-1">
+								{/* Filtrer les items: exclure connexion (affiché en haut) */}
+								{accountItems
+									.filter((item) => item.href !== "/connexion")
+									.map((item) => {
+										const isActive = isMenuItemActive(item.href);
+										const showWishlistBadge =
+											item.href === "/favoris" && wishlistCount > 0;
 
-									return (
-										<Tap key={item.href}>
-											<SheetClose asChild>
-												<Link
-													href={item.href}
-													className={
-														isActive ? activeLinkClassName : linkClassName
-													}
-													aria-current={isActive ? "page" : undefined}
-												>
-													<span className="flex-1">{item.label}</span>
-													{showWishlistBadge && (
-														<span
-															className="ml-2 bg-secondary text-secondary-foreground text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center"
-															aria-label={`${wishlistCount} article${wishlistCount > 1 ? "s" : ""} dans les favoris`}
-														>
-															{wishlistCount > 99 ? "99+" : wishlistCount}
-														</span>
-													)}
-												</Link>
-											</SheetClose>
-										</Tap>
-									);
-								})}
+										return (
+											<Tap key={item.href}>
+												<SheetClose asChild>
+													<Link
+														href={item.href}
+														className={
+															isActive ? activeLinkClassName : linkClassName
+														}
+														aria-current={isActive ? "page" : undefined}
+													>
+														<span className="flex-1">{item.label}</span>
+														{showWishlistBadge && (
+															<span
+																className="ml-2 bg-secondary text-secondary-foreground text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center"
+																aria-label={`${wishlistCount} article${wishlistCount > 1 ? "s" : ""} dans les favoris`}
+															>
+																{wishlistCount > 99 ? "99+" : wishlistCount}
+															</span>
+														)}
+													</Link>
+												</SheetClose>
+											</Tap>
+										);
+									})}
 
 								{/* Lien Mes commandes (si connecté) */}
 								{session?.user && (
@@ -504,7 +677,7 @@ export function MenuSheet({
 										<LogoutAlertDialog>
 											<button
 												type="button"
-												className={cn(linkClassName, "w-full text-left")}
+												className={cn(linkClassName, "w-full text-left text-muted-foreground hover:text-foreground")}
 											>
 												Déconnexion
 											</button>
@@ -517,41 +690,72 @@ export function MenuSheet({
 					</ScrollFade>
 				</div>
 
-				{/* Footer avec réseaux sociaux */}
-				<footer className="relative z-10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0">
+				{/* Footer amélioré */}
+				<footer className="relative z-10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0 border-t border-border/40">
+					{/* Liens rapides */}
+					<div className="flex items-center justify-center gap-4 mb-3">
+						<SheetClose asChild>
+							<Link
+								href="/contact"
+								className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+							>
+								<Mail className="size-4" aria-hidden="true" />
+								Contact
+							</Link>
+						</SheetClose>
+						<span className="text-border">•</span>
+						<SheetClose asChild>
+							<Link
+								href="/faq"
+								className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+							>
+								<HelpCircle className="size-4" aria-hidden="true" />
+								Aide
+							</Link>
+						</SheetClose>
+					</div>
+
+					{/* Réseaux sociaux et admin */}
 					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-4">
+						<div className="flex items-center gap-3">
 							<Link
 								href={BRAND.social.instagram.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="inline-flex items-center justify-center size-11 rounded-full text-muted-foreground active:text-foreground active:scale-95 transition-all duration-150"
+								className="inline-flex items-center justify-center size-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all duration-150"
 								aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
 							>
-								<InstagramIcon decorative size={20} />
+								<InstagramIcon decorative size={18} />
 							</Link>
 							<Link
 								href={BRAND.social.tiktok.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="inline-flex items-center justify-center size-11 rounded-full text-muted-foreground active:text-foreground active:scale-95 transition-all duration-150"
+								className="inline-flex items-center justify-center size-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all duration-150"
 								aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
 							>
-								<TikTokIcon decorative size={20} />
+								<TikTokIcon decorative size={18} />
 							</Link>
 						</div>
-						{isAdmin && (
-							<SheetClose asChild>
-								<Link
-									href="/admin"
-									className="inline-flex items-center justify-center size-11 rounded-full text-muted-foreground active:text-foreground active:scale-95 transition-all duration-150"
-									aria-label="Tableau de bord"
-								>
-									<Settings size={20} aria-hidden="true" />
-								</Link>
-							</SheetClose>
-						)}
+						<div className="flex items-center gap-2">
+							{isAdmin && (
+								<SheetClose asChild>
+									<Link
+										href="/admin"
+										className="inline-flex items-center justify-center size-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all duration-150"
+										aria-label="Tableau de bord"
+									>
+										<Settings size={18} aria-hidden="true" />
+									</Link>
+								</SheetClose>
+							)}
+						</div>
 					</div>
+
+					{/* Copyright */}
+					<p className="text-center text-xs text-muted-foreground/60 mt-3">
+						© {new Date().getFullYear()} {BRAND.name}
+					</p>
 				</footer>
 			</SheetContent>
 		</Sheet>

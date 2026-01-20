@@ -8,6 +8,7 @@ import { dancingScript } from "@/shared/styles/fonts";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
+import { generateCuratedPicksSchema } from "../_utils/generate-curated-picks-schema";
 
 interface CuratedPicksProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -37,8 +38,19 @@ export function CuratedPicks({
 		return null;
 	}
 
+	// Schema.org ItemList pour SEO
+	const curatedPicksSchema = generateCuratedPicksSchema(products);
+
 	return (
-		<section
+		<>
+			{/* JSON-LD Schema.org ItemList */}
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify(curatedPicksSchema),
+				}}
+			/>
+			<section
 			id="coups-de-coeur"
 			className={`relative overflow-hidden bg-muted/20 ${SECTION_SPACING.section}`}
 			aria-labelledby="curated-picks-title"
@@ -65,6 +77,9 @@ export function CuratedPicks({
 								aria-hidden="true"
 							/>
 						</SectionTitle>
+						<span className="sr-only">
+							Sélection de bijoux artisanaux faits main par Léane, créatrice à Nantes
+						</span>
 					</Fade>
 					<Fade y={10} delay={0.1} duration={0.6}>
 						<p
@@ -96,11 +111,11 @@ export function CuratedPicks({
 						<div key={product.id} className="relative">
 							{/* Badge Coup de coeur */}
 							<div
-								className="absolute -top-2 -right-2 z-10 px-2 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full shadow-md flex items-center gap-1"
+								className="absolute -top-2 -right-2 z-10 px-2 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full shadow-lg backdrop-blur-sm ring-1 ring-black/10 flex items-center gap-1"
 								aria-label="Coup de coeur de Léane"
 							>
 								<Heart className="w-3 h-3 fill-current" aria-hidden="true" />
-								<span className="hidden sm:inline">Coup de coeur</span>
+								<span className="sr-only sm:not-sr-only">Coup de coeur</span>
 							</div>
 							<ProductCard
 								product={product}
@@ -126,9 +141,8 @@ export function CuratedPicks({
 						size="lg"
 						variant="secondary"
 						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
-						aria-describedby="curated-picks-cta-description"
 					>
-						<Link href="/produits">
+						<Link href="/produits" aria-describedby="curated-picks-cta-description">
 							Découvrir tous mes bijoux
 						</Link>
 					</Button>
@@ -138,5 +152,6 @@ export function CuratedPicks({
 				</Fade>
 			</div>
 		</section>
+		</>
 	);
 }

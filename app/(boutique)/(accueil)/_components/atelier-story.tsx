@@ -12,6 +12,8 @@ export function AtelierStory() {
 			id="atelier-story"
 			className={`relative overflow-hidden bg-background ${SECTION_SPACING.spacious}`}
 			aria-labelledby="atelier-story-title"
+			data-voice-queries="qui est Léane Synclune,atelier bijoux Nantes,créatrice bijoux artisanaux"
+			data-content-type="about-creator"
 		>
 			{/* Titre descriptif pour SEO et lecteurs d'ecran */}
 			<h2 id="atelier-story-title" className="sr-only">
@@ -29,15 +31,15 @@ export function AtelierStory() {
 					</div>
 				</Reveal>
 
-				{/* Separateur decoratif anime - delay 0.4s pour apparaitre apres l'image */}
-				<Fade y={8} delay={0.4} duration={0.5} inView once>
+				{/* Separateur decoratif anime - delay 0.25s pour apparaitre entre image et texte */}
+				<Fade y={8} delay={0.25} duration={0.5} inView once>
 					<div
 						className="flex justify-center items-center gap-3 mb-8 sm:mb-12"
 						aria-hidden="true"
 					>
-						<Sparkles className="w-4 h-4 text-secondary" />
+						<Sparkles className="w-4 h-4 text-primary" />
 						<Sparkles className="w-5 h-5 text-primary" />
-						<Sparkles className="w-4 h-4 text-secondary" />
+						<Sparkles className="w-4 h-4 text-primary" />
 					</div>
 				</Fade>
 
@@ -91,7 +93,11 @@ export function AtelierStory() {
 				<Reveal y={25} delay={0.3} duration={0.6} once>
 					<div className="mt-12 sm:mt-16 space-y-8">
 						{/* Photos en grid - Style Polaroid scrapbook */}
-						<Stagger
+						<div
+							role="group"
+							aria-label="Galerie photos de l'atelier Synclune"
+						>
+							<Stagger
 							stagger={0.1}
 							y={20}
 							inView
@@ -146,7 +152,8 @@ export function AtelierStory() {
 									label="Vue de l'atelier de création Synclune"
 								/>
 							</PolaroidFrame>
-						</Stagger>
+							</Stagger>
+						</div>
 
 						{/* CTA vers personnalisation */}
 						<div className="text-center">
@@ -154,6 +161,7 @@ export function AtelierStory() {
 								href="/personnalisation"
 								className="inline-block min-h-12 py-3 px-6 text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
 								title="Créez un bijou unique sur-mesure avec Léane"
+								aria-label="Discuter d'un projet de bijou personnalisé avec Léane"
 							>
 								Discuter d'un projet personnalisé →
 							</Link>
@@ -161,6 +169,34 @@ export function AtelierStory() {
 					</div>
 				</Reveal>
 			</div>
+
+			{/* JSON-LD structured data for SEO */}
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify({
+						"@context": "https://schema.org",
+						"@type": "AboutPage",
+						mainEntity: {
+							"@type": "Person",
+							name: "Léane",
+							jobTitle: "Créatrice de bijoux artisanaux",
+							workLocation: {
+								"@type": "Place",
+								address: {
+									"@type": "PostalAddress",
+									addressLocality: "Nantes",
+									addressCountry: "FR",
+								},
+							},
+							brand: {
+								"@type": "Brand",
+								name: "Synclune",
+							},
+						},
+					}),
+				}}
+			/>
 		</section>
 	);
 }

@@ -1,4 +1,4 @@
-import { Fade, ParticleBackground, Reveal, Stagger } from "@/shared/components/animations";
+import { Fade, Reveal, Stagger } from "@/shared/components/animations";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { IMAGES } from "@/shared/constants/images";
@@ -6,21 +6,9 @@ import { STEP_COLORS } from "@/shared/constants/process-steps";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
-
-// Lazy load client components (code-split framer-motion)
-const ParallaxImage = dynamic(() =>
-	import("./parallax-image").then((mod) => mod.ParallaxImage)
-);
-
-const ScrollProgressLine = dynamic(() =>
-	import("./scroll-progress-line").then((mod) => mod.ScrollProgressLine)
-);
-
-const CreativeProcessParallax = dynamic(() =>
-	import("./creative-process-parallax").then((mod) => mod.CreativeProcessParallax)
-);
+import { ParallaxImage } from "./parallax-image";
+import { ScrollProgressLine } from "./scroll-progress-line";
 
 interface ProcessStep {
 	id: string;
@@ -49,7 +37,7 @@ const processSteps: ProcessStep[] = [
 		title: "Le dessin et la peinture",
 		description:
 			"Je dessine mes motifs sur du plastique fou, puis je passe à la peinture acrylique. C'est l'étape la plus minutieuse : chaque trait compte, chaque couleur est choisie avec soin.",
-		color: STEP_COLORS.accent,
+		color: STEP_COLORS.primary,
 		iconHoverClass: "group-hover:[&_svg]:rotate-[-15deg]",
 	},
 	{
@@ -67,7 +55,7 @@ const processSteps: ProcessStep[] = [
 		title: "La touche finale",
 		description:
 			"Je polis, je vérifie chaque détail, j'assemble les perles... Bon, je suis un peu perfectionniste ! Puis emballage avec amour dans sa jolie pochette.",
-		color: STEP_COLORS.accent,
+		color: STEP_COLORS.primary,
 		iconHoverClass: "group-hover:[&_svg]:scale-110",
 	},
 ];
@@ -123,19 +111,6 @@ export function CreativeProcess() {
 				Aller au bouton de contact
 			</a>
 
-			{/* Couche 1: Particules décoratives */}
-			<div className="absolute inset-0" aria-hidden="true">
-				<ParticleBackground
-					count={6}
-					shape="diamond"
-					colors={["var(--secondary)", "oklch(0.95 0.06 70)", "oklch(0.97 0.03 80)"]}
-					opacity={[0.12, 0.35]}
-					blur={[15, 45]}
-				/>
-			</div>
-
-			{/* Couche 2: Parallax multicouches (Tendance 2026: 3D depth + parallax layering) */}
-			<CreativeProcessParallax />
 
 			<div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<header className="text-center mb-12 lg:mb-16">
@@ -165,14 +140,14 @@ export function CreativeProcess() {
 						<div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-xl">
 							<ParallaxImage
 								src={IMAGES.ATELIER}
-								alt="Atelier de création Synclune - Bijoux colorés faits main à Nantes"
+								alt="Atelier de création de bijoux artisanaux à Nantes : table de travail avec pinceaux, peintures acryliques colorées et plastique fou prêt à être façonné"
 								blurDataURL={IMAGES.ATELIER_BLUR}
 								className="object-cover object-center saturate-[1.05] brightness-[1.02]"
 							/>
 
-							{/* Badge Fait main - contraste renforcé */}
+							{/* Badge Fait main - contraste renforcé WCAG AA */}
 							<div
-								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary backdrop-blur-md border-2 border-white/30 rounded-full shadow-lg"
+								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary/95 backdrop-blur-md border-2 border-white/30 rounded-full shadow-lg drop-shadow-md"
 								aria-hidden="true"
 							>
 								<span className="text-xs/5 font-bold tracking-wider antialiased text-secondary-foreground">
@@ -180,11 +155,6 @@ export function CreativeProcess() {
 								</span>
 							</div>
 
-							{/* Halo décoratif - Aura magique rose/doré */}
-							<div
-								className="absolute -inset-8 bg-linear-to-br from-primary/20 to-accent/20 rounded-2xl -z-10 blur-3xl"
-								aria-hidden="true"
-							/>
 						</div>
 					</Reveal>
 
@@ -194,9 +164,9 @@ export function CreativeProcess() {
 							{/* Ligne verticale animée au scroll (desktop) */}
 							<ScrollProgressLine />
 
-							{/* Ligne verticale simplifiée (mobile) */}
+							{/* Ligne verticale simplifiée (mobile) - centré sur 48px */}
 							<div
-								className="absolute left-[22px] top-8 bottom-8 w-px bg-secondary/30 sm:hidden transition-colors duration-300"
+								className="absolute left-[24px] top-8 bottom-8 w-px bg-secondary/30 sm:hidden transition-colors duration-300"
 								aria-hidden="true"
 							/>
 
@@ -235,11 +205,11 @@ export function CreativeProcess() {
 											{step.icon}
 										</div>
 
-										{/* Mobile : Numéros colorés plus visibles (guidage progression) - 44px WCAG */}
+										{/* Mobile : Numéros colorés plus visibles (guidage progression) - 48px WCAG */}
 										<div
 											aria-hidden="true"
 											className={cn(
-												"flex sm:hidden shrink-0 w-11 h-11 rounded-full items-center justify-center font-bold text-lg transition-all duration-300",
+												"flex sm:hidden shrink-0 w-12 h-12 rounded-full items-center justify-center font-bold text-lg transition-all duration-300",
 												step.color,
 												"group-hover:scale-110",
 												// Crescendo progressif : intensité croissante
@@ -284,16 +254,19 @@ export function CreativeProcess() {
 								<Sparkles className="w-5 h-5 text-secondary" />
 							</div>
 
-							{/* Mobile : Numéro bonus */}
+							{/* Mobile : Numéro bonus - 48px WCAG touch target */}
 							<div
-								className="flex sm:hidden shrink-0 w-11 h-11 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center text-secondary font-bold"
+								className="flex sm:hidden shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center text-secondary font-bold"
 								aria-hidden="true"
 							>
 								+
 							</div>
 
 							<div className="flex-1">
-								<p className="text-sm text-muted-foreground mb-3 italic">
+								<p
+									id="cta-personnalisation-description"
+									className="text-sm text-muted-foreground mb-3 italic"
+								>
 									Tu as une idée de bijou personnalisé ? N'hésite pas à m'en parler !
 								</p>
 								<Button
@@ -303,7 +276,10 @@ export function CreativeProcess() {
 									size="lg"
 									className="w-full sm:w-auto shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
 								>
-									<Link href="/personnalisation">
+									<Link
+										href="/personnalisation"
+										aria-describedby="cta-personnalisation-description"
+									>
 										Discutons de ton idée
 									</Link>
 								</Button>

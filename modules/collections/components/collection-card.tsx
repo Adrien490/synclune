@@ -13,6 +13,8 @@ import { CollectionImagesGrid } from "./collection-images-grid";
 interface CollectionCardProps {
   slug: string;
   name: string;
+  /** Description de la collection pour SEO (schema.org) */
+  description?: string | null;
   /** Images multiples pour Bento Grid (prioritaire) */
   images?: CollectionImage[];
   index?: number;
@@ -40,6 +42,7 @@ interface CollectionCardProps {
 export function CollectionCard({
   slug,
   name,
+  description,
   images,
   index,
   sizes = COLLECTION_IMAGE_SIZES.COLLECTION_CARD,
@@ -62,6 +65,7 @@ export function CollectionCard({
           "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:rounded-xl",
         )}
         aria-labelledby={titleId}
+        aria-label={`Voir la collection ${name}`}
       >
         <div
           className={cn(
@@ -87,12 +91,24 @@ export function CollectionCard({
         >
           {/* SEO: Metadata schema.org */}
           <link itemProp="url" href={buildUrl(`/collections/${slug}`)} />
+          {description && (
+            <meta itemProp="description" content={description.slice(0, 200)} />
+          )}
           {productCount !== undefined && (
             <meta itemProp="numberOfItems" content={String(productCount)} />
           )}
           {displayImages[0] && (
             <meta itemProp="primaryImageOfPage" content={displayImages[0].url} />
           )}
+          {/* Brand Schema.org (Synclune) */}
+          <div
+            itemProp="brand"
+            itemScope
+            itemType="https://schema.org/Brand"
+            className="hidden"
+          >
+            <meta itemProp="name" content="Synclune" />
+          </div>
 
           {/* Images Bento Grid avec animation scroll */}
           {displayImages.length > 0 ? (

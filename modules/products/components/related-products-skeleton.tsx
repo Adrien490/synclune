@@ -56,32 +56,30 @@ export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
 }
 
 /**
- * Skeleton d'une ProductCard avec size="md"
+ * Skeleton d'une ProductCard
  *
- * Structure exacte de ProductCard (full-bleed):
- * - article avec rounded-lg, shadow-sm, bg-white (SANS p-4)
- * - Image : aspect-4/5, full-bleed avec rounded-t-lg
- * - Contenu : flex flex-col gap-2 p-4
- *   - Titre : line-clamp-2, text-lg (2 lignes)
- *   - Prix : text-sm (1 ligne)
+ * Structure exacte de ProductCard:
+ * - article avec rounded-lg, shadow-sm, bg-card, gap-4
+ * - Image : aspect-square sm:aspect-4/5, rounded-lg
+ * - Contenu : flex flex-col gap-2.5 sm:gap-3, px-3 pb-3 sm:px-4 sm:pb-4
+ *   - Titre : text-base sm:text-lg
+ *   - Prix : ProductPrice
  *
- * Note : showDescription={false} donc pas de description
+ * ⚠️ IMPORTANT : Les dimensions DOIVENT correspondre exactement à ProductCard
+ * pour éviter le Cumulative Layout Shift (CLS).
  */
 function ProductCardSkeleton() {
 	return (
-		<div className="product-card-skeleton bg-white rounded-lg shadow-sm overflow-hidden">
-			{/* Image - aspect-4/5 full-bleed avec rounded-t-lg */}
-			<div className="aspect-4/5 bg-muted animate-pulse" />
+		<div className="product-card-skeleton bg-card rounded-lg shadow-sm overflow-hidden grid gap-4">
+			{/* Image - aspect-square sur mobile, aspect-4/5 sur desktop (comme ProductCard) */}
+			<div className="aspect-square sm:aspect-4/5 bg-muted animate-pulse rounded-lg" />
 
-			{/* Contenu - p-4 flex flex-col gap-2 comme ProductCard */}
-			<div className="flex flex-col gap-2 p-4">
-				{/* Titre - line-clamp-2 text-lg (2 lignes de h-6 = h-12 total) */}
-				<div className="space-y-2">
-					<div className="h-6 bg-muted animate-pulse rounded" />
-					<div className="h-6 w-3/4 bg-muted animate-pulse rounded" />
-				</div>
+			{/* Contenu - gap et padding identiques à ProductCard */}
+			<div className="flex flex-col gap-2.5 sm:gap-3 px-3 pb-3 sm:px-4 sm:pb-4">
+				{/* Titre - text-base sm:text-lg (hauteur correspondante) */}
+				<div className="h-5 sm:h-6 bg-muted animate-pulse rounded w-full" />
 
-				{/* Prix - ProductPrice → text-sm → h-5 */}
+				{/* Prix - ProductPrice */}
 				<div className="h-5 w-20 bg-muted animate-pulse rounded" />
 			</div>
 		</div>

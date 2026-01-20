@@ -14,7 +14,6 @@ export default function NewsletterLoading() {
 			{/* Page Header */}
 			<PageHeader
 				title="Newsletter"
-				description="Envoyez des emails à vos abonnés et gérez votre liste de diffusion"
 				variant="compact"
 			/>
 

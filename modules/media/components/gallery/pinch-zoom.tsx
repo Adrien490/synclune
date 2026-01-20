@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion, usePinchZoom } from "@/shared/hooks";
-import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
+import { MAIN_IMAGE_QUALITY, GALLERY_MAIN_SIZES } from "@/modules/media/constants/image-config.constants";
 import { PINCH_ZOOM_CONFIG } from "@/modules/media/constants/gallery.constants";
 
 interface GalleryPinchZoomProps {
@@ -101,7 +101,7 @@ export function GalleryPinchZoom({
 					loading={priority ? "eager" : "lazy"}
 					fetchPriority={priority ? "high" : "auto"}
 					quality={MAIN_IMAGE_QUALITY}
-					sizes="100vw"
+					sizes={GALLERY_MAIN_SIZES}
 					placeholder={blurDataUrl ? "blur" : "empty"}
 					blurDataURL={blurDataUrl}
 					draggable={false}

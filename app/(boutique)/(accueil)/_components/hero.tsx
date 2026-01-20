@@ -14,11 +14,28 @@ export function Hero() {
       id="hero-section"
       role="region"
       aria-labelledby="hero-title"
+      aria-describedby="hero-subtitle"
       className="relative min-h-[calc(85dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
-      itemScope
-      itemType="https://schema.org/WebPageElement"
-      itemProp="mainContentOfPage"
     >
+      {/* JSON-LD structured data pour SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Synclune",
+            url: "https://synclune.fr",
+            description: "Bijoux artisanaux faits main, colorés et uniques pour sublimer votre quotidien",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://synclune.fr/produits?search={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          }),
+        }}
+      />
+
       {/* Background particules - Desktop uniquement */}
       <div className="absolute inset-0 -z-10" aria-hidden="true">
         <div className="hidden md:block absolute inset-0">
@@ -63,7 +80,10 @@ export function Hero() {
                   duration={3000}
                 />
               </SectionTitle>
-              <p className="text-lg/7 sm:text-xl/8 md:text-2xl/9 2xl:text-3xl/10 text-foreground font-normal tracking-tight antialiased max-w-2xl 2xl:max-w-3xl mx-auto">
+              <p
+                id="hero-subtitle"
+                className="text-lg/7 sm:text-xl/8 md:text-2xl/9 2xl:text-3xl/10 text-foreground font-normal tracking-tight antialiased max-w-2xl 2xl:max-w-3xl mx-auto"
+              >
                 <span className="sm:hidden">
                   Faits main pour sublimer votre quotidien{" "}
                 </span>

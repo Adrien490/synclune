@@ -46,6 +46,20 @@ export const PREFETCH_SIZE_DESKTOP = 1080
 export const EAGER_LOAD_THUMBNAILS = 6
 
 // ============================================
+// SIZES ATTRIBUTE (RESPONSIVE)
+// ============================================
+
+/**
+ * Attribut sizes pour l'image principale de la galerie produit
+ *
+ * Layout page produit:
+ * - Mobile (<768px): pleine largeur (100vw)
+ * - Tablet (768-1023px): pleine largeur - thumbnails - padding (~calc(100vw - 100px))
+ * - Desktop (>=1024px): 55% du container (max 640px) due to grid [1.1fr, 0.9fr]
+ */
+export const GALLERY_MAIN_SIZES = "(min-width: 1024px) min(55vw, 640px), (min-width: 768px) calc(100vw - 100px), 100vw"
+
+// ============================================
 // HELPERS
 // ============================================
 

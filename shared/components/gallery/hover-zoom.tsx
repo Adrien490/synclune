@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "@/shared/hooks";
+import { GALLERY_MAIN_SIZES } from "@/modules/media/constants/image-config.constants";
 
 interface GalleryHoverZoomProps {
 	src: string;
@@ -29,7 +30,7 @@ export function GalleryHoverZoom({
 	className,
 	priority = false,
 	quality = 85,
-	sizes = "(min-width: 1024px) 45vw, 100vw",
+	sizes = GALLERY_MAIN_SIZES,
 }: GalleryHoverZoomProps) {
 	const [isZooming, setIsZooming] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);

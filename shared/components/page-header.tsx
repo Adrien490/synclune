@@ -77,7 +77,7 @@ export function PageHeader({
 					<div className="min-w-0 flex-1 space-y-3">
 						<h1
 							id="page-title"
-							className="text-2xl sm:text-3xl lg:text-4xl font-display font-medium tracking-wide text-foreground wrap-break-words"
+							className="text-2xl sm:text-3xl lg:text-4xl font-display font-medium tracking-normal text-foreground wrap-break-words"
 							title={title}
 						>
 							{title}
@@ -140,10 +140,7 @@ export function PageHeader({
 								>
 									<ChevronLeft className="size-5" />
 								</Link>
-								<span
-									aria-hidden="true"
-									className="text-2xl font-display font-medium text-foreground tracking-normal truncate flex-1 min-w-0"
-								>
+								<span className="text-2xl font-display font-medium text-foreground tracking-normal truncate flex-1 min-w-0">
 									{title}
 								</span>
 								{/* Actions mobile - alignées à droite */}
@@ -181,7 +178,7 @@ export function PageHeader({
 									{/* Breadcrumbs dynamiques (position 2+) */}
 									{breadcrumbs.map((item, index) => (
 										<li
-											key={`${item.href}-${index}`}
+											key={item.href}
 											className="flex items-center gap-2"
 											itemProp="itemListElement"
 											itemScope

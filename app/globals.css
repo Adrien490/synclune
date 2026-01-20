@@ -343,6 +343,12 @@ textarea {
    UTILITIES - Accents avec couleurs logo
    ======================================================================== */
 @layer utilities {
+	/* Gestion word-wrap pour longs textes (titres, descriptions) */
+	.wrap-break-words {
+		overflow-wrap: break-word;
+		word-break: break-word;
+	}
+
 	/* Gradient Hero avec couleurs logo */
 	.bg-linear-organic {
 		background: linear-gradient(

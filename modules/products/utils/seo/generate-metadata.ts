@@ -3,17 +3,59 @@ import type { Metadata } from "next";
 import { PRODUCTION_URL } from "@/shared/constants/urls";
 
 /**
- * Tronque une description à une longueur maximale pour le SEO.
+ * Tronque un texte à une longueur maximale pour le SEO.
  * Coupe au dernier espace avant la limite et ajoute "..." si nécessaire.
  */
-function truncateDescription(text: string, maxLength: number = 155): string {
+function truncateText(text: string, maxLength: number, ellipsis: boolean = true): string {
 	if (text.length <= maxLength) return text;
 
-	// Trouver le dernier espace avant la limite pour ne pas couper un mot
-	const truncated = text.slice(0, maxLength - 3);
+	const reservedChars = ellipsis ? 3 : 0;
+	const truncated = text.slice(0, maxLength - reservedChars);
 	const lastSpace = truncated.lastIndexOf(" ");
 
-	return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + "...";
+	const result = lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;
+	return ellipsis ? result + "..." : result;
+}
+
+/**
+ * Tronque une description à 155 caractères pour le SEO.
+ */
+function truncateDescription(text: string, maxLength: number = 155): string {
+	return truncateText(text, maxLength);
+}
+
+/**
+ * Construit un titre SEO optimisé pour les moteurs de recherche.
+ * Garantit que le titre reste sous 60 caractères (recommandation Google).
+ */
+function buildSeoTitle(productTitle: string, price?: string): string {
+	const suffix = " | Synclune";
+	const maxTitleLength = 60;
+
+	if (price) {
+		const fullTitle = `${productTitle} à ${price}${suffix}`;
+		if (fullTitle.length <= maxTitleLength) {
+			return fullTitle;
+		}
+
+		// Titre trop long : tronquer le nom du produit pour garder le prix
+		const priceAndSuffix = ` à ${price}${suffix}`;
+		const availableForTitle = maxTitleLength - priceAndSuffix.length - 3; // -3 pour "..."
+
+		if (availableForTitle > 10) {
+			return truncateText(productTitle, availableForTitle) + priceAndSuffix;
+		}
+
+		// Prix trop long, omettre le prix
+		return truncateText(productTitle, maxTitleLength - suffix.length - 3) + suffix;
+	}
+
+	const fullTitle = `${productTitle}${suffix}`;
+	if (fullTitle.length <= maxTitleLength) {
+		return fullTitle;
+	}
+
+	return truncateText(productTitle, maxTitleLength - suffix.length - 3) + suffix;
 }
 
 export async function generateProductMetadata({
@@ -37,10 +79,8 @@ export async function generateProductMetadata({
 		? `${(primarySku.priceInclTax / 100).toFixed(2)}€`
 		: "";
 
-	// Construire le titre SEO optimisé (< 60 caractères recommandés)
-	const title = price
-		? `${product.title} à ${price} | Synclune`
-		: `${product.title} | Synclune`;
+	// Construire le titre SEO optimisé (< 60 caractères garanti)
+	const title = buildSeoTitle(product.title, price || undefined);
 
 	// Construire la description avec limite SEO (155 caractères)
 	const rawDescription =

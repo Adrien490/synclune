@@ -6,6 +6,7 @@ import {
   useReducedMotion,
   useScroll,
   useTransform,
+  useInView,
 } from "motion/react";
 import { useRef } from "react";
 
@@ -17,10 +18,13 @@ import { useRef } from "react";
  * - Couche 1 (lente): blobs colorés flous
  * - Couche 2 (moyenne): silhouettes de bijoux
  * - Couche 3 (rapide): sparkles/étoiles
+ *
+ * Performance: CSS animations pausées quand off-screen pour économiser GPU
  */
 export function CreativeProcessParallax() {
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
+  const isInView = useInView(containerRef, { margin: "100px 0px" });
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -51,11 +55,20 @@ export function CreativeProcessParallax() {
       className="absolute inset-0 overflow-hidden pointer-events-none"
       aria-hidden="true"
     >
-      {/* Couche 1: Blobs colorés flous (lent) */}
+      {/* Couche 1: Blobs colorés flous (lent) - animation pausée si off-screen */}
       <motion.div className="absolute inset-0" style={{ y: layer1Y }}>
-        <div className="absolute top-[10%] left-[5%] w-32 h-32 rounded-full bg-primary/10 blur-3xl animate-[blob-float-1_20s_ease-in-out_infinite]" />
-        <div className="absolute top-[60%] right-[10%] w-40 h-40 rounded-full bg-secondary/15 blur-3xl animate-[blob-float-2_25s_ease-in-out_infinite]" />
-        <div className="absolute bottom-[20%] left-[15%] w-28 h-28 rounded-full bg-[oklch(0.75_0.12_280/0.12)] blur-3xl animate-[blob-float-3_22s_ease-in-out_infinite]" />
+        <div
+          className="absolute top-[10%] left-[5%] w-32 h-32 rounded-full bg-primary/10 blur-3xl animate-[blob-float-1_20s_ease-in-out_infinite]"
+          style={{ animationPlayState: isInView ? "running" : "paused" }}
+        />
+        <div
+          className="absolute top-[60%] right-[10%] w-40 h-40 rounded-full bg-secondary/15 blur-3xl animate-[blob-float-2_25s_ease-in-out_infinite]"
+          style={{ animationPlayState: isInView ? "running" : "paused" }}
+        />
+        <div
+          className="absolute bottom-[20%] left-[15%] w-28 h-28 rounded-full bg-[oklch(0.75_0.12_280/0.12)] blur-3xl animate-[blob-float-3_22s_ease-in-out_infinite]"
+          style={{ animationPlayState: isInView ? "running" : "paused" }}
+        />
       </motion.div>
 
       {/* Couche 2: Silhouettes de bijoux (moyen) */}
@@ -99,27 +112,32 @@ export function CreativeProcessParallax() {
         </svg>
       </motion.div>
 
-      {/* Couche 3: Sparkles/étoiles (rapide) */}
+      {/* Couche 3: Sparkles/étoiles (rapide) - animation pausée si off-screen */}
       <motion.div className="absolute inset-0" style={{ y: layer3Y }}>
         <Sparkle
           className="absolute top-[8%] left-[25%] w-4 h-4 text-secondary/40"
           delay={0}
+          isInView={isInView}
         />
         <Sparkle
           className="absolute top-[25%] right-[30%] w-3 h-3 text-primary/35"
           delay={1}
+          isInView={isInView}
         />
         <Sparkle
           className="absolute top-[50%] left-[18%] w-5 h-5 text-secondary/30"
           delay={2}
+          isInView={isInView}
         />
         <Sparkle
           className="absolute top-[70%] right-[25%] w-3 h-3 text-primary/40"
           delay={0.5}
+          isInView={isInView}
         />
         <Sparkle
           className="absolute bottom-[15%] left-[30%] w-4 h-4 text-[oklch(0.75_0.12_280/0.35)]"
           delay={1.5}
+          isInView={isInView}
         />
       </motion.div>
     </div>
@@ -127,19 +145,24 @@ export function CreativeProcessParallax() {
 }
 
 /**
- * Composant sparkle/étoile animé
+ * Composant sparkle/étoile animé - animation pausée si off-screen
  */
 function Sparkle({
   className,
   delay = 0,
+  isInView = true,
 }: {
   className?: string;
   delay?: number;
+  isInView?: boolean;
 }) {
   return (
     <svg
       className={cn("animate-sparkle-pulse", className)}
-      style={{ animationDelay: `${delay}s` }}
+      style={{
+        animationDelay: `${delay}s`,
+        animationPlayState: isInView ? "running" : "paused",
+      }}
       viewBox="0 0 24 24"
       fill="currentColor"
     >

@@ -79,7 +79,7 @@ export function LayoutTextFlip({
 		return (
 			<span className="inline-flex items-center gap-[0.35em] flex-wrap justify-center">
 				<span className={textClassName}>{text}</span>
-				<span className={pillStyles}>
+				<span className={pillStyles} style={{ contain: "layout paint" }}>
 					<span className={textStyles}>{words[0]}</span>
 				</span>
 			</span>
@@ -90,8 +90,13 @@ export function LayoutTextFlip({
 		<span className="inline-flex items-center gap-[0.35em] flex-wrap justify-center">
 			<span className={textClassName}>{text}</span>
 
-			{/* Pill avec le texte animé */}
-			<span className={pillStyles}>
+			{/* Pill avec le texte animé - aria-live pour annoncer les changements aux lecteurs d'écran */}
+			<span
+				className={pillStyles}
+				style={{ contain: "layout paint" }}
+				aria-live="polite"
+				aria-atomic="true"
+			>
 				{/* Container relatif pour le positionnement */}
 				<span className="relative inline-flex items-center">
 					{/* Texte animé - position absolute */}

@@ -71,9 +71,8 @@ export function ProductCard({
 				"shadow-sm",
 				"can-hover:hover:border-primary/40",
 				"can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
-				// Tilt 3D subtil + scale
+				// Lift effect 2D (scale + translateY)
 				"motion-safe:can-hover:hover:-translate-y-2 motion-safe:can-hover:hover:scale-[1.02]",
-				"motion-safe:can-hover:hover:transform-[perspective(1000px)_rotateX(2deg)_translateY(-8px)]",
 				// Focus state
 				"focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
 				"will-change-transform"
@@ -124,7 +123,7 @@ export function ProductCard({
 					)}
 					placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 					blurDataURL={primaryImage.blurDataUrl ?? undefined}
-					preload={index !== undefined && index < 4}
+					priority={index !== undefined && index < 4}
 					loading={index !== undefined && index < 4 ? undefined : "lazy"}
 					fetchPriority={index !== undefined && index < 4 ? "high" : undefined}
 					sizes={IMAGE_SIZES.PRODUCT_CARD}

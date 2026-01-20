@@ -64,6 +64,7 @@ export async function Navbar() {
 	const menuCollections = collectionsData.collections.map((c) => ({
 		slug: c.slug,
 		label: c.name,
+		createdAt: c.createdAt,
 		images: c.products
 			.slice(0, 4)
 			.map((p) => {

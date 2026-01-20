@@ -7,7 +7,6 @@ export default function NotificationsStockLoading() {
 			<PageHeader
 				variant="compact"
 				title="Alertes stock"
-				description="Demandes de notification de retour en stock"
 			/>
 
 			{/* Stats skeleton */}
