@@ -2,7 +2,6 @@
 
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import type { Session } from "@/modules/auth/lib/auth";
-import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-search-dialog/constants";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
@@ -25,16 +24,15 @@ import { COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
-import { Flame, Gem, HelpCircle, Heart, Mail, Menu, Palette, Search, Settings, Sparkles } from "lucide-react";
+import { Flame, Gem, Heart, Menu, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 /** HREFs de la zone compte */
-const ACCOUNT_HREFS = ["/compte", "/commandes", "/connexion", "/favoris"] as const;
+const ACCOUNT_HREFS = ["/compte", "/commandes"] as const;
 
 /**
  * Header de section pour les catégories du menu
@@ -118,22 +116,6 @@ function UserHeader({
 	);
 }
 
-/**
- * Barre de recherche simplifiée qui ouvre le dialog de recherche
- */
-function SearchBar({ onOpenSearch }: { onOpenSearch: () => void }) {
-	return (
-		<button
-			type="button"
-			onClick={onOpenSearch}
-			className="w-full flex items-center gap-3 px-4 py-3 mb-4 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-			aria-label="Ouvrir la recherche"
-		>
-			<Search className="size-5 shrink-0" aria-hidden="true" />
-			<span className="text-base">Que cherchez-vous ?</span>
-		</button>
-	);
-}
 
 /**
  * Mini-grid pour afficher les images de collection dans le menu mobile
@@ -228,9 +210,6 @@ function CollectionMiniGrid({
  * - Navigation au clavier
  * - Focus visible
  */
-/** Nombre de jours pour considérer une collection comme "nouvelle" */
-const NEW_COLLECTION_DAYS = 30;
-
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
 	productTypes?: Array<{ slug: string; label: string }>;
@@ -244,17 +223,6 @@ interface MenuSheetProps {
 	session?: Session | null;
 }
 
-/**
- * Vérifie si une collection est "nouvelle" (créée il y a moins de 30 jours)
- */
-function isNewCollection(createdAt?: Date): boolean {
-	if (!createdAt) return false;
-	const now = new Date();
-	const diffMs = now.getTime() - new Date(createdAt).getTime();
-	const diffDays = diffMs / (1000 * 60 * 60 * 24);
-	return diffDays <= NEW_COLLECTION_DAYS;
-}
-
 export function MenuSheet({
 	navItems,
 	productTypes,
@@ -266,22 +234,15 @@ export function MenuSheet({
 	const pathname = usePathname();
 	const { wishlistCount, cartCount } = useBadgeCountsStore();
 	const [isOpen, setIsOpen] = useState(false);
-	const { open: openSearch } = useDialog(QUICK_SEARCH_DIALOG_ID);
 
 	// Séparer les items en zones
 	const homeItem = navItems.find((item) => item.href === "/");
 	const bestsellerItem = navItems.find((item) => item.href.startsWith("/produits?sortBy=best-selling"));
+	const favorisItem = navItems.find((item) => item.href === "/favoris");
 	const personalizationItem = navItems.find((item) => item.href === "/personnalisation");
 	const accountItems = navItems.filter((item) =>
 		ACCOUNT_HREFS.includes(item.href as (typeof ACCOUNT_HREFS)[number])
 	);
-
-	// Handler pour ouvrir la recherche et fermer le menu
-	const handleOpenSearch = () => {
-		setIsOpen(false);
-		// Petit délai pour laisser l'animation de fermeture du menu commencer
-		setTimeout(() => openSearch(), 150);
-	};
 
 	// Limites d'affichage
 	const displayedCollections = collections?.slice(0, MAX_COLLECTIONS_IN_MENU);
@@ -352,7 +313,7 @@ export function MenuSheet({
 							)}
 						>
 						{/* Header utilisateur personnalisé (si connecté) */}
-						{session?.user ? (
+						{session?.user && (
 							<Stagger stagger={0.025} delay={0.03} y={10}>
 								<UserHeader
 									session={session}
@@ -361,25 +322,7 @@ export function MenuSheet({
 									onClose={() => setIsOpen(false)}
 								/>
 							</Stagger>
-						) : (
-							<Stagger stagger={0.025} delay={0.03} y={10} className="mb-4">
-								<Tap>
-									<SheetClose asChild>
-										<Link
-											href="/connexion"
-											className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-										>
-											Se connecter
-										</Link>
-									</SheetClose>
-								</Tap>
-							</Stagger>
 						)}
-
-						{/* Barre de recherche */}
-						<Stagger stagger={0.025} delay={0.05} y={10}>
-							<SearchBar onOpenSearch={handleOpenSearch} />
-						</Stagger>
 
 						{/* Section Découvrir - Accueil + Meilleures ventes */}
 						<section aria-labelledby="section-discover" className="mb-4">
@@ -426,6 +369,37 @@ export function MenuSheet({
 												<Badge variant="warning" className="text-[10px] px-1.5 py-0">
 													Top
 												</Badge>
+											</Link>
+										</SheetClose>
+									</Tap>
+								)}
+								{favorisItem && (
+									<Tap>
+										<SheetClose asChild>
+											<Link
+												href={favorisItem.href}
+												className={cn(
+													isMenuItemActive(favorisItem.href)
+														? activeLinkClassName
+														: linkClassName,
+													"justify-between"
+												)}
+												aria-current={
+													isMenuItemActive(favorisItem.href) ? "page" : undefined
+												}
+											>
+												<span className="flex items-center gap-2">
+													<Heart className="size-4 text-pink-500" aria-hidden="true" />
+													{favorisItem.label}
+												</span>
+												{wishlistCount > 0 && (
+													<span
+														className="ml-2 bg-secondary text-secondary-foreground text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center"
+														aria-label={`${wishlistCount} article${wishlistCount > 1 ? "s" : ""} dans les favoris`}
+													>
+														{wishlistCount > 99 ? "99+" : wishlistCount}
+													</span>
+												)}
 											</Link>
 										</SheetClose>
 									</Tap>
@@ -508,9 +482,7 @@ export function MenuSheet({
 											</Link>
 										</SheetClose>
 									</Tap>
-									{displayedCollections.map((collection) => {
-										const isNew = isNewCollection(collection.createdAt);
-										return (
+									{displayedCollections.map((collection) => (
 											<Tap key={collection.slug}>
 												<SheetClose asChild>
 													<Link
@@ -545,16 +517,10 @@ export function MenuSheet({
 															</div>
 														)}
 														<span className="flex-1">{collection.label}</span>
-														{isNew && (
-															<Badge variant="success" className="text-[10px] px-1.5 py-0">
-																Nouveau
-															</Badge>
-														)}
 													</Link>
 												</SheetClose>
 											</Tap>
-										);
-									})}
+									))}
 								</Stagger>
 							</section>
 						)}
@@ -568,30 +534,18 @@ export function MenuSheet({
 										<SheetClose asChild>
 											<Link
 												href={personalizationItem.href}
-												className={cn(
+												className={
 													isMenuItemActive(personalizationItem.href)
-														? "bg-primary/12 border-l-2 border-primary shadow-sm"
-														: "hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent",
-													"flex items-start gap-3 px-4 py-3 rounded-lg transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 group"
-												)}
+														? activeLinkClassName
+														: linkClassName
+												}
 												aria-current={
 													isMenuItemActive(personalizationItem.href)
 														? "page"
 														: undefined
 												}
 											>
-												<div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
-													<Palette className="size-5 text-primary" aria-hidden="true" />
-												</div>
-												<div className="flex-1 min-w-0">
-													<p className="text-base font-medium text-foreground">
-														{personalizationItem.label}
-													</p>
-													<p className="text-sm text-muted-foreground mt-0.5">
-														Créez votre bijou unique
-													</p>
-												</div>
-												<Sparkles className="size-4 text-primary/60 shrink-0 mt-1" aria-hidden="true" />
+												{personalizationItem.label}
 											</Link>
 										</SheetClose>
 									</Tap>
@@ -617,10 +571,7 @@ export function MenuSheet({
 						<section aria-labelledby="section-account">
 							<SectionHeader id="section-account">Mon compte</SectionHeader>
 							<Stagger stagger={0.025} delay={0.15} y={10} className="space-y-1">
-								{/* Filtrer les items: exclure connexion (affiché en haut) */}
-								{accountItems
-									.filter((item) => item.href !== "/connexion")
-									.map((item) => {
+								{accountItems.map((item) => {
 										const isActive = isMenuItemActive(item.href);
 										const showWishlistBadge =
 											item.href === "/favoris" && wishlistCount > 0;
@@ -692,29 +643,6 @@ export function MenuSheet({
 
 				{/* Footer amélioré */}
 				<footer className="relative z-10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0 border-t border-border/40">
-					{/* Liens rapides */}
-					<div className="flex items-center justify-center gap-4 mb-3">
-						<SheetClose asChild>
-							<Link
-								href="/contact"
-								className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-							>
-								<Mail className="size-4" aria-hidden="true" />
-								Contact
-							</Link>
-						</SheetClose>
-						<span className="text-border">•</span>
-						<SheetClose asChild>
-							<Link
-								href="/faq"
-								className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-							>
-								<HelpCircle className="size-4" aria-hidden="true" />
-								Aide
-							</Link>
-						</SheetClose>
-					</div>
-
 					{/* Réseaux sociaux et admin */}
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-3">
