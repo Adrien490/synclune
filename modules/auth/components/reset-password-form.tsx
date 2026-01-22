@@ -86,8 +86,8 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 						validators={{
 							onChange: ({ value }: { value: string }) => {
 								if (!value) return "Le mot de passe est requis";
-								if (value.length < 6) {
-									return "Le mot de passe doit contenir au moins 6 caractères";
+								if (value.length < 8) {
+									return "Le mot de passe doit contenir au moins 8 caractères";
 								}
 								if (value.length > 128) {
 									return "Le mot de passe ne doit pas dépasser 128 caractères";
@@ -113,8 +113,8 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 							onChange: ({ value, fieldApi }) => {
 								if (!value)
 									return "La confirmation du mot de passe est requise";
-								if (value.length < 6) {
-									return "Le mot de passe doit contenir au moins 6 caractères";
+								if (value.length < 8) {
+									return "Le mot de passe doit contenir au moins 8 caractères";
 								}
 								if (value.length > 128) {
 									return "Le mot de passe ne doit pas dépasser 128 caractères";
