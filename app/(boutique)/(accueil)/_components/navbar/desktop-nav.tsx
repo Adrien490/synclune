@@ -23,6 +23,7 @@ interface DesktopNavProps {
 const linkClasses = cn(
 	"relative h-auto px-3 py-2 rounded-sm text-sm font-medium",
 	"text-foreground/80 hover:text-foreground",
+	"data-[active=true]:text-foreground",
 	"transition-colors duration-200",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 	// Underline animé au hover
@@ -30,7 +31,8 @@ const linkClasses = cn(
 	"after:h-0.5 after:bg-primary after:rounded-full",
 	"after:origin-center after:scale-x-0",
 	"after:transition-transform after:duration-200",
-	"hover:after:scale-x-100 data-[state=open]:after:scale-x-100"
+	"hover:after:scale-x-100 data-[state=open]:after:scale-x-100",
+	"data-[active=true]:after:scale-x-100"
 );
 
 export function DesktopNav({ navItems }: DesktopNavProps) {
