@@ -40,7 +40,7 @@ export function MegaMenuColumn({ title, items, viewAllLink }: MegaMenuColumnProp
 			<h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 				{title}
 			</h3>
-			<ul className="space-y-1" role="list">
+			<ul className="space-y-1">
 				{items.map((item) => {
 					const isActive = pathname === item.href;
 					return (

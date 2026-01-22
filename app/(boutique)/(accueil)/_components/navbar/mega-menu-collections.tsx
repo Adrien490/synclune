@@ -17,21 +17,14 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 
 	return (
 		<div className="py-6">
-			<div className="grid grid-cols-4 gap-8">
-				<MegaMenuColumn
-					title="Collections"
-					items={filteredCollections}
-					viewAllLink={{
-						href: "/collections",
-						label: "Voir toutes les collections",
-					}}
-				/>
-
-				{/* Colonnes disponibles pour contenu futur */}
-				<div className="col-span-3">
-					{/* Contenu à enrichir */}
-				</div>
-			</div>
+			<MegaMenuColumn
+				title="Collections"
+				items={filteredCollections}
+				viewAllLink={{
+					href: "/collections",
+					label: "Voir toutes les collections",
+				}}
+			/>
 		</div>
 	);
 }
