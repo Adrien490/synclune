@@ -1,6 +1,6 @@
 "use client";
 
-import type { NavItemWithChildren, MegaMenuProduct } from "@/shared/constants/navigation";
+import type { NavItemWithChildren } from "@/shared/constants/navigation";
 import {
 	NavigationMenu,
 	NavigationMenuContent,
@@ -18,13 +18,12 @@ import { MegaMenuCollections } from "./mega-menu-collections";
 
 interface DesktopNavProps {
 	navItems: NavItemWithChildren[];
-	newProducts: MegaMenuProduct[];
 }
 
 const linkClasses = cn(
 	"relative h-auto px-3 py-2 rounded-sm text-sm font-medium",
 	"text-foreground/80 hover:text-foreground",
-	"transition-colors duration-150",
+	"transition-colors duration-200",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 	// Underline animé au hover
 	"after:absolute after:bottom-0 after:left-2 after:right-2",
@@ -34,7 +33,7 @@ const linkClasses = cn(
 	"hover:after:scale-x-100 data-[state=open]:after:scale-x-100"
 );
 
-export function DesktopNav({ navItems, newProducts }: DesktopNavProps) {
+export function DesktopNav({ navItems }: DesktopNavProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 
 	return (
@@ -85,10 +84,7 @@ export function DesktopNav({ navItems, newProducts }: DesktopNavProps) {
 							>
 								<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 									{item.dropdownType === "creations" && (
-										<MegaMenuCreations
-											productTypes={item.children}
-											newProducts={newProducts}
-										/>
+										<MegaMenuCreations productTypes={item.children} />
 									)}
 									{item.dropdownType === "collections" && (
 										<MegaMenuCollections collections={item.children} />

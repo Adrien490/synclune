@@ -1,14 +1,12 @@
 import { Logo } from "@/shared/components/logo";
 import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/navigation";
-import type { MegaMenuProduct } from "@/shared/constants/navigation";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
 import { getRecentSearches } from "@/modules/products/data/get-recent-searches";
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
-import { getProducts } from "@/modules/products/data/get-products";
-import { CollectionStatus, ProductStatus } from "@/app/generated/prisma/client";
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { Heart } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import Link from "next/link";
@@ -26,7 +24,7 @@ const iconButtonClassName = "relative items-center justify-center size-11 text-m
 
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
-	const [session, cartCount, wishlistCount, recentSearches, collectionsData, productTypesData, newProductsData] = await Promise.all([
+	const [session, cartCount, wishlistCount, recentSearches, collectionsData, productTypesData] = await Promise.all([
 		getSession(),
 		getCartItemCount(),
 		getWishlistItemCount(),
@@ -40,13 +38,6 @@ export async function Navbar() {
 			perPage: 12,
 			sortBy: "label-ascending",
 			filters: { isActive: true, hasProducts: true },
-		}),
-		// Nouveautés pour mega menu (plus récents)
-		getProducts({
-			perPage: 4,
-			sortBy: "created-descending",
-			status: ProductStatus.PUBLIC,
-			filters: {},
 		}),
 	]);
 
@@ -82,15 +73,6 @@ export async function Navbar() {
 				return image ? { url: image.url, blurDataUrl: image.blurDataUrl, alt: image.altText } : null;
 			})
 			.filter((img): img is { url: string; blurDataUrl: string | null; alt: string | null } => img !== null),
-	}));
-
-	// Nouveautés pour mega menu créations
-	const newProducts: MegaMenuProduct[] = newProductsData.products.map((p) => ({
-		slug: p.slug,
-		title: p.title,
-		priceInclTax: p.skus[0]?.priceInclTax ?? 0,
-		imageUrl: p.skus[0]?.images[0]?.url ?? "",
-		blurDataUrl: p.skus[0]?.images[0]?.blurDataUrl ?? null,
 	}));
 
 	// Générer les items de navigation mobile en fonction de la session et statut admin
@@ -155,7 +137,7 @@ export async function Navbar() {
 								imageClassName="shadow-md hover:shadow-lg transition-shadow duration-300 ease-out"
 								sizes="44px"
 							/>
-							<DesktopNav navItems={desktopNavItems} newProducts={newProducts} />
+							<DesktopNav navItems={desktopNavItems} />
 						</div>
 
 						{/* Section droite: Favoris + Recherche + Compte (dropdown) + Panier */}

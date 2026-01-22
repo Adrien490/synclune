@@ -7,10 +7,13 @@ import { cn } from "@/shared/utils/cn";
 
 interface MegaMenuCreationsProps {
 	productTypes?: NavItemChild[];
-	newProducts?: unknown[];
 }
 
 export function MegaMenuCreations({ productTypes }: MegaMenuCreationsProps) {
+	if (!productTypes || productTypes.length === 0) {
+		return null;
+	}
+
 	return (
 		<div className="py-6">
 			<div className="grid grid-cols-4 gap-8">
@@ -28,7 +31,7 @@ export function MegaMenuCreations({ productTypes }: MegaMenuCreationsProps) {
 										className={cn(
 											"block rounded-sm px-2 py-1.5 text-sm",
 											"hover:bg-accent hover:text-accent-foreground",
-											"transition-colors duration-150"
+											"transition-colors duration-200"
 										)}
 									>
 										{type.label}
@@ -45,17 +48,6 @@ export function MegaMenuCreations({ productTypes }: MegaMenuCreationsProps) {
 				</div>
 			</div>
 
-			{/* Footer */}
-			<div className="mt-6 border-t border-border pt-4">
-				<NavigationMenuLink asChild>
-					<Link
-						href="/produits"
-						className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-					>
-						Voir toutes les créations
-					</Link>
-				</NavigationMenuLink>
-			</div>
 		</div>
 	);
 }

@@ -13,6 +13,10 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 	// Exclure "Toutes les collections"
 	const filteredCollections = collections?.filter((c) => c.href !== "/collections");
 
+	if (!filteredCollections || filteredCollections.length === 0) {
+		return null;
+	}
+
 	return (
 		<div className="py-6">
 			<div className="grid grid-cols-4 gap-8">
@@ -30,7 +34,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 										className={cn(
 											"block rounded-sm px-2 py-1.5 text-sm",
 											"hover:bg-accent hover:text-accent-foreground",
-											"transition-colors duration-150"
+											"transition-colors duration-200"
 										)}
 									>
 										{collection.label}
