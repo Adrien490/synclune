@@ -7,6 +7,7 @@ export type {
 	NavItemChild,
 	NavItemWithChildren,
 	NavItem,
+	MegaMenuProduct,
 } from "@/shared/types/navigation.types"
 
 /**
@@ -149,23 +150,28 @@ type CollectionImage = {
 };
 
 /** Type pour les collections dans le mega menu */
-type MegaMenuCollection = {
+export type MegaMenuCollection = {
 	slug: string;
 	label: string;
+	description?: string | null;
+	createdAt?: Date;
 	images: CollectionImage[];
+};
+
+/** Données pour les mega menus desktop */
+export type MegaMenuData = {
+	productTypes?: Array<{ slug: string; label: string }>;
+	collections?: MegaMenuCollection[];
 };
 
 /**
  * Génère les items de navigation desktop avec mega menus
  *
- * @param productTypes - Types de produits actifs (Bagues, Colliers, etc.)
- * @param collections - Collections avec images pour le mega menu
+ * @param data - Données pour les mega menus (types, collections)
  * @returns Items de navigation desktop avec children pour mega menus
  */
-export function getDesktopNavItems(
-	productTypes?: Array<{ slug: string; label: string }>,
-	collections?: MegaMenuCollection[]
-): NavItemWithChildren[] {
+export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
+	const { productTypes, collections } = data;
 	// Mega menu "Les créations" avec types de produits
 	const creationsItem: NavItemWithChildren = {
 		href: "/produits",
@@ -197,7 +203,9 @@ export function getDesktopNavItems(
 					...collections.map((collection) => ({
 						href: `/collections/${collection.slug}`,
 						label: collection.label,
+						description: collection.description,
 						images: collection.images,
+						createdAt: collection.createdAt,
 					})),
 			  ]
 			: undefined,

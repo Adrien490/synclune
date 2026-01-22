@@ -29,6 +29,15 @@ export type NavItemImage = {
 	alt: string | null
 }
 
+/** Produit pour mega menu (bestseller/nouveauté) */
+export type MegaMenuProduct = {
+	slug: string
+	title: string
+	priceInclTax: number // prix en centimes
+	imageUrl: string
+	blurDataUrl: string | null
+}
+
 /**
  * Item enfant de navigation (sous-menu)
  */
@@ -42,6 +51,8 @@ export type NavItemChild = {
 	blurDataUrl?: string | null
 	/** Images multiples pour mega menu collections (bento grid) */
 	images?: NavItemImage[]
+	/** Date de création (pour badge "Nouvelle" sur les collections) */
+	createdAt?: Date
 }
 
 /**

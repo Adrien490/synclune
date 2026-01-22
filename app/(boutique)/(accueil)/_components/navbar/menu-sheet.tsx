@@ -238,7 +238,6 @@ export function MenuSheet({
 	// Séparer les items en zones
 	const homeItem = navItems.find((item) => item.href === "/");
 	const bestsellerItem = navItems.find((item) => item.href.startsWith("/produits?sortBy=best-selling"));
-	const favorisItem = navItems.find((item) => item.href === "/favoris");
 	const personalizationItem = navItems.find((item) => item.href === "/personnalisation");
 	const accountItems = navItems.filter((item) =>
 		ACCOUNT_HREFS.includes(item.href as (typeof ACCOUNT_HREFS)[number])
@@ -369,37 +368,6 @@ export function MenuSheet({
 												<Badge variant="warning" className="text-[10px] px-1.5 py-0">
 													Top
 												</Badge>
-											</Link>
-										</SheetClose>
-									</Tap>
-								)}
-								{favorisItem && (
-									<Tap>
-										<SheetClose asChild>
-											<Link
-												href={favorisItem.href}
-												className={cn(
-													isMenuItemActive(favorisItem.href)
-														? activeLinkClassName
-														: linkClassName,
-													"justify-between"
-												)}
-												aria-current={
-													isMenuItemActive(favorisItem.href) ? "page" : undefined
-												}
-											>
-												<span className="flex items-center gap-2">
-													<Heart className="size-4 text-pink-500" aria-hidden="true" />
-													{favorisItem.label}
-												</span>
-												{wishlistCount > 0 && (
-													<span
-														className="ml-2 bg-secondary text-secondary-foreground text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center"
-														aria-label={`${wishlistCount} article${wishlistCount > 1 ? "s" : ""} dans les favoris`}
-													>
-														{wishlistCount > 99 ? "99+" : wishlistCount}
-													</span>
-												)}
 											</Link>
 										</SheetClose>
 									</Tap>
