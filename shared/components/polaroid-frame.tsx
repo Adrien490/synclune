@@ -2,8 +2,9 @@ import { dancingScript } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import type { ReactNode } from "react";
 
-type TiltDirection = "left" | "right" | "none";
-type WashiTapeColor = "pink" | "lavender" | "mint" | "peach";
+export type TiltDirection = "left" | "right" | "none";
+export type WashiTapeColor = "pink" | "lavender" | "mint" | "peach";
+export type WashiTapePosition = "top-left" | "top-right" | "both";
 
 interface PolaroidFrameProps {
 	children: ReactNode;
@@ -16,7 +17,7 @@ interface PolaroidFrameProps {
 	/** Couleur du washi tape */
 	washiColor?: WashiTapeColor;
 	/** Position du washi tape */
-	washiPosition?: "top-left" | "top-right" | "both";
+	washiPosition?: WashiTapePosition;
 	className?: string;
 }
 

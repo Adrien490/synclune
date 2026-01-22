@@ -8,6 +8,8 @@ import { BRAND } from "@/shared/constants/brand";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 
+const socialLinkClassName = "inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-accent motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+
 export function HeroSection() {
   return (
     <section
@@ -94,7 +96,6 @@ export function HeroSection() {
                   size={22}
                   fill="currentColor"
                   className="text-primary inline align-middle"
-                  role="img"
                   aria-label="coeur"
                 />
               </p>
@@ -138,7 +139,7 @@ export function HeroSection() {
                     href={BRAND.social.instagram.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-accent motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className={socialLinkClassName}
                     aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
                   >
                     <InstagramIcon decorative size={20} className="text-foreground" />
@@ -147,7 +148,7 @@ export function HeroSection() {
                     href={BRAND.social.tiktok.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-accent motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className={socialLinkClassName}
                     aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
                   >
                     <TikTokIcon decorative size={20} className="text-foreground" />

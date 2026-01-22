@@ -8,92 +8,104 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaqAccordion } from "./faq-accordion";
 
+interface FaqLink {
+	text: string;
+	href: string;
+}
+
 interface FaqItemData {
 	question: string;
-	answerText: string;
-	answerJsx: ReactNode;
+	answer: string;
+	links?: FaqLink[];
+}
+
+const LINK_PLACEHOLDER_REGEX = /\{\{link(\d+)\}\}/g;
+
+function renderAnswerWithLinks(answer: string, links?: FaqLink[]): ReactNode {
+	if (!links || links.length === 0) {
+		return answer;
+	}
+
+	const parts: ReactNode[] = [];
+	let lastIndex = 0;
+	let match: RegExpExecArray | null;
+
+	while ((match = LINK_PLACEHOLDER_REGEX.exec(answer)) !== null) {
+		if (match.index > lastIndex) {
+			parts.push(answer.slice(lastIndex, match.index));
+		}
+
+		const linkIndex = Number.parseInt(match[1], 10);
+		const link = links[linkIndex];
+
+		if (link) {
+			parts.push(
+				<Link
+					key={match.index}
+					href={link.href}
+					className="underline underline-offset-2 hover:text-foreground transition-colors"
+				>
+					{link.text}
+				</Link>,
+			);
+		} else {
+			parts.push(match[0]);
+		}
+
+		lastIndex = match.index + match[0].length;
+	}
+
+	if (lastIndex < answer.length) {
+		parts.push(answer.slice(lastIndex));
+	}
+
+	LINK_PLACEHOLDER_REGEX.lastIndex = 0;
+
+	return <>{parts}</>;
+}
+
+function getPlainTextAnswer(answer: string, links?: FaqLink[]): string {
+	if (!links || links.length === 0) {
+		return answer;
+	}
+
+	return answer.replace(LINK_PLACEHOLDER_REGEX, (_, index) => {
+		const link = links[Number.parseInt(index, 10)];
+		return link ? link.text : "";
+	});
 }
 
 const faqItems: FaqItemData[] = [
 	{
 		question: "Combien de temps pour recevoir ma commande ?",
-		answerText:
+		answer:
 			"Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite, Colissimo te livre en 2-4 jours en France métropolitaine. Je t'envoie le numéro de suivi par email dès que ton colis part de mon atelier !",
-		answerJsx: (
-			<>
-				Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite,
-				Colissimo te livre en 2-4 jours en France métropolitaine. Je t'envoie le
-				numéro de suivi par email dès que ton colis part de mon atelier !
-			</>
-		),
 	},
 	{
 		question: "Je peux retourner un bijou si je change d'avis ?",
-		answerText:
+		answer:
 			"Bien sûr ! Tu as 14 jours après réception pour changer d'avis. Renvoie-moi le bijou dans son état d'origine, non porté, et je te rembourse. Écris-moi par email pour qu'on organise ça ensemble.",
-		answerJsx: (
-			<>
-				Bien sûr ! Tu as 14 jours après réception pour changer d'avis.
-				Renvoie-moi le bijou dans son état d'origine, non porté, et je te
-				rembourse. Écris-moi par email pour qu'on organise ça ensemble.
-			</>
-		),
 	},
 	{
 		question: "En quoi sont faits tes bijoux ?",
-		answerText:
+		answer:
 			"Je crée mes bijoux à partir de plastique fou (polystyrène) que je dessine et peins entièrement à la main. Ensuite, je les vernis pour protéger les couleurs. Pour les crochets et fermoirs, j'utilise de l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles !",
-		answerJsx: (
-			<>
-				Je crée mes bijoux à partir de plastique fou (polystyrène) que je
-				dessine et peins entièrement à la main. Ensuite, je les vernis pour
-				protéger les couleurs. Pour les crochets et fermoirs, j'utilise de
-				l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles !
-			</>
-		),
 	},
 	{
 		question: "Comment je prends soin de mes bijoux ?",
-		answerText:
+		answer:
 			"Évite le contact avec l'eau, les parfums et les crèmes. Range-les à plat dans leur jolie pochette pour éviter les rayures. Avec ces petites attentions, ils resteront beaux pendant longtemps !",
-		answerJsx: (
-			<>
-				Évite le contact avec l'eau, les parfums et les crèmes. Range-les à plat
-				dans leur jolie pochette pour éviter les rayures. Avec ces petites
-				attentions, ils resteront beaux pendant longtemps !
-			</>
-		),
 	},
 	{
 		question: "Tu fais des bijoux sur-mesure ?",
-		answerText:
-			"Oui, j'adore ! Créer une pièce unique pour un cadeau spécial ou une envie particulière, c'est ce que je préfère. Écris-moi via la page Personnalisation et on discute de ton projet ensemble.",
-		answerJsx: (
-			<>
-				Oui, j'adore ! Créer une pièce unique pour un cadeau spécial ou une
-				envie particulière, c'est ce que je préfère. Écris-moi via la{" "}
-				<Link
-					href="/personnalisation"
-					className="underline underline-offset-2 hover:text-foreground transition-colors"
-				>
-					page Personnalisation
-				</Link>{" "}
-				et on discute de ton projet ensemble.
-			</>
-		),
+		answer:
+			"Oui, j'adore ! Créer une pièce unique pour un cadeau spécial ou une envie particulière, c'est ce que je préfère. Écris-moi via la {{link0}} et on discute de ton projet ensemble.",
+		links: [{ text: "page Personnalisation", href: "/personnalisation" }],
 	},
 	{
 		question: "C'est quoi le délai pour une création personnalisée ?",
-		answerText:
+		answer:
 			"Compte environ 2-3 semaines pour une commande sur-mesure. Ce temps me permet de bien comprendre ce que tu veux, de créer des esquisses qu'on validera ensemble, et de réaliser ton bijou avec tout le soin qu'il mérite.",
-		answerJsx: (
-			<>
-				Compte environ 2-3 semaines pour une commande sur-mesure. Ce temps me
-				permet de bien comprendre ce que tu veux, de créer des esquisses qu'on
-				validera ensemble, et de réaliser ton bijou avec tout le soin qu'il
-				mérite.
-			</>
-		),
 	},
 ];
 
@@ -115,7 +127,7 @@ function generateFaqSchema(items: FaqItemData[]) {
 					name: item.question,
 					acceptedAnswer: {
 						"@type": "Answer",
-						text: item.answerText,
+						text: getPlainTextAnswer(item.answer, item.links),
 					},
 				})),
 			},
@@ -136,7 +148,7 @@ const faqSchema = generateFaqSchema(faqItems);
 export function FaqSection() {
 	const accordionItems = faqItems.map((item) => ({
 		question: item.question,
-		answer: item.answerJsx,
+		answer: renderAnswerWithLinks(item.answer, item.links),
 	}));
 
 	return (

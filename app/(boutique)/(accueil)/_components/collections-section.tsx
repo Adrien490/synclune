@@ -1,6 +1,7 @@
 import { CollectionCard } from "@/modules/collections/components/collection-card";
 import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
+import { extractCollectionImages } from "@/modules/collections/utils/collection-images.utils";
 import { Fade, Reveal } from "@/shared/components/animations";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
@@ -57,7 +58,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 							id="collections-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
 						>
-							Je rajoute une petite touche personnelle à chaque création <Heart className="inline size-4 text-primary fill-primary" />
+							Je rajoute une petite touche personnelle à chaque création <Heart className="inline size-4 text-primary fill-primary" aria-hidden="true" />
 						</p>
 					</Fade>
 				</header>
@@ -74,14 +75,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 						>
 							<CarouselContent className="-ml-4 sm:-ml-6 py-4" showFade>
 								{collections.map((collection, index) => {
-									const images = collection.products
-										.map((p) => p.product?.skus?.[0]?.images?.[0])
-										.filter(Boolean)
-										.map((img) => ({
-											url: img!.url,
-											blurDataUrl: img!.blurDataUrl,
-											alt: img!.altText,
-										}));
+									const images = extractCollectionImages(collection.products);
 
 									return (
 										<CarouselItem

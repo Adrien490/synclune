@@ -67,18 +67,11 @@ export function AtelierStory() {
 							once
 							className="space-y-4 sm:space-y-6 text-base sm:text-lg text-muted-foreground leading-relaxed"
 						>
+							<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
 							<p>
-								Quand j'ai commencé à créer des bijoux, c'était juste pour moi.
+								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span role="img" aria-label="visage qui rit aux larmes">😂</span>
 							</p>
-							<p>
-								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies.
-								Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span role="img" aria-label="visage qui rit aux larmes">😂</span>
-							</p>
-							<p>
-								Chaque bijou que tu vois ici, j'ai
-								choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il
-								n'existe qu'en quelques exemplaires (parfois moins de dix).
-							</p>
+							<p>Chaque bijou que tu vois ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).</p>
 							{/* Signature */}
 							<p
 								className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic pt-4 text-center`}
@@ -98,60 +91,56 @@ export function AtelierStory() {
 							aria-label="Galerie photos de l'atelier Synclune"
 						>
 							<Stagger
-							stagger={0.1}
-							y={20}
-							inView
-							once
-							className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto"
-						>
-							<PolaroidFrame
-								tilt="left"
-								caption="Les mains dans les perles !"
-								washiTape
-								washiColor="pink"
-								washiPosition="top-left"
+								stagger={0.1}
+								y={20}
+								inView
+								once
+								className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto"
 							>
-								<PlaceholderImage
-									className="w-full h-full"
-									label="Photo des mains de Léane assemblant un bijou artisanal"
-								/>
-							</PolaroidFrame>
-							<PolaroidFrame
-								tilt="right"
-								caption="Mes petits trésors"
-								washiTape
-								washiColor="lavender"
-								washiPosition="top-right"
-							>
-								<PlaceholderImage
-									className="w-full h-full"
-									label="Perles et matériaux colorés utilisés pour la création"
-								/>
-							</PolaroidFrame>
-							<PolaroidFrame
-								tilt="left"
-								caption="L'inspiration du jour"
-								washiTape
-								washiColor="mint"
-								washiPosition="top-left"
-							>
-								<PlaceholderImage
-									className="w-full h-full"
-									label="Carnet d'inspiration avec croquis de bijoux"
-								/>
-							</PolaroidFrame>
-							<PolaroidFrame
-								tilt="right"
-								caption="Mon coin créatif"
-								washiTape
-								washiColor="peach"
-								washiPosition="top-right"
-							>
-								<PlaceholderImage
-									className="w-full h-full"
-									label="Vue de l'atelier de création Synclune"
-								/>
-							</PolaroidFrame>
+								{[
+									{
+										caption: "Les mains dans les perles !",
+										label: "Photo des mains de Léane assemblant un bijou artisanal",
+										tilt: "left" as const,
+										washiColor: "pink" as const,
+										washiPosition: "top-left" as const,
+									},
+									{
+										caption: "Mes petits trésors",
+										label: "Perles et matériaux colorés utilisés pour la création",
+										tilt: "right" as const,
+										washiColor: "lavender" as const,
+										washiPosition: "top-right" as const,
+									},
+									{
+										caption: "L'inspiration du jour",
+										label: "Carnet d'inspiration avec croquis de bijoux",
+										tilt: "left" as const,
+										washiColor: "mint" as const,
+										washiPosition: "top-left" as const,
+									},
+									{
+										caption: "Mon coin créatif",
+										label: "Vue de l'atelier de création Synclune",
+										tilt: "right" as const,
+										washiColor: "peach" as const,
+										washiPosition: "top-right" as const,
+									},
+								].map((item) => (
+									<PolaroidFrame
+										key={item.caption}
+										tilt={item.tilt}
+										caption={item.caption}
+										washiTape
+										washiColor={item.washiColor}
+										washiPosition={item.washiPosition}
+									>
+										<PlaceholderImage
+											className="w-full h-full"
+											label={item.label}
+										/>
+									</PolaroidFrame>
+								))}
 							</Stagger>
 						</div>
 
@@ -160,7 +149,6 @@ export function AtelierStory() {
 							<Link
 								href="/personnalisation"
 								className="inline-block min-h-12 py-3 px-6 text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-								title="Créez un bijou unique sur-mesure avec Léane"
 								aria-label="Discuter d'un projet de bijou personnalisé avec Léane"
 							>
 								Discuter d'un projet personnalisé →
@@ -176,8 +164,9 @@ export function AtelierStory() {
 				dangerouslySetInnerHTML={{
 					__html: JSON.stringify({
 						"@context": "https://schema.org",
-						"@type": "AboutPage",
-						mainEntity: {
+						"@type": "Article",
+						headline: "L'histoire de Léane, créatrice de bijoux artisanaux Synclune",
+						author: {
 							"@type": "Person",
 							name: "Léane",
 							jobTitle: "Créatrice de bijoux artisanaux",
@@ -189,10 +178,11 @@ export function AtelierStory() {
 									addressCountry: "FR",
 								},
 							},
-							brand: {
-								"@type": "Brand",
-								name: "Synclune",
-							},
+						},
+						about: {
+							"@type": "Brand",
+							name: "Synclune",
+							description: "Bijoux artisanaux faits main à Nantes",
 						},
 					}),
 				}}

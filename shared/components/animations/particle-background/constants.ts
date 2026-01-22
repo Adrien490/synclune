@@ -26,6 +26,7 @@ export const SHAPE_CONFIGS: Record<ParticleShape, ShapeConfig> = {
 		type: "svg",
 		viewBox: "0 0 100 100",
 		path: "M 50 5 C 20 5, 5 25, 5 50 C 5 75, 20 95, 50 95 C 35 80, 30 65, 30 50 C 30 35, 35 20, 50 5 Z",
+		fillRule: "evenodd",
 	},
 	pearl: {
 		type: "css",

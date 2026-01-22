@@ -4,23 +4,10 @@ import { MOTION_CONFIG } from "../motion.config";
 import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
 
-/**
- * Générateur pseudo-aléatoire déterministe (mulberry32)
- * Meilleure distribution que Math.sin() - pas de patterns visibles
- */
-function mulberry32(seed: number): () => number {
-	return () => {
-		seed |= 0;
-		seed = (seed + 0x6d2b79f5) | 0;
-		let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-	};
-}
-
 /** Générateur pseudo-aléatoire déterministe (seeded) */
 export function seededRandom(seed: number): number {
-	return mulberry32(seed)();
+	const x = Math.sin(seed) * 10000;
+	return x - Math.floor(x);
 }
 
 /** Cache pour la memoization des particules générées */
@@ -135,7 +122,7 @@ export function getShapeStyles(
 	if (config.type === "css") {
 		if (shape === "pearl") {
 			return {
-				borderRadius: "50%",
+				...config.styles,
 				background: `
 					radial-gradient(ellipse 50% 40% at 30% 25%, rgba(255,255,255,0.7) 0%, transparent 60%),
 					radial-gradient(circle at 50% 50%,
