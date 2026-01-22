@@ -4,7 +4,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  * Skeleton de chargement pour le Hero de la page d'accueil
  * Reproduit exactement la structure du Hero pour éviter le CLS
  */
-export function HeroSkeleton() {
+export function HeroSectionSkeleton() {
 	return (
 		<section className="relative min-h-[calc(75dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%">
 			{/* Background gradient */}

@@ -1,4 +1,4 @@
-import { Collections } from "@/app/(boutique)/(accueil)/_components/collections";
+import { CollectionsSection } from "@/app/(boutique)/(accueil)/_components/collections-section";
 import { CuratedPicks } from "@/app/(boutique)/(accueil)/_components/curated-picks";
 import { CuratedPicksSkeleton } from "@/app/(boutique)/(accueil)/_components/curated-picks-skeleton";
 import { LatestCreations } from "@/app/(boutique)/(accueil)/_components/latest-creations";
@@ -17,7 +17,7 @@ import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
 import { CreativeProcess } from "./_components/creative-process";
-import { Hero } from "./_components/hero";
+import { HeroSection } from "./_components/hero-section";
 
 // Slugs des produits "Coups de coeur" de Léane (à modifier depuis l'admin plus tard)
 const CURATED_PICKS_SLUGS = [
@@ -79,7 +79,7 @@ export default async function Page() {
       <StructuredData reviewStats={reviewStats} />
 
       {/* 1. Hero - Capture d'attention + Tagline rotative */}
-      <Hero />
+      <HeroSection />
 
       {/* 2. Value Proposition Bar - L'ADN Synclune (fait main, Nantes, couleurs, amour) */}
       <ValuePropositionBar />
@@ -121,7 +121,7 @@ export default async function Page() {
 
       {/* 5. Collections - Exploration thématique avec descriptions et badge "Nouvelle" */}
       <Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
-        <Collections
+        <CollectionsSection
           collectionsPromise={getCollections({
             perPage: 6,
             sortBy: "created-descending",

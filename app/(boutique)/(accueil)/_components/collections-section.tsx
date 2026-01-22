@@ -17,11 +17,11 @@ import { Heart } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 
-interface CollectionsProps {
+interface CollectionsSectionProps {
 	collectionsPromise: Promise<GetCollectionsReturn>;
 }
 
-export function Collections({ collectionsPromise }: CollectionsProps) {
+export function CollectionsSection({ collectionsPromise }: CollectionsSectionProps) {
 	const { collections } = use(collectionsPromise);
 
 	// Si aucune collection, ne pas afficher la section

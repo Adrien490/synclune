@@ -3,7 +3,7 @@ import { SparklesDivider } from "@/shared/components/section-divider";
 import { AtelierStorySkeleton } from "./_components/atelier-story-skeleton";
 import { CreativeProcessSkeleton } from "./_components/creative-process-skeleton";
 import { FaqSectionSkeleton } from "./_components/faq-section-skeleton";
-import { HeroSkeleton } from "./_components/hero-skeleton";
+import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 
 /**
@@ -21,7 +21,7 @@ export default function HomeLoading() {
 			aria-label="Chargement de la page d'accueil"
 		>
 			<span className="sr-only">Chargement en cours...</span>
-			<HeroSkeleton />
+			<HeroSectionSkeleton />
 			<LatestCreationsSkeleton productsCount={8} />
 			<CollectionsSectionSkeleton collectionsCount={6} />
 			<SparklesDivider />

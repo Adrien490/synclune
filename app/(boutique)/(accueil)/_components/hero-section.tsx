@@ -8,7 +8,7 @@ import { BRAND } from "@/shared/constants/brand";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 
-export function Hero() {
+export function HeroSection() {
   return (
     <section
       id="hero-section"
