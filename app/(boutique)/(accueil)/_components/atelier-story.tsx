@@ -6,41 +6,12 @@ import { dancingScript } from "@/shared/styles/fonts";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
 
-// Données des polaroids - desktop: 4, mobile: 2 premiers (via CSS)
-const POLAROID_DATA = [
-	{
-		caption: "Les mains dans les perles !",
-		label: "Photo des mains de Léane assemblant un bijou artisanal",
-		tilt: "left" as const,
-		washiColor: "pink" as const,
-		washiPosition: "top-left" as const,
-		mobileOnly: false,
-	},
-	{
-		caption: "Mes petits trésors",
-		label: "Perles et matériaux colorés utilisés pour la création",
-		tilt: "right" as const,
-		washiColor: "lavender" as const,
-		washiPosition: "top-right" as const,
-		mobileOnly: false,
-	},
-	{
-		caption: "L'inspiration du jour",
-		label: "Carnet d'inspiration avec croquis de bijoux",
-		tilt: "left" as const,
-		washiColor: "mint" as const,
-		washiPosition: "top-left" as const,
-		mobileOnly: true, // Masqué sur mobile
-	},
-	{
-		caption: "Mon coin créatif",
-		label: "Vue de l'atelier de création Synclune",
-		tilt: "right" as const,
-		washiColor: "peach" as const,
-		washiPosition: "top-right" as const,
-		mobileOnly: true, // Masqué sur mobile
-	},
-];
+const POLAROIDS = [
+	{ caption: "Les mains dans les perles !", label: "Mains de Léane assemblant un bijou", tilt: "left", washiColor: "pink", washiPosition: "top-left" },
+	{ caption: "Mes petits trésors", label: "Perles et matériaux colorés", tilt: "right", washiColor: "lavender", washiPosition: "top-right" },
+	{ caption: "L'inspiration du jour", label: "Carnet d'inspiration avec croquis", tilt: "left", washiColor: "mint", washiPosition: "top-left", className: "hidden lg:block" },
+	{ caption: "Mon coin créatif", label: "Vue de l'atelier Synclune", tilt: "right", washiColor: "peach", washiPosition: "top-right", className: "hidden lg:block" },
+] as const;
 
 export function AtelierStory() {
 	return (
@@ -133,20 +104,17 @@ export function AtelierStory() {
 								once
 								className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto"
 							>
-								{POLAROID_DATA.map((item) => (
+								{POLAROIDS.map((p) => (
 									<PolaroidFrame
-										key={item.caption}
-										tilt={item.tilt}
-										caption={item.caption}
+										key={p.caption}
+										tilt={p.tilt}
+										caption={p.caption}
 										washiTape
-										washiColor={item.washiColor}
-										washiPosition={item.washiPosition}
-										className={item.mobileOnly ? "hidden lg:block" : undefined}
+										washiColor={p.washiColor}
+										washiPosition={p.washiPosition}
+										className={"className" in p ? p.className : undefined}
 									>
-										<PlaceholderImage
-											className="w-full h-full"
-											label={item.label}
-										/>
+										<PlaceholderImage className="w-full h-full" label={p.label} />
 									</PolaroidFrame>
 								))}
 							</Stagger>
