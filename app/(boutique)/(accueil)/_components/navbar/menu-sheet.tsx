@@ -7,7 +7,6 @@ import { Tap } from "@/shared/components/animations/tap";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import ScrollFade from "@/shared/components/scroll-fade";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { Badge } from "@/shared/components/ui/badge";
 import { BRAND } from "@/shared/constants/brand";
 import {
@@ -46,20 +45,8 @@ function SectionHeader({ children, id }: { children: React.ReactNode; id?: strin
 }
 
 /**
- * Helper pour extraire les initiales d'un nom
- */
-function getInitials(name: string): string {
-	return name
-		.split(" ")
-		.map((part) => part[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
-}
-
-/**
  * Header personnalisé pour l'utilisateur connecté
- * Affiche un message de bienvenue avec avatar et compteurs rapides
+ * Affiche un message de bienvenue et compteurs rapides (sans avatar)
  */
 function UserHeader({
 	session,
@@ -79,40 +66,29 @@ function UserHeader({
 			<SheetClose asChild>
 				<Link
 					href="/compte"
-					className="flex items-center gap-3 group"
+					className="block group"
 					onClick={onClose}
 				>
-					<Avatar className="size-11 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
-						{session.user.image && (
-							<AvatarImage src={session.user.image} alt={session.user.name || "Avatar"} />
+					<p className="text-base font-semibold text-foreground">
+						Bonjour {firstName}
+					</p>
+					<p className="text-sm text-muted-foreground mt-0.5">
+						{wishlistCount > 0 && (
+							<span>{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}</span>
 						)}
-						<AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
-							{session.user.name ? getInitials(session.user.name) : "U"}
-						</AvatarFallback>
-					</Avatar>
-					<div className="flex-1 min-w-0">
-						<p className="text-base font-semibold text-foreground truncate">
-							Bonjour {firstName}
-						</p>
-						<p className="text-sm text-muted-foreground">
-							{wishlistCount > 0 && (
-								<span>{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}</span>
-							)}
-							{wishlistCount > 0 && cartCount > 0 && <span> • </span>}
-							{cartCount > 0 && (
-								<span>{cartCount} article{cartCount > 1 ? "s" : ""}</span>
-							)}
-							{wishlistCount === 0 && cartCount === 0 && (
-								<span>Mon espace personnel</span>
-							)}
-						</p>
-					</div>
+						{wishlistCount > 0 && cartCount > 0 && <span> • </span>}
+						{cartCount > 0 && (
+							<span>{cartCount} article{cartCount > 1 ? "s" : ""}</span>
+						)}
+						{wishlistCount === 0 && cartCount === 0 && (
+							<span>Mon espace personnel</span>
+						)}
+					</p>
 				</Link>
 			</SheetClose>
 		</div>
 	);
 }
-
 
 /**
  * Mini-grid pour afficher les images de collection dans le menu mobile
@@ -305,16 +281,14 @@ export function MenuSheet({
 								isOpen ? "opacity-100" : "opacity-0"
 							)}
 						>
-						{/* Header utilisateur personnalisé (si connecté) */}
+						{/* Header utilisateur (si connecté) */}
 						{session?.user && (
-							<Stagger stagger={0.025} delay={0.03} y={10}>
-								<UserHeader
-									session={session}
-									wishlistCount={wishlistCount}
-									cartCount={cartCount}
-									onClose={() => setIsOpen(false)}
-								/>
-							</Stagger>
+							<UserHeader
+								session={session}
+								wishlistCount={wishlistCount}
+								cartCount={cartCount}
+								onClose={() => setIsOpen(false)}
+							/>
 						)}
 
 						{/* Section Découvrir - Accueil + Meilleures ventes */}
