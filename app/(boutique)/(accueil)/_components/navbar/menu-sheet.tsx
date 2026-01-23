@@ -31,9 +31,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-/** HREFs de la zone compte */
-const ACCOUNT_HREFS = ["/compte", "/commandes"] as const;
-
 /**
  * Header de section pour les catégories du menu
  */
@@ -239,9 +236,6 @@ export function MenuSheet({
 	const homeItem = navItems.find((item) => item.href === "/");
 	const bestsellerItem = navItems.find((item) => item.href.startsWith("/produits?sortBy=best-selling"));
 	const personalizationItem = navItems.find((item) => item.href === "/personnalisation");
-	const accountItems = navItems.filter((item) =>
-		ACCOUNT_HREFS.includes(item.href as (typeof ACCOUNT_HREFS)[number])
-	);
 
 	// Limites d'affichage
 	const displayedCollections = collections?.slice(0, MAX_COLLECTIONS_IN_MENU);
@@ -539,35 +533,24 @@ export function MenuSheet({
 						<section aria-labelledby="section-account">
 							<SectionHeader id="section-account">Mon compte</SectionHeader>
 							<Stagger stagger={0.025} delay={0.15} y={10} className="space-y-1">
-								{accountItems.map((item) => {
-										const isActive = isMenuItemActive(item.href);
-										const showWishlistBadge =
-											item.href === "/favoris" && wishlistCount > 0;
-
-										return (
-											<Tap key={item.href}>
-												<SheetClose asChild>
-													<Link
-														href={item.href}
-														className={
-															isActive ? activeLinkClassName : linkClassName
-														}
-														aria-current={isActive ? "page" : undefined}
-													>
-														<span className="flex-1">{item.label}</span>
-														{showWishlistBadge && (
-															<span
-																className="ml-2 bg-secondary text-secondary-foreground text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center"
-																aria-label={`${wishlistCount} article${wishlistCount > 1 ? "s" : ""} dans les favoris`}
-															>
-																{wishlistCount > 99 ? "99+" : wishlistCount}
-															</span>
-														)}
-													</Link>
-												</SheetClose>
-											</Tap>
-										);
-									})}
+								{/* Lien Mon compte */}
+								<Tap>
+									<SheetClose asChild>
+										<Link
+											href="/compte"
+											className={
+												isMenuItemActive("/compte")
+													? activeLinkClassName
+													: linkClassName
+											}
+											aria-current={
+												isMenuItemActive("/compte") ? "page" : undefined
+											}
+										>
+											Mon compte
+										</Link>
+									</SheetClose>
+								</Tap>
 
 								{/* Lien Mes commandes (si connecté) */}
 								{session?.user && (
