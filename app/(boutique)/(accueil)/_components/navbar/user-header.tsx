@@ -1,0 +1,49 @@
+import type { Session } from "@/modules/auth/lib/auth";
+import { SheetClose } from "@/shared/components/ui/sheet";
+import Link from "next/link";
+
+/**
+ * Header personnalisé pour l'utilisateur connecté
+ * Affiche un message de bienvenue et compteurs rapides (sans avatar)
+ */
+export function UserHeader({
+	session,
+	wishlistCount,
+	cartCount,
+	onClose,
+}: {
+	session: Session;
+	wishlistCount: number;
+	cartCount: number;
+	onClose: () => void;
+}) {
+	const firstName = session.user.name?.split(" ")[0] || "vous";
+
+	return (
+		<div className="px-4 py-4 bg-primary/5 rounded-xl mb-4">
+			<SheetClose asChild>
+				<Link
+					href="/compte"
+					className="block group"
+					onClick={onClose}
+				>
+					<p className="text-base font-semibold text-foreground">
+						Bonjour {firstName}
+					</p>
+					<p className="text-sm text-muted-foreground mt-0.5">
+						{wishlistCount > 0 && (
+							<span>{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}</span>
+						)}
+						{wishlistCount > 0 && cartCount > 0 && <span> • </span>}
+						{cartCount > 0 && (
+							<span>{cartCount} article{cartCount > 1 ? "s" : ""}</span>
+						)}
+						{wishlistCount === 0 && cartCount === 0 && (
+							<span>Mon espace personnel</span>
+						)}
+					</p>
+				</Link>
+			</SheetClose>
+		</div>
+	);
+}

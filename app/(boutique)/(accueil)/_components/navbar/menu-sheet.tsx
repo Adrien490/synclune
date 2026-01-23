@@ -2,13 +2,13 @@
 
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import type { Session } from "@/modules/auth/lib/auth";
+import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { Badge } from "@/shared/components/ui/badge";
-import { BRAND } from "@/shared/constants/brand";
 import {
 	Sheet,
 	SheetClose,
@@ -17,153 +17,19 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
+import { BRAND } from "@/shared/constants/brand";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
-import { COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-sizes.constants";
-import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
 import { Flame, Gem, Heart, Menu, Settings } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-
-/**
- * Header de section pour les catégories du menu
- */
-function SectionHeader({ children, id }: { children: React.ReactNode; id?: string }) {
-	return (
-		<h3
-			id={id}
-			className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-		>
-			{children}
-		</h3>
-	);
-}
-
-/**
- * Header personnalisé pour l'utilisateur connecté
- * Affiche un message de bienvenue et compteurs rapides (sans avatar)
- */
-function UserHeader({
-	session,
-	wishlistCount,
-	cartCount,
-	onClose,
-}: {
-	session: Session;
-	wishlistCount: number;
-	cartCount: number;
-	onClose: () => void;
-}) {
-	const firstName = session.user.name?.split(" ")[0] || "vous";
-
-	return (
-		<div className="px-4 py-4 bg-primary/5 rounded-xl mb-4">
-			<SheetClose asChild>
-				<Link
-					href="/compte"
-					className="block group"
-					onClick={onClose}
-				>
-					<p className="text-base font-semibold text-foreground">
-						Bonjour {firstName}
-					</p>
-					<p className="text-sm text-muted-foreground mt-0.5">
-						{wishlistCount > 0 && (
-							<span>{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}</span>
-						)}
-						{wishlistCount > 0 && cartCount > 0 && <span> • </span>}
-						{cartCount > 0 && (
-							<span>{cartCount} article{cartCount > 1 ? "s" : ""}</span>
-						)}
-						{wishlistCount === 0 && cartCount === 0 && (
-							<span>Mon espace personnel</span>
-						)}
-					</p>
-				</Link>
-			</SheetClose>
-		</div>
-	);
-}
-
-/**
- * Mini-grid pour afficher les images de collection dans le menu mobile
- * Adapté à la taille 48x48 (size-12) avec layout similaire à CollectionImagesGrid
- */
-function CollectionMiniGrid({
-	images,
-	collectionName,
-}: {
-	images: CollectionImage[];
-	collectionName: string;
-}) {
-	const count = images.length;
-
-	// 1 image: pleine taille
-	if (count === 1) {
-		return (
-			<div className="size-12 rounded-lg overflow-hidden bg-muted shrink-0">
-				<Image
-					src={images[0].url}
-					alt={images[0].alt || `Image de la collection ${collectionName}`}
-					width={48}
-					height={48}
-					className="size-full object-cover"
-					sizes="48px"
-					quality={COLLECTION_IMAGE_QUALITY}
-					placeholder={images[0].blurDataUrl ? "blur" : "empty"}
-					blurDataURL={images[0].blurDataUrl ?? undefined}
-				/>
-			</div>
-		);
-	}
-
-	// 2 images: 2 colonnes
-	if (count === 2) {
-		return (
-			<div className="size-12 rounded-lg overflow-hidden bg-muted shrink-0 grid grid-cols-2 gap-px">
-				{images.slice(0, 2).map((image, i) => (
-					<Image
-						key={i}
-						src={image.url}
-						alt={image.alt || `Image ${i + 1} de la collection ${collectionName}`}
-						width={24}
-						height={48}
-						className="w-full h-12 object-cover"
-						sizes="24px"
-						quality={COLLECTION_IMAGE_QUALITY}
-						placeholder={image.blurDataUrl ? "blur" : "empty"}
-						blurDataURL={image.blurDataUrl ?? undefined}
-					/>
-				))}
-			</div>
-		);
-	}
-
-	// 3-4 images: grille 2x2
-	return (
-		<div className="size-12 rounded-lg overflow-hidden bg-muted shrink-0 grid grid-cols-2 grid-rows-2 gap-px">
-			{images.slice(0, 4).map((image, i) => (
-				<Image
-					key={i}
-					src={image.url}
-					alt={image.alt || `Image ${i + 1} de la collection ${collectionName}`}
-					width={24}
-					height={24}
-					className="size-full object-cover"
-					sizes="24px"
-					quality={COLLECTION_IMAGE_QUALITY}
-					placeholder={image.blurDataUrl ? "blur" : "empty"}
-					blurDataURL={image.blurDataUrl ?? undefined}
-				/>
-			))}
-		</div>
-	);
-}
+import { CollectionMiniGrid } from "./collection-mini-grid";
+import { SectionHeader } from "./section-header";
+import { UserHeader } from "./user-header";
 
 /**
  * Composant Menu Sheet pour la navigation mobile
