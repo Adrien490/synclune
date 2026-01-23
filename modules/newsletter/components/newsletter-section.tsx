@@ -26,12 +26,13 @@ export function NewsletterSection() {
 				SECTION_SPACING.section
 			)}
 		>
-			{/* Background animé subtil */}
+			{/* Background animé subtil - désactivé sur mobile pour performance */}
 			<div className="absolute inset-0 pointer-events-none" aria-hidden="true">
 				<GlitterSparkles
 					count={12}
 					sizeRange={[4, 8]}
 					glowIntensity={0.6}
+					disableOnMobile
 				/>
 			</div>
 

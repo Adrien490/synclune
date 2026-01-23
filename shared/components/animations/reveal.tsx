@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { useSyncExternalStore } from "react";
+import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 import type { RevealProps } from "./types";
 
@@ -18,6 +19,8 @@ const getServerSnapshot = () => false;
  *
  * Fix hydratation: On assume toujours une animation normale côté serveur
  * et on ajuste côté client si reduced motion est activé
+ *
+ * @param disableOnTouch - Désactiver l'animation sur appareils tactiles (défaut: false)
  */
 export function Reveal({
 	children,
@@ -28,15 +31,26 @@ export function Reveal({
 	once = true,
 	amount = 0.2,
 	role,
+	disableOnTouch = false,
 	...rest
 }: RevealProps) {
 	const prefersReducedMotion = useReducedMotion();
+	const isTouchDevice = useIsTouchDevice();
 	// useSyncExternalStore: false côté serveur, true côté client (pas d'hydration mismatch)
 	const isClient = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
 
 	// Côté serveur et première hydratation: toujours avec animation
 	// Côté client après mount: respecte les préférences utilisateur
 	const shouldReduceMotion = isClient && prefersReducedMotion;
+
+	// Désactiver l'animation sur appareils tactiles pour améliorer TBT/INP
+	if (disableOnTouch && isTouchDevice) {
+		return (
+			<div className={className} role={role} {...rest}>
+				{children}
+			</div>
+		);
+	}
 
 	return (
 		<motion.div

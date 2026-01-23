@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { motion, useReducedMotion, useInView } from "motion/react";
 import { cn } from "@/shared/utils/cn";
+import { useIsTouchDevice } from "@/shared/hooks";
 import { seededRandom } from "./particle-background/utils";
 import { MOTION_CONFIG } from "./motion.config";
 
@@ -19,6 +20,8 @@ export interface GlitterSparklesProps {
 	sizeRange?: [number, number];
 	/** Intensité de l'effet glow (0-1, défaut: 0.8) */
 	glowIntensity?: number;
+	/** Désactiver complètement sur appareils tactiles (mobile/tablette) pour performance */
+	disableOnMobile?: boolean;
 }
 
 // ============================================================================
@@ -173,13 +176,20 @@ const GlitterSparklesBase = ({
 	count,
 	sizeRange = [DEFAULT_CONFIG.SIZE_MIN, DEFAULT_CONFIG.SIZE_MAX],
 	glowIntensity = 0.8,
+	disableOnMobile = false,
 }: GlitterSparklesProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = useReducedMotion();
+	const isTouchDevice = useIsTouchDevice();
 	const isInView = useInView(containerRef, {
 		once: true,
 		margin: "-100px",
 	});
+
+	// Désactiver sur mobile/tactile pour améliorer les performances (INP/TBT)
+	if (disableOnMobile && isTouchDevice) {
+		return null;
+	}
 
 	// Génération des paillettes pour desktop et mobile
 	// CSS gère l'affichage conditionnel, évitant le flash d'hydratation
@@ -223,11 +233,13 @@ const GlitterSparklesBase = ({
  * - 25 particules desktop, 12 sur mobile
  * - Respecte prefers-reduced-motion
  * - Couleurs liées au thème via CSS variables
+ * - Option disableOnMobile pour performances sur appareils tactiles
  *
  * @example
  * ```tsx
  * <GlitterSparkles />
  * <GlitterSparkles count={30} sizeRange={[3, 8]} glowIntensity={1} />
+ * <GlitterSparkles disableOnMobile /> // Améliore INP/TBT sur mobile
  * ```
  */
 export { GlitterSparklesBase as GlitterSparkles };

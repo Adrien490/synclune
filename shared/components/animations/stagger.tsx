@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { Children, isValidElement, type ReactNode, type Key } from "react";
+import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 import type { StaggerProps } from "./types";
 
@@ -22,6 +23,8 @@ export type { StaggerProps };
  *
  * Note: willChange retiré pour meilleure performance GPU.
  * Framer Motion optimise déjà les animations avec transform et opacity.
+ *
+ * @param disableOnTouch - Désactiver l'animation sur appareils tactiles (défaut: false)
  */
 export function Stagger({
 	children,
@@ -33,10 +36,23 @@ export function Stagger({
 	once = true,
 	amount = 0.2,
 	role,
+	disableOnTouch = false,
 	...rest
 }: StaggerProps) {
 	const shouldReduceMotion = useReducedMotion();
+	const isTouchDevice = useIsTouchDevice();
 	const childrenArray = Children.toArray(children);
+
+	// Désactiver l'animation sur appareils tactiles pour améliorer TBT/INP
+	if (disableOnTouch && isTouchDevice) {
+		return (
+			<div className={className} role={role} {...rest}>
+				{childrenArray.map((child, index) => (
+					<div key={getStableKey(child, index)}>{child}</div>
+				))}
+			</div>
+		);
+	}
 
 	// Variants pour gérer les animations avec ou sans inView
 	const containerVariants = {

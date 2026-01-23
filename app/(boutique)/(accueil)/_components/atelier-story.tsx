@@ -6,6 +6,42 @@ import { dancingScript } from "@/shared/styles/fonts";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
 
+// Données des polaroids - desktop: 4, mobile: 2 premiers (via CSS)
+const POLAROID_DATA = [
+	{
+		caption: "Les mains dans les perles !",
+		label: "Photo des mains de Léane assemblant un bijou artisanal",
+		tilt: "left" as const,
+		washiColor: "pink" as const,
+		washiPosition: "top-left" as const,
+		mobileOnly: false,
+	},
+	{
+		caption: "Mes petits trésors",
+		label: "Perles et matériaux colorés utilisés pour la création",
+		tilt: "right" as const,
+		washiColor: "lavender" as const,
+		washiPosition: "top-right" as const,
+		mobileOnly: false,
+	},
+	{
+		caption: "L'inspiration du jour",
+		label: "Carnet d'inspiration avec croquis de bijoux",
+		tilt: "left" as const,
+		washiColor: "mint" as const,
+		washiPosition: "top-left" as const,
+		mobileOnly: true, // Masqué sur mobile
+	},
+	{
+		caption: "Mon coin créatif",
+		label: "Vue de l'atelier de création Synclune",
+		tilt: "right" as const,
+		washiColor: "peach" as const,
+		washiPosition: "top-right" as const,
+		mobileOnly: true, // Masqué sur mobile
+	},
+];
+
 export function AtelierStory() {
 	return (
 		<section
@@ -82,7 +118,7 @@ export function AtelierStory() {
 					</div>
 				</Fade>
 
-				{/* Galerie de polaroids enrichie - 4 photos avec stagger */}
+				{/* Galerie de polaroids - 4 photos desktop, 2 mobile (via CSS) */}
 				<Reveal y={25} delay={0.3} duration={0.6} once>
 					<div className="mt-12 sm:mt-16 space-y-8">
 						{/* Photos en grid - Style Polaroid scrapbook */}
@@ -97,36 +133,7 @@ export function AtelierStory() {
 								once
 								className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto"
 							>
-								{[
-									{
-										caption: "Les mains dans les perles !",
-										label: "Photo des mains de Léane assemblant un bijou artisanal",
-										tilt: "left" as const,
-										washiColor: "pink" as const,
-										washiPosition: "top-left" as const,
-									},
-									{
-										caption: "Mes petits trésors",
-										label: "Perles et matériaux colorés utilisés pour la création",
-										tilt: "right" as const,
-										washiColor: "lavender" as const,
-										washiPosition: "top-right" as const,
-									},
-									{
-										caption: "L'inspiration du jour",
-										label: "Carnet d'inspiration avec croquis de bijoux",
-										tilt: "left" as const,
-										washiColor: "mint" as const,
-										washiPosition: "top-left" as const,
-									},
-									{
-										caption: "Mon coin créatif",
-										label: "Vue de l'atelier de création Synclune",
-										tilt: "right" as const,
-										washiColor: "peach" as const,
-										washiPosition: "top-right" as const,
-									},
-								].map((item) => (
+								{POLAROID_DATA.map((item) => (
 									<PolaroidFrame
 										key={item.caption}
 										tilt={item.tilt}
@@ -134,6 +141,7 @@ export function AtelierStory() {
 										washiTape
 										washiColor={item.washiColor}
 										washiPosition={item.washiPosition}
+										className={item.mobileOnly ? "hidden lg:block" : undefined}
 									>
 										<PlaceholderImage
 											className="w-full h-full"

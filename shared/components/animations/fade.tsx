@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 import type { FadeProps } from "./types";
 
@@ -19,6 +20,7 @@ export type { FadeProps };
  * @param y - Décalage vertical en pixels (défaut: config)
  * @param inView - Active animation au scroll avec whileInView (défaut: false)
  * @param once - N'anime qu'une fois au scroll (défaut: false)
+ * @param disableOnTouch - Désactiver l'animation sur appareils tactiles (défaut: false)
  *
  * @example
  * ```tsx
@@ -31,6 +33,11 @@ export type { FadeProps };
  * <Fade inView once y={30}>
  *   <div>Contenu révélé au scroll</div>
  * </Fade>
+ *
+ * // Désactiver sur mobile pour performance
+ * <Fade disableOnTouch y={20}>
+ *   <div>Contenu sans animation sur mobile</div>
+ * </Fade>
  * ```
  */
 export function Fade({
@@ -41,8 +48,15 @@ export function Fade({
 	y = MOTION_CONFIG.transform.fadeY,
 	inView = false,
 	once = false,
+	disableOnTouch = false,
 }: FadeProps) {
 	const shouldReduceMotion = useReducedMotion();
+	const isTouchDevice = useIsTouchDevice();
+
+	// Désactiver l'animation sur appareils tactiles pour améliorer TBT/INP
+	if (disableOnTouch && isTouchDevice) {
+		return <div className={className}>{children}</div>;
+	}
 
 	const animationProps = inView
 		? {

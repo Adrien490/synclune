@@ -11,6 +11,8 @@ export interface FadeProps {
 	y?: number;
 	inView?: boolean;
 	once?: boolean;
+	/** Désactiver l'animation sur appareils tactiles (mobile/tablette) pour performance */
+	disableOnTouch?: boolean;
 }
 
 /**
@@ -37,6 +39,8 @@ export interface RevealProps {
 	once?: boolean;
 	amount?: ViewportAmount;
 	role?: string;
+	/** Désactiver l'animation sur appareils tactiles (mobile/tablette) pour performance */
+	disableOnTouch?: boolean;
 	/** Data attributes (e.g., data-testid) */
 	[key: `data-${string}`]: string | undefined;
 }
@@ -57,6 +61,8 @@ export interface StaggerProps {
 	/** Portion of element that must be visible to trigger (default: 0.2) */
 	amount?: ViewportAmount;
 	role?: string;
+	/** Désactiver l'animation sur appareils tactiles (mobile/tablette) pour performance */
+	disableOnTouch?: boolean;
 	/** Data attributes (e.g., data-carousel-scroll) */
 	[key: `data-${string}`]: string | undefined;
 }
