@@ -60,7 +60,7 @@ export function ValuePropositionBar() {
         data-voice-queries="bijoux faits main Nantes,artisan bijoutier Nantes,bijoux colorés artisanaux"
         data-content-type="brand-values"
         data-ai-category="unique-selling-points"
-        className="relative overflow-hidden py-8 sm:py-10 lg:py-12 bg-muted/30"
+        className="hidden md:block relative overflow-hidden py-8 sm:py-10 lg:py-12 bg-muted/30"
       >
         {/* Microdata pour SEO */}
         <meta itemProp="name" content="Les valeurs Synclune" />
