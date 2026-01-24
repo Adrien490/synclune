@@ -18,8 +18,7 @@ import {
 } from "@/shared/components/ui/dialog"
 import ScrollFade from "@/shared/components/scroll-fade"
 import { useAddRecentSearch } from "@/modules/products/hooks/use-add-recent-search"
-import { useClearRecentSearches } from "@/modules/products/hooks/use-clear-recent-search"
-import { useRemoveRecentSearch } from "@/modules/products/hooks/use-remove-recent-search"
+import { useRecentSearches } from "@/modules/products/hooks/use-recent-searches"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { cn } from "@/shared/utils/cn"
 
@@ -45,13 +44,10 @@ export function QuickSearchDialog({
 	const { add } = useAddRecentSearch({
 		onError: () => toast.error("Erreur lors de l'enregistrement"),
 	})
-	const { searches, remove } = useRemoveRecentSearch({
+	const { searches, remove, clear } = useRecentSearches({
 		initialSearches,
-		onError: () => toast.error("Erreur lors de la suppression"),
-	})
-	const { clear } = useClearRecentSearches({
-		initialSearches,
-		onError: () => toast.error("Erreur lors de la suppression"),
+		onRemoveError: () => toast.error("Erreur lors de la suppression"),
+		onClearError: () => toast.error("Erreur lors de la suppression"),
 	})
 
 	const displayedSearches = searches.slice(0, RECENT_SEARCHES_MAX_ITEMS)
