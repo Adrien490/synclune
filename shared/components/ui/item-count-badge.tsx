@@ -7,12 +7,12 @@ import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 
 const itemCountBadgeVariants = cva(
-	"flex items-center justify-center p-0 font-bold bg-secondary text-secondary-foreground shadow-lg animate-in zoom-in-50 duration-300",
+	"flex items-center justify-center p-0 font-bold bg-primary text-primary-foreground shadow-lg animate-in zoom-in-50 duration-300 border-2 border-background",
 	{
 		variants: {
 			size: {
-				sm: "h-5 w-5 text-[10px] border-2 border-secondary",
-				default: "h-[22px] w-[22px] text-[11px] border-2 border-background ring-2 ring-background",
+				sm: "h-5 w-5 text-[10px]",
+				default: "h-[22px] w-[22px] text-[11px]",
 			},
 		},
 		defaultVariants: {
