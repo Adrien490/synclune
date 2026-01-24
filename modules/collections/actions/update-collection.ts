@@ -7,6 +7,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
+import { sanitizeText } from "@/shared/lib/sanitize";
 
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { updateCollectionSchema } from "../schemas/collection.schemas";
@@ -38,6 +39,12 @@ export async function updateCollection(
 
 		const validatedData = validation.data;
 
+		// Sanitize text inputs
+		const sanitizedName = sanitizeText(validatedData.name);
+		const sanitizedDescription = validatedData.description
+			? sanitizeText(validatedData.description)
+			: null;
+
 		// 3. Transaction pour garantir l'atomicite
 		const slug = await prisma.$transaction(async (tx) => {
 			// Verifier que la collection existe
@@ -50,9 +57,9 @@ export async function updateCollection(
 			}
 
 			// Verifier l'unicite du nom (sauf si c'est le meme)
-			if (validatedData.name !== existingCollection.name) {
+			if (sanitizedName !== existingCollection.name) {
 				const nameExists = await tx.collection.findFirst({
-					where: { name: validatedData.name },
+					where: { name: sanitizedName },
 				});
 
 				if (nameExists) {
@@ -62,17 +69,17 @@ export async function updateCollection(
 
 			// Generer un nouveau slug si le nom a change
 			const newSlug =
-				validatedData.name !== existingCollection.name
-					? await generateSlug(tx, "collection", validatedData.name)
+				sanitizedName !== existingCollection.name
+					? await generateSlug(tx, "collection", sanitizedName)
 					: existingCollection.slug;
 
 			// Mettre a jour la collection
 			await tx.collection.update({
 				where: { id: validatedData.id },
 				data: {
-					name: validatedData.name,
+					name: sanitizedName,
 					slug: newSlug,
-					description: validatedData.description,
+					description: sanitizedDescription,
 					status: validatedData.status,
 				},
 			});

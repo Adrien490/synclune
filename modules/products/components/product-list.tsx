@@ -1,9 +1,11 @@
 import { Suspense, use } from "react";
+import { AlertTriangle } from "lucide-react";
 
 import { ProductCard } from "@/modules/products/components/product-card";
 import { GetProductsReturn } from "@/modules/products/data/get-products";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 
 import { SearchFallbackSuggestions, SearchFallbackSuggestionsSkeleton } from "./search-fallback-suggestions";
 import { SearchCorrectionSuggestion } from "./search-correction-suggestion";
@@ -23,8 +25,22 @@ export function ProductList({
 	searchTerm,
 	baseResetUrl = "/produits",
 }: ProductListProps) {
-	const { products, pagination, totalCount, suggestion } = use(productsPromise);
+	const result = use(productsPromise);
+	const { products, pagination, totalCount, suggestion } = result;
+	const error = "error" in result ? result.error : undefined;
 	const wishlistProductIds = use(getWishlistProductIds());
+
+	// Afficher une erreur si la requête a échoué
+	if (error) {
+		return (
+			<Alert variant="destructive">
+				<AlertTriangle className="h-4 w-4" />
+				<AlertDescription>
+					Une erreur est survenue lors du chargement des produits. Veuillez réessayer.
+				</AlertDescription>
+			</Alert>
+		);
+	}
 
 	// Afficher les suggestions de repli si aucun produit (Baymard UX)
 	if (!products || products.length === 0) {

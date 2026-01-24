@@ -1,8 +1,14 @@
 import { redirect } from "next/navigation"
 import Stripe from "stripe"
 import type { Metadata } from "next"
+import { z } from "zod"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+
+const searchParamsSchema = z.object({
+	session_id: z.string().min(1),
+	order_id: z.string().cuid().optional(),
+})
 
 export const metadata: Metadata = {
 	title: "Vérification du paiement | Synclune",
@@ -27,13 +33,14 @@ export default async function CheckoutReturnPage({
 	searchParams,
 }: CheckoutReturnPageProps) {
 	const params = await searchParams
-	const sessionId = params.session_id
-	const orderId = params.order_id
 
-	// Si pas de session_id, retour à l'accueil
-	if (!sessionId) {
+	// Validation Zod des paramètres
+	const validation = searchParamsSchema.safeParse(params)
+	if (!validation.success) {
 		redirect("/")
 	}
+
+	const { session_id: sessionId, order_id: orderId } = validation.data
 
 	try {
 		// Récupérer le statut de la session Stripe

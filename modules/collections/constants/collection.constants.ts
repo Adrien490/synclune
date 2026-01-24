@@ -13,6 +13,11 @@ export const GET_COLLECTION_SELECT = {
 	createdAt: true,
 	updatedAt: true,
 	products: {
+		where: {
+			product: {
+				status: ProductStatus.PUBLIC,
+			},
+		},
 		select: {
 			id: true,
 			addedAt: true,
@@ -74,6 +79,11 @@ export const GET_COLLECTIONS_SELECT = {
 	// Produit vedette pour l'image de la collection (avec fallback sur le plus recent)
 	// orderBy: isFeatured desc met le produit featured en premier, sinon le plus recent
 	products: {
+		where: {
+			product: {
+				status: ProductStatus.PUBLIC,
+			},
+		},
 		select: {
 			isFeatured: true,
 			product: {
@@ -118,6 +128,11 @@ export const GET_COLLECTIONS_PREVIEW_SELECT = {
 	status: true,
 	createdAt: true,
 	products: {
+		where: {
+			product: {
+				status: ProductStatus.PUBLIC,
+			},
+		},
 		select: {
 			product: {
 				select: {
@@ -141,7 +156,13 @@ export const GET_COLLECTIONS_PREVIEW_SELECT = {
 	},
 	_count: {
 		select: {
-			products: true,
+			products: {
+				where: {
+					product: {
+						status: ProductStatus.PUBLIC,
+					},
+				},
+			},
 		},
 	},
 } as const satisfies Prisma.CollectionSelect;

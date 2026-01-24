@@ -98,19 +98,31 @@ const baseDiscountSchema = z.object({
 	minOrderAmount: z.number().int().nonnegative().optional().nullable(),
 	maxUsageCount: z.number().int().positive().optional().nullable(),
 	maxUsagePerUser: z.number().int().positive().optional().nullable(),
+	startsAt: z.coerce.date().optional().nullable(),
+	endsAt: z.coerce.date().optional().nullable(),
 });
 
 // Refinements communs
 const discountRefinements = <T extends typeof baseDiscountSchema>(schema: T) =>
-	schema.refine(
-		(data) => {
-			if (data.type === DiscountType.PERCENTAGE && data.value > 100) {
-				return false;
-			}
-			return true;
-		},
-		{ message: "Un pourcentage ne peut pas dépasser 100%", path: ["value"] }
-	);
+	schema
+		.refine(
+			(data) => {
+				if (data.type === DiscountType.PERCENTAGE && data.value > 100) {
+					return false;
+				}
+				return true;
+			},
+			{ message: "Un pourcentage ne peut pas dépasser 100%", path: ["value"] }
+		)
+		.refine(
+			(data) => {
+				if (data.startsAt && data.endsAt && data.startsAt >= data.endsAt) {
+					return false;
+				}
+				return true;
+			},
+			{ message: "La date de fin doit être postérieure à la date de début", path: ["endsAt"] }
+		);
 
 // ============================================================================
 // CREATE SCHEMA

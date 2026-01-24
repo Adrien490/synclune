@@ -11,6 +11,7 @@ import {
 	handleActionError,
 } from "@/shared/lib/actions"
 import { sendReviewResponseEmail } from "@/modules/emails/services/review-emails"
+import { sanitizeText } from "@/shared/lib/sanitize"
 import type { ActionState } from "@/shared/types/server-action"
 
 import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache"
@@ -49,6 +50,9 @@ export async function createReviewResponse(
 		}
 
 		const { reviewId, content } = validation.data
+
+		// 2b. Sanitize text inputs
+		const sanitizedContent = sanitizeText(content)
 
 		// 3. Vérifier que l'avis existe et n'a pas déjà de réponse
 		const review = await prisma.productReview.findFirst({
@@ -95,7 +99,7 @@ export async function createReviewResponse(
 		const response = await prisma.reviewResponse.create({
 			data: {
 				reviewId,
-				content,
+				content: sanitizedContent,
 				authorId: user.id,
 				authorName: user.name || "Équipe Synclune",
 			},
@@ -116,7 +120,7 @@ export async function createReviewResponse(
 				customerName: review.user.name?.split(" ")[0] || "Cliente",
 				productTitle: review.product.title,
 				reviewContent: review.content,
-				responseContent: content,
+				responseContent: sanitizedContent,
 				responseAuthorName: user.name || "Équipe Synclune",
 				productUrl: buildUrl(ROUTES.SHOP.PRODUCT(review.product.slug)),
 			})

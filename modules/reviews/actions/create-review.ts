@@ -11,6 +11,7 @@ import {
 	handleActionError,
 } from "@/shared/lib/actions"
 import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config"
+import { sanitizeText } from "@/shared/lib/sanitize"
 import type { ActionState } from "@/shared/types/server-action"
 
 import { getReviewInvalidationTags } from "../constants/cache"
@@ -45,13 +46,20 @@ export async function createReview(
 		if ("error" in rateLimitCheck) return rateLimitCheck.error
 
 		// 3. Extraire les données du FormData
+		let parsedMedia: unknown = []
+		try {
+			parsedMedia = JSON.parse((formData.get("media") as string) || "[]")
+		} catch {
+			parsedMedia = []
+		}
+
 		const rawData = {
 			productId: formData.get("productId"),
 			orderItemId: formData.get("orderItemId"),
 			rating: formData.get("rating"),
 			title: formData.get("title") || undefined,
 			content: formData.get("content"),
-			media: JSON.parse((formData.get("media") as string) || "[]"),
+			media: parsedMedia,
 		}
 
 		// 4. Valider les données
@@ -66,6 +74,10 @@ export async function createReview(
 		}
 
 		const { productId, orderItemId, rating, title, content, media } = validation.data
+
+		// 4b. Sanitize text inputs
+		const sanitizedTitle = title ? sanitizeText(title) : null
+		const sanitizedContent = sanitizeText(content)
 
 		// 5. Vérifier l'éligibilité de l'utilisateur
 		const eligibility = await canUserReviewProduct(userId, productId)
@@ -100,8 +112,8 @@ export async function createReview(
 					userId,
 					orderItemId,
 					rating,
-					title,
-					content,
+					title: sanitizedTitle,
+					content: sanitizedContent,
 					status: "PUBLISHED", // Auto-publié
 				},
 				select: {

@@ -13,6 +13,7 @@ import { getOrderInvalidationTags } from "../constants/cache";
 import { cancelOrderSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { sanitizeText } from "@/shared/lib/sanitize";
 
 /**
  * Annule une commande
@@ -36,8 +37,9 @@ export async function cancelOrder(
 
 		const id = formData.get("id") as string;
 		const reason = formData.get("reason") as string | null;
+		const sanitizedReason = reason ? sanitizeText(reason) : null;
 
-		const result = cancelOrderSchema.safeParse({ id, reason });
+		const result = cancelOrderSchema.safeParse({ id, reason: sanitizedReason });
 		if (!result.success) {
 			return {
 				status: ActionStatus.VALIDATION_ERROR,
@@ -128,7 +130,7 @@ export async function cancelOrder(
 				newStatus: OrderStatus.CANCELLED,
 				previousPaymentStatus: order.paymentStatus,
 				newPaymentStatus: newPaymentStatus,
-				note: reason || undefined,
+				note: sanitizedReason || undefined,
 				authorId: adminUser.id,
 				authorName: adminUser.name || "Admin",
 				source: "admin",
@@ -160,7 +162,7 @@ export async function cancelOrder(
 					orderNumber: order.orderNumber,
 					customerName: customerFirstName,
 					orderTotal: order.total,
-					reason: reason || undefined,
+					reason: sanitizedReason || undefined,
 					wasRefunded: newPaymentStatus === PaymentStatus.REFUNDED,
 					orderDetailsUrl,
 				});

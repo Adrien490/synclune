@@ -34,6 +34,148 @@ export type { SkuSelectorDialogData };
 
 export const SKU_SELECTOR_DIALOG_ID = "sku-selector";
 
+/** Quantité maximale par ajout au panier */
+const MAX_QUANTITY_PER_ADD = 10;
+
+/** ID pour aria-describedby des erreurs de validation */
+const VALIDATION_ERROR_ID = "sku-selector-validation-error";
+
+// ============================================================================
+// Types locaux
+// ============================================================================
+
+type ColorOption = { slug: string; hex: string; name: string };
+type MaterialOption = { slug: string; name: string };
+type ActiveSku = NonNullable<Product["skus"]>[number];
+
+interface ImageSelection {
+	url: string;
+	alt: string;
+	blurDataUrl: string | null;
+}
+
+interface AvailabilityMaps {
+	color: Map<string, boolean>;
+	material: Map<string, boolean>;
+	size: Map<string, boolean>;
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+/**
+ * Construit les maps de disponibilité pour chaque option de variante
+ * en fonction des sélections actuelles
+ */
+function buildAvailabilityMaps(
+	product: Product,
+	colors: ColorOption[],
+	materials: MaterialOption[],
+	sizes: string[],
+	selectedColor: string,
+	selectedMaterial: string,
+	selectedSize: string
+): AvailabilityMaps {
+	const filterSkus = (selectors: {
+		colorSlug?: string;
+		materialSlug?: string;
+		size?: string;
+	}) => filterCompatibleSkusService(product, selectors);
+
+	return {
+		color: new Map(
+			colors.map((c) => [
+				c.slug,
+				filterSkus({
+					colorSlug: c.slug,
+					materialSlug: selectedMaterial || undefined,
+					size: selectedSize || undefined,
+				}).length > 0,
+			])
+		),
+		material: new Map(
+			materials.map((m) => [
+				m.slug,
+				filterSkus({
+					colorSlug: selectedColor || undefined,
+					materialSlug: m.slug,
+					size: selectedSize || undefined,
+				}).length > 0,
+			])
+		),
+		size: new Map(
+			sizes.map((s) => [
+				s,
+				filterSkus({
+					colorSlug: selectedColor || undefined,
+					materialSlug: selectedMaterial || undefined,
+					size: s,
+				}).length > 0,
+			])
+		),
+	};
+}
+
+/**
+ * Retourne l'image à afficher en fonction de la couleur sélectionnée
+ */
+function getImageForColor(
+	selectedColor: string,
+	activeSkus: ActiveSku[],
+	product: Product
+): ImageSelection {
+	if (selectedColor) {
+		const skuWithColor = activeSkus.find(
+			(sku) => sku.color?.slug === selectedColor && sku.images?.length > 0
+		);
+		if (skuWithColor?.images?.length) {
+			const img =
+				skuWithColor.images.find((i) => i.isPrimary) || skuWithColor.images[0];
+			return {
+				url: img.url,
+				alt: img.altText || `${product.title} - ${selectedColor}`,
+				blurDataUrl: img.blurDataUrl ?? null,
+			};
+		}
+	}
+	const primaryImage = getPrimaryImageForList(product);
+	return {
+		url: primaryImage.url,
+		alt: primaryImage.alt || product.title,
+		blurDataUrl: primaryImage.blurDataUrl ?? null,
+	};
+}
+
+/**
+ * Calcule les erreurs de validation basées sur les sélections requises
+ */
+function computeValidationErrors(
+	colors: ColorOption[],
+	materials: MaterialOption[],
+	sizes: string[],
+	requiresSize: boolean,
+	selectedColor: string,
+	selectedMaterial: string,
+	selectedSize: string
+): string[] {
+	const errors: string[] = [];
+	if (colors.length > 1 && !selectedColor) {
+		errors.push("Veuillez sélectionner une couleur");
+	}
+	if (materials.length > 1 && !selectedMaterial) {
+		errors.push("Veuillez sélectionner un matériau");
+	}
+	if (requiresSize && sizes.length > 0 && !selectedSize) {
+		errors.push("Veuillez sélectionner une taille");
+	}
+	return errors;
+}
+
+// ============================================================================
+// Component
+// ============================================================================
+
 interface SkuSelectorDialogProps {
 	/** Promise du panier pour vérifier les quantités disponibles */
 	cartPromise: Promise<GetCartReturn>;
@@ -234,13 +376,6 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 			product.type?.slug as (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number]
 		);
 
-	// Filtrer les SKUs compatibles en utilisant le service partagé
-	const filterCompatibleSkus = (selectors: {
-		colorSlug?: string;
-		materialSlug?: string;
-		size?: string;
-	}) => filterCompatibleSkusService(product, selectors);
-
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
 			<ResponsiveDialogContent className="group/sku-selector sm:max-w-130 sm:max-h-[85vh]">
@@ -265,41 +400,20 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 							const selectedSize = values.size;
 							const quantity = values.quantity;
 
-							// Fix 14: Pré-calcul des disponibilités une seule fois
-							const colorAvailability = new Map(
-								colors.map((c) => [
-									c.slug,
-									filterCompatibleSkus({
-										colorSlug: c.slug,
-										materialSlug: selectedMaterial || undefined,
-										size: selectedSize || undefined,
-									}).length > 0,
-								])
-							);
-							const materialAvailability = new Map(
-								materials.map((m) => [
-									m.slug,
-									filterCompatibleSkus({
-										colorSlug: selectedColor || undefined,
-										materialSlug: m.slug,
-										size: selectedSize || undefined,
-									}).length > 0,
-								])
-							);
-							const sizeAvailability = new Map(
-								sizes.map((s) => [
-									s,
-									filterCompatibleSkus({
-										colorSlug: selectedColor || undefined,
-										materialSlug: selectedMaterial || undefined,
-										size: s,
-									}).length > 0,
-								])
+							// Calcul des disponibilités via helper
+							const availability = buildAvailabilityMaps(
+								product,
+								colors,
+								materials,
+								sizes,
+								selectedColor,
+								selectedMaterial,
+								selectedSize
 							);
 
-							const isColorAvailable = (slug: string) => colorAvailability.get(slug) ?? false;
-							const isMaterialAvailable = (slug: string) => materialAvailability.get(slug) ?? false;
-							const isSizeAvailable = (size: string) => sizeAvailability.get(size) ?? false;
+							const isColorAvailable = (slug: string) => availability.color.get(slug) ?? false;
+							const isMaterialAvailable = (slug: string) => availability.material.get(slug) ?? false;
+							const isSizeAvailable = (size: string) => availability.size.get(size) ?? false;
 
 							// Trouver le SKU correspondant
 							const selectedSku = activeSkus.find((sku) => {
@@ -321,46 +435,19 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 								return true;
 							});
 
-							// Image dynamique selon la couleur
-							const getImageForSelection = () => {
-								if (selectedColor) {
-									const skuWithColor = activeSkus.find(
-										(sku) =>
-											sku.color?.slug === selectedColor &&
-											sku.images?.length > 0
-									);
-									if (skuWithColor?.images?.length) {
-										const img =
-											skuWithColor.images.find((i) => i.isPrimary) ||
-											skuWithColor.images[0];
-										return {
-											url: img.url,
-											alt: img.altText || `${product.title} - ${selectedColor}`,
-											blurDataUrl: img.blurDataUrl,
-										};
-									}
-								}
-								const primaryImage = getPrimaryImageForList(product);
-								return {
-									url: primaryImage.url,
-									alt: primaryImage.alt || product.title,
-									blurDataUrl: primaryImage.blurDataUrl,
-								};
-							};
+							// Image dynamique selon la couleur (via helper)
+							const currentImage = getImageForColor(selectedColor, activeSkus, product);
 
-							const currentImage = getImageForSelection();
-
-							// Validation
-							const validationErrors: string[] = [];
-							if (colors.length > 1 && !selectedColor) {
-								validationErrors.push("Veuillez sélectionner une couleur");
-							}
-							if (materials.length > 1 && !selectedMaterial) {
-								validationErrors.push("Veuillez sélectionner un matériau");
-							}
-							if (requiresSize && sizes.length > 0 && !selectedSize) {
-								validationErrors.push("Veuillez sélectionner une taille");
-							}
+							// Validation (via helper)
+							const validationErrors = computeValidationErrors(
+								colors,
+								materials,
+								sizes,
+								requiresSize,
+								selectedColor,
+								selectedMaterial,
+								selectedSize
+							);
 
 							// Calcul de la quantité déjà dans le panier pour ce SKU
 							const quantityInCart = selectedSku
@@ -377,8 +464,8 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 								: activeSkus[0]?.priceInclTax || 0;
 
 							const maxQuantity = selectedSku
-								? Math.min(availableToAdd, 10)
-								: 10;
+								? Math.min(availableToAdd, MAX_QUANTITY_PER_ADD)
+								: MAX_QUANTITY_PER_ADD;
 
 							return (
 								<>
@@ -468,7 +555,11 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 									{colors.length > 1 && (
 										<form.Field name="color">
 											{(field) => (
-												<fieldset className="space-y-2" disabled={isPending}>
+												<fieldset
+													className="space-y-2"
+													disabled={isPending}
+													aria-describedby={validationErrors.length > 0 && !field.state.value ? VALIDATION_ERROR_ID : undefined}
+												>
 													{/* Fix 6: Legend sémantique */}
 													<legend className="text-sm font-medium">
 														Couleur
@@ -556,7 +647,11 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 									{materials.length > 1 && (
 										<form.Field name="material">
 											{(field) => (
-												<fieldset className="space-y-2" disabled={isPending}>
+												<fieldset
+													className="space-y-2"
+													disabled={isPending}
+													aria-describedby={validationErrors.length > 0 && !field.state.value ? VALIDATION_ERROR_ID : undefined}
+												>
 													{/* Fix 6: Legend sémantique */}
 													<legend className="text-sm font-medium">
 														Matériau
@@ -590,6 +685,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																		/* Fix 9: État disabled plus visible */
 																		!isAvailable && "opacity-40 saturate-0"
 																	)}
+																	aria-label={`${material.name}${!isAvailable ? " (indisponible)" : ""}`}
 																>
 																	<span className="text-sm">
 																		{material.name}
@@ -623,7 +719,11 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 									{requiresSize && sizes.length > 0 && (
 										<form.Field name="size">
 											{(field) => (
-												<fieldset className="space-y-2" disabled={isPending}>
+												<fieldset
+													className="space-y-2"
+													disabled={isPending}
+													aria-describedby={validationErrors.length > 0 && !field.state.value ? VALIDATION_ERROR_ID : undefined}
+												>
 													{/* Fix 6: Legend sémantique */}
 													<legend className="text-sm font-medium">
 														Taille
@@ -663,6 +763,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 																		/* Fix 9: État disabled plus visible */
 																		!isAvailable && "opacity-40 saturate-0"
 																	)}
+																	aria-label={`Taille ${size}${!isAvailable ? " (indisponible)" : ""}`}
 																>
 																	<span className="text-sm font-medium truncate">
 																		{size}
@@ -727,7 +828,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 														}}
 														disabled={isPending}
 														className="w-12 text-center text-lg font-semibold tabular-nums bg-transparent focus:outline-none"
-														aria-label="Quantité"
+														aria-label="Quantité à ajouter au panier"
 													/>
 													<Button
 														type="button"
@@ -754,6 +855,7 @@ export function SkuSelectorDialog({ cartPromise }: SkuSelectorDialogProps) {
 									<AnimatePresence mode="wait">
 										{validationErrors.length > 0 && !isPending && (
 											<motion.p
+												id={VALIDATION_ERROR_ID}
 												key={validationErrors.join()}
 												initial={{ opacity: 0, height: 0, x: 0 }}
 												animate={{

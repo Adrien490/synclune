@@ -52,6 +52,24 @@ export async function DiscountsDataTable({
 		return `${usageCount} / ${maxUsageCount}`;
 	};
 
+	const getTemporalStatus = (
+		startsAt: Date | null,
+		endsAt: Date | null,
+		isActive: boolean
+	): { label: string; variant: "default" | "secondary" | "outline" } => {
+		if (!isActive) {
+			return { label: "Inactif", variant: "secondary" };
+		}
+		const now = new Date();
+		if (startsAt && new Date(startsAt) > now) {
+			return { label: "Planifié", variant: "outline" };
+		}
+		if (endsAt && new Date(endsAt) < now) {
+			return { label: "Expiré", variant: "secondary" };
+		}
+		return { label: "Actif", variant: "default" };
+	};
+
 	if (discounts.length === 0) {
 		return (
 			<TableEmptyState
@@ -133,15 +151,21 @@ export async function DiscountsDataTable({
 											</span>
 										</TableCell>
 										<TableCell role="gridcell" className="text-center">
-											{discount.isActive ? (
-												<Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
-													Actif
-												</Badge>
-											) : (
-												<Badge variant="secondary">
-													Inactif
-												</Badge>
-											)}
+											{(() => {
+												const status = getTemporalStatus(
+													discount.startsAt,
+													discount.endsAt,
+													discount.isActive
+												);
+												return (
+													<Badge
+														variant={status.variant}
+														className={status.variant === "default" ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}
+													>
+														{status.label}
+													</Badge>
+												);
+											})()}
 										</TableCell>
 										<TableCell>
 											<div className="flex justify-end">

@@ -102,6 +102,7 @@ export async function subscribeToNewsletter(
 			message: internalResult.message,
 		};
 	} catch (error) {
+		console.error("[SUBSCRIBE_NEWSLETTER]", error);
 		return {
 			status: ActionStatus.ERROR,
 			message: "Une erreur est survenue. Veuillez réessayer plus tard.",

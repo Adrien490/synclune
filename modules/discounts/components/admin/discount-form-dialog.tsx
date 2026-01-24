@@ -32,8 +32,13 @@ interface DiscountDialogData extends Record<string, unknown> {
 		maxUsageCount: number | null;
 		maxUsagePerUser: number | null;
 		isActive: boolean;
+		startsAt: Date | null;
+		endsAt: Date | null;
 	};
 }
+
+const formatDateTimeLocal = (date: Date | null): string =>
+	date ? date.toISOString().slice(0, 16) : "";
 
 export function DiscountFormDialog() {
 	const { isOpen, close, data } =
@@ -50,6 +55,8 @@ export function DiscountFormDialog() {
 			minOrderAmount: null as number | null,
 			maxUsageCount: null as number | null,
 			maxUsagePerUser: null as number | null,
+			startsAt: "" as string,
+			endsAt: "" as string,
 		},
 	});
 
@@ -93,6 +100,8 @@ export function DiscountFormDialog() {
 				minOrderAmount: discount.minOrderAmount,
 				maxUsageCount: discount.maxUsageCount,
 				maxUsagePerUser: discount.maxUsagePerUser,
+				startsAt: formatDateTimeLocal(discount.startsAt),
+				endsAt: formatDateTimeLocal(discount.endsAt),
 			});
 		} else {
 			form.reset({
@@ -102,6 +111,8 @@ export function DiscountFormDialog() {
 				minOrderAmount: null,
 				maxUsageCount: null,
 				maxUsagePerUser: null,
+				startsAt: "",
+				endsAt: "",
 			});
 		}
 	}, [discount, form]);
@@ -284,6 +295,31 @@ export function DiscountFormDialog() {
 											min={1}
 										/>
 									</div>
+								)}
+							</form.AppField>
+						</div>
+
+						{/* Période de validité */}
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<form.AppField name="startsAt">
+								{(field) => (
+									<field.DateTimeField
+										label="Date de début"
+										placeholder="Activation immédiate"
+										optional
+										disabled={isPending}
+									/>
+								)}
+							</form.AppField>
+
+							<form.AppField name="endsAt">
+								{(field) => (
+									<field.DateTimeField
+										label="Date de fin"
+										placeholder="Durée illimitée"
+										optional
+										disabled={isPending}
+									/>
 								)}
 							</form.AppField>
 						</div>

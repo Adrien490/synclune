@@ -15,6 +15,8 @@ export const GET_DISCOUNT_SELECT = {
 	maxUsagePerUser: true,
 	usageCount: true,
 	isActive: true,
+	startsAt: true,
+	endsAt: true,
 	createdAt: true,
 	updatedAt: true,
 	_count: { select: { usages: true } },
@@ -34,6 +36,8 @@ export const GET_DISCOUNTS_SELECT = {
 	maxUsagePerUser: true,
 	usageCount: true,
 	isActive: true,
+	startsAt: true,
+	endsAt: true,
 	createdAt: true,
 	_count: { select: { usages: true } },
 } as const satisfies Prisma.DiscountSelect;
@@ -52,6 +56,8 @@ export const GET_DISCOUNT_VALIDATION_SELECT = {
 	maxUsagePerUser: true,
 	usageCount: true,
 	isActive: true,
+	startsAt: true,
+	endsAt: true,
 } as const satisfies Prisma.DiscountSelect;
 
 // ============================================================================
@@ -106,6 +112,8 @@ export const DISCOUNT_TYPE_ICONS = {
 export const DISCOUNT_ERROR_MESSAGES = {
 	NOT_FOUND: "Code promo introuvable",
 	NOT_ACTIVE: "Ce code promo n'est plus actif",
+	NOT_YET_ACTIVE: "Ce code promo n'est pas encore actif",
+	EXPIRED: "Ce code promo a expiré",
 	MAX_USAGE_REACHED: "Ce code promo a atteint sa limite d'utilisation",
 	USER_MAX_USAGE_REACHED: "Vous avez déjà utilisé ce code promo",
 	MIN_ORDER_NOT_MET: "Commande minimum de {amount}€ requise",

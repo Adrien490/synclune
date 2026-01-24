@@ -101,10 +101,13 @@ export async function fetchWishlist(
 
 		// Filtres communs pour les requêtes wishlistItem
 		// Supporte userId OU sessionId
+		// Exclut les items et produits soft-deleted
 		const itemWhereClause = {
+			deletedAt: null,
 			wishlist: userId ? { userId } : { sessionId },
 			product: {
 				status: "PUBLIC" as const,
+				deletedAt: null,
 			},
 		};
 

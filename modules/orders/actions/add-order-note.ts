@@ -6,6 +6,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { addOrderNoteSchema } from "../schemas/order.schemas";
 import { handleActionError } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { updateTag } from "next/cache";
 
@@ -43,11 +44,12 @@ export async function addOrderNote(
 			};
 		}
 
-		// 5. Créer la note
+		// 5. Sanitize and create the note
+		const sanitizedContent = sanitizeText(content.trim());
 		await prisma.orderNote.create({
 			data: {
 				orderId,
-				content: content.trim(),
+				content: sanitizedContent,
 				authorId: auth.user.id,
 				authorName: auth.user.name || auth.user.email,
 			},

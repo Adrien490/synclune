@@ -7,6 +7,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
+import { sanitizeText } from "@/shared/lib/sanitize";
 
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { createCollectionSchema } from "../schemas/collection.schemas";
@@ -36,9 +37,15 @@ export async function createCollection(
 
 		const validatedData = validation.data;
 
+		// Sanitize text inputs
+		const sanitizedName = sanitizeText(validatedData.name);
+		const sanitizedDescription = validatedData.description
+			? sanitizeText(validatedData.description)
+			: null;
+
 		// Verifier l'unicite du nom
 		const existingName = await prisma.collection.findFirst({
-			where: { name: validatedData.name },
+			where: { name: sanitizedName },
 		});
 
 		if (existingName) {
@@ -50,14 +57,14 @@ export async function createCollection(
 		}
 
 		// Generer un slug unique automatiquement
-		const slug = await generateSlug(prisma, "collection", validatedData.name);
+		const slug = await generateSlug(prisma, "collection", sanitizedName);
 
 		// Creer la collection
 		await prisma.collection.create({
 			data: {
-				name: validatedData.name,
+				name: sanitizedName,
 				slug,
-				description: validatedData.description,
+				description: sanitizedDescription,
 				status: validatedData.status,
 			},
 		});

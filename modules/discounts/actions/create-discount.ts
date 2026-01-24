@@ -38,6 +38,12 @@ export async function createDiscount(
 			maxUsagePerUser: formData.get("maxUsagePerUser")
 				? Number(formData.get("maxUsagePerUser"))
 				: null,
+			startsAt: formData.get("startsAt")
+				? new Date(formData.get("startsAt") as string)
+				: null,
+			endsAt: formData.get("endsAt")
+				? new Date(formData.get("endsAt") as string)
+				: null,
 		};
 
 		// 3. Validation
@@ -73,6 +79,8 @@ export async function createDiscount(
 				minOrderAmount: data.minOrderAmount,
 				maxUsageCount: data.maxUsageCount,
 				maxUsagePerUser: data.maxUsagePerUser,
+				startsAt: data.startsAt ?? new Date(),
+				endsAt: data.endsAt,
 				isActive: true,
 			},
 			select: { id: true, code: true },

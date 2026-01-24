@@ -10,6 +10,7 @@ import {
 	validateInput,
 	handleActionError,
 } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import {
 	getCustomizationInvalidationTags,
 	CUSTOMIZATION_CACHE_TAGS,
@@ -41,6 +42,9 @@ export async function updateCustomizationNotes(
 
 	const { requestId, notes } = validation.data;
 
+	// 2b. Sanitize text input
+	const sanitizedNotes = notes ? sanitizeText(notes) : null;
+
 	try {
 		// 3. Check if request exists
 		const existing = await prisma.customizationRequest.findFirst({
@@ -58,7 +62,7 @@ export async function updateCustomizationNotes(
 		// 4. Update notes
 		await prisma.customizationRequest.update({
 			where: { id: requestId },
-			data: { adminNotes: notes },
+			data: { adminNotes: sanitizedNotes },
 		});
 
 		// 5. Invalidate cache
@@ -70,7 +74,7 @@ export async function updateCustomizationNotes(
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: notes ? "Notes mises à jour" : "Notes supprimées",
+			message: sanitizedNotes ? "Notes mises à jour" : "Notes supprimées",
 		};
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la mise à jour des notes");

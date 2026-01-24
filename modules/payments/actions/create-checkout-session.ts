@@ -353,7 +353,7 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 
 				const discount = discountRows[0];
 
-				// Vérifier l'éligibilité (montant min, limites usage)
+				// Vérifier l'éligibilité (montant min, limites usage, dates)
 				const eligibility = await checkDiscountEligibility(
 					{
 						id: discount.id,
@@ -365,6 +365,8 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 						maxUsagePerUser: discount.maxUsagePerUser,
 						usageCount: discount.usageCount,
 						isActive: discount.isActive,
+						startsAt: discount.startsAt,
+						endsAt: discount.endsAt,
 					},
 					{
 						subtotal, // Montant hors frais de port
@@ -401,11 +403,16 @@ export const createCheckoutSession = async (_: unknown, formData: FormData) => {
 				});
 
 				if (discountAmount > 0) {
-					// 🔴 ATOMIQUE : Incrémenter le compteur d'utilisation
-					await tx.discount.update({
-						where: { id: discount.id },
-						data: { usageCount: { increment: 1 } },
-					});
+					// 🔴 UPDATE CONDITIONNEL ATOMIQUE : évite race condition sur maxUsageCount
+					const updateResult = await tx.$executeRaw`
+						UPDATE "Discount"
+						SET "usageCount" = "usageCount" + 1
+						WHERE id = ${discount.id}
+							AND ("maxUsageCount" IS NULL OR "usageCount" < "maxUsageCount")
+					`;
+					if (updateResult === 0) {
+						throw new BusinessError("Ce code promo a atteint sa limite d'utilisation");
+					}
 
 					appliedDiscountId = discount.id;
 					appliedDiscountCode = discount.code;

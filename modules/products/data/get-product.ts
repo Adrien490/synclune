@@ -53,7 +53,8 @@ async function fetchProduct(
 		}
 
 		return product;
-	} catch {
+	} catch (error) {
+		console.error("[GET_PRODUCT]", error);
 		return null;
 	}
 }

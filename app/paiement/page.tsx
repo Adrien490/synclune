@@ -12,7 +12,7 @@ import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckoutFormWrapper } from "./checkout-form-wrapper";
+import { CheckoutForm } from "@/modules/payments/components/checkout-form";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -114,7 +114,7 @@ export default async function CheckoutPage() {
 
 			<section className="bg-background pt-4 pb-12 lg:pt-6 lg:pb-16">
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-					<CheckoutFormWrapper
+					<CheckoutForm
 						cart={cart}
 						session={session}
 						addresses={addresses}
