@@ -24,10 +24,12 @@ interface ProductCardProps {
  * @description
  * Server component optimisé pour les Core Web Vitals avec:
  * - Preload des images above-fold (index < 4)
- * - Schema.org Product/Offer complet
  * - Support responsive
  * - Animations respectant prefers-reduced-motion (WCAG 2.3.3)
  * - WishlistButton et AddToCartCardButton comme client islands
+ *
+ * Note: Schema.org JSON-LD est généré sur la page produit détaillée uniquement
+ * (pas de microdata dans les grilles pour éviter la redondance)
  *
  * @example
  * ```tsx
@@ -75,10 +77,8 @@ export function ProductCard({
 				"motion-safe:can-hover:hover:-translate-y-2 motion-safe:can-hover:hover:scale-[1.02]",
 				// Focus state
 				"focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
-				"will-change-transform"
+				"can-hover:group-hover:will-change-transform"
 			)}
-			itemScope
-			itemType="https://schema.org/Product"
 		>
 			{/* Conteneur image avec boutons interactifs */}
 			<div className="product-card-media relative aspect-square sm:aspect-4/5 overflow-hidden bg-muted rounded-lg">
@@ -87,7 +87,7 @@ export function ProductCard({
 				{stockStatus === "out_of_stock" && (
 					<div
 						role="status"
-						aria-label={stockMessage}
+						aria-label={`${stockMessage} pour ${title}`}
 						className="absolute top-2.5 left-2.5 bg-foreground/80 text-background px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md backdrop-blur-sm"
 					>
 						{stockMessage}
@@ -97,8 +97,8 @@ export function ProductCard({
 				{showUrgencyBadge && (
 					<div
 						role="status"
-						aria-label={`Stock limité : plus que ${inventory} exemplaire${inventory && inventory > 1 ? "s" : ""} disponible${inventory && inventory > 1 ? "s" : ""}`}
-						className="absolute top-2.5 left-2.5 bg-amber-600 text-white px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md"
+						aria-label={`Stock limité pour ${title} : plus que ${inventory} exemplaire${inventory && inventory > 1 ? "s" : ""} disponible${inventory && inventory > 1 ? "s" : ""}`}
+						className="absolute top-2.5 left-2.5 bg-amber-700 text-white px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md"
 					>
 						{stockMessage}
 					</div>
@@ -127,7 +127,6 @@ export function ProductCard({
 					loading={index !== undefined && index < 4 ? undefined : "lazy"}
 					fetchPriority={index !== undefined && index < 4 ? "high" : undefined}
 					sizes={IMAGE_SIZES.PRODUCT_CARD}
-					itemProp="image"
 				/>
 
 				{/* Link overlay pour rendre l'image cliquable (décoratif, exclu de l'accessibilité) */}
@@ -155,12 +154,10 @@ export function ProductCard({
 				<Link
 					href={productUrl}
 					className="block focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 focus-visible:rounded-sm"
-					aria-label={`Voir ${title}`}
 				>
 					<h3
 						id={titleId}
 						className="font-sans text-foreground text-base sm:text-lg tracking-normal wrap-break-words"
-						itemProp="name"
 					>
 						{title}
 					</h3>
@@ -184,42 +181,8 @@ export function ProductCard({
 					</div>
 				)}
 
-				{/* Brand Schema.org (Synclune) */}
-				<div
-					itemProp="brand"
-					itemScope
-					itemType="https://schema.org/Brand"
-					className="hidden"
-				>
-					<meta itemProp="name" content="Synclune" />
-				</div>
-
-				{/* Description et SKU pour Schema.org (SEO Rich Snippets) */}
-				{product.description && (
-					<meta
-						itemProp="description"
-						content={product.description.slice(0, 200)}
-					/>
-				)}
-				{defaultSku?.sku && (
-					<meta itemProp="sku" content={defaultSku.sku} />
-				)}
-
 				{/* Prix */}
-				<div itemProp="offers" itemScope itemType="https://schema.org/Offer">
-					<meta itemProp="priceCurrency" content="EUR" />
-					<meta itemProp="price" content={(price / 100).toString()} />
-					<meta
-						itemProp="availability"
-						content={
-							stockStatus === "out_of_stock"
-								? "https://schema.org/OutOfStock"
-								: "https://schema.org/InStock"
-						}
-					/>
-					<meta itemProp="url" content={productUrl} />
-					<ProductPrice price={price} compareAtPrice={compareAtPrice} />
-				</div>
+				<ProductPrice price={price} compareAtPrice={compareAtPrice} />
 
 				{/* Bouton d'ajout au panier - Mobile (client island) */}
 				{defaultSku && stockStatus !== "out_of_stock" && (

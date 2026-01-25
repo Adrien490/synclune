@@ -2,6 +2,8 @@
 
 import { DEFAULT_PER_PAGE } from "@/shared/components/cursor-pagination/pagination"
 import { useRouter, useSearchParams } from "next/navigation"
+// Note: useEffectEvent is a React 19 feature for stable event handlers in effects
+// See: https://react.dev/reference/react/useEffectEvent
 import { useEffect, useRef, useTransition, useEffectEvent } from "react"
 
 import type { UseCursorPaginationProps } from "@/shared/types/hook.types"
@@ -37,7 +39,14 @@ export function useCursorPagination({
 			onNavigate();
 		} else {
 			// Comportement par défaut : scroll to top
-			window.scrollTo({ top: 0, behavior: "smooth" });
+			// Respecte prefers-reduced-motion pour l'accessibilité
+			const prefersReducedMotion = window.matchMedia(
+				"(prefers-reduced-motion: reduce)"
+			).matches;
+			window.scrollTo({
+				top: 0,
+				behavior: prefersReducedMotion ? "instant" : "smooth",
+			});
 		}
 
 		// Focus management pour accessibilité

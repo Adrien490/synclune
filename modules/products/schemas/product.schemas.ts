@@ -29,7 +29,11 @@ import {
 // ============================================================================
 
 export const getProductSchema = z.object({
-	slug: z.string().trim().min(1),
+	slug: z
+		.string()
+		.trim()
+		.min(1)
+		.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Format slug invalide"),
 	includeDraft: z.boolean().default(false),
 });
 

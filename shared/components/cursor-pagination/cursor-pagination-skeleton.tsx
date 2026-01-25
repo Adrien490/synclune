@@ -1,4 +1,9 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import {
+	NAV_BUTTON_SIZE,
+	PAGE_INDICATOR_SIZE,
+	RESET_BUTTON_SIZE,
+} from "./constants";
 
 export function CursorPaginationSkeleton() {
 	return (
@@ -19,18 +24,18 @@ export function CursorPaginationSkeleton() {
 			{/* Contrôles de pagination */}
 			<div className="flex items-center gap-2">
 				{/* Bouton retour au début */}
-				<Skeleton className="h-12 w-12 md:h-9 md:w-20" />
+				<Skeleton className={RESET_BUTTON_SIZE} />
 
 				{/* Groupe de boutons */}
 				<div className="flex items-center">
 					{/* Bouton précédent */}
-					<Skeleton className="h-12 w-12 md:h-9 md:w-9 rounded-r-none" />
+					<Skeleton className={`${NAV_BUTTON_SIZE} rounded-r-none`} />
 
 					{/* Indicateur de page */}
-					<Skeleton className="h-12 md:h-9 min-w-20 sm:min-w-25 rounded-none" />
+					<Skeleton className={`${PAGE_INDICATOR_SIZE} rounded-none`} />
 
 					{/* Bouton suivant */}
-					<Skeleton className="h-12 w-12 md:h-9 md:w-9 rounded-l-none" />
+					<Skeleton className={`${NAV_BUTTON_SIZE} rounded-l-none`} />
 				</div>
 			</div>
 		</div>

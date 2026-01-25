@@ -16,6 +16,11 @@ import {
 	Loader2,
 } from "lucide-react";
 import { Button } from "../ui/button";
+import {
+	NAV_BUTTON_SIZE,
+	PAGE_INDICATOR_SIZE,
+	RESET_BUTTON_SIZE,
+} from "./constants";
 import { PER_PAGE_OPTIONS } from "./pagination";
 import { useCursorPagination } from "@/shared/hooks/use-cursor-pagination";
 import type { CursorPaginationProps } from "@/shared/types/component.types";
@@ -53,15 +58,17 @@ export function CursorPagination({
 			`Affichage de ${currentPageSize} résultat${currentPageSize > 1 ? "s" : ""} sur cette page.`,
 		];
 
-		if (!hasPreviousPage) {
+		if (!canNavigate) {
+			parts.push("Page unique, navigation non disponible.");
+		} else if (!hasPreviousPage) {
 			parts.push("Première page.");
 		} else {
 			parts.push("Page précédente disponible.");
 		}
 
-		if (hasNextPage) {
+		if (canNavigate && hasNextPage) {
 			parts.push("Pages suivantes disponibles.");
-		} else {
+		} else if (canNavigate) {
 			parts.push("Dernière page.");
 		}
 
@@ -101,11 +108,7 @@ export function CursorPagination({
 						onValueChange={(value) => handlePerPageChange(Number(value))}
 						disabled={isPending}
 					>
-						<SelectTrigger
-							id="perPage-select"
-							className="w-20 h-9"
-							aria-label="Éléments par page"
-						>
+						<SelectTrigger id="perPage-select" className="w-20 h-9">
 							<SelectValue>{perPage}</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
@@ -153,7 +156,8 @@ export function CursorPagination({
 						disabled={isFirstPage || isPending}
 						onClick={handleReset}
 						className={cn(
-							"h-12 md:h-9 gap-1 cursor-pointer",
+							RESET_BUTTON_SIZE,
+							"gap-1 cursor-pointer",
 							"backdrop-blur-sm",
 							"border-primary/20",
 							"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
@@ -180,7 +184,8 @@ export function CursorPagination({
 							disabled={!hasPreviousPage || isPending}
 							onClick={handlePrevious}
 							className={cn(
-								"h-12 w-12 md:h-9 md:w-9 cursor-pointer",
+								NAV_BUTTON_SIZE,
+								"cursor-pointer",
 								"backdrop-blur-sm",
 								"border-primary/20",
 								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
@@ -195,9 +200,12 @@ export function CursorPagination({
 						</Button>
 
 						<div
-							className="px-3 text-xs sm:text-sm bg-muted/50 min-w-20 sm:min-w-25 text-center flex items-center justify-center h-12 md:h-9"
+							className={cn(
+								"px-3 text-xs sm:text-sm bg-muted/50 text-center flex items-center justify-center",
+								PAGE_INDICATOR_SIZE
+							)}
 							role="status"
-							aria-current="page"
+							aria-label="Position actuelle dans la pagination"
 						>
 							<span className="font-medium text-foreground">
 								{!hasPreviousPage && !hasNextPage
@@ -217,7 +225,8 @@ export function CursorPagination({
 							disabled={!hasNextPage || isPending}
 							onClick={handleNext}
 							className={cn(
-								"h-12 w-12 md:h-9 md:w-9 cursor-pointer",
+								NAV_BUTTON_SIZE,
+								"cursor-pointer",
 								"backdrop-blur-sm",
 								"border-primary/20",
 								"hover:bg-primary/10 hover:text-primary hover:border-primary/40",

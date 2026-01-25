@@ -1,7 +1,11 @@
 import { Prisma, ProductStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 
-import { SPELL_SUGGESTION_TIMEOUT_MS } from "../constants/search.constants";
+import {
+	MAX_SEARCH_LENGTH,
+	SPELL_SUGGESTION_TIMEOUT_MS,
+} from "../constants/search.constants";
+import { setTrigramThreshold } from "../utils/trigram-helpers";
 
 // ============================================================================
 // CONFIGURATION
@@ -18,12 +22,6 @@ const SUGGESTION_MIN_SIMILARITY = 0.2;
  * Si on a plus de ce nombre de résultats, pas besoin de suggérer
  */
 export const SUGGESTION_THRESHOLD_RESULTS = 3;
-
-/**
- * Longueur maximale du terme de recherche pour éviter les attaques DoS
- * pg_trgm doit calculer les trigrammes pour chaque caractère
- */
-const MAX_SEARCH_LENGTH = 100;
 
 // ============================================================================
 // TYPES
@@ -72,76 +70,78 @@ export async function getSpellSuggestion(
 	if (term.length > MAX_SEARCH_LENGTH) return null;
 
 	try {
-		// Configurer le seuil de similarité
-		await prisma.$executeRawUnsafe(
-			`SET pg_trgm.similarity_threshold = ${SUGGESTION_MIN_SIMILARITY}`
-		);
-
 		// Construire la condition de statut
 		const statusCondition = status
 			? Prisma.sql`AND p.status = ${status}::"ProductStatus"`
 			: Prisma.empty;
 
-		// Recherche unifiée dans toutes les sources avec UNION ALL
-		// Retourne le terme le plus similaire avec sa source
-		const queryPromise = prisma.$queryRaw<SpellSuggestion[]>`
-			WITH suggestions AS (
-				-- Titres de produits
-				SELECT DISTINCT
-					p.title as term,
-					similarity(LOWER(p.title), ${term}) as similarity,
-					'product'::text as source
-				FROM "Product" p
-				WHERE
-					p."deletedAt" IS NULL
-					${statusCondition}
-					AND LOWER(p.title) % ${term}
-					AND LOWER(p.title) != ${term}
+		// Transaction avec SET LOCAL pour isoler le seuil de similarité
+		// SET LOCAL scope le changement à la transaction courante,
+		// évitant d'affecter d'autres requêtes avec le connection pooling
+		const queryPromise = prisma.$transaction(async (tx) => {
+			await setTrigramThreshold(tx, SUGGESTION_MIN_SIMILARITY);
 
-				UNION ALL
+			// Recherche unifiée dans toutes les sources avec UNION ALL
+			// Retourne le terme le plus similaire avec sa source
+			return tx.$queryRaw<SpellSuggestion[]>`
+				WITH suggestions AS (
+					-- Titres de produits
+					SELECT DISTINCT
+						p.title as term,
+						similarity(LOWER(p.title), ${term}) as similarity,
+						'product'::text as source
+					FROM "Product" p
+					WHERE
+						p."deletedAt" IS NULL
+						${statusCondition}
+						AND LOWER(p.title) % ${term}
+						AND LOWER(p.title) != ${term}
 
-				-- Noms de collections
-				SELECT DISTINCT
-					c.name as term,
-					similarity(LOWER(c.name), ${term}) as similarity,
-					'collection'::text as source
-				FROM "Collection" c
-				WHERE
-					c.status = 'PUBLIC'
-					AND LOWER(c.name) % ${term}
-					AND LOWER(c.name) != ${term}
+					UNION ALL
 
-				UNION ALL
+					-- Noms de collections
+					SELECT DISTINCT
+						c.name as term,
+						similarity(LOWER(c.name), ${term}) as similarity,
+						'collection'::text as source
+					FROM "Collection" c
+					WHERE
+						c.status = 'PUBLIC'
+						AND LOWER(c.name) % ${term}
+						AND LOWER(c.name) != ${term}
 
-				-- Noms de couleurs
-				SELECT DISTINCT
-					col.name as term,
-					similarity(LOWER(col.name), ${term}) as similarity,
-					'color'::text as source
-				FROM "Color" col
-				WHERE
-					col."isActive" = true
-					AND LOWER(col.name) % ${term}
-					AND LOWER(col.name) != ${term}
+					UNION ALL
 
-				UNION ALL
+					-- Noms de couleurs
+					SELECT DISTINCT
+						col.name as term,
+						similarity(LOWER(col.name), ${term}) as similarity,
+						'color'::text as source
+					FROM "Color" col
+					WHERE
+						col."isActive" = true
+						AND LOWER(col.name) % ${term}
+						AND LOWER(col.name) != ${term}
 
-				-- Noms de matériaux
-				SELECT DISTINCT
-					m.name as term,
-					similarity(LOWER(m.name), ${term}) as similarity,
-					'material'::text as source
-				FROM "Material" m
-				WHERE
-					m."isActive" = true
-					AND LOWER(m.name) % ${term}
-					AND LOWER(m.name) != ${term}
-			)
-			SELECT term, similarity, source
-			FROM suggestions
-			ORDER BY similarity DESC
-			LIMIT 1
-		`;
+					UNION ALL
+
+					-- Noms de matériaux
+					SELECT DISTINCT
+						m.name as term,
+						similarity(LOWER(m.name), ${term}) as similarity,
+						'material'::text as source
+					FROM "Material" m
+					WHERE
+						m."isActive" = true
+						AND LOWER(m.name) % ${term}
+						AND LOWER(m.name) != ${term}
+				)
+				SELECT term, similarity, source
+				FROM suggestions
+				ORDER BY similarity DESC
+				LIMIT 1
+			`;
+		});
 
 		// Timeout pour éviter les requêtes longues
 		const timeoutPromise = new Promise<never>((_, reject) =>

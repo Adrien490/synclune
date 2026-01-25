@@ -210,7 +210,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						}
 					>
 						<Search className={iconClassName} aria-hidden="true" />
-						<span className={labelClassName}>Recherche</span>
+						<span className={labelClassName}>Rechercher</span>
 						<ActiveBadge showDot={hasActiveSearch} />
 					</button>
 
@@ -229,7 +229,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						}
 					>
 						<SlidersHorizontal className={iconClassName} aria-hidden="true" />
-						<span className={labelClassName}>Filtres</span>
+						<span className={labelClassName}>Filtrer</span>
 						<ActiveBadge count={activeFiltersCount} />
 					</button>
 

@@ -1,5 +1,6 @@
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { deleteUploadThingFileFromUrl } from "@/modules/media/services/delete-uploadthing-files.service";
 
 const GRACE_PERIOD_DAYS = 30; // 30 jours de délai de rétractation RGPD
 
@@ -34,6 +35,7 @@ export async function processAccountDeletions(): Promise<{
 		select: {
 			id: true,
 			email: true,
+			image: true,
 		},
 		take: 50, // Limiter pour éviter timeout
 	});
@@ -47,6 +49,11 @@ export async function processAccountDeletions(): Promise<{
 
 	for (const user of accountsToAnonymize) {
 		try {
+			// Supprimer l'avatar UploadThing avant anonymisation
+			if (user.image) {
+				await deleteUploadThingFileFromUrl(user.image);
+			}
+
 			const anonymizedEmail = `anonymized-${user.id}@deleted.local`;
 			const now = new Date();
 

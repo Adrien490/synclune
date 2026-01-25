@@ -18,6 +18,7 @@ import { getReviewInvalidationTags } from "../constants/cache"
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
 import { deleteReviewSchema } from "../schemas/review.schemas"
 import { updateProductReviewStats } from "../services/review-stats.service"
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service"
 
 /**
  * Supprime un avis (soft delete pour conformité RGPD)
@@ -70,6 +71,9 @@ export async function deleteReview(
 				id: true,
 				userId: true,
 				productId: true,
+				medias: {
+					select: { url: true },
+				},
 			},
 		})
 
@@ -98,6 +102,14 @@ export async function deleteReview(
 		// 6. Invalider le cache
 		const tags = getReviewInvalidationTags(existingReview.productId, userId, id)
 		tags.forEach((tag) => updateTag(tag))
+
+		// 7. Supprimer les fichiers UploadThing (hors transaction, non-bloquant)
+		const mediaUrls = existingReview.medias.map((m) => m.url)
+		if (mediaUrls.length > 0) {
+			deleteUploadThingFilesFromUrls(mediaUrls).catch((err) => {
+				console.error("[deleteReview] Erreur suppression fichiers UploadThing:", err)
+			})
+		}
 
 		return success("Votre avis a été supprimé")
 	} catch (e) {

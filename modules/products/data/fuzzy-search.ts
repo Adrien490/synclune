@@ -5,8 +5,10 @@ import {
 	FUZZY_MAX_RESULTS,
 	FUZZY_SIMILARITY_THRESHOLD,
 	FUZZY_TIMEOUT_MS,
+	MAX_SEARCH_LENGTH,
 	RELEVANCE_WEIGHTS,
 } from "../constants/search.constants";
+import { setTrigramThreshold } from "../utils/trigram-helpers";
 
 // ============================================================================
 // TYPES
@@ -55,62 +57,51 @@ export async function fuzzySearchProductIds(
 
 	const term = searchTerm.trim();
 	if (!term) return [];
+	if (term.length > MAX_SEARCH_LENGTH) return [];
 
 	try {
 		// Construire les paramètres de recherche
 		const likeTerm = `%${term}%`;
 
-		// Configurer le seuil de similarité pour cette session
-		// L'opérateur % retourne TRUE si similarity > pg_trgm.similarity_threshold
-		//
-		// SECURITY NOTE: Utilisation de $executeRawUnsafe
-		// -------------------------------------------------
-		// PostgreSQL ne supporte pas les prepared statements pour les commandes SET.
-		// L'interpolation directe est nécessaire mais sécurisée car:
-		// 1. La valeur est convertie en Number() (pas de string injection)
-		// 2. Math.max(0, Math.min(1, ...)) borne la valeur entre 0 et 1
-		// 3. Number.isFinite() rejette NaN et Infinity
-		// Résultat: seul un float valide entre 0.0 et 1.0 peut être interpolé
-		const safeThreshold = Math.max(0, Math.min(1, Number(threshold)));
-		if (!Number.isFinite(safeThreshold)) {
-			return [];
-		}
-		await prisma.$executeRawUnsafe(
-			`SET pg_trgm.similarity_threshold = ${safeThreshold}`
-		);
+		// Transaction avec SET LOCAL pour isoler le seuil de similarité
+		// SET LOCAL scope le changement à la transaction courante,
+		// évitant d'affecter d'autres requêtes avec le connection pooling
+		const queryPromise = prisma.$transaction(async (tx) => {
+			await setTrigramThreshold(tx, threshold);
 
-		// Requête SQL avec pg_trgm + timeout
-		// Utilise l'opérateur % qui exploite l'index GIN pour de meilleures performances
-		const queryPromise = prisma.$queryRaw<FuzzySearchResult[]>`
-			SELECT
-				p.id as "productId",
-				GREATEST(
-					-- Match exact dans le titre (priorité maximale)
-					CASE WHEN p.title ILIKE ${likeTerm}
-						THEN ${RELEVANCE_WEIGHTS.exactTitle}::float
-						ELSE similarity(p.title, ${term}) * ${RELEVANCE_WEIGHTS.fuzzyTitle}::float
-					END,
-					-- Match exact dans la description
-					CASE WHEN COALESCE(p.description, '') ILIKE ${likeTerm}
-						THEN ${RELEVANCE_WEIGHTS.exactDescription}::float
-						ELSE COALESCE(similarity(p.description, ${term}), 0) * ${RELEVANCE_WEIGHTS.fuzzyDescription}::float
-					END
-				) as score
-			FROM "Product" p
-			WHERE
-				p."deletedAt" IS NULL
-				${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
-				AND (
-					-- Match exact (substring)
-					p.title ILIKE ${likeTerm}
-					OR COALESCE(p.description, '') ILIKE ${likeTerm}
-					-- Match fuzzy avec opérateur % (utilise l'index GIN)
-					OR p.title % ${term}
-					OR COALESCE(p.description, '') % ${term}
-				)
-			ORDER BY score DESC
-			LIMIT ${limit}
-		`;
+			// Requête SQL avec pg_trgm
+			// Utilise l'opérateur % qui exploite l'index GIN pour de meilleures performances
+			return tx.$queryRaw<FuzzySearchResult[]>`
+				SELECT
+					p.id as "productId",
+					GREATEST(
+						-- Match exact dans le titre (priorité maximale)
+						CASE WHEN p.title ILIKE ${likeTerm}
+							THEN ${RELEVANCE_WEIGHTS.exactTitle}::float
+							ELSE similarity(p.title, ${term}) * ${RELEVANCE_WEIGHTS.fuzzyTitle}::float
+						END,
+						-- Match exact dans la description
+						CASE WHEN COALESCE(p.description, '') ILIKE ${likeTerm}
+							THEN ${RELEVANCE_WEIGHTS.exactDescription}::float
+							ELSE COALESCE(similarity(p.description, ${term}), 0) * ${RELEVANCE_WEIGHTS.fuzzyDescription}::float
+						END
+					) as score
+				FROM "Product" p
+				WHERE
+					p."deletedAt" IS NULL
+					${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
+					AND (
+						-- Match exact (substring)
+						p.title ILIKE ${likeTerm}
+						OR COALESCE(p.description, '') ILIKE ${likeTerm}
+						-- Match fuzzy avec opérateur % (utilise l'index GIN)
+						OR p.title % ${term}
+						OR COALESCE(p.description, '') % ${term}
+					)
+				ORDER BY score DESC
+				LIMIT ${limit}
+			`;
+		});
 
 		// Timeout pour éviter les requêtes longues
 		const timeoutPromise = new Promise<never>((_, reject) =>

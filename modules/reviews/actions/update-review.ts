@@ -18,6 +18,7 @@ import { getReviewInvalidationTags } from "../constants/cache"
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants"
 import { updateReviewSchema } from "../schemas/review.schemas"
 import { updateProductReviewStats } from "../services/review-stats.service"
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service"
 
 /**
  * Modifie un avis existant
@@ -75,6 +76,9 @@ export async function updateReview(
 				id: true,
 				userId: true,
 				productId: true,
+				medias: {
+					select: { url: true },
+				},
 			},
 		})
 
@@ -132,6 +136,17 @@ export async function updateReview(
 		// 7. Invalider le cache
 		const tags = getReviewInvalidationTags(existingReview.productId, userId, review.id)
 		tags.forEach((tag) => updateTag(tag))
+
+		// 8. Supprimer les anciennes photos remplacees de UploadThing
+		const oldUrls = new Set(existingReview.medias.map((m) => m.url))
+		const newUrls = new Set(media.map((m) => m.url))
+		const removedUrls = [...oldUrls].filter((url): url is string => !newUrls.has(url))
+
+		if (removedUrls.length > 0) {
+			deleteUploadThingFilesFromUrls(removedUrls).catch((err) => {
+				console.error("[updateReview] Erreur suppression fichiers UploadThing:", err)
+			})
+		}
 
 		return success("Votre avis a été modifié", { id: review.id })
 	} catch (e) {

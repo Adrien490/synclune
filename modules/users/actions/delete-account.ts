@@ -14,6 +14,7 @@ import {
 	handleActionError,
 } from "@/shared/lib/actions";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
+import { deleteUploadThingFileFromUrl } from "@/modules/media/services/delete-uploadthing-files.service";
 
 /**
  * Server Action pour supprimer le compte utilisateur (droit à l'oubli RGPD)
@@ -58,6 +59,7 @@ export async function deleteAccount(): Promise<ActionState> {
 
 		const anonymizedEmail = `deleted_${userId.slice(0, 8)}@synclune.local`;
 		const stripeCustomerId = user.stripeCustomerId;
+		const userAvatar = user.image;
 
 		// 4. Transaction pour garantir l'intégrité des données
 		await prisma.$transaction(async (tx) => {
@@ -127,7 +129,14 @@ export async function deleteAccount(): Promise<ActionState> {
 			}
 		}
 
-		// 4. Invalider la session Better Auth
+		// 4. Supprimer l'avatar UploadThing si present
+		if (userAvatar) {
+			deleteUploadThingFileFromUrl(userAvatar).catch((err) => {
+				console.error("[deleteAccount] Erreur suppression avatar UploadThing:", err);
+			});
+		}
+
+		// 5. Invalider la session Better Auth
 		const headersList = await headers();
 		await auth.api.signOut({
 			headers: headersList,

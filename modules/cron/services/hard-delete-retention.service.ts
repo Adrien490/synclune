@@ -1,4 +1,5 @@
 import { prisma } from "@/shared/lib/prisma";
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 
 const RETENTION_YEARS = 10; // Art. L123-22 Code de Commerce - Conservation 10 ans
 
@@ -38,6 +39,26 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	);
 
 	// 1. Supprimer les avis produits (ReviewMedia et ReviewResponse supprimés en cascade)
+	// 1a. Collecter les URLs des ReviewMedia avant suppression
+	const reviewMediaUrls = await prisma.reviewMedia.findMany({
+		where: {
+			review: {
+				deletedAt: { lt: retentionDate },
+			},
+		},
+		select: { url: true },
+	});
+
+	// 1b. Supprimer les fichiers UploadThing
+	if (reviewMediaUrls.length > 0) {
+		const urls = reviewMediaUrls.map((m) => m.url);
+		const result = await deleteUploadThingFilesFromUrls(urls);
+		console.log(
+			`[CRON:hard-delete-retention] Deleted ${result.deleted} review media files from UploadThing`
+		);
+	}
+
+	// 1c. Supprimer les avis de la DB
 	const reviewsResult = await prisma.productReview.deleteMany({
 		where: {
 			deletedAt: { lt: retentionDate },
@@ -91,6 +112,31 @@ export async function hardDeleteExpiredRecords(): Promise<{
 
 	// 6. Supprimer les produits archivés (ProductSku, SkuMedia, etc. en cascade)
 	// Note: On supprime seulement les produits ARCHIVED + soft-deleted
+	// 6a. Collecter les URLs des SkuMedia avant suppression
+	const skuMediaUrls = await prisma.skuMedia.findMany({
+		where: {
+			sku: {
+				product: {
+					deletedAt: { lt: retentionDate },
+					status: "ARCHIVED",
+				},
+			},
+		},
+		select: { url: true, thumbnailUrl: true },
+	});
+
+	// 6b. Supprimer les fichiers UploadThing (url + thumbnailUrl)
+	if (skuMediaUrls.length > 0) {
+		const urls = skuMediaUrls.flatMap((m) =>
+			[m.url, m.thumbnailUrl].filter((u): u is string => u !== null)
+		);
+		const result = await deleteUploadThingFilesFromUrls(urls);
+		console.log(
+			`[CRON:hard-delete-retention] Deleted ${result.deleted} product media files from UploadThing`
+		);
+	}
+
+	// 6c. Supprimer les produits de la DB
 	const productsResult = await prisma.product.deleteMany({
 		where: {
 			deletedAt: { lt: retentionDate },

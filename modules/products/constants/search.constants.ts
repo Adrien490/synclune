@@ -17,6 +17,13 @@ export const FUZZY_SIMILARITY_THRESHOLD = 0.3;
 export const FUZZY_MIN_LENGTH = 3;
 
 /**
+ * Longueur maximale du terme de recherche
+ * pg_trgm doit calculer les trigrammes pour chaque caractère
+ * Protège contre les attaques DoS avec des termes très longs
+ */
+export const MAX_SEARCH_LENGTH = 100;
+
+/**
  * Limite de résultats pour la recherche fuzzy
  * Correspond à GET_PRODUCTS_MAX_RESULTS_PER_PAGE
  */
