@@ -10,7 +10,7 @@ import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import { getCartExpirationDate, getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { addToCartSchema } from "../schemas/cart.schemas";
-import { handleActionError } from "@/shared/lib/actions";
+import { BusinessError, handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour ajouter un article au panier
@@ -101,19 +101,19 @@ export async function addToCart(
 
 			// Validation complète du SKU (toutes les vérifications dans la transaction)
 			if (!sku) {
-				throw new Error(CART_ERROR_MESSAGES.SKU_NOT_FOUND);
+				throw new BusinessError(CART_ERROR_MESSAGES.SKU_NOT_FOUND);
 			}
 
 			if (sku.deletedAt || sku.productDeletedAt) {
-				throw new Error(CART_ERROR_MESSAGES.PRODUCT_DELETED);
+				throw new BusinessError(CART_ERROR_MESSAGES.PRODUCT_DELETED);
 			}
 
 			if (!sku.isActive) {
-				throw new Error(CART_ERROR_MESSAGES.SKU_INACTIVE);
+				throw new BusinessError(CART_ERROR_MESSAGES.SKU_INACTIVE);
 			}
 
 			if (sku.productStatus !== "PUBLIC") {
-				throw new Error(CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
+				throw new BusinessError(CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
 			}
 
 			// 6b. Upsert panier (après validation SKU pour ne pas créer de panier inutile)
@@ -149,7 +149,7 @@ export async function addToCart(
 
 				// Vérification du stock (message générique pour ne pas révéler le stock exact)
 				if (sku.inventory < newQuantity) {
-					throw new Error(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory));
+					throw new BusinessError(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory));
 				}
 
 				// Mettre à jour le CartItem
@@ -166,11 +166,11 @@ export async function addToCart(
 
 				// Vérification du stock (message générique pour ne pas révéler le stock exact)
 				if (sku.inventory === 0) {
-					throw new Error(CART_ERROR_MESSAGES.OUT_OF_STOCK);
+					throw new BusinessError(CART_ERROR_MESSAGES.OUT_OF_STOCK);
 				}
 
 				if (sku.inventory < validatedData.quantity) {
-					throw new Error(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory));
+					throw new BusinessError(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK(sku.inventory));
 				}
 
 				// Créer le CartItem avec le prix récupéré dans la transaction (atomique)

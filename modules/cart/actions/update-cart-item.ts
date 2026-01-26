@@ -9,7 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { getCartExpirationDate } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { updateCartItemSchema } from "../schemas/cart.schemas";
-import { handleActionError } from "@/shared/lib/actions";
+import { BusinessError, handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour mettre à jour la quantité d'un article dans le panier
@@ -92,12 +92,12 @@ export async function updateCartItem(
 
 			const sku = skuRows[0];
 			if (!sku || !sku.isActive) {
-				throw new Error("Ce produit n'est plus disponible");
+				throw new BusinessError("Ce produit n'est plus disponible");
 			}
 
 			// 7b. Si augmentation de quantité, vérifier le stock disponible
 			if (validatedData.quantity > sku.inventory) {
-				throw new Error(
+				throw new BusinessError(
 					`Stock insuffisant. Disponible : ${sku.inventory} exemplaire${sku.inventory > 1 ? "s" : ""}.`
 				);
 			}
