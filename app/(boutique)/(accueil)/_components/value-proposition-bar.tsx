@@ -50,7 +50,11 @@ const valuePillars: ValuePillar[] = [
  * - Responsive: 4 colonnes desktop, 2x2 mobile
  * - Animation stagger à l'entrée
  */
-export function ValuePropositionBar() {
+export async function ValuePropositionBar() {
+  "use cache";
+  cacheLife("reference");
+  cacheTag("value-proposition-bar");
+
   return (
     <Fade y={10} duration={0.6}>
       <section

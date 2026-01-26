@@ -16,7 +16,11 @@ import { cacheLife, cacheTag } from "next/cache";
  * - Incentive avec cadeau (guide des couleurs)
  * - Background GlitterSparkles subtil
  */
-export function NewsletterSection() {
+export async function NewsletterSection() {
+  "use cache";
+  cacheLife("reference");
+  cacheTag("newsletter-section");
+
   return (
     <section
       aria-labelledby="newsletter-title"

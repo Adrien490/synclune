@@ -146,7 +146,11 @@ const faqSchema = generateFaqSchema(faqItems);
  * - Maillage interne vers pages Personnalisation et Contact
  * - Accessible avec landmark region
  */
-export function FaqSection() {
+export async function FaqSection() {
+	"use cache";
+	cacheLife("reference");
+	cacheTag("faq-section");
+
 	const accordionItems = faqItems.map((item) => ({
 		question: item.question,
 		answer: renderAnswerWithLinks(item.answer, item.links),
