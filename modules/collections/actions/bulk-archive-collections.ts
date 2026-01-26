@@ -91,6 +91,7 @@ export async function bulkArchiveCollections(
 			const collectionTags = getCollectionInvalidationTags(collection.slug);
 			collectionTags.forEach((tag) => updateTag(tag));
 		}
+		updateTag("navbar-menu");
 
 		// 7. Message de succes
 		const count = existingCollections.length;

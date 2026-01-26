@@ -67,6 +67,7 @@ export async function createProductType(
 
 		// 7. Invalider le cache des types de produits
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
+		updateTag("navbar-menu");
 
 		return {
 			status: ActionStatus.SUCCESS,

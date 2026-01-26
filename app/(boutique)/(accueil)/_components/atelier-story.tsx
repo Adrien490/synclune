@@ -4,6 +4,7 @@ import { PolaroidFrame } from "@/shared/components/polaroid-frame";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
 import { Sparkles } from "lucide-react";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 
 const POLAROIDS = [
@@ -13,7 +14,15 @@ const POLAROIDS = [
 	{ caption: "Mon coin créatif", label: "Vue de l'atelier Synclune", tilt: "right", washiColor: "peach", washiPosition: "top-right", className: "hidden lg:block" },
 ] as const;
 
-export function AtelierStory() {
+/**
+ * Section histoire de l'atelier
+ *
+ * Contenu entierement statique. Cache au niveau composant avec profil "reference".
+ */
+export async function AtelierStory() {
+	"use cache";
+	cacheLife("reference");
+	cacheTag("atelier-story");
 	return (
 		<section
 			id="atelier-story"

@@ -10,12 +10,21 @@ import { Button } from "@/shared/components/ui/button";
 import { LayoutTextFlip } from "@/shared/components/ui/layout-text-flip";
 import { BRAND } from "@/shared/constants/brand";
 import { Heart } from "lucide-react";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 
 const socialLinkClassName =
   "inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-accent motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-export function HeroSection() {
+/**
+ * Section Hero de la page d'accueil
+ *
+ * Contenu entierement statique. Cache au niveau composant avec profil "reference".
+ */
+export async function HeroSection() {
+  "use cache";
+  cacheLife("reference");
+  cacheTag("hero-section");
   return (
     <section
       id="hero-section"

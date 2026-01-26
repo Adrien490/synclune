@@ -42,6 +42,7 @@ export async function toggleProductTypeStatus(
 
 		revalidatePath("/admin/catalogue/types-de-produits");
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
+		updateTag("navbar-menu");
 
 		return {
 			status: ActionStatus.SUCCESS,

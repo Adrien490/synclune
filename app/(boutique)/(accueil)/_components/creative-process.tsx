@@ -6,6 +6,7 @@ import { STEP_COLORS } from "@/shared/constants/process-steps";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { ParallaxImage } from "./parallax-image";
 import { ScrollProgressLine } from "./scroll-progress-line";
@@ -97,7 +98,10 @@ const STEP_INTENSITY = [
  * <CreativeProcess />
  * ```
  */
-export function CreativeProcess() {
+export async function CreativeProcess() {
+	"use cache";
+	cacheLife("reference");
+	cacheTag("creative-process");
 	return (
 		<section
 			className={cn("relative overflow-hidden bg-background", SECTION_SPACING.section)}

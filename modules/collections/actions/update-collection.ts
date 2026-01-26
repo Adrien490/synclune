@@ -91,6 +91,7 @@ export async function updateCollection(
 		revalidatePath("/admin/catalogue/collections");
 		revalidatePath(`/collections/${slug}`);
 		getCollectionInvalidationTags(slug).forEach(tag => updateTag(tag));
+		updateTag("navbar-menu");
 
 		return {
 			status: ActionStatus.SUCCESS,

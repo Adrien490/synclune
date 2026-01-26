@@ -65,6 +65,7 @@ export async function deleteCollection(
 		revalidatePath("/admin/catalogue/collections");
 		revalidatePath("/collections");
 		getCollectionInvalidationTags(existingCollection.slug).forEach(tag => updateTag(tag));
+		updateTag("navbar-menu");
 
 		// Message different selon si la collection avait des produits
 		const message =

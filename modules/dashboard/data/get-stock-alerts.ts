@@ -21,7 +21,7 @@ export async function fetchDashboardStockAlerts(
 	skip: number = 0,
 	take: number = 10
 ): Promise<GetStockAlertsReturn> {
-	"use cache";
+	"use cache: remote";
 
 	cacheDashboard();
 

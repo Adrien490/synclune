@@ -10,6 +10,7 @@ import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
 import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import { FOOTER_PADDING } from "@/shared/constants/spacing";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { CopyrightYear } from "./copyright-year";
 
@@ -17,8 +18,12 @@ import { CopyrightYear } from "./copyright-year";
  * Footer statique de l'application
  *
  * Contenu entierement statique (navigation, liens, contact).
+ * Cache au niveau composant avec profil "reference" (7j stale, 24h revalidate).
  */
-export function Footer() {
+export async function Footer() {
+	"use cache";
+	cacheLife("reference");
+	cacheTag("footer");
 	return (
 		<footer
 			className="relative bg-background overflow-hidden"

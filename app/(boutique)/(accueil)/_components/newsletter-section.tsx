@@ -5,6 +5,7 @@ import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
 import { Sparkles } from "lucide-react";
 import { NewsletterForm } from "@/modules/newsletter/components/newsletter-form";
+import { cacheLife, cacheTag } from "next/cache";
 
 /**
  * Section newsletter pour la page d'accueil

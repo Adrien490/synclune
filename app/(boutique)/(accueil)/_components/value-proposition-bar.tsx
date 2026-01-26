@@ -1,6 +1,7 @@
 import { Fade, Stagger } from "@/shared/components/animations";
 import { cn } from "@/shared/utils/cn";
 import { Heart, MapPin, Paintbrush, Sparkles } from "lucide-react";
+import { cacheLife, cacheTag } from "next/cache";
 
 interface ValuePillar {
   icon: React.ReactNode;

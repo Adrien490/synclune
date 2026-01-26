@@ -83,6 +83,7 @@ export async function bulkDeleteCollections(
 		for (const collection of collectionsWithUsage) {
 			getCollectionInvalidationTags(collection.slug).forEach(tag => updateTag(tag));
 		}
+		updateTag("navbar-menu");
 
 		// Message avec info sur les produits
 		const message =

@@ -93,6 +93,7 @@ export async function bulkDeleteProductTypes(
 		// 6. Revalidation et invalidation du cache
 		revalidatePath("/admin/catalogue/types-de-produits");
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
+		updateTag("navbar-menu");
 
 		// 7. Construire le message de retour
 		const skipped = systemTypes.length + typesWithProducts.length;

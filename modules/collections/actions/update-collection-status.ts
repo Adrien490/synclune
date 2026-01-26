@@ -78,6 +78,7 @@ export async function updateCollectionStatus(
 		// 7. Invalidate cache tags
 		const collectionTags = getCollectionInvalidationTags(existingCollection.slug);
 		collectionTags.forEach(tag => updateTag(tag));
+		updateTag("navbar-menu");
 
 		// 8. Messages de succes contextuels
 		const statusMessages: Record<CollectionStatus, string> = {

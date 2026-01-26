@@ -7,6 +7,7 @@ import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaqAccordion } from "./faq-accordion";
+import { cacheLife, cacheTag } from "next/cache";
 
 interface FaqLink {
 	text: string;

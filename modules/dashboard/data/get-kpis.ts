@@ -195,7 +195,7 @@ async function fetchOutOfStockProducts() {
  * Récupère les KPIs essentiels du dashboard avec cache
  */
 export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
-	"use cache";
+	"use cache: remote";
 
 	cacheDashboard();
 

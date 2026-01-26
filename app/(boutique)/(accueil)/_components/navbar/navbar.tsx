@@ -9,6 +9,7 @@ import { getProductTypes } from "@/modules/product-types/data/get-product-types"
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { Heart } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
@@ -19,19 +20,19 @@ import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarWrapper } from "./navbar-wrapper";
 
-/** Classes communes pour les boutons icônes de la navbar */
-const iconButtonClassName = "relative items-center justify-center size-11 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group";
+/**
+ * Fonction cachee pour les donnees publiques du menu (collections et types de produits)
+ * Ces donnees sont partagees entre tous les utilisateurs et changent rarement.
+ */
+async function getNavbarMenuData() {
+	"use cache";
+	cacheLife("collections");
+	cacheTag("navbar-menu");
 
-export async function Navbar() {
-	// Paralléliser tous les fetches pour optimiser le TTFB
-	const [session, cartCount, wishlistCount, recentSearches, collectionsData, productTypesData] = await Promise.all([
-		getSession(),
-		getCartItemCount(),
-		getWishlistItemCount(),
-		getRecentSearches(),
+	const [collectionsData, productTypesData] = await Promise.all([
 		getCollections({
-			perPage: 4, // Collections principales pour le quick search (bouton "Voir toutes" dans le dialog)
-			sortBy: "products-descending", // Collections avec le plus de produits en premier
+			perPage: 4,
+			sortBy: "products-descending",
 			filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
 		}),
 		getProductTypes({
@@ -40,6 +41,25 @@ export async function Navbar() {
 			filters: { isActive: true, hasProducts: true },
 		}),
 	]);
+
+	return { collectionsData, productTypesData };
+}
+
+/** Classes communes pour les boutons icônes de la navbar */
+const iconButtonClassName = "relative items-center justify-center size-11 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group";
+
+export async function Navbar() {
+	// Paralléliser tous les fetches pour optimiser le TTFB
+	// Les données publiques (collections, productTypes) sont cachées via getNavbarMenuData()
+	const [session, cartCount, wishlistCount, recentSearches, menuData] = await Promise.all([
+		getSession(),
+		getCartItemCount(),
+		getWishlistItemCount(),
+		getRecentSearches(),
+		getNavbarMenuData(),
+	]);
+
+	const { collectionsData, productTypesData } = menuData;
 
 	// Dériver isAdmin depuis la session (évite un appel DB redondant)
 	const userIsAdmin = session?.user?.role === "ADMIN";

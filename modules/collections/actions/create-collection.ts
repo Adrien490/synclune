@@ -72,6 +72,7 @@ export async function createCollection(
 		// Revalider les pages concernees et invalider le cache
 		revalidatePath("/admin/catalogue/collections");
 		getCollectionInvalidationTags(slug).forEach(tag => updateTag(tag));
+		updateTag("navbar-menu");
 
 		return {
 			status: ActionStatus.SUCCESS,

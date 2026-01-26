@@ -31,7 +31,7 @@ type RevenueRow = {
  * Optimisé: agrégation côté DB via GROUP BY au lieu de traitement JS
  */
 export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartReturn> {
-	"use cache";
+	"use cache: remote";
 
 	cacheDashboard();
 

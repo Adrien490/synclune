@@ -71,6 +71,7 @@ export async function deleteProductType(
 		// 6. Revalidation et invalidation du cache
 		revalidatePath("/admin/catalogue/types-de-produits");
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
+		updateTag("navbar-menu");
 
 		return {
 			status: ActionStatus.SUCCESS,
