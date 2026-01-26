@@ -33,7 +33,7 @@ const valuePillars: ValuePillar[] = [
   {
     icon: <Heart className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />,
     title: "Avec amour",
-    subtitle: "Pour vous !",
+    subtitle: "Pour vous ou vos proches !",
     glowClass: "group-hover:shadow-[0_0_25px_oklch(0.92_0.09_86/0.5)]",
   },
 ];
