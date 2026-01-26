@@ -90,7 +90,7 @@ export function HeroSection() {
                   Faits main pour sublimer votre quotidien{" "}
                 </span>
                 <span className="hidden sm:inline">
-                  Crées à la main pour des occasions particulières, ou pour sublimer votre quotidien{" "}
+                  Créés à la main pour des occasions particulières, ou pour sublimer votre quotidien{" "}
                 </span>
                 <Heart
                   size={22}
