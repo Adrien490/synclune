@@ -14,25 +14,25 @@ const valuePillars: ValuePillar[] = [
   {
     icon: <Paintbrush className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />,
     title: "Fait main",
-    subtitle: "Chaque pièce est unique",
+    subtitle: "Chaque pièce est unique !",
     glowClass: "group-hover:shadow-[0_0_25px_oklch(0.86_0.1_341/0.4)]",
   },
   {
     icon: <MapPin className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />,
     title: "Créé à Nantes",
-    subtitle: "Artisanat local 44",
+    subtitle: "Dans mon petit atelier",
     glowClass: "group-hover:shadow-[0_0_25px_oklch(0.75_0.12_280/0.35)]",
   },
   {
     icon: <Sparkles className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />,
-    title: "Couleurs vibrantes",
-    subtitle: "Des bijoux qui vous ressemblent",
+    title: "De la couleur",
+    subtitle: "Et de l'originalité !",
     glowClass: "group-hover:shadow-[0_0_25px_oklch(0.82_0.14_160/0.4)]",
   },
   {
     icon: <Heart className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />,
     title: "Avec amour",
-    subtitle: "De mon atelier à votre boîte",
+    subtitle: "Pour vous !",
     glowClass: "group-hover:shadow-[0_0_25px_oklch(0.92_0.09_86/0.5)]",
   },
 ];

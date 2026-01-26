@@ -1,4 +1,8 @@
-import { Fade, ParticleBackground, ScrollIndicator } from "@/shared/components/animations";
+import {
+  Fade,
+  ParticleBackground,
+  ScrollIndicator,
+} from "@/shared/components/animations";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -8,7 +12,8 @@ import { BRAND } from "@/shared/constants/brand";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 
-const socialLinkClassName = "inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-accent motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+const socialLinkClassName =
+  "inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-accent motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 export function HeroSection() {
   return (
@@ -28,10 +33,12 @@ export function HeroSection() {
             "@type": "WebSite",
             name: "Synclune",
             url: "https://synclune.fr",
-            description: "Bijoux artisanaux faits main, colorés et uniques pour sublimer votre quotidien",
+            description:
+              "Bijoux artisanaux faits main, colorés et uniques pour sublimer votre quotidien",
             potentialAction: {
               "@type": "SearchAction",
-              target: "https://synclune.fr/produits?search={search_term_string}",
+              target:
+                "https://synclune.fr/produits?search={search_term_string}",
               "query-input": "required name=search_term_string",
             },
           }),
@@ -90,7 +97,8 @@ export function HeroSection() {
                   Faits main pour sublimer votre quotidien{" "}
                 </span>
                 <span className="hidden sm:inline">
-                  Créés à la main pour des occasions particulières, ou pour sublimer votre quotidien{" "}
+                  Créés à la main pour des occasions particulières, ou pour
+                  sublimer votre quotidien{" "}
                 </span>
                 <Heart
                   size={22}
@@ -108,8 +116,11 @@ export function HeroSection() {
                 size="lg"
                 className="shadow-lg font-semibold w-full sm:w-auto"
               >
-                <Link href="/produits" className="flex items-center justify-center">
-                  Découvrir la boutique
+                <Link
+                  href="/produits"
+                  className="flex items-center justify-center"
+                >
+                  Découvrir la boutique !
                 </Link>
               </Button>
               <Button
@@ -123,7 +134,7 @@ export function HeroSection() {
                   className="flex items-center justify-center"
                 >
                   <span className="sm:hidden">Personnalisation</span>
-                  <span className="hidden sm:inline">Je veux un bijou personnalisé</span>
+                  <span className="hidden sm:inline">Personnalisation</span>
                 </Link>
               </Button>
             </div>
@@ -132,7 +143,7 @@ export function HeroSection() {
             <Fade y={8} delay={0.5} duration={0.4}>
               <div className="flex items-center justify-center gap-3">
                 <span className="text-sm text-muted-foreground hidden sm:inline">
-                  Suivez-moi :
+                  Mes réseaux :
                 </span>
                 <div className="flex items-center gap-4">
                   <Link
@@ -142,7 +153,11 @@ export function HeroSection() {
                     className={socialLinkClassName}
                     aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
                   >
-                    <InstagramIcon decorative size={20} className="text-foreground" />
+                    <InstagramIcon
+                      decorative
+                      size={20}
+                      className="text-foreground"
+                    />
                   </Link>
                   <Link
                     href={BRAND.social.tiktok.url}
@@ -151,7 +166,11 @@ export function HeroSection() {
                     className={socialLinkClassName}
                     aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
                   >
-                    <TikTokIcon decorative size={20} className="text-foreground" />
+                    <TikTokIcon
+                      decorative
+                      size={20}
+                      className="text-foreground"
+                    />
                   </Link>
                 </div>
               </div>
@@ -162,7 +181,12 @@ export function HeroSection() {
 
       {/* Indicateur de scroll */}
       <ScrollIndicator
-        targetIds={["value-proposition", "coups-de-coeur", "latest-creations", "collections"]}
+        targetIds={[
+          "value-proposition",
+          "coups-de-coeur",
+          "latest-creations",
+          "collections",
+        ]}
         ariaLabel="Voir la suite"
         className="hidden sm:block"
       />

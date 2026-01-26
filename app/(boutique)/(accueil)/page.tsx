@@ -7,7 +7,7 @@ import { ValuePropositionBar } from "@/app/(boutique)/(accueil)/_components/valu
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
-import { NewsletterSection } from "@/modules/newsletter/components/newsletter-section";
+import { NewsletterSection } from "@/app/(boutique)/(accueil)/_components/newsletter-section";
 import { getProducts } from "@/modules/products/data/get-products";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
