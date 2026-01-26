@@ -7,7 +7,6 @@ import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaqAccordion } from "./faq-accordion";
-import { cacheLife, cacheTag } from "next/cache";
 
 interface FaqLink {
 	text: string;
@@ -146,11 +145,7 @@ const faqSchema = generateFaqSchema(faqItems);
  * - Maillage interne vers pages Personnalisation et Contact
  * - Accessible avec landmark region
  */
-export async function FaqSection() {
-	"use cache";
-	cacheLife("reference");
-	cacheTag("faq-section");
-
+export function FaqSection() {
 	const accordionItems = faqItems.map((item) => ({
 		question: item.question,
 		answer: renderAnswerWithLinks(item.answer, item.links),
