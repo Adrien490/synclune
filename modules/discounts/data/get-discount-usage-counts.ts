@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 import { prisma } from "@/shared/lib/prisma";
+import { DISCOUNT_CACHE_TAGS } from "../constants/cache";
 
 type DiscountUsageCountsParams = {
 	discountId: string;
@@ -24,7 +25,7 @@ export async function getDiscountUsageCounts(
 	"use cache";
 
 	cacheLife("cart");
-	cacheTag(`discount-usage-${params.discountId}`);
+	cacheTag(DISCOUNT_CACHE_TAGS.USAGE(params.discountId));
 
 	const { discountId, userId, customerEmail } = params;
 

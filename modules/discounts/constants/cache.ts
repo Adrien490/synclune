@@ -15,6 +15,9 @@ export const DISCOUNT_CACHE_TAGS = {
 
 	/** Détail d'un code promo spécifique (par ID ou code) */
 	DETAIL: (idOrCode: string) => `discount-${idOrCode}`,
+
+	/** Compteur d'utilisation d'un code promo */
+	USAGE: (discountId: string) => `discount-usage-${discountId}`,
 } as const
 
 // ============================================

@@ -18,7 +18,6 @@ import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 export async function getMaxProductPrice(): Promise<number> {
 	// Cache reference : données quasi-statiques qui changent très rarement
 	cacheLife("reference"); // 24h stale, 2h revalidate, 30j expire
-	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 	cacheTag(PRODUCTS_CACHE_TAGS.MAX_PRICE);
 
 	try {

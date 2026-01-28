@@ -10,7 +10,7 @@ import { updateTag } from "next/cache";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import { generateOrderNumber } from "@/modules/orders/services/order-generation.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
-import { ActionStatus } from "@/shared/types/server-action";
+import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import Stripe from "stripe";
 import { createCheckoutSessionSchema } from "@/modules/payments/schemas/create-checkout-session-schema";
@@ -29,7 +29,7 @@ import { BusinessError, handleActionError } from "@/shared/lib/actions";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-export const createCheckoutSession = async (_: unknown, formData: FormData) => {
+export const createCheckoutSession = async (_prevState: ActionState | undefined, formData: FormData) => {
 	try {
 		// 1. Récupération de l'utilisateur connecté (optionnel)
 		const session = await getSession();
