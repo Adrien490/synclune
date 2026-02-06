@@ -25,7 +25,7 @@ interface CollectionsSectionProps {
 export function CollectionsSection({ collectionsPromise }: CollectionsSectionProps) {
 	const { collections } = use(collectionsPromise);
 
-	// Si aucune collection, ne pas afficher la section
+	// Don't render section with no collections
 	if (collections.length === 0) {
 		return null;
 	}
@@ -39,7 +39,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 			aria-labelledby="collections-title"
 			aria-describedby="collections-subtitle"
 		>
-			{/* Skip link pour navigation clavier - sauter le carousel */}
+			{/* Skip link for keyboard navigation - skip carousel */}
 			<a
 				href="#collections-cta"
 				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-background focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-ring focus:text-foreground"
@@ -90,7 +90,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 													index={index}
 													sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CAROUSEL}
 												/>
-												{/* Description sous la card */}
+												{/* Description below the card */}
 												{collection.description && (
 													<p className="mt-2 text-xs text-muted-foreground text-center line-clamp-2 px-2">
 														{collection.description}
@@ -102,7 +102,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 								})}
 							</CarouselContent>
 
-							{/* Flèches de navigation - Desktop uniquement */}
+							{/* Navigation arrows - Desktop only */}
 							{showArrows && (
 								<>
 									<CarouselPrevious
@@ -116,7 +116,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 								</>
 							)}
 
-							{/* Dots - Mobile uniquement */}
+							{/* Dots - Mobile only */}
 							<CarouselDots className="md:hidden" />
 						</Carousel>
 					</Reveal>

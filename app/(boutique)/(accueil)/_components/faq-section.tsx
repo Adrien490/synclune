@@ -138,12 +138,9 @@ function generateFaqSchema(items: FaqItemData[]) {
 const faqSchema = generateFaqSchema(faqItems);
 
 /**
- * Section FAQ - Questions fréquentes avec schema SEO
+ * FAQ section with FAQPage JSON-LD schema for rich snippets.
  *
- * Pattern : Server Component avec client island pour l'Accordion
- * - 6 questions avec schema FAQPage JSON-LD pour rich snippets Google
- * - Maillage interne vers pages Personnalisation et Contact
- * - Accessible avec landmark region
+ * Server Component with client island for the Accordion.
  */
 export function FaqSection() {
 	const accordionItems = faqItems.map((item) => ({
@@ -157,7 +154,7 @@ export function FaqSection() {
 			aria-labelledby="faq-title"
 			role="region"
 		>
-			{/* JSON-LD Schema pour SEO */}
+			{/* JSON-LD Schema for SEO */}
 			<script
 				id="faq-schema"
 				type="application/ld+json"

@@ -17,9 +17,9 @@ const socialLinkClassName =
   "inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-accent motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 /**
- * Section Hero de la page d'accueil
+ * Homepage hero section.
  *
- * Contenu entierement statique. Cache au niveau composant avec profil "reference".
+ * Fully static content. Component-level cache with "reference" profile.
  */
 export async function HeroSection() {
   "use cache";
@@ -33,28 +33,7 @@ export async function HeroSection() {
       aria-describedby="hero-subtitle"
       className="relative min-h-[calc(85dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
     >
-      {/* JSON-LD structured data pour SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: "Synclune",
-            url: "https://synclune.fr",
-            description:
-              "Bijoux artisanaux faits main, colorés et uniques pour sublimer votre quotidien",
-            potentialAction: {
-              "@type": "SearchAction",
-              target:
-                "https://synclune.fr/produits?search={search_term_string}",
-              "query-input": "required name=search_term_string",
-            },
-          }),
-        }}
-      />
-
-      {/* Background particules - Desktop uniquement */}
+      {/* Particle background - Desktop only */}
       <div className="absolute inset-0 -z-10" aria-hidden="true">
         <div className="hidden md:block absolute inset-0">
           <ParticleBackground
@@ -79,9 +58,9 @@ export async function HeroSection() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl 2xl:max-w-7xl relative z-10">
         <div className="flex flex-col items-center">
-          {/* Contenu centré */}
+          {/* Centered content */}
           <div className="space-y-5 sm:space-y-7 md:space-y-10 flex flex-col items-center">
-            {/* Titre principal - Affichage immédiat pour LCP */}
+            {/* Main title - Immediate render for LCP */}
             <div className="space-y-4 sm:space-y-6 text-center w-full">
               <SectionTitle
                 as="h1"
@@ -118,7 +97,7 @@ export async function HeroSection() {
               </p>
             </div>
 
-            {/* CTA - Affichage immédiat pour LCP */}
+            {/* CTA - Immediate render for LCP */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
               <Button
                 asChild
@@ -142,13 +121,12 @@ export async function HeroSection() {
                   href="/personnalisation"
                   className="flex items-center justify-center"
                 >
-                  <span className="sm:hidden">Personnalisation</span>
-                  <span className="hidden sm:inline">Personnalisation</span>
+                  Personnalisation
                 </Link>
               </Button>
             </div>
 
-            {/* Réseaux sociaux - Version compacte */}
+            {/* Social links - Compact version */}
             <Fade y={8} delay={0.5} duration={0.4}>
               <div className="flex items-center justify-center gap-3">
                 <span className="text-sm text-muted-foreground hidden sm:inline">
@@ -188,7 +166,7 @@ export async function HeroSection() {
         </div>
       </div>
 
-      {/* Indicateur de scroll */}
+      {/* Scroll indicator */}
       <ScrollIndicator
         targetIds={[
           "value-proposition",

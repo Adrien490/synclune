@@ -15,9 +15,10 @@ const POLAROIDS = [
 ] as const;
 
 /**
- * Section histoire de l'atelier
+ * Atelier story section - Personal storytelling with polaroid gallery.
  *
- * Contenu entierement statique. Cache au niveau composant avec profil "reference".
+ * Fully static content. Component-level cache with "reference" profile.
+ * Article JSON-LD schema is centralized in the StructuredData component.
  */
 export async function AtelierStory() {
 	"use cache";
@@ -31,13 +32,13 @@ export async function AtelierStory() {
 			data-voice-queries="qui est Léane Synclune,atelier bijoux Nantes,créatrice bijoux artisanaux"
 			data-content-type="about-creator"
 		>
-			{/* Titre descriptif pour SEO et lecteurs d'ecran */}
+			{/* Descriptive title for SEO and screen readers */}
 			<h2 id="atelier-story-title" className="sr-only">
 				L'histoire de Léane, créatrice de bijoux artisanaux Synclune à Nantes
 			</h2>
 
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-				{/* Photo ambiance principale - hauteur reduite sur mobile pour meilleur flow */}
+				{/* Main ambiance photo - reduced height on mobile for better flow */}
 				<Reveal y={20} duration={0.6} once>
 					<div className="mb-8 sm:mb-12">
 						<PlaceholderImage
@@ -47,7 +48,7 @@ export async function AtelierStory() {
 					</div>
 				</Reveal>
 
-				{/* Separateur decoratif anime - delay 0.25s pour apparaitre entre image et texte */}
+				{/* Decorative animated separator */}
 				<Fade y={8} delay={0.25} duration={0.5} inView once>
 					<div
 						className="flex justify-center items-center gap-3 mb-8 sm:mb-12"
@@ -59,10 +60,10 @@ export async function AtelierStory() {
 					</div>
 				</Fade>
 
-				{/* Texte confession - delay 0.15s apres sparkles, stagger sur paragraphes */}
+				{/* Confession text with staggered paragraphs */}
 				<Fade y={12} delay={0.15} duration={0.5} inView once>
 					<div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
-						{/* Badge decoratif (le vrai h2 est sr-only plus haut) */}
+						{/* Decorative badge (real h2 is sr-only above) */}
 						<span
 							className="inline-block text-sm uppercase tracking-[0.2em] text-muted-foreground font-medium"
 							aria-hidden="true"
@@ -70,12 +71,12 @@ export async function AtelierStory() {
 							Depuis mon atelier
 						</span>
 
-						{/* Intro accrocheuse */}
+						{/* Catchy intro */}
 						<p className="text-2xl sm:text-3xl md:text-4xl font-light text-foreground tracking-tight">
 							Je vais te faire une confidence.
 						</p>
 
-						{/* Corps du texte avec stagger pour lecture progressive */}
+						{/* Body text with stagger for progressive reading */}
 						<Stagger
 							stagger={0.08}
 							y={20}
@@ -98,10 +99,10 @@ export async function AtelierStory() {
 					</div>
 				</Fade>
 
-				{/* Galerie de polaroids - 4 photos desktop, 2 mobile (via CSS) */}
+				{/* Polaroid gallery - 4 photos desktop, 2 mobile (via CSS) */}
 				<Reveal y={25} delay={0.3} duration={0.6} once>
 					<div className="mt-12 sm:mt-16 space-y-8">
-						{/* Photos en grid - Style Polaroid scrapbook */}
+						{/* Polaroid scrapbook grid */}
 						<div
 							role="group"
 							aria-label="Galerie photos de l'atelier Synclune"
@@ -129,7 +130,7 @@ export async function AtelierStory() {
 							</Stagger>
 						</div>
 
-						{/* CTA vers personnalisation */}
+						{/* CTA to customization page */}
 						<div className="text-center">
 							<Link
 								href="/personnalisation"
@@ -142,36 +143,6 @@ export async function AtelierStory() {
 					</div>
 				</Reveal>
 			</div>
-
-			{/* JSON-LD structured data for SEO */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify({
-						"@context": "https://schema.org",
-						"@type": "Article",
-						headline: "L'histoire de Léane, créatrice de bijoux artisanaux Synclune",
-						author: {
-							"@type": "Person",
-							name: "Léane",
-							jobTitle: "Créatrice de bijoux artisanaux",
-							workLocation: {
-								"@type": "Place",
-								address: {
-									"@type": "PostalAddress",
-									addressLocality: "Nantes",
-									addressCountry: "FR",
-								},
-							},
-						},
-						about: {
-							"@type": "Brand",
-							name: "Synclune",
-							description: "Bijoux artisanaux faits main à Nantes",
-						},
-					}),
-				}}
-			/>
 		</section>
 	);
 }

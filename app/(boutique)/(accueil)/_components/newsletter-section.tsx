@@ -8,13 +8,10 @@ import { NewsletterForm } from "@/modules/newsletter/components/newsletter-form"
 import { cacheLife, cacheTag } from "next/cache";
 
 /**
- * Section newsletter pour la page d'accueil
+ * Homepage newsletter section.
  *
- * Storytelling: "Rejoins ma petite communauté créative"
- * - Headline personnelle
- * - Preview du contenu
- * - Incentive avec cadeau (guide des couleurs)
- * - Background GlitterSparkles subtil
+ * Features personal storytelling headline, content preview,
+ * gift incentive, and subtle GlitterSparkles background.
  */
 export async function NewsletterSection() {
   "use cache";
@@ -31,13 +28,13 @@ export async function NewsletterSection() {
         SECTION_SPACING.section,
       )}
     >
-      {/* Background animé subtil - masqué sur mobile pour performance */}
+      {/* Subtle animated background - hidden on mobile for performance */}
       <div className="hidden md:block absolute inset-0 pointer-events-none" aria-hidden="true">
         <GlitterSparkles count={12} sizeRange={[4, 8]} glowIntensity={0.6} />
       </div>
 
       <div className={cn("relative z-10", CONTAINER_CLASS)}>
-        {/* Header storytelling */}
+        {/* Storytelling header */}
         <header className="mb-8 text-center lg:mb-12">
           <Fade y={20} duration={0.6}>
             <SectionTitle id="newsletter-title">Ma newsletter</SectionTitle>
@@ -53,23 +50,23 @@ export async function NewsletterSection() {
           </Fade>
         </header>
 
-        {/* Formulaire centré */}
+        {/* Centered form */}
         <Fade y={15} delay={0.2} duration={0.6}>
           <div className="max-w-md mx-auto">
             <NewsletterForm />
           </div>
         </Fade>
 
-        {/* Assurance anti-spam + signature */}
+        {/* Anti-spam assurance + signature */}
         <Fade y={10} delay={0.3} duration={0.6}>
           <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground/70">
+            <p className="text-sm text-muted-foreground">
               Pas de spam, promis ! Désinscription en un clic si besoin.
             </p>
             <p
               className={`${dancingScript.className} mt-2 text-lg text-foreground/60 italic`}
             >
-              Bye !
+              À très vite !
             </p>
           </div>
         </Fade>

@@ -57,6 +57,14 @@ html {
 	--color-ring: var(--ring);
 
 	/* ==========================================
+	   GLOW COLORS (Value Proposition Bar)
+	   ========================================== */
+	--color-glow-pink: oklch(0.86 0.1 341 / 0.4);
+	--color-glow-lavender: oklch(0.75 0.12 280 / 0.35);
+	--color-glow-mint: oklch(0.82 0.14 160 / 0.4);
+	--color-glow-yellow: oklch(0.92 0.09 86 / 0.5);
+
+	/* ==========================================
 	   PASTELS DOUX (Bijoux colorés)
 	   ========================================== */
 	--color-pastel-peach: var(--pastel-peach);

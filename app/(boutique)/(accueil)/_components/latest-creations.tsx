@@ -13,12 +13,9 @@ interface LatestCreationsProps {
 }
 
 /**
- * Section Dernières Créations - Grille des bijoux les plus récents
+ * Latest Creations section - Grid of most recent jewelry.
  *
- * Pattern : Server Component qui accepte une Promise pour le streaming
- * Permet le rendu progressif avec React Suspense
- *
- * @param productsPromise - Promise contenant les produits récents
+ * Accepts a Promise for streaming with React Suspense.
  */
 export function LatestCreations({
   productsPromise,
@@ -27,7 +24,7 @@ export function LatestCreations({
   const { products } = use(productsPromise);
   const wishlistProductIds = use(wishlistProductIdsPromise);
 
-  // Si aucun produit, ne pas afficher la section
+  // Don't render section with no products
   if (products.length === 0) {
     return null;
   }

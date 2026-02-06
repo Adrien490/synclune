@@ -5,16 +5,19 @@ import {
 	getWebSiteSchema,
 	type GlobalReviewStats,
 } from "@/shared/constants/seo-config";
+import { use } from "react";
 
 interface StructuredDataProps {
-	reviewStats?: GlobalReviewStats;
+	reviewStatsPromise: Promise<GlobalReviewStats | undefined>;
 }
 
 /**
- * Composant consolidant tous les schemas JSON-LD en un seul script.
- * Utilise le format @graph standard pour combiner plusieurs schemas.
+ * Consolidates all JSON-LD schemas into a single @graph script.
+ * Accepts a Promise for review stats to enable streaming with Suspense.
  */
-export function StructuredData({ reviewStats }: StructuredDataProps) {
+export function StructuredData({ reviewStatsPromise }: StructuredDataProps) {
+	const reviewStats = use(reviewStatsPromise);
+
 	const schemas = [
 		getOrganizationSchema(),
 		getWebSiteSchema(),
@@ -22,8 +25,34 @@ export function StructuredData({ reviewStats }: StructuredDataProps) {
 		getFounderSchema(),
 	];
 
-	// Transformer en format @graph (supprimer @context de chaque schema)
-	const graphSchemas = schemas.map(({ "@context": _, ...rest }) => rest);
+	// Remove @context from each schema for @graph format
+	const graphSchemas: Record<string, unknown>[] = schemas.map(
+		({ "@context": _, ...rest }) => rest,
+	);
+
+	// Article schema for the atelier story section (centralized here)
+	graphSchemas.push({
+		"@type": "Article",
+		headline: "L'histoire de Léane, créatrice de bijoux artisanaux Synclune",
+		author: {
+			"@type": "Person",
+			name: "Léane",
+			jobTitle: "Créatrice de bijoux artisanaux",
+			workLocation: {
+				"@type": "Place",
+				address: {
+					"@type": "PostalAddress",
+					addressLocality: "Nantes",
+					addressCountry: "FR",
+				},
+			},
+		},
+		about: {
+			"@type": "Brand",
+			name: "Synclune",
+			description: "Bijoux artisanaux faits main à Nantes",
+		},
+	});
 
 	const jsonLd = {
 		"@context": "https://schema.org",
@@ -34,7 +63,6 @@ export function StructuredData({ reviewStats }: StructuredDataProps) {
 		<script
 			type="application/ld+json"
 			dangerouslySetInnerHTML={{
-				// Sanitization XSS recommandée par Next.js
 				__html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
 			}}
 		/>

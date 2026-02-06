@@ -7,7 +7,7 @@ interface ValuePillar {
   icon: React.ReactNode;
   title: string;
   subtitle: string;
-  /** Glow coloré au hover (Tendance 2026: Micro-interactions 2.0 + ambient glow) */
+  /** Colored glow on hover */
   glowClass: string;
 }
 
@@ -16,39 +16,33 @@ const valuePillars: ValuePillar[] = [
     icon: <Paintbrush className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />,
     title: "Fait main",
     subtitle: "Chaque pièce est unique !",
-    glowClass: "group-hover:shadow-[0_0_25px_oklch(0.86_0.1_341/0.4)]",
+    glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-pink)]",
   },
   {
     icon: <MapPin className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />,
     title: "Créé à Nantes",
     subtitle: "Dans mon petit atelier",
-    glowClass: "group-hover:shadow-[0_0_25px_oklch(0.75_0.12_280/0.35)]",
+    glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-lavender)]",
   },
   {
     icon: <Sparkles className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />,
     title: "De la couleur",
     subtitle: "Et de l'originalité !",
-    glowClass: "group-hover:shadow-[0_0_25px_oklch(0.82_0.14_160/0.4)]",
+    glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-mint)]",
   },
   {
     icon: <Heart className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />,
     title: "Avec amour",
     subtitle: "Pour vous ou vos proches !",
-    glowClass: "group-hover:shadow-[0_0_25px_oklch(0.92_0.09_86/0.5)]",
+    glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-yellow)]",
   },
 ];
 
 /**
- * Value Proposition Bar - "L'ADN Synclune"
+ * Value Proposition Bar - Synclune brand pillars.
  *
- * Barre horizontale communiquant instantanément les valeurs artisanales.
- * 4 piliers : Fait main, Créé à Nantes, Couleurs vibrantes, Avec amour.
- *
- * Design:
- * - Fond muted subtil (respecte le thème)
- * - Icônes avec animation hover (scale)
- * - Responsive: 4 colonnes desktop, 2x2 mobile
- * - Animation stagger à l'entrée
+ * 4 pillars: Handmade, Made in Nantes, Colorful, With love.
+ * Responsive: 2x2 grid on mobile, 4 columns on desktop.
  */
 export async function ValuePropositionBar() {
   "use cache";
@@ -65,13 +59,13 @@ export async function ValuePropositionBar() {
         data-voice-queries="bijoux faits main Nantes,artisan bijoutier Nantes,bijoux colorés artisanaux"
         data-content-type="brand-values"
         data-ai-category="unique-selling-points"
-        className="hidden md:block relative overflow-hidden py-8 sm:py-10 lg:py-12 bg-muted/30"
+        className="relative overflow-hidden py-6 sm:py-8 lg:py-12 bg-muted/30"
       >
-        {/* Microdata pour SEO */}
+        {/* Microdata for SEO */}
         <meta itemProp="name" content="Les valeurs Synclune" />
         <meta itemProp="numberOfItems" content="4" />
 
-        {/* Titre accessible mais visuellement masqué */}
+        {/* Visually hidden accessible title */}
         <h2 id="value-proposition-title" className="sr-only">
           Les valeurs Synclune : bijoux artisanaux faits main à Nantes
         </h2>
@@ -96,7 +90,7 @@ export async function ValuePropositionBar() {
               >
                 <meta itemProp="position" content={String(index + 1)} />
 
-                {/* Icône avec animation hover + glow coloré */}
+                {/* Icon with hover animation + colored glow */}
                 <div
                   className={cn(
                     "flex items-center justify-center w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-card shadow-sm motion-safe:transition-all motion-safe:duration-300",
@@ -108,7 +102,7 @@ export async function ValuePropositionBar() {
                   {pillar.icon}
                 </div>
 
-                {/* Texte */}
+                {/* Text */}
                 <div className="space-y-1">
                   <h3
                     itemProp="name"

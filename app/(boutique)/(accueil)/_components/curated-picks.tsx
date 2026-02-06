@@ -16,15 +16,10 @@ interface CuratedPicksProps {
 }
 
 /**
- * Section "Coups de Coeur de Léane" - Sélection curée par la créatrice
+ * Curated Picks section - Leane's handpicked favorites.
  *
- * Remplace Bestsellers: storytelling > data (pas de stats de ventes)
- * - 4 produits sélectionnés manuellement (via slugs hardcodés pour le moment)
- * - Intro personnelle de Léane
- * - Badge "Coup de coeur" sur chaque carte
- * - Design distinct : fond pastel, cadre décoratif
- *
- * Pattern : Server Component qui accepte une Promise pour le streaming
+ * 4 manually selected products with personal intro and "Coup de coeur" badges.
+ * Accepts a Promise for streaming with React Suspense.
  */
 export function CuratedPicks({
 	productsPromise,
@@ -33,12 +28,12 @@ export function CuratedPicks({
 	const { products } = use(productsPromise);
 	const wishlistProductIds = use(wishlistProductIdsPromise);
 
-	// Si moins de 2 produits, ne pas afficher la section
+	// Don't render section with fewer than 2 products
 	if (products.length < 2) {
 		return null;
 	}
 
-	// Schema.org ItemList pour SEO
+	// Schema.org ItemList for SEO
 	const curatedPicksSchema = generateCuratedPicksSchema(products);
 
 	return (
@@ -56,7 +51,7 @@ export function CuratedPicks({
 			aria-labelledby="curated-picks-title"
 			aria-describedby="curated-picks-subtitle"
 		>
-			{/* Décorations subtiles */}
+			{/* Subtle decorations */}
 			<div
 				className="absolute top-0 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"
 				aria-hidden="true"
@@ -67,7 +62,7 @@ export function CuratedPicks({
 			/>
 
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-				{/* Header avec intro personnelle */}
+				{/* Header with personal intro */}
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
 						<SectionTitle id="curated-picks-title">
@@ -89,7 +84,7 @@ export function CuratedPicks({
 							Mes créations préférées du moment...
 						</p>
 					</Fade>
-					{/* Citation personnelle */}
+					{/* Personal quote */}
 					<Fade y={10} delay={0.2} duration={0.6}>
 						<p
 							className={`${dancingScript.className} mt-3 text-xl sm:text-2xl text-foreground/80 italic`}
@@ -99,7 +94,7 @@ export function CuratedPicks({
 					</Fade>
 				</header>
 
-				{/* Grille de produits */}
+				{/* Product grid */}
 				<Stagger
 					className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
 					stagger={0.1}

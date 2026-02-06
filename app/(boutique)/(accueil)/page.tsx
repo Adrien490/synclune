@@ -16,21 +16,14 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
+import { CURATED_PICKS_SLUGS } from "./_constants/curated-picks";
 import { CreativeProcess } from "./_components/creative-process";
 import { HeroSection } from "./_components/hero-section";
-
-// Slugs des produits "Coups de coeur" de Léane (à modifier depuis l'admin plus tard)
-const CURATED_PICKS_SLUGS = [
-  "boucles-fleurs-roses",
-  "collier-papillon-bleu",
-  "bracelet-perles-multicolores",
-  "bague-coeur-dore",
-];
 
 // Lazy load Client Components below the fold
 const FaqSection = dynamic(
   () => import("./_components/faq-section").then((mod) => mod.FaqSection),
-  { ssr: true }, // Garder SSR pour le JSON-LD SEO
+  { ssr: true }, // Keep SSR for JSON-LD SEO
 );
 
 export const metadata: Metadata = {
@@ -40,7 +33,7 @@ export const metadata: Metadata = {
   description:
     "Bijoux artisanaux colorés faits main à Nantes. Boucles d'oreilles, colliers, bracelets uniques. Créatrice Loire-Atlantique.",
   keywords:
-    "bijoux artisanaux Nantes, bijoux faits main Nantes, créatrice bijoux Nantes, bagues Nantes, colliers Nantes, boucles d'oreilles Nantes, bracelets Nantes, bijoux colorés Loire-Atlantique. atelier bijoux Nantes 44",
+    "bijoux artisanaux Nantes, bijoux faits main Nantes, créatrice bijoux Nantes, bagues Nantes, colliers Nantes, boucles d'oreilles Nantes, bracelets Nantes, bijoux colorés Loire-Atlantique, atelier bijoux Nantes 44",
   alternates: {
     canonical: "/",
   },
@@ -68,23 +61,24 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  // Fetch les stats d'avis pour les schemas SEO
-  const reviewStats = await getGlobalReviewStats();
-  // Promise pour le streaming des wishlist IDs
+  // Stream review stats to avoid blocking page render
+  const reviewStatsPromise = getGlobalReviewStats();
   const wishlistIdsPromise = getWishlistProductIds();
 
   return (
     <>
-      {/* Schemas JSON-LD pour SEO (LocalBusiness, Organization, WebSite, Founder) */}
-      <StructuredData reviewStats={reviewStats} />
+      {/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article */}
+      <Suspense>
+        <StructuredData reviewStatsPromise={reviewStatsPromise} />
+      </Suspense>
 
-      {/* 1. Hero - Capture d'attention + Tagline rotative */}
+      {/* 1. Hero - Attention capture + rotating tagline */}
       <HeroSection />
 
-      {/* 2. Value Proposition Bar - L'ADN Synclune (fait main, Nantes, couleurs, amour) */}
+      {/* 2. Value Proposition Bar - Synclune brand pillars */}
       <ValuePropositionBar />
 
-      {/* 3. Coups de Coeur de Léane - Sélection curée (storytelling > data) */}
+      {/* 3. Curated Picks - Leane's handpicked favorites */}
       <Suspense fallback={<CuratedPicksSkeleton productsCount={4} />}>
         <CuratedPicks
           productsPromise={getProducts(
@@ -102,12 +96,12 @@ export default async function Page() {
         />
       </Suspense>
 
-      {/* 4. Latest Creations - Nouveautés: 8 dernières créations */}
-      <Suspense fallback={<LatestCreationsSkeleton productsCount={8} />}>
+      {/* 4. Latest Creations - 4 most recent products */}
+      <Suspense fallback={<LatestCreationsSkeleton productsCount={4} />}>
         <LatestCreations
           productsPromise={getProducts(
             {
-              perPage: 8,
+              perPage: 4,
               sortBy: "created-descending",
               filters: {
                 status: "PUBLIC",
@@ -119,7 +113,7 @@ export default async function Page() {
         />
       </Suspense>
 
-      {/* 5. Collections - Exploration thématique avec descriptions et badge "Nouvelle" */}
+      {/* 5. Collections - Thematic browsing with descriptions */}
       <Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
         <CollectionsSection
           collectionsPromise={getCollections({
@@ -133,16 +127,16 @@ export default async function Page() {
         />
       </Suspense>
 
-      {/* 6. AtelierStory - Storytelling intimiste de Léane avec galerie de 4 polaroids */}
+      {/* 6. Atelier Story - Personal storytelling with polaroid gallery */}
       <AtelierStory />
 
-      {/* 7. CreativeProcess - Processus créatif détaillé avec durées et matériaux */}
+      {/* 7. Creative Process - Step-by-step jewelry making */}
       <CreativeProcess />
 
-      {/* 8. FAQ - Questions fréquentes personnalisées (je/tu) + CTA contact */}
+      {/* 8. FAQ - Frequently asked questions with JSON-LD */}
       <FaqSection />
 
-      {/* 9. Newsletter - Version storytelling avec incentive cadeau */}
+      {/* 9. Newsletter - Subscription with gift incentive */}
       <NewsletterSection />
     </>
   );

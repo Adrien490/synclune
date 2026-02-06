@@ -17,11 +17,11 @@ interface ProcessStep {
 	title: string;
 	description: string;
 	color: string;
-	/** Animation CSS au hover du groupe */
+	/** CSS animation on group hover */
 	iconHoverClass: string;
 }
 
-// Étapes du processus créatif - données statiques enrichies
+// Creative process steps - static data
 const processSteps: ProcessStep[] = [
 	{
 		id: "idea",
@@ -62,41 +62,25 @@ const processSteps: ProcessStep[] = [
 ];
 
 /**
- * Système de crescendo visuel progressif
- * Chaque étape gagne en intensité jusqu'à l'aboutissement final
+ * Progressive visual crescendo system.
+ * Each step gains intensity toward the final result.
  */
 const STEP_INTENSITY = [
-	// Étape 1 - Subtil (début du parcours)
+	// Step 1 - Subtle (start)
 	{ ring: "", shadow: "", scale: "" },
-	// Étape 2 - Léger (progression)
+	// Step 2 - Light (progression)
 	{ ring: "ring-1 ring-secondary/10", shadow: "shadow-sm shadow-secondary/20", scale: "" },
-	// Étape 3 - Modéré (montée en puissance)
+	// Step 3 - Moderate (building up)
 	{ ring: "ring-1 ring-secondary/20", shadow: "shadow-md shadow-secondary/30", scale: "" },
-	// Étape 4 - Climax (aboutissement)
+	// Step 4 - Climax (final result)
 	{ ring: "ring-2 ring-secondary/30", shadow: "shadow-lg shadow-secondary/40", scale: "" },
 ] as const;
 
 /**
- * Section Processus Créatif - Raconte l'histoire de création des bijoux
+ * Creative Process section - Step-by-step jewelry making story.
  *
- * Pattern : Server Component avec cache public car contenu 100% statique
- * - 4 étapes du processus (Inspiration → Esquisse → Création → Finition)
- * - Image d'atelier avec badge artisanal "Fait main à Nantes"
- * - Timeline visuelle avec animations stagger au scroll
- * - CTA vers page contact pour créations personnalisées
- * - Signature manuscrite de la créatrice (Dancing Script)
- *
- * Design Features:
- * - Ligne verticale décorative reliant les étapes (desktop)
- * - Halo rose/doré autour de l'image (effet "aura magique")
- * - Particules décoratives en arrière-plan (variant: minimal)
- * - Responsive : icônes desktop vs numéros mobile pour meilleur guidage
- *
- * @example
- * ```tsx
- * // Dans homepage
- * <CreativeProcess />
- * ```
+ * Fully static content with "reference" cache profile.
+ * 4 steps with visual timeline and stagger scroll animations.
  */
 export async function CreativeProcess() {
 	"use cache";
@@ -107,7 +91,7 @@ export async function CreativeProcess() {
 			className={cn("relative overflow-hidden bg-background", SECTION_SPACING.section)}
 			aria-labelledby="creative-process-title"
 		>
-			{/* Skip link pour accessibilité */}
+			{/* Skip link for accessibility */}
 			<a
 				href="#cta-personnalisation"
 				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-secondary focus:text-secondary-foreground focus:rounded-md focus:shadow-md"
@@ -134,7 +118,7 @@ export async function CreativeProcess() {
 				</header>
 
 				<div className="grid lg:grid-cols-2 gap-12 items-center">
-					{/* Image atelier avec animation d'entrée - Image en premier sur mobile */}
+					{/* Atelier image with entrance animation - Image first on mobile */}
 					<Reveal
 						y={20}
 						duration={0.6}
@@ -149,7 +133,7 @@ export async function CreativeProcess() {
 								className="object-cover object-center saturate-[1.05] brightness-[1.02]"
 							/>
 
-							{/* Badge Fait main - contraste renforcé WCAG AA */}
+							{/* Handmade badge - WCAG AA contrast */}
 							<div
 								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary/95 backdrop-blur-md border-2 border-white/30 rounded-full shadow-lg drop-shadow-md"
 								aria-hidden="true"
@@ -162,13 +146,13 @@ export async function CreativeProcess() {
 						</div>
 					</Reveal>
 
-					{/* Timeline processus */}
+					{/* Process timeline */}
 					<div className="relative order-2">
 						<div className="relative space-y-8 sm:space-y-12 lg:space-y-16">
-							{/* Ligne verticale animée au scroll (desktop) */}
+							{/* Scroll-animated vertical line (desktop) */}
 							<ScrollProgressLine />
 
-							{/* Ligne verticale simplifiée (mobile) - centré sur 48px */}
+							{/* Simplified vertical line (mobile) - centered on 48px */}
 							<div
 								className="absolute left-[24px] top-8 bottom-8 w-px bg-secondary/30 sm:hidden transition-colors duration-300"
 								aria-hidden="true"
@@ -188,19 +172,19 @@ export async function CreativeProcess() {
 										role="listitem"
 										className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 transition-all duration-300 hover:bg-muted/30 hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
 									>
-										{/* Accessibilité : numéro d'étape pour lecteurs d'écran */}
+										{/* Accessibility: step number for screen readers */}
 										<span className="sr-only">Étape {index + 1} :</span>
 
-										{/* Desktop : Icônes dans cercles avec ligne verticale */}
+										{/* Desktop: Icons in circles with vertical line */}
 										<div
 											className={cn(
 												"hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 items-center justify-center transition-all duration-300 relative z-20",
 												step.color,
-												// Animation hover subtile : légère rotation et scale
+												// Subtle hover animation: slight rotation and scale
 												"group-hover:scale-110 group-hover:-rotate-3",
-												// Micro-interaction icône spécifique
+												// Icon-specific micro-interaction
 												step.iconHoverClass,
-												// Crescendo progressif : intensité croissante
+												// Progressive crescendo
 												STEP_INTENSITY[index].ring,
 												STEP_INTENSITY[index].shadow,
 												STEP_INTENSITY[index].scale
@@ -209,14 +193,14 @@ export async function CreativeProcess() {
 											{step.icon}
 										</div>
 
-										{/* Mobile : Numéros colorés plus visibles (guidage progression) - 48px WCAG */}
+										{/* Mobile: Colored numbers for better guidance - 48px WCAG touch target */}
 										<div
 											aria-hidden="true"
 											className={cn(
 												"flex sm:hidden shrink-0 w-12 h-12 rounded-full items-center justify-center font-bold text-lg transition-all duration-300",
 												step.color,
 												"group-hover:scale-110",
-												// Crescendo progressif : intensité croissante
+												// Progressive crescendo
 												STEP_INTENSITY[index].ring,
 												STEP_INTENSITY[index].shadow
 											)}
@@ -226,12 +210,12 @@ export async function CreativeProcess() {
 
 										<div className="flex-1 pb-8">
 											<h3 className="text-xl/7 font-semibold text-foreground mb-2 tracking-tight antialiased">
-												{/* Numérotation visible seulement sur desktop (mobile a déjà le numéro dans le cercle) */}
+												{/* Numbering visible on desktop only (mobile has number in circle) */}
 												<span className="hidden sm:inline" aria-hidden="true">
 													{index + 1}.{" "}
 												</span>
 												{step.title}
-												{/* Sparkles sur l'étape finale (climax) */}
+												{/* Sparkles on final step (climax) */}
 												{index === 3 && (
 													<Sparkles
 														className="inline-block w-4 h-4 ml-1.5 text-secondary opacity-70 transition-opacity group-hover:opacity-100"
@@ -248,9 +232,9 @@ export async function CreativeProcess() {
 							</Stagger>
 						</div>
 
-						{/* CTA intégré comme continuation naturelle du processus */}
+						{/* CTA as natural continuation of the process */}
 						<div className="mt-4 flex items-start gap-4 group relative rounded-xl p-2 -m-2">
-							{/* Desktop : Icône dans cercle en pointillés */}
+							{/* Desktop: Icon in dashed circle */}
 							<div
 								className="hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center transition-all duration-300 group-hover:border-secondary group-hover:scale-105"
 								aria-hidden="true"
@@ -258,7 +242,7 @@ export async function CreativeProcess() {
 								<Sparkles className="w-5 h-5 text-secondary" />
 							</div>
 
-							{/* Mobile : Numéro bonus - 48px WCAG touch target */}
+							{/* Mobile: Bonus number - 48px WCAG touch target */}
 							<div
 								className="flex sm:hidden shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center text-secondary font-bold"
 								aria-hidden="true"
