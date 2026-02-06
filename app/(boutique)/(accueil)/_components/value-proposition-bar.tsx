@@ -1,4 +1,5 @@
 import { Fade, Stagger } from "@/shared/components/animations";
+import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { Heart, MapPin, Paintbrush, Sparkles } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
@@ -59,7 +60,7 @@ export async function ValuePropositionBar() {
         data-voice-queries="bijoux faits main Nantes,artisan bijoutier Nantes,bijoux colorés artisanaux"
         data-content-type="brand-values"
         data-ai-category="unique-selling-points"
-        className="relative overflow-hidden py-6 sm:py-8 lg:py-12 bg-muted/30"
+        className={`relative overflow-hidden ${SECTION_SPACING.compact} bg-muted/30`}
       >
         {/* Microdata for SEO */}
         <meta itemProp="name" content="Les valeurs Synclune" />
@@ -76,12 +77,13 @@ export async function ValuePropositionBar() {
             y={15}
             inView
             once
+            role="list"
             className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
           >
             {valuePillars.map((pillar, index) => (
               <div
                 key={pillar.title}
-                role="group"
+                role="listitem"
                 aria-label={pillar.title}
                 itemScope
                 itemType="https://schema.org/ListItem"

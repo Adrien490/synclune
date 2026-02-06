@@ -38,6 +38,10 @@ export function StructuredData({ reviewStatsPromise }: StructuredDataProps) {
 			"@type": "Person",
 			name: "Léane",
 			jobTitle: "Créatrice de bijoux artisanaux",
+			sameAs: [
+				"https://www.instagram.com/synclune.bijoux/",
+				"https://www.tiktok.com/@synclune",
+			],
 			workLocation: {
 				"@type": "Place",
 				address: {

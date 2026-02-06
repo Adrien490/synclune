@@ -86,7 +86,7 @@ export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
 		legalName: BUSINESS_INFO.legalName,
 		description: BUSINESS_INFO.description,
 		url: SITE_URL,
-		logo: `${SITE_URL}/logo.png`,
+		logo: `${SITE_URL}/logo.jpg`,
 		image: `${SITE_URL}/opengraph-image`,
 		email: BUSINESS_INFO.email,
 		address: {
@@ -128,7 +128,7 @@ export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
 		brand: {
 			"@type": "Brand",
 			name: BUSINESS_INFO.name,
-			logo: `${SITE_URL}/logo.png`,
+			logo: `${SITE_URL}/logo.jpg`,
 		},
 		founder: {
 			"@type": "Person",
@@ -227,7 +227,7 @@ export function getFounderSchema() {
 		description:
 			"Artisan créatrice de bijoux faits main à Nantes. Passionnée par les couleurs et les créations uniques, je conçois chaque pièce avec amour dans mon atelier nantais.",
 		url: SITE_URL,
-		image: `${SITE_URL}/images/leane-taddei.jpg`,
+		image: `${SITE_URL}/opengraph-image`,
 		sameAs: [
 			BUSINESS_INFO.social.instagram.url,
 			BUSINESS_INFO.social.tiktok.url,
@@ -265,8 +265,8 @@ export function getOrganizationSchema() {
 		logo: {
 			"@type": "ImageObject",
 			"@id": `${SITE_URL}/#logo`,
-			url: `${SITE_URL}/logo.png`,
-			contentUrl: `${SITE_URL}/logo.png`,
+			url: `${SITE_URL}/logo.jpg`,
+			contentUrl: `${SITE_URL}/logo.jpg`,
 			caption: BUSINESS_INFO.name,
 		},
 		image: {

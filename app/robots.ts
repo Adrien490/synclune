@@ -23,9 +23,15 @@ export default function robots(): MetadataRoute.Robots {
 					"/produits/*?*priceMax*",
 					"/produits/*?*color=*",
 					"/produits/*?*collectionId*",
-					// Bloquer les URLs avec multiples query params (filtres combinés)
-					"/produits/*?*&*",
-					"/collections/*?*&*",
+					// Bloquer les combinaisons de filtres (multi-params de filtrage)
+					// Mais ne pas bloquer les paramètres UTM ou sorting seuls
+					"/produits/*?*priceMin*&*",
+					"/produits/*?*priceMax*&*",
+					"/produits/*?*color=*&*",
+					"/produits/*?*collectionId*&*",
+					"/collections/*?*priceMin*&*",
+					"/collections/*?*priceMax*&*",
+					"/collections/*?*color=*&*",
 				],
 			},
 		],

@@ -13,18 +13,12 @@ import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-s
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { StructuredData } from "@/shared/components/structured-data";
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
 import { CURATED_PICKS_SLUGS } from "./_constants/curated-picks";
 import { CreativeProcess } from "./_components/creative-process";
+import { FaqSection } from "./_components/faq-section";
 import { HeroSection } from "./_components/hero-section";
-
-// Lazy load Client Components below the fold
-const FaqSection = dynamic(
-  () => import("./_components/faq-section").then((mod) => mod.FaqSection),
-  { ssr: true }, // Keep SSR for JSON-LD SEO
-);
 
 export const metadata: Metadata = {
   title: {

@@ -12,7 +12,7 @@ interface LatestCreationsSkeletonProps {
  * Reproduit exactement la structure de LatestCreations pour eviter
  * les layout shifts lors du chargement (CLS optimization)
  *
- * @param productsCount - Nombre de produits dans la grille (par defaut: 8)
+ * @param productsCount - Nombre de produits dans la grille (par defaut: 4)
  *
  * @example
  * ```tsx
@@ -22,7 +22,7 @@ interface LatestCreationsSkeletonProps {
  * ```
  */
 export function LatestCreationsSkeleton({
-	productsCount = 8,
+	productsCount = 4,
 }: LatestCreationsSkeletonProps = {}) {
 	return (
 		<section
