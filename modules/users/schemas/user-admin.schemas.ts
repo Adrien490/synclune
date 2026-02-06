@@ -50,3 +50,11 @@ export const bulkChangeUserRoleSchema = z.object({
 	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne"),
 	role: z.enum([Role.USER, Role.ADMIN]),
 });
+
+// ============================================================================
+// DIRECT PARAM SCHEMAS (Admin)
+// ============================================================================
+
+export const adminUserIdSchema = z.object({
+	userId: z.cuid2("ID utilisateur invalide"),
+});

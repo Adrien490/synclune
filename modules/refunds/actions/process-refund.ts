@@ -2,11 +2,14 @@
 
 import { Prisma, PaymentStatus, RefundAction, RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
@@ -57,6 +60,9 @@ export async function processRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.PROCESS);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
@@ -274,12 +280,14 @@ export async function processRefund(
 			}
 		});
 
+		// Invalider le cache commandes et badges (paymentStatus a changé)
+		updateTag(ORDERS_CACHE_TAGS.LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 		// Invalider le cache d'inventaire si des articles ont été restockés
 		const restockedCount = refundData.items.filter((i) => i.restock).length;
 		if (restockedCount > 0) {
 			updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
-			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		}
 		const restockMessage =
 			restockedCount > 0

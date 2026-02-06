@@ -2,14 +2,18 @@
 
 import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { rejectRefundSchema } from "../schemas/refund.schemas";
 
 /**
@@ -25,6 +29,9 @@ export async function rejectRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
@@ -42,7 +49,7 @@ export async function rejectRefund(
 
 		// Récupérer le remboursement
 		const refund = await prisma.refund.findUnique({
-			where: { id },
+			where: { id, deletedAt: null },
 			select: {
 				id: true,
 				status: true,
@@ -78,17 +85,19 @@ export async function rejectRefund(
 			};
 		}
 
-		// Construire la note avec la raison du rejet
-		const updatedNote = result.data.reason
+		// Sanitiser et construire la note avec la raison du rejet
+		const sanitizedReason = result.data.reason ? sanitizeText(result.data.reason) : null;
+		const updatedNote = sanitizedReason
 			? refund.note
-				? `${refund.note}\n\n[REFUSÉ] ${result.data.reason}`
-				: `[REFUSÉ] ${result.data.reason}`
+				? `${refund.note}\n\n[REFUSÉ] ${sanitizedReason}`
+				: `[REFUSÉ] ${sanitizedReason}`
 			: refund.note;
 
 		// Mettre à jour le statut et créer l'entrée d'historique
+		// Le where inclut le statut attendu pour protection TOCTOU
 		await prisma.$transaction(async (tx) => {
 			await tx.refund.update({
-				where: { id },
+				where: { id, status: RefundStatus.PENDING },
 				data: {
 					status: RefundStatus.REJECTED,
 					note: updatedNote,
@@ -100,7 +109,7 @@ export async function rejectRefund(
 					refundId: id,
 					action: RefundAction.REJECTED,
 					authorId: adminUser.id,
-					note: result.data.reason || undefined,
+					note: sanitizedReason || undefined,
 				},
 			});
 		});
@@ -113,10 +122,6 @@ export async function rejectRefund(
 			message: `Remboursement de ${(refund.amount / 100).toFixed(2)} € refusé pour la commande ${refund.order.orderNumber}`,
 		};
 	} catch (error) {
-		console.error("[REJECT_REFUND]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: REFUND_ERROR_MESSAGES.REJECT_FAILED,
-		};
+		return handleActionError(error, REFUND_ERROR_MESSAGES.REJECT_FAILED);
 	}
 }

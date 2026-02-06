@@ -88,3 +88,15 @@ export function getUserAccountsInvalidationTags(userId: string): string[] {
 export function getAdminAccountsListInvalidationTags(): string[] {
 	return [USERS_CACHE_TAGS.ACCOUNTS_LIST];
 }
+
+/**
+ * All cache tags to invalidate when an admin modifies a user
+ * Covers: user data, session, sessions list
+ */
+export function getUserFullInvalidationTags(userId: string): string[] {
+	return [
+		USERS_CACHE_TAGS.CURRENT_USER(userId),
+		SESSION_CACHE_TAGS.SESSION(userId),
+		SESSION_CACHE_TAGS.SESSIONS(userId),
+	];
+}

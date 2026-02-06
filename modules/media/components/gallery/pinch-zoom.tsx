@@ -72,7 +72,7 @@ export function GalleryPinchZoom({
 			tabIndex={0}
 			onKeyDown={handleKeyDown}
 			className={cn(
-				"relative w-full h-full overflow-hidden",
+				"group/pinch relative w-full h-full overflow-hidden",
 				"outline-none",
 				"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 				"active:scale-[0.99] transition-transform", // Feedback tactile
@@ -138,7 +138,7 @@ export function GalleryPinchZoom({
 					"bg-black/60 backdrop-blur-sm text-white",
 					"px-3 py-1.5 rounded-full text-xs font-medium",
 					"pointer-events-none select-none",
-					"opacity-0 focus-within:opacity-100",
+					"opacity-0 group-focus-visible/pinch:opacity-100",
 					"hidden sm:block", // Visible uniquement au focus clavier (desktop)
 					!prefersReduced && "transition-opacity duration-200"
 				)}

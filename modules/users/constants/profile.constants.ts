@@ -21,8 +21,3 @@ export const USER_ERROR_MESSAGES = {
 	IMAGE_INVALID_TYPE: "Format d'image non supporté",
 	UPDATE_FAILED: "Une erreur est survenue lors de la mise à jour",
 } as const;
-
-export const CACHE_TAGS = {
-	USER: (userId: string) => `user:${userId}`,
-	CURRENT_USER: "current-user",
-} as const;

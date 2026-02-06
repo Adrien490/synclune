@@ -38,9 +38,6 @@ export async function sendRefundConfirmationEmail({
 			orderDetailsUrl,
 		})
 	)
-	console.log(
-		`✅ [EMAIL] Refund confirmation sent to ${to} for order ${orderNumber}`
-	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.REFUND_CONFIRMATION, html })
 }
 
@@ -76,9 +73,6 @@ export async function sendRefundApprovedEmail({
 			isPartialRefund,
 			orderDetailsUrl,
 		})
-	)
-	console.log(
-		`✅ [EMAIL] Refund approved notification sent to ${to} for order ${orderNumber}`
 	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.REFUND_APPROVED, html })
 }

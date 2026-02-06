@@ -327,7 +327,6 @@ export function buildPostCheckoutTasks(
 					country: order.shippingCountry || "",
 				},
 				trackingUrl,
-				orderId: order.id,
 			},
 		});
 	}
@@ -339,7 +338,6 @@ export function buildPostCheckoutTasks(
 		type: "ADMIN_NEW_ORDER_EMAIL",
 		data: {
 			orderNumber: order.orderNumber,
-			orderId: order.id,
 			customerName: `${order.shippingFirstName || ""} ${order.shippingLastName || ""}`.trim() || "Client",
 			customerEmail: customerEmail || "Email non disponible",
 			items: order.items.map((item) => ({
@@ -353,7 +351,6 @@ export function buildPostCheckoutTasks(
 			subtotal: order.subtotal,
 			discount: order.discountAmount,
 			shipping: order.shippingCost,
-			tax: order.taxAmount,
 			total: order.total,
 			shippingAddress: {
 				firstName: order.shippingFirstName || "",
@@ -366,7 +363,6 @@ export function buildPostCheckoutTasks(
 				phone: order.shippingPhone || "",
 			},
 			dashboardUrl,
-			stripePaymentIntentId: session.payment_intent as string,
 		},
 	});
 

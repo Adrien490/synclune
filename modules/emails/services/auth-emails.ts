@@ -16,7 +16,6 @@ export async function sendVerificationEmail({
 }: {
 	to: string
 	url: string
-	token: string
 }): Promise<EmailResult> {
 	const html = await render(VerificationEmail({ verificationUrl: url }))
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.VERIFICATION, html })
@@ -31,7 +30,6 @@ export async function sendPasswordResetEmail({
 }: {
 	to: string
 	url: string
-	token: string
 }): Promise<EmailResult> {
 	const html = await render(PasswordResetEmail({ resetUrl: url }))
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.PASSWORD_RESET, html })
@@ -48,7 +46,6 @@ export async function sendPasswordChangedEmail({
 	to: string
 	userName: string
 	changeDate: string
-	ipAddress?: string
 }): Promise<EmailResult> {
 	const resetUrl = buildUrl(ROUTES.AUTH.FORGOT_PASSWORD)
 	const html = await render(

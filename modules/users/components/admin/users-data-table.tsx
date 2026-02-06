@@ -10,7 +10,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
-import type { GetUsersReturn } from "@/modules/users/data/get-users";
+import type { GetUsersReturn } from "@/modules/users/types/user.types";
 import { CheckCircle, Users } from "lucide-react";
 import { use } from "react";
 import Link from "next/link";

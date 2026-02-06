@@ -138,7 +138,7 @@ export function GalleryHoverZoom({
 			ref={containerRef}
 			className={cn(
 				"relative w-full h-full overflow-hidden group/zoom",
-				"cursor-crosshair",
+				"cursor-zoom-in",
 				className
 			)}
 			onMouseMove={handleMouseMove}

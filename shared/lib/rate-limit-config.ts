@@ -618,3 +618,49 @@ export const ADMIN_SKU_UPDATE_PRICE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1), // par minute
 };
 
+// ========================================
+// REMBOURSEMENTS (REFUNDS)
+// ========================================
+
+/**
+ * Limite pour la création de remboursements (admin)
+ */
+export const REFUND_CREATE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(1),
+};
+
+/**
+ * Limite pour le traitement de remboursements via Stripe (admin)
+ */
+export const REFUND_PROCESS_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
+/**
+ * Limite pour les opérations unitaires sur remboursements (admin)
+ */
+export const REFUND_SINGLE_OPERATION_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(1),
+};
+
+/**
+ * Limite pour les opérations bulk sur remboursements (admin)
+ */
+export const REFUND_BULK_OPERATION_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(1),
+};
+
+/**
+ * Toutes les limites de remboursements
+ */
+export const REFUND_LIMITS = {
+	CREATE: REFUND_CREATE_LIMIT,
+	PROCESS: REFUND_PROCESS_LIMIT,
+	SINGLE_OPERATION: REFUND_SINGLE_OPERATION_LIMIT,
+	BULK_OPERATION: REFUND_BULK_OPERATION_LIMIT,
+} as const;
+

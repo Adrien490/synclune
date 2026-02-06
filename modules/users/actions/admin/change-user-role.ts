@@ -16,6 +16,7 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { changeUserRoleSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function changeUserRole(
 	_prevState: unknown,
@@ -90,6 +91,9 @@ export async function changeUserRole(
 		// 8. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		for (const tag of getUserFullInvalidationTags(userId)) {
+			updateTag(tag);
+		}
 
 		const roleLabel = newRole === Role.ADMIN ? "administrateur" : "utilisateur";
 		return success(`${user.name || user.email} est maintenant ${roleLabel}.`);

@@ -1,4 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
+import { notDeleted } from "@/shared/lib/prisma";
 import type { GetUsersParams, UserFilters } from "../types/user.types";
 
 // ============================================================================
@@ -99,6 +100,23 @@ export function buildUserFilterConditions(
 		conditions.push({ sessions: { none: {} } });
 	}
 
+	if (typeof filters.hasStripeCustomer === "boolean") {
+		conditions.push(
+			filters.hasStripeCustomer
+				? { stripeCustomerId: { not: null } }
+				: { stripeCustomerId: null }
+		);
+	}
+
+	if (typeof filters.hasImage === "boolean") {
+		conditions.push(
+			filters.hasImage ? { image: { not: null } } : { image: null }
+		);
+	}
+
+	// minOrderCount: Prisma doesn't support aggregate filtering in WHERE.
+	// Filtering by _count happens post-query in fetchUsers if needed.
+
 	return conditions;
 }
 
@@ -106,8 +124,8 @@ export function buildUserWhereClause(
 	params: GetUsersParams
 ): Prisma.UserWhereInput {
 	const whereClause: Prisma.UserWhereInput = {
-		// Soft delete: exclure les utilisateurs supprimés par défaut
-		deletedAt: null,
+		// Soft delete: exclude deleted users unless includeDeleted is set
+		...(params.filters?.includeDeleted ? {} : notDeleted),
 	};
 	const andConditions: Prisma.UserWhereInput[] = [];
 	const filters = params.filters ?? {};

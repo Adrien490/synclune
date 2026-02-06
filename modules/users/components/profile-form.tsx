@@ -5,7 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useUpdateProfile } from "@/modules/users/hooks/use-update-profile";
-import { GetCurrentUserReturn } from "@/modules/users/data/get-current-user";
+import type { GetCurrentUserReturn } from "@/modules/users/types/current-user.types";
 import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useRouter } from "next/navigation";
 

@@ -6,12 +6,14 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
+	validateInput,
 	success,
 	notFound,
 	handleActionError,
 } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
 
 /**
  * Server Action ADMIN pour forcer la déconnexion d'un utilisateur
@@ -28,6 +30,10 @@ export async function invalidateUserSessions(userId: string): Promise<ActionStat
 		// 2. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2b. Validation du userId
+		const validation = validateInput(adminUserIdSchema, { userId });
+		if ("error" in validation) return validation.error;
 
 		// 3. Vérifier que l'utilisateur existe
 		const user = await prisma.user.findUnique({

@@ -109,6 +109,16 @@ export const bulkDeleteColorsSchema = z.object({
 	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucune couleur sélectionnée"),
 });
 
+export const toggleColorStatusSchema = z.object({
+	id: z.cuid2("ID invalide"),
+	isActive: z.boolean(),
+});
+
+export const bulkToggleColorStatusSchema = z.object({
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucune couleur selectionnee"),
+	isActive: z.boolean(),
+});
+
 export const duplicateColorSchema = z.object({
 	colorId: z.cuid2("ID de couleur invalide"),
 });

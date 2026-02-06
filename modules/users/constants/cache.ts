@@ -35,4 +35,5 @@ export {
 	getUserSessionsInvalidationTags,
 	getUserAccountsInvalidationTags,
 	getAdminAccountsListInvalidationTags,
+	getUserFullInvalidationTags,
 } from "../utils/cache.utils";

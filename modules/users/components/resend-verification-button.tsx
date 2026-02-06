@@ -61,7 +61,7 @@ export function ResendVerificationButton({
 		}, 1000);
 
 		return () => clearInterval(interval);
-	}, [cooldown > 0, COOLDOWN_KEY]);
+	}, [cooldown, COOLDOWN_KEY]);
 
 	const handleResend = () => {
 		const formData = new FormData();

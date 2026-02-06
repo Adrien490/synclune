@@ -60,6 +60,7 @@ export const userFiltersSchema = z
 		hasOrders: z.boolean().optional(),
 		hasSessions: z.boolean().optional(),
 		minOrderCount: z.number().int().nonnegative().max(10000).optional(),
+		includeDeleted: z.boolean().optional(),
 	})
 	.refine((data) => {
 		if (data.createdAfter && data.createdBefore) {

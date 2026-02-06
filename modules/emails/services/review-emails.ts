@@ -29,9 +29,6 @@ export async function sendReviewRequestEmail({
 	const html = await render(
 		ReviewRequestEmail({ customerName, orderNumber, products, reviewUrl })
 	)
-	console.log(
-		`✅ [EMAIL] Review request sent to ${to} for order ${orderNumber}`
-	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.REVIEW_REQUEST, html })
 }
 
@@ -65,6 +62,5 @@ export async function sendReviewResponseEmail({
 			productUrl,
 		})
 	)
-	console.log(`✅ [EMAIL] Review response sent to ${to} for ${productTitle}`)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.REVIEW_RESPONSE, html })
 }

@@ -6,15 +6,20 @@ import { stripe } from "@/shared/lib/stripe";
 import type { ActionState } from "@/shared/types/server-action";
 import { auth } from "@/modules/auth/lib/auth";
 import { headers } from "next/headers";
+import { updateTag } from "next/cache";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
 	success,
 	error,
+	validateInput,
 	handleActionError,
 } from "@/shared/lib/actions";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteUploadThingFileFromUrl } from "@/modules/media/services/delete-uploadthing-files.service";
+import { deleteAccountSchema } from "../schemas/user.schemas";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USERS_CACHE_TAGS } from "../constants/cache";
 
 /**
  * Server Action pour supprimer le compte utilisateur (droit à l'oubli RGPD)
@@ -27,7 +32,10 @@ import { deleteUploadThingFileFromUrl } from "@/modules/media/services/delete-up
  *
  * Les commandes sont conservées avec des données anonymisées pour la comptabilité.
  */
-export async function deleteAccount(): Promise<ActionState> {
+export async function deleteAccount(
+	_prevState: ActionState | undefined,
+	formData: FormData
+): Promise<ActionState> {
 	try {
 		// 1. Rate limiting
 		const rateCheck = await enforceRateLimitForCurrentUser(USER_LIMITS.DELETE_ACCOUNT);
@@ -37,11 +45,17 @@ export async function deleteAccount(): Promise<ActionState> {
 		const userAuth = await requireAuth();
 		if ("error" in userAuth) return userAuth.error;
 
+		// 3. Validation server-side de la confirmation
+		const validation = validateInput(deleteAccountSchema, {
+			confirmation: formData.get("confirmation"),
+		});
+		if ("error" in validation) return validation.error;
+
 		const user = userAuth.user;
 
 		const userId = user.id;
 
-		// 3. Vérifier qu'il n'y a pas de commandes en cours
+		// 4. Vérifier qu'il n'y a pas de commandes en cours
 		const pendingOrders = await prisma.order.count({
 			where: {
 				userId,
@@ -61,9 +75,9 @@ export async function deleteAccount(): Promise<ActionState> {
 		const stripeCustomerId = user.stripeCustomerId;
 		const userAvatar = user.image;
 
-		// 4. Transaction pour garantir l'intégrité des données
+		// 5. Transaction pour garantir l'intégrité des données
 		await prisma.$transaction(async (tx) => {
-			// 2.1 Anonymiser les commandes (conserver pour comptabilité)
+			// 5.1 Anonymiser les commandes (conserver pour comptabilité)
 			await tx.order.updateMany({
 				where: { userId },
 				data: {
@@ -79,7 +93,7 @@ export async function deleteAccount(): Promise<ActionState> {
 				},
 			});
 
-			// 2.2 Supprimer les données non nécessaires à la comptabilité
+			// 5.2 Supprimer les données non nécessaires à la comptabilité
 			// Adresses
 			await tx.address.deleteMany({ where: { userId } });
 
@@ -95,7 +109,7 @@ export async function deleteAccount(): Promise<ActionState> {
 			// Comptes OAuth
 			await tx.account.deleteMany({ where: { userId } });
 
-			// 2.3 Soft delete du compte utilisateur avec anonymisation RGPD
+			// 5.3 Soft delete du compte utilisateur avec anonymisation RGPD
 			await tx.user.update({
 				where: { id: userId },
 				data: {
@@ -120,7 +134,7 @@ export async function deleteAccount(): Promise<ActionState> {
 			});
 		});
 
-		// 3. Supprimer le client Stripe (hors transaction car externe)
+		// 6. Supprimer le client Stripe (hors transaction car externe)
 		if (stripeCustomerId) {
 			try {
 				await stripe.customers.del(stripeCustomerId);
@@ -129,18 +143,23 @@ export async function deleteAccount(): Promise<ActionState> {
 			}
 		}
 
-		// 4. Supprimer l'avatar UploadThing si present
+		// 7. Supprimer l'avatar UploadThing si present
 		if (userAvatar) {
 			deleteUploadThingFileFromUrl(userAvatar).catch((err) => {
 				console.error("[deleteAccount] Erreur suppression avatar UploadThing:", err);
 			});
 		}
 
-		// 5. Invalider la session Better Auth
+		// 8. Invalider la session Better Auth
 		const headersList = await headers();
 		await auth.api.signOut({
 			headers: headersList,
 		});
+
+		// 9. Invalider le cache
+		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
+		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(USERS_CACHE_TAGS.CURRENT_USER(userId));
 
 		return success(
 			"Votre compte a été supprimé. Vos données personnelles ont été effacées conformément au RGPD."

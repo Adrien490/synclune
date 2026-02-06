@@ -26,26 +26,6 @@ import {
 import type { GetUsersParams, GetUsersReturn, User } from "../types/user.types";
 import { buildUserWhereClause } from "../services/user-query-builder";
 
-// Re-export pour compatibilité
-export {
-	GET_USERS_SELECT,
-	GET_USERS_DEFAULT_PER_PAGE,
-	GET_USERS_MAX_RESULTS_PER_PAGE,
-	GET_USERS_DEFAULT_SORT_BY,
-	GET_USERS_SORT_FIELDS,
-} from "../constants/user.constants";
-export {
-	getUsersSchema,
-	userFiltersSchema,
-	userSortBySchema,
-} from "../schemas/user.schemas";
-export type {
-	GetUsersParams,
-	GetUsersReturn,
-	UserFilters,
-	User,
-} from "../types/user.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

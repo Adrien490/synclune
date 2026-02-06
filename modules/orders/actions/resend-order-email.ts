@@ -79,7 +79,6 @@ export async function resendOrderEmail(
 						country: order.shippingCountry,
 					},
 					trackingUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.id)),
-					orderId: order.id,
 				});
 
 				if (!result.success) {

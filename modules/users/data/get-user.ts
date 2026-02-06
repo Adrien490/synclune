@@ -1,16 +1,11 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { cacheCurrentUser } from "../constants/cache";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { GET_USER_SELECT } from "../constants/user.constants";
 import { getUserSchema } from "../schemas/user.schemas";
 import type { GetUserParams, GetUserReturn, UserDetail } from "../types/user.types";
-
-// Re-export pour compatibilité
-export { GET_USER_SELECT } from "../constants/user.constants";
-export { getUserSchema } from "../schemas/user.schemas";
-export type { GetUserParams, GetUserReturn, UserDetail } from "../types/user.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -79,7 +74,7 @@ export async function fetchUser(userId: string): Promise<GetUserReturn> {
 		const user = await prisma.user.findUnique({
 			where: {
 				id: userId,
-				deletedAt: null, // Soft delete: exclure les utilisateurs supprimés
+				...notDeleted,
 			},
 			select: GET_USER_SELECT,
 		});

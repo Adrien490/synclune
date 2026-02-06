@@ -34,7 +34,6 @@ export async function sendOrderConfirmationEmail({
 	total: number
 	shippingAddress: ShippingAddress
 	trackingUrl: string
-	orderId: string
 }): Promise<EmailResult> {
 	const html = await render(
 		OrderConfirmationEmail({
@@ -86,9 +85,6 @@ export async function sendShippingConfirmationEmail({
 			estimatedDelivery,
 		})
 	)
-	console.log(
-		`✅ [EMAIL] Shipping confirmation sent to ${to} for order ${orderNumber}`
-	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_SHIPPED, html })
 }
 
@@ -110,7 +106,6 @@ export async function sendTrackingUpdateEmail({
 	trackingNumber: string
 	trackingUrl: string | null
 	carrierLabel: string
-	shippingAddress: ShippingAddress
 	estimatedDelivery?: string
 }): Promise<EmailResult> {
 	const html = await render(
@@ -122,9 +117,6 @@ export async function sendTrackingUpdateEmail({
 			carrierLabel,
 			estimatedDelivery,
 		})
-	)
-	console.log(
-		`✅ [EMAIL] Tracking update sent to ${to} for order ${orderNumber}`
 	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_TRACKING_UPDATE, html })
 }
@@ -152,9 +144,6 @@ export async function sendDeliveryConfirmationEmail({
 			deliveryDate,
 			orderDetailsUrl,
 		})
-	)
-	console.log(
-		`✅ [EMAIL] Delivery confirmation sent to ${to} for order ${orderNumber}`
 	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_DELIVERED, html })
 }

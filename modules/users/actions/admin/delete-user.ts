@@ -2,7 +2,8 @@
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { updateTag } from "next/cache";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, softDelete } from "@/shared/lib/prisma";
+import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin, requireAuth } from "@/modules/auth/lib/require-auth";
 import {
@@ -15,7 +16,7 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { USERS_CACHE_TAGS } from "../../constants/cache";
+import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function deleteUser(
 	_prevState: unknown,
@@ -48,7 +49,7 @@ export async function deleteUser(
 		// 5. Verifier que l'utilisateur existe
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
-			select: { id: true, name: true, email: true, deletedAt: true },
+			select: { id: true, name: true, email: true, role: true, deletedAt: true },
 		});
 
 		if (!user) {
@@ -59,16 +60,26 @@ export async function deleteUser(
 			return error("Cet utilisateur est deja supprime.");
 		}
 
+		// 5b. Verifier qu'on ne supprime pas le dernier admin
+		if (user.role === Role.ADMIN) {
+			const adminCount = await prisma.user.count({
+				where: { role: Role.ADMIN, deletedAt: null },
+			});
+			if (adminCount <= 1) {
+				return error("Impossible de supprimer le dernier administrateur.");
+			}
+		}
+
 		// 6. Soft delete
-		await prisma.user.update({
-			where: { id: userId },
-			data: { deletedAt: new Date() },
-		});
+		await softDelete.user(userId);
 
 		// 7. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
+		for (const tag of getUserFullInvalidationTags(userId)) {
+			updateTag(tag);
+		}
 
 		return success(`L'utilisateur ${user.name || user.email} a ete supprime.`);
 	} catch (e) {

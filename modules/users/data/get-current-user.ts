@@ -1,21 +1,11 @@
 import { headers } from "next/headers";
 import { cacheLife, cacheTag } from "next/cache";
 import { auth } from "@/modules/auth/lib/auth";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { GET_CURRENT_USER_DEFAULT_SELECT } from "../constants/current-user.constants";
 import { USERS_CACHE_TAGS } from "../constants/cache";
-import type {
-	GetCurrentUserReturn,
-	CurrentUser,
-} from "../types/current-user.types";
-
-// Re-export pour compatibilité
-export { GET_CURRENT_USER_DEFAULT_SELECT } from "../constants/current-user.constants";
-export type {
-	GetCurrentUserReturn,
-	CurrentUser,
-} from "../types/current-user.types";
+import type { GetCurrentUserReturn } from "../types/current-user.types";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -63,7 +53,7 @@ export async function fetchCurrentUser(
 	const user = await prisma.user.findUnique({
 		where: {
 			id: userId,
-			deletedAt: null,
+			...notDeleted,
 		},
 		select: GET_CURRENT_USER_DEFAULT_SELECT,
 	});

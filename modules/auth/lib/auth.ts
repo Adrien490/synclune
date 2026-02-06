@@ -58,7 +58,6 @@ export const auth = betterAuth({
 			await sendPasswordResetEmail({
 				to: user.email,
 				url,
-				token,
 			});
 		},
 		onPasswordReset: async ({ user }) => {
@@ -79,7 +78,6 @@ export const auth = betterAuth({
 			await sendVerificationEmail({
 				to: user.email,
 				url: verificationUrl,
-				token,
 			});
 		},
 		sendOnSignUp: true, // Envoi automatique à l'inscription

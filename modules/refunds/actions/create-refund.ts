@@ -1,15 +1,19 @@
 "use server";
 
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 import { RefundAction } from "@/app/generated/prisma/client";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createRefundSchema } from "../schemas/refund.schemas";
 import { shouldRestockByDefault } from "../services/refund-restock.service";
 
@@ -28,6 +32,9 @@ export async function createRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.CREATE);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
@@ -61,6 +68,9 @@ export async function createRefund(
 				message: result.error.issues[0]?.message || "Données invalides",
 			};
 		}
+
+		// Sanitiser le texte libre
+		const sanitizedNote = result.data.note ? sanitizeText(result.data.note) : null;
 
 		// Récupérer la commande avec ses items (exclure les commandes soft-deleted)
 		const order = await prisma.order.findUnique({
@@ -100,8 +110,12 @@ export async function createRefund(
 			};
 		}
 
-		// Vérifier que la commande est payée
-		if (order.paymentStatus !== "PAID" && order.paymentStatus !== "REFUNDED") {
+		// Vérifier que la commande est payée (ou partiellement remboursée)
+		if (
+			order.paymentStatus !== "PAID" &&
+			order.paymentStatus !== "PARTIALLY_REFUNDED" &&
+			order.paymentStatus !== "REFUNDED"
+		) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Cette commande n'a pas été payée et ne peut pas être remboursée.",
@@ -178,7 +192,7 @@ export async function createRefund(
 				orderId,
 				amount: totalAmount,
 				reason: result.data.reason,
-				note: result.data.note,
+				note: sanitizedNote,
 				createdBy: adminUser.id,
 				items: {
 					create: validatedItems.map((item) => ({
@@ -210,10 +224,6 @@ export async function createRefund(
 			data: { refundId: refund.id },
 		};
 	} catch (error) {
-		console.error("[CREATE_REFUND]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: REFUND_ERROR_MESSAGES.CREATE_FAILED,
-		};
+		return handleActionError(error, REFUND_ERROR_MESSAGES.CREATE_FAILED);
 	}
 }

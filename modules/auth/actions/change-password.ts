@@ -67,7 +67,6 @@ export const changePassword = async (
 
 			// Envoyer un email de notification (sécurité)
 			try {
-				const ipAddress = headersList.get("x-forwarded-for")?.split(",")[0].trim();
 				const changeDate = new Intl.DateTimeFormat("fr-FR", {
 					dateStyle: "long",
 					timeStyle: "short",
@@ -77,7 +76,6 @@ export const changePassword = async (
 					to: session.user.email,
 					userName: session.user.name,
 					changeDate,
-					ipAddress: ipAddress || undefined,
 				});
 			} catch {
 				// Ne pas faire échouer si l'email ne part pas

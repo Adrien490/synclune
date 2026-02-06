@@ -5,7 +5,7 @@
  */
 
 import type { RefundReason } from "@/app/generated/prisma/enums";
-import { shouldRestockByDefault } from "@/modules/refunds/utils/refund-utils.browser";
+import { shouldRestockByDefault } from "./refund-restock.service";
 import type { RefundItemValue } from "../types/refund.types";
 
 // Re-export pour retro-compatibilite

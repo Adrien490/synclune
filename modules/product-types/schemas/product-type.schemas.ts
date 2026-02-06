@@ -122,6 +122,18 @@ export const bulkDeactivateProductTypesSchema = z.object({
 	}).pipe(z.array(z.cuid2("ID invalide"))),
 });
 
+export const bulkToggleProductTypeStatusSchema = z.object({
+	ids: z.string().transform((str) => {
+		try {
+			const parsed = JSON.parse(str);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	}).pipe(z.array(z.cuid2("ID invalide"))),
+	isActive: z.boolean(),
+});
+
 export const bulkDeleteProductTypesSchema = z.object({
 	ids: z.string().transform((str) => {
 		try {

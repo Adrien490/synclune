@@ -222,7 +222,6 @@ export async function sendRefundFailureAlert(
 
 		await sendAdminRefundFailedAlert({
 			orderNumber: order.orderNumber,
-			orderId,
 			customerEmail: order.user?.email || "Email non disponible",
 			amount: order.total,
 			reason,

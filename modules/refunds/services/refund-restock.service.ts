@@ -1,4 +1,4 @@
-import { RefundReason } from "@/app/generated/prisma/client";
+import { RefundReason } from "@/app/generated/prisma/browser";
 
 /**
  * Détermine si le stock doit être restauré selon le motif du remboursement

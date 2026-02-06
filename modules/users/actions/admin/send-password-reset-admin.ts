@@ -5,6 +5,7 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
+	validateInput,
 	success,
 	error,
 	notFound,
@@ -12,6 +13,7 @@ import {
 } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { auth } from "@/modules/auth/lib/auth";
+import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
 
 /**
  * Server Action ADMIN pour envoyer un email de réinitialisation de mot de passe
@@ -27,6 +29,10 @@ export async function sendPasswordResetAdmin(userId: string): Promise<ActionStat
 		// 2. Vérification admin
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
+
+		// 2b. Validation du userId
+		const validation = validateInput(adminUserIdSchema, { userId });
+		if ("error" in validation) return validation.error;
 
 		// 3. Récupérer l'utilisateur
 		const user = await prisma.user.findUnique({

@@ -21,8 +21,5 @@ export async function sendPaymentFailedEmail({
 	const html = await render(
 		PaymentFailedEmail({ orderNumber, customerName, retryUrl })
 	)
-	console.log(
-		`⚠️ [EMAIL] Payment failed notification sent to ${to} for order ${orderNumber}`
-	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.PAYMENT_FAILED, html })
 }

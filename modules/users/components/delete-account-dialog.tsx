@@ -73,6 +73,7 @@ export function DeleteAccountDialog() {
 						</Label>
 						<Input
 							id="confirmation"
+							name="confirmation"
 							value={confirmation}
 							onChange={(e) => setConfirmation(e.target.value)}
 							placeholder={CONFIRMATION_TEXT}

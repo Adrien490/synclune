@@ -14,6 +14,7 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { bulkSuspendUsersSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function bulkSuspendUsers(
 	_prevState: unknown,
@@ -78,6 +79,11 @@ export async function bulkSuspendUsers(
 		// 7. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		for (const id of eligibleIds) {
+			for (const tag of getUserFullInvalidationTags(id)) {
+				updateTag(tag);
+			}
+		}
 
 		return success(
 			`${eligibleIds.length} utilisateur${eligibleIds.length > 1 ? "s" : ""} suspendu${eligibleIds.length > 1 ? "s" : ""} avec succes.`

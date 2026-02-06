@@ -2,14 +2,17 @@
 
 import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { bulkApproveRefundsSchema } from "../schemas/refund.schemas";
 
 /**
@@ -25,6 +28,9 @@ export async function bulkApproveRefunds(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.BULK_OPERATION);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
@@ -49,11 +55,12 @@ export async function bulkApproveRefunds(
 			};
 		}
 
-		// Récupérer les remboursements éligibles (PENDING uniquement)
+		// Récupérer les remboursements éligibles (PENDING uniquement, non supprimés)
 		const refunds = await prisma.refund.findMany({
 			where: {
 				id: { in: result.data.ids },
 				status: RefundStatus.PENDING,
+				deletedAt: null,
 			},
 			select: {
 				id: true,
@@ -107,10 +114,6 @@ export async function bulkApproveRefunds(
 			message,
 		};
 	} catch (error) {
-		console.error("[BULK_APPROVE_REFUNDS]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: REFUND_ERROR_MESSAGES.APPROVE_FAILED,
-		};
+		return handleActionError(error, REFUND_ERROR_MESSAGES.APPROVE_FAILED);
 	}
 }

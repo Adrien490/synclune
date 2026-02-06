@@ -3,7 +3,7 @@
 import { RefundReason } from "@/app/generated/prisma/enums";
 import { createRefund } from "@/modules/refunds/actions/create-refund";
 import type { OrderItemForRefund } from "@/modules/refunds/data/get-order-for-refund";
-import { shouldRestockByDefault } from "@/modules/refunds/utils/refund-utils.browser";
+import { shouldRestockByDefault } from "@/modules/refunds/services/refund-restock.service";
 import {
 	getAvailableQuantity as getAvailableQuantityService,
 	initializeRefundItems,

@@ -43,8 +43,5 @@ export async function sendBackInStockEmail({
 			unsubscribeUrl,
 		})
 	)
-	console.log(
-		`✅ [EMAIL] Back in stock notification sent to ${to} for ${productTitle}`
-	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.BACK_IN_STOCK, html })
 }

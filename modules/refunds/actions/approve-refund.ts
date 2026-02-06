@@ -2,17 +2,20 @@
 
 import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 import { sendRefundApprovedEmail } from "@/modules/emails/services/refund-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
+import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { approveRefundSchema } from "../schemas/refund.schemas";
 
 /**
@@ -24,6 +27,9 @@ export async function approveRefund(
 	formData: FormData
 ): Promise<ActionState> {
 	try {
+		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
@@ -40,7 +46,7 @@ export async function approveRefund(
 
 		// Récupérer le remboursement avec les infos pour l'email
 		const refund = await prisma.refund.findUnique({
-			where: { id },
+			where: { id, deletedAt: null },
 			select: {
 				id: true,
 				status: true,
@@ -85,9 +91,10 @@ export async function approveRefund(
 		}
 
 		// Mettre à jour le statut et créer l'entrée d'historique
+		// Le where inclut le statut attendu pour protection TOCTOU
 		await prisma.$transaction(async (tx) => {
 			await tx.refund.update({
-				where: { id },
+				where: { id, status: RefundStatus.PENDING },
 				data: {
 					status: RefundStatus.APPROVED,
 				},
@@ -131,10 +138,6 @@ export async function approveRefund(
 			message: `Remboursement de ${(refund.amount / 100).toFixed(2)} € approuvé pour la commande ${refund.order.orderNumber}`,
 		};
 	} catch (error) {
-		console.error("[APPROVE_REFUND]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: REFUND_ERROR_MESSAGES.APPROVE_FAILED,
-		};
+		return handleActionError(error, REFUND_ERROR_MESSAGES.APPROVE_FAILED);
 	}
 }

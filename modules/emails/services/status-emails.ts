@@ -36,9 +36,6 @@ export async function sendCancelOrderConfirmationEmail({
 			orderDetailsUrl,
 		})
 	)
-	console.log(
-		`✅ [EMAIL] Cancel order confirmation sent to ${to} for order ${orderNumber}`
-	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_CANCELLED, html })
 }
 
@@ -69,9 +66,6 @@ export async function sendReturnConfirmationEmail({
 			orderDetailsUrl,
 		})
 	)
-	console.log(
-		`✅ [EMAIL] Return confirmation sent to ${to} for order ${orderNumber}`
-	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_RETURNED, html })
 }
 
@@ -98,9 +92,6 @@ export async function sendRevertShippingNotificationEmail({
 			reason,
 			orderDetailsUrl,
 		})
-	)
-	console.log(
-		`✅ [EMAIL] Revert shipping notification sent to ${to} for order ${orderNumber}`
 	)
 	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_SHIPPING_REVERTED, html })
 }

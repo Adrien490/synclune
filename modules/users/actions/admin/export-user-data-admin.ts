@@ -5,12 +5,14 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
+	validateInput,
 	success,
 	notFound,
 	handleActionError,
 } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { UserDataExport } from "../export-user-data";
+import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
 
 /**
  * Server Action ADMIN pour exporter les données d'un utilisateur (RGPD)
@@ -28,7 +30,11 @@ export async function exportUserDataAdmin(userId: string): Promise<ActionState> 
 		const adminCheck = await requireAdmin();
 		if ("error" in adminCheck) return adminCheck.error;
 
-		// 2. Récupérer toutes les données utilisateur
+		// 2b. Validation du userId
+		const validation = validateInput(adminUserIdSchema, { userId });
+		if ("error" in validation) return validation.error;
+
+		// 3. Récupérer toutes les données utilisateur
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 			include: {

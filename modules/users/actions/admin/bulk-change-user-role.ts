@@ -15,6 +15,7 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { bulkChangeUserRoleSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function bulkChangeUserRole(
 	_prevState: unknown,
@@ -92,6 +93,11 @@ export async function bulkChangeUserRole(
 		// 9. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		for (const id of eligibleIds) {
+			for (const tag of getUserFullInvalidationTags(id)) {
+				updateTag(tag);
+			}
+		}
 
 		const roleLabel = validatedData.role === Role.ADMIN ? "administrateurs" : "utilisateurs";
 		return success(

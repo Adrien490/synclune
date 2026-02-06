@@ -144,15 +144,6 @@ export async function updateTracking(
 					trackingNumber: result.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					carrierLabel,
-					shippingAddress: {
-						firstName: order.shippingFirstName || "",
-						lastName: order.shippingLastName || "",
-						address1: order.shippingAddress1 || "",
-						address2: order.shippingAddress2,
-						postalCode: order.shippingPostalCode || "",
-						city: order.shippingCity || "",
-						country: order.shippingCountry || "France",
-					},
 					estimatedDelivery: estimatedDeliveryStr,
 				});
 				emailSent = true;
