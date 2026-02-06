@@ -18,7 +18,7 @@ interface FaqAccordionProps {
 
 export function FaqAccordion({ items }: FaqAccordionProps) {
   return (
-    <Accordion type="multiple" className="max-w-3xl mx-auto">
+    <Accordion type="single" collapsible className="max-w-3xl mx-auto">
       <Stagger stagger={0.06} y={20} once className="space-y-3">
         {items.map((item, idx) => (
           <AccordionItem

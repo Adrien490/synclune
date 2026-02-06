@@ -44,8 +44,8 @@ export async function NewsletterSection() {
               id="newsletter-subtitle"
               className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto"
             >
-              Les nouveautés en avant-première, et possiblement des petites
-              surprises en plus de ça !{" "}
+              Les nouveautés en avant-première, des offres exclusives et
+              des surprises réservées aux abonnées !
             </p>
           </Fade>
         </header>
@@ -61,7 +61,7 @@ export async function NewsletterSection() {
         <Fade y={10} delay={0.3} duration={0.6}>
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Pas de spam, promis ! Désinscription en un clic si besoin.
+              1 à 2 emails par mois maximum. Désinscription en un clic.
             </p>
             <p
               className={`${dancingScript.className} mt-2 text-lg text-foreground/60 italic`}

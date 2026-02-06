@@ -5,7 +5,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { dancingScript } from "@/shared/styles/fonts";
 import { Sparkles } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
-import Link from "next/link";
+
 
 const POLAROIDS = [
 	{ caption: "Les mains dans les perles !", label: "Mains de Léane assemblant un bijou", tilt: "left", washiColor: "pink", washiPosition: "top-left" },
@@ -101,7 +101,7 @@ export async function AtelierStory() {
 
 				{/* Polaroid gallery - 4 photos desktop, 2 mobile (via CSS) */}
 				<Reveal y={25} delay={0.3} duration={0.6} once>
-					<div className="mt-12 sm:mt-16 space-y-8">
+					<div className="mt-12 sm:mt-16">
 						{/* Polaroid scrapbook grid */}
 						<div
 							role="group"
@@ -128,17 +128,6 @@ export async function AtelierStory() {
 									</PolaroidFrame>
 								))}
 							</Stagger>
-						</div>
-
-						{/* CTA to customization page */}
-						<div className="text-center">
-							<Link
-								href="/personnalisation"
-								className="inline-block min-h-12 py-3 px-6 text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-								aria-label="Discuter d'un projet de bijou personnalisé avec Léane"
-							>
-								Discuter d'un projet personnalisé →
-							</Link>
 						</div>
 					</div>
 				</Reveal>

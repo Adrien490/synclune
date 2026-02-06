@@ -81,7 +81,8 @@ export function LatestCreations({
           <Button
             asChild
             size="lg"
-            className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+            variant="outline"
+            className="hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
             aria-describedby="latest-creations-cta-description"
           >
             <Link href="/produits?sortBy=created-descending">

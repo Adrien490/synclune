@@ -1,6 +1,7 @@
 import { Footer } from "@/app/(boutique)/(accueil)/_components/footer";
 import { Navbar } from "@/app/(boutique)/(accueil)/_components/navbar";
 import { NavbarSkeleton } from "@/app/(boutique)/(accueil)/_components/navbar/navbar-skeleton";
+import { ScrollToTop } from "@/shared/components/scroll-to-top";
 import { Suspense } from "react";
 
 interface ShopLayoutProps {
@@ -23,6 +24,7 @@ export default async function ShopLayout({
 				{children}
 			</main>
 			<Footer />
+			<ScrollToTop />
 		</>
 	);
 }

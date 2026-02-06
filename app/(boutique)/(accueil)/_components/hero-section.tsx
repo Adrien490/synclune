@@ -1,20 +1,13 @@
 import {
-  Fade,
   ParticleBackground,
   ScrollIndicator,
 } from "@/shared/components/animations";
-import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
-import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { LayoutTextFlip } from "@/shared/components/ui/layout-text-flip";
-import { BRAND } from "@/shared/constants/brand";
 import { Heart } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
-
-const socialLinkClassName =
-  "inline-flex items-center justify-center size-11 rounded-full bg-card/50 hover:bg-accent motion-safe:transition-colors motion-safe:duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 /**
  * Homepage hero section.
@@ -126,42 +119,6 @@ export async function HeroSection() {
               </Button>
             </div>
 
-            {/* Social links - Compact version */}
-            <Fade y={8} delay={0.5} duration={0.4}>
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-sm text-muted-foreground hidden sm:inline">
-                  Mes réseaux :
-                </span>
-                <div className="flex items-center gap-4">
-                  <Link
-                    href={BRAND.social.instagram.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={socialLinkClassName}
-                    aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
-                  >
-                    <InstagramIcon
-                      decorative
-                      size={20}
-                      className="text-foreground"
-                    />
-                  </Link>
-                  <Link
-                    href={BRAND.social.tiktok.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={socialLinkClassName}
-                    aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
-                  >
-                    <TikTokIcon
-                      decorative
-                      size={20}
-                      className="text-foreground"
-                    />
-                  </Link>
-                </div>
-              </div>
-            </Fade>
           </div>
         </div>
       </div>

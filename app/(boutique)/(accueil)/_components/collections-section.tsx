@@ -106,11 +106,11 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 							{showArrows && (
 								<>
 									<CarouselPrevious
-										className="hidden md:flex left-4 top-[40%] opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
+										className="hidden md:flex left-4 top-[40%] opacity-40 group-hover/carousel:opacity-100 transition-opacity duration-300"
 										aria-label="Voir les collections précédentes"
 									/>
 									<CarouselNext
-										className="hidden md:flex right-4 top-[40%] opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300"
+										className="hidden md:flex right-4 top-[40%] opacity-40 group-hover/carousel:opacity-100 transition-opacity duration-300"
 										aria-label="Voir les collections suivantes"
 									/>
 								</>
@@ -127,7 +127,8 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 					<Button
 						asChild
 						size="lg"
-						className="shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+						variant="outline"
+						className="hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
 						aria-describedby="collections-cta-description"
 					>
 						<Link href="/collections">

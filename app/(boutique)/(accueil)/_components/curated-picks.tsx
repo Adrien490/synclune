@@ -18,7 +18,7 @@ interface CuratedPicksProps {
 /**
  * Curated Picks section - Leane's handpicked favorites.
  *
- * 4 manually selected products with personal intro and "Coup de coeur" badges.
+ * 4 manually selected products with personal intro.
  * Accepts a Promise for streaming with React Suspense.
  */
 export function CuratedPicks({
@@ -103,22 +103,13 @@ export function CuratedPicks({
 					once
 				>
 					{products.map((product, index) => (
-						<div key={product.id} className="relative">
-							{/* Badge Coup de coeur */}
-							<div
-								className="absolute -top-2 -right-2 z-10 px-2 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full shadow-lg backdrop-blur-sm ring-1 ring-black/10 flex items-center gap-1"
-								aria-label="Coup de coeur de Léane"
-							>
-								<Heart className="w-3 h-3 fill-current" aria-hidden="true" />
-								<span className="sr-only sm:not-sr-only">Coup de coeur</span>
-							</div>
-							<ProductCard
-								product={product}
-								index={index}
-								isInWishlist={wishlistProductIds.has(product.id)}
-								sectionId="curated"
-							/>
-						</div>
+						<ProductCard
+							key={product.id}
+							product={product}
+							index={index}
+							isInWishlist={wishlistProductIds.has(product.id)}
+							sectionId="curated"
+						/>
 					))}
 				</Stagger>
 
