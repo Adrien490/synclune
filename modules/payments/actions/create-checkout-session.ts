@@ -52,7 +52,7 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 		const ipAddress = await getClientIp(headersList);
 
 		const rateLimitId = getRateLimitIdentifier(userId, sessionId || null, ipAddress);
-		const rateLimit = checkRateLimit(rateLimitId, PAYMENT_LIMITS.CREATE_SESSION);
+		const rateLimit = await checkRateLimit(rateLimitId, PAYMENT_LIMITS.CREATE_SESSION);
 
 		if (!rateLimit.success) {
 			return {

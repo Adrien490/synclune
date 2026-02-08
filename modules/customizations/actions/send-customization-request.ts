@@ -37,7 +37,7 @@ export async function sendCustomizationRequest(
 		const ipAddress = await getClientIp(headersList);
 
 		const rateLimitId = getRateLimitIdentifier(null, null, ipAddress);
-		const rateLimit = checkRateLimit(rateLimitId, COMMUNICATION_LIMITS.CONTACT);
+		const rateLimit = await checkRateLimit(rateLimitId, COMMUNICATION_LIMITS.CONTACT);
 
 		if (!rateLimit.success) {
 			return error(
@@ -76,7 +76,7 @@ export async function sendCustomizationRequest(
 
 		// 5. Rate limiting par email (protection contre spam multi-IP)
 		const emailRateLimitId = `customization:email:${validatedData.email.toLowerCase()}`;
-		const emailRateLimit = checkRateLimit(emailRateLimitId, {
+		const emailRateLimit = await checkRateLimit(emailRateLimitId, {
 			limit: 5,
 			windowMs: 24 * 60 * 60 * 1000, // 5 demandes par email par 24h
 		});

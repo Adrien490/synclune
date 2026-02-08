@@ -70,7 +70,7 @@ export async function toggleWishlistItem(
 		const ipAddress = await getClientIp(headersList)
 
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress)
-		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.TOGGLE)
+		const rateLimit = await checkRateLimit(rateLimitId, WISHLIST_LIMITS.TOGGLE)
 
 		if (!rateLimit.success) {
 			return {

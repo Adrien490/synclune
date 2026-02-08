@@ -15,6 +15,7 @@ import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { BadgeCountsStoreProvider } from "@/shared/stores/badge-counts-store-provider";
 import { QuickSearchDialog, QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
+import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { AccountDropdown } from "./account-dropdown";
 import { DesktopNav } from "./desktop-nav";
@@ -173,7 +174,7 @@ export async function Navbar() {
 								<Tooltip>
 									<TooltipTrigger asChild>
 										<Link
-											href="/favoris"
+											href={ROUTES.ACCOUNT.FAVORITES}
 											className={cn("inline-flex", iconButtonClassName)}
 											aria-label="Accéder à mes favoris"
 										>

@@ -62,7 +62,7 @@ export async function removeFromWishlist(
 		const ipAddress = await getClientIp(headersList)
 
 		const rateLimitId = getRateLimitIdentifier(userId ?? null, sessionId, ipAddress)
-		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.REMOVE)
+		const rateLimit = await checkRateLimit(rateLimitId, WISHLIST_LIMITS.REMOVE)
 
 		if (!rateLimit.success) {
 			return {

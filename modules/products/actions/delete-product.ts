@@ -7,42 +7,12 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { deleteProductSchema } from "../schemas/product.schemas";
-import { UTApi } from "uploadthing/server";
 import { getProductInvalidationTags } from "../constants/cache";
 
 /**
- * Extrait la cle du fichier depuis une URL UploadThing
- */
-function extractFileKeyFromUrl(url: string): string {
-	try {
-		const urlObj = new URL(url);
-		const parts = urlObj.pathname.split("/");
-		return parts[parts.length - 1];
-	} catch {
-		return url;
-	}
-}
-
-/**
- * Supprime des fichiers UploadThing de maniere securisee
- * Instancie UTApi par requete pour eviter le partage de tokens entre workers
- */
-async function deleteUploadThingFiles(urls: string[]): Promise<void> {
-	if (urls.length === 0) return;
-	try {
-		const utapi = new UTApi();
-		const fileKeys = urls.map(extractFileKeyFromUrl);
-		await utapi.deleteFiles(fileKeys);
-	} catch {
-		// Ignore - ne bloque pas la suppression du produit
-	}
-}
-
-/**
- * Server Action pour supprimer un produit
- * Supprime egalement :
- * - Tous les SKUs (cascade Prisma)
- * - Toutes les images des SKUs (fichiers UploadThing + entrees DB)
+ * Server Action pour soft-delete un produit
+ * Les SKUs sont soft-deleted en cascade.
+ * Les fichiers UploadThing sont preserves jusqu'au hard delete (retention legale).
  * Compatible avec useActionState de React 19
  */
 export async function deleteProduct(
@@ -65,7 +35,7 @@ export async function deleteProduct(
 
 		const { productId } = validation.data;
 
-		// 4. Verifier que le produit existe et recuperer toutes les images des SKUs
+		// 4. Verifier que le produit existe
 		const existingProduct = await prisma.product.findUnique({
 			where: { id: productId },
 			select: {
@@ -76,17 +46,6 @@ export async function deleteProduct(
 					select: {
 						collection: {
 							select: { slug: true },
-						},
-					},
-				},
-				skus: {
-					select: {
-						id: true,
-						sku: true,
-						images: {
-							select: {
-								url: true,
-							},
 						},
 					},
 				},
@@ -114,13 +73,8 @@ export async function deleteProduct(
 			);
 		}
 
-		// 6. Supprimer tous les fichiers UploadThing de toutes les variantes
-		const allImageUrls = existingProduct.skus.flatMap((sku) =>
-			sku.images.map((img) => img.url)
-		);
-		await deleteUploadThingFiles(allImageUrls);
-
-		// 7. Soft delete le produit et ses SKUs dans une transaction
+		// 6. Soft delete le produit et ses SKUs dans une transaction
+		// Files are preserved on UploadThing until hard delete (10-year retention)
 		await prisma.$transaction(async (tx) => {
 			const now = new Date();
 			await tx.productSku.updateMany({
@@ -133,7 +87,7 @@ export async function deleteProduct(
 			});
 		});
 
-		// 8. Invalidate cache tags (invalidation ciblee au lieu de revalidatePath global)
+		// 7. Invalidate cache tags (invalidation ciblee au lieu de revalidatePath global)
 		const productTags = getProductInvalidationTags(
 			existingProduct.slug,
 			existingProduct.id
@@ -148,7 +102,7 @@ export async function deleteProduct(
 			collectionTags.forEach(tag => updateTag(tag));
 		}
 
-		// 9. Success
+		// 8. Success
 		return success(`Produit "${existingProduct.title}" supprimé avec succès.`, {
 			productId,
 			title: existingProduct.title,

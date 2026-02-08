@@ -1,140 +1,108 @@
 /**
- * Rate limiting simple en mémoire pour le développement
- * et production sans dépendances externes
+ * Rate limiting with Upstash Redis (production) and in-memory fallback (dev)
  *
- * ⚠️ LIMITATIONS :
- * - Store en mémoire : perdu au redémarrage de l'instance serverless
- * - Mono-instance : ne fonctionne PAS sur plusieurs instances Vercel
- * - Parfait pour v1 avec faible trafic (<1000 req/min)
+ * In production (UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN set):
+ * - Uses Upstash Redis for distributed rate limiting across all Vercel instances
+ * - Sliding window algorithm for accurate limiting
  *
- * ✅ COMPATIBLE SERVERLESS :
- * - Nettoyage "lazy" au lieu de setInterval
- * - Pas de timers qui restent actifs
- * - Fonctionne dans environnements "freeze" (Vercel, Lambda)
- *
- * 🚀 Pour production avec trafic élevé, migrer vers Redis:
- * - Installer: npm install @upstash/ratelimit @upstash/redis
- * - Configurer Upstash Redis sur https://upstash.com
- * - Remplacer cette implémentation par Upstash Ratelimit
- * - Permet rate limiting distribué sur N instances
- *
- * 🛡️ PROTECTIONS DDOS :
- * - Limite globale par IP (toutes actions confondues)
- * - Éviction LRU automatique si mémoire saturée
- * - Logging des abus pour détection patterns
+ * In development (env vars absent):
+ * - Falls back to in-memory Map (same as before)
+ * - Works without any external dependencies
  */
 
 import type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types"
 
 export type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types"
 
+// ============================================================================
+// UPSTASH REDIS RATE LIMITER (lazy-initialized)
+// ============================================================================
+
+let upstashLimiterCache: Map<string, import("@upstash/ratelimit").Ratelimit> | null = null;
+let globalIpLimiter: import("@upstash/ratelimit").Ratelimit | null = null;
+
+function isUpstashConfigured(): boolean {
+	return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+}
+
+async function getUpstashLimiter(limit: number, windowMs: number): Promise<import("@upstash/ratelimit").Ratelimit> {
+	if (!upstashLimiterCache) {
+		upstashLimiterCache = new Map();
+	}
+
+	const cacheKey = `${limit}:${windowMs}`;
+	const cached = upstashLimiterCache.get(cacheKey);
+	if (cached) return cached;
+
+	const { Ratelimit } = await import("@upstash/ratelimit");
+	const { Redis } = await import("@upstash/redis");
+
+	const redis = new Redis({
+		url: process.env.UPSTASH_REDIS_REST_URL!,
+		token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+	});
+
+	const windowSeconds = Math.ceil(windowMs / 1000);
+	const limiter = new Ratelimit({
+		redis,
+		limiter: Ratelimit.slidingWindow(limit, `${windowSeconds} s`),
+		prefix: "synclune:rl",
+	});
+
+	upstashLimiterCache.set(cacheKey, limiter);
+	return limiter;
+}
+
+async function getGlobalIpLimiter(): Promise<import("@upstash/ratelimit").Ratelimit> {
+	if (globalIpLimiter) return globalIpLimiter;
+
+	const { Ratelimit } = await import("@upstash/ratelimit");
+	const { Redis } = await import("@upstash/redis");
+
+	const redis = new Redis({
+		url: process.env.UPSTASH_REDIS_REST_URL!,
+		token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+	});
+
+	globalIpLimiter = new Ratelimit({
+		redis,
+		limiter: Ratelimit.slidingWindow(GLOBAL_IP_LIMIT, `${Math.ceil(GLOBAL_IP_WINDOW / 1000)} s`),
+		prefix: "synclune:rl:global-ip",
+	});
+
+	return globalIpLimiter;
+}
+
+// ============================================================================
+// IN-MEMORY FALLBACK (dev / missing Upstash config)
+// ============================================================================
+
 interface RateLimitEntry {
 	count: number
 	resetAt: number
 }
 
-// Store en mémoire (simple pour v1, perdu au redémarrage)
-// Note: Pour une app multi-instances, utiliser Redis (Upstash)
 const rateLimitStore = new Map<string, RateLimitEntry>();
-
-// Store pour rate limit global par IP (protection DDoS)
 const globalIpLimitStore = new Map<string, RateLimitEntry>();
 
-// Track du dernier nettoyage pour éviter de nettoyer trop souvent
 let lastCleanup = Date.now();
 const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const MAX_STORE_SIZE = 10000;
 
-// Limites de sécurité
-const MAX_STORE_SIZE = 10000; // Limite max d'entrées en mémoire (protection memory leak)
-const GLOBAL_IP_LIMIT = 100; // 100 requêtes par minute max par IP (toutes actions)
+// ============================================================================
+// SHARED CONSTANTS
+// ============================================================================
+
+const GLOBAL_IP_LIMIT = 100;
 const GLOBAL_IP_WINDOW = 60 * 1000; // 1 minute
 
-// Whitelist/Blacklist (configurables via variables d'environnement)
 const WHITELIST_IPS = process.env.RATE_LIMIT_WHITELIST?.split(",").map((ip) => ip.trim()) || [];
 const BLACKLIST_IPS = process.env.RATE_LIMIT_BLACKLIST?.split(",").map((ip) => ip.trim()) || [];
 
-/**
- * Nettoyage "lazy" des entrées expirées avec éviction LRU
- * S'exécute uniquement toutes les 5 minutes lors d'une vérification
- * ET seulement si le store dépasse 1000 entrées (évite le nettoyage inutile)
- * Compatible avec environnements serverless (pas de setInterval)
- *
- * PROTECTION MEMORY LEAK :
- * - Si le store dépasse MAX_STORE_SIZE (10k entrées), force le nettoyage
- * - Si toujours trop grand après nettoyage, éviction LRU (supprime les plus anciennes)
- */
-function cleanupExpiredEntries(): void {
-	const now = Date.now();
+// ============================================================================
+// HELPERS
+// ============================================================================
 
-	// Nettoyage forcé si dépassement MAX_STORE_SIZE (protection memory leak)
-	const shouldForceCleanup = rateLimitStore.size > MAX_STORE_SIZE;
-
-	// Ne nettoyer que toutes les 5 minutes ET si le store est assez grand
-	// OU si on dépasse la limite max (force cleanup)
-	if (!shouldForceCleanup && (now - lastCleanup < CLEANUP_INTERVAL || rateLimitStore.size < 1000)) {
-		return;
-	}
-
-	if (shouldForceCleanup) {
-		// console.warn("[RATE_LIMIT] Store size exceeded MAX_STORE_SIZE, forcing cleanup", {
-		// 	size: rateLimitStore.size,
-		// 	max: MAX_STORE_SIZE,
-		// 	timestamp: new Date().toISOString(),
-		// });
-	}
-
-	lastCleanup = now;
-
-	// Étape 1: Supprimer toutes les entrées expirées
-	let deletedCount = 0;
-	for (const [key, entry] of rateLimitStore.entries()) {
-		if (entry.resetAt < now) {
-			rateLimitStore.delete(key);
-			deletedCount++;
-		}
-	}
-
-	if (deletedCount > 0) {
-		// console.log(`[RATE_LIMIT] Cleaned up ${deletedCount} expired entries`);
-	}
-
-	// Étape 2: Si toujours trop grand après cleanup, éviction LRU (Least Recently Used)
-	if (rateLimitStore.size > MAX_STORE_SIZE) {
-		// console.warn("[RATE_LIMIT] Store still too large after cleanup, applying LRU eviction", {
-		// 	currentSize: rateLimitStore.size,
-		// 	max: MAX_STORE_SIZE,
-		// });
-
-		// Trier les entrées par resetAt (les plus anciennes en premier)
-		const entries = Array.from(rateLimitStore.entries()).sort(
-			(a, b) => a[1].resetAt - b[1].resetAt
-		);
-
-		// Calculer combien d'entrées supprimer (garder 90% de MAX_STORE_SIZE pour marge)
-		const targetSize = Math.floor(MAX_STORE_SIZE * 0.9);
-		const toDelete = entries.slice(0, entries.length - targetSize);
-
-		// Supprimer les entrées les plus anciennes
-		toDelete.forEach(([key]) => rateLimitStore.delete(key));
-
-		// console.error("[RATE_LIMIT] LRU eviction completed", {
-		// 	deleted: toDelete.length,
-		// 	remainingSize: rateLimitStore.size,
-		// 	targetSize,
-		// });
-	}
-
-	// Nettoyer aussi le store global IP
-	for (const [key, entry] of globalIpLimitStore.entries()) {
-		if (entry.resetAt < now) {
-			globalIpLimitStore.delete(key);
-		}
-	}
-}
-
-/**
- * Helper pour formater le temps d'attente de manière lisible
- */
 function formatRetryAfter(seconds: number): string {
 	if (seconds < 60) {
 		return `${seconds} seconde${seconds > 1 ? "s" : ""}`;
@@ -143,92 +111,168 @@ function formatRetryAfter(seconds: number): string {
 	return `${minutes} minute${minutes > 1 ? "s" : ""}`;
 }
 
-/**
- * Vérifie et incrémente le compteur de rate limiting pour un identifiant
- *
- * PROTECTIONS INTÉGRÉES :
- * - Whitelist: IPs toujours autorisées (admin, tests)
- * - Blacklist: IPs toujours bloquées (malveillantes)
- * - Limite globale par IP: Protection DDoS (100 req/min max toutes actions)
- * - Logging des abus: Détection patterns anormaux
- *
- * @param identifier - Identifiant unique (IP, userId, sessionId, etc.)
- * @param config - Configuration du rate limiting
- * @returns Résultat du rate limiting
- *
- * @example
- * ```ts
- * const result = checkRateLimit('user-123', { limit: 10, windowMs: 60000 });
- * if (!result.success) {
- *   return { error: result.error };
- * }
- * ```
- */
-export function checkRateLimit(
-	identifier: string,
-	config: RateLimitConfig = {}
-): RateLimitResult {
-	const { limit = 10, windowMs = 60000 } = config;
+function cleanupExpiredEntries(): void {
 	const now = Date.now();
-	const key = `ratelimit:${identifier}`;
+	const shouldForceCleanup = rateLimitStore.size > MAX_STORE_SIZE;
 
-	// Extraire l'IP de l'identifiant (si présent)
-	const ipAddress = identifier.startsWith("ip:") ? identifier.substring(3) : null;
-
-	// 🛡️ WHITELIST: Toujours autoriser les IPs whitelistées
-	if (ipAddress && WHITELIST_IPS.length > 0 && WHITELIST_IPS.includes(ipAddress)) {
-		return {
-			success: true,
-			remaining: 999,
-			limit: 999,
-			reset: now + windowMs,
-		};
+	if (!shouldForceCleanup && (now - lastCleanup < CLEANUP_INTERVAL || rateLimitStore.size < 1000)) {
+		return;
 	}
 
-	// 🛡️ BLACKLIST: Toujours bloquer les IPs blacklistées
-	if (ipAddress && BLACKLIST_IPS.length > 0 && BLACKLIST_IPS.includes(ipAddress)) {
-		// console.warn("[RATE_LIMIT] Blacklisted IP blocked", {
-		// 	identifier,
-		// 	ip: ipAddress,
-		// 	timestamp: new Date().toISOString(),
-		// });
+	lastCleanup = now;
 
+	for (const [key, entry] of rateLimitStore.entries()) {
+		if (entry.resetAt < now) {
+			rateLimitStore.delete(key);
+		}
+	}
+
+	if (rateLimitStore.size > MAX_STORE_SIZE) {
+		const entries = Array.from(rateLimitStore.entries()).sort(
+			(a, b) => a[1].resetAt - b[1].resetAt
+		);
+		const targetSize = Math.floor(MAX_STORE_SIZE * 0.9);
+		const toDelete = entries.slice(0, entries.length - targetSize);
+		toDelete.forEach(([key]) => rateLimitStore.delete(key));
+	}
+
+	for (const [key, entry] of globalIpLimitStore.entries()) {
+		if (entry.resetAt < now) {
+			globalIpLimitStore.delete(key);
+		}
+	}
+}
+
+// ============================================================================
+// MAIN EXPORTS
+// ============================================================================
+
+/**
+ * Checks and increments the rate limit counter for an identifier.
+ *
+ * Uses Upstash Redis when configured (production), falls back to in-memory (dev).
+ *
+ * Built-in protections:
+ * - Whitelist: always-allowed IPs
+ * - Blacklist: always-blocked IPs
+ * - Global IP limit: DDoS protection (100 req/min per IP across all actions)
+ */
+export async function checkRateLimit(
+	identifier: string,
+	config: RateLimitConfig = {}
+): Promise<RateLimitResult> {
+	const { limit = 10, windowMs = 60000 } = config;
+	const now = Date.now();
+
+	const ipAddress = identifier.startsWith("ip:") ? identifier.substring(3) : null;
+
+	// Whitelist
+	if (ipAddress && WHITELIST_IPS.length > 0 && WHITELIST_IPS.includes(ipAddress)) {
+		return { success: true, remaining: 999, limit: 999, reset: now + windowMs };
+	}
+
+	// Blacklist
+	if (ipAddress && BLACKLIST_IPS.length > 0 && BLACKLIST_IPS.includes(ipAddress)) {
 		return {
 			success: false,
 			remaining: 0,
 			limit: 0,
-			reset: now + 86400000, // 24h
+			reset: now + 86400000,
 			retryAfter: 86400,
 			error: "Accès refusé. Contactez le support si vous pensez qu'il s'agit d'une erreur.",
 		};
 	}
 
-	// 🛡️ PROTECTION DDOS GLOBALE: Limite par IP (toutes actions confondues)
+	// Use Upstash if configured
+	if (isUpstashConfigured()) {
+		return checkRateLimitUpstash(identifier, ipAddress, limit, windowMs);
+	}
+
+	// Fallback to in-memory
+	return checkRateLimitInMemory(identifier, ipAddress, limit, windowMs);
+}
+
+// ============================================================================
+// UPSTASH IMPLEMENTATION
+// ============================================================================
+
+async function checkRateLimitUpstash(
+	identifier: string,
+	ipAddress: string | null,
+	limit: number,
+	windowMs: number
+): Promise<RateLimitResult> {
+	try {
+		// Global IP limit check
+		if (ipAddress) {
+			const globalLimiter = await getGlobalIpLimiter();
+			const globalResult = await globalLimiter.limit(ipAddress);
+
+			if (!globalResult.success) {
+				const retryAfterSeconds = Math.ceil((globalResult.reset - Date.now()) / 1000);
+				return {
+					success: false,
+					remaining: 0,
+					limit: GLOBAL_IP_LIMIT,
+					reset: globalResult.reset,
+					retryAfter: retryAfterSeconds,
+					error: `Trop de requêtes depuis votre adresse IP. Veuillez réessayer dans ${formatRetryAfter(retryAfterSeconds)}.`,
+				};
+			}
+		}
+
+		// Per-action rate limit
+		const limiter = await getUpstashLimiter(limit, windowMs);
+		const result = await limiter.limit(identifier);
+
+		const retryAfterSeconds = result.success
+			? undefined
+			: Math.ceil((result.reset - Date.now()) / 1000);
+
+		return {
+			success: result.success,
+			remaining: result.remaining,
+			limit,
+			reset: result.reset,
+			retryAfter: retryAfterSeconds,
+			error: result.success
+				? undefined
+				: `Trop de requêtes. Veuillez réessayer dans ${formatRetryAfter(retryAfterSeconds!)}.`,
+		};
+	} catch (error) {
+		// If Upstash fails, fall back to in-memory to avoid blocking requests
+		console.error(
+			"[RATE_LIMIT] Upstash error, falling back to in-memory:",
+			error instanceof Error ? error.message : String(error)
+		);
+		return checkRateLimitInMemory(identifier, ipAddress, limit, windowMs);
+	}
+}
+
+// ============================================================================
+// IN-MEMORY IMPLEMENTATION
+// ============================================================================
+
+function checkRateLimitInMemory(
+	identifier: string,
+	ipAddress: string | null,
+	limit: number,
+	windowMs: number
+): RateLimitResult {
+	const now = Date.now();
+	const key = `ratelimit:${identifier}`;
+
+	// Global IP limit
 	if (ipAddress) {
 		const globalKey = `global:ip:${ipAddress}`;
 		let globalEntry = globalIpLimitStore.get(globalKey);
 
-		// Créer ou réinitialiser l'entrée si expirée
 		if (!globalEntry || globalEntry.resetAt < now) {
-			globalEntry = {
-				count: 0,
-				resetAt: now + GLOBAL_IP_WINDOW,
-			};
+			globalEntry = { count: 0, resetAt: now + GLOBAL_IP_WINDOW };
 		}
 
-		// Vérifier la limite globale
 		if (globalEntry.count >= GLOBAL_IP_LIMIT) {
 			const retryAfterSeconds = Math.ceil((globalEntry.resetAt - now) / 1000);
-
-			// console.warn("[RATE_LIMIT] Global IP limit exceeded (DDoS protection)", {
-			// 	identifier,
-			// 	ip: ipAddress,
-			// 	count: globalEntry.count,
-			// 	limit: GLOBAL_IP_LIMIT,
-			// 	window: GLOBAL_IP_WINDOW / 1000 + "s",
-			// 	timestamp: new Date().toISOString(),
-			// });
-
 			return {
 				success: false,
 				remaining: 0,
@@ -239,43 +283,23 @@ export function checkRateLimit(
 			};
 		}
 
-		// Incrémenter le compteur global
 		globalEntry.count++;
 		globalIpLimitStore.set(globalKey, globalEntry);
 	}
 
-	// Nettoyage lazy des entrées expirées (toutes les 5 min)
 	cleanupExpiredEntries();
 
-	// Récupérer l'entrée existante
 	let entry = rateLimitStore.get(key);
 
-	// Si l'entrée a expiré ou n'existe pas, créer une nouvelle entrée
 	if (!entry || entry.resetAt < now) {
-		entry = {
-			count: 0,
-			resetAt: now + windowMs,
-		};
+		entry = { count: 0, resetAt: now + windowMs };
 	}
 
-	// Vérifier si la limite serait dépassée AVANT d'incrémenter
 	const wouldExceedLimit = entry.count >= limit;
 
-	// Incrémenter uniquement si pas encore bloqué
 	if (!wouldExceedLimit) {
 		entry.count++;
 		rateLimitStore.set(key, entry);
-	} else {
-		// 📊 LOGGING: Rate limit dépassé
-		// const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
-		// console.warn("[RATE_LIMIT] Rate limit exceeded", {
-		// 	identifier,
-		// 	limit,
-		// 	count: entry.count,
-		// 	window: windowMs / 1000 + "s",
-		// 	retryAfter: retryAfterSeconds + "s",
-		// 	timestamp: new Date().toISOString(),
-		// });
 	}
 
 	const success = !wouldExceedLimit;
@@ -294,76 +318,53 @@ export function checkRateLimit(
 	};
 }
 
+// ============================================================================
+// UTILITY EXPORTS
+// ============================================================================
+
 /**
- * Middleware helper pour extraire un identifiant de requête
- * Utilise l'IP comme fallback si userId/sessionId indisponibles
- *
- * @param userId - ID de l'utilisateur connecté
- * @param sessionId - ID de session pour les visiteurs
- * @param ipAddress - Adresse IP (x-forwarded-for ou x-real-ip)
- * @returns Identifiant unique pour le rate limiting
+ * Builds a rate limit identifier from available request info
  */
 export function getRateLimitIdentifier(
 	userId?: string | null,
 	sessionId?: string | null,
 	ipAddress?: string | null
 ): string {
-	if (userId) {
-		return `user:${userId}`;
-	}
-	if (sessionId) {
-		return `session:${sessionId}`;
-	}
-	if (ipAddress) {
-		return `ip:${ipAddress}`;
-	}
-	// Fallback: utiliser un identifiant générique (permissif)
+	if (userId) return `user:${userId}`;
+	if (sessionId) return `session:${sessionId}`;
+	if (ipAddress) return `ip:${ipAddress}`;
 	return "anonymous";
 }
 
 /**
- * Extrait l'adresse IP réelle depuis les headers Next.js
- * Supporte x-forwarded-for et x-real-ip (proxies/load balancers)
- *
- * @param headers - Headers de la requête Next.js
- * @returns Adresse IP ou null
+ * Extracts the real client IP from Next.js headers
  */
 export async function getClientIp(
 	headers: Awaited<ReturnType<typeof import("next/headers").headers>>
 ): Promise<string | null> {
-	// Priorité 1: x-forwarded-for (standard proxy/CDN)
 	const forwardedFor = headers.get("x-forwarded-for");
-	if (forwardedFor) {
-		// Prendre la première IP (client original)
-		return forwardedFor.split(",")[0].trim();
-	}
+	if (forwardedFor) return forwardedFor.split(",")[0].trim();
 
-	// Priorité 2: x-real-ip (Nginx, Cloudflare)
 	const realIp = headers.get("x-real-ip");
-	if (realIp) {
-		return realIp.trim();
-	}
+	if (realIp) return realIp.trim();
 
-	// Pas d'IP disponible
 	return null;
 }
 
 /**
- * Réinitialise le compteur pour un identifiant (utile pour les tests)
+ * Resets the counter for an identifier (useful for tests)
  */
 export function resetRateLimit(identifier: string): void {
 	rateLimitStore.delete(`ratelimit:${identifier}`);
 }
 
 /**
- * Obtient les statistiques actuelles de rate limiting pour un identifiant
+ * Gets current rate limiting stats for an identifier
  */
 export function getRateLimitStatus(
 	identifier: string
 ): { count: number; resetAt: number } | null {
 	const entry = rateLimitStore.get(`ratelimit:${identifier}`);
-	if (!entry || entry.resetAt < Date.now()) {
-		return null;
-	}
+	if (!entry || entry.resetAt < Date.now()) return null;
 	return { count: entry.count, resetAt: entry.resetAt };
 }

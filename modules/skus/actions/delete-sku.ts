@@ -7,44 +7,8 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
-import { UTApi } from "uploadthing/server";
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
-
-/**
- * Extrait la cle du fichier depuis une URL UploadThing
- * @param url - URL complete du fichier (ex: https://utfs.io/f/abc123.png)
- * @returns La cle du fichier (ex: abc123.png)
- */
-function extractFileKeyFromUrl(url: string): string {
-	try {
-		// Format UploadThing: https://utfs.io/f/{fileKey}
-		// ou https://uploadthing-prod.s3.us-west-2.amazonaws.com/{fileKey}
-		const urlObj = new URL(url);
-		const parts = urlObj.pathname.split("/");
-		// La cle est le dernier segment du path
-		return parts[parts.length - 1];
-	} catch {
-		// Si l'URL est invalide, on retourne l'URL telle quelle
-		// UTApi peut gerer les URLs completes
-		return url;
-	}
-}
-
-/**
- * Supprime des fichiers UploadThing de maniere securisee
- * Instancie UTApi par requete pour eviter le partage de tokens entre workers
- */
-async function deleteUploadThingFiles(urls: string[]): Promise<void> {
-	if (urls.length === 0) return;
-	try {
-		const utapi = new UTApi();
-		const fileKeys = urls.map(extractFileKeyFromUrl);
-		await utapi.deleteFiles(fileKeys);
-	} catch {
-		// Log l'erreur mais ne bloque pas la suppression du SKU
-		// Les fichiers orphelins seront nettoyes par un cron job ulterieur
-	}
-}
 
 /**
  * Server Action pour supprimer une variante de produit
@@ -218,7 +182,7 @@ export async function deleteProductSku(
 		// 10. Supprimer les fichiers UploadThing AVANT la suppression du SKU
 		// (pour eviter les medias orphelins en cas d'echec de la transaction DB)
 		const imageUrls = existingSku.images.map((img) => img.url);
-		await deleteUploadThingFiles(imageUrls);
+		await deleteUploadThingFilesFromUrls(imageUrls);
 
 		// 11. Supprimer la variante
 		// Les entrees SkuMedia seront supprimees automatiquement grace a onDelete: Cascade dans le schema Prisma

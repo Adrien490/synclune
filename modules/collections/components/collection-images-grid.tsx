@@ -1,11 +1,15 @@
 import { cn } from "@/shared/utils/cn";
 import type { CollectionImage } from "../types/collection.types";
+import { COLLECTION_IMAGE_SIZES_COMPACT } from "../constants/image-sizes.constants";
 import { CollectionImageItem } from "./collection-image-item";
+
+type CollectionImagesVariant = "default" | "compact";
 
 interface CollectionImagesGridProps {
 	images: CollectionImage[];
 	collectionName: string;
 	isAboveFold?: boolean;
+	variant?: CollectionImagesVariant;
 }
 
 /**
@@ -21,6 +25,7 @@ export function CollectionImagesGrid({
 	images,
 	collectionName,
 	isAboveFold = false,
+	variant = "default",
 }: CollectionImagesGridProps) {
 	const count = images.length;
 	const ariaLabel = `Aperçu de ${count} produit${count > 1 ? "s" : ""} de la collection ${collectionName}`;
@@ -32,6 +37,7 @@ export function CollectionImagesGrid({
 				collectionName={collectionName}
 				isAboveFold={isAboveFold}
 				ariaLabel={ariaLabel}
+				variant={variant}
 			/>
 		);
 	}
@@ -43,6 +49,7 @@ export function CollectionImagesGrid({
 				collectionName={collectionName}
 				isAboveFold={isAboveFold}
 				ariaLabel={ariaLabel}
+				variant={variant}
 			/>
 		);
 	}
@@ -54,6 +61,7 @@ export function CollectionImagesGrid({
 				collectionName={collectionName}
 				isAboveFold={isAboveFold}
 				ariaLabel={ariaLabel}
+				variant={variant}
 			/>
 		);
 	}
@@ -64,6 +72,7 @@ export function CollectionImagesGrid({
 			collectionName={collectionName}
 			isAboveFold={isAboveFold}
 			ariaLabel={ariaLabel}
+			variant={variant}
 		/>
 	);
 }
@@ -76,6 +85,7 @@ interface LayoutProps {
 	collectionName: string;
 	isAboveFold: boolean;
 	ariaLabel: string;
+	variant: CollectionImagesVariant;
 }
 
 /** 1 image : pleine largeur */
@@ -84,7 +94,12 @@ function SingleImageLayout({
 	collectionName,
 	isAboveFold,
 	ariaLabel,
+	variant,
 }: LayoutProps & { image: CollectionImage }) {
+	const sizes = variant === "compact"
+		? COLLECTION_IMAGE_SIZES_COMPACT.SINGLE
+		: "(max-width: 374px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw";
+
 	return (
 		<div
 			role="group"
@@ -96,7 +111,7 @@ function SingleImageLayout({
 				collectionName={collectionName}
 				index={0}
 				isAboveFold={isAboveFold}
-				sizes="(max-width: 374px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw"
+				sizes={sizes}
 				staggerIndex={0}
 			/>
 		</div>
@@ -109,7 +124,12 @@ function TwoImagesLayout({
 	collectionName,
 	isAboveFold,
 	ariaLabel,
+	variant,
 }: LayoutProps & { images: CollectionImage[] }) {
+	const sizes = variant === "compact"
+		? COLLECTION_IMAGE_SIZES_COMPACT.TWO_IMAGES
+		: "(max-width: 640px) 50vw, 25vw";
+
 	return (
 		<div
 			role="group"
@@ -123,7 +143,7 @@ function TwoImagesLayout({
 						collectionName={collectionName}
 						index={i}
 						isAboveFold={isAboveFold && i === 0}
-						sizes="(max-width: 640px) 50vw, 25vw"
+						sizes={sizes}
 						staggerIndex={i}
 					/>
 				</div>
@@ -138,7 +158,15 @@ function ThreeImagesLayout({
 	collectionName,
 	isAboveFold,
 	ariaLabel,
+	variant,
 }: LayoutProps & { images: CollectionImage[] }) {
+	const mainSizes = variant === "compact"
+		? COLLECTION_IMAGE_SIZES_COMPACT.THREE_IMAGES
+		: "(max-width: 640px) 50vw, 33vw";
+	const secondarySizes = variant === "compact"
+		? COLLECTION_IMAGE_SIZES_COMPACT.THREE_IMAGES
+		: "(max-width: 640px) 50vw, 25vw";
+
 	return (
 		<div
 			role="group"
@@ -152,7 +180,7 @@ function ThreeImagesLayout({
 					collectionName={collectionName}
 					index={0}
 					isAboveFold={isAboveFold}
-					sizes="(max-width: 640px) 50vw, 33vw"
+					sizes={mainSizes}
 					staggerIndex={0}
 				/>
 			</div>
@@ -163,7 +191,7 @@ function ThreeImagesLayout({
 						image={image}
 						collectionName={collectionName}
 						index={i + 1}
-						sizes="(max-width: 640px) 50vw, 25vw"
+						sizes={secondarySizes}
 						staggerIndex={i + 1}
 					/>
 				</div>
@@ -178,7 +206,18 @@ function BentoGridLayout({
 	collectionName,
 	isAboveFold,
 	ariaLabel,
+	variant,
 }: LayoutProps & { images: CollectionImage[] }) {
+	const mainSizes = variant === "compact"
+		? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_MAIN
+		: "(max-width: 640px) 50vw, 33vw";
+	const secondarySizes = variant === "compact"
+		? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_SECONDARY
+		: "(max-width: 640px) 25vw, 15vw";
+	const hiddenSecondarySizes = variant === "compact"
+		? COLLECTION_IMAGE_SIZES_COMPACT.BENTO_SECONDARY
+		: "(max-width: 640px) 0px, 15vw";
+
 	return (
 		<div
 			role="group"
@@ -204,7 +243,7 @@ function BentoGridLayout({
 					collectionName={collectionName}
 					index={0}
 					isAboveFold={isAboveFold}
-					sizes="(max-width: 640px) 50vw, 33vw"
+					sizes={mainSizes}
 					staggerIndex={0}
 				/>
 			</div>
@@ -229,7 +268,7 @@ function BentoGridLayout({
 							collectionName={collectionName}
 							index={actualIndex}
 							isAboveFold={isSecondaryAboveFold}
-							sizes={isImage4 ? "(max-width: 640px) 0px, 15vw" : "(max-width: 640px) 25vw, 15vw"}
+							sizes={isImage4 ? hiddenSecondarySizes : secondarySizes}
 							staggerIndex={actualIndex}
 						/>
 					</div>

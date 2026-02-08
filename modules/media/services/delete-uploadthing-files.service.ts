@@ -1,19 +1,6 @@
 import { UTApi } from "uploadthing/server";
 import { extractFileKeysFromUrls } from "@/modules/media/utils/extract-file-key";
-
-const UPLOADTHING_URL_PATTERNS = [
-	"utfs.io",
-	"uploadthing",
-	"ufs.sh",
-] as const;
-
-/**
- * Verifie si une URL est une URL UploadThing
- */
-export function isUploadThingUrl(url: string | null | undefined): boolean {
-	if (!url) return false;
-	return UPLOADTHING_URL_PATTERNS.some((pattern) => url.includes(pattern));
-}
+import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file";
 
 /**
  * Service centralise pour supprimer des fichiers UploadThing depuis des URLs
@@ -34,8 +21,8 @@ export async function deleteUploadThingFilesFromUrls(
 		return { deleted: 0, failed: 0 };
 	}
 
-	// Filtrer uniquement les URLs UploadThing
-	const uploadThingUrls = urls.filter(isUploadThingUrl);
+	// Filtrer uniquement les URLs UploadThing valides (HTTPS + domaine autorise)
+	const uploadThingUrls = urls.filter(isValidUploadThingUrl);
 
 	if (uploadThingUrls.length === 0) {
 		return { deleted: 0, failed: 0 };
@@ -85,7 +72,7 @@ export async function deleteUploadThingFilesFromUrls(
 export async function deleteUploadThingFileFromUrl(
 	url: string | null | undefined
 ): Promise<boolean> {
-	if (!url || !isUploadThingUrl(url)) {
+	if (!url || !isValidUploadThingUrl(url)) {
 		return false;
 	}
 

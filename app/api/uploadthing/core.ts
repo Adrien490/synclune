@@ -114,7 +114,7 @@ export const ourFileRouter = {
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
 			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
-			const rateLimit = checkRateLimit(rateLimitId, UPLOAD_LIMITS.TESTIMONIAL);
+			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.TESTIMONIAL);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
@@ -163,7 +163,7 @@ export const ourFileRouter = {
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
 			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
-			const rateLimit = checkRateLimit(rateLimitId, UPLOAD_LIMITS.CATALOG);
+			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.CATALOG);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
@@ -239,7 +239,7 @@ export const ourFileRouter = {
 				null,
 				clientIp
 			);
-			const rateLimit = checkRateLimit(rateLimitId, UPLOAD_LIMITS.CONTACT_ATTACHMENT);
+			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.CONTACT_ATTACHMENT);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(
@@ -300,7 +300,7 @@ export const ourFileRouter = {
 			const headersList = await headers();
 			const clientIp = await getClientIp(headersList);
 			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
-			const rateLimit = checkRateLimit(rateLimitId, UPLOAD_LIMITS.REVIEW_MEDIA);
+			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.REVIEW_MEDIA);
 
 			if (!rateLimit.success) {
 				throw new UploadThingError(

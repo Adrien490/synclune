@@ -108,6 +108,10 @@ export async function cleanupOrphanMedia(): Promise<{
 /**
  * Charge toutes les cles de fichiers referencees en DB
  * Approche efficace: 3 requetes simples au lieu de N requetes avec LIKE
+ *
+ * TODO: When adding new UploadThing routes (e.g. testimonialMedia, contactAttachment),
+ * ensure uploaded files are tracked in DB and add the corresponding query here.
+ * Otherwise the orphan cleanup cron will delete those files as unreferenced.
  */
 async function getAllReferencedFileKeys(): Promise<Set<string>> {
 	const keys = new Set<string>();

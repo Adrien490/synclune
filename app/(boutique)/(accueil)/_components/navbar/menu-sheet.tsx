@@ -19,6 +19,7 @@ import {
 import { BRAND } from "@/shared/constants/brand";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
+import { ROUTES } from "@/shared/constants/urls";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
@@ -61,14 +62,15 @@ export function MenuSheet({
 }: MenuSheetProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 	const pathname = usePathname();
-	const { wishlistCount, cartCount } = useBadgeCountsStore();
+	const wishlistCount = useBadgeCountsStore((s) => s.wishlistCount);
+	const cartCount = useBadgeCountsStore((s) => s.cartCount);
 	const [isOpen, setIsOpen] = useState(false);
 
 	// Séparer les items en zones
-	const homeItem = navItems.find((item) => item.href === "/");
-	const personalizationItem = navItems.find((item) => item.href === "/personnalisation");
-	const accountItem = navItems.find((item) => item.href === "/compte" || item.href === "/connexion");
-	const favoritesItem = navItems.find((item) => item.href === "/favoris");
+	const homeItem = navItems.find((item) => item.href === ROUTES.SHOP.HOME);
+	const personalizationItem = navItems.find((item) => item.href === ROUTES.SHOP.CUSTOMIZATION);
+	const accountItem = navItems.find((item) => item.href === ROUTES.ACCOUNT.ROOT || item.href === ROUTES.AUTH.SIGN_IN);
+	const favoritesItem = navItems.find((item) => item.href === ROUTES.ACCOUNT.FAVORITES);
 	const isLoggedIn = !!session?.user;
 
 	// Limites d'affichage
@@ -173,14 +175,14 @@ export function MenuSheet({
 									<li className={staggerItemClassName} style={staggerDelay(0, 90)}>
 										<SheetClose asChild>
 											<Link
-												href="/produits"
+												href={ROUTES.SHOP.PRODUCTS}
 												className={
-													pathname === "/produits"
+													pathname === ROUTES.SHOP.PRODUCTS
 														? activeLinkClassName
 														: linkClassName
 												}
 												aria-current={
-													pathname === "/produits"
+													pathname === ROUTES.SHOP.PRODUCTS
 														? "page"
 														: undefined
 												}
@@ -223,14 +225,14 @@ export function MenuSheet({
 									<li className={staggerItemClassName} style={staggerDelay(0, 110)}>
 										<SheetClose asChild>
 											<Link
-												href="/collections"
+												href={ROUTES.SHOP.COLLECTIONS}
 												className={
-													isMenuItemActive("/collections")
+													isMenuItemActive(ROUTES.SHOP.COLLECTIONS)
 														? activeLinkClassName
 														: linkClassName
 												}
 												aria-current={
-													isMenuItemActive("/collections")
+													isMenuItemActive(ROUTES.SHOP.COLLECTIONS)
 														? "page"
 														: undefined
 												}
@@ -382,14 +384,14 @@ export function MenuSheet({
 									<li className={staggerItemClassName} style={staggerDelay(2, 150)}>
 										<SheetClose asChild>
 											<Link
-												href="/commandes"
+												href={ROUTES.ACCOUNT.ORDERS}
 												className={
-													isMenuItemActive("/commandes")
+													isMenuItemActive(ROUTES.ACCOUNT.ORDERS)
 														? activeLinkClassName
 														: linkClassName
 												}
 												aria-current={
-													isMenuItemActive("/commandes") ? "page" : undefined
+													isMenuItemActive(ROUTES.ACCOUNT.ORDERS) ? "page" : undefined
 												}
 											>
 												Mes commandes
@@ -417,15 +419,15 @@ export function MenuSheet({
 									<li className={staggerItemClassName} style={staggerDelay(1, 150)}>
 										<SheetClose asChild>
 											<Link
-												href="/inscription"
+												href={ROUTES.AUTH.SIGN_UP}
 												className={cn(
-													isMenuItemActive("/inscription")
+													isMenuItemActive(ROUTES.AUTH.SIGN_UP)
 														? activeLinkClassName
 														: linkClassName,
 													"text-muted-foreground hover:text-foreground"
 												)}
 												aria-current={
-													isMenuItemActive("/inscription") ? "page" : undefined
+													isMenuItemActive(ROUTES.AUTH.SIGN_UP) ? "page" : undefined
 												}
 											>
 												Créer un compte
@@ -467,7 +469,7 @@ export function MenuSheet({
 							{isAdmin && (
 								<SheetClose asChild>
 									<Link
-										href="/admin"
+										href={ROUTES.ADMIN.ROOT}
 										className="inline-flex items-center justify-center size-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent active:scale-95 transition-all duration-150"
 										aria-label="Tableau de bord"
 									>

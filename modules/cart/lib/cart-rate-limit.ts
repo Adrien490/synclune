@@ -82,7 +82,7 @@ export async function checkCartRateLimit(
 
 	// 4. Vérifier le rate limiting
 	const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-	const rateLimit = checkRateLimit(rateLimitId, limitConfig);
+	const rateLimit = await checkRateLimit(rateLimitId, limitConfig);
 
 	if (!rateLimit.success) {
 		return {
@@ -126,7 +126,7 @@ export async function checkMergeCartsRateLimit(
 	const ipAddress = await getClientIp(headersList);
 
 	const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-	const rateLimit = checkRateLimit(rateLimitId, limitConfig);
+	const rateLimit = await checkRateLimit(rateLimitId, limitConfig);
 
 	if (!rateLimit.success) {
 		return {

@@ -1,5 +1,6 @@
 import type { MinimalSession } from "@/shared/types/session.types"
 import type { NavItemChild, NavItemWithChildren } from "@/shared/types/navigation.types"
+import { ROUTES } from "@/shared/constants/urls"
 
 export type {
 	NavCategory,
@@ -20,7 +21,7 @@ export const MAX_COLLECTIONS_IN_MENU = 3
  * Structure permettant d'afficher les collections dans les menus dropdown/collapsible
  */
 export const COLLECTIONS_MENU_ITEMS: NavItemChild[] = [
-	{ href: "/collections", label: "Toutes les collections", icon: "folder-open" },
+	{ href: ROUTES.SHOP.COLLECTIONS, label: "Toutes les collections", icon: "folder-open" },
 	// Exemples - À remplacer par vos vraies collections dynamiques
 	{ href: "/collections/nouveautes", label: "Nouveautés" },
 	{ href: "/collections/ete-2025", label: "Collection Été 2025" },
@@ -35,9 +36,9 @@ export const COLLECTIONS_MENU_ITEMS: NavItemChild[] = [
  * Niveau 1: Les créations (mega menu), Les collections (mega menu), Personnalisation
  */
 export const desktopNavItems = [
-	{ href: "/produits", label: "Les créations", icon: "gem", hasDropdown: true },
-	{ href: "/collections", label: "Les collections", icon: "folder-open", hasDropdown: true },
-	{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
+	{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations", icon: "gem", hasDropdown: true },
+	{ href: ROUTES.SHOP.COLLECTIONS, label: "Les collections", icon: "folder-open", hasDropdown: true },
+	{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
 ] as const;
 
 /**
@@ -74,13 +75,13 @@ export function getMobileNavItems(
 ): NavItemWithChildren[] {
 	// Item "Les créations" avec collapsible des types
 	const bijouxItem: NavItemWithChildren = {
-		href: "/produits",
+		href: ROUTES.SHOP.PRODUCTS,
 		label: "Les créations",
 		icon: "gem",
 		hasDropdown: true,
 		children: productTypes
 			? [
-					{ href: "/produits", label: "Les créations", icon: "gem" },
+					{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations", icon: "gem" },
 					...productTypes.map((type) => ({
 						href: `/produits/${type.slug}`,
 						label: type.label,
@@ -91,14 +92,14 @@ export function getMobileNavItems(
 
 	// Item "Collections" avec collapsible des collections (limité aux 3 dernières)
 	const collectionsItem: NavItemWithChildren = {
-		href: "/collections",
+		href: ROUTES.SHOP.COLLECTIONS,
 		label: "Les collections",
 		icon: "folder-open",
 		hasDropdown: true,
 		children: collections
 			? [
 					{
-						href: "/collections",
+						href: ROUTES.SHOP.COLLECTIONS,
 						label: "Toutes les collections",
 						icon: "folder-open",
 					},
@@ -116,27 +117,27 @@ export function getMobileNavItems(
 	// Flow optimisé: Accueil → Créations → Collections → Personnaliser → Compte → Tableau de bord (admin)
 	const items: NavItemWithChildren[] = [
 		// 🏠 ACCUEIL - Retour à la page d'accueil
-		{ href: "/", label: "Accueil", icon: "home" },
+		{ href: ROUTES.SHOP.HOME, label: "Accueil", icon: "home" },
 
 		// 💎 DÉCOUVRIR - Créations en premier
 		bijouxItem,
 		collectionsItem,
 
 		// ✨ PERSONNALISER - Service différenciateur
-		{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
+		{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
 
 		// 👤 COMPTE - Gestion utilisateur
 		session
-			? { href: "/compte", label: "Mon compte", icon: "user" }
-			: { href: "/connexion", label: "Se connecter", icon: "log-in" },
+			? { href: ROUTES.ACCOUNT.ROOT, label: "Mon compte", icon: "user" }
+			: { href: ROUTES.AUTH.SIGN_IN, label: "Se connecter", icon: "log-in" },
 
 		// ❤️ FAVORIS - Accessible à tous (Baymard: full scope label)
-		{ href: "/favoris", label: "Mes favoris", icon: "heart" },
+		{ href: ROUTES.ACCOUNT.FAVORITES, label: "Mes favoris", icon: "heart" },
 	];
 
 	// 🛠️ ADMIN - Tableau de bord (uniquement pour les administrateurs)
 	if (isAdmin) {
-		items.push({ href: "/admin", label: "Tableau de bord", icon: "layout-dashboard" });
+		items.push({ href: ROUTES.ADMIN.ROOT, label: "Tableau de bord", icon: "layout-dashboard" });
 	}
 
 	return items;
@@ -174,14 +175,14 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 	const { productTypes, collections } = data;
 	// Mega menu "Les créations" avec types de produits
 	const creationsItem: NavItemWithChildren = {
-		href: "/produits",
+		href: ROUTES.SHOP.PRODUCTS,
 		label: "Les créations",
 		icon: "gem",
 		hasDropdown: true,
 		dropdownType: "creations",
 		children: productTypes
 			? [
-					{ href: "/produits", label: "Toutes les créations", icon: "gem" },
+					{ href: ROUTES.SHOP.PRODUCTS, label: "Toutes les créations", icon: "gem" },
 					...productTypes.map((type) => ({
 						href: `/produits/${type.slug}`,
 						label: type.label,
@@ -192,14 +193,14 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 
 	// Mega menu "Les collections" avec images
 	const collectionsItem: NavItemWithChildren = {
-		href: "/collections",
+		href: ROUTES.SHOP.COLLECTIONS,
 		label: "Les collections",
 		icon: "folder-open",
 		hasDropdown: true,
 		dropdownType: "collections",
 		children: collections
 			? [
-					{ href: "/collections", label: "Toutes les collections", icon: "folder-open" },
+					{ href: ROUTES.SHOP.COLLECTIONS, label: "Toutes les collections", icon: "folder-open" },
 					...collections.map((collection) => ({
 						href: `/collections/${collection.slug}`,
 						label: collection.label,
@@ -214,24 +215,24 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 	return [
 		creationsItem,
 		collectionsItem,
-		{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" },
+		{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
 	];
 }
 
 // Footer - Navigation simple (labels harmonisés avec le header)
 export const footerNavItems = [
-	{ href: "/produits", label: "Les créations" },
-	{ href: "/collections", label: "Les collections" },
-	{ href: "/personnalisation", label: "Personnalisation" },
-	{ href: "/compte", label: "Mon compte" },
+	{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations" },
+	{ href: ROUTES.SHOP.COLLECTIONS, label: "Les collections" },
+	{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation" },
+	{ href: ROUTES.ACCOUNT.ROOT, label: "Mon compte" },
 ] as const;
 
 // Liens légaux
 export const legalLinks = [
-	{ label: "CGV", href: "/cgv" },
-	{ label: "Mentions légales", href: "/mentions-legales" },
-	{ label: "Politique de confidentialité", href: "/confidentialite" },
-	{ label: "Gestion des cookies", href: "/cookies" },
-	{ label: "Formulaire de rétractation", href: "/retractation" },
-	{ label: "Accessibilité", href: "/accessibilite" },
+	{ label: "CGV", href: ROUTES.LEGAL.CGV },
+	{ label: "Mentions légales", href: ROUTES.LEGAL.LEGAL_NOTICE },
+	{ label: "Politique de confidentialité", href: ROUTES.LEGAL.PRIVACY },
+	{ label: "Gestion des cookies", href: ROUTES.LEGAL.COOKIES },
+	{ label: "Formulaire de rétractation", href: ROUTES.LEGAL.WITHDRAWAL },
+	{ label: "Accessibilité", href: ROUTES.LEGAL.ACCESSIBILITY },
 ] as const;

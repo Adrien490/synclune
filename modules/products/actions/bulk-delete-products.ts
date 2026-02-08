@@ -6,43 +6,13 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, success, error, notFound, validationError, handleActionError } from "@/shared/lib/actions";
-import { UTApi } from "uploadthing/server";
 import { bulkDeleteProductsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
 
 /**
- * Extrait la cle du fichier depuis une URL UploadThing
- */
-function extractFileKeyFromUrl(url: string): string {
-	try {
-		const urlObj = new URL(url);
-		const parts = urlObj.pathname.split("/");
-		return parts[parts.length - 1];
-	} catch {
-		return url;
-	}
-}
-
-/**
- * Supprime des fichiers UploadThing de maniere securisee
- * Instancie UTApi par requete pour eviter le partage de tokens entre workers
- */
-async function deleteUploadThingFiles(urls: string[]): Promise<void> {
-	if (urls.length === 0) return;
-	try {
-		const utapi = new UTApi();
-		const fileKeys = urls.map(extractFileKeyFromUrl);
-		await utapi.deleteFiles(fileKeys);
-	} catch {
-		// Ignore - ne bloque pas la suppression des produits
-	}
-}
-
-/**
- * Server Action pour supprimer plusieurs produits
- * Supprime egalement :
- * - Tous les SKUs (cascade Prisma)
- * - Toutes les images des SKUs (fichiers UploadThing + entrees DB)
+ * Server Action pour soft-delete plusieurs produits
+ * Les SKUs sont soft-deleted en cascade.
+ * Les fichiers UploadThing sont preserves jusqu'au hard delete (retention legale).
  * Compatible avec useActionState de React 19
  */
 export async function bulkDeleteProducts(
@@ -97,17 +67,6 @@ export async function bulkDeleteProducts(
 						},
 					},
 				},
-				skus: {
-					select: {
-						id: true,
-						sku: true,
-						images: {
-							select: {
-								url: true,
-							},
-						},
-					},
-				},
 			},
 		});
 
@@ -133,13 +92,8 @@ export async function bulkDeleteProducts(
 			);
 		}
 
-		// 6. Supprimer tous les fichiers UploadThing de tous les produits
-		const allImageUrls = existingProducts.flatMap((product) =>
-			product.skus.flatMap((sku) => sku.images.map((img) => img.url))
-		);
-		await deleteUploadThingFiles(allImageUrls);
-
-		// 7. Soft delete les produits et leurs SKUs dans une transaction
+		// 6. Soft delete les produits et leurs SKUs dans une transaction
+		// Files are preserved on UploadThing until hard delete (10-year retention)
 		await prisma.$transaction(async (tx) => {
 			const now = new Date();
 			await tx.productSku.updateMany({
@@ -152,7 +106,7 @@ export async function bulkDeleteProducts(
 			});
 		});
 
-		// 8. Invalidate cache tags pour tous les produits supprimes
+		// 7. Invalidate cache tags pour tous les produits supprimes
 		for (const product of existingProducts) {
 			const productTags = getProductInvalidationTags(product.slug, product.id);
 			productTags.forEach(tag => updateTag(tag));
@@ -166,7 +120,7 @@ export async function bulkDeleteProducts(
 			}
 		}
 
-		// 9. Success
+		// 8. Success
 		return success(
 			`${existingProducts.length} produit${existingProducts.length > 1 ? "s" : ""} supprimé${existingProducts.length > 1 ? "s" : ""} avec succès.`,
 			{

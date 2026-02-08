@@ -9,8 +9,9 @@ import { UploadProgress } from "@/modules/media/components/admin/upload-progress
 import { MultiSelect } from "@/shared/components/multi-select";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { useUpdateProductForm } from "@/modules/products/hooks/use-update-product-form";
+import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { cn } from "@/shared/utils/cn";
-import { UploadDropzone, useUploadThing } from "@/modules/media/utils/uploadthing";
+import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { Euro, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -33,8 +34,8 @@ export function EditProductForm({
 }: EditProductFormProps) {
 	const router = useRouter();
 
-	const { startUpload: startMediaUpload, isUploading: isMediaUploading } =
-		useUploadThing("catalogMedia");
+	const { upload: uploadMedia, isUploading: isMediaUploading, progress: uploadProgress } =
+		useMediaUpload();
 
 	const { form, action, isPending } = useUpdateProductForm({
 		product,
@@ -430,40 +431,6 @@ export function EditProductForm({
 						{(field) => {
 							const maxCount = 6;
 
-							const handleUploadComplete = (
-								uploadedFiles: Array<{
-									url: string;
-									name: string;
-									type: string;
-									thumbnailUrl?: string;
-									blurDataUrl?: string | null;
-								}>
-							) => {
-								const remaining = maxCount - field.state.value.length;
-								const filesToAdd = uploadedFiles.slice(0, remaining);
-
-								if (uploadedFiles.length > remaining) {
-									toast.warning(
-										`Seulement ${remaining} média${remaining > 1 ? "s ont" : " a"} été ajouté${remaining > 1 ? "s" : ""}`
-									);
-								}
-
-								filesToAdd.forEach((file) => {
-									const mediaType = file.type.startsWith("video/")
-										? "VIDEO"
-										: "IMAGE";
-
-									// Les thumbnails vidéo sont générées côté serveur dans onUploadComplete
-									field.pushValue({
-										url: file.url,
-										thumbnailUrl: file.thumbnailUrl ?? undefined,
-										blurDataUrl: file.blurDataUrl ?? undefined,
-										altText: form.state.values.title || undefined,
-										mediaType: mediaType as "IMAGE" | "VIDEO",
-									});
-								});
-							};
-
 							return (
 								<div className="space-y-4">
 									<MediaUploadGrid
@@ -496,15 +463,7 @@ export function EditProductForm({
 												endpoint="catalogMedia"
 												onChange={async (files) => {
 													const remaining = maxCount - field.state.value.length;
-													let filesToUpload = files.slice(0, remaining);
-
-													// Trier: images d'abord, vidéos ensuite (l'ordre du navigateur n'est pas garanti)
-													filesToUpload = filesToUpload.sort((a, b) => {
-														const aIsVideo = a.type.startsWith("video/");
-														const bIsVideo = b.type.startsWith("video/");
-														if (aIsVideo === bIsVideo) return 0;
-														return aIsVideo ? 1 : -1;
-													});
+													const filesToUpload = files.slice(0, remaining);
 
 													if (files.length > remaining) {
 														toast.warning(
@@ -512,42 +471,17 @@ export function EditProductForm({
 														);
 													}
 
-													// Vérifier la taille des fichiers
-													const oversizedFiles = filesToUpload.filter((f) => {
-														const maxFileSize = f.type.startsWith("video/")
-															? 512 * 1024 * 1024
-															: 16 * 1024 * 1024;
-														return f.size > maxFileSize;
-													});
-													if (oversizedFiles.length > 0) {
-														toast.error(
-															`${oversizedFiles.length} média(s) dépassent la limite`
-														);
-														filesToUpload = filesToUpload.filter((f) => {
-															const maxFileSize = f.type.startsWith("video/")
-																? 512 * 1024 * 1024
-																: 16 * 1024 * 1024;
-															return f.size <= maxFileSize;
+													// useMediaUpload handles validation, retry, and video thumbnails
+													const results = await uploadMedia(filesToUpload);
+													results.forEach((result) => {
+														field.pushValue({
+															url: result.url,
+															thumbnailUrl: result.thumbnailUrl ?? undefined,
+															blurDataUrl: result.blurDataUrl ?? undefined,
+															altText: form.state.values.title || undefined,
+															mediaType: result.mediaType,
 														});
-														if (filesToUpload.length === 0) return;
-													}
-
-													try {
-														const res = await startMediaUpload(filesToUpload);
-														if (res) {
-															handleUploadComplete(
-																res.map((r, i) => ({
-																	url: r.serverData?.url || "",
-																	name: filesToUpload[i].name,
-																	type: filesToUpload[i].type,
-																	thumbnailUrl: r.serverData?.thumbnailUrl ?? undefined,
-																	blurDataUrl: r.serverData?.blurDataUrl,
-																}))
-															);
-														}
-													} catch {
-														toast.error("Échec de l'upload des médias");
-													}
+													});
 												}}
 												onUploadError={(error) => {
 													toast.error(`Erreur: ${error.message}`);

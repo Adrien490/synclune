@@ -1,5 +1,6 @@
 import type { Session } from "@/modules/auth/lib/auth";
 import { SheetClose } from "@/shared/components/ui/sheet";
+import { ROUTES } from "@/shared/constants/urls";
 import Link from "next/link";
 
 /**
@@ -21,7 +22,7 @@ export function UserHeader({
 		<div className="px-4 py-4 bg-primary/5 rounded-xl mb-4">
 			<SheetClose asChild>
 				<Link
-					href="/compte"
+					href={ROUTES.ACCOUNT.ROOT}
 					className="block group"
 					aria-label="Accéder à mon compte"
 				>

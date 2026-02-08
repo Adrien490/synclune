@@ -60,7 +60,7 @@ export async function enforceRateLimitForCurrentUser(
 	limit: RateLimitConfig
 ): Promise<{ success: true } | { error: ActionState }> {
 	const identifier = await getRateLimitId();
-	const check = checkRateLimit(identifier, limit);
+	const check = await checkRateLimit(identifier, limit);
 
 	if (!check.success) {
 		return {

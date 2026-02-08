@@ -5,38 +5,9 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { handleActionError, success, error } from "@/shared/lib/actions";
-import { UTApi } from "uploadthing/server";
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { bulkDeleteSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
-
-/**
- * Extrait la clé du fichier depuis une URL UploadThing
- */
-function extractFileKeyFromUrl(url: string): string {
-	try {
-		const urlObj = new URL(url);
-		const parts = urlObj.pathname.split("/");
-		return parts[parts.length - 1];
-	} catch {
-		return url;
-	}
-}
-
-/**
- * Supprime des fichiers UploadThing de maniere securisee
- * Instancie UTApi par requete pour eviter le partage de tokens entre workers
- */
-async function deleteUploadThingFiles(urls: string[]): Promise<void> {
-	if (urls.length === 0) return;
-	try {
-		const utapi = new UTApi();
-		const fileKeys = urls.map(extractFileKeyFromUrl);
-		await utapi.deleteFiles(fileKeys);
-	} catch {
-		// Log l'erreur mais ne bloque pas la suppression
-		// Les fichiers orphelins seront nettoyés par un cron job
-	}
-}
 
 export async function bulkDeleteSkus(
 	prevState: ActionState | undefined,
@@ -114,7 +85,7 @@ export async function bulkDeleteSkus(
 		const allImageUrls = skusData.flatMap((sku) =>
 			sku.images.map((img) => img.url)
 		);
-		await deleteUploadThingFiles(allImageUrls);
+		await deleteUploadThingFilesFromUrls(allImageUrls);
 
 		// Supprimer toutes les variantes et synchroniser les prix
 		const productIds = [...new Set(skusData.map((s) => s.productId))];

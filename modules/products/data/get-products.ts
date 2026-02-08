@@ -92,7 +92,7 @@ export async function getProducts(
 					? SEARCH_RATE_LIMITS.authenticated
 					: SEARCH_RATE_LIMITS.guest;
 
-				const rateLimitResult = checkRateLimit(`search:${rateLimitId}`, limits);
+				const rateLimitResult = await checkRateLimit(`search:${rateLimitId}`, limits);
 				if (!rateLimitResult.success) {
 					// Fallback: utilise recherche exacte seulement
 					console.warn("[search] Rate limit exceeded:", {

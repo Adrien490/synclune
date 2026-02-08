@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { NavItemChild } from "@/shared/constants/navigation";
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { CollectionImagesGrid } from "@/modules/collections/components/collection-images-grid";
+import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { ArrowRight, Gem } from "lucide-react";
 
@@ -17,14 +18,14 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 
 	// Exclude "Toutes les collections" from cards (shown as CTA instead)
 	const filteredCollections = collections?.filter(
-		(c) => c.href !== "/collections",
+		(c) => c.href !== ROUTES.SHOP.COLLECTIONS,
 	);
 
 	if (!filteredCollections || filteredCollections.length === 0) {
 		return null;
 	}
 
-	const isViewAllActive = pathname === "/collections";
+	const isViewAllActive = pathname === ROUTES.SHOP.COLLECTIONS;
 
 	return (
 		<div className="py-6">
@@ -35,7 +36,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 			{/* CTA "Toutes les collections" */}
 			<NavigationMenuLink asChild>
 				<Link
-					href="/collections"
+					href={ROUTES.SHOP.COLLECTIONS}
 					aria-current={isViewAllActive ? "page" : undefined}
 					className={cn(
 						"flex-row! flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-semibold min-h-11",
@@ -80,6 +81,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 									<CollectionImagesGrid
 										images={displayImages}
 										collectionName={collection.label}
+										variant="compact"
 									/>
 								) : (
 									<div className="relative aspect-square overflow-hidden rounded-t-xl bg-muted flex items-center justify-center">

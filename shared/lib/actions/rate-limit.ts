@@ -29,11 +29,11 @@ import { ActionStatus, type ActionState } from "@/shared/types/server-action";
  * // Rate limit OK, continuer
  * ```
  */
-export function enforceRateLimit(
+export async function enforceRateLimit(
 	identifier: string,
 	limit: RateLimitConfig
-): { success: true } | { error: ActionState } {
-	const check = checkRateLimit(identifier, limit);
+): Promise<{ success: true } | { error: ActionState }> {
+	const check = await checkRateLimit(identifier, limit);
 
 	if (!check.success) {
 		return {

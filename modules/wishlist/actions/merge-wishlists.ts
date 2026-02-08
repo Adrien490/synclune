@@ -53,7 +53,7 @@ export async function mergeWishlists(
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
 		const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.MERGE);
+		const rateLimit = await checkRateLimit(rateLimitId, WISHLIST_LIMITS.MERGE);
 
 		if (!rateLimit.success) {
 			return error("Trop de requetes. Veuillez reessayer plus tard.");

@@ -12,6 +12,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
+import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { LayoutDashboard, LogOut, User } from "lucide-react";
 import Link from "next/link";
@@ -40,7 +41,7 @@ export function AccountDropdown({ session, isAdmin, className }: AccountDropdown
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<Link
-						href="/connexion"
+						href={ROUTES.AUTH.SIGN_IN}
 						className={className}
 						aria-label="Se connecter"
 					>
@@ -85,14 +86,14 @@ export function AccountDropdown({ session, isAdmin, className }: AccountDropdown
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
 					<DropdownMenuItem asChild>
-						<Link href="/compte">
+						<Link href={ROUTES.ACCOUNT.ROOT}>
 							<User aria-hidden="true" />
 							Mon compte
 						</Link>
 					</DropdownMenuItem>
 					{isAdmin && (
 						<DropdownMenuItem asChild>
-							<Link href="/admin">
+							<Link href={ROUTES.ADMIN.ROOT}>
 								<LayoutDashboard aria-hidden="true" />
 								Tableau de bord
 							</Link>
