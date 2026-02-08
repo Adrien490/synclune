@@ -4,8 +4,7 @@ import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { updateProductSkuStatusSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 
@@ -29,17 +28,10 @@ export async function updateProductSkuStatus(
 		};
 
 		// 3. Validation avec Zod
-		const result = updateProductSkuStatusSchema.safeParse(rawData);
+		const validated = validateInput(updateProductSkuStatusSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
-		}
-
-		const { skuId: validatedSkuId, isActive: validatedIsActive } = result.data;
+		const { skuId: validatedSkuId, isActive: validatedIsActive } = validated.data;
 
 		// 4. Verifier que le SKU existe et recuperer les infos pour invalidation
 		const existingSku = await prisma.productSku.findUnique({
@@ -59,19 +51,14 @@ export async function updateProductSkuStatus(
 		});
 
 		if (!existingSku) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "La variante de produit n'existe pas.",
-			};
+			return error("La variante de produit n'existe pas.");
 		}
 
 		// 5. Verifier qu'on ne desactive pas la variante principale
 		if (existingSku.isDefault && !validatedIsActive) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					"Impossible de desactiver la variante principale d'un produit. Veuillez d'abord definir une autre variante comme principale.",
-			};
+			return error(
+				"Impossible de desactiver la variante principale d'un produit. Veuillez d'abord definir une autre variante comme principale."
+			);
 		}
 
 		// 6. Mettre a jour le statut
@@ -95,11 +82,10 @@ export async function updateProductSkuStatus(
 		tags.forEach(tag => updateTag(tag));
 
 		// 8. Success
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Variante ${updatedSku.sku} ${validatedIsActive ? "activée" : "désactivée"} avec succès.`,
-			data: updatedSku,
-		};
+		return success(
+			`Variante ${updatedSku.sku} ${validatedIsActive ? "activee" : "desactivee"} avec succes.`,
+			updatedSku
+		);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la mise à jour du statut");
 	}

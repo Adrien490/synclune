@@ -3,8 +3,8 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 import { subscriberIdSchema } from "../schemas/subscriber.schemas";
 import { getNewsletterInvalidationTags } from "../constants/cache";
@@ -23,15 +23,10 @@ export async function unsubscribeSubscriberAdmin(
 
 		// 2. Validation de l'entrée
 		const subscriberId = formData.get("subscriberId");
-		const validation = subscriberIdSchema.safeParse({ subscriberId });
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: validation.error.issues[0]?.message || "ID d'abonné invalide",
-			};
-		}
+		const validated = validateInput(subscriberIdSchema, { subscriberId });
+		if ("error" in validated) return validated.error;
 
-		const validatedId = validation.data.subscriberId;
+		const validatedId = validated.data.subscriberId;
 
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
@@ -40,17 +35,11 @@ export async function unsubscribeSubscriberAdmin(
 		});
 
 		if (!subscriber) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Abonné non trouvé",
-			};
+			return notFound("Abonné");
 		}
 
 		if (subscriber.status === NewsletterStatus.UNSUBSCRIBED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Cet abonné est déjà désabonné",
-			};
+			return error("Cet abonné est déjà désabonné");
 		}
 
 		// 4. Désabonner
@@ -65,15 +54,8 @@ export async function unsubscribeSubscriberAdmin(
 		// 5. Invalider le cache
 		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${subscriber.email} a été désabonné`,
-		};
-	} catch (error) {
-		console.error("[UNSUBSCRIBE_SUBSCRIBER_ADMIN] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue",
-		};
+		return success(`${subscriber.email} a été désabonné`);
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue");
 	}
 }

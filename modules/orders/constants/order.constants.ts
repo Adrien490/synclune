@@ -24,10 +24,7 @@ export const GET_ORDERS_SELECT = {
 	shippedAt: true,
 	paymentMethod: true,
 	paidAt: true,
-	// TODO: Ajouter ces champs quand la feature factures sera implémentée dans le schéma Prisma
-	// invoiceNumber: true,
-	// invoiceStatus: true,
-	// invoiceGeneratedAt: true,
+	// ROADMAP: Invoices - add invoiceNumber, invoiceStatus, invoiceGeneratedAt
 	createdAt: true,
 	updatedAt: true,
 	user: {
@@ -62,7 +59,7 @@ export const GET_ORDER_SELECT = {
 	stripePaymentIntentId: true,
 	stripeChargeId: true,
 	stripeCustomerId: true,
-	// TODO: Ajouter stripeInvoiceId au schéma Prisma quand la feature factures sera implémentée
+	// ROADMAP: Invoices - add stripeInvoiceId
 	customerEmail: true,
 	customerName: true,
 	customerPhone: true,
@@ -93,10 +90,7 @@ export const GET_ORDER_SELECT = {
 	fulfillmentStatus: true,
 	paymentMethod: true,
 	paidAt: true,
-	// TODO: Ajouter ces champs quand la feature factures sera implémentée dans le schéma Prisma
-	// invoiceNumber: true,
-	// invoiceGeneratedAt: true,
-	// invoiceStatus: true,
+	// ROADMAP: Invoices - add invoiceNumber, invoiceGeneratedAt, invoiceStatus
 	createdAt: true,
 	updatedAt: true,
 	items: {

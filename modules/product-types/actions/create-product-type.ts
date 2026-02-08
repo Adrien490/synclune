@@ -1,12 +1,13 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
+
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
-import { handleActionError } from "@/shared/lib/actions";
 
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { createProductTypeSchema } from "../schemas/product-type.schemas";
@@ -27,17 +28,10 @@ export async function createProductType(
 		};
 
 		// 3. Valider les donnees
-		const validation = createProductTypeSchema.safeParse(rawData);
+		const validated = validateInput(createProductTypeSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validatedData = validated.data;
 
 		// 4. Verifier l'unicite du label
 		const existingLabel = await prisma.productType.findFirst({
@@ -45,10 +39,7 @@ export async function createProductType(
 		});
 
 		if (existingLabel) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Ce label de type existe deja. Veuillez en choisir un autre.",
-			};
+			return error("Ce label de type existe deja. Veuillez en choisir un autre.");
 		}
 
 		// 5. Generer un slug unique automatiquement
@@ -57,8 +48,10 @@ export async function createProductType(
 		// 6. Creer le type de produit
 		await prisma.productType.create({
 			data: {
-				label: validatedData.label,
-				description: validatedData.description,
+				label: sanitizeText(validatedData.label),
+				description: validatedData.description
+					? sanitizeText(validatedData.description)
+					: undefined,
 				slug,
 				isActive: true,
 				isSystem: false, // Les types crees manuellement ne sont pas systeme
@@ -69,10 +62,7 @@ export async function createProductType(
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
 		updateTag("navbar-menu");
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Type de produit créé avec succès",
-		};
+		return success("Type de produit créé avec succès");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la création du type de produit");
 	}

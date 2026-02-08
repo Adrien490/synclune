@@ -27,18 +27,24 @@ export async function sendRefundConfirmationEmail({
 	isPartialRefund: boolean
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		RefundConfirmationEmail({
-			orderNumber,
-			customerName,
-			refundAmount,
-			originalOrderTotal,
-			reason,
-			isPartialRefund,
-			orderDetailsUrl,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.REFUND_CONFIRMATION, html })
+	const component = RefundConfirmationEmail({
+		orderNumber,
+		customerName,
+		refundAmount,
+		originalOrderTotal,
+		reason,
+		isPartialRefund,
+		orderDetailsUrl,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.REFUND_CONFIRMATION,
+		html,
+		text,
+		tags: [{ name: "category", value: "payment" }],
+	})
 }
 
 /**
@@ -63,16 +69,22 @@ export async function sendRefundApprovedEmail({
 	isPartialRefund: boolean
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		RefundApprovedEmail({
-			orderNumber,
-			customerName,
-			refundAmount,
-			originalOrderTotal,
-			reason,
-			isPartialRefund,
-			orderDetailsUrl,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.REFUND_APPROVED, html })
+	const component = RefundApprovedEmail({
+		orderNumber,
+		customerName,
+		refundAmount,
+		originalOrderTotal,
+		reason,
+		isPartialRefund,
+		orderDetailsUrl,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.REFUND_APPROVED,
+		html,
+		text,
+		tags: [{ name: "category", value: "payment" }],
+	})
 }

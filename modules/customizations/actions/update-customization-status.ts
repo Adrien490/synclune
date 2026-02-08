@@ -5,9 +5,13 @@ import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	error,
+} from "@/shared/lib/actions";
 import { getCustomizationInvalidationTags, CUSTOMIZATION_CACHE_TAGS } from "../constants/cache";
 import { updateStatusSchema } from "../schemas/update-status.schema";
 
@@ -44,10 +48,7 @@ export async function updateCustomizationStatus(
 		});
 
 		if (!existing) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Demande non trouvée",
-			};
+			return error("Demande non trouvee");
 		}
 
 		// 4. Update status
@@ -70,10 +71,7 @@ export async function updateCustomizationStatus(
 		];
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Statut mis à jour",
-		};
+		return success("Statut mis a jour");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la mise à jour du statut");
 	}

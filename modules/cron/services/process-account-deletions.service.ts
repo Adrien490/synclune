@@ -1,8 +1,9 @@
+import { updateTag } from "next/cache";
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { deleteUploadThingFileFromUrl } from "@/modules/media/services/delete-uploadthing-files.service";
-
-const GRACE_PERIOD_DAYS = 30; // 30 jours de délai de rétractation RGPD
+import { BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
+import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 
 /**
  * Service de traitement des suppressions de compte RGPD
@@ -22,7 +23,7 @@ export async function processAccountDeletions(): Promise<{
 	);
 
 	const gracePeriodEnd = new Date(
-		Date.now() - GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+		Date.now() - RETENTION.GDPR_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
 	);
 
 	// Trouver les comptes PENDING_DELETION dont la période de grâce est terminée
@@ -37,7 +38,7 @@ export async function processAccountDeletions(): Promise<{
 			email: true,
 			image: true,
 		},
-		take: 50, // Limiter pour éviter timeout
+		take: BATCH_SIZE_LARGE,
 	});
 
 	console.log(
@@ -49,10 +50,8 @@ export async function processAccountDeletions(): Promise<{
 
 	for (const user of accountsToAnonymize) {
 		try {
-			// Supprimer l'avatar UploadThing avant anonymisation
-			if (user.image) {
-				await deleteUploadThingFileFromUrl(user.image);
-			}
+			// Save avatar URL before transaction (will be deleted after success)
+			const avatarUrl = user.image;
 
 			const anonymizedEmail = `anonymized-${user.id}@deleted.local`;
 			const now = new Date();
@@ -106,6 +105,25 @@ export async function processAccountDeletions(): Promise<{
 				// userId reste dans Order pour traçabilité, mais les données personnelles
 				// du user sont anonymisées (email, nom, adresse IP, etc.)
 			});
+
+			// Invalidate user-related caches
+			updateTag(REVIEWS_CACHE_TAGS.USER(user.id));
+			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(user.id));
+
+			// Delete avatar from UploadThing AFTER successful transaction
+			if (avatarUrl) {
+				try {
+					await deleteUploadThingFileFromUrl(avatarUrl);
+				} catch (avatarError) {
+					// Non-blocking: avatar becomes orphan, cleaned up by cleanup-orphan-media
+					console.warn(
+						`[CRON:process-account-deletions] Failed to delete avatar for ${user.id}:`,
+						avatarError instanceof Error
+							? avatarError.message
+							: String(avatarError)
+					);
+				}
+			}
 
 			console.log(
 				`[CRON:process-account-deletions] Anonymized account ${user.id}`

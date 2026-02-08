@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
-import { ActionStatus } from "@/shared/types/server-action";
+import { success, error, handleActionError } from "@/shared/lib/actions";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import { headers } from "next/headers";
@@ -46,10 +46,7 @@ export async function mergeWishlists(
 		// Empêche un attaquant de fusionner la wishlist d'un autre utilisateur
 		const currentSession = await getSession();
 		if (!currentSession?.user?.id || currentSession.user.id !== userId) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Non autorisé",
-			};
+			return error("Non autorise");
 		}
 
 		// 0b. Rate limiting uniforme avec les autres actions wishlist (avec IP fallback)
@@ -59,10 +56,7 @@ export async function mergeWishlists(
 		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.MERGE);
 
 		if (!rateLimit.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Trop de requêtes. Veuillez réessayer plus tard.",
-			};
+			return error("Trop de requetes. Veuillez reessayer plus tard.");
 		}
 
 		// 0c. Vérifier que l'utilisateur existe (protection contre appels directs)
@@ -72,10 +66,7 @@ export async function mergeWishlists(
 		});
 
 		if (!user || user.deletedAt) {
-			return {
-				status: ActionStatus.ERROR,
-				message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
-			};
+			return error(WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 		}
 
 		// 1. Récupérer les deux wishlists (via data/)
@@ -89,11 +80,7 @@ export async function mergeWishlists(
 			if (guestWishlist) {
 				await prisma.wishlist.delete({ where: { id: guestWishlist.id } });
 			}
-			return {
-				status: ActionStatus.SUCCESS,
-				message: WISHLIST_INFO_MESSAGES.NO_ITEMS_TO_MERGE,
-				data: { addedItems: 0, skippedItems: 0 },
-			};
+			return success(WISHLIST_INFO_MESSAGES.NO_ITEMS_TO_MERGE, { addedItems: 0, skippedItems: 0 });
 		}
 
 		// 3. Créer la wishlist utilisateur si elle n'existe pas
@@ -160,21 +147,16 @@ export async function mergeWishlists(
 		const userTags = getWishlistInvalidationTags(userId, undefined);
 		[...guestTags, ...userTags].forEach(tag => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: addedCount > 0
-				? `${addedCount} favori${addedCount > 1 ? "s" : ""} ajouté${addedCount > 1 ? "s" : ""} à ta wishlist`
-				: "Tous les favoris étaient déjà dans ta liste",
-			data: {
+		return success(
+			addedCount > 0
+				? `${addedCount} favori${addedCount > 1 ? "s" : ""} ajoute${addedCount > 1 ? "s" : ""} a ta wishlist`
+				: "Tous les favoris etaient deja dans ta liste",
+			{
 				addedItems: addedCount,
 				skippedItems: skippedCount,
 			},
-		};
+		);
 	} catch (e) {
-		console.error("[MERGE_WISHLISTS]", e);
-		return {
-			status: ActionStatus.ERROR,
-			message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
-		};
+		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 	}
 }

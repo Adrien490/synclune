@@ -4,13 +4,12 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
+import { validateInput, handleActionError, success, error, BusinessError } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import { getCartExpirationDate, getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { addToCartSchema } from "../schemas/cart.schemas";
-import { BusinessError, handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour ajouter un article au panier
@@ -30,16 +29,10 @@ export async function addToCart(
 		};
 
 		// 2. Validation avec Zod
-		const result = addToCartSchema.safeParse(rawData);
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(addToCartSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const validatedData = result.data;
+		const validatedData = validated.data;
 
 		// 3. Rate limiting + récupération contexte
 		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.ADD, { createSessionIfMissing: true });
@@ -64,10 +57,7 @@ export async function addToCart(
 
 		// 5. Vérifier que sessionId est bien défini pour les visiteurs
 		if (!userId && !sessionId) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Impossible de créer une session panier. Veuillez réessayer.",
-			};
+			return error("Impossible de creer une session panier. Veuillez reessayer.");
 		}
 
 		// 6. Transaction: Trouver ou créer le panier, ajouter/mettre à jour l'item
@@ -197,17 +187,13 @@ export async function addToCart(
 
 		// 9. Success - Return ActionState format
 		const successMessage = transactionResult.isUpdate
-			? `Quantité mise à jour (${transactionResult.newQuantity})`
-			: "Article ajouté au panier";
+			? `Quantite mise a jour (${transactionResult.newQuantity})`
+			: "Article ajoute au panier";
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: successMessage,
-			data: {
-				cartItemId: transactionResult.cartItem.id,
-				quantity: transactionResult.newQuantity,
-			},
-		};
+		return success(successMessage, {
+			cartItemId: transactionResult.cartItem.id,
+			quantity: transactionResult.newQuantity,
+		});
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de l'ajout au panier");
 	}

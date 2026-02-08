@@ -5,8 +5,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_ADJUST_STOCK_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { adjustSkuStockSchema } from "../schemas/sku.schemas";
 import { getInventoryInvalidationTags } from "../utils/cache.utils";
@@ -36,17 +35,12 @@ export async function adjustSkuStock(
 		if ("error" in adminCheck) return adminCheck.error;
 
 		// 2. Validation
-		const validation = adjustSkuStockSchema.safeParse({
+		const validation = validateInput(adjustSkuStockSchema, {
 			skuId,
 			adjustment,
 			reason: reason || undefined,
 		});
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Données invalides",
-			};
-		}
+		if ("error" in validation) return validation.error;
 
 		// 3. Vérifier que le SKU existe
 		const sku = await prisma.productSku.findUnique({
@@ -61,19 +55,13 @@ export async function adjustSkuStock(
 		});
 
 		if (!sku) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Variante non trouvée",
-			};
+			return error("Variante non trouvee");
 		}
 
-		// 4. Vérifier que le stock ne devient pas négatif
+		// 4. Verifier que le stock ne devient pas negatif
 		const newInventory = sku.inventory + adjustment;
 		if (newInventory < 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: `Stock insuffisant. Stock actuel: ${sku.inventory}, ajustement demandé: ${adjustment}`,
-			};
+			return error(`Stock insuffisant. Stock actuel: ${sku.inventory}, ajustement demande: ${adjustment}`);
 		}
 
 		// 5. Mettre à jour le stock avec opération atomique (évite les race conditions)
@@ -92,16 +80,12 @@ export async function adjustSkuStock(
 		tags.forEach((tag) => updateTag(tag));
 
 		const adjustmentText = adjustment > 0 ? `+${adjustment}` : `${adjustment}`;
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Stock de ${sku.sku} ajusté (${adjustmentText}). Nouveau stock: ${newInventory}`,
-			data: {
-				skuId: sku.id,
-				previousInventory: sku.inventory,
-				newInventory,
-				adjustment,
-			},
-		};
+		return success(`Stock de ${sku.sku} ajuste (${adjustmentText}). Nouveau stock: ${newInventory}`, {
+			skuId: sku.id,
+			previousInventory: sku.inventory,
+			newInventory,
+			adjustment,
+		});
 	} catch (e) {
 		return handleActionError(e, "Impossible d'ajuster le stock");
 	}

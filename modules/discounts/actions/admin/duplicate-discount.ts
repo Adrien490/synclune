@@ -3,7 +3,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import { revalidatePath } from "next/cache";
 
 /**
@@ -26,10 +26,7 @@ export async function duplicateDiscount(discountId: string): Promise<ActionState
 		});
 
 		if (!original) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Code promo non trouvé",
-			};
+			return notFound("Code promo");
 		}
 
 		// 3. Générer un nouveau code unique
@@ -49,10 +46,7 @@ export async function duplicateDiscount(discountId: string): Promise<ActionState
 
 			// Sécurité: éviter boucle infinie
 			if (suffix > 100) {
-				return {
-					status: ActionStatus.ERROR,
-					message: "Impossible de générer un code unique. Supprimez certaines copies.",
-				};
+				return error("Impossible de generer un code unique. Supprimez certaines copies.");
 			}
 		}
 
@@ -75,16 +69,8 @@ export async function duplicateDiscount(discountId: string): Promise<ActionState
 		// 5. Revalider
 		revalidatePath("/admin/marketing/promotions");
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Code promo dupliqué: ${duplicate.code}`,
-			data: { id: duplicate.id, code: duplicate.code },
-		};
-	} catch (error) {
-		console.error("[DUPLICATE_DISCOUNT] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: error instanceof Error ? error.message : "Une erreur est survenue",
-		};
+		return success(`Code promo duplique: ${duplicate.code}`, { id: duplicate.id, code: duplicate.code });
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de la duplication");
 	}
 }

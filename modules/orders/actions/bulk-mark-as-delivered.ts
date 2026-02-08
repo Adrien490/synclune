@@ -8,7 +8,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { scheduleReviewRequestEmailsBulk } from "@/modules/webhooks/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { revalidatePath, updateTag } from "next/cache";
 
 import { bulkMarkAsDeliveredSchema } from "../schemas/order.schemas";
@@ -34,20 +34,13 @@ export async function bulkMarkAsDelivered(
 		const ids = idsString ? JSON.parse(idsString as string) : [];
 		const sendEmail = formData.get("sendEmail") as string | null;
 
-		const validation = bulkMarkAsDeliveredSchema.safeParse({
+		const validated = validateInput(bulkMarkAsDeliveredSchema, {
 			ids,
 			sendEmail: sendEmail || "false",
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Données invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validatedData = validated.data;
 
 		// Filtrer les commandes éligibles (SHIPPED uniquement)
 		const eligibleOrders = await prisma.order.findMany({
@@ -59,10 +52,7 @@ export async function bulkMarkAsDelivered(
 		});
 
 		if (eligibleOrders.length === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucune commande éligible (doivent être au statut SHIPPED).",
-			};
+			return error("Aucune commande eligible (doivent etre au statut SHIPPED).");
 		}
 
 		const eligibleIds = eligibleOrders.map((o) => o.id);
@@ -91,15 +81,8 @@ export async function bulkMarkAsDelivered(
 		getOrderInvalidationTags().forEach(tag => updateTag(tag));
 		revalidatePath("/admin/ventes/commandes");
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${result.count} commande${result.count > 1 ? "s" : ""} marquée${result.count > 1 ? "s" : ""} comme livrée${result.count > 1 ? "s" : ""}.`,
-		};
-	} catch (error) {
-		console.error("[BULK_MARK_AS_DELIVERED]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la mise à jour des commandes.",
-		};
+		return success(`${result.count} commande${result.count > 1 ? "s" : ""} marquee${result.count > 1 ? "s" : ""} comme livree${result.count > 1 ? "s" : ""}.`);
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de la mise a jour des commandes.");
 	}
 }

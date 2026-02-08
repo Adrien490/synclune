@@ -4,11 +4,12 @@ import { updateTag } from "next/cache";
 
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	handleActionError,
+	success,
+	error,
 } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import {
@@ -53,10 +54,7 @@ export async function updateCustomizationNotes(
 		});
 
 		if (!existing) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Demande non trouvée",
-			};
+			return error("Demande non trouvee");
 		}
 
 		// 4. Update notes
@@ -72,10 +70,7 @@ export async function updateCustomizationNotes(
 		];
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: sanitizedNotes ? "Notes mises à jour" : "Notes supprimées",
-		};
+		return success(sanitizedNotes ? "Notes mises a jour" : "Notes supprimees");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la mise à jour des notes");
 	}

@@ -2,27 +2,30 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { useCookieConsentStore } from "@/shared/providers/cookie-consent-store-provider";
-import { startTransition, useOptimistic } from "react";
+import { useEffect, useState } from "react";
 
 export function CookiePreferences() {
 	const accepted = useCookieConsentStore((state) => state.accepted);
 	const acceptCookies = useCookieConsentStore((state) => state.acceptCookies);
 	const rejectCookies = useCookieConsentStore((state) => state.rejectCookies);
 	const consentDate = useCookieConsentStore((state) => state.consentDate);
-	const [optimisticSaved, setOptimisticSaved] = useOptimistic(false);
+	const [saved, setSaved] = useState(false);
+
+	// Auto-dismiss confirmation after 3s
+	useEffect(() => {
+		if (!saved) return;
+		const timer = setTimeout(() => setSaved(false), 3000);
+		return () => clearTimeout(timer);
+	}, [saved]);
 
 	const handleAccept = () => {
-		startTransition(() => {
-			setOptimisticSaved(true);
-		});
 		acceptCookies();
+		setSaved(true);
 	};
 
 	const handleReject = () => {
-		startTransition(() => {
-			setOptimisticSaved(true);
-		});
 		rejectCookies();
+		setSaved(true);
 	};
 
 	return (
@@ -50,10 +53,10 @@ export function CookiePreferences() {
 			</div>
 
 			{/* Message de confirmation */}
-			{optimisticSaved && (
-				<div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md">
+			{saved && (
+				<div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md" role="status">
 					<p className="text-sm text-green-800 dark:text-green-200">
-						✓ Vos préférences ont été enregistrées
+						Vos préférences ont été enregistrées
 					</p>
 				</div>
 			)}

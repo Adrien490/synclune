@@ -5,10 +5,9 @@ import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { addressSchema } from "@/shared/schemas/address-schema";
 import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 
 export async function updateAddress(
 	addressId: string,
@@ -26,10 +25,7 @@ export async function updateAddress(
 		});
 
 		if (!existingAddress) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ADDRESS_ERROR_MESSAGES.NOT_FOUND,
-			};
+			return error(ADDRESS_ERROR_MESSAGES.NOT_FOUND);
 		}
 
 		const rawData = {
@@ -43,27 +39,18 @@ export async function updateAddress(
 			phone: formData.get("phone") as string,
 		};
 
-		const result = addressSchema.safeParse(rawData);
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(addressSchema, rawData);
+		if ("error" in validated) return validated.error;
 
 		await prisma.address.update({
 			where: { id: addressId },
-			data: result.data,
+			data: validated.data,
 		});
 
 		// Revalidation du cache avec tags
 		getUserAddressesInvalidationTags(user.id).forEach(tag => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Adresse modifiée avec succès",
-		};
+		return success("Adresse modifiee avec succes");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la modification de l'adresse");
 	}

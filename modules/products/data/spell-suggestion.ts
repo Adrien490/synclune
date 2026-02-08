@@ -166,7 +166,8 @@ export async function getSpellSuggestion(
 			similarity: Number(best.similarity),
 			source: best.source as SpellSuggestion["source"],
 		};
-	} catch {
+	} catch (error) {
+		console.error("[spellSuggestion] Failed:", error instanceof Error ? error.message : error);
 		return null;
 	}
 }

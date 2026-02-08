@@ -1,14 +1,6 @@
-import {
-	Body,
-	Button,
-	Container,
-	Head,
-	Html,
-	Preview,
-	Section,
-	Text,
-} from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Button, Section, Text } from "@react-email/components";
+import { EMAIL_STYLES } from "./email-colors";
+import { EmailLayout } from "./_components/email-layout";
 
 interface NewsletterWelcomeEmailProps {
 	email: string;
@@ -20,66 +12,42 @@ export const NewsletterWelcomeEmail = ({
 	unsubscribeUrl,
 }: NewsletterWelcomeEmailProps) => {
 	return (
-		<Html>
-			<Head />
-			<Preview>Bienvenue</Preview>
-			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
-				<Container style={EMAIL_STYLES.container}>
-					{/* Header */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "24px",
-								fontWeight: "bold",
-								color: EMAIL_COLORS.primary,
-							}}
+		<EmailLayout
+			preview="Bienvenue"
+			footer={
+				<>
+					<Text style={EMAIL_STYLES.text.tiny}>
+						Synclune - Bijoux artisanaux
+					</Text>
+					<Text style={EMAIL_STYLES.text.tiny}>
+						<a
+							href={unsubscribeUrl}
+							style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}
 						>
-							Synclune
-						</Text>
-					</Section>
+							Se désinscrire
+						</a>
+					</Text>
+				</>
+			}
+		>
+			{/* Titre */}
+			<Section style={{ marginBottom: "24px" }}>
+				<Text style={EMAIL_STYLES.heading.h2}>Bienvenue</Text>
+				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+					Tu es inscrit à la newsletter avec {email}.
+				</Text>
+			</Section>
 
-					{/* Titre */}
-					<Section style={{ marginBottom: "24px" }}>
-						<Text style={EMAIL_STYLES.heading.h2}>Bienvenue</Text>
-						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-							Tu es inscrit à la newsletter avec {email}.
-						</Text>
-					</Section>
-
-					{/* CTA */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<Button
-							href="https://synclune.fr/produits"
-							style={EMAIL_STYLES.button.primary}
-						>
-							Voir les créations
-						</Button>
-					</Section>
-
-					{/* Footer */}
-					<Section
-						style={{
-							paddingTop: "24px",
-							borderTop: `1px solid ${EMAIL_COLORS.border}`,
-							textAlign: "center",
-						}}
-					>
-						<Text style={EMAIL_STYLES.text.tiny}>
-							<a
-								href={unsubscribeUrl}
-								style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}
-							>
-								Se désinscrire
-							</a>
-						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.tiny, marginTop: "12px" }}>
-							© {new Date().getFullYear()} Synclune
-						</Text>
-					</Section>
-				</Container>
-			</Body>
-		</Html>
+			{/* CTA */}
+			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+				<Button
+					href="https://synclune.fr/produits"
+					style={EMAIL_STYLES.button.primary}
+				>
+					Voir les créations
+				</Button>
+			</Section>
+		</EmailLayout>
 	);
 };
 

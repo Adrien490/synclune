@@ -26,17 +26,23 @@ export async function sendCancelOrderConfirmationEmail({
 	wasRefunded: boolean
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		CancelOrderConfirmationEmail({
-			orderNumber,
-			customerName,
-			orderTotal,
-			reason,
-			wasRefunded,
-			orderDetailsUrl,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_CANCELLED, html })
+	const component = CancelOrderConfirmationEmail({
+		orderNumber,
+		customerName,
+		orderTotal,
+		reason,
+		wasRefunded,
+		orderDetailsUrl,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.ORDER_CANCELLED,
+		html,
+		text,
+		tags: [{ name: "category", value: "order" }],
+	})
 }
 
 /**
@@ -57,16 +63,22 @@ export async function sendReturnConfirmationEmail({
 	reason?: string
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		ReturnConfirmationEmail({
-			orderNumber,
-			customerName,
-			orderTotal,
-			reason,
-			orderDetailsUrl,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_RETURNED, html })
+	const component = ReturnConfirmationEmail({
+		orderNumber,
+		customerName,
+		orderTotal,
+		reason,
+		orderDetailsUrl,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.ORDER_RETURNED,
+		html,
+		text,
+		tags: [{ name: "category", value: "order" }],
+	})
 }
 
 /**
@@ -85,13 +97,19 @@ export async function sendRevertShippingNotificationEmail({
 	reason: string
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		RevertShippingNotificationEmail({
-			orderNumber,
-			customerName,
-			reason,
-			orderDetailsUrl,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_SHIPPING_REVERTED, html })
+	const component = RevertShippingNotificationEmail({
+		orderNumber,
+		customerName,
+		reason,
+		orderDetailsUrl,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.ORDER_SHIPPING_REVERTED,
+		html,
+		text,
+		tags: [{ name: "category", value: "order" }],
+	})
 }

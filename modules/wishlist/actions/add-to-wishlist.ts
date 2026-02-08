@@ -11,7 +11,6 @@ import {
 } from "@/shared/lib/rate-limit";
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { addToWishlistSchema } from "@/modules/wishlist/schemas/wishlist.schemas";
@@ -23,7 +22,7 @@ import {
 	WISHLIST_ERROR_MESSAGES,
 	WISHLIST_SUCCESS_MESSAGES,
 } from "@/modules/wishlist/constants/error-messages";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 
 /**
  * Server Action pour ajouter un article à la wishlist
@@ -50,10 +49,7 @@ export async function addToWishlist(
 
 		// Vérifier qu'on a soit un userId soit un sessionId
 		if (!userId && !sessionId) {
-			return {
-				status: ActionStatus.ERROR,
-				message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
-			};
+			return error(WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 		}
 
 		// 2. Extraction des données du FormData
@@ -62,16 +58,10 @@ export async function addToWishlist(
 		};
 
 		// 3. Validation avec Zod
-		const result = addToWishlistSchema.safeParse(rawData);
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || WISHLIST_ERROR_MESSAGES.INVALID_DATA,
-			};
-		}
+		const validated = validateInput(addToWishlistSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const validatedData = result.data;
+		const validatedData = validated.data;
 
 		// 4. Rate limiting (protection anti-spam)
 		const headersList = await headers();
@@ -81,15 +71,9 @@ export async function addToWishlist(
 		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.ADD);
 
 		if (!rateLimit.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					rateLimit.error || "Trop de requêtes. Veuillez réessayer plus tard.",
-				data: {
-					retryAfter: rateLimit.retryAfter,
-					reset: rateLimit.reset,
-				},
-			};
+			return error(
+				rateLimit.error || "Trop de requetes. Veuillez reessayer plus tard.",
+			);
 		}
 
 		// 5. Valider le produit (existence et status)
@@ -102,10 +86,7 @@ export async function addToWishlist(
 		});
 
 		if (!product || product.status !== "PUBLIC") {
-			return {
-				status: ActionStatus.ERROR,
-				message: WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
-			};
+			return error(WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
 		}
 
 		// 6. Transaction: Récupérer/créer la wishlist et ajouter l'item
@@ -170,16 +151,15 @@ export async function addToWishlist(
 		// 8. Revalidation complète pour mise à jour du header (badge count)
 		revalidatePath("/", "layout");
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: transactionResult.alreadyExists
+		return success(
+			transactionResult.alreadyExists
 				? WISHLIST_ERROR_MESSAGES.ITEM_ALREADY_IN_WISHLIST
-				: "Ajouté à ta wishlist",
-			data: {
+				: "Ajoute a ta wishlist",
+			{
 				wishlistItemId: transactionResult.wishlistItem.id,
 				wishlistId: transactionResult.wishlist.id,
 			},
-		};
+		);
 	} catch (e) {
 		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 	}

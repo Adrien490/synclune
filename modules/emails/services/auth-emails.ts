@@ -17,8 +17,16 @@ export async function sendVerificationEmail({
 	to: string
 	url: string
 }): Promise<EmailResult> {
-	const html = await render(VerificationEmail({ verificationUrl: url }))
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.VERIFICATION, html })
+	const component = VerificationEmail({ verificationUrl: url })
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.VERIFICATION,
+		html,
+		text,
+		tags: [{ name: "category", value: "auth" }],
+	})
 }
 
 /**
@@ -31,8 +39,16 @@ export async function sendPasswordResetEmail({
 	to: string
 	url: string
 }): Promise<EmailResult> {
-	const html = await render(PasswordResetEmail({ resetUrl: url }))
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.PASSWORD_RESET, html })
+	const component = PasswordResetEmail({ resetUrl: url })
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.PASSWORD_RESET,
+		html,
+		text,
+		tags: [{ name: "category", value: "auth" }],
+	})
 }
 
 /**
@@ -48,8 +64,14 @@ export async function sendPasswordChangedEmail({
 	changeDate: string
 }): Promise<EmailResult> {
 	const resetUrl = buildUrl(ROUTES.AUTH.FORGOT_PASSWORD)
-	const html = await render(
-		PasswordChangedEmail({ userName, changeDate, resetUrl })
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.PASSWORD_CHANGED, html })
+	const component = PasswordChangedEmail({ userName, changeDate, resetUrl })
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.PASSWORD_CHANGED,
+		html,
+		text,
+		tags: [{ name: "category", value: "auth" }],
+	})
 }

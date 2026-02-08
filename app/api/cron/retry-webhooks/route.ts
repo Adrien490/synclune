@@ -19,6 +19,7 @@ export async function GET() {
 			succeeded: result.succeeded,
 			permanentlyFailed: result.permanentlyFailed,
 			errors: result.errors,
+			orphansRecovered: result.orphansRecovered,
 		});
 	} catch (error) {
 		return cronError(

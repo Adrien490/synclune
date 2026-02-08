@@ -6,7 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -15,7 +15,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
 import { processRefundSchema } from "../schemas/refund.schemas";
-import { handleActionError } from "@/shared/lib/actions";
+
 
 // Type pour le résultat de la query raw
 type RefundLockRow = {
@@ -69,13 +69,8 @@ export async function processRefund(
 
 		const id = formData.get("id") as string;
 
-		const result = processRefundSchema.safeParse({ id });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "ID invalide",
-			};
-		}
+		const validated = validateInput(processRefundSchema, { id });
+		if ("error" in validated) return validated.error;
 
 		// ========================================================================
 		// ÉTAPE 1: Verrouillage atomique et validation (FOR UPDATE)

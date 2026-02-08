@@ -7,7 +7,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
-import { getOrder } from "@/modules/orders/data/get-order";
+import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { CheckCircle2, Heart, Package, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 interface CheckoutSuccessPageProps {
 	searchParams: Promise<{
 		order_id?: string;
+		order_number?: string;
 	}>;
 }
 
@@ -33,25 +34,28 @@ interface CheckoutSuccessPageProps {
  * Page de confirmation de commande réussie
  * Affichée après le paiement Stripe réussi
  *
- * SÉCURISÉ : Nécessite order_id en paramètre et vérifie que la commande est payée
+ * SÉCURISÉ : Nécessite order_id + order_number (double vérification)
+ * Accepte paymentStatus PENDING car le webhook peut ne pas avoir encore process
  */
 export default async function CheckoutSuccessPage({
 	searchParams,
 }: CheckoutSuccessPageProps) {
 	const params = await searchParams;
 	const orderId = params.order_id;
+	const orderNumber = params.order_number;
 
-	// Si pas d'order_id, rediriger vers les commandes
-	if (!orderId) {
-		redirect("/orders");
+	// Both params required for secure lookup
+	if (!orderId || !orderNumber) {
+		redirect("/");
 	}
 
-	// Récupérer la commande
-	const order = await getOrder({ orderNumber: orderId });
+	// Fetch order by id + orderNumber (no auth required, secured by double lookup)
+	const order = await getOrderForConfirmation(orderId, orderNumber);
 
-	// Si commande introuvable ou non payée, rediriger
-	if (!order || order.paymentStatus !== "PAID") {
-		redirect("/orders");
+	// Accept both PENDING and PAID: Stripe already confirmed payment on the return page,
+	// but the webhook may not have processed yet (race condition)
+	if (!order) {
+		redirect("/");
 	}
 
 	return (
@@ -192,13 +196,13 @@ export default async function CheckoutSuccessPage({
 							{/* Actions */}
 							<div className="flex flex-col sm:flex-row gap-3 pt-4">
 								<Button asChild size="lg" className="flex-1">
-									<Link href="/commandes">
+									<Link href="/">
 										<Package className="w-4 h-4 mr-2" />
-										Suivre ma commande
+										Retour à l'accueil
 									</Link>
 								</Button>
 								<Button asChild variant="outline" size="lg" className="flex-1">
-									<Link href="/produits">Continuer mes achats</Link>
+									<Link href="/creations">Continuer mes achats</Link>
 								</Button>
 							</div>
 						</CardContent>

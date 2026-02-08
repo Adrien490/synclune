@@ -5,9 +5,8 @@ import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
-import { validateInput, handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { addressIdSchema } from "../schemas/user-addresses.schemas";
 
 export async function setDefaultAddress(
@@ -34,10 +33,7 @@ export async function setDefaultAddress(
 		});
 
 		if (!existingAddress) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ADDRESS_ERROR_MESSAGES.NOT_FOUND,
-			};
+			return error(ADDRESS_ERROR_MESSAGES.NOT_FOUND);
 		}
 
 		await prisma.$transaction([
@@ -54,10 +50,7 @@ export async function setDefaultAddress(
 		// Revalidation du cache avec tags
 		getUserAddressesInvalidationTags(user.id).forEach(tag => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Adresse par défaut modifiée",
-		};
+		return success("Adresse par defaut modifiee");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors du changement d'adresse par défaut");
 	}

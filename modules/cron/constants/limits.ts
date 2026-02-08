@@ -51,6 +51,9 @@ export const RETENTION = {
 	/** Days to keep skipped webhook events before cleanup */
 	WEBHOOK_SKIPPED_DAYS: 90,
 
+	/** Days to keep stale PROCESSING/PENDING webhook events before cleanup */
+	WEBHOOK_STALE_DAYS: 90,
+
 	/** Years for legal data retention (French Commercial Code Art. L123-22) */
 	LEGAL_RETENTION_YEARS: 10,
 

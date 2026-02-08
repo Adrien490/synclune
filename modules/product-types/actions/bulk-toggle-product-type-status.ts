@@ -1,11 +1,11 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ActionStatus, type ActionState } from "@/shared/types/server-action";
+import type { ActionState } from "@/shared/types/server-action";
 
 import { bulkToggleProductTypeStatusSchema } from "../schemas/product-type.schemas";
 import { getProductTypeInvalidationTags } from "../utils/cache.utils";
@@ -24,15 +24,14 @@ export async function bulkToggleProductTypeStatus(
 			isActive: formData.get("isActive") === "true",
 		};
 
-		const result = bulkToggleProductTypeStatusSchema.safeParse(rawData);
-		if (!result.success || result.data.ids.length === 0) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Au moins un type doit être sélectionné",
-			};
-		}
+		const validated = validateInput(bulkToggleProductTypeStatusSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const { ids, isActive } = result.data;
+		const { ids, isActive } = validated.data;
+
+		if (ids.length === 0) {
+			return error("Au moins un type doit être sélectionné");
+		}
 
 		// Verifier qu'aucun type systeme n'est selectionne
 		const systemTypes = await prisma.productType.findMany({
@@ -44,10 +43,7 @@ export async function bulkToggleProductTypeStatus(
 		});
 
 		if (systemTypes.length > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Impossible de modifier un type système",
-			};
+			return error("Impossible de modifier un type système");
 		}
 
 		// Mettre a jour le statut
@@ -58,14 +54,10 @@ export async function bulkToggleProductTypeStatus(
 			data: { isActive },
 		});
 
-		revalidatePath("/admin/catalogue/types-de-produits");
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
 
 		const statusText = isActive ? "activé" : "désactivé";
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${ids.length} type(s) ${statusText}(s) avec succès`,
-		};
+		return success(`${ids.length} type(s) ${statusText}(s) avec succès`);
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier le statut des types");
 	}

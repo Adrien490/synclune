@@ -1,7 +1,6 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-
-const CONFIRMATION_EXPIRY_DAYS = 7; // Supprimer les inscriptions non confirmées après 7 jours
+import { RETENTION } from "@/modules/cron/constants/limits";
 
 /**
  * Service de nettoyage des abonnements newsletter non confirmés
@@ -17,7 +16,7 @@ export async function cleanupUnconfirmedNewsletterSubscriptions(): Promise<{
 	);
 
 	const expiryDate = new Date(
-		Date.now() - CONFIRMATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+		Date.now() - RETENTION.NEWSLETTER_CONFIRMATION_DAYS * 24 * 60 * 60 * 1000
 	);
 
 	// Supprimer les abonnements non confirmés après 7 jours

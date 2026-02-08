@@ -1,14 +1,7 @@
-import {
-	Body,
-	Button,
-	Container,
-	Head,
-	Html,
-	Preview,
-	Section,
-	Text,
-} from "@react-email/components";
+import { Button, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailLayout } from "./_components/email-layout";
+import { FlexRow } from "./_components/flex-row";
 
 interface AdminWebhookFailedEmailProps {
 	eventId: string;
@@ -28,163 +21,129 @@ export const AdminWebhookFailedEmail = ({
 	adminDashboardUrl,
 }: AdminWebhookFailedEmailProps) => {
 	return (
-		<Html>
-			<Head />
-			<Preview>
-				{`ALERTE : Webhook ${eventType} en echec (${attempts} tentatives)`}
-			</Preview>
-			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
-				<Container style={EMAIL_STYLES.container}>
-					{/* Header */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "24px",
-								fontWeight: "bold",
-								color: EMAIL_COLORS.primary,
-							}}
-						>
-							Webhook Stripe en echec
-						</Text>
-						<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
-							Action manuelle peut etre requise
-						</Text>
-					</Section>
+		<EmailLayout
+			preview={`ALERTE : Webhook ${eventType} en echec (${attempts} tentatives)`}
+			headerText="Webhook Stripe en echec"
+			footer={
+				<Text style={EMAIL_STYLES.text.tiny}>
+					Cet email a ete envoye automatiquement par le systeme de
+					monitoring Synclune.
+				</Text>
+			}
+		>
+			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
+				<Text style={EMAIL_STYLES.text.small}>
+					Action manuelle peut etre requise
+				</Text>
+			</Section>
 
-					{/* Details */}
-					<Section style={{ marginBottom: "24px" }}>
-						<div style={EMAIL_STYLES.section.card}>
-							<div
+			{/* Details */}
+			<Section style={{ marginBottom: "24px" }}>
+				<div style={EMAIL_STYLES.section.card}>
+					<FlexRow
+						style={{ marginBottom: "8px" }}
+						left={<Text style={EMAIL_STYLES.text.small}>Event ID</Text>}
+						right={
+							<Text
 								style={{
-									display: "flex",
-									justifyContent: "space-between",
-									marginBottom: "8px",
-								}}
-							>
-								<Text style={EMAIL_STYLES.text.small}>Event ID</Text>
-								<Text
-									style={{
-										margin: 0,
-										fontFamily: "monospace",
-										fontSize: "14px",
-										fontWeight: "bold",
-										color: EMAIL_COLORS.text.primary,
-									}}
-								>
-									{eventId}
-								</Text>
-							</div>
-							<div
-								style={{
-									display: "flex",
-									justifyContent: "space-between",
-									marginBottom: "8px",
-								}}
-							>
-								<Text style={EMAIL_STYLES.text.small}>
-									Type d&apos;evenement
-								</Text>
-								<Text
-									style={{
-										margin: 0,
-										fontFamily: "monospace",
-										fontSize: "14px",
-										fontWeight: "bold",
-										color: EMAIL_COLORS.text.primary,
-									}}
-								>
-									{eventType}
-								</Text>
-							</div>
-							<div
-								style={{
-									display: "flex",
-									justifyContent: "space-between",
-								}}
-							>
-								<Text style={EMAIL_STYLES.text.small}>Tentatives</Text>
-								<Text
-									style={{
-										margin: 0,
-										fontSize: "14px",
-										fontWeight: "bold",
-										color: EMAIL_COLORS.primary,
-									}}
-								>
-									{attempts}
-								</Text>
-							</div>
-						</div>
-					</Section>
-
-					{/* Error */}
-					<Section style={{ marginBottom: "24px" }}>
-						<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-							Derniere erreur
-						</Text>
-						<div
-							style={{
-								...EMAIL_STYLES.section.card,
-								backgroundColor: EMAIL_COLORS.text.primary,
-								padding: "12px",
-							}}
-						>
-							<code
-								style={{
+									margin: 0,
 									fontFamily: "monospace",
-									fontSize: "12px",
-									color: EMAIL_COLORS.primary,
-									wordBreak: "break-all",
+									fontSize: "14px",
+									fontWeight: "bold",
+									color: EMAIL_COLORS.text.primary,
 								}}
 							>
-								{error}
-							</code>
-						</div>
-					</Section>
-
-					{/* CTAs */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<div style={{ marginBottom: "12px" }}>
-							<Button
-								href={stripeDashboardUrl}
+								{eventId}
+							</Text>
+						}
+					/>
+					<FlexRow
+						style={{ marginBottom: "8px" }}
+						left={
+							<Text style={EMAIL_STYLES.text.small}>
+								Type d&apos;evenement
+							</Text>
+						}
+						right={
+							<Text
 								style={{
-									...EMAIL_STYLES.button.primary,
-									backgroundColor: "#635bff",
+									margin: 0,
+									fontFamily: "monospace",
+									fontSize: "14px",
+									fontWeight: "bold",
+									color: EMAIL_COLORS.text.primary,
 								}}
 							>
-								Voir dans Stripe
-							</Button>
-						</div>
-						<div>
-							<Button
-								href={adminDashboardUrl}
-								style={EMAIL_STYLES.button.primary}
+								{eventType}
+							</Text>
+						}
+					/>
+					<FlexRow
+						left={<Text style={EMAIL_STYLES.text.small}>Tentatives</Text>}
+						right={
+							<Text
+								style={{
+									margin: 0,
+									fontSize: "14px",
+									fontWeight: "bold",
+									color: EMAIL_COLORS.primary,
+								}}
 							>
-								Dashboard Admin
-							</Button>
-						</div>
-					</Section>
+								{attempts}
+							</Text>
+						}
+					/>
+				</div>
+			</Section>
 
-					{/* Footer */}
-					<Section
+			{/* Error */}
+			<Section style={{ marginBottom: "24px" }}>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
+					Derniere erreur
+				</Text>
+				<div
+					style={{
+						...EMAIL_STYLES.section.card,
+						backgroundColor: EMAIL_COLORS.text.primary,
+						padding: "12px",
+					}}
+				>
+					<code
 						style={{
-							paddingTop: "24px",
-							borderTop: `1px solid ${EMAIL_COLORS.border}`,
-							textAlign: "center",
+							fontFamily: "monospace",
+							fontSize: "12px",
+							color: EMAIL_COLORS.primary,
+							wordBreak: "break-all",
 						}}
 					>
-						<Text style={EMAIL_STYLES.text.tiny}>
-							Cet email a ete envoye automatiquement par le systeme de
-							monitoring Synclune.
-						</Text>
-						<Text style={EMAIL_STYLES.text.tiny}>
-							© {new Date().getFullYear()} Synclune
-						</Text>
-					</Section>
-				</Container>
-			</Body>
-		</Html>
+						{error}
+					</code>
+				</div>
+			</Section>
+
+			{/* CTAs */}
+			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+				<div style={{ marginBottom: "12px" }}>
+					<Button
+						href={stripeDashboardUrl}
+						style={{
+							...EMAIL_STYLES.button.primary,
+							backgroundColor: "#635bff",
+						}}
+					>
+						Voir dans Stripe
+					</Button>
+				</div>
+				<div>
+					<Button
+						href={adminDashboardUrl}
+						style={EMAIL_STYLES.button.primary}
+					>
+						Dashboard Admin
+					</Button>
+				</div>
+			</Section>
+		</EmailLayout>
 	);
 };
 

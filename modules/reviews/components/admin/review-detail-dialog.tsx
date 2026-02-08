@@ -79,7 +79,11 @@ export function ReviewDetailDialog({ review, trigger, open, onOpenChange }: Revi
 									{review.user.email}
 								</p>
 							</div>
-							<Badge variant={isPublished ? "default" : "secondary"}>
+							<Badge
+								variant={isPublished ? "default" : "secondary"}
+								role="status"
+								aria-label={`Statut : ${REVIEW_STATUS_LABELS[review.status]}`}
+							>
 								{isPublished ? (
 									<CheckCircle2 className="size-3 mr-1" aria-hidden="true" />
 								) : (

@@ -4,8 +4,8 @@ import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { sendNewsletterConfirmationEmail } from "@/modules/emails/services/newsletter-emails";
+import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { randomUUID } from "crypto";
 import { subscriberIdSchema } from "../schemas/subscriber.schemas";
 import { NEWSLETTER_BASE_URL } from "../constants/urls.constants";
@@ -26,15 +26,10 @@ export async function resendConfirmationAdmin(
 
 		// 2. Validation de l'entrée
 		const subscriberId = formData.get("subscriberId");
-		const validation = subscriberIdSchema.safeParse({ subscriberId });
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: validation.error.issues[0]?.message || "ID d'abonné invalide",
-			};
-		}
+		const validated = validateInput(subscriberIdSchema, { subscriberId });
+		if ("error" in validated) return validated.error;
 
-		const validatedId = validation.data.subscriberId;
+		const validatedId = validated.data.subscriberId;
 
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
@@ -43,17 +38,11 @@ export async function resendConfirmationAdmin(
 		});
 
 		if (!subscriber) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Abonné non trouvé",
-			};
+			return notFound("Abonné");
 		}
 
 		if (subscriber.status === NewsletterStatus.CONFIRMED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Cet abonné a déjà confirmé son email et est actif",
-			};
+			return error("Cet abonné a déjà confirmé son email et est actif");
 		}
 
 		// 4. Régénérer un token de confirmation
@@ -77,24 +66,14 @@ export async function resendConfirmationAdmin(
 			});
 		} catch (emailError) {
 			console.error("[RESEND_CONFIRMATION_ADMIN] Échec envoi email:", emailError);
-			return {
-				status: ActionStatus.ERROR,
-				message: "Token régénéré mais échec de l'envoi de l'email. Veuillez réessayer.",
-			};
+			return error("Token régénéré mais échec de l'envoi de l'email. Veuillez réessayer.");
 		}
 
 		// 6. Invalider le cache
 		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Email de confirmation renvoyé à ${subscriber.email}`,
-		};
-	} catch (error) {
-		console.error("[RESEND_CONFIRMATION_ADMIN] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Impossible de renvoyer l'email de confirmation",
-		};
+		return success(`Email de confirmation renvoyé à ${subscriber.email}`);
+	} catch (e) {
+		return handleActionError(e, "Impossible de renvoyer l'email de confirmation");
 	}
 }

@@ -38,7 +38,5 @@ export async function setTrigramThreshold(
 	if (!Number.isFinite(safeThreshold)) {
 		throw new Error("Invalid trigram threshold value");
 	}
-	await tx.$executeRawUnsafe(
-		`SET LOCAL pg_trgm.similarity_threshold = ${safeThreshold}`
-	);
+	await tx.$executeRaw`SET LOCAL pg_trgm.similarity_threshold = ${safeThreshold}::float`;
 }

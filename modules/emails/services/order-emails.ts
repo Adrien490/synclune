@@ -35,21 +35,27 @@ export async function sendOrderConfirmationEmail({
 	shippingAddress: ShippingAddress
 	trackingUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		OrderConfirmationEmail({
-			orderNumber,
-			customerName,
-			items,
-			subtotal,
-			discount,
-			shipping,
-			tax,
-			total,
-			shippingAddress,
-			trackingUrl,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_CONFIRMATION, html })
+	const component = OrderConfirmationEmail({
+		orderNumber,
+		customerName,
+		items,
+		subtotal,
+		discount,
+		shipping,
+		tax,
+		total,
+		shippingAddress,
+		trackingUrl,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.ORDER_CONFIRMATION,
+		html,
+		text,
+		tags: [{ name: "category", value: "order" }],
+	})
 }
 
 /**
@@ -74,18 +80,24 @@ export async function sendShippingConfirmationEmail({
 	shippingAddress: ShippingAddress
 	estimatedDelivery?: string
 }): Promise<EmailResult> {
-	const html = await render(
-		ShippingConfirmationEmail({
-			orderNumber,
-			customerName,
-			trackingNumber,
-			trackingUrl,
-			carrierLabel,
-			shippingAddress,
-			estimatedDelivery,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_SHIPPED, html })
+	const component = ShippingConfirmationEmail({
+		orderNumber,
+		customerName,
+		trackingNumber,
+		trackingUrl,
+		carrierLabel,
+		shippingAddress,
+		estimatedDelivery,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.ORDER_SHIPPED,
+		html,
+		text,
+		tags: [{ name: "category", value: "order" }],
+	})
 }
 
 /**
@@ -108,17 +120,23 @@ export async function sendTrackingUpdateEmail({
 	carrierLabel: string
 	estimatedDelivery?: string
 }): Promise<EmailResult> {
-	const html = await render(
-		TrackingUpdateEmail({
-			orderNumber,
-			customerName,
-			trackingNumber,
-			trackingUrl,
-			carrierLabel,
-			estimatedDelivery,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_TRACKING_UPDATE, html })
+	const component = TrackingUpdateEmail({
+		orderNumber,
+		customerName,
+		trackingNumber,
+		trackingUrl,
+		carrierLabel,
+		estimatedDelivery,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.ORDER_TRACKING_UPDATE,
+		html,
+		text,
+		tags: [{ name: "category", value: "order" }],
+	})
 }
 
 /**
@@ -137,13 +155,19 @@ export async function sendDeliveryConfirmationEmail({
 	deliveryDate: string
 	orderDetailsUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		DeliveryConfirmationEmail({
-			orderNumber,
-			customerName,
-			deliveryDate,
-			orderDetailsUrl,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.ORDER_DELIVERED, html })
+	const component = DeliveryConfirmationEmail({
+		orderNumber,
+		customerName,
+		deliveryDate,
+		orderDetailsUrl,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.ORDER_DELIVERED,
+		html,
+		text,
+		tags: [{ name: "category", value: "order" }],
+	})
 }

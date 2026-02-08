@@ -3,7 +3,8 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
-import { ActionState, ActionStatus } from "@/shared/types/server-action";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import type { ActionState } from "@/shared/types/server-action";
 import { exportSubscribersSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 import { NEWSLETTER_STATUS_LABELS } from "../constants/newsletter-status.constants";
 
@@ -28,19 +29,13 @@ export async function exportSubscribers(
 		const statusParam = formData.get("status") || "all";
 		const formatParam = formData.get("format") || "csv";
 
-		const result = exportSubscribersSchema.safeParse({
+		const validated = validateInput(exportSubscribersSchema, {
 			status: statusParam,
 			format: formatParam,
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
-
-		const { status } = result.data;
+		const { status } = validated.data;
 
 		// Construire le filtre Prisma basé sur le statut enum
 		const whereClause =
@@ -65,10 +60,7 @@ export async function exportSubscribers(
 		});
 
 		if (subscribers.length === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun abonné trouvé avec les filtres sélectionnés",
-			};
+			return error("Aucun abonné trouvé avec les filtres sélectionnés");
 		}
 
 		// Audit log de l'export
@@ -116,20 +108,12 @@ export async function exportSubscribers(
 					: "";
 		const filename = `newsletter-subscribers${statusSuffix}-${today}.csv`;
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Export réussi : ${subscribers.length} abonné(s)`,
-			data: {
-				csv: csvBase64,
-				filename,
-				count: subscribers.length,
-			},
-		};
-	} catch (error) {
-		console.error("[EXPORT_SUBSCRIBERS] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de l'export",
-		};
+		return success(`Export réussi : ${subscribers.length} abonné(s)`, {
+			csv: csvBase64,
+			filename,
+			count: subscribers.length,
+		});
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de l'export");
 	}
 }

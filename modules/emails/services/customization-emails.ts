@@ -23,21 +23,23 @@ export async function sendCustomizationRequestEmail({
 	details: string
 	inspirationProducts?: Array<{ title: string }>
 }): Promise<EmailResult> {
-	const html = await render(
-		CustomizationRequestEmail({
-			firstName,
-			email,
-			phone,
-			productTypeLabel,
-			details,
-			inspirationProducts,
-		})
-	)
+	const component = CustomizationRequestEmail({
+		firstName,
+		email,
+		phone,
+		productTypeLabel,
+		details,
+		inspirationProducts,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
 	return sendEmail({
 		to: EMAIL_ADMIN,
 		subject: `${EMAIL_SUBJECTS.CUSTOMIZATION_REQUEST} - ${firstName}`,
 		html,
+		text,
 		replyTo: email,
+		tags: [{ name: "category", value: "order" }],
 	})
 }
 
@@ -57,17 +59,19 @@ export async function sendCustomizationConfirmationEmail({
 	details: string
 	inspirationProducts?: Array<{ title: string }>
 }): Promise<EmailResult> {
-	const html = await render(
-		CustomizationConfirmationEmail({
-			firstName,
-			productTypeLabel,
-			details,
-			inspirationProducts,
-		})
-	)
+	const component = CustomizationConfirmationEmail({
+		firstName,
+		productTypeLabel,
+		details,
+		inspirationProducts,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
 	return sendEmail({
 		to: email,
 		subject: EMAIL_SUBJECTS.CUSTOMIZATION_CONFIRMATION,
 		html,
+		text,
+		tags: [{ name: "category", value: "order" }],
 	})
 }

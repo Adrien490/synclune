@@ -10,6 +10,52 @@ import {
 	THRESHOLDS,
 } from "@/modules/cron/constants/limits";
 
+/** Events stuck in PROCESSING longer than this are considered orphaned */
+const PROCESSING_ORPHAN_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+
+/**
+ * Recover events stuck in PROCESSING status (orphaned by a crash).
+ * Re-marks them as FAILED so they can be retried on the next run.
+ */
+async function recoverOrphanedProcessingEvents(): Promise<number> {
+	const orphanThreshold = new Date(
+		Date.now() - PROCESSING_ORPHAN_THRESHOLD_MS
+	);
+
+	const result = await prisma.webhookEvent.updateMany({
+		where: {
+			status: WebhookEventStatus.PROCESSING,
+			processedAt: { lt: orphanThreshold },
+		},
+		data: {
+			status: WebhookEventStatus.FAILED,
+			errorMessage: "Recovered from orphaned PROCESSING state",
+		},
+	});
+
+	// Also recover PROCESSING events with no processedAt (stuck before first update)
+	const noProcessedAtResult = await prisma.webhookEvent.updateMany({
+		where: {
+			status: WebhookEventStatus.PROCESSING,
+			processedAt: null,
+			receivedAt: { lt: orphanThreshold },
+		},
+		data: {
+			status: WebhookEventStatus.FAILED,
+			errorMessage: "Recovered from orphaned PROCESSING state",
+		},
+	});
+
+	const total = result.count + noProcessedAtResult.count;
+	if (total > 0) {
+		console.warn(
+			`[CRON:retry-webhooks] Recovered ${total} orphaned PROCESSING events`
+		);
+	}
+
+	return total;
+}
+
 /**
  * Service de retry des webhooks échoués
  *
@@ -23,6 +69,7 @@ export async function retryFailedWebhooks(): Promise<{
 	succeeded: number;
 	permanentlyFailed: number;
 	errors: number;
+	orphansRecovered: number;
 } | null> {
 	console.log("[CRON:retry-webhooks] Starting failed webhook retry...");
 
@@ -31,6 +78,9 @@ export async function retryFailedWebhooks(): Promise<{
 		console.error("[CRON:retry-webhooks] STRIPE_SECRET_KEY not configured");
 		return null;
 	}
+
+	// Recovery phase: re-mark orphaned PROCESSING events as FAILED
+	const orphansRecovered = await recoverOrphanedProcessingEvents();
 
 	// Trouver les webhooks FAILED avec moins de MAX_WEBHOOK_RETRY_ATTEMPTS tentatives
 	// et traités il y a plus de 30 minutes (éviter les retries trop fréquents)
@@ -125,8 +175,18 @@ export async function retryFailedWebhooks(): Promise<{
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
 
-			// Vérifier si on a atteint le max de tentatives
-			const newAttempts = webhookEvent.attempts + 1;
+			// Fetch current attempts from DB (may have been incremented in the try block)
+			const current = await prisma.webhookEvent.findUnique({
+				where: { id: webhookEvent.id },
+				select: { attempts: true, status: true },
+			});
+
+			// If the PROCESSING update didn't execute, increment attempts now
+			const needsIncrement =
+				current?.status !== WebhookEventStatus.PROCESSING;
+			const newAttempts = needsIncrement
+				? (current?.attempts ?? webhookEvent.attempts) + 1
+				: (current?.attempts ?? webhookEvent.attempts + 1);
 			const isPermanentlyFailed = newAttempts >= MAX_WEBHOOK_RETRY_ATTEMPTS;
 
 			await prisma.webhookEvent.update({
@@ -135,6 +195,7 @@ export async function retryFailedWebhooks(): Promise<{
 					status: WebhookEventStatus.FAILED,
 					errorMessage,
 					processedAt: new Date(),
+					...(needsIncrement && { attempts: { increment: 1 } }),
 				},
 			});
 
@@ -162,5 +223,6 @@ export async function retryFailedWebhooks(): Promise<{
 		succeeded,
 		permanentlyFailed,
 		errors,
+		orphansRecovered,
 	};
 }

@@ -1,9 +1,10 @@
 "use server";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
-import { ActionStatus, type ActionState } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import type { ActionState } from "@/shared/types/server-action";
+import { handleActionError, success, error } from "@/shared/lib/actions";
 import { bulkAdjustStockSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 
@@ -86,23 +87,19 @@ export async function bulkAdjustStock(
 		}
 
 		// Appliquer les modifications
-		await prisma.$transaction(async (tx) => {
-			if (mode === "absolute") {
-				// Mode absolu: definir la meme valeur pour tous
-				await tx.productSku.updateMany({
-					where: { id: { in: ids } },
-					data: { inventory: value },
-				});
-			} else {
-				// Mode relatif: ajuster chaque SKU individuellement
-				for (const sku of skusData) {
-					await tx.productSku.update({
-						where: { id: sku.id },
-						data: { inventory: sku.inventory + value },
-					});
-				}
-			}
-		});
+		if (mode === "absolute") {
+			await prisma.productSku.updateMany({
+				where: { id: { in: ids } },
+				data: { inventory: value },
+			});
+		} else {
+			// Single UPDATE for all SKUs instead of N individual queries
+			await prisma.$executeRaw`
+				UPDATE "ProductSku"
+				SET "inventory" = "inventory" + ${value}, "updatedAt" = NOW()
+				WHERE "id" = ANY(${ids}::text[])
+			`;
+		}
 
 		// Invalider le cache
 		const uniqueTags = collectBulkInvalidationTags(skusData);

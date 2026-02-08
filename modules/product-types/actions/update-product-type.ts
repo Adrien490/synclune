@@ -1,12 +1,13 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
+
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
-import { handleActionError } from "@/shared/lib/actions";
 
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { updateProductTypeSchema } from "../schemas/product-type.schemas";
@@ -28,17 +29,10 @@ export async function updateProductType(
 		};
 
 		// 3. Valider les donnees
-		const validation = updateProductTypeSchema.safeParse(rawData);
+		const validated = validateInput(updateProductTypeSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validatedData = validated.data;
 
 		// 4. Verifier que le type existe
 		const existingType = await prisma.productType.findUnique({
@@ -46,18 +40,12 @@ export async function updateProductType(
 		});
 
 		if (!existingType) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Ce type de produit n'existe pas",
-			};
+			return error("Ce type de produit n'existe pas");
 		}
 
 		// 5. Protection: Les types systeme ne peuvent pas etre modifies (label/slug)
 		if (existingType.isSystem) {
-			return {
-				status: ActionStatus.ERROR,
-				message: `Le type "${existingType.label}" est un type systeme et ne peut pas etre modifie`,
-			};
+			return error(`Le type "${existingType.label}" est un type systeme et ne peut pas etre modifie`);
 		}
 
 		// 6. Verifier l'unicite du label (sauf si c'est le meme)
@@ -67,11 +55,7 @@ export async function updateProductType(
 			});
 
 			if (labelExists) {
-				return {
-					status: ActionStatus.ERROR,
-					message:
-						"Ce label de type existe deja. Veuillez en choisir un autre.",
-				};
+				return error("Ce label de type existe deja. Veuillez en choisir un autre.");
 			}
 		}
 
@@ -85,8 +69,10 @@ export async function updateProductType(
 		await prisma.productType.update({
 			where: { id: validatedData.id },
 			data: {
-				label: validatedData.label,
-				description: validatedData.description,
+				label: sanitizeText(validatedData.label),
+				description: validatedData.description
+					? sanitizeText(validatedData.description)
+					: undefined,
 				slug,
 			},
 		});
@@ -95,10 +81,7 @@ export async function updateProductType(
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
 		updateTag("navbar-menu");
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Type de produit modifié avec succès",
-		};
+		return success("Type de produit modifié avec succès");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la modification du type de produit");
 	}

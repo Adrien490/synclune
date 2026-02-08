@@ -5,8 +5,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
@@ -49,25 +48,17 @@ export async function createRefund(
 		try {
 			items = JSON.parse(itemsRaw);
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format des articles invalide",
-			};
+			return error("Format des articles invalide");
 		}
 
-		const result = createRefundSchema.safeParse({
+		const validated = validateInput(createRefundSchema, {
 			orderId,
 			reason,
 			note,
 			items,
 		});
 
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		if ("error" in validated) return validated.error;
 
 		// Sanitiser le texte libre
 		const sanitizedNote = result.data.note ? sanitizeText(result.data.note) : null;

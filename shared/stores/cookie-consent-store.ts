@@ -117,6 +117,7 @@ export const createCookieConsentStore = (
 								state.bannerVisible = true;
 								state.accepted = null;
 								state.consentDate = null;
+								state.policyVersion = 0;
 							}
 						}
 

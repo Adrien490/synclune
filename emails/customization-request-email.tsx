@@ -1,15 +1,7 @@
-import {
-	Body,
-	Button,
-	Container,
-	Head,
-	Html,
-	Link,
-	Preview,
-	Section,
-	Text,
-} from "@react-email/components";
+import { Button, Link, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailLayout } from "./_components/email-layout";
+import { FlexRow } from "./_components/flex-row";
 
 interface CustomizationRequestEmailProps {
 	firstName: string;
@@ -28,61 +20,56 @@ export const CustomizationRequestEmail = ({
 	details,
 	inspirationProducts,
 }: CustomizationRequestEmailProps) => {
-
 	return (
-		<Html>
-			<Head />
-			<Preview>Demande de personnalisation de {firstName}</Preview>
-			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
-				<Container style={EMAIL_STYLES.container}>
-					{/* Header */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "24px",
-								fontWeight: "bold",
-								color: EMAIL_COLORS.primary,
-							}}
-						>
-							Nouvelle demande
-						</Text>
-					</Section>
-
-					{/* Client */}
-					<Section style={{ marginBottom: "24px" }}>
-						<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-							Client
-						</Text>
-						<div style={EMAIL_STYLES.section.card}>
-							<div
+		<EmailLayout
+			preview={`Demande de personnalisation de ${firstName}`}
+			headerText="Nouvelle demande"
+		>
+			{/* Client */}
+			<Section style={{ marginBottom: "24px" }}>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+					Client
+				</Text>
+				<div style={EMAIL_STYLES.section.card}>
+					<FlexRow
+						style={{ marginBottom: "8px" }}
+						left={<Text style={EMAIL_STYLES.text.small}>Prénom</Text>}
+						right={
+							<Text
 								style={{
-									display: "flex",
-									justifyContent: "space-between",
-									marginBottom: "8px",
+									margin: 0,
+									fontSize: "14px",
+									color: EMAIL_COLORS.text.primary,
 								}}
 							>
-								<Text style={EMAIL_STYLES.text.small}>Prénom</Text>
-								<Text
-									style={{
-										margin: 0,
-										fontSize: "14px",
-										color: EMAIL_COLORS.text.primary,
-									}}
-								>
-									{firstName}
-								</Text>
-							</div>
-							<div
+								{firstName}
+							</Text>
+						}
+					/>
+					<FlexRow
+						style={{ marginBottom: "8px" }}
+						left={<Text style={EMAIL_STYLES.text.small}>Email</Text>}
+						right={
+							<Link
+								href={`mailto:${email}`}
 								style={{
-									display: "flex",
-									justifyContent: "space-between",
-									marginBottom: "8px",
+									margin: 0,
+									fontSize: "14px",
+									color: EMAIL_COLORS.primary,
+									textDecoration: "none",
 								}}
 							>
-								<Text style={EMAIL_STYLES.text.small}>Email</Text>
+								{email}
+							</Link>
+						}
+					/>
+					{phone && (
+						<FlexRow
+							style={{ marginBottom: "8px" }}
+							left={<Text style={EMAIL_STYLES.text.small}>Téléphone</Text>}
+							right={
 								<Link
-									href={`mailto:${email}`}
+									href={`tel:${phone}`}
 									style={{
 										margin: 0,
 										fontSize: "14px",
@@ -90,108 +77,75 @@ export const CustomizationRequestEmail = ({
 										textDecoration: "none",
 									}}
 								>
-									{email}
+									{phone}
 								</Link>
-							</div>
-							{phone && (
-								<div
-									style={{
-										display: "flex",
-										justifyContent: "space-between",
-										marginBottom: "8px",
-									}}
-								>
-									<Text style={EMAIL_STYLES.text.small}>Téléphone</Text>
-									<Link
-										href={`tel:${phone}`}
-										style={{
-											margin: 0,
-											fontSize: "14px",
-											color: EMAIL_COLORS.primary,
-											textDecoration: "none",
-										}}
-									>
-										{phone}
-									</Link>
-								</div>
-							)}
-							<div style={{ display: "flex", justifyContent: "space-between" }}>
-								<Text style={EMAIL_STYLES.text.small}>Type</Text>
-								<Text
-									style={{
-										margin: 0,
-										fontSize: "14px",
-										fontWeight: "600",
-										color: EMAIL_COLORS.primary,
-									}}
-								>
-									{productTypeLabel}
-								</Text>
-							</div>
-						</div>
-					</Section>
-
-					{/* Inspirations */}
-					{inspirationProducts && inspirationProducts.length > 0 && (
-						<Section style={{ marginBottom: "24px" }}>
-							<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-								Inspirations
-							</Text>
-							<div style={EMAIL_STYLES.section.card}>
-								{inspirationProducts.map((product, index) => (
-									<Text key={index} style={EMAIL_STYLES.text.small}>
-										• {product.title}
-									</Text>
-								))}
-							</div>
-						</Section>
+							}
+						/>
 					)}
-
-					{/* Détails */}
-					<Section style={{ marginBottom: "24px" }}>
-						<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
-							Description
-						</Text>
-						<div style={EMAIL_STYLES.section.card}>
+					<FlexRow
+						left={<Text style={EMAIL_STYLES.text.small}>Type</Text>}
+						right={
 							<Text
 								style={{
 									margin: 0,
 									fontSize: "14px",
-									color: EMAIL_COLORS.text.primary,
-									whiteSpace: "pre-wrap",
-									lineHeight: "1.6",
+									fontWeight: "600",
+									color: EMAIL_COLORS.primary,
 								}}
 							>
-								{details}
+								{productTypeLabel}
 							</Text>
-						</div>
-					</Section>
+						}
+					/>
+				</div>
+			</Section>
 
-					{/* CTA */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<Button
-							href={`mailto:${email}?subject=RE: Demande de personnalisation - Synclune`}
-							style={EMAIL_STYLES.button.primary}
-						>
-							Répondre au client
-						</Button>
-					</Section>
+			{/* Inspirations */}
+			{inspirationProducts && inspirationProducts.length > 0 && (
+				<Section style={{ marginBottom: "24px" }}>
+					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+						Inspirations
+					</Text>
+					<div style={EMAIL_STYLES.section.card}>
+						{inspirationProducts.map((product, index) => (
+							<Text key={index} style={EMAIL_STYLES.text.small}>
+								• {product.title}
+							</Text>
+						))}
+					</div>
+				</Section>
+			)}
 
-					{/* Footer */}
-					<Section
+			{/* Détails */}
+			<Section style={{ marginBottom: "24px" }}>
+				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
+					Description
+				</Text>
+				<div style={EMAIL_STYLES.section.card}>
+					<Text
 						style={{
-							paddingTop: "24px",
-							borderTop: `1px solid ${EMAIL_COLORS.border}`,
-							textAlign: "center",
+							margin: 0,
+							fontSize: "14px",
+							color: EMAIL_COLORS.text.primary,
+							whiteSpace: "pre-wrap",
+							lineHeight: "1.6",
 						}}
 					>
-						<Text style={EMAIL_STYLES.text.tiny}>
-							© {new Date().getFullYear()} Synclune
-						</Text>
-					</Section>
-				</Container>
-			</Body>
-		</Html>
+						{details}
+					</Text>
+				</div>
+			</Section>
+
+			{/* CTA */}
+			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+				<Button
+					href={`mailto:${email}?subject=RE: Demande de personnalisation - Synclune`}
+					style={EMAIL_STYLES.button.primary}
+				>
+					Répondre au client
+				</Button>
+			</Section>
+		</EmailLayout>
 	);
 };
 

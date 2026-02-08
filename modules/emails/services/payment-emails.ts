@@ -18,8 +18,14 @@ export async function sendPaymentFailedEmail({
 	orderNumber: string
 	retryUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		PaymentFailedEmail({ orderNumber, customerName, retryUrl })
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.PAYMENT_FAILED, html })
+	const component = PaymentFailedEmail({ orderNumber, customerName, retryUrl })
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.PAYMENT_FAILED,
+		html,
+		text,
+		tags: [{ name: "category", value: "payment" }],
+	})
 }

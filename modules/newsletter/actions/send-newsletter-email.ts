@@ -5,7 +5,8 @@ import { sendNewsletterEmail as sendEmail } from "@/modules/emails/services/news
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { sanitizeForEmail, newlinesToBr } from "@/shared/lib/sanitize";
-import { ActionState, ActionStatus } from "@/shared/types/server-action";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import type { ActionState } from "@/shared/types/server-action";
 import { sendNewsletterEmailSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 import { NEWSLETTER_BASE_URL } from "@/modules/newsletter/constants/urls.constants";
 import {
@@ -25,17 +26,11 @@ export async function sendNewsletterEmail(
 		// 2. Validation avec Zod
 		const subject = formData.get("subject");
 		const content = formData.get("content");
-		const result = sendNewsletterEmailSchema.safeParse({ subject, content });
-
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(sendNewsletterEmailSchema, { subject, content });
+		if ("error" in validated) return validated.error;
 
 		const { subject: validatedSubject, content: validatedContent } =
-			result.data;
+			validated.data;
 
 		// Sanitizer le contenu pour éviter XSS et injection de caractères de contrôle
 		const sanitizedSubject = sanitizeForEmail(validatedSubject);
@@ -49,10 +44,7 @@ export async function sendNewsletterEmail(
 		});
 
 		if (totalCount === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun abonné actif trouvé",
-			};
+			return error("Aucun abonné actif trouvé");
 		}
 
 		// Traitement par batch avec curseur pour éviter surcharge mémoire
@@ -132,20 +124,15 @@ export async function sendNewsletterEmail(
 			);
 		}
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Newsletter envoyée avec succès à ${successCount} abonné(s)${errorCount > 0 ? `. ${errorCount} échec(s).` : ""}`,
-			data: {
+		return success(
+			`Newsletter envoyée avec succès à ${successCount} abonné(s)${errorCount > 0 ? `. ${errorCount} échec(s).` : ""}`,
+			{
 				successCount,
 				errorCount,
 				totalCount,
-			},
-		};
-	} catch (error) {
-		console.error("[SEND_NEWSLETTER] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de l'envoi de la newsletter",
-		};
+			}
+		);
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de l'envoi de la newsletter");
 	}
 }

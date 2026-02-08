@@ -7,7 +7,6 @@ import { prisma } from "@/shared/lib/prisma"
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit"
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config"
 import type { ActionState } from "@/shared/types/server-action"
-import { ActionStatus } from "@/shared/types/server-action"
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { clearWishlistSchema } from '@/modules/wishlist/schemas/wishlist.schemas'
@@ -16,6 +15,7 @@ import {
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session"
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages"
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions"
 
 /**
  * Server Action pour vider complètement la wishlist
@@ -42,20 +42,12 @@ export async function clearWishlist(
 
 		// Vérifier qu'on a soit un userId soit un sessionId
 		if (!userId && !sessionId) {
-			return {
-				status: ActionStatus.ERROR,
-				message: WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND,
-			}
+			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND)
 		}
 
-		// 2. Validation avec Zod (pas de données requises)
-		const result = clearWishlistSchema.safeParse({})
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: WISHLIST_ERROR_MESSAGES.INVALID_DATA,
-			}
-		}
+		// 2. Validation avec Zod (pas de donnees requises)
+		const validated = validateInput(clearWishlistSchema, {})
+		if ("error" in validated) return validated.error
 
 		// 3. Rate limiting (protection anti-spam)
 		const headersList = await headers()
@@ -65,14 +57,9 @@ export async function clearWishlist(
 		const rateLimit = checkRateLimit(rateLimitId, WISHLIST_LIMITS.CLEAR)
 
 		if (!rateLimit.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message: rateLimit.error || 'Trop de requêtes. Veuillez réessayer plus tard.',
-				data: {
-					retryAfter: rateLimit.retryAfter,
-					reset: rateLimit.reset,
-				},
-			}
+			return error(
+				rateLimit.error || 'Trop de requetes. Veuillez reessayer plus tard.',
+			)
 		}
 
 		// 4. Récupérer la wishlist de l'utilisateur ou visiteur
@@ -82,10 +69,7 @@ export async function clearWishlist(
 		})
 
 		if (!wishlist) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND,
-			}
+			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND)
 		}
 
 		// 5. Transaction: Supprimer tous les items et mettre à jour le timestamp
@@ -117,22 +101,16 @@ export async function clearWishlist(
 		// 7. Revalidation complète pour mise à jour du header (badge count)
 		revalidatePath('/', 'layout')
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message:
-				deleteResult.count > 0
-					? `${deleteResult.count} article${deleteResult.count > 1 ? 's' : ''} retiré${deleteResult.count > 1 ? 's' : ''} de ta wishlist`
-					: 'Ta wishlist est déjà vide',
-			data: {
+		return success(
+			deleteResult.count > 0
+				? `${deleteResult.count} article${deleteResult.count > 1 ? 's' : ''} retire${deleteResult.count > 1 ? 's' : ''} de ta wishlist`
+				: 'Ta wishlist est deja vide',
+			{
 				wishlistId: wishlist.id,
 				itemsRemoved: deleteResult.count,
 			},
-		}
+		)
 	} catch (e) {
-		console.error('[CLEAR_WISHLIST] Error:', e);
-		return {
-			status: ActionStatus.ERROR,
-			message: WISHLIST_ERROR_MESSAGES.GENERAL_ERROR,
-		}
+		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR)
 	}
 }

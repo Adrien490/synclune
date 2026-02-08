@@ -1,11 +1,11 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ActionStatus, type ActionState } from "@/shared/types/server-action";
+import type { ActionState } from "@/shared/types/server-action";
 
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { bulkDeleteProductTypesSchema } from "../schemas/product-type.schemas";
@@ -28,15 +28,14 @@ export async function bulkDeleteProductTypes(
 			ids: formData.get("ids") as string,
 		};
 
-		const result = bulkDeleteProductTypesSchema.safeParse(rawData);
-		if (!result.success || result.data.ids.length === 0) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Au moins un type de bijou doit être sélectionné",
-			};
-		}
+		const validated = validateInput(bulkDeleteProductTypesSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const { ids } = result.data;
+		const { ids } = validated.data;
+
+		if (ids.length === 0) {
+			return error("Au moins un type de bijou doit être sélectionné");
+		}
 
 		// 3. Récupérer les types pour vérification
 		const productTypes = await prisma.productType.findMany({
@@ -79,10 +78,7 @@ export async function bulkDeleteProductTypes(
 					`${typesWithProducts.length} type(s) avec produits actifs: ${typesWithProducts.map((t) => t.label).join(", ")}`
 				);
 			}
-			return {
-				status: ActionStatus.ERROR,
-				message: `Aucun type supprimable. ${errors.join(". ")}`,
-			};
+			return error(`Aucun type supprimable. ${errors.join(". ")}`);
 		}
 
 		// 5. Supprimer les types éligibles
@@ -90,8 +86,7 @@ export async function bulkDeleteProductTypes(
 			where: { id: { in: deletableTypes.map((pt) => pt.id) } },
 		});
 
-		// 6. Revalidation et invalidation du cache
-		revalidatePath("/admin/catalogue/types-de-produits");
+		// 6. Invalidation du cache
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
 		updateTag("navbar-menu");
 
@@ -109,10 +104,7 @@ export async function bulkDeleteProductTypes(
 			message += ` - ${skipped} ignoré(s) (${skippedReasons.join(", ")})`;
 		}
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message,
-		};
+		return success(message);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la suppression");
 	}

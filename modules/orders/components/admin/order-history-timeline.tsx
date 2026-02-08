@@ -24,7 +24,7 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
-import type { OrderAction } from "@/app/generated/prisma/client";
+import type { OrderAction, HistorySource } from "@/app/generated/prisma/client";
 
 const VISIBLE_COUNT = 5;
 
@@ -40,7 +40,7 @@ interface OrderHistoryEntry {
 	note?: string | null;
 	metadata?: unknown; // JsonValue from Prisma
 	authorName?: string | null;
-	source: string;
+	source: HistorySource;
 	createdAt: Date;
 }
 
@@ -246,11 +246,11 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 												variant="outline"
 												className="text-xs py-0"
 											>
-												{entry.source === "admin"
+												{entry.source === "ADMIN"
 													? "Admin"
-													: entry.source === "webhook"
+													: entry.source === "WEBHOOK"
 														? "Stripe"
-														: entry.source === "customer"
+														: entry.source === "CUSTOMER"
 															? "Client"
 															: "Système"}
 											</Badge>

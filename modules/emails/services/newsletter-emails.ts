@@ -20,10 +20,20 @@ export async function sendNewsletterEmail({
 	content: string
 	unsubscribeUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		NewsletterEmail({ subject, content, unsubscribeUrl })
-	)
-	return sendEmail({ to, subject: subject || EMAIL_SUBJECTS.NEWSLETTER, html })
+	const component = NewsletterEmail({ subject, content, unsubscribeUrl })
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: subject || EMAIL_SUBJECTS.NEWSLETTER,
+		html,
+		text,
+		headers: {
+			"List-Unsubscribe": `<${unsubscribeUrl}>`,
+			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+		},
+		tags: [{ name: "category", value: "marketing" }],
+	})
 }
 
 /**
@@ -36,11 +46,15 @@ export async function sendNewsletterConfirmationEmail({
 	to: string
 	confirmationUrl: string
 }): Promise<EmailResult> {
-	const html = await render(NewsletterConfirmationEmail({ confirmationUrl }))
+	const component = NewsletterConfirmationEmail({ confirmationUrl })
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
 	return sendEmail({
 		to,
 		subject: EMAIL_SUBJECTS.NEWSLETTER_CONFIRMATION,
 		html,
+		text,
+		tags: [{ name: "category", value: "marketing" }],
 	})
 }
 
@@ -54,6 +68,18 @@ export async function sendNewsletterWelcomeEmail({
 	to: string
 	unsubscribeUrl: string
 }): Promise<EmailResult> {
-	const html = await render(NewsletterWelcomeEmail({ email: to, unsubscribeUrl }))
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.NEWSLETTER_WELCOME, html })
+	const component = NewsletterWelcomeEmail({ email: to, unsubscribeUrl })
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.NEWSLETTER_WELCOME,
+		html,
+		text,
+		headers: {
+			"List-Unsubscribe": `<${unsubscribeUrl}>`,
+			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+		},
+		tags: [{ name: "category", value: "marketing" }],
+	})
 }

@@ -319,6 +319,20 @@ export function buildProductFilterConditions(
 		conditions.push({ updatedAt: { lte: filters.updatedBefore } });
 	}
 
+	// On sale filter: products with at least one active SKU that has compareAtPrice set
+	// Note: compareAtPrice >= priceInclTax is enforced by schema validation on create/update,
+	// so a non-null compareAtPrice reliably indicates a sale
+	if (filters.onSale === true) {
+		conditions.push({
+			skus: {
+				some: {
+					isActive: true,
+					compareAtPrice: { not: null },
+				},
+			},
+		});
+	}
+
 	// Stock status filter
 	if (filters.stockStatus !== undefined) {
 		if (filters.stockStatus === "out_of_stock") {

@@ -1,14 +1,6 @@
-import {
-	Body,
-	Button,
-	Container,
-	Head,
-	Html,
-	Preview,
-	Section,
-	Text,
-} from "@react-email/components";
+import { Button, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailLayout } from "./_components/email-layout";
 
 interface RevertShippingNotificationEmailProps {
 	orderNumber: string;
@@ -24,86 +16,51 @@ export const RevertShippingNotificationEmail = ({
 	orderDetailsUrl,
 }: RevertShippingNotificationEmailProps) => {
 	return (
-		<Html>
-			<Head />
-			<Preview>
-				Mise à jour de l'expédition - {orderNumber}
-			</Preview>
-			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
-				<Container style={EMAIL_STYLES.container}>
-					{/* Header */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "24px",
-								fontWeight: "bold",
-								color: EMAIL_COLORS.primary,
-							}}
-						>
-							Synclune
-						</Text>
-					</Section>
+		<EmailLayout preview={`Mise à jour de l'expédition - ${orderNumber}`}>
+			{/* Titre */}
+			<Section style={{ marginBottom: "24px" }}>
+				<Text style={EMAIL_STYLES.heading.h2}>Expédition mise à jour</Text>
+				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+					Bonjour {customerName}, le précédent numéro de suivi de ta commande{" "}
+					{orderNumber} n'est plus valide. Ta commande est de nouveau en
+					préparation.
+				</Text>
+			</Section>
 
-					{/* Titre */}
-					<Section style={{ marginBottom: "24px" }}>
-						<Text style={EMAIL_STYLES.heading.h2}>Expédition mise à jour</Text>
-						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-							Bonjour {customerName}, le précédent numéro de suivi de ta commande{" "}
-							{orderNumber} n'est plus valide. Ta commande est de nouveau en
-							préparation.
-						</Text>
-					</Section>
-
-					{/* Raison */}
-					<Section style={{ marginBottom: "24px" }}>
-						<div style={EMAIL_STYLES.section.card}>
-							<Text style={{ ...EMAIL_STYLES.text.small, fontWeight: "600" }}>
-								Motif
-							</Text>
-							<Text
-								style={{
-									margin: 0,
-									marginTop: "4px",
-									fontSize: "14px",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{reason}
-							</Text>
-						</div>
-					</Section>
-
-					{/* Info */}
-					<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
-						<Text style={EMAIL_STYLES.text.small}>
-							Tu recevras un nouvel email avec les informations de suivi dès que
-							le colis sera réexpédié.
-						</Text>
-					</Section>
-
-					{/* CTA */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<Button href={orderDetailsUrl} style={EMAIL_STYLES.button.primary}>
-							Suivre ma commande
-						</Button>
-					</Section>
-
-					{/* Footer */}
-					<Section
+			{/* Raison */}
+			<Section style={{ marginBottom: "24px" }}>
+				<div style={EMAIL_STYLES.section.card}>
+					<Text style={{ ...EMAIL_STYLES.text.small, fontWeight: "600" }}>
+						Motif
+					</Text>
+					<Text
 						style={{
-							paddingTop: "24px",
-							borderTop: `1px solid ${EMAIL_COLORS.border}`,
-							textAlign: "center",
+							margin: 0,
+							marginTop: "4px",
+							fontSize: "14px",
+							color: EMAIL_COLORS.text.primary,
 						}}
 					>
-						<Text style={EMAIL_STYLES.text.tiny}>
-							© {new Date().getFullYear()} Synclune
-						</Text>
-					</Section>
-				</Container>
-			</Body>
-		</Html>
+						{reason}
+					</Text>
+				</div>
+			</Section>
+
+			{/* Info */}
+			<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
+				<Text style={EMAIL_STYLES.text.small}>
+					Tu recevras un nouvel email avec les informations de suivi dès que
+					le colis sera réexpédié.
+				</Text>
+			</Section>
+
+			{/* CTA */}
+			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+				<Button href={orderDetailsUrl} style={EMAIL_STYLES.button.primary}>
+					Suivre ma commande
+				</Button>
+			</Section>
+		</EmailLayout>
 	);
 };
 

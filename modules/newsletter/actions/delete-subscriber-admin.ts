@@ -2,12 +2,11 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 import { subscriberIdSchema } from "../schemas/subscriber.schemas";
 import { getNewsletterInvalidationTags } from "../constants/cache";
-import { handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action ADMIN pour supprimer définitivement un abonné newsletter
@@ -24,15 +23,10 @@ export async function deleteSubscriberAdmin(
 
 		// 2. Validation de l'entrée
 		const subscriberId = formData.get("subscriberId");
-		const validation = subscriberIdSchema.safeParse({ subscriberId });
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: validation.error.issues[0]?.message || "ID d'abonné invalide",
-			};
-		}
+		const validated = validateInput(subscriberIdSchema, { subscriberId });
+		if ("error" in validated) return validated.error;
 
-		const validatedId = validation.data.subscriberId;
+		const validatedId = validated.data.subscriberId;
 
 		// 3. Vérifier que l'abonné existe
 		const subscriber = await prisma.newsletterSubscriber.findUnique({
@@ -41,10 +35,7 @@ export async function deleteSubscriberAdmin(
 		});
 
 		if (!subscriber) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Abonné non trouvé",
-			};
+			return notFound("Abonné");
 		}
 
 		const email = subscriber.email;
@@ -57,11 +48,8 @@ export async function deleteSubscriberAdmin(
 		// 5. Invalider le cache
 		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${email} a été supprimé définitivement`,
-		};
-	} catch (error) {
-		return handleActionError(error, "Une erreur est survenue");
+		return success(`${email} a été supprimé définitivement`);
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue");
 	}
 }

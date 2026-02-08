@@ -86,6 +86,7 @@ export function UserReviewCard({ review, className }: UserReviewCardProps) {
 								variant={review.status === "PUBLISHED" ? "default" : "secondary"}
 								className="shrink-0"
 								role="status"
+								aria-label={`Statut de l'avis : ${REVIEW_STATUS_LABELS[review.status]}`}
 							>
 								{REVIEW_STATUS_LABELS[review.status]}
 							</Badge>

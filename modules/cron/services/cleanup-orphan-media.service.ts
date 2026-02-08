@@ -34,44 +34,60 @@ export async function cleanupOrphanMedia(): Promise<{
 			`[CRON:cleanup-orphan-media] Found ${referencedKeys.size} referenced keys in DB`
 		);
 
-		// 2. Lister les fichiers UploadThing (limite API: 500)
-		const response = await utapi.listFiles({ limit: UPLOADTHING_LIST_LIMIT });
-		const files = response.files;
-		filesScanned = files.length;
+		// 2. Lister les fichiers UploadThing avec pagination
+		let offset = 0;
+		let hasMore = true;
 
-		console.log(
-			`[CRON:cleanup-orphan-media] Found ${files.length} files in UploadThing`
-		);
+		while (hasMore) {
+			const response = await utapi.listFiles({
+				limit: UPLOADTHING_LIST_LIMIT,
+				offset,
+			});
+			const files = response.files;
+			filesScanned += files.length;
 
-		if (files.length === 0) {
-			return { filesScanned: 0, orphansDeleted: 0, errors: 0 };
-		}
+			console.log(
+				`[CRON:cleanup-orphan-media] Fetched ${files.length} files (offset: ${offset})`
+			);
 
-		// 3. Identifier les fichiers orphelins
-		const orphanKeys = files
-			.map((f) => f.key)
-			.filter((key) => !referencedKeys.has(key));
+			if (files.length === 0) break;
 
-		console.log(
-			`[CRON:cleanup-orphan-media] Found ${orphanKeys.length} orphan files out of ${filesScanned} scanned`
-		);
+			// 3. Identify orphan files in this page
+			// Skip files created in the last 24h to avoid race conditions
+			// (file uploaded between DB scan and UploadThing scan)
+			const ageThreshold = Date.now() - 24 * 60 * 60 * 1000;
+			const orphanKeys = files
+				.filter(
+					(f) =>
+						!referencedKeys.has(f.key) &&
+						new Date(f.uploadedAt).getTime() < ageThreshold
+				)
+				.map((f) => f.key);
 
-		// 4. Supprimer les fichiers orphelins
-		if (orphanKeys.length > 0) {
-			try {
-				await utapi.deleteFiles(orphanKeys);
-				orphansDeleted = orphanKeys.length;
-				console.log(
-					`[CRON:cleanup-orphan-media] Deleted ${orphansDeleted} orphan files`
-				);
-			} catch (error) {
-				console.error(
-					"[CRON:cleanup-orphan-media] Error deleting orphan files:",
-					error instanceof Error ? error.message : String(error)
-				);
-				errors = orphanKeys.length;
+			// 4. Supprimer les fichiers orphelins de cette page
+			if (orphanKeys.length > 0) {
+				try {
+					await utapi.deleteFiles(orphanKeys);
+					orphansDeleted += orphanKeys.length;
+					console.log(
+						`[CRON:cleanup-orphan-media] Deleted ${orphanKeys.length} orphan files`
+					);
+				} catch (error) {
+					console.error(
+						"[CRON:cleanup-orphan-media] Error deleting orphan files:",
+						error instanceof Error ? error.message : String(error)
+					);
+					errors += orphanKeys.length;
+				}
 			}
+
+			hasMore = files.length === UPLOADTHING_LIST_LIMIT;
+			offset += files.length;
 		}
+
+		console.log(
+			`[CRON:cleanup-orphan-media] Total: ${orphansDeleted} orphans deleted out of ${filesScanned} scanned`
+		);
 	} catch (error) {
 		console.error(
 			"[CRON:cleanup-orphan-media] Error during cleanup:",

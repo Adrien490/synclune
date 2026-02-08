@@ -83,6 +83,7 @@ model User {
   @@index([suspendedAt])
   @@index([role, id])
   @@index([emailVerified, id])
+  @@index([name, id]) // Admin: tri par nom d'utilisateur
   @@index([createdAt, id])
   // Note: Les 2 index composites commençant par deletedAt couvrent les queries sur deletedAt seul
   // PostgreSQL utilise le leading column d'un index composite pour les queries mono-colonne
@@ -106,6 +107,7 @@ model Session {
 
   @@unique([token])
   @@index([userId, expiresAt]) // Couvre aussi userId seul
+  @@index([expiresAt]) // cleanup-sessions cron: WHERE expiresAt < now()
 }
 
 model Account {
@@ -137,6 +139,7 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@index([identifier])
+  @@index([expiresAt]) // cleanup-sessions cron: WHERE expiresAt < now()
 }
 
 model Address {
@@ -225,6 +228,20 @@ enum ShippingMethod {
   CORSE
   DOM
   TOM
+}
+
+/// Source d'une action sur une commande (audit trail)
+enum HistorySource {
+  ADMIN
+  WEBHOOK
+  SYSTEM
+  CUSTOMER
+}
+
+/// Comportement de la TVA Stripe
+enum TaxBehavior {
+  INCLUSIVE
+  EXCLUSIVE
 }
 
 // ============================================================================
@@ -494,14 +511,12 @@ model Wishlist {
 
   items WishlistItem[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete (RGPD - Art. L123-22 Code de Commerce : 10 ans)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([expiresAt]) // Pour le nettoyage des wishlists expirées
   @@index([userId])
   @@index([sessionId])
-  @@index([deletedAt])
 }
 
 model WishlistItem {
@@ -513,16 +528,14 @@ model WishlistItem {
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete (RGPD - Art. L123-22 Code de Commerce : 10 ans)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Un produit ne peut être ajouté qu'une seule fois par wishlist
   // Note: Contrainte unique sur champ nullable - validation métier côté applicatif
   @@unique([wishlistId, productId])
   @@index([wishlistId])
   @@index([productId])
-  @@index([deletedAt])
 }
 
 // ============================================================================
@@ -639,7 +652,7 @@ model Order {
   // === PRÉPARATION RÉGIME RÉEL TVA ===
   // Ces champs préparent la migration vers le régime réel TVA (seuil 85 000€)
   customerTaxId          String?  // N° TVA client B2B (ex: FR12345678901 pour ventes B2B)
-  taxBehavior            String   @default("inclusive") // Stripe Tax: "inclusive" ou "exclusive"
+  taxBehavior            TaxBehavior @default(INCLUSIVE) // Stripe Tax: "inclusive" ou "exclusive"
   reverseCharge          Boolean  @default(false) // Autoliquidation TVA pour ventes B2B UE
   stripeTaxTransactionId String?  // tax_txn_xxx - ID permanent pour reporting fiscal (txcalc_ expire 90j)
   customerTaxIdVerified  Boolean  @default(false) // Résultat validation VIES (TVA intracommunautaire)
@@ -700,10 +713,12 @@ model Order {
   @@index([status, createdAt])
   @@index([paymentStatus, paidAt, deletedAt]) // KPIs Dashboard (revenue, order count aggregates)
   @@index([customerEmail]) // Recherche support client
-  @@index([deletedAt]) // Soft delete filter
+  // Note: @@index([deletedAt]) removed - redundant with composite @@index([deletedAt, status, createdAt])
+  // PostgreSQL uses the leading column of a composite index for single-column queries
   @@index([deletedAt, status, createdAt]) // Index composite pour listings admin (soft-delete + status)
   // Timestamps métier
   @@index([shippedAt, fulfillmentStatus]) // Timeline expéditions
+  @@index([fulfillmentStatus, actualDelivery]) // review-request-emails cron
   @@index([paidAt, paymentStatus]) // Rapports comptables
   @@index([paidAt(sort: Desc), paymentStatus, deletedAt]) // Covering index: requetes popularite/bestsellers
   @@index([fiscalYear, paymentStatus])
@@ -747,7 +762,7 @@ model OrderHistory {
   authorName String? @db.VarChar(100) // Dénormalisé pour audit (si admin supprimé plus tard)
 
   /// Source de l'action
-  source String @default("admin") // "admin" | "webhook" | "system" | "customer"
+  source HistorySource @default(ADMIN)
 
   /// Timestamp de l'action
   createdAt DateTime @default(now())

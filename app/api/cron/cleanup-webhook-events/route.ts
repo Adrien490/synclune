@@ -14,6 +14,7 @@ export async function GET() {
 			completedDeleted: result.completedDeleted,
 			failedDeleted: result.failedDeleted,
 			skippedDeleted: result.skippedDeleted,
+			staleDeleted: result.staleDeleted,
 		});
 	} catch (error) {
 		return cronError(

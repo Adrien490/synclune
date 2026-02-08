@@ -26,10 +26,16 @@ export async function sendReviewRequestEmail({
 	}>
 	reviewUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		ReviewRequestEmail({ customerName, orderNumber, products, reviewUrl })
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.REVIEW_REQUEST, html })
+	const component = ReviewRequestEmail({ customerName, orderNumber, products, reviewUrl })
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.REVIEW_REQUEST,
+		html,
+		text,
+		tags: [{ name: "category", value: "order" }],
+	})
 }
 
 /**
@@ -52,15 +58,21 @@ export async function sendReviewResponseEmail({
 	responseAuthorName: string
 	productUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		ReviewResponseEmail({
-			customerName,
-			productTitle,
-			reviewContent,
-			responseContent,
-			responseAuthorName,
-			productUrl,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.REVIEW_RESPONSE, html })
+	const component = ReviewResponseEmail({
+		customerName,
+		productTitle,
+		reviewContent,
+		responseContent,
+		responseAuthorName,
+		productUrl,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.REVIEW_RESPONSE,
+		html,
+		text,
+		tags: [{ name: "category", value: "order" }],
+	})
 }

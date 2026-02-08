@@ -1,11 +1,11 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
-import { ActionStatus, type ActionState } from "@/shared/types/server-action";
+import type { ActionState } from "@/shared/types/server-action";
 
 import { PRODUCT_TYPES_CACHE_TAGS } from "../constants/cache";
 import { deleteProductTypeSchema } from "../schemas/product-type.schemas";
@@ -28,15 +28,10 @@ export async function deleteProductType(
 			productTypeId: formData.get("productTypeId") as string,
 		};
 
-		const result = deleteProductTypeSchema.safeParse(rawData);
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Donnees invalides",
-			};
-		}
+		const validated = validateInput(deleteProductTypeSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const { productTypeId } = result.data;
+		const { productTypeId } = validated.data;
 
 		// 3. Verifier si c'est un type systeme
 		const productType = await prisma.productType.findUnique({
@@ -49,18 +44,12 @@ export async function deleteProductType(
 		});
 
 		if (!productType) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Type de produit non trouve",
-			};
+			return notFound("Type de produit");
 		}
 
 		// 4. Protection: Bloquer la suppression des types systeme
 		if (productType.isSystem) {
-			return {
-				status: ActionStatus.ERROR,
-				message: `Le type "${productType.label}" est un type systeme et ne peut pas etre supprime`,
-			};
+			return error(`Le type "${productType.label}" est un type systeme et ne peut pas etre supprime`);
 		}
 
 		// 5. Suppression (les produits liés auront leur typeId mis à null automatiquement)
@@ -68,15 +57,11 @@ export async function deleteProductType(
 			where: { id: productTypeId },
 		});
 
-		// 6. Revalidation et invalidation du cache
-		revalidatePath("/admin/catalogue/types-de-produits");
+		// 6. Invalidation du cache
 		updateTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
 		updateTag("navbar-menu");
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Type de produit supprimé avec succès",
-		};
+		return success("Type de produit supprimé avec succès");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la suppression");
 	}

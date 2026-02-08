@@ -5,6 +5,7 @@ import {
 	PaymentStatus,
 	FulfillmentStatus,
 	Prisma,
+	HistorySource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
@@ -158,7 +159,7 @@ export async function markAsPaid(
 				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
 				authorId: adminUser.id,
 				authorName: adminUser.name || "Admin",
-				source: "admin",
+				source: HistorySource.ADMIN,
 				metadata: {
 					stockAdjusted: !stockAlreadyReserved,
 					itemsCount: order.items.length,

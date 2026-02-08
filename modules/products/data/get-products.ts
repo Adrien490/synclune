@@ -181,19 +181,6 @@ async function fetchProducts(
 			sortedProducts = sortProducts(allProducts, params.sortBy);
 		}
 
-		// Filtrer les produits en promotion si demandé
-		// Un produit est en promo si au moins un SKU actif a compareAtPrice > priceInclTax
-		if (params.filters?.onSale === true) {
-			sortedProducts = sortedProducts.filter((product) =>
-				product.skus.some(
-					(sku) =>
-						sku.isActive &&
-						sku.compareAtPrice !== null &&
-						sku.compareAtPrice > sku.priceInclTax
-				)
-			);
-		}
-
 		// Pagination manuelle
 		const perPage = Math.min(
 			Math.max(1, params.perPage || GET_PRODUCTS_DEFAULT_PER_PAGE),
@@ -206,7 +193,7 @@ async function fetchProducts(
 			const cursorIndex = sortedProducts.findIndex((p) => p.id === params.cursor);
 			if (cursorIndex !== -1) {
 				startIndex = params.direction === "backward"
-					? Math.max(0, cursorIndex - perPage)
+					? Math.max(0, cursorIndex - perPage + 1)
 					: cursorIndex + 1;
 			}
 		}
@@ -231,6 +218,7 @@ async function fetchProducts(
 			totalCount: sortedProducts.length,
 		};
 	} catch (error) {
+		console.error("[fetchProducts] Error:", error);
 		const baseReturn = {
 			products: [],
 			pagination: {

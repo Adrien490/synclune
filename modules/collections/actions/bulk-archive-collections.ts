@@ -2,10 +2,9 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { bulkArchiveCollectionsSchema } from "../schemas/collection.schemas";
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 
@@ -31,10 +30,7 @@ export async function bulkArchiveCollections(
 		try {
 			collectionIds = JSON.parse(collectionIdsRaw);
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format des IDs de collections invalide.",
-			};
+			return error("Format des IDs de collections invalide.");
 		}
 
 		// 3. Validation avec Zod

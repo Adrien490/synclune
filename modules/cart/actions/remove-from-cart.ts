@@ -1,12 +1,11 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { removeFromCartSchema } from "../schemas/cart.schemas";
 
@@ -34,16 +33,10 @@ export async function removeFromCart(
 		};
 
 		// 3. Validation avec Zod
-		const result = removeFromCartSchema.safeParse(rawData);
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(removeFromCartSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const validatedData = result.data;
+		const validatedData = validated.data;
 
 		// 4. Récupérer l'item avec son panier et le productId du SKU
 		const cartItem = await prisma.cartItem.findUnique({
@@ -57,7 +50,7 @@ export async function removeFromCart(
 		});
 
 		if (!cartItem) {
-			return { status: ActionStatus.ERROR, message: "Article introuvable dans le panier" };
+			return error("Article introuvable dans le panier");
 		}
 
 		// 5. Vérifier l'appartenance du panier
@@ -67,7 +60,7 @@ export async function removeFromCart(
 			: cartItem.cart.sessionId === sessionId;
 
 		if (!isOwner) {
-			return { status: ActionStatus.ERROR, message: "Accès non autorisé" };
+			return error("Acces non autorise");
 		}
 
 		// 6. Supprimer l'item du panier
@@ -92,10 +85,7 @@ export async function removeFromCart(
 		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(cartItem.sku.productId));
 
 		// 9. Success - Return ActionState format
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Article supprimé du panier",
-		};
+		return success("Article supprime du panier");
 	} catch (e) {
 		return handleActionError(e, "Impossible de supprimer l'article du panier");
 	}

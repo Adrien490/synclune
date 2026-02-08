@@ -5,7 +5,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
-		"build": "prisma generate && next build",
+		"build": "prisma generate && next build --turbopack",
 		"start": "next start",
 		"lint": "eslint",
 		"seed": "prisma db seed",
@@ -48,7 +48,6 @@
 		"@radix-ui/react-toggle-group": "^1.1.11",
 		"@radix-ui/react-tooltip": "^1.2.8",
 		"@react-email/components": "^1.0.6",
-		"@react-email/tailwind": "2.0.3",
 		"@stripe/react-stripe-js": "^5.4.1",
 		"@stripe/stripe-js": "^8.6.3",
 		"@tanstack/react-form": "^1.27.7",

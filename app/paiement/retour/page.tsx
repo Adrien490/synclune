@@ -46,10 +46,13 @@ export default async function CheckoutReturnPage({
 		// Récupérer le statut de la session Stripe
 		const session = await stripe.checkout.sessions.retrieve(sessionId)
 
+		// Extract orderNumber from Stripe session metadata for secure confirmation lookup
+		const orderNumber = session.metadata?.orderNumber
+
 		// Vérifier le statut de paiement (critère principal pour Embedded Checkout)
 		if (session.payment_status === "paid") {
 			// Paiement réussi - redirection vers la confirmation
-			redirect(`/paiement/confirmation?order_id=${orderId}`)
+			redirect(`/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}`)
 		} else if (session.status === "open") {
 			// Session encore ouverte - paiement non finalisé ou échoué
 			// Retour au checkout pour réessayer

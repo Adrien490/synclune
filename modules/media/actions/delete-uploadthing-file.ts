@@ -1,9 +1,8 @@
 "use server";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, success, error } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { deleteUploadThingFileSchema } from "@/modules/media/schemas/uploadthing.schemas";
 import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
@@ -30,11 +29,7 @@ export async function deleteUploadThingFile(
 		const result = deleteUploadThingFileSchema.safeParse(rawData);
 
 		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
+			return error(result.error.issues[0]?.message ?? "Erreur de validation");
 		}
 
 		const { fileUrl } = result.data;
@@ -42,10 +37,7 @@ export async function deleteUploadThingFile(
 		// 3. Extraire la cle de l'URL
 		const fileKey = extractFileKeyFromUrl(fileUrl);
 		if (!fileKey) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Impossible d'extraire la cle du fichier depuis l'URL",
-			};
+			return error("Impossible d'extraire la cle du fichier depuis l'URL");
 		}
 
 		// 4. Supprimer le fichier via UTApi (instanciation par requete)
@@ -53,14 +45,8 @@ export async function deleteUploadThingFile(
 		await utapi.deleteFiles(fileKey);
 
 		// 5. Success
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Fichier supprimé",
-			data: {
-				deletedFile: fileKey,
-			},
-		};
-	} catch (error) {
-		return handleActionError(error, "Impossible de supprimer le fichier");
+		return success("Fichier supprime", { deletedFile: fileKey });
+	} catch (e) {
+		return handleActionError(e, "Impossible de supprimer le fichier");
 	}
 }

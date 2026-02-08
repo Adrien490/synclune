@@ -4,7 +4,7 @@ import { PaymentStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { revalidatePath, updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -33,30 +33,25 @@ export async function bulkDeleteOrders(
 		const idsRaw = formData.get("ids") as string;
 		const ids = idsRaw ? JSON.parse(idsRaw) : [];
 
-		const result = bulkDeleteOrdersSchema.safeParse({ ids });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(bulkDeleteOrdersSchema, { ids });
+		if ("error" in validated) return validated.error;
 
 		// Récupérer les commandes pour vérifier leur éligibilité
 		const orders = await prisma.order.findMany({
 			where: {
-				id: { in: result.data.ids },
+				id: { in: validated.data.ids },
 			},
 			select: {
 				id: true,
 				orderNumber: true,
 				userId: true,
-				// TODO: Ajouter invoiceNumber au schéma Prisma quand la feature factures sera implémentée
+				// ROADMAP: Invoices - add invoiceNumber to select
 				paymentStatus: true,
 			},
 		});
 
-		// Filtrer les commandes éligibles à la suppression
-		// TODO: Ajouter vérification invoiceNumber === null quand la feature factures sera implémentée
+		// Filter orders eligible for deletion
+		// ROADMAP: Invoices - add invoiceNumber === null check
 		const deletableOrders = orders.filter(
 			(order) =>
 				order.paymentStatus !== PaymentStatus.PAID &&
@@ -67,10 +62,7 @@ export async function bulkDeleteOrders(
 		const skippedCount = orders.length - deletableIds.length;
 
 		if (deletableIds.length === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.BULK_DELETE_NONE_ELIGIBLE,
-			};
+			return error(ORDER_ERROR_MESSAGES.BULK_DELETE_NONE_ELIGIBLE);
 		}
 
 		// Soft delete des commandes éligibles (Art. L123-22 Code de Commerce - conservation 10 ans)
@@ -90,18 +82,11 @@ export async function bulkDeleteOrders(
 
 		const message =
 			skippedCount > 0
-				? `${deletableIds.length} commande(s) supprimée(s), ${skippedCount} ignorée(s) (facturées ou payées)`
-				: `${deletableIds.length} commande(s) supprimée(s)`;
+				? `${deletableIds.length} commande(s) supprimee(s), ${skippedCount} ignoree(s) (facturees ou payees)`
+				: `${deletableIds.length} commande(s) supprimee(s)`;
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message,
-		};
-	} catch (error) {
-		console.error("[BULK_DELETE_ORDERS]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: ORDER_ERROR_MESSAGES.DELETE_FAILED,
-		};
+		return success(message);
+	} catch (e) {
+		return handleActionError(e, ORDER_ERROR_MESSAGES.DELETE_FAILED);
 	}
 }

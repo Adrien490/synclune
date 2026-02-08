@@ -16,7 +16,6 @@ export async function GET() {
 			newsletterDeleted: result.newsletterDeleted,
 			stockNotificationsDeleted: result.stockNotificationsDeleted,
 			customizationRequestsDeleted: result.customizationRequestsDeleted,
-			wishlistsDeleted: result.wishlistsDeleted,
 		});
 	} catch (error) {
 		return cronError(

@@ -2,9 +2,17 @@
 
 import { prisma } from "@/shared/lib/prisma";
 import { getClientIp } from "@/shared/lib/rate-limit";
-import { enforceRateLimit, handleActionError } from "@/shared/lib/actions";
+import {
+	enforceRateLimit,
+	handleActionError,
+	validateInput,
+	success,
+	error,
+	notFound,
+} from "@/shared/lib/actions";
 import { STOCK_NOTIFICATION_SUBSCRIBE_LIMIT } from "@/shared/lib/rate-limit-config";
-import { ActionState, ActionStatus } from "@/shared/types/server-action";
+import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus } from "@/shared/types/server-action";
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { headers } from "next/headers";
 import { updateTag } from "next/cache";
@@ -42,22 +50,14 @@ export async function subscribeToStockNotification(
 		const email = formData.get("email");
 		const consent = formData.get("consent") === "true";
 
-		const result = subscribeToStockNotificationSchema.safeParse({
+		const validated = validateInput(subscribeToStockNotificationSchema, {
 			skuId,
 			email,
 			consent,
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message:
-					result.error.issues[0]?.message ||
-					"Veuillez remplir les champs obligatoires",
-			};
-		}
-
-		const { skuId: validatedSkuId, email: validatedEmail } = result.data;
+		const { skuId: validatedSkuId, email: validatedEmail } = validated.data;
 		const normalizedEmail = validatedEmail.toLowerCase();
 
 		// Vérifier que le SKU existe et est en rupture de stock
@@ -74,25 +74,19 @@ export async function subscribeToStockNotification(
 		});
 
 		if (!sku) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Ce produit n'existe pas",
-			};
+			return notFound("Ce produit");
 		}
 
 		if (!sku.isActive) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Ce produit n'est plus disponible",
-			};
+			return error("Ce produit n'est plus disponible");
 		}
 
 		// Si le produit est en stock, pas besoin de notification
 		if (sku.inventory > 0) {
-			return {
-				status: ActionStatus.CONFLICT,
-				message: "Ce produit est actuellement en stock !",
-			};
+			return error(
+				"Ce produit est actuellement en stock !",
+				ActionStatus.CONFLICT
+			);
 		}
 
 		// Transaction pour éviter les race conditions entre vérification et création
@@ -139,11 +133,10 @@ export async function subscribeToStockNotification(
 		});
 
 		if (transactionResult.alreadyPending) {
-			return {
-				status: ActionStatus.CONFLICT,
-				message:
-					"Vous êtes déjà inscrit(e) pour recevoir une notification pour ce produit",
-			};
+			return error(
+				"Vous êtes déjà inscrit(e) pour recevoir une notification pour ce produit",
+				ActionStatus.CONFLICT
+			);
 		}
 
 		// Invalider le cache
@@ -153,11 +146,10 @@ export async function subscribeToStockNotification(
 		);
 		tagsToInvalidate.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Parfait ! Nous vous préviendrons par email dès que "${sku.product.title}" sera de nouveau disponible.`,
-		};
-	} catch (error) {
-		return handleActionError(error, "Une erreur est survenue. Veuillez réessayer plus tard.");
+		return success(
+			`Parfait ! Nous vous préviendrons par email dès que "${sku.product.title}" sera de nouveau disponible.`
+		);
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue. Veuillez réessayer plus tard.");
 	}
 }

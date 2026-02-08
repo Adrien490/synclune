@@ -30,18 +30,28 @@ export async function sendBackInStockEmail({
 	availableQuantity: number
 	unsubscribeUrl: string
 }): Promise<EmailResult> {
-	const html = await render(
-		BackInStockEmail({
-			productTitle,
-			productUrl,
-			skuColor,
-			skuMaterial,
-			skuSize,
-			skuImageUrl,
-			price,
-			availableQuantity,
-			unsubscribeUrl,
-		})
-	)
-	return sendEmail({ to, subject: EMAIL_SUBJECTS.BACK_IN_STOCK, html })
+	const component = BackInStockEmail({
+		productTitle,
+		productUrl,
+		skuColor,
+		skuMaterial,
+		skuSize,
+		skuImageUrl,
+		price,
+		availableQuantity,
+		unsubscribeUrl,
+	})
+	const html = await render(component)
+	const text = await render(component, { plainText: true })
+	return sendEmail({
+		to,
+		subject: EMAIL_SUBJECTS.BACK_IN_STOCK,
+		html,
+		text,
+		headers: {
+			"List-Unsubscribe": `<${unsubscribeUrl}>`,
+			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+		},
+		tags: [{ name: "category", value: "marketing" }],
+	})
 }

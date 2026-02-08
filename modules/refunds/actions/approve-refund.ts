@@ -6,8 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 
 import { sendRefundApprovedEmail } from "@/modules/emails/services/refund-emails";
@@ -36,13 +35,8 @@ export async function approveRefund(
 
 		const id = formData.get("id") as string;
 
-		const result = approveRefundSchema.safeParse({ id });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "ID invalide",
-			};
-		}
+		const validated = validateInput(approveRefundSchema, { id });
+		if ("error" in validated) return validated.error;
 
 		// Récupérer le remboursement avec les infos pour l'email
 		const refund = await prisma.refund.findUnique({
@@ -69,25 +63,16 @@ export async function approveRefund(
 		});
 
 		if (!refund) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: REFUND_ERROR_MESSAGES.NOT_FOUND,
-			};
+			return error(REFUND_ERROR_MESSAGES.NOT_FOUND);
 		}
 
 		// Vérifier le statut actuel
 		if (refund.status === RefundStatus.APPROVED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: REFUND_ERROR_MESSAGES.ALREADY_APPROVED,
-			};
+			return error(REFUND_ERROR_MESSAGES.ALREADY_APPROVED);
 		}
 
 		if (refund.status !== RefundStatus.PENDING) {
-			return {
-				status: ActionStatus.ERROR,
-				message: REFUND_ERROR_MESSAGES.ALREADY_PROCESSED,
-			};
+			return error(REFUND_ERROR_MESSAGES.ALREADY_PROCESSED);
 		}
 
 		// Mettre à jour le statut et créer l'entrée d'historique
@@ -133,11 +118,8 @@ export async function approveRefund(
 			}
 		}
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Remboursement de ${(refund.amount / 100).toFixed(2)} € approuvé pour la commande ${refund.order.orderNumber}`,
-		};
-	} catch (error) {
-		return handleActionError(error, REFUND_ERROR_MESSAGES.APPROVE_FAILED);
+		return success(`Remboursement de ${(refund.amount / 100).toFixed(2)} € approuvé pour la commande ${refund.order.orderNumber}`);
+	} catch (e) {
+		return handleActionError(e, REFUND_ERROR_MESSAGES.APPROVE_FAILED);
 	}
 }

@@ -10,7 +10,7 @@ import { updateTag } from "next/cache";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import { generateOrderNumber } from "@/modules/orders/services/order-generation.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
-import { ActionStatus, type ActionState } from "@/shared/types/server-action";
+import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import Stripe from "stripe";
 import { createCheckoutSessionSchema } from "@/modules/payments/schemas/create-checkout-session-schema";
@@ -25,7 +25,7 @@ import { getShippingZoneFromPostalCode } from "@/modules/orders/utils/postal-zon
 import { getInvoiceFooter } from "@/shared/lib/stripe";
 import { getValidImageUrl } from "@/modules/payments/utils/validate-image-url";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
-import { BusinessError, handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error, BusinessError } from "@/shared/lib/actions";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -56,8 +56,7 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 
 		if (!rateLimit.success) {
 			return {
-				status: ActionStatus.ERROR,
-				message: rateLimit.error || "Trop de tentatives de paiement. Veuillez réessayer plus tard.",
+				...error(rateLimit.error || "Trop de tentatives de paiement. Veuillez réessayer plus tard."),
 				data: {
 					retryAfter: rateLimit.retryAfter,
 					reset: rateLimit.reset,
@@ -76,11 +75,7 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 			cartItems = JSON.parse(cartItemsRaw);
 			shippingAddress = JSON.parse(shippingAddressRaw);
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format JSON invalide pour les données du panier.",
-				validationErrors: { cartItems: ["Format JSON invalide"] },
-			};
+			return error("Format JSON invalide pour les donnees du panier.");
 		}
 
 		const rawData: CreateCheckoutSessionData = {
@@ -91,25 +86,15 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 		};
 
 		// 4. Validation
-		const validation = createCheckoutSessionSchema.safeParse(rawData);
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Validation échouée. Veuillez vérifier votre saisie.",
-				validationErrors: validation.error.flatten().fieldErrors,
-			};
-		}
+		const validated = validateInput(createCheckoutSessionSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const validatedData = validation.data;
+		const validatedData = validated.data;
 
 		// 5. Validation guest checkout
 		const finalEmail = validatedData.email || userEmail;
 		if (!userId && !finalEmail) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "L'email est requis pour une commande invité.",
-				validationErrors: { email: ["L'email est requis pour les invités"] },
-			};
+			return error("L'email est requis pour une commande invite.");
 		}
 
 		// Parser fullName en firstName/lastName pour Stripe et la base de données
@@ -157,15 +142,11 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 					});
 // console.log(`✅ [CHECKOUT] User ${userId} updated with stripeCustomerId`);
 				}
-			} catch (error) {
+			} catch (e) {
 				// Distinguer erreurs permanentes (email invalide) vs transitoires (réseau)
-				if (error instanceof Stripe.errors.StripeInvalidRequestError) {
+				if (e instanceof Stripe.errors.StripeInvalidRequestError) {
 					// Erreur permanente : email invalide, données incorrectes
-					return {
-						status: ActionStatus.VALIDATION_ERROR,
-						message: "Email invalide pour la création du profil client.",
-						validationErrors: { email: ["Email invalide ou non accepté par Stripe"] },
-					};
+					return error("Email invalide pour la creation du profil client.");
 				}
 				// Erreur transitoire (réseau, timeout) : continuer sans customer Stripe
 				// Le checkout fonctionnera mais sans customer_id pré-rempli
@@ -187,13 +168,7 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 		// Vérifier les erreurs
 		const failedSkus = skuDetailsResults.filter((result) => !result.success);
 		if (failedSkus.length > 0) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Certains articles ne sont plus disponibles.",
-				validationErrors: {
-					cartItems: ["Un ou plusieurs articles ne sont plus disponibles"],
-				},
-			};
+			return error("Certains articles ne sont plus disponibles.");
 		}
 
 		// 7. Préparer les line items Stripe (sans vérification stock pour l'instant)
@@ -629,16 +604,12 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 			updateTag(`cart-${userId}`);
 		}
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Session de paiement créée avec succès.",
-			data: {
-				clientSecret: checkoutSession.client_secret, // ✅ EMBEDDED MODE : clientSecret pour initialiser le formulaire
-				orderId: order.id,
-				orderNumber: order.orderNumber,
-			},
-		};
-	} catch (error) {
-		return handleActionError(error, "Une erreur est survenue lors de la création de la session de paiement.");
+		return success("Session de paiement creee avec succes.", {
+			clientSecret: checkoutSession.client_secret, // EMBEDDED MODE : clientSecret pour initialiser le formulaire
+			orderId: order.id,
+			orderNumber: order.orderNumber,
+		});
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de la creation de la session de paiement.");
 	}
 };

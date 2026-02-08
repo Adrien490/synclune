@@ -5,7 +5,8 @@ import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { sendBackInStockEmail } from "@/modules/emails/services/stock-emails";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { ActionState, ActionStatus } from "@/shared/types/server-action";
+import type { ActionState } from "@/shared/types/server-action";
+import { success, error, validationError } from "@/shared/lib/actions";
 import { getNotifyStockInvalidationTags } from "../constants/cache";
 import {
 	STOCK_NOTIFICATION_BATCH_SIZE,
@@ -168,7 +169,7 @@ export async function notifyStockAvailable(
 			await Promise.all(batch.map(processNotification));
 		}
 
-		// ⚠️ AUDIT FIX: Batch update de toutes les notifications réussies en une seule requête
+		// AUDIT FIX: Batch update de toutes les notifications réussies en une seule requête
 		if (successfulIds.length > 0) {
 			await prisma.stockNotificationRequest.updateMany({
 				where: { id: { in: successfulIds } },
@@ -261,32 +262,18 @@ export async function notifyStockAvailableAction(
 	const skuId = formData.get("skuId") as string;
 
 	if (!skuId) {
-		return {
-			status: ActionStatus.VALIDATION_ERROR,
-			message: "ID de SKU requis",
-		};
+		return validationError("ID de SKU requis");
 	}
 
 	const result = await notifyStockAvailable(skuId);
 
 	if (result.successfulNotifications > 0) {
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${result.successfulNotifications} notification(s) envoyée(s)`,
-			data: result,
-		};
+		return success(`${result.successfulNotifications} notification(s) envoyée(s)`, result);
 	}
 
 	if (result.totalNotifications === 0) {
-		return {
-			status: ActionStatus.ERROR,
-			message: "Aucune notification en attente pour ce produit",
-		};
+		return error("Aucune notification en attente pour ce produit");
 	}
 
-	return {
-		status: ActionStatus.ERROR,
-		message: "Échec de l'envoi des notifications",
-		data: result,
-	};
+	return error("Échec de l'envoi des notifications");
 }

@@ -5,9 +5,8 @@ import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { addressSchema } from "@/shared/schemas/address-schema";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success } from "@/shared/lib/actions";
 
 /**
  * Server Action pour créer une nouvelle adresse
@@ -36,16 +35,10 @@ export async function createAddress(
 		};
 
 		// 3. Validation avec Zod
-		const result = addressSchema.safeParse(rawData);
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(addressSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const validatedData = result.data;
+		const validatedData = validated.data;
 
 		// 4. Vérifier si c'est la première adresse (définir par défaut)
 		const addressCount = await prisma.address.count({
@@ -66,12 +59,11 @@ export async function createAddress(
 		// 6. Revalidation du cache avec tags
 		getUserAddressesInvalidationTags(user.id).forEach(tag => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: isDefault
-				? "Adresse ajoutée et définie comme adresse par défaut"
-				: "Adresse ajoutée avec succès",
-		};
+		return success(
+			isDefault
+				? "Adresse ajoutee et definie comme adresse par defaut"
+				: "Adresse ajoutee avec succes"
+		);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la création de l'adresse");
 	}

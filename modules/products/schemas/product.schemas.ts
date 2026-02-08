@@ -116,6 +116,7 @@ export const getProductsSchema = z.object({
 		.enum([ProductStatus.PUBLIC, ProductStatus.DRAFT, ProductStatus.ARCHIVED])
 		.optional()
 		.default(ProductStatus.PUBLIC),
+	includeDeleted: z.boolean().optional(),
 });
 
 // ============================================================================

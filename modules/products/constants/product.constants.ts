@@ -164,6 +164,12 @@ export const GET_PRODUCT_SELECT = {
 	},
 } as const satisfies Prisma.ProductSelect;
 
+/**
+ * Select for product listings (public storefront + admin).
+ * WARNING: Shared between public and admin views.
+ * Do NOT add admin-only sensitive fields here (e.g. costPrice, supplierNotes).
+ * Create a separate admin select if needed.
+ */
 export const GET_PRODUCTS_SELECT = {
 	id: true,
 	slug: true,

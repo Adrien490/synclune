@@ -3,8 +3,13 @@
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
+import {
+	validateInput,
+	handleActionError,
+	success,
+	validationError,
+} from "@/shared/lib/actions";
 
 import { bulkDeleteStockNotificationsSchema } from "../schemas/stock-notification.schemas";
 import { STOCK_NOTIFICATIONS_CACHE_TAGS } from "../constants/cache";
@@ -27,24 +32,16 @@ export async function bulkDeleteStockNotifications(
 		try {
 			ids = JSON.parse(idsRaw);
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format des IDs invalide",
-			};
+			return validationError("Format des IDs invalide");
 		}
 
-		const result = bulkDeleteStockNotificationsSchema.safeParse({ ids });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(bulkDeleteStockNotificationsSchema, { ids });
+		if ("error" in validated) return validated.error;
 
 		// Soft delete en masse (retention 10 ans - Art. L123-22 Code de Commerce)
 		const deleteResult = await prisma.stockNotificationRequest.updateMany({
 			where: {
-				id: { in: result.data.ids },
+				id: { in: validated.data.ids },
 				deletedAt: null, // Ne pas re-supprimer les déjà supprimés
 			},
 			data: { deletedAt: new Date() },
@@ -57,15 +54,10 @@ export async function bulkDeleteStockNotifications(
 		];
 		tagsToInvalidate.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${deleteResult.count} notification${deleteResult.count > 1 ? "s" : ""} supprimée${deleteResult.count > 1 ? "s" : ""} définitivement`,
-		};
-	} catch (error) {
-		console.error("[BULK_DELETE_STOCK_NOTIFICATIONS]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Erreur lors de la suppression",
-		};
+		return success(
+			`${deleteResult.count} notification${deleteResult.count > 1 ? "s" : ""} supprimée${deleteResult.count > 1 ? "s" : ""} définitivement`
+		);
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la suppression");
 	}
 }

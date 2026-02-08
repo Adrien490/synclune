@@ -4,7 +4,7 @@ import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { revalidatePath, updateTag } from "next/cache";
 
 import { bulkCancelOrdersSchema } from "../schemas/order.schemas";
@@ -31,35 +31,25 @@ export async function bulkCancelOrders(
 		const ids = idsString ? JSON.parse(idsString as string) : [];
 		const reason = formData.get("reason") as string | null;
 
-		const validation = bulkCancelOrdersSchema.safeParse({
+		const validated = validateInput(bulkCancelOrdersSchema, {
 			ids,
 			reason: reason || undefined,
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Données invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validatedData = validated.data;
 
 		// Filtrer les commandes éligibles (via data/)
 		const eligibleOrders = await getOrdersForBulkCancel(validatedData.ids);
 
 		if (eligibleOrders.length === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucune commande éligible pour l'annulation.",
-			};
+			return error("Aucune commande eligible pour l'annulation.");
 		}
 
 		let stockRestored = 0;
 		let refundedCount = 0;
 
-		// ⚠️ AUDIT FIX: Pré-calculer les mises à jour de stock pour éviter N+1 queries
+		// Pré-calculer les mises à jour de stock pour éviter N+1 queries
 		// Grouper les quantités par skuId pour batch update
 		const stockUpdates = new Map<string, number>();
 		const orderUpdates: Array<{
@@ -131,25 +121,18 @@ export async function bulkCancelOrders(
 		revalidatePath("/admin/ventes/commandes");
 		revalidatePath("/admin/catalogue/inventaire");
 
-		const messages = [`${eligibleOrders.length} commande${eligibleOrders.length > 1 ? "s" : ""} annulée${eligibleOrders.length > 1 ? "s" : ""}.`];
+		const messages = [`${eligibleOrders.length} commande${eligibleOrders.length > 1 ? "s" : ""} annulee${eligibleOrders.length > 1 ? "s" : ""}.`];
 
 		if (refundedCount > 0) {
-			messages.push(`${refundedCount} passée${refundedCount > 1 ? "s" : ""} à REFUNDED.`);
+			messages.push(`${refundedCount} passee${refundedCount > 1 ? "s" : ""} a REFUNDED.`);
 		}
 
 		if (stockRestored > 0) {
-			messages.push(`Stock restauré pour ${stockRestored} commande${stockRestored > 1 ? "s" : ""}.`);
+			messages.push(`Stock restaure pour ${stockRestored} commande${stockRestored > 1 ? "s" : ""}.`);
 		}
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: messages.join(" "),
-		};
-	} catch (error) {
-		console.error("[BULK_CANCEL_ORDERS]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de l'annulation des commandes.",
-		};
+		return success(messages.join(" "));
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de l'annulation des commandes.");
 	}
 }

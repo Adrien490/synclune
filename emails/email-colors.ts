@@ -41,6 +41,11 @@ export const EMAIL_COLORS = {
  * Styles inline réutilisables pour les composants d'email
  */
 export const EMAIL_STYLES = {
+	body: {
+		fontFamily:
+			"system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+	},
+
 	container: {
 		maxWidth: "600px",
 		margin: "32px auto",
@@ -75,6 +80,7 @@ export const EMAIL_STYLES = {
 		body: {
 			margin: 0,
 			fontSize: "16px",
+			lineHeight: "1.6",
 			color: EMAIL_COLORS.text.primary,
 		},
 		small: {
@@ -94,7 +100,7 @@ export const EMAIL_STYLES = {
 			display: "inline-block",
 			padding: "16px 32px",
 			backgroundColor: EMAIL_COLORS.primary,
-			color: EMAIL_COLORS.text.primary,
+			color: "#ffffff",
 			fontSize: "16px",
 			fontWeight: "600" as const,
 			textDecoration: "none",

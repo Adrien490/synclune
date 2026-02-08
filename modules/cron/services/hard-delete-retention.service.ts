@@ -1,7 +1,9 @@
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
-
-const RETENTION_YEARS = 10; // Art. L123-22 Code de Commerce - Conservation 10 ans
+import { RETENTION } from "@/modules/cron/constants/limits";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 
 /**
  * Service de suppression définitive après la période de rétention légale
@@ -17,7 +19,6 @@ const RETENTION_YEARS = 10; // Art. L123-22 Code de Commerce - Conservation 10 a
  * - NewsletterSubscriber
  * - StockNotificationRequest
  * - CustomizationRequest
- * - Wishlist (et WishlistItem en cascade)
  */
 export async function hardDeleteExpiredRecords(): Promise<{
 	productsDeleted: number;
@@ -25,21 +26,19 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	newsletterDeleted: number;
 	stockNotificationsDeleted: number;
 	customizationRequestsDeleted: number;
-	wishlistsDeleted: number;
 }> {
 	console.log(
 		"[CRON:hard-delete-retention] Starting 10-year retention cleanup..."
 	);
 
 	const retentionDate = new Date();
-	retentionDate.setFullYear(retentionDate.getFullYear() - RETENTION_YEARS);
+	retentionDate.setFullYear(retentionDate.getFullYear() - RETENTION.LEGAL_RETENTION_YEARS);
 
 	console.log(
 		`[CRON:hard-delete-retention] Deleting records soft-deleted before ${retentionDate.toISOString()}`
 	);
 
-	// 1. Supprimer les avis produits (ReviewMedia et ReviewResponse supprimés en cascade)
-	// 1a. Collecter les URLs des ReviewMedia avant suppression
+	// 1. Collect UploadThing URLs before DB transaction
 	const reviewMediaUrls = await prisma.reviewMedia.findMany({
 		where: {
 			review: {
@@ -49,70 +48,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 		select: { url: true },
 	});
 
-	// 1b. Supprimer les fichiers UploadThing
-	if (reviewMediaUrls.length > 0) {
-		const urls = reviewMediaUrls.map((m) => m.url);
-		const result = await deleteUploadThingFilesFromUrls(urls);
-		console.log(
-			`[CRON:hard-delete-retention] Deleted ${result.deleted} review media files from UploadThing`
-		);
-	}
-
-	// 1c. Supprimer les avis de la DB
-	const reviewsResult = await prisma.productReview.deleteMany({
-		where: {
-			deletedAt: { lt: retentionDate },
-		},
-	});
-	console.log(
-		`[CRON:hard-delete-retention] Deleted ${reviewsResult.count} product reviews`
-	);
-
-	// 2. Supprimer les abonnements newsletter
-	const newsletterResult = await prisma.newsletterSubscriber.deleteMany({
-		where: {
-			deletedAt: { lt: retentionDate },
-		},
-	});
-	console.log(
-		`[CRON:hard-delete-retention] Deleted ${newsletterResult.count} newsletter subscribers`
-	);
-
-	// 3. Supprimer les demandes de notification de stock
-	const stockNotificationsResult =
-		await prisma.stockNotificationRequest.deleteMany({
-			where: {
-				deletedAt: { lt: retentionDate },
-			},
-		});
-	console.log(
-		`[CRON:hard-delete-retention] Deleted ${stockNotificationsResult.count} stock notifications`
-	);
-
-	// 4. Supprimer les demandes de personnalisation
-	const customizationRequestsResult =
-		await prisma.customizationRequest.deleteMany({
-			where: {
-				deletedAt: { lt: retentionDate },
-			},
-		});
-	console.log(
-		`[CRON:hard-delete-retention] Deleted ${customizationRequestsResult.count} customization requests`
-	);
-
-	// 5. Supprimer les wishlists (WishlistItem supprimés en cascade)
-	const wishlistsResult = await prisma.wishlist.deleteMany({
-		where: {
-			deletedAt: { lt: retentionDate },
-		},
-	});
-	console.log(
-		`[CRON:hard-delete-retention] Deleted ${wishlistsResult.count} wishlists`
-	);
-
-	// 6. Supprimer les produits archivés (ProductSku, SkuMedia, etc. en cascade)
-	// Note: On supprime seulement les produits ARCHIVED + soft-deleted
-	// 6a. Collecter les URLs des SkuMedia avant suppression
 	const skuMediaUrls = await prisma.skuMedia.findMany({
 		where: {
 			sku: {
@@ -125,7 +60,59 @@ export async function hardDeleteExpiredRecords(): Promise<{
 		select: { url: true, thumbnailUrl: true },
 	});
 
-	// 6b. Supprimer les fichiers UploadThing (url + thumbnailUrl)
+	// 2. Run all DB deletes in a single transaction
+	// Note: Wishlist has no deletedAt (no soft-delete), skipped here
+	const [
+		reviewsResult,
+		newsletterResult,
+		stockNotificationsResult,
+		customizationRequestsResult,
+		productsResult,
+	] = await prisma.$transaction([
+		prisma.productReview.deleteMany({
+			where: { deletedAt: { lt: retentionDate } },
+		}),
+		prisma.newsletterSubscriber.deleteMany({
+			where: { deletedAt: { lt: retentionDate } },
+		}),
+		prisma.stockNotificationRequest.deleteMany({
+			where: { deletedAt: { lt: retentionDate } },
+		}),
+		prisma.customizationRequest.deleteMany({
+			where: { deletedAt: { lt: retentionDate } },
+		}),
+		prisma.product.deleteMany({
+			where: { deletedAt: { lt: retentionDate }, status: "ARCHIVED" },
+		}),
+	]);
+
+	console.log(
+		`[CRON:hard-delete-retention] DB transaction completed: ` +
+			`${reviewsResult.count} reviews, ${newsletterResult.count} newsletter, ` +
+			`${stockNotificationsResult.count} stock notifications, ` +
+			`${customizationRequestsResult.count} customization requests, ` +
+			`${productsResult.count} products`
+	);
+
+	// 3. Invalidate caches for deleted records
+	if (productsResult.count > 0) {
+		updateTag(PRODUCTS_CACHE_TAGS.LIST);
+		updateTag(PRODUCTS_CACHE_TAGS.COUNTS);
+	}
+	if (reviewsResult.count > 0) {
+		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST);
+		updateTag(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
+	}
+
+	// 4. Delete UploadThing files after DB transaction succeeds
+	if (reviewMediaUrls.length > 0) {
+		const urls = reviewMediaUrls.map((m) => m.url);
+		const result = await deleteUploadThingFilesFromUrls(urls);
+		console.log(
+			`[CRON:hard-delete-retention] Deleted ${result.deleted} review media files from UploadThing`
+		);
+	}
+
 	if (skuMediaUrls.length > 0) {
 		const urls = skuMediaUrls.flatMap((m) =>
 			[m.url, m.thumbnailUrl].filter((u): u is string => u !== null)
@@ -136,17 +123,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 		);
 	}
 
-	// 6c. Supprimer les produits de la DB
-	const productsResult = await prisma.product.deleteMany({
-		where: {
-			deletedAt: { lt: retentionDate },
-			status: "ARCHIVED",
-		},
-	});
-	console.log(
-		`[CRON:hard-delete-retention] Deleted ${productsResult.count} archived products`
-	);
-
 	console.log("[CRON:hard-delete-retention] Retention cleanup completed");
 
 	return {
@@ -155,6 +131,5 @@ export async function hardDeleteExpiredRecords(): Promise<{
 		newsletterDeleted: newsletterResult.count,
 		stockNotificationsDeleted: stockNotificationsResult.count,
 		customizationRequestsDeleted: customizationRequestsResult.count,
-		wishlistsDeleted: wishlistsResult.count,
 	};
 }

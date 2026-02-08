@@ -5,9 +5,8 @@ import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import { getUserAddressesInvalidationTags } from "../constants/cache";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { ADDRESS_ERROR_MESSAGES } from "../constants/address.constants";
-import { validateInput, handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { addressIdSchema } from "../schemas/user-addresses.schemas";
 
 export async function deleteAddress(
@@ -34,10 +33,7 @@ export async function deleteAddress(
 		});
 
 		if (!existingAddress) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ADDRESS_ERROR_MESSAGES.NOT_FOUND,
-			};
+			return error(ADDRESS_ERROR_MESSAGES.NOT_FOUND);
 		}
 
 		// Utiliser une transaction pour garantir l'intégrité
@@ -67,10 +63,7 @@ export async function deleteAddress(
 		// Revalidation du cache avec tags
 		getUserAddressesInvalidationTags(user.id).forEach(tag => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Adresse supprimée avec succès",
-		};
+		return success("Adresse supprimee avec succes");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la suppression de l'adresse");
 	}

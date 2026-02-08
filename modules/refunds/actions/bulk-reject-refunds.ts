@@ -6,8 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
@@ -50,13 +49,8 @@ export async function bulkRejectRefunds(
 			};
 		}
 
-		const result = bulkRejectRefundsSchema.safeParse({ ids, reason });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(bulkRejectRefundsSchema, { ids, reason });
+		if ("error" in validated) return validated.error;
 
 		// Récupérer les remboursements éligibles (PENDING uniquement, non supprimés)
 		const refunds = await prisma.refund.findMany({

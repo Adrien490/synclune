@@ -4,7 +4,7 @@ import { PaymentStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma, softDelete } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { revalidatePath, updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -38,13 +38,8 @@ export async function deleteOrder(
 
 		const id = formData.get("id") as string;
 
-		const result = deleteOrderSchema.safeParse({ id });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "ID invalide",
-			};
-		}
+		const validated = validateInput(deleteOrderSchema, { id });
+		if ("error" in validated) return validated.error;
 
 		// Récupérer la commande avec les infos nécessaires
 		const order = await prisma.order.findUnique({
@@ -53,19 +48,16 @@ export async function deleteOrder(
 				id: true,
 				orderNumber: true,
 				userId: true,
-				// TODO: Ajouter invoiceNumber au schéma Prisma quand la feature factures sera implémentée
+				// ROADMAP: Invoices - add invoiceNumber to select
 				paymentStatus: true,
 			},
 		});
 
 		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
+			return error(ORDER_ERROR_MESSAGES.NOT_FOUND);
 		}
 
-		// TODO: Règle 1 - Vérifier invoiceNumber === null quand la feature factures sera implémentée
+		// ROADMAP: Invoices - check invoiceNumber === null before allowing delete
 
 		// Règle 2 : Vérifier que la commande n'a jamais été payée
 		// PAID ou REFUNDED signifie qu'il y a eu un paiement
@@ -73,10 +65,7 @@ export async function deleteOrder(
 			order.paymentStatus === PaymentStatus.PAID ||
 			order.paymentStatus === PaymentStatus.REFUNDED
 		) {
-			return {
-				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_DELETE_PAID,
-			};
+			return error(ORDER_ERROR_MESSAGES.CANNOT_DELETE_PAID);
 		}
 
 		// Soft delete autorisé (commande de test, abandonnée, ou échouée)
@@ -87,15 +76,8 @@ export async function deleteOrder(
 		getOrderInvalidationTags(order.userId ?? undefined).forEach(tag => updateTag(tag));
 		revalidatePath("/admin/ventes/commandes");
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} supprimée.`,
-		};
-	} catch (error) {
-		console.error("[DELETE_ORDER]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: ORDER_ERROR_MESSAGES.DELETE_FAILED,
-		};
+		return success(`Commande ${order.orderNumber} supprimee.`);
+	} catch (e) {
+		return handleActionError(e, ORDER_ERROR_MESSAGES.DELETE_FAILED);
 	}
 }

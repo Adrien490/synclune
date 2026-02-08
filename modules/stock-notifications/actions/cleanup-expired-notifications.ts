@@ -4,7 +4,8 @@ import { prisma } from "@/shared/lib/prisma";
 import { StockNotificationStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { ActionState, ActionStatus } from "@/shared/types/server-action";
+import type { ActionState } from "@/shared/types/server-action";
+import { success } from "@/shared/lib/actions";
 import { STOCK_NOTIFICATIONS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { STOCK_NOTIFICATION_EXPIRY_DAYS } from "../constants/stock-notification.constants";
@@ -63,26 +64,16 @@ export async function cleanupExpiredNotificationsAction(
 	_: ActionState | undefined
 ): Promise<ActionState> {
 	const admin = await requireAdmin();
-	if (!admin) {
-		return {
-			status: ActionStatus.UNAUTHORIZED,
-			message: "Accès non autorisé. Droits administrateur requis.",
-		};
-	}
+	if ("error" in admin) return admin.error;
 
 	const result = await cleanupExpiredNotifications();
 
 	if (result.expiredCount > 0) {
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${result.expiredCount} demande(s) expirée(s) nettoyée(s)`,
-			data: result,
-		};
+		return success(
+			`${result.expiredCount} demande(s) expirée(s) nettoyée(s)`,
+			result
+		);
 	}
 
-	return {
-		status: ActionStatus.SUCCESS,
-		message: "Aucune demande expirée à nettoyer",
-		data: result,
-	};
+	return success("Aucune demande expirée à nettoyer", result);
 }

@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma, HistorySource } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type {
 	OrderAction,
@@ -38,7 +38,7 @@ export async function createOrderAudit(
 			metadata: params.metadata as Prisma.InputJsonValue,
 			authorId: params.authorId,
 			authorName: params.authorName,
-			source: params.source || "admin",
+			source: params.source || HistorySource.ADMIN,
 		},
 	});
 }
@@ -65,7 +65,7 @@ export async function createOrderAuditTx(
 			metadata: params.metadata as Prisma.InputJsonValue,
 			authorId: params.authorId,
 			authorName: params.authorName,
-			source: params.source || "admin",
+			source: params.source || HistorySource.ADMIN,
 		},
 	});
 }
@@ -100,7 +100,7 @@ export function buildStatusChangeAudit(
 		note?: string;
 		authorId?: string;
 		authorName?: string;
-		source?: "admin" | "webhook" | "system" | "customer";
+		source?: HistorySource;
 		metadata?: Record<string, unknown>;
 	}
 ): CreateOrderAuditParams {
@@ -128,7 +128,7 @@ export function buildStatusChangeAudit(
 		note: options?.note,
 		authorId: options?.authorId,
 		authorName: options?.authorName,
-		source: options?.source || "admin",
+		source: options?.source || HistorySource.ADMIN,
 		metadata: options?.metadata,
 	};
 }

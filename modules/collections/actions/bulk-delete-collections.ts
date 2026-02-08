@@ -2,10 +2,9 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { bulkDeleteCollectionsSchema } from "../schemas/collection.schemas";
@@ -25,10 +24,7 @@ export async function bulkDeleteCollections(
 			const idsString = formData.get("ids") as string;
 			ids = idsString ? JSON.parse(idsString) : [];
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format JSON invalide pour les IDs",
-			};
+			return error("Format JSON invalide pour les IDs");
 		}
 
 		// 3. Valider les donnees

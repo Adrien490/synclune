@@ -5,9 +5,8 @@ import { updateTag } from "next/cache";
 import { createDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 
 import { getDiscountInvalidationTags } from "../constants/cache";
@@ -63,10 +62,7 @@ export async function createDiscount(
 		});
 
 		if (existingDiscount) {
-			return {
-				status: ActionStatus.CONFLICT,
-				message: DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS,
-			};
+			return error(DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS);
 		}
 
 		// 5. Créer le discount

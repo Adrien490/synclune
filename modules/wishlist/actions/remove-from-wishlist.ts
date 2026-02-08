@@ -7,7 +7,6 @@ import { prisma } from "@/shared/lib/prisma"
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit"
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config"
 import type { ActionState } from "@/shared/types/server-action"
-import { ActionStatus } from "@/shared/types/server-action"
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { removeFromWishlistSchema } from '@/modules/wishlist/schemas/wishlist.schemas'
@@ -16,6 +15,7 @@ import {
 	getWishlistExpirationDate,
 } from "@/modules/wishlist/lib/wishlist-session"
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages"
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions"
 
 /**
  * Server Action pour retirer un article de la wishlist
@@ -42,10 +42,7 @@ export async function removeFromWishlist(
 
 		// Vérifier qu'on a soit un userId soit un sessionId
 		if (!userId && !sessionId) {
-			return {
-				status: ActionStatus.ERROR,
-				message: WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND,
-			}
+			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_NOT_FOUND)
 		}
 
 		// 2. Extraction des données du FormData
@@ -54,16 +51,10 @@ export async function removeFromWishlist(
 		}
 
 		// 3. Validation avec Zod
-		const result = removeFromWishlistSchema.safeParse(rawData)
-		if (!result.success) {
-			const firstError = result.error.issues[0]
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || WISHLIST_ERROR_MESSAGES.INVALID_DATA,
-			}
-		}
+		const validated = validateInput(removeFromWishlistSchema, rawData)
+		if ("error" in validated) return validated.error
 
-		const validatedData = result.data
+		const validatedData = validated.data
 
 		// 4. Rate limiting (protection anti-spam)
 		const headersList = await headers()

@@ -20,11 +20,11 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
 					<div className="flex h-16 items-center justify-between">
 						<Logo href="/" size={40} showText />
 						<Link
-							href="/panier"
+							href="/creations"
 							className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
 						>
 							<ArrowLeft className="size-4" />
-							<span className="hidden sm:inline">Retour au panier</span>
+							<span className="hidden sm:inline">Continuer mes achats</span>
 						</Link>
 					</div>
 				</div>

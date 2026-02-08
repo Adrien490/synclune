@@ -1,6 +1,6 @@
 "use server";
 
-import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
@@ -133,7 +133,7 @@ export async function cancelOrder(
 				note: sanitizedReason || undefined,
 				authorId: adminUser.id,
 				authorName: adminUser.name || "Admin",
-				source: "admin",
+				source: HistorySource.ADMIN,
 				metadata: {
 					stockRestored: shouldRestoreStock,
 					itemsCount: order.items.length,

@@ -22,9 +22,7 @@ import { useRecentSearches } from "@/modules/products/hooks/use-recent-searches"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { cn } from "@/shared/utils/cn"
 
-import { RECENT_SEARCHES_MAX_ITEMS } from "@/modules/products/constants/recent-searches"
-
-import { QUICK_SEARCH_DIALOG_ID } from "./constants"
+import { FOCUSABLE_SELECTOR, QUICK_SEARCH_DIALOG_ID } from "./constants"
 
 interface QuickSearchDialogProps {
 	recentSearches?: string[]
@@ -50,7 +48,6 @@ export function QuickSearchDialog({
 		onClearError: () => toast.error("Erreur lors de la suppression"),
 	})
 
-	const displayedSearches = searches.slice(0, RECENT_SEARCHES_MAX_ITEMS)
 	const hasContent = searches.length > 0 || collections.length > 0 || productTypes.length > 0
 
 	const contentRef = useRef<HTMLDivElement>(null)
@@ -59,10 +56,8 @@ export function QuickSearchDialog({
 		const container = contentRef.current
 		if (!container) return
 
-		const focusableSelector =
-			'button:not([disabled]), a:not([disabled]), [tabindex]:not([tabindex="-1"]):not([type="search"])'
 		const focusables = Array.from(
-			container.querySelectorAll<HTMLElement>(focusableSelector)
+			container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
 		)
 
 		if (focusables.length === 0) return
@@ -208,8 +203,8 @@ export function QuickSearchDialog({
 					{isPending
 						? "Recherche en cours..."
 						: <>
-							{displayedSearches.length > 0 &&
-								`${displayedSearches.length} recherche${displayedSearches.length > 1 ? "s" : ""} recente${displayedSearches.length > 1 ? "s" : ""}.`}
+							{searches.length > 0 &&
+								`${searches.length} recherche${searches.length > 1 ? "s" : ""} recente${searches.length > 1 ? "s" : ""}.`}
 							{collections.length > 0 && ` ${collections.length} collection${collections.length > 1 ? "s" : ""}.`}
 							{productTypes.length > 0 && ` ${productTypes.length} categorie${productTypes.length > 1 ? "s" : ""}.`}
 						</>
@@ -230,7 +225,7 @@ export function QuickSearchDialog({
 					<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
 						<div className="px-4 py-4 space-y-6">
 							{/* Recent Searches */}
-							{displayedSearches.length > 0 && (
+							{searches.length > 0 && (
 								<section aria-labelledby="recent-searches-heading">
 									<div className="flex items-center justify-between mb-3">
 										<h2 id="recent-searches-heading" className="font-display text-base font-medium text-muted-foreground tracking-wide flex items-center gap-2">
@@ -249,7 +244,7 @@ export function QuickSearchDialog({
 										</Button>
 									</div>
 									<Stagger role="list" className="space-y-1" stagger={0.02} delay={0.02} y={8}>
-										{displayedSearches.map((term) => (
+										{searches.map((term) => (
 											<div key={term} role="listitem" className="flex items-center gap-1 group/item">
 												<Tap className="flex-1 min-w-0" scale={0.97}>
 													<button

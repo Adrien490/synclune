@@ -15,7 +15,7 @@ import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 /**
  * Configure le cache pour les listes de produits
  * - Utilisé pour : /products, recherches, filtres
- * - Durée : 1h fraîche, 15min revalidation, 1j expiration
+ * - Durée : 15min fraîche, 5min revalidation, 6h expiration
  */
 export function cacheProducts() {
 	cacheLife("products");

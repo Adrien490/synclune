@@ -1,15 +1,8 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import {
-	Body,
-	Button,
-	Container,
-	Head,
-	Html,
-	Preview,
-	Section,
-	Text,
-} from "@react-email/components";
+import { Button, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailLayout } from "./_components/email-layout";
+import { FlexRow } from "./_components/flex-row";
 
 interface RefundConfirmationEmailProps {
 	orderNumber: string;
@@ -42,141 +35,96 @@ export const RefundConfirmationEmail = ({
 	const reasonLabel = reasonLabels[reason] || reason;
 
 	return (
-		<Html>
-			<Head />
-			<Preview>Remboursement {formatEuro(refundAmount)} effectué</Preview>
-			<Body style={{ backgroundColor: EMAIL_COLORS.background.main }}>
-				<Container style={EMAIL_STYLES.container}>
-					{/* Header */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<Text
-							style={{
-								margin: 0,
-								fontSize: "24px",
-								fontWeight: "bold",
-								color: EMAIL_COLORS.primary,
-							}}
-						>
-							Synclune
-						</Text>
-					</Section>
+		<EmailLayout preview={`Remboursement ${formatEuro(refundAmount)} effectué`}>
+			{/* Titre */}
+			<Section style={{ marginBottom: "24px" }}>
+				<Text style={EMAIL_STYLES.heading.h2}>Remboursement effectué</Text>
+				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+					Bonjour {customerName}, ton remboursement de{" "}
+					{formatEuro(refundAmount)} a été effectué. Le montant sera crédité
+					sous 3 à 10 jours ouvrés.
+				</Text>
+			</Section>
 
-					{/* Titre */}
-					<Section style={{ marginBottom: "24px" }}>
-						<Text style={EMAIL_STYLES.heading.h2}>Remboursement effectué</Text>
-						<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-							Bonjour {customerName}, ton remboursement de{" "}
-							{formatEuro(refundAmount)} a été effectué. Le montant sera crédité
-							sous 3 à 10 jours ouvrés.
-						</Text>
-					</Section>
-
-					{/* Détails */}
-					<Section style={{ marginBottom: "24px" }}>
-						<div style={EMAIL_STYLES.section.card}>
-							<div
+			{/* Détails */}
+			<Section style={{ marginBottom: "24px" }}>
+				<div style={EMAIL_STYLES.section.card}>
+					<FlexRow
+						style={{ marginBottom: "8px" }}
+						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
+						right={
+							<Text
 								style={{
-									display: "flex",
-									justifyContent: "space-between",
-									marginBottom: "8px",
+									margin: 0,
+									fontFamily: "monospace",
+									fontSize: "14px",
+									fontWeight: "600",
+									color: EMAIL_COLORS.text.primary,
 								}}
 							>
-								<Text style={EMAIL_STYLES.text.small}>Commande</Text>
+								{orderNumber}
+							</Text>
+						}
+					/>
+					<FlexRow
+						style={{ marginBottom: "8px" }}
+						left={<Text style={EMAIL_STYLES.text.small}>Montant remboursé</Text>}
+						right={
+							<Text
+								style={{
+									margin: 0,
+									fontFamily: "monospace",
+									fontSize: "14px",
+									fontWeight: "bold",
+									color: EMAIL_COLORS.primary,
+								}}
+							>
+								{formatEuro(refundAmount)}
+							</Text>
+						}
+					/>
+					{isPartialRefund && (
+						<FlexRow
+							style={{ marginBottom: "8px" }}
+							left={<Text style={EMAIL_STYLES.text.small}>Montant initial</Text>}
+							right={
 								<Text
 									style={{
 										margin: 0,
 										fontFamily: "monospace",
 										fontSize: "14px",
-										fontWeight: "600",
 										color: EMAIL_COLORS.text.primary,
 									}}
 								>
-									{orderNumber}
+									{formatEuro(originalOrderTotal)}
 								</Text>
-							</div>
-							<div
+							}
+						/>
+					)}
+					<FlexRow
+						left={<Text style={EMAIL_STYLES.text.small}>Raison</Text>}
+						right={
+							<Text
 								style={{
-									display: "flex",
-									justifyContent: "space-between",
-									marginBottom: "8px",
+									margin: 0,
+									fontSize: "14px",
+									color: EMAIL_COLORS.text.primary,
 								}}
 							>
-								<Text style={EMAIL_STYLES.text.small}>Montant remboursé</Text>
-								<Text
-									style={{
-										margin: 0,
-										fontFamily: "monospace",
-										fontSize: "14px",
-										fontWeight: "bold",
-										color: EMAIL_COLORS.primary,
-									}}
-								>
-									{formatEuro(refundAmount)}
-								</Text>
-							</div>
-							{isPartialRefund && (
-								<div
-									style={{
-										display: "flex",
-										justifyContent: "space-between",
-										marginBottom: "8px",
-									}}
-								>
-									<Text style={EMAIL_STYLES.text.small}>Montant initial</Text>
-									<Text
-										style={{
-											margin: 0,
-											fontFamily: "monospace",
-											fontSize: "14px",
-											color: EMAIL_COLORS.text.primary,
-										}}
-									>
-										{formatEuro(originalOrderTotal)}
-									</Text>
-								</div>
-							)}
-							<div
-								style={{
-									display: "flex",
-									justifyContent: "space-between",
-								}}
-							>
-								<Text style={EMAIL_STYLES.text.small}>Raison</Text>
-								<Text
-									style={{
-										margin: 0,
-										fontSize: "14px",
-										color: EMAIL_COLORS.text.primary,
-									}}
-								>
-									{reasonLabel}
-								</Text>
-							</div>
-						</div>
-					</Section>
+								{reasonLabel}
+							</Text>
+						}
+					/>
+				</div>
+			</Section>
 
-					{/* CTA */}
-					<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-						<Button href={orderDetailsUrl} style={EMAIL_STYLES.button.primary}>
-							Voir ma commande
-						</Button>
-					</Section>
-
-					{/* Footer */}
-					<Section
-						style={{
-							paddingTop: "24px",
-							borderTop: `1px solid ${EMAIL_COLORS.border}`,
-							textAlign: "center",
-						}}
-					>
-						<Text style={EMAIL_STYLES.text.tiny}>
-							© {new Date().getFullYear()} Synclune
-						</Text>
-					</Section>
-				</Container>
-			</Body>
-		</Html>
+			{/* CTA */}
+			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
+				<Button href={orderDetailsUrl} style={EMAIL_STYLES.button.primary}>
+					Voir ma commande
+				</Button>
+			</Section>
+		</EmailLayout>
 	);
 };
 

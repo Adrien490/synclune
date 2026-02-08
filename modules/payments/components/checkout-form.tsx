@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Alert, AlertDescription } from "@/shared/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { CreditCard, Info, Loader2, Lock, Mail, Shield } from "lucide-react";
+import { AlertCircle, CreditCard, Info, Loader2, Lock, Mail, Shield } from "lucide-react";
 import {
 	VisaIcon,
 	MastercardIcon,
@@ -35,6 +35,18 @@ const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
 	value: code,
 	label: COUNTRY_NAMES[code],
 }));
+
+// Field name to label mapping for error summary
+const CHECKOUT_FIELD_LABELS: Record<string, string> = {
+	email: "Adresse email",
+	"shipping.fullName": "Nom complet",
+	"shipping.addressLine1": "Adresse",
+	"shipping.postalCode": "Code postal",
+	"shipping.city": "Ville",
+	"shipping.country": "Pays",
+	"shipping.phoneNumber": "Téléphone",
+	termsAccepted: "Conditions générales de vente",
+};
 
 interface CheckoutFormProps {
 	cart: NonNullable<GetCartReturn>;
@@ -126,7 +138,7 @@ export function CheckoutForm({
 	const subtotal = cart.items.reduce((sum, item) => {
 		return sum + item.priceAtAdd * item.quantity;
 	}, 0);
-	const shipping = calculateShipping();
+	const shipping = calculateShipping(country, postalCode);
 	const total = subtotal + shipping;
 
 	return (
@@ -289,6 +301,61 @@ export function CheckoutForm({
 										<AlertDescription>{state.message}</AlertDescription>
 									</Alert>
 								)}
+
+							{/* Error summary for screen readers */}
+							<form.Subscribe
+								selector={(s) => ({
+									submissionAttempts: s.submissionAttempts,
+									canSubmit: s.canSubmit,
+									fieldMeta: s.fieldMeta,
+								})}
+							>
+								{({ submissionAttempts, canSubmit, fieldMeta }) => {
+									if (submissionAttempts === 0 || canSubmit) return null;
+
+									const fieldErrors = Object.entries(
+										fieldMeta as Record<string, { errors: string[] }>,
+									)
+										.filter(([, meta]) => meta.errors.length > 0)
+										.map(([name, meta]) => ({
+											name,
+											label: CHECKOUT_FIELD_LABELS[name] ?? name,
+											message: meta.errors[0] as string,
+										}));
+
+									if (fieldErrors.length === 0) return null;
+
+									return (
+										<Alert variant="destructive" role="alert" aria-live="assertive">
+											<AlertCircle className="size-4" />
+											<AlertTitle>
+												{fieldErrors.length === 1
+													? "1 erreur trouvée"
+													: `${fieldErrors.length} erreurs trouvées`}
+											</AlertTitle>
+											<AlertDescription>
+												<ul className="mt-1 space-y-1">
+													{fieldErrors.map(({ name, label, message }) => (
+														<li key={name}>
+															<a
+																href={`#${name}`}
+																className="underline hover:no-underline"
+																onClick={(e) => {
+																	e.preventDefault();
+																	document.getElementById(name)?.focus();
+																}}
+															>
+																{label}
+															</a>{" "}
+															: {message}
+														</li>
+													))}
+												</ul>
+											</AlertDescription>
+										</Alert>
+									);
+								}}
+							</form.Subscribe>
 
 							{/* Email (guests uniquement) */}
 							{isGuest && (

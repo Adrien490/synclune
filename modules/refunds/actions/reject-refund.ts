@@ -6,8 +6,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
@@ -39,13 +38,8 @@ export async function rejectRefund(
 		const id = formData.get("id") as string;
 		const reason = formData.get("reason") as string | null;
 
-		const result = rejectRefundSchema.safeParse({ id, reason });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "ID invalide",
-			};
-		}
+		const validated = validateInput(rejectRefundSchema, { id, reason });
+		if ("error" in validated) return validated.error;
 
 		// Récupérer le remboursement
 		const refund = await prisma.refund.findUnique({

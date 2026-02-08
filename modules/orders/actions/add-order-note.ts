@@ -3,9 +3,8 @@
 import { prisma } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { addOrderNoteSchema } from "../schemas/order.schemas";
-import { handleActionError } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { updateTag } from "next/cache";
@@ -23,13 +22,8 @@ export async function addOrderNote(
 		if ("error" in auth) return auth.error;
 
 		// 2. Validation des entrées
-		const validation = addOrderNoteSchema.safeParse({ orderId, content });
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: validation.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(addOrderNoteSchema, { orderId, content });
+		if ("error" in validated) return validated.error;
 
 		// 4. Vérifier que la commande existe
 		const order = await prisma.order.findUnique({
@@ -38,10 +32,7 @@ export async function addOrderNote(
 		});
 
 		if (!order) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Commande non trouvée",
-			};
+			return error("Commande non trouvee");
 		}
 
 		// 5. Sanitize and create the note
@@ -58,11 +49,8 @@ export async function addOrderNote(
 		// 6. Invalider le cache
 		getOrderInvalidationTags().forEach(tag => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Note ajoutée",
-		};
-	} catch (error) {
-		return handleActionError(error, "Une erreur est survenue");
+		return success("Note ajoutee");
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue");
 	}
 }

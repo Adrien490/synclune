@@ -5,9 +5,8 @@ import { updateTag } from "next/cache";
 import { updateDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 
 import { getDiscountInvalidationTags } from "../constants/cache";
@@ -71,7 +70,7 @@ export async function updateDiscount(
 				select: { id: true },
 			});
 			if (codeExists) {
-				return { status: ActionStatus.CONFLICT, message: DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS };
+				return error(DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS);
 			}
 		}
 

@@ -6,8 +6,7 @@ import { OrderItemsList } from "@/modules/orders/components/customer/order-items
 import { OrderTracking } from "@/modules/orders/components/customer/order-tracking";
 import { OrderSummaryCard } from "@/modules/orders/components/customer/order-summary-card";
 import { OrderAddressesCard } from "@/modules/orders/components/customer/order-addresses-card";
-// TODO: Implémenter DownloadInvoiceButton
-// import { DownloadInvoiceButton } from "@/modules/orders/components/customer/download-invoice-button";
+// ROADMAP: Invoices - add DownloadInvoiceButton
 import { getOrder } from "@/modules/orders/data/get-order";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -124,13 +123,7 @@ export default async function OrderDetailPage({
 								}}
 							/>
 
-							{/* TODO: Implémenter DownloadInvoiceButton */}
-							{/* {order.invoiceNumber && (
-								<DownloadInvoiceButton
-									orderId={order.id}
-									invoiceNumber={order.invoiceNumber}
-								/>
-							)} */}
+							{/* ROADMAP: Invoices - DownloadInvoiceButton goes here */}
 						</div>
 					</div>
 				</div>

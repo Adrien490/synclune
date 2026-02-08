@@ -4,12 +4,11 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
+import { validateInput, handleActionError, success, error, BusinessError } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { getCartExpirationDate } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { updateCartItemSchema } from "../schemas/cart.schemas";
-import { BusinessError, handleActionError } from "@/shared/lib/actions";
 
 /**
  * Server Action pour mettre à jour la quantité d'un article dans le panier
@@ -36,16 +35,10 @@ export async function updateCartItem(
 		};
 
 		// 3. Validation avec Zod
-		const result = updateCartItemSchema.safeParse(rawData);
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(updateCartItemSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const validatedData = result.data;
+		const validatedData = validated.data;
 
 		// 4. Récupérer l'item avec son panier
 		const cartItem = await prisma.cartItem.findUnique({
@@ -57,10 +50,7 @@ export async function updateCartItem(
 		});
 
 		if (!cartItem) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Article introuvable dans le panier",
-			};
+			return error("Article introuvable dans le panier");
 		}
 
 		// 5. Vérifier l'appartenance du panier
@@ -69,15 +59,12 @@ export async function updateCartItem(
 			: cartItem.cart.sessionId === sessionId;
 
 		if (!isOwner) {
-			return { status: ActionStatus.ERROR, message: "Accès non autorisé" };
+			return error("Acces non autorise");
 		}
 
 		// 6. Si la quantité n'a pas changé, ne rien faire
 		if (validatedData.quantity === cartItem.quantity) {
-			return {
-				status: ActionStatus.SUCCESS,
-				message: `Quantité mise à jour (${validatedData.quantity})`,
-			};
+			return success(`Quantite mise a jour (${validatedData.quantity})`);
 		}
 
 		// 7. Transaction: Mettre à jour l'item et le panier
@@ -123,10 +110,7 @@ export async function updateCartItem(
 		tags.forEach(tag => updateTag(tag));
 
 		// 9. Success - Return ActionState format
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Quantité mise à jour (${validatedData.quantity})`,
-		};
+		return success(`Quantite mise a jour (${validatedData.quantity})`);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la mise à jour");
 	}

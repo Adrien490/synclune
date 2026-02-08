@@ -3,6 +3,7 @@
 import {
 	OrderStatus,
 	FulfillmentStatus,
+	HistorySource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
@@ -107,7 +108,7 @@ export async function markAsReturned(
 			note: result.data.reason,
 			authorId: adminUser.id,
 			authorName: adminUser.name || "Admin",
-			source: "admin",
+			source: HistorySource.ADMIN,
 		});
 
 		// Invalider les caches (orders list admin + commandes user)

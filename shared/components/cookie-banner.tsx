@@ -24,7 +24,7 @@ import { useEffect, useRef } from "react";
  * - Support prefers-reduced-motion
  * - Touch targets 44px minimum sur mobile (WCAG 2.5.5)
  * - Safe area iOS pour iPhone avec barre de navigation
- * - Focus trap pour dialog modal
+ * - Focus trap
  * - Attributs ARIA complets
  *
  * Optimisé pour React 19.2 - hydratation safe sans useState
@@ -41,12 +41,12 @@ export function CookieBanner() {
 	// Condition d'affichage : hydraté + pas de consentement + banner visible
 	const shouldShow = _hasHydrated && !hasConsented && bannerVisible;
 
-	// Focus sur le bouton Accepter après animation
+	// Focus sur le bouton Accepter après animation (immédiat si reduced motion)
 	useEffect(() => {
-		if (shouldShow && acceptButtonRef.current && !shouldReduceMotion) {
+		if (shouldShow && acceptButtonRef.current) {
 			const timer = setTimeout(() => {
 				acceptButtonRef.current?.focus();
-			}, 300);
+			}, shouldReduceMotion ? 0 : 300);
 			return () => clearTimeout(timer);
 		}
 	}, [shouldShow, shouldReduceMotion]);
@@ -80,10 +80,10 @@ export function CookieBanner() {
 					exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
 					transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: "easeOut" }}
 					className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 md:bottom-6 md:left-6 md:right-auto z-50 w-auto max-w-[calc(100vw-2rem)] md:max-w-md"
-					role="dialog"
-					aria-modal="true"
+					role="region"
 					aria-label="Consentement cookies"
 					aria-describedby="cookie-description"
+					aria-live="polite"
 				>
 					<FocusScope trapped loop>
 						<div className="bg-background/95 backdrop-blur-md border border-primary/15 shadow-lg rounded-xl p-4 md:p-6 space-y-3 md:space-y-4">
@@ -103,7 +103,7 @@ export function CookieBanner() {
 							<p id="cookie-description" className="text-sm text-muted-foreground leading-relaxed">
 								Nous utilisons des cookies pour améliorer ton expérience.
 								<span className="sr-only">
-									{" "}Votre choix sera mémorisé pendant 6 mois conformément aux recommandations CNIL.
+									{" "}Ton choix sera mémorisé pendant 6 mois conformément aux recommandations CNIL.
 								</span>
 							</p>
 

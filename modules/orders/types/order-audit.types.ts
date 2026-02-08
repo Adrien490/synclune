@@ -3,6 +3,7 @@ import type {
 	OrderStatus,
 	PaymentStatus,
 	FulfillmentStatus,
+	HistorySource,
 } from "@/app/generated/prisma/client";
 
 /**
@@ -31,5 +32,5 @@ export interface CreateOrderAuditParams {
 	authorName?: string;
 
 	// Source de l'action
-	source?: "admin" | "webhook" | "system" | "customer";
+	source?: HistorySource;
 }

@@ -1,9 +1,8 @@
 "use server";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, success, error } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { deleteUploadThingFilesSchema } from "@/modules/media/schemas/uploadthing.schemas";
 import { extractFileKeysFromUrls } from "@/modules/media/utils/extract-file-key";
@@ -25,42 +24,29 @@ export async function deleteUploadThingFiles(
 		const fileUrlsRaw = formData.get("fileUrls");
 
 		if (fileUrlsRaw === null || fileUrlsRaw === undefined) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Les URLs de fichiers sont requises",
-			};
+			return error("Les URLs de fichiers sont requises");
 		}
 
 		if (typeof fileUrlsRaw !== "string") {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Les URLs de fichiers doivent etre un JSON string",
-			};
+			return error("Les URLs de fichiers doivent etre un JSON string");
 		}
 
 		let parsedFileUrls: unknown;
 		try {
 			parsedFileUrls = JSON.parse(fileUrlsRaw);
-		} catch (error) {
+		} catch (parseError) {
 			console.error(
 				"[deleteUploadThingFiles] JSON parse failed:",
-				error instanceof Error ? error.message : String(error)
+				parseError instanceof Error ? parseError.message : String(parseError)
 			);
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format JSON invalide pour les URLs de fichiers",
-			};
+			return error("Format JSON invalide pour les URLs de fichiers");
 		}
 
 		// 3. Validation avec Zod
 		const result = deleteUploadThingFilesSchema.safeParse({ fileUrls: parsedFileUrls });
 
 		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
+			return error(result.error.issues[0]?.message ?? "Erreur de validation");
 		}
 
 		const { fileUrls } = result.data;
@@ -69,10 +55,7 @@ export async function deleteUploadThingFiles(
 		const { keys: fileKeys, failedUrls } = extractFileKeysFromUrls(fileUrls);
 
 		if (fileKeys.length === 0) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Impossible d'extraire les cles des fichiers depuis les URLs",
-			};
+			return error("Impossible d'extraire les cles des fichiers depuis les URLs");
 		}
 
 		if (failedUrls.length > 0) {
@@ -87,13 +70,7 @@ export async function deleteUploadThingFiles(
 		await utapi.deleteFiles(fileKeys);
 
 		// 6. Success
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${fileKeys.length} fichier(s) supprimé(s)`,
-			data: {
-				deletedCount: fileKeys.length,
-			},
-		};
+		return success(`${fileKeys.length} fichier(s) supprime(s)`, { deletedCount: fileKeys.length });
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la suppression des fichiers");
 	}

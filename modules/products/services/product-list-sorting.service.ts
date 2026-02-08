@@ -50,6 +50,19 @@ export function sortProducts(products: Product[], sortBy: string): Product[] {
 			return multiplier * (dateA - dateB);
 		}
 
+		// Admin sort fields (without -ascending/-descending suffix)
+		if (sortBy === "updatedAt") {
+			return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+		}
+		if (sortBy === "title") {
+			return a.title.localeCompare(b.title, "fr");
+		}
+		if (sortBy === "type") {
+			const typeA = a.type?.label ?? "";
+			const typeB = b.type?.label ?? "";
+			return typeA.localeCompare(typeB, "fr");
+		}
+
 		if (sortBy.startsWith("rating-")) {
 			const ratingA = getAverageRating(a);
 			const ratingB = getAverageRating(b);

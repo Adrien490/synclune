@@ -3,8 +3,8 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
+import { validateInput, handleActionError, success, error, validationError } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 import { BULK_OPERATIONS } from "../constants/subscriber.constants";
@@ -25,50 +25,33 @@ export async function bulkUnsubscribeSubscribers(
 
 		// Validation type et taille avant JSON.parse
 		if (!idsRaw || typeof idsRaw !== "string") {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format des IDs invalide",
-			};
+			return validationError("Format des IDs invalide");
 		}
 
 		if (idsRaw.length > BULK_OPERATIONS.MAX_JSON_LENGTH) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: `Données trop volumineuses (max ${BULK_OPERATIONS.MAX_JSON_LENGTH} caractères)`,
-			};
+			return validationError(`Données trop volumineuses (max ${BULK_OPERATIONS.MAX_JSON_LENGTH} caractères)`);
 		}
 
 		let ids: string[];
 		try {
 			ids = JSON.parse(idsRaw);
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format JSON invalide",
-			};
+			return validationError("Format JSON invalide");
 		}
 
 		// Vérification limite
 		if (ids.length > BULK_OPERATIONS.MAX_IDS) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: `Maximum ${BULK_OPERATIONS.MAX_IDS} abonnés par opération`,
-			};
+			return validationError(`Maximum ${BULK_OPERATIONS.MAX_IDS} abonnés par opération`);
 		}
 
-		const result = bulkUnsubscribeSubscribersSchema.safeParse({ ids });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(bulkUnsubscribeSubscribersSchema, { ids });
+		if ("error" in validated) return validated.error;
 
 		// Désabonner en masse avec transaction pour atomicité
 		const updateResult = await prisma.$transaction(async (tx) => {
 			return tx.newsletterSubscriber.updateMany({
 				where: {
-					id: { in: result.data.ids },
+					id: { in: validated.data.ids },
 					status: { not: NewsletterStatus.UNSUBSCRIBED },
 				},
 				data: { status: NewsletterStatus.UNSUBSCRIBED, unsubscribedAt: new Date() },
@@ -76,10 +59,7 @@ export async function bulkUnsubscribeSubscribers(
 		});
 
 		if (updateResult.count === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun abonné actif à désabonner",
-			};
+			return error("Aucun abonné actif à désabonner");
 		}
 
 		// Invalider le cache
@@ -90,21 +70,14 @@ export async function bulkUnsubscribeSubscribers(
 			`[BULK_UNSUBSCRIBE_AUDIT] Admin unsubscribed ${updateResult.count} subscribers`
 		);
 
-		const skipped = result.data.ids.length - updateResult.count;
+		const skipped = validated.data.ids.length - updateResult.count;
 		let message = `${updateResult.count} abonné${updateResult.count > 1 ? "s" : ""} désabonné${updateResult.count > 1 ? "s" : ""}`;
 		if (skipped > 0) {
 			message += ` - ${skipped} ignoré${skipped > 1 ? "s" : ""} (déjà inactif${skipped > 1 ? "s" : ""})`;
 		}
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message,
-		};
-	} catch (error) {
-		console.error("[BULK_UNSUBSCRIBE_SUBSCRIBERS]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Erreur lors du désabonnement",
-		};
+		return success(message);
+	} catch (e) {
+		return handleActionError(e, "Erreur lors du désabonnement");
 	}
 }

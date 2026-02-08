@@ -1,6 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { PaginationInfo } from "@/shared/components/cursor-pagination/pagination";
-import { ActionStatus } from "@/shared/types/server-action";
+import type { ActionState } from "@/shared/types/server-action";
 import {
 	GET_WISHLIST_SELECT,
 	GET_WISHLIST_ITEM_SELECT,
@@ -93,16 +93,4 @@ export type ToggleWishlistItemData = {
 // TYPES - WISHLIST MERGE
 // ============================================================================
 
-export type MergeWishlistsResult =
-	| {
-			status: typeof ActionStatus.SUCCESS;
-			message: string;
-			data: {
-				addedItems: number;
-				skippedItems: number;
-			};
-	  }
-	| {
-			status: typeof ActionStatus.ERROR;
-			message: string;
-	  };
+export type MergeWishlistsResult = ActionState;

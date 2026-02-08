@@ -8,7 +8,10 @@ export async function sendEmail(params: {
 	to: string | string[]
 	subject: string
 	html: string
+	text?: string
 	replyTo?: string
+	headers?: Record<string, string>
+	tags?: Array<{ name: string; value: string }>
 }): Promise<EmailResult> {
 	const recipient = Array.isArray(params.to) ? params.to.join(", ") : params.to
 	try {

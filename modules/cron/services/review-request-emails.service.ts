@@ -2,6 +2,7 @@ import { FulfillmentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendReviewRequestEmailInternal } from "@/modules/reviews/actions/send-review-request-email";
 import { ActionStatus } from "@/shared/types/server-action";
+import { BATCH_SIZE_LARGE } from "@/modules/cron/constants/limits";
 
 const DAYS_AFTER_DELIVERY = 2; // Envoyer 2 jours après livraison
 
@@ -41,7 +42,7 @@ export async function sendDelayedReviewRequestEmails(): Promise<{
 			orderNumber: true,
 			customerEmail: true,
 		},
-		take: 50, // Limiter pour éviter timeout
+		take: BATCH_SIZE_LARGE,
 	});
 
 	console.log(

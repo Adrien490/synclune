@@ -94,12 +94,12 @@ export async function ReviewsDataTable({
 									{/* Statut */}
 									<TableCell>
 										{review.status === ReviewStatus.PUBLISHED ? (
-											<Badge variant="default" className="gap-1">
+											<Badge variant="default" className="gap-1" role="status" aria-label={`Statut : ${REVIEW_STATUS_LABELS.PUBLISHED}`}>
 												<CheckCircle2 className="size-3" aria-hidden="true" />
 												{REVIEW_STATUS_LABELS.PUBLISHED}
 											</Badge>
 										) : (
-											<Badge variant="secondary" className="gap-1">
+											<Badge variant="secondary" className="gap-1" role="status" aria-label={`Statut : ${REVIEW_STATUS_LABELS.HIDDEN}`}>
 												<EyeOff className="size-3" aria-hidden="true" />
 												{REVIEW_STATUS_LABELS.HIDDEN}
 											</Badge>

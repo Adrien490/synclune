@@ -1,8 +1,6 @@
 import { WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-
-const COMPLETED_RETENTION_DAYS = 90; // Garder les events COMPLETED 90 jours
-const FAILED_RETENTION_DAYS = 180; // Garder les events FAILED 180 jours (debug)
+import { RETENTION } from "@/modules/cron/constants/limits";
 
 /**
  * Service de nettoyage des WebhookEvents anciens
@@ -14,16 +12,17 @@ export async function cleanupOldWebhookEvents(): Promise<{
 	completedDeleted: number;
 	failedDeleted: number;
 	skippedDeleted: number;
+	staleDeleted: number;
 }> {
 	console.log(
 		"[CRON:cleanup-webhook-events] Starting webhook events cleanup..."
 	);
 
 	const completedExpiryDate = new Date(
-		Date.now() - COMPLETED_RETENTION_DAYS * 24 * 60 * 60 * 1000
+		Date.now() - RETENTION.WEBHOOK_COMPLETED_DAYS * 24 * 60 * 60 * 1000
 	);
 	const failedExpiryDate = new Date(
-		Date.now() - FAILED_RETENTION_DAYS * 24 * 60 * 60 * 1000
+		Date.now() - RETENTION.WEBHOOK_FAILED_DAYS * 24 * 60 * 60 * 1000
 	);
 
 	// 1. Supprimer les events COMPLETED de plus de 90 jours
@@ -62,11 +61,37 @@ export async function cleanupOldWebhookEvents(): Promise<{
 		`[CRON:cleanup-webhook-events] Deleted ${skippedResult.count} skipped events`
 	);
 
+	// 4. Supprimer les events PROCESSING et PENDING anciens (> 90 jours)
+	// These should not exist: PROCESSING events are recovered by retry-webhooks,
+	// and PENDING events should be processed quickly. Clean up any stragglers.
+	const staleExpiryDate = new Date(
+		Date.now() - RETENTION.WEBHOOK_STALE_DAYS * 24 * 60 * 60 * 1000
+	);
+
+	const staleResult = await prisma.webhookEvent.deleteMany({
+		where: {
+			status: {
+				in: [
+					WebhookEventStatus.PROCESSING,
+					WebhookEventStatus.PENDING,
+				],
+			},
+			receivedAt: { lt: staleExpiryDate },
+		},
+	});
+
+	if (staleResult.count > 0) {
+		console.warn(
+			`[CRON:cleanup-webhook-events] Deleted ${staleResult.count} stale PROCESSING/PENDING events`
+		);
+	}
+
 	console.log("[CRON:cleanup-webhook-events] Cleanup completed");
 
 	return {
 		completedDeleted: completedResult.count,
 		failedDeleted: failedResult.count,
 		skippedDeleted: skippedResult.count,
+		staleDeleted: staleResult.count,
 	};
 }

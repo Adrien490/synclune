@@ -2,7 +2,9 @@
 
 import { ajNewsletter } from "@/shared/lib/arcjet";
 import { getClientIp } from "@/shared/lib/rate-limit";
-import { ActionState, ActionStatus } from "@/shared/types/server-action";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { subscribeToNewsletterSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
@@ -30,47 +32,27 @@ export async function subscribeToNewsletter(
 		// Bloquer si Arcjet détecte une menace
 		if (decision.isDenied()) {
 			if (decision.reason.isRateLimit()) {
-				return {
-					status: ActionStatus.ERROR,
-					message:
-						"Trop de tentatives d'inscription. Veuillez réessayer dans quelques minutes.",
-				};
+				return error("Trop de tentatives d'inscription. Veuillez réessayer dans quelques minutes.");
 			}
 
 			if (decision.reason.isBot()) {
-				return {
-					status: ActionStatus.ERROR,
-					message:
-						"Votre requête semble provenir d'un bot. Veuillez réessayer depuis un navigateur normal.",
-				};
+				return error("Votre requête semble provenir d'un bot. Veuillez réessayer depuis un navigateur normal.");
 			}
 
 			if (decision.reason.isShield()) {
-				return {
-					status: ActionStatus.ERROR,
-					message: "Votre requête a été bloquée pour des raisons de sécurité.",
-				};
+				return error("Votre requête a été bloquée pour des raisons de sécurité.");
 			}
 
-			return {
-				status: ActionStatus.ERROR,
-				message: "Votre requête n'a pas pu être traitée. Veuillez réessayer.",
-			};
+			return error("Votre requête n'a pas pu être traitée. Veuillez réessayer.");
 		}
 
 		// Validation avec Zod
 		const email = formData.get("email");
 		const consent = formData.get("consent") === "true";
-		const result = subscribeToNewsletterSchema.safeParse({ email, consent });
+		const validated = validateInput(subscribeToNewsletterSchema, { email, consent });
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Veuillez remplir les champs obligatoires",
-			};
-		}
-
-		const { email: validatedEmail } = result.data;
+		const { email: validatedEmail } = validated.data;
 
 		// Déléguer à la fonction utilitaire interne (single source of truth)
 		const internalResult = await subscribeToNewsletterInternal({
@@ -81,10 +63,7 @@ export async function subscribeToNewsletter(
 		});
 
 		if (!internalResult.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message: internalResult.message,
-			};
+			return error(internalResult.message);
 		}
 
 		if (internalResult.alreadySubscribed) {
@@ -97,15 +76,8 @@ export async function subscribeToNewsletter(
 		// Invalider le cache (nouvelle inscription)
 		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: internalResult.message,
-		};
-	} catch (error) {
-		console.error("[SUBSCRIBE_NEWSLETTER]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue. Veuillez réessayer plus tard.",
-		};
+		return success(internalResult.message);
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue. Veuillez réessayer plus tard.");
 	}
 }

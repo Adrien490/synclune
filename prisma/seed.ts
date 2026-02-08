@@ -17,6 +17,7 @@ import {
   RefundReason,
   RefundStatus,
   ReviewStatus,
+  HistorySource,
   StockNotificationStatus,
   WebhookEventStatus,
 } from "../app/generated/prisma/client";
@@ -1826,7 +1827,7 @@ async function main(): Promise<void> {
       action: OrderAction.CREATED,
       newStatus: OrderStatus.PENDING,
       newPaymentStatus: PaymentStatus.PENDING,
-      source: "system",
+      source: HistorySource.SYSTEM,
       createdAt: currentDate,
     });
 
@@ -1839,7 +1840,7 @@ async function main(): Promise<void> {
         action: OrderAction.PAID,
         previousPaymentStatus: PaymentStatus.PENDING,
         newPaymentStatus: PaymentStatus.PAID,
-        source: "webhook",
+        source: HistorySource.WEBHOOK,
         createdAt: currentDate,
       });
     }
@@ -1854,7 +1855,7 @@ async function main(): Promise<void> {
         previousStatus: OrderStatus.PENDING,
         newStatus: OrderStatus.PROCESSING,
         authorName: "Admin Dev",
-        source: "admin",
+        source: HistorySource.ADMIN,
         createdAt: currentDate,
       });
     }
@@ -1869,7 +1870,7 @@ async function main(): Promise<void> {
         previousStatus: OrderStatus.PROCESSING,
         newStatus: OrderStatus.SHIPPED,
         authorName: "Admin Dev",
-        source: "admin",
+        source: HistorySource.ADMIN,
         createdAt: currentDate,
       });
     }
@@ -1883,7 +1884,7 @@ async function main(): Promise<void> {
         action: OrderAction.DELIVERED,
         previousStatus: OrderStatus.SHIPPED,
         newStatus: OrderStatus.DELIVERED,
-        source: "system",
+        source: HistorySource.SYSTEM,
         createdAt: currentDate,
       });
     }
@@ -1899,7 +1900,7 @@ async function main(): Promise<void> {
         newStatus: OrderStatus.CANCELLED,
         note: "Annulation à la demande du client",
         authorName: "Admin Dev",
-        source: "admin",
+        source: HistorySource.ADMIN,
         createdAt: currentDate,
       });
     }
