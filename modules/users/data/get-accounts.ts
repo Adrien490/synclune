@@ -83,7 +83,7 @@ export async function getAccounts(
  * Récupère la liste des comptes avec pagination, tri et filtrage
  * Admin uniquement avec sécurité renforcée
  */
-export async function fetchAccounts(
+async function fetchAccounts(
 	params: GetAccountsParams
 ): Promise<GetAccountsReturn> {
 	"use cache";

@@ -3,16 +3,6 @@ import type { SortOption } from "@/shared/types/sort.types";
 import type { FilterOption } from "@/shared/types/pagination.types";
 
 /**
- * Props pour le composant Pagination (offset-based)
- */
-export interface PaginationProps {
-	total: number;
-	pageCount: number;
-	page: number;
-	perPage: number;
-}
-
-/**
  * Props pour le composant CursorPagination
  */
 export interface CursorPaginationProps {

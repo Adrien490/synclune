@@ -193,7 +193,7 @@ async function fetchProducts(
 			const cursorIndex = sortedProducts.findIndex((p) => p.id === params.cursor);
 			if (cursorIndex !== -1) {
 				startIndex = params.direction === "backward"
-					? Math.max(0, cursorIndex - perPage + 1)
+					? Math.max(0, cursorIndex - perPage)
 					: cursorIndex + 1;
 			}
 		}
@@ -202,10 +202,13 @@ async function fetchProducts(
 		const pageProducts = sortedProducts.slice(startIndex, startIndex + perPage);
 
 		// Calculer la pagination
+		// Convention alignée sur processCursorResults (Relay spec) :
+		// - nextCursor = dernier élément de la page (pour aller forward)
+		// - prevCursor = premier élément de la page (pour aller backward)
 		const hasNextPage = startIndex + perPage < sortedProducts.length;
 		const hasPreviousPage = startIndex > 0;
 		const nextCursor = hasNextPage ? pageProducts[pageProducts.length - 1]?.id ?? null : null;
-		const prevCursor = hasPreviousPage ? sortedProducts[startIndex - 1]?.id ?? null : null;
+		const prevCursor = hasPreviousPage ? pageProducts[0]?.id ?? null : null;
 
 		return {
 			products: pageProducts.map(serializeProduct),

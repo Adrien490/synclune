@@ -70,7 +70,7 @@ export async function getOrders(
 /**
  * Récupère les commandes depuis la DB avec cache
  */
-export async function fetchOrders(
+async function fetchOrders(
 	params: GetOrdersParams
 ): Promise<GetOrdersReturn> {
 	"use cache";

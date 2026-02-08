@@ -5,22 +5,6 @@
 import type { RefObject } from "react"
 
 // =============================================================================
-// PAGINATION TYPES
-// =============================================================================
-
-export type PaginationState = {
-	total: number
-	pageCount: number
-	page: number
-	perPage: number
-}
-
-export interface UsePaginationOptions {
-	/** Ref pour focus management après pagination */
-	focusTargetRef?: RefObject<HTMLElement | null>
-}
-
-// =============================================================================
 // FILTER TYPES
 // =============================================================================
 

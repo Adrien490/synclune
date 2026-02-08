@@ -49,7 +49,7 @@ function renderAnswerWithLinks(answer: string, links?: FaqLink[]): ReactNode {
 				</Link>,
 			);
 		} else {
-			parts.push(match[0]);
+			// Skip silently — missing link placeholder should not be shown to users
 		}
 
 		lastIndex = matchIndex + match[0].length;
@@ -109,6 +109,21 @@ const faqItems: FaqItemData[] = [
 			"Compte environ 2-3 semaines pour une commande sur-mesure. Ce temps me permet de bien comprendre ce que tu veux, de créer des esquisses qu'on validera ensemble, et de réaliser ton bijou avec tout le soin qu'il mérite.",
 	},
 ];
+
+// Dev-time validation: warn if any FAQ item has unmatched link placeholders
+if (process.env.NODE_ENV === "development") {
+	for (const item of faqItems) {
+		const matches = item.answer.matchAll(LINK_PLACEHOLDER_REGEX);
+		for (const match of matches) {
+			const idx = Number.parseInt(match[1], 10);
+			if (!item.links?.[idx]) {
+				console.warn(
+					`FAQ "${item.question}": placeholder {{link${idx}}} has no matching link`,
+				);
+			}
+		}
+	}
+}
 
 function generateFaqSchema(items: FaqItemData[]) {
 	return {

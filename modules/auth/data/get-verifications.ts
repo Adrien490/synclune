@@ -69,7 +69,7 @@ export async function getVerifications(
  * Récupère la liste des vérifications avec pagination, tri et filtrage
  * Admin uniquement avec sécurité renforcée
  */
-export async function fetchVerifications(
+async function fetchVerifications(
 	params: GetVerificationsParams
 ): Promise<GetVerificationsReturn> {
 	"use cache";

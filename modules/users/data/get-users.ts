@@ -75,7 +75,7 @@ export async function getUsers(
  * Récupère la liste des utilisateurs avec pagination, tri et filtrage
  * Accès admin uniquement
  */
-export async function fetchUsers(
+async function fetchUsers(
 	params: GetUsersParams
 ): Promise<GetUsersReturn> {
 	"use cache";

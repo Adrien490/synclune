@@ -55,16 +55,29 @@ export async function ValuePropositionBar() {
       <section
         id="value-proposition"
         aria-labelledby="value-proposition-title"
-        itemScope
-        itemType="https://schema.org/ItemList"
         data-voice-queries="bijoux faits main Nantes,artisan bijoutier Nantes,bijoux colorés artisanaux"
         data-content-type="brand-values"
         data-ai-category="unique-selling-points"
         className={`relative overflow-hidden ${SECTION_SPACING.compact} bg-muted/30`}
       >
-        {/* Microdata for SEO */}
-        <meta itemProp="name" content="Les valeurs Synclune" />
-        <meta itemProp="numberOfItems" content="4" />
+        {/* JSON-LD Schema for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              name: "Les valeurs Synclune",
+              numberOfItems: valuePillars.length,
+              itemListElement: valuePillars.map((pillar, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                name: pillar.title,
+                description: pillar.subtitle,
+              })),
+            }).replace(/</g, "\\u003c"),
+          }}
+        />
 
         {/* Visually hidden accessible title */}
         <h2 id="value-proposition-title" className="sr-only">
@@ -85,12 +98,8 @@ export async function ValuePropositionBar() {
                 key={pillar.title}
                 role="listitem"
                 aria-label={pillar.title}
-                itemScope
-                itemType="https://schema.org/ListItem"
-                itemProp="itemListElement"
                 className="group flex flex-col items-center text-center gap-3 p-4 rounded-xl motion-safe:transition-all motion-safe:duration-300 hover:bg-card/80 active:scale-[0.98] active:bg-card/90"
               >
-                <meta itemProp="position" content={String(index + 1)} />
 
                 {/* Icon with hover animation + colored glow */}
                 <div
@@ -107,13 +116,11 @@ export async function ValuePropositionBar() {
                 {/* Text */}
                 <div className="space-y-1">
                   <h3
-                    itemProp="name"
                     className="font-semibold text-foreground text-sm sm:text-base tracking-tight"
                   >
                     {pillar.title}
                   </h3>
                   <p
-                    itemProp="description"
                     className="text-sm text-muted-foreground leading-snug line-clamp-2"
                   >
                     {pillar.subtitle}

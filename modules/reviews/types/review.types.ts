@@ -31,6 +31,16 @@ export interface ReviewPublic {
 }
 
 /**
+ * Avis pour la section homepage (social proof)
+ */
+export interface ReviewHomepage extends ReviewPublic {
+	product: {
+		title: string
+		slug: string
+	}
+}
+
+/**
  * Avis pour la liste admin
  */
 export interface ReviewAdmin {

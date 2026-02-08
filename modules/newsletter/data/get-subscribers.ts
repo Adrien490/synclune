@@ -70,7 +70,7 @@ export async function getSubscribers(
 /**
  * Récupère les abonnés newsletter depuis la DB avec cache
  */
-export async function fetchSubscribers(
+async function fetchSubscribers(
 	params: GetSubscribersParams
 ): Promise<GetSubscribersReturn> {
 	"use cache";

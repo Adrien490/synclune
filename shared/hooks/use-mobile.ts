@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-const MOBILE_BREAKPOINT = 768;
+export const MOBILE_BREAKPOINT = 768;
 
 /**
  * Hook pour detecter si l'ecran est en mode mobile (largeur < 768px)

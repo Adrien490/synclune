@@ -1,5 +1,6 @@
 "use client";
 
+import { MOBILE_BREAKPOINT } from "@/shared/hooks/use-mobile";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
@@ -20,7 +21,7 @@ export function DesktopParticles() {
   const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    const mql = window.matchMedia("(min-width: 768px)");
+    const mql = window.matchMedia(`(min-width: ${MOBILE_BREAKPOINT}px)`);
     setIsDesktop(mql.matches);
 
     function handleChange(e: MediaQueryListEvent) {

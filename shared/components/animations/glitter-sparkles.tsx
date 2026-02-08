@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useReducedMotion, useInView } from "motion/react";
+import { useInView } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { seededRandom } from "./particle-background/utils";
@@ -14,7 +14,7 @@ import { MOTION_CONFIG } from "./motion.config";
 export interface GlitterSparklesProps {
 	/** Classes Tailwind additionnelles pour le conteneur */
 	className?: string;
-	/** Nombre de paillettes (défaut: 50 desktop, 20 mobile) */
+	/** Nombre de paillettes (défaut: 25 desktop, 12 mobile) */
 	count?: number;
 	/** Taille des paillettes en pixels (défaut: 2-6) */
 	sizeRange?: [number, number];
@@ -72,23 +72,6 @@ const DEFAULT_CONFIG = {
 	GLOW_MULTIPLIER: 2,
 } as const;
 
-/**
- * Animation de scintillement
- * Opacité initiale à 0.15 pour éviter le pop-in brutal
- */
-const SPARKLE_ANIMATION = {
-	opacity: [0.15, 1, 1, 0.15],
-	scale: [0.3, 1, 1, 0.3],
-	rotate: [0, 180, 360],
-};
-
-/**
- * Animation réduite pour prefers-reduced-motion
- */
-const REDUCED_MOTION_ANIMATION = {
-	opacity: [0.5, 1, 0.5],
-};
-
 // ============================================================================
 // HELPERS
 // ============================================================================
@@ -134,39 +117,35 @@ const generateSparkles = (
  */
 const SparkleSet = ({
 	sparkles,
-	animation,
 	isInView,
 }: {
 	sparkles: Sparkle[];
-	animation: typeof SPARKLE_ANIMATION | typeof REDUCED_MOTION_ANIMATION;
 	isInView: boolean;
 }) => {
 	if (!isInView) return null;
 
 	return (
 		<>
-			{sparkles.map((sparkle) => (
-				<motion.div
-					key={sparkle.id}
-					className="absolute rounded-full will-change-transform"
-					style={{
-						left: `${sparkle.left}%`,
-						top: `${sparkle.top}%`,
-						width: sparkle.size,
-						height: sparkle.size,
-						backgroundColor: sparkle.color,
-						boxShadow: `0 0 ${sparkle.glowSize}px ${sparkle.color}`,
-					}}
-					initial={{ opacity: 0.15, scale: 0.3 }}
-					animate={animation}
-					transition={{
-						duration: sparkle.duration,
-						delay: sparkle.delay,
-						repeat: Infinity,
-						ease: MOTION_CONFIG.easing.easeInOut,
-					}}
-				/>
-			))}
+			{sparkles.map((sparkle) => {
+				const totalRadius = sparkle.size / 2 + sparkle.glowSize;
+				const coreRadius = sparkle.size / 2;
+
+				return (
+					<div
+						key={sparkle.id}
+						className="absolute rounded-full animate-glitter-twinkle"
+						style={{
+							left: `${sparkle.left}%`,
+							top: `${sparkle.top}%`,
+							width: totalRadius * 2,
+							height: totalRadius * 2,
+							background: `radial-gradient(circle, ${sparkle.color} ${coreRadius}px, transparent ${totalRadius}px)`,
+							"--sparkle-duration": `${sparkle.duration}s`,
+							"--sparkle-delay": `${sparkle.delay}s`,
+						} as React.CSSProperties}
+					/>
+				);
+			})}
 		</>
 	);
 };
@@ -179,10 +158,9 @@ const GlitterSparklesBase = ({
 	disableOnMobile = false,
 }: GlitterSparklesProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const reducedMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
 	const isInView = useInView(containerRef, {
-		once: true,
+		once: false,
 		margin: "-100px",
 	});
 
@@ -196,11 +174,6 @@ const GlitterSparklesBase = ({
 	const desktopSparkles = generateSparkles(count ?? DEFAULT_CONFIG.COUNT_DESKTOP, sizeRange, glowIntensity);
 	const mobileSparkles = generateSparkles(count ?? DEFAULT_CONFIG.COUNT_MOBILE, sizeRange, glowIntensity);
 
-	// Animation selon prefers-reduced-motion
-	const animation = reducedMotion
-		? REDUCED_MOTION_ANIMATION
-		: SPARKLE_ANIMATION;
-
 	return (
 		<div
 			ref={containerRef}
@@ -208,16 +181,17 @@ const GlitterSparklesBase = ({
 				"absolute inset-0 overflow-hidden pointer-events-none",
 				className
 			)}
+			style={{ contain: "layout paint" }}
 			aria-hidden="true"
 			data-testid="glitter-sparkles"
 		>
 			{/* Desktop : visible uniquement sur md+ (768px+) */}
 			<div className="hidden md:contents">
-				<SparkleSet sparkles={desktopSparkles} animation={animation} isInView={isInView} />
+				<SparkleSet sparkles={desktopSparkles} isInView={isInView} />
 			</div>
 			{/* Mobile : visible uniquement sous md (< 768px) */}
 			<div className="contents md:hidden">
-				<SparkleSet sparkles={mobileSparkles} animation={animation} isInView={isInView} />
+				<SparkleSet sparkles={mobileSparkles} isInView={isInView} />
 			</div>
 		</div>
 	);
@@ -231,9 +205,11 @@ const GlitterSparklesBase = ({
  *
  * - Adaptatif via CSS media queries (évite le flash d'hydratation)
  * - 25 particules desktop, 12 sur mobile
- * - Respecte prefers-reduced-motion
+ * - Respecte prefers-reduced-motion (via CSS)
  * - Couleurs liées au thème via CSS variables
  * - Option disableOnMobile pour performances sur appareils tactiles
+ * - Animations CSS compositor-only (zéro repaint, auto-pause hors onglet)
+ * - Démontage hors viewport via useInView (once: false)
  *
  * @example
  * ```tsx

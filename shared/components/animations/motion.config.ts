@@ -72,6 +72,14 @@ export const MOTION_CONFIG = {
 		amount: 0.2,
 	},
 
+	// Homepage section animation presets (shared across 4+ sections)
+	section: {
+		title: { y: 20, duration: 0.6 },
+		subtitle: { y: 10, delay: 0.1, duration: 0.6 },
+		grid: { stagger: 0.08, y: 25 },
+		cta: { y: 15, delay: 0.3, duration: 0.5 },
+	},
+
 	// Background animation presets
 	background: {
 		blob: {

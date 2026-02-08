@@ -2,6 +2,7 @@ import { CollectionCard } from "@/modules/collections/components/collection-card
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import { extractCollectionImages } from "@/modules/collections/utils/collection-images.utils";
 import { Fade, Reveal } from "@/shared/components/animations";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -47,12 +48,12 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 			</a>
 			<div className={`relative ${CONTAINER_CLASS}`}>
 				<header className="mb-8 text-center lg:mb-12">
-					<Fade y={20} duration={0.6}>
+					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="collections-title">
 							Les dernières collections
 						</SectionTitle>
 					</Fade>
-					<Fade y={10} delay={0.1} duration={0.6}>
+					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p
 							id="collections-subtitle"
 							className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
@@ -124,7 +125,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 				</div>
 
 				<div id="collections-cta">
-					<Fade y={15} delay={0.3} duration={0.5} inView once className="text-center">
+					<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay} duration={MOTION_CONFIG.section.cta.duration} inView once className="text-center">
 					<Button
 						asChild
 						size="lg"

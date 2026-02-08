@@ -9,7 +9,6 @@ export { useMediaQuery } from "./use-media-query"
 export { useSelection } from "./use-selection"
 export { useSortSelect } from "./use-sort-select"
 export { useSelectFilter } from "./use-select-filter"
-export { usePagination } from "./use-pagination"
 export { useCursorPagination } from "./use-cursor-pagination"
 export { useActiveNavbarItem } from "./use-active-navbar-item"
 

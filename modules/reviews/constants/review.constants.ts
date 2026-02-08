@@ -68,6 +68,14 @@ export const REVIEW_PUBLIC_SELECT = {
 } as const satisfies Prisma.ProductReviewSelect
 
 /**
+ * SELECT pour la section homepage (social proof)
+ */
+export const REVIEW_HOMEPAGE_SELECT = {
+	...REVIEW_PUBLIC_SELECT,
+	product: { select: { title: true, slug: true } },
+} as const satisfies Prisma.ProductReviewSelect
+
+/**
  * SELECT pour la liste admin des avis
  */
 export const REVIEW_ADMIN_SELECT = {

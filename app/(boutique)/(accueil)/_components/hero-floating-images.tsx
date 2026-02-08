@@ -20,13 +20,16 @@ const IMAGE_POSITIONS = [
 		rotate: -8,
 		width: 160,
 		height: 200,
-		widthClasses: "w-40 xl:w-48 2xl:w-56",
-		sizes: "(min-width: 1536px) 224px, (min-width: 1280px) 192px, 160px",
+		widthClasses: "w-32 md:w-36 lg:w-40 xl:w-48 2xl:w-56",
+		sizes: "(min-width: 1536px) 224px, (min-width: 1280px) 192px, (min-width: 1024px) 160px, 144px",
 		delay: 0.3,
 		glowColor: "var(--color-glow-pink)",
 		parallaxSpeed: 45,
+		parallaxDirection: 1 as const,
+		idleAnimation: "hero-idle-float-1",
 		idleDuration: 20,
 		idleDelay: 0,
+		tabletVisible: true,
 	},
 	// Top-right — medium balance
 	{
@@ -39,8 +42,11 @@ const IMAGE_POSITIONS = [
 		delay: 0.5,
 		glowColor: "var(--color-glow-lavender)",
 		parallaxSpeed: 75,
+		parallaxDirection: 1 as const,
+		idleAnimation: "hero-idle-float-2",
 		idleDuration: 22,
 		idleDelay: 2,
+		tabletVisible: false,
 	},
 	// Bottom-left — small depth
 	{
@@ -53,8 +59,11 @@ const IMAGE_POSITIONS = [
 		delay: 0.7,
 		glowColor: "var(--color-glow-mint)",
 		parallaxSpeed: 105,
+		parallaxDirection: -1 as const,
+		idleAnimation: "hero-idle-float-3",
 		idleDuration: 18,
 		idleDelay: 4,
+		tabletVisible: false,
 	},
 	// Bottom-right — medium balance
 	{
@@ -62,13 +71,16 @@ const IMAGE_POSITIONS = [
 		rotate: -4,
 		width: 128,
 		height: 160,
-		widthClasses: "w-32 xl:w-38 2xl:w-44",
-		sizes: "(min-width: 1536px) 176px, (min-width: 1280px) 152px, 128px",
+		widthClasses: "w-32 md:w-34 lg:w-32 xl:w-38 2xl:w-44",
+		sizes: "(min-width: 1536px) 176px, (min-width: 1280px) 152px, (min-width: 1024px) 128px, 136px",
 		delay: 0.9,
 		glowColor: "var(--color-glow-yellow)",
 		parallaxSpeed: 60,
+		parallaxDirection: -1 as const,
+		idleAnimation: "hero-idle-float-4",
 		idleDuration: 24,
 		idleDelay: 6,
+		tabletVisible: true,
 	},
 ] as const;
 
@@ -80,40 +92,52 @@ interface FloatingImageProps {
 	image: HeroProductImage;
 	position: (typeof IMAGE_POSITIONS)[number];
 	scrollProgress: ReturnType<typeof useScroll>["scrollYProgress"];
+	parallaxOpacity: ReturnType<typeof useTransform>;
 	shouldReduceMotion: boolean | null;
+	index: number;
 }
 
 function FloatingImage({
 	image,
 	position,
 	scrollProgress,
+	parallaxOpacity,
 	shouldReduceMotion,
+	index,
 }: FloatingImageProps) {
-	// Scroll-driven parallax: outer wrapper
+	// Scroll-driven parallax: bidirectional for depth
 	const parallaxY = useTransform(
 		scrollProgress,
 		[0, 1],
-		[0, position.parallaxSpeed]
+		[0, position.parallaxSpeed * position.parallaxDirection],
 	);
-
-	// Idle floating keyframes (organic Lissajous-like motion)
-	const idleY = [0, -8, 2, 8, -2, 0];
-	const idleX = [0, 4, -3, -4, 3, 0];
-	const idleRotate = [
-		position.rotate,
-		position.rotate - 1.5,
-		position.rotate + 0.5,
-		position.rotate + 1.5,
-		position.rotate - 0.5,
-		position.rotate,
-	];
 
 	return (
 		<motion.div
-			className={`absolute ${position.className} ${position.widthClasses} pointer-events-auto`}
-			style={shouldReduceMotion ? undefined : { y: parallaxY }}
+			className={`absolute ${position.className} ${position.widthClasses} pointer-events-auto ${position.tabletVisible ? "hidden md:block" : "hidden lg:block"}`}
+			style={
+				shouldReduceMotion
+					? undefined
+					: { y: parallaxY, opacity: parallaxOpacity }
+			}
 		>
 			<motion.div
+				className={
+					shouldReduceMotion
+						? undefined
+						: "animate-hero-idle-float"
+				}
+				style={
+					shouldReduceMotion
+						? undefined
+						: {
+								animationName: position.idleAnimation,
+								animationDuration: `${position.idleDuration}s`,
+								animationTimingFunction: "ease-in-out",
+								animationIterationCount: "infinite",
+								animationDelay: `${position.delay + position.idleDelay}s`,
+							}
+				}
 				initial={
 					shouldReduceMotion
 						? { opacity: 1 }
@@ -122,47 +146,21 @@ function FloatingImage({
 				animate={
 					shouldReduceMotion
 						? { opacity: 1 }
-						: {
-								opacity: 1,
-								scale: 1,
-								y: idleY,
-								x: idleX,
-								rotate: idleRotate,
-							}
+						: { opacity: 1, scale: 1 }
 				}
 				transition={
 					shouldReduceMotion
 						? undefined
 						: {
-								// One-shot entry for opacity and scale
 								opacity: {
-									duration: 0.6,
+									duration: MOTION_CONFIG.duration.slower,
 									delay: position.delay,
-									ease: "easeOut",
+									ease: MOTION_CONFIG.easing.easeOut,
 								},
 								scale: {
-									duration: 0.6,
+									duration: MOTION_CONFIG.duration.slower,
 									delay: position.delay,
-									ease: "easeOut",
-								},
-								// Continuous idle for y, x, rotate
-								y: {
-									duration: position.idleDuration,
-									delay: position.delay + position.idleDelay,
-									repeat: Infinity,
-									ease: "easeInOut",
-								},
-								x: {
-									duration: position.idleDuration * 1.3,
-									delay: position.delay + position.idleDelay,
-									repeat: Infinity,
-									ease: "easeInOut",
-								},
-								rotate: {
-									duration: position.idleDuration * 0.9,
-									delay: position.delay + position.idleDelay,
-									repeat: Infinity,
-									ease: "easeInOut",
+									ease: MOTION_CONFIG.easing.easeOut,
 								},
 							}
 				}
@@ -176,10 +174,20 @@ function FloatingImage({
 								transition: MOTION_CONFIG.spring.bouncy,
 							}
 				}
+				whileTap={
+					shouldReduceMotion
+						? undefined
+						: {
+								scale: 0.97,
+								transition: MOTION_CONFIG.spring.snappy,
+							}
+				}
 			>
 				<Link
 					href={`/creations/${image.slug}`}
-					className="pointer-events-auto group relative block overflow-hidden rounded-2xl border border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.2),0_4px_12px_rgba(0,0,0,0.1)] hover:ring-1 hover:ring-white/30"
+					aria-label={`Voir ${image.title}`}
+					className="pointer-events-auto group relative block overflow-hidden rounded-2xl border border-white/20 backdrop-blur-sm shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] hover:ring-1 hover:ring-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+					style={{ "--img-glow": position.glowColor } as React.CSSProperties}
 				>
 					{/* Glow layer — visible on hover */}
 					<div
@@ -197,11 +205,12 @@ function FloatingImage({
 						height={position.height}
 						className="relative aspect-[4/5] w-full object-cover"
 						sizes={position.sizes}
-						loading="lazy"
+						loading={index === 0 ? "eager" : "lazy"}
 						placeholder={image.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={image.blurDataUrl}
 					/>
-				</Link>
+
+					</Link>
 			</motion.div>
 		</motion.div>
 	);
@@ -216,12 +225,22 @@ export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 		offset: ["start start", "end start"],
 	});
 
+	// Single shared opacity transform instead of one per image
+	const parallaxOpacity = useTransform(
+		scrollYProgress,
+		[0, 0.4, 1],
+		[1, 1, 0.2],
+	);
+
 	if (images.length === 0) return null;
 
 	return (
 		<div
 			ref={containerRef}
-			className="absolute inset-0 z-0 hidden lg:block pointer-events-none"
+			role="group"
+			aria-label="Aperçu des dernières créations"
+			className="absolute inset-0 z-0 hidden md:block pointer-events-none"
+			style={{ contain: "layout paint" }}
 		>
 			{images.map((image, index) => {
 				const pos = IMAGE_POSITIONS[index];
@@ -233,7 +252,9 @@ export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 						image={image}
 						position={pos}
 						scrollProgress={scrollYProgress}
+						parallaxOpacity={parallaxOpacity}
 						shouldReduceMotion={shouldReduceMotion}
+						index={index}
 					/>
 				);
 			})}

@@ -1,4 +1,5 @@
 import { Fade, Reveal, Stagger } from "@/shared/components/animations";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { IMAGES } from "@/shared/constants/images";
@@ -102,12 +103,12 @@ export async function CreativeProcess() {
 
 			<div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<header className="text-center mb-12 lg:mb-16">
-					<Fade y={20} duration={0.6}>
+					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="creative-process-title">
 							Comment je crée tes bijoux
 						</SectionTitle>
 					</Fade>
-					<Fade y={10} delay={0.1} duration={0.6}>
+					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto">
 							De l'inspiration à la finition
 							<span className="hidden sm:inline">
@@ -161,8 +162,8 @@ export async function CreativeProcess() {
 							/>
 
 							<Stagger
-								stagger={0.08}
-								y={25}
+								stagger={MOTION_CONFIG.section.grid.stagger}
+								y={MOTION_CONFIG.section.grid.y}
 								delay={0}
 								inView
 								once={true}

@@ -7,6 +7,7 @@ import { CollectionsSectionSkeleton } from "@/modules/collections/components/col
 import { getCollections } from "@/modules/collections/data/get-collections";
 import { NewsletterSection } from "@/app/(boutique)/(accueil)/_components/newsletter-section";
 import { getProducts } from "@/modules/products/data/get-products";
+import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
 import { StructuredData } from "@/shared/components/structured-data";
@@ -17,6 +18,8 @@ import { CreativeProcess } from "./_components/creative-process";
 import { FaqSection } from "./_components/faq-section";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
+import { ReviewsSection } from "./_components/reviews-section";
+import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
 export const metadata: Metadata = {
   title: {
@@ -55,6 +58,7 @@ export const metadata: Metadata = {
 export default async function Page() {
   // Stream review stats to avoid blocking page render
   const reviewStatsPromise = getGlobalReviewStats();
+  const featuredReviewsPromise = getFeaturedReviews();
   const wishlistIdsPromise = getWishlistProductIds();
 
   // Shared between HeroSection (floating images) and LatestCreations (product cards)
@@ -104,18 +108,26 @@ export default async function Page() {
         />
       </Suspense>
 
-      {/* 5. Atelier Story - Personal storytelling with polaroid gallery */}
+      {/* 5. Reviews - Social proof with featured customer reviews */}
+      <Suspense fallback={<ReviewsSectionSkeleton />}>
+        <ReviewsSection
+          reviewsPromise={featuredReviewsPromise}
+          reviewStatsPromise={reviewStatsPromise}
+        />
+      </Suspense>
+
+      {/* 6. Atelier Story - Personal storytelling with polaroid gallery */}
       <AtelierStory />
 
-      {/* 6. Creative Process - Step-by-step jewelry making */}
+      {/* 7. Creative Process - Step-by-step jewelry making */}
       <Suspense>
         <CreativeProcess />
       </Suspense>
 
-      {/* 7. FAQ - Frequently asked questions with JSON-LD */}
+      {/* 8. FAQ - Frequently asked questions with JSON-LD */}
       <FaqSection />
 
-      {/* 8. Newsletter - Subscription with gift incentive */}
+      {/* 9. Newsletter - Subscription with gift incentive */}
       <NewsletterSection />
     </>
   );

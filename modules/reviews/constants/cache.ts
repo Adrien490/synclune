@@ -29,6 +29,9 @@ export const REVIEWS_CACHE_TAGS = {
 
 	/** Liste admin (tous les avis) */
 	ADMIN_LIST: "reviews-admin-list",
+
+	/** Avis mis en avant sur la homepage */
+	HOMEPAGE: "homepage-reviews",
 } as const
 
 // ============================================
@@ -85,6 +88,16 @@ export function cacheReviewsAdmin() {
 	cacheTag(REVIEWS_CACHE_TAGS.ADMIN_LIST)
 }
 
+/**
+ * Configure le cache pour les avis homepage (social proof)
+ * - Utilisé pour : Section "Avis clients" sur la homepage
+ * - Durée : Cache moyen (products)
+ */
+export function cacheHomepageReviews() {
+	cacheLife("products")
+	cacheTag(REVIEWS_CACHE_TAGS.HOMEPAGE)
+}
+
 // ============================================
 // INVALIDATION HELPERS
 // ============================================
@@ -102,6 +115,7 @@ export function getReviewInvalidationTags(
 		REVIEWS_CACHE_TAGS.USER(userId),
 		REVIEWS_CACHE_TAGS.REVIEWABLE(userId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
+		REVIEWS_CACHE_TAGS.HOMEPAGE,
 	]
 
 	// Ajouter les tags produit seulement si le produit existe encore
@@ -129,6 +143,7 @@ export function getReviewModerationTags(
 	const tags = [
 		REVIEWS_CACHE_TAGS.DETAIL(reviewId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
+		REVIEWS_CACHE_TAGS.HOMEPAGE,
 	]
 
 	// Ajouter les tags produit seulement si le produit existe encore

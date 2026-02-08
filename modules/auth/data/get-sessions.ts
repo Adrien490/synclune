@@ -110,7 +110,7 @@ export async function getSessions(
  * Récupère la liste des sessions avec pagination, tri et filtrage
  * Self /dashboard avec sécurité renforcée
  */
-export async function fetchSessions(
+async function fetchSessions(
 	params: GetSessionsParams
 ): Promise<GetSessionsReturn> {
 	"use cache";

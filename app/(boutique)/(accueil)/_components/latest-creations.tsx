@@ -1,4 +1,5 @@
 import { Fade, Stagger } from "@/shared/components/animations";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
@@ -39,12 +40,12 @@ export function LatestCreations({
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
         <header className="mb-8 text-center lg:mb-12">
-          <Fade y={20} duration={0.6}>
+          <Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
             <SectionTitle id="latest-creations-title">
               Nouvelles créations
             </SectionTitle>
           </Fade>
-          <Fade y={10} delay={0.1} duration={0.6}>
+          <Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
             <p
               id="latest-creations-subtitle"
               className="mt-4 text-lg/7 tracking-normal text-muted-foreground max-w-2xl mx-auto"
@@ -55,8 +56,8 @@ export function LatestCreations({
         </header>
         <Stagger
           className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12"
-          stagger={0.08}
-          y={25}
+          stagger={MOTION_CONFIG.section.grid.stagger}
+          y={MOTION_CONFIG.section.grid.y}
           inView
           once={true}
         >
@@ -71,9 +72,9 @@ export function LatestCreations({
           ))}
         </Stagger>
         <Fade
-          y={15}
-          delay={0.3}
-          duration={0.5}
+          y={MOTION_CONFIG.section.cta.y}
+          delay={MOTION_CONFIG.section.cta.delay}
+          duration={MOTION_CONFIG.section.cta.duration}
           inView
           once
           className="text-center"
