@@ -50,7 +50,7 @@ export function ProductDetails({
 
 	return (
 		<div className="space-y-6">
-			{/* 1. Prix + Réassurance en bloc fluide (style Etsy) */}
+			{/* 1. Prix (Baymard: visible en premier) */}
 			<AnimatePresence mode="wait">
 				<motion.div
 					key={`price-${currentSku?.id || "no-sku"}`}
@@ -59,17 +59,21 @@ export function ProductDetails({
 					animate="animate"
 					exit="exit"
 					transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-					className="space-y-4"
 				>
 					<ProductPriceDisplay selectedSku={currentSku} product={product} cartsCount={cartsCount} />
-					<ProductReassurance />
 				</motion.div>
 			</AnimatePresence>
 
 			{/* 2. Sélection des variantes */}
 			<VariantSelector product={product} defaultSku={defaultSku} />
 
-			{/* 3. Caractéristiques principales (avant CTA pour aider le client) */}
+			{/* 3. CTA principal (monté pour réduire la distance au fold - Baymard) */}
+			<AddToCartForm product={product} selectedSku={currentSku} />
+
+			{/* 4. Réassurance (après CTA - "decision support") */}
+			<ProductReassurance />
+
+			{/* 5. Caractéristiques principales */}
 			<AnimatePresence mode="wait">
 				<motion.div
 					key={`chars-${currentSku?.id || "no-sku"}`}
@@ -83,15 +87,12 @@ export function ProductDetails({
 				</motion.div>
 			</AnimatePresence>
 
-			{/* 4. CTA principal */}
-			<AddToCartForm product={product} selectedSku={currentSku} />
-
 			<Separator className="bg-border" />
 
-			{/* 5. Highlights produit (après CTA - pattern Etsy) */}
+			{/* 6. Highlights produit (après CTA - pattern Etsy) */}
 			<ProductHighlights product={product} />
 
-			{/* 6. Description produit (après CTA - pattern Etsy) */}
+			{/* 7. Description produit (après CTA - pattern Etsy) */}
 			{product.description && (
 				<div
 					id="product-description"
@@ -104,7 +105,7 @@ export function ProductDetails({
 				</div>
 			)}
 
-			{/* 7. Entretien et livraison (reste en bas) */}
+			{/* 8. Entretien et livraison (reste en bas) */}
 			<ProductCareInfo primaryMaterial={currentSku?.material?.name} />
 		</div>
 	);

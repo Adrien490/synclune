@@ -194,10 +194,22 @@ export default async function ProductPage({
 								</section>
 							</div>
 
+							{/* Separator avant avis clients */}
+							<Separator className="bg-border" />
+
+							{/* 7. Avis clients (avant related/recently viewed - 72% lisent les avis avant d'acheter) */}
+							<Suspense fallback={<ProductReviewsSectionSkeleton />}>
+								<ProductReviewsSection
+									productId={product.id}
+									productSlug={product.slug}
+									ratingFilter={urlParams.ratingFilter ? parseInt(urlParams.ratingFilter, 10) : undefined}
+								/>
+							</Suspense>
+
 							{/* Separator avant produits recemment vus */}
 							<Separator className="bg-border" />
 
-							{/* 7. RecentlyViewedProducts - Produits recemment consultes */}
+							{/* 8. RecentlyViewedProducts - Produits recemment consultes */}
 							<Suspense fallback={<RecentlyViewedProductsSkeleton limit={4} />}>
 								<RecentlyViewedProducts currentProductSlug={product.slug} limit={4} />
 							</Suspense>
@@ -205,21 +217,9 @@ export default async function ProductPage({
 							{/* Separator avant produits similaires */}
 							<Separator className="bg-border" />
 
-							{/* 8. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
+							{/* 9. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
 							<Suspense fallback={<RelatedProductsSkeleton limit={8} />}>
 								<RelatedProducts currentProductSlug={product.slug} limit={8} />
-							</Suspense>
-
-							{/* Separator avant avis clients */}
-							<Separator className="bg-border" />
-
-							{/* 9. Avis clients */}
-							<Suspense fallback={<ProductReviewsSectionSkeleton />}>
-								<ProductReviewsSection
-									productId={product.id}
-									productSlug={product.slug}
-									ratingFilter={urlParams.ratingFilter ? parseInt(urlParams.ratingFilter, 10) : undefined}
-								/>
 							</Suspense>
 						</article>
 					</div>

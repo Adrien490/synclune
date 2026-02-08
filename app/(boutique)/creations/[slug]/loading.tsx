@@ -1,15 +1,16 @@
 import { PageHeaderSkeleton } from "@/shared/components/page-header";
 import { RecentlyViewedProductsSkeleton } from "@/modules/products/components/recently-viewed-products-skeleton";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
+import { ProductReviewsSectionSkeleton } from "@/modules/reviews/components/product-reviews-section";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
  * Loading state for product detail page
- * Structure exacte : PageHeader → Gallery + ProductInfo/ProductDetails → RelatedProducts
+ * Structure exacte : PageHeader → Gallery + ProductInfo/ProductDetails → Reviews → RecentlyViewed → Related
  *
  * IMPORTANT: L'ordre des composants doit correspondre exactement à page.tsx pour éviter le CLS
  * ProductInfo: Titre → Prix mobile → Badge type → Description
- * ProductDetails: Prix → VariantSelector → Reassurance → AddToCart → Separator → Characteristics → CareInfo
+ * ProductDetails: Prix → VariantSelector → AddToCart → Reassurance → Characteristics → CareInfo
  */
 export default function ProductDetailLoading() {
 	return (
@@ -181,29 +182,18 @@ export default function ProductDetailLoading() {
 										</div>
 									</div>
 
-									{/* ===== 4. ProductReassurance - Trust badges (AVANT CTA) ===== */}
-									<div className="space-y-3 pt-2">
-										{/* Trust badges - flex-col sur mobile, flex-row sur desktop */}
-										<div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-3 sm:gap-4 py-2">
-											{Array.from({ length: 3 }).map((_, i) => (
-												<div key={i} className="flex items-center gap-2 sm:gap-1.5">
-													<Skeleton className="h-5 w-5 sm:h-4 sm:w-4 rounded-full bg-muted/30" />
-													<Skeleton className="h-4 sm:h-3 w-24 bg-muted/30" />
-												</div>
-											))}
-										</div>
-										{/* Info livraison */}
-										<div className="flex items-center justify-center gap-2">
-											<Skeleton className="h-3.5 w-3.5 bg-muted/30" />
-											<Skeleton className="h-3 w-32 bg-muted/30" />
-										</div>
-									</div>
-
-									{/* ===== 5. AddToCartForm ===== */}
+									{/* ===== 4. AddToCartForm (monté avant Reassurance - Baymard) ===== */}
 									<Skeleton className="h-12 w-full rounded-lg bg-primary/30" />
 
-									{/* Separator */}
-									<div className="h-px bg-border" />
+									{/* ===== 5. ProductReassurance - Trust icons (après CTA) ===== */}
+									<ul className="space-y-1.5">
+										{Array.from({ length: 3 }).map((_, i) => (
+											<li key={i} className="flex items-center gap-2">
+												<Skeleton className="h-4 w-4 shrink-0 rounded bg-muted/30" />
+												<Skeleton className="h-4 w-48 bg-muted/30" />
+											</li>
+										))}
+									</ul>
 
 									{/* ===== 6. ProductCharacteristics - Card ===== */}
 									<div className="rounded-xl border-transparent bg-muted/30">
@@ -231,16 +221,19 @@ export default function ProductDetailLoading() {
 										</div>
 									</div>
 
+									{/* Separator */}
+									<div className="h-px bg-border" />
+
 									{/* ===== 7. ProductCareInfo - Accordion fermé ===== */}
 									<div className="space-y-0">
-										{/* Accordion Item 1 - Entretien */}
+										{/* Accordion Item 1 - Livraison */}
 										<div className="border-b py-4">
 											<div className="flex items-center gap-2">
 												<Skeleton className="h-4 w-4 bg-primary/30" />
 												<Skeleton className="h-5 w-20 bg-muted/40" />
 											</div>
 										</div>
-										{/* Accordion Item 2 - Livraison */}
+										{/* Accordion Item 2 - Entretien */}
 										<div className="border-b py-4">
 											<div className="flex items-center gap-2">
 												<Skeleton className="h-4 w-4 bg-primary/30" />
@@ -250,6 +243,12 @@ export default function ProductDetailLoading() {
 									</div>
 								</section>
 							</div>
+
+							{/* Separator avant avis clients */}
+							<div className="h-px bg-border" />
+
+							{/* ProductReviewsSection Skeleton */}
+							<ProductReviewsSectionSkeleton />
 
 							{/* Separator avant produits recemment vus */}
 							<div className="h-px bg-border" />

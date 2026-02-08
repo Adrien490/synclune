@@ -1,3 +1,5 @@
+import { Truck, RotateCcw, ShieldCheck } from "lucide-react";
+
 /**
  * ProductReassurance - Infos de confiance style Etsy (Baymard UX)
  *
@@ -10,18 +12,18 @@ export function ProductReassurance() {
 		<ul className="space-y-1.5 text-sm text-muted-foreground">
 			{/* Frais de livraison explicites - Baymard : 64% cherchent cette info avant add-to-cart */}
 			<li className="flex items-center gap-2">
-				<span className="text-muted-foreground/70" aria-hidden="true">•</span>
+				<Truck className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
 				<span>
 					<span className="font-medium text-foreground">Livraison France : 6€</span>
 					<span> · Expédition sous 2-3 jours</span>
 				</span>
 			</li>
 			<li className="flex items-center gap-2">
-				<span className="text-muted-foreground/70" aria-hidden="true">•</span>
+				<RotateCcw className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
 				<span>Retours et échanges sous 14 jours</span>
 			</li>
 			<li className="flex items-center gap-2">
-				<span className="text-muted-foreground/70" aria-hidden="true">•</span>
+				<ShieldCheck className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
 				<span>Paiement sécurisé (CB, PayPal)</span>
 			</li>
 		</ul>
