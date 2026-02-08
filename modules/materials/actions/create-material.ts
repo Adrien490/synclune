@@ -1,12 +1,12 @@
 "use server";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { getMaterialInvalidationTags } from "../constants/cache";
 import { createMaterialSchema } from "../schemas/materials.schemas";
@@ -22,22 +22,16 @@ export async function createMaterial(
 
 		// 2. Extraire les donnees du FormData
 		const rawData = {
-			name: formData.get("name"),
-			description: formData.get("description") || null,
+			name: sanitizeText(formData.get("name") as string ?? ""),
+			description: formData.get("description")
+				? sanitizeText(formData.get("description") as string)
+				: null,
 		};
 
 		// Valider les donnees
-		const validation = createMaterialSchema.safeParse(rawData);
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validated = validateInput(createMaterialSchema, rawData);
+		if ("error" in validated) return validated.error;
+		const validatedData = validated.data;
 
 		// Verifier l'unicite du nom
 		const existingName = await prisma.material.findFirst({
@@ -45,10 +39,7 @@ export async function createMaterial(
 		});
 
 		if (existingName) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Ce nom de materiau existe deja. Veuillez en choisir un autre.",
-			};
+			return error("Ce nom de materiau existe deja. Veuillez en choisir un autre.");
 		}
 
 		// Generer un slug unique automatiquement
@@ -63,16 +54,12 @@ export async function createMaterial(
 			},
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/materiaux");
+		// Invalider le cache
 		const tags = getMaterialInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Matériau créé avec succès",
-		};
-	} catch (error) {
-		return handleActionError(error, "Une erreur est survenue lors de la création du matériau");
+		return success("Matériau créé avec succès");
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de la création du matériau");
 	}
 }

@@ -4,11 +4,10 @@ import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { UTApi } from "uploadthing/server";
 import { updateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
@@ -81,17 +80,10 @@ export async function updateProduct(
 		);
 
 		// 3. Validation avec Zod
-		const result = updateProductSchema.safeParse(rawData);
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			const errorPath = firstError.path.join(".");
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: `${errorPath}: ${firstError.message}`,
-			};
-		}
+		const validation = validateInput(updateProductSchema, rawData);
+		if ("error" in validation) return validation.error;
 
-		const validatedData = result.data;
+		const validatedData = validation.data;
 
 		// 4. Verifier que le produit et le SKU existent
 		const existingProduct = await prisma.product.findUnique({
@@ -119,10 +111,7 @@ export async function updateProduct(
 		});
 
 		if (!existingProduct) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Le produit n'existe pas.",
-			};
+			return notFound("Le produit");
 		}
 
 		// Verifier que le SKU existe et appartient au produit
@@ -135,10 +124,7 @@ export async function updateProduct(
 		});
 
 		if (!existingSku) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Le SKU n'existe pas ou n'appartient pas au produit.",
-			};
+			return notFound("Le SKU");
 		}
 
 		// 5. Validation metier : Produit PUBLIC doit avoir au moins 1 SKU actif
@@ -147,11 +133,9 @@ export async function updateProduct(
 			!validatedData.defaultSku.isActive &&
 			existingProduct._count.skus === 1
 		) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message:
-					"Impossible de desactiver le seul SKU d'un produit PUBLIC. Veuillez creer un autre SKU actif ou mettre le produit en DRAFT.",
-			};
+			return validationError(
+				"Impossible de desactiver le seul SKU d'un produit PUBLIC. Veuillez creer un autre SKU actif ou mettre le produit en DRAFT."
+			);
 		}
 
 		// 6. Normalize empty strings to null for optional foreign keys
@@ -332,11 +316,7 @@ export async function updateProduct(
 		}
 
 		// 12. Success
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Produit "${updatedProduct.title}" modifié avec succès.`,
-			data: updatedProduct,
-		};
+		return success(`Produit "${updatedProduct.title}" modifié avec succès.`, updatedProduct);
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier le produit");
 	}

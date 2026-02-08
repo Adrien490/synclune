@@ -1,13 +1,14 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { revalidatePath } from "next/cache";
 import { updateTag } from "next/cache";
 import { createDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { validateInput, handleActionError, success } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 
 import { getDiscountInvalidationTags } from "../constants/cache";
 
@@ -47,19 +48,17 @@ export async function createDiscount(
 		};
 
 		// 3. Validation
-		const result = createDiscountSchema.safeParse(rawData);
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(createDiscountSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const data = result.data;
+		const data = validated.data;
+
+		// 3b. Sanitize text input
+		const sanitizedCode = sanitizeText(data.code);
 
 		// 4. Vérifier l'unicité du code
 		const existingDiscount = await prisma.discount.findUnique({
-			where: { code: data.code },
+			where: { code: sanitizedCode },
 			select: { id: true },
 		});
 
@@ -73,7 +72,7 @@ export async function createDiscount(
 		// 5. Créer le discount
 		const discount = await prisma.discount.create({
 			data: {
-				code: data.code,
+				code: sanitizedCode,
 				type: data.type,
 				value: data.value,
 				minOrderAmount: data.minOrderAmount,
@@ -86,20 +85,11 @@ export async function createDiscount(
 			select: { id: true, code: true },
 		});
 
-		// 6. Revalidation et invalidation du cache
-		revalidatePath("/admin/marketing/codes-promo");
+		// 6. Invalidation du cache
 		getDiscountInvalidationTags(discount.code).forEach(tag => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Code promo "${discount.code}" créé avec succès`,
-			data: { id: discount.id },
-		};
-	} catch (error) {
-		console.error("[CREATE_DISCOUNT]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: DISCOUNT_ERROR_MESSAGES.CREATE_FAILED,
-		};
+		return success(`Code promo "${discount.code}" créé avec succès`, { id: discount.id });
+	} catch (e) {
+		return handleActionError(e, DISCOUNT_ERROR_MESSAGES.CREATE_FAILED);
 	}
 }

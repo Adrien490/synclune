@@ -4,8 +4,7 @@ import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { toggleProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../constants/cache";
@@ -33,17 +32,10 @@ export async function toggleProductStatus(
 		};
 
 		// 3. Validation avec Zod
-		const result = toggleProductStatusSchema.safeParse(rawData);
+		const validation = validateInput(toggleProductStatusSchema, rawData);
+		if ("error" in validation) return validation.error;
 
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
-		}
-
-		const { productId, currentStatus, targetStatus } = result.data;
+		const { productId, currentStatus, targetStatus } = validation.data;
 
 		// 4. Verifier que le produit existe et recuperer toutes les donnees necessaires
 		// (requete unique pour eviter N+1)
@@ -71,10 +63,7 @@ export async function toggleProductStatus(
 		});
 
 		if (!existingProduct) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Le produit n'existe pas.",
-			};
+			return notFound("Le produit");
 		}
 
 		// 5. Determiner le nouveau statut
@@ -98,12 +87,9 @@ export async function toggleProductStatus(
 
 		// 5.5. Validation metier : Un produit PUBLIC doit avoir au moins 1 SKU actif avec stock
 		if (newStatus === "PUBLIC") {
-			const validation = validateProductForPublication(existingProduct);
-			if (!validation.isValid) {
-				return {
-					status: ActionStatus.VALIDATION_ERROR,
-					message: validation.errorMessage!,
-				};
+			const pubValidation = validateProductForPublication(existingProduct);
+			if (!pubValidation.isValid) {
+				return validationError(pubValidation.errorMessage!);
 			}
 		}
 
@@ -159,17 +145,13 @@ export async function toggleProductStatus(
 			? `${statusMessages[newStatus]}. ${warningMessage}`
 			: statusMessages[newStatus];
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: successMessage,
-			data: {
-				productId,
-				title: existingProduct.title,
-				oldStatus: currentStatus,
-				newStatus,
-				warning: warningMessage,
-			},
-		};
+		return success(successMessage, {
+			productId,
+			title: existingProduct.title,
+			oldStatus: currentStatus,
+			newStatus,
+			warning: warningMessage,
+		});
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors du changement de statut");
 	}

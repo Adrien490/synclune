@@ -1,3 +1,6 @@
+import { BadgeCheck } from "lucide-react";
+
+import { Badge } from "@/shared/components/ui/badge";
 import { CardContent } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
 import { formatRelativeDate } from "@/shared/utils/dates";
@@ -36,9 +39,15 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 			<CardContent className="py-4 space-y-4">
 				{/* En-tête: nom, date, étoiles */}
 				<div>
-					<span className="font-medium text-foreground truncate">
-						{review.user.name || "Anonyme"}
-					</span>
+					<div className="flex items-center gap-2">
+						<span className="font-medium text-foreground truncate">
+							{review.user.name || "Anonyme"}
+						</span>
+						<Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 h-5 shrink-0 text-muted-foreground">
+							<BadgeCheck className="size-3" aria-hidden="true" />
+							Achat vérifié
+						</Badge>
+					</div>
 					<div className="flex items-center gap-2 mt-0.5">
 						<RatingStars rating={review.rating} size="sm" />
 						<span className="text-xs text-muted-foreground">

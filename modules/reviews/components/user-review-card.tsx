@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { MessageSquare, ExternalLink } from "lucide-react"
+import { BadgeCheck, MessageSquare, ExternalLink } from "lucide-react"
 
 import { CardContent } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
@@ -68,7 +68,7 @@ export function UserReviewCard({ review, className }: UserReviewCardProps) {
 									{review.product.title}
 									<ExternalLink className="size-3 shrink-0" aria-hidden="true" />
 								</Link>
-								<div className="flex items-center gap-2 mt-1">
+								<div className="flex flex-wrap items-center gap-2 mt-1">
 									<RatingStars rating={review.rating} size="sm" />
 									<time
 										dateTime={new Date(review.createdAt).toISOString()}
@@ -76,6 +76,10 @@ export function UserReviewCard({ review, className }: UserReviewCardProps) {
 									>
 										{formatDate(review.createdAt)}
 									</time>
+									<Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 h-5 shrink-0 text-muted-foreground">
+										<BadgeCheck className="size-3" aria-hidden="true" />
+										Achat vérifié
+									</Badge>
 								</div>
 							</div>
 							<Badge

@@ -5,8 +5,7 @@ import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { deleteProductSchema } from "../schemas/product.schemas";
 import { UTApi } from "uploadthing/server";
 import { getProductInvalidationTags } from "../constants/cache";
@@ -61,17 +60,10 @@ export async function deleteProduct(
 		};
 
 		// 3. Validation avec Zod
-		const result = deleteProductSchema.safeParse(rawData);
+		const validation = validateInput(deleteProductSchema, rawData);
+		if ("error" in validation) return validation.error;
 
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
-		}
-
-		const { productId } = result.data;
+		const { productId } = validation.data;
 
 		// 4. Verifier que le produit existe et recuperer toutes les images des SKUs
 		const existingProduct = await prisma.product.findUnique({
@@ -102,10 +94,7 @@ export async function deleteProduct(
 		});
 
 		if (!existingProduct) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Le produit n'existe pas.",
-			};
+			return notFound("Le produit");
 		}
 
 		// 5. Verifier si le produit a des commandes associees
@@ -119,12 +108,10 @@ export async function deleteProduct(
 		});
 
 		if (orderItemsCount > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					`Ce produit ne peut pas etre supprime car il est associe a ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
-					"Pour conserver l'historique des commandes, veuillez archiver le produit a la place.",
-			};
+			return error(
+				`Ce produit ne peut pas etre supprime car il est associe a ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
+				"Pour conserver l'historique des commandes, veuillez archiver le produit a la place."
+			);
 		}
 
 		// 6. Supprimer tous les fichiers UploadThing de toutes les variantes
@@ -133,11 +120,16 @@ export async function deleteProduct(
 		);
 		await deleteUploadThingFiles(allImageUrls);
 
-		// 7. Supprimer le produit dans une transaction
+		// 7. Soft delete le produit et ses SKUs dans une transaction
 		await prisma.$transaction(async (tx) => {
-			// Les SKUs et entrees SkuMedia seront supprimes automatiquement grace a onDelete: Cascade
-			await tx.product.delete({
+			const now = new Date();
+			await tx.productSku.updateMany({
+				where: { productId },
+				data: { deletedAt: now },
+			});
+			await tx.product.update({
 				where: { id: productId },
+				data: { deletedAt: now },
 			});
 		});
 
@@ -157,15 +149,11 @@ export async function deleteProduct(
 		}
 
 		// 9. Success
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Produit "${existingProduct.title}" supprimé avec succès.`,
-			data: {
-				productId,
-				title: existingProduct.title,
-				slug: existingProduct.slug,
-			},
-		};
+		return success(`Produit "${existingProduct.title}" supprimé avec succès.`, {
+			productId,
+			title: existingProduct.title,
+			slug: existingProduct.slug,
+		});
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la suppression du produit");
 	}

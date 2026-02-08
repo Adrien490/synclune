@@ -64,9 +64,9 @@ export async function generateProductMetadata({
 	params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
 	const { slug } = await params;
-	const product = await getProductBySlug({ slug });
+	const product = await getProductBySlug({ slug, includeDraft: true });
 
-	if (!product) {
+	if (!product || product.status !== "PUBLIC") {
 		return {
 			title: "Produit non trouvé - Synclune",
 			description: "Ce produit n'existe pas ou n'est plus disponible.",
@@ -96,56 +96,9 @@ export async function generateProductMetadata({
 	const mainImage = primarySku?.images?.[0];
 	const imageUrl = mainImage?.url || `${PRODUCTION_URL}/opengraph-image`;
 
-	// Keywords dynamiques basés sur les attributs du produit
-	const dynamicKeywords: string[] = [
-		product.title.toLowerCase(),
-		"bijoux artisanaux",
-		"fait main",
-		"Synclune",
-	];
-
-	// Ajouter le type de produit
-	if (product.type?.label) {
-		dynamicKeywords.push(
-			product.type.label.toLowerCase(),
-			`${product.type.label.toLowerCase()} fait main`,
-			`${product.type.label.toLowerCase()} artisanal`
-		);
-	}
-
-	// Ajouter la couleur si disponible
-	if (primarySku?.color?.name) {
-		dynamicKeywords.push(
-			`bijoux ${primarySku.color.name.toLowerCase()}`,
-			primarySku.color.name.toLowerCase()
-		);
-	}
-
-	// Ajouter la matière si disponible
-	if (primarySku?.material?.name) {
-		dynamicKeywords.push(
-			`bijoux ${primarySku.material.name.toLowerCase()}`,
-			primarySku.material.name.toLowerCase()
-		);
-	}
-
-	// Ajouter les collections
-	if (product.collections && product.collections.length > 0) {
-		product.collections.slice(0, 3).forEach((pc) => {
-			dynamicKeywords.push(
-				`collection ${pc.collection.name.toLowerCase()}`,
-				pc.collection.name.toLowerCase()
-			);
-		});
-	}
-
-	// Ajouter les termes locaux SEO Nantes
-	dynamicKeywords.push("bijoux Nantes", "créatrice Nantes", "Loire-Atlantique");
-
 	return {
 		title,
 		description,
-		keywords: dynamicKeywords.join(", "),
 		alternates: {
 			canonical: canonicalUrl,
 		},
@@ -153,7 +106,7 @@ export async function generateProductMetadata({
 			title,
 			description,
 			url: fullUrl,
-			type: "article", // "article" pour les pages produit (meilleur support que "product")
+			type: "website",
 			images: [
 				{
 					url: imageUrl,
@@ -168,6 +121,13 @@ export async function generateProductMetadata({
 			title,
 			description,
 			images: [imageUrl],
+		},
+		other: {
+			"product:price:amount": price || (primarySku?.priceInclTax ? (primarySku.priceInclTax / 100).toFixed(2) : ""),
+			"product:price:currency": "EUR",
+			"product:availability": primarySku?.inventory && primarySku.inventory > 0 ? "in stock" : "out of stock",
+			"product:condition": "new",
+			"product:brand": "Synclune",
 		},
 	};
 }

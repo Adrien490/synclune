@@ -163,7 +163,7 @@ async function fetchReviews(
  * Récupère tous les avis publiés d'un produit (sans pagination)
  * Conservé pour compatibilité
  */
-export async function getAllProductReviews(productId: string): Promise<ReviewPublic[]> {
+export async function getAllProductReviews(productId: string, limit?: number): Promise<ReviewPublic[]> {
 	"use cache"
 	cacheProductReviews(productId)
 
@@ -175,6 +175,7 @@ export async function getAllProductReviews(productId: string): Promise<ReviewPub
 		},
 		select: REVIEW_PUBLIC_SELECT,
 		orderBy: { createdAt: "desc" },
+		...(limit && { take: limit }),
 	}) as Promise<ReviewPublic[]>
 }
 

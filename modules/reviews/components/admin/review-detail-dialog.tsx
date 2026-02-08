@@ -1,7 +1,5 @@
 "use client"
 
-import { ReviewStatus } from "@/app/generated/prisma/client"
-import { useState } from "react"
 import {
 	Dialog,
 	DialogContent,
@@ -21,6 +19,7 @@ import {
 	ExternalLink,
 	MessageSquare,
 } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 import { RatingStars } from "@/shared/components/rating-stars"
@@ -32,28 +31,23 @@ import { ReviewResponseForm } from "./review-response-form"
 interface ReviewDetailDialogProps {
 	review: ReviewAdmin
 	trigger?: React.ReactNode
+	open?: boolean
+	onOpenChange?: (open: boolean) => void
 }
 
 /**
  * Dialog de détail d'un avis avec possibilité de répondre
  */
-export function ReviewDetailDialog({ review, trigger }: ReviewDetailDialogProps) {
-	const [isOpen, setIsOpen] = useState(false)
-
-	const handleResponseSuccess = () => {
-		// Le dialog reste ouvert pour voir le résultat
-	}
+export function ReviewDetailDialog({ review, trigger, open, onOpenChange }: ReviewDetailDialogProps) {
+	const isPublished = review.status === "PUBLISHED"
 
 	return (
-		<Dialog open={isOpen} onOpenChange={setIsOpen}>
-			<DialogTrigger asChild>
-				{trigger || (
-					<Button variant="outline" size="sm">
-						<Eye className="size-4 mr-2" aria-hidden="true" />
-						Voir
-					</Button>
-				)}
-			</DialogTrigger>
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			{trigger && (
+				<DialogTrigger asChild>
+					{trigger}
+				</DialogTrigger>
+			)}
 			<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
@@ -85,10 +79,8 @@ export function ReviewDetailDialog({ review, trigger }: ReviewDetailDialogProps)
 									{review.user.email}
 								</p>
 							</div>
-							<Badge
-								variant={review.status === ReviewStatus.PUBLISHED ? "default" : "secondary"}
-							>
-								{review.status === ReviewStatus.PUBLISHED ? (
+							<Badge variant={isPublished ? "default" : "secondary"}>
+								{isPublished ? (
 									<CheckCircle2 className="size-3 mr-1" aria-hidden="true" />
 								) : (
 									<EyeOff className="size-3 mr-1" aria-hidden="true" />
@@ -128,10 +120,13 @@ export function ReviewDetailDialog({ review, trigger }: ReviewDetailDialogProps)
 											rel="noopener noreferrer"
 											className="relative size-20 rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
 										>
-											<img
+											<Image
 												src={media.url}
 												alt={media.altText || "Photo de l'avis"}
-												className="w-full h-full object-cover"
+												fill
+												className="object-cover"
+												sizes="80px"
+												quality={75}
 											/>
 										</a>
 									))}
@@ -169,14 +164,10 @@ export function ReviewDetailDialog({ review, trigger }: ReviewDetailDialogProps)
 										id: review.response.id,
 										content: review.response.content,
 									}}
-									onSuccess={handleResponseSuccess}
 								/>
 							</div>
 						) : (
-							<ReviewResponseForm
-								reviewId={review.id}
-								onSuccess={handleResponseSuccess}
-							/>
+							<ReviewResponseForm reviewId={review.id} />
 						)}
 					</div>
 				</div>

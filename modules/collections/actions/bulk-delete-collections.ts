@@ -1,8 +1,8 @@
 "use server";
 
-import { updateTag, revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -32,17 +32,10 @@ export async function bulkDeleteCollections(
 		}
 
 		// 3. Valider les donnees
-		const validation = bulkDeleteCollectionsSchema.safeParse({ ids });
+		const validated = validateInput(bulkDeleteCollectionsSchema, { ids });
+		if ("error" in validated) return validated.error;
 
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validatedData = validated.data;
 
 		// Verifier les collections et leur utilisation
 		const collectionsWithUsage = await prisma.collection.findMany({
@@ -76,9 +69,6 @@ export async function bulkDeleteCollections(
 			},
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/collections");
-		revalidatePath("/collections");
 		// Invalider le cache pour chaque collection supprimee
 		for (const collection of collectionsWithUsage) {
 			getCollectionInvalidationTags(collection.slug).forEach(tag => updateTag(tag));
@@ -91,10 +81,7 @@ export async function bulkDeleteCollections(
 				? `${result.count} collection${result.count > 1 ? "s" : ""} supprimée${result.count > 1 ? "s" : ""} avec succès. ${totalProducts} produit${totalProducts > 1 ? "s ont" : " a"} été préservé${totalProducts > 1 ? "s" : ""}.`
 				: `${result.count} collection${result.count > 1 ? "s" : ""} supprimée${result.count > 1 ? "s" : ""} avec succès`;
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message,
-		};
+		return success(message);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la suppression des collections");
 	}

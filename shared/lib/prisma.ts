@@ -7,7 +7,7 @@ const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
  * Client Prisma avec Neon serverless adapter
  *
  * Soft Delete :
- * - Les modèles Order, User, Refund ont un champ `deletedAt` pour le soft delete
+ * - Les modèles Order, User, Refund, Product, ProductSku ont un champ `deletedAt` pour le soft delete
  * - Le filtrage automatique n'est PAS implémenté via $extends pour éviter
  *   les problèmes de compatibilité avec les transactions Prisma
  * - Utiliser `where: { deletedAt: null }` explicitement dans les requêtes
@@ -90,5 +90,7 @@ export const softDelete = {
   stockNotificationRequest: (id: string) => prisma.stockNotificationRequest.update({ where: { id }, data: { deletedAt: new Date() } }),
   productReview: (id: string) => prisma.productReview.update({ where: { id }, data: { deletedAt: new Date() } }),
   reviewResponse: (id: string) => prisma.reviewResponse.update({ where: { id }, data: { deletedAt: new Date() } }),
+  product: (id: string) => prisma.product.update({ where: { id }, data: { deletedAt: new Date() } }),
+  productSku: (id: string) => prisma.productSku.update({ where: { id }, data: { deletedAt: new Date() } }),
 };
 

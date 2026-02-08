@@ -1,11 +1,10 @@
 "use server";
 
-import { updateTag, revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { deleteCollectionSchema } from "../schemas/collection.schemas";
@@ -20,18 +19,12 @@ export async function deleteCollection(
 		if ("error" in admin) return admin.error;
 
 		// 2. Extraire et valider les donnees
-		const validation = deleteCollectionSchema.safeParse({
+		const validated = validateInput(deleteCollectionSchema, {
 			id: formData.get("id"),
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: validation.error.issues[0]?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validatedData = validated.data;
 
 		// Verifier que la collection existe
 		const existingCollection = await prisma.collection.findUnique({
@@ -46,10 +39,7 @@ export async function deleteCollection(
 		});
 
 		if (!existingCollection) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Cette collection n'existe pas",
-			};
+			return error("Cette collection n'existe pas");
 		}
 
 		// Note: On peut supprimer une collection meme si elle a des produits
@@ -61,9 +51,7 @@ export async function deleteCollection(
 			where: { id: validatedData.id },
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/collections");
-		revalidatePath("/collections");
+		// Invalider le cache
 		getCollectionInvalidationTags(existingCollection.slug).forEach(tag => updateTag(tag));
 		updateTag("navbar-menu");
 
@@ -73,10 +61,7 @@ export async function deleteCollection(
 				? `Collection supprimée avec succès. ${productCount} produit${productCount > 1 ? "s ont" : " a"} été préservé${productCount > 1 ? "s" : ""}.`
 				: "Collection supprimée avec succès";
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message,
-		};
+		return success(message);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la suppression de la collection");
 	}

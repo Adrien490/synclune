@@ -4,6 +4,7 @@ import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { CustomizationForm } from "@/modules/customizations/components/customization-form";
+import { CustomizationSidebar } from "@/modules/customizations/components/customization-sidebar";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -69,8 +70,7 @@ export default async function CustomizationPage() {
 						<div className="max-w-xl">
 							<CustomizationForm productTypes={productTypes} />
 						</div>
-						{/* Espace réservé pour sidebar future - desktop uniquement */}
-						<div className="hidden lg:block" />
+						<CustomizationSidebar />
 					</div>
 				</div>
 			</section>

@@ -5,8 +5,7 @@ import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, success, error, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { UTApi } from "uploadthing/server";
 import { bulkDeleteProductsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
@@ -62,18 +61,12 @@ export async function bulkDeleteProducts(
 		try {
 			productIds = JSON.parse(productIdsRaw);
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format de donnees invalide.",
-			};
+			return validationError("Format de donnees invalide.");
 		}
 
 		// Validation defensive : verifier que productIds est bien un tableau
 		if (!Array.isArray(productIds)) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "La liste des produits est invalide.",
-			};
+			return validationError("La liste des produits est invalide.");
 		}
 
 		const rawData = {
@@ -81,17 +74,10 @@ export async function bulkDeleteProducts(
 		};
 
 		// 3. Validation avec Zod
-		const result = bulkDeleteProductsSchema.safeParse(rawData);
+		const validation = validateInput(bulkDeleteProductsSchema, rawData);
+		if ("error" in validation) return validation.error;
 
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
-		}
-
-		const { productIds: validatedProductIds } = result.data;
+		const { productIds: validatedProductIds } = validation.data;
 
 		// 4. Verifier que tous les produits existent et recuperer leurs infos
 		const existingProducts = await prisma.product.findMany({
@@ -126,10 +112,7 @@ export async function bulkDeleteProducts(
 		});
 
 		if (existingProducts.length !== validatedProductIds.length) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Certains produits n'existent pas.",
-			};
+			return notFound("Certains produits");
 		}
 
 		// 5. Verifier si les produits ont des commandes associees
@@ -144,12 +127,10 @@ export async function bulkDeleteProducts(
 		});
 
 		if (orderItemsCount > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					`Les produits selectionnes ne peuvent pas etre supprimes car ils sont associes a ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
-					"Pour conserver l'historique des commandes, veuillez archiver les produits a la place.",
-			};
+			return error(
+				`Les produits selectionnes ne peuvent pas etre supprimes car ils sont associes a ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
+				"Pour conserver l'historique des commandes, veuillez archiver les produits a la place."
+			);
 		}
 
 		// 6. Supprimer tous les fichiers UploadThing de tous les produits
@@ -158,15 +139,16 @@ export async function bulkDeleteProducts(
 		);
 		await deleteUploadThingFiles(allImageUrls);
 
-		// 7. Supprimer les produits dans une transaction
+		// 7. Soft delete les produits et leurs SKUs dans une transaction
 		await prisma.$transaction(async (tx) => {
-			// Les SKUs et entrees SkuMedia seront supprimes automatiquement grace a onDelete: Cascade
-			await tx.product.deleteMany({
-				where: {
-					id: {
-						in: validatedProductIds,
-					},
-				},
+			const now = new Date();
+			await tx.productSku.updateMany({
+				where: { productId: { in: validatedProductIds } },
+				data: { deletedAt: now },
+			});
+			await tx.product.updateMany({
+				where: { id: { in: validatedProductIds } },
+				data: { deletedAt: now },
 			});
 		});
 
@@ -185,14 +167,13 @@ export async function bulkDeleteProducts(
 		}
 
 		// 9. Success
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${existingProducts.length} produit${existingProducts.length > 1 ? "s" : ""} supprimé${existingProducts.length > 1 ? "s" : ""} avec succès.`,
-			data: {
+		return success(
+			`${existingProducts.length} produit${existingProducts.length > 1 ? "s" : ""} supprimé${existingProducts.length > 1 ? "s" : ""} avec succès.`,
+			{
 				deletedCount: existingProducts.length,
 				productIds: validatedProductIds,
-			},
-		};
+			}
+		);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la suppression des produits");
 	}

@@ -8,11 +8,10 @@ import { detectMediaType } from "@/modules/media/utils/media-type-detection";
 import { prisma } from "@/shared/lib/prisma";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { createProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, success, error, validationError, handleActionError } from "@/shared/lib/actions";
 import { validatePublicProductCreation } from "../services/product-validation.service";
 
 /**
@@ -68,17 +67,10 @@ export async function createProduct(
     };
 
     // 3. Validation avec Zod
-    const result = createProductSchema.safeParse(rawData);
-    if (!result.success) {
-      const firstError = result.error.issues[0];
-      const errorPath = firstError.path.join(".");
-      return {
-        status: ActionStatus.VALIDATION_ERROR,
-        message: `${errorPath}: ${firstError.message}`,
-      };
-    }
+    const validation = validateInput(createProductSchema, rawData);
+    if ("error" in validation) return validation.error;
 
-    const validatedData = result.data;
+    const validatedData = validation.data;
 
     // 3.5. Validation metier : Produit PUBLIC doit avoir un SKU actif
     if (validatedData.status === "PUBLIC") {
@@ -86,10 +78,7 @@ export async function createProduct(
         validatedData.initialSku,
       );
       if (!validation.isValid) {
-        return {
-          status: ActionStatus.VALIDATION_ERROR,
-          message: validation.errorMessage!,
-        };
+        return validationError(validation.errorMessage!);
       }
     }
 
@@ -271,21 +260,17 @@ export async function createProduct(
       }
     }
 
-    // 9. Success - Return ActionState format
-    return {
-      status: ActionStatus.SUCCESS,
-      message: `Produit "${product.title}" créé avec succès${
+    // 9. Success
+    return success(
+      `Produit "${product.title}" créé avec succès${
         product.status === "PUBLIC" ? " et publié" : ""
       }.`,
-      data: product,
-    };
+      product
+    );
   } catch (e) {
     // Gestion spéciale des contraintes d'unicité (slug)
     if (e instanceof Error && e.message.includes("Unique constraint")) {
-      return {
-        status: ActionStatus.ERROR,
-        message: "Une erreur technique est survenue. Veuillez reessayer.",
-      };
+      return error("Une erreur technique est survenue. Veuillez reessayer.");
     }
     return handleActionError(
       e,

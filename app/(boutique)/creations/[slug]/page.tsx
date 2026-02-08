@@ -58,23 +58,27 @@ export default async function ProductPage({
 	const urlParams = await searchParams;
 
 	// Paralléliser toutes les requêtes pour optimiser le TTFB
-	const [admin, product, wishlistProductIds] = await Promise.all([
+	const [admin, productData, wishlistProductIds] = await Promise.all([
 		isAdmin(),
-		getProductBySlug({ slug, includeDraft: true }), // Récupérer avec DRAFT, filtrer après
-		getWishlistProductIds(), // Récupérer tous les Product IDs de la wishlist en parallèle
+		(async () => {
+			const product = await getProductBySlug({ slug, includeDraft: true });
+			if (!product) return null;
+			const [reviewStats, reviews, cartsCount] = await Promise.all([
+				getProductReviewStats(product.id),
+				getAllProductReviews(product.id, 10),
+				getProductCartsCount(product.id),
+			]);
+			return { product, reviewStats, reviews, cartsCount };
+		})(),
+		getWishlistProductIds(),
 	]);
 
 	// Vérifier existence produit
-	if (!product) {
+	if (!productData) {
 		notFound();
 	}
 
-	// Récupérer les stats, avis et compteur de paniers (après vérification existence produit)
-	const [reviewStats, reviews, cartsCount] = await Promise.all([
-		getProductReviewStats(product.id),
-		getAllProductReviews(product.id),
-		getProductCartsCount(product.id),
-	]);
+	const { product, reviewStats, reviews, cartsCount } = productData;
 
 	// Sécurité: Bloquer les DRAFT pour les non-admins
 	if (product.status === "DRAFT" && !admin) {
@@ -137,14 +141,6 @@ export default async function ProductPage({
 
 	return (
 		<div className="min-h-screen relative">
-			{/* Skip link pour accessibilité - permet de passer directement au contenu */}
-			<a
-				href="#product-main"
-				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-			>
-				Aller au contenu principal
-			</a>
-
 			{/* Enregistrer la vue produit (client-side, non-bloquant) */}
 			<RecordProductView slug={product.slug} />
 

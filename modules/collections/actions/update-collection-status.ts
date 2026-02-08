@@ -3,10 +3,9 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { updateCollectionStatusSchema } from "../schemas/collection.schemas";
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { COLLECTION_STATUS_LABELS } from "../constants/collection.constants";
@@ -31,17 +30,10 @@ export async function updateCollectionStatus(
 		};
 
 		// 3. Validation avec Zod
-		const result = updateCollectionStatusSchema.safeParse(rawData);
+		const validated = validateInput(updateCollectionStatusSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
-		}
-
-		const { id, status } = result.data;
+		const { id, status } = validated.data;
 
 		// 4. Verifier que la collection existe
 		const existingCollection = await prisma.collection.findUnique({
@@ -55,18 +47,12 @@ export async function updateCollectionStatus(
 		});
 
 		if (!existingCollection) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "La collection n'existe pas.",
-			};
+			return notFound("Collection");
 		}
 
 		// 5. Verifier si le statut a change
 		if (existingCollection.status === status) {
-			return {
-				status: ActionStatus.SUCCESS,
-				message: `La collection est déjà ${COLLECTION_STATUS_LABELS[status].toLowerCase()}.`,
-			};
+			return success(`La collection est déjà ${COLLECTION_STATUS_LABELS[status].toLowerCase()}.`);
 		}
 
 		// 6. Mettre a jour le statut
@@ -87,16 +73,12 @@ export async function updateCollectionStatus(
 			[CollectionStatus.ARCHIVED]: `"${existingCollection.name}" archivée`,
 		};
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: statusMessages[status],
-			data: {
-				collectionId: id,
-				name: existingCollection.name,
-				oldStatus: existingCollection.status,
-				newStatus: status,
-			},
-		};
+		return success(statusMessages[status], {
+			collectionId: id,
+			name: existingCollection.name,
+			oldStatus: existingCollection.status,
+			newStatus: status,
+		});
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la mise à jour du statut");
 	}

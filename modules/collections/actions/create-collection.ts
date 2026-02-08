@@ -1,11 +1,10 @@
 "use server";
 
-import { updateTag, revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { sanitizeText } from "@/shared/lib/sanitize";
 
@@ -22,20 +21,14 @@ export async function createCollection(
 		if ("error" in admin) return admin.error;
 
 		// 2. Extraire et valider les donnees
-		const validation = createCollectionSchema.safeParse({
+		const validated = validateInput(createCollectionSchema, {
 			name: formData.get("name"),
 			description: formData.get("description") || null,
 			status: formData.get("status") || undefined,
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: validation.error.issues[0]?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validatedData = validated.data;
 
 		// Sanitize text inputs
 		const sanitizedName = sanitizeText(validatedData.name);
@@ -49,11 +42,7 @@ export async function createCollection(
 		});
 
 		if (existingName) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
-					"Ce nom de collection existe deja. Veuillez en choisir un autre.",
-			};
+			return error("Ce nom de collection existe deja. Veuillez en choisir un autre.");
 		}
 
 		// Generer un slug unique automatiquement
@@ -69,18 +58,13 @@ export async function createCollection(
 			},
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/collections");
+		// Invalider le cache
 		getCollectionInvalidationTags(slug).forEach(tag => updateTag(tag));
 		updateTag("navbar-menu");
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Collection créée avec succès",
-			data: {
-				collectionStatus: validatedData.status,
-			},
-		};
+		return success("Collection créée avec succès", {
+			collectionStatus: validatedData.status,
+		});
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la creation de la collection");
 	}

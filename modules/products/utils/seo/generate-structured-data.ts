@@ -111,6 +111,34 @@ export function generateStructuredData({
 	// Nombre de SKUs actifs pour AggregateOffer
 	const activeSkuCount = product.skus?.filter((sku) => sku.isActive).length || 1;
 
+	// Return policy and shipping details shared by all offer types
+	const returnPolicy = {
+		"@type": "MerchantReturnPolicy",
+		applicableCountry: "FR",
+		returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+		merchantReturnDays: 14,
+		returnMethod: "https://schema.org/ReturnByMail",
+		returnFees: "https://schema.org/FreeReturn",
+	};
+
+	const shippingDetails = {
+		"@type": "OfferShippingDetails",
+		shippingRate: {
+			"@type": "MonetaryAmount",
+			value: "6.00",
+			currency: "EUR",
+		},
+		shippingDestination: {
+			"@type": "DefinedRegion",
+			addressCountry: "FR",
+		},
+		deliveryTime: {
+			"@type": "ShippingDeliveryTime",
+			handlingTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 3, unitCode: "DAY" },
+			transitTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 4, unitCode: "DAY" },
+		},
+	};
+
 	// Utiliser AggregateOffer pour les produits multi-variantes
 	const offers =
 		hasMultiplePrices && activeSkuCount > 1
@@ -126,6 +154,8 @@ export function generateStructuredData({
 						"@type": "Organization",
 						name: "Synclune",
 					},
+					hasMerchantReturnPolicy: returnPolicy,
+					shippingDetails,
 				}
 			: {
 					"@type": "Offer",
@@ -137,9 +167,8 @@ export function generateStructuredData({
 						"@type": "Organization",
 						name: "Synclune",
 					},
-					priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-						.toISOString()
-						.split("T")[0], // +30 jours
+					hasMerchantReturnPolicy: returnPolicy,
+					shippingDetails,
 				};
 
 	// Image principale en format ImageObject
@@ -208,8 +237,9 @@ export function generateStructuredData({
 		}),
 		...(product.collections && product.collections.length > 0 && {
 			isRelatedTo: product.collections.map((pc) => ({
-				"@type": "Collection",
+				"@type": "CollectionPage",
 				name: pc.collection.name,
+				url: `${SITE_URL}/collections/${pc.collection.slug}`,
 			})),
 		}),
 		additionalProperty: [

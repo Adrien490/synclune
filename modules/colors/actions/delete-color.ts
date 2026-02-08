@@ -1,12 +1,11 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 
 import { getColorInvalidationTags } from "../constants/cache";
 import { deleteColorSchema } from "../schemas/color.schemas";
@@ -26,17 +25,9 @@ export async function deleteColor(
 		};
 
 		// Valider les donnees
-		const validation = deleteColorSchema.safeParse(rawData);
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validated = validateInput(deleteColorSchema, rawData);
+		if ("error" in validated) return validated.error;
+		const validatedData = validated.data;
 
 		// Verifier que la couleur existe
 		const existingColor = await prisma.color.findUnique({
@@ -51,19 +42,13 @@ export async function deleteColor(
 		});
 
 		if (!existingColor) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Cette couleur n'existe pas",
-			};
+			return error("Cette couleur n'existe pas");
 		}
 
 		// Verifier si la couleur est utilisee
 		const skuCount = existingColor._count.skus;
 		if (skuCount > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: `Cette couleur est utilisee par ${skuCount} variante${skuCount > 1 ? "s" : ""}. Veuillez modifier ces variantes avant de supprimer la couleur.`,
-			};
+			return error(`Cette couleur est utilisee par ${skuCount} variante${skuCount > 1 ? "s" : ""}. Veuillez modifier ces variantes avant de supprimer la couleur.`);
 		}
 
 		// Supprimer la couleur
@@ -71,15 +56,11 @@ export async function deleteColor(
 			where: { id: validatedData.id },
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/couleurs");
+		// Invalider le cache
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Couleur supprimée avec succès",
-		};
+		return success("Couleur supprimée avec succès");
 	} catch (e) {
 		return handleActionError(e, "Impossible de supprimer la couleur");
 	}

@@ -35,7 +35,7 @@ export const PRODUCTS_CACHE_TAGS = {
 	COUNTS: "product-counts",
 
 	/** Liste globale des SKUs */
-	SKUS_LIST: "skus",
+	SKUS_LIST: "skus-list",
 
 	/** Détail d'un SKU spécifique */
 	SKU_DETAIL: (sku: string) => `sku-${sku}`,

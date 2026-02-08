@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -37,20 +38,13 @@ export async function bulkArchiveCollections(
 		}
 
 		// 3. Validation avec Zod
-		const result = bulkArchiveCollectionsSchema.safeParse({
+		const validated = validateInput(bulkArchiveCollectionsSchema, {
 			collectionIds,
 			targetStatus,
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
-		}
-
-		const validatedData = result.data;
+		const validatedData = validated.data;
 
 		// 4. Verifier que toutes les collections existent
 		const existingCollections = await prisma.collection.findMany({
@@ -68,10 +62,7 @@ export async function bulkArchiveCollections(
 		});
 
 		if (existingCollections.length !== validatedData.collectionIds.length) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Une ou plusieurs collections n'existent pas.",
-			};
+			return notFound("Collection");
 		}
 
 		// 5. Mettre a jour le statut
@@ -99,27 +90,17 @@ export async function bulkArchiveCollections(
 			validatedData.targetStatus === "ARCHIVED" ? "archivée" : "restaurée";
 		const successMessage = `${count} collection${count > 1 ? "s" : ""} ${actionLabel}${count > 1 ? "s" : ""} avec succès`;
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: successMessage,
-			data: {
-				collectionIds: validatedData.collectionIds,
-				count,
-				targetStatus: validatedData.targetStatus,
-				collections: existingCollections.map((c) => ({
-					id: c.id,
-					name: c.name,
-					slug: c.slug,
-				})),
-			},
-		};
-	} catch (error) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de l'archivage en masse.",
-		};
+		return success(successMessage, {
+			collectionIds: validatedData.collectionIds,
+			count,
+			targetStatus: validatedData.targetStatus,
+			collections: existingCollections.map((c) => ({
+				id: c.id,
+				name: c.name,
+				slug: c.slug,
+			})),
+		});
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de l'archivage en masse.");
 	}
 }

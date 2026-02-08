@@ -57,6 +57,10 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 	const inventory = selectedSku?.inventory ?? 0;
 	const stockStatus = determineStockStatus(inventory, selectedSku?.isActive);
 
+	// Pre-compute delivery dates to avoid creating Date objects in JSX
+	const minDelivery = addBusinessDays(new Date(), SHIPPING_RATES.FR.minDays);
+	const maxDelivery = addBusinessDays(new Date(), SHIPPING_RATES.FR.maxDays);
+
 	if (!selectedSku) {
 		return (
 			<div role="region" aria-labelledby="product-price-title" className="space-y-4 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60">
@@ -195,8 +199,8 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 					<span>
 						Recevez d'ici le{" "}
 						<span className="font-medium text-foreground">
-							{format(addBusinessDays(new Date(), SHIPPING_RATES.FR.minDays), "d", { locale: fr })}-
-							{format(addBusinessDays(new Date(), SHIPPING_RATES.FR.maxDays), "d MMM", { locale: fr })}
+							{format(minDelivery, "d", { locale: fr })}-
+							{format(maxDelivery, "d MMM", { locale: fr })}
 						</span>
 					</span>
 				</div>

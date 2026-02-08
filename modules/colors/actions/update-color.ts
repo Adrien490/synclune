@@ -1,12 +1,12 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 
 import { getColorInvalidationTags } from "../constants/cache";
@@ -24,23 +24,15 @@ export async function updateColor(
 		// 2. Extraire les donnees du FormData
 		const rawData = {
 			id: formData.get("id"),
-			name: formData.get("name"),
+			name: sanitizeText(formData.get("name") as string),
 			slug: formData.get("slug"),
 			hex: formData.get("hex"),
 		};
 
 		// Valider les donnees
-		const validation = updateColorSchema.safeParse(rawData);
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validated = validateInput(updateColorSchema, rawData);
+		if ("error" in validated) return validated.error;
+		const validatedData = validated.data;
 
 		// Verifier que la couleur existe
 		const existingColor = await prisma.color.findUnique({
@@ -48,10 +40,7 @@ export async function updateColor(
 		});
 
 		if (!existingColor) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Cette couleur n'existe pas",
-			};
+			return error("Cette couleur n'existe pas");
 		}
 
 		// Verifier l'unicite du nom (sauf si c'est le meme)
@@ -61,11 +50,7 @@ export async function updateColor(
 			});
 
 			if (nameExists) {
-				return {
-					status: ActionStatus.ERROR,
-					message:
-						"Ce nom de couleur existe deja. Veuillez en choisir un autre.",
-				};
+				return error("Ce nom de couleur existe deja. Veuillez en choisir un autre.");
 			}
 		}
 
@@ -85,15 +70,11 @@ export async function updateColor(
 			},
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/couleurs");
+		// Invalider le cache
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Couleur modifiée avec succès",
-		};
+		return success("Couleur modifiée avec succès");
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier la couleur");
 	}

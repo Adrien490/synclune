@@ -39,8 +39,8 @@ async function fetchProduct(
 	cacheProductDetail(params.slug);
 
 	try {
-		const product = await prisma.product.findUnique({
-			where: { slug: params.slug },
+		const product = await prisma.product.findFirst({
+			where: { slug: params.slug, deletedAt: null },
 			select: GET_PRODUCT_SELECT,
 		});
 

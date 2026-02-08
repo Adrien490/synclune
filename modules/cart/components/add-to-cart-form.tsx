@@ -44,7 +44,7 @@ export function AddToCartForm({
 	const getMissingOptionsMessage = () => {
 		const missing: string[] = [];
 		if (requiresColor && !searchParams.get("color")) missing.push("la couleur");
-		if (requiresMaterial && !searchParams.get("material")) missing.push("le materiau");
+		if (requiresMaterial && !searchParams.get("material")) missing.push("le matériau");
 		if (requiresSize && !searchParams.get("size")) missing.push("la taille");
 
 		if (missing.length === 0) return "Choisis tes options";
@@ -93,9 +93,11 @@ export function AddToCartForm({
 					"hover:scale-[1.02] hover:shadow-xl",
 					"active:scale-[0.98]",
 					// Anneau de focus accessible
-					"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+					"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+					(!canAddToCart || isPending) && "opacity-50 cursor-not-allowed"
 				)}
-				disabled={!canAddToCart || isPending}
+				aria-disabled={!canAddToCart || isPending || undefined}
+				onClick={(e) => { if (!canAddToCart || isPending) e.preventDefault(); }}
 				size="lg"
 			>
 				{isPending ? (
@@ -103,8 +105,6 @@ export function AddToCartForm({
 						<Loader2 size={18} className="animate-spin" aria-hidden="true" />
 						<span>Ajout en cours...</span>
 					</span>
-				) : !isAvailable ? (
-					<span>Indisponible</span>
 				) : !selectedSku ? (
 					<>
 						{hasOnlyOneSku ? (
@@ -113,6 +113,8 @@ export function AddToCartForm({
 							<span>{getMissingOptionsMessage()}</span>
 						)}
 					</>
+				) : !isAvailable ? (
+					<span>Indisponible</span>
 				) : (
 					<>
 						<ShoppingCart size={18} className="sm:hidden" aria-hidden="true" />

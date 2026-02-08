@@ -4,8 +4,7 @@ import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { bulkChangeProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../constants/cache";
@@ -32,27 +31,17 @@ export async function bulkChangeProductStatus(
 		try {
 			productIds = JSON.parse(productIdsRaw);
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format des IDs de produits invalide.",
-			};
+			return validationError("Format des IDs de produits invalide.");
 		}
 
 		// 3. Validation avec Zod
-		const result = bulkChangeProductStatusSchema.safeParse({
+		const validation = validateInput(bulkChangeProductStatusSchema, {
 			productIds,
 			targetStatus,
 		});
+		if ("error" in validation) return validation.error;
 
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
-		}
-
-		const validatedData = result.data;
+		const validatedData = validation.data;
 
 		// 4. Verifier que tous les produits existent et ne sont pas archives
 		const existingProducts = await prisma.product.findMany({
@@ -71,10 +60,7 @@ export async function bulkChangeProductStatus(
 		});
 
 		if (existingProducts.length !== validatedData.productIds.length) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Un ou plusieurs produits n'existent pas.",
-			};
+			return notFound("Un ou plusieurs produits");
 		}
 
 		// 5. Verifier qu'aucun produit n'est archive
@@ -82,11 +68,9 @@ export async function bulkChangeProductStatus(
 			(p) => p.status === "ARCHIVED"
 		);
 		if (archivedProducts.length > 0) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message:
-					"Impossible de changer le statut de produits archives. Veuillez d'abord les restaurer.",
-			};
+			return validationError(
+				"Impossible de changer le statut de produits archives. Veuillez d'abord les restaurer."
+			);
 		}
 
 		// 6. Mettre a jour le statut
@@ -124,20 +108,16 @@ export async function bulkChangeProductStatus(
 			validatedData.targetStatus === "PUBLIC" ? "publié" : "mis en brouillon";
 		const successMessage = `${count} produit${count > 1 ? "s" : ""} ${actionLabel}${count > 1 ? "s" : ""} avec succès`;
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: successMessage,
-			data: {
-				productIds: validatedData.productIds,
-				count,
-				targetStatus: validatedData.targetStatus,
-				products: existingProducts.map((p) => ({
-					id: p.id,
-					title: p.title,
-					slug: p.slug,
-				})),
-			},
-		};
+		return success(successMessage, {
+			productIds: validatedData.productIds,
+			count,
+			targetStatus: validatedData.targetStatus,
+			products: existingProducts.map((p) => ({
+				id: p.id,
+				title: p.title,
+				slug: p.slug,
+			})),
+		});
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors du changement de statut");
 	}

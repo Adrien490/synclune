@@ -24,6 +24,12 @@ const serwist = new Serwist({
 					return request.destination === "document";
 				},
 			},
+			{
+				url: "/icons/offline-placeholder.svg",
+				matcher({ request }) {
+					return request.destination === "image";
+				},
+			},
 		],
 	},
 });

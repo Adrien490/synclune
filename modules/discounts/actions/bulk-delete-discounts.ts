@@ -1,13 +1,12 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { revalidatePath } from "next/cache";
 import { updateTag } from "next/cache";
 import { bulkDeleteDiscountsSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 
 import { getDiscountInvalidationTags } from "../constants/cache";
 
@@ -28,18 +27,13 @@ export async function bulkDeleteDiscounts(
 		const idsRaw = formData.get("ids") as string;
 		const ids = idsRaw ? JSON.parse(idsRaw) : [];
 
-		const result = bulkDeleteDiscountsSchema.safeParse({ ids });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(bulkDeleteDiscountsSchema, { ids });
+		if ("error" in validated) return validated.error;
 
 		// Récupérer les discounts sans utilisation
 		const discounts = await prisma.discount.findMany({
 			where: {
-				id: { in: result.data.ids },
+				id: { in: validated.data.ids },
 			},
 			select: {
 				id: true,
@@ -55,17 +49,13 @@ export async function bulkDeleteDiscounts(
 		const skippedCount = discounts.length - deletableIds.length;
 
 		if (deletableIds.length === 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Aucun code ne peut être supprimé (tous ont des utilisations)",
-			};
+			return error("Aucun code ne peut être supprimé (tous ont des utilisations)");
 		}
 
 		await prisma.discount.deleteMany({
 			where: { id: { in: deletableIds } },
 		});
 
-		revalidatePath("/admin/marketing/codes-promo");
 		// Invalider le cache pour chaque discount supprimé
 		for (const discount of discounts.filter((d) => deletableIds.includes(d.id))) {
 			getDiscountInvalidationTags(discount.code).forEach(tag => updateTag(tag));
@@ -76,9 +66,8 @@ export async function bulkDeleteDiscounts(
 				? `${deletableIds.length} code(s) supprimé(s), ${skippedCount} ignoré(s) (déjà utilisés)`
 				: `${deletableIds.length} code(s) supprimé(s)`;
 
-		return { status: ActionStatus.SUCCESS, message };
-	} catch (error) {
-		console.error("[BULK_DELETE_DISCOUNTS]", error);
-		return { status: ActionStatus.ERROR, message: DISCOUNT_ERROR_MESSAGES.DELETE_FAILED };
+		return success(message);
+	} catch (e) {
+		return handleActionError(e, DISCOUNT_ERROR_MESSAGES.DELETE_FAILED);
 	}
 }

@@ -4,8 +4,7 @@ import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, success, notFound, validationError, handleActionError } from "@/shared/lib/actions";
 import { bulkArchiveProductsSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../constants/cache";
@@ -32,27 +31,17 @@ export async function bulkArchiveProducts(
 		try {
 			productIds = JSON.parse(productIdsRaw);
 		} catch {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: "Format des IDs de produits invalide.",
-			};
+			return validationError("Format des IDs de produits invalide.");
 		}
 
 		// 3. Validation avec Zod
-		const result = bulkArchiveProductsSchema.safeParse({
+		const validation = validateInput(bulkArchiveProductsSchema, {
 			productIds,
 			targetStatus,
 		});
+		if ("error" in validation) return validation.error;
 
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
-		}
-
-		const validatedData = result.data;
+		const validatedData = validation.data;
 
 		// 4. Verifier que tous les produits existent
 		const existingProducts = await prisma.product.findMany({
@@ -71,10 +60,7 @@ export async function bulkArchiveProducts(
 		});
 
 		if (existingProducts.length !== validatedData.productIds.length) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Un ou plusieurs produits n'existent pas.",
-			};
+			return notFound("Un ou plusieurs produits");
 		}
 
 		// 5. Verifier s'il y a des commandes associees (warning informatif)
@@ -150,21 +136,17 @@ export async function bulkArchiveProducts(
 			? `${successMessage}. ${warningMessage}`
 			: successMessage;
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: finalMessage,
-			data: {
-				productIds: validatedData.productIds,
-				count,
-				targetStatus: validatedData.targetStatus,
-				warning: warningMessage,
-				products: existingProducts.map((p) => ({
-					id: p.id,
-					title: p.title,
-					slug: p.slug,
-				})),
-			},
-		};
+		return success(finalMessage, {
+			productIds: validatedData.productIds,
+			count,
+			targetStatus: validatedData.targetStatus,
+			warning: warningMessage,
+			products: existingProducts.map((p) => ({
+				id: p.id,
+				title: p.title,
+				slug: p.slug,
+			})),
+		});
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de l'archivage en masse");
 	}

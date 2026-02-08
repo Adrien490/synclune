@@ -3,14 +3,17 @@ import { Toolbar } from "@/shared/components/toolbar"
 import { PageHeader } from "@/shared/components/page-header"
 import { SearchInput } from "@/shared/components/search-input"
 import { SelectFilter } from "@/shared/components/select-filter"
-import { MessageSquare, CheckCircle2, EyeOff } from "lucide-react"
+import { MessageSquare, CheckCircle2, EyeOff, Star } from "lucide-react"
 import { Suspense } from "react"
 import type { Metadata } from "next"
 
 import { getReviews, getReviewCountsByStatus } from "@/modules/reviews/data/get-reviews"
+import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats"
 import { ReviewsDataTable } from "@/modules/reviews/components/admin/reviews-data-table"
 import { ReviewsDataTableSkeleton } from "@/modules/reviews/components/admin/reviews-data-table-skeleton"
 import { REVIEW_STATUS_LABELS } from "@/modules/reviews/constants/review.constants"
+import { RatingStars } from "@/shared/components/rating-stars"
+import { formatRating } from "@/shared/utils/rating-utils"
 import { getFirstParam } from "@/shared/utils/params"
 import type { ReviewSortField } from "@/modules/reviews/types/review.types"
 
@@ -27,7 +30,10 @@ export default async function ReviewsAdminPage({
 	searchParams,
 }: ReviewsAdminPageProps) {
 	const params = await searchParams
-	const stats = await getReviewCountsByStatus()
+	const [stats, globalStats] = await Promise.all([
+		getReviewCountsByStatus(),
+		getGlobalReviewStats(),
+	])
 
 	// Parsing des paramètres
 	const perPage = parseInt(getFirstParam(params.perPage) || "20", 10)
@@ -82,7 +88,7 @@ export default async function ReviewsAdminPage({
 			<PageHeader variant="compact" title="Avis clients" />
 
 			{/* Statistiques */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<div className="rounded-lg border bg-card p-6">
 					<div className="flex items-center justify-between">
 						<div>
@@ -120,6 +126,23 @@ export default async function ReviewsAdminPage({
 							</p>
 						</div>
 						<EyeOff className="h-8 w-8 text-muted-foreground" />
+					</div>
+				</div>
+
+				<div className="rounded-lg border bg-card p-6">
+					<div className="flex items-center justify-between">
+						<div>
+							<p className="text-sm font-medium text-muted-foreground">
+								Note moyenne
+							</p>
+							<p className="text-2xl font-bold mt-1">
+								{globalStats.totalReviews > 0 ? formatRating(globalStats.averageRating) : "-"}
+							</p>
+							{globalStats.totalReviews > 0 && (
+								<RatingStars rating={globalStats.averageRating} size="sm" />
+							)}
+						</div>
+						<Star className="h-8 w-8 text-muted-foreground" />
 					</div>
 				</div>
 			</div>

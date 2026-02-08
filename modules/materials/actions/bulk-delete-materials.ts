@@ -1,12 +1,11 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 
 import { getMaterialInvalidationTags } from "../constants/cache";
 import { bulkDeleteMaterialsSchema } from "../schemas/materials.schemas";
@@ -25,17 +24,9 @@ export async function bulkDeleteMaterials(
 		const ids = idsString ? JSON.parse(idsString as string) : [];
 
 		// Valider les donnees
-		const validation = bulkDeleteMaterialsSchema.safeParse({ ids });
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validated = validateInput(bulkDeleteMaterialsSchema, { ids });
+		if ("error" in validated) return validated.error;
+		const validatedData = validated.data;
 
 		// Verifier les materiaux utilises
 		const materialsWithUsage = await prisma.material.findMany({
@@ -57,10 +48,7 @@ export async function bulkDeleteMaterials(
 
 		if (usedMaterials.length > 0) {
 			const materialNames = usedMaterials.map((m) => m.name).join(", ");
-			return {
-				status: ActionStatus.ERROR,
-				message: `${usedMaterials.length} materiau${usedMaterials.length > 1 ? "x" : ""} (${materialNames}) ${usedMaterials.length > 1 ? "sont utilises" : "est utilise"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`,
-			};
+			return error(`${usedMaterials.length} materiau${usedMaterials.length > 1 ? "x" : ""} (${materialNames}) ${usedMaterials.length > 1 ? "sont utilises" : "est utilise"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`);
 		}
 
 		// Supprimer les materiaux
@@ -72,15 +60,11 @@ export async function bulkDeleteMaterials(
 			},
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/materiaux");
+		// Invalider le cache
 		const tags = getMaterialInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${result.count} materiau${result.count > 1 ? "x" : ""} supprime${result.count > 1 ? "s" : ""} avec succes`,
-		};
+		return success(`${result.count} materiau${result.count > 1 ? "x" : ""} supprime${result.count > 1 ? "s" : ""} avec succes`);
 	} catch (e) {
 		return handleActionError(e, "Impossible de supprimer les materiaux");
 	}

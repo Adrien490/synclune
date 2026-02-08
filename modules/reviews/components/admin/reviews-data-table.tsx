@@ -29,7 +29,7 @@ export interface ReviewsDataTableProps {
 export async function ReviewsDataTable({
 	reviewsPromise,
 }: ReviewsDataTableProps) {
-	const { reviews, pagination, totalCount } = await reviewsPromise
+	const { reviews, pagination } = await reviewsPromise
 	const adminReviews = reviews as ReviewAdmin[]
 
 	if (reviews.length === 0) {
@@ -126,16 +126,7 @@ export async function ReviewsDataTable({
 
 									{/* Actions */}
 									<TableCell className="text-right">
-										<ReviewRowActions
-											review={{
-												id: review.id,
-												status: review.status,
-												productSlug: review.product.slug,
-												productTitle: review.product.title,
-												userName: review.user.name,
-												hasResponse: !!review.response,
-											}}
-										/>
+										<ReviewRowActions review={review} />
 									</TableCell>
 								</TableRow>
 							))}

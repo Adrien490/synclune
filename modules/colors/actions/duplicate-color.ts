@@ -1,13 +1,12 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 
 import { getColorInvalidationTags } from "../constants/cache";
@@ -35,15 +34,9 @@ export async function duplicateColor(
 			colorId: formData.get("colorId") as string,
 		};
 
-		const result = duplicateColorSchema.safeParse(rawData);
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Donnees invalides",
-			};
-		}
-
-		const { colorId } = result.data;
+		const validated = validateInput(duplicateColorSchema, rawData);
+		if ("error" in validated) return validated.error;
+		const { colorId } = validated.data;
 
 		// 3. Recuperer la couleur originale
 		const original = await prisma.color.findUnique({
@@ -51,10 +44,7 @@ export async function duplicateColor(
 		});
 
 		if (!original) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Couleur non trouvee",
-			};
+			return notFound("Couleur");
 		}
 
 		// 4. Generer un nouveau nom unique via le service
@@ -67,10 +57,7 @@ export async function duplicateColor(
 		);
 
 		if (!nameResult.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message: nameResult.error ?? "Impossible de générer un nom unique",
-			};
+			return error(nameResult.error ?? "Impossible de générer un nom unique");
 		}
 
 		const newName = nameResult.name!;
@@ -88,16 +75,11 @@ export async function duplicateColor(
 			},
 		});
 
-		// 7. Revalider
-		revalidatePath("/admin/catalogue/couleurs");
+		// 7. Invalider le cache
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Couleur dupliquee: ${duplicate.name}`,
-			data: { id: duplicate.id, name: duplicate.name },
-		};
+		return success(`Couleur dupliquee: ${duplicate.name}`, { id: duplicate.id, name: duplicate.name });
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer la couleur");
 	}

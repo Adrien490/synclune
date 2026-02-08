@@ -45,6 +45,7 @@ async function fetchProductCountsByStatus(): Promise<ProductCountsByStatus> {
 	try {
 		const counts = await prisma.product.groupBy({
 			by: ["status"],
+			where: { deletedAt: null },
 			_count: {
 				id: true,
 			},

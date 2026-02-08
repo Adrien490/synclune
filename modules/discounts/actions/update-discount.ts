@@ -1,13 +1,14 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { revalidatePath } from "next/cache";
 import { updateTag } from "next/cache";
 import { updateDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
+import { sanitizeText } from "@/shared/lib/sanitize";
 
 import { getDiscountInvalidationTags } from "../constants/cache";
 
@@ -45,15 +46,13 @@ export async function updateDiscount(
 				: null,
 		};
 
-		const result = updateDiscountSchema.safeParse(rawData);
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		const validated = validateInput(updateDiscountSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const { id, ...data } = result.data;
+		const { id, ...data } = validated.data;
+
+		// Sanitize text input
+		const sanitizedCode = sanitizeText(data.code);
 
 		// Vérifier que le discount existe
 		const existing = await prisma.discount.findUnique({
@@ -62,13 +61,13 @@ export async function updateDiscount(
 		});
 
 		if (!existing) {
-			return { status: ActionStatus.NOT_FOUND, message: DISCOUNT_ERROR_MESSAGES.NOT_FOUND };
+			return notFound("Code promo");
 		}
 
 		// Vérifier l'unicité du code si modifié
-		if (data.code !== existing.code) {
+		if (sanitizedCode !== existing.code) {
 			const codeExists = await prisma.discount.findUnique({
-				where: { code: data.code },
+				where: { code: sanitizedCode },
 				select: { id: true },
 			});
 			if (codeExists) {
@@ -79,7 +78,7 @@ export async function updateDiscount(
 		await prisma.discount.update({
 			where: { id },
 			data: {
-				code: data.code,
+				code: sanitizedCode,
 				type: data.type,
 				value: data.value,
 				minOrderAmount: data.minOrderAmount,
@@ -91,19 +90,14 @@ export async function updateDiscount(
 			},
 		});
 
-		revalidatePath("/admin/marketing/codes-promo");
 		// Invalider le cache pour l'ancien et le nouveau code si different
 		getDiscountInvalidationTags(id).forEach(tag => updateTag(tag));
-		if (data.code !== existing.code) {
-			getDiscountInvalidationTags(data.code).forEach(tag => updateTag(tag));
+		if (sanitizedCode !== existing.code) {
+			getDiscountInvalidationTags(sanitizedCode).forEach(tag => updateTag(tag));
 		}
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Code promo "${data.code}" mis à jour`,
-		};
-	} catch (error) {
-		console.error("[UPDATE_DISCOUNT]", error);
-		return { status: ActionStatus.ERROR, message: DISCOUNT_ERROR_MESSAGES.UPDATE_FAILED };
+		return success(`Code promo "${sanitizedCode}" mis à jour`);
+	} catch (e) {
+		return handleActionError(e, DISCOUNT_ERROR_MESSAGES.UPDATE_FAILED);
 	}
 }

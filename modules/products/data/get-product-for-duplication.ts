@@ -35,8 +35,8 @@ async function fetchProductForDuplication(productId: string) {
 	// Le product n'a pas encore de slug connu, on cache par ID
 	cacheProductDetail(`product-id-${productId}`);
 
-	return prisma.product.findUnique({
-		where: { id: productId },
+	return prisma.product.findFirst({
+		where: { id: productId, deletedAt: null },
 		select: {
 			id: true,
 			title: true,

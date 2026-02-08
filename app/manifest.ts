@@ -74,6 +74,29 @@ export default function manifest(): MetadataRoute.Manifest {
 				purpose: "maskable",
 			},
 		],
+		screenshots: [
+			{
+				src: "/screenshots/desktop-home.png",
+				sizes: "1920x1080",
+				type: "image/png",
+				form_factor: "wide",
+				label: "Page d'accueil Synclune sur desktop",
+			},
+			{
+				src: "/screenshots/mobile-home.png",
+				sizes: "750x1334",
+				type: "image/png",
+				form_factor: "narrow",
+				label: "Page d'accueil Synclune sur mobile",
+			},
+			{
+				src: "/screenshots/mobile-product.png",
+				sizes: "750x1334",
+				type: "image/png",
+				form_factor: "narrow",
+				label: "Page produit Synclune sur mobile",
+			},
+		],
 		shortcuts: [
 			{
 				name: "Nos Bijoux",

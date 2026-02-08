@@ -2,10 +2,9 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
 import { setFeaturedProductSchema } from "../schemas/collection.schemas";
 
@@ -23,19 +22,13 @@ export async function setFeaturedProduct(
 		if ("error" in admin) return admin.error;
 
 		// 2. Validation des donnees
-		const validation = setFeaturedProductSchema.safeParse({
+		const validated = validateInput(setFeaturedProductSchema, {
 			collectionId: formData.get("collectionId"),
 			productId: formData.get("productId"),
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: validation.error.issues[0]?.message || "Donnees invalides",
-			};
-		}
-
-		const { collectionId, productId } = validation.data;
+		const { collectionId, productId } = validated.data;
 
 		// 3. Verifier que l'association ProductCollection existe
 		const productCollection = await prisma.productCollection.findUnique({
@@ -56,10 +49,7 @@ export async function setFeaturedProduct(
 		});
 
 		if (!productCollection) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Ce produit n'appartient pas a cette collection.",
-			};
+			return notFound("Produit dans cette collection");
 		}
 
 		// 4. Transaction: retirer l'ancien featured et definir le nouveau
@@ -94,10 +84,7 @@ export async function setFeaturedProduct(
 		);
 		collectionTags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `"${productCollection.product.title}" est maintenant le produit vedette de "${productCollection.collection.name}".`,
-		};
+		return success(`"${productCollection.product.title}" est maintenant le produit vedette de "${productCollection.collection.name}".`);
 	} catch (e) {
 		return handleActionError(e, "Impossible de définir le produit vedette");
 	}
@@ -116,19 +103,13 @@ export async function removeFeaturedProduct(
 		if ("error" in admin) return admin.error;
 
 		// 2. Validation des donnees
-		const validation = setFeaturedProductSchema.safeParse({
+		const validated = validateInput(setFeaturedProductSchema, {
 			collectionId: formData.get("collectionId"),
 			productId: formData.get("productId"),
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: validation.error.issues[0]?.message || "Donnees invalides",
-			};
-		}
-
-		const { collectionId, productId } = validation.data;
+		const { collectionId, productId } = validated.data;
 
 		// 3. Verifier que l'association ProductCollection existe
 		const productCollection = await prisma.productCollection.findUnique({
@@ -149,10 +130,7 @@ export async function removeFeaturedProduct(
 		});
 
 		if (!productCollection) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Ce produit n'appartient pas a cette collection.",
-			};
+			return notFound("Produit dans cette collection");
 		}
 
 		// 4. Retirer le statut featured
@@ -174,10 +152,7 @@ export async function removeFeaturedProduct(
 		);
 		collectionTags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `"${productCollection.product.title}" n'est plus le produit vedette de "${productCollection.collection.name}".`,
-		};
+		return success(`"${productCollection.product.title}" n'est plus le produit vedette de "${productCollection.collection.name}".`);
 	} catch (e) {
 		return handleActionError(e, "Impossible de retirer le produit vedette");
 	}

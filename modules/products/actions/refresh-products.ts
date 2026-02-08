@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import { success, handleActionError } from "@/shared/lib/actions";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
@@ -21,21 +21,8 @@ export async function refreshProducts(
 		updateTag(PRODUCTS_CACHE_TAGS.SKUS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Produits rafraîchis",
-		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors du rafraîchissement",
-		};
+		return success("Produits rafraîchis");
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors du rafraîchissement");
 	}
 }

@@ -1,11 +1,10 @@
 "use server";
 
-import { updateTag, revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { sanitizeText } from "@/shared/lib/sanitize";
 
@@ -22,22 +21,16 @@ export async function updateCollection(
 		if ("error" in admin) return admin.error;
 
 		// 2. Extraire et valider les donnees
-		const validation = updateCollectionSchema.safeParse({
+		const validated = validateInput(updateCollectionSchema, {
 			id: formData.get("id"),
 			name: formData.get("name"),
 			slug: formData.get("slug"),
 			description: formData.get("description") || null,
 			status: formData.get("status"),
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!validation.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: validation.error.issues[0]?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validatedData = validated.data;
 
 		// Sanitize text inputs
 		const sanitizedName = sanitizeText(validatedData.name);
@@ -87,30 +80,19 @@ export async function updateCollection(
 			return newSlug;
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/collections");
-		revalidatePath(`/collections/${slug}`);
+		// Invalider le cache
 		getCollectionInvalidationTags(slug).forEach(tag => updateTag(tag));
 		updateTag("navbar-menu");
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Collection modifiée avec succès",
-		};
+		return success("Collection modifiée avec succès");
 	} catch (e) {
 		// Gerer les erreurs metier de la transaction
 		if (e instanceof Error) {
 			if (e.message === "NOT_FOUND") {
-				return {
-					status: ActionStatus.NOT_FOUND,
-					message: "Cette collection n'existe pas",
-				};
+				return notFound("Collection");
 			}
 			if (e.message === "NAME_EXISTS") {
-				return {
-					status: ActionStatus.ERROR,
-					message: "Ce nom de collection existe deja. Veuillez en choisir un autre.",
-				};
+				return error("Ce nom de collection existe deja. Veuillez en choisir un autre.");
 			}
 		}
 		return handleActionError(e, "Erreur lors de la modification de la collection");

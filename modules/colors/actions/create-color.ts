@@ -1,13 +1,13 @@
 "use server";
 
+import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
-import { revalidatePath, updateTag } from "next/cache";
 
 import { getColorInvalidationTags } from "../constants/cache";
 import { createColorSchema } from "../schemas/color.schemas";
@@ -23,22 +23,14 @@ export async function createColor(
 
 		// 2. Extraire les donnees du FormData
 		const rawData = {
-			name: formData.get("name"),
+			name: sanitizeText(formData.get("name") as string),
 			hex: formData.get("hex"),
 		};
 
 		// Valider les donnees
-		const validation = createColorSchema.safeParse(rawData);
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validated = validateInput(createColorSchema, rawData);
+		if ("error" in validated) return validated.error;
+		const validatedData = validated.data;
 
 		// Verifier l'unicite du nom
 		const existingName = await prisma.color.findFirst({
@@ -46,10 +38,7 @@ export async function createColor(
 		});
 
 		if (existingName) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Ce nom de couleur existe deja. Veuillez en choisir un autre.",
-			};
+			return error("Ce nom de couleur existe deja. Veuillez en choisir un autre.");
 		}
 
 		// Generer un slug unique automatiquement
@@ -64,16 +53,12 @@ export async function createColor(
 			},
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/couleurs");
+		// Invalider le cache
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Couleur créée avec succès",
-		};
-	} catch (error) {
-		return handleActionError(error, "Impossible de créer la couleur");
+		return success("Couleur créée avec succès");
+	} catch (e) {
+		return handleActionError(e, "Impossible de créer la couleur");
 	}
 }

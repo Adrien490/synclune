@@ -1,12 +1,11 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 
 import { getColorInvalidationTags } from "../constants/cache";
 import { bulkDeleteColorsSchema } from "../schemas/color.schemas";
@@ -25,17 +24,9 @@ export async function bulkDeleteColors(
 		const ids = idsString ? JSON.parse(idsString as string) : [];
 
 		// Valider les donnees
-		const validation = bulkDeleteColorsSchema.safeParse({ ids });
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validated = validateInput(bulkDeleteColorsSchema, { ids });
+		if ("error" in validated) return validated.error;
+		const validatedData = validated.data;
 
 		// Verifier les couleurs utilisees
 		const colorsWithUsage = await prisma.color.findMany({
@@ -57,10 +48,7 @@ export async function bulkDeleteColors(
 
 		if (usedColors.length > 0) {
 			const colorNames = usedColors.map((c) => c.name).join(", ");
-			return {
-				status: ActionStatus.ERROR,
-				message: `${usedColors.length} couleur${usedColors.length > 1 ? "s" : ""} (${colorNames}) ${usedColors.length > 1 ? "sont utilisees" : "est utilisee"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`,
-			};
+			return error(`${usedColors.length} couleur${usedColors.length > 1 ? "s" : ""} (${colorNames}) ${usedColors.length > 1 ? "sont utilisees" : "est utilisee"} par des variantes. Veuillez modifier ces variantes avant de supprimer.`);
 		}
 
 		// Supprimer les couleurs
@@ -72,15 +60,11 @@ export async function bulkDeleteColors(
 			},
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/couleurs");
+		// Invalider le cache
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `${result.count} couleur${result.count > 1 ? "s" : ""} supprimée${result.count > 1 ? "s" : ""} avec succès`,
-		};
+		return success(`${result.count} couleur${result.count > 1 ? "s" : ""} supprimée${result.count > 1 ? "s" : ""} avec succès`);
 	} catch (e) {
 		return handleActionError(e, "Impossible de supprimer les couleurs");
 	}

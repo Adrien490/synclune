@@ -1,12 +1,11 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { handleActionError } from "@/shared/lib/actions";
+import { handleActionError, success, error, notFound, validateInput } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
 
 import { getMaterialInvalidationTags } from "../constants/cache";
@@ -34,15 +33,9 @@ export async function duplicateMaterial(
 			materialId: formData.get("materialId") as string,
 		};
 
-		const result = duplicateMaterialSchema.safeParse(rawData);
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Donnees invalides",
-			};
-		}
-
-		const { materialId } = result.data;
+		const validated = validateInput(duplicateMaterialSchema, rawData);
+		if ("error" in validated) return validated.error;
+		const { materialId } = validated.data;
 
 		// 3. Recuperer le materiau original
 		const original = await prisma.material.findUnique({
@@ -50,10 +43,7 @@ export async function duplicateMaterial(
 		});
 
 		if (!original) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Materiau non trouve",
-			};
+			return notFound("Materiau");
 		}
 
 		// 4. Generer un nouveau nom unique
@@ -73,11 +63,7 @@ export async function duplicateMaterial(
 
 			// Securite: eviter boucle infinie
 			if (suffix > 100) {
-				return {
-					status: ActionStatus.ERROR,
-					message:
-						"Impossible de generer un nom unique. Supprimez certaines copies.",
-				};
+				return error("Impossible de generer un nom unique. Supprimez certaines copies.");
 			}
 		}
 
@@ -94,16 +80,11 @@ export async function duplicateMaterial(
 			},
 		});
 
-		// 7. Revalider
-		revalidatePath("/admin/catalogue/materiaux");
+		// 7. Invalider le cache
 		const tags = getMaterialInvalidationTags(duplicate.slug);
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Materiau duplique: ${duplicate.name}`,
-			data: { id: duplicate.id, name: duplicate.name },
-		};
+		return success(`Materiau duplique: ${duplicate.name}`, { id: duplicate.id, name: duplicate.name });
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer le materiau");
 	}

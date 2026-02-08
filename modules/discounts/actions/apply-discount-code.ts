@@ -1,6 +1,7 @@
 "use server";
 
-import { ActionState, ActionStatus } from "@/shared/types/server-action";
+import type { ActionState } from "@/shared/types/server-action";
+import { success, error } from "@/shared/lib/actions";
 import { validateDiscountCode } from "./validate-discount-code";
 
 /**
@@ -34,15 +35,8 @@ export async function applyDiscountCode(
 	);
 
 	if (result.valid && result.discount) {
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Code "${result.discount.code}" appliqué`,
-			data: result.discount,
-		};
+		return success(`Code "${result.discount.code}" appliqué`, result.discount);
 	}
 
-	return {
-		status: ActionStatus.ERROR,
-		message: result.error || "Code invalide",
-	};
+	return error(result.error || "Code invalide");
 }

@@ -1,10 +1,10 @@
 "use server";
 
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { revalidatePath, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { getMaterialInvalidationTags } from "../constants/cache";
 import { toggleMaterialStatusSchema } from "../schemas/materials.schemas";
@@ -25,17 +25,9 @@ export async function toggleMaterialStatus(
 		};
 
 		// Valider les donnees
-		const validation = toggleMaterialStatusSchema.safeParse(rawData);
-
-		if (!validation.success) {
-			const firstError = validation.error.issues?.[0];
-			return {
-				status: ActionStatus.ERROR,
-				message: firstError?.message || "Donnees invalides",
-			};
-		}
-
-		const validatedData = validation.data;
+		const validated = validateInput(toggleMaterialStatusSchema, rawData);
+		if ("error" in validated) return validated.error;
+		const validatedData = validated.data;
 
 		// Verifier que le materiau existe
 		const existingMaterial = await prisma.material.findUnique({
@@ -43,10 +35,7 @@ export async function toggleMaterialStatus(
 		});
 
 		if (!existingMaterial) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Ce materiau n'existe pas",
-			};
+			return error("Ce materiau n'existe pas");
 		}
 
 		// Mettre a jour le statut
@@ -57,28 +46,16 @@ export async function toggleMaterialStatus(
 			},
 		});
 
-		// Revalider les pages concernees et invalider le cache
-		revalidatePath("/admin/catalogue/materiaux");
+		// Invalider le cache
 		const tags = getMaterialInvalidationTags(existingMaterial.slug);
 		tags.forEach((tag) => updateTag(tag));
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: validatedData.isActive
+		return success(
+			validatedData.isActive
 				? "Matériau activé avec succès"
-				: "Matériau désactivé avec succès",
-		};
-	} catch (error) {
-		if (error instanceof Error) {
-			return {
-				status: ActionStatus.ERROR,
-				message: error.message,
-			};
-		}
-
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la modification du statut",
-		};
+				: "Matériau désactivé avec succès"
+		);
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de la modification du statut");
 	}
 }

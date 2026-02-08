@@ -1,6 +1,5 @@
 "use client"
 
-import { ReviewStatus } from "@/app/generated/prisma/client"
 import { Button } from "@/shared/components/ui/button"
 import {
 	DropdownMenu,
@@ -23,35 +22,29 @@ import {
 	EyeOff,
 	ExternalLink,
 	Loader2,
-	MessageSquare,
 	MoreVertical,
-	Star,
 } from "lucide-react"
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useState } from "react"
 
+import type { ReviewAdmin } from "../../types/review.types"
 import { useReviewModeration } from "../../hooks/use-review-moderation"
 
+const ReviewDetailDialog = dynamic(
+	() => import("./review-detail-dialog").then((mod) => mod.ReviewDetailDialog),
+)
+
 interface ReviewRowActionsProps {
-	review: {
-		id: string
-		status: ReviewStatus
-		productSlug: string
-		productTitle: string
-		userName: string | null
-		hasResponse: boolean
-	}
-	onOpenResponse?: () => void
+	review: ReviewAdmin
 }
 
 /**
  * Actions disponibles pour chaque ligne d'avis dans l'admin
  */
-export function ReviewRowActions({
-	review,
-	onOpenResponse,
-}: ReviewRowActionsProps) {
+export function ReviewRowActions({ review }: ReviewRowActionsProps) {
 	const [moderateDialogOpen, setModerateDialogOpen] = useState(false)
+	const [detailDialogOpen, setDetailDialogOpen] = useState(false)
 
 	const { toggleStatus, isPending } = useReviewModeration({
 		onSuccess: () => setModerateDialogOpen(false),
@@ -72,10 +65,19 @@ export function ReviewRowActions({
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
+					{/* Voir le détail */}
+					<DropdownMenuItem
+						onSelect={() => setDetailDialogOpen(true)}
+						className="flex items-center cursor-pointer"
+					>
+						<Eye className="mr-2 h-4 w-4" aria-hidden="true" />
+						Voir le détail
+					</DropdownMenuItem>
+
 					{/* Voir le produit */}
 					<DropdownMenuItem asChild>
 						<Link
-							href={`/creations/${review.productSlug}`}
+							href={`/creations/${review.product.slug}`}
 							target="_blank"
 							className="flex items-center cursor-pointer"
 						>
@@ -85,17 +87,6 @@ export function ReviewRowActions({
 					</DropdownMenuItem>
 
 					<DropdownMenuSeparator />
-
-					{/* Répondre */}
-					{!review.hasResponse && onOpenResponse && (
-						<DropdownMenuItem
-							onClick={onOpenResponse}
-							className="flex items-center cursor-pointer"
-						>
-							<MessageSquare className="mr-2 h-4 w-4" aria-hidden="true" />
-							Répondre
-						</DropdownMenuItem>
-					)}
 
 					{/* Masquer / Afficher */}
 					<DropdownMenuItem
@@ -117,6 +108,15 @@ export function ReviewRowActions({
 				</DropdownMenuContent>
 			</DropdownMenu>
 
+			{/* Dialog de détail (lazy-loaded) */}
+			{detailDialogOpen && (
+				<ReviewDetailDialog
+					review={review}
+					open={detailDialogOpen}
+					onOpenChange={setDetailDialogOpen}
+				/>
+			)}
+
 			{/* Dialog de confirmation modération */}
 			<AlertDialog open={moderateDialogOpen} onOpenChange={setModerateDialogOpen}>
 				<AlertDialogContent>
@@ -128,14 +128,14 @@ export function ReviewRowActions({
 							{isPublished ? (
 								<>
 									L&apos;avis de{" "}
-									<span className="font-semibold">{review.userName || "Anonyme"}</span>{" "}
-									sur &quot;{review.productTitle}&quot; ne sera plus visible sur le site.
+									<span className="font-semibold">{review.user.name || "Anonyme"}</span>{" "}
+									sur &quot;{review.product.title}&quot; ne sera plus visible sur le site.
 								</>
 							) : (
 								<>
 									L&apos;avis de{" "}
-									<span className="font-semibold">{review.userName || "Anonyme"}</span>{" "}
-									sur &quot;{review.productTitle}&quot; sera visible sur le site.
+									<span className="font-semibold">{review.user.name || "Anonyme"}</span>{" "}
+									sur &quot;{review.product.title}&quot; sera visible sur le site.
 								</>
 							)}
 						</AlertDialogDescription>

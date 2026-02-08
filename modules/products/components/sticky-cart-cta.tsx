@@ -10,8 +10,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductSku } from "@/modules/products/types/product-services.types";
+import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
 interface StickyCartCTAProps {
 	product: GetProductReturn;
@@ -174,7 +173,7 @@ export function StickyCartCTA({
 								</>
 							) : (
 								<span className="text-sm text-muted-foreground">
-									Selectionne tes options
+									Sélectionne tes options
 								</span>
 							)}
 						</div>

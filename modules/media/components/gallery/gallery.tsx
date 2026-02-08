@@ -147,27 +147,16 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	// Connection-aware prefetch range avec fallback intelligent
 	// Safari/Firefox ne supportent pas navigator.connection
-	// Fallback: mobile viewport sans connection API = traiter comme connexion modérée
-	const getEffectivePrefetchRange = (): number => {
-		const connection = typeof navigator !== "undefined"
-			? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType
-			: undefined;
-
-		// Si connection API disponible, l'utiliser
-		if (connection) {
-			return connection === "slow-2g" || connection === "2g"
-				? PREFETCH_RANGE_SLOW
-				: PREFETCH_RANGE_FAST;
+	// Computed once on mount to avoid DOM access on every render
+	const [prefetchRange, setPrefetchRange] = useState(PREFETCH_RANGE_FAST);
+	useEffect(() => {
+		const connection = (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType;
+		if (connection === "slow-2g" || connection === "2g") {
+			setPrefetchRange(PREFETCH_RANGE_SLOW);
+		} else if (window.innerWidth < 768) {
+			setPrefetchRange(PREFETCH_RANGE_SLOW);
 		}
-
-		// Fallback: mobile sans connection API = prudent (Safari iOS ~25% trafic FR)
-		if (typeof window !== "undefined" && window.innerWidth < 768) {
-			return PREFETCH_RANGE_SLOW;
-		}
-
-		return PREFETCH_RANGE_FAST;
-	};
-	const prefetchRange = getEffectivePrefetchRange();
+	}, []);
 
 	// Prefetch intelligent des images adjacentes (Next.js 16 + React 19)
 	// Extraire les URLs pour éviter de recréer un tableau à chaque render
@@ -239,12 +228,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 		}
 	});
 
-	// Navigation clavier (WCAG 2.1.1)
+	// Navigation clavier scoped to gallery element (WCAG 2.1.1)
 	useEffect(() => {
 		if (!emblaApi || images.length <= 1) return;
-
-		window.addEventListener("keydown", onKeyDown);
-		return () => window.removeEventListener("keydown", onKeyDown);
+		const el = galleryRef.current;
+		if (!el) return;
+		if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
+		el.addEventListener("keydown", onKeyDown);
+		return () => el.removeEventListener("keydown", onKeyDown);
 	}, [emblaApi, images.length, onKeyDown]);
 
 	// Navigation
@@ -292,8 +283,8 @@ function GalleryContent({ product, title }: GalleryProps) {
 				className={cn(
 					"product-gallery w-full",
 					transitionClass,
-					"group-has-[[data-pending]]/product-details:blur-[1px]",
-					"group-has-[[data-pending]]/product-details:scale-[0.99]",
+					"motion-safe:group-has-[[data-pending]]/product-details:blur-[1px]",
+					"motion-safe:group-has-[[data-pending]]/product-details:scale-[0.99]",
 					"group-has-[[data-pending]]/product-details:pointer-events-none"
 				)}
 				role="region"
