@@ -171,7 +171,7 @@ function FloatingImage({
 								scale: 1.08,
 								y: -6,
 								rotate: 0,
-								transition: MOTION_CONFIG.spring.bouncy,
+								transition: { type: "spring", stiffness: 300, damping: 25, mass: 0.5 },
 							}
 				}
 				whileTap={
