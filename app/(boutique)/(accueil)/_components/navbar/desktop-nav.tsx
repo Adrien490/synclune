@@ -28,7 +28,7 @@ const linkClasses = cn(
   "transition-colors duration-200",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
   // Underline animé au hover
-  "after:absolute after:bottom-0 after:left-2 after:right-2",
+  "after:absolute after:bottom-0 after:left-1 after:right-1",
   "after:h-0.5 after:bg-primary after:rounded-full",
   "after:origin-center after:scale-x-0",
   "after:transition-transform after:duration-200",
@@ -67,7 +67,7 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
           return (
             <NavigationMenuItem key={item.href}>
               <NavigationMenuTrigger
-                showChevron={false}
+                showChevron
                 className={linkClasses}
                 data-active={itemIsActive}
                 onClick={(e) => {

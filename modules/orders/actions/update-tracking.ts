@@ -9,6 +9,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { sendTrackingUpdateEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { getCarrierLabel, getTrackingUrl, toShippingCarrierEnum, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { revalidatePath, updateTag } from "next/cache";
 
@@ -40,7 +41,7 @@ export async function updateTracking(
 		const estimatedDelivery = formData.get("estimatedDelivery") as string | null;
 		const sendEmail = formData.get("sendEmail") as string | null;
 
-		const result = updateTrackingSchema.safeParse({
+		const validated = validateInput(updateTrackingSchema, {
 			id,
 			trackingNumber,
 			trackingUrl: trackingUrl || undefined,
@@ -48,13 +49,7 @@ export async function updateTracking(
 			estimatedDelivery: estimatedDelivery || undefined,
 			sendEmail: sendEmail || "true",
 		});
-
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message || "Données invalides",
-			};
-		}
+		if ("error" in validated) return validated.error;
 
 		// Récupérer la commande avec les données nécessaires pour l'email
 		const order = await prisma.order.findUnique({
@@ -79,34 +74,28 @@ export async function updateTracking(
 		});
 
 		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
-			};
+			return error(ORDER_ERROR_MESSAGES.NOT_FOUND);
 		}
 
 		// Vérifier si la commande est expédiée ou livrée
 		if (order.status !== OrderStatus.SHIPPED && order.status !== OrderStatus.DELIVERED) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Impossible de modifier le suivi : la commande n'est pas expédiée.",
-			};
+			return error("Impossible de modifier le suivi : la commande n'est pas expediee.");
 		}
 
 		// Générer l'URL de suivi si non fournie
-		const carrierValue = (result.data.carrier || "autre") as Carrier;
+		const carrierValue = (validated.data.carrier || "autre") as Carrier;
 		const finalTrackingUrl =
-			result.data.trackingUrl ||
-			getTrackingUrl(carrierValue, result.data.trackingNumber);
+			validated.data.trackingUrl ||
+			getTrackingUrl(carrierValue, validated.data.trackingNumber);
 
 		// Mettre à jour la commande
 		await prisma.order.update({
 			where: { id },
 			data: {
-				trackingNumber: result.data.trackingNumber,
+				trackingNumber: validated.data.trackingNumber,
 				trackingUrl: finalTrackingUrl,
-				shippingCarrier: toShippingCarrierEnum(result.data.carrier),
-				estimatedDelivery: result.data.estimatedDelivery,
+				shippingCarrier: toShippingCarrierEnum(validated.data.carrier),
+				estimatedDelivery: validated.data.estimatedDelivery,
 			},
 		});
 
@@ -117,7 +106,7 @@ export async function updateTracking(
 
 		// Envoyer l'email de mise à jour du suivi au client
 		let emailSent = false;
-		if (result.data.sendEmail && order.customerEmail) {
+		if (validated.data.sendEmail && order.customerEmail) {
 			const carrierLabel = getCarrierLabel(carrierValue);
 
 			// Extraire le prénom du customerName ou utiliser shippingFirstName
@@ -127,21 +116,21 @@ export async function updateTracking(
 				"Client";
 
 			// Formater la date de livraison estimée
-			const estimatedDeliveryStr = result.data.estimatedDelivery
-				? result.data.estimatedDelivery.toLocaleDateString("fr-FR", {
+			const estimatedDeliveryStr = validated.data.estimatedDelivery
+				? validated.data.estimatedDelivery.toLocaleDateString("fr-FR", {
 						weekday: "long",
 						year: "numeric",
 						month: "long",
 						day: "numeric",
 				  })
-				: "3-5 jours ouvrés";
+				: "3-5 jours ouvres";
 
 			try {
 				await sendTrackingUpdateEmail({
 					to: order.customerEmail,
 					orderNumber: order.orderNumber,
 					customerName: customerFirstName,
-					trackingNumber: result.data.trackingNumber,
+					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					carrierLabel,
 					estimatedDelivery: estimatedDeliveryStr,
@@ -153,23 +142,16 @@ export async function updateTracking(
 		}
 
 		// Si l'email devait être envoyé mais a échoué, retourner un warning
-		if (result.data.sendEmail && !emailSent) {
+		if (validated.data.sendEmail && !emailSent) {
 			return {
 				status: ActionStatus.WARNING,
-				message: `Suivi mis à jour. Nouveau numéro : ${result.data.trackingNumber}. ATTENTION: L'email n'a pas pu être envoyé au client.`,
+				message: `Suivi mis a jour. Nouveau numero : ${validated.data.trackingNumber}. ATTENTION: L'email n'a pas pu etre envoye au client.`,
 			};
 		}
 
-		const emailMessage = emailSent ? " Email envoyé au client." : "";
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Suivi mis à jour. Nouveau numéro : ${result.data.trackingNumber}.${emailMessage}`,
-		};
-	} catch (error) {
-		console.error("[UPDATE_TRACKING]", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Erreur lors de la mise à jour du suivi.",
-		};
+		const emailMessage = emailSent ? " Email envoye au client." : "";
+		return success(`Suivi mis a jour. Nouveau numero : ${validated.data.trackingNumber}.${emailMessage}`);
+	} catch (e) {
+		return handleActionError(e, "Erreur lors de la mise a jour du suivi.");
 	}
 }

@@ -10,12 +10,10 @@ export function UserHeader({
 	session,
 	wishlistCount,
 	cartCount,
-	onClose,
 }: {
 	session: Session;
 	wishlistCount: number;
 	cartCount: number;
-	onClose: () => void;
 }) {
 	const firstName = session.user.name?.split(" ")[0] || "vous";
 
@@ -25,7 +23,6 @@ export function UserHeader({
 				<Link
 					href="/compte"
 					className="block group"
-					onClick={onClose}
 				>
 					<p className="text-base font-semibold text-foreground">
 						Bonjour {firstName}

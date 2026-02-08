@@ -11,6 +11,7 @@ import {
 import { sendReviewRequestEmailInternal } from "@/modules/reviews/actions/send-review-request-email";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
+import { handleActionError, success, error } from "@/shared/lib/actions";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { ResendEmailType } from "../types/email.types";
@@ -48,10 +49,7 @@ export async function resendOrderEmail(
 		});
 
 		if (!order) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Commande non trouvée",
-			};
+			return error("Commande non trouvee");
 		}
 
 		// 3. Vérifier que l'email peut être envoyé selon le type
@@ -82,32 +80,20 @@ export async function resendOrderEmail(
 				});
 
 				if (!result.success) {
-					return {
-						status: ActionStatus.ERROR,
-						message: "Erreur lors de l'envoi de l'email de confirmation",
-					};
+					return error("Erreur lors de l'envoi de l'email de confirmation");
 				}
 
-				return {
-					status: ActionStatus.SUCCESS,
-					message: "Email de confirmation renvoyé",
-				};
+				return success("Email de confirmation renvoye");
 			}
 
 			case "shipping": {
 				// Vérifier que la commande a été expédiée
 				if (order.status !== OrderStatus.SHIPPED && order.status !== OrderStatus.DELIVERED) {
-					return {
-						status: ActionStatus.ERROR,
-						message: "La commande n'a pas encore été expédiée",
-					};
+					return error("La commande n'a pas encore ete expediee");
 				}
 
 				if (!order.trackingNumber) {
-					return {
-						status: ActionStatus.ERROR,
-						message: "Aucun numéro de suivi disponible",
-					};
+					return error("Aucun numero de suivi disponible");
 				}
 
 				const carrierLabel = getCarrierLabel((order.shippingCarrier || "autre") as Carrier);
@@ -128,29 +114,20 @@ export async function resendOrderEmail(
 						city: order.shippingCity,
 						country: order.shippingCountry,
 					},
-					estimatedDelivery: "3-5 jours ouvrés",
+					estimatedDelivery: "3-5 jours ouvres",
 				});
 
 				if (!result.success) {
-					return {
-						status: ActionStatus.ERROR,
-						message: "Erreur lors de l'envoi de l'email d'expédition",
-					};
+					return error("Erreur lors de l'envoi de l'email d'expedition");
 				}
 
-				return {
-					status: ActionStatus.SUCCESS,
-					message: "Email d'expédition renvoyé",
-				};
+				return success("Email d'expedition renvoye");
 			}
 
 			case "delivery": {
 				// Vérifier que la commande a été livrée
 				if (order.status !== OrderStatus.DELIVERED && order.fulfillmentStatus !== FulfillmentStatus.DELIVERED) {
-					return {
-						status: ActionStatus.ERROR,
-						message: "La commande n'a pas encore été livrée",
-					};
+					return error("La commande n'a pas encore ete livree");
 				}
 
 				const deliveryDate = order.actualDelivery
@@ -174,53 +151,31 @@ export async function resendOrderEmail(
 				});
 
 				if (!result.success) {
-					return {
-						status: ActionStatus.ERROR,
-						message: "Erreur lors de l'envoi de l'email de livraison",
-					};
+					return error("Erreur lors de l'envoi de l'email de livraison");
 				}
 
-				return {
-					status: ActionStatus.SUCCESS,
-					message: "Email de livraison renvoyé",
-				};
+				return success("Email de livraison renvoye");
 			}
 
 			case "review-request": {
 				// Verifier que la commande a ete livree
 				if (order.status !== OrderStatus.DELIVERED && order.fulfillmentStatus !== FulfillmentStatus.DELIVERED) {
-					return {
-						status: ActionStatus.ERROR,
-						message: "La commande n'a pas encore ete livree",
-					};
+					return error("La commande n'a pas encore ete livree");
 				}
 
 				const reviewResult = await sendReviewRequestEmailInternal(orderId);
 
 				if (reviewResult.status !== ActionStatus.SUCCESS) {
-					return {
-						status: ActionStatus.ERROR,
-						message: reviewResult.message || "Erreur lors de l'envoi de l'email de demande d'avis",
-					};
+					return error(reviewResult.message || "Erreur lors de l'envoi de l'email de demande d'avis");
 				}
 
-				return {
-					status: ActionStatus.SUCCESS,
-					message: "Email de demande d'avis renvoye",
-				};
+				return success("Email de demande d'avis renvoye");
 			}
 
 			default:
-				return {
-					status: ActionStatus.VALIDATION_ERROR,
-					message: "Type d'email invalide",
-				};
+				return error("Type d'email invalide");
 		}
-	} catch (error) {
-		console.error("[RESEND_ORDER_EMAIL] Erreur:", error);
-		return {
-			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de l'envoi",
-		};
+	} catch (e) {
+		return handleActionError(e, "Une erreur est survenue lors de l'envoi");
 	}
 }

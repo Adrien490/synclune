@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
+import { useBottomBarHeight } from "@/shared/hooks";
 import { Heart, LayoutDashboard, MessageSquare, Package, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -48,15 +49,17 @@ interface AccountNavProps {
 export function AccountNav({ variant = "full" }: AccountNavProps) {
 	const pathname = usePathname();
 
+	const showDesktop = variant === "full" || variant === "desktop-only";
+	const showMobile = variant === "full" || variant === "mobile-only";
+
+	useBottomBarHeight(56, showMobile);
+
 	const isActive = (href: string) => {
 		if (href === "/compte") {
 			return pathname === "/compte";
 		}
 		return pathname.startsWith(href);
 	};
-
-	const showDesktop = variant === "full" || variant === "desktop-only";
-	const showMobile = variant === "full" || variant === "mobile-only";
 
 	return (
 		<>

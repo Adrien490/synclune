@@ -8,6 +8,7 @@ import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
+import { useBottomBarHeight } from "@/shared/hooks";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
@@ -39,6 +40,8 @@ export function StickyCartCTA({
 	const [isVisible, setIsVisible] = useState(false);
 	const observerRef = useRef<IntersectionObserver | null>(null);
 	const prefersReducedMotion = useReducedMotion();
+
+	useBottomBarHeight(60, isVisible);
 
 	const { action, isPending } = useAddToCart();
 	const searchParams = useSearchParams();

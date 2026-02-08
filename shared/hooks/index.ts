@@ -16,6 +16,7 @@ export { useActiveNavbarItem } from "./use-active-navbar-item"
 // State & Effects hooks
 export { useIsScrolled } from "./use-is-scrolled"
 export { useFabVisibility } from "./use-fab-visibility"
+export { useBottomBarHeight } from "./use-bottom-bar-height"
 export { useFilter } from "./use-filter"
 export { useBackButtonClose } from "./use-back-button-close"
 export { useRadioGroupKeyboard } from "./use-radio-group-keyboard"

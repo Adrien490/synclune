@@ -37,7 +37,7 @@ export function ScrollToTop() {
 			aria-label="Retour en haut de la page"
 			tabIndex={visible ? 0 : -1}
 			className={cn(
-				"fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1.5rem,env(safe-area-inset-right))] z-40",
+				"fixed bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] md:bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1.5rem,env(safe-area-inset-right))] z-40",
 				"size-11 rounded-full bg-background/80 backdrop-blur-sm shadow-md border",
 				"flex items-center justify-center",
 				"hover:bg-background hover:shadow-lg",

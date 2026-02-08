@@ -11,6 +11,7 @@ import {
 	Sheet,
 	SheetClose,
 	SheetContent,
+	SheetDescription,
 	SheetHeader,
 	SheetTitle,
 	SheetTrigger,
@@ -21,7 +22,7 @@ import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
-import { Flame, Gem, Heart, Menu, Settings } from "lucide-react";
+import { Flame, Gem, Heart, LogIn, Menu, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -67,6 +68,9 @@ export function MenuSheet({
 	const homeItem = navItems.find((item) => item.href === "/");
 	const bestsellerItem = navItems.find((item) => item.href.startsWith("/produits?sortBy=best-selling"));
 	const personalizationItem = navItems.find((item) => item.href === "/personnalisation");
+	const accountItem = navItems.find((item) => item.href === "/compte" || item.href === "/connexion");
+	const favoritesItem = navItems.find((item) => item.href === "/favoris");
+	const isLoggedIn = !!session?.user;
 
 	// Limites d'affichage
 	const displayedCollections = collections?.slice(0, MAX_COLLECTIONS_IN_MENU);
@@ -103,17 +107,16 @@ export function MenuSheet({
 			</SheetTrigger>
 
 			<SheetContent
-				className="w-[min(85vw,320px)] sm:w-80 sm:max-w-md border-r bg-background/95 !p-0 flex flex-col"
+				className="w-[min(88vw,340px)] sm:w-80 sm:max-w-md border-r bg-background/95 !p-0 flex flex-col"
 				id="mobile-menu-synclune"
-				aria-describedby="mobile-menu-synclune-description"
 			>
 
 				{/* Header sr-only */}
 				<SheetHeader className="!p-0 sr-only">
 					<SheetTitle>Menu de navigation</SheetTitle>
-					<p id="mobile-menu-synclune-description">
+					<SheetDescription>
 						Menu de navigation de Synclune - Découvrez nos bijoux et collections
-					</p>
+					</SheetDescription>
 				</SheetHeader>
 
 				{/* Contenu scrollable */}
@@ -133,7 +136,6 @@ export function MenuSheet({
 								session={session}
 								wishlistCount={wishlistCount}
 								cartCount={cartCount}
-								onClose={() => setIsOpen(false)}
 							/>
 						)}
 
@@ -342,39 +344,70 @@ export function MenuSheet({
 							aria-hidden="true"
 						>
 							<div className="absolute inset-0 flex items-center">
-								<div className="w-full border-t border-border/60" />
+								<div className="w-full border-t border-border/80" />
 							</div>
 							<div className="relative bg-background/95 px-3 rounded-full">
-								<Heart className="h-4 w-4 text-muted-foreground/40 fill-muted-foreground/10" />
+								<Heart className="h-4 w-4 text-muted-foreground/60 fill-muted-foreground/20" />
 							</div>
 						</div>
 
 						{/* Zone compte */}
 						<section aria-labelledby="section-account">
-							<SectionHeader id="section-account">Mon compte</SectionHeader>
+							<SectionHeader id="section-account">{isLoggedIn ? "Mon compte" : "Compte"}</SectionHeader>
 							<div className="space-y-1">
-								{/* Lien Mon compte */}
-								<div className={staggerItemClassName} style={staggerDelay(0, 150)}>
-									<SheetClose asChild>
-										<Link
-											href="/compte"
-											className={
-												isMenuItemActive("/compte")
-													? activeLinkClassName
-													: linkClassName
-											}
-											aria-current={
-												isMenuItemActive("/compte") ? "page" : undefined
-											}
-										>
-											Mon compte
-										</Link>
-									</SheetClose>
-								</div>
+								{/* Account link - adapts to session state */}
+								{accountItem && (
+									<div className={staggerItemClassName} style={staggerDelay(0, 150)}>
+										<SheetClose asChild>
+											<Link
+												href={accountItem.href}
+												className={cn(
+													isMenuItemActive(accountItem.href)
+														? activeLinkClassName
+														: linkClassName,
+													!isLoggedIn && "gap-2"
+												)}
+												aria-current={
+													isMenuItemActive(accountItem.href) ? "page" : undefined
+												}
+											>
+												{!isLoggedIn && <LogIn className="size-4" aria-hidden="true" />}
+												{accountItem.label}
+											</Link>
+										</SheetClose>
+									</div>
+								)}
 
-								{/* Lien Mes commandes (si connecté) */}
-								{session?.user && (
+								{/* Favorites with badge count */}
+								{favoritesItem && isLoggedIn && (
 									<div className={staggerItemClassName} style={staggerDelay(1, 150)}>
+										<SheetClose asChild>
+											<Link
+												href={favoritesItem.href}
+												className={cn(
+													isMenuItemActive(favoritesItem.href)
+														? activeLinkClassName
+														: linkClassName,
+													"justify-between"
+												)}
+												aria-current={
+													isMenuItemActive(favoritesItem.href) ? "page" : undefined
+												}
+											>
+												{favoritesItem.label}
+												{wishlistCount > 0 && (
+													<Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+														{wishlistCount}
+													</Badge>
+												)}
+											</Link>
+										</SheetClose>
+									</div>
+								)}
+
+								{/* Orders (logged in only) */}
+								{isLoggedIn && (
+									<div className={staggerItemClassName} style={staggerDelay(2, 150)}>
 										<SheetClose asChild>
 											<Link
 												href="/commandes"
@@ -393,9 +426,9 @@ export function MenuSheet({
 									</div>
 								)}
 
-								{/* Bouton Déconnexion (si connecté) */}
-								{session?.user && (
-									<div className={staggerItemClassName} style={staggerDelay(2, 150)}>
+								{/* Logout (logged in only) */}
+								{isLoggedIn && (
+									<div className={staggerItemClassName} style={staggerDelay(3, 150)}>
 										<LogoutAlertDialog>
 											<button
 												type="button"
@@ -404,6 +437,28 @@ export function MenuSheet({
 												Déconnexion
 											</button>
 										</LogoutAlertDialog>
+									</div>
+								)}
+
+								{/* Sign up link for non-logged-in users */}
+								{!isLoggedIn && (
+									<div className={staggerItemClassName} style={staggerDelay(1, 150)}>
+										<SheetClose asChild>
+											<Link
+												href="/inscription"
+												className={cn(
+													isMenuItemActive("/inscription")
+														? activeLinkClassName
+														: linkClassName,
+													"text-muted-foreground hover:text-foreground"
+												)}
+												aria-current={
+													isMenuItemActive("/inscription") ? "page" : undefined
+												}
+											>
+												Créer un compte
+											</Link>
+										</SheetClose>
 									</div>
 								)}
 							</div>

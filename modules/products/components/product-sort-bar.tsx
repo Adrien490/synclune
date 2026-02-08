@@ -10,6 +10,7 @@ import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-sear
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { cn } from "@/shared/utils/cn";
+import { useBottomBarHeight } from "@/shared/hooks";
 
 interface ProductSortBarProps {
 	/** Options de tri disponibles */
@@ -72,6 +73,8 @@ function ActiveBadge({ count, showDot = false }: ActiveBadgeProps) {
  * - Touch targets 72px minimum (WCAG 2.5.8)
  */
 export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) {
+	useBottomBarHeight(56);
+
 	const [sortOpen, setSortOpen] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState(0);
 	const { open: openSearch } = useDialog(QUICK_SEARCH_DIALOG_ID);
