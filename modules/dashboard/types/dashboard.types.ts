@@ -261,10 +261,6 @@ export type InventoryKpisReturn = {
 		amount: number;
 		totalUnits: number;
 	};
-	/** Demandes de notification retour en stock */
-	stockNotifications: {
-		pendingCount: number;
-	};
 };
 
 export type StockValueReturn = {

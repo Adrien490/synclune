@@ -92,56 +92,6 @@ export type UnsubscribeFromNewsletterInput = z.infer<
 >;
 
 // ============================================================================
-// EXPORT SUBSCRIBERS SCHEMA
-// ============================================================================
-
-/**
- * Schema de validation pour l'export des abonnés newsletter
- *
- * Permet de spécifier des filtres optionnels pour l'export
- */
-export const exportSubscribersSchema = z.object({
-	/**
-	 * Filtrer par statut
-	 * - "active" : Seulement les abonnés actifs
-	 * - "inactive" : Seulement les désabonnés
-	 * - undefined : Tous les abonnés (défaut)
-	 */
-	status: z.enum(["active", "inactive", "all"]).optional().default("all"),
-
-	/**
-	 * Format d'export
-	 * - "csv" : Format CSV (défaut)
-	 */
-	format: z.enum(["csv"]).optional().default("csv"),
-});
-
-export type ExportSubscribersInput = z.infer<typeof exportSubscribersSchema>;
-
-// ============================================================================
-// SEND NEWSLETTER EMAIL SCHEMA
-// ============================================================================
-
-export const sendNewsletterEmailSchema = z.object({
-	subject: z
-		.string()
-		.min(1, "Le sujet est requis")
-		.max(200, "Le sujet ne doit pas dépasser 200 caractères")
-		// Validation CRLF pour éviter injection header email
-		.refine((s) => !s.includes("\n") && !s.includes("\r"), {
-			message: "Le sujet ne peut pas contenir de sauts de ligne",
-		}),
-	content: z
-		.string()
-		.min(10, "Le contenu doit contenir au moins 10 caractères")
-		.max(5000, "Le contenu ne doit pas dépasser 5000 caractères"),
-});
-
-export type SendNewsletterEmailInput = z.infer<
-	typeof sendNewsletterEmailSchema
->;
-
-// ============================================================================
 // CONFIRMATION TOKEN SCHEMA
 // ============================================================================
 

@@ -56,26 +56,3 @@ export const getSubscribersSchema = z.object({
 	filters: subscriberFiltersSchema.optional(),
 });
 
-// ============================================================================
-// SINGLE ADMIN ACTION SCHEMA
-// ============================================================================
-
-export const subscriberIdSchema = z.object({
-	subscriberId: z.cuid2("ID d'abonné invalide"),
-});
-
-// ============================================================================
-// BULK ADMIN SCHEMAS
-// ============================================================================
-
-export const bulkUnsubscribeSubscribersSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins un abonné doit être sélectionné"),
-});
-
-export const bulkResubscribeSubscribersSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins un abonné doit être sélectionné"),
-});
-
-export const bulkDeleteSubscribersSchema = z.object({
-	ids: z.array(z.cuid2()).min(1, "Au moins un abonné doit être sélectionné"),
-});

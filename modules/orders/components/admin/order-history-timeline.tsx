@@ -12,8 +12,6 @@ import {
 	CheckCircle2,
 	XCircle,
 	RotateCcw,
-	FileText,
-	Edit,
 } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -80,30 +78,6 @@ const ACTION_CONFIG: Record<
 		color: "text-amber-500",
 		label: "Statut annulé",
 		symbol: "↶",
-	},
-	NOTE_ADDED: {
-		icon: FileText,
-		color: "text-gray-500",
-		label: "Note ajoutée",
-		symbol: "+",
-	},
-	NOTE_DELETED: {
-		icon: FileText,
-		color: "text-gray-400",
-		label: "Note supprimée",
-		symbol: "−",
-	},
-	TRACKING_UPDATED: {
-		icon: Truck,
-		color: "text-blue-400",
-		label: "Suivi mis à jour",
-		symbol: "📍",
-	},
-	MANUAL_EDIT: {
-		icon: Edit,
-		color: "text-gray-600",
-		label: "Modification manuelle",
-		symbol: "✎",
 	},
 };
 

@@ -8,7 +8,6 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
-import { triggerStockNotificationsIfNeeded } from "@/modules/stock-notifications/services/trigger-stock-notifications.service";
 import {
 	parsePrimaryImageFromForm,
 	parseGalleryMediaFromForm,
@@ -110,7 +109,7 @@ export async function updateProductSku(
 		}
 
 		// 7. Update product SKU in transaction
-		const { productSku, previousInventory } = await prisma.$transaction(async (tx) => {
+		const { productSku } = await prisma.$transaction(async (tx) => {
 			// Validate SKU exists and get product info
 			const existingSku = await tx.productSku.findUnique({
 				where: { id: validatedData.skuId },
@@ -118,7 +117,6 @@ export async function updateProductSku(
 					id: true,
 					sku: true,
 					productId: true,
-					inventory: true, // Pour déclencher les notifications si stock revient
 					product: {
 						select: {
 							id: true,
@@ -132,8 +130,6 @@ export async function updateProductSku(
 			if (!existingSku) {
 				throw new BusinessError("Le SKU spécifié n'existe pas.");
 			}
-
-			const previousInventory = existingSku.inventory;
 
 			// Validate color if provided
 			if (normalizedColorId) {
@@ -256,7 +252,7 @@ export async function updateProductSku(
 				}
 			}
 
-			return { productSku: updatedSku, previousInventory };
+			return { productSku: updatedSku };
 		});
 
 		// 8. Build success message
@@ -281,19 +277,7 @@ export async function updateProductSku(
 		);
 		tags.forEach((tag) => updateTag(tag));
 
-		// 10. Déclencher les notifications si le stock est revenu (0 → >0)
-		if (previousInventory === 0 && validatedData.inventory > 0) {
-			// Fire and forget - ne pas bloquer la réponse
-			triggerStockNotificationsIfNeeded(
-				productSku.id,
-				previousInventory,
-				validatedData.inventory
-			).catch((error) =>
-				console.error("[updateProductSku] Stock notification trigger error:", error)
-			);
-		}
-
-		// 11. Success - Return ActionState format
+		// 10. Success - Return ActionState format
 		return {
 			status: ActionStatus.SUCCESS,
 			message: successMessage,

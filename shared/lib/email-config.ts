@@ -51,13 +51,11 @@ export const EMAIL_SUBJECTS = {
 	REFUND_CONFIRMATION: "Votre remboursement a été effectué - Synclune",
 	REFUND_APPROVED: "Votre demande de remboursement a été acceptée - Synclune",
 	PAYMENT_FAILED: "Échec de votre paiement - Synclune",
-	NEWSLETTER: "Newsletter - Synclune",
 	NEWSLETTER_CONFIRMATION:
 		"Confirmez votre inscription à la newsletter Synclune ✨",
 	NEWSLETTER_WELCOME: "Bienvenue dans notre communauté Synclune ! 🎉",
 	CUSTOMIZATION_REQUEST: "✨ Nouvelle demande de personnalisation - Synclune",
 	CUSTOMIZATION_CONFIRMATION: "Ta demande de personnalisation a été reçue - Synclune",
-	BACK_IN_STOCK: "Bonne nouvelle ! Votre produit est de retour en stock - Synclune",
 	REVIEW_REQUEST: "Ton avis compte ! - Synclune",
 	REVIEW_RESPONSE: "Nous avons répondu à ton avis - Synclune",
 } as const;

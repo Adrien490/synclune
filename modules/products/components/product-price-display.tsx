@@ -11,7 +11,6 @@ import {
 	getSchemaOrgAvailabilityUrl,
 } from "@/modules/products/services/product-pricing.service";
 import { AlertCircle, CheckCircle, Sparkles } from "lucide-react";
-import { StockNotificationForm } from "@/modules/stock-notifications/components/stock-notification-form";
 import { motion, useReducedMotion } from "motion/react";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { addBusinessDays, format } from "date-fns";
@@ -213,7 +212,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 				</p>
 			)}
 
-			{/* Section rupture de stock avec formulaire de notification */}
+			{/* Section rupture de stock */}
 			{stockStatus === "out_of_stock" && (
 				<div className="space-y-3">
 					<div
@@ -223,9 +222,6 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 						<Sparkles className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
 						<p>Cette petite merveille sera bientôt disponible !</p>
 					</div>
-
-					{/* Formulaire de notification de retour en stock */}
-					<StockNotificationForm skuId={selectedSku.id} />
 				</div>
 			)}
 		</div>

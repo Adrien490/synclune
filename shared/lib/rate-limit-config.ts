@@ -581,20 +581,6 @@ export const ADMIN_USER_LIMITS = {
 } as const;
 
 // ========================================
-// 📦 STOCK & NOTIFICATIONS
-// ========================================
-
-/**
- * Limite pour la souscription aux notifications de stock
- *
- * Stricte car action anonyme possible (email uniquement)
- */
-export const STOCK_NOTIFICATION_SUBSCRIBE_LIMIT: RateLimitConfig = {
-	limit: 5, // 5 souscriptions maximum
-	windowMs: hours(1), // par heure
-};
-
-// ========================================
 // 💰 ADMIN SKU OPERATIONS
 // ========================================
 

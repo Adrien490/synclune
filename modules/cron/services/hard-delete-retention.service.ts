@@ -17,14 +17,12 @@ import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
  * - Product (et ProductSku, SkuMedia, etc. en cascade)
  * - ProductReview, ReviewResponse, ReviewMedia (en cascade)
  * - NewsletterSubscriber
- * - StockNotificationRequest
  * - CustomizationRequest
  */
 export async function hardDeleteExpiredRecords(): Promise<{
 	productsDeleted: number;
 	reviewsDeleted: number;
 	newsletterDeleted: number;
-	stockNotificationsDeleted: number;
 	customizationRequestsDeleted: number;
 }> {
 	console.log(
@@ -65,7 +63,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	const [
 		reviewsResult,
 		newsletterResult,
-		stockNotificationsResult,
 		customizationRequestsResult,
 		productsResult,
 	] = await prisma.$transaction([
@@ -73,9 +70,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 			where: { deletedAt: { lt: retentionDate } },
 		}),
 		prisma.newsletterSubscriber.deleteMany({
-			where: { deletedAt: { lt: retentionDate } },
-		}),
-		prisma.stockNotificationRequest.deleteMany({
 			where: { deletedAt: { lt: retentionDate } },
 		}),
 		prisma.customizationRequest.deleteMany({
@@ -89,7 +83,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	console.log(
 		`[CRON:hard-delete-retention] DB transaction completed: ` +
 			`${reviewsResult.count} reviews, ${newsletterResult.count} newsletter, ` +
-			`${stockNotificationsResult.count} stock notifications, ` +
 			`${customizationRequestsResult.count} customization requests, ` +
 			`${productsResult.count} products`
 	);
@@ -129,7 +122,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 		productsDeleted: productsResult.count,
 		reviewsDeleted: reviewsResult.count,
 		newsletterDeleted: newsletterResult.count,
-		stockNotificationsDeleted: stockNotificationsResult.count,
 		customizationRequestsDeleted: customizationRequestsResult.count,
 	};
 }

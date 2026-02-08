@@ -38,8 +38,6 @@ export const PAGINATION_DEFAULTS = {
 export const PAGE_SPECIFIC_LIMITS = {
 	/** Limite pour la liste des produits admin (affichage dense) */
 	ADMIN_PRODUCTS: 100,
-	/** Limite pour les notifications de stock admin */
-	ADMIN_STOCK_NOTIFICATIONS: 50,
 	/** Limites pour les carousels de la homepage */
 	HOMEPAGE_CAROUSEL: {
 		/** Produits mis en avant */

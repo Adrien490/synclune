@@ -14,10 +14,6 @@
       "schedule": "0 3 * * *"
     },
     {
-      "path": "/api/cron/cleanup-stock-notifications",
-      "schedule": "30 3 * * *"
-    },
-    {
       "path": "/api/cron/sync-async-payments",
       "schedule": "0 */4 * * *"
     },

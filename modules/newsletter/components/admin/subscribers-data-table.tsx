@@ -15,10 +15,6 @@ import { GetSubscribersReturn } from "@/modules/newsletter/data/get-subscribers"
 import { formatDateShort } from "@/shared/utils/dates";
 import { CheckCircle2, Clock, Mail, XCircle } from "lucide-react";
 import { NEWSLETTER_STATUS_LABELS } from "@/modules/newsletter/constants/newsletter-status.constants";
-import { SubscriberRowActions } from "./subscriber-row-actions";
-import { SubscribersSelectionToolbar } from "./subscribers-selection-toolbar";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
-
 export interface SubscribersDataTableProps {
 	subscribersPromise: Promise<GetSubscribersReturn>;
 	perPage: number;
@@ -29,7 +25,6 @@ export async function SubscribersDataTable({
 	perPage,
 }: SubscribersDataTableProps) {
 	const { subscribers, pagination } = await subscribersPromise;
-	const subscriberIds = subscribers.map((s) => s.id);
 
 	if (subscribers.length === 0) {
 		return (
@@ -44,27 +39,19 @@ export async function SubscribersDataTable({
 	return (
 		<Card>
 			<CardContent>
-				<SubscribersSelectionToolbar subscriberIds={subscriberIds} />
 				<TableScrollContainer>
 					<Table aria-label="Liste des abonnés newsletter" striped>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[5%]">
-									<TableSelectionCell type="header" itemIds={subscriberIds} />
-								</TableHead>
-								<TableHead className="w-[35%] sm:w-[30%]">Email</TableHead>
-								<TableHead className="w-[15%] sm:w-[15%]">Statut</TableHead>
-								<TableHead className="hidden sm:table-cell w-[20%]">Date d'inscription</TableHead>
-								<TableHead className="hidden md:table-cell w-[15%]">Dernière mise à jour</TableHead>
-								<TableHead className="w-[10%] text-right" aria-label="Actions disponibles pour chaque abonné">Actions</TableHead>
+								<TableHead className="w-[35%]">Email</TableHead>
+								<TableHead className="w-[20%]">Statut</TableHead>
+								<TableHead className="hidden sm:table-cell w-[25%]">Date d'inscription</TableHead>
+								<TableHead className="hidden md:table-cell w-[20%]">Dernière mise à jour</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
 							{subscribers.map((subscriber) => (
 								<TableRow key={subscriber.id}>
-									<TableCell>
-										<TableSelectionCell type="row" itemId={subscriber.id} />
-									</TableCell>
 									<TableCell className="font-medium">
 										<span>{subscriber.email}</span>
 									</TableCell>
@@ -91,16 +78,6 @@ export async function SubscribersDataTable({
 									</TableCell>
 									<TableCell className="hidden md:table-cell text-sm text-muted-foreground">
 										{formatDateShort(subscriber.updatedAt)}
-									</TableCell>
-									<TableCell className="text-right">
-										<SubscriberRowActions
-											subscriber={{
-												id: subscriber.id,
-												email: subscriber.email,
-												status: subscriber.status,
-												confirmedAt: subscriber.confirmedAt,
-											}}
-										/>
 									</TableCell>
 								</TableRow>
 							))}

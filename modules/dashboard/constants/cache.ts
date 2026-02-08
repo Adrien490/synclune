@@ -64,8 +64,6 @@ export const DASHBOARD_CACHE_TAGS = {
 	STOCK_VALUE: "dashboard-stock-value",
 	/** Turnover ratio par SKU */
 	INVENTORY_TURNOVER: (period: string) => `dashboard-turnover-${period}`,
-	/** Notifications de retour en stock */
-	STOCK_NOTIFICATIONS: "dashboard-stock-notifications",
 	/** Produits jamais vendus */
 	NEVER_SOLD: "dashboard-never-sold",
 	/** Stock par couleur */

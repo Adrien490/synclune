@@ -2,8 +2,7 @@ import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { ExportSubscribersButton } from "@/modules/newsletter/components/admin/export-subscribers-button";
+
 import {
 	getSubscribers,
 	SORT_LABELS,
@@ -11,7 +10,6 @@ import {
 } from "@/modules/newsletter/data/get-subscribers";
 import { getNewsletterStats } from "@/modules/newsletter/data/get-newsletter-stats";
 import { RefreshNewsletterButton } from "@/modules/newsletter/components/admin/refresh-newsletter-button";
-import { SendNewsletterEmailForm } from "@/modules/newsletter/components/admin/send-newsletter-email-form";
 import { getFirstParam } from "@/shared/utils/params";
 import { Mail, Users } from "lucide-react";
 import { Suspense } from "react";
@@ -20,7 +18,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Newsletter | Dashboard",
-	description: "Envoyez des newsletters et gérez vos abonnés",
+	description: "Gérez vos abonnés newsletter",
 };
 
 interface NewsletterPageProps {
@@ -120,67 +118,31 @@ export default async function NewsletterPage({
 				</div>
 			</div>
 
-			{/* Tabs */}
-			<Tabs defaultValue="send" className="space-y-6">
-				<TabsList>
-					<TabsTrigger value="send">Envoyer une newsletter</TabsTrigger>
-					<TabsTrigger value="subscribers">
-						Abonnés ({stats.totalSubscribers})
-					</TabsTrigger>
-				</TabsList>
+			<Toolbar
+				ariaLabel="Barre d'outils de gestion des abonnés"
+				search={
+					<SearchInput mode="live" size="sm"
+						paramName="search"
+						placeholder="Rechercher un email..."
+						ariaLabel="Rechercher un abonné par email"
+						className="w-full"
+					/>
+				}
+			>
+				<SelectFilter
+					filterKey="sortBy"
+					label="Trier par"
+					options={sortOptions}
+					placeholder="Plus récents"
+					className="w-full sm:min-w-45"
+					noPrefix
+				/>
+				<RefreshNewsletterButton />
+			</Toolbar>
 
-				<TabsContent value="send" className="space-y-6">
-					<div className="rounded-lg border bg-card p-6">
-						<div className="mb-6">
-							<h2 className="text-xl font-semibold">Composer une newsletter</h2>
-							<p className="text-sm text-muted-foreground mt-1">
-								L'email sera envoyé à tous les {stats.activeSubscribers}{" "}
-								abonné(s) actif(s)
-							</p>
-						</div>
-
-						{stats.activeSubscribers === 0 ? (
-							<div className="rounded-md bg-muted/50 p-8 text-center">
-								<Mail className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-								<p className="text-sm text-muted-foreground">
-									Aucun abonné actif pour le moment.
-								</p>
-							</div>
-						) : (
-							<SendNewsletterEmailForm />
-						)}
-					</div>
-				</TabsContent>
-
-				<TabsContent value="subscribers" className="space-y-6">
-					<Toolbar
-						ariaLabel="Barre d'outils de gestion des abonnés"
-						search={
-							<SearchInput mode="live" size="sm"
-								paramName="search"
-								placeholder="Rechercher un email..."
-								ariaLabel="Rechercher un abonné par email"
-								className="w-full"
-							/>
-						}
-					>
-						<SelectFilter
-							filterKey="sortBy"
-							label="Trier par"
-							options={sortOptions}
-							placeholder="Plus récents"
-							className="w-full sm:min-w-45"
-							noPrefix
-						/>
-						<ExportSubscribersButton />
-						<RefreshNewsletterButton />
-					</Toolbar>
-
-					<Suspense fallback={<div>Chargement...</div>}>
-						<SubscribersDataTable subscribersPromise={subscribersPromise} perPage={perPage} />
-					</Suspense>
-				</TabsContent>
-			</Tabs>
+			<Suspense fallback={<div>Chargement...</div>}>
+				<SubscribersDataTable subscribersPromise={subscribersPromise} perPage={perPage} />
+			</Suspense>
 		</>
 	);
 }

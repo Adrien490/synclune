@@ -55,7 +55,6 @@ model User {
   addresses                 Address[]
   wishlist                  Wishlist?
   discountUsages            DiscountUsage[]
-  stockNotificationRequests StockNotificationRequest[]
   newsletterSubscription    NewsletterSubscriber?
 
   // Relations avec les remboursements (audit)
@@ -365,8 +364,6 @@ model ProductSku {
   images                    SkuMedia[]
   orderItems                OrderItem[]
   cartItems                 CartItem[]
-  stockNotificationRequests StockNotificationRequest[]
-
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete pour preserver historique commandes
@@ -537,10 +534,6 @@ enum OrderAction {
   CANCELLED        // Annulation
   RETURNED         // Retour client
   STATUS_REVERTED  // Retour a un statut precedent
-  NOTE_ADDED       // Note ajoutee
-  NOTE_DELETED     // Note supprimee
-  TRACKING_UPDATED // Suivi mis a jour
-  MANUAL_EDIT      // Modification manuelle admin
 }
 
 // ============================================================================
@@ -970,68 +963,6 @@ model NewsletterSubscriber {
   @@index([confirmedAt]) // Audit RGPD preuve de consentement
   @@index([confirmationToken])
   @@index([deletedAt, status, subscribedAt])
-}
-
-// ============================================================================
-// NOTIFICATIONS RETOUR EN STOCK
-// ============================================================================
-
-enum StockNotificationStatus {
-  PENDING   // En attente du retour en stock
-  NOTIFIED  // Email envoye au client
-  EXPIRED   // Demande expiree (apres X jours sans retour)
-  CANCELLED // Annulee par l'utilisateur
-}
-
-/// Demande de notification quand un produit revient en stock
-/// Permet aux clients de s'inscrire pour etre notifies du retour d'un SKU
-model StockNotificationRequest {
-  id String @id @default(cuid())
-
-  // SKU concerne (Cascade coherent avec CartItem/WishlistItem)
-  skuId String
-  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
-
-  // Utilisateur (optionnel : peut etre un visiteur non connecte)
-  userId String?
-  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  // Email du demandeur (obligatoire pour envoi notification)
-  email String @db.VarChar(255)
-
-  // Statut de la demande
-  status StockNotificationStatus @default(PENDING)
-
-  // Token unique pour desinscription sans connexion
-  unsubscribeToken String @unique @default(cuid())
-
-  // Tracking envoi notification
-  notifiedAt        DateTime? // Date d'envoi de l'email de notification
-  notifiedInventory Int? // Stock disponible au moment de l'envoi
-
-  // Metadonnees RGPD
-  ipAddress String?
-  userAgent String?
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime? // Soft delete pour RGPD
-
-  // Contrainte unicite au niveau DB
-  // Note: @@unique cree automatiquement un index, pas besoin de @@index([email, skuId])
-  @@unique([email, skuId])
-
-  // Indexes pour performances
-  @@index([skuId, status])
-  @@index([email])
-  @@index([userId])
-  @@index([status, createdAt])
-  @@index([email, createdAt(sort: Desc)]) // Historique demandes par email
-  @@index([deletedAt]) // Soft delete filter RGPD
-  @@index([notifiedAt(sort: Desc)]) // Analyse historique notifications
-  @@index([status, deletedAt]) // Stats avec soft delete
-  @@index([status, notifiedAt, deletedAt]) // notifiedThisMonth stat query
 }
 
 // ============================================================================

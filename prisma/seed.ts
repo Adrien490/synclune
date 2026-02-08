@@ -18,7 +18,6 @@ import {
   RefundStatus,
   ReviewStatus,
   HistorySource,
-  StockNotificationStatus,
   WebhookEventStatus,
 } from "../app/generated/prisma/client";
 
@@ -2090,49 +2089,6 @@ async function main(): Promise<void> {
     }
   }
   console.log(`✅ ${webhookEventsCreated} événements webhook créés`);
-
-  // ============================================
-  // NOTIFICATIONS RETOUR EN STOCK
-  // ============================================
-  const outOfStockSKUs = await prisma.productSku.findMany({
-    where: { inventory: { lte: 2 }, isActive: true },
-    select: { id: true },
-    take: 10,
-  });
-
-  const stockNotifStatuses: StockNotificationStatus[] = [
-    StockNotificationStatus.PENDING,
-    StockNotificationStatus.PENDING,
-    StockNotificationStatus.PENDING,
-    StockNotificationStatus.NOTIFIED,
-    StockNotificationStatus.NOTIFIED,
-    StockNotificationStatus.EXPIRED,
-    StockNotificationStatus.CANCELLED,
-  ];
-
-  let stockNotifsCreated = 0;
-  for (let i = 0; i < Math.min(outOfStockSKUs.length, stockNotifStatuses.length); i++) {
-    const sku = outOfStockSKUs[i];
-    const status = stockNotifStatuses[i];
-
-    try {
-      await prisma.stockNotificationRequest.create({
-        data: {
-          skuId: sku.id,
-          email: faker.internet.email().toLowerCase(),
-          status,
-          notifiedAt: status === StockNotificationStatus.NOTIFIED ? faker.date.recent({ days: 7 }) : null,
-          notifiedInventory: status === StockNotificationStatus.NOTIFIED ? faker.number.int({ min: 1, max: 10 }) : null,
-          ipAddress: faker.internet.ipv4(),
-          userAgent: faker.internet.userAgent(),
-        },
-      });
-      stockNotifsCreated++;
-    } catch {
-      continue;
-    }
-  }
-  console.log(`✅ ${stockNotifsCreated} notifications de stock créées`);
 
   // ============================================
   // PHOTOS D'AVIS (REVIEW MEDIA)

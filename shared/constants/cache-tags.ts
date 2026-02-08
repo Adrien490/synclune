@@ -25,7 +25,7 @@ export const SHARED_CACHE_TAGS = {
 	 * Badges de la sidebar admin (compteurs de notifications)
 	 *
 	 * Utilisé par : orders, products, skus, discounts, collections,
-	 * newsletter, stock-notifications, refunds, materials, colors, product-types
+	 * newsletter, refunds, materials, colors, product-types
 	 */
 	ADMIN_BADGES: "admin-badges",
 
@@ -46,7 +46,7 @@ export const SHARED_CACHE_TAGS = {
 	/**
 	 * Liste de l'inventaire dans l'admin
 	 *
-	 * Utilisé par : products, skus, stock-notifications
+	 * Utilisé par : products, skus
 	 */
 	ADMIN_INVENTORY_LIST: "admin-inventory-list",
 

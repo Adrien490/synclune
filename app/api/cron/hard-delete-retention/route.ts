@@ -14,7 +14,6 @@ export async function GET() {
 			productsDeleted: result.productsDeleted,
 			reviewsDeleted: result.reviewsDeleted,
 			newsletterDeleted: result.newsletterDeleted,
-			stockNotificationsDeleted: result.stockNotificationsDeleted,
 			customizationRequestsDeleted: result.customizationRequestsDeleted,
 		});
 	} catch (error) {
