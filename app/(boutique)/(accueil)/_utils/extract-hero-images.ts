@@ -14,14 +14,14 @@ export interface HeroProductImage {
  * Extract hero-worthy images from the latest products.
  *
  * Filters out products using the SVG fallback placeholder and returns
- * at most 3 images. Returns [] if fewer than 2 real images are found
+ * at most 4 images. Returns [] if fewer than 2 real images are found
  * so the hero falls back to the text-only layout.
  */
 export function extractHeroImages(products: Product[]): HeroProductImage[] {
 	const images: HeroProductImage[] = [];
 
 	for (const product of products) {
-		if (images.length >= 3) break;
+		if (images.length >= 4) break;
 
 		const primaryImage = getPrimaryImageForList(product);
 
