@@ -23,6 +23,7 @@ export function UserHeader({
 				<Link
 					href="/compte"
 					className="block group"
+					aria-label="Accéder à mon compte"
 				>
 					<p className="text-base font-semibold text-foreground">
 						Bonjour {firstName}

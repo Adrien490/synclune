@@ -87,6 +87,9 @@ html {
 	--color-pastel-sky: var(--pastel-sky);
 	--color-pastel-cream: var(--pastel-cream);
 
+	--spacing-34: 8.5rem;
+	--spacing-38: 9.5rem;
+
 	--radius: 0.5rem;
 	--radius-sm: 0.5rem;
 	--radius-md: 0.625rem;

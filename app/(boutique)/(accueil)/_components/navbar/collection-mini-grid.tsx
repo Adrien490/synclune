@@ -24,7 +24,7 @@ export function CollectionMiniGrid({
 			<div
 				className="size-12 rounded-lg overflow-hidden bg-muted shrink-0"
 				role="img"
-				aria-label={`Aperçu de la collection ${collectionName}`}
+				aria-label={`${count} photo${count > 1 ? "s" : ""} de la collection ${collectionName}`}
 			>
 				<Image
 					src={images[0].url}
@@ -48,7 +48,7 @@ export function CollectionMiniGrid({
 			<div
 				className="size-12 rounded-lg overflow-hidden bg-muted shrink-0 grid grid-cols-2 gap-px"
 				role="img"
-				aria-label={`Aperçu de la collection ${collectionName}`}
+				aria-label={`${count} photo${count > 1 ? "s" : ""} de la collection ${collectionName}`}
 			>
 				{images.slice(0, 2).map((image, i) => (
 					<Image
@@ -74,7 +74,7 @@ export function CollectionMiniGrid({
 		<div
 			className="size-12 rounded-lg overflow-hidden bg-muted shrink-0 grid grid-cols-2 grid-rows-2 gap-px"
 			role="img"
-			aria-label={`Aperçu de la collection ${collectionName}`}
+			aria-label={`${count} photo${count > 1 ? "s" : ""} de la collection ${collectionName}`}
 		>
 			{images.slice(0, 4).map((image, i) => (
 				<Image

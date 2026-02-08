@@ -1,6 +1,7 @@
 "use client"
 
 import { BadgeCheck } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 import { Badge } from "@/shared/components/ui/badge"
@@ -21,6 +22,8 @@ interface HomepageReviewCardProps {
  * Client Component because formatRelativeDate uses new Date().
  */
 export function HomepageReviewCard({ review, className }: HomepageReviewCardProps) {
+	const productImage = review.product.skus[0]?.images[0] ?? null
+
 	return (
 		<article
 			itemScope
@@ -69,13 +72,46 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 					</p>
 				</div>
 
-				{/* Product link */}
+				{/* User-uploaded review photos */}
+				{review.medias.length > 0 && (
+					<div className="flex gap-2">
+						{review.medias.slice(0, 3).map((media) => (
+							<Image
+								key={media.id}
+								src={media.url}
+								alt={media.altText || "Photo de l'avis"}
+								width={64}
+								height={64}
+								className="size-16 rounded object-cover"
+								{...(media.blurDataUrl
+									? { placeholder: "blur", blurDataURL: media.blurDataUrl }
+									: {})}
+							/>
+						))}
+					</div>
+				)}
+
+				{/* Product link with thumbnail */}
 				<div className="pt-1">
 					<Link
 						href={`/creations/${review.product.slug}`}
-						className="text-xs text-foreground hover:underline"
+						className="flex items-center gap-2 group"
 					>
-						{review.product.title}
+						{productImage && (
+							<Image
+								src={productImage.url}
+								alt={productImage.altText || review.product.title}
+								width={32}
+								height={32}
+								className="size-8 rounded object-cover"
+								{...(productImage.blurDataUrl
+									? { placeholder: "blur", blurDataURL: productImage.blurDataUrl }
+									: {})}
+							/>
+						)}
+						<span className="text-xs text-foreground group-hover:underline truncate">
+							{review.product.title}
+						</span>
 					</Link>
 				</div>
 			</CardContent>

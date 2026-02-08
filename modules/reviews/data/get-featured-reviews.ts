@@ -22,9 +22,14 @@ export async function getFeaturedReviews(): Promise<ReviewHomepage[]> {
 		},
 		select: REVIEW_HOMEPAGE_SELECT,
 		orderBy: [{ rating: "desc" }, { createdAt: "desc" }],
-		take: 6,
+		take: 12,
 	})
 
-	// Relations are guaranteed non-null by the where clause filters
-	return reviews as unknown as ReviewHomepage[]
+	const typed = reviews as unknown as ReviewHomepage[]
+
+	// Filter for substantive reviews (>= 50 chars)
+	const quality = typed.filter((r) => r.content.length >= 50)
+
+	// Fallback to unfiltered if fewer than 3 pass the quality filter
+	return (quality.length >= 3 ? quality : typed).slice(0, 6)
 }

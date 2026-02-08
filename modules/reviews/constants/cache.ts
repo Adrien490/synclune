@@ -116,6 +116,7 @@ export function getReviewInvalidationTags(
 		REVIEWS_CACHE_TAGS.REVIEWABLE(userId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		REVIEWS_CACHE_TAGS.HOMEPAGE,
+		REVIEWS_CACHE_TAGS.GLOBAL_STATS,
 	]
 
 	// Ajouter les tags produit seulement si le produit existe encore
@@ -144,6 +145,7 @@ export function getReviewModerationTags(
 		REVIEWS_CACHE_TAGS.DETAIL(reviewId),
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		REVIEWS_CACHE_TAGS.HOMEPAGE,
+		REVIEWS_CACHE_TAGS.GLOBAL_STATS,
 	]
 
 	// Ajouter les tags produit seulement si le produit existe encore

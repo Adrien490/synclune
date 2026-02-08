@@ -72,7 +72,27 @@ export const REVIEW_PUBLIC_SELECT = {
  */
 export const REVIEW_HOMEPAGE_SELECT = {
 	...REVIEW_PUBLIC_SELECT,
-	product: { select: { title: true, slug: true } },
+	product: {
+		select: {
+			title: true,
+			slug: true,
+			skus: {
+				where: { isDefault: true },
+				take: 1,
+				select: {
+					images: {
+						where: { isPrimary: true },
+						take: 1,
+						select: {
+							url: true,
+							blurDataUrl: true,
+							altText: true,
+						},
+					},
+				},
+			},
+		},
+	},
 } as const satisfies Prisma.ProductReviewSelect
 
 /**

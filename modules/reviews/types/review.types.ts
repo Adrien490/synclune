@@ -37,6 +37,13 @@ export interface ReviewHomepage extends ReviewPublic {
 	product: {
 		title: string
 		slug: string
+		skus: Array<{
+			images: Array<{
+				url: string
+				blurDataUrl: string | null
+				altText: string | null
+			}>
+		}>
 	}
 }
 

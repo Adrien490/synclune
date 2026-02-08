@@ -89,14 +89,14 @@ function SingleImageLayout({
 		<div
 			role="group"
 			aria-label={ariaLabel}
-			className="relative aspect-square overflow-hidden rounded-t-xl bg-muted"
+			className="relative aspect-square overflow-hidden rounded-t-lg bg-muted"
 		>
 			<CollectionImageItem
 				image={image}
 				collectionName={collectionName}
 				index={0}
 				isAboveFold={isAboveFold}
-				sizes="(max-width: 640px) 100vw, 50vw"
+				sizes="(max-width: 374px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw"
 				staggerIndex={0}
 			/>
 		</div>
@@ -114,7 +114,7 @@ function TwoImagesLayout({
 		<div
 			role="group"
 			aria-label={ariaLabel}
-			className="grid grid-cols-2 gap-0.5 overflow-hidden rounded-t-xl"
+			className="grid grid-cols-2 gap-0.5 overflow-hidden rounded-t-lg"
 		>
 			{images.map((image, i) => (
 				<div key={`${collectionName}-${i}`} className="relative aspect-square overflow-hidden bg-muted">
@@ -143,7 +143,7 @@ function ThreeImagesLayout({
 		<div
 			role="group"
 			aria-label={ariaLabel}
-			className="grid grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-t-xl"
+			className="grid grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-t-lg"
 		>
 			{/* Grande image - span 2 rows */}
 			<div className="relative row-span-2 overflow-hidden bg-muted">
@@ -184,7 +184,7 @@ function BentoGridLayout({
 			role="group"
 			aria-label={ariaLabel}
 			className={cn(
-				"grid gap-0.5 overflow-hidden rounded-t-xl",
+				"grid gap-0.5 overflow-hidden rounded-t-lg",
 				// Mobile : 2x2
 				"grid-cols-2 grid-rows-2",
 				// Desktop : Bento (1 grande + 3 petites)

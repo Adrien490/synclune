@@ -85,6 +85,32 @@ const IMAGE_POSITIONS = [
 	},
 ] as const;
 
+// Extracted motion variants to reduce inline ternary verbosity
+const FLOAT_VARIANTS = {
+	initial: {
+		reduced: { opacity: 1 },
+		full: { opacity: 0, scale: 0.9 },
+	},
+	animate: {
+		reduced: { opacity: 1 },
+		full: { opacity: 1, scale: 1 },
+	},
+	whileHover: {
+		full: {
+			scale: 1.08,
+			y: -6,
+			rotate: 0,
+			transition: { type: "spring", stiffness: 300, damping: 25, mass: 0.5 },
+		},
+	},
+	whileTap: {
+		full: {
+			scale: 0.97,
+			transition: MOTION_CONFIG.spring.snappy,
+		},
+	},
+} as const;
+
 interface HeroFloatingImagesProps {
 	images: HeroProductImage[];
 }
@@ -113,6 +139,8 @@ function FloatingImage({
 		[0, position.parallaxSpeed * position.parallaxDirection],
 	);
 
+	const mode = shouldReduceMotion ? "reduced" : "full";
+
 	return (
 		<motion.div
 			className={`absolute ${position.className} ${position.widthClasses} pointer-events-auto ${position.tabletVisible ? "hidden md:block" : "hidden lg:block"}`}
@@ -123,11 +151,6 @@ function FloatingImage({
 			}
 		>
 			<motion.div
-				className={
-					shouldReduceMotion
-						? undefined
-						: "animate-hero-idle-float"
-				}
 				style={
 					shouldReduceMotion
 						? undefined
@@ -139,16 +162,8 @@ function FloatingImage({
 								animationDelay: `${position.delay + position.idleDelay}s`,
 							}
 				}
-				initial={
-					shouldReduceMotion
-						? { opacity: 1 }
-						: { opacity: 0, scale: 0.9 }
-				}
-				animate={
-					shouldReduceMotion
-						? { opacity: 1 }
-						: { opacity: 1, scale: 1 }
-				}
+				initial={FLOAT_VARIANTS.initial[mode]}
+				animate={FLOAT_VARIANTS.animate[mode]}
 				transition={
 					shouldReduceMotion
 						? undefined
@@ -165,24 +180,8 @@ function FloatingImage({
 								},
 							}
 				}
-				whileHover={
-					shouldReduceMotion
-						? undefined
-						: {
-								scale: 1.08,
-								y: -6,
-								rotate: 0,
-								transition: { type: "spring", stiffness: 300, damping: 25, mass: 0.5 },
-							}
-				}
-				whileTap={
-					shouldReduceMotion
-						? undefined
-						: {
-								scale: 0.97,
-								transition: MOTION_CONFIG.spring.snappy,
-							}
-				}
+				whileHover={shouldReduceMotion ? undefined : FLOAT_VARIANTS.whileHover.full}
+				whileTap={shouldReduceMotion ? undefined : FLOAT_VARIANTS.whileTap.full}
 			>
 				<Link
 					href={`/creations/${image.slug}`}
@@ -206,7 +205,10 @@ function FloatingImage({
 						height={position.height}
 						className="relative aspect-[4/5] w-full object-cover"
 						sizes={position.sizes}
-						loading={index === 0 ? "eager" : "lazy"}
+						preload={index === 0}
+						loading={index === 0 ? undefined : "lazy"}
+						fetchPriority={index === 0 ? "high" : undefined}
+						quality={85}
 						placeholder={image.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={image.blurDataUrl}
 					/>

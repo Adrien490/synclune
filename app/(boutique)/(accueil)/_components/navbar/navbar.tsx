@@ -15,6 +15,7 @@ import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { BadgeCountsStoreProvider } from "@/shared/stores/badge-counts-store-provider";
 import { QuickSearchDialog, QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
+import { cn } from "@/shared/utils/cn";
 import { AccountDropdown } from "./account-dropdown";
 import { DesktopNav } from "./desktop-nav";
 import { MenuSheet } from "./menu-sheet";
@@ -46,7 +47,13 @@ async function getNavbarMenuData() {
 }
 
 /** Classes communes pour les boutons icônes de la navbar */
-const iconButtonClassName = "relative items-center justify-center size-11 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl hover:scale-105 active:scale-95 group";
+const iconButtonClassName = cn(
+	"relative items-center justify-center size-11 rounded-xl group",
+	"text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+	"transition-all duration-300 ease-out",
+	"hover:scale-105 active:scale-95",
+	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+);
 
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
@@ -133,7 +140,7 @@ export async function Navbar() {
 							/>
 
 							{/* Recherche mobile (juste à droite du menu) */}
-							<QuickSearchTrigger className={`sm:hidden inline-flex ${iconButtonClassName}`} />
+							<QuickSearchTrigger className={cn("sm:hidden inline-flex", iconButtonClassName)} />
 
 							<Logo
 								href="/"
@@ -167,7 +174,7 @@ export async function Navbar() {
 									<TooltipTrigger asChild>
 										<Link
 											href="/favoris"
-											className={`inline-flex ${iconButtonClassName}`}
+											className={cn("inline-flex", iconButtonClassName)}
 											aria-label="Accéder à mes favoris"
 										>
 											<Heart
@@ -193,11 +200,11 @@ export async function Navbar() {
 								<AccountDropdown
 									session={session}
 									isAdmin={userIsAdmin}
-									className={`hidden sm:inline-flex ${iconButtonClassName}`}
+									className={cn("hidden sm:inline-flex", iconButtonClassName)}
 								/>
 
 								{/* Icône panier - Ouvre le cart sheet */}
-								<CartSheetTrigger className={`inline-flex ${iconButtonClassName}`} />
+								<CartSheetTrigger className={cn("inline-flex", iconButtonClassName)} />
 							</div>
 						</div>
 					</div>

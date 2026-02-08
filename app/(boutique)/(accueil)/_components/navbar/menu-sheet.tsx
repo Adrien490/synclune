@@ -22,7 +22,7 @@ import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { cn } from "@/shared/utils/cn";
-import { Flame, Gem, Heart, LogIn, Menu, Settings } from "lucide-react";
+import { Gem, Heart, LogIn, Menu, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -66,7 +66,6 @@ export function MenuSheet({
 
 	// Séparer les items en zones
 	const homeItem = navItems.find((item) => item.href === "/");
-	const bestsellerItem = navItems.find((item) => item.href.startsWith("/produits?sortBy=best-selling"));
 	const personalizationItem = navItems.find((item) => item.href === "/personnalisation");
 	const accountItem = navItems.find((item) => item.href === "/compte" || item.href === "/connexion");
 	const favoritesItem = navItems.find((item) => item.href === "/favoris");
@@ -107,12 +106,12 @@ export function MenuSheet({
 			</SheetTrigger>
 
 			<SheetContent
-				className="w-[min(88vw,340px)] sm:w-80 sm:max-w-md border-r bg-background/95 !p-0 flex flex-col"
+				className="w-[min(88vw,340px)] sm:w-80 sm:max-w-md border-r bg-background/95 p-0! flex flex-col"
 				id="mobile-menu-synclune"
 			>
 
 				{/* Header sr-only */}
-				<SheetHeader className="!p-0 sr-only">
+				<SheetHeader className="p-0! sr-only">
 					<SheetTitle>Menu de navigation</SheetTitle>
 					<SheetDescription>
 						Menu de navigation de Synclune - Découvrez nos bijoux et collections
@@ -142,9 +141,9 @@ export function MenuSheet({
 						{/* Section Découvrir - Accueil + Meilleures ventes */}
 						<section aria-labelledby="section-discover" className="mb-4">
 							<SectionHeader id="section-discover">Découvrir</SectionHeader>
-							<div className="space-y-1">
+							<ul className="space-y-1">
 								{homeItem && (
-									<div className={staggerItemClassName} style={staggerDelay(0, 70)}>
+									<li className={staggerItemClassName} style={staggerDelay(0, 70)}>
 										<SheetClose asChild>
 											<Link
 												href={homeItem.href}
@@ -160,44 +159,18 @@ export function MenuSheet({
 												{homeItem.label}
 											</Link>
 										</SheetClose>
-									</div>
+									</li>
 								)}
-								{bestsellerItem && (
-									<div className={staggerItemClassName} style={staggerDelay(1, 70)}>
-										<SheetClose asChild>
-											<Link
-												href={bestsellerItem.href}
-												className={cn(
-													isMenuItemActive(bestsellerItem.href)
-														? activeLinkClassName
-														: linkClassName,
-													"justify-between"
-												)}
-												aria-current={
-													isMenuItemActive(bestsellerItem.href) ? "page" : undefined
-												}
-											>
-												<span className="flex items-center gap-2">
-													<Flame className="size-4 text-orange-500" aria-hidden="true" />
-													{bestsellerItem.label}
-												</span>
-												<Badge variant="warning" className="text-[10px] px-1.5 py-0">
-													Top
-												</Badge>
-											</Link>
-										</SheetClose>
-									</div>
-								)}
-							</div>
+							</ul>
 						</section>
 
 						{/* Section Les créations (productTypes) */}
 						{productTypes && productTypes.length > 0 && (
 							<section aria-labelledby="section-creations" className="mb-4">
 								<SectionHeader id="section-creations">Nos créations</SectionHeader>
-								<div className="space-y-1">
+								<ul className="space-y-1">
 									{/* Lien "Tous les bijoux" proéminent en premier (Baymard UX) */}
-									<div className={staggerItemClassName} style={staggerDelay(0, 90)}>
+									<li className={staggerItemClassName} style={staggerDelay(0, 90)}>
 										<SheetClose asChild>
 											<Link
 												href="/produits"
@@ -215,9 +188,9 @@ export function MenuSheet({
 												Tous les bijoux
 											</Link>
 										</SheetClose>
-									</div>
+									</li>
 									{productTypes.map((type, i) => (
-										<div key={type.slug} className={staggerItemClassName} style={staggerDelay(i + 1, 90)}>
+										<li key={type.slug} className={staggerItemClassName} style={staggerDelay(i + 1, 90)}>
 											<SheetClose asChild>
 												<Link
 													href={`/produits/${type.slug}`}
@@ -235,9 +208,9 @@ export function MenuSheet({
 													{type.label}
 												</Link>
 											</SheetClose>
-										</div>
+										</li>
 									))}
-								</div>
+								</ul>
 							</section>
 						)}
 
@@ -245,9 +218,9 @@ export function MenuSheet({
 						{displayedCollections && displayedCollections.length > 0 && (
 							<section aria-labelledby="section-collections" className="mb-4">
 								<SectionHeader id="section-collections">Collections</SectionHeader>
-								<div className="space-y-1">
+								<ul className="space-y-1">
 									{/* Lien "Toutes les collections" proéminent en premier */}
-									<div className={staggerItemClassName} style={staggerDelay(0, 110)}>
+									<li className={staggerItemClassName} style={staggerDelay(0, 110)}>
 										<SheetClose asChild>
 											<Link
 												href="/collections"
@@ -265,9 +238,9 @@ export function MenuSheet({
 												Toutes les collections
 											</Link>
 										</SheetClose>
-									</div>
+									</li>
 									{displayedCollections.map((collection, i) => (
-										<div key={collection.slug} className={staggerItemClassName} style={staggerDelay(i + 1, 110)}>
+										<li key={collection.slug} className={staggerItemClassName} style={staggerDelay(i + 1, 110)}>
 											<SheetClose asChild>
 												<Link
 													href={`/collections/${collection.slug}`}
@@ -303,9 +276,9 @@ export function MenuSheet({
 													<span className="flex-1">{collection.label}</span>
 												</Link>
 											</SheetClose>
-										</div>
+										</li>
 									))}
-								</div>
+								</ul>
 							</section>
 						)}
 
@@ -313,8 +286,8 @@ export function MenuSheet({
 						{personalizationItem && (
 							<section aria-labelledby="section-custom" className="mb-4">
 								<SectionHeader id="section-custom">Sur mesure</SectionHeader>
-								<div>
-									<div className={staggerItemClassName} style={staggerDelay(0, 130)}>
+								<ul>
+									<li className={staggerItemClassName} style={staggerDelay(0, 130)}>
 										<SheetClose asChild>
 											<Link
 												href={personalizationItem.href}
@@ -332,15 +305,14 @@ export function MenuSheet({
 												{personalizationItem.label}
 											</Link>
 										</SheetClose>
-									</div>
-								</div>
+									</li>
+								</ul>
 							</section>
 						)}
 
 						{/* Séparateur décoratif */}
 						<div
 							className="relative my-6 flex items-center justify-center"
-							role="separator"
 							aria-hidden="true"
 						>
 							<div className="absolute inset-0 flex items-center">
@@ -354,10 +326,10 @@ export function MenuSheet({
 						{/* Zone compte */}
 						<section aria-labelledby="section-account">
 							<SectionHeader id="section-account">{isLoggedIn ? "Mon compte" : "Compte"}</SectionHeader>
-							<div className="space-y-1">
+							<ul className="space-y-1">
 								{/* Account link - adapts to session state */}
 								{accountItem && (
-									<div className={staggerItemClassName} style={staggerDelay(0, 150)}>
+									<li className={staggerItemClassName} style={staggerDelay(0, 150)}>
 										<SheetClose asChild>
 											<Link
 												href={accountItem.href}
@@ -375,12 +347,12 @@ export function MenuSheet({
 												{accountItem.label}
 											</Link>
 										</SheetClose>
-									</div>
+									</li>
 								)}
 
 								{/* Favorites with badge count */}
 								{favoritesItem && isLoggedIn && (
-									<div className={staggerItemClassName} style={staggerDelay(1, 150)}>
+									<li className={staggerItemClassName} style={staggerDelay(1, 150)}>
 										<SheetClose asChild>
 											<Link
 												href={favoritesItem.href}
@@ -402,12 +374,12 @@ export function MenuSheet({
 												)}
 											</Link>
 										</SheetClose>
-									</div>
+									</li>
 								)}
 
 								{/* Orders (logged in only) */}
 								{isLoggedIn && (
-									<div className={staggerItemClassName} style={staggerDelay(2, 150)}>
+									<li className={staggerItemClassName} style={staggerDelay(2, 150)}>
 										<SheetClose asChild>
 											<Link
 												href="/commandes"
@@ -423,12 +395,12 @@ export function MenuSheet({
 												Mes commandes
 											</Link>
 										</SheetClose>
-									</div>
+									</li>
 								)}
 
 								{/* Logout (logged in only) */}
 								{isLoggedIn && (
-									<div className={staggerItemClassName} style={staggerDelay(3, 150)}>
+									<li className={staggerItemClassName} style={staggerDelay(3, 150)}>
 										<LogoutAlertDialog>
 											<button
 												type="button"
@@ -437,12 +409,12 @@ export function MenuSheet({
 												Déconnexion
 											</button>
 										</LogoutAlertDialog>
-									</div>
+									</li>
 								)}
 
 								{/* Sign up link for non-logged-in users */}
 								{!isLoggedIn && (
-									<div className={staggerItemClassName} style={staggerDelay(1, 150)}>
+									<li className={staggerItemClassName} style={staggerDelay(1, 150)}>
 										<SheetClose asChild>
 											<Link
 												href="/inscription"
@@ -459,9 +431,9 @@ export function MenuSheet({
 												Créer un compte
 											</Link>
 										</SheetClose>
-									</div>
+									</li>
 								)}
-							</div>
+							</ul>
 						</section>
 						</nav>
 					</ScrollFade>

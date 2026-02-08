@@ -1,9 +1,15 @@
 import { use } from "react"
 import Link from "next/link"
 
-import { Fade, Stagger } from "@/shared/components/animations"
+import { Fade, Reveal, Stagger } from "@/shared/components/animations"
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config"
 import { Button } from "@/shared/components/ui/button"
+import {
+	Carousel,
+	CarouselContent,
+	CarouselDots,
+	CarouselItem,
+} from "@/shared/components/ui/carousel"
 import { SectionTitle } from "@/shared/components/section-title"
 import { RatingStars } from "@/shared/components/rating-stars"
 import { SECTION_SPACING } from "@/shared/constants/spacing"
@@ -42,6 +48,14 @@ export function ReviewsSection({
 			aria-labelledby="reviews-title"
 			aria-describedby="reviews-subtitle"
 		>
+			{/* Skip link for keyboard navigation - skip carousel */}
+			<a
+				href="#reviews-cta"
+				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-background focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-ring focus:text-foreground"
+			>
+				Passer le carrousel d&apos;avis
+			</a>
+
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Header */}
 				<header className="mb-8 text-center lg:mb-12">
@@ -75,9 +89,36 @@ export function ReviewsSection({
 					)}
 				</header>
 
-				{/* Reviews grid */}
+				{/* Mobile: Carousel */}
+				<div className="lg:hidden mb-6 sm:mb-8">
+					<Reveal delay={0.2} duration={0.8} y={20} once={true}>
+						<Carousel
+							opts={{
+								align: "center",
+								containScroll: "trimSnaps",
+							}}
+							className="w-full"
+							aria-label="Carrousel d'avis clients"
+						>
+							<CarouselContent className="-ml-4 py-4" showFade>
+								{reviews.map((review, index) => (
+									<CarouselItem
+										key={review.id}
+										index={index}
+										className="pl-4 basis-[clamp(260px,80vw,340px)]"
+									>
+										<HomepageReviewCard review={review} className="h-full" />
+									</CarouselItem>
+								))}
+							</CarouselContent>
+							<CarouselDots />
+						</Carousel>
+					</Reveal>
+				</div>
+
+				{/* Desktop: Stagger grid */}
 				<Stagger
-					className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 lg:mb-12"
+					className="hidden lg:grid grid-cols-3 gap-6 mb-12"
 					stagger={MOTION_CONFIG.section.grid.stagger}
 					y={MOTION_CONFIG.section.grid.y}
 					inView
@@ -89,25 +130,27 @@ export function ReviewsSection({
 				</Stagger>
 
 				{/* CTA */}
-				<Fade
-					y={MOTION_CONFIG.section.cta.y}
-					delay={MOTION_CONFIG.section.cta.delay}
-					duration={MOTION_CONFIG.section.cta.duration}
-					inView
-					once
-					className="text-center"
-				>
-					<Button
-						asChild
-						size="lg"
-						variant="outline"
-						className="hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+				<div id="reviews-cta">
+					<Fade
+						y={MOTION_CONFIG.section.cta.y}
+						delay={MOTION_CONFIG.section.cta.delay}
+						duration={MOTION_CONFIG.section.cta.duration}
+						inView
+						once
+						className="text-center"
 					>
-						<Link href="/produits">
-							Découvrir nos créations
-						</Link>
-					</Button>
-				</Fade>
+						<Button
+							asChild
+							size="lg"
+							variant="outline"
+							className="hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out"
+						>
+							<Link href="/produits">
+								Découvrir nos créations
+							</Link>
+						</Button>
+					</Fade>
+				</div>
 			</div>
 		</section>
 	)

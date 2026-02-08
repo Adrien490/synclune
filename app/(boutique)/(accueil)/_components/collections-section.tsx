@@ -87,7 +87,6 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 												<CollectionCard
 													slug={collection.slug}
 													name={collection.name}
-													description={collection.description}
 													images={images}
 													index={index}
 													productCount={collection._count.products}
