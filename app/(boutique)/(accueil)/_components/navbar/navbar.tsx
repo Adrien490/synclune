@@ -4,12 +4,9 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
 import { getRecentSearches } from "@/modules/products/data/get-recent-searches";
-import { getCollections } from "@/modules/collections/data/get-collections";
-import { getProductTypes } from "@/modules/product-types/data/get-product-types";
-import { CollectionStatus } from "@/app/generated/prisma/client";
+import { getRecentProducts } from "@/modules/products/data/get-recent-products";
 import { Heart } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
@@ -19,33 +16,9 @@ import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { AccountDropdown } from "./account-dropdown";
 import { DesktopNav } from "./desktop-nav";
+import { getNavbarMenuData } from "./get-navbar-menu-data";
 import { MenuSheet } from "./menu-sheet";
 import { NavbarWrapper } from "./navbar-wrapper";
-
-/**
- * Fonction cachee pour les donnees publiques du menu (collections et types de produits)
- * Ces donnees sont partagees entre tous les utilisateurs et changent rarement.
- */
-async function getNavbarMenuData() {
-	"use cache";
-	cacheLife("collections");
-	cacheTag("navbar-menu");
-
-	const [collectionsData, productTypesData] = await Promise.all([
-		getCollections({
-			perPage: 4,
-			sortBy: "products-descending",
-			filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
-		}),
-		getProductTypes({
-			perPage: 12,
-			sortBy: "label-ascending",
-			filters: { isActive: true, hasProducts: true },
-		}),
-	]);
-
-	return { collectionsData, productTypesData };
-}
 
 /** Classes communes pour les boutons icônes de la navbar */
 const iconButtonClassName = cn(
@@ -56,15 +29,16 @@ const iconButtonClassName = cn(
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 );
 
-export async function Navbar() {
+export async function Navbar({ quickSearchSlot }: { quickSearchSlot?: React.ReactNode }) {
 	// Paralléliser tous les fetches pour optimiser le TTFB
 	// Les données publiques (collections, productTypes) sont cachées via getNavbarMenuData()
-	const [session, cartCount, wishlistCount, recentSearches, menuData] = await Promise.all([
+	const [session, cartCount, wishlistCount, recentSearches, menuData, recentProducts] = await Promise.all([
 		getSession(),
 		getCartItemCount(),
 		getWishlistItemCount(),
 		getRecentSearches(),
 		getNavbarMenuData(),
+		getRecentProducts({ limit: 4 }),
 	]);
 
 	const { collectionsData, productTypesData } = menuData;
@@ -77,16 +51,32 @@ export async function Navbar() {
 	const safeWishlistCount = wishlistCount ?? 0;
 
 	// Collections et types de produits pour le quick search dialog
-	const collections = collectionsData.collections.map((c) => ({
-		slug: c.slug,
-		name: c.name,
-		productCount: c._count.products,
-	}));
+	const collections = collectionsData.collections.map((c) => {
+		const firstImage = c.products[0]?.product?.skus[0]?.images[0];
+		return {
+			slug: c.slug,
+			name: c.name,
+			productCount: c._count.products,
+			image: firstImage ? { url: firstImage.url, blurDataUrl: firstImage.blurDataUrl } : null,
+		};
+	});
 
 	const productTypes = productTypesData.productTypes.map((t) => ({
 		slug: t.slug,
 		label: t.label,
 	}));
+
+	// Lightweight recently viewed products for the quick search dialog
+	const recentlyViewed = recentProducts.map((p) => {
+		const defaultSku = p.skus.find((s) => s.isDefault) ?? p.skus[0];
+		const image = defaultSku?.images?.find((img) => img.isPrimary) ?? defaultSku?.images?.[0];
+		return {
+			slug: p.slug,
+			title: p.title,
+			price: defaultSku?.priceInclTax ?? 0,
+			image: image ? { url: image.url, blurDataUrl: image.blurDataUrl } : null,
+		};
+	});
 
 	// Collections avec images[] pour les menus (Bento Grid - jusqu'à 4 images)
 	const menuCollections = collectionsData.collections.map((c) => ({
@@ -195,6 +185,8 @@ export async function Navbar() {
 									recentSearches={recentSearches}
 									collections={collections}
 									productTypes={productTypes}
+									recentlyViewed={recentlyViewed}
+									quickSearchSlot={quickSearchSlot}
 								/>
 
 								{/* Dropdown compte (visible sur desktop seulement) */}

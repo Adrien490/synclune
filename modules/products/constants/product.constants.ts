@@ -266,6 +266,28 @@ export const GET_PRODUCTS_SELECT = {
 	},
 } as const satisfies Prisma.ProductSelect;
 
+/**
+ * Ultra-lightweight select for quick search dialog results.
+ * Only includes data needed for compact result display (thumbnail, title, price, colors).
+ */
+export const QUICK_SEARCH_SELECT = {
+	id: true,
+	slug: true,
+	title: true,
+	skus: {
+		where: { isActive: true },
+		select: {
+			priceInclTax: true,
+			compareAtPrice: true,
+			inventory: true,
+			isDefault: true,
+			color: { select: { slug: true, name: true, hex: true } },
+			images: { where: { isPrimary: true }, take: 1, select: { url: true, blurDataUrl: true, altText: true } },
+		},
+		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
+	},
+} as const satisfies Prisma.ProductSelect;
+
 // ============================================================================
 // PAGINATION & SORTING
 // ============================================================================

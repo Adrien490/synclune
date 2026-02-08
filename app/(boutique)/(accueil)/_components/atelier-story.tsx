@@ -1,17 +1,21 @@
-import { Fade, Reveal, Stagger } from "@/shared/components/animations";
+import { Fade, HandDrawnUnderline, Reveal, Stagger } from "@/shared/components/animations";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { PolaroidFrame } from "@/shared/components/polaroid-frame";
+import { SparklesDivider } from "@/shared/components/section-divider";
+import { Button } from "@/shared/components/ui/button";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { cn } from "@/shared/utils/cn";
 import { dancingScript } from "@/shared/styles/fonts";
-import { Sparkles } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
+import Link from "next/link";
 
 
 const POLAROIDS = [
-	{ caption: "Les mains dans les perles !", label: "Mains de Léane assemblant un bijou", tilt: "left", washiColor: "pink", washiPosition: "top-left" },
-	{ caption: "Mes petits trésors", label: "Perles et matériaux colorés", tilt: "right", washiColor: "lavender", washiPosition: "top-right" },
-	{ caption: "L'inspiration du jour", label: "Carnet d'inspiration avec croquis", tilt: "left", washiColor: "mint", washiPosition: "top-left", className: "hidden lg:block" },
-	{ caption: "Mon coin créatif", label: "Vue de l'atelier Synclune", tilt: "right", washiColor: "peach", washiPosition: "top-right", className: "hidden lg:block" },
+	{ caption: "Les mains dans les perles !", label: "Mains de Léane assemblant un bijou", tilt: "left", washiColor: "pink", washiPosition: "top-left", glowClass: "hover:shadow-[0_0_20px_var(--color-glow-pink)]" },
+	{ caption: "Mes petits trésors", label: "Perles et matériaux colorés", tilt: "right", washiColor: "lavender", washiPosition: "top-right", glowClass: "hover:shadow-[0_0_20px_var(--color-glow-lavender)]" },
+	{ caption: "L'inspiration du jour", label: "Carnet d'inspiration avec croquis", tilt: "left", washiColor: "mint", washiPosition: "top-left", className: "hidden lg:block", glowClass: "hover:shadow-[0_0_20px_var(--color-glow-mint)]" },
+	{ caption: "Mon coin créatif", label: "Vue de l'atelier Synclune", tilt: "right", washiColor: "peach", washiPosition: "top-right", className: "hidden lg:block", glowClass: "hover:shadow-[0_0_20px_var(--color-glow-yellow)]" },
 ] as const;
 
 /**
@@ -37,9 +41,17 @@ export async function AtelierStory() {
 				L'histoire de Léane, créatrice de bijoux artisanaux Synclune à Nantes
 			</h2>
 
+			{/* Skip link for keyboard navigation */}
+			<a
+				href="#atelier-story-cta"
+				className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-background focus:px-4 focus:py-2 focus:rounded-md focus:ring-2 focus:ring-ring focus:text-foreground"
+			>
+				Passer au bouton Découvrir
+			</a>
+
 			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Main ambiance photo - reduced height on mobile for better flow */}
-				<Reveal y={20} duration={0.6} once>
+				<Reveal y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration} once>
 					<div className="mb-8 sm:mb-12">
 						<PlaceholderImage
 							className="aspect-3/2 sm:aspect-video max-h-[50vh] sm:max-h-none"
@@ -49,20 +61,11 @@ export async function AtelierStory() {
 				</Reveal>
 
 				{/* Decorative animated separator */}
-				<Fade y={8} delay={0.25} duration={0.5} inView once>
-					<div
-						className="flex justify-center items-center gap-3 mb-8 sm:mb-12"
-						aria-hidden="true"
-					>
-						<Sparkles className="w-4 h-4 text-primary" />
-						<Sparkles className="w-5 h-5 text-primary" />
-						<Sparkles className="w-4 h-4 text-primary" />
-					</div>
-				</Fade>
+				<SparklesDivider className="mb-8 sm:mb-12 py-0" />
 
 				{/* Confession text with staggered paragraphs */}
-				<Fade y={12} delay={0.15} duration={0.5} inView once>
-					<div className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
+				<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration} inView once>
+					<blockquote className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6">
 						{/* Decorative badge (real h2 is sr-only above) */}
 						<span
 							className="inline-block text-sm uppercase tracking-[0.2em] text-muted-foreground font-medium"
@@ -78,8 +81,8 @@ export async function AtelierStory() {
 
 						{/* Body text with stagger for progressive reading */}
 						<Stagger
-							stagger={0.08}
-							y={20}
+							stagger={MOTION_CONFIG.section.grid.stagger}
+							y={MOTION_CONFIG.section.grid.y}
 							inView
 							once
 							className="space-y-4 sm:space-y-6 text-base sm:text-lg text-muted-foreground leading-relaxed"
@@ -89,18 +92,20 @@ export async function AtelierStory() {
 								Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier à Nantes ! C'était pas prévu à la base <span role="img" aria-label="visage qui rit aux larmes">😂</span>
 							</p>
 							<p>Chaque bijou que tu vois ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).</p>
-							{/* Signature */}
-							<p
-								className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic pt-4 text-center`}
-							>
-								— Léane
-							</p>
 						</Stagger>
-					</div>
+
+						{/* Signature */}
+						<footer
+							className={`${dancingScript.className} text-2xl md:text-3xl text-foreground italic pt-4 text-center text-shadow-glow`}
+						>
+							— Léane
+						</footer>
+						<HandDrawnUnderline color="var(--secondary)" delay={0.4} className="mx-auto mt-2" />
+					</blockquote>
 				</Fade>
 
 				{/* Polaroid gallery - 4 photos desktop, 2 mobile (via CSS) */}
-				<Reveal y={25} delay={0.3} duration={0.6} once>
+				<Reveal y={MOTION_CONFIG.section.grid.y} delay={0.3} duration={MOTION_CONFIG.section.title.duration} once>
 					<div className="mt-12 sm:mt-16">
 						{/* Polaroid scrapbook grid */}
 						<div
@@ -108,8 +113,8 @@ export async function AtelierStory() {
 							aria-label="Galerie photos de l'atelier Synclune"
 						>
 							<Stagger
-								stagger={0.1}
-								y={20}
+								stagger={MOTION_CONFIG.stagger.slow}
+								y={MOTION_CONFIG.section.grid.y}
 								inView
 								once
 								className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto"
@@ -122,7 +127,11 @@ export async function AtelierStory() {
 										washiTape
 										washiColor={p.washiColor}
 										washiPosition={p.washiPosition}
-										className={"className" in p ? p.className : undefined}
+										className={cn(
+											"className" in p ? p.className : undefined,
+											"motion-safe:transition-shadow motion-safe:duration-300",
+											p.glowClass
+										)}
 									>
 										<PlaceholderImage className="w-full h-full" label={p.label} />
 									</PolaroidFrame>
@@ -131,6 +140,21 @@ export async function AtelierStory() {
 						</div>
 					</div>
 				</Reveal>
+
+				{/* CTA */}
+				<div id="atelier-story-cta" className="mt-12 sm:mt-16">
+					<Fade y={MOTION_CONFIG.section.cta.y} delay={MOTION_CONFIG.section.cta.delay}
+						duration={MOTION_CONFIG.section.cta.duration} inView once className="text-center">
+						<p className="text-muted-foreground mb-4 text-base sm:text-lg">
+							Envie de voir mes créations de plus près ?
+						</p>
+						<Button asChild size="lg" variant="outline"
+							className="shadow-md hover:shadow-xl motion-safe:hover:scale-[1.02] active:scale-[0.98] motion-safe:transition-all motion-safe:duration-300"
+						>
+							<Link href="/produits">Découvrir les créations</Link>
+						</Button>
+					</Fade>
+				</div>
 			</div>
 		</section>
 	);

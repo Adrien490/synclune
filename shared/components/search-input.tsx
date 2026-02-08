@@ -35,6 +35,8 @@ type SearchInputProps = {
 	onSubmit?: (term: string) => void
 	/** Callback on Escape key - if provided, always called (even with content). If not provided, clears input first then propagates. */
 	onEscape?: () => void
+	/** Callback on every input value change (for live search debouncing in parent) */
+	onValueChange?: (value: string) => void
 }
 
 const sizeStyles = {
@@ -77,6 +79,7 @@ export function SearchInput({
 	ariaLabel,
 	onSubmit,
 	onEscape,
+	onValueChange,
 }: SearchInputProps) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const [internalPending, startTransition] = useTransition()
@@ -156,6 +159,7 @@ export function SearchInput({
 
 	const handleClear = () => {
 		form.setFieldValue("search", "")
+		onValueChange?.("")
 		// In live mode, also clear the URL param
 		if (mode === "live") {
 			handleSearch("")
@@ -170,6 +174,7 @@ export function SearchInput({
 				// Parent handles Escape (e.g., close dialog directly)
 				if (currentValue) {
 					form.setFieldValue("search", "")
+					onValueChange?.("")
 				}
 				onEscape()
 			} else if (currentValue) {
@@ -236,7 +241,10 @@ export function SearchInput({
 								inputMode="search"
 								enterKeyHint="search"
 								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
+								onChange={(e) => {
+									field.handleChange(e.target.value)
+									onValueChange?.(e.target.value)
+								}}
 								onKeyDown={(e) => handleKeyDown(e, field.state.value)}
 								className={cn(
 									"border-none shadow-none focus-visible:ring-0",

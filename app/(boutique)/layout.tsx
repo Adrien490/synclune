@@ -7,16 +7,18 @@ import { Suspense } from "react";
 
 interface ShopLayoutProps {
 	children: React.ReactNode;
+	quicksearch: React.ReactNode;
 }
 
 export default async function ShopLayout({
 	children,
+	quicksearch,
 }: ShopLayoutProps) {
 	return (
 		<>
 			<ErrorBoundary fallback={<NavbarSkeleton />}>
 				<Suspense fallback={<NavbarSkeleton />}>
-					<Navbar />
+					<Navbar quickSearchSlot={quicksearch} />
 				</Suspense>
 			</ErrorBoundary>
 			<main

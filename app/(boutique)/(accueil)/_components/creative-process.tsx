@@ -1,4 +1,4 @@
-import { Fade, Reveal, Stagger } from "@/shared/components/animations";
+import { Fade, GlitterSparkles, HandDrawnUnderline, Reveal, Stagger } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
@@ -9,6 +9,10 @@ import { cn } from "@/shared/utils/cn";
 import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
+import { ActiveStepTracker } from "./active-step-tracker";
+import { CreativeProcessParallax } from "./creative-process-parallax";
+import { ImageScrollOverlay } from "./image-scroll-overlay";
+import { MobileStepCircle } from "./mobile-step-circle";
 import { ParallaxImage } from "./parallax-image";
 import { ScrollProgressLine } from "./scroll-progress-line";
 
@@ -20,45 +24,51 @@ interface ProcessStep {
 	color: string;
 	/** CSS animation on group hover */
 	iconHoverClass: string;
+	/** Colored glow on hover */
+	glowClass: string;
 }
 
 // Creative process steps - static data
 const processSteps: ProcessStep[] = [
 	{
 		id: "idea",
-		icon: <Lightbulb className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
+		icon: <Lightbulb className="w-6 h-6 motion-safe:transition-all motion-safe:duration-300" aria-hidden="true" />,
 		title: "D'abord, une idée",
 		description:
 			"L'idée naît souvent de mon quotidien : une couleur aperçue dans la rue, un motif sur un tissu, ou même un rêve ! J'essaye de ne pas me forcer, mais plutôt de laisser l'inspiration venir d'elle-même.",
 		color: STEP_COLORS.secondary,
 		iconHoverClass: "group-hover:[&_svg]:text-yellow-500 group-hover:[&_svg]:drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]",
+		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-yellow)]",
 	},
 	{
 		id: "drawing",
-		icon: <Pencil className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
+		icon: <Pencil className="w-6 h-6 motion-safe:transition-all motion-safe:duration-300" aria-hidden="true" />,
 		title: "Le dessin et la peinture",
 		description:
 			"Je dessine mes motifs sur du plastique fou, puis je passe à la peinture acrylique. C'est l'étape la plus minutieuse : chaque trait compte, chaque couleur est choisie avec soin.",
 		color: STEP_COLORS.primary,
 		iconHoverClass: "group-hover:[&_svg]:rotate-[-15deg]",
+		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-pink)]",
 	},
 	{
 		id: "assembly",
-		icon: <Hammer className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
+		icon: <Hammer className="w-6 h-6 motion-safe:transition-all motion-safe:duration-300" aria-hidden="true" />,
 		title: "La cuisson et l'assemblage",
 		description:
 			"Cuisson au four (le plastique rétrécit de 7 fois !), vernissage pour protéger les couleurs, puis montage sur les supports. Parfois le résultat surprend, mais ça fait partie du charme artisanal !",
 		color: STEP_COLORS.secondary,
 		iconHoverClass: "group-hover:[&_svg]:translate-y-[-2px] group-hover:[&_svg]:rotate-[-8deg]",
+		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-lavender)]",
 	},
 	{
 		id: "finishing",
-		icon: <CheckCircle className="w-6 h-6 transition-all duration-300" aria-hidden="true" />,
+		icon: <CheckCircle className="w-6 h-6 motion-safe:transition-all motion-safe:duration-300" aria-hidden="true" />,
 		title: "La touche finale",
 		description:
 			"Je polis, je vérifie chaque détail, j'assemble les perles... Bon, je suis un peu perfectionniste ! Puis emballage avec amour dans sa jolie pochette.",
 		color: STEP_COLORS.primary,
 		iconHoverClass: "group-hover:[&_svg]:scale-110",
+		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-mint)]",
 	},
 ];
 
@@ -100,6 +110,8 @@ export async function CreativeProcess() {
 				Aller au bouton de contact
 			</a>
 
+			{/* Parallax background with blobs, jewelry silhouettes and sparkles */}
+			<CreativeProcessParallax />
 
 			<div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<header className="text-center mb-12 lg:mb-16">
@@ -107,6 +119,7 @@ export async function CreativeProcess() {
 						<SectionTitle id="creative-process-title">
 							Comment je crée tes bijoux
 						</SectionTitle>
+						<HandDrawnUnderline color="var(--secondary)" delay={0.3} className="mx-auto mt-2" />
 					</Fade>
 					<Fade y={MOTION_CONFIG.section.subtitle.y} delay={MOTION_CONFIG.section.subtitle.delay} duration={MOTION_CONFIG.section.subtitle.duration}>
 						<p className="mt-4 text-lg/7 tracking-normal antialiased text-muted-foreground max-w-2xl mx-auto">
@@ -136,6 +149,9 @@ export async function CreativeProcess() {
 								className="object-cover object-center saturate-[1.05] brightness-[1.02]"
 							/>
 
+							{/* Scroll-linked gradient overlay (desktop) */}
+							<ImageScrollOverlay />
+
 							{/* Handmade badge - WCAG AA contrast */}
 							<div
 								className="absolute top-4 right-4 z-10 px-3 py-1.5 bg-secondary/95 backdrop-blur-md border-2 border-white/30 rounded-full shadow-lg drop-shadow-md"
@@ -151,125 +167,128 @@ export async function CreativeProcess() {
 
 					{/* Process timeline */}
 					<div className="relative order-2">
-						<div className="relative space-y-8 sm:space-y-12 lg:space-y-16">
-							{/* Scroll-animated vertical line (desktop) */}
-							<ScrollProgressLine />
+						<ActiveStepTracker>
+							<div className="relative space-y-8 sm:space-y-12 lg:space-y-16" role="list">
+								{/* Scroll-animated vertical line (desktop) */}
+								<ScrollProgressLine />
 
-							{/* Simplified vertical line (mobile) - centered on 48px */}
-							<div
-								className="absolute left-[24px] top-8 bottom-8 w-px bg-secondary/50 sm:hidden transition-colors duration-300"
-								aria-hidden="true"
-							/>
+								{/* Simplified vertical line (mobile) - centered on 48px */}
+								<div
+									className="absolute left-[24px] top-8 bottom-8 w-px bg-secondary/50 sm:hidden motion-safe:transition-colors motion-safe:duration-300"
+									aria-hidden="true"
+								/>
 
-							<Stagger
-								stagger={MOTION_CONFIG.section.grid.stagger}
-								y={MOTION_CONFIG.section.grid.y}
-								delay={0}
-								inView
-								once={true}
-							>
-								{processSteps.map((step, index) => (
-									<article
-										key={step.id}
-										className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 transition-all duration-300 hover:bg-muted/30 hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
-									>
-										{/* Accessibility: step number for screen readers */}
-										<span className="sr-only">Étape {index + 1} :</span>
-
-										{/* Desktop: Icons in circles with vertical line */}
+								<Stagger
+									stagger={0.12}
+									y={30}
+									delay={0}
+									inView
+									once={true}
+								>
+									{processSteps.map((step, index) => (
 										<div
-											className={cn(
-												"hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 items-center justify-center transition-all duration-300 relative z-20",
-												step.color,
-												// Subtle hover animation: slight rotation and scale
-												"group-hover:scale-110 group-hover:-rotate-3",
-												// Icon-specific micro-interaction
-												step.iconHoverClass,
-												// Progressive crescendo
-												STEP_INTENSITY[index].ring,
-												STEP_INTENSITY[index].shadow
-											)}
+											key={step.id}
+											role="listitem"
+											className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 motion-safe:transition-all motion-safe:duration-300 motion-safe:hover:bg-muted/30 motion-safe:hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
+											data-step-index={index}
+											style={{ opacity: `var(--step-${index}-opacity, 1)` }}
 										>
-											{step.icon}
-										</div>
+											{/* Accessibility: step number for screen readers */}
+											<span className="sr-only">Étape {index + 1} :</span>
 
-										{/* Mobile: Colored numbers for better guidance - 48px WCAG touch target */}
-										<div
-											aria-hidden="true"
-											className={cn(
-												"flex sm:hidden shrink-0 w-12 h-12 rounded-full items-center justify-center font-bold text-lg transition-all duration-300",
-												step.color,
-												"group-hover:scale-110",
-												// Progressive crescendo
-												STEP_INTENSITY[index].ring,
-												STEP_INTENSITY[index].shadow
-											)}
-										>
-											{index + 1}
-										</div>
-
-										<div className="flex-1 pb-8">
-											<h3 className="text-xl/7 font-semibold text-foreground mb-2 tracking-tight antialiased">
-												{/* Numbering visible on desktop only (mobile has number in circle) */}
-												<span className="hidden sm:inline" aria-hidden="true">
-													{index + 1}.{" "}
-												</span>
-												{step.title}
-												{/* Sparkles on final step (climax) */}
-												{index === 3 && (
-													<Sparkles
-														className="inline-block w-4 h-4 ml-1.5 text-secondary opacity-70 transition-opacity group-hover:opacity-100"
-														aria-hidden="true"
-													/>
+											{/* Desktop: Icons in circles with vertical line */}
+											<div
+												className={cn(
+													"hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 items-center justify-center motion-safe:transition-all motion-safe:duration-300 relative z-20",
+													step.color,
+													// Subtle hover animation: slight rotation and scale
+													"motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3",
+													// Icon-specific micro-interaction
+													step.iconHoverClass,
+													// Colored glow on hover
+													step.glowClass,
+													// Progressive crescendo
+													STEP_INTENSITY[index].ring,
+													STEP_INTENSITY[index].shadow
 												)}
-											</h3>
-											<p className="text-base/7 tracking-normal antialiased text-muted-foreground">
-												{step.description}
-											</p>
+											>
+												{step.icon}
+												{/* GlitterSparkles on final step (climax) */}
+												{index === 3 && (
+													<div className="hidden sm:block">
+														<GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />
+													</div>
+												)}
+											</div>
+
+											{/* Mobile: Animated colored numbers - 48px WCAG touch target */}
+											<MobileStepCircle index={index} color={step.color} intensity={STEP_INTENSITY[index]} />
+
+											<div className="flex-1 pb-8">
+												<h3 className="text-xl/7 font-semibold text-foreground mb-2 tracking-tight antialiased">
+													{/* Numbering visible on desktop only (mobile has number in circle) */}
+													<span className="hidden sm:inline" aria-hidden="true">
+														{index + 1}.{" "}
+													</span>
+													{step.title}
+													{/* Sparkles on final step (climax) */}
+													{index === 3 && (
+														<Sparkles
+															className="inline-block w-4 h-4 ml-1.5 text-secondary opacity-70 motion-safe:transition-opacity group-hover:opacity-100"
+															aria-hidden="true"
+														/>
+													)}
+												</h3>
+												<p className="text-base/7 tracking-normal antialiased text-muted-foreground">
+													{step.description}
+												</p>
+											</div>
 										</div>
-									</article>
-								))}
-							</Stagger>
-						</div>
+									))}
+								</Stagger>
+							</div>
+						</ActiveStepTracker>
 
 						{/* CTA as natural continuation of the process */}
-						<div id="cta-personnalisation" className="mt-4 flex items-start gap-4 group relative rounded-xl p-2 -m-2">
-							{/* Desktop: Icon in dashed circle */}
-							<div
-								className="hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center transition-all duration-300 group-hover:border-secondary group-hover:scale-105"
-								aria-hidden="true"
-							>
-								<Sparkles className="w-5 h-5 text-secondary" />
-							</div>
-
-							{/* Mobile: Bonus number - 48px WCAG touch target */}
-							<div
-								className="flex sm:hidden shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center text-secondary font-bold"
-								aria-hidden="true"
-							>
-								+
-							</div>
-
-							<div className="flex-1">
-								<p
-									className="text-sm text-muted-foreground mb-3 italic"
+						<Fade inView once y={15} delay={0.2}>
+							<div id="cta-personnalisation" className="mt-4 flex items-start gap-4 group relative rounded-xl p-2 -m-2">
+								{/* Desktop: Icon in dashed circle */}
+								<div
+									className="hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center motion-safe:transition-all motion-safe:duration-300 group-hover:border-secondary group-hover:scale-105"
+									aria-hidden="true"
 								>
-									Tu as une idée de bijou personnalisé ? N'hésite pas à m'en parler !
-								</p>
-								<Button
-									asChild
-									variant="secondary"
-									size="lg"
-									className="w-full sm:w-auto shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+									<Sparkles className="w-5 h-5 text-secondary" />
+								</div>
+
+								{/* Mobile: Bonus number - 48px WCAG touch target */}
+								<div
+									className="flex sm:hidden shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center text-secondary font-bold"
+									aria-hidden="true"
 								>
-									<Link
-										href="/personnalisation"
+									+
+								</div>
+
+								<div className="flex-1">
+									<p
+										className="text-sm text-muted-foreground mb-3 italic"
 									>
-										Discutons de ton idée
-									</Link>
-								</Button>
+										Tu as une idée de bijou personnalisé ? N'hésite pas à m'en parler !
+									</p>
+									<Button
+										asChild
+										variant="secondary"
+										size="lg"
+										className="w-full sm:w-auto shadow-md hover:shadow-xl motion-safe:hover:scale-[1.02] active:scale-[0.98] motion-safe:transition-all motion-safe:duration-300"
+									>
+										<Link
+											href="/personnalisation"
+										>
+											Discutons de ton idée
+										</Link>
+									</Button>
+								</div>
 							</div>
-						</div>
+						</Fade>
 					</div>
 				</div>
 			</div>
