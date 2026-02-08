@@ -3,9 +3,7 @@
  *
  * Regroupe les types pour:
  * - Téléchargement d'images (image-downloader.service)
- * - Génération de blur placeholders (generate-blur-data-url)
  * - Génération de ThumbHash (generate-thumbhash)
- * - Génération de placeholders couleur (generate-color-placeholder)
  *
  * @module modules/media/types/image-processing.types
  */
@@ -38,26 +36,6 @@ export interface RetryOptions {
 }
 
 // ============================================================================
-// BLUR DATA URL
-// ============================================================================
-
-/** Fonction de log pour les avertissements blur */
-export type BlurLogFn = LogFn;
-
-export interface GenerateBlurOptions {
-	/** Timeout pour le téléchargement (ms) */
-	downloadTimeout?: number;
-	/** Taille max de l'image (octets) */
-	maxImageSize?: number;
-	/** Taille du placeholder (pixels) */
-	plaiceholderSize?: number;
-	/** Valider que l'URL est un domaine UploadThing */
-	validateDomain?: boolean;
-	/** Fonction de log personnalisée (defaut: console.warn) */
-	logWarning?: BlurLogFn;
-}
-
-// ============================================================================
 // THUMBHASH
 // ============================================================================
 
@@ -87,31 +65,3 @@ export interface ThumbHashResult {
 	height: number;
 }
 
-// ============================================================================
-// COLOR PLACEHOLDER
-// ============================================================================
-
-export interface ColorPlaceholderResult {
-	/** Couleur dominante en hexadécimal (ex: "#8B7355") */
-	dominantColor: string;
-	/** CSS gradient pour placeholder (ex: "linear-gradient(135deg, #8B7355 0%, #6B5344 100%)") */
-	cssGradient: string;
-	/** Data URL CSS compatible avec Next.js Image blurDataURL */
-	blurDataUrl: string;
-}
-
-/** Fonction de log pour les avertissements color placeholder */
-export type ColorLogFn = LogFn;
-
-export interface GenerateColorPlaceholderOptions {
-	/** Timeout pour le téléchargement (ms) */
-	downloadTimeout?: number;
-	/** Taille max de l'image (octets) */
-	maxImageSize?: number;
-	/** Taille de resize pour l'analyse (pixels) - plus petit = plus rapide */
-	analysisSize?: number;
-	/** Valider que l'URL est un domaine UploadThing */
-	validateDomain?: boolean;
-	/** Fonction de log personnalisée (defaut: console.warn) */
-	logWarning?: ColorLogFn;
-}

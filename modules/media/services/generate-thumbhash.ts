@@ -51,7 +51,7 @@ async function extractRgbaData(
 	// Resize en gardant l'aspect ratio, max 100x100
 	const resized = image.resize(maxSize, maxSize, {
 		fit: "inside",
-		withoutEnlargement: false,
+		withoutEnlargement: true,
 	});
 
 	const { data, info } = await resized.raw().toBuffer({ resolveWithObject: true });
