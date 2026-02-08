@@ -2,7 +2,6 @@ import { CollectionsSectionSkeleton } from "@/modules/collections/components/col
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { AtelierStorySkeleton } from "./_components/atelier-story-skeleton";
 import { CreativeProcessSkeleton } from "./_components/creative-process-skeleton";
-import { CuratedPicksSkeleton } from "./_components/curated-picks-skeleton";
 import { FaqSectionSkeleton } from "./_components/faq-section-skeleton";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
@@ -11,7 +10,7 @@ import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton
  * Loading state for home page
  * Reproduit EXACTEMENT la structure de la page réelle pour éviter le CLS
  *
- * Structure : Hero → ValueProposition → CuratedPicks → LatestCreations
+ * Structure : Hero → ValueProposition → LatestCreations
  *           → Collections → AtelierStory → CreativeProcess → FAQ → Newsletter
  */
 export default function HomeLoading() {
@@ -44,25 +43,22 @@ export default function HomeLoading() {
 				</div>
 			</div>
 
-			{/* 3. Curated Picks */}
-			<CuratedPicksSkeleton productsCount={4} />
-
-			{/* 4. Latest Creations */}
+			{/* 3. Latest Creations */}
 			<LatestCreationsSkeleton productsCount={4} />
 
-			{/* 5. Collections */}
+			{/* 4. Collections */}
 			<CollectionsSectionSkeleton collectionsCount={6} />
 
-			{/* 6. Atelier Story */}
+			{/* 5. Atelier Story */}
 			<AtelierStorySkeleton />
 
-			{/* 7. Creative Process */}
+			{/* 6. Creative Process */}
 			<CreativeProcessSkeleton />
 
-			{/* 8. FAQ */}
+			{/* 7. FAQ */}
 			<FaqSectionSkeleton />
 
-			{/* 9. Newsletter */}
+			{/* 8. Newsletter */}
 			<div className={`relative overflow-hidden bg-muted/20 ${SECTION_SPACING.section}`}>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 					<header className="mb-8 text-center lg:mb-12">

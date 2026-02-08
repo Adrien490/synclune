@@ -8,10 +8,18 @@ export function HeroSectionSkeleton() {
 	return (
 		<section className="relative min-h-[calc(75dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%">
 			{/* Background gradient */}
+			{/* Background gradient */}
 			<div
 				className="absolute inset-0 bg-linear-to-br from-pink-50/20 via-transparent to-amber-50/20"
 				aria-hidden="true"
 			/>
+
+			{/* Floating image placeholders - Desktop only */}
+			<div className="absolute inset-0 z-0 hidden lg:block" aria-hidden="true">
+				<Skeleton className="absolute left-[3%] xl:left-[5%] top-[18%] w-36 xl:w-44 2xl:w-52 aspect-[4/5] rounded-2xl bg-muted/30" />
+				<Skeleton className="absolute right-[3%] xl:right-[5%] top-[15%] w-36 xl:w-44 2xl:w-52 aspect-[4/5] rounded-2xl bg-muted/30" />
+				<Skeleton className="absolute right-[15%] xl:right-[18%] bottom-[12%] w-36 xl:w-44 2xl:w-52 aspect-[4/5] rounded-2xl bg-muted/30" />
+			</div>
 
 			<div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
 				<div className="flex flex-col items-center">

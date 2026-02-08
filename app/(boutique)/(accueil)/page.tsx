@@ -1,6 +1,4 @@
 import { CollectionsSection } from "@/app/(boutique)/(accueil)/_components/collections-section";
-import { CuratedPicks } from "@/app/(boutique)/(accueil)/_components/curated-picks";
-import { CuratedPicksSkeleton } from "@/app/(boutique)/(accueil)/_components/curated-picks-skeleton";
 import { LatestCreations } from "@/app/(boutique)/(accueil)/_components/latest-creations";
 import { LatestCreationsSkeleton } from "@/app/(boutique)/(accueil)/_components/latest-creations-skeleton";
 import { ValuePropositionBar } from "@/app/(boutique)/(accueil)/_components/value-proposition-bar";
@@ -15,10 +13,10 @@ import { StructuredData } from "@/shared/components/structured-data";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierStory } from "./_components/atelier-story";
-import { CURATED_PICKS_SLUGS } from "./_constants/curated-picks";
 import { CreativeProcess } from "./_components/creative-process";
 import { FaqSection } from "./_components/faq-section";
 import { HeroSection } from "./_components/hero-section";
+import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 
 export const metadata: Metadata = {
   title: {
@@ -59,6 +57,16 @@ export default async function Page() {
   const reviewStatsPromise = getGlobalReviewStats();
   const wishlistIdsPromise = getWishlistProductIds();
 
+  // Shared between HeroSection (floating images) and LatestCreations (product cards)
+  const latestCreationsPromise = getProducts(
+    {
+      perPage: 4,
+      sortBy: "created-descending",
+      filters: { status: "PUBLIC" },
+    },
+    { isAdmin: false },
+  );
+
   return (
     <>
       {/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article */}
@@ -66,48 +74,23 @@ export default async function Page() {
         <StructuredData reviewStatsPromise={reviewStatsPromise} />
       </Suspense>
 
-      {/* 1. Hero - Attention capture + rotating tagline */}
-      <HeroSection />
+      {/* 1. Hero - Attention capture + rotating tagline + floating product images */}
+      <Suspense fallback={<HeroSectionSkeleton />}>
+        <HeroSection productsPromise={latestCreationsPromise} />
+      </Suspense>
 
       {/* 2. Value Proposition Bar - Synclune brand pillars */}
       <ValuePropositionBar />
 
-      {/* 3. Curated Picks - Leane's handpicked favorites */}
-      <Suspense fallback={<CuratedPicksSkeleton productsCount={4} />}>
-        <CuratedPicks
-          productsPromise={getProducts(
-            {
-              perPage: 4,
-              sortBy: "created-descending",
-              filters: {
-                status: "PUBLIC",
-                slugs: CURATED_PICKS_SLUGS,
-              },
-            },
-            { isAdmin: false },
-          )}
-          wishlistProductIdsPromise={wishlistIdsPromise}
-        />
-      </Suspense>
-
-      {/* 4. Latest Creations - 4 most recent products */}
+      {/* 3. Latest Creations - 4 most recent products */}
       <Suspense fallback={<LatestCreationsSkeleton productsCount={4} />}>
         <LatestCreations
-          productsPromise={getProducts(
-            {
-              perPage: 4,
-              sortBy: "created-descending",
-              filters: {
-                status: "PUBLIC",
-              },
-            },
-            { isAdmin: false },
-          )}
+          productsPromise={latestCreationsPromise}
           wishlistProductIdsPromise={wishlistIdsPromise}
         />
       </Suspense>
 
-      {/* 5. Collections - Thematic browsing with descriptions */}
+      {/* 4. Collections - Thematic browsing with descriptions */}
       <Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
         <CollectionsSection
           collectionsPromise={getCollections({
@@ -121,18 +104,18 @@ export default async function Page() {
         />
       </Suspense>
 
-      {/* 6. Atelier Story - Personal storytelling with polaroid gallery */}
+      {/* 5. Atelier Story - Personal storytelling with polaroid gallery */}
       <AtelierStory />
 
-      {/* 7. Creative Process - Step-by-step jewelry making */}
+      {/* 6. Creative Process - Step-by-step jewelry making */}
       <Suspense>
         <CreativeProcess />
       </Suspense>
 
-      {/* 8. FAQ - Frequently asked questions with JSON-LD */}
+      {/* 7. FAQ - Frequently asked questions with JSON-LD */}
       <FaqSection />
 
-      {/* 9. Newsletter - Subscription with gift incentive */}
+      {/* 8. Newsletter - Subscription with gift incentive */}
       <NewsletterSection />
     </>
   );

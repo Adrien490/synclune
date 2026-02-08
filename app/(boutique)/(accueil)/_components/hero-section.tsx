@@ -1,21 +1,30 @@
 import { ScrollIndicator } from "@/shared/components/animations";
 import { DesktopParticles } from "./desktop-particles";
+import { HeroFloatingImages } from "./hero-floating-images";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { LayoutTextFlip } from "@/shared/components/ui/layout-text-flip";
+import type { GetProductsReturn } from "@/modules/products/data/get-products";
+import { extractHeroImages } from "../_utils/extract-hero-images";
 import { Heart } from "lucide-react";
-import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
+import { use } from "react";
+
+interface HeroSectionProps {
+  productsPromise: Promise<GetProductsReturn>;
+}
 
 /**
  * Homepage hero section.
  *
- * Fully static content. Component-level cache with "reference" profile.
+ * Displays rotating tagline, floating product images on desktop,
+ * and particle background. Products come from the shared latest
+ * creations fetch (no extra query).
  */
-export async function HeroSection() {
-  "use cache";
-  cacheLife("reference");
-  cacheTag("hero-section");
+export function HeroSection({ productsPromise }: HeroSectionProps) {
+  const { products } = use(productsPromise);
+  const heroImages = extractHeroImages(products);
+
   return (
     <section
       id="hero-section"
@@ -31,6 +40,9 @@ export async function HeroSection() {
         </div>
         <div className="absolute inset-0 bg-background/20" />
       </div>
+
+      {/* Floating product images - Desktop only, between particles and text */}
+      <HeroFloatingImages images={heroImages} />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl 2xl:max-w-7xl relative z-10">
         <div className="flex flex-col items-center">
@@ -110,7 +122,6 @@ export async function HeroSection() {
       <ScrollIndicator
         targetIds={[
           "value-proposition",
-          "coups-de-coeur",
           "latest-creations",
           "collections",
         ]}
