@@ -89,6 +89,7 @@ export function ProductList({
 							product={product}
 							index={index}
 							isInWishlist={wishlistProductIds.has(product.id)}
+							sectionId="catalog"
 						/>
 					</div>
 				))}

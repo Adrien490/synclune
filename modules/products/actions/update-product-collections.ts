@@ -123,38 +123,3 @@ export async function updateProductCollections(
 		);
 	}
 }
-
-/**
- * Récupère les collections d'un produit
- */
-export async function getProductCollections(
-	productId: string
-): Promise<{ id: string; name: string }[]> {
-	const productCollections = await prisma.productCollection.findMany({
-		where: { productId },
-		include: {
-			collection: {
-				select: { id: true, name: true },
-			},
-		},
-	});
-
-	return productCollections.map((pc) => ({
-		id: pc.collection.id,
-		name: pc.collection.name,
-	}));
-}
-
-/**
- * Récupère toutes les collections disponibles (avec cache)
- */
-export async function getAllCollections(): Promise<
-	{ id: string; name: string }[]
-> {
-	const collections = await prisma.collection.findMany({
-		select: { id: true, name: true },
-		orderBy: { name: "asc" },
-	});
-
-	return collections;
-}

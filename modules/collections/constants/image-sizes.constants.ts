@@ -11,9 +11,9 @@ export const COLLECTION_IMAGE_SIZES = {
 	COLLECTION_CARD:
 		"(max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw",
 
-	// Carousel homepage: w-[clamp(200px,72vw,280px)]
+	// Carousel homepage: basis-[clamp(200px,72vw,280px)] md:basis-1/3 lg:basis-1/4
 	COLLECTION_CAROUSEL:
-		"(max-width: 389px) 200px, (max-width: 640px) 72vw, 280px",
+		"(max-width: 389px) 200px, (max-width: 640px) 72vw, (max-width: 767px) 280px, (max-width: 1023px) 33vw, 25vw",
 
 	COLLECTION_HERO: "(max-width: 1024px) 100vw, 50vw",
 

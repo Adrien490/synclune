@@ -97,8 +97,8 @@ export function ProductCard({
 				{showUrgencyBadge && (
 					<div
 						role="status"
-						aria-label={`Stock limité pour ${title} : plus que ${inventory} exemplaire${inventory && inventory > 1 ? "s" : ""} disponible${inventory && inventory > 1 ? "s" : ""}`}
-						className="absolute top-2.5 left-2.5 bg-amber-700 text-white px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md"
+						aria-label={`Stock limité pour ${title} : plus que ${inventory} exemplaire${inventory > 1 ? "s" : ""} disponible${inventory > 1 ? "s" : ""}`}
+						className="absolute top-2.5 left-2.5 bg-amber-800 text-white px-2.5 py-1 rounded-full text-xs font-medium z-20 shadow-md"
 					>
 						{stockMessage}
 					</div>
@@ -162,11 +162,6 @@ export function ProductCard({
 						{title}
 					</h3>
 				</Link>
-
-				{/* Information de rupture de stock pour les technologies d'assistance */}
-				{stockStatus === "out_of_stock" && (
-					<span className="sr-only">{stockMessage}</span>
-				)}
 
 				{/* Indicateur couleurs avec lien */}
 				{colors.length > 1 && (

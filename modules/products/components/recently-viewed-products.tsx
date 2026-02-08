@@ -69,6 +69,7 @@ export async function RecentlyViewedProducts({
 						product={product}
 						index={index}
 						isInWishlist={wishlistProductIds.has(product.id)}
+						sectionId="recent"
 					/>
 				))}
 			</Stagger>

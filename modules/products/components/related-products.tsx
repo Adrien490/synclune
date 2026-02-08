@@ -84,8 +84,8 @@ export async function RelatedProducts({
 							>
 								<ProductCard
 									product={product}
-									index={index}
 									isInWishlist={wishlistProductIds.has(product.id)}
+									sectionId="related"
 								/>
 							</CarouselItem>
 						))}

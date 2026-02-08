@@ -17,7 +17,7 @@ import { useUpdateProductCollections } from "@/modules/products/hooks/use-update
 import {
 	getAllCollections,
 	getProductCollections,
-} from "@/modules/products/actions/update-product-collections";
+} from "@/modules/products/data/get-product-collections";
 import { Loader2, FolderOpen } from "lucide-react";
 
 export const MANAGE_COLLECTIONS_DIALOG_ID = "manage-product-collections";

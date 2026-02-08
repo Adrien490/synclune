@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/shared/utils/cn";
 import { motion } from "motion/react";
 import { ANIMATION_PRESETS } from "./constants";
 import type { Particle, ParticleSetProps } from "./types";
@@ -36,8 +35,8 @@ function renderParticle(
 			return (
 				<motion.span
 					key={p.id}
-					className={cn("absolute", animated && "will-change-[transform,opacity]")}
-					style={{ ...baseStyle, opacity: p.opacity, transform: "translateZ(0)" }}
+					className="absolute will-change-[transform,opacity]"
+					style={{ ...baseStyle, opacity: p.opacity }}
 					animate={ANIMATION_PRESETS[animationStyle](p)}
 					transition={getTransition(p)}
 				>
@@ -60,8 +59,8 @@ function renderParticle(
 		return (
 			<motion.span
 				key={p.id}
-				className={cn("absolute", animated && "will-change-[transform,opacity]")}
-				style={{ ...baseStyle, transform: "translateZ(0)", ...shapeStyles }}
+				className="absolute will-change-[transform,opacity]"
+				style={{ ...baseStyle, ...shapeStyles }}
 				animate={ANIMATION_PRESETS[animationStyle](p)}
 				transition={getTransition(p)}
 			/>

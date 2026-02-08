@@ -13,6 +13,7 @@ import {
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MegaMenuCreations } from "./mega-menu-creations";
 import { MegaMenuCollections } from "./mega-menu-collections";
 
@@ -37,6 +38,7 @@ const linkClasses = cn(
 
 export function DesktopNav({ navItems }: DesktopNavProps) {
   const { isMenuItemActive } = useActiveNavbarItem();
+  const router = useRouter();
 
   return (
     <NavigationMenu className="hidden lg:flex" viewport={false}>
@@ -68,15 +70,19 @@ export function DesktopNav({ navItems }: DesktopNavProps) {
                 showChevron={false}
                 className={linkClasses}
                 data-active={itemIsActive}
+                onClick={(e) => {
+                  // Navigate on direct click (not when opening the mega menu via hover)
+                  if (!e.defaultPrevented) {
+                    router.push(item.href);
+                  }
+                }}
               >
-                <Link href={item.href} className="contents">
-                  {item.label}
-                </Link>
+                {item.label}
               </NavigationMenuTrigger>
               <NavigationMenuContent
                 className={cn(
                   "fixed! left-0! right-0! w-screen!",
-                  "top-16! sm:top-20!",
+                  "top-[var(--navbar-height)]!",
                   "mt-0! p-0! rounded-none! border-0!",
                   "bg-background border-b border-border shadow-md",
                 )}

@@ -12,6 +12,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
+import { cn } from "@/shared/utils/cn";
 import { LayoutDashboard, LogOut, User } from "lucide-react";
 import Link from "next/link";
 
@@ -63,7 +64,7 @@ export function AccountDropdown({ session, isAdmin, className }: AccountDropdown
 					<DropdownMenuTrigger asChild>
 						<button
 							type="button"
-							className={`${className} cursor-pointer`}
+							className={cn(className, "cursor-pointer")}
 							aria-label={`Menu de ${session.user.name || "mon compte"}`}
 							aria-haspopup="menu"
 						>

@@ -34,7 +34,7 @@ export function UserHeader({
 						{wishlistCount > 0 && (
 							<span>{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}</span>
 						)}
-						{wishlistCount > 0 && cartCount > 0 && <span> • </span>}
+						{wishlistCount > 0 && cartCount > 0 && <span aria-hidden="true"> • </span>}
 						{cartCount > 0 && (
 							<span>{cartCount} article{cartCount > 1 ? "s" : ""}</span>
 						)}

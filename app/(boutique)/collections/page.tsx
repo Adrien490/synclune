@@ -92,7 +92,7 @@ export default async function CollectionsPage({
 			{/* JSON-LD Structured Data */}
 			<script
 				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+				dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c") }}
 			/>
 
 			{/* Background décoratif - Particules pour ambiance bijoux */}

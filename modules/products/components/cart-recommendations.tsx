@@ -74,6 +74,7 @@ export async function CartRecommendations({
 						product={product}
 						index={index}
 						isInWishlist={wishlistProductIds.has(product.id)}
+						sectionId="cart-reco"
 					/>
 				))}
 			</Stagger>

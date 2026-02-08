@@ -1,5 +1,4 @@
 import { CollectionCard } from "@/modules/collections/components/collection-card";
-import { COLLECTION_IMAGE_SIZES } from "@/modules/collections/constants/image-sizes.constants";
 import { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import { extractCollectionImages } from "@/modules/collections/utils/collection-images.utils";
 import { Fade, Reveal } from "@/shared/components/animations";
@@ -13,7 +12,7 @@ import {
 	CarouselNext,
 	CarouselPrevious,
 } from "@/shared/components/ui/carousel";
-import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
@@ -46,7 +45,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 			>
 				Passer au bouton Explorer
 			</a>
-			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+			<div className={`relative ${CONTAINER_CLASS}`}>
 				<header className="mb-8 text-center lg:mb-12">
 					<Fade y={20} duration={0.6}>
 						<SectionTitle id="collections-title">
@@ -80,15 +79,17 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 									return (
 										<CarouselItem
 											key={collection.id}
+											index={index}
 											className="pl-4 sm:pl-6 basis-[clamp(200px,72vw,280px)] md:basis-1/3 lg:basis-1/4"
 										>
 											<div className="relative">
 												<CollectionCard
 													slug={collection.slug}
 													name={collection.name}
+													description={collection.description}
 													images={images}
 													index={index}
-													sizes={COLLECTION_IMAGE_SIZES.COLLECTION_CAROUSEL}
+													productCount={collection._count.products}
 												/>
 												{/* Description below the card */}
 												{collection.description && (

@@ -1,7 +1,6 @@
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
-import { SITE_URL } from "@/shared/constants/seo-config";
 import { cn } from "@/shared/utils/cn";
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
@@ -28,11 +27,12 @@ function renderAnswerWithLinks(answer: string, links?: FaqLink[]): ReactNode {
 
 	const parts: ReactNode[] = [];
 	let lastIndex = 0;
-	let match: RegExpExecArray | null;
 
-	while ((match = LINK_PLACEHOLDER_REGEX.exec(answer)) !== null) {
-		if (match.index > lastIndex) {
-			parts.push(answer.slice(lastIndex, match.index));
+	for (const match of answer.matchAll(LINK_PLACEHOLDER_REGEX)) {
+		const matchIndex = match.index!;
+
+		if (matchIndex > lastIndex) {
+			parts.push(answer.slice(lastIndex, matchIndex));
 		}
 
 		const linkIndex = Number.parseInt(match[1], 10);
@@ -41,7 +41,7 @@ function renderAnswerWithLinks(answer: string, links?: FaqLink[]): ReactNode {
 		if (link) {
 			parts.push(
 				<Link
-					key={match.index}
+					key={matchIndex}
 					href={link.href}
 					className="underline underline-offset-2 hover:text-foreground transition-colors"
 				>
@@ -52,14 +52,12 @@ function renderAnswerWithLinks(answer: string, links?: FaqLink[]): ReactNode {
 			parts.push(match[0]);
 		}
 
-		lastIndex = match.index + match[0].length;
+		lastIndex = matchIndex + match[0].length;
 	}
 
 	if (lastIndex < answer.length) {
 		parts.push(answer.slice(lastIndex));
 	}
-
-	LINK_PLACEHOLDER_REGEX.lastIndex = 0;
 
 	return <>{parts}</>;
 }
@@ -79,17 +77,20 @@ const faqItems: FaqItemData[] = [
 	{
 		question: "Combien de temps pour recevoir ma commande ?",
 		answer:
-			"Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite, Colissimo te livre en 2-4 jours en France métropolitaine. Je t'envoie le numéro de suivi par email dès que ton colis part de mon atelier !",
+			"Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite, Colissimo te livre en 2-4 jours en France métropolitaine. Je t'envoie le numéro de suivi par email dès que ton colis part de mon atelier ! Tous les détails sont dans mes {{link0}}.",
+		links: [{ text: "conditions de vente", href: "/cgv" }],
 	},
 	{
 		question: "Je peux retourner un bijou si je change d'avis ?",
 		answer:
-			"Bien sûr ! Tu as 14 jours après réception pour changer d'avis. Renvoie-moi le bijou dans son état d'origine, non porté, et je te rembourse. Écris-moi par email pour qu'on organise ça ensemble.",
+			"Bien sûr ! Tu as 14 jours après réception pour changer d'avis. Renvoie-moi le bijou dans son état d'origine, non porté, et je te rembourse. Écris-moi par email pour qu'on organise ça ensemble. Plus d'infos sur les retours dans mes {{link0}}.",
+		links: [{ text: "conditions de vente", href: "/cgv" }],
 	},
 	{
 		question: "En quoi sont faits tes bijoux ?",
 		answer:
-			"Je crée mes bijoux à partir de plastique fou (polystyrène) que je dessine et peins entièrement à la main. Ensuite, je les vernis pour protéger les couleurs. Pour les crochets et fermoirs, j'utilise de l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles !",
+			"Je crée mes bijoux à partir de plastique fou (polystyrène) que je dessine et peins entièrement à la main. Ensuite, je les vernis pour protéger les couleurs. Pour les crochets et fermoirs, j'utilise de l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles ! Découvre toutes mes {{link0}}.",
+		links: [{ text: "collections", href: "/collections" }],
 	},
 	{
 		question: "Comment je prends soin de mes bijoux ?",
@@ -112,26 +113,16 @@ const faqItems: FaqItemData[] = [
 function generateFaqSchema(items: FaqItemData[]) {
 	return {
 		"@context": "https://schema.org",
-		"@graph": [
-			{
-				"@type": "FAQPage",
-				"@id": `${SITE_URL}/#faq`,
-				isPartOf: {
-					"@id": `${SITE_URL}/#website`,
-				},
-				author: {
-					"@id": `${SITE_URL}/#founder`,
-				},
-				mainEntity: items.map((item) => ({
-					"@type": "Question",
-					name: item.question,
-					acceptedAnswer: {
-						"@type": "Answer",
-						text: getPlainTextAnswer(item.answer, item.links),
-					},
-				})),
+		"@type": "FAQPage",
+		inLanguage: "fr-FR",
+		mainEntity: items.map((item) => ({
+			"@type": "Question",
+			name: item.question,
+			acceptedAnswer: {
+				"@type": "Answer",
+				text: getPlainTextAnswer(item.answer, item.links),
 			},
-		],
+		})),
 	};
 }
 
@@ -152,7 +143,6 @@ export function FaqSection() {
 		<section
 			className={cn("bg-background", SECTION_SPACING.section)}
 			aria-labelledby="faq-title"
-			role="region"
 		>
 			{/* JSON-LD Schema for SEO */}
 			<script
@@ -177,7 +167,7 @@ export function FaqSection() {
 					<p className="text-muted-foreground mb-4">
 						Une autre question ? N'hésite pas à m'écrire directement !
 					</p>
-					<Button asChild variant="outline" size="lg" className="gap-2">
+					<Button asChild variant="outline" size="lg" className="gap-2 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out">
 						<Link href="/contact">
 							<MessageCircle className="w-4 h-4" aria-hidden="true" />
 							Me contacter

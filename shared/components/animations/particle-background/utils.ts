@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 import type { Easing, Transition } from "motion/react";
-import { MOTION_CONFIG } from "../motion.config";
 import { SHAPE_CONFIGS } from "./constants";
 import type { Particle, ParticleShape } from "./types";
 
@@ -11,39 +10,8 @@ export function seededRandom(seed: number): number {
 }
 
 /** Cache pour la memoization des particules générées */
-const particleCache = new Map<number, Particle[]>();
+const particleCache = new Map<string, Particle[]>();
 const MAX_CACHE_SIZE = 50;
-
-/** Hash numerique simple pour cle de cache */
-function hashParams(
-	count: number,
-	size: [number, number],
-	opacity: [number, number],
-	colors: string[],
-	blur: number | [number, number],
-	depthParallax: boolean,
-	shapes: ParticleShape[],
-	baseDuration: number
-): number {
-	let hash = count * 1000000;
-	hash += size[0] * 10000 + size[1] * 100;
-	hash += Math.floor(opacity[0] * 10) + Math.floor(opacity[1] * 10) * 10;
-	hash += (Array.isArray(blur) ? blur[0] + blur[1] * 100 : blur * 100);
-	hash += depthParallax ? 1 : 0;
-	hash += shapes.length * 10000;
-	hash += baseDuration * 1000;
-	for (const c of colors) {
-		for (let i = 0; i < c.length; i++) {
-			hash = (hash * 31 + c.charCodeAt(i)) | 0;
-		}
-	}
-	for (const s of shapes) {
-		for (let i = 0; i < s.length; i++) {
-			hash = (hash * 31 + s.charCodeAt(i)) | 0;
-		}
-	}
-	return hash;
-}
 
 const DEFAULT_DURATION = 20;
 
@@ -58,7 +26,7 @@ export function generateParticles(
 	shapes: ParticleShape[] = ["circle"],
 	baseDuration: number = DEFAULT_DURATION
 ): Particle[] {
-	const cacheKey = hashParams(count, size, opacity, colors, blur, depthParallax, shapes, baseDuration);
+	const cacheKey = JSON.stringify([count, size, opacity, colors, blur, depthParallax, shapes, baseDuration]);
 	const cached = particleCache.get(cacheKey);
 	if (cached) return cached;
 
@@ -149,7 +117,7 @@ export function isSvgShape(shape: ParticleShape): boolean {
 }
 
 /** Retourne la configuration SVG pour une forme */
-export function getSvgConfig(shape: ParticleShape) {
+export function getSvgConfig(shape: ParticleShape): { viewBox: string; path: string; fillRule?: "evenodd" | "nonzero" } | null {
 	const config = SHAPE_CONFIGS[shape];
 	if (config.type === "svg") {
 		return { viewBox: config.viewBox, path: config.path, fillRule: config.fillRule };

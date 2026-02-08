@@ -5,7 +5,12 @@ import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
+import {
+	validateInput,
+	success,
+	notFound,
+	handleActionError,
+} from "@/shared/lib/actions";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { duplicateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../constants/cache";
@@ -32,26 +37,16 @@ export async function duplicateProduct(
 		};
 
 		// 3. Validation avec Zod
-		const result = duplicateProductSchema.safeParse(rawData);
+		const validation = validateInput(duplicateProductSchema, rawData);
+		if ("error" in validation) return validation.error;
 
-		if (!result.success) {
-			const firstError = result.error.issues[0];
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: firstError.message,
-			};
-		}
-
-		const { productId } = result.data;
+		const { productId } = validation.data;
 
 		// 4. Recuperer le produit source avec tous ses SKUs et images (via data/)
 		const sourceProduct = await getProductForDuplication(productId);
 
 		if (!sourceProduct) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Le produit source n'existe pas.",
-			};
+			return notFound("Le produit source");
 		}
 
 		// 5. Generer le nouveau titre et slug
@@ -144,22 +139,15 @@ export async function duplicateProduct(
 		}
 
 		// 8. Success
-		return {
-			status: ActionStatus.SUCCESS,
-			message: `Produit "${duplicatedProduct.title}" dupliqué avec succès.`,
-			data: {
-				productId: duplicatedProduct.id,
-				title: duplicatedProduct.title,
-				slug: duplicatedProduct.slug,
-			},
-		};
-	} catch (error) {
-		return {
-			status: ActionStatus.ERROR,
-			message:
-				error instanceof Error
-					? error.message
-					: "Une erreur est survenue lors de la duplication du produit.",
-		};
+		return success(`Produit "${duplicatedProduct.title}" dupliqué avec succès.`, {
+			productId: duplicatedProduct.id,
+			title: duplicatedProduct.title,
+			slug: duplicatedProduct.slug,
+		});
+	} catch (e) {
+		return handleActionError(
+			e,
+			"Une erreur est survenue lors de la duplication du produit."
+		);
 	}
 }

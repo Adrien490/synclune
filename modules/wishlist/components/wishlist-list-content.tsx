@@ -77,6 +77,7 @@ export function WishlistListContent({
 									product={item.product as Product}
 									index={index}
 									isInWishlist={wishlistProductIds.has(item.productId)}
+									sectionId="wishlist"
 								/>
 							</motion.div>
 						))}

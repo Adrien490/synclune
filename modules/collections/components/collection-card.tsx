@@ -1,9 +1,6 @@
-import {
-	ABOVE_FOLD_THRESHOLD,
-	COLLECTION_IMAGE_SIZES,
-} from "@/modules/collections/constants/image-sizes.constants";
+import { ABOVE_FOLD_THRESHOLD } from "@/modules/collections/constants/image-sizes.constants";
 import { Reveal } from "@/shared/components/animations/reveal";
-import { buildUrl } from "@/shared/constants/urls";
+import { buildProductionUrl } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { Gem } from "lucide-react";
 import Link from "next/link";
@@ -18,8 +15,6 @@ interface CollectionCardProps {
   /** Images multiples pour Bento Grid (prioritaire) */
   images?: CollectionImage[];
   index?: number;
-  /** Custom sizes pour contextes differents (grid vs carousel) */
-  sizes?: string;
   /** Niveau de heading pour hierarchie a11y (defaut: h3) */
   headingLevel?: "h2" | "h3" | "h4";
   /** Nombre de produits dans la collection (UX e-commerce) */
@@ -35,7 +30,7 @@ interface CollectionCardProps {
  *
  * OPTIMISATIONS:
  * - can-hover + motion-safe (WCAG 2.3.3)
- * - Shadow oklch pastel + will-change-transform
+ * - Shadow oklch pastel + hover-only will-change-transform
  * - Blur placeholder + preload above-fold
  * - Schema.org Collection
  */
@@ -45,7 +40,6 @@ export function CollectionCard({
   description,
   images,
   index,
-  sizes = COLLECTION_IMAGE_SIZES.COLLECTION_CARD,
   headingLevel: HeadingTag = "h3",
   productCount,
 }: CollectionCardProps) {
@@ -53,8 +47,7 @@ export function CollectionCard({
   const titleId = `collection-title-${uniqueSuffix}`;
   const isAboveFold = index !== undefined && index < ABOVE_FOLD_THRESHOLD;
 
-  const displayImages: CollectionImage[] =
-    images && images.length > 0 ? images : [];
+  const displayImages = images ?? [];
 
   return (
     <article itemScope itemType="https://schema.org/CollectionPage">
@@ -65,51 +58,37 @@ export function CollectionCard({
           "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:rounded-xl",
         )}
         aria-labelledby={titleId}
-        aria-label={`Voir la collection ${name}`}
       >
         <div
           className={cn(
             "relative overflow-hidden rounded-xl bg-card",
             // COHERENCE ProductCard: border-2 transparent
             "border-2 border-transparent shadow-sm",
-            "transition-all duration-300 ease-out",
+            "transition-[transform,border-color,box-shadow] duration-300 ease-out",
             // Motion-reduce: desactiver transforms, garder transitions couleurs
             "motion-reduce:transition-colors",
             // COHERENCE ProductCard: border-primary/40
             "motion-safe:can-hover:hover:border-primary/40",
             // COHERENCE ProductCard: shadow oklch pastel
-            "motion-safe:can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
+            "can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
             // COHERENCE ProductCard: transform subtil (version plus douce)
             "motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01]",
             // Active state pour feedback tactile immediat sur mobile
-            "active:scale-[0.98] active:shadow-sm",
+            "motion-safe:active:scale-[0.98] motion-safe:active:shadow-sm",
             // COHERENCE ProductCard: focus state
             "focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
             // COHERENCE ProductCard: GPU optimization
-            "will-change-transform",
+            "can-hover:group-hover:will-change-transform",
           )}
         >
           {/* SEO: Metadata schema.org */}
-          <link itemProp="url" href={buildUrl(`/collections/${slug}`)} />
+          <link itemProp="url" href={buildProductionUrl(`/collections/${slug}`)} />
           {description && (
             <meta itemProp="description" content={description.slice(0, 200)} />
-          )}
-          {productCount !== undefined && (
-            <meta itemProp="numberOfItems" content={String(productCount)} />
           )}
           {displayImages[0] && (
             <meta itemProp="primaryImageOfPage" content={displayImages[0].url} />
           )}
-          {/* Brand Schema.org (Synclune) */}
-          <div
-            itemProp="brand"
-            itemScope
-            itemType="https://schema.org/Brand"
-            className="hidden"
-          >
-            <meta itemProp="name" content="Synclune" />
-          </div>
-
           {/* Images Bento Grid avec animation scroll */}
           {displayImages.length > 0 ? (
             <Reveal y={8} once amount={0.2}>
@@ -162,7 +141,7 @@ export function CollectionCard({
 
             {/* Compteur de produits (UX e-commerce) - contraste WCAG ameliore */}
             {productCount !== undefined && productCount > 0 && (
-              <p role="status" className="mt-2 text-xs text-foreground/60">
+              <p className="mt-2 text-xs text-foreground/60">
                 {productCount} article{productCount > 1 ? "s" : ""}
               </p>
             )}

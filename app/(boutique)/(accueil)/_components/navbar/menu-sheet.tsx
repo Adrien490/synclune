@@ -3,8 +3,6 @@
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 import type { Session } from "@/modules/auth/lib/auth";
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
-import { Stagger } from "@/shared/components/animations/stagger";
-import { Tap } from "@/shared/components/animations/tap";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import ScrollFade from "@/shared/components/scroll-fade";
@@ -31,24 +29,15 @@ import { CollectionMiniGrid } from "./collection-mini-grid";
 import { SectionHeader } from "./section-header";
 import { UserHeader } from "./user-header";
 
-/**
- * Composant Menu Sheet pour la navigation mobile
- *
- * Architecture:
- * - Menu plat scrollable avec ScrollArea
- * - Sections visuelles pour productTypes et collections
- * - CTAs "Voir plus" avec limites d'affichage
- * - Images pour les collections (produit vedette)
- *
- * Performance:
- * - Animation stagger pour meilleure perception UX
- * - Limites d'affichage (6 productTypes, 3 collections)
- *
- * Accessibilité:
- * - Labels ARIA descriptifs
- * - Navigation au clavier
- * - Focus visible
- */
+// CSS stagger animation style for menu items
+const staggerItemClassName =
+	"motion-safe:animate-[menu-item-in_0.3s_ease-out_both]";
+
+// Inline style to set animation-delay for stagger effect
+function staggerDelay(index: number, baseDelay = 0): React.CSSProperties {
+	return { animationDelay: `${baseDelay + index * 20}ms` };
+}
+
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
 	productTypes?: Array<{ slug: string; label: string }>;
@@ -87,7 +76,8 @@ export function MenuSheet({
 		"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3 rounded-lg",
 		"transition-all duration-300 ease-out",
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-		"text-foreground/80 hover:text-foreground hover:bg-primary/5 hover:pl-5"
+		"text-foreground/80 hover:text-foreground hover:bg-primary/5 hover:pl-5",
+		"active:scale-[0.97]"
 	);
 
 	const activeLinkClassName = cn(
@@ -103,10 +93,6 @@ export function MenuSheet({
 					className="relative -ml-3 inline-flex items-center justify-center size-11 rounded-xl lg:hidden bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground transition-all duration-300 ease-out hover:scale-105 active:scale-95 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
 					aria-label="Ouvrir le menu de navigation"
 					aria-controls="mobile-menu-synclune"
-					onFocus={(e) => {
-						// Blur when sheet is open to avoid aria-hidden conflict
-						if (isOpen) e.currentTarget.blur();
-					}}
 				>
 					<Menu
 						size={20}
@@ -116,17 +102,11 @@ export function MenuSheet({
 				</button>
 			</SheetTrigger>
 
-			{/* Aria-live region pour annoncer l'état du menu aux lecteurs d'écran */}
-			<div aria-live="polite" aria-atomic="true" className="sr-only">
-				{isOpen ? "Menu de navigation ouvert" : "Menu de navigation fermé"}
-			</div>
-
 			<SheetContent
 				className="w-[min(85vw,320px)] sm:w-80 sm:max-w-md border-r bg-background/95 !p-0 flex flex-col"
 				id="mobile-menu-synclune"
 				aria-describedby="mobile-menu-synclune-description"
 			>
-
 
 				{/* Header sr-only */}
 				<SheetHeader className="!p-0 sr-only">
@@ -160,9 +140,9 @@ export function MenuSheet({
 						{/* Section Découvrir - Accueil + Meilleures ventes */}
 						<section aria-labelledby="section-discover" className="mb-4">
 							<SectionHeader id="section-discover">Découvrir</SectionHeader>
-							<Stagger stagger={0.02} delay={0.07} y={8} className="space-y-1">
+							<div className="space-y-1">
 								{homeItem && (
-									<Tap>
+									<div className={staggerItemClassName} style={staggerDelay(0, 70)}>
 										<SheetClose asChild>
 											<Link
 												href={homeItem.href}
@@ -178,10 +158,10 @@ export function MenuSheet({
 												{homeItem.label}
 											</Link>
 										</SheetClose>
-									</Tap>
+									</div>
 								)}
 								{bestsellerItem && (
-									<Tap>
+									<div className={staggerItemClassName} style={staggerDelay(1, 70)}>
 										<SheetClose asChild>
 											<Link
 												href={bestsellerItem.href}
@@ -204,18 +184,18 @@ export function MenuSheet({
 												</Badge>
 											</Link>
 										</SheetClose>
-									</Tap>
+									</div>
 								)}
-							</Stagger>
+							</div>
 						</section>
 
 						{/* Section Les créations (productTypes) */}
 						{productTypes && productTypes.length > 0 && (
 							<section aria-labelledby="section-creations" className="mb-4">
 								<SectionHeader id="section-creations">Nos créations</SectionHeader>
-								<Stagger stagger={0.02} delay={0.09} y={8} className="space-y-1">
+								<div className="space-y-1">
 									{/* Lien "Tous les bijoux" proéminent en premier (Baymard UX) */}
-									<Tap>
+									<div className={staggerItemClassName} style={staggerDelay(0, 90)}>
 										<SheetClose asChild>
 											<Link
 												href="/produits"
@@ -233,9 +213,9 @@ export function MenuSheet({
 												Tous les bijoux
 											</Link>
 										</SheetClose>
-									</Tap>
-									{productTypes.map((type) => (
-										<Tap key={type.slug}>
+									</div>
+									{productTypes.map((type, i) => (
+										<div key={type.slug} className={staggerItemClassName} style={staggerDelay(i + 1, 90)}>
 											<SheetClose asChild>
 												<Link
 													href={`/produits/${type.slug}`}
@@ -253,9 +233,9 @@ export function MenuSheet({
 													{type.label}
 												</Link>
 											</SheetClose>
-										</Tap>
+										</div>
 									))}
-								</Stagger>
+								</div>
 							</section>
 						)}
 
@@ -263,9 +243,9 @@ export function MenuSheet({
 						{displayedCollections && displayedCollections.length > 0 && (
 							<section aria-labelledby="section-collections" className="mb-4">
 								<SectionHeader id="section-collections">Collections</SectionHeader>
-								<Stagger stagger={0.02} delay={0.11} y={8} className="space-y-1">
+								<div className="space-y-1">
 									{/* Lien "Toutes les collections" proéminent en premier */}
-									<Tap>
+									<div className={staggerItemClassName} style={staggerDelay(0, 110)}>
 										<SheetClose asChild>
 											<Link
 												href="/collections"
@@ -283,47 +263,47 @@ export function MenuSheet({
 												Toutes les collections
 											</Link>
 										</SheetClose>
-									</Tap>
-									{displayedCollections.map((collection) => (
-											<Tap key={collection.slug}>
-												<SheetClose asChild>
-													<Link
-														href={`/collections/${collection.slug}`}
-														className={cn(
-															isMenuItemActive(
-																`/collections/${collection.slug}`
-															)
-																? activeLinkClassName
-																: linkClassName,
-															"gap-3"
-														)}
-														aria-current={
-															isMenuItemActive(
-																`/collections/${collection.slug}`
-															)
-																? "page"
-																: undefined
-														}
-													>
-														{collection.images.length > 0 ? (
-															<CollectionMiniGrid
-																images={collection.images}
-																collectionName={collection.label}
-															/>
-														) : (
-															<div
-																className="size-12 rounded-lg bg-muted flex items-center justify-center shrink-0"
-																aria-hidden="true"
-															>
-																<Gem className="h-5 w-5 text-primary/40" />
-															</div>
-														)}
-														<span className="flex-1">{collection.label}</span>
-													</Link>
-												</SheetClose>
-											</Tap>
+									</div>
+									{displayedCollections.map((collection, i) => (
+										<div key={collection.slug} className={staggerItemClassName} style={staggerDelay(i + 1, 110)}>
+											<SheetClose asChild>
+												<Link
+													href={`/collections/${collection.slug}`}
+													className={cn(
+														isMenuItemActive(
+															`/collections/${collection.slug}`
+														)
+															? activeLinkClassName
+															: linkClassName,
+														"gap-3"
+													)}
+													aria-current={
+														isMenuItemActive(
+															`/collections/${collection.slug}`
+														)
+															? "page"
+															: undefined
+													}
+												>
+													{collection.images.length > 0 ? (
+														<CollectionMiniGrid
+															images={collection.images}
+															collectionName={collection.label}
+														/>
+													) : (
+														<div
+															className="size-12 rounded-lg bg-muted flex items-center justify-center shrink-0"
+															aria-hidden="true"
+														>
+															<Gem className="h-5 w-5 text-primary/40" />
+														</div>
+													)}
+													<span className="flex-1">{collection.label}</span>
+												</Link>
+											</SheetClose>
+										</div>
 									))}
-								</Stagger>
+								</div>
 							</section>
 						)}
 
@@ -331,8 +311,8 @@ export function MenuSheet({
 						{personalizationItem && (
 							<section aria-labelledby="section-custom" className="mb-4">
 								<SectionHeader id="section-custom">Sur mesure</SectionHeader>
-								<Stagger stagger={0.02} delay={0.13} y={8}>
-									<Tap>
+								<div>
+									<div className={staggerItemClassName} style={staggerDelay(0, 130)}>
 										<SheetClose asChild>
 											<Link
 												href={personalizationItem.href}
@@ -350,8 +330,8 @@ export function MenuSheet({
 												{personalizationItem.label}
 											</Link>
 										</SheetClose>
-									</Tap>
-								</Stagger>
+									</div>
+								</div>
 							</section>
 						)}
 
@@ -372,9 +352,9 @@ export function MenuSheet({
 						{/* Zone compte */}
 						<section aria-labelledby="section-account">
 							<SectionHeader id="section-account">Mon compte</SectionHeader>
-							<Stagger stagger={0.025} delay={0.15} y={10} className="space-y-1">
+							<div className="space-y-1">
 								{/* Lien Mon compte */}
-								<Tap>
+								<div className={staggerItemClassName} style={staggerDelay(0, 150)}>
 									<SheetClose asChild>
 										<Link
 											href="/compte"
@@ -390,11 +370,11 @@ export function MenuSheet({
 											Mon compte
 										</Link>
 									</SheetClose>
-								</Tap>
+								</div>
 
 								{/* Lien Mes commandes (si connecté) */}
 								{session?.user && (
-									<Tap>
+									<div className={staggerItemClassName} style={staggerDelay(1, 150)}>
 										<SheetClose asChild>
 											<Link
 												href="/commandes"
@@ -410,12 +390,12 @@ export function MenuSheet({
 												Mes commandes
 											</Link>
 										</SheetClose>
-									</Tap>
+									</div>
 								)}
 
 								{/* Bouton Déconnexion (si connecté) */}
 								{session?.user && (
-									<Tap>
+									<div className={staggerItemClassName} style={staggerDelay(2, 150)}>
 										<LogoutAlertDialog>
 											<button
 												type="button"
@@ -424,20 +404,20 @@ export function MenuSheet({
 												Déconnexion
 											</button>
 										</LogoutAlertDialog>
-									</Tap>
+									</div>
 								)}
-							</Stagger>
+							</div>
 						</section>
 						</nav>
 					</ScrollFade>
 				</div>
 
-				{/* Footer amélioré */}
+				{/* Footer */}
 				<footer className="relative z-10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0 border-t border-border/40">
 					{/* Réseaux sociaux et admin */}
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-3">
-							<Link
+							<a
 								href={BRAND.social.instagram.url}
 								target="_blank"
 								rel="noopener noreferrer"
@@ -445,8 +425,8 @@ export function MenuSheet({
 								aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
 							>
 								<InstagramIcon decorative size={18} />
-							</Link>
-							<Link
+							</a>
+							<a
 								href={BRAND.social.tiktok.url}
 								target="_blank"
 								rel="noopener noreferrer"
@@ -454,7 +434,7 @@ export function MenuSheet({
 								aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
 							>
 								<TikTokIcon decorative size={18} />
-							</Link>
+							</a>
 						</div>
 						<div className="flex items-center gap-2">
 							{isAdmin && (

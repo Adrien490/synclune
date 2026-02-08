@@ -48,7 +48,7 @@ export const SHAPE_CONFIGS: Record<ParticleShape, ShapeConfig> = {
 export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {
 	float: (p) => ({
 		scale: [1, 1.4, 0.8, 1],
-		opacity: [p.opacity, p.opacity * 1.2, p.opacity * 0.8, p.opacity],
+		opacity: [p.opacity, Math.min(p.opacity * 1.2, 1), p.opacity * 0.8, p.opacity],
 		x: ["0%", "8%", "-8%", "0%"],
 		y: ["0%", "-6%", "6%", "0%"],
 	}),

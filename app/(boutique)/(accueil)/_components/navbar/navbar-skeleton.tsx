@@ -16,7 +16,6 @@ export function NavbarSkeleton() {
 			aria-label="Chargement de la navigation"
 		>
 			<nav
-				role="navigation"
 				aria-label="Navigation principale en cours de chargement"
 				className="transition-all duration-300 ease-in-out"
 			>
@@ -24,13 +23,13 @@ export function NavbarSkeleton() {
 					<div className="flex h-16 sm:h-20 items-center gap-4">
 						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
 						<div className="flex flex-1 items-center lg:flex-none">
-							{/* Menu burger skeleton (mobile uniquement) */}
-							<div className="lg:hidden h-12 w-12 animate-pulse bg-muted/60 rounded-xl" />
+							{/* Menu burger skeleton (mobile uniquement) - size-11 = 44px matches real burger */}
+							<div className="lg:hidden size-11 animate-pulse bg-muted/60 rounded-xl" />
 
 							{/* Logo skeleton (desktop uniquement) */}
 							<div className="hidden lg:flex items-center gap-3">
-								{/* Icône logo - rounded-lg pour correspondre au vrai logo */}
-								<div className="h-12 w-12 animate-pulse bg-muted/60 rounded-lg" />
+								{/* Icône logo - size-12 = 48px matches Logo size={48} */}
+								<div className="size-12 animate-pulse bg-muted/60 rounded-lg" />
 								{/* Texte "SYNCLUNE" */}
 								<div className="h-6 w-24 animate-pulse bg-muted/60 rounded-md" />
 							</div>
@@ -38,8 +37,8 @@ export function NavbarSkeleton() {
 
 						{/* Section centrale: Logo (mobile) / Navigation desktop */}
 						<div className="flex items-center justify-center lg:flex-1">
-							{/* Logo skeleton centré (mobile uniquement - icône seule) - rounded-lg pour correspondre au vrai logo */}
-							<div className="lg:hidden h-12 w-12 animate-pulse bg-muted/60 rounded-lg" />
+							{/* Logo skeleton centré (mobile uniquement) - size-11 = 44px matches Logo size={44} */}
+							<div className="lg:hidden size-11 animate-pulse bg-muted/60 rounded-lg" />
 
 							{/* Navigation desktop skeleton (cachée sur mobile) */}
 							{/* 3 items: Les créations, Les collections, Personnalisation (synchronisé avec getDesktopNavItems) */}
@@ -54,16 +53,16 @@ export function NavbarSkeleton() {
 						<div className="flex flex-1 items-center justify-end">
 							<div className="flex items-center gap-2 sm:gap-3">
 								{/* Icône favoris skeleton (toujours visible) */}
-								<div className="h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />
+								<div className="size-11 animate-pulse bg-muted/60 rounded-xl" />
 
 								{/* Icône recherche skeleton (visible sur sm+ seulement) */}
-								<div className="hidden sm:inline-flex h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />
+								<div className="hidden sm:inline-flex size-11 animate-pulse bg-muted/60 rounded-xl" />
 
 								{/* Icône compte skeleton (visible sur sm+ seulement) */}
-								<div className="hidden sm:inline-flex h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />
+								<div className="hidden sm:inline-flex size-11 animate-pulse bg-muted/60 rounded-xl" />
 
 								{/* Icône panier skeleton (toujours visible) */}
-								<div className="h-11 w-11 animate-pulse bg-muted/60 rounded-xl" />
+								<div className="size-11 animate-pulse bg-muted/60 rounded-xl" />
 							</div>
 						</div>
 					</div>

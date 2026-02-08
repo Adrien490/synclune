@@ -116,7 +116,6 @@ export async function Navbar() {
 			</a>
 
 			<nav
-				role="navigation"
 				aria-label="Navigation principale"
 				className="transition-all duration-300 ease-in-out"
 			>

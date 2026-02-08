@@ -12,7 +12,7 @@ import {
 	GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE,
 } from "../constants/sku.constants";
 import { GetProductSkusParams, GetProductSkusReturn } from "../types/skus.types";
-import { buildWhereClause } from "@/modules/products/services/build-where-clause";
+import { buildWhereClause } from "@/modules/skus/services/build-where-clause";
 
 const getSortDirection = (sortBy: string): "asc" | "desc" => {
 	if (sortBy.endsWith("-ascending")) return "asc";

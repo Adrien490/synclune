@@ -67,13 +67,13 @@ const processSteps: ProcessStep[] = [
  */
 const STEP_INTENSITY = [
 	// Step 1 - Subtle (start)
-	{ ring: "", shadow: "", scale: "" },
+	{ ring: "", shadow: "" },
 	// Step 2 - Light (progression)
-	{ ring: "ring-1 ring-secondary/10", shadow: "shadow-sm shadow-secondary/20", scale: "" },
+	{ ring: "ring-1 ring-secondary/10", shadow: "shadow-sm shadow-secondary/20" },
 	// Step 3 - Moderate (building up)
-	{ ring: "ring-1 ring-secondary/20", shadow: "shadow-md shadow-secondary/30", scale: "" },
+	{ ring: "ring-1 ring-secondary/20", shadow: "shadow-md shadow-secondary/30" },
 	// Step 4 - Climax (final result)
-	{ ring: "ring-2 ring-secondary/30", shadow: "shadow-lg shadow-secondary/40", scale: "" },
+	{ ring: "ring-2 ring-secondary/30", shadow: "shadow-lg shadow-secondary/40" },
 ] as const;
 
 /**
@@ -130,6 +130,8 @@ export async function CreativeProcess() {
 								src={IMAGES.ATELIER}
 								alt="Atelier de création de bijoux artisanaux à Nantes : table de travail avec pinceaux, peintures acryliques colorées et plastique fou prêt à être façonné"
 								blurDataURL={IMAGES.ATELIER_BLUR}
+								sizes="(max-width: 1024px) 100vw, 50vw"
+								quality={80}
 								className="object-cover object-center saturate-[1.05] brightness-[1.02]"
 							/>
 
@@ -154,12 +156,11 @@ export async function CreativeProcess() {
 
 							{/* Simplified vertical line (mobile) - centered on 48px */}
 							<div
-								className="absolute left-[24px] top-8 bottom-8 w-px bg-secondary/30 sm:hidden transition-colors duration-300"
+								className="absolute left-[24px] top-8 bottom-8 w-px bg-secondary/50 sm:hidden transition-colors duration-300"
 								aria-hidden="true"
 							/>
 
 							<Stagger
-								role="list"
 								stagger={0.08}
 								y={25}
 								delay={0}
@@ -169,7 +170,6 @@ export async function CreativeProcess() {
 								{processSteps.map((step, index) => (
 									<article
 										key={step.id}
-										role="listitem"
 										className="flex items-start gap-4 group relative rounded-xl p-2 -m-2 transition-all duration-300 hover:bg-muted/30 hover:-translate-y-0.5 active:bg-muted/40 active:scale-[0.99]"
 									>
 										{/* Accessibility: step number for screen readers */}
@@ -186,8 +186,7 @@ export async function CreativeProcess() {
 												step.iconHoverClass,
 												// Progressive crescendo
 												STEP_INTENSITY[index].ring,
-												STEP_INTENSITY[index].shadow,
-												STEP_INTENSITY[index].scale
+												STEP_INTENSITY[index].shadow
 											)}
 										>
 											{step.icon}
@@ -233,7 +232,7 @@ export async function CreativeProcess() {
 						</div>
 
 						{/* CTA as natural continuation of the process */}
-						<div className="mt-4 flex items-start gap-4 group relative rounded-xl p-2 -m-2">
+						<div id="cta-personnalisation" className="mt-4 flex items-start gap-4 group relative rounded-xl p-2 -m-2">
 							{/* Desktop: Icon in dashed circle */}
 							<div
 								className="hidden sm:flex shrink-0 w-12 h-12 rounded-full border-2 border-dashed border-secondary/50 items-center justify-center transition-all duration-300 group-hover:border-secondary group-hover:scale-105"
@@ -252,13 +251,11 @@ export async function CreativeProcess() {
 
 							<div className="flex-1">
 								<p
-									id="cta-personnalisation-description"
 									className="text-sm text-muted-foreground mb-3 italic"
 								>
 									Tu as une idée de bijou personnalisé ? N'hésite pas à m'en parler !
 								</p>
 								<Button
-									id="cta-personnalisation"
 									asChild
 									variant="secondary"
 									size="lg"
@@ -266,7 +263,6 @@ export async function CreativeProcess() {
 								>
 									<Link
 										href="/personnalisation"
-										aria-describedby="cta-personnalisation-description"
 									>
 										Discutons de ton idée
 									</Link>

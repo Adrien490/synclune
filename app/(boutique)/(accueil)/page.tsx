@@ -125,7 +125,9 @@ export default async function Page() {
       <AtelierStory />
 
       {/* 7. Creative Process - Step-by-step jewelry making */}
-      <CreativeProcess />
+      <Suspense>
+        <CreativeProcess />
+      </Suspense>
 
       {/* 8. FAQ - Frequently asked questions with JSON-LD */}
       <FaqSection />
