@@ -11,6 +11,12 @@ html {
 	--navbar-height: 4rem;
 }
 
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+}
+
 @media (min-width: 640px) {
 	html {
 		--navbar-height: 5rem;
@@ -108,13 +114,6 @@ html {
 	--color-chart-3: var(--chart-3);
 	--color-chart-2: var(--chart-2);
 	--color-chart-1: var(--chart-1);
-	--bg-size: 300%;
-	--animate-gradient: gradient 8s linear infinite;
-	@keyframes gradient {
-		to {
-			background-position: var(--bg-size) 0;
-		}
-	}
 }
 
 :root {
@@ -392,18 +391,6 @@ textarea {
 		}
 	}
 
-	/* Animation fade-out pour indicateur de scroll */
-	@keyframes scroll-hint-fade {
-		0%,
-		70% {
-			opacity: 1;
-		}
-		100% {
-			opacity: 0;
-			visibility: hidden;
-		}
-	}
-
 	/* Animation sparkle */
 	@keyframes sparkle-pulse {
 		0%,
@@ -479,19 +466,6 @@ textarea {
 
 	.animate-wave {
 		animation: wave 2.5s ease-in-out infinite;
-	}
-
-	/* Animation gradient-shift pour texte irisé */
-	@keyframes gradient-shift {
-		0% {
-			background-position: 0% 50%;
-		}
-		50% {
-			background-position: 100% 50%;
-		}
-		100% {
-			background-position: 0% 50%;
-		}
 	}
 
 	/* Animations floating blobs - mouvement organique */
@@ -574,42 +548,9 @@ textarea {
 		animation: shimmer 1.5s ease-in-out infinite;
 	}
 
-	/* Variante girly: shimmer rose-doré */
-	.animate-shimmer-girly {
-		--shimmer-base: oklch(0.95 0.03 350);
-		--shimmer-highlight: oklch(0.92 0.06 60);
-		background: linear-gradient(
-			90deg,
-			var(--shimmer-base) 0%,
-			var(--shimmer-highlight) 25%,
-			oklch(0.96 0.04 350) 50%,
-			var(--shimmer-highlight) 75%,
-			var(--shimmer-base) 100%
-		);
-		background-size: 200% 100%;
-		animation: shimmer 2s ease-in-out infinite;
-	}
-
 	/* Dark mode: highlight plus subtil */
 	.dark .animate-shimmer {
 		--shimmer-highlight: oklch(0.22 0.015 270);
-	}
-
-	.dark .animate-shimmer-girly {
-		--shimmer-base: oklch(0.18 0.02 350);
-		--shimmer-highlight: oklch(0.22 0.03 60);
-	}
-
-	/* Animation sparkle fade pour curseur */
-	@keyframes sparkle-fade {
-		0% {
-			opacity: 1;
-			transform: translate(-50%, -50%) scale(1) rotate(var(--rotation, 0deg));
-		}
-		100% {
-			opacity: 0;
-			transform: translate(-50%, -50%) scale(0.5) rotate(var(--rotation, 0deg)) translateY(-20px);
-		}
 	}
 
 	/* Animation draw-line pour SVG dessinés à la main (Tendance 2026: Hand-drawn aesthetic) */
@@ -952,6 +893,12 @@ textarea {
 	to {
 		opacity: 1;
 		transform: scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.yarl__slide {
+		animation: none !important;
 	}
 }
 

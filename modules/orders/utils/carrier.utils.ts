@@ -24,11 +24,6 @@ export const CARRIERS: CarrierInfo[] = [
 	{ value: "mondial_relay", label: "Mondial Relay" },
 	{ value: "chronopost", label: "Chronopost" },
 	{ value: "dpd", label: "DPD" },
-	{ value: "gls", label: "GLS" },
-	{ value: "dhl", label: "DHL" },
-	{ value: "ups", label: "UPS" },
-	{ value: "fedex", label: "FedEx" },
-	{ value: "relais_colis", label: "Relais Colis" },
 	{ value: "autre", label: "Autre transporteur" },
 ];
 

@@ -39,3 +39,6 @@ export {
 	forbidden,
 	validationError,
 } from "./responses";
+
+// Re-export ActionStatus for convenience
+export { ActionStatus } from "@/shared/types/server-action";

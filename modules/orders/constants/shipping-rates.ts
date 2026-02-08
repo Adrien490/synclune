@@ -24,7 +24,6 @@ export type { ShippingCarrier, ShippingRate, AllowedShippingCountry };
 
 export const SHIPPING_CARRIERS = {
 	STANDARD: "standard",
-	EXPRESS: "express",
 } as const;
 
 /**

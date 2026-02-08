@@ -3,6 +3,7 @@
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success } from "@/shared/lib/actions";
+import { ActionStatus } from "@/shared/types/server-action";
 import type { ActionState } from "@/shared/types/server-action";
 
 import { ORDERS_CACHE_TAGS } from "../constants/cache";

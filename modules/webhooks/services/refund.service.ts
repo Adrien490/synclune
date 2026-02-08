@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { PaymentStatus, RefundStatus, RefundAction, CurrencyCode } from "@/app/generated/prisma/client";
+import { PaymentStatus, RefundStatus, CurrencyCode } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
@@ -282,50 +282,30 @@ export async function updateRefundStatus(
 	newStatus: RefundStatus,
 	stripeStatus: string
 ): Promise<void> {
-	await prisma.$transaction(async (tx) => {
-		await tx.refund.update({
-			where: { id: refundId },
-			data: {
-				status: newStatus,
-				processedAt: newStatus === RefundStatus.COMPLETED ? new Date() : undefined,
-			},
-		});
-
-		await tx.refundHistory.create({
-			data: {
-				refundId,
-				action: newStatus === RefundStatus.COMPLETED ? RefundAction.COMPLETED : RefundAction.FAILED,
-				note: `Mis à jour via webhook Stripe (status: ${stripeStatus})`,
-			},
-		});
+	await prisma.refund.update({
+		where: { id: refundId },
+		data: {
+			status: newStatus,
+			processedAt: newStatus === RefundStatus.COMPLETED ? new Date() : undefined,
+		},
 	});
 
 	console.log(`✅ [WEBHOOK] Refund ${refundId} status updated to ${newStatus}`);
 }
 
 /**
- * Marque un remboursement comme échoué avec historique
+ * Marque un remboursement comme échoué
  */
 export async function markRefundAsFailed(
 	refundId: string,
 	failureReason: string
 ): Promise<void> {
-	await prisma.$transaction(async (tx) => {
-		await tx.refund.update({
-			where: { id: refundId },
-			data: {
-				status: RefundStatus.FAILED,
-				failureReason,
-			},
-		});
-
-		await tx.refundHistory.create({
-			data: {
-				refundId,
-				action: RefundAction.FAILED,
-				note: `Échec Stripe: ${failureReason}`,
-			},
-		});
+	await prisma.refund.update({
+		where: { id: refundId },
+		data: {
+			status: RefundStatus.FAILED,
+			failureReason,
+		},
 	});
 
 	console.log(`✅ [WEBHOOK] Refund ${refundId} marked as FAILED (reason: ${failureReason})`);

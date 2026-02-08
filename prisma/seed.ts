@@ -13,7 +13,7 @@ import {
   Prisma,
   PrismaClient,
   ProductStatus,
-  RefundAction,
+
   RefundReason,
   RefundStatus,
   ReviewStatus,
@@ -1108,12 +1108,7 @@ async function main(): Promise<void> {
 
     let trackingData: Partial<Prisma.OrderCreateInput> = {};
     if (status === OrderStatus.SHIPPED || status === OrderStatus.DELIVERED) {
-      const shippingMethod = faker.helpers.arrayElement([
-        "STANDARD",
-        "EXPRESS",
-        "STANDARD",
-        "STANDARD",
-      ] as const);
+      const shippingMethod = "STANDARD" as const;
 
       const shippedAt = new Date(orderDate);
       shippedAt.setDate(shippedAt.getDate() + faker.number.int({ min: 1, max: 3 }));
@@ -1761,49 +1756,12 @@ async function main(): Promise<void> {
         },
       });
 
-      // Créer l'historique du remboursement
-      const historyEntries: Prisma.RefundHistoryCreateManyInput[] = [
-        { refundId: refund.id, action: RefundAction.CREATED, authorId: adminUser.id, createdAt: refundDate },
-      ];
-
-      if (status !== RefundStatus.PENDING) {
-        const approveDate = new Date(refundDate);
-        approveDate.setHours(approveDate.getHours() + faker.number.int({ min: 1, max: 48 }));
-
-        if (status === RefundStatus.REJECTED) {
-          historyEntries.push({
-            refundId: refund.id,
-            action: RefundAction.REJECTED,
-            note: "Délai de rétractation de 14 jours dépassé",
-            authorId: adminUser.id,
-            createdAt: approveDate,
-          });
-        } else {
-          historyEntries.push({
-            refundId: refund.id,
-            action: RefundAction.APPROVED,
-            authorId: adminUser.id,
-            createdAt: approveDate,
-          });
-
-          if (status === RefundStatus.COMPLETED) {
-            const processDate = new Date(approveDate);
-            processDate.setHours(processDate.getHours() + faker.number.int({ min: 1, max: 24 }));
-            historyEntries.push(
-              { refundId: refund.id, action: RefundAction.PROCESSED, authorId: null, createdAt: processDate },
-              { refundId: refund.id, action: RefundAction.COMPLETED, authorId: null, createdAt: processDate }
-            );
-          }
-        }
-      }
-
-      await prisma.refundHistory.createMany({ data: historyEntries });
       refundsCreated++;
     } catch {
       continue;
     }
   }
-  console.log(`✅ ${refundsCreated} remboursements créés avec historique`);
+  console.log(`✅ ${refundsCreated} remboursements créés`);
 
   // ============================================
   // HISTORIQUE DES COMMANDES (ORDER HISTORY)

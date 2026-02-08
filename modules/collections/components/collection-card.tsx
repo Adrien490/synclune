@@ -64,7 +64,7 @@ export function CollectionCard({
             "relative overflow-hidden rounded-xl bg-card",
             // COHERENCE ProductCard: border-2 transparent
             "border-2 border-transparent shadow-sm",
-            "transition-[transform,border-color,box-shadow] duration-300 ease-out",
+            "transition-transform duration-300 ease-out",
             // Motion-reduce: desactiver transforms, garder transitions couleurs
             "motion-reduce:transition-colors",
             // COHERENCE ProductCard: border-primary/40
@@ -73,8 +73,6 @@ export function CollectionCard({
             "can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
             // COHERENCE ProductCard: transform subtil (version plus douce)
             "motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01]",
-            // Active state pour feedback tactile immediat sur mobile
-            "motion-safe:active:scale-[0.98] motion-safe:active:shadow-sm",
             // COHERENCE ProductCard: focus state
             "focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/15",
             // COHERENCE ProductCard: GPU optimization

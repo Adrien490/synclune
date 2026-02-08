@@ -1,4 +1,3 @@
-import { LEGAL_VERSIONS } from "@/shared/constants/legal-versions";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/modules/emails/services/auth-emails";
 import { prisma } from "@/shared/lib/prisma";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -128,13 +127,7 @@ export const auth = betterAuth({
 
 			// 🔴 CORRECTION : Hook appelé après création du Customer Stripe
 			onCustomerCreate: async ({ stripeCustomer, user }, request) => {
-				// Extraire IP et User-Agent pour traçabilité RGPD
-				const ipAddress = request?.headers?.get?.("x-forwarded-for")?.split(",")[0]?.trim()
-					|| request?.headers?.get?.("x-real-ip")
-					|| null;
-				const userAgent = request?.headers?.get?.("user-agent") || null;
-
-				// 🛒 Créer automatiquement le panier et la wishlist + Enregistrer consentement RGPD
+				// Create cart and wishlist automatically on signup
 				try {
 					await prisma.$transaction(async (tx) => {
 						// Créer le panier
@@ -151,19 +144,6 @@ export const auth = betterAuth({
 							},
 						});
 
-						// Enregistrer les données RGPD de consentement
-						await tx.user.update({
-							where: { id: user.id },
-							data: {
-								signupIpAddress: ipAddress,
-								signupUserAgent: userAgent,
-								signupSource: "website",
-								termsAcceptedAt: new Date(),
-								termsVersion: LEGAL_VERSIONS.TERMS,
-								privacyPolicyAcceptedAt: new Date(),
-								privacyPolicyVersion: LEGAL_VERSIONS.PRIVACY_POLICY,
-							},
-						});
 					});
 				} catch (error) {
 					// Ne pas bloquer l'inscription si la création échoue

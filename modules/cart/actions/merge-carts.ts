@@ -4,6 +4,7 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { handleActionError, success, error } from "@/shared/lib/actions";
+import { ActionStatus } from "@/shared/types/server-action";
 import { batchValidateSkusForMerge } from "@/modules/cart/services/sku-validation.service";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getSession } from "@/modules/auth/lib/get-current-session";

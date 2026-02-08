@@ -8,11 +8,6 @@ export type Carrier =
 	| "mondial_relay"
 	| "chronopost"
 	| "dpd"
-	| "gls"
-	| "dhl"
-	| "ups"
-	| "fedex"
-	| "relais_colis"
 	| "autre";
 
 export interface CarrierInfo {

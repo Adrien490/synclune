@@ -4,6 +4,7 @@ import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { UTApi } from "uploadthing/server";

@@ -6,10 +6,11 @@ import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { ActionStatus } from "@/shared/types/server-action";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
-import { RefundAction } from "@/app/generated/prisma/client";
+
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -61,7 +62,7 @@ export async function createRefund(
 		if ("error" in validated) return validated.error;
 
 		// Sanitiser le texte libre
-		const sanitizedNote = result.data.note ? sanitizeText(result.data.note) : null;
+		const sanitizedNote = validated.data.note ? sanitizeText(validated.data.note) : null;
 
 		// Récupérer la commande avec ses items (exclure les commandes soft-deleted)
 		const order = await prisma.order.findUnique({
@@ -129,7 +130,7 @@ export async function createRefund(
 			restock: boolean;
 		}> = [];
 
-		for (const item of result.data.items) {
+		for (const item of validated.data.items) {
 			const orderItem = order.items.find((oi) => oi.id === item.orderItemId);
 
 			if (!orderItem) {
@@ -157,7 +158,7 @@ export async function createRefund(
 			const itemAmount = item.amount || orderItem.price * item.quantity;
 
 			// Utiliser le restock fourni, sinon déterminer automatiquement selon le motif
-			const shouldRestock = item.restock ?? shouldRestockByDefault(result.data.reason);
+			const shouldRestock = item.restock ?? shouldRestockByDefault(validated.data.reason);
 
 			validatedItems.push({
 				orderItemId: item.orderItemId,
@@ -177,12 +178,12 @@ export async function createRefund(
 			};
 		}
 
-		// Créer le remboursement avec ses items et l'historique
+		// Créer le remboursement avec ses items
 		const refund = await prisma.refund.create({
 			data: {
 				orderId,
 				amount: totalAmount,
-				reason: result.data.reason,
+				reason: validated.data.reason,
 				note: sanitizedNote,
 				createdBy: adminUser.id,
 				items: {
@@ -192,13 +193,6 @@ export async function createRefund(
 						amount: item.amount,
 						restock: item.restock,
 					})),
-				},
-				history: {
-					create: {
-						action: RefundAction.CREATED,
-						authorId: adminUser.id,
-						note: `Demande de remboursement créée pour ${(totalAmount / 100).toFixed(2)} €`,
-					},
 				},
 			},
 			select: {

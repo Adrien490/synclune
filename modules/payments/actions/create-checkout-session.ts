@@ -427,8 +427,7 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 					shippingCity: validatedData.shippingAddress.city,
 					shippingCountry: validatedData.shippingAddress.country || "FR",
 					shippingPhone: validatedData.shippingAddress.phoneNumber || "",
-					shippingMethod:
-						shippingZoneInfo.zone !== "UNKNOWN" ? shippingZoneInfo.zone : null,
+					shippingMethod: "STANDARD",
 
 					// === STATUTS ===
 					status: "PENDING",
@@ -468,9 +467,6 @@ export const createCheckoutSession = async (_prevState: ActionState | undefined,
 						skuImageUrl: imageUrl,
 						price: sku.priceInclTax,
 						quantity: cartItem.quantity,
-						// Détails fiscaux temporaires (mis à jour par webhook après calcul Stripe Tax)
-						taxAmount: 0,
-						taxRate: null,
 					},
 				});
 			}

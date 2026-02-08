@@ -56,7 +56,7 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 						href={primaryItem.href}
 						aria-current={pathname === primaryItem.href ? "page" : undefined}
 						className={cn(
-							"flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-semibold min-h-11",
+							"flex-row! flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-semibold min-h-11",
 							"bg-accent/40 hover:bg-accent",
 							"text-foreground",
 							"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -66,7 +66,7 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 						)}
 					>
 						{primaryItem.label}
-						<ArrowRight className="size-3.5 text-muted-foreground" aria-hidden="true" />
+						<ArrowRight className="size-3.5! text-muted-foreground" aria-hidden="true" />
 					</Link>
 				</NavigationMenuLink>
 			)}
@@ -112,7 +112,7 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 							href={viewAllLink.href}
 							aria-current={pathname === viewAllLink.href ? "page" : undefined}
 							className={cn(
-								"inline-flex items-center gap-2 min-h-11 px-3 py-2.5 rounded-sm text-sm font-medium",
+								"flex-row! inline-flex items-center gap-2 min-h-11 px-3 py-2.5 rounded-sm text-sm font-medium",
 								"text-foreground hover:text-foreground",
 								"hover:bg-accent/50",
 								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -120,7 +120,7 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 							)}
 						>
 							{viewAllLink.label}
-							<ArrowRight className="size-3.5 text-muted-foreground" aria-hidden="true" />
+							<ArrowRight className="size-3.5! text-muted-foreground" aria-hidden="true" />
 						</Link>
 					</NavigationMenuLink>
 				</div>

@@ -1,6 +1,6 @@
 "use server";
 
-import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -75,23 +75,13 @@ export async function approveRefund(
 			return error(REFUND_ERROR_MESSAGES.ALREADY_PROCESSED);
 		}
 
-		// Mettre à jour le statut et créer l'entrée d'historique
+		// Mettre à jour le statut
 		// Le where inclut le statut attendu pour protection TOCTOU
-		await prisma.$transaction(async (tx) => {
-			await tx.refund.update({
-				where: { id, status: RefundStatus.PENDING },
-				data: {
-					status: RefundStatus.APPROVED,
-				},
-			});
-
-			await tx.refundHistory.create({
-				data: {
-					refundId: id,
-					action: RefundAction.APPROVED,
-					authorId: adminUser.id,
-				},
-			});
+		await prisma.refund.update({
+			where: { id, status: RefundStatus.PENDING },
+			data: {
+				status: RefundStatus.APPROVED,
+			},
 		});
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);

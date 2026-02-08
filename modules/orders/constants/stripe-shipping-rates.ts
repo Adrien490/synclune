@@ -120,11 +120,9 @@ export function getShippingRateName(shippingRateId: string): string {
  * Détermine la méthode de livraison (enum) à partir du shipping rate ID
  *
  * @param shippingRateId - ID du shipping rate Stripe (shr_xxx)
- * @returns La méthode de livraison (STANDARD ou EXPRESS)
+ * @returns La méthode de livraison (toujours STANDARD)
  */
-export function getShippingMethodFromRate(shippingRateId: string): "STANDARD" | "EXPRESS" {
-	// Tous les tarifs sont STANDARD pour l'instant
-	// Si ajout d'un tarif EXPRESS futur, mapper ici
+export function getShippingMethodFromRate(shippingRateId: string): "STANDARD" {
 	return "STANDARD";
 }
 

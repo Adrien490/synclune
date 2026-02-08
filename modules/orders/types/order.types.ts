@@ -68,7 +68,7 @@ export type CancelOrderInput = z.infer<typeof cancelOrderSchema>;
 import type { ShippingCountry } from "@/shared/constants/countries";
 
 /** Transporteur de livraison */
-export type ShippingCarrier = "standard" | "express";
+export type ShippingCarrier = "standard";
 
 /** Tarif de livraison */
 export interface ShippingRate {

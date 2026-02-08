@@ -7,6 +7,7 @@ import { prisma } from "@/shared/lib/prisma"
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit"
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config"
 import type { ActionState } from "@/shared/types/server-action"
+import { ActionStatus } from "@/shared/types/server-action";
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { removeFromWishlistSchema } from '@/modules/wishlist/schemas/wishlist.schemas'

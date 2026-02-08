@@ -1,12 +1,13 @@
 "use server";
 
-import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { ActionStatus } from "@/shared/types/server-action";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
@@ -80,32 +81,21 @@ export async function rejectRefund(
 		}
 
 		// Sanitiser et construire la note avec la raison du rejet
-		const sanitizedReason = result.data.reason ? sanitizeText(result.data.reason) : null;
+		const sanitizedReason = validated.data.reason ? sanitizeText(validated.data.reason) : null;
 		const updatedNote = sanitizedReason
 			? refund.note
 				? `${refund.note}\n\n[REFUSÉ] ${sanitizedReason}`
 				: `[REFUSÉ] ${sanitizedReason}`
 			: refund.note;
 
-		// Mettre à jour le statut et créer l'entrée d'historique
+		// Mettre à jour le statut
 		// Le where inclut le statut attendu pour protection TOCTOU
-		await prisma.$transaction(async (tx) => {
-			await tx.refund.update({
-				where: { id, status: RefundStatus.PENDING },
-				data: {
-					status: RefundStatus.REJECTED,
-					note: updatedNote,
-				},
-			});
-
-			await tx.refundHistory.create({
-				data: {
-					refundId: id,
-					action: RefundAction.REJECTED,
-					authorId: adminUser.id,
-					note: sanitizedReason || undefined,
-				},
-			});
+		await prisma.refund.update({
+			where: { id, status: RefundStatus.PENDING },
+			data: {
+				status: RefundStatus.REJECTED,
+				note: updatedNote,
+			},
 		});
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);

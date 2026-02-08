@@ -1,12 +1,13 @@
 "use server";
 
-import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
@@ -75,22 +76,12 @@ export async function cancelRefund(
 		// Soft delete : marquer comme CANCELLED au lieu de supprimer
 		// (Conformité comptable Art. L123-22 Code de Commerce - conservation 10 ans)
 		// Le where inclut le statut courant pour protection TOCTOU
-		await prisma.$transaction(async (tx) => {
-			await tx.refund.update({
-				where: { id, status: refund.status },
-				data: {
-					status: RefundStatus.CANCELLED,
-					deletedAt: new Date(),
-				},
-			});
-
-			await tx.refundHistory.create({
-				data: {
-					refundId: id,
-					action: RefundAction.CANCELLED,
-					authorId: adminUser.id,
-				},
-			});
+		await prisma.refund.update({
+			where: { id, status: refund.status },
+			data: {
+				status: RefundStatus.CANCELLED,
+				deletedAt: new Date(),
+			},
 		});
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);

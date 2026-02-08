@@ -121,15 +121,6 @@ export async function deleteAccount(
 					image: null,
 					stripeCustomerId: null,
 					emailVerified: false,
-					// Effacer les données RGPD
-					signupIpAddress: null,
-					signupUserAgent: null,
-					termsAcceptedAt: null,
-					termsVersion: null,
-					privacyPolicyAcceptedAt: null,
-					privacyPolicyVersion: null,
-					marketingEmailConsentedAt: null,
-					marketingConsentSource: null,
 				},
 			});
 		});

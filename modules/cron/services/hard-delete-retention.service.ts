@@ -10,7 +10,7 @@ import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
  *
  * Supprime définitivement les données soft-deleted après 10 ans.
  *
- * IMPORTANT: Les données comptables (Order, Refund, OrderHistory, RefundHistory)
+ * IMPORTANT: Les données comptables (Order, Refund, OrderHistory)
  * sont exclues car elles doivent être conservées indéfiniment pour audit.
  *
  * Tables concernées:

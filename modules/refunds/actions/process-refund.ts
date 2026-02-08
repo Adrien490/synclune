@@ -1,12 +1,13 @@
 "use server";
 
-import { Prisma, PaymentStatus, RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { Prisma, PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -134,16 +135,6 @@ export async function processRefund(
 					AND id != ${id}
 			`;
 
-			// Enregistrer l'action PROCESSED (marque le début du traitement)
-			await tx.refundHistory.create({
-				data: {
-					refundId: id,
-					action: RefundAction.PROCESSED,
-					authorId: adminUser.id,
-					note: "Envoi vers Stripe en cours",
-				},
-			});
-
 			return {
 				refund,
 				items,
@@ -170,20 +161,9 @@ export async function processRefund(
 		// P0.1: Gérer les différents états de retour Stripe
 		if (!stripeResult.success && !stripeResult.pending) {
 			// Marquer le remboursement comme échoué
-			await prisma.$transaction(async (tx) => {
-				await tx.refund.update({
-					where: { id },
-					data: { status: RefundStatus.FAILED },
-				});
-
-				await tx.refundHistory.create({
-					data: {
-						refundId: id,
-						action: RefundAction.FAILED,
-						authorId: adminUser.id,
-						note: `Échec Stripe: ${stripeResult.error || "Erreur inconnue"}`,
-					},
-				});
+			await prisma.refund.update({
+				where: { id },
+				data: { status: RefundStatus.FAILED },
 			});
 
 			return {
@@ -194,24 +174,13 @@ export async function processRefund(
 
 		// P0.1: Si pending, garder APPROVED et attendre webhook refund.updated
 		if (stripeResult.pending) {
-			await prisma.$transaction(async (tx) => {
-				// Mettre à jour avec l'ID Stripe mais garder APPROVED
-				await tx.refund.update({
-					where: { id },
-					data: {
-						stripeRefundId: stripeResult.refundId,
-						// Status reste APPROVED - sera COMPLETED par webhook
-					},
-				});
-
-				await tx.refundHistory.create({
-					data: {
-						refundId: id,
-						action: RefundAction.PROCESSED,
-						authorId: adminUser.id,
-						note: `Remboursement Stripe en attente de confirmation (${stripeResult.refundId})`,
-					},
-				});
+			// Mettre à jour avec l'ID Stripe mais garder APPROVED
+			await prisma.refund.update({
+				where: { id },
+				data: {
+					stripeRefundId: stripeResult.refundId,
+					// Status reste APPROVED - sera COMPLETED par webhook
+				},
 			});
 
 			return {
@@ -233,16 +202,6 @@ export async function processRefund(
 					status: RefundStatus.COMPLETED,
 					stripeRefundId: stripeResult.refundId,
 					processedAt: new Date(),
-				},
-			});
-
-			// 2. Ajouter l'entrée d'historique COMPLETED
-			await tx.refundHistory.create({
-				data: {
-					refundId: id,
-					action: RefundAction.COMPLETED,
-					authorId: adminUser.id,
-					note: `Remboursement Stripe confirmé: ${stripeResult.refundId}`,
 				},
 			});
 

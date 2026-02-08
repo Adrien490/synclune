@@ -107,8 +107,6 @@ export const GET_ORDER_SELECT = {
 			skuImageUrl: true,
 			price: true,
 			quantity: true,
-			taxAmount: true,
-			taxRate: true,
 		},
 	},
 	history: {

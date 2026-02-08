@@ -85,15 +85,12 @@ export const softDelete = {
   user: (id: string) => prisma.user.update({ where: { id }, data: { deletedAt: new Date() } }),
   refund: (id: string) => prisma.refund.update({ where: { id }, data: { deletedAt: new Date() } }),
   orderNote: (id: string) => prisma.orderNote.update({ where: { id }, data: { deletedAt: new Date() } }),
-  discountUsage: (id: string) => prisma.discountUsage.update({ where: { id }, data: { deletedAt: new Date() } }),
   newsletterSubscriber: (id: string) => prisma.newsletterSubscriber.update({ where: { id }, data: { deletedAt: new Date() } }),
   stockNotificationRequest: (id: string) => prisma.stockNotificationRequest.update({ where: { id }, data: { deletedAt: new Date() } }),
   productReview: (id: string) => prisma.productReview.update({ where: { id }, data: { deletedAt: new Date() } }),
   reviewResponse: (id: string) => prisma.reviewResponse.update({ where: { id }, data: { deletedAt: new Date() } }),
   product: (id: string) => prisma.product.update({ where: { id }, data: { deletedAt: new Date() } }),
   productSku: (id: string) => prisma.productSku.update({ where: { id }, data: { deletedAt: new Date() } }),
-  orderHistory: (id: string) => prisma.orderHistory.update({ where: { id }, data: { deletedAt: new Date() } }),
-  refundHistory: (id: string) => prisma.refundHistory.update({ where: { id }, data: { deletedAt: new Date() } }),
   customizationRequest: (id: string) => prisma.customizationRequest.update({ where: { id }, data: { deletedAt: new Date() } }),
 };
 

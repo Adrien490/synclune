@@ -31,6 +31,7 @@ export function useIsScrolled(threshold: number = 10): boolean {
 			height: 1px;
 			pointer-events: none;
 		`;
+		sentinel.setAttribute("aria-hidden", "true");
 		document.body.appendChild(sentinel);
 		sentinelRef.current = sentinel;
 

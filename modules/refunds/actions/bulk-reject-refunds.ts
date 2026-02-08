@@ -1,12 +1,13 @@
 "use server";
 
-import { RefundAction, RefundStatus } from "@/app/generated/prisma/client";
+import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
+import { ActionStatus } from "@/shared/types/server-action";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
@@ -55,7 +56,7 @@ export async function bulkRejectRefunds(
 		// Récupérer les remboursements éligibles (PENDING uniquement, non supprimés)
 		const refunds = await prisma.refund.findMany({
 			where: {
-				id: { in: result.data.ids },
+				id: { in: validated.data.ids },
 				status: RefundStatus.PENDING,
 				deletedAt: null,
 			},
@@ -79,7 +80,7 @@ export async function bulkRejectRefunds(
 		}
 
 		// Sanitiser la raison avant stockage
-		const sanitizedReason = result.data.reason ? sanitizeText(result.data.reason) : null;
+		const sanitizedReason = validated.data.reason ? sanitizeText(validated.data.reason) : null;
 
 		// Rejeter tous les remboursements avec audit trail
 		await prisma.$transaction(async (tx) => {
@@ -98,14 +99,6 @@ export async function bulkRejectRefunds(
 					},
 				});
 
-				await tx.refundHistory.create({
-					data: {
-						refundId: refund.id,
-						action: RefundAction.REJECTED,
-						note: sanitizedReason || undefined,
-						authorId: adminUser.id,
-					},
-				});
 			}
 		});
 
@@ -113,7 +106,7 @@ export async function bulkRejectRefunds(
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 		const totalAmount = refunds.reduce((sum, r) => sum + r.amount, 0);
-		const skipped = result.data.ids.length - refunds.length;
+		const skipped = validated.data.ids.length - refunds.length;
 
 		let message = `${refunds.length} remboursement${refunds.length > 1 ? "s" : ""} refusé${refunds.length > 1 ? "s" : ""} (${(totalAmount / 100).toFixed(2)} €)`;
 		if (skipped > 0) {

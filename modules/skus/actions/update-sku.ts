@@ -5,6 +5,7 @@ import { detectMediaType } from "@/modules/media/utils/media-type-detection";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus } from "@/shared/types/server-action";
 import { updateProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 import { triggerStockNotificationsIfNeeded } from "@/modules/stock-notifications/services/trigger-stock-notifications.service";

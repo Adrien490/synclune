@@ -44,24 +44,9 @@ model User {
   // === STATUT DE COMPTE (RGPD) ===
   accountStatus AccountStatus @default(ACTIVE)
 
-  // === CONSENTEMENT RGPD (avec versioning) ===
-  termsAcceptedAt         DateTime? // Date d'acceptation des CGV
-  termsVersion            String?   @db.VarChar(20) // Version CGV acceptées (ex: "2024-11")
-  privacyPolicyAcceptedAt DateTime? // Date d'acceptation de la politique de confidentialité
-  privacyPolicyVersion    String?   @db.VarChar(20) // Version politique confidentialité
-
-  // === MÉTADONNÉES INSCRIPTION ===
-  signupIpAddress String? @db.VarChar(45) // IP lors de l'inscription (IPv6 max 45 chars)
-  signupUserAgent String? @db.Text        // Browser/device info
-  signupSource    String? @db.VarChar(50) // 'website', 'mobile', 'checkout'
-
-  // === CONSENTEMENT MARKETING (séparé de la newsletter) ===
-  marketingEmailConsentedAt DateTime?
-  marketingConsentSource    String?   @db.VarChar(100)
-
   // === ANONYMISATION RGPD ===
   anonymizedAt        DateTime? // Date d'anonymisation effective
-  deletionRequestedAt DateTime? // Demande de suppression enregistrée
+  deletionRequestedAt DateTime? // Demande de suppression enregistree
 
   sessions                  Session[]
   accounts                  Account[]
@@ -74,22 +59,15 @@ model User {
   newsletterSubscription    NewsletterSubscriber?
 
   // Relations avec les remboursements (audit)
-  refundsCreated       Refund[]        @relation("RefundCreator")
-  refundHistoryActions RefundHistory[] @relation("RefundHistoryAuthor")
+  refundsCreated Refund[] @relation("RefundCreator")
 
   // Avis produits
   reviews ProductReview[]
 
   @@index([suspendedAt])
-  @@index([role, id])
-  @@index([emailVerified, id])
   @@index([name, id]) // Admin: tri par nom d'utilisateur
   @@index([createdAt, id])
-  // Note: Les 2 index composites commençant par deletedAt couvrent les queries sur deletedAt seul
-  // PostgreSQL utilise le leading column d'un index composite pour les queries mono-colonne
-  @@index([deletedAt, role]) // Admin: filtrer users actifs par rôle
-  @@index([deletedAt, emailVerified]) // Admin: filtrer users actifs par statut email
-  @@index([accountStatus])
+  @@index([deletedAt, role]) // Admin: filtrer users actifs par role
   @@index([deletionRequestedAt])
   @@index([anonymizedAt])
 }
@@ -160,7 +138,7 @@ model Address {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  // Note: Contrainte unique partielle ajoutée via migration SQL brute
+  // Note: Contrainte unique partielle ajoutee via migration SQL brute
   // pour garantir qu'un seul enregistrement a isDefault: true par userId
 
   @@index([userId, isDefault]) // Couvre aussi userId seul
@@ -188,21 +166,18 @@ enum MediaType {
   VIDEO
 }
 
-/// Statut de modération des avis produits
+/// Statut de moderation des avis produits
 enum ReviewStatus {
-  PUBLISHED // Auto-publié (défaut)
-  HIDDEN    // Masqué par modération (spam, inapproprié, etc.)
+  PUBLISHED // Auto-publie (defaut)
+  HIDDEN    // Masque par moderation (spam, inapproprie, etc.)
 }
 
 // ============================================================================
-// CATALOGUE - ENUMS ADDITIONNELS (Audit Fix)
+// CATALOGUE - ENUMS ADDITIONNELS
 // ============================================================================
 
 enum CurrencyCode {
   EUR
-  USD
-  GBP
-  CHF
 }
 
 enum ShippingCarrier {
@@ -210,24 +185,11 @@ enum ShippingCarrier {
   CHRONOPOST
   MONDIAL_RELAY
   DPD
-  GLS
-  DHL
-  UPS
-  FEDEX
-  RELAIS_COLIS
   OTHER
 }
 
 enum ShippingMethod {
   STANDARD
-  EXPRESS
-  PICKUP_POINT
-  STORE_PICKUP
-  // Zones de livraison (compatibilité rétroactive)
-  METROPOLITAN
-  CORSE
-  DOM
-  TOM
 }
 
 /// Source d'une action sur une commande (audit trail)
@@ -238,14 +200,8 @@ enum HistorySource {
   CUSTOMER
 }
 
-/// Comportement de la TVA Stripe
-enum TaxBehavior {
-  INCLUSIVE
-  EXCLUSIVE
-}
-
 // ============================================================================
-// CATALOGUE - RÉFÉRENTIELS
+// CATALOGUE - REFERENTIELS
 // ============================================================================
 
 model ProductType {
@@ -254,7 +210,7 @@ model ProductType {
   label       String  @db.VarChar(50)
   description String? @db.Text
   isActive    Boolean @default(true)
-  isSystem    Boolean @default(false) // Types système non modifiables/supprimables
+  isSystem    Boolean @default(false) // Types systeme non modifiables/supprimables
 
   products              Product[]
   customizationRequests CustomizationRequest[]
@@ -271,7 +227,7 @@ model Color {
   slug      String       @unique
   name      String       @unique @db.VarChar(100)
   hex       String       @db.VarChar(7)
-  isActive  Boolean      @default(true) // Cohérence avec Material
+  isActive  Boolean      @default(true) // Coherence avec Material
   skus      ProductSku[]
 
   createdAt DateTime @default(now())
@@ -317,7 +273,7 @@ model Collection {
 }
 
 /// Table de jointure explicite Product <-> Collection (many-to-many)
-/// Permet à un produit d'appartenir à plusieurs collections
+/// Permet a un produit d'appartenir a plusieurs collections
 model ProductCollection {
   id           String     @id @default(cuid())
   productId    String
@@ -325,17 +281,17 @@ model ProductCollection {
   collectionId String
   collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
-  /// Date d'ajout à la collection (pour tri automatique par nouveautés)
+  /// Date d'ajout a la collection (pour tri automatique par nouveautes)
   addedAt DateTime @default(now())
 
   /// Produit mis en avant dans la collection (pour hero/banner)
-  /// Un seul produit peut être featured par collection (géré côté applicatif)
+  /// Un seul produit peut etre featured par collection (gere cote applicatif)
   isFeatured Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  /// Un produit ne peut appartenir qu'une seule fois à une collection
+  /// Un produit ne peut appartenir qu'une seule fois a une collection
   @@unique([productId, collectionId])
   @@index([collectionId, addedAt(sort: Desc)])
   @@index([productId])
@@ -360,7 +316,7 @@ model Product {
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete pour préserver historique commandes
+  deletedAt DateTime? // Soft delete pour preserver historique commandes
 
   skus       ProductSku[]
   orderItems OrderItem[]
@@ -378,7 +334,7 @@ model Product {
   @@index([typeId])
   @@index([createdAt, id])
   @@index([deletedAt, status]) // Couvre aussi deletedAt seul
-  @@index([status, createdAt(sort: Desc)]) // Nouveautés, couvre aussi status seul
+  @@index([status, createdAt(sort: Desc)]) // Nouveautes, couvre aussi status seul
   @@index([typeId, status]) // Filtrage par type
 }
 
@@ -396,11 +352,11 @@ model ProductSku {
 
   size String? @db.VarChar(50)
 
-  // ℹ️ Prix en régime micro-entreprise (exonéré de TVA - art. 293 B du CGI)
-  // Le nom "priceInclTax" est conservé pour compatibilité, mais il s'agit du prix FINAL sans TVA
-  // Exemple : 30€ = 3000 centimes (prix que paie le client, sans TVA ajoutée)
+  // Prix en regime micro-entreprise (exonere de TVA - art. 293 B du CGI)
+  // Le nom "priceInclTax" est conserve pour compatibilite, mais il s'agit du prix FINAL sans TVA
+  // Exemple : 30 euros = 3000 centimes (prix que paie le client, sans TVA ajoutee)
   priceInclTax   Int
-  compareAtPrice Int? // Prix avant réduction (optionnel, pour afficher prix barré)
+  compareAtPrice Int? // Prix avant reduction (optionnel, pour afficher prix barre)
   inventory      Int     @default(0)
   isActive       Boolean @default(true)
 
@@ -413,18 +369,18 @@ model ProductSku {
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete pour préserver historique commandes
+  deletedAt DateTime? // Soft delete pour preserver historique commandes
 
-  // 🔒 CONTRAINTE : Garantir unicité des combinaisons produit/couleur/taille/matériau
-  // Évite les doublons de variantes (ex: 2 SKUs "Bague Rouge Taille 52 Argent")
+  // Garantir unicite des combinaisons produit/couleur/taille/materiau
+  // Evite les doublons de variantes (ex: 2 SKUs "Bague Rouge Taille 52 Argent")
   @@unique([productId, colorId, size, materialId])
-  // Indexes optimisés pour requêtes fréquentes
+  // Indexes optimises pour requetes frequentes
   @@index([productId, isActive, inventory]) // Stock actif par produit, couvre aussi [productId, isActive]
   @@index([isActive, inventory(sort: Asc), updatedAt(sort: Desc)]) // Stock alerts (low inventory first)
   @@index([isActive, priceInclTax])
   @@index([productId, isDefault])
   @@index([colorId, isActive]) // Filtrage catalogue par couleur
-  @@index([materialId, isActive]) // Filtrage catalogue par matériau
+  @@index([materialId, isActive]) // Filtrage catalogue par materiau
   @@index([productId, isActive, deletedAt]) // Soft delete + product queries (couvre deletedAt seul)
 }
 
@@ -434,7 +390,7 @@ model SkuMedia {
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
 
   url          String  @db.VarChar(2048)
-  thumbnailUrl String? @db.VarChar(2048) // Thumbnail pour vidéos (poster)
+  thumbnailUrl String? @db.VarChar(2048) // Thumbnail pour videos (poster)
   blurDataUrl  String? @db.Text          // Base64 blur placeholder (~200 bytes)
   altText      String?
   mediaType    MediaType @default(IMAGE)
@@ -444,7 +400,7 @@ model SkuMedia {
   updatedAt DateTime @updatedAt
 
   @@index([skuId, isPrimary])
-  @@index([skuId, mediaType]) // Filtrage vidéo/image
+  @@index([skuId, mediaType]) // Filtrage video/image
 }
 
 // ============================================================================
@@ -482,8 +438,8 @@ model CartItem {
   quantity Int @default(1)
 
   // Prix snapshot au moment de l'ajout au panier (en centimes)
-  // Protège contre les changements de prix entre l'ajout et le paiement
-  // Exemple: 29,99€ = 2999 centimes
+  // Protege contre les changements de prix entre l'ajout et le paiement
+  // Exemple: 29,99 euros = 2999 centimes
   priceAtAdd Int
 
   createdAt DateTime @default(now())
@@ -501,12 +457,12 @@ model CartItem {
 model Wishlist {
   id String @id @default(cuid())
 
-  // Support utilisateur connecté OU session invité
+  // Support utilisateur connecte OU session invite
   userId    String? @unique
   user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId String? @unique // UUID pour sessions invité (cookie httpOnly)
+  sessionId String? @unique // UUID pour sessions invite (cookie httpOnly)
 
-  // Date d'expiration pour les wishlists invité (null = utilisateur connecté)
+  // Date d'expiration pour les wishlists invite (null = utilisateur connecte)
   expiresAt DateTime?
 
   items WishlistItem[]
@@ -514,7 +470,7 @@ model Wishlist {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([expiresAt]) // Pour le nettoyage des wishlists expirées
+  @@index([expiresAt]) // Pour le nettoyage des wishlists expirees
   @@index([userId])
   @@index([sessionId])
 }
@@ -524,15 +480,15 @@ model WishlistItem {
   wishlistId String
   wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
-  // ⚠️ SetNull permet l'archivage produit sans bloquer les wishlists existantes
+  // SetNull permet l'archivage produit sans bloquer les wishlists existantes
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Un produit ne peut être ajouté qu'une seule fois par wishlist
-  // Note: Contrainte unique sur champ nullable - validation métier côté applicatif
+  // Un produit ne peut etre ajoute qu'une seule fois par wishlist
+  // Note: Contrainte unique sur champ nullable - validation metier cote applicatif
   @@unique([wishlistId, productId])
   @@index([wishlistId])
   @@index([productId])
@@ -560,9 +516,6 @@ enum PaymentStatus {
 
 enum PaymentMethod {
   CARD
-  BANK_TRANSFER
-  PAYPAL
-  OTHER
 }
 
 enum FulfillmentStatus {
@@ -573,27 +526,20 @@ enum FulfillmentStatus {
   RETURNED
 }
 
-/// Catégorie d'opération (conformité fiscale française depuis juillet 2024)
-enum OperationCategory {
-  GOODS    // Vente de biens
-  SERVICES // Prestations de services
-  MIXED    // Mixte (biens + services)
-}
-
-/// Actions traçables sur les commandes (audit trail)
-/// Requis pour conformité légale (Art. L123-22 Code de Commerce)
+/// Actions tracables sur les commandes (audit trail)
+/// Requis pour conformite legale (Art. L123-22 Code de Commerce)
 enum OrderAction {
-  CREATED          // Création de la commande
-  PAID             // Paiement reçu
-  PROCESSING       // Mise en préparation
-  SHIPPED          // Expédition
-  DELIVERED        // Livraison confirmée
+  CREATED          // Creation de la commande
+  PAID             // Paiement recu
+  PROCESSING       // Mise en preparation
+  SHIPPED          // Expedition
+  DELIVERED        // Livraison confirmee
   CANCELLED        // Annulation
   RETURNED         // Retour client
-  STATUS_REVERTED  // Retour à un statut précédent
-  NOTE_ADDED       // Note ajoutée
-  NOTE_DELETED     // Note supprimée
-  TRACKING_UPDATED // Suivi mis à jour
+  STATUS_REVERTED  // Retour a un statut precedent
+  NOTE_ADDED       // Note ajoutee
+  NOTE_DELETED     // Note supprimee
+  TRACKING_UPDATED // Suivi mis a jour
   MANUAL_EDIT      // Modification manuelle admin
 }
 
@@ -612,17 +558,13 @@ model Order {
   stripePaymentIntentId   String? @unique // pi_xxx
   stripeChargeId          String? // ch_xxx
   stripeCustomerId        String? // cus_xxx
-  // ⚠️ PRÉPARATION TVA RÉGIME RÉEL : Champ conservé pour future activation de Stripe Tax
-  // En micro-entreprise (CA < 91 900€/an), ce champ reste null
-  // Si passage en régime réel TVA (> seuil), activer Stripe Tax et ce champ sera rempli
-  stripeTaxCalculationId  String? // txcalc_xxx - ID Stripe Tax pour réconciliation
 
   // === INFORMATIONS CLIENT ===
   customerEmail String @db.VarChar(255)
   customerName  String @db.VarChar(200)
   customerPhone String?
 
-  // === ADRESSE DE LIVRAISON (DÉNORMALISÉE - SNAPSHOT) ===
+  // === ADRESSE DE LIVRAISON (DENORMALISEE - SNAPSHOT) ===
   shippingFirstName  String
   shippingLastName   String
   shippingAddress1   String
@@ -634,45 +576,27 @@ model Order {
 
   // === MONTANTS (EN CENTIMES) ===
   subtotal       Int
-  discountAmount Int          @default(0) // Montant total des réductions appliquées
-  taxAmount      Int          @default(0) // ❌ Micro-entreprise : Toujours 0 (exonérée de TVA - art. 293 B du CGI)
+  discountAmount Int          @default(0) // Montant total des reductions appliquees
+  taxAmount      Int          @default(0) // Micro-entreprise : Toujours 0 (exoneree de TVA - art. 293 B du CGI)
   shippingCost   Int          @default(0) // Frais de livraison
   total          Int // Formule: MAX(0, subtotal - discountAmount + shippingCost + taxAmount)
   currency       CurrencyCode @default(EUR)
 
-  // === DÉTAILS FISCAUX (INUTILISÉS EN MICRO-ENTREPRISE) ===
-  // ⚠️ Ces champs sont conservés pour compatibilité et future migration en régime réel TVA
-  // En micro-entreprise (CA < 91 900€/an), ces champs restent null ou 0
-  // Si passage en régime réel TVA (> seuil), réactiver Stripe Tax et ces champs seront remplis
-  taxRate         Decimal? @db.Decimal(5, 4) // ❌ Micro-entreprise : null (pas de TVA)
-  taxJurisdiction String? // ❌ Micro-entreprise : null
-  taxType         String? // ❌ Micro-entreprise : null
-  taxDetails      Json? // ❌ Micro-entreprise : null (pas de Stripe Tax)
-
-  // === PRÉPARATION RÉGIME RÉEL TVA ===
-  // Ces champs préparent la migration vers le régime réel TVA (seuil 85 000€)
-  customerTaxId          String?  // N° TVA client B2B (ex: FR12345678901 pour ventes B2B)
-  taxBehavior            TaxBehavior @default(INCLUSIVE) // Stripe Tax: "inclusive" ou "exclusive"
-  reverseCharge          Boolean  @default(false) // Autoliquidation TVA pour ventes B2B UE
-  stripeTaxTransactionId String?  // tax_txn_xxx - ID permanent pour reporting fiscal (txcalc_ expire 90j)
-  customerTaxIdVerified  Boolean  @default(false) // Résultat validation VIES (TVA intracommunautaire)
-  taxExempt              Boolean  @default(false) // Client exonéré de TVA
-
-  // === ÉCHECS DE PAIEMENT ===
-  // Stocke les codes d'erreur du dernier échec (historique complet dans WebhookEvent)
+  // === ECHECS DE PAIEMENT ===
+  // Stocke les codes d'erreur du dernier echec (historique complet dans WebhookEvent)
   paymentFailureCode    String? @db.VarChar(100) // Code Stripe: "card_declined", "expired_card", etc.
-  paymentDeclineCode    String? @db.VarChar(100) // Code réseau détaillé (Visa/MC)
+  paymentDeclineCode    String? @db.VarChar(100) // Code reseau detaille (Visa/MC)
   paymentFailureMessage String? // Message lisible pour debug
 
   // === LIVRAISON ===
   shippingMethod    ShippingMethod?  // Type de livraison
   shippingCarrier   ShippingCarrier? // Transporteur
-  shippingRateId    String? // ID du tarif Stripe utilisé
+  shippingRateId    String? // ID du tarif Stripe utilise
   trackingNumber    String? @db.VarChar(50)
   trackingUrl       String? // URL de suivi
-  estimatedDelivery DateTime? // Date estimée de livraison
-  actualDelivery    DateTime? // Date réelle de livraison
-  shippedAt         DateTime? // Date d'expédition
+  estimatedDelivery DateTime? // Date estimee de livraison
+  actualDelivery    DateTime? // Date reelle de livraison
+  shippedAt         DateTime? // Date d'expedition
 
   // === EMAIL INCITATIF AVIS ===
   reviewRequestSentAt DateTime? // Date d'envoi de l'email de demande d'avis
@@ -686,26 +610,21 @@ model Order {
   paymentMethod PaymentMethod @default(CARD)
   paidAt        DateTime?
 
-  // === CONFORMITÉ LÉGALE FRANÇAISE ===
-  // Obligation de conservation 10 ans (Art. L123-22 Code de commerce)
-  operationCategory OperationCategory @default(GOODS) // Conformité fiscale depuis juillet 2024
-  fiscalYear        Int? // Année fiscale de la commande
-
   // === RELATIONS ===
   items          OrderItem[]
   discountUsages DiscountUsage[]
   refunds        Refund[]
   notes          OrderNote[]
-  history        OrderHistory[] // 🔴 Audit trail (conformité légale)
+  history        OrderHistory[] // Audit trail (conformite legale)
 
-  // === SOFT DELETE (Conformité légale - Conservation 10 ans) ===
+  // === SOFT DELETE (Conformite legale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)
   deletedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // === INDEXES OPTIMISÉS ===
+  // === INDEXES OPTIMISES ===
   @@index([userId])
   // Chronologique
   @@index([userId, createdAt(sort: Desc)])
@@ -716,34 +635,33 @@ model Order {
   // Note: @@index([deletedAt]) removed - redundant with composite @@index([deletedAt, status, createdAt])
   // PostgreSQL uses the leading column of a composite index for single-column queries
   @@index([deletedAt, status, createdAt]) // Index composite pour listings admin (soft-delete + status)
-  // Timestamps métier
-  @@index([shippedAt, fulfillmentStatus]) // Timeline expéditions
+  // Timestamps metier
+  @@index([shippedAt, fulfillmentStatus]) // Timeline expeditions
   @@index([fulfillmentStatus, actualDelivery]) // review-request-emails cron
   @@index([paidAt, paymentStatus]) // Rapports comptables
   @@index([paidAt(sort: Desc), paymentStatus, deletedAt]) // Covering index: requetes popularite/bestsellers
-  @@index([fiscalYear, paymentStatus])
 
-  // === INDEXES STRIPE (Réconciliation & Support) ===
+  // === INDEXES STRIPE (Reconciliation & Support) ===
   @@index([stripePaymentIntentId])
   @@index([stripeCheckoutSessionId])
   @@index([stripeCustomerId])
   @@index([stripeChargeId]) // Recherche remboursements
-  @@index([createdAt(sort: Desc)]) // Listing commandes récentes
+  @@index([createdAt(sort: Desc)]) // Listing commandes recentes
 }
 
 /// Historique des actions sur les commandes (audit trail)
-/// Obligatoire pour conformité légale française (Art. L123-22 Code de Commerce)
+/// Obligatoire pour conformite legale francaise (Art. L123-22 Code de Commerce)
 /// Conservation 10 ans avec la commande
-/// ⚠️ AUDIT FIX: onDelete: SetNull pour préserver l'audit trail même si commande supprimée
+/// onDelete: SetNull pour preserver l'audit trail meme si commande supprimee
 model OrderHistory {
   id      String  @id @default(cuid())
   orderId String?
   order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
-  /// Action effectuée sur la commande
+  /// Action effectuee sur la commande
   action OrderAction
 
-  /// Statuts avant/après pour les changements de statut
+  /// Statuts avant/apres pour les changements de statut
   previousStatus            OrderStatus?
   newStatus                 OrderStatus?
   previousPaymentStatus     PaymentStatus?
@@ -754,12 +672,12 @@ model OrderHistory {
   /// Note explicative (ex: raison annulation, commentaire admin)
   note String? @db.Text
 
-  /// Métadonnées supplémentaires (JSON flexible pour données additionnelles)
+  /// Metadonnees supplementaires (JSON flexible pour donnees additionnelles)
   metadata Json?
 
   /// Auteur de l'action
-  authorId   String? // ID de l'admin ou null pour actions système
-  authorName String? @db.VarChar(100) // Dénormalisé pour audit (si admin supprimé plus tard)
+  authorId   String? // ID de l'admin ou null pour actions systeme
+  authorName String? @db.VarChar(100) // Denormalise pour audit (si admin supprime plus tard)
 
   /// Source de l'action
   source HistorySource @default(ADMIN)
@@ -767,16 +685,12 @@ model OrderHistory {
   /// Timestamp de l'action
   createdAt DateTime @default(now())
 
-  // === SOFT DELETE (Conformité légale - Conservation 10 ans avec la commande) ===
-  deletedAt DateTime?
-
   // === INDEXES ===
-  // Note: @@index([orderId]) supprimé (couvert par composite)
+  // Note: @@index([orderId]) supprime (couvert par composite)
   @@index([orderId, createdAt(sort: Desc)])
   @@index([action])
   @@index([authorId])
   @@index([createdAt(sort: Desc)])
-  @@index([deletedAt])
 }
 
 model OrderItem {
@@ -784,18 +698,18 @@ model OrderItem {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  // ⚠️ onDelete: NoAction - Préserve l'historique des ventes pour le calcul des bestsellers
-  // Un produit avec commandes ne peut pas être supprimé physiquement (utiliser soft-delete)
+  // onDelete: NoAction - Preserve l'historique des ventes pour le calcul des bestsellers
+  // Un produit avec commandes ne peut pas etre supprime physiquement (utiliser soft-delete)
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: NoAction)
 
-  // ⚠️ onDelete: Restrict intentionnel - Un SKU avec commandes ne peut pas être supprimé
-  // Garantit l'intégrité comptable (Art. L123-22 Code de commerce - conservation 10 ans)
+  // onDelete: Restrict intentionnel - Un SKU avec commandes ne peut pas etre supprime
+  // Garantit l'integrite comptable (Art. L123-22 Code de commerce - conservation 10 ans)
   // Pour "supprimer" un SKU : utiliser le soft-delete sur Product ou archiver le SKU
   skuId String
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Restrict)
 
-  // Snapshot des données produit au moment de la commande
+  // Snapshot des donnees produit au moment de la commande
   productTitle       String
   productDescription String? @db.Text
   productImageUrl    String?
@@ -805,14 +719,9 @@ model OrderItem {
   skuSize     String?
   skuImageUrl String?
 
-  // Prix et quantité
-  price    Int // ℹ️ Prix unitaire FINAL sans TVA en centimes (micro-entreprise exonérée)
+  // Prix et quantite
+  price    Int // Prix unitaire FINAL sans TVA en centimes (micro-entreprise exoneree)
   quantity Int
-
-  // Détails fiscaux (inutilisés en micro-entreprise)
-  // ⚠️ Conservés pour compatibilité et future migration en régime réel TVA
-  taxAmount Int      @default(0) // ❌ Micro-entreprise : Toujours 0 (pas de TVA)
-  taxRate   Decimal? @db.Decimal(5, 4) // ❌ Micro-entreprise : null (pas de TVA)
 
   // Relations
   refundItems RefundItem[]
@@ -827,11 +736,11 @@ model OrderItem {
   @@index([productId])
   @@index([skuId])
   @@index([productId, orderId]) // Analytics top produits
-  @@index([productId, createdAt(sort: Desc)]) // Calcul bestsellers / popularité produits
+  @@index([productId, createdAt(sort: Desc)]) // Calcul bestsellers / popularite produits
 }
 
 /// Notes internes sur les commandes (visibles uniquement par les admins)
-/// Permet de documenter les échanges clients, incidents, ou actions spéciales
+/// Permet de documenter les echanges clients, incidents, ou actions speciales
 model OrderNote {
   id String @id @default(cuid())
 
@@ -841,16 +750,16 @@ model OrderNote {
   // Contenu de la note
   content String @db.Text
 
-  // Admin qui a créé la note
+  // Admin qui a cree la note
   authorId   String
-  authorName String @db.VarChar(100) // Dénormalisé pour historique si admin supprimé
+  authorName String @db.VarChar(100) // Denormalise pour historique si admin supprime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime? // Soft delete pour audit trail
 
   @@index([orderId, createdAt(sort: Desc)])
-  @@index([authorId, createdAt(sort: Desc)]) // Historique activité admin
+  @@index([authorId, createdAt(sort: Desc)]) // Historique activite admin
   @@index([deletedAt])
 }
 
@@ -859,32 +768,21 @@ model OrderNote {
 // ============================================================================
 
 enum RefundReason {
-  CUSTOMER_REQUEST // Droit de rétractation (14 jours)
-  DEFECTIVE        // Bijou cassé / abîmé
-  WRONG_ITEM       // Erreur de préparation de commande
+  CUSTOMER_REQUEST // Droit de retractation (14 jours)
+  DEFECTIVE        // Bijou casse / abime
+  WRONG_ITEM       // Erreur de preparation de commande
   LOST_IN_TRANSIT  // Colis perdu par le transporteur
-  FRAUD            // Fraude avérée
+  FRAUD            // Fraude averee
   OTHER            // Autre
 }
 
 enum RefundStatus {
-  PENDING   // Demande reçue / En attente de validation
-  APPROVED  // Validé, en attente de traitement Stripe
-  COMPLETED // Remboursé effectivement (Stripe a confirmé)
-  REJECTED  // Refusé (ex: retour hors délai)
-  FAILED    // Échec technique Stripe
-  CANCELLED // Annulé par l'admin (soft delete)
-}
-
-// === Actions de l'historique des remboursements ===
-enum RefundAction {
-  CREATED   // Création de la demande
-  APPROVED  // Approbation de la demande
-  REJECTED  // Rejet de la demande
-  PROCESSED // Envoi vers Stripe
-  COMPLETED // Remboursement confirmé par Stripe
-  FAILED    // Échec du remboursement Stripe
-  CANCELLED // Annulation de la demande
+  PENDING   // Demande recue / En attente de validation
+  APPROVED  // Valide, en attente de traitement Stripe
+  COMPLETED // Rembourse effectivement (Stripe a confirme)
+  REJECTED  // Refuse (ex: retour hors delai)
+  FAILED    // Echec technique Stripe
+  CANCELLED // Annule par l'admin (soft delete)
 }
 
 model Refund {
@@ -898,32 +796,29 @@ model Refund {
   stripeRefundId String? @unique // re_xxxx
 
   // Montants
-  amount   Int          // Montant TOTAL remboursé en centimes
+  amount   Int          // Montant TOTAL rembourse en centimes
   currency CurrencyCode @default(EUR)
 
   // Raison et Statut
   reason        RefundReason
   status        RefundStatus @default(PENDING)
-  failureReason String?      // Détail si FAILED (ex: "insufficient_funds", "charge_already_refunded")
+  failureReason String?      // Detail si FAILED (ex: "insufficient_funds", "charge_already_refunded")
 
-  // Note interne (ex: "Le fermoir était cassé, photos reçues par mail")
+  // Note interne (ex: "Le fermoir etait casse, photos recues par mail")
   note String? @db.Text
 
-  // Détails des articles remboursés
+  // Details des articles rembourses
   items RefundItem[]
 
   // Audit
-  createdBy     String? // ID de l'admin qui a créé le remboursement
+  createdBy     String? // ID de l'admin qui a cree le remboursement
   createdByUser User?   @relation("RefundCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   processedAt   DateTime? // Date de traitement effectif (Stripe)
-
-  // Historique des actions
-  history RefundHistory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // === SOFT DELETE (Conformité légale - Conservation 10 ans) ===
+  // === SOFT DELETE (Conformite legale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement un remboursement (Art. L123-22 Code de Commerce)
   deletedAt DateTime?
 
@@ -940,19 +835,19 @@ model RefundItem {
   refundId String
   refund   Refund @relation(fields: [refundId], references: [id], onDelete: Cascade)
 
-  // Lien précis vers la ligne de commande d'origine
-  // Cela permet de savoir quel produit exact (et à quel prix d'origine) est remboursé
+  // Lien precis vers la ligne de commande d'origine
+  // Cela permet de savoir quel produit exact (et a quel prix d'origine) est rembourse
   orderItemId String
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
 
-  quantity Int // Nombre d'unités remboursées (ex: 1 sur 2 achetées)
+  quantity Int // Nombre d'unites remboursees (ex: 1 sur 2 achetees)
 
-  amount Int // Montant remboursé pour CET article (en centimes)
-  // Permet de rembourser moins que le prix d'achat si décote appliquée
+  amount Int // Montant rembourse pour CET article (en centimes)
+  // Permet de rembourser moins que le prix d'achat si decote appliquee
 
   // Gestion de stock
   restock Boolean @default(true) // Faut-il remettre le produit en stock (inventory +1) ?
-  // false si le produit est abîmé/cassé
+  // false si le produit est abime/casse
 
   createdAt DateTime @default(now())
 
@@ -960,68 +855,37 @@ model RefundItem {
   @@index([orderItemId])
 }
 
-// === Historique des actions sur les remboursements ===
-/// ⚠️ AUDIT FIX: onDelete: SetNull pour préserver l'audit trail même si remboursement supprimé
-model RefundHistory {
-  id String @id @default(cuid())
-
-  refundId String?
-  refund   Refund? @relation(fields: [refundId], references: [id], onDelete: SetNull)
-
-  action RefundAction
-
-  // Note optionnelle (ex: raison du rejet)
-  note String? @db.Text
-
-  // Auteur de l'action (admin ou système via webhook)
-  authorId String?
-  author   User?   @relation("RefundHistoryAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-
-  // === SOFT DELETE (Conformité légale - Conservation 10 ans avec le remboursement) ===
-  deletedAt DateTime?
-
-  @@index([refundId, createdAt]) // Couvre aussi refundId seul
-  @@index([deletedAt])
-}
-
 // ============================================================================
-// CODES PROMO & RÉDUCTIONS
+// CODES PROMO & REDUCTIONS
 // ============================================================================
 
 enum DiscountType {
   PERCENTAGE   // Ex: -20%
-  FIXED_AMOUNT // Ex: -10€
+  FIXED_AMOUNT // Ex: -10 euros
 }
 
 model Discount {
   id   String @id @default(cuid())
   code String @unique @db.VarChar(30) // Ex: "BIENVENUE10", "ETE2025"
 
-  // Type et valeur de la réduction
+  // Type et valeur de la reduction
   type  DiscountType
-  value Int // En pourcentage (20 = 20%) ou centimes (1000 = 10€)
+  value Int // En pourcentage (20 = 20%) ou centimes (1000 = 10 euros)
 
   // Conditions d'utilisation
-  minOrderAmount  Int? // Montant minimum de commande en centimes (ex: 5000 = 50€)
-  maxUsageCount   Int? // Nombre max d'utilisations total (null = illimité)
-  maxUsagePerUser Int? // Nombre max d'utilisations par utilisateur (null = illimité)
+  minOrderAmount  Int? // Montant minimum de commande en centimes (ex: 5000 = 50 euros)
+  maxUsageCount   Int? // Nombre max d'utilisations total (null = illimite)
+  maxUsagePerUser Int? // Nombre max d'utilisations par utilisateur (null = illimite)
 
-  // Période de validité
+  // Periode de validite
   startsAt DateTime  @default(now())
   endsAt   DateTime?
 
   // Statistiques
   usageCount Int @default(0) // Compteur d'utilisations
 
-  // État
+  // Etat
   isActive Boolean @default(true)
-
-  // Restrictions optionnelles (à implémenter si besoin)
-  // appliesToCollectionId String?
-  // appliesToProductId    String?
-  // firstOrderOnly        Boolean @default(false)
 
   // Relations
   usages DiscountUsage[]
@@ -1043,20 +907,18 @@ model DiscountUsage {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  // Commande associée (Restrict pour protection comptable)
+  // Commande associee (Restrict pour protection comptable)
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
-  // Montant de la réduction appliquée (snapshot)
+  // Montant de la reduction appliquee (snapshot)
   amountApplied Int // En centimes
 
   createdAt DateTime @default(now())
-  deletedAt DateTime? // Soft delete pour audit trail comptable
 
   @@index([orderId])
-  @@index([discountId, userId]) // Pour vérifier usage par utilisateur, couvre aussi discountId seul
+  @@index([discountId, userId]) // Pour verifier usage par utilisateur, couvre aussi discountId seul
   @@index([userId, createdAt(sort: Desc)]) // Historique usage par user
-  @@index([deletedAt])
 }
 
 // ============================================================================
@@ -1065,8 +927,8 @@ model DiscountUsage {
 
 enum NewsletterStatus {
   PENDING      // En attente de confirmation (double opt-in)
-  CONFIRMED    // Email confirmé, abonnement actif
-  UNSUBSCRIBED // Désabonné
+  CONFIRMED    // Email confirme, abonnement actif
+  UNSUBSCRIBED // Desabonne
 }
 
 model NewsletterSubscriber {
@@ -1082,12 +944,12 @@ model NewsletterSubscriber {
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Double opt-in : Confirmation email obligatoire
-  emailVerified      Boolean   @default(false) // true après clic sur lien confirmation
+  emailVerified      Boolean   @default(false) // true apres clic sur lien confirmation
   confirmationToken  String?   @unique // Token unique pour confirmer l'inscription
   confirmationSentAt DateTime? // Date d'envoi de l'email de confirmation
   confirmedAt        DateTime? // Date de confirmation par l'utilisateur
 
-  // Champs de traçabilité RGPD
+  // Champs de tracabilite RGPD
   ipAddress             String? // IP inscription
   confirmationIpAddress String? // IP confirmation (preuve RGPD)
   userAgent             String?
@@ -1116,21 +978,21 @@ model NewsletterSubscriber {
 
 enum StockNotificationStatus {
   PENDING   // En attente du retour en stock
-  NOTIFIED  // Email envoyé au client
-  EXPIRED   // Demande expirée (après X jours sans retour)
-  CANCELLED // Annulée par l'utilisateur
+  NOTIFIED  // Email envoye au client
+  EXPIRED   // Demande expiree (apres X jours sans retour)
+  CANCELLED // Annulee par l'utilisateur
 }
 
 /// Demande de notification quand un produit revient en stock
-/// Permet aux clients de s'inscrire pour être notifiés du retour d'un SKU
+/// Permet aux clients de s'inscrire pour etre notifies du retour d'un SKU
 model StockNotificationRequest {
   id String @id @default(cuid())
 
-  // SKU concerné (Cascade cohérent avec CartItem/WishlistItem)
+  // SKU concerne (Cascade coherent avec CartItem/WishlistItem)
   skuId String
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
 
-  // Utilisateur (optionnel : peut être un visiteur non connecté)
+  // Utilisateur (optionnel : peut etre un visiteur non connecte)
   userId String?
   user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -1140,14 +1002,14 @@ model StockNotificationRequest {
   // Statut de la demande
   status StockNotificationStatus @default(PENDING)
 
-  // Token unique pour désinscription sans connexion
+  // Token unique pour desinscription sans connexion
   unsubscribeToken String @unique @default(cuid())
 
   // Tracking envoi notification
   notifiedAt        DateTime? // Date d'envoi de l'email de notification
   notifiedInventory Int? // Stock disponible au moment de l'envoi
 
-  // Métadonnées RGPD
+  // Metadonnees RGPD
   ipAddress String?
   userAgent String?
 
@@ -1156,8 +1018,8 @@ model StockNotificationRequest {
   updatedAt DateTime @updatedAt
   deletedAt DateTime? // Soft delete pour RGPD
 
-  // ⚠️ AUDIT FIX: Contrainte unicité au niveau DB (avant: gérée côté applicatif)
-  // Note: @@unique crée automatiquement un index, pas besoin de @@index([email, skuId])
+  // Contrainte unicite au niveau DB
+  // Note: @@unique cree automatiquement un index, pas besoin de @@index([email, skuId])
   @@unique([email, skuId])
 
   // Indexes pour performances
@@ -1176,41 +1038,41 @@ model StockNotificationRequest {
 // AVIS PRODUITS
 // ============================================================================
 
-/// Avis produit laissé par un acheteur vérifié
+/// Avis produit laisse par un acheteur verifie
 /// Un seul avis par utilisateur et par produit (pas par OrderItem)
-/// Permet de mettre à jour l'avis après un nouvel achat
+/// Permet de mettre a jour l'avis apres un nouvel achat
 model ProductReview {
   id String @id @default(cuid())
 
   // === RELATIONS PRINCIPALES ===
-  // Produit concerné (relation vers Product, pas ProductSku)
+  // Produit concerne (relation vers Product, pas ProductSku)
   // Les avis sont au niveau produit, pas variante
-  // ⚠️ SetNull permet l'archivage produit sans bloquer (avis conservé, productId devient null)
+  // SetNull permet l'archivage produit sans bloquer (avis conserve, productId devient null)
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
-  // Auteur de l'avis (acheteur vérifié)
-  // ⚠️ SetNull pour conformité RGPD (anonymisation utilisateur possible)
+  // Auteur de l'avis (acheteur verifie)
+  // SetNull pour conformite RGPD (anonymisation utilisateur possible)
   userId String?
   user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Preuve d'achat : OrderItem du PREMIER achat ayant permis de laisser l'avis
-  // Ce champ ne change pas lors des mises à jour de l'avis (même si rachat ultérieur)
-  // Garantit que seuls les acheteurs vérifiés peuvent laisser un avis
-  orderItemId String    @unique // Un OrderItem ne peut générer qu'un seul avis
+  // Ce champ ne change pas lors des mises a jour de l'avis (meme si rachat ulterieur)
+  // Garantit que seuls les acheteurs verifies peuvent laisser un avis
+  orderItemId String    @unique // Un OrderItem ne peut generer qu'un seul avis
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
 
   // === CONTENU DE L'AVIS ===
-  rating  Int     // Note de 1 à 5 étoiles (validation Zod côté serveur)
+  rating  Int     // Note de 1 a 5 etoiles (validation Zod cote serveur)
   title   String? @db.VarChar(150) // Titre optionnel de l'avis
   content String  @db.Text // Commentaire texte
 
-  // === MODÉRATION ===
-  status ReviewStatus @default(PUBLISHED) // Auto-publié, modération a posteriori
+  // === MODERATION ===
+  status ReviewStatus @default(PUBLISHED) // Auto-publie, moderation a posteriori
 
   // === RELATIONS ===
   medias   ReviewMedia[] // Photos de l'avis (max 3)
-  response ReviewResponse? // Réponse admin (unique)
+  response ReviewResponse? // Reponse admin (unique)
 
   // === TIMESTAMPS ===
   createdAt DateTime  @default(now())
@@ -1219,9 +1081,9 @@ model ProductReview {
 
   // === CONTRAINTES ===
   // Un utilisateur ne peut laisser qu'un seul avis par produit
-  // S'il rachète le produit, il peut modifier son avis existant
+  // S'il rachete le produit, il peut modifier son avis existant
   // Note: Contrainte unique sur champs nullable - PostgreSQL permet plusieurs (NULL, NULL)
-  // La validation métier est faite côté applicatif pour les avis actifs
+  // La validation metier est faite cote applicatif pour les avis actifs
   @@unique([userId, productId])
 
   // === INDEXES ===
@@ -1229,13 +1091,13 @@ model ProductReview {
   @@index([productId, status, deletedAt, createdAt(sort: Desc)])
   // Index pour page "Mes avis" du client
   @@index([userId, deletedAt, createdAt(sort: Desc)])
-  // Index pour modération admin
+  // Index pour moderation admin
   @@index([status, createdAt(sort: Desc)])
   // Index pour calcul des stats (rating) et filtrage par note
   @@index([productId, deletedAt, rating])
 }
 
-/// Photo jointe à un avis produit
+/// Photo jointe a un avis produit
 /// Maximum 3 photos par avis (validation applicative)
 model ReviewMedia {
   id       String        @id @default(cuid())
@@ -1245,7 +1107,7 @@ model ReviewMedia {
   // === MEDIA (Pattern SkuMedia) ===
   url         String  @db.VarChar(2048) // URL UploadThing
   blurDataUrl String? @db.Text // Base64 blur placeholder (~200 bytes)
-  altText     String? @db.VarChar(255) // Alt text pour accessibilité
+  altText     String? @db.VarChar(255) // Alt text pour accessibilite
 
   // Position pour ordre d'affichage (0, 1, 2)
   position Int @default(0)
@@ -1258,20 +1120,20 @@ model ReviewMedia {
   @@index([reviewId, position])
 }
 
-/// Réponse de l'admin/marque à un avis
-/// Une seule réponse possible par avis
+/// Reponse de l'admin/marque a un avis
+/// Une seule reponse possible par avis
 model ReviewResponse {
   id       String        @id @default(cuid())
-  reviewId String        @unique // Une seule réponse par avis
+  reviewId String        @unique // Une seule reponse par avis
   review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
   // === CONTENU ===
-  content String @db.Text // Réponse texte de la marque
+  content String @db.Text // Reponse texte de la marque
 
   // === AUTEUR ADMIN (Pattern OrderNote) ===
-  // L'admin qui a rédigé la réponse
+  // L'admin qui a redige la reponse
   authorId   String // ID de l'admin
-  authorName String @db.VarChar(100) // Dénormalisé pour historique si admin supprimé
+  authorName String @db.VarChar(100) // Denormalise pour historique si admin supprime
 
   // === TIMESTAMPS ===
   createdAt DateTime  @default(now())
@@ -1282,24 +1144,24 @@ model ReviewResponse {
   @@index([authorId, createdAt(sort: Desc)])
 }
 
-/// Statistiques agrégées des avis par produit
-/// Table de cache pour performances (évite COUNT/AVG à chaque requête)
-/// Mise à jour via trigger applicatif après création/modification/suppression d'avis
+/// Statistiques agregees des avis par produit
+/// Table de cache pour performances (evite COUNT/AVG a chaque requete)
+/// Mise a jour via trigger applicatif apres creation/modification/suppression d'avis
 model ProductReviewStats {
   id        String  @id @default(cuid())
   productId String  @unique
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  // === STATISTIQUES AGRÉGÉES ===
-  totalCount    Int     @default(0) // Nombre total d'avis publiés
+  // === STATISTIQUES AGREGEES ===
+  totalCount    Int     @default(0) // Nombre total d'avis publies
   averageRating Decimal @default(0) @db.Decimal(3, 2) // Moyenne (ex: 4.75)
 
   // Distribution des notes (pour graphique cliquable)
-  rating1Count Int @default(0) // Nombre d'avis 1 étoile
-  rating2Count Int @default(0) // Nombre d'avis 2 étoiles
-  rating3Count Int @default(0) // Nombre d'avis 3 étoiles
-  rating4Count Int @default(0) // Nombre d'avis 4 étoiles
-  rating5Count Int @default(0) // Nombre d'avis 5 étoiles
+  rating1Count Int @default(0) // Nombre d'avis 1 etoile
+  rating2Count Int @default(0) // Nombre d'avis 2 etoiles
+  rating3Count Int @default(0) // Nombre d'avis 3 etoiles
+  rating4Count Int @default(0) // Nombre d'avis 4 etoiles
+  rating5Count Int @default(0) // Nombre d'avis 5 etoiles
 
   // === TIMESTAMPS ===
   updatedAt DateTime @updatedAt
@@ -1316,18 +1178,18 @@ model ProductReviewStats {
 // ============================================================================
 
 enum WebhookEventStatus {
-  PENDING    // Reçu, en attente de traitement
+  PENDING    // Recu, en attente de traitement
   PROCESSING // En cours de traitement
-  COMPLETED  // Traité avec succès
-  FAILED     // Échec du traitement
-  SKIPPED    // Ignoré (type non géré ou doublon)
+  COMPLETED  // Traite avec succes
+  FAILED     // Echec du traitement
+  SKIPPED    // Ignore (type non gere ou doublon)
 }
 
-/// Événements webhook Stripe
+/// Evenements webhook Stripe
 /// Permet l'idempotence et l'audit trail des webhooks
 model WebhookEvent {
   id            String             @id @default(cuid())
-  stripeEventId String             @unique // evt_xxx - Clé d'idempotence
+  stripeEventId String             @unique // evt_xxx - Cle d'idempotence
   eventType     String             @db.VarChar(100) // checkout.session.completed, etc.
   status        WebhookEventStatus @default(PENDING)
   errorMessage  String?            @db.Text
@@ -1347,12 +1209,12 @@ model WebhookEvent {
 enum CustomizationRequestStatus {
   PENDING     // Nouvelle demande
   IN_PROGRESS // En cours de traitement
-  COMPLETED   // Réalisé
-  CANCELLED   // Annulé
+  COMPLETED   // Realise
+  CANCELLED   // Annule
 }
 
 /// Demande de personnalisation de bijou
-/// Stocke les demandes clients pour créations sur mesure
+/// Stocke les demandes clients pour creations sur mesure
 model CustomizationRequest {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -1365,20 +1227,20 @@ model CustomizationRequest {
   phone     String? @db.VarChar(20)
 
   // === TYPE DE PRODUIT ===
-  productTypeLabel String       @db.VarChar(100) // Label du type sélectionné (snapshot)
+  productTypeLabel String       @db.VarChar(100) // Label du type selectionne (snapshot)
   productType      ProductType? @relation(fields: [productTypeId], references: [id], onDelete: SetNull)
   productTypeId    String?
 
-  // === INSPIRATIONS (produits existants comme référence) ===
+  // === INSPIRATIONS (produits existants comme reference) ===
   inspirationProducts Product[] @relation("CustomizationInspirations")
 
   // === DESCRIPTION ===
-  details String @db.Text // Description détaillée de la demande
+  details String @db.Text // Description detaillee de la demande
 
   // === STATUT ET SUIVI ===
   status      CustomizationRequestStatus @default(PENDING)
   adminNotes  String?                    @db.Text // Notes internes admin
-  respondedAt DateTime?                          // Date de première réponse
+  respondedAt DateTime?                          // Date de premiere reponse
 
   @@index([status, createdAt(sort: Desc)])
   @@index([email])
@@ -1386,4 +1248,3 @@ model CustomizationRequest {
   @@index([deletedAt])
   @@index([deletedAt, status])
 }
-
