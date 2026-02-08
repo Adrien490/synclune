@@ -21,6 +21,7 @@ const IMAGE_POSITIONS = [
 		width: 160,
 		height: 200,
 		widthClasses: "w-40 xl:w-48 2xl:w-56",
+		sizes: "(min-width: 1536px) 224px, (min-width: 1280px) 192px, 160px",
 		delay: 0.3,
 		glowColor: "var(--color-glow-pink)",
 		parallaxSpeed: 45,
@@ -34,6 +35,7 @@ const IMAGE_POSITIONS = [
 		width: 128,
 		height: 160,
 		widthClasses: "w-32 xl:w-40 2xl:w-48",
+		sizes: "(min-width: 1536px) 192px, (min-width: 1280px) 160px, 128px",
 		delay: 0.5,
 		glowColor: "var(--color-glow-lavender)",
 		parallaxSpeed: 75,
@@ -47,6 +49,7 @@ const IMAGE_POSITIONS = [
 		width: 112,
 		height: 140,
 		widthClasses: "w-28 xl:w-34 2xl:w-40",
+		sizes: "(min-width: 1536px) 160px, (min-width: 1280px) 136px, 112px",
 		delay: 0.7,
 		glowColor: "var(--color-glow-mint)",
 		parallaxSpeed: 105,
@@ -60,6 +63,7 @@ const IMAGE_POSITIONS = [
 		width: 128,
 		height: 160,
 		widthClasses: "w-32 xl:w-38 2xl:w-44",
+		sizes: "(min-width: 1536px) 176px, (min-width: 1280px) 152px, 128px",
 		delay: 0.9,
 		glowColor: "var(--color-glow-yellow)",
 		parallaxSpeed: 60,
@@ -75,7 +79,6 @@ interface HeroFloatingImagesProps {
 interface FloatingImageProps {
 	image: HeroProductImage;
 	position: (typeof IMAGE_POSITIONS)[number];
-	index: number;
 	scrollProgress: ReturnType<typeof useScroll>["scrollYProgress"];
 	shouldReduceMotion: boolean | null;
 }
@@ -83,7 +86,6 @@ interface FloatingImageProps {
 function FloatingImage({
 	image,
 	position,
-	index,
 	scrollProgress,
 	shouldReduceMotion,
 }: FloatingImageProps) {
@@ -108,7 +110,7 @@ function FloatingImage({
 
 	return (
 		<motion.div
-			className={`absolute ${position.className} ${position.widthClasses}`}
+			className={`absolute ${position.className} ${position.widthClasses} pointer-events-auto`}
 			style={shouldReduceMotion ? undefined : { y: parallaxY }}
 		>
 			<motion.div
@@ -177,9 +179,7 @@ function FloatingImage({
 			>
 				<Link
 					href={`/creations/${image.slug}`}
-					className="pointer-events-auto group relative block overflow-hidden rounded-2xl border border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.2),0_4px_12px_rgba(0,0,0,0.1)] hover:ring-1 hover:ring-white/30"
-					tabIndex={-1}
-					aria-hidden="true"
+					className="pointer-events-none group relative block overflow-hidden rounded-2xl border border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.2),0_4px_12px_rgba(0,0,0,0.1)] hover:ring-1 hover:ring-white/30"
 				>
 					{/* Glow layer — visible on hover */}
 					<div
@@ -196,8 +196,8 @@ function FloatingImage({
 						width={position.width}
 						height={position.height}
 						className="relative aspect-[4/5] w-full object-cover"
-						sizes="(min-width: 1536px) 224px, (min-width: 1280px) 192px, 160px"
-						priority={index === 0}
+						sizes={position.sizes}
+						loading="lazy"
 						placeholder={image.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={image.blurDataUrl}
 					/>
@@ -233,7 +233,6 @@ export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 						key={image.slug}
 						image={image}
 						position={pos}
-						index={index}
 						scrollProgress={scrollYProgress}
 						shouldReduceMotion={shouldReduceMotion}
 					/>
