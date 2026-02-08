@@ -1,6 +1,6 @@
 import { ScrollIndicator } from "@/shared/components/animations";
 import { DesktopParticles } from "./desktop-particles";
-import { HeroFloatingImages } from "./hero-floating-images";
+import { HeroFloatingImages } from "./hero";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { LayoutTextFlip } from "@/shared/components/ui/layout-text-flip";
