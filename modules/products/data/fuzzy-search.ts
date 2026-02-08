@@ -28,6 +28,11 @@ type FuzzySearchResult = {
 	score: number;
 };
 
+type FuzzySearchReturn = {
+	ids: string[];
+	totalCount: number;
+};
+
 // ============================================================================
 // FUZZY SEARCH SERVICE
 // ============================================================================
@@ -48,7 +53,7 @@ type FuzzySearchResult = {
 export async function fuzzySearchProductIds(
 	searchTerm: string,
 	options: FuzzySearchOptions = {}
-): Promise<string[]> {
+): Promise<FuzzySearchReturn> {
 	const {
 		threshold = FUZZY_SIMILARITY_THRESHOLD,
 		limit = FUZZY_MAX_RESULTS,
@@ -56,8 +61,8 @@ export async function fuzzySearchProductIds(
 	} = options;
 
 	const term = searchTerm.trim();
-	if (!term) return [];
-	if (term.length > MAX_SEARCH_LENGTH) return [];
+	if (!term) return { ids: [], totalCount: 0 };
+	if (term.length > MAX_SEARCH_LENGTH) return { ids: [], totalCount: 0 };
 
 	try {
 		// Construire les paramètres de recherche
@@ -69,35 +74,35 @@ export async function fuzzySearchProductIds(
 		const queryPromise = prisma.$transaction(async (tx) => {
 			await setTrigramThreshold(tx, threshold);
 
-			// Requête SQL avec pg_trgm
-			// Utilise l'opérateur % qui exploite l'index GIN pour de meilleures performances
-			return tx.$queryRaw<FuzzySearchResult[]>`
-				SELECT
-					p.id as "productId",
-					GREATEST(
-						-- Match exact dans le titre (priorité maximale)
-						CASE WHEN p.title ILIKE ${likeTerm}
-							THEN ${RELEVANCE_WEIGHTS.exactTitle}::float
-							ELSE similarity(p.title, ${term}) * ${RELEVANCE_WEIGHTS.fuzzyTitle}::float
-						END,
-						-- Match exact dans la description
-						CASE WHEN COALESCE(p.description, '') ILIKE ${likeTerm}
-							THEN ${RELEVANCE_WEIGHTS.exactDescription}::float
-							ELSE COALESCE(similarity(p.description, ${term}), 0) * ${RELEVANCE_WEIGHTS.fuzzyDescription}::float
-						END
-					) as score
-				FROM "Product" p
-				WHERE
-					p."deletedAt" IS NULL
-					${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
-					AND (
-						-- Match exact (substring)
-						p.title ILIKE ${likeTerm}
-						OR COALESCE(p.description, '') ILIKE ${likeTerm}
-						-- Match fuzzy avec opérateur % (utilise l'index GIN)
-						OR p.title % ${term}
-						OR COALESCE(p.description, '') % ${term}
-					)
+			// CTE to compute total count before applying LIMIT
+			type ResultWithCount = FuzzySearchResult & { totalCount: bigint };
+			return tx.$queryRaw<ResultWithCount[]>`
+				WITH matched AS (
+					SELECT
+						p.id as "productId",
+						GREATEST(
+							CASE WHEN p.title ILIKE ${likeTerm}
+								THEN ${RELEVANCE_WEIGHTS.exactTitle}::float
+								ELSE similarity(p.title, ${term}) * ${RELEVANCE_WEIGHTS.fuzzyTitle}::float
+							END,
+							CASE WHEN COALESCE(p.description, '') ILIKE ${likeTerm}
+								THEN ${RELEVANCE_WEIGHTS.exactDescription}::float
+								ELSE COALESCE(similarity(p.description, ${term}), 0) * ${RELEVANCE_WEIGHTS.fuzzyDescription}::float
+							END
+						) as score
+					FROM "Product" p
+					WHERE
+						p."deletedAt" IS NULL
+						${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
+						AND (
+							p.title ILIKE ${likeTerm}
+							OR COALESCE(p.description, '') ILIKE ${likeTerm}
+							OR p.title % ${term}
+							OR COALESCE(p.description, '') % ${term}
+						)
+				)
+				SELECT "productId", score, (SELECT COUNT(*) FROM matched) as "totalCount"
+				FROM matched
 				ORDER BY score DESC
 				LIMIT ${limit}
 			`;
@@ -110,9 +115,12 @@ export async function fuzzySearchProductIds(
 
 		const results = await Promise.race([queryPromise, timeoutPromise]);
 
-		return results.map((r) => r.productId);
+		return {
+			ids: results.map((r) => r.productId),
+			totalCount: results.length > 0 ? Number(results[0].totalCount) : 0,
+		};
 	} catch (error) {
 		console.error("[fuzzySearch] Failed:", error instanceof Error ? error.message : error);
-		return [];
+		return { ids: [], totalCount: 0 };
 	}
 }

@@ -52,7 +52,7 @@ export async function quickSearchProducts(
 	}
 
 	// Search for product IDs using fuzzy search
-	const productIds = await fuzzySearchProductIds(term, {
+	const { ids: productIds, totalCount } = await fuzzySearchProductIds(term, {
 		limit: QUICK_SEARCH_LIMIT,
 		status: ProductStatus.PUBLIC,
 	})
@@ -81,6 +81,6 @@ export async function quickSearchProducts(
 	return {
 		products: orderedProducts,
 		suggestion: spellResult?.term ?? null,
-		totalCount: productIds.length,
+		totalCount,
 	}
 }

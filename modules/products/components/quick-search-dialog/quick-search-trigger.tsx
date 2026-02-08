@@ -1,7 +1,7 @@
 "use client"
 
 import { Search } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { Button } from "@/shared/components/ui/button"
@@ -19,6 +19,11 @@ interface QuickSearchTriggerProps {
  */
 export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 	const { open, isOpen } = useDialog(QUICK_SEARCH_DIALOG_ID)
+	const [isMac, setIsMac] = useState(true)
+
+	useEffect(() => {
+		setIsMac(navigator.platform.includes("Mac") || navigator.userAgent.includes("Mac"))
+	}, [])
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -52,7 +57,7 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 				<span className="flex items-center gap-1.5">
 					Rechercher
 					<kbd className="pointer-events-none inline-flex h-5 items-center gap-0.5 rounded border border-border/50 bg-muted/50 px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-						<span className="text-xs">⌘</span>K
+						<span className="text-xs">{isMac ? "\u2318" : "Ctrl"}</span>K
 					</kbd>
 				</span>
 			</TooltipContent>

@@ -4,6 +4,7 @@ import { getNavbarMenuData } from "@/app/(boutique)/(accueil)/_components/navbar
 import { quickSearchProducts } from "@/modules/products/data/quick-search-products"
 import { QuickSearchContent } from "@/modules/products/components/quick-search-dialog/quick-search-content"
 import { SearchResultsSkeleton } from "@/modules/products/components/quick-search-dialog/search-results-skeleton"
+import { SearchErrorFallback } from "@/modules/products/components/quick-search-dialog/search-error-fallback"
 
 type Props = {
 	searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -39,13 +40,15 @@ export default async function QuickSearchSlot({ searchParams }: Props) {
 	}))
 
 	return (
-		<Suspense fallback={<SearchResultsSkeleton />}>
-			<QuickSearchContent
-				resultsPromise={resultsPromise}
-				query={qs}
-				collections={collections}
-				productTypes={productTypes}
-			/>
-		</Suspense>
+		<SearchErrorFallback>
+			<Suspense fallback={<SearchResultsSkeleton />}>
+				<QuickSearchContent
+					resultsPromise={resultsPromise}
+					query={qs}
+					collections={collections}
+					productTypes={productTypes}
+				/>
+			</Suspense>
+		</SearchErrorFallback>
 	)
 }

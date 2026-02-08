@@ -33,8 +33,10 @@ type SearchInputProps = {
 	ariaLabel?: string
 	/** Callback before search navigation (for side effects like saving recent searches, closing dialogs) */
 	onSubmit?: (term: string) => void
-	/** Callback on Escape key - if provided, always called (even with content). If not provided, clears input first then propagates. */
+	/** Callback on Escape key (two-step: first clears input, then calls onEscape on second press) */
 	onEscape?: () => void
+	/** Prevent blur on mobile after live search (for dialog contexts where keyboard should stay open) */
+	preventMobileBlur?: boolean
 	/** Callback on every input value change (for live search debouncing in parent) */
 	onValueChange?: (value: string) => void
 }
@@ -80,6 +82,7 @@ export function SearchInput({
 	onSubmit,
 	onEscape,
 	onValueChange,
+	preventMobileBlur = false,
 }: SearchInputProps) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const [internalPending, startTransition] = useTransition()
@@ -143,8 +146,8 @@ export function SearchInput({
 				router.replace(`?${newSearchParams.toString()}`, { scroll: false })
 			})
 
-			// Close keyboard on mobile
-			if (typeof window !== "undefined" && window.innerWidth < 768) {
+			// Close keyboard on mobile (skip in dialog contexts)
+			if (!preventMobileBlur && typeof window !== "undefined" && window.innerWidth < 768) {
 				inputRef.current?.blur()
 			}
 		}
@@ -170,19 +173,15 @@ export function SearchInput({
 	const handleKeyDown = (e: React.KeyboardEvent, currentValue: string) => {
 		if (e.key === "Escape") {
 			e.preventDefault()
-			if (onEscape) {
-				// Parent handles Escape (e.g., close dialog directly)
-				if (currentValue) {
-					form.setFieldValue("search", "")
-					onValueChange?.("")
-				}
-				onEscape()
-			} else if (currentValue) {
-				// Default: clear input first, then let next Escape close dialog
+			if (currentValue) {
+				// First Escape: clear input, don't close dialog
 				e.stopPropagation()
 				handleClear()
+			} else if (onEscape) {
+				// Second Escape (empty input): close dialog
+				onEscape()
 			}
-			// If no content and no onEscape, let event propagate to close dialog
+			// If no content and no onEscape, let event propagate
 		}
 	}
 

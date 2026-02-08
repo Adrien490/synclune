@@ -1,31 +1,26 @@
 "use client"
 
 import { use } from "react"
-import { ChevronRight, Layers, Search, Sparkles } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
+import { ChevronRight, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-import { Tap } from "@/shared/components/animations/tap"
 import ScrollFade from "@/shared/components/scroll-fade"
 import { useAddRecentSearch } from "@/modules/products/hooks/use-add-recent-search"
 import { useDialog } from "@/shared/providers/dialog-store-provider"
 import { cn } from "@/shared/utils/cn"
 
 import type { QuickSearchResult } from "../../data/quick-search-products"
+import { CollectionCard } from "./collection-card"
+import { CategoryCard } from "./category-card"
 import { QUICK_SEARCH_DIALOG_ID } from "./constants"
 import { SearchResultItem } from "./search-result-item"
+import type { QuickSearchCollection, QuickSearchProductType } from "./types"
 
 interface QuickSearchContentProps {
 	resultsPromise: Promise<QuickSearchResult>
 	query: string
-	collections: Array<{
-		slug: string
-		name: string
-		productCount: number
-		image: { url: string; blurDataUrl: string | null } | null
-	}>
-	productTypes: Array<{ slug: string; label: string }>
+	collections: QuickSearchCollection[]
+	productTypes: QuickSearchProductType[]
 }
 
 export function QuickSearchContent({
@@ -39,12 +34,13 @@ export function QuickSearchContent({
 	const router = useRouter()
 	const { add } = useAddRecentSearch()
 
-	// Client-side filtering of collections/categories
+	// Client-side filtering of collections/categories (word-start match)
+	const lowerQuery = query.toLowerCase()
 	const matchedCollections = collections
-		.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
+		.filter((c) => matchesWordStart(c.name, lowerQuery))
 		.slice(0, 2)
 	const matchedTypes = productTypes
-		.filter((t) => t.label.toLowerCase().includes(query.toLowerCase()))
+		.filter((t) => matchesWordStart(t.label, lowerQuery))
 		.slice(0, 2)
 
 	const hasSearchResults = products.length > 0
@@ -56,6 +52,12 @@ export function QuickSearchContent({
 	}
 
 	const handleSelectResult = () => {
+		// Save search term when user clicks a product result
+		add(query)
+		close()
+	}
+
+	const handleSelectNav = () => {
 		close()
 	}
 
@@ -63,10 +65,6 @@ export function QuickSearchContent({
 		add(query)
 		router.push(`/produits?search=${encodeURIComponent(query)}`)
 		close()
-	}
-
-	const handleMouseEnter = (_element: HTMLElement) => {
-		// Keyboard navigation handled by parent dialog
 	}
 
 	return (
@@ -96,41 +94,12 @@ export function QuickSearchContent({
 							</h3>
 							<div className="space-y-1">
 								{matchedCollections.map((collection) => (
-									<Tap key={collection.slug} scale={0.97}>
-										<Link
-											href={`/collections/${collection.slug}`}
-											onClick={handleSelectResult}
-											onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
-											data-active={undefined}
-											className={cn(
-												"flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl transition-colors",
-												"hover:bg-muted",
-												"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
-												"data-[active=true]:bg-muted"
-											)}
-										>
-											<div className="flex items-center gap-2 min-w-0">
-												{collection.image ? (
-													<div className="size-8 shrink-0 rounded-lg overflow-hidden bg-muted">
-														<Image
-															src={collection.image.url}
-															alt=""
-															width={32}
-															height={32}
-															className="size-full object-cover"
-															{...(collection.image.blurDataUrl ? { placeholder: "blur", blurDataURL: collection.image.blurDataUrl } : {})}
-														/>
-													</div>
-												) : (
-													<Layers className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
-												)}
-												<span className="font-medium truncate">{collection.name}</span>
-											</div>
-											<span className="text-xs text-muted-foreground/60 shrink-0 tabular-nums">
-												{collection.productCount}
-											</span>
-										</Link>
-									</Tap>
+									<CollectionCard
+										key={collection.slug}
+										collection={collection}
+										onSelect={handleSelectNav}
+										variant="compact"
+									/>
 								))}
 							</div>
 						</section>
@@ -144,23 +113,12 @@ export function QuickSearchContent({
 							</h3>
 							<div className="space-y-1">
 								{matchedTypes.map((type) => (
-									<Tap key={type.slug} scale={0.97}>
-										<Link
-											href={`/produits/${type.slug}`}
-											onClick={handleSelectResult}
-											onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
-											data-active={undefined}
-											className={cn(
-												"flex items-center gap-2 px-3 py-2.5 rounded-xl transition-colors",
-												"hover:bg-muted",
-												"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
-												"data-[active=true]:bg-muted"
-											)}
-										>
-											<Sparkles className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
-											<span className="font-medium truncate">{type.label}</span>
-										</Link>
-									</Tap>
+									<CategoryCard
+										key={type.slug}
+										type={type}
+										onSelect={handleSelectNav}
+										variant="compact"
+									/>
 								))}
 							</div>
 						</section>
@@ -179,7 +137,6 @@ export function QuickSearchContent({
 										product={product}
 										query={query}
 										onSelect={handleSelectResult}
-										onMouseEnter={handleMouseEnter}
 									/>
 								))}
 							</div>
@@ -204,7 +161,6 @@ export function QuickSearchContent({
 					<button
 						type="button"
 						onClick={handleViewAllResults}
-						onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
 						data-active={undefined}
 						className={cn(
 							"w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl",
@@ -221,4 +177,10 @@ export function QuickSearchContent({
 			)}
 		</>
 	)
+}
+
+/** Match query against word starts in text (e.g. "or" matches "Oreilles" but not "Colorees") */
+function matchesWordStart(text: string, query: string): boolean {
+	const words = text.toLowerCase().split(/\s+/)
+	return words.some((word) => word.startsWith(query))
 }

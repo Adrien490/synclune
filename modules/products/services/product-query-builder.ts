@@ -40,7 +40,7 @@ export async function buildSearchConditions(
 	}
 
 	// Recherche fuzzy sur title/description
-	const fuzzyIds = await fuzzySearchProductIds(term, {
+	const { ids: fuzzyIds } = await fuzzySearchProductIds(term, {
 		status: options?.status,
 	});
 

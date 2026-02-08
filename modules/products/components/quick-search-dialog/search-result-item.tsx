@@ -14,7 +14,6 @@ interface SearchResultItemProps {
 	product: QuickSearchProduct
 	query: string
 	onSelect: () => void
-	onMouseEnter?: (element: HTMLElement) => void
 }
 
 const MAX_COLOR_SWATCHES = 3
@@ -23,7 +22,7 @@ const MAX_COLOR_SWATCHES = 3
  * Compact product result item for the quick search dialog.
  * Shows thumbnail, title with highlighted match, price, and color swatches.
  */
-export function SearchResultItem({ product, query, onSelect, onMouseEnter }: SearchResultItemProps) {
+export function SearchResultItem({ product, query, onSelect }: SearchResultItemProps) {
 	const defaultSku = product.skus.find((s) => s.isDefault) ?? product.skus[0]
 	if (!defaultSku) return null
 
@@ -43,7 +42,6 @@ export function SearchResultItem({ product, query, onSelect, onMouseEnter }: Sea
 			<Link
 				href={`/creations/${product.slug}`}
 				onClick={onSelect}
-				onMouseEnter={(e) => onMouseEnter?.(e.currentTarget)}
 				className={cn(
 					"flex items-center gap-3 px-3 py-2.5 rounded-xl",
 					"hover:bg-muted transition-colors",
@@ -95,7 +93,7 @@ export function SearchResultItem({ product, query, onSelect, onMouseEnter }: Sea
 
 				{/* Color swatches */}
 				{colors.length > 0 && (
-					<div className="flex items-center gap-1 shrink-0">
+					<div className="flex items-center gap-1 shrink-0" role="img" aria-label={`Couleurs : ${colors.map((c) => c.name).join(", ")}`}>
 						{colors.slice(0, MAX_COLOR_SWATCHES).map((color) => (
 							<span
 								key={color.slug}
@@ -106,7 +104,7 @@ export function SearchResultItem({ product, query, onSelect, onMouseEnter }: Sea
 							/>
 						))}
 						{extraColors > 0 && (
-							<span className="text-[10px] text-muted-foreground/60">
+							<span className="text-[10px] text-muted-foreground/60" aria-hidden="true">
 								+{extraColors}
 							</span>
 						)}
