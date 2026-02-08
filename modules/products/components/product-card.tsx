@@ -123,7 +123,7 @@ export function ProductCard({
 					)}
 					placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 					blurDataURL={primaryImage.blurDataUrl ?? undefined}
-					priority={index !== undefined && index < 4}
+					preload={index !== undefined && index < 4}
 					loading={index !== undefined && index < 4 ? undefined : "lazy"}
 					fetchPriority={index !== undefined && index < 4 ? "high" : undefined}
 					sizes={IMAGE_SIZES.PRODUCT_CARD}

@@ -211,7 +211,7 @@ export function GallerySlide({
 					alt={alt}
 					blurDataUrl={media.blurDataUrl}
 					zoomLevel={GALLERY_ZOOM_LEVEL}
-					priority={index === 0}
+					preload={index === 0}
 					quality={MAIN_IMAGE_QUALITY}
 				/>
 			</div>
@@ -230,7 +230,7 @@ export function GallerySlide({
 				blurDataUrl={media.blurDataUrl}
 				isActive={isActive}
 				onTap={onOpen}
-				priority={index === 0}
+				preload={index === 0}
 			/>
 		</div>
 	);

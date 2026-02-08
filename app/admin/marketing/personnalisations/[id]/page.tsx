@@ -149,6 +149,7 @@ export default async function CustomizationDetailPage({
 															src={primaryImage.url}
 															alt={product.title}
 															fill
+															sizes="(max-width: 640px) 50vw, 33vw"
 															className="object-cover"
 														/>
 													) : (

@@ -54,6 +54,7 @@ export function RefundItemRow({
 						src={imageUrl}
 						alt={orderItem.productTitle}
 						fill
+						sizes="64px"
 						className="object-cover"
 					/>
 				</div>

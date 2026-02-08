@@ -24,10 +24,10 @@ interface ParallaxImageProps {
 	intensity?: number;
 	/** Attribut sizes pour images responsives */
 	sizes?: string;
-	/** Qualite de compression (defaut: 85) */
+	/** Qualite de compression (defaut: 75) */
 	quality?: number;
 	/** Preload prioritaire pour above-fold */
-	priority?: boolean;
+	preload?: boolean;
 	/** Image purement decorative (aria-hidden, alt vide) */
 	decorative?: boolean;
 	/** Desactive le parallax sur appareils tactiles (defaut: true pour meilleure UX mobile) */
@@ -105,8 +105,8 @@ function ParallaxInner({
  * @param containerClassName - Classes CSS pour le container externe
  * @param intensity - Force de l'effet (defaut: 5%, max: 15%)
  * @param sizes - Attribut sizes responsive
- * @param quality - Qualite de compression (defaut: 85)
- * @param priority - Preload prioritaire
+ * @param quality - Qualite de compression (defaut: 75)
+ * @param preload - Preload prioritaire
  * @param decorative - Image purement decorative (aria-hidden)
  * @param disableOnTouch - Desactive le parallax sur appareils tactiles (defaut: true)
  *
@@ -130,7 +130,7 @@ export function ParallaxImage({
 	intensity = 5,
 	sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 45vw",
 	quality = 75,
-	priority = false,
+	preload = false,
 	decorative = false,
 	disableOnTouch = true,
 }: ParallaxImageProps) {
@@ -156,11 +156,11 @@ export function ParallaxImage({
 			aria-hidden={decorative || undefined}
 			fill
 			className={className}
-			loading={priority ? undefined : "lazy"}
-			priority={priority}
+			loading={preload ? undefined : "lazy"}
+			preload={preload}
 			quality={quality}
 			sizes={sizes}
-			placeholder={blurDataURL ? "blur" : undefined}
+			placeholder={blurDataURL ? "blur" : "empty"}
 			blurDataURL={blurDataURL}
 		/>
 	);

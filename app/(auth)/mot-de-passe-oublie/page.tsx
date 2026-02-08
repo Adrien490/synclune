@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
 
 			{/* Logo en haut à droite */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-				<Logo size={44} priority href="/" />
+				<Logo size={44} preload href="/" />
 			</div>
 
 			{/* Contenu principal */}

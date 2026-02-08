@@ -19,23 +19,25 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "esbuild-wasm"],
 
   images: {
-    qualities: [75, 80, 85, 90],
+    qualities: [65, 70, 75, 80, 85, 90],
     remotePatterns: [
-      { protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**" },
-      { protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
-      { protocol: "https", hostname: "ufs.sh", pathname: "/f/**" },
-      { protocol: "https", hostname: "uploadthing.com", pathname: "/**" },
+      { protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**", search: "" },
+      { protocol: "https", hostname: "utfs.io", pathname: "/f/**", search: "" },
+      { protocol: "https", hostname: "ufs.sh", pathname: "/f/**", search: "" },
+      { protocol: "https", hostname: "uploadthing.com", pathname: "/**", search: "" },
       {
         protocol: "https",
         hostname: "uploadthing-prod.s3.us-west-2.amazonaws.com",
         pathname: "/**",
+        search: "",
       },
       {
         protocol: "https",
         hostname: "avatars.githubusercontent.com",
         pathname: "/**",
+        search: "",
       },
-      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**", search: "" },
     ],
   },
 

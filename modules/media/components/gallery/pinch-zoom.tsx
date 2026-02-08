@@ -13,7 +13,7 @@ interface GalleryPinchZoomProps {
 	blurDataUrl?: string;
 	isActive: boolean;
 	onTap?: () => void;
-	priority?: boolean;
+	preload?: boolean;
 }
 
 /**
@@ -38,7 +38,7 @@ export function GalleryPinchZoom({
 	blurDataUrl,
 	isActive,
 	onTap,
-	priority = false,
+	preload = false,
 }: GalleryPinchZoomProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const prefersReduced = useReducedMotion();
@@ -97,9 +97,8 @@ export function GalleryPinchZoom({
 					alt="" // Alt vide car géré par le container parent
 					fill
 					className="object-cover pointer-events-none select-none"
-					priority={priority}
-					loading={priority ? "eager" : "lazy"}
-					fetchPriority={priority ? "high" : "auto"}
+					preload={preload}
+					loading={preload ? undefined : "lazy"}
 					quality={MAIN_IMAGE_QUALITY}
 					sizes={GALLERY_MAIN_SIZES}
 					placeholder={blurDataUrl ? "blur" : "empty"}

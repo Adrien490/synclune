@@ -179,7 +179,7 @@ function FloatingImage({
 			>
 				<Link
 					href={`/creations/${image.slug}`}
-					className="pointer-events-none group relative block overflow-hidden rounded-2xl border border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.2),0_4px_12px_rgba(0,0,0,0.1)] hover:ring-1 hover:ring-white/30"
+					className="pointer-events-auto group relative block overflow-hidden rounded-2xl border border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.2),0_4px_12px_rgba(0,0,0,0.1)] hover:ring-1 hover:ring-white/30"
 				>
 					{/* Glow layer — visible on hover */}
 					<div
@@ -222,7 +222,6 @@ export function HeroFloatingImages({ images }: HeroFloatingImagesProps) {
 		<div
 			ref={containerRef}
 			className="absolute inset-0 z-0 hidden lg:block pointer-events-none"
-			aria-hidden="true"
 		>
 			{images.map((image, index) => {
 				const pos = IMAGE_POSITIONS[index];

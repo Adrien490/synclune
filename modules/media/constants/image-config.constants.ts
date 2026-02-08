@@ -20,7 +20,7 @@ export const MAX_IMAGE_SIZE = 3840
 // ============================================
 
 /** Qualité pour les images en lightbox (haute qualité) */
-export const LIGHTBOX_QUALITY = 95
+export const LIGHTBOX_QUALITY = 90
 
 /** Qualité pour les thumbnails de la galerie */
 export const THUMBNAIL_IMAGE_QUALITY = 65
@@ -71,16 +71,3 @@ export function nextImageUrl(src: string, size: number, quality = LIGHTBOX_QUALI
 	return `/_next/image?url=${encodeURIComponent(src)}&w=${size}&q=${quality}`
 }
 
-/**
- * Génère un srcSet complet pour une image
- * Combine IMAGE_SIZES et DEVICE_SIZES jusqu'à MAX_IMAGE_SIZE
- */
-export function generateSrcSet(src: string, quality = LIGHTBOX_QUALITY): Array<{ src: string; width: number; height: number }> {
-	return [...IMAGE_SIZES, ...DEVICE_SIZES]
-		.filter((size) => size <= MAX_IMAGE_SIZE)
-		.map((size) => ({
-			src: nextImageUrl(src, size, quality),
-			width: size,
-			height: size,
-		}))
-}
