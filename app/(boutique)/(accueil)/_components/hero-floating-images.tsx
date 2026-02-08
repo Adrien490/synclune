@@ -2,6 +2,7 @@
 
 import type { HeroProductImage } from "../_utils/extract-hero-images";
 import {
+	type MotionValue,
 	motion,
 	useReducedMotion,
 	useScroll,
@@ -92,7 +93,7 @@ interface FloatingImageProps {
 	image: HeroProductImage;
 	position: (typeof IMAGE_POSITIONS)[number];
 	scrollProgress: ReturnType<typeof useScroll>["scrollYProgress"];
-	parallaxOpacity: ReturnType<typeof useTransform>;
+	parallaxOpacity: MotionValue<number>;
 	shouldReduceMotion: boolean | null;
 	index: number;
 }
