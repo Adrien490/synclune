@@ -30,10 +30,14 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 	const isOutOfStock = product.skus.every((s) => s.inventory <= 0)
 
 	// Collect unique colors
-	const colors = product.skus
-		.map((s) => s.color)
-		.filter((c): c is NonNullable<typeof c> => c !== null)
-		.filter((c, i, arr) => arr.findIndex((x) => x.slug === c.slug) === i)
+	const seen = new Set<string>()
+	const colors = product.skus.reduce<NonNullable<(typeof product.skus)[number]["color"]>[]>((acc, s) => {
+		if (s.color && !seen.has(s.color.slug)) {
+			seen.add(s.color.slug)
+			acc.push(s.color)
+		}
+		return acc
+	}, [])
 
 	const extraColors = colors.length > MAX_COLOR_SWATCHES ? colors.length - MAX_COLOR_SWATCHES : 0
 

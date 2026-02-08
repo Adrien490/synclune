@@ -3,7 +3,7 @@
 import { AnimatePresence } from "motion/react"
 import { X } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useRef, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { Fade } from "@/shared/components/animations/fade"
@@ -46,7 +46,6 @@ export function QuickSearchDialog({
 	const { isOpen, close } = useDialog(QUICK_SEARCH_DIALOG_ID)
 	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
-	const pendingAddRef = useRef(false)
 
 	const { add } = useAddRecentSearch({
 		onError: () => toast.error("Erreur lors de l'enregistrement"),
@@ -78,15 +77,12 @@ export function QuickSearchDialog({
 
 	const handleEnterKey = (term: string) => {
 		const trimmed = term.trim()
-		if (!trimmed || pendingAddRef.current) return
+		if (!trimmed || isPending) return
 
-		// Prevent double-Enter dedup
-		pendingAddRef.current = true
 		add(trimmed)
 		startTransition(() => {
 			router.push(`/produits?search=${encodeURIComponent(trimmed)}`)
 			close()
-			pendingAddRef.current = false
 		})
 	}
 

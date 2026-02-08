@@ -22,7 +22,10 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 	const [isMac, setIsMac] = useState(true)
 
 	useEffect(() => {
-		setIsMac(navigator.platform.includes("Mac") || navigator.userAgent.includes("Mac"))
+		setIsMac(
+			(navigator as Navigator & { userAgentData?: { platform: string } }).userAgentData?.platform === "macOS"
+			|| navigator.userAgent.includes("Mac")
+		)
 	}, [])
 
 	useEffect(() => {
