@@ -266,7 +266,8 @@ function CarouselItem({ className, index, ...props }: CarouselItemProps) {
 				? `Diapositive ${index + 1} sur ${scrollSnaps.length}`
 				: undefined
 			}
-			aria-hidden={index !== undefined ? !isVisible : undefined}
+			// inert replaces aria-hidden: hides from AT and prevents focus on descendants
+			{...(index !== undefined && !isVisible ? { inert: true } : {})}
 			data-slot="carousel-item"
 			className={cn(
 				"min-w-0 shrink-0 grow-0 basis-full",

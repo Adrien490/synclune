@@ -62,7 +62,7 @@ export default async function ResetPasswordPage({
 						<div className="space-y-3">
 							<h1
 								className={cn(
-									"text-3xl font-semibold text-foreground",
+									"text-2xl sm:text-3xl lg:text-4xl font-semibold text-foreground",
 									cormorantGaramond.className
 								)}
 							>

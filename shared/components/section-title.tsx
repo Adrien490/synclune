@@ -5,9 +5,9 @@ import type { SectionTitleProps } from "@/shared/types/component.types";
 export type { SectionTitleProps };
 
 const sizeVariants = {
-	hero: "text-4xl sm:text-5xl lg:text-7xl leading-tight",
-	default: "text-2xl sm:text-3xl lg:text-5xl leading-tight",
-	small: "text-xl sm:text-2xl lg:text-3xl leading-normal",
+	hero: "text-5xl sm:text-6xl lg:text-7xl leading-tight",
+	default: "text-3xl sm:text-4xl lg:text-5xl leading-tight",
+	small: "text-2xl sm:text-3xl lg:text-3xl leading-normal",
 } as const;
 
 const alignVariants = {
@@ -17,7 +17,6 @@ const alignVariants = {
 } as const;
 
 const weightVariants = {
-	light: "font-light",
 	normal: "font-normal",
 	medium: "font-medium",
 	semibold: "font-semibold",

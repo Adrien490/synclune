@@ -125,7 +125,7 @@ export default async function VerifyEmailPage({
 					{/* Header */}
 					<div className="text-center space-y-7">
 						<div className="space-y-3">
-							<h1 className={cn("text-3xl font-semibold text-foreground", cormorantGaramond.className)}>
+							<h1 className={cn("text-2xl sm:text-3xl lg:text-4xl font-semibold text-foreground", cormorantGaramond.className)}>
 								Vérification d'email
 							</h1>
 						</div>

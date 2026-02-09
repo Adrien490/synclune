@@ -85,7 +85,7 @@ export interface SectionTitleProps {
 	 * Graisse de la police
 	 * @default "semibold"
 	 */
-	weight?: "light" | "normal" | "medium" | "semibold";
+	weight?: "normal" | "medium" | "semibold";
 	/**
 	 * Utiliser l'italique (Fraunces italic)
 	 * @default false

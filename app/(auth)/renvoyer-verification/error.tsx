@@ -39,7 +39,7 @@ export default function ResendVerificationError({ reset }: ErrorPageProps) {
 					</div>
 
 					<div className="space-y-3">
-						<h1 className={cn("text-3xl font-semibold text-foreground", cormorantGaramond.className)}>
+						<h1 className={cn("text-2xl sm:text-3xl lg:text-4xl font-semibold text-foreground", cormorantGaramond.className)}>
 							Une erreur est survenue
 						</h1>
 						<p className="text-muted-foreground">
