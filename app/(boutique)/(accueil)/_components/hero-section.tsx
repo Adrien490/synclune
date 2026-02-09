@@ -1,5 +1,4 @@
-import { ScrollIndicator } from "@/shared/components/animations";
-import { DesktopParticles } from "./desktop-particles";
+import { ParticleBackground, ScrollIndicator } from "@/shared/components/animations";
 import { HeroFloatingImages } from "./hero";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
@@ -33,11 +32,24 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
       aria-describedby="hero-subtitle"
       className="relative min-h-[calc(85dvh-4rem)] sm:min-h-[calc(90dvh-5rem)] lg:min-h-screen flex items-center overflow-hidden pt-16 sm:pt-20 md:pt-28 pb-10 sm:pb-16 md:pb-24 mask-b-from-85% mask-b-to-100%"
     >
-      {/* Particle background - Desktop only (lazy loaded to save ~30KB on mobile) */}
+      {/* Particle background */}
       <div className="absolute inset-0 -z-10" aria-hidden="true">
-        <div className="absolute inset-0">
-          <DesktopParticles />
-        </div>
+        <ParticleBackground
+          shape={["heart", "pearl"]}
+          colors={[
+            "var(--primary)",
+            "var(--secondary)",
+            "oklch(0.78 0.15 340)",
+            "oklch(0.75 0.12 280)",
+            "oklch(0.82 0.14 160)",
+          ]}
+          count={10}
+          size={[40, 80]}
+          opacity={[0.25, 0.45]}
+          blur={[5, 14]}
+          animationStyle="drift"
+          depthParallax={true}
+        />
         <div className="absolute inset-0 bg-background/20" />
       </div>
 
