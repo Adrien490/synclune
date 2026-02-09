@@ -27,7 +27,7 @@ const weightVariants = {
  * Composant de titre de section unifié pour l'application Synclune
  *
  * Style cohérent avec:
- * - Font display (Josefin Sans - sans-serif géométrique)
+ * - Font display (Cormorant Garamond - serif élégante)
  * - Italique + uppercase + tracking-wider
  * - Font-weight semibold
  * - Progression responsive harmonisée
@@ -64,7 +64,7 @@ export function SectionTitle({
 			id={id}
 			itemProp={itemProp}
 			className={cn(
-				// Police Josefin Sans - Sans-serif géométrique élégante
+				// Police Cormorant Garamond - Serif élégante
 				cormorantGaramond.className,
 				// Style de base unifié
 				"text-foreground tracking-wide",
