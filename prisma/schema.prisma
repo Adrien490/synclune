@@ -217,8 +217,6 @@ model ProductType {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([isActive])
-  @@index([label, id])
 }
 
 model Color {
@@ -232,8 +230,6 @@ model Color {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([name, id])
-  @@index([isActive])
 }
 
 model Material {
@@ -247,8 +243,6 @@ model Material {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([name, id])
-  @@index([isActive])
 }
 
 // ============================================================================
@@ -266,9 +260,6 @@ model Collection {
   updatedAt DateTime             @updatedAt
   products  ProductCollection[]
 
-  @@index([name, id])
-  @@index([createdAt, id])
-  @@index([status, id])
 }
 
 /// Table de jointure explicite Product <-> Collection (many-to-many)
@@ -293,7 +284,6 @@ model ProductCollection {
   /// Un produit ne peut appartenir qu'une seule fois a une collection
   @@unique([productId, collectionId])
   @@index([collectionId, addedAt(sort: Desc)])
-  @@index([productId])
   @@index([collectionId, isFeatured])
 }
 
@@ -374,11 +364,9 @@ model ProductSku {
   // Indexes optimises pour requetes frequentes
   @@index([productId, isActive, inventory]) // Stock actif par produit, couvre aussi [productId, isActive]
   @@index([isActive, inventory(sort: Asc), updatedAt(sort: Desc)]) // Stock alerts (low inventory first)
-  @@index([isActive, priceInclTax])
   @@index([productId, isDefault])
   @@index([colorId, isActive]) // Filtrage catalogue par couleur
   @@index([materialId, isActive]) // Filtrage catalogue par materiau
-  @@index([productId, isActive, deletedAt]) // Soft delete + product queries (couvre deletedAt seul)
 }
 
 model SkuMedia {
@@ -419,9 +407,6 @@ model Cart {
   updatedAt DateTime @updatedAt
 
   @@index([expiresAt])
-  @@index([userId])
-  @@index([sessionId])
-  @@index([createdAt, userId]) // Dashboard: abandon de panier
 }
 
 model CartItem {
@@ -443,7 +428,6 @@ model CartItem {
   updatedAt DateTime @updatedAt
 
   @@unique([cartId, skuId])
-  @@index([cartId])
   @@index([skuId])
 }
 
@@ -468,8 +452,6 @@ model Wishlist {
   updatedAt DateTime @updatedAt
 
   @@index([expiresAt]) // Pour le nettoyage des wishlists expirees
-  @@index([userId])
-  @@index([sessionId])
 }
 
 model WishlistItem {
@@ -487,7 +469,6 @@ model WishlistItem {
   // Un produit ne peut etre ajoute qu'une seule fois par wishlist
   // Note: Contrainte unique sur champ nullable - validation metier cote applicatif
   @@unique([wishlistId, productId])
-  @@index([wishlistId])
   @@index([productId])
 }
 
@@ -618,7 +599,6 @@ model Order {
   updatedAt DateTime @updatedAt
 
   // === INDEXES OPTIMISES ===
-  @@index([userId])
   // Chronologique
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, paymentStatus, deletedAt, createdAt(sort: Desc)]) // Covering index "Mes commandes" avec soft-delete
@@ -629,16 +609,8 @@ model Order {
   // PostgreSQL uses the leading column of a composite index for single-column queries
   @@index([deletedAt, status, createdAt]) // Index composite pour listings admin (soft-delete + status)
   // Timestamps metier
-  @@index([shippedAt, fulfillmentStatus]) // Timeline expeditions
   @@index([fulfillmentStatus, actualDelivery]) // review-request-emails cron
   @@index([paidAt, paymentStatus]) // Rapports comptables
-  @@index([paidAt(sort: Desc), paymentStatus, deletedAt]) // Covering index: requetes popularite/bestsellers
-
-  // === INDEXES STRIPE (Reconciliation & Support) ===
-  @@index([stripePaymentIntentId])
-  @@index([stripeCheckoutSessionId])
-  @@index([stripeCustomerId])
-  @@index([stripeChargeId]) // Recherche remboursements
   @@index([createdAt(sort: Desc)]) // Listing commandes recentes
 }
 
@@ -679,11 +651,7 @@ model OrderHistory {
   createdAt DateTime @default(now())
 
   // === INDEXES ===
-  // Note: @@index([orderId]) supprime (couvert par composite)
   @@index([orderId, createdAt(sort: Desc)])
-  @@index([action])
-  @@index([authorId])
-  @@index([createdAt(sort: Desc)])
 }
 
 model OrderItem {
@@ -726,9 +694,7 @@ model OrderItem {
   updatedAt DateTime @updatedAt
 
   @@index([orderId])
-  @@index([productId])
   @@index([skuId])
-  @@index([productId, orderId]) // Analytics top produits
   @@index([productId, createdAt(sort: Desc)]) // Calcul bestsellers / popularite produits
 }
 
@@ -752,7 +718,6 @@ model OrderNote {
   deletedAt DateTime? // Soft delete pour audit trail
 
   @@index([orderId, createdAt(sort: Desc)])
-  @@index([authorId, createdAt(sort: Desc)]) // Historique activite admin
   @@index([deletedAt])
 }
 
@@ -957,11 +922,6 @@ model NewsletterSubscriber {
   deletedAt DateTime? // Soft delete pour RGPD
 
   @@index([status, createdAt])
-  @@index([emailVerified, status])
-  @@index([userId])
-  @@index([deletedAt])
-  @@index([confirmedAt]) // Audit RGPD preuve de consentement
-  @@index([confirmationToken])
   @@index([deletedAt, status, subscribedAt])
 }
 
