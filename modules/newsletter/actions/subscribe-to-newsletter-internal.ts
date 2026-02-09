@@ -141,6 +141,7 @@ export async function subscribeToNewsletterInternal({
 				"Merci ! Un email de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception 📧",
 		};
 	} catch (error) {
+		console.error("[SUBSCRIBE_INTERNAL]", error);
 		return {
 			success: false,
 			message:

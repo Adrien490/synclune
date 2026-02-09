@@ -69,7 +69,9 @@ export async function unsubscribeFromNewsletter(
 				return error("Le code de désinscription ne correspond pas à cet email.");
 			}
 		} else {
-			// Fallback : recherche par email uniquement (moins sécurisé mais fonctionnel)
+			// Email-only fallback: less secure than token-based but necessary for users who
+			// lost the original email or whose token link expired. Information disclosure is
+			// mitigated by returning generic messages regardless of subscriber existence.
 			existingSubscriber = await prisma.newsletterSubscriber.findFirst({
 				where: {
 					email: validatedEmail,

@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
@@ -12,8 +12,10 @@ export async function refreshNewsletter(
 	_formData: FormData
 ): Promise<ActionState> {
 	try {
-		const admin = await requireAdmin();
+		const admin = await requireAdminWithUser();
 		if ("error" in admin) return admin.error;
+
+		console.info("[REFRESH_NEWSLETTER] Cache refreshed by admin:", admin.user.id);
 
 		updateTag(NEWSLETTER_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
